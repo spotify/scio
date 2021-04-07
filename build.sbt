@@ -276,7 +276,7 @@ lazy val assemblySettings = Seq(
 
 lazy val macroSettings = Def.settings(
   libraryDependencies ++= {
-    if (!isDotty.value)
+    if (!scalaVersion.value.startsWith("3"))
       Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
     else Nil
   },
@@ -397,12 +397,10 @@ lazy val `scio-core`: Project = project
       (ThisBuild / baseDirectory).value / "build.sbt",
       (ThisBuild / baseDirectory).value / "version.sbt"
     ),
+    // Java dependencies
     libraryDependencies ++= Seq(
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.github.alexarchambault" %% "case-app" % caseappVersion,
-      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
@@ -413,9 +411,6 @@ lazy val `scio-core`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
-      "com.twitter" %% "algebird-core" % algebirdVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.twitter" %% "chill-algebird" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
@@ -424,7 +419,6 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      ("me.lyh" %% "protobuf-generic" % protobufGenericVersion),
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
@@ -442,23 +436,43 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.typelevel" %% "algebra" % algebraVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
-    ).map(_.withDottyCompat(scalaVersion.value)),
+      "org.slf4j" % "slf4j-api" % slf4jVersion
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+     "com.github.alexarchambault" %% "case-app" % caseappVersion,
+     "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
+     "com.twitter" %% "algebird-core" % algebirdVersion,
+     "com.twitter" %% "chill" % chillVersion,
+     "com.twitter" %% "chill-algebird" % chillVersion,
+     "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+     "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+     "org.typelevel" %% "algebra" % algebraVersion
+    ).map(_.cross(CrossVersion.for3Use2_13)),
+    // Scala dependencies available for 2.12, 2.13 and 3
+    libraryDependencies ++= Seq(
+     "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+    ),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio",
     libraryDependencies ++= {
-      if (!isDotty.value)
+      if (!scalaVersion.value.startsWith("3"))
         Seq(
           "com.chuusai" %% "shapeless" % shapelessVersion,
           "com.propensive" %% "magnolia" % magnoliaVersion
         )
       else Nil
     },
+    libraryDependencies ++= {
+      if (scalaVersion.value.startsWith("2.12"))
+        Seq(
+          "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+        )
+      else Nil
+    },
     scalacOptions ++= {
-      if (isDotty.value) Seq("-source:3.0-migration") else Nil
+      if (scalaVersion.value.startsWith("3")) Seq("-source:3.0-migration") else Nil
     },
     compileOrder := CompileOrder.JavaThenScala,
   )
@@ -479,14 +493,14 @@ lazy val `scio-sql`: Project = project
   .settings(
     description := "Scio - SQL extension",
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
     scalacOptions ++= {
-      if (isDotty.value) Seq("-source:3.0-migration") else Nil
+      if (scalaVersion.value.startsWith("3")) Seq("-source:3.0-migration") else Nil
     },
     Test / compileOrder := CompileOrder.JavaThenScala
   )
@@ -506,38 +520,45 @@ lazy val `scio-test`: Project = project
   .settings(macroSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
-      "org.scalatest" %% "scalatest" % scalatestVersion,
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
-      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
-      // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
-      "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
-      "com.lihaoyi" %% "pprint" % "0.6.5",
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
+    ),
+    // Scala dependencies available for 2.12, 2.13 and 3
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion,
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
+      // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
+      "com.twitter" %% "algebird-test" % algebirdVersion % "test",
+      "com.lihaoyi" %% "pprint" % "0.6.5",
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.twitter" %% "chill" % chillVersion,
       "org.scalactic" %% "scalactic" % "3.2.8",
       "com.propensive" %% "magnolia" % magnoliaVersion
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ).map(_.cross(CrossVersion.for3Use2_13)),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
@@ -545,7 +566,7 @@ lazy val `scio-test`: Project = project
       (Test / forkOptions).value
     ),
     scalacOptions ++= {
-      if (isDotty.value) Seq("-source:3.0-migration") else Nil
+      if (scalaVersion.value.startsWith("3")) Seq("-source:3.0-migration") else Nil
     },
   )
   .configs(IntegrationTest)
@@ -562,13 +583,15 @@ lazy val `scio-macros`: Project = project
   .settings(macroSettings)
   .settings(
     description := "Scio macros",
+    // Java dependencies
     libraryDependencies ++= Seq(
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion
     ),
+    // Scala 2 dependencies
     libraryDependencies ++= {
-      if (!isDotty.value)
+      if (!scalaVersion.value.startsWith("3"))
         Seq(
           "com.chuusai" %% "shapeless" % shapelessVersion,
           "com.propensive" %% "magnolia" % magnoliaVersion
@@ -587,25 +610,29 @@ lazy val `scio-avro`: Project = project
   .settings(itSettings)
   .settings(
     description := "Scio add-on for working with Avro",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.apache.avro" % "avro" % avroVersion exclude ("com.thoughtworks.paranamer", "paranamer"),
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+     "com.twitter" %% "chill" % chillVersion,
+     "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ).map(_.cross(CrossVersion.for3Use2_13)),
     scalacOptions ++= {
-      if (isDotty.value) Seq("-source:3.0-migration") else Nil
+      if (scalaVersion.value.startsWith("3")) Seq("-source:3.0-migration") else Nil
     },
   )
   .dependsOn(
@@ -622,6 +649,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   .settings(beamRunnerSettings)
   .settings(
     description := "Scio add-on for Google Cloud Platform",
+    // Java dependecies
     libraryDependencies ++= Seq(
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
         ExclusionRule(organization = "io.grpc")
@@ -629,7 +657,6 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
         ExclusionRule(organization = "io.grpc")
       ),
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.98.0",
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
@@ -648,9 +675,6 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
-      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
-      "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "junit" % "junit" % junitVersion % "test",
@@ -661,12 +685,19 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
+      "com.twitter" %% "chill" % chillVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
-    ).map(_.withDottyCompat(scalaVersion.value)),
+     ).map(_.cross(CrossVersion.for3Use2_13)),
     compileOrder := CompileOrder.JavaThenScala, // required for Scala 3
   )
   .dependsOn(
@@ -684,23 +715,27 @@ lazy val `scio-cassandra3`: Project = project
   .settings(itSettings)
   .settings(
     description := "Scio add-on for Apache Cassandra 3.x",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.11.0",
       ("org.apache.cassandra" % "cassandra-all" % "3.11.10")
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" % "chill-java" % chillVersion
-    ).map(_.withDottyCompat(scalaVersion.value))
+    ),
+    // Scala dependencies available for 2.12, 2.13 and 3
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      ("com.twitter" %% "chill" % chillVersion).cross(CrossVersion.for3Use2_13),
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+   )
   )
   .dependsOn(
     `scio-core`,
@@ -714,8 +749,8 @@ lazy val `scio-elasticsearch6`: Project = project
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -723,7 +758,8 @@ lazy val `scio-elasticsearch6`: Project = project
       "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
       "org.elasticsearch.client" % "transport" % elasticsearch6Version
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
+    //libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
     compileOrder := CompileOrder.JavaThenScala, // required for Scala 3
   )
   .dependsOn(
@@ -737,8 +773,8 @@ lazy val `scio-elasticsearch7`: Project = project
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -749,7 +785,8 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
+    //libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
     compileOrder := CompileOrder.JavaThenScala, // required for Scala 3
   )
   .dependsOn(
@@ -765,8 +802,8 @@ lazy val `scio-extra`: Project = project
   .settings(macroSettings)
   .settings(
     description := "Scio extra utilities",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
@@ -776,24 +813,28 @@ lazy val `scio-extra`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "com.spotify" % "annoy" % annoyVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
-      "com.twitter" %% "algebird-core" % algebirdVersion,
       "info.debatty" % "java-lsh" % javaLshVersion,
-      "net.pishen" %% "annoy4s" % annoy4sVersion,
-      "org.scalanlp" %% "breeze" % breezeVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test",
-      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "net.java.dev.jna" % "jna" % jnaVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "net.pishen" %% "annoy4s" % annoy4sVersion,
+      "org.scalanlp" %% "breeze" % breezeVersion,
+      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
+      "com.chuusai" %% "shapeless" % shapelessVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion
-    ),
+    ).map(_.cross(CrossVersion.for3Use2_13)),
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
@@ -816,6 +857,7 @@ lazy val `scio-jdbc`: Project = project
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for JDBC",
+    // Java dependencies
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
@@ -841,24 +883,17 @@ lazy val `scio-parquet`: Project = project
     }.value,
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
     description := "Scio add-on for Parquet",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "me.lyh" %% "parquet-avro" % parquetExtraVersion excludeAll (
-        // parquet-avro depends on avro 1.10.x
-        ExclusionRule("org.apache.avro", "avro"),
-        ExclusionRule("org.apache.avro", "avro-compiler")
-      ),
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
-      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
       "org.apache.parquet" % "parquet-avro" % parquetVersion exclude (
         "org.apache.avro", "avro"
       ),
-      "com.twitter" %% "chill" % chillVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
@@ -867,7 +902,18 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "me.lyh" %% "parquet-avro" % parquetExtraVersion excludeAll (
+        // parquet-avro depends on avro 1.10.x
+        ExclusionRule("org.apache.avro", "avro"),
+        ExclusionRule("org.apache.avro", "avro-compiler")
+      ),
+     "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+     "com.twitter" %% "chill" % chillVersion,
+    ).map(_.cross(CrossVersion.for3Use2_13)),
     compileOrder := CompileOrder.JavaThenScala
   )
   .dependsOn(
@@ -889,24 +935,28 @@ lazy val `scio-tensorflow`: Project = project
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.tensorflow" % "tensorflow-core-platform" % tensorFlowVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "com.spotify" %% "featran-core" % featranVersion,
-      "com.spotify" %% "featran-scio" % featranVersion,
-      "com.spotify" %% "featran-tensorflow" % featranVersion,
       "com.spotify" % "zoltar-api" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
       "com.spotify" % "zoltar-core" % zoltarVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.spotify" %% "featran-core" % featranVersion,
+      "com.spotify" %% "featran-scio" % featranVersion,
+      "com.spotify" %% "featran-tensorflow" % featranVersion,
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
+    ).map(_.cross(CrossVersion.for3Use2_13)),
     compileOrder := CompileOrder.JavaThenScala,
     scalacOptions ++= {
-      if (isDotty.value) Seq("-source:3.0-migration") else Nil // Easily fixable
+      if (scalaVersion.value.startsWith("3")) Seq("-source:3.0-migration") else Nil // Easily fixable
     },
   )
   .dependsOn(
@@ -923,10 +973,8 @@ lazy val `scio-schemas`: Project = project
   .settings(
     description := "Avro/Proto schemas for testing",
     publish / skip := true,
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.avro" % "avro" % avroVersion
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    //libraryDependencies +="org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion, 
+    libraryDependencies += "org.apache.avro" % "avro" % avroVersion,
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
@@ -944,8 +992,8 @@ lazy val `scio-examples`: Project = project
   .settings(macroSettings)
   .settings(
     publish / skip := true,
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -956,19 +1004,11 @@ lazy val `scio-examples`: Project = project
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.2.2",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
-      "com.spotify" %% "magnolify-avro" % magnolifyVersion,
-      "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
-      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
-      "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "mysql" % "mysql-connector-java" % "8.0.24",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
-      "com.chuusai" %% "shapeless" % shapelessVersion,
-      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
-      "com.github.alexarchambault" %% "case-app-util" % caseappVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-pubsub" % s"v1-rev20200713-$googleClientsVersion",
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
@@ -977,13 +1017,25 @@ lazy val `scio-examples`: Project = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
-      "com.twitter" %% "algebird-core" % algebirdVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
     ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.spotify" %% "magnolify-avro" % magnolifyVersion,
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
+      "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
+      "com.github.alexarchambault" %% "case-app-util" % caseappVersion,
+      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
+      "com.twitter" %% "algebird-core" % algebirdVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    ).map(_.cross(CrossVersion.for3Use2_13)),
     // exclude problematic sources if we don't have GCP credentials
     unmanagedSources / excludeFilter := {
       if (BuildCredentials.exists) {
@@ -1023,8 +1075,9 @@ lazy val `scio-repl`: Project = project
   .settings(macroSettings)
   .settings(
     scalacOptions := Scalac.replOptions.value,
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -1039,9 +1092,9 @@ lazy val `scio-repl`: Project = project
       "org.apache.commons" % "commons-text" % commonsTextVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ),
+    libraryDependencies += ("com.nrinaudo" %% "kantan.csv" % kantanCsvVersion).cross(CrossVersion.for3Use2_13),
     libraryDependencies ++= {
       VersionNumber(scalaVersion.value) match {
         case v if v.matchesSemVer(SemanticSelector("2.12.x")) =>
@@ -1067,13 +1120,14 @@ lazy val `scio-jmh`: Project = project
     Jmh / sourceDirectory := (Test / sourceDirectory).value,
     Jmh / classDirectory := (Test / classDirectory).value,
     Jmh / dependencyClasspath := (Test / dependencyClasspath).value,
+    // Java dependencies
     libraryDependencies ++= directRunnerDependencies ++ Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "junit" % "junit" % junitVersion % "test",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
     publish / skip := true
   )
   .dependsOn(
@@ -1090,8 +1144,8 @@ lazy val `scio-smb`: Project = project
   .settings(beamRunnerSettings)
   .settings(
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
@@ -1102,9 +1156,6 @@ lazy val `scio-smb`: Project = project
         "org.apache.avro", "avro"
       ),
       "org.apache.parquet" % "parquet-common" % parquetVersion,
-      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
-      // #3260 work around for sorter memory limit until we patch upstream
-      // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.tensorflow" % "tensorflow-core-platform" % tensorFlowVersion,
@@ -1116,7 +1167,6 @@ lazy val `scio-smb`: Project = project
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
       "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
       "junit" % "junit" % junitVersion % Test,
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
@@ -1125,7 +1175,15 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided"
-    ).map(_.withDottyCompat(scalaVersion.value)),
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+      // #3260 work around for sorter memory limit until we patch upstream
+      // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+   ).map(_.cross(CrossVersion.for3Use2_13)),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
@@ -1149,14 +1207,18 @@ lazy val `scio-redis`: Project = project
   .settings(itSettings)
   .settings(
     description := "Scio integration with Redis",
+    // Java dependencies
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.apache.beam" % "beam-sdks-java-io-redis" % beamVersion
-    ).map(_.withDottyCompat(scalaVersion.value))
+    ),
+    // Scala dependencies not ported to Scala 3 yet
+    libraryDependencies ++= Seq(
+      //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+     "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+    ).map(_.cross(CrossVersion.for3Use2_13))
   )
   .dependsOn(
     `scio-core`,
@@ -1297,13 +1359,14 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
 //strict should only be enabled when updating/adding depedencies
 // ThisBuild / conflictManager := ConflictManager.strict
 //To update this list we need to check against the dependencies being evicted
+
+// Java overrides
 ThisBuild / dependencyOverrides ++= Seq(
   "org.threeten" % "threetenbp" % "1.4.1",
   "org.conscrypt" % "conscrypt-openjdk-uber" % "2.2.1",
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
@@ -1332,7 +1395,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.oauth-client" % "google-oauth-client-java6" % googleOauthClientVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
-  "com.propensive" %% "magnolia" % magnoliaVersion,
   "com.squareup.okio" % "okio" % "1.13.0",
   "com.thoughtworks.paranamer" % "paranamer" % "2.8",
   "commons-cli" % "commons-cli" % "1.2",
@@ -1341,9 +1403,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "commons-io" % "commons-io" % commonsIoVersion,
   "commons-lang" % "commons-lang" % "2.6",
   "commons-logging" % "commons-logging" % "1.2",
-  "io.circe" %% "circe-core" % circeVersion,
-  "io.circe" %% "circe-generic" % circeVersion,
-  "io.circe" %% "circe-parser" % circeVersion,
   "io.dropwizard.metrics" % "metrics-core" % metricsVersion,
   "io.dropwizard.metrics" % "metrics-jvm" % metricsVersion,
   "io.grpc" % "grpc-auth" % grpcVersion,
@@ -1394,17 +1453,28 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
   "org.objenesis" % "objenesis" % "2.5.1",
   "org.ow2.asm" % "asm" % "5.0.4",
-  "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-  "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
-  "org.scalacheck" %% "scalacheck" % scalacheckVersion,
-  "org.scalactic" %% "scalactic" % scalatestVersion,
-  "org.scalatest" %% "scalatest" % scalatestVersion,
   "org.slf4j" % "slf4j-api" % slf4jVersion,
   "org.slf4j" % "slf4j-log4j12" % slf4jVersion,
   "org.tukaani" % "xz" % "1.8",
-  "org.typelevel" %% "algebra" % algebraVersion,
-  "org.typelevel" %% "cats-core" % catsVersion,
   "org.xerial.snappy" % "snappy-java" % "1.1.4",
   "org.yaml" % "snakeyaml" % "1.12",
-  "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
+)
+
+ThisBuild / dependencyOverrides ++= Seq(
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+  "com.propensive" %% "magnolia" % magnoliaVersion,
+  "io.circe" %% "circe-core" % circeVersion,
+  "io.circe" %% "circe-generic" % circeVersion,
+  "io.circe" %% "circe-parser" % circeVersion,
+  "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
+  "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
+  //"org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
+).map(_.cross(CrossVersion.for3Use2_13))
+
+ThisBuild / dependencyOverrides ++= Seq(
+  "org.typelevel" %% "algebra" % algebraVersion,
+  "org.typelevel" %% "cats-core" % catsVersion,
+  "org.scalacheck" %% "scalacheck" % scalacheckVersion,
+  "org.scalactic" %% "scalactic" % scalatestVersion,
+  "org.scalatest" %% "scalatest" % scalatestVersion
 )
