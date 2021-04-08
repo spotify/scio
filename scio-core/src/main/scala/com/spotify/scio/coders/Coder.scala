@@ -192,7 +192,7 @@ final private[scio] case class LazyCoder[T](
    * and other methods that DO NOT actually serialize / deserialize the data.
    * Internally, looping coders are replaced by an instance of Coder[Nothing]
    */
-  private def uncycled: Coder[T] = {
+  private lazy val uncycled: BCoder[T] = {
     def go[B](c: Coder[B], types: Set[String]): Coder[B] =
       c match {
         // Stop the recursion. We already traversed that Coder
@@ -224,14 +224,14 @@ final private[scio] case class LazyCoder[T](
         case KVCoder(koder, voder) =>
           KVCoder(go(koder, types), go(voder, types))
       }
-    go(coder, Set.empty)
+    CoderMaterializer.beamImpl(o, go(coder, Set.empty))
   }
 
-  def verifyDeterministic(): Unit =
-    CoderMaterializer.beamImpl(o, uncycled).verifyDeterministic()
+  override def verifyDeterministic(): Unit =
+    uncycled.verifyDeterministic()
 
   override def consistentWithEquals(): Boolean =
-    CoderMaterializer.beamImpl(o, uncycled).consistentWithEquals()
+    uncycled.consistentWithEquals()
 
   override def structuralValue(value: T): AnyRef =
     if (consistentWithEquals()) {
