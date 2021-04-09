@@ -19,7 +19,6 @@ package com.spotify.scio.avro.syntax
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values._
@@ -90,25 +89,6 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
   }
 }
 
-final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])
-    extends AnyVal {
-
-  /**
-   * Save this SCollection as an Avro file. Note that element type `T` must be a case class
-   * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-   */
-  def saveAsTypedAvroFile(
-    path: String,
-    numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-    suffix: String = AvroIO.WriteParam.DefaultSuffix,
-    codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
-    metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata
-  )(implicit ct: ClassTag[T], tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata)
-    self.write(AvroTyped.AvroIO[T](path))(param)
-  }
-}
-
 final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T]) extends AnyVal {
 
   /**
@@ -142,10 +122,6 @@ trait SCollectionSyntax {
   implicit def avroSpecificRecordSCollectionOps[T <: SpecificRecord](
     c: SCollection[T]
   ): SpecificRecordSCollectionOps[T] = new SpecificRecordSCollectionOps[T](c)
-
-  implicit def avroTypedAvroSCollectionOps[T <: HasAvroAnnotation](
-    c: SCollection[T]
-  ): TypedAvroSCollectionOps[T] = new TypedAvroSCollectionOps[T](c)
 
   implicit def avroProtobufSCollectionOps[T <: Message](
     c: SCollection[T]

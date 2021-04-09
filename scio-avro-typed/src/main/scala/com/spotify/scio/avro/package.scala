@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.avro.syntax.Syntax
+import com.spotify.scio.avro.syntax.{Syntax, TypedSyntax}
 
 /**
  * Main package for Avro APIs. Import all.
@@ -26,7 +26,7 @@ import com.spotify.scio.avro.syntax.Syntax
  * import com.spotify.scio.avro._
  * }}}
  */
-package object avro extends Syntax {
+package object avro extends Syntax with TypedSyntax {
 
   /** Typed Avro annotations and converters. */
   val AvroType = com.spotify.scio.avro.types.AvroType

@@ -21,7 +21,6 @@ import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.avro._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import org.apache.avro.Schema
@@ -80,19 +79,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
     self.read(SpecificRecordIO[T](path))
-
-  /**
-   * Get a typed SCollection from an Avro schema.
-   *
-   * Note that `T` must be annotated with
-   * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
-   * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
-   * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-   */
-  def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
-    path: String
-  ): SCollection[T] =
-    self.read(AvroTyped.AvroIO[T](path))
 
   /**
    * Get an SCollection for a Protobuf file.

@@ -19,7 +19,6 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.spotify.scio.values._
@@ -112,14 +111,4 @@ final case class AvroTaps(self: Taps) {
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =
     self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordTap[T](path))
-
-  /** Get a `Future[Tap[T]]` for typed Avro source. */
-  def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
-    path: String
-  ): Future[Tap[T]] = {
-    val avroT = AvroType[T]
-
-    import scala.concurrent.ExecutionContext.Implicits.global
-    avroFile(path, avroT.schema).map(_.map(avroT.fromGenericRecord))
-  }
 }

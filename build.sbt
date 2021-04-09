@@ -551,11 +551,33 @@ lazy val `scio-macros`: Project = project
   )
 
 lazy val `scio-avro`: Project = project
-  .in(file("scio-avro"))
+  .in(file("scio-avro-typed"))
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
+  .settings(
+    description := "Scio add-on for working with typed Avro",
+    libraryDependencies ++= Seq(
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
+    )
+  )
+  .dependsOn(
+    `scio-core` % "compile;it->it",
+    `scio-avro-base`
+  )
+  .configs(IntegrationTest)
+
+lazy val `scio-avro-base`: Project = project
+  .in(file("scio-avro-base"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(macroSettings)
   .settings(
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
@@ -567,19 +589,10 @@ lazy val `scio-avro`: Project = project
       "com.twitter" %% "chill" % chillVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.apache.avro" % "avro" % avroVersion exclude ("com.thoughtworks.paranamer", "paranamer"),
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
-      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     )
   )
-  .dependsOn(
-    `scio-core` % "compile;it->it"
-  )
-  .configs(IntegrationTest)
+  .dependsOn(`scio-core`)
 
 lazy val `scio-google-cloud-platform`: Project = project
   .in(file("scio-google-cloud-platform"))
