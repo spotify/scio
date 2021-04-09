@@ -137,9 +137,10 @@ private[scio] object VersionUtil {
   def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
     val version = ReleaseInfo.getReleaseInfo.getVersion
-    require(
-      version == BuildInfo.beamVersion,
-      s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
-    )
+    if (version != BuildInfo.beamVersion) {
+      Logger.warn(
+        s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
+      )
+    }
   }
 }
