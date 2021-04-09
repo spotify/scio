@@ -27,11 +27,11 @@ ThisBuild / turbo := true
 
 val algebirdVersion = "0.13.7"
 val algebraVersion = "2.2.2"
-val annoy4sVersion = "0.9.0"
+val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
 val autoServiceVersion = "1.0"
-val autoValueVersion = "1.7.5"
+val autoValueVersion = "1.8"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
 val beamVersion = "2.28.0"
@@ -92,12 +92,12 @@ val opencensusVersion = "0.24.0"
 val parquetExtraVersion = "0.4.0"
 val parquetVersion = "1.12.0"
 val protobufGenericVersion = "0.2.9"
-val protobufVersion = "3.15.7"
+val protobufVersion = "3.15.8"
 val scalacheckVersion = "1.15.3"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
 val scalatestVersion = "3.2.7"
-val shapelessVersion = "2.3.3"
+val shapelessVersion = "2.3.4"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
@@ -914,7 +914,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.2.1",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.2.2",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
