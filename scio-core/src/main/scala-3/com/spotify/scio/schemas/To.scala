@@ -18,6 +18,7 @@
 package com.spotify.scio.schemas
 
 import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+import BSchema.{ FieldType => BFieldType }
 
 import scala.compiletime._
 import scala.deriving._
@@ -26,39 +27,13 @@ import scala.reflect.ClassTag
 
 object ToMacro {
 
-  def interpretSchema[T: scala.quoted.Type](schemaExpr: Expr[Schema[T]])(using Quotes): Option[Schema[T]] = schemaExpr match {
-    case '{ Schema.stringSchema }     => Some(Schema.stringSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.byteSchema }       => Some(Schema.byteSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.bytesSchema }      => Some(Schema.bytesSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.sortSchema }       => Some(Schema.sortSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.intSchema }        => Some(Schema.intSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.longSchema }       => Some(Schema.longSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.floatSchema }      => Some(Schema.floatSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.doubleSchema }     => Some(Schema.doubleSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.bigDecimalSchema } => Some(Schema.bigDecimalSchema.asInstanceOf[Schema[T]])
-    case '{ Schema.booleanSchema }    => Some(Schema.booleanSchema.asInstanceOf[Schema[T]])
-
-    case '{ Schema.optionSchema[t](using $tSchemaExpr) } =>
-      for (tSchema <- interpretSchema(tSchemaExpr))
-      yield Schema.optionSchema(using tSchema).asInstanceOf[Schema[T]]
-
-    case '{ Schema.mapSchema[k, v](using $keySchemaExpr, $valueSchemaExpr) } =>
-      for {
-        keySchema <- interpretSchema(keySchemaExpr)
-        valueSchema <- interpretSchema(valueSchemaExpr)
-      } yield Schema.mapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
-
-    case _ => None
-  }
-
-
   def safeImpl[I: scala.quoted.Type, O: scala.quoted.Type](
     iSchema: Expr[Schema[I]],
     oSchema: Expr[Schema[O]]
   )(using Quotes): Expr[To[I, O]] = {
     import scala.quoted.quotes.reflect.{report, TypeRepr}
 
-    (interpretSchema(iSchema), interpretSchema(oSchema)) match {
+    (interpret[I] , interpret[O]) match {
       case (None, None) => report.throwError(
         s"""
         |Could not interpret input schema:
@@ -81,6 +56,54 @@ object ToMacro {
           .fold(message => report.throwError(message), identity)
     }
   }
+
+  private def sequence[T](ls: List[Option[T]]): Option[List[T]] =
+    if ls.exists(_.isEmpty) then None
+    else Some(ls.collect { case Some(x) => x })
+
+  private def interpret[T: scala.quoted.Type](using Quotes): Option[Schema[T]] = 
+    Type.of[T] match {
+      case '[Boolean] => Some(Schema.jBooleanSchema.asInstanceOf[Schema[T]])
+      case '[String]     => Some(Schema.stringSchema.asInstanceOf[Schema[T]])
+      case '[Byte]       => Some(Schema.byteSchema.asInstanceOf[Schema[T]])
+      case '[Array[Byte]]=> Some(Schema.bytesSchema.asInstanceOf[Schema[T]])
+      case '[Short]       => Some(Schema.sortSchema.asInstanceOf[Schema[T]])
+      case '[Int]        => Some(Schema.intSchema.asInstanceOf[Schema[T]])
+      case '[Long]       => Some(Schema.longSchema.asInstanceOf[Schema[T]])
+      case '[Float]      => Some(Schema.floatSchema.asInstanceOf[Schema[T]])
+      case '[Double]     => Some(Schema.doubleSchema.asInstanceOf[Schema[T]])
+      case '[BigDecimal] => Some(Schema.bigDecimalSchema.asInstanceOf[Schema[T]])
+      case '[List[u]] => 
+        for (itemSchema <- interpret[u])
+        yield Schema.listSchema(itemSchema).asInstanceOf[Schema[T]]
+      case '[Option[u]] =>
+        for (tSchema <- interpret[u])
+        yield Schema.optionSchema(using tSchema).asInstanceOf[Schema[T]]
+      case '[Map[k, v]] =>
+        for {
+          keySchema <- interpret[k]
+          valueSchema <- interpret[v]
+        } yield Schema.mapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
+      case _ =>
+        import quotes.reflect._
+        val tp = TypeRepr.of[T]
+        val caseClass: Symbol = tp.typeSymbol
+        val fields: List[Symbol] = caseClass.caseFields
+
+        // if case class iterate and recurse, else sorry
+        if tp <:< TypeRepr.of[Product] && fields.nonEmpty then {
+          val schemasOpt: List[Option[(String, Schema[Any])]] = fields.map { (f: Symbol) =>
+            assert(f.isValDef)
+            val fieldName = f.name
+            val fieldType: TypeRepr = tp.memberType(f)
+            fieldType.asType match {
+              // mattern match to create a bind <3
+              case '[u] => interpret[u].asInstanceOf[Option[Schema[Any]]].map(s => (fieldName, s))
+            }
+          }
+          sequence(schemasOpt).map(schemas => Record(schemas.toArray, null, null))
+        } else None
+    }
 }
 
 trait ToMacro {
