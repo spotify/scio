@@ -32,6 +32,8 @@ import scala.jdk.CollectionConverters._
 
 object ScioContextOps {
   private val DefaultSleepDuration = Duration.standardMinutes(20)
+  // Empty set means all clusters.
+  private val DefaultClusterNames: Set[String] = Set.empty
 }
 
 /** Enhanced version of [[ScioContext]] with Bigtable methods. */
@@ -93,13 +95,37 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     instanceId: String,
     numberOfNodes: Int,
     sleepDuration: Duration = DefaultSleepDuration
+  ): Unit =
+    updateNumberOfBigtableNodes(
+      projectId,
+      instanceId,
+      numberOfNodes,
+      DefaultClusterNames,
+      sleepDuration
+    )
+
+  /**
+   * Updates given clusters within the specified Bigtable instance to a specified number of nodes.
+   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at
+   * the end to lower costs yet still get high throughput during bulk ingests/dumps.
+   *
+   * @param clusterNames Only update the number of nodes for given cluster names, update all clusters if it's empty.
+   * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
+   *                      at least 20 minutes before the new nodes are fully functional
+   */
+  def updateNumberOfBigtableNodes(
+    projectId: String,
+    instanceId: String,
+    numberOfNodes: Int,
+    clusterNames: Set[String],
+    sleepDuration: Duration
   ): Unit = {
     val bigtableOptions = BigtableOptions
       .builder()
       .setProjectId(projectId)
       .setInstanceId(instanceId)
       .build
-    updateNumberOfBigtableNodes(bigtableOptions, numberOfNodes, sleepDuration)
+    updateNumberOfBigtableNodes(bigtableOptions, numberOfNodes, clusterNames, sleepDuration)
   }
 
   /**
@@ -117,7 +143,37 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): Unit =
     if (!self.isTest) {
       // No need to update the number of nodes in a test
-      BigtableUtil.updateNumberOfBigtableNodes(bigtableOptions, numberOfNodes, sleepDuration)
+      updateNumberOfBigtableNodes(
+        bigtableOptions,
+        numberOfNodes,
+        DefaultClusterNames,
+        sleepDuration
+      )
+    }
+
+  /**
+   * Updates given clusters within the specified Bigtable instance to a specified number of nodes.
+   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at
+   * the end to lower costs yet still get high throughput during bulk ingests/dumps.
+   *
+   * @param clusterNames Only update the number of nodes for given cluster names, update all clusters if it's empty.
+   * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends
+   *                      at least 20 minutes before the new nodes are fully functional
+   */
+  def updateNumberOfBigtableNodes(
+    bigtableOptions: BigtableOptions,
+    numberOfNodes: Int,
+    clusterNames: Set[String],
+    sleepDuration: Duration
+  ): Unit =
+    if (!self.isTest) {
+      // No need to update the number of nodes in a test
+      BigtableUtil.updateNumberOfBigtableNodes(
+        bigtableOptions,
+        numberOfNodes,
+        sleepDuration,
+        clusterNames.asJava
+      )
     }
 
   /**

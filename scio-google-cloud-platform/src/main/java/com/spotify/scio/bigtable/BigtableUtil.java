@@ -34,7 +34,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Utilities to deal with Bigtable. */
@@ -69,8 +71,10 @@ public final class BigtableUtil {
    * @throws InterruptedException If sleep fails
    */
   public static void updateNumberOfBigtableNodes(
-      final BigtableOptions bigtableOptions, final int numberOfNodes, final Duration sleepDuration)
-      throws IOException, InterruptedException {
+      final BigtableOptions bigtableOptions,
+      final int numberOfNodes,
+      final Duration sleepDuration,
+      final Set<String> clusterNames) throws IOException, InterruptedException {
     final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions);
 
     try {
@@ -85,8 +89,15 @@ public final class BigtableUtil {
       final ListClustersResponse clustersResponse =
           bigtableInstanceClient.listCluster(clustersRequest);
 
+      final List<Cluster> clusters = clustersResponse
+          .getClustersList()
+          .stream()
+          // if no clusters specified then apply to all clusters in the instance.
+          .filter(c -> clusterNames.isEmpty() || clusterNames.contains(simplify(c.getName())))
+          .collect(Collectors.toList());
+
       // For each cluster update the number of nodes
-      for (Cluster cluster : clustersResponse.getClustersList()) {
+      for (Cluster cluster : clusters) {
         final Cluster updatedCluster =
             Cluster.newBuilder().setName(cluster.getName()).setServeNodes(numberOfNodes).build();
         LOG.info("Updating number of nodes to {} for cluster {}", numberOfNodes, cluster.getName());
@@ -123,6 +134,14 @@ public final class BigtableUtil {
                   Collectors.toMap(
                       cn -> cn.getName().substring(cn.getName().indexOf("/clusters/") + 10),
                       Cluster::getServeNodes)));
+    }
+  }
+
+  static String simplify(String name) {
+    if (name.lastIndexOf('/') != -1) {
+      return name.substring(name.lastIndexOf('/') + 1, name.length());
+    } else {
+      return name;
     }
   }
 }
