@@ -500,6 +500,8 @@ public class ElasticsearchIO {
           if (currentSize < maxBulkRequestSize
               && (currentBytes + requestBytes) < maxBulkRequestBytes) {
             chunk.add(request);
+            currentSize += 1;
+            currentBytes += requestBytes;
           } else {
             flush();
             chunk = new BulkRequest().add(request);
@@ -507,6 +509,8 @@ public class ElasticsearchIO {
             currentBytes = requestBytes;
           }
         }
+
+        flush();
       }
 
       private void flush() throws Exception {
