@@ -25,13 +25,7 @@ import org.apache.beam.sdk.options.PipelineOptions;
 public interface SortedBucketOptions extends PipelineOptions {
   @Description("Buffer size for each SMB source file")
   @Default.Integer(10000)
-  int getReadBufferSize();
+  int getSortedBucketReadBufferSize();
 
-  void setReadBufferSize(int readBufferSize);
-
-  @Description("Whether to back-off when reading multiple partitions")
-  @Default.Boolean(false)
-  boolean getReadBackoff();
-
-  void setReadBackoff(boolean readBackoff);
+  void setSortedBucketReadBufferSize(int readBufferSize);
 }
