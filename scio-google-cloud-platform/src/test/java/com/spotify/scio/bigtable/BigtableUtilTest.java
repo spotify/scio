@@ -6,14 +6,14 @@ import org.junit.Test;
 public class BigtableUtilTest {
 
   @Test
-  public void simplifyTest() {
+  public void shorterNameTest() {
     Assert.assertEquals(
-        BigtableUtil.simplify("/projects/scio-test/instances/test-instance/clusters/sample-cluster"),
+        BigtableUtil.shorterName("/projects/scio-test/instances/test-instance/clusters/sample-cluster"),
         "sample-cluster"
     );
 
     Assert.assertEquals(
-        BigtableUtil.simplify("simple-name-cluster"),
+        BigtableUtil.shorterName("simple-name-cluster"),
         "simple-name-cluster"
     );
   }

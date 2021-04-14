@@ -93,7 +93,7 @@ public final class BigtableUtil {
           .getClustersList()
           .stream()
           // if no clusters specified then apply to all clusters in the instance.
-          .filter(c -> clusterNames.isEmpty() || clusterNames.contains(simplify(c.getName())))
+          .filter(c -> clusterNames.isEmpty() || clusterNames.contains(shorterName(c.getName())))
           .collect(Collectors.toList());
 
       // For each cluster update the number of nodes
@@ -137,7 +137,7 @@ public final class BigtableUtil {
     }
   }
 
-  static String simplify(String name) {
+  static String shorterName(String name) {
     if (name.lastIndexOf('/') != -1) {
       return name.substring(name.lastIndexOf('/') + 1, name.length());
     } else {
