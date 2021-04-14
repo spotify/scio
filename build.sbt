@@ -1068,6 +1068,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
       "org.tensorflow" % "tensorflow-core-platform" % tensorFlowVersion,
+      "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       "com.google.auto.value" % "auto-value" % autoValueVersion,
       "javax.annotation" % "javax.annotation-api" % "1.3.2",

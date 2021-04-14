@@ -305,6 +305,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   public BoundedReader<KV<FinalKeyT, CoGbkResult>> createReader(PipelineOptions options)
       throws IOException {
     return new MergeBucketsReader<>(
+        options,
         sources,
         bucketOffsetId,
         effectiveParallelism,
@@ -319,6 +320,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
+    private final PipelineOptions options;
     private final Coder<FinalKeyT> keyCoder;
     private final SortedBucketSource<FinalKeyT> currentSource;
     private final Distribution keyGroupSize;
@@ -337,6 +339,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private int runningKeyGroupSize;
 
     MergeBucketsReader(
+        PipelineOptions options,
         List<BucketedInput<?, ?>> sources,
         Integer bucketId,
         int parallelism,
@@ -344,6 +347,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         SortedBucketSource<FinalKeyT> currentSource,
         Distribution keyGroupSize,
         boolean materializeKeyGroup) {
+      this.options = options;
       this.keyCoder = sourceSpec.keyCoder;
       this.numSources = sources.size();
       this.currentSource = currentSource;
@@ -359,7 +363,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
       iterators =
           sources.stream()
-              .map(i -> i.createIterator(bucketId, parallelism))
+              .map(i -> i.createIterator(bucketId, parallelism, options))
               .toArray(KeyGroupIterator[]::new);
 
       resultSchema = BucketedInput.schemaOf(sources);
@@ -667,14 +671,18 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
           .sum();
     }
 
-    KeyGroupIterator<byte[], V> createIterator(int bucketId, int targetParallelism) {
+    KeyGroupIterator<byte[], V> createIterator(
+        int bucketId, int targetParallelism, PipelineOptions options) {
+      final SortedBucketOptions opts = options.as(SortedBucketOptions.class);
+      final int bufferSize = opts.getSortedBucketReadBufferSize();
       final List<Iterator<V>> iterators =
           mapBucketFiles(
               bucketId,
               targetParallelism,
               file -> {
                 try {
-                  return fileOperations.iterator(file);
+                  Iterator<V> iterator = fileOperations.iterator(file);
+                  return bufferSize > 0 ? new BufferedIterator<>(iterator, bufferSize) : iterator;
                 } catch (Exception e) {
                   throw new RuntimeException(e);
                 }
