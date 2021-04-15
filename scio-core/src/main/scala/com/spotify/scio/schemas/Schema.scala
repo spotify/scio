@@ -142,7 +142,7 @@ object LogicalType {
     Some(logicalType.underlying)
 }
 
-final case class Record[T] private (
+final case class Record[T] private[schemas] (
   schemas: Array[(String, Schema[Any])],
   construct: Seq[Any] => T,
   destruct: T => Array[Any]

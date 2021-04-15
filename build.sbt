@@ -471,9 +471,6 @@ lazy val `scio-core`: Project = project
         )
       else Nil
     },
-    scalacOptions ++= {
-      if (scalaVersion.value.startsWith("3")) Seq("-source:3.0-migration") else Nil
-    },
     compileOrder := CompileOrder.JavaThenScala,
   )
   .dependsOn(

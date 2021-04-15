@@ -76,19 +76,20 @@ private[scio] object Ref {
   def unapply[T](c: Ref[T]): Option[(String, Coder[T])] = Option((c.typeName, c.value))
 }
 
-final case class RawBeam[T] private (beam: BCoder[T]) extends Coder[T] {
+final case class RawBeam[T] private[coders] (beam: BCoder[T]) extends Coder[T] {
   override def toString: String = s"RawBeam($beam)"
 }
-final case class Beam[T] private (beam: BCoder[T]) extends Coder[T] {
+final case class Beam[T] private[coders] (beam: BCoder[T]) extends Coder[T] {
   override def toString: String = s"Beam($beam)"
 }
-final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T] {
+final case class Fallback[T] private[coders] (ct: ClassTag[T]) extends Coder[T] {
   override def toString: String = s"Fallback($ct)"
 }
-final case class Transform[A, B] private (c: Coder[A], f: BCoder[A] => Coder[B]) extends Coder[B] {
+final case class Transform[A, B] private[coders] (c: Coder[A], f: BCoder[A] => Coder[B])
+    extends Coder[B] {
   override def toString: String = s"Transform($c, $f)"
 }
-final case class Disjunction[T, Id] private (
+final case class Disjunction[T, Id] private[coders] (
   typeName: String,
   idCoder: Coder[Id],
   id: T => Id,
@@ -97,7 +98,7 @@ final case class Disjunction[T, Id] private (
   override def toString: String = s"Disjunction($typeName, $coder)"
 }
 
-final case class Record[T] private (
+final case class Record[T] private[coders] (
   typeName: String,
   cs: Array[(String, Coder[Any])],
   construct: Seq[Any] => T,
@@ -112,7 +113,8 @@ final case class Record[T] private (
 }
 
 // KV are special in beam and need to be serialized using an instance of KvCoder.
-final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extends Coder[KV[K, V]] {
+final case class KVCoder[K, V] private[coders] (koder: Coder[K], voder: Coder[V])
+    extends Coder[KV[K, V]] {
   override def toString: String = s"KVCoder($koder, $voder)"
 }
 

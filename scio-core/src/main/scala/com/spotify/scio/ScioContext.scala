@@ -167,7 +167,7 @@ object ContextAndArgs {
     def parse(args: Array[String]): F[Result]
   }
 
-  final case class DefaultParser[T <: PipelineOptions: ClassTag] private ()
+  final case class DefaultParser[T <: PipelineOptions: ClassTag] private[scio] ()
       extends ArgsParser[Try] {
     override type ArgsType = Args
 
@@ -213,7 +213,7 @@ object ContextAndArgs {
           case _ => true
         }
 
-      CaseApp.detailedParseWithHelp[T](customArgs) match {
+      CaseApp.detailedParseWithHelp[T](customArgs.toIndexedSeq) match {
         case Left(error) =>
           Failure(new Exception(error.message))
         case Right((_, _, help, _)) if help =>
@@ -245,7 +245,7 @@ object ContextAndArgs {
     }
   }
 
-  final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private ()
+  final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private[scio] ()
       extends ArgsParser[Try] {
     override type ArgsType = T
 
@@ -412,7 +412,7 @@ object ScioContext {
         }
     } yield s"--$str($$|=)".r
 
-    val patterns = registeredPatterns + "--help($$|=)".r
+    val patterns = registeredPatterns.union(Set("--help($$|=)".r))
 
     // Split cmdlineArgs into 2 parts, optArgs for PipelineOptions and appArgs for Args
     val (optArgs, appArgs) =
@@ -690,7 +690,7 @@ class ScioContext private[scio] (
               BuildInfo.version,
               BuildInfo.scalaVersion,
               sc.optionsAs[ApplicationNameOptions].getAppName,
-              state.toString,
+              this.state.toString,
               getBeamMetrics
             )
 
