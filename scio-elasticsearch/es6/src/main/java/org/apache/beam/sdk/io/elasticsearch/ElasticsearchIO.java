@@ -504,8 +504,6 @@ public class ElasticsearchIO {
             currentBytes = requestBytes;
           }
         }
-
-        flush();
       }
 
       private void flush() throws Exception {
