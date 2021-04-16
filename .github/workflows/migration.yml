@@ -23,7 +23,7 @@ jobs:
           # - scio-extra/compile
           # - scio-extra/test
           - scio-core/compile
-          # - scio-core/test
+          - scio-core/test
           # - scio-examples/compile
           # - scio-examples/test
           # - scio-redis/compile
