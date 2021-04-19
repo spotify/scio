@@ -24,6 +24,7 @@ import scala.compiletime._
 import scala.deriving._
 import scala.quoted._
 import scala.reflect.ClassTag
+import scala.collection.mutable
 
 object ToMacro {
 
@@ -63,27 +64,85 @@ object ToMacro {
 
   private def interpret[T: scala.quoted.Type](using Quotes): Option[Schema[T]] = 
     Type.of[T] match {
-      case '[Boolean] => Some(Schema.jBooleanSchema.asInstanceOf[Schema[T]])
-      case '[String]     => Some(Schema.stringSchema.asInstanceOf[Schema[T]])
-      case '[Byte]       => Some(Schema.byteSchema.asInstanceOf[Schema[T]])
-      case '[Array[Byte]]=> Some(Schema.bytesSchema.asInstanceOf[Schema[T]])
+      case '[java.lang.Byte]        => Some(Schema.jByteSchema.asInstanceOf[Schema[T]])
+      case '[Array[java.lang.Byte]] => Some(Schema.jBytesSchema.asInstanceOf[Schema[T]])
+      case '[java.lang.Short]       => Some(Schema.jShortSchema.asInstanceOf[Schema[T]])
+      case '[java.lang.Integer]     => Some(Schema.jIntegerSchema.asInstanceOf[Schema[T]])
+      case '[java.lang.Long]        => Some(Schema.jLongSchema.asInstanceOf[Schema[T]])
+      case '[java.lang.Float]       => Some(Schema.jFloatSchema.asInstanceOf[Schema[T]])
+      case '[java.lang.Double]      => Some(Schema.jDoubleSchema.asInstanceOf[Schema[T]])
+      case '[java.math.BigDecimal]  => Some(Schema.jBigDecimalSchema.asInstanceOf[Schema[T]])
+      case '[java.lang.Boolean]     => Some(Schema.jBooleanSchema.asInstanceOf[Schema[T]])
+      case '[java.util.List[u]] =>
+        for (itemSchema) <- interpret[u]
+        yield Schema.jListSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[java.util.ArrayList[u]] =>
+        for (itemSchema) <- interpret[u]
+        yield Schema.jArrayListSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[java.util.Map[k, v]] =>
+        for {
+          keySchema <- interpret[k]
+          valueSchema <- interpret[v]
+        } yield Schema.jMapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
+      // TODO javaBeanSchema
+      // TODO javaEnumSchema
+      case '[java.time.LocalDate] => Some(Schema.jLocalDate.asInstanceOf[Schema[T]])
+
+      case '[String]      => Some(Schema.stringSchema.asInstanceOf[Schema[T]])
+      case '[Byte]        => Some(Schema.byteSchema.asInstanceOf[Schema[T]])
+      case '[Array[Byte]] => Some(Schema.bytesSchema.asInstanceOf[Schema[T]])
       case '[Short]       => Some(Schema.sortSchema.asInstanceOf[Schema[T]])
-      case '[Int]        => Some(Schema.intSchema.asInstanceOf[Schema[T]])
-      case '[Long]       => Some(Schema.longSchema.asInstanceOf[Schema[T]])
-      case '[Float]      => Some(Schema.floatSchema.asInstanceOf[Schema[T]])
-      case '[Double]     => Some(Schema.doubleSchema.asInstanceOf[Schema[T]])
-      case '[BigDecimal] => Some(Schema.bigDecimalSchema.asInstanceOf[Schema[T]])
-      case '[List[u]] => 
-        for (itemSchema <- interpret[u])
-        yield Schema.listSchema(itemSchema).asInstanceOf[Schema[T]]
+      case '[Int]         => Some(Schema.intSchema.asInstanceOf[Schema[T]])
+      case '[Long]        => Some(Schema.longSchema.asInstanceOf[Schema[T]])
+      case '[Float]       => Some(Schema.floatSchema.asInstanceOf[Schema[T]])
+      case '[Double]      => Some(Schema.doubleSchema.asInstanceOf[Schema[T]])
+      case '[BigDecimal]  => Some(Schema.bigDecimalSchema.asInstanceOf[Schema[T]])
+      case '[Boolean]     => Some(Schema.booleanSchema.asInstanceOf[Schema[T]])
       case '[Option[u]] =>
-        for (tSchema <- interpret[u])
-        yield Schema.optionSchema(using tSchema).asInstanceOf[Schema[T]]
+        for (itemSchema <- interpret[u])
+        yield Schema.optionSchema(using itemSchema).asInstanceOf[Schema[T]]
+      // TODO Array[T]
+      case '[List[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.listSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[Seq[u]] => 
+        for (itemSchema <- interpret[u])
+        yield Schema.seqSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[TraversableOnce[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.traversableOnceSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[Iterable[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.iterableSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[mutable.ArrayBuffer[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.arrayBufferSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[mutable.Buffer[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.bufferSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[Set[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.setSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[mutable.Set[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.mutableSetSchema(using itemSchema).asInstanceOf[Schema[T]]
+      // TODO SortedSet[T]
+      case '[mutable.ListBuffer[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.listBufferSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[Vector[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.vectorSchema(using itemSchema).asInstanceOf[Schema[T]]
       case '[Map[k, v]] =>
         for {
           keySchema <- interpret[k]
           valueSchema <- interpret[v]
         } yield Schema.mapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
+      case '[mutable.Map[k, v]] =>
+        for {
+          keySchema <- interpret[k]
+          valueSchema <- interpret[v]
+        } yield Schema.mutableMapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
       case _ =>
         import quotes.reflect._
         val tp = TypeRepr.of[T]
