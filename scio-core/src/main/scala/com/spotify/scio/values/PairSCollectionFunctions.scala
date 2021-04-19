@@ -223,7 +223,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * A Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
    * concatenated. This is useful for joining historical aggregates with incremental updates.
-   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param rhsNumKeys An estimate of the number of keys in the right collection `rhs`.
    *                    This estimate is used to find the size and number of BloomFilters rhs Scio
@@ -256,7 +256,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * A Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are filtered
    * out before the join.
-   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param rhsNumKeys An estimate of the number of keys in the right collection `rhs`.
    *                    This estimate is used to find the size and number of BloomFilters that Scio
@@ -289,7 +289,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * A Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
    * concatenated. This is useful for joining historical aggregates with incremental updates.
-   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param rhsNumKeys An estimate of the number of keys in the right collection `rhs`.
    *                    This estimate is used to find the size and number of BloomFilters that Scio
@@ -323,7 +323,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * A Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
    * concatenated. This is useful for joining historical aggregates with incremental updates.
-   * Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param rhsNumKeys An estimate of the number of keys in the right collection `rhs`.
    *                    This estimate is used to find the size and number of BloomFilters that Scio
@@ -392,7 +392,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
    *                    the size and number of BloomFilters that Scio would use to pre-filter
@@ -433,7 +433,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
    *                    the size and number of BloomFilters that Scio would use to pre-filter
@@ -449,7 +449,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
    *                    the size and number of BloomFilters that Scio would use to pre-filter
@@ -500,7 +500,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.twitter.algebird.BloomFilter]].
+   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
    * @group join
    * @param thisNumKeys An estimate of the number of keys in `this`. This estimate is used to find
    *                    the size and number of BloomFilters that Scio would use to pre-filter
