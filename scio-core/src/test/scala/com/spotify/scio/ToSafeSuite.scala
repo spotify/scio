@@ -19,16 +19,16 @@ class ToSafeTest extends AnyFlatSpec with Matchers {
     To.safe[Source, Dest]
   }
 
-  "To.safe" should "fail on incompatible flat case class schemas" in {
+  it should "fail on incompatible flat case class schemas" in {
     "To.safe[Source, Mistake2]" shouldNot compile
     "To.safe[Source, Mistake]" shouldNot compile
   }
 
-  "To.safe" should "generate a conversion on compatible nested case class schemas" in {
+  it should "generate a conversion on compatible nested case class schemas" in {
     To.safe[Sources, Destinations]
   }
 
-  "To.safe" should "fail on incompatible nested case class schemas" in {
+  it should "fail on incompatible nested case class schemas" in {
     "To.safe[Sources, DestinationsWrong]" shouldNot compile
   }
 }
