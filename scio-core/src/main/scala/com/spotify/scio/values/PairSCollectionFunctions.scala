@@ -367,7 +367,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(implicit
     funnel: Funnel[K]
   ): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
-    val rhsBfSIs = BloomFilter.createPartitionedSideInputs(self.keys, rhsNumKeys, fpProb)
+    val rhsBfSIs = BloomFilter.createPartitionedSideInputs(rhsSColl.keys, rhsNumKeys, fpProb)
     val n = rhsBfSIs.size
 
     val thisParts = thisSColl.hashPartitionByKey(n)
