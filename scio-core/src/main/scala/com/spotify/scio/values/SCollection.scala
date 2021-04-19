@@ -383,7 +383,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Partition this SCollection using Object.hashCode() into `n` partitions
+   * Partition this SCollection using T.## into `n` partitions
    *
    * @param numPartitions number of output partitions
    * @return partitioned SCollections in a `Seq`
@@ -392,7 +392,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def hashPartition(numPartitions: Int): Seq[SCollection[T]] =
     self.partition(
       numPartitions,
-      t => Math.floorMod(t.hashCode(), numPartitions)
+      t => Math.floorMod(ScioUtil.hashCodeFn[K](t), numPartitions)
     )
 
   // =======================================================================

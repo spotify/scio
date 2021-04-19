@@ -181,13 +181,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @return partitioned SCollections in a `Seq`
    * @group collection
    */
-  def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] = {
-    val hashCodeFn: K => Int = {
-      case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
-      case key           => key.##
-    }
-    self.partition(numPartitions, elem => Math.floorMod(hashCodeFn(elem._1), numPartitions))
-  }
+  def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] =
+    self.partition(
+      numPartitions,
+      elem => Math.floorMod(ScioUtil.hashCodeFn[K](elem._1), numPartitions)
+    )
 
   // =======================================================================
   // Joins
