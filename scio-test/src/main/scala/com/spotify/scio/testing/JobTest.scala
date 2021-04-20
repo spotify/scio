@@ -23,6 +23,7 @@ import com.spotify.scio.ScioResult
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.testing.TestStream
 import org.apache.beam.sdk.{metrics => beam}
 
@@ -110,14 +111,14 @@ object JobTest {
      * `TestIO[T]` must match the one used inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")`
      * with `sc.avroFile[MyRecord]("in.avro")`.
      */
-    def input[T](io: ScioIO[T], value: Iterable[T]): Builder =
+    def input[T: Coder](io: ScioIO[T], value: Iterable[T]): Builder =
       input(io, IterableInputSource(value))
 
     /**
      * Feed an input in the form of a `PTransform[PBegin, PCollection[T]]` to the pipeline being
      * tested. Note that `PTransform` inputs may not be supported for all `TestIO[T]` types.
      */
-    def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
+    def inputStream[T: Coder](io: ScioIO[T], stream: TestStream[T]): Builder =
       input(io, TestStreamInputSource(stream))
 
     private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {

@@ -29,11 +29,13 @@ import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
  * performing the full combine.
  */
-class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
+class SCollectionWithHotKeyFanout[K, V] private[values] (
   private val context: ScioContext,
   private val self: PairSCollectionFunctions[K, V],
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
+  implicit private[this] val valueCoder: Coder[V] = self.valueCoder
+
   private def withFanout[K0, I, O](
     combine: Combine.PerKey[K0, I, O]
   ): PerKeyWithHotKeyFanout[K0, I, O] =
@@ -74,7 +76,7 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
     self.self.context.wrap(self.self.internal).transform { in =>
       val a = aggregator // defeat closure
       in.mapValues(a.prepare)
-        .sumByKey(a.semigroup, Coder[K], Coder[A])
+        .sumByKey(a.semigroup)
         .mapValues(a.present)
     }
 
@@ -88,7 +90,7 @@ class SCollectionWithHotKeyFanout[K: Coder, V: Coder] private[values] (
     self.self.context.wrap(self.self.internal).transform { in =>
       val a = aggregator // defeat closure
       in.mapValues(a.prepare)
-        .foldByKey(a.monoid, Coder[K], Coder[A])
+        .foldByKey(a.monoid)
         .mapValues(a.present)
     }
 

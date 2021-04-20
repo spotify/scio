@@ -32,6 +32,7 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -46,7 +47,6 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCodec(AvroFileOperations.defaultCodec())
         .setSchema(schema)
         .build();
   }
@@ -57,7 +57,6 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<T>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setCodec(AvroFileOperations.defaultCodec())
         .setRecordClass(recordClass)
         .build();
   }
@@ -135,10 +134,8 @@ public class AvroSortedBucketIO {
     @Nullable
     abstract Class<T> getRecordClass();
 
-    abstract CodecFactory getCodec();
-
     @Nullable
-    abstract Map<String, Object> getMetadata();
+    abstract Predicate<T> getPredicate();
 
     abstract Builder<T> toBuilder();
 
@@ -156,9 +153,7 @@ public class AvroSortedBucketIO {
 
       abstract Builder<T> setRecordClass(Class<T> recordClass);
 
-      abstract Builder<T> setCodec(CodecFactory codec);
-
-      abstract Builder<T> setMetadata(Map<String, Object> metadata);
+      abstract Builder<T> setPredicate(Predicate<T> predicate);
 
       abstract Read<T> build();
     }
@@ -183,17 +178,26 @@ public class AvroSortedBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the filter predicate. */
+    public Read<T> withPredicate(Predicate<T> predicate) {
+      return toBuilder().setPredicate(predicate).build();
+    }
+
     @Override
     protected BucketedInput<?, T> toBucketedInput() {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =
           getRecordClass() == null
-              ? AvroFileOperations.of(getSchema(), getCodec(), getMetadata())
+              ? AvroFileOperations.of(getSchema())
               : (AvroFileOperations<T>)
                   AvroFileOperations.of(
-                      (Class<SpecificRecordBase>) getRecordClass(), getCodec(), getMetadata());
+                      (Class<SpecificRecordBase>) getRecordClass());
       return new BucketedInput<>(
-          getTupleTag(), getInputDirectories(), getFilenameSuffix(), fileOperations);
+          getTupleTag(),
+          getInputDirectories(),
+          getFilenameSuffix(),
+          fileOperations,
+          getPredicate());
     }
   }
 
@@ -215,6 +219,9 @@ public class AvroSortedBucketIO {
     abstract Class<T> getRecordClass();
 
     abstract CodecFactory getCodec();
+
+    @Nullable
+    abstract Map<String, Object> getMetadata();
 
     abstract Builder<K, T> toBuilder();
 
@@ -246,6 +253,8 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K, T> setCodec(CodecFactory codec);
 
+      abstract Builder<K, T> setMetadata(Map<String, Object> metadata);
+
       abstract Builder<K, T> setKeyCacheSize(int cacheSize);
 
       abstract Builder<K, T> setFilenamePrefix(String filenamePrefix);
@@ -268,6 +277,11 @@ public class AvroSortedBucketIO {
       return toBuilder().setHashType(hashType).build();
     }
 
+    /** Specifies the Avro metadata. */
+    public Write<K, T> withMetadata(Map<String, Object> metadata) {
+      return toBuilder().setMetadata(metadata).build();
+    }
+
     /** Writes to the given output directory. */
     public Write<K, T> to(String outputDirectory) {
       return toBuilder()
@@ -275,7 +289,7 @@ public class AvroSortedBucketIO {
           .build();
     }
 
-    /** Specifies the temporary directory for writing. */
+    /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
     public Write<K, T> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
@@ -392,7 +406,7 @@ public class AvroSortedBucketIO {
           .build();
     }
 
-    /** Specifies the temporary directory for writing. */
+    /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
     public TransformOutput<K, T> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))

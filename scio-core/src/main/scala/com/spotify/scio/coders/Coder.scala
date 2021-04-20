@@ -179,14 +179,60 @@ final private[scio] case class LazyCoder[T](
 )(coder: Coder[T])
     extends BCoder[T] {
 
-  private lazy val bcoder = CoderMaterializer.beamImpl[T](o, coder)
+  private[scio] lazy val bcoder = CoderMaterializer.beamImpl[T](o, coder)
 
   def decode(inStream: InputStream): T = bcoder.decode(inStream)
   def encode(value: T, outStream: OutputStream): Unit = bcoder.encode(value, outStream)
   def getCoderArguments(): java.util.List[_ <: BCoder[_]] = bcoder.getCoderArguments()
-  def verifyDeterministic(): Unit = bcoder.verifyDeterministic()
 
-  override def consistentWithEquals(): Boolean = bcoder.consistentWithEquals()
+  /**
+   * Traverse this coder graph and create a version of it without any loop.
+   * Fixes: [[https://github.com/spotify/scio/issues/3707 #3707]]
+   * Should only be used in [[verifyDeterministic]], [[consistentWithEquals]]
+   * and other methods that DO NOT actually serialize / deserialize the data.
+   * Internally, looping coders are replaced by an instance of Coder[Nothing]
+   */
+  private lazy val uncycled: BCoder[T] = {
+    def go[B](c: Coder[B], types: Set[String]): Coder[B] =
+      c match {
+        // Stop the recursion. We already traversed that Coder
+        case ref: Ref[_] if types.contains(ref.typeName) =>
+          Coder[Nothing].asInstanceOf[Coder[B]]
+        case Disjunction(typeName, _, _, _) if types.contains(typeName) =>
+          Coder[Nothing].asInstanceOf[Coder[B]]
+        case Record(typeName, _, _, _) if types.contains(typeName) =>
+          Coder[Nothing].asInstanceOf[Coder[B]]
+        //
+        case ref: Ref[_]     => go(ref.value, types + ref.typeName)
+        case c @ RawBeam(_)  => c
+        case c @ Beam(_)     => c
+        case c @ Fallback(_) => c
+        case Transform(c, f) =>
+          val c2 = f(CoderMaterializer.beamImpl(o, c))
+          go(c2, types)
+        case Disjunction(typeName, idCoder, id, coders) =>
+          val ts = types + typeName
+          Disjunction(
+            typeName,
+            go(idCoder, ts),
+            id,
+            coders.map { case (id, c) => id -> go(c, ts) }
+          )
+        case Record(typeName, cs, construct, destruct) =>
+          val cs2 = cs.map { case (n, c) => (n, go(c, types + typeName)) }
+          Record(typeName, cs2, construct, destruct)
+        case KVCoder(koder, voder) =>
+          KVCoder(go(koder, types), go(voder, types))
+      }
+    CoderMaterializer.beamImpl(o, go(coder, Set.empty))
+  }
+
+  override def verifyDeterministic(): Unit =
+    uncycled.verifyDeterministic()
+
+  override def consistentWithEquals(): Boolean =
+    uncycled.consistentWithEquals()
+
   override def structuralValue(value: T): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
@@ -330,6 +376,7 @@ final private[scio] case class RecordCoder[T](
   }
 
   override def consistentWithEquals(): Boolean = cs.forall(_._2.consistentWithEquals())
+
   override def structuralValue(value: T): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
@@ -475,6 +522,7 @@ object Coder
     with AvroCoders
     with ProtobufCoders
     with AlgebirdCoders
+    with GuavaCoders
     with JodaCoders
     with BeamTypeCoders
     with LowPriorityCoders {

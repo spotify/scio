@@ -1,0 +1,26 @@
+name: release
+on:
+  push:
+    branches: [main]
+    tags: ["*"]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java 11 setup
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm-ce-java11@21.0.0
+      - uses: olafurpg/setup-gpg@v3
+      - name: Publish ${{ github.ref }}
+        run: sbt ci-release
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}

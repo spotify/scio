@@ -17,12 +17,9 @@
 
 package com.spotify.scio.hash
 
-import java.io.{InputStream, OutputStream}
-
 import com.google.common.{hash => g}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideInput}
-import org.apache.beam.sdk.coders.AtomicCoder
 import org.slf4j.LoggerFactory
 
 /**
@@ -44,7 +41,7 @@ sealed trait ApproxFilter[T] extends Serializable {
    * [[ApproxFilter]]. This approximation is reasonably accurate if it does not exceed the value of
    * `expectedInsertions` that was used when constructing the filter.
    */
-  val approxElementCount: Long
+  def approxElementCount: Long
 
   /**
    * Return the probability that [[mightContain]] will erroneously return `true` for an object
@@ -196,7 +193,6 @@ sealed trait ApproxFilterCompanion {
     expectedInsertions: Long,
     fpp: Double
   ): SCollection[Filter[T]] = {
-    implicit val elemCoder = Coder.beam(elems.internal.getCoder)
     elems.transform {
       _.groupBy(_ => ()).values
         .map { xs =>
@@ -279,14 +275,10 @@ sealed trait ApproxFilterCompanion {
     } else {
       val settings = partitionSettings(expectedInsertions, fpp, 100 * 1024 * 1024)
       logger.info(
-        "Partition settings for approximate filter side input of {} keys: " +
-          "partitions={}, expectedInsertions={}, sizeBytes={}",
-        Seq(
-          expectedInsertions,
-          settings.partitions,
-          settings.expectedInsertions,
-          settings.sizeBytes
-        )
+        s"""Partition settings for approximate filter side input of $expectedInsertions keys:
+           |partitions=${settings.partitions}
+           |expectedInsertions=${settings.expectedInsertions}
+           |sizeBytes=${settings.sizeBytes}""".stripMargin
       )
       elems
         .hashPartition(settings.partitions)
@@ -305,8 +297,7 @@ sealed trait ApproxFilterCompanion {
  * Import `magnolify.guava.auto._` to get common instances of Guava
  * [[com.google.common.hash.Funnel Funnel]]s.
  */
-class BloomFilter[T: g.Funnel] private (private val impl: g.BloomFilter[T])
-    extends ApproxFilter[T] {
+class BloomFilter[T] private (private val impl: g.BloomFilter[T]) extends ApproxFilter[T] {
   override def mightContain(elem: T): Boolean = impl.mightContain(elem)
   override val approxElementCount: Long = impl.approximateElementCount()
   override val expectedFpp: Double = impl.expectedFpp()
@@ -334,15 +325,8 @@ object BloomFilter extends ApproxFilterCompanion {
     PartitionSettings(partitions, capacity, numBits(capacity, fpp) / 8)
   }
 
-  private class BloomFilterCoder[T](implicit val hash: Hash[T]) extends AtomicCoder[Filter[T]] {
-    override def encode(value: Filter[T], outStream: OutputStream): Unit =
-      value.impl.writeTo(outStream)
-    override def decode(inStream: InputStream): Filter[T] =
-      new BloomFilter[T](g.BloomFilter.readFrom(inStream, hash))
-  }
-
   implicit override def filterCoder[T: Hash]: Coder[Filter[T]] =
-    Coder.beam(new BloomFilterCoder[T]())
+    Coder.xmap(Coder[g.BloomFilter[T]])(a => new BloomFilter[T](a), b => b.impl)
 
   override protected def createImpl[T: Hash](
     elems: Iterable[T],

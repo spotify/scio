@@ -25,11 +25,11 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.tensorflow.example.BytesList;
-import org.tensorflow.example.Example;
-import org.tensorflow.example.Feature;
-import org.tensorflow.example.FloatList;
-import org.tensorflow.example.Int64List;
+import org.tensorflow.proto.example.BytesList;
+import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.example.Feature;
+import org.tensorflow.proto.example.FloatList;
+import org.tensorflow.proto.example.Int64List;
 
 /** {@link BucketMetadata} for TensorFlow {@link Example} records. */
 public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {

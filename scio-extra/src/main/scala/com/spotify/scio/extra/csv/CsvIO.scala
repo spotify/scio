@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.extra.csv
 
 import java.io.{Reader, Writer}
@@ -60,8 +61,9 @@ import org.apache.beam.sdk.values.PCollection
  * [[https://nrinaudo.github.io/kantan.csv/rows_as_arbitrary_types.html Kantan docs]]
  * {{{
  *  case class User(name: String, age: Int)
- *  implicit val decoder = HeaderDecoder.ordered { (name: String, age: Int) => User(name, age) }
- *  val users: SCollection[User] = scioContext.csvFile(path)
+ *  implicit val decoder = RowDecoder.ordered { (name: String, age: Int) => User(name, age) }
+ *  val csvConfiguration = CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfig.withoutHeader)
+ *  val users: SCollection[User] = scioContext.csvFile(path, csvConfiguration)
  * }}}
  *
  * =Writing=
@@ -128,7 +130,7 @@ object CsvIO {
     override def tap(params: ReadP): Tap[T] = new CsvTap[T](path, params)
   }
 
-  final case class Write[T: HeaderEncoder: Coder](path: String) extends ScioIO[T] {
+  final case class Write[T: HeaderEncoder](path: String) extends ScioIO[T] {
     override type ReadP = Nothing // WriteOnly
     override type WriteP = CsvIO.WriteParam
     final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]

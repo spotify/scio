@@ -21,14 +21,18 @@ import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInpu
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
 import java.nio.channels.Channels;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
+import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
@@ -55,9 +59,10 @@ public class SortedBucketTransformTest {
   @Rule public final TestPipeline transformPipeline = TestPipeline.create();
   @Rule public final TemporaryFolder outputFolder = new TemporaryFolder();
 
-  private static final List<String> inputLhs = ImmutableList.of("a1", "b1", "c1", "d1", "e1");
-  private static final List<String> inputRhs = ImmutableList.of("c2", "d2", "e2", "f2", "g2");
-  private static final Set<String> expected = ImmutableSet.of("c1-c2", "d1-d2", "e1-e2");
+  private static final List<String> inputLhs = ImmutableList.of("", "a1", "b1", "c1", "d1", "e1");
+  private static final List<String> inputRhs = ImmutableList.of("", "c2", "d2", "e2", "f2", "g2");
+  // Predicate will filter out c2 from RHS input
+  private static final Set<String> expected = ImmutableSet.of("d1-d2", "e1-e2");
 
   private static List<BucketedInput<?, ?>> sources;
 
@@ -105,6 +110,8 @@ public class SortedBucketTransformTest {
 
     sinkPipeline.run().waitUntilFinish();
 
+    final Predicate<String> predicate = (xs, s) -> !s.startsWith("c");
+
     sources =
         ImmutableList.of(
             new BucketedInput<String, String>(
@@ -114,9 +121,10 @@ public class SortedBucketTransformTest {
                 new TestFileOperations()),
             new BucketedInput<String, String>(
                 new TupleTag<>("rhs"),
-                fromFolder(inputRhsFolder),
+                Collections.singletonList(fromFolder(inputRhsFolder)),
                 ".txt",
-                new TestFileOperations()));
+                new TestFileOperations(),
+                predicate));
   }
 
   @Test
@@ -175,7 +183,7 @@ public class SortedBucketTransformTest {
     SortedBucketSourceTest.verifyMetrics(
         result,
         ImmutableMap.of(
-            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(10, 7, 1, 2)));
+            "SortedBucketTransform-KeyGroupSize", DistributionResult.create(9, 7, 1, 2)));
   }
 
   private static KV<TestBucketMetadata, Map<BucketShardId, List<String>>> readAllFrom(
@@ -190,14 +198,24 @@ public class SortedBucketTransformTest {
 
     final Map<BucketShardId, List<String>> bucketsToOutputs = new HashMap<>();
 
-    for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {
+    for (BucketShardId bucketShardId : metadata.getAllBucketShardIds()) {
       final FileOperations.Reader<String> outputReader = new TestFileOperations().createReader();
       outputReader.prepareRead(
-          FileSystems.open(fileAssignment.forBucket(BucketShardId.of(bucketId, 0), metadata)));
+          FileSystems.open(
+              fileAssignment.forBucket(
+                  BucketShardId.of(bucketShardId.getBucketId(), bucketShardId.getShardId()),
+                  metadata)));
 
       bucketsToOutputs.put(
-          BucketShardId.of(bucketId, 0), Lists.newArrayList(outputReader.iterator()));
+          BucketShardId.of(bucketShardId.getBucketId(), bucketShardId.getShardId()),
+          Lists.newArrayList(outputReader.iterator()));
     }
+
+    Assert.assertSame(
+        "Found unexpected null-key bucket written in SortedBucketTransform output",
+        FileSystems.match(fileAssignment.forNullKeys().toString(), EmptyMatchTreatment.DISALLOW)
+            .status(),
+        Status.NOT_FOUND);
 
     return KV.of((TestBucketMetadata) metadata, bucketsToOutputs);
   }

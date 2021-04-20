@@ -23,8 +23,9 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.{io => beam}
-import org.tensorflow.example.{Example, SequenceExample}
+import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
+import scala.annotation.unused
 
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = TFRecordIO.ReadParam
@@ -133,6 +134,6 @@ private object TFRecordMethods {
     ()
   }
 
-  def tap(read: TFRecordIO.ReadParam, path: String): Tap[Array[Byte]] =
+  def tap(@unused read: TFRecordIO.ReadParam, path: String): Tap[Array[Byte]] =
     TFRecordFileTap(ScioUtil.addPartSuffix(path))
 }

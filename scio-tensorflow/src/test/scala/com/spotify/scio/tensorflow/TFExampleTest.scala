@@ -22,7 +22,7 @@ import com.spotify.featran.transformers.{OneHotEncoder, StandardScaler}
 import com.spotify.scio._
 import com.spotify.scio.tensorflow.TFSavedSpec.Iris
 import com.spotify.scio.testing._
-import org.tensorflow.example.Example
+import org.tensorflow.proto.example.Example
 
 object ExamplesJobV2 {
   def main(argv: Array[String]): Unit = {

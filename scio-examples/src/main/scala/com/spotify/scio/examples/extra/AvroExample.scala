@@ -125,12 +125,10 @@ object AvroExample {
       }
       .saveAsTypedAvroFile(args("output"))
 
-  private def genericIn(sc: ScioContext, args: Args): ClosedTap[String] = {
-    implicit def genericCoder = Coder.avroGenericRecordCoder(schema)
+  private def genericIn(sc: ScioContext, args: Args): ClosedTap[String] =
     sc.avroFile(args("input"), schema)
       .map(_.toString)
       .saveAsTextFile(args("output"))
-  }
 
   val schema: Schema = {
     def f(name: String, tpe: Schema.Type) =

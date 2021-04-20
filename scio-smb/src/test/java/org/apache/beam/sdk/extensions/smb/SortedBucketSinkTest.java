@@ -19,23 +19,25 @@ package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.coders.KvCoder;
+import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.SortedBucketPreKeyedSink;
@@ -43,6 +45,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO.Sink;
 import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
@@ -75,12 +78,19 @@ public class SortedBucketSinkTest {
   // test input, [a01, a02, ..., a09, a10, b01, ...]
   private static final String[] input =
       Stream.concat(
-              IntStream.rangeClosed('a', 'z').boxed(), IntStream.rangeClosed('A', 'Z').boxed())
-          .flatMap(
-              i ->
-                  IntStream.rangeClosed(1, 10)
-                      .boxed()
-                      .map(j -> String.format("%s%02d", String.valueOf((char) i.intValue()), j)))
+              Stream.concat(
+                      IntStream.rangeClosed('a', 'z').boxed(),
+                      IntStream.rangeClosed('A', 'Z').boxed())
+                  .flatMap(
+                      i ->
+                          IntStream.rangeClosed(1, 10)
+                              .boxed()
+                              .map(
+                                  j ->
+                                      String.format(
+                                          "%s%02d", String.valueOf((char) i.intValue()), j))),
+              Stream.of("") // Include an element with a null key
+              )
           .toArray(String[]::new);
 
   @Test
@@ -125,6 +135,34 @@ public class SortedBucketSinkTest {
     testKeyedCollection(2, 2, false);
   }
 
+  @SuppressWarnings("unchecked")
+  @Test
+  @Category(NeedsRunner.class)
+  public void testCleansUpTempFiles() throws Exception {
+    final TestBucketMetadata metadata = TestBucketMetadata.of(1, 1);
+
+    final File output = Files.createTempDirectory("output").toFile();
+    final File temp = Files.createTempDirectory("temp").toFile();
+    output.deleteOnExit();
+    temp.deleteOnExit();
+
+    final SortedBucketSink<String, String> sink =
+        new SortedBucketSink<>(
+            metadata,
+            LocalResources.fromFile(output, true),
+            LocalResources.fromFile(temp, true),
+            ".txt",
+            new TestFileOperations(),
+            1,
+            0);
+
+    pipeline.apply(Create.of(Stream.of(input).collect(Collectors.toList()))).apply(sink);
+    pipeline.run().waitUntilFinish();
+
+    // Assert that no files are left in the temp directory
+    Assert.assertFalse(Files.walk(temp.toPath(), 2).anyMatch(path -> path.toFile().isFile()));
+  }
+
   @Test
   @Category(NeedsRunner.class)
   public void testCustomFilenamePrefix() throws Exception {
@@ -141,7 +179,7 @@ public class SortedBucketSinkTest {
     final MatchResult outputFiles =
         FileSystems.match(
             TestUtils.fromFolder(output)
-                .resolve("*.txt", StandardResolveOptions.RESOLVE_FILE)
+                .resolve("*-of-*.txt", StandardResolveOptions.RESOLVE_FILE)
                 .toString());
 
     Assert.assertEquals(1, outputFiles.metadata().size());
@@ -254,13 +292,15 @@ public class SortedBucketSinkTest {
     @SuppressWarnings("deprecation")
     final Reshuffle.ViaRandomKey<KV<String, String>> reshuffle = Reshuffle.viaRandomKey();
 
+    final List<KV<String, String>> keyedInput =
+        Stream.of(input).map(s -> KV.of(metadata.extractKey(s), s)).collect(Collectors.toList());
+
     check(
         pipeline
             .apply(
-                Create.of(
-                    Stream.of(input)
-                        .map(s -> KV.of(metadata.extractKey(s), s))
-                        .collect(Collectors.toList())))
+                Create.of(keyedInput)
+                    .withCoder(
+                        KvCoder.of(NullableCoder.of(StringUtf8Coder.of()), StringUtf8Coder.of())))
             .apply(reshuffle)
             .apply(sink),
         metadata,
@@ -286,6 +326,13 @@ public class SortedBucketSinkTest {
         .satisfies(
             id -> {
               Assert.assertTrue(readMetadata(id).isCompatibleWith(metadata));
+              return null;
+            });
+
+    PAssert.thatMap(writtenFiles)
+        .satisfies(
+            (m) -> {
+              Assert.assertTrue(m.containsKey(BucketShardId.ofNullKey()));
               return null;
             });
 
@@ -343,18 +390,20 @@ public class SortedBucketSinkTest {
 
   static SerializableConsumer<Map<BucketShardId, List<String>>> assertValidSmbFormat(
       TestBucketMetadata metadata, String[] expectedInput) {
+    final int nullBucketId = BucketShardId.ofNullKey().getBucketId();
+
     return writtenBuckets -> {
       final Map<String, Integer> keysToBuckets = new HashMap<>();
       final List<String> seenItems = new ArrayList<>();
 
       writtenBuckets.forEach(
           (bucketShardId, writtenRecords) -> {
-            String prevKey = null;
+            String prevKey = "UNSET";
             final Integer bucketId = bucketShardId.getBucketId();
             for (String record : writtenRecords) {
               seenItems.add(record);
 
-              if (prevKey == null) {
+              if (prevKey.equals("UNSET")) {
                 prevKey = metadata.extractKey(record);
                 keysToBuckets.put(prevKey, bucketId);
                 continue;
@@ -364,11 +413,13 @@ public class SortedBucketSinkTest {
               Assert.assertEquals(
                   "Record " + record + " was not written to correct bucket",
                   bucketShardId.getBucketId(),
-                  metadata.getBucketId(metadata.getKeyBytes(record)));
+                  currKey == null
+                      ? nullBucketId
+                      : metadata.getBucketId(metadata.getKeyBytes(record)));
 
               Assert.assertTrue(
                   "Keys in " + bucketShardId + " are not in sorted order.",
-                  prevKey.compareTo(currKey) <= 0);
+                  currKey == null || prevKey.compareTo(currKey) <= 0);
 
               final Integer existingKeyBucket = keysToBuckets.get(currKey);
               Assert.assertTrue(
@@ -384,16 +435,9 @@ public class SortedBucketSinkTest {
           seenItems,
           Matchers.containsInAnyOrder(expectedInput));
 
-      final Set<BucketShardId> allBucketShardIds = new HashSet<>();
-      for (int bucketId = 0; bucketId < metadata.getNumBuckets(); bucketId++) {
-        for (int shardId = 0; shardId < metadata.getNumShards(); shardId++) {
-          allBucketShardIds.add(BucketShardId.of(bucketId, shardId));
-        }
-      }
-      Assert.assertEquals(
+      Assert.assertTrue(
           "Written bucketShardIds did not match metadata",
-          allBucketShardIds,
-          writtenBuckets.keySet());
+          writtenBuckets.keySet().containsAll(metadata.getAllBucketShardIds()));
     };
   }
 }

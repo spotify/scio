@@ -28,6 +28,7 @@ import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper.{makeKey, makeValue}
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.datastore._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -63,7 +64,7 @@ object AutoComplete {
   ): SCollection[(String, Iterable[(String, Long)])] =
     input
       .flatMap(allPrefixes(minPrefix))
-      .topByKey(candidatesPerPrefix, Ordering.by(_._2))
+      .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
 
   def computeTopRecursive(
     input: SCollection[(String, Long)],
@@ -79,7 +80,7 @@ object AutoComplete {
       val small =
         (larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix))
           .flatMap(allPrefixes(minPrefix, minPrefix))
-          .topByKey(candidatesPerPrefix, Ordering.by(_._2))
+          .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
       Seq(larger.head ++ larger(1), small)
     }
 

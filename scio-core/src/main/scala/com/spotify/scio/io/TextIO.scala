@@ -67,7 +67,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
       )
 
     transform = params.header.fold(transform)(transform.withHeader)
-    transform = params.header.fold(transform)(transform.withFooter)
+    transform = params.footer.fold(transform)(transform.withFooter)
 
     transform
   }

@@ -43,14 +43,14 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   private final ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
 
   @StartBundle
-  public void startBundle() {
+  public void startBundle(StartBundleContext context) {
     futures.clear();
     results.clear();
     errors.clear();
   }
 
   @FinishBundle
-  public void finishBundle(FinishBundleContext c) {
+  public void finishBundle(FinishBundleContext context) {
     if (!futures.isEmpty()) {
       try {
         waitForFutures(futures.values());
@@ -63,7 +63,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
         throw new RuntimeException("Failed to process futures", e);
       }
     }
-    flush(c);
+    flush(context);
   }
 
   @ProcessElement

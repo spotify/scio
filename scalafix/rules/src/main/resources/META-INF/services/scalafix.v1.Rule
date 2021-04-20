@@ -9,3 +9,4 @@ fix.v0_8_0.FixSyntaxImports
 fix.v0_8_0.FixTensorflow
 fix.v0_8_0.FixBigQueryDeprecations
 fix.v0_8_0.ConsistenceJoinNames
+fix.v0_10_0.FixCoderPropagation

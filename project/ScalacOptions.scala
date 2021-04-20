@@ -20,8 +20,9 @@ import sbt.librarymanagement.{SemanticSelector, VersionNumber}
 
 object Scalac {
   // see: https://tpolecat.github.io/2017/04/25/scalac-flags.html
+  val parallelism = math.min(math.max(4, java.lang.Runtime.getRuntime().availableProcessors()), 16)
   val baseOptions = Def.setting {
-    val base = List(
+    List(
       "-target:jvm-1.8",
       "-deprecation", // Emit warning and location for usages of deprecated APIs.
       "-feature", // Emit warning and location for usages of features that should be imported explicitly.
@@ -58,13 +59,10 @@ object Scalac {
       // "-Ywarn-unused:privates", // Warn if a private member is unused.
       "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
       "-Xmacro-settings:show-coder-fallback=true",
-      "-Ydelambdafy:inline" // Set the strategy used for translating lambdas into JVM code to "inline"
+      "-Ydelambdafy:inline", // Set the strategy used for translating lambdas into JVM code to "inline"
+      "-Ybackend-parallelism",
+      parallelism.toString
     )
-
-    VersionNumber(sys.props("java.version")) match {
-      case v if v.matchesSemVer(SemanticSelector(">1.8")) => base ++ List("-release", "8")
-      case _                                              => base
-    }
   }
 
   val scalaVersionOptions = Def.setting {
@@ -90,14 +88,26 @@ object Scalac {
     }
   }
 
-  val commonsOptions = Def.setting(baseOptions.value ++ scalaVersionOptions.value)
+  val jvmVersionOptions = Def.setting {
+    VersionNumber(sys.props("java.version")) match {
+      case v if v.matchesSemVer(SemanticSelector(">1.8")) => List("-release", "8")
+      case _                                              => Nil
+    }
+  }
 
-  val compileDocOptions = Def.setting {
-    val base = List("-skip-packages", "org.apache")
+  val commonsOptions =
+    Def.setting(baseOptions.value ++ scalaVersionOptions.value ++ jvmVersionOptions.value)
+
+  val docOptions = Def.setting {
+    val base =
+      baseOptions.value ++ scalaVersionOptions.value ++ List("-skip-packages", "org.apache")
 
     VersionNumber(scalaVersion.value) match {
       case v if v.matchesSemVer(SemanticSelector("2.12.x")) => base ++ List("-no-java-comments")
       case _                                                => base
     }
   }
+
+  val replOptions = Def.setting(baseOptions.value ++ scalaVersionOptions.value)
+
 }

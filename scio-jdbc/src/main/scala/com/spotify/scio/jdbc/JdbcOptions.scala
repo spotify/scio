@@ -14,9 +14,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.jdbc
 
-import java.sql.{Driver, PreparedStatement, ResultSet}
+import java.sql.{Driver, PreparedStatement, ResultSet, SQLException}
+
+import org.apache.beam.sdk.io.jdbc.JdbcIO.{DefaultRetryStrategy, RetryConfiguration}
 
 /**
  * Options for a JDBC connection.
@@ -36,6 +39,14 @@ final case class JdbcConnectionOptions(
 object JdbcIoOptions {
   private[jdbc] val BeamDefaultBatchSize = -1L
   private[jdbc] val BeamDefaultFetchSize = -1
+  private[jdbc] val BeamDefaultMaxRetryAttempts = 5
+  private[jdbc] val BeamDefaultInitialRetryDelay = org.joda.time.Duration.ZERO
+  private[jdbc] val BeamDefaultMaxRetryDelay = org.joda.time.Duration.ZERO
+  private[jdbc] val BeamDefaultRetryConfiguration = RetryConfiguration.create(
+    BeamDefaultMaxRetryAttempts,
+    BeamDefaultMaxRetryDelay,
+    BeamDefaultInitialRetryDelay
+  )
 }
 
 sealed trait JdbcIoOptions
@@ -64,10 +75,14 @@ final case class JdbcReadOptions[T](
  * @param statement               query statement
  * @param preparedStatementSetter function to set values in a [[java.sql.PreparedStatement]]
  * @param batchSize               use apache beam default batch size if the value is -1
+ * @param retryConfiguration      [[org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration]] for specifying retry behavior
+ * @param retryStrategy           A predicate of [[java.sql.SQLException]] indicating a failure to retry
  */
 final case class JdbcWriteOptions[T](
   connectionOptions: JdbcConnectionOptions,
   statement: String,
   preparedStatementSetter: (T, PreparedStatement) => Unit = null,
-  batchSize: Long = JdbcIoOptions.BeamDefaultBatchSize
+  batchSize: Long = JdbcIoOptions.BeamDefaultBatchSize,
+  retryConfiguration: RetryConfiguration = JdbcIoOptions.BeamDefaultRetryConfiguration,
+  retryStrategy: SQLException => Boolean = new DefaultRetryStrategy().apply
 ) extends JdbcIoOptions

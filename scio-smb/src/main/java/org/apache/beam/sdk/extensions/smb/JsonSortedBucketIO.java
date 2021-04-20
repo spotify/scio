@@ -21,11 +21,15 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
+
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileSystems;
@@ -91,6 +95,9 @@ public class JsonSortedBucketIO {
 
     abstract Compression getCompression();
 
+    @Nullable
+    abstract Predicate<TableRow> getPredicate();
+
     abstract Builder toBuilder();
 
     @AutoValue.Builder
@@ -105,13 +112,22 @@ public class JsonSortedBucketIO {
 
       abstract Builder setCompression(Compression compression);
 
+      abstract Builder setPredicate(Predicate<TableRow> predicate);
+
       abstract Read build();
     }
 
     /** Reads from the given input directory. */
-    public Read from(String inputDirectory) {
+    public Read from(String... inputDirectories) {
+      return from(Arrays.asList(inputDirectories));
+    }
+
+    public Read from(List<String> inputDirectories) {
       return toBuilder()
-          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
+          .setInputDirectories(
+              inputDirectories.stream()
+                .map(dir -> FileSystems.matchNewResource(dir, true))
+                .collect(Collectors.toList()))
           .build();
     }
 
@@ -120,13 +136,19 @@ public class JsonSortedBucketIO {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
+    /** Specifies the filter predicate. */
+    public Read withPredicate(Predicate<TableRow> predicate) {
+      return toBuilder().setPredicate(predicate).build();
+    }
+
     @Override
     protected BucketedInput<?, TableRow> toBucketedInput() {
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          JsonFileOperations.of(getCompression()));
+          JsonFileOperations.of(getCompression()),
+          getPredicate());
     }
   }
 
@@ -200,7 +222,7 @@ public class JsonSortedBucketIO {
           .build();
     }
 
-    /** Specifies the temporary directory for writing. */
+    /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
     public Write<K> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
@@ -298,7 +320,7 @@ public class JsonSortedBucketIO {
           .build();
     }
 
-    /** Specifies the temporary directory for writing. */
+    /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
     public TransformOutput<K> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))

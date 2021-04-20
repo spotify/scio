@@ -30,6 +30,7 @@ import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
+import org.apache.http.auth.UsernamePasswordCredentials
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing
@@ -41,28 +42,32 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
 
   /** Save this SCollection into Elasticsearch. */
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    val shards = if (params.numOfShards > 0) {
+    val shards = if (params.numOfShards >= 0) {
       params.numOfShards
     } else {
       esOptions.nodes.size
     }
 
+    val write = beam.ElasticsearchIO.Write
+      .withNodes(esOptions.nodes.toArray)
+      .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
+        override def apply(t: T): JIterable[DocWriteRequest[_]] =
+          params.f(t).asJava
+      })
+      .withFlushInterval(params.flushInterval)
+      .withNumOfShard(shards)
+      .withMaxBulkRequestSize(params.maxBulkRequestSize)
+      .withMaxBulkRequestBytes(params.maxBulkRequestBytes)
+      .withMaxRetries(params.retry.maxRetries)
+      .withRetryPause(params.retry.retryPause)
+      .withError((t: BulkExecutionException) => params.errorFn(t))
+
     data.applyInternal(
-      beam.ElasticsearchIO.Write
-        .withNodes(esOptions.nodes.toArray)
-        .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
-          override def apply(t: T): JIterable[DocWriteRequest[_]] =
-            params.f(t).asJava
-        })
-        .withFlushInterval(params.flushInterval)
-        .withNumOfShard(shards)
-        .withMaxBulkRequestSize(params.maxBulkRequestSize)
-        .withMaxRetries(params.retry.maxRetries)
-        .withRetryPause(params.retry.retryPause)
-        .withError(new beam.ThrowingConsumer[BulkExecutionException] {
-          override def accept(t: BulkExecutionException): Unit =
-            params.errorFn(t)
-        })
+      esOptions.usernameAndPassword
+        .map { case (username, password) =>
+          write.withCredentials(new UsernamePasswordCredentials(username, password))
+        }
+        .getOrElse(write)
     )
 
     EmptyTap
@@ -76,8 +81,9 @@ object ElasticsearchIO {
   object WriteParam {
     private[elasticsearch] val DefaultErrorFn: BulkExecutionException => Unit = m => throw m
     private[elasticsearch] val DefaultFlushInterval = Duration.standardSeconds(1)
-    private[elasticsearch] val DefaultNumShards = 0
+    private[elasticsearch] val DefaultNumShards = -1
     private[elasticsearch] val DefaultMaxBulkRequestSize = 3000
+    private[elasticsearch] val DefaultMaxBulkRequestBytes = 5L * 1024L * 1024L
     private[elasticsearch] val DefaultMaxRetries = 3
     private[elasticsearch] val DefaultRetryPause = Duration.millis(35000)
     private[elasticsearch] val DefaultRetryConfig =
@@ -93,6 +99,7 @@ object ElasticsearchIO {
     flushInterval: Duration = WriteParam.DefaultFlushInterval,
     numOfShards: Long = WriteParam.DefaultNumShards,
     maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+    maxBulkRequestBytes: Long = WriteParam.DefaultMaxBulkRequestBytes,
     retry: RetryConfig = WriteParam.DefaultRetryConfig
   )
 

@@ -41,7 +41,6 @@ abstract class ILoop(
   override def createInterpreter(): Unit = {
     super.createInterpreter()
     initCommand()
-    out.print(prompt)
     out.flush()
   }
 

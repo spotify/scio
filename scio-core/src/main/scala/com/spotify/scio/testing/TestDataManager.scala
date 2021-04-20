@@ -22,18 +22,18 @@ import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.testing.TestStream
-
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline, or PTransforms to be applied */
 sealed private[scio] trait JobInputSource[T] {
-  def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T]
+  def toSCollection(sc: ScioContext): SCollection[T]
   val asIterable: Try[Iterable[T]]
 }
 
-final private[scio] case class TestStreamInputSource[T](
+final private[scio] case class TestStreamInputSource[T: Coder](
   stream: TestStream[T]
 ) extends JobInputSource[T] {
   override val asIterable: Try[Iterable[T]] = Failure(
@@ -42,23 +42,24 @@ final private[scio] case class TestStreamInputSource[T](
     )
   )
 
-  override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
+  override def toSCollection(sc: ScioContext): SCollection[T] =
     sc.applyTransform(stream)
 
   override def toString: String = s"TestStream(${stream.getEvents})"
 }
 
-final private[scio] case class IterableInputSource[T](
+final private[scio] case class IterableInputSource[T: Coder](
   iterable: Iterable[T]
 ) extends JobInputSource[T] {
   override val asIterable: Success[Iterable[T]] = Success(iterable)
-  override def toSCollection(sc: ScioContext)(implicit coder: Coder[T]): SCollection[T] =
+  override def toSCollection(sc: ScioContext): SCollection[T] =
     sc.parallelize(iterable)
   override def toString: String = iterable.toString
 }
 
 private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
-  val s: MSet[String] = MSet.empty
+  val s: MSet[String] =
+    java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
 
   def apply[T](io: ScioIO[T]): JobInputSource[T] = {
     val key = io.testId
@@ -79,7 +80,8 @@ private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
 
 /* Outputs are lambdas that apply assertions on SCollections */
 private[scio] class TestOutput(val m: Map[String, SCollection[_] => Any]) {
-  val s: MSet[String] = MSet.empty
+  val s: MSet[String] =
+    java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
 
   def apply[T](io: ScioIO[T]): SCollection[T] => Any = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
@@ -100,7 +102,9 @@ private[scio] class TestOutput(val m: Map[String, SCollection[_] => Any]) {
 }
 
 private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
-  val s: MSet[DistCacheIO[_]] = MSet.empty
+  val s: MSet[DistCacheIO[_]] =
+    java.util.concurrent.ConcurrentHashMap.newKeySet[DistCacheIO[_]]().asScala
+
   def apply[T](key: DistCacheIO[T]): () => T = {
     require(
       m.contains(key),
