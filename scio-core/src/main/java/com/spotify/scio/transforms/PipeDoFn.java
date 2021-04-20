@@ -186,12 +186,12 @@ public class PipeDoFn extends DoFn<String, String> {
   }
 
   @StartBundle
-  public void startBundle() {
+  public void startBundle(StartBundleContext context) {
     isNewBundle = true;
   }
 
   @FinishBundle
-  public void finishBundle() {
+  public void finishBundle(FinishBundleContext context) {
     try {
       stdIn.close();
       int exitCode = pipeProcess.waitFor();

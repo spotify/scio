@@ -49,7 +49,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   private final PatchedSerializableAvroCodecFactory codec;
   private final Map<String, Object> metadata;
 
-  static final CodecFactory defaultCodec() {
+  static CodecFactory defaultCodec() {
     return CodecFactory.deflateCodec(6);
   }
 

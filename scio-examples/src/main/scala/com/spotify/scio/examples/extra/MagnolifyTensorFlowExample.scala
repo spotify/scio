@@ -26,7 +26,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
 import com.spotify.scio.tensorflow._
-import org.tensorflow.example.Example
+import org.tensorflow.proto.example.Example
 import magnolify.tensorflow._
 
 object MagnolifyTensorFlowExample {

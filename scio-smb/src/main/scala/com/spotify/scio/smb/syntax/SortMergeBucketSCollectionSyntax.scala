@@ -18,14 +18,14 @@
 package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
+import org.apache.beam.sdk.coders.KvCoder
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO
 import org.apache.beam.sdk.values.KV
 
 trait SortMergeBucketSCollectionSyntax {
-  implicit def toSortMergeBucketKeyedSCollection[K, V: Coder](
+  implicit def toSortMergeBucketKeyedSCollection[K, V](
     data: SCollection[KV[K, V]]
   ): SortedBucketPairSCollection[K, V] = new SortedBucketPairSCollection(data)
 
@@ -54,7 +54,7 @@ final class SortedBucketSCollection[T](private val self: SCollection[T]) {
   }
 }
 
-final class SortedBucketPairSCollection[K, V: Coder](private val self: SCollection[KV[K, V]]) {
+final class SortedBucketPairSCollection[K, V](private val self: SCollection[KV[K, V]]) {
 
   /**
    * Save an `SCollection[(K, V)]` to a filesystem, where each file represents a bucket
@@ -75,7 +75,7 @@ final class SortedBucketPairSCollection[K, V: Coder](private val self: SCollecti
     write: SortedBucketIO.Write[K, V],
     verifyKeyExtraction: Boolean = true
   ): ClosedTap[Nothing] = {
-    val vCoder = CoderMaterializer.beam(self.context, Coder[V])
+    val vCoder = self.internal.getCoder.asInstanceOf[KvCoder[K, V]].getValueCoder
     self.applyInternal(write.onKeyedCollection(vCoder, verifyKeyExtraction))
 
     // @Todo: Implement taps for metadata/bucket elements

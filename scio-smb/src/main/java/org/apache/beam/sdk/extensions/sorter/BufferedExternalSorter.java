@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.beam.sdk.extensions.sorter;
 
 import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
@@ -26,6 +27,8 @@ import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType;
 import org.apache.beam.sdk.values.KV;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link Sorter} that will use in memory sorting until the values can't fit into memory and will
@@ -33,6 +36,8 @@ import org.checkerframework.checker.nullness.qual.RequiresNonNull;
  */
 @PatchedFromBeam(origin = "org.apache.beam.sdk.extensions.sorter")
 public class BufferedExternalSorter implements Sorter {
+  private static Logger LOG = LoggerFactory.getLogger(BufferedExternalSorter.class);
+
   public static Options options() {
     return new Options("/tmp", 100, SorterType.HADOOP);
   }
@@ -129,6 +134,8 @@ public class BufferedExternalSorter implements Sorter {
       } else {
         // Flushing contents of in memory sorter to external sorter so we can rely on external
         // from here on out
+        LOG.info(
+            "InMemorySorter buffer exceeded memoryMb limit. Transferring from in-memory to external sort.");
         transferToExternalSorter();
       }
     }

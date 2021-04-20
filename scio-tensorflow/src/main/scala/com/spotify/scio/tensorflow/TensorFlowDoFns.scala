@@ -27,7 +27,9 @@ import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
-import org.tensorflow.example.Example
+import org.tensorflow.types.TString
+import org.tensorflow.ndarray.NdArrays
+import org.tensorflow.proto.example.Example
 import scala.jdk.CollectionConverters._
 
 import com.spotify.scio.transforms.DoFnWithResource
@@ -215,7 +217,9 @@ object SavedBundlePredictDoFn {
 
       override def extractInput(input: T): Map[String, Tensor[_]] = {
         val opName = model.inputsNameMap().get(exampleTensorName)
-        Map(opName -> Tensors.create(Array(input.toByteArray)))
+        val bytes = NdArrays.vectorOfObjects(input.toByteArray())
+        val tensor = TString.tensorOfBytes(bytes)
+        Map(opName -> tensor)
       }
 
       override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =

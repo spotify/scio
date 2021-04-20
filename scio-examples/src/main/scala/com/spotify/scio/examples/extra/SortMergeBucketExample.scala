@@ -72,7 +72,7 @@ object SortMergeBucketWriteExample {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
     sc.parallelize(0 until 500)
-      .map(i => SortMergeBucketExample.user(i, Random.nextInt(100)))
+      .map(i => SortMergeBucketExample.user(i, i % 100))
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write(classOf[Integer], "userId", SortMergeBucketExample.UserDataSchema)
@@ -137,6 +137,9 @@ object SortMergeBucketJoinExample {
       classOf[Integer],
       AvroSortedBucketIO
         .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
+        // 1. Only 1 user per user ID
+        // 2. Out of key intersection 250-499, only 100 (300-349, 400-499) with age < 50
+        .withPredicate((xs, x) => xs.size() == 0 && x.get("age").asInstanceOf[Int] < 50)
         .from(args("users")),
       AvroSortedBucketIO
         .read(new TupleTag[Account]("rhs"), classOf[Account])

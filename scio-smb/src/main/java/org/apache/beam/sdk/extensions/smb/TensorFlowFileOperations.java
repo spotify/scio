@@ -27,7 +27,7 @@ import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.TFRecordIO;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.tensorflow.example.Example;
+import org.tensorflow.proto.example.Example;
 
 /**
  * {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for TensorFlow TFRecord

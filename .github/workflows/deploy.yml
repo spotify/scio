@@ -1,0 +1,65 @@
+name: deploy
+
+env:
+  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
+  GOOGLE_PROJECT_ID: data-integration-test
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  publish-repl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java 11 setup
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm-ce-java11@21.0.0
+      - run: sbt scio-repl/assembly
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+      - name: Upload Repl
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: scio-repl/target/scala-2.13/scio-repl.jar
+          asset_name: scio-repl.jar
+          asset_content_type: application/java-archive
+  publish-docs:
+    name: Publish documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v2.3.4
+      - name: Cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java 11 setup
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm-ce-java11@21.0.0
+      - name: Setup project
+        run: scripts/gha_setup.sh
+      - name: Build documentation
+        run: sbt scio-examples/compile site/makeSite
+        env:
+          SOCCO: true
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@4.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: site/target/site

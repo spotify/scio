@@ -41,6 +41,8 @@ import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
+import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
@@ -49,6 +51,7 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.metrics.MetricResult;
+import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
@@ -63,6 +66,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -225,11 +229,11 @@ public class SortedBucketSourceTest {
   public void testNullKeysIgnored() throws Exception {
     test(
         ImmutableMap.of(
-            BucketShardId.ofNullKey(0), Lists.newArrayList(""),
+            BucketShardId.ofNullKey(), Lists.newArrayList(""),
             BucketShardId.of(0, 0), Lists.newArrayList("x1", "x2", "y1", "y2"),
             BucketShardId.of(1, 0), Lists.newArrayList("c1", "c2")),
         ImmutableMap.of(
-            BucketShardId.ofNullKey(0), Lists.newArrayList(""),
+            BucketShardId.ofNullKey(), Lists.newArrayList(""),
             BucketShardId.of(0, 0), Lists.newArrayList("x3", "x4", "z3", "z4"),
             BucketShardId.of(1, 0), Lists.newArrayList("c2", "c3")));
   }
@@ -237,6 +241,17 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testSingleSourceGbk() throws Exception {
+    testSingleSourceGbk(null);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testSingleSourceGbkWithPredicate() throws Exception {
+    testSingleSourceGbk((vs, v) -> v.startsWith("x"));
+    testSingleSourceGbk((vs, v) -> v.endsWith("1"));
+  }
+
+  private void testSingleSourceGbk(Predicate<String> predicate) throws Exception {
     Map<BucketShardId, List<String>> input =
         ImmutableMap.of(
             BucketShardId.of(0, 0), Lists.newArrayList("a1", "a2", "b1", "b2"),
@@ -252,14 +267,20 @@ public class SortedBucketSourceTest {
     final TupleTag<String> tag = new TupleTag<>("GBK");
     final TestFileOperations fileOperations = new TestFileOperations();
     final BucketedInput<?, ?> bucketedInput =
-        new BucketedInput<>(tag, fromFolder(lhsFolder), ".txt", fileOperations);
+        new BucketedInput<>(
+            tag,
+            Collections.singletonList(fromFolder(lhsFolder)),
+            ".txt",
+            fileOperations,
+            predicate);
 
     PCollection<KV<String, CoGbkResult>> output =
         pipeline.apply(
             Read.from(
                 new SortedBucketSource<>(String.class, Collections.singletonList(bucketedInput))));
 
-    final Map<String, List<String>> expected = groupByKey(input, metadata::extractKey);
+    final Map<String, List<String>> expected =
+        filter(groupByKey(input, metadata::extractKey), predicate);
 
     PAssert.thatMap(output)
         .satisfies(
@@ -428,38 +449,48 @@ public class SortedBucketSourceTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testSourceSplit() throws Exception {
-    writeSmbSourceWithBytes(120, 4, 1, lhsPolicy);
-    writeSmbSourceWithBytes(60, 1, 2, rhsPolicy);
+  public void testRecursiveSourceSplit() throws Exception {
+    writeSmbSourceWithBytes(800, 8, 1, lhsPolicy);
 
     final List<BucketedInput<?, ?>> inputs =
-        Lists.newArrayList(
+        Collections.singletonList(
             new BucketedInput<String, String>(
                 new TupleTag<>("lhs"),
                 lhsPolicy.forDestination().getDirectory(),
                 ".txt",
-                new TestFileOperations()),
-            new BucketedInput<>(
-                new TupleTag<>("rhs"),
-                rhsPolicy.forDestination().getDirectory(),
-                ".txt",
                 new TestFileOperations()));
 
-    final SortedBucketSource source =
-        new SortedBucketSource(String.class, inputs, TargetParallelism.auto());
+    final SortedBucketSource<String> source =
+        new SortedBucketSource<>(String.class, inputs, TargetParallelism.auto());
 
-    Assert.assertEquals(180, source.getEstimatedSizeBytes(PipelineOptionsFactory.create()));
+    Assert.assertEquals(800, source.getEstimatedSizeBytes(PipelineOptionsFactory.create()));
 
-    final List<SortedBucketSource<String>> splitSources =
-        source.split(
-            (long) (50 / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), PipelineOptionsFactory.create());
-    splitSources.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
+    final List<SortedBucketSource<String>> firstSplit = splitAndSort(source, 400);
+    // Split into 2 source of size 400 bytes each
+    Assert.assertEquals(2, firstSplit.size());
+    firstSplit.forEach(s -> Assert.assertEquals(2, s.getEffectiveParallelism()));
 
-    Assert.assertEquals(4, splitSources.size());
-    Assert.assertEquals(0, splitSources.get(0).getBucketOffset());
-    Assert.assertEquals(1, splitSources.get(1).getBucketOffset());
-    Assert.assertEquals(2, splitSources.get(2).getBucketOffset());
-    Assert.assertEquals(3, splitSources.get(3).getBucketOffset());
+    final SortedBucketSource<String> split1 = firstSplit.get(0);
+    final SortedBucketSource<String> split2 = firstSplit.get(1);
+
+    Assert.assertEquals(0, split1.getBucketOffset());
+    Assert.assertEquals(1, split2.getBucketOffset());
+
+    // Split 1 of the sources again into 4 sources of 100 bytes each
+    List<SortedBucketSource<String>> secondSplit = splitAndSort(split1, 100);
+    Assert.assertEquals(4, secondSplit.size());
+    Assert.assertEquals(0, secondSplit.get(0).getBucketOffset());
+    Assert.assertEquals(2, secondSplit.get(1).getBucketOffset());
+    Assert.assertEquals(4, secondSplit.get(2).getBucketOffset());
+    Assert.assertEquals(6, secondSplit.get(3).getBucketOffset());
+    secondSplit.forEach(s -> Assert.assertEquals(8, s.getEffectiveParallelism()));
+
+    // Split the other source again into 2 sources of 200 bytes each
+    secondSplit = splitAndSort(split2, 200);
+    Assert.assertEquals(2, secondSplit.size());
+    Assert.assertEquals(1, secondSplit.get(0).getBucketOffset());
+    Assert.assertEquals(3, secondSplit.get(1).getBucketOffset());
+    secondSplit.forEach(s -> Assert.assertEquals(4, s.getEffectiveParallelism()));
   }
 
   @Test
@@ -479,6 +510,18 @@ public class SortedBucketSourceTest {
                     new BucketedInput<String, String>(
                         new TupleTag<>("lhs"), illegalPath, ".txt", new TestFileOperations())),
                 TargetParallelism.auto()));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<SortedBucketSource<String>> splitAndSort(
+      SortedBucketSource<String> source, int desiredByteSize) throws Exception {
+    final PipelineOptions opts = PipelineOptionsFactory.create();
+    final List<SortedBucketSource<String>> splitSources =
+        (List<SortedBucketSource<String>>)
+            source.split((long) (desiredByteSize / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), opts);
+    splitSources.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
+
+    return splitSources;
   }
 
   private void writeSmbSourceWithBytes(
@@ -506,12 +549,22 @@ public class SortedBucketSourceTest {
   private void test(
       Map<BucketShardId, List<String>> lhsInput, Map<BucketShardId, List<String>> rhsInput)
       throws Exception {
-    test(lhsInput, rhsInput, TargetParallelism.min());
+    test(lhsInput, rhsInput, null, null, TargetParallelism.min());
   }
 
   private void test(
       Map<BucketShardId, List<String>> lhsInput,
       Map<BucketShardId, List<String>> rhsInput,
+      TargetParallelism targetParallelism)
+      throws Exception {
+    test(lhsInput, rhsInput, null, null, targetParallelism);
+  }
+
+  private void test(
+      Map<BucketShardId, List<String>> lhsInput,
+      Map<BucketShardId, List<String>> rhsInput,
+      Predicate<String> lhsPredicate,
+      Predicate<String> rhsPredicate,
       TargetParallelism targetParallelism)
       throws Exception {
     int lhsNumBuckets = maxId(lhsInput.keySet(), BucketShardId::getBucketId) + 1;
@@ -534,6 +587,8 @@ public class SortedBucketSourceTest {
         Collections.singletonList(fromFolder(rhsFolder)),
         lhsInput,
         rhsInput,
+        lhsPredicate,
+        rhsPredicate,
         targetParallelism);
 
     final PipelineResult result = pipeline.run();
@@ -624,7 +679,8 @@ public class SortedBucketSourceTest {
                   }));
     }
 
-    checkJoin(pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues, targetParallelism);
+    checkJoin(
+        pipeline, lhsPaths, rhsPaths, allLhsValues, allRhsValues, null, null, targetParallelism);
     pipeline.run();
   }
 
@@ -634,6 +690,8 @@ public class SortedBucketSourceTest {
       List<ResourceId> rhsPaths,
       Map<BucketShardId, List<String>> lhsValues,
       Map<BucketShardId, List<String>> rhsValues,
+      Predicate<String> lhsPredicate,
+      Predicate<String> rhsPredicate,
       TargetParallelism targetParallelism)
       throws Exception {
     final TupleTag<String> lhsTag = new TupleTag<>("LHS");
@@ -641,8 +699,8 @@ public class SortedBucketSourceTest {
     final TestFileOperations fileOperations = new TestFileOperations();
     final List<BucketedInput<?, ?>> inputs =
         Lists.newArrayList(
-            new BucketedInput<>(lhsTag, lhsPaths, ".txt", fileOperations),
-            new BucketedInput<>(rhsTag, rhsPaths, ".txt", fileOperations));
+            new BucketedInput<>(lhsTag, lhsPaths, ".txt", fileOperations, lhsPredicate),
+            new BucketedInput<>(rhsTag, rhsPaths, ".txt", fileOperations, rhsPredicate));
 
     PCollection<KV<String, CoGbkResult>> output =
         pipeline.apply(
@@ -651,8 +709,8 @@ public class SortedBucketSourceTest {
     Function<String, String> extractKeyFn = TestBucketMetadata.of(2, 1)::extractKey;
 
     // CoGroupByKey inputs as expected result
-    final Map<String, List<String>> lhs = groupByKey(lhsValues, extractKeyFn);
-    final Map<String, List<String>> rhs = groupByKey(rhsValues, extractKeyFn);
+    final Map<String, List<String>> lhs = filter(groupByKey(lhsValues, extractKeyFn), lhsPredicate);
+    final Map<String, List<String>> rhs = filter(groupByKey(rhsValues, extractKeyFn), rhsPredicate);
 
     final Map<String, KV<List<String>, List<String>>> expected = new HashMap<>();
     for (String k : Sets.union(lhs.keySet(), rhs.keySet())) {
@@ -720,6 +778,27 @@ public class SortedBucketSourceTest {
                 Collections::singletonList,
                 (l, r) ->
                     Stream.concat(l.stream(), r.stream()).sorted().collect(Collectors.toList())));
+  }
+
+  private static Map<String, List<String>> filter(
+      Map<String, List<String>> input, Predicate<String> predicate) {
+    if (predicate == null) {
+      return input;
+    } else {
+      Map<String, List<String>> filtered = new HashMap<>();
+      for (Map.Entry<String, List<String>> e : input.entrySet()) {
+        List<String> value = new ArrayList<>();
+        e.getValue()
+            .forEach(
+                v -> {
+                  if (predicate.apply(value, v)) {
+                    value.add(v);
+                  }
+                });
+        filtered.put(e.getKey(), value);
+      }
+      return filtered;
+    }
   }
 
   static void verifyMetrics(

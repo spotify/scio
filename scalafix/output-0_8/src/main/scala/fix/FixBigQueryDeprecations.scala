@@ -1,4 +1,5 @@
 package fix
+package v0_8_0
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.ScioContext

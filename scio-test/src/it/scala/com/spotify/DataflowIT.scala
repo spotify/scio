@@ -29,13 +29,12 @@ object DataflowIT {
   val projectId = "data-integration-test"
 
   def run(): ScioResult = {
-    val (sc, _) = ContextAndArgs(Array(s"--project=$projectId", "--runner=DataflowRunner"))
+    val (sc, _) = ContextAndArgs(
+      Array(s"--project=$projectId", "--runner=DataflowRunner", "--region=europe-west1")
+    )
     val c = ScioMetrics.counter("count")
     sc.parallelize(1 to 100)
-      .map { x =>
-        c.inc()
-        x
-      }
+      .tap(_ => c.inc())
       .filter { _ =>
         c.inc()
         true

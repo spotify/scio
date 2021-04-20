@@ -17,7 +17,6 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.elasticsearch.ElasticsearchIO.{RetryConfig, WriteParam}
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
@@ -34,7 +33,10 @@ import org.joda.time.Duration
  * }}}
  */
 package object elasticsearch extends CoderInstances {
-  final case class ElasticsearchOptions(nodes: Seq[HttpHost])
+  final case class ElasticsearchOptions(
+    nodes: Seq[HttpHost],
+    usernameAndPassword: Option[(String, String)] = None
+  )
 
   implicit
   class ElasticsearchSCollection[T](@transient private val self: SCollection[T]) extends AnyVal {
@@ -54,10 +56,19 @@ package object elasticsearch extends CoderInstances {
       flushInterval: Duration = WriteParam.DefaultFlushInterval,
       numOfShards: Long = WriteParam.DefaultNumShards,
       maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+      maxBulkRequestBytes: Long = WriteParam.DefaultMaxBulkRequestBytes,
       errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
       retry: RetryConfig = WriteParam.DefaultRetryConfig
-    )(f: T => Iterable[DocWriteRequest[_]])(implicit coder: Coder[T]): ClosedTap[Nothing] = {
-      val param = WriteParam(f, errorFn, flushInterval, numOfShards, maxBulkRequestSize, retry)
+    )(f: T => Iterable[DocWriteRequest[_]]): ClosedTap[Nothing] = {
+      val param = WriteParam(
+        f,
+        errorFn,
+        flushInterval,
+        numOfShards,
+        maxBulkRequestSize,
+        maxBulkRequestBytes,
+        retry
+      )
       self.write(ElasticsearchIO[T](esOptions))(param)
     }
   }

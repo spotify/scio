@@ -35,7 +35,14 @@ final class TypedStorageBigQueryTornadoesTest extends PipelineSpec {
   "StorageTypedBigQueryTornadoes" should "work" in {
     JobTest[com.spotify.scio.examples.extra.TypedStorageBigQueryTornadoes.type]
       .args("--output=dataset.table")
-      .input(BigQueryIO(TypedStorageBigQueryTornadoes.Row.table), inData)
+      .input(
+        BigQueryIO(
+          TypedStorageBigQueryTornadoes.Row.table,
+          List("tornado", "month"),
+          Some("tornado = true")
+        ),
+        inData
+      )
       .output(BigQueryIO[Result]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
       }

@@ -17,13 +17,18 @@
 
 package com.spotify.scio.parquet.avro
 
+import java.io.File
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
+import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
+import org.joda.time.{DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 
 class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
@@ -112,24 +117,162 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     FileUtils.deleteDirectory(dir)
   }
 
-  it should "write generic records" in {
+  it should "read/write generic records" in {
+    val dir = tmpDir
+
+    val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
+    val sc1 = ScioContext()
+    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+    sc1
+      .parallelize(genericRecords)
+      .saveAsParquetAvroFile(dir.toString, numShards = 1, schema = AvroUtils.schema)
+    sc1.run()
+
+    val files = dir.listFiles()
+    files.length shouldBe 1
+
+    val sc2 = ScioContext()
+    val data: SCollection[GenericRecord] =
+      sc2.parquetAvroFile[GenericRecord](s"$dir/*.parquet", AvroUtils.schema)
+    data should containInAnyOrder(genericRecords)
+    sc2.run()
+
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "write windowed generic records to dynamic destinations" in {
+    // This test follows the same pattern as com.spotify.scio.io.dynamic.DynamicFileTest
+
+    val dir = tmpDir
+
+    val genericRecords = (0 until 10).map(AvroUtils.newGenericRecord)
+    val options = PipelineOptionsFactory.fromArgs("--streaming=true").create()
+    val sc1 = ScioContext(options)
+    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+    sc1
+      .parallelize(genericRecords)
+      // Explicit optional arguments `Duration.Zero` and `WindowOptions()` as a workaround for the
+      // mysterious "Could not find proxy for val sc1" compiler error
+      // take each records int value and multiply it by half hour, so we should have 2 records in each hour window
+      .timestampBy(x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000), Duration.ZERO)
+      .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
+      .saveAsDynamicParquetAvroFile(
+        dir.toString,
+        Left { (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) =>
+          val intervalWindow = window.asInstanceOf[IntervalWindow]
+          val year = intervalWindow.start().get(DateTimeFieldType.year())
+          val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
+          val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
+          val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
+          "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
+            .format(year, month, day, hour, shardNumber, numShards)
+        },
+        numShards = 1,
+        schema = AvroUtils.schema
+      )
+    sc1.run()
+
+    def recursiveListFiles(directory: File): List[File] = {
+      val files = directory.listFiles()
+      files.filter(!_.isDirectory).toList ++ files.filter(_.isDirectory).flatMap(recursiveListFiles)
+    }
+
+    val files = recursiveListFiles(dir)
+    files.length shouldBe 5
+
+    val params =
+      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](
+        identity[GenericRecord] _,
+        AvroUtils.schema,
+        null
+      )
+
+    (0 until 10)
+      .sliding(2, 2)
+      .zipWithIndex
+      .map(t =>
+        (
+          "y=1970/m=01/d=01/h=%02d/part-0-of-1.parquet".format(t._2),
+          t._1.map(AvroUtils.newGenericRecord)
+        )
+      )
+      .foreach({
+        case (filename, records) => {
+          val tap = ParquetAvroTap(s"$dir/$filename", params)
+          tap.value.toList should contain theSameElementsAs records
+        }
+      })
+
+    FileUtils.deleteDirectory(dir)
+  }
+
+  it should "write generic records to dynamic destinations" in {
     val dir = tmpDir
 
     val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
     val sc = ScioContext()
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.parallelize(genericRecords)
-      .saveAsParquetAvroFile(dir.toString, numShards = 1, schema = AvroUtils.schema)
+      .saveAsDynamicParquetAvroFile(
+        dir.toString,
+        Right((shardNumber: Int, numShards: Int) =>
+          "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
+        ),
+        numShards = 1,
+        schema = AvroUtils.schema
+      )
     sc.run()
 
     val files = dir.listFiles()
     files.length shouldBe 1
+    files.head.getAbsolutePath should include("part-0-of-1-with-custom-naming.parquet")
 
     val params =
-      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](AvroUtils.schema, null, identity)
+      ParquetAvroIO.ReadParam[GenericRecord, GenericRecord](
+        identity[GenericRecord] _,
+        AvroUtils.schema,
+        null
+      )
     val tap = ParquetAvroTap(files.head.getAbsolutePath, params)
     tap.value.toList should contain theSameElementsAs genericRecords
 
     FileUtils.deleteDirectory(dir)
+  }
+
+  it should "throw exception when filename functions not correctly defined for dynamic destinations" in {
+    val dir = tmpDir
+
+    val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
+    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+
+    an[NotImplementedError] should be thrownBy {
+      val sc = ScioContext()
+      sc.parallelize(genericRecords)
+        .saveAsDynamicParquetAvroFile(
+          dir.toString,
+          Left((_, _, _, _) => "test for exception handling"),
+          numShards = 1,
+          schema = AvroUtils.schema
+        )
+      sc.run()
+    }
+
+    an[NotImplementedError] should be thrownBy {
+      val sc = ScioContext()
+      sc.parallelize(genericRecords)
+        .timestampBy(
+          x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000),
+          Duration.ZERO
+        )
+        .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
+        .saveAsDynamicParquetAvroFile(
+          dir.toString,
+          Right((_, _) => "test for exception handling"),
+          numShards = 1,
+          schema = AvroUtils.schema
+        )
+      sc.run()
+    }
+
   }
 }

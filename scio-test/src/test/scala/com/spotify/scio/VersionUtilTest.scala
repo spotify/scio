@@ -31,6 +31,8 @@ class VersionUtilTest extends AnyFlatSpec with Matchers {
     verifySnapshotVersion("0.1.0-SNAPSHOT", Some("0.1.0-alpha"))
     verifySnapshotVersion("0.1.0-SNAPSHOT", Some("0.1.0-beta"))
     verifySnapshotVersion("0.1.0-SNAPSHOT", Some("0.1.0-RC"))
+    verifySnapshotVersion("0.1.0-beta+42-828dca9a-SNAPSHOT", Some("0.1.0-beta"))
+    verifySnapshotVersion("0.1.0-beta+45-a364d49e+20201118-2236-SNAPSHOT", Some("0.1.0-beta"))
   }
 
   it should "warn about release version" in {

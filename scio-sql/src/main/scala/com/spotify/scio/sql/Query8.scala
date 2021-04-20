@@ -215,6 +215,7 @@ final class SqlSCollection8[
   h: SCollection[H]
 ) {
 
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   def query(
     q: String,
     aTag: TupleTag[A],
@@ -229,6 +230,7 @@ final class SqlSCollection8[
   ): SCollection[Row] =
     query(Query8(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, hTag, udfs.toList))
 
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   def query(q: Query8[A, B, C, D, E, F, G, H, Row]): SCollection[Row] =
     a.context.wrap {
       val collA = Sql.setSchema(a)
@@ -257,6 +259,7 @@ final class SqlSCollection8[
 
     }
 
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   def queryAs[R: Schema: ClassTag](
     q: String,
     aTag: TupleTag[A],
@@ -271,6 +274,7 @@ final class SqlSCollection8[
   ): SCollection[R] =
     queryAs(Query8(q, aTag, bTag, cTag, dTag, eTag, fTag, gTag, hTag, udfs.toList))
 
+  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
   def queryAs[R: Schema: ClassTag](q: Query8[A, B, C, D, E, F, G, H, R]): SCollection[R] =
     try {
       query(q.query, q.aTag, q.bTag, q.cTag, q.dTag, q.eTag, q.fTag, q.gTag, q.hTag, q.udfs: _*)

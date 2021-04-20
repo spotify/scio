@@ -19,7 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
+import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
@@ -40,6 +41,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.RenameBuckets;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.MergeBucketsReader;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TraversableOnceIterable;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -48,6 +50,7 @@ import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.schemas.transforms.Group;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.Filter;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -119,6 +122,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         begin
             .getPipeline()
             .apply("MergeAndWriteTempBuckets", Read.from(boundedSource))
+            .apply(Filter.by(Objects::nonNull))
             .apply(Group.globally())
             .apply(
                 "FinalizeTempFiles",
@@ -181,13 +185,15 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         }
         writtenBuckets.put(BucketShardId.of(bucket.bucketId, 0), bucket.destination);
       }
+
       RenameBuckets.moveFiles(
           bucketMetadata,
           writtenBuckets,
           dstFileAssignment,
           fileOperations,
           bucketDst -> c.output(BUCKETS_TAG, bucketDst),
-          metadataDst -> c.output(METADATA_TAG, metadataDst));
+          metadataDst -> c.output(METADATA_TAG, metadataDst),
+          false); // Don't include null-key bucket in output
     }
   }
 
@@ -306,8 +312,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     public List<? extends BoundedSource<MergedBucket>> split(
         long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
 
-      final int adjustedParallelism =
-          SortedBucketSource.getFanout(
+      final int numSplits =
+          SortedBucketSource.getNumSplits(
               sourceSpec,
               effectiveParallelism,
               targetParallelism,
@@ -315,17 +321,23 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               desiredBundleSizeBytes,
               DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
 
-      if (adjustedParallelism == 1) {
-        return Collections.singletonList(this);
-      }
+      final long estSplitSize = estimatedSizeBytes / numSplits;
 
-      LOG.info("Parallelism was adjusted to " + adjustedParallelism);
+      final DecimalFormat sizeFormat = new DecimalFormat("0.00");
+      LOG.info(
+          "Parallelism was adjusted by {}splitting source of size {} MB into {} source(s) of size {} MB",
+          effectiveParallelism > 1 ? "further " : "",
+          sizeFormat.format(estimatedSizeBytes / 1000000.0),
+          numSplits,
+          sizeFormat.format(estSplitSize / 1000000.0));
 
-      final long estSplitSize = estimatedSizeBytes / adjustedParallelism;
-
-      return IntStream.range(0, adjustedParallelism)
+      final int totalParallelism = numSplits * effectiveParallelism;
+      return IntStream.range(0, numSplits)
           .boxed()
-          .map(i -> this.split(i, adjustedParallelism, estSplitSize))
+          .map(
+              i ->
+                  this.split(
+                      bucketOffsetId + (i * effectiveParallelism), totalParallelism, estSplitSize))
           .collect(Collectors.toList());
     }
 
@@ -343,7 +355,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
     @Override
     public Coder<MergedBucket> getOutputCoder() {
-      return SerializableCoder.of(MergedBucket.class);
+      return NullableCoder.of(SerializableCoder.of(MergedBucket.class));
     }
 
     @Override
@@ -361,12 +373,20 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         private int bucketId;
         private ResourceId dst;
         private OutputCollector<FinalValueT> outputCollector;
+        private boolean started = false;
 
         @Override
         public boolean start() throws IOException {
           keyGroupReader =
               new MergeBucketsReader<>(
-                  sources, bucketOffsetId, effectiveParallelism, sourceSpec, null, keyGroupSize);
+                  options,
+                  sources,
+                  bucketOffsetId,
+                  effectiveParallelism,
+                  sourceSpec,
+                  null,
+                  keyGroupSize,
+                  false);
 
           bucketId = bucketOffsetId;
           dst = fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
@@ -384,19 +404,30 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         public MergedBucket getCurrent() throws NoSuchElementException {
           try {
             KV<FinalKeyT, CoGbkResult> mergedKeyGroup = keyGroupReader.getCurrent();
-            while (true) {
-              transformFn.writeTransform(mergedKeyGroup, outputCollector);
+            transformFn.writeTransform(mergedKeyGroup, outputCollector);
 
-              if (!keyGroupReader.advance()) {
-                break;
-              }
-              mergedKeyGroup = keyGroupReader.getCurrent();
+            // exhaust iterators if necessary before moving on to the next key group:
+            // for example, if not every element was needed in the transformFn
+            sources.forEach(
+                source -> {
+                  final Iterable<?> maybeUnfinishedIt =
+                      mergedKeyGroup.getValue().getAll(source.getTupleTag());
+                  if (TraversableOnceIterable.class.isAssignableFrom(
+                      maybeUnfinishedIt.getClass())) {
+                    ((TraversableOnceIterable<?>) maybeUnfinishedIt).ensureExhausted();
+                  }
+                });
+
+            // Return 1 non-null value for the entire bucket
+            if (!started) {
+              started = true;
+              return new MergedBucket(bucketId, dst, effectiveParallelism);
+            } else {
+              return null;
             }
           } catch (Exception e) {
             throw new RuntimeException("Failed to write merged key group", e);
           }
-
-          return new MergedBucket(bucketId, dst, effectiveParallelism);
         }
 
         @Override

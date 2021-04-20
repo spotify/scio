@@ -21,12 +21,13 @@ import java.io.File
 import java.nio.file.Files
 import java.util.Arrays
 
-import com.spotify.scio.util._
 import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
 import com.spotify.scio._
 import com.spotify.scio.testing._
+import com.spotify.scio.util._
 import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.values.KV
 import org.apache.commons.io.FileUtils
 
 import scala.jdk.CollectionConverters._
@@ -81,7 +82,7 @@ class SparkeyTest extends PipelineSpec {
     }
   }
 
-  "SCollection" should "support reading in an existing Sparkey file" in {
+  it should "support reading in an existing Sparkey file" in {
     // Create a temporary Sparkey file pair
     val sc = ScioContext()
     val p = sc.parallelize(sideData).asSparkey.materialize
@@ -105,7 +106,7 @@ class SparkeyTest extends PipelineSpec {
     }
   }
 
-  "SCollection" should "support reading in an existing sharded Sparkey collection" in {
+  it should "support reading in an existing sharded Sparkey collection" in {
     // Create a temporary Sparkey file pair
     val sc = ScioContext()
     val p = sc.parallelize(sideData).asSparkey(numShards = 2).materialize
@@ -128,7 +129,7 @@ class SparkeyTest extends PipelineSpec {
     FileUtils.deleteDirectory(new File(sparkeyUri.basePath))
   }
 
-  "SCollection" should "support .asSparkey with shards" in {
+  it should "support .asSparkey with shards" in {
     val sc = ScioContext()
     val p = sc.parallelize(bigSideData).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
@@ -414,12 +415,12 @@ class SparkeyTest extends PipelineSpec {
     val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
     val typedSideDataMap = typedSideData.toMap
 
-    val cache = TestCache[String, AnyRef]()
+    val cache = TestCache[String, Seq[Int]]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -477,12 +478,12 @@ class SparkeyTest extends PipelineSpec {
     val input = Seq("1")
     val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
 
-    val cache = TestCache[String, AnyRef]()
+    val cache = TestCache[String, Seq[Int]]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -511,12 +512,12 @@ class SparkeyTest extends PipelineSpec {
     val input = Seq("1")
     val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
 
-    val cache = TestCache[String, AnyRef]()
+    val cache = TestCache[String, Seq[Int]]()
 
     val sparkey = sc.parallelize(typedSideData).mapValues(_.mkString(",")).asSparkey(numShards = 2)
     val sparkeyMaterialized = sparkey.materialize
 
-    val si = sparkey.asTypedSparkeySideInput[Object](cache) { b: Array[Byte] =>
+    val si = sparkey.asTypedSparkeySideInput[Seq[Int]](cache) { b: Array[Byte] =>
       new String(b).split(",").map(_.toInt).toSeq
     }
 
@@ -536,6 +537,136 @@ class SparkeyTest extends PipelineSpec {
     cache.underlying.stats().loadCount shouldBe 0
 
     val basePath = scioResult.tap(sparkeyMaterialized).value.next().basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "support .asLargeMapSideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    val si = sc.parallelize(typedSideData).asLargeMapSideInput
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "support .asLargeMapSideInput with one shard" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
+    val typedSideDataMap = typedSideData.toMap
+
+    val si = sc.parallelize(typedSideData).asLargeMapSideInput(numShards = 1)
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .flatMap((x, sic) => sic(si).get(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.flatMap(typedSideDataMap.get)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "support .asLargeSetSideInput" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Set("ab", "bc", "cd")
+
+    val si = sc.parallelize(typedSideData).asLargeSetSideInput
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .filter((x, sic) => sic(si).contains(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.filter(typedSideData.contains)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
+    FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "support .asLargeSetSideInput with one shard" in {
+    val sc = ScioContext()
+
+    val input = Seq("ab", "bc", "cd", "de")
+    val typedSideData = Set("ab", "bc", "cd")
+
+    val si = sc.parallelize(typedSideData).asLargeSetSideInput(numShards = 1)
+
+    val result = sc
+      .parallelize(input)
+      .withSideInputs(si)
+      .filter((x, sic) => sic(si).contains(x))
+      .toSCollection
+      .materialize
+
+    val sparkeyMaterialized = sc.wrap(si.view.getPCollection).materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = input.filter(typedSideData.contains)
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+
+    val basePath = scioResult
+      .tap(sparkeyMaterialized)
+      .value
+      .next
+      .asInstanceOf[KV[Any, SparkeyUri]]
+      .getValue
+      .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
 }

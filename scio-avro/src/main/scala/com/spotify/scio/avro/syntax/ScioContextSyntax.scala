@@ -44,7 +44,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(ObjectFileIO[T](path))
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
-    self.read(GenericRecordIO(path, schema))(Coder.avroGenericRecordCoder(schema))
+    self.read(GenericRecordIO(path, schema))
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying
@@ -89,7 +89,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
-  def typedAvroFile[T <: HasAvroAnnotation: ClassTag: TypeTag: Coder](
+  def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
     path: String
   ): SCollection[T] =
     self.read(AvroTyped.AvroIO[T](path))
@@ -100,7 +100,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
    * Avro's block file format.
    */
-  def protobufFile[T <: Message: ClassTag: Coder](path: String): SCollection[T] =
+  def protobufFile[T <: Message: ClassTag](path: String): SCollection[T] =
     self.read(ProtobufIO[T](path))
 }
 

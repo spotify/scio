@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.transforms;
 
 import org.apache.beam.sdk.transforms.DoFn;
@@ -32,7 +33,7 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
     extends BaseAsyncLookupDoFn<A, B, C, CompletableFuture<B>, BaseAsyncLookupDoFn.Try<B>>
     implements FutureHandlers.Java<B> {
 
-  /** Create a {@link GuavaAsyncLookupDoFn} instance. */
+  /** Create a {@link JavaAsyncLookupDoFn} instance. */
   public JavaAsyncLookupDoFn() {
     super();
   }

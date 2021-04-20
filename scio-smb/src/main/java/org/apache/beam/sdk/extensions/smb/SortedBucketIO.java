@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.SortedBucketPreKeyedSink;
@@ -29,6 +30,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
+import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
@@ -38,6 +40,7 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
+import org.slf4j.LoggerFactory;
 
 /**
  * Sorted-bucket files are {@code PCollection<V>}s written with {@link SortedBucketSink} that can be
@@ -168,16 +171,25 @@ public class SortedBucketIO {
       return this;
     }
 
+    ResourceId getTempDirectoryOrDefault(Pipeline pipeline) {
+      if (tempDirectory != null) {
+        return tempDirectory;
+      }
+
+      final String tempLocationOpt = pipeline.getOptions().getTempLocation();
+      LoggerFactory.getLogger(SortedBucketIO.class)
+          .info(
+              "tempDirectory was not set for SortedBucketTransform, defaulting to {}",
+              tempLocationOpt);
+      return FileSystems.matchNewResource(tempLocationOpt, true);
+    }
+
     @Override
     public WriteResult expand(PBegin input) {
       Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
       Preconditions.checkNotNull(toFinalResultT, "TransformFn<K, V> via() is not set");
 
-      ResourceId tmpDir = tempDirectory;
-      if (tmpDir == null) {
-        tmpDir = outputDirectory;
-      }
-
+      final ResourceId tmpDir = getTempDirectoryOrDefault(input.getPipeline());
       return input.apply(
           new SortedBucketTransform<>(
               keyClass,
@@ -249,21 +261,28 @@ public class SortedBucketIO {
       return new PreKeyedWrite<>(this, valueCoder, verifyKeyExtraction);
     }
 
+    ResourceId getTempDirectoryOrDefault(Pipeline pipeline) {
+      if (getTempDirectory() != null) {
+        return getTempDirectory();
+      }
+
+      final String tempLocationOpt = pipeline.getOptions().getTempLocation();
+      LoggerFactory.getLogger(SortedBucketIO.class)
+          .info(
+              "tempDirectory was not set for SortedBucketSink, defaulting to {}", tempLocationOpt);
+      return FileSystems.matchNewResource(tempLocationOpt, true);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public WriteResult expand(PCollection<V> input) {
       Preconditions.checkNotNull(getOutputDirectory(), "outputDirectory is not set");
 
-      final ResourceId outputDirectory = getOutputDirectory();
-      ResourceId tempDirectory = getTempDirectory();
-      if (tempDirectory == null) {
-        tempDirectory = outputDirectory;
-      }
       return input.apply(
           new SortedBucketSink<>(
               getBucketMetadata(),
-              outputDirectory,
-              tempDirectory,
+              getOutputDirectory(),
+              getTempDirectoryOrDefault(input.getPipeline()),
               getFilenameSuffix(),
               getFileOperations(),
               getSorterMemoryMb(),

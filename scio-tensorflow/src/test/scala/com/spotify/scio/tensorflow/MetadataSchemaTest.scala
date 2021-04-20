@@ -18,7 +18,7 @@
 package com.spotify.scio.tensorflow
 
 import com.google.protobuf.ByteString
-import org.tensorflow.example._
+import org.tensorflow.proto.example._
 
 import scala.jdk.CollectionConverters._
 

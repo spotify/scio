@@ -66,8 +66,8 @@ public class SMBFilenamePolicyTest {
         resolveFile(destination, PREFIX + "-00005-of-00008-shard-00001-of-00003", SUFFIX));
 
     Assert.assertEquals(
-        fileAssignment.forBucket(BucketShardId.ofNullKey(1), metadata),
-        resolveFile(destination, PREFIX + "-null-keys-shard-00001-of-00003", SUFFIX));
+        fileAssignment.forBucket(BucketShardId.ofNullKey(), metadata),
+        resolveFile(destination, PREFIX + "-null-keys", SUFFIX));
 
     // Test single-shard combinations
     final BucketMetadata singleShardMetadata = TestBucketMetadata.of(8, 1);
@@ -77,7 +77,7 @@ public class SMBFilenamePolicyTest {
         resolveFile(destination, PREFIX + "-00005-of-00008", SUFFIX));
 
     Assert.assertEquals(
-        fileAssignment.forBucket(BucketShardId.ofNullKey(0), singleShardMetadata),
+        fileAssignment.forBucket(BucketShardId.ofNullKey(), singleShardMetadata),
         resolveFile(destination, PREFIX + "-null-keys", SUFFIX));
 
     // Test invalid shard-bucket combinations

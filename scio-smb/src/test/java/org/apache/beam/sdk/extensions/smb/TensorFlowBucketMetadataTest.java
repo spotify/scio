@@ -28,12 +28,12 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tensorflow.example.BytesList;
-import org.tensorflow.example.Example;
-import org.tensorflow.example.Feature;
-import org.tensorflow.example.Features;
-import org.tensorflow.example.FloatList;
-import org.tensorflow.example.Int64List;
+import org.tensorflow.proto.example.BytesList;
+import org.tensorflow.proto.example.Example;
+import org.tensorflow.proto.example.Feature;
+import org.tensorflow.proto.example.Features;
+import org.tensorflow.proto.example.FloatList;
+import org.tensorflow.proto.example.Int64List;
 
 /** Unit tests for {@link TensorFlowBucketMetadata}. */
 public class TensorFlowBucketMetadataTest {

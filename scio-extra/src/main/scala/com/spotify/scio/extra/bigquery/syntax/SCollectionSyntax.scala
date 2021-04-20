@@ -19,8 +19,8 @@ package com.spotify.scio.extra.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableReference
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.bigquery.BigQueryTable.WriteParam
-import com.spotify.scio.bigquery.{BigQueryTable, Table, TableRow}
+import com.spotify.scio.bigquery.BigQueryTypedTable.WriteParam
+import com.spotify.scio.bigquery.{BigQueryTypedTable, Table, TableRow}
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
@@ -29,6 +29,7 @@ import org.apache.avro.generic.IndexedRecord
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 
 import scala.reflect.ClassTag
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 
 trait SCollectionSyntax {
   implicit def toAvroToBigQuerySCollection[T <: IndexedRecord: ClassTag](
@@ -70,6 +71,6 @@ final class AvroToBigQuerySCollectionOps[T <: IndexedRecord: ClassTag](
       WriteParam(toTableSchema(schema), writeDisposition, createDisposition, tableDescription)
     self
       .map(toTableRow(_))
-      .write(BigQueryTable(Table.Ref(table)))(params)
+      .write(BigQueryTypedTable(Table.Ref(table), Format.TableRow))(params)
   }
 }

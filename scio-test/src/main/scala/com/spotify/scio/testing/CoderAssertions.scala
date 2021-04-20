@@ -76,6 +76,26 @@ object CoderAssertions {
       }
     }
 
+  def beConsistentWithEquals[T: ClassTag](
+    opts: PipelineOptions = DefaultPipelineOptions
+  ): CoderAssertion[T] =
+    new CoderAssertion[T] {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
+        val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
+        beamCoder.consistentWithEquals() shouldBe true
+      }
+    }
+
+  def beDeterministic[T: ClassTag](
+    opts: PipelineOptions = DefaultPipelineOptions
+  ): CoderAssertion[T] =
+    new CoderAssertion[T] {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
+        val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
+        noException should be thrownBy beamCoder.verifyDeterministic()
+      }
+    }
+
   def coderIsSerializable[A](implicit c: Coder[A]): Assertion =
     coderIsSerializable(CoderMaterializer.beamWithDefault(c))
 

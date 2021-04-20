@@ -18,7 +18,6 @@
 package com.spotify.scio.parquet.tensorflow
 
 import java.lang.{Boolean => JBoolean}
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
@@ -44,10 +43,11 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.example.Example
+import org.tensorflow.proto.example.Example
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
+import org.apache.hadoop.conf.Configuration
 
 final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = ParquetExampleIO.ReadParam
@@ -55,7 +55,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override val tapT: TapT.Aux[Example, Example] = TapOf[Example]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
-    val job = Job.getInstance()
+    val job = Job.getInstance(params.conf)
     GcsConnectorUtil.setInputPaths(sc, job, path)
     job.setInputFormatClass(classOf[ExampleParquetInputFormat])
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
@@ -80,7 +80,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   }
 
   override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
-    val job = Job.getInstance()
+    val job = Job.getInstance(params.conf)
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
       GcsConnectorUtil.setCredentials(job)
     }
@@ -104,35 +104,46 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   }
 
   override def tap(params: ReadP): Tap[Example] =
-    ParquetExapmleTap(ScioUtil.addPartSuffix(path), params)
+    ParquetExampleTap(ScioUtil.addPartSuffix(path), params)
 }
 
 object ParquetExampleIO {
+  object ReadParam {
+    private[tensorflow] val DefaultProjection = null
+    private[tensorflow] val DefaultPredicate = null
+    private[tensorflow] val DefaultConfiguration = new Configuration()
+  }
   final case class ReadParam private (
-    projection: Seq[String] = null,
-    predicate: FilterPredicate = null
+    projection: Seq[String] = ReadParam.DefaultProjection,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
+    conf: Configuration = ReadParam.DefaultConfiguration
   )
 
   object WriteParam {
     private[tensorflow] val DefaultNumShards = 0
     private[tensorflow] val DefaultSuffix = ".parquet"
-    private[tensorflow] val DefaultCompression = CompressionCodecName.SNAPPY
+    private[tensorflow] val DefaultCompression = CompressionCodecName.GZIP
+    private[tensorflow] val DefaultConfiguration = new Configuration()
   }
 
   final case class WriteParam private (
     schema: Schema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression
+    compression: CompressionCodecName = WriteParam.DefaultCompression,
+    conf: Configuration = WriteParam.DefaultConfiguration
   )
 }
 
-final case class ParquetExapmleTap(path: String, params: ParquetExampleIO.ReadParam)
+final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadParam)
     extends Tap[Example] {
   override def value: Iterator[Example] = {
     val xs = FileSystems.`match`(path).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
-      val reader = ExampleParquetReader.builder(BeamInputFile.of(metadata.resourceId())).build()
+      val reader = ExampleParquetReader
+        .builder(BeamInputFile.of(metadata.resourceId()))
+        .withConf(params.conf)
+        .build()
       new Iterator[Example] {
         private var current: Example = reader.read()
         override def hasNext: Boolean = current != null
