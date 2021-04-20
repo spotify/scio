@@ -36,13 +36,17 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Utilities to deal with Bigtable. */
+/**
+ * Utilities to deal with Bigtable.
+ */
 public final class BigtableUtil {
 
-  private BigtableUtil() {}
+  private BigtableUtil() {
+  }
 
   private static final Logger LOG = LoggerFactory.getLogger(BigtableUtil.class);
 
@@ -64,17 +68,24 @@ public final class BigtableUtil {
    * end to lower costs yet still get high throughput during bulk ingests/dumps.
    *
    * @param bigtableOptions Bigtable Options
-   * @param numberOfNodes New number of nodes in the cluster
-   * @param sleepDuration How long to sleep after updating the number of nodes. Google recommends at
-   *     least 20 minutes before the new nodes are fully functional
-   * @throws IOException If setting up channel pool fails
+   * @param numberOfNodes   New number of nodes in the cluster
+   * @param sleepDuration   How long to sleep after updating the number of nodes. Google recommends at
+   *                        least 20 minutes before the new nodes are fully functional
+   * @throws IOException          If setting up channel pool fails
    * @throws InterruptedException If sleep fails
    */
   public static void updateNumberOfBigtableNodes(
       final BigtableOptions bigtableOptions,
       final int numberOfNodes,
       final Duration sleepDuration,
-      final Set<String> clusterNames) throws IOException, InterruptedException {
+      final Optional<Set<String>> clusterNamesOpt) throws IOException, InterruptedException {
+
+    clusterNamesOpt.ifPresent(cns -> {
+      if (cns.isEmpty()) {
+        throw new IllegalArgumentException("Cluster names shouldn't be empty");
+      }
+    });
+
     final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions);
 
     try {
@@ -89,12 +100,16 @@ public final class BigtableUtil {
       final ListClustersResponse clustersResponse =
           bigtableInstanceClient.listCluster(clustersRequest);
 
-      final List<Cluster> clusters = clustersResponse
-          .getClustersList()
-          .stream()
-          // if no clusters specified then apply to all clusters in the instance.
-          .filter(c -> clusterNames.isEmpty() || clusterNames.contains(shorterName(c.getName())))
-          .collect(Collectors.toList());
+      List<Cluster> clusters = clustersResponse
+          .getClustersList();
+
+      if (clusterNamesOpt.isPresent()) {
+        Set<String> clustersToScale = clusterNamesOpt.get();
+        clusters = clusters
+            .stream()
+            .filter(cluster -> clustersToScale.contains(shorterName(cluster.getName())))
+            .collect(Collectors.toList());
+      }
 
       // For each cluster update the number of nodes
       for (Cluster cluster : clusters) {
@@ -117,17 +132,17 @@ public final class BigtableUtil {
   /**
    * Get size of all clusters for specified Bigtable instance.
    *
-   * @param projectId GCP projectId
+   * @param projectId  GCP projectId
    * @param instanceId Bigtable instanceId
    * @return map of clusterId to its number of nodes
-   * @throws IOException If setting up channel pool fails
+   * @throws IOException              If setting up channel pool fails
    * @throws GeneralSecurityException If security-related exceptions occurs
    */
   public static Map<String, Integer> getClusterSizes(
       final String projectId, final String instanceId)
       throws IOException, GeneralSecurityException {
     try (BigtableClusterUtilities clusterUtil =
-        BigtableClusterUtilities.forInstance(projectId, instanceId)) {
+             BigtableClusterUtilities.forInstance(projectId, instanceId)) {
       return Collections.unmodifiableMap(
           clusterUtil.getClusters().getClustersList().stream()
               .collect(

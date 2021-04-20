@@ -29,11 +29,11 @@ import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
 
 object ScioContextOps {
   private val DefaultSleepDuration = Duration.standardMinutes(20)
-  // Empty set means all clusters.
-  private val DefaultClusterNames: Set[String] = Set.empty
+  private val DefaultClusterNames: Option[Set[String]] = None
 }
 
 /** Enhanced version of [[ScioContext]] with Bigtable methods. */
@@ -117,7 +117,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     projectId: String,
     instanceId: String,
     numberOfNodes: Int,
-    clusterNames: Set[String],
+    clusterNames: Option[Set[String]],
     sleepDuration: Duration
   ): Unit = {
     val bigtableOptions = BigtableOptions
@@ -163,7 +163,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def updateNumberOfBigtableNodes(
     bigtableOptions: BigtableOptions,
     numberOfNodes: Int,
-    clusterNames: Set[String],
+    clusterNames: Option[Set[String]],
     sleepDuration: Duration
   ): Unit =
     if (!self.isTest) {
@@ -172,7 +172,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         bigtableOptions,
         numberOfNodes,
         sleepDuration,
-        clusterNames.asJava
+        clusterNames.map(_.asJava).toJava
       )
     }
 
