@@ -87,7 +87,7 @@ private[scio] object ScioUtil {
   def pathWithShards(path: String): String =
     path.replaceAll("\\/+$", "") + "/part"
 
-  def hashCodeFn[K]: K => Int = {
+  def consistentHashCode[K](k: K): Int = k match {
     case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
     case key           => key.##
   }
