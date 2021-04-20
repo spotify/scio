@@ -28,8 +28,8 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
 
+import java.util.Optional
 import scala.jdk.CollectionConverters._
-import scala.jdk.OptionConverters.RichOption
 
 object ScioContextOps {
   private val DefaultSleepDuration = Duration.standardMinutes(20)
@@ -172,7 +172,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
         bigtableOptions,
         numberOfNodes,
         sleepDuration,
-        clusterNames.map(_.asJava).toJava
+        Optional.ofNullable(clusterNames.map(_.asJava).orNull)
       )
     }
 
