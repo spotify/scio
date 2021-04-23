@@ -33,7 +33,7 @@ import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
 import org.slf4j.LoggerFactory
 
-import scala.collection.compat._
+import scala.collection.compat._ // scalafix:ok
 
 private object PairSCollectionFunctions {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -165,13 +165,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @return partitioned SCollections in a `Seq`
    * @group collection
    */
-  def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] = {
-    val hashCodeFn: K => Int = {
-      case key: Array[_] => immutable.ArraySeq.unsafeWrapArray(key).##
-      case key           => key.##
-    }
-    self.partition(numPartitions, elem => Math.floorMod(hashCodeFn(elem._1), numPartitions))
-  }
+  def hashPartitionByKey(numPartitions: Int): Seq[SCollection[(K, V)]] =
+    self.partition(
+      numPartitions,
+      elem => Math.floorMod(ScioUtil.consistentHashCode(elem._1), numPartitions)
+    )
 
   // =======================================================================
   // Joins

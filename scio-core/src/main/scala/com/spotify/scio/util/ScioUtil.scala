@@ -19,7 +19,6 @@ package com.spotify.scio.util
 
 import java.net.URI
 import java.util.UUID
-
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.ScioContext
@@ -28,6 +27,7 @@ import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 
+import scala.collection.compat.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
@@ -86,4 +86,9 @@ private[scio] object ScioUtil {
 
   def pathWithShards(path: String): String =
     path.replaceAll("\\/+$", "") + "/part"
+
+  def consistentHashCode[K](k: K): Int = k match {
+    case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
+    case key           => key.##
+  }
 }
