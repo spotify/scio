@@ -54,5 +54,7 @@ jobs:
         uses: coursier/cache-action@v5
       - name: java 8 setup
         uses: olafurpg/setup-scala@v10
-      - name: Compile
+      - name: Scala 2
+        run: sbt "++2.13.5;${{ matrix.task }}"
+      - name: Scala 3
         run: sbt "++3.0.0-RC2;${{ matrix.task }}"
