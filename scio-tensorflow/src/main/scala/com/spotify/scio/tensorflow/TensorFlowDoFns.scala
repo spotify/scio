@@ -49,9 +49,9 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   def withRunner(f: Session#Runner => V): V
 
-  def extractInput(input: T): Map[String, Tensor[_]]
+  def extractInput(input: T): Map[String, Tensor]
 
-  def extractOutput(input: T, out: Map[String, Tensor[_]]): V
+  def extractOutput(input: T, out: Map[String, Tensor]): V
 
   def outputTensorNames: Seq[String]
 
@@ -144,12 +144,12 @@ object SavedBundlePredictDoFn {
     fetchOps: Seq[String],
     options: TensorFlowModel.Options,
     signatureName: String,
-    inFn: T => Map[String, Tensor[_]],
-    outFn: (T, Map[String, Tensor[_]]) => V
+    inFn: T => Map[String, Tensor],
+    outFn: (T, Map[String, Tensor]) => V
   ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
-    override def extractInput(input: T): Map[String, Tensor[_]] = inFn(input)
+    override def extractInput(input: T): Map[String, Tensor] = inFn(input)
 
-    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V = outFn(input, out)
+    override def extractOutput(input: T, out: Map[String, Tensor]): V = outFn(input, out)
 
     override def outputTensorNames: Seq[String] = fetchOps
 
@@ -161,8 +161,8 @@ object SavedBundlePredictDoFn {
     fetchOps: Option[Seq[String]],
     options: TensorFlowModel.Options,
     signatureName: String,
-    inFn: T => Map[String, Tensor[_]],
-    outFn: (T, Map[String, Tensor[_]]) => V
+    inFn: T => Map[String, Tensor],
+    outFn: (T, Map[String, Tensor]) => V
   ): SavedBundlePredictDoFn[T, V] = new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
     private lazy val exportedFetchOps =
       model.outputsNameMap().asScala.toMap
@@ -172,14 +172,14 @@ object SavedBundlePredictDoFn {
       }
       .getOrElse(exportedFetchOps)
 
-    override def extractInput(input: T): Map[String, Tensor[_]] = {
+    override def extractInput(input: T): Map[String, Tensor] = {
       val extractedInput = inFn(input)
       extractedInput.iterator.map { case (tensorId, tensor) =>
         model.inputsNameMap().get(tensorId) -> tensor
       }.toMap
     }
 
-    override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+    override def extractOutput(input: T, out: Map[String, Tensor]): V =
       outFn(
         input,
         requestedFetchOps.iterator.map { case (tensorId, opName) =>
@@ -202,7 +202,7 @@ object SavedBundlePredictDoFn {
     fetchOps: Option[Seq[String]],
     options: TensorFlowModel.Options,
     signatureName: String,
-    outFn: (T, Map[String, Tensor[_]]) => V
+    outFn: (T, Map[String, Tensor]) => V
   )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
     new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
       private lazy val exportedFetchOps =
@@ -215,14 +215,14 @@ object SavedBundlePredictDoFn {
 
       override def outputTensorNames: Seq[String] = requestedFetchOps.values.toSeq
 
-      override def extractInput(input: T): Map[String, Tensor[_]] = {
+      override def extractInput(input: T): Map[String, Tensor] = {
         val opName = model.inputsNameMap().get(exampleTensorName)
         val bytes = NdArrays.vectorOfObjects(input.toByteArray())
         val tensor = TString.tensorOfBytes(bytes)
         Map(opName -> tensor)
       }
 
-      override def extractOutput(input: T, out: Map[String, Tensor[_]]): V =
+      override def extractOutput(input: T, out: Map[String, Tensor]): V =
         outFn(
           input,
           requestedFetchOps.iterator.map { case (tensorId, opName) =>

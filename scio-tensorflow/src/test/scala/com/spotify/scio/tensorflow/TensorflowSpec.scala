@@ -76,7 +76,7 @@ object TFSavedRawJob {
         Map("input_example_tensor" -> tensor)
       } { (_, o) =>
         val tensor = o("linear/head/predictions/class_ids")
-        tensor.data().asInstanceOf[TInt64].getObject()
+        tensor.asInstanceOf[TInt64].getLong()
       }
       .saveAsTextFile(args("output"))
 
@@ -106,8 +106,8 @@ object TFSavedTensorsMapInputDefaultSigDefJob {
         val tensor = TString.tensorOfBytes(NdArrays.vectorOfObjects(e.toByteArray()))
         Map("inputs" -> tensor)
       } { (_, o) =>
-        val classes = o("classes").data().asInstanceOf[TString].get(0)
-        val scores = o("scores").data().asInstanceOf[TFloat32].get(0)
+        val classes = o("classes").asInstanceOf[TString].get(0)
+        val scores = o("scores").asInstanceOf[TFloat32].get(0)
         classes
           .scalars()
           .iterator()
@@ -146,7 +146,7 @@ object TFSavedTensorsMapInputPredictSigDefJob {
         Map("examples" -> tensor)
       } { (_, o) =>
         // get the highest probability class
-        o("classes").data().asInstanceOf[TString].get(0).getObject()
+        o("classes").asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -180,7 +180,7 @@ object TFSavedTensorsMapInputPredictSigDefSpecifiedFetchOpsJob {
       )(e => Map("examples" -> TString.tensorOfBytes(NdArrays.vectorOfObjects(e.toByteArray())))) {
         (_, o) =>
           // get the highest probability class
-          o("classes").data().asInstanceOf[TString].get(0).getObject()
+          o("classes").asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -210,8 +210,8 @@ object TFSavedExampleInputDefaultSigDefJob {
         savedModelUri = args("savedModelUri"),
         options = options
       ) { (_, o) =>
-        val classes = o("classes").data().asInstanceOf[TString].get(0)
-        val scores = o("scores").data().asInstanceOf[TFloat32].get(0)
+        val classes = o("classes").asInstanceOf[TString].get(0)
+        val scores = o("scores").asInstanceOf[TFloat32].get(0)
         // get the highest probability class
         classes
           .scalars()
@@ -253,7 +253,7 @@ object TFSavedExampleInputPredictSigDefJob {
         signatureName = "predict"
       ) { (_, o) =>
         // get the highest probability class
-        o("classes").data().asInstanceOf[TString].get(0).getObject()
+        o("classes").asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 
@@ -287,7 +287,7 @@ object TFSavedExampleInputPredictSigDefSpecifiedFetchOpsJob {
         signatureName = "predict"
       ) { (_, o) =>
         // get the highest probability class
-        o("classes").data().asInstanceOf[TString].get(0).getObject()
+        o("classes").asInstanceOf[TString].get(0).getObject()
       }
       .saveAsTextFile(args("output"))
 

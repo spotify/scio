@@ -52,7 +52,7 @@ val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.15"
 val elasticsearch7Version = "7.12.0"
-val featranVersion = "0.8.0-RC1"
+val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.60.0"
 val gcsVersion = "1.8.0"
@@ -89,7 +89,7 @@ val metricsVersion = "3.2.6"
 val nettyVersion = "4.1.51.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
 val opencensusVersion = "0.24.0"
-val parquetExtraVersion = "0.4.0"
+val parquetExtraVersion = "0.4.1"
 val parquetVersion = "1.12.0"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.15.8"
@@ -101,7 +101,7 @@ val shapelessVersion = "2.3.4"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
-val tensorFlowVersion = "0.2.0"
+val tensorFlowVersion = "0.3.1"
 val zoltarVersion = "0.6.0-M2"
 val scalaCollectionCompatVersion = "2.4.3"
 
@@ -816,6 +816,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
