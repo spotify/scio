@@ -50,4 +50,15 @@ class ToSafeTest extends AnyFlatSpec with Matchers {
   it should "fail on incompatible nested case class schemas" in {
     "To.safe[Sources, DestinationsWrong]" shouldNot compile
   }
+
+  it should "work with java beans" in {
+    "To.safe[JavaBeanA, JavaBeanB]" shouldNot compile
+    "To.safe[JavaBeanB, JavaBeanA]" shouldNot compile
+
+    "To.safe[JavaBeanB, JavaBeanC]" shouldNot compile
+    "To.safe[JavaBeanC, JavaBeanB]" shouldNot compile
+
+    To.safe[JavaBeanA, JavaBeanC]
+    To.safe[JavaBeanC, JavaBeanA]
+  }
 }
