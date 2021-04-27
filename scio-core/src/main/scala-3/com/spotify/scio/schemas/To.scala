@@ -25,6 +25,7 @@ import scala.deriving._
 import scala.quoted._
 import scala.reflect.ClassTag
 import scala.collection.mutable
+import com.spotify.scio.IsJavaBean.checkGetterAndSetters
 
 object ToMacro {
 
@@ -146,12 +147,11 @@ object ToMacro {
       case _ =>
         import quotes.reflect._
         val tp = TypeRepr.of[T]
-        val caseClass: Symbol = tp.typeSymbol
-        val fields: List[Symbol] = caseClass.caseFields
+        val tpSymbol: Symbol = tp.typeSymbol
 
         // if case class iterate and recurse, else sorry
-        if tp <:< TypeRepr.of[Product] && fields.nonEmpty then {
-          val schemasOpt: List[Option[(String, Schema[Any])]] = fields.map { (f: Symbol) =>
+        if tp <:< TypeRepr.of[Product] && tpSymbol.caseFields.nonEmpty then {
+          val schemasOpt: List[Option[(String, Schema[Any])]] = tpSymbol.caseFields.map { (f: Symbol) =>
             assert(f.isValDef)
             val fieldName = f.name
             val fieldType: TypeRepr = tp.memberType(f)
@@ -160,6 +160,19 @@ object ToMacro {
               case '[u] => interpret[u].asInstanceOf[Option[Schema[Any]]].map(s => (fieldName, s))
             }
           }
+          sequence(schemasOpt).map(schemas => Record(schemas.toArray, null, null))
+        } else if tpSymbol.flags.is(Flags.JavaDefined) && scala.util.Try(checkGetterAndSetters(tpSymbol)).isSuccess then {
+          val schemasOpt = tpSymbol.declaredMethods.collect {
+            case s if s.name.toString.startsWith("get") && s.isDefDef=>
+              // AVOID .TREE ? It is already used in checkGetterAndSetter
+              val fieldName: String = s.name.toString.drop(3)
+              val fieldType: TypeRepr = s.tree.asInstanceOf[DefDef].returnTpt.tpe
+
+              fieldType.asType match {
+                case '[u] => interpret[u].asInstanceOf[Option[Schema[Any]]].map(s => (fieldName, s))
+              }
+          }
+          // RawRecord is used for JavaBeans, not Record
           sequence(schemasOpt).map(schemas => Record(schemas.toArray, null, null))
         } else None
     }

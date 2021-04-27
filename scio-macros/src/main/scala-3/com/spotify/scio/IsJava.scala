@@ -26,7 +26,7 @@ sealed trait IsJavaBean[T]
 
 object IsJavaBean {
 
-  private def checkGetterAndSetters(using q: Quotes)(sym: q.reflect.Symbol): Unit = {
+  private[scio] def checkGetterAndSetters(using q: Quotes)(sym: q.reflect.Symbol): Unit = {
     import q.reflect._
     val methods: List[Symbol] = sym.declaredMethods
 
