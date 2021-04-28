@@ -164,12 +164,13 @@ object ToMacro {
         } else if tpSymbol.flags.is(Flags.JavaDefined) && scala.util.Try(checkGetterAndSetters(tpSymbol)).isSuccess then {
           val schemasOpt = tpSymbol.declaredMethods.collect {
             case s if s.name.toString.startsWith("get") && s.isDefDef=>
-              // AVOID .TREE ? It is already used in checkGetterAndSetter
               val fieldName: String = s.name.toString.drop(3)
-              val fieldType: TypeRepr = s.tree.asInstanceOf[DefDef].returnTpt.tpe
-
-              fieldType.asType match {
-                case '[u] => interpret[u].asInstanceOf[Option[Schema[Any]]].map(s => (fieldName, s))
+              val fieldType: TypeRepr = tp.memberType(s)
+              fieldType match {
+                case MethodType(_, _, returnTpt) => 
+                  returnTpt.asType match {
+                    case '[u] => interpret[u].asInstanceOf[Option[Schema[Any]]].map(s => (fieldName, s))
+                  }
               }
           }
           // RawRecord is used for JavaBeans, not Record
