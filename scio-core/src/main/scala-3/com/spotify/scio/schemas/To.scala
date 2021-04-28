@@ -161,7 +161,7 @@ object ToMacro {
             }
           }
           sequence(schemasOpt).map(schemas => Record(schemas.toArray, null, null))
-        } else if tpSymbol.flags.is(Flags.JavaDefined) && scala.util.Try(checkGetterAndSetters(tpSymbol)).isSuccess then {
+        } else if tpSymbol.flags.is(Flags.JavaDefined) && scala.util.Try(checkGetterAndSetters[T]).isSuccess then {
           val schemasOpt = tpSymbol.declaredMethods.collect {
             case s if s.name.toString.startsWith("get") && s.isDefDef=>
               val fieldName: String = s.name.toString.drop(3)

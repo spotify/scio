@@ -26,30 +26,30 @@ sealed trait IsJavaBean[T]
 
 object IsJavaBean {
 
-  private[scio] def checkGetterAndSetters(using q: Quotes)(sym: q.reflect.Symbol): Unit = {
-    import q.reflect._
-    val methods: List[Symbol] = sym.declaredMethods
+  private[scio] def checkGetterAndSetters[T: scala.quoted.Type](using Quotes): Unit = {
+    import quotes.reflect._
+    val methods: List[Symbol] = TypeRepr.of[T].typeSymbol.declaredMethods
 
-    val getters =
+    val getters: List[(String, Symbol)] =
       methods.collect {
-        case s if s.name.toString.startsWith("get") =>
-          (s.name.toString.drop(3), s.tree.asInstanceOf[DefDef])
+        case s if s.name.toString.startsWith("get") && s.isDefDef =>
+          (s.name.toString.drop(3), s)
       }
 
-    val setters =
+    val setters: Map[String, Symbol] =
       methods.collect {
-        case s if s.name.toString.startsWith("set") =>
-          (s.name.toString.drop(3), s.tree.asInstanceOf[DefDef])
+        case s if s.name.toString.startsWith("set") && s.isDefDef =>
+          (s.name.toString.drop(3), s)
       }.toMap
 
-    if(getters.isEmpty) {
+    if (getters.isEmpty) then {
       val mess =
-        s"""Class ${sym.name} has not getter"""
+        s"""Class ${TypeRepr.of[T].typeSymbol.name} has not getter"""
       report.throwError(mess)
     }
 
-    getters.foreach { case (name, info) =>
-      val setter: DefDef =
+    getters.foreach { case (name, getter) =>
+      val setter: Symbol =
         setters // Map[String, DefDef]
           .get(name)
           .getOrElse {
@@ -59,26 +59,26 @@ object IsJavaBean {
             report.throwError(mess)
           }
 
-      val resType: TypeRepr = info.returnTpt.tpe
-      setter.paramss.head match {
-        case TypeParamClause(params: List[TypeDef]) => report.throwError(s"JavaBean setter for field $name has type parameters")
-        case TermParamClause(head :: _) => 
-          val tpe = head.tpt.tpe
-          if (resType != tpe) {
+      val getterType: TypeRepr = TypeRepr.of[T].memberType(getter)
+      val setterType: TypeRepr = TypeRepr.of[T].memberType(setter)
+      (getterType, setterType) match {
+        // MethodType(paramNames, paramTypes, returnType)
+        case (MethodType(_, Nil, getReturnType), MethodType(_, setReturnType :: Nil, _)) =>
+          if getReturnType != setReturnType then {
             val mess =
               s"""JavaBean contained setter for field $name that had a mismatching type.
-                    |  found:    $tpe
-                    |  expected: $resType""".stripMargin
+                    |  found:    $setReturnType
+                    |  expected: $getReturnType""".stripMargin
             report.throwError(mess)
           }
       }
     }
   }
 
+
   private def isJavaBeanImpl[T](using Quotes, Type[T]): Expr[IsJavaBean[T]] = {
     import quotes.reflect._
-    val sym =  TypeRepr.of[T].typeSymbol
-    if sym.flags.is(Flags.JavaDefined) then checkGetterAndSetters(sym)
+    if TypeRepr.of[T].typeSymbol.flags.is(Flags.JavaDefined) then checkGetterAndSetters[T]
     '{new IsJavaBean[T]{}}
   }
 
