@@ -147,7 +147,7 @@ val commonSettings = Def
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
-    javacOptions in (Compile, doc) := Seq("-source", "1.8"),
+    Compile / doc / javacOptions := Seq("-source", "1.8"),
     // protobuf-lite is an older subset of protobuf-java and causes issues
     excludeDependencies += "com.google.protobuf" % "protobuf-lite",
     resolvers += Resolver.sonatypeRepo("public"),
@@ -235,7 +235,7 @@ lazy val itSettings = Def.settings(
   Defaults.itSettings,
   IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   // exclude all sources if we don't have GCP credentials
-  (excludeFilter in unmanagedSources) in IntegrationTest := {
+  IntegrationTest / unmanagedSources / excludeFilter := {
     if (BuildCredentials.exists) {
       HiddenFileFilter
     } else {
@@ -249,8 +249,8 @@ lazy val itSettings = Def.settings(
 )
 
 lazy val assemblySettings = Seq(
-  test in assembly := {},
-  assemblyMergeStrategy in assembly ~= { old =>
+  assembly / test := {},
+  assembly / assemblyMergeStrategy ~= { old =>
     {
       case s if s.endsWith(".properties")            => MergeStrategy.filterDistinctLines
       case s if s.endsWith("public-suffix-list.txt") => MergeStrategy.filterDistinctLines
@@ -340,11 +340,11 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 )
 
 lazy val protobufSettings = Def.settings(
-  version in ProtobufConfig := protobufVersion,
-  protobufRunProtoc in ProtobufConfig := (args =>
+  ProtobufConfig / version := protobufVersion,
+  ProtobufConfig / protobufRunProtoc := (args =>
     com.github.os72.protocjar.Protoc.runProtoc("-v3.11.4" +: args.toArray)
   ),
-  libraryDependencies += "com.google.protobuf" % "protobuf-java" % (version in ProtobufConfig).value % ProtobufConfig.name
+  libraryDependencies += "com.google.protobuf" % "protobuf-java" % (ProtobufConfig / version).value % ProtobufConfig.name
 )
 
 def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: ForkOptions) = {
@@ -388,9 +388,9 @@ lazy val `scio-core`: Project = project
   .settings(itSettings)
   .settings(
     description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
-    resources in Compile ++= Seq(
-      (baseDirectory in ThisBuild).value / "build.sbt",
-      (baseDirectory in ThisBuild).value / "version.sbt"
+    Compile / resources ++= Seq(
+      (ThisBuild / baseDirectory).value / "build.sbt",
+      (ThisBuild / baseDirectory).value / "version.sbt"
     ),
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % shapelessVersion,
@@ -800,9 +800,9 @@ lazy val `scio-parquet`: Project = project
   .settings(
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
-    (compile in Compile) := Def.task {
+    Compile / compile := Def.task {
       val _ = ensureSourceManaged.value
-      (compile in Compile).value
+      (Compile / compile).value
     }.value,
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
     description := "Scio add-on for Parquet",
@@ -891,7 +891,7 @@ lazy val `scio-schemas`: Project = project
       .filterNot(_.getPath.endsWith("/src_managed/main")),
     Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
-    sources in doc in Compile := List(), // suppress warnings
+    Compile / doc / sources := List(), // suppress warnings
     compileOrder := CompileOrder.JavaThenScala
   )
   .enablePlugins(ProtobufPlugin)
@@ -945,15 +945,15 @@ lazy val `scio-examples`: Project = project
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
     // exclude problematic sources if we don't have GCP credentials
-    excludeFilter in unmanagedSources := {
+    unmanagedSources / excludeFilter := {
       if (BuildCredentials.exists) {
         HiddenFileFilter
       } else {
         HiddenFileFilter || "TypedBigQueryTornadoes*.scala" || "TypedStorageBigQueryTornadoes*.scala"
       }
     },
-    fork in run := true,
-    sources in doc in Compile := List(),
+    run / fork := true,
+    Compile / doc / sources := List(),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
@@ -1024,9 +1024,9 @@ lazy val `scio-jmh`: Project = project
   .settings(macroSettings)
   .settings(
     description := "Scio JMH Microbenchmarks",
-    sourceDirectory in Jmh := (sourceDirectory in Test).value,
-    classDirectory in Jmh := (classDirectory in Test).value,
-    dependencyClasspath in Jmh := (dependencyClasspath in Test).value,
+    Jmh / sourceDirectory := (Test / sourceDirectory).value,
+    Jmh / classDirectory := (Test / classDirectory).value,
+    Jmh / dependencyClasspath := (Test / dependencyClasspath).value,
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "junit" % "junit" % junitVersion % "test",
@@ -1245,9 +1245,9 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
     addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.4").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
-    compile in Compile := {
+    Compile / compile := {
       val _ = soccoIndex.value
-      (compile in Compile).value
+      (Compile / compile).value
     }
   )
 } else {
