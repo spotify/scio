@@ -31,7 +31,7 @@ val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val asmVersion = "4.13"
 val autoServiceVersion = "1.0"
-val autoValueVersion = "1.8"
+val autoValueVersion = "1.8.1"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
 val beamVersion = "2.28.0"
@@ -39,8 +39,8 @@ val bigdataossVersion = "2.1.6"
 val bigQueryStorageVersion = "0.133.0-beta"
 val bigtableClientVersion = "1.16.0"
 val breezeVersion = "1.2"
-val caffeineVersion = "2.9.0"
-val caseappVersion = "2.0.6"
+val caffeineVersion = "2.9.1"
+val caseappVersion = "2.0.5"
 val catsVersion = "2.5.0"
 val chillVersion = "0.9.5"
 val circeVersion = "0.13.0"
@@ -51,7 +51,7 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.15"
-val elasticsearch7Version = "7.12.0"
+val elasticsearch7Version = "7.12.1"
 val featranVersion = "0.8.0-RC1"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.60.0"
@@ -96,7 +96,7 @@ val protobufVersion = "3.15.8"
 val scalacheckVersion = "1.15.3"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
-val scalatestVersion = "3.2.7"
+val scalatestVersion = "3.2.8"
 val shapelessVersion = "2.3.4"
 val slf4jVersion = "1.7.30"
 val sparkeyVersion = "3.2.1"
@@ -509,7 +509,7 @@ lazy val `scio-test`: Project = project
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.novocode" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
-      "com.lihaoyi" %% "pprint" % "0.6.4",
+      "com.lihaoyi" %% "pprint" % "0.6.5",
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -517,7 +517,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.2.7",
+      "org.scalactic" %% "scalactic" % "3.2.8",
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
