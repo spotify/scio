@@ -731,19 +731,20 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     @SuppressWarnings("unchecked")
     private void writeObject(ObjectOutputStream outStream) throws IOException {
       SerializableCoder.of(TupleTag.class).encode(tupleTag, outStream);
-      StringUtf8Coder.of().encode(filenameSuffix, outStream);
-      SerializableCoder.of(FileOperations.class).encode(fileOperations, outStream);
       ListCoder.of(ResourceIdCoder.of()).encode(inputDirectories, outStream);
-      SerializableCoder.of(Predicate.class).encode(predicate, outStream);
+      outStream.writeUTF(filenameSuffix);
+      outStream.writeObject(fileOperations);
+      outStream.writeObject(predicate);
+      outStream.flush();
     }
 
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
       this.tupleTag = SerializableCoder.of(TupleTag.class).decode(inStream);
-      this.filenameSuffix = StringUtf8Coder.of().decode(inStream);
-      this.fileOperations = SerializableCoder.of(FileOperations.class).decode(inStream);
       this.inputDirectories = ListCoder.of(ResourceIdCoder.of()).decode(inStream);
-      this.predicate = SerializableCoder.of(Predicate.class).decode(inStream);
+      this.filenameSuffix = inStream.readUTF();
+      this.fileOperations = (FileOperations<V>) inStream.readObject();
+      this.predicate = (Predicate<V>) inStream.readObject();
     }
   }
 
