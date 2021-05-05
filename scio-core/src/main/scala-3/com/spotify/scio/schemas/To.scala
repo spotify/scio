@@ -106,6 +106,35 @@ object ToMacro {
       case '[List[u]] =>
         for (itemSchema <- interpret[u])
         yield Schema.listSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[mutable.ArrayBuffer[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.arrayBufferSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[mutable.Buffer[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.bufferSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[mutable.Set[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.mutableSetSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[Set[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.setSchema(using itemSchema).asInstanceOf[Schema[T]]
+      // TODO SortedSet[T]
+      case '[mutable.ListBuffer[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.listBufferSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[Vector[u]] =>
+        for (itemSchema <- interpret[u])
+        yield Schema.vectorSchema(using itemSchema).asInstanceOf[Schema[T]]
+      case '[mutable.Map[k, v]] =>
+        for {
+          keySchema <- interpret[k]
+          valueSchema <- interpret[v]
+        } yield Schema.mutableMapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
+      case '[Map[k, v]] =>
+        for {
+          keySchema <- interpret[k]
+          valueSchema <- interpret[v]
+        } yield Schema.mapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
       case '[Seq[u]] => 
         for (itemSchema <- interpret[u])
         yield Schema.seqSchema(using itemSchema).asInstanceOf[Schema[T]]
@@ -115,35 +144,6 @@ object ToMacro {
       case '[Iterable[u]] =>
         for (itemSchema <- interpret[u])
         yield Schema.iterableSchema(using itemSchema).asInstanceOf[Schema[T]]
-      case '[mutable.ArrayBuffer[u]] =>
-        for (itemSchema <- interpret[u])
-        yield Schema.arrayBufferSchema(using itemSchema).asInstanceOf[Schema[T]]
-      case '[mutable.Buffer[u]] =>
-        for (itemSchema <- interpret[u])
-        yield Schema.bufferSchema(using itemSchema).asInstanceOf[Schema[T]]
-      case '[Set[u]] =>
-        for (itemSchema <- interpret[u])
-        yield Schema.setSchema(using itemSchema).asInstanceOf[Schema[T]]
-      case '[mutable.Set[u]] =>
-        for (itemSchema <- interpret[u])
-        yield Schema.mutableSetSchema(using itemSchema).asInstanceOf[Schema[T]]
-      // TODO SortedSet[T]
-      case '[mutable.ListBuffer[u]] =>
-        for (itemSchema <- interpret[u])
-        yield Schema.listBufferSchema(using itemSchema).asInstanceOf[Schema[T]]
-      case '[Vector[u]] =>
-        for (itemSchema <- interpret[u])
-        yield Schema.vectorSchema(using itemSchema).asInstanceOf[Schema[T]]
-      case '[Map[k, v]] =>
-        for {
-          keySchema <- interpret[k]
-          valueSchema <- interpret[v]
-        } yield Schema.mapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
-      case '[mutable.Map[k, v]] =>
-        for {
-          keySchema <- interpret[k]
-          valueSchema <- interpret[v]
-        } yield Schema.mutableMapSchema(using keySchema, valueSchema).asInstanceOf[Schema[T]]
       case _ =>
         import quotes.reflect._
         val tp = TypeRepr.of[T]
