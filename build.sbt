@@ -29,14 +29,13 @@ val algebirdVersion = "0.13.7"
 val algebraVersion = "2.2.2"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
-val asmVersion = "4.13"
 val autoServiceVersion = "1.0"
 val autoValueVersion = "1.8.1"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.28.0"
+val beamVersion = "2.29.0"
 val bigdataossVersion = "2.1.6"
-val bigQueryStorageVersion = "0.133.0-beta"
+val bigQueryStorageVersion = "1.12.0"
 val bigtableClientVersion = "1.16.0"
 val breezeVersion = "1.2"
 val caffeineVersion = "2.9.1"
@@ -54,25 +53,26 @@ val elasticsearch6Version = "6.8.15"
 val elasticsearch7Version = "7.12.1"
 val featranVersion = "0.8.0-RC1"
 val flinkVersion = "1.12.1"
-val gaxVersion = "1.60.0"
+val gaxVersion = "1.60.1"
 val gcsVersion = "1.8.0"
-val generatedGrpcBetaVersion = "1.14.0"
-val generatedDatastoreProtoVersion = "0.85.0"
-val generatedGrpcGaVersion = "1.85.1"
-val googleApiServicesBigQuery = "v2-rev20200719-1.30.10"
-val googleApiServicesDataflow = "v1b3-rev20200713-1.30.10"
-val googleAuthVersion = "0.19.0"
-val googleClientsVersion = "1.30.10"
-val googleCloudCoreVersion = "1.93.7"
-val googleCloudSpannerVersion = "1.59.0"
-val googleHttpClientsVersion = "1.36.0"
-val googleOauthClientVersion = "1.31.0"
-val grpcVersion = "1.32.2"
-val guavaVersion = "28.2-jre"
+val generatedGrpcBetaVersion = "1.19.2"
+val generatedDatastoreProtoVersion = "0.88.5"
+val googleClientsVersion = "1.31.1"
+val googleApiServicesBigQueryVersion = s"v2-rev20210219-1.31.0"
+val googleApiServicesDataflowVersion = s"v1b3-rev20210217-1.31.0"
+val googleApiServicesPubsubVersion = s"v1-rev20210208-1.31.0"
+val googleApiServicesStorageVersion = s"v1-rev20210127-1.31.0"
+val googleAuthVersion = "0.22.2"
+val googleCloudCoreVersion = "1.94.0"
+val googleCloudSpannerVersion = "3.2.1"
+val googleHttpClientsVersion = "1.38.1"
+val googleOauthClientVersion = "1.31.2"
+val grpcVersion = "1.35.0"
+val guavaVersion = "30.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
-val httpCoreVersion = "4.4.13"
-val jacksonVersion = "2.10.5"
+val httpCoreVersion = "4.4.14"
+val jacksonVersion = "2.12.1"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.8.0"
@@ -86,9 +86,9 @@ val kryoVersion =
 val magnoliaVersion = "0.17.0"
 val magnolifyVersion = "0.4.3"
 val metricsVersion = "3.2.6"
-val nettyVersion = "4.1.51.Final"
+val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.33.Final"
-val opencensusVersion = "0.24.0"
+val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.0"
 val parquetVersion = "1.12.0"
 val protobufGenericVersion = "0.2.9"
@@ -401,7 +401,7 @@ lazy val `scio-core`: Project = project
       "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflow,
+      "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -599,12 +599,13 @@ lazy val `scio-google-cloud-platform`: Project = project
       ),
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % "0.98.0",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.120.2",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % "1.20.2",
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
       "com.google.api" % "gax" % gaxVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
@@ -737,7 +738,7 @@ lazy val `scio-extra`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sketching" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-zetasketch" % beamVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "com.spotify" % "annoy" % annoyVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
@@ -915,7 +916,7 @@ lazy val `scio-examples`: Project = project
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.2.3",
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
@@ -930,7 +931,7 @@ lazy val `scio-examples`: Project = project
       "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.alexarchambault" %% "case-app-util" % caseappVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.apis" % "google-api-services-pubsub" % s"v1-rev20200713-$googleClientsVersion",
+      "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
@@ -1066,7 +1067,7 @@ lazy val `scio-smb`: Project = project
       // #3260 work around for sorter memory limit until we patch upstream
       // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQuery,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "org.tensorflow" % "tensorflow-core-platform" % tensorFlowVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
@@ -1269,7 +1270,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax" % gaxVersion,
-  "com.google.apis" % "google-api-services-storage" % s"v1-rev20200611-$googleClientsVersion",
+  "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value" % autoValueVersion,
