@@ -169,7 +169,7 @@ object ParquetAvroIO {
       ReadParam(projectionFn, projection, predicate)
   }
 
-  final case class ReadParam[A: ClassTag, T: ClassTag] private (
+  final case class ReadParam[A: ClassTag, T: ClassTag] private[avro] (
     projectionFn: A => T,
     projection: Schema = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
@@ -229,7 +229,7 @@ object ParquetAvroIO {
     private[avro] val DefaultConfiguration = new Configuration()
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[avro] (
     schema: Schema = WriteParam.DefaultSchema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,

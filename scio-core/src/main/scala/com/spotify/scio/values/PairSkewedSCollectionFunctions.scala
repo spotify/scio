@@ -33,7 +33,7 @@ final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SColl
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
+  implicit private[this] val (keyCoder: Coder[K], valueCoder: Coder[V]) =
     (self.keyCoder, self.valueCoder)
 
   /**
@@ -394,7 +394,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
   ): (Partitions[K, V], Partitions[K, W]) = {
-    implicit val wCoder = rhs.valueCoder
+    implicit val wCoder: Coder[W] = rhs.valueCoder
     val (hotSelf, chillSelf) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
 
     // Use asIterableSideInput as workaround for:

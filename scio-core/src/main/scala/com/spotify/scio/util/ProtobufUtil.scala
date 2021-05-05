@@ -46,6 +46,7 @@ object ProtobufUtil {
    */
   def schemaMetadataOf[T <: Message: ClassTag]: Map[String, AnyRef] = {
     import me.lyh.protobuf.generic
+    import me.lyh.protobuf.generic.JsonSchema
     val schema = generic.Schema
       .of[Message](classTag[T].asInstanceOf[ClassTag[Message]])
       .toJson

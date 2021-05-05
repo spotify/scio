@@ -35,7 +35,7 @@ sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializab
     coll.map(i => convert(i))(coder)
 }
 
-object To {
+object To extends ToMacro {
 
   @tailrec @inline
   private def getBaseType(t: BSchema.FieldType): BSchema.FieldType = {
@@ -207,37 +207,4 @@ object To {
       val coder = Coder.beam(SchemaCoder.of(bso, td, toO, fromO))
       def convert(i: I): O = f.curried(bso).andThen(fromO(_))(i)
     }
-
-  /**
-   * Convert instance of ${T} in this SCollection into instances of ${O}
-   * based on the Schemas on the 2 classes. The compatibility of thoses classes is checked
-   * at compile time.
-   * @see To#unsafe
-   */
-  def safe[I: Schema, O: Schema]: To[I, O] =
-    macro ToMacro.safeImpl[I, O]
-}
-
-object ToMacro {
-  import scala.reflect.macros._
-  def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
-    c: blackbox.Context
-  )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
-    val h = new { val ctx: c.type = c } with SchemaMacroHelpers
-    import h._
-    import c.universe._
-
-    val tpeI = weakTypeOf[I]
-    val tpeO = weakTypeOf[O]
-
-    val expr = c.Expr[(Schema[I], Schema[O])](q"(${untyped(iSchema)}, ${untyped(oSchema)})")
-    val (sIn, sOut) = c.eval(expr)
-
-    val schemaOut: BSchema = SchemaMaterializer.fieldType(sOut).getRowSchema()
-    val schemaIn: BSchema = SchemaMaterializer.fieldType(sIn).getRowSchema()
-
-    To.checkCompatibility(schemaIn, schemaOut) {
-      q"""_root_.com.spotify.scio.schemas.To.unchecked[$tpeI, $tpeO]"""
-    }.fold(message => c.abort(c.enclosingPosition, message), t => c.Expr[To[I, O]](t))
-  }
 }

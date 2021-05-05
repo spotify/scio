@@ -113,7 +113,7 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultPredicate = null
     private[tensorflow] val DefaultConfiguration = new Configuration()
   }
-  final case class ReadParam private (
+  final case class ReadParam private[tensorflow] (
     projection: Seq[String] = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration
@@ -126,7 +126,7 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultConfiguration = new Configuration()
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[tensorflow] (
     schema: Schema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,

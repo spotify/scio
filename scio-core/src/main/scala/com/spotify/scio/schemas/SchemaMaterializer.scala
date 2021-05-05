@@ -83,14 +83,14 @@ object SchemaMaterializer {
   private def decode[A](schema: LogicalType[A])(v: schema.Repr): A =
     schema.fromBase(v)
 
-  private def decode[F[_], A: ClassTag](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
-    val values = new Array[A](v.size)
+  private def decode[F[_], A](schema: ArrayType[F, A])(v: schema.Repr): F[A] = {
+    val values = new Array[Any](v.size)
     var i = 0
     while (i < v.size) {
       values.update(i, dispatchDecode[A](schema.schema)(v.get(i)))
       i = i + 1
     }
-    schema.fromList(java.util.Arrays.asList(values: _*))
+    schema.fromList(java.util.Arrays.asList(values.asInstanceOf[Array[A]]: _*))
   }
 
   private def decode[F[_, _], A, B](schema: MapType[F, A, B])(v: schema.Repr): F[A, B] = {
@@ -150,7 +150,7 @@ object SchemaMaterializer {
     schema
       .toList(v)
       .asScala
-      .map(dispatchEncode(schema.schema, fieldType.getCollectionElementType))
+      .map(dispatchEncode(schema.schema, fieldType.getCollectionElementType): A => schema.schema.Repr)
       .asJava
 
   private def encode[F[_, _], A, B](schema: MapType[F, A, B], fieldType: BFieldType)(
@@ -198,7 +198,7 @@ object SchemaMaterializer {
         (bschema, toRow, fromRow)
       case _ =>
         implicit val imp = schema
-        val (bschema, to, from) = materialize(implicitly[Schema[ScalarWrapper[T]]])
+        val (bschema, to, from) = materialize(ScalarWrapper.schemaScalarWrapper[T])
 
         def fromRow =
           new SerializableFunction[Row, T] {
@@ -219,6 +219,6 @@ object SchemaMaterializer {
     case s @ (_: Record[T] | _: RawRecord[T]) =>
       SchemaMaterializer.fieldType(s).getRowSchema
     case _ =>
-      SchemaMaterializer.fieldType(Schema[ScalarWrapper[T]]).getRowSchema
+      SchemaMaterializer.fieldType(Schema[ScalarWrapper[T]](ScalarWrapper.schemaScalarWrapper[T])).getRowSchema
   }
 }

@@ -27,7 +27,7 @@ import com.spotify.scio.coders.{BeamCoders, Coder}
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
+  implicit private[this] val (keyCoder: Coder[K], valueCoder: Coder[V]) =
     (self.keyCoder, self.valueCoder)
 
   /**

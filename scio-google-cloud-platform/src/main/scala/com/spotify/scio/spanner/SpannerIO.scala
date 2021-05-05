@@ -46,7 +46,7 @@ object SpannerRead {
   final case class FromTable(tableName: String, columns: Seq[String]) extends ReadMethod
   final case class FromQuery(query: String) extends ReadMethod
 
-  final case class ReadParam private (
+  final case class ReadParam private[spanner] (
     readMethod: ReadMethod,
     withTransaction: Boolean = ReadParam.DefaultWithTransaction,
     withBatching: Boolean = ReadParam.DefaultWithBatching
@@ -90,7 +90,7 @@ object SpannerWrite {
     private[spanner] val DefaultBatchSizeBytes = 1024L * 1024L
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[spanner] (
     failureMode: FailureMode = WriteParam.DefaultFailureMode,
     batchSizeBytes: Long = WriteParam.DefaultBatchSizeBytes
   )

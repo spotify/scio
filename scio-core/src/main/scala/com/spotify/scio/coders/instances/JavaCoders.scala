@@ -140,7 +140,7 @@ trait JavaCoders extends JavaBeanCoders {
     Coder.xmap(jInstantCoder)(java.sql.Timestamp.from, _.toInstant())
 
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
-    Coder.xmap(Coder[String])(
+    Coder.xmap(Coder.stringCoder)(
       value => java.lang.Enum.valueOf(ScioUtil.classOf[E], value),
       _.name
     )

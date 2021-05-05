@@ -21,14 +21,15 @@ import com.spotify.scio.redis.types._
 
 trait CoderInstances {
 
-  implicit def appendCoder[T: Coder: RedisType]: Coder[Append[T]] = Coder.gen[Append[T]]
-  implicit def setCoder[T: Coder: RedisType]: Coder[Set[T]] = Coder.gen[Set[T]]
-  implicit def incrByCoder[T: Coder: RedisType]: Coder[IncrBy[T]] = Coder.gen[IncrBy[T]]
-  implicit def decrByCoder[T: Coder: RedisType]: Coder[DecrBy[T]] = Coder.gen[DecrBy[T]]
-  implicit def sAddCoder[T: Coder: RedisType]: Coder[SAdd[T]] = Coder.gen[SAdd[T]]
-  implicit def lPushCoder[T: Coder: RedisType]: Coder[LPush[T]] = Coder.gen[LPush[T]]
-  implicit def rPushCoder[T: Coder: RedisType]: Coder[RPush[T]] = Coder.gen[RPush[T]]
-  implicit def pfAddCoder[T: Coder: RedisType]: Coder[PFAdd[T]] = Coder.gen[PFAdd[T]]
+  // TODO: scala3 - workaround https://github.com/lampepfl/dotty/issues/9985
+  implicit def appendCoder[T: Coder: RedisType]: Coder[Append[T]] = ??? // Coder.gen[Append[T]]
+  implicit def setCoder[T: Coder: RedisType]: Coder[Set[T]] = ??? // Coder.gen[Set[T]]
+  implicit def incrByCoder[T: Coder: RedisType]: Coder[IncrBy[T]] = ??? // Coder.gen[IncrBy[T]]
+  implicit def decrByCoder[T: Coder: RedisType]: Coder[DecrBy[T]] = ??? // Coder.gen[DecrBy[T]]
+  implicit def sAddCoder[T: Coder: RedisType]: Coder[SAdd[T]] = ??? // Coder.gen[SAdd[T]]
+  implicit def lPushCoder[T: Coder: RedisType]: Coder[LPush[T]] = ??? // Coder.gen[LPush[T]]
+  implicit def rPushCoder[T: Coder: RedisType]: Coder[RPush[T]] = ??? // Coder.gen[RPush[T]]
+  implicit def pfAddCoder[T: Coder: RedisType]: Coder[PFAdd[T]] = ??? // Coder.gen[PFAdd[T]]
 
   private[this] def coders: Map[Int, Coder[_]] = Map(
     1 -> appendCoder[String],

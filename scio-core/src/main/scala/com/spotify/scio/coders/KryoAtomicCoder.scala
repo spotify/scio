@@ -231,7 +231,7 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
     }
 
   private def kryoEncodedElementByteSize(obj: Any): Long =
-    withKryoState(instanceId, options) { kryoState: KryoState =>
+    withKryoState(instanceId, options) { (kryoState: KryoState) =>
       val s = new CountingOutputStream(ByteStreams.nullOutputStream())
       val output = new Output(options.bufferSize, options.maxBufferSize)
       output.setOutputStream(s)

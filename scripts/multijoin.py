@@ -48,9 +48,9 @@ def mkFnRetVal(n, aWrapper=None, otherWrapper=None):
 
 
 def common(out, vals):
-    print('    implicit val keyCoder = a.keyCoder', file=out)
+    print('    implicit val keyCoder: Coder[KEY] = a.keyCoder', file=out)
     print('    implicit val (%s) = (%s)' % (
-        ', '.join('coder' + x for x in vals),
+        ', '.join('coder' + x + ': Coder[' + x + ']' for x in vals),
         ', '.join('%s.valueCoder' % x.lower() for x in vals)),
         file=out)
 
@@ -187,10 +187,12 @@ def main(out):
         package com.spotify.scio.util
 
         import com.spotify.scio.values.SCollection
+        import com.spotify.scio.coders.Coder
         import org.apache.beam.sdk.transforms.join.{CoGroupByKey, KeyedPCollectionTuple}  # NOQA
         import org.apache.beam.sdk.values.TupleTag
 
         import scala.jdk.CollectionConverters._
+        import com.spotify.scio.values.SCollection.makePairSCollectionFunctions
 
         trait MultiJoin extends Serializable {
 

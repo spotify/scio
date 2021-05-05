@@ -97,7 +97,7 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     val (q, mod) = (maxToken - minToken + 1) /% numPartitions
     val rangePerGroup = (if (mod != 0) q + 1 else q).bigInteger
 
-    values: Array[ByteString] => {
+    (values: Array[ByteString]) => {
       val key = if (config.partitionKeyIndices.length == 1) {
         values(config.partitionKeyIndices.head).asReadOnlyByteBuffer()
       } else {

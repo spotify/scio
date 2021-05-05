@@ -31,6 +31,9 @@ import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.PCollection
+import org.apache.beam.sdk.values.PDone
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -94,7 +97,7 @@ object BigtableRead {
       new ReadParam(Seq(keyRange), rowFilter)
   }
 
-  final case class ReadParam private (
+  final case class ReadParam private[bigtable] (
     keyRanges: Seq[ByteKeyRange] = ReadParam.DefaultKeyRanges,
     rowFilter: RowFilter = ReadParam.DefaultRowFilter
   )
@@ -152,7 +155,7 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
         .map { case (key, value) =>
           KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
         }
-        .applyInternal(sink)
+        .applyInternal[PDone](sink.asInstanceOf[PTransform[PCollection[KV[Serializable, java.lang.Iterable[Mutation]]], PDone]])
     }
     EmptyTap
   }
@@ -169,7 +172,7 @@ object BigtableWrite {
     private[bigtable] val DefaultFlushInterval = Duration.standardSeconds(1)
   }
 
-  final case class Bulk private (
+  final case class Bulk private[bigtable] (
     numOfShards: Int,
     flushInterval: Duration = Bulk.DefaultFlushInterval
   ) extends WriteParam

@@ -41,7 +41,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
 
   /** Save this SCollection into Elasticsearch. */
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    val shards = if (params.numOfShards >= 0) {
+    val shards: Long = if (params.numOfShards >= 0) {
       params.numOfShards
     } else {
       esOptions.servers.size
@@ -89,7 +89,7 @@ object ElasticsearchIO {
       )
   }
 
-  final case class WriteParam[T] private (
+  final case class WriteParam[T] private[elasticsearch] (
     f: T => Iterable[DocWriteRequest[_]],
     errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
     flushInterval: Duration = WriteParam.DefaultFlushInterval,

@@ -17,25 +17,14 @@
 
 package com.spotify.scio.coders
 
-import org.apache.avro.specific.SpecificRecordBase
+import scala.compiletime._
+import scala.deriving._
+import scala.quoted._
 
-import scala.reflect.macros.blackbox
+// TODO: scala3 Implement macros ?
+private[coders] object CoderMacros {
 
-private[coders] object AvroCoderMacros {
-
-  /** Generate a coder which does not serialize the schema and relies exclusively on types. */
-  def staticInvokeCoder[T <: SpecificRecordBase: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
-    import c.universe._
-    val wtt = weakTypeOf[T]
-    val companioned = wtt.typeSymbol
-
-    q"""
-    _root_.com.spotify.scio.coders.Coder.beam(
-      _root_.org.apache.beam.sdk.coders.AvroCoder.of[$companioned](
-        classOf[$companioned],
-        new $companioned().getSchema
-      )
-    )
-    """
-  }
+  // Add a level of indirection to prevent the macro from capturing
+  // $outer which would make the Coder serialization fail
+  def wrappedCoder[T] = { ??? }
 }

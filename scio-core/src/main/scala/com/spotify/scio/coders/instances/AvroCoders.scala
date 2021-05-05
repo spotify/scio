@@ -19,7 +19,7 @@ package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
 
-import com.spotify.scio.coders.{AvroCoderMacros, Coder}
+import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.{SpecificData, SpecificFixed}
@@ -104,7 +104,7 @@ private object SpecificFixedCoder {
   }
 }
 
-trait AvroCoders {
+trait AvroCoders extends AvroCodersMacros {
 
   /**
    * Create a Coder for Avro GenericRecord given the schema of the GenericRecord.
@@ -119,10 +119,6 @@ trait AvroCoders {
   // XXX: similar to GenericAvroSerializer
   def avroGenericRecordCoder: Coder[GenericRecord] =
     Coder.beam(new SlowGenericRecordCoder)
-
-  import org.apache.avro.specific.SpecificRecordBase
-  implicit def genAvro[T <: SpecificRecordBase]: Coder[T] =
-    macro AvroCoderMacros.staticInvokeCoder[T]
 
   implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
     SpecificFixedCoder[T]

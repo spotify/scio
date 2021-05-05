@@ -32,6 +32,8 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.twitter.chill.Externalizer
+import com.twitter.chill.ClosureCleaner
+import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
 /** Tap for BigQuery TableRow JSON files. */
 final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
@@ -50,7 +52,19 @@ final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, Ta
 
   override def open(sc: ScioContext): SCollection[T] = {
     val ser = Externalizer(ts)
-    sc.bigQueryTable(table, Format.GenericRecord).map(gr => fn(gr, ser.get))
+    val cFn = ClosureCleaner.clean(fn)
+    val rFn = ClosureCleaner.clean((sr: SchemaAndRecord) => cFn(sr.getRecord, sr.getTableSchema))
+
+    // TODO: scala3 - make sure this new implementation actually works
+    val io =
+      BigQueryTypedTable(
+        readerFn = rFn,
+        writerFn = ???, // will not be used
+        fn = cFn,
+        table = table
+      )
+
+    sc.read(io)
   }
 }
 
@@ -142,7 +156,7 @@ final case class BigQueryTaps(self: Taps) {
       () => {
         val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
         val rowRestriction = Option(readOptions.getRowRestriction)
-        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap()
+        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap(())
       }
     )
 
@@ -158,7 +172,7 @@ final case class BigQueryTaps(self: Taps) {
         val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
         val rowRestriction = Option(readOptions.getRowRestriction)
         BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction)
-          .tap()
+          .tap(())
           .map(fn)
       }
     )
