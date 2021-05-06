@@ -177,7 +177,6 @@ object ContextAndArgs {
   }
 
   import caseapp._
-  import caseapp.core.help._
   import caseapp.core.parser.ParserWithNameFormatter
 
   object TypedParser {
