@@ -46,7 +46,6 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
@@ -320,7 +319,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
         (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
 
-    private final PipelineOptions options;
     private final Coder<FinalKeyT> keyCoder;
     private final SortedBucketSource<FinalKeyT> currentSource;
     private final Distribution keyGroupSize;
@@ -347,7 +345,6 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         SortedBucketSource<FinalKeyT> currentSource,
         Distribution keyGroupSize,
         boolean materializeKeyGroup) {
-      this.options = options;
       this.keyCoder = sourceSpec.keyCoder;
       this.numSources = sources.size();
       this.currentSource = currentSource;
@@ -675,6 +672,8 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         int bucketId, int targetParallelism, PipelineOptions options) {
       final SortedBucketOptions opts = options.as(SortedBucketOptions.class);
       final int bufferSize = opts.getSortedBucketReadBufferSize();
+      final int diskBufferMb = opts.getSortedBucketReadDiskBufferMb();
+      FileOperations.setDiskBufferMb(diskBufferMb);
       final List<Iterator<V>> iterators =
           mapBucketFiles(
               bucketId,
