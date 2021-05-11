@@ -19,10 +19,19 @@ package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
@@ -31,9 +40,13 @@ import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.PatchedReadableFileUtil;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstracts IO operations for file-based formats.
@@ -45,8 +58,22 @@ import org.apache.beam.sdk.transforms.display.HasDisplayData;
  */
 public abstract class FileOperations<V> implements Serializable, HasDisplayData {
 
+  private static final Logger LOG = LoggerFactory.getLogger(FileOperations.class);
+  private static final AtomicReference<Long> diskBufferBytes = new AtomicReference<>(null);
+
+  private static final Counter filesStreamed =
+      Metrics.counter(FileOperations.class, "SortedBucketSource-FilesStreamed");
+  private static final Counter filesBuffered =
+      Metrics.counter(FileOperations.class, "SortedBucketSource-FilesBuffered");
+  private static final Counter bytesBuffered =
+      Metrics.counter(FileOperations.class, "SortedBucketSource-BytesBuffered");
+
   private final Compression compression;
   private final String mimeType;
+
+  public static void setDiskBufferMb(int diskBufferMb) {
+    diskBufferBytes.compareAndSet(null, diskBufferMb * 1024L * 1024L);
+  }
 
   protected FileOperations(Compression compression, String mimeType) {
     this.compression = compression;
@@ -64,6 +91,40 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
     final ReadableFile readableFile = toReadableFile(resourceId);
 
     final Reader<V> reader = createReader();
+
+    Long bytes = diskBufferBytes.get();
+    if (bytes != null && bytes > 0) {
+      final long fileSize = readableFile.getMetadata().sizeBytes();
+      final long prevSize = diskBufferBytes.getAndUpdate(prev -> prev > 0 ? prev - fileSize : prev);
+
+      // Buffer available, an update was made
+      if (prevSize > 0) {
+        LOG.debug("Buffering SMB source file {}, size = {}B", resourceId, fileSize);
+        String tmpDir = System.getProperties().getProperty("java.io.tmpdir");
+        Path path = Paths.get(tmpDir, String.format("smb-buffer-%s", UUID.randomUUID()));
+        ReadableByteChannel src = readableFile.open();
+        FileChannel dst =
+            FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+        long copied = 0;
+        do {
+          copied += dst.transferFrom(src, copied, fileSize - copied);
+        } while (copied < fileSize);
+        dst.close();
+        src.close();
+
+        bytesBuffered.inc(fileSize);
+        filesBuffered.inc();
+        reader.whenDone(
+            () -> {
+              path.toFile().delete();
+              return diskBufferBytes.getAndUpdate(prev -> prev + fileSize);
+            });
+        reader.prepareRead(Files.newByteChannel(path));
+        return reader.iterator();
+      }
+    }
+
+    filesStreamed.inc();
     reader.prepareRead(readableFile.open());
     return reader.iterator();
   }
@@ -83,6 +144,12 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
   /** Per-element file reader. */
   public abstract static class Reader<V> implements Serializable {
+    private transient Supplier<?> cleanupFn = null;
+
+    private void whenDone(Supplier<?> cleanupFn) {
+      this.cleanupFn = cleanupFn;
+    }
+
     public abstract void prepareRead(ReadableByteChannel channel) throws IOException;
 
     /** Reads next record in the collection. */
@@ -107,6 +174,9 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
             if (!hasNext) {
               finishRead();
+              if (cleanupFn != null) {
+                cleanupFn.get();
+              }
               finished = true;
             }
 

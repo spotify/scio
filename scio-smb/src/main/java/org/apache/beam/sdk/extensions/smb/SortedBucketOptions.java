@@ -23,9 +23,15 @@ import org.apache.beam.sdk.options.PipelineOptions;
 
 @Description("Tuning options for SortMergeBucket")
 public interface SortedBucketOptions extends PipelineOptions {
-  @Description("Buffer size for each SMB source file")
+  @Description("Buffer size for each SMB source file, in number of elements")
   @Default.Integer(10000)
   int getSortedBucketReadBufferSize();
 
   void setSortedBucketReadBufferSize(int readBufferSize);
+
+  @Description("Buffer size for all SMB source files on worker disk, in MiB")
+  @Default.Integer(0)
+  int getSortedBucketReadDiskBufferMb();
+
+  void setSortedBucketReadDiskBufferMb(int readDiskBufferMb);
 }
