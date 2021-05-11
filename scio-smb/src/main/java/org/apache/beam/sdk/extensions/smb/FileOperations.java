@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.Compression;
@@ -98,7 +99,7 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
       // Buffer available, an update was made
       if (prevSize > 0) {
-        LOG.info("Buffering SMB source file {}, size = {}B", resourceId, fileSize);
+        LOG.debug("Buffering SMB source file {}, size = {}B", resourceId, fileSize);
         String tmpDir = System.getProperties().getProperty("java.io.tmpdir");
         Path path = Paths.get(tmpDir, String.format("smb-buffer-%s", UUID.randomUUID()));
         ReadableByteChannel src = readableFile.open();
@@ -113,7 +114,12 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
         bytesBuffered.inc(fileSize);
         filesBuffered.inc();
-        reader.prepareRead(path);
+        reader.whenDone(
+            () -> {
+              path.toFile().delete();
+              return diskBufferBytes.getAndUpdate(prev -> prev + fileSize);
+            });
+        reader.prepareRead(Files.newByteChannel(path));
         return reader.iterator();
       }
     }
@@ -138,11 +144,10 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
   /** Per-element file reader. */
   public abstract static class Reader<V> implements Serializable {
-    private transient Path path = null;
+    private transient Supplier<?> cleanupFn = null;
 
-    public void prepareRead(Path path) throws IOException {
-      this.path = path;
-      prepareRead(Files.newByteChannel(path));
+    private void whenDone(Supplier<?> cleanupFn) {
+      this.cleanupFn = cleanupFn;
     }
 
     public abstract void prepareRead(ReadableByteChannel channel) throws IOException;
@@ -169,8 +174,8 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
 
             if (!hasNext) {
               finishRead();
-              if (path != null) {
-                path.toFile().delete();
+              if (cleanupFn != null) {
+                cleanupFn.get();
               }
               finished = true;
             }
