@@ -33,17 +33,13 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.Duration
 import scala.jdk.CollectionConverters._
 
-object RedisDoFn {
-  import scala.concurrent.ExecutionContext.Implicits.global
-  implicit val ec: ExecutionContext = global
-}
-
 abstract class RedisDoFn[I, O](
   connectionConfig: RedisConnectionConfiguration,
   batchSize: Int
 ) extends DoFn[I, O] {
 
-  @transient implicit lazy val ec: ExecutionContext = RedisDoFn.ec
+  @transient implicit lazy val ec: ExecutionContext =
+    scala.concurrent.ExecutionContext.Implicits.global
   @transient private var jedis: Jedis = _
   @transient private var pipeline: Pipeline = _
   private val results: ConcurrentLinkedQueue[Future[Result]] = new ConcurrentLinkedQueue()
@@ -64,7 +60,7 @@ abstract class RedisDoFn[I, O](
     }
   }
 
-  def this(opts: RedisConnectionOptions, batchSize: Int)(implicit ec: ExecutionContext) =
+  def this(opts: RedisConnectionOptions, batchSize: Int) =
     this(RedisConnectionOptions.toConnectionConfig(opts), batchSize)
 
   private def flush(fn: Result => Unit): Unit = {
