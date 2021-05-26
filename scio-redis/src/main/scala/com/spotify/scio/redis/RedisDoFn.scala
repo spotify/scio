@@ -36,9 +36,10 @@ import scala.jdk.CollectionConverters._
 abstract class RedisDoFn[I, O](
   connectionConfig: RedisConnectionConfiguration,
   batchSize: Int
-)(implicit ec: ExecutionContext)
-    extends DoFn[I, O] {
+) extends DoFn[I, O] {
 
+  @transient implicit lazy val ec: ExecutionContext =
+    scala.concurrent.ExecutionContext.Implicits.global
   @transient private var jedis: Jedis = _
   @transient private var pipeline: Pipeline = _
   private val results: ConcurrentLinkedQueue[Future[Result]] = new ConcurrentLinkedQueue()
@@ -59,7 +60,7 @@ abstract class RedisDoFn[I, O](
     }
   }
 
-  def this(opts: RedisConnectionOptions, batchSize: Int)(implicit ec: ExecutionContext) =
+  def this(opts: RedisConnectionOptions, batchSize: Int) =
     this(RedisConnectionOptions.toConnectionConfig(opts), batchSize)
 
   private def flush(fn: Result => Unit): Unit = {

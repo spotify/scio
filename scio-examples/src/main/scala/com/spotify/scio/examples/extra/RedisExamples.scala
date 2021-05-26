@@ -137,7 +137,6 @@ object RedisWriteStreamingExample {
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]
 object RedisLookUpStringsExample {
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   def main(cmdlineArgs: Array[String]): Unit = {
 

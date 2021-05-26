@@ -30,7 +30,6 @@ import org.apache.beam.sdk.io.redis.{RedisConnectionConfiguration, RedisIO => Be
 import org.joda.time.Duration
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 sealed trait RedisIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
