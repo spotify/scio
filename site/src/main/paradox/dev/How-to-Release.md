@@ -62,6 +62,7 @@ git push origin vX.Y.Z
 
 ### 0.10.x
 
+- [v0.10.3](https://github.com/spotify/scio/releases/tag/v0.10.3) - _"Dallasium"_
 - [v0.10.2](https://github.com/spotify/scio/releases/tag/v0.10.2) - _"Cantabrigia"_
 - [v0.10.1](https://github.com/spotify/scio/releases/tag/v0.10.1) - _"Belli Horizontis"_
 - [v0.10.0](https://github.com/spotify/scio/releases/tag/v0.10.0) - _"Aquae Sextiae"_
