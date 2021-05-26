@@ -25,7 +25,7 @@ import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
-val algebirdVersion = "0.13.7"
+val algebirdVersion = "0.13.8"
 val algebraVersion = "2.2.2"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
