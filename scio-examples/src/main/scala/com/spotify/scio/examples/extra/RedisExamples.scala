@@ -25,7 +25,7 @@ import com.spotify.scio.redis.types._
 import com.spotify.scio.redis.coders._
 import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
@@ -148,7 +148,9 @@ object RedisLookUpStringsExample {
     sc.parallelize(Seq("key1", "key2", "unknownKey"))
       .parDo(
         new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
-          override def request(value: String, client: Client): Future[(String, Option[String])] =
+          override def request(value: String, client: Client)(implicit
+            ec: ExecutionContext
+          ): Future[(String, Option[String])] =
             client
               .request(p => p.get(value) :: Nil)
               .map { case r: List[String @unchecked] => (value, r.headOption) }

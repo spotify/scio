@@ -38,8 +38,6 @@ abstract class RedisDoFn[I, O](
   batchSize: Int
 ) extends DoFn[I, O] {
 
-  @transient implicit lazy val ec: ExecutionContext =
-    scala.concurrent.ExecutionContext.Implicits.global
   @transient private var jedis: Jedis = _
   @transient private var pipeline: Pipeline = _
   private val results: ConcurrentLinkedQueue[Future[Result]] = new ConcurrentLinkedQueue()
@@ -63,10 +61,13 @@ abstract class RedisDoFn[I, O](
   def this(opts: RedisConnectionOptions, batchSize: Int) =
     this(RedisConnectionOptions.toConnectionConfig(opts), batchSize)
 
+  def executionContext: ExecutionContext = scala.concurrent.ExecutionContext.global
+
   private def flush(fn: Result => Unit): Unit = {
     pipeline.exec
     pipeline.sync()
 
+    implicit val ec = executionContext
     val iter = requests.iterator()
     while (iter.hasNext()) {
       val (rsp, promise) = iter.next()
@@ -88,7 +89,7 @@ abstract class RedisDoFn[I, O](
     requests.clear()
   }
 
-  def request(value: I, client: Client): Future[O]
+  def request(value: I, client: Client)(implicit ec: ExecutionContext): Future[O]
 
   @Setup
   def setup(): Unit =
@@ -103,6 +104,7 @@ abstract class RedisDoFn[I, O](
 
   @ProcessElement
   def processElement(c: ProcessContext, window: BoundedWindow): Unit = {
+    implicit val ec = executionContext
     val result = request(c.element(), client).map { r =>
       Result(c.element(), r, c.timestamp(), window)
     }
