@@ -13,7 +13,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: graalvm-ce-java11@21.0.0
       - uses: olafurpg/setup-gpg@v3

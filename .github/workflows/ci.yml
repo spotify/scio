@@ -10,7 +10,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: graalvm-ce-java11@21.0.0
       - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
@@ -21,7 +21,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: graalvm-ce-java11@21.0.0
       - run: "cd scalafix; sbt test"
@@ -32,7 +32,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: ${{matrix.java}}
       - run: sbt "++${{matrix.scala}} test"
@@ -51,7 +51,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: graalvm-ce-java11@21.0.0
       - run: |
@@ -64,7 +64,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
       - run: ./scripts/ci_repl.sh
         env:
           SCALA_VERSION: ${{ matrix.scala }}
@@ -83,7 +83,7 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: ${{matrix.java}}
       - run: sbt "++${{matrix.scala}} mimaReportBinaryIssues"
