@@ -41,8 +41,8 @@ jobs:
         java:
           - graalvm-ce-java11@21.0.0
         scala:
-          - 2.12.13
-          - 2.13.5
+          - 2.12.14
+          - 2.13.6
   test-coverage:
     runs-on: ubuntu-latest
     steps:
@@ -72,8 +72,8 @@ jobs:
         java:
           - graalvm-ce-java11@21.0.0
         scala:
-          - 2.12.13
-          - 2.13.5
+          - 2.12.14
+          - 2.13.6
   mimaReport:
     runs-on: ubuntu-latest
     steps:
@@ -90,5 +90,5 @@ jobs:
         java:
           - graalvm-ce-java11@21.0.0
         scala:
-          - 2.12.13
-          - 2.13.5
+          - 2.12.14
+          - 2.13.6

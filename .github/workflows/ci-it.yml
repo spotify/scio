@@ -24,8 +24,8 @@ jobs:
     strategy:
       matrix:
         scala:
-          - "2.12.13"
-          - "2.13.5"
+          - "2.12.14"
+          - "2.13.6"
 
   build-docs:
     name: Build documentation
