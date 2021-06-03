@@ -36,7 +36,6 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,55 +76,82 @@ public final class BigtableUtil {
   public static void updateNumberOfBigtableNodes(
       final BigtableOptions bigtableOptions,
       final int numberOfNodes,
-      final Duration sleepDuration,
-      final Optional<Set<String>> clusterNamesOpt) throws IOException, InterruptedException {
-
-    clusterNamesOpt.ifPresent(cns -> {
-      if (cns.isEmpty()) {
-        throw new IllegalArgumentException("Cluster names shouldn't be empty");
-      }
-    });
+      final Duration sleepDuration) throws IOException, InterruptedException {
 
     final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions);
-
     try {
       final BigtableInstanceClient bigtableInstanceClient =
           new BigtableInstanceGrpcClient(channelPool);
+      final List<Cluster> clusters =
+          getListClusters(bigtableInstanceClient, bigtableOptions.getInstanceName().getInstanceName());
+      // update all clusters
+      Set<String> clusterNames = clusters.stream()
+          .map(Cluster::getName)
+          .collect(Collectors.toSet());
 
-      final String instanceName = bigtableOptions.getInstanceName().toString();
-
-      // Fetch clusters in Bigtable instance
-      final ListClustersRequest clustersRequest =
-          ListClustersRequest.newBuilder().setParent(instanceName).build();
-      final ListClustersResponse clustersResponse =
-          bigtableInstanceClient.listCluster(clustersRequest);
-
-      List<Cluster> clusters = clustersResponse
-          .getClustersList();
-
-      if (clusterNamesOpt.isPresent()) {
-        Set<String> clustersToScale = clusterNamesOpt.get();
-        clusters = clusters
-            .stream()
-            .filter(cluster -> clustersToScale.contains(shorterName(cluster.getName())))
-            .collect(Collectors.toList());
-      }
-
-      // For each cluster update the number of nodes
-      for (Cluster cluster : clusters) {
-        final Cluster updatedCluster =
-            Cluster.newBuilder().setName(cluster.getName()).setServeNodes(numberOfNodes).build();
-        LOG.info("Updating number of nodes to {} for cluster {}", numberOfNodes, cluster.getName());
-        bigtableInstanceClient.updateCluster(updatedCluster);
-      }
-
-      // Wait for the new nodes to be provisioned
-      if (sleepDuration.getMillis() > 0) {
-        LOG.info("Sleeping for {} after update", formatter.print(sleepDuration.toPeriod()));
-        Thread.sleep(sleepDuration.getMillis());
-      }
+      updateNumberOfBigtableNodes(bigtableInstanceClient, bigtableOptions, numberOfNodes, sleepDuration, clusterNames);
     } finally {
       channelPool.shutdownNow();
+    }
+  }
+
+  /**
+   * Updates only the provided set of clusters within the specified Bigtable instance to a specified number of nodes.
+   * Useful for increasing the number of nodes at the beginning of a job and decreasing it at the
+   * end to lower costs yet still get high throughput during bulk ingests/dumps.
+   *
+   * @param bigtableOptions Bigtable Options
+   * @param numberOfNodes   New number of nodes in the cluster
+   * @param sleepDuration   How long to sleep after updating the number of nodes. Google recommends at
+   *                        least 20 minutes before the new nodes are fully functional
+   * @param clusterNames    Set of cluster names to be updated in the instant, throw exception if this is empty.
+   * @throws IOException              If setting up channel pool fails
+   * @throws InterruptedException     If sleep fails
+   * @throws IllegalArgumentException if cluster name set is empty
+   */
+  public static void updateNumberOfBigtableNodes(
+      final BigtableOptions bigtableOptions,
+      final int numberOfNodes,
+      final Duration sleepDuration,
+      final Set<String> clusterNames) throws IOException, InterruptedException {
+
+    final ChannelPool channelPool = ChannelPoolCreator.createPool(bigtableOptions);
+    try {
+      final BigtableInstanceClient bigtableInstanceClient =
+          new BigtableInstanceGrpcClient(channelPool);
+      updateNumberOfBigtableNodes(bigtableInstanceClient, bigtableOptions, numberOfNodes, sleepDuration, clusterNames);
+    } finally {
+      channelPool.shutdownNow();
+    }
+  }
+
+  private static void updateNumberOfBigtableNodes(
+      final BigtableInstanceClient bigtableInstanceClient,
+      final BigtableOptions bigtableOptions,
+      final int numberOfNodes,
+      final Duration sleepDuration,
+      final Set<String> clusterNames) throws InterruptedException {
+
+    if (clusterNames.isEmpty()) {
+      throw new IllegalArgumentException("Cluster names shouldn't be empty");
+    }
+
+    List<Cluster> clusters = getListClusters(bigtableInstanceClient, bigtableOptions.getInstanceName().getInstanceName());
+    List<Cluster> clustersToScale = clusters
+        .stream()
+        .filter(cluster -> clusterNames.contains(shorterName(cluster.getName())))
+        .collect(Collectors.toList());
+    // For each cluster update the number of nodes
+    for (Cluster cluster : clustersToScale) {
+      final Cluster updatedCluster =
+          Cluster.newBuilder().setName(cluster.getName()).setServeNodes(numberOfNodes).build();
+      LOG.info("Updating number of nodes to {} for cluster {}", numberOfNodes, cluster.getName());
+      bigtableInstanceClient.updateCluster(updatedCluster);
+    }
+    // Wait for the new nodes to be provisioned
+    if (sleepDuration.getMillis() > 0) {
+      LOG.info("Sleeping for {} after update", formatter.print(sleepDuration.toPeriod()));
+      Thread.sleep(sleepDuration.getMillis());
     }
   }
 
@@ -150,6 +176,15 @@ public final class BigtableUtil {
                       cn -> cn.getName().substring(cn.getName().indexOf("/clusters/") + 10),
                       Cluster::getServeNodes)));
     }
+  }
+
+  private static List<Cluster> getListClusters(BigtableInstanceClient bigtableInstanceClient, String instanceName) {
+    // Fetch clusters in Bigtable instance
+    final ListClustersRequest clustersRequest =
+        ListClustersRequest.newBuilder().setParent(instanceName).build();
+    final ListClustersResponse clustersResponse =
+        bigtableInstanceClient.listCluster(clustersRequest);
+    return clustersResponse.getClustersList();
   }
 
   static String shorterName(String name) {

@@ -168,12 +168,20 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): Unit =
     if (!self.isTest) {
       // No need to update the number of nodes in a test
-      BigtableUtil.updateNumberOfBigtableNodes(
-        bigtableOptions,
-        numberOfNodes,
-        sleepDuration,
-        Optional.ofNullable(clusterNames.map(_.asJava).orNull)
-      )
+      if (clusterNames.isDefined) {
+        BigtableUtil.updateNumberOfBigtableNodes(
+          bigtableOptions,
+          numberOfNodes,
+          sleepDuration
+        )
+      } else {
+        BigtableUtil.updateNumberOfBigtableNodes(
+          bigtableOptions,
+          numberOfNodes,
+          sleepDuration,
+          clusterNames.map(_.asJava).get
+        )
+      }
     }
 
   /**
