@@ -17,13 +17,13 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: graalvm-ce-java11@21.0.0
       - run: sbt scio-repl/assembly
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -48,7 +48,7 @@ jobs:
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v12
         with:
           java-version: graalvm-ce-java11@21.0.0
       - name: Setup project
@@ -58,7 +58,7 @@ jobs:
         env:
           SOCCO: true
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@4.1.1
+        uses: JamesIves/github-pages-deploy-action@4.1.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages

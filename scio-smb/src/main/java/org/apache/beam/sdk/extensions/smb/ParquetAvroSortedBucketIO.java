@@ -327,6 +327,10 @@ public class ParquetAvroSortedBucketIO {
 
     @Override
     BucketMetadata<K, T> getBucketMetadata() {
+      final Schema schema =
+          getRecordClass() == null
+              ? getSchema()
+              : new ReflectData(getRecordClass().getClassLoader()).getSchema(getRecordClass());
       try {
         return new ParquetBucketMetadata<>(
             getNumBuckets(),
@@ -335,7 +339,7 @@ public class ParquetAvroSortedBucketIO {
             getHashType(),
             getKeyField(),
             getFilenamePrefix(),
-            getSchema());
+            schema);
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }

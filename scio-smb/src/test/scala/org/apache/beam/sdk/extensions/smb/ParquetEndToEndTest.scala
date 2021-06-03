@@ -24,6 +24,7 @@ import com.spotify.scio.smb._
 import com.spotify.scio.testing._
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+import org.apache.beam.sdk.io.AvroGeneratedUser
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.jdk.CollectionConverters._
@@ -171,5 +172,40 @@ class ParquetEndToEndTest extends PipelineSpec {
 
     eventsDir.delete()
     usersDir.delete()
+  }
+
+  it should "support specific records" in {
+    val usersDir = tmpDir
+
+    val sc1 = ScioContext()
+
+    val users = (1 to 100).map { i =>
+      AvroGeneratedUser
+        .newBuilder()
+        .setName(s"user$i")
+        .setFavoriteColor(s"color$i")
+        .setFavoriteNumber(i)
+        .build()
+    }
+    sc1
+      .parallelize(users)
+      .saveAsSortedBucket(
+        ParquetAvroSortedBucketIO
+          .write(classOf[CharSequence], "name", classOf[AvroGeneratedUser])
+          .to(usersDir.toString)
+      )
+    sc1.run()
+
+    val sc2 = ScioContext()
+    val actual = sc2
+      .sortMergeGroupByKey(
+        classOf[CharSequence],
+        ParquetAvroSortedBucketIO
+          .read(new TupleTag[AvroGeneratedUser]("user"), classOf[AvroGeneratedUser])
+          .from(usersDir.toString)
+      )
+      .map(kv => (kv._1.toString, kv._2.toList))
+    val expected = users.map(u => (u.getName, List(u)))
+    actual should containInAnyOrder(expected)
   }
 }
