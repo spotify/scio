@@ -5,7 +5,10 @@ env:
   GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
   GOOGLE_PROJECT_ID: data-integration-test
 
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   it-test:
