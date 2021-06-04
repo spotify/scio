@@ -1,0 +1,54 @@
+name: tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java ${{matrix.java}} setup
+        uses: olafurpg/setup-scala@v12
+        with:
+          java-version: ${{matrix.java}}
+      - if: ${{ !matrix.coverage }}
+        run: sbt "++${{matrix.scala}} test"
+      - if: ${{ matrix.coverage }}
+        run: |
+          sbt coverage "++${{matrix.scala}} test" coverageReport
+          bash <(curl -s https://codecov.io/bash)
+    strategy:
+      matrix:
+        java:
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
+        scala:
+          - 2.12.14
+          - 2.13.6
+        include:
+          - scala: 2.13.6
+            java: graalvm-ce-java11@21.0.0
+            coverage: true
+        exclude:
+          - scala: 2.12.14
+            java: graalvm-ce-java8@21.0.0
+  repl-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java ${{matrix.java}} setup
+        uses: olafurpg/setup-scala@v12
+      - run: ./scripts/ci_repl.sh
+        env:
+          SCALA_VERSION: ${{ matrix.scala }}
+    strategy:
+      matrix:
+        java:
+          - graalvm-ce-java11@21.0.0
+        scala:
+          - 2.12.14
+          - 2.13.6
