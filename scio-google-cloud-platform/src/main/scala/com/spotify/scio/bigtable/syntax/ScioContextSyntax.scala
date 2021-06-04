@@ -28,7 +28,6 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
 
-import java.util.Optional
 import scala.jdk.CollectionConverters._
 
 object ScioContextOps {
