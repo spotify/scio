@@ -17,6 +17,7 @@
 
 package com.spotify.scio
 
+import scala.util.{Try => STry}
 import scala.compiletime._
 import scala.deriving._
 import scala.quoted._
@@ -78,9 +79,9 @@ object IsJavaBean {
 
   private def isJavaBeanImpl[T](using Quotes, Type[T]): Expr[IsJavaBean[T]] = {
     import quotes.reflect._
-    if TypeRepr.of[T].typeSymbol.flags.is(Flags.JavaDefined) && checkGetterAndSetters[T] then
+    if TypeRepr.of[T].typeSymbol.flags.is(Flags.JavaDefined) && STry(checkGetterAndSetters[T]).isSuccess then
       '{new IsJavaBean[T]{}}
-    esle report.error(s"${summon[Type[T]].show} is not a Java Bean")
+    else report.throwError("Not a Java Bean")
   }
 
   inline given isJavaBean[T]: IsJavaBean[T] = {
