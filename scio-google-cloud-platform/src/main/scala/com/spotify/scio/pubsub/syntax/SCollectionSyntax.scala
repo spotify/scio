@@ -76,10 +76,11 @@ trait SCollectionSyntax {
       maxBatchSize: Option[Int] = None,
       maxBatchBytesSize: Option[Int] = None
     )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-      implicit val vCoder = BeamCoders.getTupleCoders(coll.covary_[(V, Map[String, String])])._1
+      implicit val vCoder =
+        BeamCoders.getTupleCoders(coll.unsafeCovary_[(V, Map[String, String])])._1
       val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
       coll
-        .covary_[(V, Map[String, String])]
+        .unsafeCovary_[(V, Map[String, String])]
         .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
     }
   }
