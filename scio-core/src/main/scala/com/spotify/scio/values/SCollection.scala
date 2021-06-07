@@ -290,14 +290,27 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Collection operations
   // =======================================================================
 
-  /** lifts this [[SCollection]] to the specified type */
-  def covary[U >: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+  /**
+   * Changes the underlying type of the SCollection from T to U and resets the coder
+   * to match the result underlying type.
+   * The function is unsafe and should be used internally only to support covary/contravary
+   * implementations.
+   * @tparam U The result underlying type.
+   * @return The result SCollection with the changed underlying type.
+   */
+  private def unsafeChangeUnderlyingType[U: Coder]: SCollection[U] = {
+    val coder = CoderMaterializer.beam(context, Coder[U])
+    ensureSerializable(coder).fold(throw _, this.asInstanceOf[SCollection[U]].setCoder)
+  }
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary_[U](implicit ev: T <:< U): SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary[U >: T: Coder]: SCollection[U] = unsafeChangeUnderlyingType[U]
 
   /** lifts this [[SCollection]] to the specified type */
-  def contravary[U <: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary_[U: Coder](implicit ev: T <:< U): SCollection[U] = unsafeChangeUnderlyingType[U]
+
+  /** lifts this [[SCollection]] to the specified type */
+  def contravary[U <: T: Coder]: SCollection[U] = unsafeChangeUnderlyingType[U]
 
   /**
    * Convert this SCollection to an [[SCollectionWithFanout]] that uses an intermediate node to
