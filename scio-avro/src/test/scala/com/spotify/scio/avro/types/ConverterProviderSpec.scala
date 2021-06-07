@@ -20,7 +20,6 @@ package com.spotify.scio.avro.types
 import cats.Eq
 import cats.instances.all._
 import com.google.protobuf.ByteString
-import magnolify.cats.semiauto.EqDerivation
 import magnolify.scalacheck.auto._
 import org.scalacheck._
 import org.scalatest.propspec.AnyPropSpec
@@ -41,22 +40,22 @@ class ConverterProviderSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChe
   implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
 
   property("round trip basic primitive types") {
-    forAll { r1: BasicFields =>
+    forAll { (r1: BasicFields) =>
       val r2 = AvroType.fromGenericRecord[BasicFields](AvroType.toGenericRecord[BasicFields](r1))
-      EqDerivation[BasicFields].eqv(r1, r2) shouldBe true
+      EqGen.of[BasicFields].eqv(r1, r2) shouldBe true
     }
   }
 
   property("round trip optional primitive types") {
-    forAll { r1: OptionalFields =>
+    forAll { (r1: OptionalFields) =>
       val r2 =
         AvroType.fromGenericRecord[OptionalFields](AvroType.toGenericRecord[OptionalFields](r1))
-      EqDerivation[OptionalFields].eqv(r1, r2) shouldBe true
+      EqGen.of[OptionalFields].eqv(r1, r2) shouldBe true
     }
   }
 
   property("skip null optional primitive types") {
-    forAll { o: OptionalFields =>
+    forAll { (o: OptionalFields) =>
       val r = AvroType.toGenericRecord[OptionalFields](o)
       // GenericRecord object should only contain a key if the corresponding Option[T] is defined
       o.boolF.isDefined shouldBe (r.get("boolF") != null)
@@ -70,37 +69,37 @@ class ConverterProviderSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChe
   }
 
   property("round trip primitive type arrays") {
-    forAll { r1: ArrayFields =>
+    forAll { (r1: ArrayFields) =>
       val r2 = AvroType.fromGenericRecord[ArrayFields](AvroType.toGenericRecord[ArrayFields](r1))
-      EqDerivation[ArrayFields].eqv(r1, r2) shouldBe true
+      EqGen.of[ArrayFields].eqv(r1, r2) shouldBe true
     }
   }
 
   property("round trip primitive type maps") {
-    forAll { r1: MapFields =>
+    forAll { (r1: MapFields) =>
       val r2 = AvroType.fromGenericRecord[MapFields](AvroType.toGenericRecord[MapFields](r1))
-      EqDerivation[MapFields].eqv(r1, r2) shouldBe true
+      EqGen.of[MapFields].eqv(r1, r2) shouldBe true
     }
   }
 
   property("round trip required nested types") {
-    forAll { r1: NestedFields =>
+    forAll { (r1: NestedFields) =>
       val r2 = AvroType.fromGenericRecord[NestedFields](AvroType.toGenericRecord[NestedFields](r1))
-      EqDerivation[NestedFields].eqv(r1, r2) shouldBe true
+      EqGen.of[NestedFields].eqv(r1, r2) shouldBe true
     }
   }
 
   property("round trip optional nested types") {
-    forAll { r1: OptionalNestedFields =>
+    forAll { (r1: OptionalNestedFields) =>
       val r2 = AvroType.fromGenericRecord[OptionalNestedFields](
         AvroType.toGenericRecord[OptionalNestedFields](r1)
       )
-      EqDerivation[OptionalNestedFields].eqv(r1, r2) shouldBe true
+      EqGen.of[OptionalNestedFields].eqv(r1, r2) shouldBe true
     }
   }
 
   property("skip null optional nested types") {
-    forAll { o: OptionalNestedFields =>
+    forAll { (o: OptionalNestedFields) =>
       val r = AvroType.toGenericRecord[OptionalNestedFields](o)
       // TableRow object should only contain a key if the corresponding Option[T] is defined
       o.basic.isDefined shouldBe (r.get("basic") != null)
@@ -111,28 +110,28 @@ class ConverterProviderSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChe
   }
 
   property("round trip nested type arrays") {
-    forAll { r1: ArrayNestedFields =>
+    forAll { (r1: ArrayNestedFields) =>
       val r2 = AvroType.fromGenericRecord[ArrayNestedFields](
         AvroType.toGenericRecord[ArrayNestedFields](r1)
       )
-      EqDerivation[ArrayNestedFields].eqv(r1, r2) shouldBe true
+      EqGen.of[ArrayNestedFields].eqv(r1, r2) shouldBe true
     }
   }
 
   // FIXME: can't derive Eq for this
 //  property("round trip nested type maps") {
-//    forAll { r1: MapNestedFields =>
+//    forAll { (r1: MapNestedFields) =>
 //      val r2 =
 //        AvroType.fromGenericRecord[MapNestedFields](AvroType.toGenericRecord[MapNestedFields](r1))
-//      EqDerivation[MapNestedFields].eqv(r1, r2) shouldBe true
+//      EqGen.of[MapNestedFields].eqv(r1, r2) shouldBe true
 //    }
 //  }
 
   property("round trip byte array types") {
-    forAll { r1: ByteArrayFields =>
+    forAll { (r1: ByteArrayFields) =>
       val r2 =
         AvroType.fromGenericRecord[ByteArrayFields](AvroType.toGenericRecord[ByteArrayFields](r1))
-      EqDerivation[ByteArrayFields].eqv(r1, r2) shouldBe true
+      EqGen.of[ByteArrayFields].eqv(r1, r2) shouldBe true
     }
   }
 }

@@ -69,7 +69,7 @@ trait ScalaInstances {
     ArrayType(s, _.asJava, _.asScala.toList)
 
   implicit def traversableOnceSchema[T](implicit s: Schema[T]): Schema[TraversableOnce[T]] =
-    ArrayType(s, _.toList.asJava, _.asScala.toList)
+    ArrayType(s, _.iterator.to(List).asJava, _.asScala.toList)
 
   implicit def iterableSchema[T](implicit s: Schema[T]): Schema[Iterable[T]] =
     ArrayType(s, _.toList.asJava, _.asScala.toList)

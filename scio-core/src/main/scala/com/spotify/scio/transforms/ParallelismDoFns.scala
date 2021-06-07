@@ -50,7 +50,7 @@ class ParallelFlatMapFn[T, U](parallelism: Int)(f: T => TraversableOnce[U])
     extends ParallelLimitedFn[T, U](parallelism: Int) {
   val g: T => TraversableOnce[U] = ClosureCleaner.clean(f) // defeat closure
   def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
-    val i = g(c.element()).toIterator
+    val i = g(c.element()).iterator
     while (i.hasNext) c.output(i.next())
   }
 }

@@ -250,7 +250,7 @@ object AvroIO {
     private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
   }
 
-  final case class WriteParam private (
+  final case class WriteParam private[avro] (
     numShards: Int = WriteParam.DefaultNumShards,
     private val _suffix: String = WriteParam.DefaultSuffix,
     codec: CodecFactory = WriteParam.DefaultCodec,
