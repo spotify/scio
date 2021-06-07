@@ -298,19 +298,19 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @tparam U The result underlying type.
    * @return The result SCollection with the changed underlying type.
    */
-  private def unsafeChangeUnderlyingType[U: Coder]: SCollection[U] = {
+  private def unsafeCastElement[U: Coder]: SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
     ensureSerializable(coder).fold(throw _, this.asInstanceOf[SCollection[U]].setCoder)
   }
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary[U >: T: Coder]: SCollection[U] = unsafeChangeUnderlyingType[U]
+  def covary[U >: T: Coder]: SCollection[U] = unsafeCastElement[U]
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary_[U: Coder](implicit ev: T <:< U): SCollection[U] = unsafeChangeUnderlyingType[U]
+  def covary_[U: Coder](implicit ev: T <:< U): SCollection[U] = unsafeCastElement[U]
 
   /** lifts this [[SCollection]] to the specified type */
-  def contravary[U <: T: Coder]: SCollection[U] = unsafeChangeUnderlyingType[U]
+  def contravary[U <: T: Coder]: SCollection[U] = unsafeCastElement[U]
 
   /**
    * Convert this SCollection to an [[SCollectionWithFanout]] that uses an intermediate node to
