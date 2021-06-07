@@ -78,8 +78,9 @@ object IsJavaBean {
 
   private def isJavaBeanImpl[T](using Quotes, Type[T]): Expr[IsJavaBean[T]] = {
     import quotes.reflect._
-    if TypeRepr.of[T].typeSymbol.flags.is(Flags.JavaDefined) then checkGetterAndSetters[T]
-    '{new IsJavaBean[T]{}}
+    if TypeRepr.of[T].typeSymbol.flags.is(Flags.JavaDefined) && checkGetterAndSetters[T] then
+      '{new IsJavaBean[T]{}}
+    esle report.error(s"${summon[Type[T]].show} is not a Java Bean")
   }
 
   inline given isJavaBean[T]: IsJavaBean[T] = {
