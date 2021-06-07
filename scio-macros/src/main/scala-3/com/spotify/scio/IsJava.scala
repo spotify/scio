@@ -81,10 +81,11 @@ object IsJavaBean {
     import quotes.reflect._
     if TypeRepr.of[T].typeSymbol.flags.is(Flags.JavaDefined) && STry(checkGetterAndSetters[T]).isSuccess then
       '{new IsJavaBean[T]{}}
-    else report.throwError("Not a Java Bean")
+    else 
+      report.throwError("Not a Java Bean")
   }
 
-  inline given isJavaBean[T]: IsJavaBean[T] = {
+  transparent inline given [T]: IsJavaBean[T] = {
     ${ isJavaBeanImpl[T] }
   }
 
