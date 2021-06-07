@@ -57,4 +57,4 @@ jobs:
 #      - name: Scala 2
 #        run: sbt "++2.13.5;${{ matrix.task }}"
       - name: Scala 3
-        run: sbt "++3.0.0-RC2;${{ matrix.task }}"
+        run: sbt "++3.0.0;${{ matrix.task }}"
