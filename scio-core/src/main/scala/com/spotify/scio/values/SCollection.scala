@@ -290,14 +290,51 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Collection operations
   // =======================================================================
 
-  /** lifts this [[SCollection]] to the specified type */
-  def covary[U >: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+  /**
+   * Changes the underlying type of the SCollection from T to U and resets the coder
+   * to match the result underlying type.
+   * The function is unsafe and should be used internally only to support covary/contravary
+   * implementations.
+   * @tparam U The result underlying type.
+   * @return The result SCollection with the changed underlying type.
+   */
+  private[scio] def unsafeCastElementWithCoder[U: Coder]: SCollection[U] = {
+    val coder = CoderMaterializer.beam(context, Coder[U])
+    ensureSerializable(coder).fold(throw _, this.asInstanceOf[SCollection[U]].setCoder)
+  }
+
+  /**
+   * Equivalent of the [[contravary]], but doesn't reset the coder and hence doesn't require it
+   * as implicit. For internal use only and mostly to minimize the number of breaking changes to
+   * migrate from covary/contravary versions which don't reset the coder.
+   */
+  private[scio] def unsafeContravary[U <: T]: SCollection[U] =
+    this.asInstanceOf[SCollection[U]]
+
+  /**
+   * Equivalent of the [[covary]], but doesn't reset the coder and hence doesn't require it
+   * as implicit. For internal use only and mostly to minimize the number of breaking changes to
+   * migrate from covary/contravary versions which don't reset the coder.
+   */
+  private[scio] def unsafeCovary[U >: T]: SCollection[U] =
+    this.asInstanceOf[SCollection[U]]
+
+  /**
+   * Equivalent of the [[covary_]], but doesn't reset the coder and hence doesn't require it
+   * as implicit. For internal use only and mostly to minimize the number of breaking changes to
+   * migrate from covary/contravary versions which don't reset the coder.
+   */
+  private[scio] def unsafeCovary_[U](implicit ev: T <:< U): SCollection[U] = this
+    .asInstanceOf[SCollection[U]]
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary_[U](implicit ev: T <:< U): SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary[U >: T: Coder]: SCollection[U] = unsafeCastElementWithCoder[U]
 
   /** lifts this [[SCollection]] to the specified type */
-  def contravary[U <: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary_[U: Coder](implicit ev: T <:< U): SCollection[U] = unsafeCastElementWithCoder[U]
+
+  /** lifts this [[SCollection]] to the specified type */
+  def contravary[U <: T: Coder]: SCollection[U] = unsafeCastElementWithCoder[U]
 
   /**
    * Convert this SCollection to an [[SCollectionWithFanout]] that uses an intermediate node to
