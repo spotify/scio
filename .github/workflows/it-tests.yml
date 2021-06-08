@@ -1,11 +1,14 @@
-name: ci-it
+name: it-tests
 
 env:
   ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
   GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
   GOOGLE_PROJECT_ID: data-integration-test
 
-on: push
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   it-test:
@@ -23,9 +26,15 @@ jobs:
       - run: sbt "++${{matrix.scala}} it:test"
     strategy:
       matrix:
+        java:
+          - graalvm-ce-java8@21.0.0
+          - graalvm-ce-java11@21.0.0
         scala:
-          - "2.12.14"
-          - "2.13.6"
+          - 2.12.14
+          - 2.13.6
+        exclude:
+          - scala: 2.12.14
+            java: graalvm-ce-java8@21.0.0
 
   build-docs:
     name: Build documentation
