@@ -32,19 +32,17 @@ trait SCollectionSyntax {
      * @group output
      */
     @deprecated(
-      """
-      |  This method has been deprecated. Use one of the following IOs instead:
-      |    - PubsubIO.string
-      |    - PubsubIO.avro
-      |    - PubsubIO.proto
-      |    - PubsubIO.pubsub
-      |    - PubsubIO.coder
-      |
-      |  For example:
-      |     coll.write(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-      |       PubsubIO.WriteParam()
-      |     )
-      """.stripMargin,
+      "This method has been deprecated. Use one of the following IOs instead:\n" +
+        "  - PubsubIO.string\n" +
+        "  - PubsubIO.avro\n" +
+        "  - PubsubIO.proto\n" +
+        "  - PubsubIO.pubsub\n" +
+        "  - PubsubIO.coder\n" +
+        "\n" +
+        "For example:\n" +
+        "   coll.write(PubsubIO.string(sub, idAttribute, timestampAttribute))(\n" +
+        "     PubsubIO.WriteParam()\n" +
+        "   )",
       since = "0.10.0"
     )
     def saveAsPubsub(
@@ -63,14 +61,12 @@ trait SCollectionSyntax {
      * @group output
      */
     @deprecated(
-      """
-      |  This method has been deprecated. Use PubsubIO.withAttributes instead
-      |
-      |  For example:
-      |     coll.write(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-      |       PubsubIO.WriteParam()
-      |     )
-      """.stripMargin,
+      "This method has been deprecated. Use PubsubIO.withAttributes instead\n" +
+        "\n" +
+        "For example:\n" +
+        "   coll.write(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(\n" +
+        "     PubsubIO.WriteParam()\n" +
+        "   )",
       since = "0.10.0"
     )
     def saveAsPubsubWithAttributes[V: ClassTag](
@@ -80,10 +76,11 @@ trait SCollectionSyntax {
       maxBatchSize: Option[Int] = None,
       maxBatchBytesSize: Option[Int] = None
     )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
-      implicit val vCoder = BeamCoders.getTupleCoders(coll.covary_[(V, Map[String, String])])._1
+      implicit val vCoder =
+        BeamCoders.getTupleCoders(coll.unsafeCovary_[(V, Map[String, String])])._1
       val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)
       coll
-        .covary_[(V, Map[String, String])]
+        .unsafeCovary_[(V, Map[String, String])]
         .write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
     }
   }

@@ -39,10 +39,18 @@ import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.schemas.Schema
+import org.apache.beam.sdk.util.CoderUtils
+
+object SCollectionTest {
+  class TestA(val l: Long)
+  case class TestB(override val l: Long, s: String) extends TestA(l)
+}
 
 class SCollectionTest extends PipelineSpec {
+  import com.spotify.scio.values.SCollectionTest._
+
   "SCollection" should "support applyTransform()" in {
     runWithContext { sc =>
       val p =
@@ -807,6 +815,24 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val coll = sc.empty[Int]().reifyAsListInGlobalWindow
       coll should containInAnyOrder(Seq(Seq.empty[Int]))
+    }
+  }
+
+  it should "reset coder after covary is applied" in {
+    runWithContext { sc =>
+      val coll1 = sc.parallelize(Seq(new TestA(0)))
+      val coll2 = sc.parallelize(Seq(TestB(1, "1")))
+      val coll = coll2.covary[TestA] ++ coll1
+
+      // The test fails if covary doesn't reset the coder to the Coder[TestA],
+      // because the result collection is a mix of TestA and TestB and Coder[TestB]
+      // won't be able to decode an instance of TestA from coll1.
+      val beamCoder = CoderMaterializer.beamWithDefault(coll.coder, sc.options)
+      val testAInstance = new TestA(0)
+      val bytes = CoderUtils.encodeToByteArray(beamCoder, testAInstance)
+      val result = CoderUtils.decodeFromByteArray(beamCoder, bytes)
+
+      result.l shouldBe testAInstance.l
     }
   }
 
