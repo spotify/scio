@@ -182,7 +182,7 @@ object ContextAndArgs {
   object TypedParser {
     final def apply[T]()(implicit parser: Parser[T], help: Help[T]): TypedParser[T] = {
       val parserOverride = parser match {
-        case p: ParserWithNameFormatter[T] => p
+        case p: ParserWithNameFormatter[T, _] => p
         case p                             => p.nameFormatter(_.name)
       }
       val helpOverride =
