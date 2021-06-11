@@ -594,8 +594,8 @@ lazy val `scio-avro-base`: Project = project
   )
   .dependsOn(`scio-core`)
 
-lazy val `scio-google-cloud-platform`: Project = project
-  .in(file("scio-google-cloud-platform"))
+lazy val `scio-google-cloud-platform-base`: Project = project
+  .in(file("scio-google-cloud-platform-base"))
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(macroSettings)
@@ -655,6 +655,71 @@ lazy val `scio-google-cloud-platform`: Project = project
     `scio-schemas` % "test",
     `scio-avro` % "test",
     `scio-test` % "test;it"
+  )
+  .configs(IntegrationTest)
+
+lazy val `scio-google-cloud-platform`: Project = project
+  .in(file("scio-google-cloud-platform-typed"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(macroSettings)
+  .settings(itSettings)
+  .settings(beamRunnerSettings)
+  .settings(
+    description := "Scio add-on for Google Cloud Platform",
+    libraryDependencies ++= Seq(
+      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
+        ExclusionRule(organization = "io.grpc")
+      ),
+      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
+        ExclusionRule(organization = "io.grpc")
+      ),
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.120.2",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % "1.20.2",
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
+      "com.google.api" % "gax-grpc" % gaxVersion,
+      "com.google.api" % "gax" % gaxVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
+      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
+      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
+      "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
+      "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
+      "com.google.guava" % "guava" % guavaVersion,
+      // From BeamModulePlugin.groovy
+      "com.google.http-client" % "google-http-client-jackson" % "1.29.2",
+      "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
+      "com.twitter" %% "chill" % chillVersion,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "junit" % "junit" % junitVersion % "test",
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
+      "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
+    )
+  )
+  .dependsOn(
+    `scio-core` % "compile;it->it",
+    `scio-schemas` % "test",
+    `scio-avro` % "test",
+    `scio-test` % "test;it",
+    `scio-google-cloud-platform-base` % "compile"
   )
   .configs(IntegrationTest)
 
