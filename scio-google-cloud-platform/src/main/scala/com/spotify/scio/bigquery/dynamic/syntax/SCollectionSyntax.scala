@@ -18,8 +18,6 @@
 package com.spotify.scio.bigquery.dynamic.syntax
 
 import com.google.api.services.bigquery.model.TableSchema
-import com.spotify.scio.bigquery.types.BigQueryType
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.dynamic._
@@ -31,8 +29,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.{DynamicDestinations, TableDestinatio
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.values.ValueInSingleWindow
 import com.spotify.scio.bigquery.ExtendedErrorInfo
-
-import scala.reflect.runtime.universe._
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
@@ -129,32 +125,6 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
  * destinations methods.
  */
-final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SCollection[T])
-    extends AnyVal {
-
-  /**
-   * Save this SCollection to dynamic BigQuery tables using the specified table function.
-   * Note that element type `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
-   */
-  def saveAsTypedBigQuery(
-    writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null
-  )(
-    tableFn: ValueInSingleWindow[T] => TableDestination
-  )(implicit tt: TypeTag[T]): ClosedTap[Nothing] = {
-    val bqt = BigQueryType[T]
-    val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
-
-    new DynamicBigQueryOps(self).saveAsBigQuery(
-      destinations,
-      bqt.toTableRow,
-      writeDisposition,
-      createDisposition
-    )
-  }
-}
-
 trait SCollectionSyntax {
   implicit def bigQueryDynamicOps[T](sc: SCollection[T]): DynamicBigQueryOps[T] =
     new DynamicBigQueryOps[T](sc)
@@ -163,9 +133,4 @@ trait SCollectionSyntax {
     sc: SCollection[T]
   ): DynamicTableRowBigQueryOps[T] =
     new DynamicTableRowBigQueryOps[T](sc)
-
-  implicit def bigQueryTypedDynamicOps[T <: HasAnnotation](
-    sc: SCollection[T]
-  ): DynamicTypedBigQueryOps[T] =
-    new DynamicTypedBigQueryOps[T](sc)
 }

@@ -21,12 +21,9 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
 import scala.collection.mutable.{Map => MMap}
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 /** Companion object for [[MockBigQuery]]. */
 object MockBigQuery {
@@ -44,7 +41,7 @@ object MockBigQuery {
  * Use [[mockTable(original:String)* mockTable]] to feed data into live BigQuery service and
  * [[queryResult]] to query them.
  */
-class MockBigQuery private (private val bq: BigQuery) {
+class MockBigQuery private (private val bq: BigQuery) extends MockTypedBigQuery {
   private val mapping = MMap.empty[TableReference, TableReference]
 
   /** Mock a BigQuery table. Each table can be mocked only once in a test class. */
@@ -84,18 +81,6 @@ class MockBigQuery private (private val bq: BigQuery) {
     }
   }
 
-  /**
-   * Get result of a live query against BigQuery service, substituting mocked tables with test
-   * data.
-   */
-  def typedQueryResult[T <: HasAnnotation: ClassTag: TypeTag](
-    sqlQuery: String,
-    flattenResults: Boolean = false
-  ): Seq[T] = {
-    val bqt = BigQueryType[T]
-    queryResult(sqlQuery, flattenResults).map(bqt.fromTableRow)
-  }
-
   private def toTableSpec(table: TableReference, isLegacy: Boolean) =
     if (isLegacy) {
       s"[${table.getProjectId}:${table.getDatasetId}.${table.getTableId}]"
@@ -110,7 +95,7 @@ class MockTable(
   private val schema: TableSchema,
   private val original: TableReference,
   private val temp: TableReference
-) {
+) extends MockTypedTable {
   private var mocked: Boolean = false
 
   private def ensureUnique(): Unit = {
@@ -129,12 +114,6 @@ class MockTable(
     ensureUnique()
     writeRows(rows)
     ()
-  }
-
-  /** Populate the table with mock data. */
-  def withTypedData[T <: HasAnnotation: ClassTag: TypeTag](rows: Seq[T]): Unit = {
-    val bqt = BigQueryType[T]
-    withData(rows.map(bqt.toTableRow))
   }
 
   /**

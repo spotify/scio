@@ -15,6 +15,16 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery.dynamic.syntax
+package com.spotify.scio.bigquery.syntax
 
-trait AllSyntax extends SCollectionSyntax with SCollectionTypedSyntax
+private[bigquery] trait Aliases {
+
+  /** Typed BigQuery annotations and converters. */
+  val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
+
+  /** BigQuery tag for macro generated classes/fields. */
+  type BigQueryTag = com.spotify.scio.bigquery.types.BigQueryTag
+
+  /** Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]]. */
+  type description = com.spotify.scio.bigquery.types.description
+}
