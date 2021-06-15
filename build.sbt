@@ -151,6 +151,7 @@ val commonSettings = Def
     // protobuf-lite is an older subset of protobuf-java and causes issues
     excludeDependencies += "com.google.protobuf" % "protobuf-lite",
     resolvers += Resolver.sonatypeRepo("public"),
+    resolvers += "confluent" at "https://packages.confluent.io/maven/",
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
