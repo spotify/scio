@@ -149,9 +149,11 @@ val commonSettings = Def
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     // protobuf-lite is an older subset of protobuf-java and causes issues
-    excludeDependencies += "com.google.protobuf" % "protobuf-lite",
+    excludeDependencies ++= Seq(
+      "com.google.protobuf" % "protobuf-lite",
+      "org.apache.beam" % "beam-sdks-java-io-kafka"
+    ),
     resolvers += Resolver.sonatypeRepo("public"),
-    resolvers += "confluent" at "https://packages.confluent.io/maven/",
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
