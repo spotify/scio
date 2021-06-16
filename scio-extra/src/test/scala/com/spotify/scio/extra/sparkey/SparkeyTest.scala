@@ -567,8 +567,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
@@ -600,8 +599,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
@@ -632,8 +630,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
@@ -664,8 +661,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
