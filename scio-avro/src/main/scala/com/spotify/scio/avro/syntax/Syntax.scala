@@ -17,4 +17,8 @@
 
 package com.spotify.scio.avro.syntax
 
-trait Syntax extends ScioContextSyntax with SCollectionSyntax
+trait Syntax
+    extends ScioContextSyntax
+    with ScioContextTypedSyntax
+    with SCollectionSyntax
+    with SCollectionTypedSyntax

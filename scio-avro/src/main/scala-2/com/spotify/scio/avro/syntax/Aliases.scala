@@ -15,15 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio
+package com.spotify.scio.avro.syntax
 
-import com.spotify.scio.avro.syntax.{Aliases, Syntax}
+trait Aliases {
 
-/**
- * Main package for Avro APIs. Import all.
- *
- * {{{
- * import com.spotify.scio.avro._
- * }}}
- */
-package object avro extends Syntax with Aliases {}
+  /** Typed Avro annotations and converters. */
+  val AvroType = com.spotify.scio.avro.types.AvroType
+
+  /** Annotation for Avro field and record documentation. */
+  type doc = com.spotify.scio.avro.types.doc
+}
