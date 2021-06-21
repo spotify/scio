@@ -42,19 +42,17 @@ trait ScioContextSyntax {
      * @group input
      */
     @deprecated(
-      """
-      |  This method has been deprecated. Use one of the following IOs instead:
-      |    - PubsubIO.string
-      |    - PubsubIO.avro
-      |    - PubsubIO.proto
-      |    - PubsubIO.pubsub
-      |    - PubsubIO.coder
-      |
-      |  For example:
-      |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-      |       PubsubIO.ReadParam(PubsubIO.Subscription)
-      |     )
-      """.stripMargin,
+      "This method has been deprecated. Use one of the following IOs instead:\n" +
+        "  - PubsubIO.string\n" +
+        "  - PubsubIO.avro\n" +
+        "  - PubsubIO.proto\n" +
+        "  - PubsubIO.pubsub\n" +
+        "  - PubsubIO.coder\n" +
+        "\n" +
+        "For example:\n" +
+        "  sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(\n" +
+        "    PubsubIO.ReadParam(PubsubIO.Subscription)\n" +
+        "  )",
       since = "0.10.0"
     )
     def pubsubSubscription[T: ClassTag: Coder](
@@ -69,19 +67,17 @@ trait ScioContextSyntax {
      * @group input
      */
     @deprecated(
-      """
-      |  This method has been deprecated. Use one of the following IOs instead:
-      |    - PubsubIO.string
-      |    - PubsubIO.avro
-      |    - PubsubIO.proto
-      |    - PubsubIO.pubsub
-      |    - PubsubIO.coder
-      |
-      |  For example:
-      |     sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(
-      |       PubsubIO.ReadParam(PubsubIO.Topic)
-      |     )
-      """.stripMargin,
+      "This method has been deprecated. Use one of the following IOs instead:\n" +
+        "  - PubsubIO.string\n" +
+        "  - PubsubIO.avro\n" +
+        "  - PubsubIO.proto\n" +
+        "  - PubsubIO.pubsub\n" +
+        "  - PubsubIO.coder\n" +
+        "\n" +
+        "For example:\n" +
+        "   sc.read(PubsubIO.string(sub, idAttribute, timestampAttribute))(\n" +
+        "     PubsubIO.ReadParam(PubsubIO.Topic)\n" +
+        "   )",
       since = "0.10.0"
     )
     def pubsubTopic[T: ClassTag: Coder](
@@ -106,13 +102,11 @@ trait ScioContextSyntax {
      * @group input
      */
     @deprecated(
-      """
-      |  This method has been deprecated. Use PubsubIO.withAttributes instead.
-      |  For example:
-      |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-      |       PubsubIO.ReadParam(PubsubIO.Subscription)
-      |     )
-      """.stripMargin,
+      "This method has been deprecated. Use PubsubIO.withAttributes instead.\n" +
+        "For example:\n" +
+        "   sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(\n" +
+        "     PubsubIO.ReadParam(PubsubIO.Subscription)\n" +
+        "   )\n",
       since = "0.10.0"
     )
     def pubsubSubscriptionWithAttributes[T: ClassTag: Coder](
@@ -127,13 +121,11 @@ trait ScioContextSyntax {
      * @group input
      */
     @deprecated(
-      """
-      |  This method has been deprecated. Use PubsubIO.withAttributes instead.
-      |  For example:
-      |     sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(
-      |       PubsubIO.ReadParam(PubsubIO.Topic)
-      |     )
-      """.stripMargin,
+      "This method has been deprecated. Use PubsubIO.withAttributes instead.\n" +
+        "For example:\n" +
+        "   sc.read(PubsubIO.withAttributes(sub, idAttribute, timestampAttribute))(\n" +
+        "     PubsubIO.ReadParam(PubsubIO.Topic)\n" +
+        "   )\n",
       since = "0.10.0"
     )
     def pubsubTopicWithAttributes[T: ClassTag: Coder](

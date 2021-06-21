@@ -293,6 +293,10 @@ object ContextAndArgs {
   def apply(args: Array[String]): (ScioContext, Args) =
     withParser(DefaultParser[PipelineOptions]()).apply(args)
 
+  @deprecated(
+    "Case-app based argument parsing will be removed in 0.11.0, use PipelineOptions instead",
+    "0.10.4"
+  )
   def typed[T](args: Array[String])(implicit tap: TypedArgsParser[T, Try]): (ScioContext, T) =
     withParser(tap.parser).apply(args)
 

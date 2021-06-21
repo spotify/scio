@@ -25,8 +25,8 @@ import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
-val algebirdVersion = "0.13.7"
-val algebraVersion = "2.2.2"
+val algebirdVersion = "0.13.8"
+val algebraVersion = "2.2.3"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val autoServiceVersion = "1.0"
@@ -41,16 +41,16 @@ val breezeVersion = "1.2"
 val caffeineVersion = "2.9.1"
 val caseappVersion = "2.0.6"
 val catsVersion = "2.5.0"
-val chillVersion = "0.9.5"
+val chillVersion = "0.10.0"
 val circeVersion = "0.13.0"
 val commonsCompressVersion = "1.20"
-val commonsIoVersion = "2.8.0"
+val commonsIoVersion = "2.10.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "6.8.15"
-val elasticsearch7Version = "7.12.1"
+val elasticsearch6Version = "6.8.16"
+val elasticsearch7Version = "7.13.2"
 val featranVersion = "0.8.0-RC1"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.60.1"
@@ -92,13 +92,13 @@ val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.0"
 val parquetVersion = "1.12.0"
 val protobufGenericVersion = "0.2.9"
-val protobufVersion = "3.17.0"
+val protobufVersion = "3.17.3"
 val scalacheckVersion = "1.15.4"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
 val scalatestVersion = "3.2.9"
-val shapelessVersion = "2.3.7"
-val slf4jVersion = "1.7.30"
+val shapelessVersion = "2.3.4"
+val slf4jVersion = "1.7.31"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
 val tensorFlowVersion = "0.2.0"
@@ -142,8 +142,8 @@ val commonSettings = Def
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
-    scalaVersion := "2.13.5",
-    crossScalaVersions := Seq("2.12.13", scalaVersion.value),
+    scalaVersion := "2.13.6",
+    crossScalaVersions := Seq("2.12.14", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
@@ -915,7 +915,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.2.3",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.3.0",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
@@ -1243,7 +1243,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.4").cross(CrossVersion.full)),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.5").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {

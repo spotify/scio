@@ -106,7 +106,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
   }
 
   @Teardown
-  def teardown(): Unit = {
+  override def teardown(): Unit = {
     Log.info(s"Tearing down predict DoFn $this")
     val (running, m) = getResource().get(modelId)
     if (running.decrementAndGet() == 0) {

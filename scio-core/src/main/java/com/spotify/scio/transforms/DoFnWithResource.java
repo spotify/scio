@@ -20,18 +20,20 @@ package com.spotify.scio.transforms;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** A {@link DoFn} that manages an external resource. */
 public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<InputT, OutputT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DoFnWithResource.class);
-  private static final ConcurrentMap<String, Object> resources = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Pair<AtomicInteger, Object>> resources = new ConcurrentHashMap<>();
 
   private final String instanceId;
   private String resourceId = null;
@@ -117,12 +119,41 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
         resourceId = instanceId + "-" + this.toString();
         break;
     }
-    resources.computeIfAbsent(
+    resources.compute(
         resourceId,
-        key -> {
-          LOG.debug("Creating resource {}", resourceId);
-          return createResource();
+        (key, value) -> {
+          if (value == null) {
+            LOG.debug("Creating resource {}", resourceId);
+            AtomicInteger resourceUsersCounter = new AtomicInteger(1);
+            return Pair.of(resourceUsersCounter, createResource());
+          }
+          else {
+            int newCurrentUsers = value.getLeft().incrementAndGet();
+            LOG.debug("Incrementing resource {} users to {}", resourceId, newCurrentUsers);
+            return value;
+          }
         });
+  }
+
+  @Teardown
+  public void teardown() {
+    try {
+      Pair<AtomicInteger, Object> resourcePair = resources.get(resourceId);
+      AtomicInteger resourceUsers = resourcePair.getLeft();
+      ResourceT resource = (ResourceT) resourcePair.getRight();
+      if (resource instanceof AutoCloseable) {
+        AutoCloseable closeable = (AutoCloseable) resource;
+        int currentUsers = resourceUsers.decrementAndGet();
+        LOG.debug("Tearing down resource {} with current users {}", resourceId, currentUsers);
+        if (currentUsers == 0) {
+          LOG.debug("Closing resource {}", resourceId);
+          closeable.close();
+          resources.remove(resourceId);
+        }
+      }
+    } catch (Exception ex) {
+      LOG.warn("Failed to close resource {}", resourceId, ex);
+    }
   }
 
   @Override
@@ -134,6 +165,6 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
   /** Get managed resource. */
   @SuppressWarnings("unchecked")
   public ResourceT getResource() {
-    return (ResourceT) resources.get(resourceId);
+    return (ResourceT) resources.get(resourceId).getRight();
   }
 }

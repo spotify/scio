@@ -36,8 +36,7 @@ import scala.jdk.CollectionConverters._
 abstract class RedisDoFn[I, O](
   connectionConfig: RedisConnectionConfiguration,
   batchSize: Int
-)(implicit ec: ExecutionContext)
-    extends DoFn[I, O] {
+) extends DoFn[I, O] {
 
   @transient private var jedis: Jedis = _
   @transient private var pipeline: Pipeline = _
@@ -59,13 +58,16 @@ abstract class RedisDoFn[I, O](
     }
   }
 
-  def this(opts: RedisConnectionOptions, batchSize: Int)(implicit ec: ExecutionContext) =
+  def this(opts: RedisConnectionOptions, batchSize: Int) =
     this(RedisConnectionOptions.toConnectionConfig(opts), batchSize)
+
+  def executionContext: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   private def flush(fn: Result => Unit): Unit = {
     pipeline.exec
     pipeline.sync()
 
+    implicit val ec = executionContext
     val iter = requests.iterator()
     while (iter.hasNext()) {
       val (rsp, promise) = iter.next()
@@ -87,7 +89,7 @@ abstract class RedisDoFn[I, O](
     requests.clear()
   }
 
-  def request(value: I, client: Client): Future[O]
+  def request(value: I, client: Client)(implicit ec: ExecutionContext): Future[O]
 
   @Setup
   def setup(): Unit =
@@ -102,6 +104,7 @@ abstract class RedisDoFn[I, O](
 
   @ProcessElement
   def processElement(c: ProcessContext, window: BoundedWindow): Unit = {
+    implicit val ec = executionContext
     val result = request(c.element(), client).map { r =>
       Result(c.element(), r, c.timestamp(), window)
     }
