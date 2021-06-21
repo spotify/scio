@@ -33,6 +33,7 @@ import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.twitter.algebird.Moments
 
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
@@ -596,6 +597,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "optimize for AnyVal" in {
     coderIsSerializable[AnyValExample]
     Coder[AnyValExample] shouldBe a[Transform[String, AnyValExample]]
+  }
+
+  it should "support Algebird's Moments" in {
+    coderIsSerializable[Moments]
+    new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
+    Moments(12) coderShould roundtrip()
   }
 
 }

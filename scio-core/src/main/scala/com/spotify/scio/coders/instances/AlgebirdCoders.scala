@@ -18,11 +18,16 @@
 package com.spotify.scio.coders.instances
 
 import com.spotify.scio.coders.Coder
-import com.twitter.algebird.{BF, Batched, CMS, TopK}
+import com.twitter.algebird.{BF, Batched, CMS, Moments, TopK}
 
 trait AlgebirdCoders {
   implicit def cmsCoder[K]: Coder[CMS[K]] = Coder.kryo
   implicit def bfCoder[K]: Coder[BF[K]] = Coder.kryo
   implicit def topKCoder[K]: Coder[TopK[K]] = Coder.kryo
   implicit def batchedCoder[U]: Coder[Batched[U]] = Coder.kryo
+  implicit def momentsCoder[U]: Coder[Moments] =
+    Coder.xmap(Coder[(Double, Double, Double, Double, Double)])(
+      { case (m0D, m1, m2, m3, m4) => new Moments(m0D, m1, m2, m3, m4) },
+      m => (m.m0D, m.m1, m.m2, m.m3, m.m4)
+    )
 }
