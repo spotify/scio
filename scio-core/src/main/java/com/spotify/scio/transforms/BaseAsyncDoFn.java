@@ -71,24 +71,20 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     flush(c);
 
     final UUID uuid = UUID.randomUUID();
-    FutureT future =
-        addCallback(
-            processElement(c.element()),
-            r -> {
-              results.add(new Result(r, c.timestamp(), window));
-              futures.remove(uuid);
-              return null;
-            },
-            t -> {
-              errors.add(t);
-              futures.remove(uuid);
-              return null;
-            });
-    // This `put` may happen after `remove` in the callbacks but it's OK since either the result
-    // or the error would've already been pushed to the corresponding queues and we are not losing
-    // data. `waitForFutures` in `finishBundle` blocks until all pending futures, including ones
-    // that may have already completed, and `startBundle` clears everything.
-    futures.put(uuid, future);
+    futures.computeIfAbsent(
+      uuid,
+      key -> addCallback(
+        processElement(c.element()),
+        r -> {
+          results.add(new Result(r, key, c.timestamp(), window));
+          return null;
+        },
+        t -> {
+          errors.add(t);
+          return null;
+        }
+      )
+    );
   }
 
   private void flush(ProcessContext c) {
@@ -104,6 +100,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     Result r = results.poll();
     while (r != null) {
       c.output(r.output);
+      futures.remove(r.futureUuid);
       r = results.poll();
     }
   }
@@ -121,18 +118,21 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     Result r = results.poll();
     while (r != null) {
       c.output(r.output, r.timestamp, r.window);
+      futures.remove(r.futureUuid);
       r = results.poll();
     }
   }
 
   private class Result {
     private OutputT output;
+    private UUID futureUuid;
     private Instant timestamp;
     private BoundedWindow window;
 
-    Result(OutputT output, Instant timestamp, BoundedWindow window) {
+    Result(OutputT output, UUID futureUuid, Instant timestamp, BoundedWindow window) {
       this.output = output;
       this.timestamp = timestamp;
+      this.futureUuid = futureUuid;
       this.window = window;
     }
   }

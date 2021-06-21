@@ -131,12 +131,31 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
     }
 
     final UUID uuid = UUID.randomUUID();
-    F future;
     try {
       semaphore.acquire();
       try {
-        //noinspection unchecked
-        future = asyncLookup((C) client.get(instanceId), input);
+        futures.computeIfAbsent(
+          uuid,
+          key -> addCallback(
+            asyncLookup((C) client.get(instanceId), input),
+            output -> {
+              semaphore.release();
+              try {
+                cacheSupplier.put(instanceId, input, output);
+                results.add(new Result(input, success(output), key, c.timestamp(), window));
+              } catch (Exception e) {
+                LOG.error("Failed to cache result", e);
+                throw e;
+              }
+              return null;
+            },
+            throwable -> {
+              semaphore.release();
+              results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
+              return null;
+            }
+          )
+        );
       } catch (Exception e) {
         semaphore.release();
         LOG.error("Failed to process element", e);
@@ -147,34 +166,6 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
       throw new RuntimeException("Failed to acquire semaphore", e);
     }
     requestCount++;
-
-    F f =
-        addCallback(
-            future,
-            output -> {
-              semaphore.release();
-              try {
-                cacheSupplier.put(instanceId, input, output);
-                results.add(new Result(input, success(output), c.timestamp(), window));
-                futures.remove(uuid);
-              } catch (Exception e) {
-                LOG.error("Failed to cache result", e);
-                throw e;
-              }
-              return null;
-            },
-            throwable -> {
-              semaphore.release();
-              results.add(new Result(input, failure(throwable), c.timestamp(), window));
-              futures.remove(uuid);
-              return null;
-            });
-
-    // This `put` may happen after `remove` in the callbacks but it's OK since either the result
-    // or the error would've already been pushed to the corresponding queues and we are not losing
-    // data. `waitForFutures` in `finishBundle` blocks until all pending futures, including ones
-    // that may have already completed, and `startBundle` clears everything.
-    futures.put(uuid, f);
   }
 
   @FinishBundle
@@ -207,6 +198,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
     while (r != null) {
       outputFn.accept(r);
       resultCount++;
+      futures.remove(r.futureUuid);
       r = results.poll();
     }
   }
@@ -214,12 +206,14 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   private class Result {
     private A input;
     private T output;
+    private UUID futureUuid;
     private Instant timestamp;
     private BoundedWindow window;
 
-    Result(A input, T output, Instant timestamp, BoundedWindow window) {
+    Result(A input, T output, UUID futureUuid, Instant timestamp, BoundedWindow window) {
       this.input = input;
       this.output = output;
+      this.futureUuid = futureUuid;
       this.timestamp = timestamp;
       this.window = window;
     }
