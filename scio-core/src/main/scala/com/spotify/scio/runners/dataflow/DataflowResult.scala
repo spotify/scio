@@ -27,6 +27,7 @@ import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.dataflow.{DataflowClient, DataflowPipelineJob}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.runners.AppliedPTransform
+import org.apache.beam.sdk.transforms.resourcehints.ResourceHints
 import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.values.{PInput, POutput}
 import org.apache.beam.sdk.{Pipeline, PipelineResult}
@@ -148,6 +149,7 @@ object DataflowResult {
       Collections.emptyMap(),
       Collections.emptyMap(),
       new EmptyPTransform,
+      ResourceHints.create(),
       new EmptyPipeline
     )
 

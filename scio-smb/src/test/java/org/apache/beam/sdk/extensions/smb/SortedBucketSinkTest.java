@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -156,7 +157,9 @@ public class SortedBucketSinkTest {
             1,
             0);
 
-    pipeline.apply(Create.of(Stream.of(input).collect(Collectors.toList()))).apply(sink);
+    pipeline
+        .apply("CleansUpTempFiles", Create.of(Stream.of(input).collect(Collectors.toList())))
+        .apply(sink);
     pipeline.run().waitUntilFinish();
 
     // Assert that no files are left in the temp directory
@@ -173,7 +176,7 @@ public class SortedBucketSinkTest {
         new SortedBucketSink<>(
             metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
 
-    pipeline.apply(Create.empty(StringUtf8Coder.of())).apply(sink);
+    pipeline.apply("CustomFilenamePrefix", Create.empty(StringUtf8Coder.of())).apply(sink);
     pipeline.run().waitUntilFinish();
 
     final MatchResult outputFiles =
@@ -198,7 +201,7 @@ public class SortedBucketSinkTest {
         new SortedBucketSink<>(
             metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
 
-    pipeline.apply(Create.empty(StringUtf8Coder.of())).apply(sink);
+    pipeline.apply("WritesEmptyBucketFiles", Create.empty(StringUtf8Coder.of())).apply(sink);
     pipeline.run().waitUntilFinish();
 
     final FileAssignment dstFiles =
@@ -233,7 +236,11 @@ public class SortedBucketSinkTest {
             new ExceptionThrowingFileOperations(),
             1);
 
-    pipeline.apply(Create.of(Stream.of(input).collect(Collectors.toList()))).apply(sink);
+    pipeline
+        .apply(
+            "WritesNoFilesIfPriorStepsFail",
+            Create.of(Stream.of(input).collect(Collectors.toList())))
+        .apply(sink);
 
     try {
       pipeline.run();
@@ -263,7 +270,9 @@ public class SortedBucketSinkTest {
 
     check(
         pipeline
-            .apply(Create.of(Stream.of(input).collect(Collectors.toList())))
+            .apply(
+                "test-" + UUID.randomUUID(),
+                Create.of(Stream.of(input).collect(Collectors.toList())))
             .apply(reshuffle)
             .apply(sink),
         metadata,
@@ -298,6 +307,7 @@ public class SortedBucketSinkTest {
     check(
         pipeline
             .apply(
+                "test-keyed-collection-" + UUID.randomUUID(),
                 Create.of(keyedInput)
                     .withCoder(
                         KvCoder.of(NullableCoder.of(StringUtf8Coder.of()), StringUtf8Coder.of())))
