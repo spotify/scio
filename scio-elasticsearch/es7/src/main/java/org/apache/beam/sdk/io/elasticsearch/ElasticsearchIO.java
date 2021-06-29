@@ -403,7 +403,8 @@ public class ElasticsearchIO {
                           toDocWriteRequests,
                           error,
                           maxRetries,
-                          retryPause)));
+                          retryPause,
+                          credentials)));
         }
         return PDone.in(input.getPipeline());
       }
@@ -543,10 +544,11 @@ public class ElasticsearchIO {
           SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
-          Duration retryPause) {
+          Duration retryPause,
+          UsernamePasswordCredentials credentials) {
         this.maxBulkRequestSize = maxBulkRequestSize;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
-        this.clientSupplier = new ClientSupplier(nodes);
+        this.clientSupplier = new ClientSupplier(nodes, credentials);
         this.toDocWriteRequests = toDocWriteRequests;
         this.error = error;
         this.maxRetries = maxRetries;
@@ -686,14 +688,14 @@ public class ElasticsearchIO {
         if (CLIENT.get() == null) {
           synchronized (CLIENT) {
             if (CLIENT.get() == null) {
-              CLIENT.set(create(nodes));
+              CLIENT.set(create());
             }
           }
         }
         return CLIENT.get();
       }
 
-      private RestHighLevelClient create(HttpHost[] nodes) {
+      private RestHighLevelClient create() {
         final RestClientBuilder builder = RestClient.builder(nodes);
         if (credentials != null) {
           final CredentialsProvider provider = new BasicCredentialsProvider();
@@ -701,7 +703,7 @@ public class ElasticsearchIO {
           builder.setHttpClientConfigCallback(
               asyncBuilder -> asyncBuilder.setDefaultCredentialsProvider(provider));
         }
-        return new RestHighLevelClient(RestClient.builder(nodes));
+        return new RestHighLevelClient(builder);
       }
     }
 
