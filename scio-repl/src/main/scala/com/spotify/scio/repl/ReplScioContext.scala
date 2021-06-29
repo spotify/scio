@@ -17,14 +17,16 @@
 
 package com.spotify.scio.repl
 
+import com.spotify.scio.values.SCollection
+
 import java.io.File
 import java.nio.file.Files
 import java.util.jar.JarOutputStream
 import java.io.FileOutputStream
 import java.util.jar.JarEntry
-
 import org.apache.beam.sdk.options.PipelineOptions
 import com.spotify.scio.{ScioContext, ScioExecutionContext}
+import org.apache.beam.sdk.io.Compression
 
 import scala.reflect.io.AbstractFile
 import scala.reflect.io.Path
@@ -45,6 +47,15 @@ class ReplScioContext private (options: PipelineOptions, replOutputDir: String, 
   override def run(): ScioExecutionContext = {
     createJar()
     super.run()
+  }
+
+  /**
+   * Get an SCollection for a text file.
+   * @group input
+   */
+  override def textFile(path: String, compression: Compression): SCollection[String] = {
+    createJar()
+    super.textFile(path, compression)
   }
 
   /** Ensure an operation is called before the pipeline is closed. */
