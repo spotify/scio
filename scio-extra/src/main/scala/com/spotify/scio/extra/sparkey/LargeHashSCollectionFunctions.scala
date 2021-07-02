@@ -30,6 +30,6 @@ class LargeHashSCollectionFunctions[T](private val self: SCollection[T]) {
    */
   def hashFilter(sideInput: SideInput[SparkeySet[T]]): SCollection[T] = {
     implicit val coder = self.coder
-    self.map((_, ())).hashIntersectByKey(sideInput).keys
+    self.map((_, ())).largeHashIntersectByKey(sideInput).keys
   }
 }
