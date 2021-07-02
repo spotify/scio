@@ -664,4 +664,25 @@ class SparkeyTest extends PipelineSpec {
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
+
+  it should "not override the regular hashJoin method" in {
+    import com.spotify.scio.extra.sparkey._
+
+    val sc = ScioContext()
+
+    val lhsInput = Seq((1, "a"), (2, "c"), (3, "e"), (4, "g"))
+    val rhsInput = Seq((1, "b"), (2, "d"), (3, "f"))
+
+    val rhs = sc.parallelize(rhsInput)
+    val lhs = sc.parallelize(lhsInput)
+
+    val result = lhs
+      .hashJoin(rhs)
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = List((1,("a", "b")), (2,("c","d")), (3,("e","f")))
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+  }
 }

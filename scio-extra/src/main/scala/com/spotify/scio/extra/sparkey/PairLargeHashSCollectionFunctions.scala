@@ -19,7 +19,7 @@ package com.spotify.scio.extra.sparkey
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.instances.{SparkeyMap, SparkeySet}
-import com.spotify.scio.values.{SCollection, SideInput}
+import com.spotify.scio.values.{PairHashSCollectionFunctions, SCollection, SideInput}
 import com.spotify.sparkey.CompressionType
 
 /**
@@ -51,7 +51,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, (V, W))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
-    hashJoin(rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashJoin(rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize))
   }
 
   /**
@@ -68,7 +68,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * @group join
    */
-  def hashJoin[W: Coder](
+  def largeHashJoin[W: Coder](
     sideInput: SideInput[SparkeyMap[K, Iterable[W]]]
   ): SCollection[(K, (V, W))] =
     self.transform { in =>
@@ -101,7 +101,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, (V, Option[W]))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
-    hashLeftOuterJoin(
+    largeHashLeftOuterJoin(
       rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize)
     )
   }
@@ -117,7 +117,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * }}}
    * @group join
    */
-  def hashLeftOuterJoin[W: Coder](
+  def largeHashLeftOuterJoin[W: Coder](
     sideInput: SideInput[SparkeyMap[K, Iterable[W]]]
   ): SCollection[(K, (V, Option[W]))] = {
     self.transform { in =>
@@ -145,7 +145,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, (Option[V], Option[W]))] = {
     implicit val wCoder = rhs.valueCoder
-    hashFullOuterJoin(
+    largeHashFullOuterJoin(
       rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize)
     )
   }
@@ -162,7 +162,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * @group join
    */
-  def hashFullOuterJoin[W: Coder](
+  def largeHashFullOuterJoin[W: Coder](
     sideInput: SideInput[SparkeyMap[K, Iterable[W]]]
   ): SCollection[(K, (Option[V], Option[W]))] =
     self.transform { in =>
@@ -208,7 +208,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     compressionType: CompressionType = DefaultCompressionType,
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
-    hashIntersectByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashIntersectByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in the SideSet `rhs`.
@@ -217,7 +217,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * @group per key
    */
-  def hashIntersectByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
+  def largeHashIntersectByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
     self
       .withSideInputs(sideInput)
       .filter { case ((k, _), sideInputCtx) => sideInputCtx(sideInput).contains(k) }
@@ -236,14 +236,14 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     compressionType: CompressionType = DefaultCompressionType,
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
-    hashSubtractByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashSubtractByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are not in SideInput[Set] `rhs`.
    *
    * @group per key
    */
-  def hashSubtractByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
+  def largeHashSubtractByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
     self
       .withSideInputs(sideInput)
       .filter { case ((k, _), sideInputCtx) => !sideInputCtx(sideInput).contains(k) }
