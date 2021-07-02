@@ -286,7 +286,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
       val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).asLargeSetSideInput
-      val p = p1.hashFilter(p2)
+      val p = p1.largeHashFilter(p2)
       p should containInAnyOrder(Seq("a", "b", "b"))
     }
   }
