@@ -17,11 +17,7 @@
 
 package com.spotify.scio.extra.sparkey
 
-import java.io.File
-import java.nio.file.Files
-import java.util.Arrays
-
-import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
+import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
@@ -29,6 +25,9 @@ import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.commons.io.FileUtils
 
+import java.io.File
+import java.nio.file.Files
+import java.util.Arrays
 import scala.jdk.CollectionConverters._
 
 final case class TestCache[K, V](testId: String) extends CacheT[K, V, CCache[K, V]] {
@@ -666,7 +665,6 @@ class SparkeyTest extends PipelineSpec {
   }
 
   it should "not override the regular hashJoin method" in {
-    import com.spotify.scio.extra.sparkey._
 
     val sc = ScioContext()
 
@@ -681,7 +679,7 @@ class SparkeyTest extends PipelineSpec {
       .materialize
 
     val scioResult = sc.run().waitUntilFinish()
-    val expectedOutput = List((1,("a", "b")), (2,("c","d")), (3,("e","f")))
+    val expectedOutput = List((1, ("a", "b")), (2, ("c", "d")), (3, ("e", "f")))
 
     scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
   }

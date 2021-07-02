@@ -19,7 +19,7 @@ package com.spotify.scio.extra.sparkey
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.instances.{SparkeyMap, SparkeySet}
-import com.spotify.scio.values.{PairHashSCollectionFunctions, SCollection, SideInput}
+import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.CompressionType
 
 /**
@@ -210,7 +210,9 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     compressionType: CompressionType = DefaultCompressionType,
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
-    largeHashIntersectByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashIntersectByKey(
+      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)
+    )
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in the SideSet `rhs`.
@@ -240,7 +242,9 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     compressionType: CompressionType = DefaultCompressionType,
     compressionBlockSize: Int = DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
-    largeHashSubtractByKey(rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize))
+    largeHashSubtractByKey(
+      rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)
+    )
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are not in SideInput[Set] `rhs`.
