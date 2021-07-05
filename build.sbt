@@ -380,7 +380,8 @@ lazy val root: Project = Project("scio", file("."))
     `scio-jmh`,
     `scio-macros`,
     `scio-smb`,
-    `scio-redis`
+    `scio-redis`,
+    `scio-memcached`
   )
 
 lazy val `scio-core`: Project = project
@@ -795,6 +796,23 @@ lazy val `scio-jdbc`: Project = project
     `scio-test` % "test"
   )
 
+lazy val `scio-memcached`: Project = project
+  .in(file("scio-memcached"))
+  .settings(commonSettings)
+  .settings(
+    description := "Scio add-on memcached",
+    libraryDependencies ++= Seq(
+      "com.spotify" % "folsom" % "1.7.4",
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
+      "com.google.auto.value" % "auto-value" % autoValueVersion
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
+  )
+
 val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
 
 lazy val `scio-parquet`: Project = project
@@ -976,7 +994,8 @@ lazy val `scio-examples`: Project = project
     `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
-    `scio-redis`
+    `scio-redis`,
+    `scio-memcached`
   )
 
 lazy val `scio-repl`: Project = project
