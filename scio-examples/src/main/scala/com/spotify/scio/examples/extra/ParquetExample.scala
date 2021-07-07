@@ -74,7 +74,7 @@ object ParquetExample {
 
       // The result Account records are not complete Avro objects. Only the projected columns are present while the rest are null.
       // These objects may fail serialization and it’s recommended that you map them out to tuples or case classes right after reading.
-      .map(x => AccountOutput(x.getId(), x.getName().toString()))
+      .map(x => AccountOutput(x.getId(), x.getName.toString))
 
       // This case class can now be saved as a parquet file
       // numShards should be explicitly set so that the size of each output file is smaller than

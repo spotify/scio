@@ -28,7 +28,7 @@ class ParquetExampleTest extends PipelineSpec {
     val input =
       Seq(new Account(1, "checking", "Alice", 1000.0), new Account(2, "checking", "Bob", 1500.0))
 
-    val expected = input.map(_.toString)
+    val expected = input.map(x => AccountOutput(x.getId(), x.getName.toString))
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--input=in.parquet", "--output=out.parquet", "--method=avroSpecific")
