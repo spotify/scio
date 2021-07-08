@@ -68,7 +68,7 @@ object ParquetExample {
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
-    sc.run()
+    sc.run().waitUntilDone()
     ()
   }
 
@@ -78,17 +78,14 @@ object ParquetExample {
     // Macros for generating column projections and row predicates
     val projection =
       Projection[Account](_.getId, _.getName, _.getAmount) // Only these columns will be projected
-    val predicate = Predicate.build[Account](x =>
+    val predicate = Predicate[Account](x =>
       x.getAmount > 0
     ) // Will skip row groups where this column value check is not satisfied
 
-    sc.parquetAvroFile[Account](args("input"), projection, predicate.parquet)
-      // filter natively with the same logic in case of mock input in tests
-      .filter(predicate.native)
-
+    sc.parquetAvroFile[Account](args("input"), projection, predicate)
       // The result Account records are not complete Avro objects. Only the projected columns are present while the rest are null.
       // These objects may fail serialization and it’s recommended that you map them out to tuples or case classes right after reading.
-      .map(x => AccountOutput(x.getId(), x.getName.toString))
+      .map(x => AccountOutput(x.getId, x.getName.toString))
       .map(_.toString)
       .saveAsTextFile(args("output"))
   }
