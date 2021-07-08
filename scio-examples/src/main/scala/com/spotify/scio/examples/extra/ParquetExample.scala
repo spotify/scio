@@ -68,7 +68,7 @@ object ParquetExample {
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
-    sc.run().waitUntilDone()
+    sc.run()
     ()
   }
 
@@ -86,7 +86,6 @@ object ParquetExample {
       // The result Account records are not complete Avro objects. Only the projected columns are present while the rest are null.
       // These objects may fail serialization and it’s recommended that you map them out to tuples or case classes right after reading.
       .map(x => AccountOutput(x.getId, x.getName.toString))
-      .map(_.toString)
       .saveAsTextFile(args("output"))
   }
 
@@ -94,16 +93,13 @@ object ParquetExample {
     // Now the fields in Account's schema act as our projection
     sc.parquetAvroFile[GenericRecord](args("input"), Account.getClassSchema)
 
-      // GenericRecord objects are also not Serializable.
       // Map out projected fields into something type safe
       .map(r => AccountOutput(r.get("id").asInstanceOf[Int], r.get("name").toString))
-      .map(_.toString)
       .saveAsTextFile(args("output"))
 
   private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] =
     // All fields in the case class definition act as our projection
     sc.typedParquetFile[AccountInput](args("input"))
-      .map(_.toString)
       .saveAsTextFile(args("output"))
 
   private def dummyData(sc: ScioContext): SCollection[Account] =
