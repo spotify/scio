@@ -164,7 +164,8 @@ val commonSettings = Def
     coverageExcludedPackages := (Seq(
       "com\\.spotify\\.scio\\.examples\\..*",
       "com\\.spotify\\.scio\\.repl\\..*",
-      "com\\.spotify\\.scio\\.util\\.MultiJoin"
+      "com\\.spotify\\.scio\\.util\\.MultiJoin",
+      "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
     ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
     coverageHighlighting := true,
     licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),

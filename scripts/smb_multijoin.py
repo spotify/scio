@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright 2016 Spotify AB.
+#  Copyright 2021 Spotify AB.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ def sortCoGroup(out, n):
 def main(out):
     print(textwrap.dedent('''
         /*
-         * Copyright 2019 Spotify AB.
+         * Copyright 2021 Spotify AB.
          *
          * Licensed under the Apache License, Version 2.0 (the "License");
          * you may not use this file except in compliance with the License.
