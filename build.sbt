@@ -976,7 +976,8 @@ lazy val `scio-examples`: Project = project
     `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
-    `scio-redis`
+    `scio-redis`,
+    `scio-parquet`
   )
 
 lazy val `scio-repl`: Project = project
