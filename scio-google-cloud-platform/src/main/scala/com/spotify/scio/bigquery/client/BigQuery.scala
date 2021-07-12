@@ -25,27 +25,19 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.rpc.FixedHeaderProvider
 import com.google.api.services.bigquery.Bigquery
-import com.google.api.services.bigquery.model._
 import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.bigquery.storage.v1beta1.{BigQueryStorageClient, BigQueryStorageSettings}
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
-import com.spotify.scio.bigquery.{Table => STable}
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQuerySysProps, BigQueryType, CREATE_IF_NEEDED, WRITE_EMPTY}
+import com.spotify.scio.bigquery.BigQuerySysProps
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.runtime.universe.TypeTag
-import scala.util.Try
 
 /** A simple BigQuery client. */
-final class BigQuery private (val client: Client) {
+final class BigQuery private (val client: Client) extends TypedBigQuery {
   private[scio] def isCacheEnabled: Boolean = BigQueryConfig.isCacheEnabled
 
   val jobs: JobOps = new JobOps(client)
@@ -53,100 +45,6 @@ final class BigQuery private (val client: Client) {
   val extract: ExtractOps = new ExtractOps(client, jobs)
   val load: LoadOps = new LoadOps(client, jobs)
   val query: QueryOps = new QueryOps(client, tables, jobs)
-
-  // =======================================================================
-  // Type safe API
-  // =======================================================================
-
-  /**
-   * Get a typed iterator for a BigQuery SELECT query or table.
-   *
-   * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
-   * [[BigQueryType.fromTable]], [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
-   *
-   * By default the source (table or query) specified in the annotation will be used, but it can
-   * be overridden with the `newSource` parameter. For example:
-   *
-   * {{{
-   * @BigQueryType.fromTable("bigquery-public-data:samples.gsod")
-   * class Row
-   *
-   * // Read from [bigquery-public-data:samples.gsod] as specified in the annotation.
-   * bq.getTypedRows[Row]()
-   *
-   * // Read from [myproject:samples.gsod] instead.
-   * bq.getTypedRows[Row]("myproject:samples.gsod")
-   *
-   * // Read from a query instead.
-   * bq.getTypedRows[Row]("SELECT * FROM [bigquery-public-data:samples.gsod] LIMIT 1000")
-   * }}}
-   */
-  def getTypedRows[T <: HasAnnotation: TypeTag](newSource: String = null): Iterator[T] = {
-    val bqt = BigQueryType[T]
-    val rows = if (newSource == null) {
-      // newSource is missing, T's companion object must have either table or query
-      if (bqt.isTable) {
-        tables.rows(STable.Spec(bqt.table.get))
-      } else if (bqt.isQuery) {
-        query.rows(bqt.query.get)
-      } else {
-        throw new IllegalArgumentException("Missing table or query field in companion object")
-      }
-    } else {
-      // newSource can be either table or query
-      Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
-        .map(STable.Ref)
-        .map(tables.rows)
-        .getOrElse(query.rows(newSource))
-    }
-    rows.map(bqt.fromTableRow)
-  }
-
-  /**
-   * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
-   * [[BigQueryType]].
-   */
-  def writeTypedRows[T <: HasAnnotation: TypeTag](
-    table: TableReference,
-    rows: List[T],
-    writeDisposition: WriteDisposition,
-    createDisposition: CreateDisposition
-  ): Long = {
-    val bqt = BigQueryType[T]
-    tables.writeRows(
-      table,
-      rows.map(bqt.toTableRow),
-      bqt.schema,
-      writeDisposition,
-      createDisposition
-    )
-  }
-
-  /**
-   * Write a List of rows to a BigQuery table. Note that element type `T` must be annotated with
-   * [[BigQueryType]].
-   */
-  def writeTypedRows[T <: HasAnnotation: TypeTag](
-    tableSpec: String,
-    rows: List[T],
-    writeDisposition: WriteDisposition = WRITE_EMPTY,
-    createDisposition: CreateDisposition = CREATE_IF_NEEDED
-  ): Long =
-    writeTypedRows(
-      beam.BigQueryHelpers.parseTableSpec(tableSpec),
-      rows,
-      writeDisposition,
-      createDisposition
-    )
-
-  def createTypedTable[T <: HasAnnotation: TypeTag](table: Table): Unit =
-    tables.create(table.setSchema(BigQueryType[T].schema))
-
-  def createTypedTable[T <: HasAnnotation: TypeTag](table: TableReference): Unit =
-    tables.create(table, BigQueryType[T].schema)
-
-  def createTypedTable[T <: HasAnnotation: TypeTag](tableSpec: String): Unit =
-    createTypedTable(beam.BigQueryHelpers.parseTableSpec(tableSpec))
 
   // =======================================================================
   // Job handling

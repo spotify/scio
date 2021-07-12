@@ -15,6 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery.dynamic.syntax
+package com.spotify.scio.avro.syntax
 
-trait AllSyntax extends SCollectionSyntax with SCollectionTypedSyntax
+trait Aliases {
+
+  /** Typed Avro annotations and converters. */
+  val AvroType = com.spotify.scio.avro.types.AvroType
+
+  /** Annotation for Avro field and record documentation. */
+  type doc = com.spotify.scio.avro.types.doc
+}

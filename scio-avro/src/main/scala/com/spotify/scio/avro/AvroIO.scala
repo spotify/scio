@@ -18,22 +18,20 @@
 package com.spotify.scio.avro
 
 import com.google.protobuf.Message
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{avro, ScioContext}
+import com.spotify.scio.ScioContext
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
@@ -263,66 +261,4 @@ object AvroIO {
     new AvroIO[T] with TestIO[T] {
       override def testId: String = s"AvroIO($id)"
     }
-}
-
-object AvroTyped {
-  final case class AvroIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String) extends ScioIO[T] {
-    override type ReadP = Unit
-    override type WriteP = avro.AvroIO.WriteParam
-    final override val tapT: TapT.Aux[T, T] = TapOf[T]
-
-    private def typedAvroOut[U](
-      write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
-      path: String,
-      numShards: Int,
-      suffix: String,
-      codec: CodecFactory,
-      metadata: Map[String, AnyRef]
-    ) =
-      write
-        .to(ScioUtil.pathWithShards(path))
-        .withNumShards(numShards)
-        .withSuffix(suffix)
-        .withCodec(codec)
-        .withMetadata(metadata.asJava)
-
-    /**
-     * Get a typed SCollection from an Avro schema.
-     *
-     * Note that `T` must be annotated with
-     * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
-     * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
-     * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-     */
-    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-      val avroT = AvroType[T]
-      val t = beam.AvroIO.readGenericRecords(avroT.schema).from(path)
-      sc.applyTransform(t).map(avroT.fromGenericRecord)
-    }
-
-    /**
-     * Save this SCollection as an Avro file. Note that element type `T` must be a case class
-     * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-     */
-    override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-      val avroT = AvroType[T]
-      val t = beam.AvroIO
-        .writeCustomTypeToGenericRecords()
-        .withFormatFunction(new SerializableFunction[T, GenericRecord] {
-          override def apply(input: T): GenericRecord =
-            avroT.toGenericRecord(input)
-        })
-        .withSchema(avroT.schema)
-      data.applyInternal(
-        typedAvroOut(t, path, params.numShards, params.suffix, params.codec, params.metadata)
-      )
-      tap(())
-    }
-
-    override def tap(read: ReadP): Tap[T] = {
-      val avroT = AvroType[T]
-      GenericRecordTap(ScioUtil.addPartSuffix(path), avroT.schema)
-        .map(avroT.fromGenericRecord)
-    }
-  }
 }

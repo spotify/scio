@@ -28,8 +28,6 @@ import org.apache.avro.generic.GenericRecord
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.twitter.chill.Externalizer
 
@@ -76,8 +74,6 @@ final case class BigQueryStorageTap(table: Table, readOptions: TableReadOptions)
 }
 
 final case class BigQueryTaps(self: Taps) {
-  import com.spotify.scio.bigquery.types.BigQueryType
-  import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
   import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
   import self.mkTap
 
@@ -103,31 +99,6 @@ final case class BigQueryTaps(self: Taps) {
   def bigQueryTable(tableSpec: String): Future[Tap[TableRow]] =
     bigQueryTable(BigQueryHelpers.parseTableSpec(tableSpec))
 
-  /** Get a `Future[Tap[T]]` for typed BigQuery source. */
-  def typedBigQuery[T <: HasAnnotation: TypeTag: ClassTag: Coder](
-    newSource: String = null
-  ): Future[Tap[T]] = {
-    val bqt = BigQueryType[T]
-    lazy val table =
-      scala.util.Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
-    val rows =
-      newSource match {
-        // newSource is missing, T's companion object must have either table or query
-        case null if bqt.isTable =>
-          bigQueryTable(bqt.table.get)
-        case null if bqt.isQuery =>
-          bigQuerySelect(bqt.query.get)
-        case null =>
-          throw new IllegalArgumentException(s"Missing table or query field in companion object")
-        case _ if table.isDefined =>
-          bigQueryTable(table.get)
-        case _ =>
-          bigQuerySelect(newSource)
-      }
-    import scala.concurrent.ExecutionContext.Implicits.global
-    rows.map(_.map(bqt.fromTableRow))
-  }
-
   /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
   def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
     mkTap(s"TableRowJson: $path", () => self.isPathDone(path), () => TableRowJsonIO(path).tap(()))
@@ -145,24 +116,6 @@ final case class BigQueryTaps(self: Taps) {
         BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap()
       }
     )
-
-  def typedBigQueryStorage[T: TypeTag: Coder](
-    table: TableReference,
-    readOptions: TableReadOptions
-  ): Future[Tap[T]] = {
-    val fn = BigQueryType[T].fromTableRow
-    mkTap(
-      s"BigQuery direct read table: $table",
-      () => bqc.tables.exists(table),
-      () => {
-        val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
-        val rowRestriction = Option(readOptions.getRowRestriction)
-        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction)
-          .tap()
-          .map(fn)
-      }
-    )
-  }
 
   private def isQueryDone(sqlQuery: String): Boolean =
     bqc.query.extractTables(sqlQuery).forall(bqc.tables.exists)

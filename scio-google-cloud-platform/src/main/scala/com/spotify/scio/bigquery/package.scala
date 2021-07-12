@@ -19,8 +19,11 @@ package com.spotify.scio
 
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
 import com.spotify.scio.bigquery.syntax.{
+  Aliases,
   SCollectionSyntax,
+  SCollectionTypedSyntax,
   ScioContextSyntax,
+  ScioContextTypedSyntax,
   TableReferenceSyntax,
   TableRowSyntax
 }
@@ -46,9 +49,12 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
  */
 package object bigquery
     extends ScioContextSyntax
+    with ScioContextTypedSyntax
     with SCollectionSyntax
+    with SCollectionTypedSyntax
     with TableRowSyntax
-    with TableReferenceSyntax {
+    with TableReferenceSyntax
+    with Aliases {
 
   /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED
@@ -64,15 +70,6 @@ package object bigquery
 
   /** Alias for BigQuery `WriteDisposition`. */
   val WRITE_TRUNCATE = Write.WriteDisposition.WRITE_TRUNCATE
-
-  /** Typed BigQuery annotations and converters. */
-  val BigQueryType = com.spotify.scio.bigquery.types.BigQueryType
-
-  /** BigQuery tag for macro generated classes/fields. */
-  type BigQueryTag = com.spotify.scio.bigquery.types.BigQueryTag
-
-  /** Annotation for BigQuery field [[com.spotify.scio.bigquery.types.description description]]. */
-  type description = com.spotify.scio.bigquery.types.description
 
   /** Alias for BigQuery `TableRow`. */
   type TableRow = GTableRow

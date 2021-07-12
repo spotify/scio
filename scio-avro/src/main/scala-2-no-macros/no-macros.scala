@@ -15,6 +15,18 @@
  * under the License.
  */
 
-package com.spotify.scio.bigquery.dynamic.syntax
+// This file is just there to provide empty implementation of empty trait
+// and make sure the code still compiles without macros.
+// The scala-2 folder needs to be replaced by scala-2-no-macros, either:
+//  by setting unmanagedSourceDirectories in sbt, or simply by renaming the files.
 
-trait AllSyntax extends SCollectionSyntax with SCollectionTypedSyntax
+package com.spotify.scio.avro {
+  trait MockTypedavro {}
+  trait MockTypedTable {}
+}
+
+package com.spotify.scio.avro.syntax {
+  trait ScioContextTypedSyntax {}
+  trait SCollectionTypedSyntax {}
+  trait Aliases {}
+}

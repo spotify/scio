@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.avro.syntax.Syntax
+import com.spotify.scio.avro.syntax.{Aliases, Syntax}
 
 /**
  * Main package for Avro APIs. Import all.
@@ -26,11 +26,4 @@ import com.spotify.scio.avro.syntax.Syntax
  * import com.spotify.scio.avro._
  * }}}
  */
-package object avro extends Syntax {
-
-  /** Typed Avro annotations and converters. */
-  val AvroType = com.spotify.scio.avro.types.AvroType
-
-  /** Annotation for Avro field and record documentation. */
-  type doc = com.spotify.scio.avro.types.doc
-}
+package object avro extends Syntax with Aliases {}
