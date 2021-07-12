@@ -67,7 +67,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13))).asLargeMultiMapSideInput
-      val p = p1.hashJoin(p2)
+      val p = p1.largeHashJoin(p2)
       p should
         containInAnyOrder(Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
     }
@@ -77,7 +77,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
       val p2 = sc.parallelize[(String, Int)](Map.empty).asLargeMultiMapSideInput
-      val p = p1.hashJoin(p2)
+      val p = p1.largeHashJoin(p2)
       p should
         containInAnyOrder(Seq.empty[(String, (Int, Int))])
     }
@@ -123,7 +123,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).asLargeMultiMapSideInput
-      val p = p1.hashLeftOuterJoin(p2)
+      val p = p1.largeHashLeftOuterJoin(p2)
       p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
@@ -181,7 +181,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2)))
       val p2 = sc.parallelize(Seq(("a", 11), ("c", 13))).asLargeMultiMapSideInput
-      val p = p1.hashFullOuterJoin(p2)
+      val p = p1.largeHashFullOuterJoin(p2)
       p should containInAnyOrder(
         Seq(("a", (Some(1), Some(11))), ("b", (Some(2), None)), ("c", (None, Some(13))))
       )
@@ -228,7 +228,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
       val p2 = sc.parallelize(Seq[String]("a", "b", "d")).asLargeSetSideInput
-      val p = p1.hashIntersectByKey(p2)
+      val p = p1.largeHashIntersectByKey(p2)
       p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("b", 4)))
     }
   }
@@ -276,7 +276,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq[String]("a", "b")).asLargeSetSideInput
-      val output = p1.hashSubtractByKey(p2)
+      val output = p1.largeHashSubtractByKey(p2)
       output should haveSize(1)
       output should containInAnyOrder(Seq(("c", 4)))
     }
@@ -286,7 +286,7 @@ class PairLargeHashSCollectionFunctionsTest extends PipelineSpec {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c", "b"))
       val p2 = sc.parallelize(Seq[String]("a", "a", "b", "e")).asLargeSetSideInput
-      val p = p1.hashFilter(p2)
+      val p = p1.largeHashFilter(p2)
       p should containInAnyOrder(Seq("a", "b", "b"))
     }
   }
