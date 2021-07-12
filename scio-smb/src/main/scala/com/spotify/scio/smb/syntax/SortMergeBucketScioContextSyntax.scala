@@ -331,6 +331,159 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     sortMergeCoGroup(keyClass, a, b, c, d, TargetParallelism.auto())
 
   /**
+   * For each key K in `a` or `b` or `c` or `d` or `e`, return a resulting SCollection that contains a
+   * tuple with the list of values for that key in a`, `b`, `c`, `d` and `e`.
+   *
+   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
+   * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
+   *
+   * @group cogroup
+   *
+   * @param keyClass cogroup key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   * @param targetParallelism the desired parallelism of the job. See
+   *                 [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
+   */
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D],
+    e: SortedBucketIO.Read[E],
+    targetParallelism: TargetParallelism
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E]))] = {
+    val t = SortedBucketIO
+      .read(keyClass)
+      .of(a)
+      .and(b)
+      .and(c)
+      .and(d)
+      .and(e)
+      .withTargetParallelism(targetParallelism)
+    val (tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE) = (
+      a.getTupleTag,
+      b.getTupleTag,
+      c.getTupleTag,
+      d.getTupleTag,
+      e.getTupleTag
+    )
+    val tfName = self.tfName
+
+    self
+      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+      .withName(tfName)
+      .map { kv =>
+        val cgbkResult = kv.getValue
+
+        (
+          kv.getKey,
+          (
+            cgbkResult.getAll(tupleTagA).asScala,
+            cgbkResult.getAll(tupleTagB).asScala,
+            cgbkResult.getAll(tupleTagC).asScala,
+            cgbkResult.getAll(tupleTagD).asScala,
+            cgbkResult.getAll(tupleTagE).asScala
+          )
+        )
+      }
+  }
+
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D],
+    e: SortedBucketIO.Read[E]
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E]))] =
+    sortMergeCoGroup(keyClass, a, b, c, d, e, TargetParallelism.auto())
+
+  /**
+   * For each key K in `a` or `b` or `c` or `d` or `e` or `f`, return a resulting SCollection that contains a
+   * tuple with the list of values for that key in a`, `b`, `c`, `d`, `e` and `f`.
+   *
+   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
+   * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
+   *
+   * @group cogroup
+   *
+   * @param keyClass cogroup key class. Must have a Coder in Beam's default
+   *                 [[org.apache.beam.sdk.coders.CoderRegistry]] as custom key coders are not
+   *                 supported yet.
+   * @param targetParallelism the desired parallelism of the job. See
+   *                 [[org.apache.beam.sdk.extensions.smb.TargetParallelism]] for more information.
+   */
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder, F: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D],
+    e: SortedBucketIO.Read[E],
+    f: SortedBucketIO.Read[F],
+    targetParallelism: TargetParallelism
+  ): SCollection[
+    (K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F]))
+  ] = {
+    val t = SortedBucketIO
+      .read(keyClass)
+      .of(a)
+      .and(b)
+      .and(c)
+      .and(d)
+      .and(e)
+      .and(f)
+      .withTargetParallelism(targetParallelism)
+    val (tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF) = (
+      a.getTupleTag,
+      b.getTupleTag,
+      c.getTupleTag,
+      d.getTupleTag,
+      e.getTupleTag,
+      f.getTupleTag
+    )
+    val tfName = self.tfName
+
+    self
+      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+      .withName(tfName)
+      .map { kv =>
+        val cgbkResult = kv.getValue
+
+        (
+          kv.getKey,
+          (
+            cgbkResult.getAll(tupleTagA).asScala,
+            cgbkResult.getAll(tupleTagB).asScala,
+            cgbkResult.getAll(tupleTagC).asScala,
+            cgbkResult.getAll(tupleTagD).asScala,
+            cgbkResult.getAll(tupleTagE).asScala,
+            cgbkResult.getAll(tupleTagF).asScala
+          )
+        )
+      }
+  }
+
+  @experimental
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder, F: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D],
+    e: SortedBucketIO.Read[E],
+    f: SortedBucketIO.Read[F]
+  ): SCollection[
+    (K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F]))
+  ] =
+    sortMergeCoGroup(keyClass, a, b, c, d, e, f, TargetParallelism.auto())
+
+  /**
    * Perform a [[SortedBucketScioContext.sortMergeGroupByKey()]] operation, then immediately apply
    * a transformation function to the merged groups and re-write using the same bucketing key and
    * hashing scheme. By applying the write, transform, and write in the same transform, an extra
