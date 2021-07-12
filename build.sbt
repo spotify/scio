@@ -49,7 +49,7 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "6.8.16"
+val elasticsearch6Version = "6.8.17"
 val elasticsearch7Version = "7.13.3"
 val featranVersion = "0.8.0-RC1"
 val flinkVersion = "1.12.1"
@@ -72,7 +72,7 @@ val guavaVersion = "30.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
 val httpCoreVersion = "4.4.14"
-val jacksonVersion = "2.12.1"
+val jacksonVersion = "2.12.4"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.8.0"
@@ -976,7 +976,8 @@ lazy val `scio-examples`: Project = project
     `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
-    `scio-redis`
+    `scio-redis`,
+    `scio-parquet`
   )
 
 lazy val `scio-repl`: Project = project
