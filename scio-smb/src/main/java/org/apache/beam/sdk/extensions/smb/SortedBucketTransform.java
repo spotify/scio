@@ -93,24 +93,39 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       NewBucketMetadataFn<FinalKeyT, FinalValueT> newBucketMetadataFn,
       FileOperations<FinalValueT> fileOperations,
       String filenameSuffix,
-      String filenamePrefix
-  ) {
+      String filenamePrefix) {
     assert !((transformFn == null) && (sideInputTransformFn == null)); // at least one defined
     assert !((transformFn != null) && (sideInputTransformFn != null)); // only one defined
     assert sides == null || (sideInputTransformFn != null);
 
-    final SMBFilenamePolicy filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenamePrefix, filenameSuffix);
+    final SMBFilenamePolicy filenamePolicy =
+        new SMBFilenamePolicy(outputDirectory, filenamePrefix, filenameSuffix);
     final SourceSpec<FinalKeyT> sourceSpec = SourceSpec.from(finalKeyClass, sources);
     bucketSource = new BucketSource<>(sources, targetParallelism, 1, 0, sourceSpec, -1);
-    finalizeBuckets = new FinalizeTransformedBuckets<>(fileOperations, newBucketMetadataFn, filenamePolicy.forDestination(), sourceSpec.hashType);
+    finalizeBuckets =
+        new FinalizeTransformedBuckets<>(
+            fileOperations,
+            newBucketMetadataFn,
+            filenamePolicy.forDestination(),
+            sourceSpec.hashType);
 
     final FileAssignment fileAssignment = filenamePolicy.forTempFiles(tempDirectory);
     final Distribution dist = Metrics.distribution(getName(), getName() + "-KeyGroupSize");
-    if(transformFn != null) {
-      this.doFn = ParDo.of(new NoSides<>(sources, sourceSpec, fileAssignment, fileOperations, transformFn, dist));
+    if (transformFn != null) {
+      this.doFn =
+          ParDo.of(
+              new NoSides<>(
+                  sources, sourceSpec, fileAssignment, fileOperations, transformFn, dist));
     } else {
       this.doFn =
-          ParDo.of(new WithSides<>(sources, sourceSpec, fileAssignment, fileOperations, sideInputTransformFn, dist))
+          ParDo.of(
+                  new WithSides<>(
+                      sources,
+                      sourceSpec,
+                      fileAssignment,
+                      fileOperations,
+                      sideInputTransformFn,
+                      dist))
               .withSideInputs(sides);
     }
   }
@@ -118,7 +133,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   @Override
   public final WriteResult expand(final PBegin begin) {
     return WriteResult.fromTuple(
-        begin.getPipeline()
+        begin
+            .getPipeline()
             // outputs bucket offsets for the various SMB readers
             .apply("BucketOffsets", Read.from(bucketSource))
             .apply("MergeBuckets", this.doFn)
@@ -130,15 +146,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                     .withOutputTags(
                         FinalizeTransformedBuckets.BUCKETS_TAG,
                         TupleTagList.of(FinalizeTransformedBuckets.METADATA_TAG))));
-
   }
 
   @FunctionalInterface
   public interface TransformFn<KeyT, ValueT> extends Serializable {
     void writeTransform(
-        KV<KeyT, CoGbkResult> keyGroup,
-        SerializableConsumer<ValueT> outputConsumer
-    );
+        KV<KeyT, CoGbkResult> keyGroup, SerializableConsumer<ValueT> outputConsumer);
   }
 
   @FunctionalInterface
@@ -147,8 +160,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         KV<KeyT, CoGbkResult> keyGroup,
         DoFn<BucketItem, MergedBucket>.ProcessContext c,
         SerializableConsumer<ValueT> outputConsumer,
-        BoundedWindow window
-    );
+        BoundedWindow window);
   }
 
   public interface SerializableConsumer<ValueT> extends Consumer<ValueT>, Serializable {}
@@ -281,8 +293,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         int effectiveParallelism,
         int bucketOffsetId,
         SourceSpec<FinalKeyT> sourceSpec,
-        long estimatedSizeBytes
-    ) {
+        long estimatedSizeBytes) {
       this.sources = sources;
       this.targetParallelism = targetParallelism;
       this.effectiveParallelism = effectiveParallelism;
@@ -291,22 +302,29 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       this.estimatedSizeBytes = estimatedSizeBytes;
     }
 
-    public BucketSource<FinalKeyT> split(int bucketOffsetId, int adjustedParallelism, long estimatedSizeBytes) {
-      return new BucketSource<>(sources, targetParallelism, adjustedParallelism, bucketOffsetId, sourceSpec, estimatedSizeBytes);
+    public BucketSource<FinalKeyT> split(
+        int bucketOffsetId, int adjustedParallelism, long estimatedSizeBytes) {
+      return new BucketSource<>(
+          sources,
+          targetParallelism,
+          adjustedParallelism,
+          bucketOffsetId,
+          sourceSpec,
+          estimatedSizeBytes);
     }
 
     @Override
     public List<? extends BoundedSource<BucketItem>> split(
-        final long desiredBundleSizeBytes,
-        final PipelineOptions options) throws Exception {
+        final long desiredBundleSizeBytes, final PipelineOptions options) throws Exception {
 
-      final int numSplits = SortedBucketSource.getNumSplits(
-          sourceSpec,
-          effectiveParallelism,
-          targetParallelism,
-          getEstimatedSizeBytes(options),
-          desiredBundleSizeBytes,
-          DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
+      final int numSplits =
+          SortedBucketSource.getNumSplits(
+              sourceSpec,
+              effectiveParallelism,
+              targetParallelism,
+              getEstimatedSizeBytes(options),
+              desiredBundleSizeBytes,
+              DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
 
       final long estSplitSize = estimatedSizeBytes / numSplits;
 
@@ -331,7 +349,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     @Override
     public long getEstimatedSizeBytes(final PipelineOptions options) throws Exception {
       if (estimatedSizeBytes == -1) {
-        estimatedSizeBytes = sources.parallelStream().mapToLong(SortedBucketSource.BucketedInput::getOrSampleByteSize).sum();
+        estimatedSizeBytes =
+            sources
+                .parallelStream()
+                .mapToLong(SortedBucketSource.BucketedInput::getOrSampleByteSize)
+                .sum();
         LOG.info("Estimated byte size is " + estimatedSizeBytes);
       }
       return estimatedSizeBytes;
@@ -349,12 +371,14 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @Override
-    public BoundedReader<BucketItem> createReader(final PipelineOptions options) throws IOException {
+    public BoundedReader<BucketItem> createReader(final PipelineOptions options)
+        throws IOException {
       return new BucketReader(this, bucketOffsetId, effectiveParallelism);
     }
   }
 
-  private static abstract class TransformDoFn<FinalKeyT, FinalValueT> extends DoFn<BucketItem, MergedBucket> {
+  private abstract static class TransformDoFn<FinalKeyT, FinalValueT>
+      extends DoFn<BucketItem, MergedBucket> {
     protected final SMBFilenamePolicy.FileAssignment fileAssignment;
     protected final FileOperations<FinalValueT> fileOperations;
     protected final List<SortedBucketSource.BucketedInput<?, ?>> sources;
@@ -366,8 +390,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         SourceSpec<FinalKeyT> sourceSpec,
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
-        Distribution keyGroupSize
-    ) {
+        Distribution keyGroupSize) {
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
       this.sources = sources;
@@ -379,20 +402,19 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         KV<FinalKeyT, CoGbkResult> mergedKeyGroup,
         ProcessContext context,
         OutputCollector<FinalValueT> outputCollector,
-        BoundedWindow window
-    );
+        BoundedWindow window);
 
     @ProcessElement
     public void processElement(
         @Element BucketItem e,
         OutputReceiver<MergedBucket> out,
         ProcessContext context,
-        BoundedWindow window
-    ) {
+        BoundedWindow window) {
       int bucketId = e.bucketOffsetId;
       int effectiveParallelism = e.effectiveParallelism;
 
-      ResourceId dst = fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
+      ResourceId dst =
+          fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
       OutputCollector<FinalValueT> outputCollector;
       try {
         outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
@@ -400,31 +422,35 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         throw new RuntimeException(err);
       }
 
-      final MultiSourceKeyGroupReader<FinalKeyT> iter = new MultiSourceKeyGroupReader<>(
-          sources,
-          sourceSpec,
-          keyGroupSize,
-          false,
-          bucketId,
-          effectiveParallelism,
-          context.getPipelineOptions()
-      );
-      while(true) {
+      final MultiSourceKeyGroupReader<FinalKeyT> iter =
+          new MultiSourceKeyGroupReader<>(
+              sources,
+              sourceSpec,
+              keyGroupSize,
+              false,
+              bucketId,
+              effectiveParallelism,
+              context.getPipelineOptions());
+      while (true) {
         try {
           Optional<KV<FinalKeyT, CoGbkResult>> optMergedKeyGroup = iter.readNext();
-          if(!optMergedKeyGroup.isPresent()) break;
+          if (!optMergedKeyGroup.isPresent()) break;
 
           KV<FinalKeyT, CoGbkResult> mergedKeyGroup = optMergedKeyGroup.get();
           outputTransform(mergedKeyGroup, context, outputCollector, window);
 
           // exhaust iterators if necessary before moving on to the next key group:
           // for example, if not every element was needed in the transformFn
-          sources.forEach(source -> {
-            final Iterable<?> maybeUnfinishedIt = mergedKeyGroup.getValue().getAll(source.getTupleTag());
-            if (SortedBucketSource.TraversableOnceIterable.class.isAssignableFrom(maybeUnfinishedIt.getClass())) {
-              ((SortedBucketSource.TraversableOnceIterable<?>) maybeUnfinishedIt).ensureExhausted();
-            }
-          });
+          sources.forEach(
+              source -> {
+                final Iterable<?> maybeUnfinishedIt =
+                    mergedKeyGroup.getValue().getAll(source.getTupleTag());
+                if (SortedBucketSource.TraversableOnceIterable.class.isAssignableFrom(
+                    maybeUnfinishedIt.getClass())) {
+                  ((SortedBucketSource.TraversableOnceIterable<?>) maybeUnfinishedIt)
+                      .ensureExhausted();
+                }
+              });
         } catch (Exception ex) {
           throw new RuntimeException("Failed to write merged key group", ex);
         }
@@ -434,16 +460,17 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class NoSides<FinalKeyT, FinalValueT> extends TransformDoFn<FinalKeyT, FinalValueT> {
+  private static class NoSides<FinalKeyT, FinalValueT>
+      extends TransformDoFn<FinalKeyT, FinalValueT> {
     private final TransformFn<FinalKeyT, FinalValueT> transformFn;
+
     public NoSides(
         List<SortedBucketSource.BucketedInput<?, ?>> sources,
         SourceSpec<FinalKeyT> sourceSpec,
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         TransformFn<FinalKeyT, FinalValueT> transformFn,
-        Distribution keyGroupSize
-    ) {
+        Distribution keyGroupSize) {
       super(sources, sourceSpec, fileAssignment, fileOperations, keyGroupSize);
       this.transformFn = transformFn;
     }
@@ -453,22 +480,22 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         final KV<FinalKeyT, CoGbkResult> mergedKeyGroup,
         final ProcessContext context,
         final OutputCollector<FinalValueT> outputCollector,
-        final BoundedWindow window
-    ) {
+        final BoundedWindow window) {
       transformFn.writeTransform(mergedKeyGroup, outputCollector);
     }
   }
 
-  private static class WithSides<FinalKeyT, FinalValueT> extends TransformDoFn<FinalKeyT, FinalValueT> {
+  private static class WithSides<FinalKeyT, FinalValueT>
+      extends TransformDoFn<FinalKeyT, FinalValueT> {
     private final TransformFnWithSideInputContext<FinalKeyT, FinalValueT> transformFn;
+
     public WithSides(
         List<SortedBucketSource.BucketedInput<?, ?>> sources,
         SourceSpec<FinalKeyT> sourceSpec,
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         TransformFnWithSideInputContext<FinalKeyT, FinalValueT> transformFn,
-        Distribution keyGroupSize
-    ) {
+        Distribution keyGroupSize) {
       super(sources, sourceSpec, fileAssignment, fileOperations, keyGroupSize);
       this.transformFn = transformFn;
     }
@@ -478,8 +505,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         final KV<FinalKeyT, CoGbkResult> mergedKeyGroup,
         final ProcessContext context,
         final OutputCollector<FinalValueT> outputCollector,
-        final BoundedWindow window
-    ) {
+        final BoundedWindow window) {
       transformFn.writeTransform(mergedKeyGroup, context, outputCollector, window);
     }
   }
@@ -491,9 +517,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     @Nullable private BucketItem next;
 
     public BucketReader(
-        BoundedSource<BucketItem> initialSource,
-        int bucketOffsetId, int effectiveParallelism
-    ) {
+        BoundedSource<BucketItem> initialSource, int bucketOffsetId, int effectiveParallelism) {
       this.currentSource = initialSource;
       this.started = false;
       this.next = new BucketItem(bucketOffsetId, effectiveParallelism);
@@ -506,7 +530,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
     @Override
     public boolean advance() throws IOException {
-      if(!started && next != null) {
+      if (!started && next != null) {
         started = true;
         return true;
       } else {
@@ -548,7 +572,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       }
       BucketItem that = (BucketItem) o;
       return Objects.equals(bucketOffsetId, that.bucketOffsetId)
-             && Objects.equals(effectiveParallelism, that.effectiveParallelism);
+          && Objects.equals(effectiveParallelism, that.effectiveParallelism);
     }
 
     @Override

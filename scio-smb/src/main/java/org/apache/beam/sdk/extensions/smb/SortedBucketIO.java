@@ -171,16 +171,17 @@ public class SortedBucketIO {
     }
 
     public CoGbkTransform<K, V> via(TransformFn<K, V> toFinalResultT) {
-      if(this.toFinalResultTWithSides != null) throw new IllegalStateException("At most one transform function may be set by via()");
+      if (this.toFinalResultTWithSides != null)
+        throw new IllegalStateException("At most one transform function may be set by via()");
       this.toFinalResultT = toFinalResultT;
       return this;
     }
 
     public CoGbkTransform<K, V> via(
         TransformFnWithSideInputContext<K, V> toFinalResultTWithSides,
-        Iterable<PCollectionView<?>> sides
-    ) {
-      if(this.toFinalResultT != null) throw new IllegalStateException("At most one transform function may be set by via()");
+        Iterable<PCollectionView<?>> sides) {
+      if (this.toFinalResultT != null)
+        throw new IllegalStateException("At most one transform function may be set by via()");
       this.toFinalResultTWithSides = toFinalResultTWithSides;
       this.sides = sides;
       return this;
@@ -204,16 +205,15 @@ public class SortedBucketIO {
       Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
       Preconditions.checkState(
           toFinalResultT != null || toFinalResultTWithSides != null,
-          "One of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> must be set by via()"
-      );
+          "One of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> must be set by via()");
       Preconditions.checkState(
           toFinalResultT == null || toFinalResultTWithSides == null,
-          "At most one of of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> may be set"
-      );
-      if(toFinalResultTWithSides != null) {
-        Preconditions.checkNotNull(this.sides, "If using TransformFnWithSideInputContext<K, V>, side inputs must not be null");
+          "At most one of of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> may be set");
+      if (toFinalResultTWithSides != null) {
+        Preconditions.checkNotNull(
+            this.sides,
+            "If using TransformFnWithSideInputContext<K, V>, side inputs must not be null");
       }
-
 
       final ResourceId tmpDir = getTempDirectoryOrDefault(input.getPipeline());
       return input.apply(

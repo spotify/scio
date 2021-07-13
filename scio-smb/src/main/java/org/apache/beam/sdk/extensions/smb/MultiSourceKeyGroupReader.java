@@ -26,7 +26,12 @@ import org.slf4j.LoggerFactory;
 public class MultiSourceKeyGroupReader<FinalKeyT> {
   private static final Logger LOG = LoggerFactory.getLogger(MultiSourceKeyGroupReader.class);
 
-  private enum AcceptKeyGroup { ACCEPT, REJECT, UNSET }
+  private enum AcceptKeyGroup {
+    ACCEPT,
+    REJECT,
+    UNSET
+  }
+
   private Optional<KV<FinalKeyT, CoGbkResult>> head = null;
 
   private final Coder<FinalKeyT> keyCoder;
@@ -42,13 +47,12 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
 
   public MultiSourceKeyGroupReader(
       List<SortedBucketSource.BucketedInput<?, ?>> sources,
-       SourceSpec<FinalKeyT> sourceSpec,
-       Distribution keyGroupSize,
-       boolean materializeKeyGroup,
+      SourceSpec<FinalKeyT> sourceSpec,
+      Distribution keyGroupSize,
+      boolean materializeKeyGroup,
       int bucketId,
       int effectiveParallelism,
-      PipelineOptions options
-  ) {
+      PipelineOptions options) {
     this.keyCoder = sourceSpec.keyCoder;
     this.keyGroupSize = keyGroupSize;
     this.materializeKeyGroup = materializeKeyGroup;
@@ -59,7 +63,9 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
         sources.stream()
             .map(src -> new BucketedInputSource<>(src, bucketId, effectiveParallelism, options))
             .collect(Collectors.toList());
-    this.keyGroupFilter = (bytes) -> sources.get(0).getMetadata().rehashBucket(bytes, effectiveParallelism) == bucketId;
+    this.keyGroupFilter =
+        (bytes) ->
+            sources.get(0).getMetadata().rehashBucket(bytes, effectiveParallelism) == bucketId;
   }
 
   public Optional<KV<FinalKeyT, CoGbkResult>> readNext() {
@@ -69,9 +75,9 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
 
   private void advance() {
     // once all sources are exhausted, head is empty, so short circuit return
-    if(head != null && !head.isPresent()) return;
+    if (head != null && !head.isPresent()) return;
 
-    while(true) {
+    while (true) {
       if (runningKeyGroupSize != 0) {
         keyGroupSize.update(runningKeyGroupSize);
         runningKeyGroupSize = 0;
@@ -84,70 +90,77 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
           .forEach(src -> src.advance());
 
       // only operate on the non-exhausted sources
-      List<BucketedInputSource<?, ?>> activeSources = bucketedInputs.stream()
-              .filter(src -> !src.isExhausted())
-              .collect(Collectors.toList());
+      List<BucketedInputSource<?, ?>> activeSources =
+          bucketedInputs.stream().filter(src -> !src.isExhausted()).collect(Collectors.toList());
 
       // once all sources are exhausted, set head to empty and return
-      if(activeSources.isEmpty()) {
+      if (activeSources.isEmpty()) {
         head = Optional.empty();
         break;
       }
 
-      // process keys in order, but since not all sources have all keys, find the minimum available key
-      final List<byte[]> consideredKeys = activeSources.stream().map(src -> src.currentKey()).collect(Collectors.toList());
+      // process keys in order, but since not all sources have all keys, find the minimum available
+      // key
+      final List<byte[]> consideredKeys =
+          activeSources.stream().map(src -> src.currentKey()).collect(Collectors.toList());
       byte[] minKey = consideredKeys.stream().min(bytesComparator).orElse(null);
       final boolean emitBasedOnMinKeyBucketing = keyGroupFilter.apply(minKey);
 
       // output accumulator
-      final List<Iterable<?>> valueMap = IntStream.range(0, resultSchema.size()).mapToObj(i -> new ArrayList<>()).collect(Collectors.toList());
+      final List<Iterable<?>> valueMap =
+          IntStream.range(0, resultSchema.size())
+              .mapToObj(i -> new ArrayList<>())
+              .collect(Collectors.toList());
 
       // minKey will be accepted or rejected by the first source which has it.
       // acceptKeyGroup short-circuits the 'emit' logic below once a decision is made on minKey.
       AcceptKeyGroup acceptKeyGroup = AcceptKeyGroup.UNSET;
-      for(BucketedInputSource<?, ?> src : activeSources) {
+      for (BucketedInputSource<?, ?> src : activeSources) {
         // for each source, if the current key is equal to the minimum, consume it
-        if(!src.isExhausted() && bytesComparator.compare(minKey, src.currentKey()) == 0) {
+        if (!src.isExhausted() && bytesComparator.compare(minKey, src.currentKey()) == 0) {
           // if this key group has been previously accepted by a preceding source, emit.
           // "  "    "   "     "   "    "          rejected by a preceding source, don't emit.
-          // if this is the first source for this key group, emit if either the source settings or the min key say we should.
-          boolean emitKeyGroup = (acceptKeyGroup == AcceptKeyGroup.ACCEPT) ||
-                                 ((acceptKeyGroup == AcceptKeyGroup.UNSET) && (src.emitByDefault || emitBasedOnMinKeyBucketing));
+          // if this is the first source for this key group, emit if either the source settings or
+          // the min key say we should.
+          boolean emitKeyGroup =
+              (acceptKeyGroup == AcceptKeyGroup.ACCEPT)
+                  || ((acceptKeyGroup == AcceptKeyGroup.UNSET)
+                      && (src.emitByDefault || emitBasedOnMinKeyBucketing));
 
           final Iterator<Object> keyGroupIterator = (Iterator<Object>) src.currentValue();
-          if(emitKeyGroup) {
+          if (emitKeyGroup) {
             acceptKeyGroup = AcceptKeyGroup.ACCEPT;
             // data must be eagerly materialized if requested or if there is a predicate
             boolean materialize = materializeKeyGroup || src.predicate.isPresent();
             int outputIndex = resultSchema.getIndex(src.tupleTag);
 
-            if(!materialize) {
+            if (!materialize) {
               // lazy data iterator
               valueMap.set(
                   outputIndex,
                   new SortedBucketSource.TraversableOnceIterable<>(
                       Iterators.transform(
-                          keyGroupIterator, (value) -> {
+                          keyGroupIterator,
+                          (value) -> {
                             runningKeyGroupSize++;
                             return value;
-                          }
-                      )
-                  )
-              );
+                          })));
 
             } else {
               // eagerly materialize this iterator and apply the predicate to each value
               // this must be eager because the predicate can operate on the entire collection
               final List<Object> values = (List<Object>) valueMap.get(outputIndex);
-              final SortedBucketSource.Predicate<Object> predicate= src.predicate
-                  .map(value -> (SortedBucketSource.Predicate<Object>) value)
-                  .orElseGet(() -> (xs, x) -> true);
-              keyGroupIterator.forEachRemaining(v -> {
-                if ((predicate).apply(values, v)) {
-                  values.add(v);
-                  runningKeyGroupSize++;
-                }
-              });
+              final SortedBucketSource.Predicate<Object> predicate =
+                  src.predicate
+                      .map(value -> (SortedBucketSource.Predicate<Object>) value)
+                      .orElseGet(() -> (xs, x) -> true);
+              keyGroupIterator.forEachRemaining(
+                  v -> {
+                    if ((predicate).apply(values, v)) {
+                      values.add(v);
+                      runningKeyGroupSize++;
+                    }
+                  });
             }
           } else {
             acceptKeyGroup = AcceptKeyGroup.REJECT;
@@ -157,11 +170,14 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
         }
       }
 
-      if(acceptKeyGroup == AcceptKeyGroup.ACCEPT) {
-        final KV<byte[], CoGbkResult> next = KV.of(minKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+      if (acceptKeyGroup == AcceptKeyGroup.ACCEPT) {
+        final KV<byte[], CoGbkResult> next =
+            KV.of(minKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
         try {
           // new head found, we're done
-          head = Optional.of(KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue()));
+          head =
+              Optional.of(
+                  KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue()));
           break;
         } catch (Exception e) {
           throw new RuntimeException("Failed to decode key group", e);
@@ -179,11 +195,10 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
     private Optional<KV<byte[], Iterator<V>>> head;
 
     public BucketedInputSource(
-        SortedBucketSource.BucketedInput<K, V>  source,
+        SortedBucketSource.BucketedInput<K, V> source,
         int bucketId,
         int parallelism,
-        PipelineOptions options
-    ) {
+        PipelineOptions options) {
       this.predicate = Optional.ofNullable(source.getPredicate());
       this.tupleTag = source.getTupleTag();
       this.iter = source.createIterator(bucketId, parallelism, options);
@@ -209,7 +224,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
     }
 
     public void advance() {
-      if(iter.hasNext()) {
+      if (iter.hasNext()) {
         head = Optional.of(iter.next());
       } else {
         head = Optional.empty();

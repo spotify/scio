@@ -331,7 +331,15 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         Distribution keyGroupSize,
         boolean materializeKeyGroup) {
       this.currentSource = currentSource;
-      this.iter = new MultiSourceKeyGroupReader<>(sources, sourceSpec, keyGroupSize, materializeKeyGroup, bucketId, parallelism, options);
+      this.iter =
+          new MultiSourceKeyGroupReader<>(
+              sources,
+              sourceSpec,
+              keyGroupSize,
+              materializeKeyGroup,
+              bucketId,
+              parallelism,
+              options);
     }
 
     @Override
@@ -341,8 +349,10 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     @Override
     public KV<FinalKeyT, CoGbkResult> getCurrent() throws NoSuchElementException {
-      if(next == null) throw new IllegalStateException("Call MergeBucketsReader.start() before MergeBucketsReader.getCurrent()");
-      if(next.isPresent()) return next.get();
+      if (next == null)
+        throw new IllegalStateException(
+            "Call MergeBucketsReader.start() before MergeBucketsReader.getCurrent()");
+      if (next.isPresent()) return next.get();
       throw new NoSuchElementException();
     }
 
@@ -438,7 +448,9 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return tupleTag;
     }
 
-    public Predicate<V> getPredicate() { return predicate; }
+    public Predicate<V> getPredicate() {
+      return predicate;
+    }
 
     public Coder<V> getCoder() {
       return fileOperations.getCoder();
