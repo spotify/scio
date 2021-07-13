@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
@@ -39,9 +41,6 @@ import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.RenameBuckets;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.MergeBucketsReader;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.TraversableOnceIterable;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -54,10 +53,11 @@ import org.apache.beam.sdk.transforms.Filter;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.display.DisplayData;
-import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
+import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.slf4j.Logger;
@@ -72,56 +72,56 @@ import org.slf4j.LoggerFactory;
  * @param <FinalValueT>
  */
 public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PBegin, WriteResult> {
+  private static final Logger LOG = LoggerFactory.getLogger(SortedBucketTransform.class);
   // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
   // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
   static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.33;
 
-  private final MergeAndWriteBucketsSource<FinalKeyT, FinalValueT> boundedSource;
-  private final FinalizeTransformedBuckets<FinalValueT> finalizeBuckets;
+  private final BucketSource<FinalKeyT> bucketSource;
+  private final DoFn<Iterable<MergedBucket>, KV<BucketShardId, ResourceId>> finalizeBuckets;
+  private final ParDo.SingleOutput<BucketItem, MergedBucket> doFn;
 
   public SortedBucketTransform(
       Class<FinalKeyT> finalKeyClass,
-      List<BucketedInput<?, ?>> sources,
+      List<SortedBucketSource.BucketedInput<?, ?>> sources,
       TargetParallelism targetParallelism,
       TransformFn<FinalKeyT, FinalValueT> transformFn,
+      TransformFnWithSideInputContext<FinalKeyT, FinalValueT> sideInputTransformFn,
       ResourceId outputDirectory,
       ResourceId tempDirectory,
+      Iterable<PCollectionView<?>> sides,
       NewBucketMetadataFn<FinalKeyT, FinalValueT> newBucketMetadataFn,
       FileOperations<FinalValueT> fileOperations,
       String filenameSuffix,
-      String filenamePrefix) {
-    final SMBFilenamePolicy filenamePolicy =
-        new SMBFilenamePolicy(outputDirectory, filenamePrefix, filenameSuffix);
+      String filenamePrefix
+  ) {
+    assert !((transformFn == null) && (sideInputTransformFn == null)); // at least one defined
+    assert !((transformFn != null) && (sideInputTransformFn != null)); // only one defined
+    assert sides == null || (sideInputTransformFn != null);
+
+    final SMBFilenamePolicy filenamePolicy = new SMBFilenamePolicy(outputDirectory, filenamePrefix, filenameSuffix);
     final SourceSpec<FinalKeyT> sourceSpec = SourceSpec.from(finalKeyClass, sources);
+    bucketSource = new BucketSource<>(sources, targetParallelism, 1, 0, sourceSpec, -1);
+    finalizeBuckets = new FinalizeTransformedBuckets<>(fileOperations, newBucketMetadataFn, filenamePolicy.forDestination(), sourceSpec.hashType);
 
-    boundedSource =
-        new MergeAndWriteBucketsSource<>(
-            finalKeyClass,
-            sources,
-            targetParallelism,
-            1,
-            0,
-            sourceSpec,
-            Metrics.distribution(getName(), getName() + "-KeyGroupSize"),
-            -1,
-            filenamePolicy.forTempFiles(tempDirectory),
-            fileOperations,
-            transformFn);
-
-    finalizeBuckets =
-        new FinalizeTransformedBuckets<>(
-            fileOperations,
-            newBucketMetadataFn,
-            filenamePolicy.forDestination(),
-            sourceSpec.hashType);
+    final FileAssignment fileAssignment = filenamePolicy.forTempFiles(tempDirectory);
+    final Distribution dist = Metrics.distribution(getName(), getName() + "-KeyGroupSize");
+    if(transformFn != null) {
+      this.doFn = ParDo.of(new NoSides<>(sources, sourceSpec, fileAssignment, fileOperations, transformFn, dist));
+    } else {
+      this.doFn =
+          ParDo.of(new WithSides<>(sources, sourceSpec, fileAssignment, fileOperations, sideInputTransformFn, dist))
+              .withSideInputs(sides);
+    }
   }
 
   @Override
-  public final WriteResult expand(PBegin begin) {
+  public final WriteResult expand(final PBegin begin) {
     return WriteResult.fromTuple(
-        begin
-            .getPipeline()
-            .apply("MergeAndWriteTempBuckets", Read.from(boundedSource))
+        begin.getPipeline()
+            // outputs bucket offsets for the various SMB readers
+            .apply("BucketOffsets", Read.from(bucketSource))
+            .apply("MergeBuckets", this.doFn)
             .apply(Filter.by(Objects::nonNull))
             .apply(Group.globally())
             .apply(
@@ -130,12 +130,25 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                     .withOutputTags(
                         FinalizeTransformedBuckets.BUCKETS_TAG,
                         TupleTagList.of(FinalizeTransformedBuckets.METADATA_TAG))));
+
   }
 
   @FunctionalInterface
   public interface TransformFn<KeyT, ValueT> extends Serializable {
     void writeTransform(
-        KV<KeyT, CoGbkResult> keyGroup, SerializableConsumer<ValueT> outputConsumer);
+        KV<KeyT, CoGbkResult> keyGroup,
+        SerializableConsumer<ValueT> outputConsumer
+    );
+  }
+
+  @FunctionalInterface
+  public interface TransformFnWithSideInputContext<KeyT, ValueT> extends Serializable {
+    void writeTransform(
+        KV<KeyT, CoGbkResult> keyGroup,
+        DoFn<BucketItem, MergedBucket>.ProcessContext c,
+        SerializableConsumer<ValueT> outputConsumer,
+        BoundedWindow window
+    );
   }
 
   public interface SerializableConsumer<ValueT> extends Consumer<ValueT>, Serializable {}
@@ -222,7 +235,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class MergedBucket implements Serializable {
+  public static class MergedBucket implements Serializable {
     final ResourceId destination;
     final int bucketId;
     final int totalNumBuckets;
@@ -250,76 +263,50 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  static class MergeAndWriteBucketsSource<FinalKeyT, FinalValueT>
-      extends BoundedSource<MergedBucket> {
-    private static final Logger LOG = LoggerFactory.getLogger(MergeAndWriteBucketsSource.class);
+  private static class BucketSource<FinalKeyT> extends BoundedSource<BucketItem> {
+    // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
+    // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
 
-    private final Class<FinalKeyT> finalKeyClass;
-    private final List<BucketedInput<?, ?>> sources;
+    private final List<SortedBucketSource.BucketedInput<?, ?>> sources;
     private final TargetParallelism targetParallelism;
     private final SourceSpec<FinalKeyT> sourceSpec;
-    private final Distribution keyGroupSize;
-    private final FileAssignment fileAssignment;
-    private final FileOperations<FinalValueT> fileOperations;
-    private final TransformFn<FinalKeyT, FinalValueT> transformFn;
 
     private final int effectiveParallelism;
     private final int bucketOffsetId;
     private long estimatedSizeBytes;
 
-    MergeAndWriteBucketsSource(
-        Class<FinalKeyT> finalKeyClass,
-        List<BucketedInput<?, ?>> sources,
+    public BucketSource(
+        List<SortedBucketSource.BucketedInput<?, ?>> sources,
         TargetParallelism targetParallelism,
         int effectiveParallelism,
         int bucketOffsetId,
         SourceSpec<FinalKeyT> sourceSpec,
-        Distribution keyGroupSize,
-        long estimatedSizeBytes,
-        FileAssignment fileAssignment,
-        FileOperations<FinalValueT> fileOperations,
-        TransformFn<FinalKeyT, FinalValueT> transformFn) {
-      this.finalKeyClass = finalKeyClass;
+        long estimatedSizeBytes
+    ) {
       this.sources = sources;
       this.targetParallelism = targetParallelism;
       this.effectiveParallelism = effectiveParallelism;
       this.bucketOffsetId = bucketOffsetId;
       this.sourceSpec = sourceSpec;
       this.estimatedSizeBytes = estimatedSizeBytes;
-      this.keyGroupSize = keyGroupSize;
-      this.fileAssignment = fileAssignment;
-      this.fileOperations = fileOperations;
-      this.transformFn = transformFn;
     }
 
-    public MergeAndWriteBucketsSource<FinalKeyT, FinalValueT> split(
-        int bucketOffsetId, int adjustedParallelism, long estimatedSizeBytes) {
-      return new MergeAndWriteBucketsSource<>(
-          finalKeyClass,
-          sources,
-          targetParallelism,
-          adjustedParallelism,
-          bucketOffsetId,
-          sourceSpec,
-          keyGroupSize,
-          estimatedSizeBytes,
-          fileAssignment,
-          fileOperations,
-          transformFn);
+    public BucketSource<FinalKeyT> split(int bucketOffsetId, int adjustedParallelism, long estimatedSizeBytes) {
+      return new BucketSource<>(sources, targetParallelism, adjustedParallelism, bucketOffsetId, sourceSpec, estimatedSizeBytes);
     }
 
     @Override
-    public List<? extends BoundedSource<MergedBucket>> split(
-        long desiredBundleSizeBytes, PipelineOptions options) throws Exception {
+    public List<? extends BoundedSource<BucketItem>> split(
+        final long desiredBundleSizeBytes,
+        final PipelineOptions options) throws Exception {
 
-      final int numSplits =
-          SortedBucketSource.getNumSplits(
-              sourceSpec,
-              effectiveParallelism,
-              targetParallelism,
-              getEstimatedSizeBytes(options),
-              desiredBundleSizeBytes,
-              DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
+      final int numSplits = SortedBucketSource.getNumSplits(
+          sourceSpec,
+          effectiveParallelism,
+          targetParallelism,
+          getEstimatedSizeBytes(options),
+          desiredBundleSizeBytes,
+          DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
 
       final long estSplitSize = estimatedSizeBytes / numSplits;
 
@@ -342,104 +329,231 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @Override
-    public long getEstimatedSizeBytes(PipelineOptions options) throws Exception {
+    public long getEstimatedSizeBytes(final PipelineOptions options) throws Exception {
       if (estimatedSizeBytes == -1) {
-        estimatedSizeBytes =
-            sources.parallelStream().mapToLong(BucketedInput::getOrSampleByteSize).sum();
-
+        estimatedSizeBytes = sources.parallelStream().mapToLong(SortedBucketSource.BucketedInput::getOrSampleByteSize).sum();
         LOG.info("Estimated byte size is " + estimatedSizeBytes);
       }
-
       return estimatedSizeBytes;
     }
 
     @Override
-    public Coder<MergedBucket> getOutputCoder() {
-      return NullableCoder.of(SerializableCoder.of(MergedBucket.class));
+    public Coder<BucketItem> getOutputCoder() {
+      return NullableCoder.of(SerializableCoder.of(BucketItem.class));
     }
 
     @Override
-    public void populateDisplayData(Builder builder) {
+    public void populateDisplayData(DisplayData.Builder builder) {
       super.populateDisplayData(builder);
       builder.add(DisplayData.item("targetParallelism", targetParallelism.toString()));
     }
 
     @Override
-    public BoundedReader<MergedBucket> createReader(PipelineOptions options) throws IOException {
-      final BoundedSource<MergedBucket> currentSource = this;
+    public BoundedReader<BucketItem> createReader(final PipelineOptions options) throws IOException {
+      return new BucketReader(this, bucketOffsetId, effectiveParallelism);
+    }
+  }
 
-      return new BoundedReader<MergedBucket>() {
-        private MergeBucketsReader<FinalKeyT> keyGroupReader;
-        private int bucketId;
-        private ResourceId dst;
-        private OutputCollector<FinalValueT> outputCollector;
-        private boolean started = false;
+  private static abstract class TransformDoFn<FinalKeyT, FinalValueT> extends DoFn<BucketItem, MergedBucket> {
+    protected final SMBFilenamePolicy.FileAssignment fileAssignment;
+    protected final FileOperations<FinalValueT> fileOperations;
+    protected final List<SortedBucketSource.BucketedInput<?, ?>> sources;
+    protected final Distribution keyGroupSize;
+    protected final SourceSpec<FinalKeyT> sourceSpec;
 
-        @Override
-        public boolean start() throws IOException {
-          keyGroupReader =
-              new MergeBucketsReader<>(
-                  options,
-                  sources,
-                  bucketOffsetId,
-                  effectiveParallelism,
-                  sourceSpec,
-                  null,
-                  keyGroupSize,
-                  false);
+    protected TransformDoFn(
+        List<SortedBucketSource.BucketedInput<?, ?>> sources,
+        SourceSpec<FinalKeyT> sourceSpec,
+        SMBFilenamePolicy.FileAssignment fileAssignment,
+        FileOperations<FinalValueT> fileOperations,
+        Distribution keyGroupSize
+    ) {
+      this.fileAssignment = fileAssignment;
+      this.fileOperations = fileOperations;
+      this.sources = sources;
+      this.keyGroupSize = keyGroupSize;
+      this.sourceSpec = sourceSpec;
+    }
 
-          bucketId = bucketOffsetId;
-          dst = fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
-          outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
+    protected abstract void outputTransform(
+        KV<FinalKeyT, CoGbkResult> mergedKeyGroup,
+        ProcessContext context,
+        OutputCollector<FinalValueT> outputCollector,
+        BoundedWindow window
+    );
 
-          return keyGroupReader.start();
-        }
+    @ProcessElement
+    public void processElement(
+        @Element BucketItem e,
+        OutputReceiver<MergedBucket> out,
+        ProcessContext context,
+        BoundedWindow window
+    ) {
+      int bucketId = e.bucketOffsetId;
+      int effectiveParallelism = e.effectiveParallelism;
 
-        @Override
-        public boolean advance() throws IOException {
-          return keyGroupReader.advance();
-        }
+      ResourceId dst = fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
+      OutputCollector<FinalValueT> outputCollector;
+      try {
+        outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
+      } catch (IOException err) {
+        throw new RuntimeException(err);
+      }
 
-        @Override
-        public MergedBucket getCurrent() throws NoSuchElementException {
-          try {
-            KV<FinalKeyT, CoGbkResult> mergedKeyGroup = keyGroupReader.getCurrent();
-            transformFn.writeTransform(mergedKeyGroup, outputCollector);
+      final MultiSourceKeyGroupReader<FinalKeyT> iter = new MultiSourceKeyGroupReader<>(
+          sources,
+          sourceSpec,
+          keyGroupSize,
+          false,
+          bucketId,
+          effectiveParallelism,
+          context.getPipelineOptions()
+      );
+      while(true) {
+        try {
+          Optional<KV<FinalKeyT, CoGbkResult>> optMergedKeyGroup = iter.readNext();
+          if(!optMergedKeyGroup.isPresent()) break;
 
-            // exhaust iterators if necessary before moving on to the next key group:
-            // for example, if not every element was needed in the transformFn
-            sources.forEach(
-                source -> {
-                  final Iterable<?> maybeUnfinishedIt =
-                      mergedKeyGroup.getValue().getAll(source.getTupleTag());
-                  if (TraversableOnceIterable.class.isAssignableFrom(
-                      maybeUnfinishedIt.getClass())) {
-                    ((TraversableOnceIterable<?>) maybeUnfinishedIt).ensureExhausted();
-                  }
-                });
+          KV<FinalKeyT, CoGbkResult> mergedKeyGroup = optMergedKeyGroup.get();
+          outputTransform(mergedKeyGroup, context, outputCollector, window);
 
-            // Return 1 non-null value for the entire bucket
-            if (!started) {
-              started = true;
-              return new MergedBucket(bucketId, dst, effectiveParallelism);
-            } else {
-              return null;
+          // exhaust iterators if necessary before moving on to the next key group:
+          // for example, if not every element was needed in the transformFn
+          sources.forEach(source -> {
+            final Iterable<?> maybeUnfinishedIt = mergedKeyGroup.getValue().getAll(source.getTupleTag());
+            if (SortedBucketSource.TraversableOnceIterable.class.isAssignableFrom(maybeUnfinishedIt.getClass())) {
+              ((SortedBucketSource.TraversableOnceIterable<?>) maybeUnfinishedIt).ensureExhausted();
             }
-          } catch (Exception e) {
-            throw new RuntimeException("Failed to write merged key group", e);
-          }
+          });
+        } catch (Exception ex) {
+          throw new RuntimeException("Failed to write merged key group", ex);
         }
+      }
+      outputCollector.onComplete();
+      out.output(new MergedBucket(bucketId, dst, effectiveParallelism));
+    }
+  }
 
-        @Override
-        public void close() throws IOException {
-          outputCollector.onComplete();
-        }
+  private static class NoSides<FinalKeyT, FinalValueT> extends TransformDoFn<FinalKeyT, FinalValueT> {
+    private final TransformFn<FinalKeyT, FinalValueT> transformFn;
+    public NoSides(
+        List<SortedBucketSource.BucketedInput<?, ?>> sources,
+        SourceSpec<FinalKeyT> sourceSpec,
+        SMBFilenamePolicy.FileAssignment fileAssignment,
+        FileOperations<FinalValueT> fileOperations,
+        TransformFn<FinalKeyT, FinalValueT> transformFn,
+        Distribution keyGroupSize
+    ) {
+      super(sources, sourceSpec, fileAssignment, fileOperations, keyGroupSize);
+      this.transformFn = transformFn;
+    }
 
-        @Override
-        public BoundedSource<MergedBucket> getCurrentSource() {
-          return currentSource;
-        }
-      };
+    @Override
+    protected void outputTransform(
+        final KV<FinalKeyT, CoGbkResult> mergedKeyGroup,
+        final ProcessContext context,
+        final OutputCollector<FinalValueT> outputCollector,
+        final BoundedWindow window
+    ) {
+      transformFn.writeTransform(mergedKeyGroup, outputCollector);
+    }
+  }
+
+  private static class WithSides<FinalKeyT, FinalValueT> extends TransformDoFn<FinalKeyT, FinalValueT> {
+    private final TransformFnWithSideInputContext<FinalKeyT, FinalValueT> transformFn;
+    public WithSides(
+        List<SortedBucketSource.BucketedInput<?, ?>> sources,
+        SourceSpec<FinalKeyT> sourceSpec,
+        SMBFilenamePolicy.FileAssignment fileAssignment,
+        FileOperations<FinalValueT> fileOperations,
+        TransformFnWithSideInputContext<FinalKeyT, FinalValueT> transformFn,
+        Distribution keyGroupSize
+    ) {
+      super(sources, sourceSpec, fileAssignment, fileOperations, keyGroupSize);
+      this.transformFn = transformFn;
+    }
+
+    @Override
+    protected void outputTransform(
+        final KV<FinalKeyT, CoGbkResult> mergedKeyGroup,
+        final ProcessContext context,
+        final OutputCollector<FinalValueT> outputCollector,
+        final BoundedWindow window
+    ) {
+      transformFn.writeTransform(mergedKeyGroup, context, outputCollector, window);
+    }
+  }
+
+  private static class BucketReader extends BoundedSource.BoundedReader<BucketItem> {
+    private final BoundedSource<BucketItem> currentSource;
+    private boolean started;
+    // there is only ever a single item in this source
+    @Nullable private BucketItem next;
+
+    public BucketReader(
+        BoundedSource<BucketItem> initialSource,
+        int bucketOffsetId, int effectiveParallelism
+    ) {
+      this.currentSource = initialSource;
+      this.started = false;
+      this.next = new BucketItem(bucketOffsetId, effectiveParallelism);
+    }
+
+    @Override
+    public boolean start() throws IOException {
+      return advance();
+    }
+
+    @Override
+    public boolean advance() throws IOException {
+      if(!started && next != null) {
+        started = true;
+        return true;
+      } else {
+        next = null;
+        return false;
+      }
+    }
+
+    @Override
+    public BucketItem getCurrent() throws NoSuchElementException {
+      if (!started || next == null) {
+        throw new NoSuchElementException();
+      }
+      return next;
+    }
+
+    @Override
+    public void close() throws IOException {}
+
+    @Override
+    public BoundedSource<BucketItem> getCurrentSource() {
+      return currentSource;
+    }
+  }
+
+  public static class BucketItem implements Serializable {
+    final int bucketOffsetId;
+    final int effectiveParallelism;
+
+    public BucketItem(Integer bucketOffsetId, Integer effectiveParallelism) {
+      this.bucketOffsetId = bucketOffsetId;
+      this.effectiveParallelism = effectiveParallelism;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      BucketItem that = (BucketItem) o;
+      return Objects.equals(bucketOffsetId, that.bucketOffsetId)
+             && Objects.equals(effectiveParallelism, that.effectiveParallelism);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(bucketOffsetId, effectiveParallelism);
     }
   }
 }

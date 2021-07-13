@@ -30,6 +30,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFnWithSideInputContext;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -37,6 +38,7 @@ import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
@@ -142,6 +144,8 @@ public class SortedBucketIO {
     private final List<BucketedInput<?, ?>> inputs;
     private final TargetParallelism targetParallelism;
     private TransformFn<K, V> toFinalResultT;
+    private TransformFnWithSideInputContext<K, V> toFinalResultTWithSides;
+    private Iterable<PCollectionView<?>> sides;
 
     private final ResourceId outputDirectory;
     private final ResourceId tempDirectory;
@@ -167,7 +171,18 @@ public class SortedBucketIO {
     }
 
     public CoGbkTransform<K, V> via(TransformFn<K, V> toFinalResultT) {
+      if(this.toFinalResultTWithSides != null) throw new IllegalStateException("At most one transform function may be set by via()");
       this.toFinalResultT = toFinalResultT;
+      return this;
+    }
+
+    public CoGbkTransform<K, V> via(
+        TransformFnWithSideInputContext<K, V> toFinalResultTWithSides,
+        Iterable<PCollectionView<?>> sides
+    ) {
+      if(this.toFinalResultT != null) throw new IllegalStateException("At most one transform function may be set by via()");
+      this.toFinalResultTWithSides = toFinalResultTWithSides;
+      this.sides = sides;
       return this;
     }
 
@@ -187,7 +202,18 @@ public class SortedBucketIO {
     @Override
     public WriteResult expand(PBegin input) {
       Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
-      Preconditions.checkNotNull(toFinalResultT, "TransformFn<K, V> via() is not set");
+      Preconditions.checkState(
+          toFinalResultT != null || toFinalResultTWithSides != null,
+          "One of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> must be set by via()"
+      );
+      Preconditions.checkState(
+          toFinalResultT == null || toFinalResultTWithSides == null,
+          "At most one of of TransformFn<K, V> or TransformFnWithSideInputContext<K, V> may be set"
+      );
+      if(toFinalResultTWithSides != null) {
+        Preconditions.checkNotNull(this.sides, "If using TransformFnWithSideInputContext<K, V>, side inputs must not be null");
+      }
+
 
       final ResourceId tmpDir = getTempDirectoryOrDefault(input.getPipeline());
       return input.apply(
@@ -196,8 +222,10 @@ public class SortedBucketIO {
               inputs,
               targetParallelism,
               toFinalResultT,
+              toFinalResultTWithSides,
               outputDirectory,
               tmpDir,
+              sides,
               newBucketMetadataFn,
               fileOperations,
               filenameSuffix,
