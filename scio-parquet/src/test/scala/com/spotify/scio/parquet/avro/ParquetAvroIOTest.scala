@@ -283,7 +283,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         ParquetAvroIO[Account]("input"),
         List(Account.newBuilder().setId(1).setName("foo").setType("bar").setAmount(2.0).build())
       )
-      .output(TextIO("output"))(_ should containSingleValue(("foo", 10.0).toString))
+      .output(TextIO("output"))(_ should containSingleValue(("foo", 2.0).toString))
       .run()
   }
 }
@@ -292,8 +292,8 @@ object ParquetTestJob {
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
     sc
-      .parquetAvroFile[Account](args("input"), projection = Projection[Account](_.getName))
-      .map(a => (a.getName.toString, 10.0))
+      .parquetAvroFile[Account](args("input"), projection = Projection[Account](_.getName, _.getAmount))
+      .map(a => (a.getName.toString, a.getAmount))
       .saveAsTextFile(args("output"))
     sc.run().waitUntilDone()
   }
