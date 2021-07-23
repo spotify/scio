@@ -292,7 +292,10 @@ object ParquetTestJob {
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
     sc
-      .parquetAvroFile[Account](args("input"), projection = Projection[Account](_.getName, _.getAmount))
+      .parquetAvroFile[Account](
+        args("input"),
+        projection = Projection[Account](_.getName, _.getAmount)
+      )
       .map(a => (a.getName.toString, a.getAmount))
       .saveAsTextFile(args("output"))
     sc.run().waitUntilDone()
