@@ -18,17 +18,18 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
         with:
-          java-version: graalvm-ce-java11@21.0.0
+          distribution: adopt
+          java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh
       - run: sbt "++${{matrix.scala}} it:test"
     strategy:
       matrix:
         java:
-          - graalvm-ce-java8@21.0.0
-          - graalvm-ce-java11@21.0.0
+          - 8
+          - 11
         scala:
           - 2.12.14
           - 2.13.6
@@ -45,9 +46,10 @@ jobs:
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
         with:
-          java-version: graalvm-ce-java11@21.0.0
+          distribution: adopt
+          java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh
       - name: Build documentation

@@ -13,9 +13,10 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
         with:
-          java-version: graalvm-ce-java11@21.0.0
+          distribution: adopt
+          java-version: 11
       - uses: olafurpg/setup-gpg@v3
       - name: Publish ${{ github.ref }}
         run: sbt ci-release

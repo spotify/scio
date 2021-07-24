@@ -1,10 +1,6 @@
 name: tests
 
-on:
-  pull_request:
-  push:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   test:
@@ -14,8 +10,9 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
         with:
+          distribution: adopt
           java-version: ${{matrix.java}}
       - if: ${{ !matrix.coverage }}
         run: sbt "++${{matrix.scala}} test"
@@ -26,18 +23,18 @@ jobs:
     strategy:
       matrix:
         java:
-          - graalvm-ce-java8@21.0.0
-          - graalvm-ce-java11@21.0.0
+          - 8
+          - 11
         scala:
           - 2.12.14
           - 2.13.6
         include:
           - scala: 2.13.6
-            java: graalvm-ce-java11@21.0.0
+            java: 11
             coverage: true
         exclude:
           - scala: 2.12.14
-            java: graalvm-ce-java8@21.0.0
+            java: 8
   repl-test:
     runs-on: ubuntu-latest
     steps:
@@ -45,14 +42,17 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: ${{matrix.java}}
       - run: ./scripts/ci_repl.sh
         env:
           SCALA_VERSION: ${{ matrix.scala }}
     strategy:
       matrix:
         java:
-          - graalvm-ce-java11@21.0.0
+          - 11
         scala:
           - 2.12.14
           - 2.13.6
