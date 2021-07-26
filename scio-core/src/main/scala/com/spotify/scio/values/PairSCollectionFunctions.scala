@@ -1013,8 +1013,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       .transform(
         _.groupByKey
           .map { kv =>
-            require(kv._2.size == 1, s"Multiple values for key ${kv._1}")
-            (kv._1, kv._2.head)
+            val iter = kv._2.iterator
+            val head = iter.next()
+            require(iter.isEmpty, s"Multiple values for key ${kv._1}")
+            (kv._1, head)
           }
           .groupBy(_ => ())
           .map(_._2.toMap)
