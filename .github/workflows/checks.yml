@@ -14,9 +14,10 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
         with:
-          java-version: graalvm-ce-java11@21.0.0
+          distribution: adopt
+          java-version: 11
       - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
   scalafix-rules:
     runs-on: ubuntu-latest
@@ -25,9 +26,10 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
         with:
-          java-version: graalvm-ce-java11@21.0.0
+          distribution: adopt
+          java-version: 11
       - run: "cd scalafix; sbt test"
   mimaReport:
     runs-on: ubuntu-latest
@@ -36,14 +38,15 @@ jobs:
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
-        uses: olafurpg/setup-scala@v12
+        uses: actions/setup-java@v2
         with:
+          distribution: adopt
           java-version: ${{matrix.java}}
       - run: sbt "++${{matrix.scala}} mimaReportBinaryIssues"
     strategy:
       matrix:
         java:
-          - graalvm-ce-java11@21.0.0
+          - 11
         scala:
           - 2.12.14
           - 2.13.6
