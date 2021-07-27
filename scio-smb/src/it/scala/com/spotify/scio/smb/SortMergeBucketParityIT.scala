@@ -18,10 +18,10 @@
 package com.spotify.scio.smb
 
 import java.nio.file.{Files, Path}
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.util.MultiJoin
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
@@ -167,6 +167,38 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
 
       avroA.keyBy(keyFn).join(avroB.keyBy(keyFn))
+    }
+  }
+
+  "SMBMultiJoin" should "have parity with a 5-way CoGroup" in withNumSources(5) { inputs =>
+    compareResults(
+      com.spotify.scio.smb.util
+        .SMBMultiJoin(_)
+        .sortMergeCoGroup(
+          classOf[Integer],
+          mkRead(inputs(0)),
+          mkRead(inputs(1)),
+          mkRead(inputs(2)),
+          mkRead(inputs(3)),
+          mkRead(inputs(4)),
+          TargetParallelism.auto()
+        )
+    ) { sc =>
+      val (avroA, avroB, avroC, avroD, avroE) = (
+        sc.avroFile(s"${inputs(0)}/*.avro", schema),
+        sc.avroFile(s"${inputs(1)}/*.avro", schema),
+        sc.avroFile(s"${inputs(2)}/*.avro", schema),
+        sc.avroFile(s"${inputs(3)}/*.avro", schema),
+        sc.avroFile(s"${inputs(4)}/*.avro", schema)
+      )
+
+      MultiJoin.cogroup(
+        avroA.keyBy(keyFn),
+        avroB.keyBy(keyFn),
+        avroC.keyBy(keyFn),
+        avroD.keyBy(keyFn),
+        avroE.keyBy(keyFn)
+      )
     }
   }
 
