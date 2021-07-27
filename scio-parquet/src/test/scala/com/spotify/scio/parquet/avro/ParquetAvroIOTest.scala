@@ -21,7 +21,7 @@ import java.io.File
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
-import com.spotify.scio.io.TapSpec
+import com.spotify.scio.io.{TapSpec, TextIO}
 import com.spotify.scio.testing._
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
@@ -274,5 +274,30 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       sc.run()
     }
 
+  }
+
+  it should "apply map functions to test input" in {
+    JobTest[ParquetTestJob.type]
+      .args("--input=input", "--output=output")
+      .input(
+        ParquetAvroIO[Account]("input"),
+        List(Account.newBuilder().setId(1).setName("foo").setType("bar").setAmount(2.0).build())
+      )
+      .output(TextIO("output"))(_ should containSingleValue(("foo", 2.0).toString))
+      .run()
+  }
+}
+
+object ParquetTestJob {
+  def main(cmdLineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+    sc
+      .parquetAvroFile[Account](
+        args("input"),
+        projection = Projection[Account](_.getName, _.getAmount)
+      )
+      .map(a => (a.getName.toString, a.getAmount))
+      .saveAsTextFile(args("output"))
+    sc.run().waitUntilDone()
   }
 }

@@ -17,37 +17,37 @@
 
 package com.spotify.scio.parquet.avro
 
-import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.{ScioIO, Tap, TapOf}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io._
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
+import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.{TypeDescriptor, WindowingStrategy}
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{AvroParquetInputFormat, AvroParquetReader}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
+import java.lang.{Boolean => JBoolean}
+
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
-import com.spotify.scio.io.TapT
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
-import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import org.apache.hadoop.conf.Configuration
-
 import scala.util.Either
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
@@ -61,6 +61,16 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     val coder = CoderMaterializer.beam(sc, Coder[T])
     sc.pipeline.getCoderRegistry.registerCoderForClass(ScioUtil.classOf[T], coder)
     sc.applyTransform(params.read(sc, path)).map(_.getValue)
+  }
+
+  override protected def readTest(sc: ScioContext, params: ReadP): SCollection[T] = {
+    type AvroType = params.avroClass.type
+
+    // The projection function is not part of the test input, so it must be applied directly
+    TestDataManager
+      .getInput(sc.testId.get)(ParquetAvroIO[AvroType](path))
+      .toSCollection(sc)
+      .map(params.projectionFn.asInstanceOf[AvroType => T])
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
