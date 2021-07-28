@@ -172,8 +172,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
   "SMBMultiJoin" should "have parity with a 5-way CoGroup" in withNumSources(5) { inputs =>
     compareResults(
-      com.spotify.scio.smb.util
-        .SMBMultiJoin(_)
+      SMBMultiJoin(_)
         .sortMergeCoGroup(
           classOf[Integer],
           mkRead(inputs(0)),
