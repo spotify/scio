@@ -73,17 +73,16 @@ def sortCoGroup(out, n):
     val tfName = self.tfName
         
     self
-    .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+    .applyTransform(s"SMB CoGroupByKey@$tfName", input)
     .withName(tfName)
     .map { kv =>
-    val cgbkResult = kv.getValue
-    (
-    kv.getKey,
-    (
-        ''', file=out)
+      val cgbkResult = kv.getValue
+      (
+      kv.getKey,
+        (''', file=out)
 
-    for x in vals:
-        print('       cgbkResult.getAll(tupleTag%s).asScala,' % x, file=out)
+    print(',\n'.join(
+        '\t\t\t\t\tcgbkResult.getAll(tupleTag%s).asScala' % x for x in vals), file=out)
 
     print('        )', file=out)
     print('      )', file=out)
@@ -131,10 +130,10 @@ def main(out):
         
         import scala.jdk.CollectionConverters._
 
-        final class SMBMultiJoin(@transient private val self: ScioContext) extends Serializable {
+        final class SMBMultiJoin(private val self: ScioContext) {
         ''').replace('  # NOQA', '').lstrip('\n'), file=out)
 
-    N = 5
+    N = 22
     for i in range(5, N + 1):
         sortCoGroup(out, i)
     print('}', file=out)

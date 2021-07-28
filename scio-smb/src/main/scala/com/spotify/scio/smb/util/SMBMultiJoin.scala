@@ -26,7 +26,7 @@ import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, TargetParallelism}
 
 import scala.jdk.CollectionConverters._
 
-final class SMBMultiJoin(@transient private val self: ScioContext) extends Serializable {
+final class SMBMultiJoin(private val self: ScioContext) {
 
   def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder](
     keyClass: Class[KEY],
@@ -51,7 +51,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -105,7 +105,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -184,7 +184,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -290,7 +290,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -423,7 +423,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -566,7 +566,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -719,7 +719,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -882,7 +882,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -1055,7 +1055,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -1238,7 +1238,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -1431,7 +1431,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -1652,7 +1652,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -1884,7 +1884,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -2127,7 +2127,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -2381,7 +2381,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -2646,7 +2646,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -2922,7 +2922,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
@@ -3209,7 +3209,7 @@ final class SMBMultiJoin(@transient private val self: ScioContext) extends Seria
     val tfName = self.tfName
 
     self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", input))
+      .applyTransform(s"SMB CoGroupByKey@$tfName", input)
       .withName(tfName)
       .map { kv =>
         val cgbkResult = kv.getValue
