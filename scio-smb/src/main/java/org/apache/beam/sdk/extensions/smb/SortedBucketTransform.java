@@ -419,7 +419,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       try {
         outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
       } catch (IOException err) {
-        throw new RuntimeException(err);
+        throw new RuntimeException("Failed to create file writer for transformed output", err);
       }
 
       final MultiSourceKeyGroupReader<FinalKeyT> iter =
