@@ -121,6 +121,25 @@ class SCollectionTest extends PipelineSpec {
     runWithContext(sc => sc.unionAll(List[SCollection[Unit]]()) should beEmpty)
   }
 
+  it should "support unionAll() with named transforms" in {
+    val sc = ScioContext.forTest()
+
+    noException shouldBe thrownBy {
+      sc
+        .withName("Test Union Name")
+        .unionAll(
+          Seq(
+            sc
+              .withName("Input A")
+              .parallelize(1 to 10),
+            sc
+              .withName("Input B")
+              .parallelize(11 to 20)
+          )
+        )
+    }
+  }
+
   it should "support ++ operator" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
@@ -834,27 +853,6 @@ class SCollectionTest extends PipelineSpec {
       val result = CoderUtils.decodeFromByteArray(beamCoder, bytes)
 
       result.l shouldBe testAInstance.l
-    }
-  }
-
-  it should "name unionAll transforms" in {
-    val input1: List[Int] = (1 to 10).toList
-    val input2: List[Int] = (11 to 20).toList
-    val sc = ScioContext.forTest()
-
-    noException shouldBe thrownBy {
-      sc
-        .withName("Test Union Name")
-        .unionAll(
-          Seq(
-            sc
-              .withName("Input A")
-              .parallelize(input1),
-            sc
-              .withName("Input B")
-              .parallelize(input2)
-          )
-        )
     }
   }
 
