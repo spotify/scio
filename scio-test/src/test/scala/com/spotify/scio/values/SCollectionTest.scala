@@ -21,6 +21,7 @@ import java.io.PrintStream
 import java.nio.file.Files
 
 import com.google.api.client.util.Charsets
+import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
 import com.spotify.scio.util.random.RandomSamplerUtils
@@ -833,6 +834,27 @@ class SCollectionTest extends PipelineSpec {
       val result = CoderUtils.decodeFromByteArray(beamCoder, bytes)
 
       result.l shouldBe testAInstance.l
+    }
+  }
+
+  it should "name unionAll transforms" in {
+    val input1: List[Int] = (1 to 10).toList
+    val input2: List[Int] = (11 to 20).toList
+    val sc = ScioContext.forTest()
+
+    noException shouldBe thrownBy {
+      sc
+        .withName("Test Union Name")
+        .unionAll(
+          Seq(
+            sc
+              .withName("Input A")
+              .parallelize(input1),
+            sc
+              .withName("Input B")
+              .parallelize(input2)
+          )
+        )
     }
   }
 
