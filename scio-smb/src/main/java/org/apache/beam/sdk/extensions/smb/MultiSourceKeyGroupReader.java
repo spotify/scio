@@ -89,9 +89,8 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
           .forEach(BucketIterator::advance);
 
       // only operate on the non-exhausted sources
-      List<BucketIterator<?, ?>> activeSources = bucketedInputs.stream()
-          .filter(BucketIterator::notExhausted)
-          .collect(Collectors.toList());
+      List<BucketIterator<?, ?>> activeSources =
+          bucketedInputs.stream().filter(BucketIterator::notExhausted).collect(Collectors.toList());
 
       // once all sources are exhausted, set head to empty and return
       if (activeSources.isEmpty()) {
@@ -101,9 +100,8 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
 
       // process keys in order, but since not all sources
       // have all keys, find the minimum available key
-      final List<byte[]> consideredKeys = activeSources.stream()
-          .map(BucketIterator::currentKey)
-          .collect(Collectors.toList());
+      final List<byte[]> consideredKeys =
+          activeSources.stream().map(BucketIterator::currentKey).collect(Collectors.toList());
       byte[] minKey = consideredKeys.stream().min(bytesComparator).orElse(null);
       final boolean emitBasedOnMinKeyBucketing = keyGroupFilter.apply(minKey);
 
@@ -151,7 +149,10 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
               // eagerly materialize this iterator and apply the predicate to each value
               // this must be eager because the predicate can operate on the entire collection
               final List<Object> values = (List<Object>) valueMap.get(outputIndex);
-              final SortedBucketSource.Predicate<Object> predicate = (src.predicate == null) ? ((xs, x) -> true) : (SortedBucketSource.Predicate<Object>) src.predicate;
+              final SortedBucketSource.Predicate<Object> predicate =
+                  (src.predicate == null)
+                      ? ((xs, x) -> true)
+                      : (SortedBucketSource.Predicate<Object>) src.predicate;
               keyGroupIterator.forEachRemaining(
                   v -> {
                     if ((predicate).apply(values, v)) {
@@ -169,7 +170,8 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
       }
 
       if (acceptKeyGroup == AcceptKeyGroup.ACCEPT) {
-        final KV<byte[], CoGbkResult> next = KV.of(minKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+        final KV<byte[], CoGbkResult> next =
+            KV.of(minKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
         try {
           // new head found, we're done
           head = KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue());
