@@ -812,16 +812,18 @@ class ScioContext private[scio] (
 
   /** Create a union of multiple SCollections. Supports empty lists. */
   // `T: Coder` context bound is required since `scs` might be empty.
-  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
+  def unionAll[T: Coder](scs: => Iterable[SCollection[T]]): SCollection[T] = {
+    val tfName = this.tfName // evaluate eagerly to avoid overriding `scs` names
     scs match {
       case Nil => empty()
       case contents =>
         wrap(
           PCollectionList
             .of(contents.map(_.internal).asJava)
-            .apply(this.tfName, Flatten.pCollections())
+            .apply(tfName, Flatten.pCollections())
         )
     }
+  }
 
   /** Form an empty SCollection. */
   def empty[T: Coder](): SCollection[T] = parallelize(Nil)

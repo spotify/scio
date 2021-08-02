@@ -21,6 +21,7 @@ import java.io.PrintStream
 import java.nio.file.Files
 
 import com.google.api.client.util.Charsets
+import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
 import com.spotify.scio.util.random.RandomSamplerUtils
@@ -118,6 +119,25 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support unionAll() with an empty list" in {
     runWithContext(sc => sc.unionAll(List[SCollection[Unit]]()) should beEmpty)
+  }
+
+  it should "support unionAll() with named transforms" in {
+    val sc = ScioContext.forTest()
+
+    noException shouldBe thrownBy {
+      sc
+        .withName("Test Union Name")
+        .unionAll(
+          Seq(
+            sc
+              .withName("Input A")
+              .parallelize(1 to 10),
+            sc
+              .withName("Input B")
+              .parallelize(11 to 20)
+          )
+        )
+    }
   }
 
   it should "support ++ operator" in {
