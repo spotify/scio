@@ -433,10 +433,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               context.getPipelineOptions());
       while (true) {
         try {
-          Optional<KV<FinalKeyT, CoGbkResult>> optMergedKeyGroup = iter.readNext();
-          if (!optMergedKeyGroup.isPresent()) break;
-
-          KV<FinalKeyT, CoGbkResult> mergedKeyGroup = optMergedKeyGroup.get();
+          KV<FinalKeyT, CoGbkResult> mergedKeyGroup = iter.readNext();
+          if (mergedKeyGroup == null) break;
           outputTransform(mergedKeyGroup, context, outputCollector, window);
 
           // exhaust iterators if necessary before moving on to the next key group:

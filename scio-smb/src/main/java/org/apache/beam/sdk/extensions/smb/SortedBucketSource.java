@@ -319,7 +319,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
   static class MergeBucketsReader<FinalKeyT> extends BoundedReader<KV<FinalKeyT, CoGbkResult>> {
     private final SortedBucketSource<FinalKeyT> currentSource;
     private final MultiSourceKeyGroupReader<FinalKeyT> iter;
-    private Optional<KV<FinalKeyT, CoGbkResult>> next = null;
+    private KV<FinalKeyT, CoGbkResult> next = null;
 
     MergeBucketsReader(
         PipelineOptions options,
@@ -349,18 +349,15 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     @Override
     public KV<FinalKeyT, CoGbkResult> getCurrent() throws NoSuchElementException {
-      if (next == null)
-        throw new IllegalStateException(
-            "Call MergeBucketsReader.start() before MergeBucketsReader.getCurrent()");
-      if (next.isPresent()) return next.get();
-      throw new NoSuchElementException();
+      if (next == null) throw new NoSuchElementException();
+      return next;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean advance() throws IOException {
       next = iter.readNext();
-      return next.isPresent();
+      return next != null;
     }
 
     @Override
