@@ -222,7 +222,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
 
     public boolean shouldAdvance() {
       // should advance if current values have been consumed and there's more data available
-      return (!currentValue().hasNext()) && notExhausted();
+      return notExhausted() && (!currentValue().hasNext());
     }
 
     public void advance() {
