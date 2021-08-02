@@ -114,12 +114,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     if (transformFn != null) {
       this.doFn =
           ParDo.of(
-              new NoSides<>(
+              new TransformWithNoSides<>(
                   sources, sourceSpec, fileAssignment, fileOperations, transformFn, dist));
     } else {
       this.doFn =
           ParDo.of(
-                  new WithSides<>(
+                  new TransformWithSides<>(
                       sources,
                       sourceSpec,
                       fileAssignment,
@@ -460,11 +460,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class NoSides<FinalKeyT, FinalValueT>
+  private static class TransformWithNoSides<FinalKeyT, FinalValueT>
       extends TransformDoFn<FinalKeyT, FinalValueT> {
     private final TransformFn<FinalKeyT, FinalValueT> transformFn;
 
-    public NoSides(
+    public TransformWithNoSides(
         List<SortedBucketSource.BucketedInput<?, ?>> sources,
         SourceSpec<FinalKeyT> sourceSpec,
         SMBFilenamePolicy.FileAssignment fileAssignment,
@@ -485,11 +485,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
   }
 
-  private static class WithSides<FinalKeyT, FinalValueT>
+  private static class TransformWithSides<FinalKeyT, FinalValueT>
       extends TransformDoFn<FinalKeyT, FinalValueT> {
     private final TransformFnWithSideInputContext<FinalKeyT, FinalValueT> transformFn;
 
-    public WithSides(
+    public TransformWithSides(
         List<SortedBucketSource.BucketedInput<?, ?>> sources,
         SourceSpec<FinalKeyT> sourceSpec,
         SMBFilenamePolicy.FileAssignment fileAssignment,
