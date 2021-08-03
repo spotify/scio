@@ -533,7 +533,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       val fn = new SortedBucketTransform.TransformFnWithSideInputContext[K, W]() {
         override def writeTransform(
           keyGroup: KV[K, CoGbkResult],
-          c: (DoFn[BucketItem, MergedBucket]#ProcessContext),
+          c: DoFn[BucketItem, MergedBucket]#ProcessContext,
           outputConsumer: SortedBucketTransform.SerializableConsumer[W],
           window: BoundedWindow
         ): Unit = {

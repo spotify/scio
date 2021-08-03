@@ -17,13 +17,9 @@ import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unchecked")
 public class MultiSourceKeyGroupReader<FinalKeyT> {
-  private static final Logger LOG = LoggerFactory.getLogger(MultiSourceKeyGroupReader.class);
-
   private enum AcceptKeyGroup {
     ACCEPT,
     REJECT,

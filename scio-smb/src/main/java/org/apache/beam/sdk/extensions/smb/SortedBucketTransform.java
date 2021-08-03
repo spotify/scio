@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -166,7 +165,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
   public interface SerializableConsumer<ValueT> extends Consumer<ValueT>, Serializable {}
 
   public interface NewBucketMetadataFn<K, V> extends Serializable {
-    public BucketMetadata<K, V> createMetadata(int numBuckets, int numShards, HashType hashType)
+    BucketMetadata<K, V> createMetadata(int numBuckets, int numShards, HashType hashType)
         throws CannotProvideCoderException, NonDeterministicException;
   }
 
