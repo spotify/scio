@@ -19,7 +19,6 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -29,7 +28,6 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -65,9 +63,7 @@ import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -316,25 +312,9 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
   /** Merge key-value groups in matching buckets. */
   static class MergeBucketsReader<FinalKeyT> extends BoundedReader<KV<FinalKeyT, CoGbkResult>> {
-    private static final Comparator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> keyComparator =
-        (o1, o2) -> bytesComparator.compare(o1.getValue().getKey(), o2.getValue().getKey());
-
-    private final Coder<FinalKeyT> keyCoder;
     private final SortedBucketSource<FinalKeyT> currentSource;
-    private final Distribution keyGroupSize;
-    private final int numSources;
-    private final int parallelism;
-    private final KeyGroupIterator[] iterators;
-    private final Function<byte[], Boolean> keyGroupFilter;
-    private final Predicate[] predicates;
-    private final CoGbkResultSchema resultSchema;
-    private final TupleTagList tupleTags;
-    private final Map<TupleTag, Integer> bucketsPerSource;
-
-    private KV<byte[], CoGbkResult> next;
-    private Map<TupleTag, KV<byte[], Iterator<?>>> nextKeyGroups;
-    private boolean materializeKeyGroup;
-    private int runningKeyGroupSize;
+    private final MultiSourceKeyGroupReader<FinalKeyT> iter;
+    private KV<FinalKeyT, CoGbkResult> next = null;
 
     MergeBucketsReader(
         PipelineOptions options,
@@ -345,161 +325,34 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
         SortedBucketSource<FinalKeyT> currentSource,
         Distribution keyGroupSize,
         boolean materializeKeyGroup) {
-      this.keyCoder = sourceSpec.keyCoder;
-      this.numSources = sources.size();
       this.currentSource = currentSource;
-      this.keyGroupSize = keyGroupSize;
-      this.parallelism = parallelism;
-      this.materializeKeyGroup = materializeKeyGroup;
-      this.runningKeyGroupSize = 0;
-
-      this.keyGroupFilter =
-          (bytes) -> sources.get(0).getMetadata().rehashBucket(bytes, parallelism) == bucketId;
-
-      predicates = sources.stream().map(i -> i.predicate).toArray(Predicate[]::new);
-
-      iterators =
-          sources.stream()
-              .map(i -> i.createIterator(bucketId, parallelism, options))
-              .toArray(KeyGroupIterator[]::new);
-
-      resultSchema = BucketedInput.schemaOf(sources);
-      tupleTags = resultSchema.getTupleTagList();
-
-      this.bucketsPerSource =
-          sources.stream()
-              .collect(
-                  Collectors.toMap(
-                      BucketedInput::getTupleTag,
-                      i -> i.getOrComputeMetadata().getCanonicalMetadata().getNumBuckets()));
+      this.iter =
+          new MultiSourceKeyGroupReader<>(
+              sources,
+              sourceSpec,
+              keyGroupSize,
+              materializeKeyGroup,
+              bucketId,
+              parallelism,
+              options);
     }
 
     @Override
     public boolean start() throws IOException {
-      nextKeyGroups = new HashMap<>();
       return advance();
     }
 
     @Override
     public KV<FinalKeyT, CoGbkResult> getCurrent() throws NoSuchElementException {
-      try {
-        return KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue());
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to decode key group", e);
-      }
+      if (next == null) throw new NoSuchElementException();
+      return next;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean advance() throws IOException {
-      while (true) {
-        if (runningKeyGroupSize != 0) { // If it's 0, that means we haven't started reading
-          keyGroupSize.update(runningKeyGroupSize);
-          runningKeyGroupSize = 0;
-        }
-
-        int completedSources = 0;
-        // Advance key-value groups from each source
-        for (int i = 0; i < numSources; i++) {
-          final KeyGroupIterator it = iterators[i];
-          if (nextKeyGroups.containsKey(tupleTags.get(i))) {
-            continue;
-          }
-          if (it.hasNext()) {
-            final KV<byte[], Iterator<?>> next = it.next();
-            nextKeyGroups.put(tupleTags.get(i), next);
-          } else {
-            completedSources++;
-          }
-        }
-
-        if (nextKeyGroups.isEmpty()) {
-          break;
-        }
-
-        // Find next key-value groups
-        final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> minKeyEntry =
-            nextKeyGroups.entrySet().stream().min(keyComparator).orElse(null);
-
-        final Iterator<Map.Entry<TupleTag, KV<byte[], Iterator<?>>>> nextKeyGroupsIt =
-            nextKeyGroups.entrySet().iterator();
-        final List<Iterable<?>> valueMap = new ArrayList<>();
-        for (int i = 0; i < resultSchema.size(); i++) {
-          valueMap.add(new ArrayList<>());
-        }
-
-        // Set to 1 if subsequent key groups should be accepted or 0 if they should be filtered out
-        int acceptKeyGroup = -1;
-
-        while (nextKeyGroupsIt.hasNext()) {
-          final Map.Entry<TupleTag, KV<byte[], Iterator<?>>> entry = nextKeyGroupsIt.next();
-
-          if (keyComparator.compare(entry, minKeyEntry) == 0) {
-            final TupleTag tupleTag = entry.getKey();
-            int index = resultSchema.getIndex(tupleTag);
-
-            // Track the canonical # buckets of each source that the key is found in.
-            // If we find it in a source with a # buckets >= the parallelism of the job,
-            // we know that it doesn't need to be re-hashed as it's already in the right bucket.
-            final boolean emitKeyGroup =
-                acceptKeyGroup == 1
-                    || (acceptKeyGroup != 0 // make sure it hasn't already been ruled out
-                        && (bucketsPerSource.get(tupleTag) >= parallelism
-                            || keyGroupFilter.apply(minKeyEntry.getValue().getKey())));
-
-            // If the user supplies a predicate, we have to materialize the iterable to apply it
-            boolean materialize = (materializeKeyGroup || predicates[index] != null);
-
-            final Predicate<Object> predicate =
-                predicates[index] != null ? predicates[index] : (xs, x) -> true;
-
-            final Iterator<Object> keyGroupIterator =
-                (Iterator<Object>) entry.getValue().getValue();
-
-            if (emitKeyGroup && !materialize) {
-              valueMap.set(
-                  index,
-                  new TraversableOnceIterable<>(
-                      Iterators.transform(
-                          keyGroupIterator,
-                          (value) -> {
-                            runningKeyGroupSize++;
-                            return value;
-                          })));
-              acceptKeyGroup = 1;
-            } else if (emitKeyGroup) {
-              final List<Object> values = (List<Object>) valueMap.get(index);
-              keyGroupIterator.forEachRemaining(
-                  v -> {
-                    if (predicate.apply(values, v)) {
-                      values.add(v);
-                      runningKeyGroupSize++;
-                    }
-                  });
-              acceptKeyGroup = 1;
-            } else {
-              // skip key but still have to exhaust iterator
-              keyGroupIterator.forEachRemaining(value -> {});
-              acceptKeyGroup = 0;
-            }
-
-            nextKeyGroupsIt.remove();
-          }
-        }
-
-        if (acceptKeyGroup == 1) {
-          next =
-              KV.of(
-                  minKeyEntry.getValue().getKey(),
-                  CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
-          return true;
-        } else {
-          if (completedSources == numSources) {
-            break;
-          }
-        }
-      }
-      return false;
+      next = iter.readNext();
+      return next != null;
     }
 
     @Override
@@ -585,6 +438,10 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     public TupleTag<V> getTupleTag() {
       return tupleTag;
+    }
+
+    public Predicate<V> getPredicate() {
+      return predicate;
     }
 
     public Coder<V> getCoder() {
