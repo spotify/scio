@@ -59,6 +59,7 @@ import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,9 +94,18 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       FileOperations<FinalValueT> fileOperations,
       String filenameSuffix,
       String filenamePrefix) {
-    assert !((transformFn == null) && (sideInputTransformFn == null)); // at least one defined
-    assert !((transformFn != null) && (sideInputTransformFn != null)); // only one defined
-    assert sides == null || (sideInputTransformFn != null);
+    Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
+    Preconditions.checkState(
+        !((transformFn == null) && (sideInputTransformFn == null)), // at least one defined
+        "At least one of transformFn and sideInputTransformFn must be set");
+    Preconditions.checkState(
+        !((transformFn != null) && (sideInputTransformFn != null)), // only one defined
+        "At most one of transformFn and sideInputTransformFn may be set");
+    if (sideInputTransformFn != null) {
+      Preconditions.checkNotNull(
+          sides,
+          "If using sideInputTransformFn, sides must not be null");
+    }
 
     final SMBFilenamePolicy filenamePolicy =
         new SMBFilenamePolicy(outputDirectory, filenamePrefix, filenameSuffix);

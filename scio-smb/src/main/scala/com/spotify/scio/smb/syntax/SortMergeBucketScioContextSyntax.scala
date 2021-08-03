@@ -30,7 +30,6 @@ import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{KV, PCollectionView}
 
-import java.lang
 import scala.jdk.CollectionConverters._
 
 trait SortMergeBucketScioContextSyntax {
@@ -528,7 +527,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
         SortedBucketTransform.SerializableConsumer[W]
       ) => Unit
     ): ClosedTap[Nothing] = {
-      val sideViews: lang.Iterable[PCollectionView[_]] = sides.map(_.view).asJava
+      val sideViews: java.lang.Iterable[PCollectionView[_]] = sides.map(_.view).asJava
 
       val fn = new SortedBucketTransform.TransformFnWithSideInputContext[K, W]() {
         override def writeTransform(
