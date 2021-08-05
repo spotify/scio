@@ -49,8 +49,8 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "6.8.17"
-val elasticsearch7Version = "7.14.0"
+val elasticsearch6Version = "6.8.18"
+val elasticsearch7Version = "7.13.4"
 val featranVersion = "0.8.0-RC1"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.60.1"
@@ -167,7 +167,8 @@ val commonSettings = Def
     coverageExcludedPackages := (Seq(
       "com\\.spotify\\.scio\\.examples\\..*",
       "com\\.spotify\\.scio\\.repl\\..*",
-      "com\\.spotify\\.scio\\.util\\.MultiJoin"
+      "com\\.spotify\\.scio\\.util\\.MultiJoin",
+      "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
     ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
     coverageHighlighting := true,
     licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
@@ -918,7 +919,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.3.1",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.3.2",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,

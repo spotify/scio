@@ -22,11 +22,13 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.values._
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.{BucketItem, MergedBucket}
 import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketTransform, TargetParallelism}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.join.CoGbkResult
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
-import org.apache.beam.sdk.values.KV
+import org.apache.beam.sdk.values.{KV, PCollectionView}
 
 import scala.jdk.CollectionConverters._
 
@@ -475,6 +477,10 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     transform: SortedBucketIO.CoGbkTransform[K, W],
     toR: CoGbkResult => R
   ) extends Serializable {
+    def withSideInputs(
+      sides: SideInput[_]*
+    ): SortMergeTransformWithSideInputsWriteBuilder[K, R, W] =
+      new SortMergeTransformWithSideInputsWriteBuilder(transform, toR, sides)
 
     /**
      * Defines the transforming function applied to each key group, where the output(s) are sent to
@@ -503,6 +509,44 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
 
       val t = transform.via(fn)
 
+      self.applyInternal(t)
+      ClosedTap[Nothing](EmptyTap)
+    }
+  }
+
+  class SortMergeTransformWithSideInputsWriteBuilder[K, R, W](
+    transform: SortedBucketIO.CoGbkTransform[K, W],
+    toR: CoGbkResult => R,
+    sides: Iterable[SideInput[_]]
+  ) extends Serializable {
+    def via(
+      transformFn: (
+        K,
+        R,
+        SideInputContext[_],
+        SortedBucketTransform.SerializableConsumer[W]
+      ) => Unit
+    ): ClosedTap[Nothing] = {
+      val sideViews: java.lang.Iterable[PCollectionView[_]] = sides.map(_.view).asJava
+
+      val fn = new SortedBucketTransform.TransformFnWithSideInputContext[K, W]() {
+        override def writeTransform(
+          keyGroup: KV[K, CoGbkResult],
+          c: DoFn[BucketItem, MergedBucket]#ProcessContext,
+          outputConsumer: SortedBucketTransform.SerializableConsumer[W],
+          window: BoundedWindow
+        ): Unit = {
+          val ctx =
+            new SideInputContext(c.asInstanceOf[DoFn[BucketItem, AnyRef]#ProcessContext], window)
+          transformFn.apply(
+            keyGroup.getKey,
+            toR(keyGroup.getValue),
+            ctx,
+            outputConsumer
+          )
+        }
+      }
+      val t = transform.via(fn, sideViews)
       self.applyInternal(t)
       ClosedTap[Nothing](EmptyTap)
     }
