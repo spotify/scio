@@ -88,7 +88,7 @@ import com.spotify.scio._
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
+```scala mdoc:compile-only
 val wordCount = sc
     .textFile("README.md")
     .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
@@ -117,7 +117,7 @@ import com.spotify.scio._
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
+```scala mdoc:compile-only
 val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/hamlet.txt")
 
 val wordCount = shakespeare
@@ -166,7 +166,7 @@ import com.spotify.scio._
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
+```scala mdoc:compile-only
 val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/*")
 
 val wordCount = shakespeare
@@ -227,7 +227,7 @@ import com.spotify.scio.bigquery._
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
+```scala mdoc:compile-only
 val tornadoes = sc.bigQuerySelect(Query("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]"))
  
 val counts = tornadoes
