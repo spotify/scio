@@ -18,9 +18,8 @@
 package com.spotify.scio
 
 import java.beans.Introspector
-import java.io.{ByteArrayOutputStream, File, PrintStream}
+import java.io.File
 import java.net.URI
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
