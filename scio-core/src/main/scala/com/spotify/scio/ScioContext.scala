@@ -218,17 +218,7 @@ object ContextAndArgs {
         case Right((_, _, help, _)) if help =>
           Success(Left(Help[T].help))
         case Right((_, usage, _, _)) if usage =>
-          val sysProps = SysProps.properties.map(_.show).mkString("\n")
-          val baos = new ByteArrayOutputStream()
-          val pos = new PrintStream(baos)
-
-          for {
-            i <- PipelineOptionsFactory.getRegisteredOptions.asScala
-          } PipelineOptionsFactory.printHelp(pos, i)
-          pos.close()
-
-          val msg = sysProps + Help[T].help + new String(baos.toByteArray, StandardCharsets.UTF_8)
-          Success(Left(msg))
+          Success(Left(Help[T].help))
         case Right((Right(t), _, _, _)) =>
           val (opts, unused) = ScioContext.parseArguments[PipelineOptions](remainingArgs)
           val unusedMap = unused.asMap

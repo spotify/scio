@@ -185,17 +185,10 @@ class ArgsTest extends AnyFlatSpec with Matchers {
         .toOption
         .flatMap(_.left.toOption)
         .getOrElse("no help message")
-    val expected =
-      s"""Scio Examples ${BuildInfo.version}
-         |Usage: com.spotify.scio.examples.MinimalWordCount [options]
-         |  --input | -i  <string>
-         |        Path of the file to read from
-         |  --output | -o  <string>
-         |        Path of the file to write to
-         |  --camelCaseTest  <string>
-         |""".stripMargin
 
-    assert(msg.contains(expected))
+    assert(msg.contains("com.spotify.scio.examples.MinimalWordCount"))
+    assert(msg.contains("Path of the file to read from"))
+    assert(msg.contains("Path of the file to write to"))
   }
 
   trait Options extends PipelineOptions {
