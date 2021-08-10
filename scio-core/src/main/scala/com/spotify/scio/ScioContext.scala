@@ -18,9 +18,8 @@
 package com.spotify.scio
 
 import java.beans.Introspector
-import java.io.{ByteArrayOutputStream, File, PrintStream}
+import java.io.File
 import java.net.URI
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -182,8 +181,8 @@ object ContextAndArgs {
   object TypedParser {
     final def apply[T]()(implicit parser: Parser[T], help: Help[T]): TypedParser[T] = {
       val parserOverride = parser match {
-        case p: ParserWithNameFormatter[T] => p
-        case p                             => p.nameFormatter(_.name)
+        case p: ParserWithNameFormatter[T, _] => p
+        case p                                => p.nameFormatter(_.name)
       }
       val helpOverride =
         help.withNameFormatter(parserOverride.defaultNameFormatter).asInstanceOf[Help[T]]
@@ -218,17 +217,7 @@ object ContextAndArgs {
         case Right((_, _, help, _)) if help =>
           Success(Left(Help[T].help))
         case Right((_, usage, _, _)) if usage =>
-          val sysProps = SysProps.properties.map(_.show).mkString("\n")
-          val baos = new ByteArrayOutputStream()
-          val pos = new PrintStream(baos)
-
-          for {
-            i <- PipelineOptionsFactory.getRegisteredOptions.asScala
-          } PipelineOptionsFactory.printHelp(pos, i)
-          pos.close()
-
-          val msg = sysProps + Help[T].help + new String(baos.toByteArray, StandardCharsets.UTF_8)
-          Success(Left(msg))
+          Success(Left(Help[T].help))
         case Right((Right(t), _, _, _)) =>
           val (opts, unused) = ScioContext.parseArguments[PipelineOptions](remainingArgs)
           val unusedMap = unused.asMap
