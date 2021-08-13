@@ -23,6 +23,7 @@ import com.spotify.scio.bigquery.BigQueryTyped.BeamSchema.{WriteParam => TypedWr
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQueryTyped, TableRow, TableRowJsonIO, TimePartitioning}
+import com.spotify.scio.bigquery.coders
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
@@ -61,13 +62,10 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
         tableDescription,
         timePartitioning
       )
-
     self
       .covary[TableRow]
       .write(
-        BigQueryTypedTable(table, Format.TableRow)(
-          self.coder.asInstanceOf[Coder[TableRow]]
-        )
+        BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder)
       )(param)
   }
 
