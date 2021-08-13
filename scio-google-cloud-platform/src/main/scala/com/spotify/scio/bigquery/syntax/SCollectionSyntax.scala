@@ -62,6 +62,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
         tableDescription,
         timePartitioning
       )
+
     self
       .covary[TableRow]
       .write(
