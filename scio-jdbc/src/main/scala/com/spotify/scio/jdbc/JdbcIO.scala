@@ -36,7 +36,7 @@ object JdbcIO {
     }
 
   private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
-    case JdbcReadOptions(connOpts, query, _, _, _) => jdbcIoId(connOpts, query)
+    case JdbcReadOptions(connOpts, query, _, _, _, _) => jdbcIoId(connOpts, query)
     case JdbcWriteOptions(connOpts, statement, _, _, _, _) =>
       jdbcIoId(connOpts, statement)
   }
@@ -80,6 +80,8 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
         override def mapRow(resultSet: ResultSet): T =
           readOptions.rowMapper(resultSet)
       })
+      .withOutputParallelization(readOptions.outputParallelization)
+
     if (readOptions.statementPreparator != null) {
       transform = transform
         .withStatementPreparator(new beam.JdbcIO.StatementPreparator {

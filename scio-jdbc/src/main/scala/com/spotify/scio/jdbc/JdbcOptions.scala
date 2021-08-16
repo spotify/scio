@@ -17,9 +17,9 @@
 
 package com.spotify.scio.jdbc
 
-import java.sql.{Driver, PreparedStatement, ResultSet, SQLException}
-
 import org.apache.beam.sdk.io.jdbc.JdbcIO.{DefaultRetryStrategy, RetryConfiguration}
+
+import java.sql.{Driver, PreparedStatement, ResultSet, SQLException}
 
 /**
  * Options for a JDBC connection.
@@ -47,6 +47,7 @@ object JdbcIoOptions {
     BeamDefaultMaxRetryDelay,
     BeamDefaultInitialRetryDelay
   )
+  private[jdbc] val DefaultOutputParallelization = true
 }
 
 sealed trait JdbcIoOptions
@@ -54,18 +55,20 @@ sealed trait JdbcIoOptions
 /**
  * Options for reading from a JDBC source.
  *
- * @param connectionOptions   connection options
- * @param query               query string
- * @param statementPreparator function to prepare a [[java.sql.PreparedStatement]]
- * @param rowMapper           function to map from a SQL [[java.sql.ResultSet]] to `T`
- * @param fetchSize           use apache beam default fetch size if the value is -1
+ * @param connectionOptions     connection options
+ * @param query                 query string
+ * @param statementPreparator   function to prepare a [[java.sql.PreparedStatement]]
+ * @param rowMapper             function to map from a SQL [[java.sql.ResultSet]] to `T`
+ * @param fetchSize             use apache beam default fetch size if the value is -1
+ * @param outputParallelization reshuffle result to distribute it to all workers. Default to true.
  */
 final case class JdbcReadOptions[T](
   connectionOptions: JdbcConnectionOptions,
   query: String,
   statementPreparator: PreparedStatement => Unit = null,
   rowMapper: ResultSet => T,
-  fetchSize: Int = JdbcIoOptions.BeamDefaultFetchSize
+  fetchSize: Int = JdbcIoOptions.BeamDefaultFetchSize,
+  outputParallelization: Boolean = JdbcIoOptions.DefaultOutputParallelization
 ) extends JdbcIoOptions
 
 /**
