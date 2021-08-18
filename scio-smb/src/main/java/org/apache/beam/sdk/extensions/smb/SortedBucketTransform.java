@@ -102,23 +102,23 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         !((transformFn != null) && (sideInputTransformFn != null)), // only one defined
         "At most one of transformFn and sideInputTransformFn may be set");
     if (sideInputTransformFn != null) {
-      Preconditions.checkNotNull(
-          sides,
-          "If using sideInputTransformFn, sides must not be null");
+      Preconditions.checkNotNull(sides, "If using sideInputTransformFn, sides must not be null");
     }
 
     final SMBFilenamePolicy filenamePolicy =
         new SMBFilenamePolicy(outputDirectory, filenamePrefix, filenameSuffix);
     final SourceSpec<FinalKeyT> sourceSpec = SourceSpec.from(finalKeyClass, sources);
     bucketSource = new BucketSource<>(sources, targetParallelism, 1, 0, sourceSpec, -1);
+    final FileAssignment fileAssignment = filenamePolicy.forTempFiles(tempDirectory);
+
     finalizeBuckets =
         new FinalizeTransformedBuckets<>(
+            fileAssignment.getDirectory(),
             fileOperations,
             newBucketMetadataFn,
             filenamePolicy.forDestination(),
             sourceSpec.hashType);
 
-    final FileAssignment fileAssignment = filenamePolicy.forTempFiles(tempDirectory);
     final Distribution dist = Metrics.distribution(getName(), getName() + "-KeyGroupSize");
     if (transformFn != null) {
       this.doFn =
@@ -181,6 +181,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   private static class FinalizeTransformedBuckets<FinalValueT>
       extends DoFn<Iterable<MergedBucket>, KV<BucketShardId, ResourceId>> {
+    private final ResourceId tempDirectory;
     private final FileOperations<FinalValueT> fileOperations;
     private final NewBucketMetadataFn<?, ?> newBucketMetadataFn;
     private final FileAssignment dstFileAssignment;
@@ -191,10 +192,12 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     static final TupleTag<ResourceId> METADATA_TAG = new TupleTag<>("writtenMetadata");
 
     public FinalizeTransformedBuckets(
+        ResourceId tempDirectory,
         FileOperations<FinalValueT> fileOperations,
         NewBucketMetadataFn<?, ?> newBucketMetadataFn,
         FileAssignment dstFileAssignment,
         HashType hashType) {
+      this.tempDirectory = tempDirectory;
       this.fileOperations = fileOperations;
       this.newBucketMetadataFn = newBucketMetadataFn;
       this.dstFileAssignment = dstFileAssignment;
@@ -202,7 +205,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(ProcessContext c) throws IOException {
       final Iterator<MergedBucket> mergedBuckets = c.element().iterator();
       final Map<BucketShardId, ResourceId> writtenBuckets = new HashMap<>();
 
@@ -221,6 +224,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       }
 
       RenameBuckets.moveFiles(
+          tempDirectory,
           bucketMetadata,
           writtenBuckets,
           dstFileAssignment,
