@@ -29,7 +29,7 @@ import com.spotify.scio.schemas.instances.{
 }
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.schemas.Schema.FieldType
-import org.apache.beam.sdk.schemas.{SchemaProvider, Schema => BSchema}
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaProvider}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 import com.twitter.chill.ClosureCleaner

@@ -58,9 +58,8 @@ private[scio] object MacroSettings {
     getFlag(c.settings)("show-coder-fallback", FeatureFlag.Disable)
 
   /**
-   * Aggressively cache Schema implicit definitions to speed up compilation.
-   * This might lead to the incorrect implicit definition to be selected
-   * since implicits may escape their scope.
+   * Aggressively cache Schema implicit definitions to speed up compilation. This might lead to the
+   * incorrect implicit definition to be selected since implicits may escape their scope.
    */
   def cacheImplicitSchemas(c: blackbox.Context): FeatureFlag =
     getFlag(c.settings)("cache-implicit-schemas", FeatureFlag.Disable)

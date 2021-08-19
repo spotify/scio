@@ -25,9 +25,12 @@ import scala.util.{Failure, Success, Try}
 /**
  * A [[org.apache.beam.sdk.transforms.DoFn DoFn]] that performs asynchronous lookup using the
  * provided client for Scala [[Future]].
- * @tparam A input element type.
- * @tparam B client lookup value type.
- * @tparam C client type.
+ * @tparam A
+ *   input element type.
+ * @tparam B
+ *   client lookup value type.
+ * @tparam C
+ *   client type.
  */
 abstract class ScalaAsyncLookupDoFn[A, B, C](
   maxPendingRequests: Int,

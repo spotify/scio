@@ -71,8 +71,8 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
   }
 
   /**
-   * Save this SCollection as a BigQuery TableRow JSON text file. Note that elements must be of
-   * type [[com.google.api.services.bigquery.model.TableRow TableRow]].
+   * Save this SCollection as a BigQuery TableRow JSON text file. Note that elements must be of type
+   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
   def saveAsTableRowJsonFile(
     path: String,
@@ -89,9 +89,8 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     extends AnyVal {
 
   /**
-   * Save this SCollection as a BigQuery table using Avro writting function.
-   * Note that elements must be of type
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * Save this SCollection as a BigQuery table using Avro writting function. Note that elements must
+   * be of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def saveAsBigQueryTable(
     table: Table,
@@ -163,8 +162,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * It could also be an empty class with schema from
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromSchema]],
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromTable BigQueryType.fromTable]], or
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]. For
-   * example:
+   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]. For example:
    *
    * {{{
    * @BigQueryType.fromTable("bigquery-public-data:samples.gsod")

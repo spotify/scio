@@ -36,9 +36,8 @@ object Query1 {
   import QueryMacros._
 
   /**
-   * Typecheck [[Query1]] q against the provided schemas.
-   * If the query correctly typechecks, it's simply return as a [[Right]].
-   * If it fails, a error message is returned in a [[Left]].
+   * Typecheck [[Query1]] q against the provided schemas. If the query correctly typechecks, it's
+   * simply return as a [[Right]]. If it fails, a error message is returned in a [[Left]].
    */
   def typecheck[A: Schema, B: Schema](q: Query1[A, B]): Either[String, Query1[A, B]] =
     Queries

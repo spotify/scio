@@ -26,7 +26,9 @@ import org.joda.time.Duration
 
 import com.spotify.scio.bigtable.BigtableWrite
 
-/** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods. */
+/**
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
+ */
 final class SCollectionMutationOps[T <: Mutation](
   private val self: SCollection[(ByteString, Iterable[T])]
 ) {
@@ -40,8 +42,8 @@ final class SCollectionMutationOps[T <: Mutation](
     self.write(BigtableWrite[T](bigtableOptions, tableId))(BigtableWrite.Default)
 
   /**
-   * Save this SCollection as a Bigtable table. This version supports batching. Note that
-   * elements must be of type `Mutation`.
+   * Save this SCollection as a Bigtable table. This version supports batching. Note that elements
+   * must be of type `Mutation`.
    */
   def saveAsBigtable(
     bigtableOptions: BigtableOptions,

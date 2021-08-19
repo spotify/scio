@@ -193,8 +193,8 @@ object SavedBundlePredictDoFn {
   }
 
   /**
-   * Note: if fetchOps isn't provided, then all outputs defined in the signature of the model
-   * are retrieved. This can be expensive and unwanted, depending on the model.
+   * Note: if fetchOps isn't provided, then all outputs defined in the signature of the model are
+   * retrieved. This can be expensive and unwanted, depending on the model.
    */
   def forTensorFlowExample[T, V](
     uri: String,

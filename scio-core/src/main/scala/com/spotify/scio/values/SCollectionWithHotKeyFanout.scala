@@ -69,8 +69,8 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     )
 
   /**
-   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
-   * with hot key fanout.
+   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]] with
+   * hot key fanout.
    */
   def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     self.self.context.wrap(self.self.internal).transform { in =>
@@ -81,8 +81,8 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     }
 
   /**
-   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]]
-   * with hot key fanout.
+   * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]] with
+   * hot key fanout.
    */
   def aggregateByKey[A: Coder, U: Coder](
     aggregator: MonoidAggregator[V, A, U]
@@ -120,8 +120,8 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     )(kvToTuple)
 
   /**
-   * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with
-   * hot key fanout.
+   * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with hot
+   * key fanout.
    */
   def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, mon))))(

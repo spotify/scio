@@ -50,10 +50,12 @@ object ScioReplClassLoader {
 }
 
 /**
- * Class loader with option to lookup classes in REPL classloader.
- * Some help/code from Twitter Scalding.
- * @param urls classpath urls for URLClassLoader
- * @param parent parent for Scio CL - may be null to close the chain
+ * Class loader with option to lookup classes in REPL classloader. Some help/code from Twitter
+ * Scalding.
+ * @param urls
+ *   classpath urls for URLClassLoader
+ * @param parent
+ *   parent for Scio CL - may be null to close the chain
  */
 class ScioReplClassLoader(urls: Array[URL], parent: ClassLoader)
     extends URLClassLoader(urls, parent)

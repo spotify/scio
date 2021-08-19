@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{CoderException, Coder => BCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
@@ -216,7 +216,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   object Avro {
-    import com.spotify.scio.avro.{User => AvUser, Account, Address}
+    import com.spotify.scio.avro.{Account, Address, User => AvUser}
 
     val accounts: List[Account] = List(new Account(1, "tyoe", "name", 12.5))
     val address =

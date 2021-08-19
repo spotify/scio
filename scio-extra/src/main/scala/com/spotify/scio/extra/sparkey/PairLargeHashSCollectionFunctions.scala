@@ -23,15 +23,16 @@ import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.CompressionType
 
 /**
- * Extra functions available on SCollections of (key, value) pairs for hash based joins
- * through an implicit conversion, using the Sparkey-backed LargeMapSideInput for dramatic speed
- * increases over the in-memory versions for datasets >100MB. As long as the RHS fits on disk,
- * these functions are usually much much faster than regular joins and save on shuffling.
+ * Extra functions available on SCollections of (key, value) pairs for hash based joins through an
+ * implicit conversion, using the Sparkey-backed LargeMapSideInput for dramatic speed increases over
+ * the in-memory versions for datasets >100MB. As long as the RHS fits on disk, these functions are
+ * usually much much faster than regular joins and save on shuffling.
  *
- * Note that these are nearly identical to the functions in PairHashSCollectionFunctions.scala,
- * but we can't reuse the implementations there as SideInput[T] is not covariant over T.
+ * Note that these are nearly identical to the functions in PairHashSCollectionFunctions.scala, but
+ * we can't reuse the implementations there as SideInput[T] is not covariant over T.
  *
- * @groupname join Join Operations
+ * @groupname join
+ *   Join Operations
  */
 class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
 
@@ -39,8 +40,8 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     (self.keyCoder, self.valueCoder)
 
   /**
-   * Perform an inner join by replicating `rhs` to all workers.
-   * The right side should be <<10x smaller than the left side, and must fit on disk.
+   * Perform an inner join by replicating `rhs` to all workers. The right side should be <<10x
+   * smaller than the left side, and must fit on disk.
    *
    * @group join
    */
@@ -83,8 +84,7 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     }
 
   /**
-   * Perform a left outer join by replicating `rhs` to all workers.
-   * The right side must fit on disk.
+   * Perform a left outer join by replicating `rhs` to all workers. The right side must fit on disk.
    *
    * @example
    * {{{
@@ -92,7 +92,8 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *   val joined = pairSColl1Left.largeHashLeftOuterJoin(pairSCollRight)
    * }}}
    * @group join
-   * @param rhs The SCollection[(K, W)] treated as right side of the join.
+   * @param rhs
+   *   The SCollection[(K, W)] treated as right side of the join.
    */
   def largeHashLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
@@ -195,12 +196,13 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
     }
 
   /**
-   * Return an SCollection with the pairs from `this` whose keys are in `rhs`
-   * given `rhs` is small enough to fit on disk.
+   * Return an SCollection with the pairs from `this` whose keys are in `rhs` given `rhs` is small
+   * enough to fit on disk.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def largeHashIntersectByKey(
     rhs: SCollection[K],
@@ -215,7 +217,8 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def hashIntersectByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
     self
@@ -228,7 +231,8 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    *
    * Rhs must be small enough to fit on disk.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def largeHashSubtractByKey(
     rhs: SCollection[K],
@@ -241,7 +245,8 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
   /**
    * Return an SCollection with the pairs from `this` whose keys are not in SideInput[Set] `rhs`.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def hashSubtractByKey(sideInput: SideInput[SparkeySet[K]]): SCollection[(K, V)] =
     self

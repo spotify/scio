@@ -36,10 +36,10 @@ import org.slf4j.LoggerFactory
 import scala.util.{Random, Success, Try}
 
 /**
- * Streaming job with periodically updating side input, modeled as a basic lottery game.
- * A side input holds a sequence of randomly generated numbers that are the current "winning"
- * numbers, and refreshes every 10 seconds. Meanwhile, a Pub/Sub subscription reads in lottery
- * tickets (represented as Strings) and checks if they match the winning numbers.
+ * Streaming job with periodically updating side input, modeled as a basic lottery game. A side
+ * input holds a sequence of randomly generated numbers that are the current "winning" numbers, and
+ * refreshes every 10 seconds. Meanwhile, a Pub/Sub subscription reads in lottery tickets
+ * (represented as Strings) and checks if they match the winning numbers.
  */
 object RefreshingSideInputExample {
   case class LotteryTicket(numbers: Seq[Int])

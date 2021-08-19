@@ -30,8 +30,8 @@ import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 
 /**
- * Placeholder to an external data set that can either be load into memory as an iterator or
- * opened in a new [[ScioContext]] as an [[com.spotify.scio.values.SCollection SCollection]].
+ * Placeholder to an external data set that can either be load into memory as an iterator or opened
+ * in a new [[ScioContext]] as an [[com.spotify.scio.values.SCollection SCollection]].
  */
 trait Tap[T] extends Serializable { self =>
 
@@ -123,9 +123,10 @@ object MaterializeTap {
 final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {
 
   /**
-   * Get access to the underlying Tap. The ScioContext has to be ran before.
-   * An instance of ScioResult is returned by ScioContext after the context is run.
-   * @see ScioContext.run
+   * Get access to the underlying Tap. The ScioContext has to be ran before. An instance of
+   * ScioResult is returned by ScioContext after the context is run.
+   * @see
+   *   ScioContext.run
    */
   def get(result: ScioResult): Tap[T] = result.tap(this)
 }

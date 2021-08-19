@@ -20,10 +20,11 @@ package com.spotify.scio.values
 import com.spotify.scio.coders.{BeamCoders, Coder}
 
 /**
- * Extra functions available on SCollections of (key, value) pairs for hash based joins
- * through an implicit conversion.
+ * Extra functions available on SCollections of (key, value) pairs for hash based joins through an
+ * implicit conversion.
  *
- * @groupname join Join Operations
+ * @groupname join
+ *   Join Operations
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
@@ -44,8 +45,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Perform an inner join with a MultiMap `SideInput[Map[K, Iterable[V]]`
    *
-   * The right side is tiny and fits in memory. The SideInput can be used reused for
-   * multiple joins.
+   * The right side is tiny and fits in memory. The SideInput can be used reused for multiple joins.
    *
    * @example
    * {{{
@@ -82,7 +82,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
    * }}}
    * @group join
-   * @param rhs The tiny SCollection[(K, W)] treated as right side of the join.
+   * @param rhs
+   *   The tiny SCollection[(K, W)] treated as right side of the join.
    */
   def hashLeftOuterJoin[W](
     rhs: SCollection[(K, W)]
@@ -173,12 +174,13 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   }
 
   /**
-   * Return an SCollection with the pairs from `this` whose keys are in `rhs`
-   * given `rhs` is small enough to fit in memory.
+   * Return an SCollection with the pairs from `this` whose keys are in `rhs` given `rhs` is small
+   * enough to fit in memory.
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def hashIntersectByKey(
     rhs: SCollection[K]
@@ -190,7 +192,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def hashIntersectByKey(
     sideInput: SideInput[Set[K]]
@@ -203,7 +206,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Return an SCollection with the pairs from `this` whose keys are not in SideInput[Set] `rhs`.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def hashSubtractByKey(
     sideInput: SideInput[Set[K]]
@@ -218,7 +222,8 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * Rhs must be small enough to fit into memory.
    *
-   * @group per key
+   * @group per
+   * key
    */
   def hashSubtractByKey(
     rhs: SCollection[K]

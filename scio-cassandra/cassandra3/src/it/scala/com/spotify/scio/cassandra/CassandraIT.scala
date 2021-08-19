@@ -17,7 +17,7 @@
 
 package com.spotify.scio.cassandra
 
-import java.math.{BigInteger, BigDecimal => JBigDecimal}
+import java.math.{BigDecimal => JBigDecimal, BigInteger}
 import java.nio.ByteBuffer
 import java.time.{Instant, LocalTime}
 import java.util.{Date, UUID}

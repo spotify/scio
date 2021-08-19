@@ -65,8 +65,7 @@ class MockBigQuery private (private val bq: BigQuery) {
   }
 
   /**
-   * Get result of a live query against BigQuery service, substituting mocked tables with test
-   * data.
+   * Get result of a live query against BigQuery service, substituting mocked tables with test data.
    */
   def queryResult(sqlQuery: String, flattenResults: Boolean = false): Seq[TableRow] = {
     val isLegacy = bq.query.isLegacySql(sqlQuery, flattenResults)
@@ -85,8 +84,7 @@ class MockBigQuery private (private val bq: BigQuery) {
   }
 
   /**
-   * Get result of a live query against BigQuery service, substituting mocked tables with test
-   * data.
+   * Get result of a live query against BigQuery service, substituting mocked tables with test data.
    */
   def typedQueryResult[T <: HasAnnotation: ClassTag: TypeTag](
     sqlQuery: String,
@@ -138,8 +136,8 @@ class MockTable(
   }
 
   /**
-   * Populate the table with sample data from the original table.
-   * Note that rows are taken from the beginning of the table and not truly random.
+   * Populate the table with sample data from the original table. Note that rows are taken from the
+   * beginning of the table and not truly random.
    */
   def withSample(numRows: Int): Unit = {
     ensureUnique()
@@ -150,8 +148,8 @@ class MockTable(
   }
 
   /**
-   * Populate the table with sample data from the original table.
-   * Note that rows are taken from the beginning of the table and not truly random.
+   * Populate the table with sample data from the original table. Note that rows are taken from the
+   * beginning of the table and not truly random.
    */
   def withSample(minNumRows: Int, maxNumRows: Int): Unit = {
     ensureUnique()

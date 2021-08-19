@@ -34,29 +34,28 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
    * Sharded JDBC read from a table or materialized view.
-   * @param readOptions The following paramters in the options class could be specified:
+   * @param readOptions
+   *   The following paramters in the options class could be specified:
    *
-   *                    shardColumn: the column to shard by. Must be
-   *                    of integer/long type ideally with evenly distributed values.
+   * shardColumn: the column to shard by. Must be of integer/long type ideally with evenly
+   * distributed values.
    *
-   *                    numShards: number of shards to split the table into for reading.
-   *                    There is no guarantee that Beam will actually execute reads in parallel.
-   *                    It is up to Beam auto scaler to decide the level of parallelism to use
-   *                    (number of workers and threads per worker). But the behavior could be
-   *                    controlled with maxNumWorkers and numberOfWorkerHarnessThreads parameters
-   *                    (see more details about these parameters here). Defaults to 4.
+   * numShards: number of shards to split the table into for reading. There is no guarantee that
+   * Beam will actually execute reads in parallel. It is up to Beam auto scaler to decide the level
+   * of parallelism to use (number of workers and threads per worker). But the behavior could be
+   * controlled with maxNumWorkers and numberOfWorkerHarnessThreads parameters (see more details
+   * about these parameters here). Defaults to 4.
    *
-   *                    tableName: name of a table or materialized view to read from
+   * tableName: name of a table or materialized view to read from
    *
-   *                    fetchSize: number of records to read from the
-   *                    JDBC source per one call to a database. Default value is 100,000. Set to
-   *                    -1 to make it unbounded.
-   *                    shard: An implementation of the [[com.spotify.scio.jdbc.sharded.Shard]]
-   *                    trait which knows how to shard a column of a type S. Example of sharding
-   *                    by a column of type Long:
-   *                    {{{
-   *                      sc.jdbcShardedSelect(getShardedReadOptions(opts), Shard.range[Long])
-   *                    }}}
+   * fetchSize: number of records to read from the JDBC source per one call to a database. Default
+   * value is 100,000. Set to
+   * -1 to make it unbounded. shard: An implementation of the
+   * [[com.spotify.scio.jdbc.sharded.Shard]] trait which knows how to shard a column of a type S.
+   * Example of sharding by a column of type Long:
+   * {{{
+   *                       sc.jdbcShardedSelect(getShardedReadOptions(opts), Shard.range[Long])
+   * }}}
    */
   def jdbcShardedSelect[T: Coder, S](
     readOptions: JdbcShardedReadOptions[T, S]

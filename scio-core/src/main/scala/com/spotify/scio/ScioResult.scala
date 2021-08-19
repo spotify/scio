@@ -27,7 +27,7 @@ import org.apache.beam.sdk.PipelineResult.State
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.metrics.{DistributionResult, GaugeResult}
 import org.apache.beam.sdk.util.MimeTypes
-import org.apache.beam.sdk.{PipelineResult, metrics => beam}
+import org.apache.beam.sdk.{metrics => beam, PipelineResult}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag

@@ -31,9 +31,9 @@ private[scio] object RandomSampler {
   def newDefaultRNG: JRandom = new XORShiftRandom
 
   /**
-   * Sampling fraction arguments may be results of computation, and subject to floating
-   * point jitter.  I check the arguments with this epsilon slop factor to prevent spurious
-   * warnings for cases such as summing some numbers to get a sampling fraction of 1.000000001
+   * Sampling fraction arguments may be results of computation, and subject to floating point
+   * jitter. I check the arguments with this epsilon slop factor to prevent spurious warnings for
+   * cases such as summing some numbers to get a sampling fraction of 1.000000001
    */
   val roundingEpsilon = 1e-6
 }
@@ -65,8 +65,10 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
 /**
  * A sampler based on Bernoulli trials.
  *
- * @param fraction the sampling fraction, aka Bernoulli sampling probability
- * @tparam T item type
+ * @param fraction
+ *   the sampling fraction, aka Bernoulli sampling probability
+ * @tparam T
+ *   item type
  */
 private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSampler[T, JRandom] {
 
@@ -98,8 +100,10 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
 /**
  * A sampler for sampling with replacement, based on values drawn from Poisson distribution.
  *
- * @param fraction the sampling fraction (with replacement)
- * @tparam T item type
+ * @param fraction
+ *   the sampling fraction (with replacement)
+ * @tparam T
+ *   item type
  */
 private[scio] class PoissonSampler[T](val fraction: Double)
     extends RandomSampler[T, IntegerDistribution] {

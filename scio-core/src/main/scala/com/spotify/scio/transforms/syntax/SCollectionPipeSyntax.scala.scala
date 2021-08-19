@@ -31,11 +31,16 @@ trait SCollectionPipeSyntax {
 
     /**
      * Pipe elements through an external command via StdIn & StdOut.
-     * @param command the command to call
-     * @param environment environment variables
-     * @param dir the working directory of the subprocess
-     * @param setupCmds setup commands to be run before processing
-     * @param teardownCmds tear down commands to be run after processing
+     * @param command
+     *   the command to call
+     * @param environment
+     *   environment variables
+     * @param dir
+     *   the working directory of the subprocess
+     * @param setupCmds
+     *   setup commands to be run before processing
+     * @param teardownCmds
+     *   tear down commands to be run after processing
      */
     def pipe(
       command: String,
@@ -52,11 +57,16 @@ trait SCollectionPipeSyntax {
 
     /**
      * Pipe elements through an external command via StdIn & StdOut.
-     * @param cmdArray array containing the command to call and its arguments
-     * @param environment environment variables
-     * @param dir the working directory of the subprocess
-     * @param setupCmds setup commands to be run before processing
-     * @param teardownCmds tear down commands to be run after processing
+     * @param cmdArray
+     *   array containing the command to call and its arguments
+     * @param environment
+     *   environment variables
+     * @param dir
+     *   the working directory of the subprocess
+     * @param setupCmds
+     *   setup commands to be run before processing
+     * @param teardownCmds
+     *   tear down commands to be run after processing
      */
     def pipe(
       cmdArray: Array[String],

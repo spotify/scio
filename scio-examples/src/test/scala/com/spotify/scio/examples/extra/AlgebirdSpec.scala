@@ -47,8 +47,10 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
     /**
      * Aggregate with an implicit Aggregator.
      *
-     * @tparam A intermediate type that can be summed with a Semigroup
-     * @tparam U result type
+     * @tparam A
+     *   intermediate type that can be summed with a Semigroup
+     * @tparam U
+     *   result type
      */
     def aggregate[A, U](aggregator: Aggregator[T, A, U]): U = {
       val a = internal
