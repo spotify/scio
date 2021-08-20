@@ -668,7 +668,6 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       for (MatchResult result : matchResults) {
         if (result.status() == MatchResult.Status.OK) {
           for (MatchResult.Metadata metadata : result.metadata()) {
-            System.out.println(metadata.resourceId());
             tempFiles.add(metadata.resourceId());
           }
         }
