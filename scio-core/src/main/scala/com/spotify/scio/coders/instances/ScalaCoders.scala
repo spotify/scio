@@ -30,7 +30,7 @@ import org.apache.beam.sdk.util.BufferedElementCountingOutputStream
 import org.apache.beam.sdk.util.VarInt
 
 import scala.reflect.ClassTag
-import scala.collection.{BitSet, SortedSet, mutable => m}
+import scala.collection.{mutable => m, BitSet, SortedSet}
 import scala.util.Try
 import scala.collection.compat._
 import scala.collection.compat.extra.Wrappers

@@ -39,9 +39,12 @@ trait Taps {
   /**
    * Make a tap, to be implemented by concrete classes.
    *
-   * @param name unique name of the tap
-   * @param readyFn function to check if the tap is ready
-   * @param tapFn function to create the tap
+   * @param name
+   *   unique name of the tap
+   * @param readyFn
+   *   function to check if the tap is ready
+   * @param tapFn
+   *   function to create the tap
    */
   private[scio] def mkTap[T](
     name: String,
@@ -140,16 +143,17 @@ object Taps extends {
   /**
    * Create a new [[Taps]] instance.
    *
-   * Taps algorithm can be set via the `taps.algorithm` property.
-   * Available algorithms are `immediate` (default) and `polling`.
+   * Taps algorithm can be set via the `taps.algorithm` property. Available algorithms are
+   * `immediate` (default) and `polling`.
    *
    * Additional properties can be set for the `polling` algorithm.
    *
-   * - `taps.polling.maximum_interval`: maximum interval between polls.
+   *   - `taps.polling.maximum_interval`: maximum interval between polls.
    *
-   * - `taps.polling.initial_interval`: initial interval between polls.
+   *   - `taps.polling.initial_interval`: initial interval between polls.
    *
-   * - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is 0.
+   *   - `taps.polling.maximum_attempts`: maximum number of attempts, unlimited if <= 0. Default is
+   *     0.
    */
   def apply(): Taps =
     Algorithm.value(AlgorithmDefault) match {

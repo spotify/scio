@@ -80,8 +80,8 @@ private object ScioMatchers {
   }
 
   /**
-   * This is equivalent to [[org.apache.beam.sdk.testing.PAssert#containsInAnyOrder()]]
-   * but will but have a nicer message in case of failure.
+   * This is equivalent to [[org.apache.beam.sdk.testing.PAssert#containsInAnyOrder()]] but will but
+   * have a nicer message in case of failure.
    */
   def containsInAnyOrder[T: Coder](
     ts: Seq[T],
@@ -176,8 +176,8 @@ private object ScioMatchers {
 }
 
 /**
- * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for
- * [[com.spotify.scio.values.SCollection SCollection]]s.
+ * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]] s for
+ * [[com.spotify.scio.values.SCollection SCollection]] s.
  */
 trait SCollectionMatchers extends EqInstances {
 
@@ -243,8 +243,8 @@ trait SCollectionMatchers extends EqInstances {
   }
 
   /**
-   * SCollection assertion only applied to the specified window,
-   * running the checker only on the on-time pane for each key.
+   * SCollection assertion only applied to the specified window, running the checker only on the
+   * on-time pane for each key.
    */
   def inOnTimePane[T: ClassTag](window: BoundedWindow)(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
@@ -261,8 +261,8 @@ trait SCollectionMatchers extends EqInstances {
     matcher.matcher(_.inWindow(window))
 
   /**
-   * SCollection assertion only applied to the specified window across
-   * all panes that were not produced by the arrival of late data.
+   * SCollection assertion only applied to the specified window across all panes that were not
+   * produced by the arrival of late data.
    */
   def inCombinedNonLatePanes[T: ClassTag, B: ClassTag](
     window: BoundedWindow
@@ -270,8 +270,8 @@ trait SCollectionMatchers extends EqInstances {
     matcher.matcher(_.inCombinedNonLatePanes(window))
 
   /**
-   * SCollection assertion only applied to the specified window,
-   * running the checker only on the final pane for each key.
+   * SCollection assertion only applied to the specified window, running the checker only on the
+   * final pane for each key.
    */
   def inFinalPane[T: ClassTag, B: ClassTag](
     window: BoundedWindow
@@ -284,8 +284,8 @@ trait SCollectionMatchers extends EqInstances {
     }
 
   /**
-   * SCollection assertion only applied to the specified window,
-   * running the checker only on the late pane for each key.
+   * SCollection assertion only applied to the specified window, running the checker only on the
+   * late pane for each key.
    */
   def inLatePane[T: ClassTag, B: ClassTag](
     window: BoundedWindow
@@ -298,8 +298,8 @@ trait SCollectionMatchers extends EqInstances {
     }
 
   /**
-   * SCollection assertion only applied to the specified window.
-   * The assertion expect outputs to be produced to the provided window exactly once.
+   * SCollection assertion only applied to the specified window. The assertion expect outputs to be
+   * produced to the provided window exactly once.
    */
   def inOnlyPane[T: ClassTag, B: ClassTag](
     window: BoundedWindow
@@ -351,7 +351,7 @@ trait SCollectionMatchers extends EqInstances {
 
   /**
    * Assert that the SCollection in question contains the provided element without making
-   *  assumptions about other elements in the collection.
+   * assumptions about other elements in the collection.
    */
   def containValue[T: Coder: Eq](value: T): IterableMatcher[SCollection[T], T] =
     new IterableMatcher[SCollection[T], T] {
@@ -453,8 +453,8 @@ trait SCollectionMatchers extends EqInstances {
     }
 
   /**
-   * Assert that the SCollection in question contains a single element which satisfies the
-   * provided function.
+   * Assert that the SCollection in question contains a single element which satisfies the provided
+   * function.
    */
   def satisfySingleValue[T: Coder: Eq](
     predicate: T => Boolean

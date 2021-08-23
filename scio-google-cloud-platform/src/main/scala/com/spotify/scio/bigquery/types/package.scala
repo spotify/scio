@@ -39,7 +39,8 @@ package object types {
    *
    * See also https://cloud.google.com/bigquery/docs/gis-data
    *
-   * @param wkt Well Known Text formatted string that BigQuery displays for Geography
+   * @param wkt
+   *   Well Known Text formatted string that BigQuery displays for Geography
    */
   case class Geography(wkt: String)
 }

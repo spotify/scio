@@ -32,9 +32,10 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 /**
- * A ScioIO class for writing raw bytes to files.
- * Like TextIO, but without newline delimiters and operating over Array[Byte] instead of String.
- * @param path a path to write to.
+ * A ScioIO class for writing raw bytes to files. Like TextIO, but without newline delimiters and
+ * operating over Array[Byte] instead of String.
+ * @param path
+ *   a path to write to.
  */
 final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = Nothing

@@ -34,9 +34,11 @@ trait SCollectionFileDownloadSyntax {
   implicit class FileDownloadSCollection(private val self: SCollection[URI]) {
 
     /**
-     * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
-     * @param batchSize batch size when downloading files
-     * @param keep keep downloaded files after processing
+     * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]] s.
+     * @param batchSize
+     *   batch size when downloading files
+     * @param keep
+     *   keep downloaded files after processing
      */
     def mapFile[T: Coder](
       f: Path => T,
@@ -55,9 +57,11 @@ trait SCollectionFileDownloadSyntax {
       )
 
     /**
-     * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]]s.
-     * @param batchSize batch size when downloading files
-     * @param keep keep downloaded files after processing
+     * Download [[java.net.URI URI]] elements and process as local [[java.nio.file.Path Path]] s.
+     * @param batchSize
+     *   batch size when downloading files
+     * @param keep
+     *   keep downloaded files after processing
      */
     def flatMapFile[T: Coder](
       f: Path => TraversableOnce[T],

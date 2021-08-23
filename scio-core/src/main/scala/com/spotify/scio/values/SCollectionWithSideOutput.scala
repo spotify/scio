@@ -27,10 +27,9 @@ import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 import scala.jdk.CollectionConverters._
 
 /**
- * An enhanced SCollection that provides access to one or more [[SideOutput]]s for some transforms.
- * [[SideOutput]]s are accessed via the additional [[SideOutputContext]] argument.
- * [[SCollection]]s of the [[SideOutput]]s are accessed via the additional
- * [[SideOutputCollections]] return value.
+ * An enhanced SCollection that provides access to one or more [[SideOutput]] s for some transforms.
+ * [[SideOutput]] s are accessed via the additional [[SideOutputContext]] argument. [[SCollection]]
+ * s of the [[SideOutput]] s are accessed via the additional [[SideOutputCollections]] return value.
  */
 class SCollectionWithSideOutput[T] private[values] (
   val internal: PCollection[T],

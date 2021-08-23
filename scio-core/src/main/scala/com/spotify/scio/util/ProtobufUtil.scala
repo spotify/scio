@@ -27,8 +27,8 @@ import scala.reflect.{classTag, ClassTag}
 object ProtobufUtil {
 
   /**
-   * A Coder for Protobuf [[Message]]s encoded as Avro [[GenericRecord]]s.
-   * This must be in implicit scope when using [[ProtobufUtil.toAvro]], for example:
+   * A Coder for Protobuf [[Message]] s encoded as Avro [[GenericRecord]] s. This must be in
+   * implicit scope when using [[ProtobufUtil.toAvro]], for example:
    *
    * `implicit val avroMessageCoder: Coder[GenericRecord] = ProtobufUtil.AvroMessageCoder`
    */
@@ -39,10 +39,11 @@ object ProtobufUtil {
   lazy val AvroMessageSchema: Schema = AvroBytesUtil.schema
 
   /**
-   * A metadata map containing information about the underlying Protobuf schema of the
-   * [[Message]] bytes encoded inside [[AvroMessageSchema]]'s `bytes` field.
+   * A metadata map containing information about the underlying Protobuf schema of the [[Message]]
+   * bytes encoded inside [[AvroMessageSchema]] 's `bytes` field.
    *
-   * @tparam T subclass of [[Message]]
+   * @tparam T
+   *   subclass of [[Message]]
    */
   def schemaMetadataOf[T <: Message: ClassTag]: Map[String, AnyRef] = {
     import me.lyh.protobuf.generic
@@ -54,8 +55,8 @@ object ProtobufUtil {
   }
 
   /**
-   * A function that converts a Protobuf [[Message]] of type `T` into a [[GenericRecord]]
-   * whose [[Schema]] is a single byte array field, corresponding to the serialized bytes in `T`.
+   * A function that converts a Protobuf [[Message]] of type `T` into a [[GenericRecord]] whose
+   * [[Schema]] is a single byte array field, corresponding to the serialized bytes in `T`.
    */
   def toAvro[T <: Message: ClassTag]: T => GenericRecord = {
     val protoCoder = CoderMaterializer.beamWithDefault(Coder.protoMessageCoder[T])
