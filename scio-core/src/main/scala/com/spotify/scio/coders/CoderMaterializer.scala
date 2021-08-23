@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import org.apache.beam.sdk.coders.{KvCoder, NullableCoder, Coder => BCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder, NullableCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 object CoderMaterializer {

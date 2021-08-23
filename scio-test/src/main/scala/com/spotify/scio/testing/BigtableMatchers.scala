@@ -26,8 +26,8 @@ import com.spotify.scio.coders.Coder
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 /**
- * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]]s for
- * [[com.spotify.scio.values.SCollection SCollection]]s specific to Bigtable output.
+ * Trait with ScalaTest [[org.scalatest.matchers.Matcher Matcher]] s for
+ * [[com.spotify.scio.values.SCollection SCollection]] s specific to Bigtable output.
  */
 trait BigtableMatchers extends SCollectionMatchers {
 
@@ -73,12 +73,18 @@ trait BigtableMatchers extends SCollectionMatchers {
   /**
    * Check that the BT collection contains a cell with the given row key, column family, column
    * qualifier, and deserialized cell value.
-   * @param key Row key the cell should be in
-   * @param cf Column family the cell should have
-   * @param cq Column qualifier the cell should have
-   * @param value Deserialized value of the set cell
-   * @param ser Serializer to convert value type V to ByteString for BT format
-   * @tparam V Class of expected value
+   * @param key
+   *   Row key the cell should be in
+   * @param cf
+   *   Column family the cell should have
+   * @param cq
+   *   Column qualifier the cell should have
+   * @param value
+   *   Deserialized value of the set cell
+   * @param ser
+   *   Serializer to convert value type V to ByteString for BT format
+   * @tparam V
+   *   Class of expected value
    */
   def containSetCellValue[V](key: ByteString, cf: String, cq: String, value: V)(implicit
     ser: V => ByteString

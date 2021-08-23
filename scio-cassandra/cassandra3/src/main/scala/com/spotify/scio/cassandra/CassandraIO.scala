@@ -33,11 +33,11 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
   /**
    * Save this SCollection as a Cassandra table.
    *
-   * Cassandra `org.apache.cassandra.hadoop.cql3.CqlBulkRecordWriter` is used to perform bulk
-   * writes for better throughput. The [[com.spotify.scio.values.SCollection SCollection]] is
-   * grouped by the table partition key before written to the cluster. Therefore writes only
-   * occur at the end of each window in streaming mode. The bulk writer writes to all nodes in a
-   * cluster so remote nodes in a multi-datacenter cluster may become a bottleneck.
+   * Cassandra `org.apache.cassandra.hadoop.cql3.CqlBulkRecordWriter` is used to perform bulk writes
+   * for better throughput. The [[com.spotify.scio.values.SCollection SCollection]] is grouped by
+   * the table partition key before written to the cluster. Therefore writes only occur at the end
+   * of each window in streaming mode. The bulk writer writes to all nodes in a cluster so remote
+   * nodes in a multi-datacenter cluster may become a bottleneck.
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val bulkOps = new BulkOperations(opts, params.parallelism)

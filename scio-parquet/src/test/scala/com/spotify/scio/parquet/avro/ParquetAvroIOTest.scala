@@ -196,12 +196,12 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
           t._1.map(AvroUtils.newGenericRecord)
         )
       )
-      .foreach({
+      .foreach {
         case (filename, records) => {
           val tap = ParquetAvroTap(s"$dir/$filename", params)
           tap.value.toList should contain theSameElementsAs records
         }
-      })
+      }
 
     FileUtils.deleteDirectory(dir)
   }

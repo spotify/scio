@@ -23,11 +23,12 @@ import com.spotify.scio.coders.Coder
 
 /**
  * A class for tracking the statistics of a set of numbers (count, mean and variance) in a
- * numerically robust way. Includes support for merging two StatCounters. Based on Welford
- * and Chan's [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance algorithms]]
- * for running variance.
+ * numerically robust way. Includes support for merging two StatCounters. Based on Welford and
+ * Chan's [[http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance algorithms]] for
+ * running variance.
  *
- * @constructor Initialize the StatCounter with the given values.
+ * @constructor
+ *   Initialize the StatCounter with the given values.
  */
 class StatCounter(values: TraversableOnce[Double]) extends Serializable {
   private var n: Long = 0 // Running count of our values
@@ -116,8 +117,8 @@ class StatCounter(values: TraversableOnce[Double]) extends Serializable {
     }
 
   /**
-   * Return the sample variance, which corrects for bias in estimating the variance by dividing
-   * by N-1 instead of N.
+   * Return the sample variance, which corrects for bias in estimating the variance by dividing by
+   * N-1 instead of N.
    */
   def sampleVariance: Double =
     if (n <= 1) {

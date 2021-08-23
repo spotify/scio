@@ -24,10 +24,14 @@ import java.sql.{Driver, PreparedStatement, ResultSet, SQLException}
 /**
  * Options for a JDBC connection.
  *
- * @param username      database login username
- * @param password      database login password if exists
- * @param connectionUrl connection url, i.e "jdbc:mysql://[host]:[port]/db?"
- * @param driverClass   subclass of [[java.sql.Driver]]
+ * @param username
+ *   database login username
+ * @param password
+ *   database login password if exists
+ * @param connectionUrl
+ *   connection url, i.e "jdbc:mysql://[host]:[port]/db?"
+ * @param driverClass
+ *   subclass of [[java.sql.Driver]]
  */
 final case class JdbcConnectionOptions(
   username: String,
@@ -55,12 +59,18 @@ sealed trait JdbcIoOptions
 /**
  * Options for reading from a JDBC source.
  *
- * @param connectionOptions     connection options
- * @param query                 query string
- * @param statementPreparator   function to prepare a [[java.sql.PreparedStatement]]
- * @param rowMapper             function to map from a SQL [[java.sql.ResultSet]] to `T`
- * @param fetchSize             use apache beam default fetch size if the value is -1
- * @param outputParallelization reshuffle result to distribute it to all workers. Default to true.
+ * @param connectionOptions
+ *   connection options
+ * @param query
+ *   query string
+ * @param statementPreparator
+ *   function to prepare a [[java.sql.PreparedStatement]]
+ * @param rowMapper
+ *   function to map from a SQL [[java.sql.ResultSet]] to `T`
+ * @param fetchSize
+ *   use apache beam default fetch size if the value is -1
+ * @param outputParallelization
+ *   reshuffle result to distribute it to all workers. Default to true.
  */
 final case class JdbcReadOptions[T](
   connectionOptions: JdbcConnectionOptions,
@@ -74,12 +84,18 @@ final case class JdbcReadOptions[T](
 /**
  * Options for writing to a JDBC source.
  *
- * @param connectionOptions       connection options
- * @param statement               query statement
- * @param preparedStatementSetter function to set values in a [[java.sql.PreparedStatement]]
- * @param batchSize               use apache beam default batch size if the value is -1
- * @param retryConfiguration      [[org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration]] for specifying retry behavior
- * @param retryStrategy           A predicate of [[java.sql.SQLException]] indicating a failure to retry
+ * @param connectionOptions
+ *   connection options
+ * @param statement
+ *   query statement
+ * @param preparedStatementSetter
+ *   function to set values in a [[java.sql.PreparedStatement]]
+ * @param batchSize
+ *   use apache beam default batch size if the value is -1
+ * @param retryConfiguration
+ *   [[org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration]] for specifying retry behavior
+ * @param retryStrategy
+ *   A predicate of [[java.sql.SQLException]] indicating a failure to retry
  */
 final case class JdbcWriteOptions[T](
   connectionOptions: JdbcConnectionOptions,

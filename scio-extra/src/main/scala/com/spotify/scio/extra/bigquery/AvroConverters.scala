@@ -41,11 +41,12 @@ object AvroConverters extends ToTableRow with ToTableSchema {
   }
 
   /**
-   * Traverses all fields of the supplied avroSchema and converts it into
-   * a TableSchema containing TableFieldSchemas.
+   * Traverses all fields of the supplied avroSchema and converts it into a TableSchema containing
+   * TableFieldSchemas.
    *
    * @param avroSchema
-   * @return the equivalent BigQuery schema
+   * @return
+   *   the equivalent BigQuery schema
    */
   @experimental
   def toTableSchema(avroSchema: Schema): TableSchema = {

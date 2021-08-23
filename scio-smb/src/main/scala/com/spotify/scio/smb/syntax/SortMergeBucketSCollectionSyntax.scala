@@ -37,13 +37,14 @@ trait SortMergeBucketSCollectionSyntax {
 final class SortedBucketSCollection[T](private val self: SCollection[T]) {
 
   /**
-   * Save an `SCollection[T]` to a filesystem, where each file represents a bucket
-   * whose records are lexicographically sorted by some key specified in the
+   * Save an `SCollection[T]` to a filesystem, where each file represents a bucket whose records are
+   * lexicographically sorted by some key specified in the
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] corresponding to the provided
    * [[SortedBucketSink]] transform.
    *
-   * @param write the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input
-   *              data. It contains information about key function, bucket and shard size, etc.
+   * @param write
+   *   the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input data. It
+   *   contains information about key function, bucket and shard size, etc.
    */
   @experimental
   def saveAsSortedBucket(write: SortedBucketIO.Write[_, T]): ClosedTap[Nothing] = {
@@ -57,18 +58,18 @@ final class SortedBucketSCollection[T](private val self: SCollection[T]) {
 final class SortedBucketPairSCollection[K, V](private val self: SCollection[KV[K, V]]) {
 
   /**
-   * Save an `SCollection[(K, V)]` to a filesystem, where each file represents a bucket
-   * whose records are lexicographically sorted by some key specified in the
+   * Save an `SCollection[(K, V)]` to a filesystem, where each file represents a bucket whose
+   * records are lexicographically sorted by some key specified in the
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] corresponding to the provided
    * [[SortedBucketSink]] transform and to the key K of each KV pair in this `SCollection`.
    *
-   * @param write the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input
-   *              data. It contains information about key function, bucket and shard size, etc.
-   * @param verifyKeyExtraction if set, the SMB Sink will add two additional nodes to the job
-   *                            graph to sample this SCollection and verify that each key K
-   *                            in the collection matches the result of the given
-   *                            [[org.apache.beam.sdk.extensions.smb.BucketMetadata]]'s
-   *                            `extractKey` function.
+   * @param write
+   *   the [[PTransform]] that applies a [[SortedBucketSink]] transform to the input data. It
+   *   contains information about key function, bucket and shard size, etc.
+   * @param verifyKeyExtraction
+   *   if set, the SMB Sink will add two additional nodes to the job graph to sample this
+   *   SCollection and verify that each key K in the collection matches the result of the given
+   *   [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] 's `extractKey` function.
    */
   @experimental
   def saveAsPreKeyedSortedBucket(

@@ -46,8 +46,10 @@ object IndexAdmin {
   /**
    * Ensure that index is created.
    *
-   * @param index index to be created
-   * @param mappingSource a valid json string
+   * @param index
+   *   index to be created
+   * @param mappingSource
+   *   a valid json string
    */
   private def ensureIndex(
     index: String,
@@ -60,11 +62,13 @@ object IndexAdmin {
     )
 
   /**
-   * Ensure that index is created.
-   * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
+   * Ensure that index is created. If index already exists or some other error occurs this results
+   * in a [[scala.util.Failure]].
    *
-   * @param index index to be created
-   * @param mappingSource a valid json string
+   * @param index
+   *   index to be created
+   * @param mappingSource
+   *   a valid json string
    */
   def ensureIndex(
     esOptions: ElasticsearchOptions,
@@ -75,9 +79,12 @@ object IndexAdmin {
 
   /**
    * Delete index
-   * @param index to be deleted
-   * @param timeout defaults to 1 minute
-   * @return Failure or unacknowledged response if operation did not succeed
+   * @param index
+   *   to be deleted
+   * @param timeout
+   *   defaults to 1 minute
+   * @return
+   *   Failure or unacknowledged response if operation did not succeed
    */
   private def removeIndex(
     client: IndicesClient,
@@ -88,9 +95,12 @@ object IndexAdmin {
 
   /**
    * Delete index
-   * @param index to be deleted
-   * @param timeout defaults to 1 minute
-   * @return Failure or unacknowledged response if operation did not succeed
+   * @param index
+   *   to be deleted
+   * @param timeout
+   *   defaults to 1 minute
+   * @return
+   *   Failure or unacknowledged response if operation did not succeed
    */
   def removeIndex(
     esOptions: ElasticsearchOptions,
@@ -100,14 +110,17 @@ object IndexAdmin {
     indicesClient(esOptions)(client => removeIndex(client, index, timeout))
 
   /**
-   * Add or update index alias with an option to remove the alias from all other indexes if it is already
-   * pointed to any.
+   * Add or update index alias with an option to remove the alias from all other indexes if it is
+   * already pointed to any.
    *
-   * @param alias            to be re-assigned
-   * @param indices          Iterable of pairs (index, isWriteIndex) to point the alias to.
-   *                         Note: only one index can be assigned as write index.
-   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
-   *                         was assigned to before adding new index alias assignment
+   * @param alias
+   *   to be re-assigned
+   * @param indices
+   *   Iterable of pairs (index, isWriteIndex) to point the alias to. Note: only one index can be
+   *   assigned as write index.
+   * @param removePrevious
+   *   When set to true, the indexAlias would be removed from all indices it was assigned to before
+   *   adding new index alias assignment
    */
   private def createOrUpdateAlias(
     client: IndicesClient,
@@ -147,13 +160,16 @@ object IndexAdmin {
 
   /**
    * Add index alias with an option to remove the alias from all other indexes if it is already
-   * pointed to any.
-   * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
+   * pointed to any. If index already exists or some other error occurs this results in a
+   * [[scala.util.Failure]].
    *
-   * @param alias            to be re-assigned
-   * @param index            index to point the alias to
-   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
-   *                         was assigned to before adding new index alias assignment.
+   * @param alias
+   *   to be re-assigned
+   * @param index
+   *   index to point the alias to
+   * @param removePrevious
+   *   When set to true, the indexAlias would be removed from all indices it was assigned to before
+   *   adding new index alias assignment.
    */
   def createOrUpdateAlias(
     esOptions: ElasticsearchOptions,
@@ -165,15 +181,18 @@ object IndexAdmin {
     createOrUpdateAlias(esOptions, List((index, true)), alias, removePrevious, timeout)
 
   /**
-   * Add or update index alias with an option to remove the alias from all other indexes if it is already
-   * pointed to any.
-   * If index already exists or some other error occurs this results in a [[scala.util.Failure]].
+   * Add or update index alias with an option to remove the alias from all other indexes if it is
+   * already pointed to any. If index already exists or some other error occurs this results in a
+   * [[scala.util.Failure]].
    *
-   * @param alias            to be re-assigned
-   * @param indices          Iterable of pairs (index, isWriteIndex) to point the alias to.
-   *                         Note: only one index can be assigned as write index.
-   * @param removePrevious   When set to true, the indexAlias would be removed from all indices it
-   *                         was assigned to before adding new index alias assignment
+   * @param alias
+   *   to be re-assigned
+   * @param indices
+   *   Iterable of pairs (index, isWriteIndex) to point the alias to. Note: only one index can be
+   *   assigned as write index.
+   * @param removePrevious
+   *   When set to true, the indexAlias would be removed from all indices it was assigned to before
+   *   adding new index alias assignment
    */
   def createOrUpdateAlias(
     esOptions: ElasticsearchOptions,

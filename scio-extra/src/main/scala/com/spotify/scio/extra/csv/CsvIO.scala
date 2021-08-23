@@ -49,25 +49,25 @@ import org.apache.beam.sdk.values.PCollection
  * }}}
  *
  * =Reading=
- * == with a header ==
+ * ==with a header==
  * [[https://nrinaudo.github.io/kantan.csv/headers.html Kantan docs]]
  * {{{
- *  case class User(name: String, age: Int)
- *  implicit val decoder = HeaderDecoder.decoder("fullName", "userAge")(User.apply _)
- *  val users: SCollection[User] = scioContext.csvFile(path)
+ *   case class User(name: String, age: Int)
+ *   implicit val decoder = HeaderDecoder.decoder("fullName", "userAge")(User.apply _)
+ *   val users: SCollection[User] = scioContext.csvFile(path)
  * }}}
  *
- * == without a header ==
+ * ==without a header==
  * [[https://nrinaudo.github.io/kantan.csv/rows_as_arbitrary_types.html Kantan docs]]
  * {{{
- *  case class User(name: String, age: Int)
- *  implicit val decoder = RowDecoder.ordered { (name: String, age: Int) => User(name, age) }
- *  val csvConfiguration = CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfig.withoutHeader)
- *  val users: SCollection[User] = scioContext.csvFile(path, csvConfiguration)
+ *   case class User(name: String, age: Int)
+ *   implicit val decoder = RowDecoder.ordered { (name: String, age: Int) => User(name, age) }
+ *   val csvConfiguration = CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfig.withoutHeader)
+ *   val users: SCollection[User] = scioContext.csvFile(path, csvConfiguration)
  * }}}
  *
  * =Writing=
- * == with a header ==
+ * ==with a header==
  * [[https://nrinaudo.github.io/kantan.csv/headers.html Kantan docs]]
  * {{{
  *   case class User(name: String, age: Int)
@@ -76,7 +76,7 @@ import org.apache.beam.sdk.values.PCollection
  *   val users: SCollection[User] = ???
  *   users.saveAsCsvFile(path)
  * }}}
- * == without a header ==
+ * ==without a header==
  * [[https://nrinaudo.github.io/kantan.csv/arbitrary_types_as_rows.html Kantan docs]]
  * {{{
  *   case class User(name: String, age: Int)

@@ -32,8 +32,7 @@ object BigQueryIOTest {
   case class BQRecord(i: Int, s: String, r: List[String])
 
   /**
-   * Return `Read` Transforms that do not have another transform using it as an
-   * input.
+   * Return `Read` Transforms that do not have another transform using it as an input.
    *
    * To do this, we visit all PTransforms, and find the inputs at each stage, and mark those inputs
    * as consumed by putting them in `consumedOutputs`. We also check if each transform is a `Read`
@@ -92,8 +91,8 @@ final class BigQueryIOTest extends ScioIOSpec {
    * The `BigQueryIO`'s write, runs Beam's BQ IO which creates a `Read` Transform to return the
    * insert errors.
    *
-   * The `saveAsBigQuery` or `saveAsTypedBigQuery` in Scio is designed to return a `ClosedTap`
-   * and by default drops insert errors.
+   * The `saveAsBigQuery` or `saveAsTypedBigQuery` in Scio is designed to return a `ClosedTap` and
+   * by default drops insert errors.
    *
    * The following tests make sure that the dropped insert errors do not appear as an unconsumed
    * read outside the transform writing to Big Query.

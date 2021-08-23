@@ -42,12 +42,17 @@ package object elasticsearch extends CoderInstances {
     /**
      * Save this SCollection into Elasticsearch.
      *
-     * @param esOptions Elasticsearch options
-     * @param flushInterval delays to Elasticsearch writes for rate limiting purpose
-     * @param f function to transform arbitrary type T to Elasticsearch `DocWriteRequest`
-     * @param numOfShards number of parallel writes to be performed, recommended setting is the
-     *                   number of pipeline workers
-     * @param errorFn function to handle error when performing Elasticsearch bulk writes
+     * @param esOptions
+     *   Elasticsearch options
+     * @param flushInterval
+     *   delays to Elasticsearch writes for rate limiting purpose
+     * @param f
+     *   function to transform arbitrary type T to Elasticsearch `DocWriteRequest`
+     * @param numOfShards
+     *   number of parallel writes to be performed, recommended setting is the number of pipeline
+     *   workers
+     * @param errorFn
+     *   function to handle error when performing Elasticsearch bulk writes
      */
     def saveAsElasticsearch(
       esOptions: ElasticsearchOptions,
