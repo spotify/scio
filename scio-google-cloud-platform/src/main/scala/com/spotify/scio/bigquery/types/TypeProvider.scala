@@ -195,6 +195,14 @@ private[types] object TypeProvider {
           desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defToPrettyString =
           q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
+
+        val fieldValNames = fields.flatMap {
+          case ValDef(_, name, _, _) => Some(name.toString)
+          case _                     => None
+        }
+        val defSelectedFields =
+          q"def selectedFields: _root_.scala.List[_root_.java.lang.String] = $fieldValNames"
+
         val fnTrait =
           tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc
@@ -225,7 +233,7 @@ private[types] object TypeProvider {
             ${companion(c)(
             cName,
             traits,
-            Seq(defSchema, defAvroSchema, defToPrettyString) ++ defTblDesc,
+            Seq(defSchema, defAvroSchema, defToPrettyString, defSelectedFields) ++ defTblDesc,
             taggedFields.asInstanceOf[Seq[Tree]].size,
             maybeCompanion
           )}

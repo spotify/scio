@@ -342,6 +342,10 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     (classOf[ToTable => TableRow] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
   }
 
+  it should "support .selectedFields in companion object" in {
+    BigQueryType[RefinedClass].selectedFields shouldBe Some(List("a1"))
+  }
+
   it should "create companion object that is a Function subtype" in {
     val cls5 =
       classOf[Function5[Long, Double, Boolean, String, Instant, ToTable]]
