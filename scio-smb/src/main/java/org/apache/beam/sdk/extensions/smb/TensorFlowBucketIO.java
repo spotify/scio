@@ -94,7 +94,7 @@ public class TensorFlowBucketIO {
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<Example> {
     @Nullable
-    abstract ImmutableList<ResourceId> getInputDirectories();
+    abstract ImmutableList<String> getInputDirectories();
 
     abstract String getFilenameSuffix();
 
@@ -109,9 +109,9 @@ public class TensorFlowBucketIO {
     abstract static class Builder {
       abstract Builder setTupleTag(TupleTag<Example> tupleTag);
 
-      abstract Builder setInputDirectories(ResourceId... inputDirectories);
+      abstract Builder setInputDirectories(String... inputDirectories);
 
-      abstract Builder setInputDirectories(List<ResourceId> inputDirectories);
+      abstract Builder setInputDirectories(List<String> inputDirectories);
 
       abstract Builder setFilenameSuffix(String filenameSuffix);
 
@@ -125,7 +125,7 @@ public class TensorFlowBucketIO {
     /** Reads from the given input directory. */
     public Read from(String inputDirectory) {
       return toBuilder()
-          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
+          .setInputDirectories(inputDirectory)
           .build();
     }
 

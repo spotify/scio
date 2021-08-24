@@ -44,6 +44,7 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.PartitionMetadata;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
@@ -55,6 +56,7 @@ import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
@@ -398,13 +400,13 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     private TupleTag<V> tupleTag;
     private String filenameSuffix;
     private FileOperations<V> fileOperations;
-    private List<ResourceId> inputDirectories;
+    private List<String> inputDirectories;
     private Predicate<V> predicate;
     private transient SourceMetadata<K, V> sourceMetadata;
 
     public BucketedInput(
         TupleTag<V> tupleTag,
-        ResourceId inputDirectory,
+        String inputDirectory,
         String filenameSuffix,
         FileOperations<V> fileOperations) {
       this(tupleTag, Collections.singletonList(inputDirectory), filenameSuffix, fileOperations);
@@ -412,7 +414,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     public BucketedInput(
         TupleTag<V> tupleTag,
-        List<ResourceId> inputDirectories,
+        List<String> inputDirectories,
         String filenameSuffix,
         FileOperations<V> fileOperations) {
       this(tupleTag, inputDirectories, filenameSuffix, fileOperations, null);
@@ -420,15 +422,10 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
 
     public BucketedInput(
         TupleTag<V> tupleTag,
-        List<ResourceId> inputDirectories,
+        List<String> inputDirectories,
         String filenameSuffix,
         FileOperations<V> fileOperations,
         Predicate<V> predicate) {
-      inputDirectories.forEach(
-          path ->
-              Preconditions.checkArgument(
-                  path.isDirectory(),
-                  "Cannot construct SMB source from non-directory input " + path));
       this.tupleTag = tupleTag;
       this.filenameSuffix = filenameSuffix;
       this.fileOperations = fileOperations;
@@ -469,10 +466,12 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
       return sourceMetadata;
     }
 
-    private static List<Metadata> sampleDirectory(ResourceId directory, String filepattern) {
+    private static List<Metadata> sampleDirectory(String directory, String filepattern) {
       try {
+        final ResourceId resourceId = FileSystems.matchNewResource(directory, true);
+
         return FileSystems.match(
-                directory.resolve(filepattern, StandardResolveOptions.RESOLVE_FILE).toString())
+                resourceId.resolve(filepattern, StandardResolveOptions.RESOLVE_FILE).toString())
             .metadata();
       } catch (FileNotFoundException e) {
         return Collections.emptyList();
@@ -587,7 +586,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     @SuppressWarnings("unchecked")
     private void writeObject(ObjectOutputStream outStream) throws IOException {
       SerializableCoder.of(TupleTag.class).encode(tupleTag, outStream);
-      ListCoder.of(ResourceIdCoder.of()).encode(inputDirectories, outStream);
+      ListCoder.of(StringUtf8Coder.of()).encode(inputDirectories, outStream);
       outStream.writeUTF(filenameSuffix);
       outStream.writeObject(fileOperations);
       outStream.writeObject(predicate);
@@ -597,7 +596,7 @@ public class SortedBucketSource<FinalKeyT> extends BoundedSource<KV<FinalKeyT, C
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
       this.tupleTag = SerializableCoder.of(TupleTag.class).decode(inStream);
-      this.inputDirectories = ListCoder.of(ResourceIdCoder.of()).decode(inStream);
+      this.inputDirectories = ListCoder.of(StringUtf8Coder.of()).decode(inStream);
       this.filenameSuffix = inStream.readUTF();
       this.fileOperations = (FileOperations<V>) inStream.readObject();
       this.predicate = (Predicate<V>) inStream.readObject();
