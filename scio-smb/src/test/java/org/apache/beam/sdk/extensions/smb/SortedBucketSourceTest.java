@@ -92,7 +92,7 @@ public class SortedBucketSourceTest {
 
   @Test
   public void testBucketedInputMetadata() throws Exception {
-    List<ResourceId> inputDirectories = new LinkedList<>();
+    List<String> inputDirectories = new LinkedList<>();
 
     // first 9 elements are source-compatible, last is not
     for (int i = 0; i < 10; i++) {
@@ -107,7 +107,7 @@ public class SortedBucketSourceTest {
                   "application/json"));
 
       BucketMetadata.to(metadata, outputStream);
-      inputDirectories.add(LocalResources.fromFile(dest, true));
+      inputDirectories.add(dest.getAbsolutePath());
     }
 
     // Test with source-compatible input directories
@@ -268,7 +268,7 @@ public class SortedBucketSourceTest {
     final BucketedInput<?, ?> bucketedInput =
         new BucketedInput<>(
             tag,
-            Collections.singletonList(fromFolder(lhsFolder)),
+            Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()),
             ".txt",
             fileOperations,
             predicate);
@@ -456,7 +456,7 @@ public class SortedBucketSourceTest {
         Collections.singletonList(
             new BucketedInput<String, String>(
                 new TupleTag<>("lhs"),
-                lhsPolicy.forDestination().getDirectory(),
+                lhsPolicy.forDestination().getDirectory().toString(),
                 ".txt",
                 new TestFileOperations()));
 
@@ -491,25 +491,6 @@ public class SortedBucketSourceTest {
     Assert.assertEquals(1, secondSplit.get(0).getBucketOffset());
     Assert.assertEquals(3, secondSplit.get(1).getBucketOffset());
     secondSplit.forEach(s -> Assert.assertEquals(4, s.getEffectiveParallelism()));
-  }
-
-  @Test
-  public void testFailsNonDirectoryInput() {
-    final ResourceId illegalPath =
-        lhsPolicy
-            .forDestination()
-            .getDirectory()
-            .resolve("/*.txt", StandardResolveOptions.RESOLVE_FILE);
-    Assert.assertThrows(
-        "Cannot construct SMB source from non-directory input " + illegalPath,
-        IllegalArgumentException.class,
-        () ->
-            new SortedBucketSource<>(
-                String.class,
-                Lists.newArrayList(
-                    new BucketedInput<String, String>(
-                        new TupleTag<>("lhs"), illegalPath, ".txt", new TestFileOperations())),
-                TargetParallelism.auto()));
   }
 
   @SuppressWarnings("unchecked")
@@ -583,8 +564,8 @@ public class SortedBucketSourceTest {
 
     checkJoin(
         pipeline,
-        Collections.singletonList(fromFolder(lhsFolder)),
-        Collections.singletonList(fromFolder(rhsFolder)),
+        Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()),
+        Collections.singletonList(rhsFolder.getRoot().getAbsolutePath()),
         lhsInput,
         rhsInput,
         lhsPredicate,
@@ -626,7 +607,7 @@ public class SortedBucketSourceTest {
       TargetParallelism targetParallelism)
       throws Exception {
 
-    List<ResourceId> lhsPaths = new ArrayList<>();
+    List<String> lhsPaths = new ArrayList<>();
     Map<BucketShardId, List<String>> allLhsValues = new HashMap<>();
 
     for (Map<BucketShardId, List<String>> input : lhsInputs) {
@@ -640,7 +621,7 @@ public class SortedBucketSourceTest {
       FileAssignment fileAssignment =
           new SMBFilenamePolicy(destination, metadata.getFilenamePrefix(), ".txt").forDestination();
       write(fileAssignment, metadata, input);
-      lhsPaths.add(destination);
+      lhsPaths.add(destination.toString());
       input.forEach(
           (k, v) ->
               allLhsValues.merge(
@@ -653,7 +634,7 @@ public class SortedBucketSourceTest {
                   }));
     }
 
-    List<ResourceId> rhsPaths = new ArrayList<>();
+    List<String> rhsPaths = new ArrayList<>();
     Map<BucketShardId, List<String>> allRhsValues = new HashMap<>();
     for (Map<BucketShardId, List<String>> input : rhsInputs) {
       int numBuckets = maxId(input.keySet(), BucketShardId::getBucketId) + 1;
@@ -666,7 +647,7 @@ public class SortedBucketSourceTest {
       FileAssignment fileAssignment =
           new SMBFilenamePolicy(destination, metadata.getFilenamePrefix(), ".txt").forDestination();
       write(fileAssignment, metadata, input);
-      rhsPaths.add(destination);
+      rhsPaths.add(destination.toString());
       input.forEach(
           (k, v) ->
               allRhsValues.merge(
@@ -686,8 +667,8 @@ public class SortedBucketSourceTest {
 
   private static void checkJoin(
       TestPipeline pipeline,
-      List<ResourceId> lhsPaths,
-      List<ResourceId> rhsPaths,
+      List<String> lhsPaths,
+      List<String> rhsPaths,
       Map<BucketShardId, List<String>> lhsValues,
       Map<BucketShardId, List<String>> rhsValues,
       Predicate<String> lhsPredicate,

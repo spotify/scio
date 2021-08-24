@@ -123,12 +123,12 @@ public class SortedBucketTransformTest {
         ImmutableList.of(
             new BucketedInput<String, String>(
                 new TupleTag<>("lhs"),
-                fromFolder(inputLhsFolder),
+                inputLhsFolder.getRoot().getAbsolutePath(),
                 ".txt",
                 new TestFileOperations()),
             new BucketedInput<String, String>(
                 new TupleTag<>("rhs"),
-                Collections.singletonList(fromFolder(inputRhsFolder)),
+                Collections.singletonList(inputRhsFolder.getRoot().getAbsolutePath()),
                 ".txt",
                 new TestFileOperations(),
                 predicate));
