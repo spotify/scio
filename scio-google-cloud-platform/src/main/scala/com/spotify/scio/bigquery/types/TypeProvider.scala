@@ -196,12 +196,10 @@ private[types] object TypeProvider {
         val defToPrettyString =
           q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
 
-        val fieldValNames = fields.flatMap {
-          case ValDef(_, name, _, _) => Some(name.toString)
-          case _                     => None
-        }
         val defSelectedFields =
-          q"def selectedFields: _root_.scala.List[_root_.java.lang.String] = $fieldValNames"
+          q"def selectedFields: _root_.scala.List[_root_.java.lang.String] = ${fields.map {
+            case ValDef(_, fname, _, _) => fname.toString
+          }}"
 
         val fnTrait =
           tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"

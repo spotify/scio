@@ -32,6 +32,9 @@ object TypeProviderTest {
   @BigQueryType.toTable
   case class RefinedClass(a1: Int)
 
+  @BigQueryType.toTable
+  case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
+
   @BigQueryType.fromSchema("""
       |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "INTEGER"}]}
       |""".stripMargin)
@@ -319,9 +322,6 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   @BigQueryType.toTable
-  case class ToTable(f1: Long, f2: Double, f3: Boolean, f4: String, f5: Instant)
-
-  @BigQueryType.toTable
   case class Record(f1: Int, f2: String)
 
   "BigQueryType.toTable" should "support .tupled in companion object" in {
@@ -343,7 +343,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .selectedFields in companion object" in {
-    BigQueryType[RefinedClass].selectedFields shouldBe Some(List("a1"))
+    BigQueryType[ToTable].selectedFields shouldBe Some(List("f1", "f2", "f3", "f4", "f5"))
   }
 
   it should "create companion object that is a Function subtype" in {
