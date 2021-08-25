@@ -44,7 +44,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * Each pair of elements will be returned as a (k, (v1, v2)) tuple, where (k, v1) is in `lhs` and
    * (k, v2) is in `rhs`.
    *
-   * Unlike a regular [[PairSCollectionFunctions.join()]], the key information (namely, how to
+   * Unlike a regular [[PairSCollectionFunctions.join]], the key information (namely, how to
    * extract a comparable `K` from `L` and `R`) is remotely encoded in a
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] file in the same directory as the input
    * records. This transform requires a filesystem lookup to ensure that the metadata for each
@@ -101,7 +101,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * For each key K in `read` return a resulting SCollection that contains a tuple with the list of
    * values for that key in `read`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB group
+   * See note on [[SortedBucketScioContext.sortMergeJoin]] for information on how an SMB group
    * differs from a regular [[org.apache.beam.sdk.transforms.GroupByKey]] operation.
    *
    * @group per_key
@@ -120,7 +120,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * For each key K in `read` return a resulting SCollection that contains a tuple with the list of
    * values for that key in `read`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB group
+   * See note on [[SortedBucketScioContext.sortMergeJoin]] for information on how an SMB group
    * differs from a regular [[org.apache.beam.sdk.transforms.GroupByKey]] operation.
    *
    * @group per_key
@@ -157,7 +157,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * For each key K in `a` or `b` return a resulting SCollection that contains a tuple with the list
    * of values for that key in `a`, and `b`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
+   * See note on [[SortedBucketScioContext.sortMergeJoin]] for information on how an SMB cogroup
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
@@ -211,7 +211,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * For each key K in `a` or `b` or `c`, return a resulting SCollection that contains a tuple with
    * the list of values for that key in `a`, `b` and `c`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
+   * See note on [[SortedBucketScioContext.sortMergeJoin]] for information on how an SMB cogroup
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
@@ -274,7 +274,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * For each key K in `a` or `b` or `c` or `d`, return a resulting SCollection that contains a
    * tuple with the list of values for that key in `a`, `b`, `c` and `d`.
    *
-   * See note on [[SortedBucketScioContext.sortMergeJoin()]] for information on how an SMB cogroup
+   * See note on [[SortedBucketScioContext.sortMergeJoin]] for information on how an SMB cogroup
    * differs from a regular [[org.apache.beam.sdk.transforms.join.CoGroupByKey]] operation.
    *
    * @group cogroup
@@ -338,7 +338,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     sortMergeCoGroup(keyClass, a, b, c, d, TargetParallelism.auto())
 
   /**
-   * Perform a [[SortedBucketScioContext.sortMergeGroupByKey()]] operation, then immediately apply a
+   * Perform a [[SortedBucketScioContext.sortMergeGroupByKey]] operation, then immediately apply a
    * transformation function to the merged groups and re-write using the same bucketing key and
    * hashing scheme. By applying the write, transform, and write in the same transform, an extra
    * shuffle step can be avoided.
@@ -353,7 +353,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     sortMergeTransform(keyClass, read, TargetParallelism.auto())
 
   /**
-   * Perform a [[SortedBucketScioContext.sortMergeGroupByKey()]] operation, then immediately apply a
+   * Perform a [[SortedBucketScioContext.sortMergeGroupByKey]] operation, then immediately apply a
    * transformation function to the merged groups and re-write using the same bucketing key and
    * hashing scheme. By applying the write, transform, and write in the same transform, an extra
    * shuffle step can be avoided.
@@ -375,7 +375,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   }
 
   /**
-   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
    * apply a transformation function to the merged cogroups and re-write using the same bucketing
    * key and hashing scheme. By applying the write, transform, and write in the same transform, an
    * extra shuffle step can be avoided.
@@ -391,7 +391,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     sortMergeTransform(keyClass, readA, readB, TargetParallelism.auto())
 
   /**
-   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
    * apply a transformation function to the merged cogroups and re-write using the same bucketing
    * key and hashing scheme. By applying the write, transform, and write in the same transform, an
    * extra shuffle step can be avoided.
@@ -415,7 +415,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   }
 
   /**
-   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
    * apply a transformation function to the merged cogroups and re-write using the same bucketing
    * key and hashing scheme. By applying the write, transform, and write in the same transform, an
    * extra shuffle step can be avoided.
@@ -432,7 +432,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     sortMergeTransform(keyClass, readA, readB, readC, TargetParallelism.auto())
 
   /**
-   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup()]] operation, then immediately
+   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
    * apply a transformation function to the merged cogroups and re-write using the same bucketing
    * key and hashing scheme. By applying the write, transform, and write in the same transform, an
    * extra shuffle step can be avoided.
