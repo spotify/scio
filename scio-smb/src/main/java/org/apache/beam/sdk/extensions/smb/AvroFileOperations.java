@@ -31,7 +31,7 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.coders.shaded.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.AvroIO;
 import org.apache.beam.sdk.io.Compression;
@@ -135,7 +135,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   public Coder<ValueT> getCoder() {
     return recordClass == null
         ? (AvroCoder<ValueT>) AvroCoder.of(getSchema())
-        : AvroCoder.of(recordClass);
+        : AvroCoder.of(recordClass, true);
   }
 
   Schema getSchema() {
