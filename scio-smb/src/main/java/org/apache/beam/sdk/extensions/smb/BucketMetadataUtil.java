@@ -92,8 +92,10 @@ public class BucketMetadataUtil {
     int start = 0;
     while (start < total) {
       final List<ResourceId> input = directories
-          .subList(start, Math.min(total, start + batchSize))
-          .stream().map(dir -> FileSystems.matchNewResource(dir, true))
+          .stream()
+          .skip(start)
+          .limit(batchSize)
+          .map(dir -> FileSystems.matchNewResource(dir, true))
           .collect(Collectors.toList());
       final List<BucketMetadata<K, V>> result =
           input
