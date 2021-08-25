@@ -44,8 +44,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * Each pair of elements will be returned as a (k, (v1, v2)) tuple, where (k, v1) is in `lhs` and
    * (k, v2) is in `rhs`.
    *
-   * Unlike a regular [[PairSCollectionFunctions.join]], the key information (namely, how to
-   * extract a comparable `K` from `L` and `R`) is remotely encoded in a
+   * Unlike a regular [[PairSCollectionFunctions.join]], the key information (namely, how to extract
+   * a comparable `K` from `L` and `R`) is remotely encoded in a
    * [[org.apache.beam.sdk.extensions.smb.BucketMetadata]] file in the same directory as the input
    * records. This transform requires a filesystem lookup to ensure that the metadata for each
    * source are compatible. In return for reading pre-sorted data, the shuffle step in a typical
@@ -375,10 +375,10 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   }
 
   /**
-   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
-   * apply a transformation function to the merged cogroups and re-write using the same bucketing
-   * key and hashing scheme. By applying the write, transform, and write in the same transform, an
-   * extra shuffle step can be avoided.
+   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately apply
+   * a transformation function to the merged cogroups and re-write using the same bucketing key and
+   * hashing scheme. By applying the write, transform, and write in the same transform, an extra
+   * shuffle step can be avoided.
    *
    * @group cogroup
    */
@@ -391,10 +391,10 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     sortMergeTransform(keyClass, readA, readB, TargetParallelism.auto())
 
   /**
-   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
-   * apply a transformation function to the merged cogroups and re-write using the same bucketing
-   * key and hashing scheme. By applying the write, transform, and write in the same transform, an
-   * extra shuffle step can be avoided.
+   * Perform a 2-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately apply
+   * a transformation function to the merged cogroups and re-write using the same bucketing key and
+   * hashing scheme. By applying the write, transform, and write in the same transform, an extra
+   * shuffle step can be avoided.
    *
    * @group cogroup
    */
@@ -415,10 +415,10 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   }
 
   /**
-   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
-   * apply a transformation function to the merged cogroups and re-write using the same bucketing
-   * key and hashing scheme. By applying the write, transform, and write in the same transform, an
-   * extra shuffle step can be avoided.
+   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately apply
+   * a transformation function to the merged cogroups and re-write using the same bucketing key and
+   * hashing scheme. By applying the write, transform, and write in the same transform, an extra
+   * shuffle step can be avoided.
    *
    * @group cogroup
    */
@@ -432,10 +432,10 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     sortMergeTransform(keyClass, readA, readB, readC, TargetParallelism.auto())
 
   /**
-   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately
-   * apply a transformation function to the merged cogroups and re-write using the same bucketing
-   * key and hashing scheme. By applying the write, transform, and write in the same transform, an
-   * extra shuffle step can be avoided.
+   * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately apply
+   * a transformation function to the merged cogroups and re-write using the same bucketing key and
+   * hashing scheme. By applying the write, transform, and write in the same transform, an extra
+   * shuffle step can be avoided.
    *
    * @group cogroup
    */
