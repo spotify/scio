@@ -199,7 +199,7 @@ private[types] object TypeProvider {
         val defSelectedFields =
           q"def selectedFields: _root_.scala.List[_root_.java.lang.String] = ${fields.map {
             case ValDef(_, fname, _, _) => fname.toString
-          }}"
+          }.toList}"
 
         val fnTrait =
           tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
