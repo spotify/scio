@@ -609,9 +609,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "deserialize Avro string fields as java.lang.Strings by default" in {
     implicit val hasJavaStringType: Equality[Account] =
       (roundtripped: Account, original: Any) =>
-        roundtripped.getName.getClass == classOf[String] && roundtripped.getType.getClass == classOf[String]
+        roundtripped.getName.getClass == classOf[
+          String
+        ] && roundtripped.getType.getClass == classOf[String]
 
-    Account.newBuilder()
+    Account
+      .newBuilder()
       .setId(0)
       .setType("foo")
       .setName("bar")
