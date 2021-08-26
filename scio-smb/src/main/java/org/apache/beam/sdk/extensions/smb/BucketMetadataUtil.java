@@ -84,14 +84,19 @@ public class BucketMetadataUtil {
 
   @SuppressWarnings("unchecked")
   public <K, V> SourceMetadata<K, V> getSourceMetadata(
-      List<ResourceId> directories, String filenameSuffix) {
+      List<String> directories, String filenameSuffix) {
     final int total = directories.size();
     final Map<ResourceId, PartitionMetadata> partitionMetadata = new HashMap<>();
     BucketMetadata<K, V> canonicalMetadata = null;
     ResourceId canonicalMetadataDir = null;
     int start = 0;
     while (start < total) {
-      final List<ResourceId> input = directories.subList(start, Math.min(total, start + batchSize));
+      final List<ResourceId> input = directories
+          .stream()
+          .skip(start)
+          .limit(batchSize)
+          .map(dir -> FileSystems.matchNewResource(dir, true))
+          .collect(Collectors.toList());
       final List<BucketMetadata<K, V>> result =
           input
               .parallelStream()

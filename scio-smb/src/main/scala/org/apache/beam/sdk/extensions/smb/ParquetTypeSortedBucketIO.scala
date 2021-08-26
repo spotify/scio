@@ -45,14 +45,14 @@ object ParquetTypeSortedBucketIO {
 
   case class Read[T: Coder: ParquetType](
     tupleTag: TupleTag[T],
-    inputDirectories: Seq[ResourceId] = Nil,
+    inputDirectories: Seq[String] = Nil,
     filenameSuffix: String = DefaultSuffix,
     filterPredicate: FilterPredicate = null,
     predicate: Predicate[T] = null,
     configuration: Configuration = new Configuration()
   ) extends SortedBucketIO.Read[T] {
     def from(inputDirectories: String*): Read[T] =
-      this.copy(inputDirectories = inputDirectories.map(FileSystems.matchNewResource(_, true)))
+      this.copy(inputDirectories = inputDirectories)
 
     def withSuffix(filenameSuffix: String): Read[T] =
       this.copy(filenameSuffix = filenameSuffix)
