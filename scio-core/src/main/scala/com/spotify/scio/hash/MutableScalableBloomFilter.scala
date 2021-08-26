@@ -39,7 +39,7 @@ object MutableScalableBloomFilter {
    * The default parameter values for this implementation are based on the findings in "Scalable Bloom Filters",
    * Almeida, Baquero, et al.: http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf
    *
-   * @param initialCapacity   The capacity of the first filter
+   * @param initialCapacity   The capacity of the first filter. Must be positive
    * @param fpProb            The desired overall false positive probability
    * @param growthRate        The growth rate of each subsequent filter added to `filters`
    * @param tighteningRatio   The tightening ratio applied to the current `fpProb` to maintain the false positive probability over the sequence of filters
@@ -51,16 +51,19 @@ object MutableScalableBloomFilter {
     fpProb: Double = 0.03,
     growthRate: Int = 2,
     tighteningRatio: Double = 0.9
-  ): MutableScalableBloomFilter[T] = MutableScalableBloomFilter(
-    fpProb,
-    initialCapacity,
-    growthRate,
-    tighteningRatio,
-    fpProb,
-    0L,
-    None,
-    Nil
-  )
+  ): MutableScalableBloomFilter[T] = {
+    if(initialCapacity <= 0) throw new IllegalArgumentException("initialCapacity must be positive.")
+    MutableScalableBloomFilter(
+      fpProb,
+      initialCapacity,
+      growthRate,
+      tighteningRatio,
+      fpProb,
+      0L,
+      None,
+      Nil
+    )
+  }
 
   def toBytes[T](sbf: MutableScalableBloomFilter[T]): Array[Byte] = {
     // serialize each of the fields, excepting the implicit funnel
@@ -156,6 +159,7 @@ case class MutableScalableBloomFilter[T](
   // package private for testing purposes
 )(implicit private val funnel: g.Funnel[T])
     extends Serializable {
+  if (headCapacity <= 0) throw new IllegalArgumentException("headCapacity must be positive")
 
   // `SerializedBloomFilters` is never appended, so do deserialization check only once. package-private for testing.
   @transient private var deserialized = false
@@ -224,8 +228,8 @@ case class MutableScalableBloomFilter[T](
     this
   }
 
-  def ++=(items: TraversableOnce[T]): MutableScalableBloomFilter[T] = {
-    items.foreach(i => this += i) // no bulk insert for guava BFs
+  def ++=(items: IterableOnce[T]): MutableScalableBloomFilter[T] = {
+    items.iterator.foreach(i => this += i) // no bulk insert for guava BFs
     this
   }
 }
