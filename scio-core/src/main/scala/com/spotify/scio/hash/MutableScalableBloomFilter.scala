@@ -61,8 +61,7 @@ object MutableScalableBloomFilter {
     growthRate: Int = 2,
     tighteningRatio: Double = 0.9
   ): MutableScalableBloomFilter[T] = {
-    if (initialCapacity <= 0)
-      throw new IllegalArgumentException("initialCapacity must be positive.")
+    require(initialCapacity > 0, "initialCapacity must be positive.")
     MutableScalableBloomFilter(
       fpProb,
       initialCapacity,
@@ -181,7 +180,7 @@ case class MutableScalableBloomFilter[T](
   // package private for testing purposes
 )(implicit private val funnel: g.Funnel[T])
     extends Serializable {
-  if (headCapacity <= 0) throw new IllegalArgumentException("headCapacity must be positive")
+  require(headCapacity > 0, "headCapacity must be positive.")
 
   // `SerializedBloomFilters` is never appended, so do deserialization check only once. package-private for testing.
   @transient private var deserialized = false
