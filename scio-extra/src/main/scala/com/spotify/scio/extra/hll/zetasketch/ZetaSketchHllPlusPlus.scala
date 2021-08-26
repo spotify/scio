@@ -27,17 +27,18 @@ import org.apache.beam.sdk.values.{KV, PCollection}
 
 /**
  * [[com.spotify.scio.estimators.ApproxDistinctCounter]] implementation for
- * [[org.apache.beam.sdk.extensions.zetasketch.HllCount]].
- * HllCount estimate the distinct count using HyperLogLogPlusPlus (HLL++) sketches on data streams based on
- * the ZetaSketch implementation.
+ * [[org.apache.beam.sdk.extensions.zetasketch.HllCount]]. HllCount estimate the distinct count
+ * using HyperLogLogPlusPlus (HLL++) sketches on data streams based on the ZetaSketch
+ * implementation.
  *
  * The HyperLogLog++ (HLL++) algorithm estimates the number of distinct values in a data stream.
- * HLL++ is based on HyperLogLog; HLL++ more accurately estimates the number of distinct values in very large and
- * small data streams.
+ * HLL++ is based on HyperLogLog; HLL++ more accurately estimates the number of distinct values in
+ * very large and small data streams.
  *
- * @param p Precision, controls the accuracy of the estimation. The precision value will have an impact on the number of buckets
- *          used to store information about the distinct elements.
- *          should be in the range `[10, 24]`, default precision value is `15`.
+ * @param p
+ *   Precision, controls the accuracy of the estimation. The precision value will have an impact on
+ *   the number of buckets used to store information about the distinct elements. should be in the
+ *   range `[10, 24]`, default precision value is `15`.
  */
 case class ZetaSketchHllPlusPlus[T](p: Int = HllCount.DEFAULT_PRECISION)(implicit
   zs: ZetaSketchable[T]
@@ -46,8 +47,8 @@ case class ZetaSketchHllPlusPlus[T](p: Int = HllCount.DEFAULT_PRECISION)(implici
   require(p >= 10 && p <= 24, "Precision(p) should be in the ragne [10, 24]")
 
   /**
-   * Return a SCollection with single (Long)value which is the estimated distinct count in the given SCollection with
-   * type `T`
+   * Return a SCollection with single (Long)value which is the estimated distinct count in the given
+   * SCollection with type `T`
    */
   override def estimateDistinctCount(in: SCollection[T]): SCollection[Long] =
     in.applyTransform(
@@ -56,8 +57,8 @@ case class ZetaSketchHllPlusPlus[T](p: Int = HllCount.DEFAULT_PRECISION)(implici
       .asInstanceOf[SCollection[Long]]
 
   /**
-   * Approximate distinct element per each key in the given key value SCollection.
-   * This will output estimated distinct count per each unique key.
+   * Approximate distinct element per each key in the given key value SCollection. This will output
+   * estimated distinct count per each unique key.
    */
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
     implicit val (keyCoder, _): (Coder[K], Coder[T]) =

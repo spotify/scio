@@ -75,7 +75,7 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.12.4"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
-val jnaVersion = "5.8.0"
+val jnaVersion = "5.9.0"
 val jodaTimeVersion = "2.10.10"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13.2"
@@ -169,7 +169,7 @@ val commonSettings = Def
       "com\\.spotify\\.scio\\.repl\\..*",
       "com\\.spotify\\.scio\\.util\\.MultiJoin",
       "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
-    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query${x}")).mkString(";"),
+    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
     coverageHighlighting := true,
     licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
     homepage := Some(url("https://github.com/spotify/scio")),

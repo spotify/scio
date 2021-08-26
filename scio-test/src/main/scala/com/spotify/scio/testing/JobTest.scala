@@ -31,8 +31,8 @@ import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
 /**
- * Set up a Scio job for end-to-end unit testing.
- * To be used in a [[com.spotify.scio.testing.PipelineSpec PipelineSpec]]. For example:
+ * Set up a Scio job for end-to-end unit testing. To be used in a
+ * [[com.spotify.scio.testing.PipelineSpec PipelineSpec]]. For example:
  *
  * {{{
  * import com.spotify.scio.testing._
@@ -132,8 +132,9 @@ object JobTest {
      * used inside the pipeline, e.g. `AvroIO[MyRecord]("out.avro")` with
      * `data.saveAsAvroFile("out.avro")` where `data` is of type `SCollection[MyRecord]`.
      *
-     * @param assertion assertion for output data. See [[SCollectionMatchers]] for available
-     *                  matchers on an [[com.spotify.scio.values.SCollection SCollection]].
+     * @param assertion
+     *   assertion for output data. See [[SCollectionMatchers]] for available matchers on an
+     *   [[com.spotify.scio.values.SCollection SCollection]].
      */
     def output[T](io: ScioIO[T])(assertion: SCollection[T] => Any): Builder = {
       require(!state.output.contains(io.testId), "Duplicate test output: " + io.testId)
@@ -144,11 +145,12 @@ object JobTest {
     }
 
     /**
-     * Feed an distributed cache to the pipeline being tested. Note that `DistCacheIO[T]` must
-     * match the one used inside the pipeline, e.g. `DistCacheIO[Set[String]]("dc.txt")` with
+     * Feed an distributed cache to the pipeline being tested. Note that `DistCacheIO[T]` must match
+     * the one used inside the pipeline, e.g. `DistCacheIO[Set[String]]("dc.txt")` with
      * `sc.distCache("dc.txt")(f => scala.io.Source.fromFile(f).getLines().toSet)`.
      *
-     * @param value mock value, must be serializable.
+     * @param value
+     *   mock value, must be serializable.
      */
     def distCache[T](key: DistCacheIO[T], value: T): Builder = {
       require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
@@ -157,11 +159,12 @@ object JobTest {
     }
 
     /**
-     * Feed an distributed cache to the pipeline being tested. Note that `DistCacheIO[T]` must
-     * match the one used inside the pipeline, e.g. `DistCacheIO[Set[String]]("dc.txt")` with
+     * Feed an distributed cache to the pipeline being tested. Note that `DistCacheIO[T]` must match
+     * the one used inside the pipeline, e.g. `DistCacheIO[Set[String]]("dc.txt")` with
      * `sc.distCache("dc.txt")(f => scala.io.Source.fromFile(f).getLines().toSet)`.
      *
-     * @param initFn init function, must be serializable.
+     * @param initFn
+     *   init function, must be serializable.
      */
     def distCacheFunc[T](key: DistCacheIO[T], initFn: () => T): Builder = {
       require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
@@ -171,8 +174,10 @@ object JobTest {
 
     /**
      * Evaluate a [[org.apache.beam.sdk.metrics.Counter Counter]] in the pipeline being tested.
-     * @param counter counter to be evaluated
-     * @param assertion assertion for the counter result's committed value
+     * @param counter
+     *   counter to be evaluated
+     * @param assertion
+     *   assertion for the counter result's committed value
      */
     def counter(counter: beam.Counter)(assertion: Long => Any): Builder = {
       require(
@@ -192,7 +197,8 @@ object JobTest {
 
     /**
      * Evaluate all [[org.apache.beam.sdk.metrics.Counter Counters]] in the pipeline being tested.
-     * @param assertion assertion on the collection of all job counters' committed values
+     * @param assertion
+     *   assertion on the collection of all job counters' committed values
      */
     def counters(assertion: Map[beam.MetricName, Long] => Any): Builder = {
       state = state.copy(
@@ -206,8 +212,10 @@ object JobTest {
     /**
      * Evaluate a [[org.apache.beam.sdk.metrics.Distribution Distribution]] in the pipeline being
      * tested.
-     * @param distribution distribution to be evaluated
-     * @param assertion assertion for the distribution result's committed value
+     * @param distribution
+     *   distribution to be evaluated
+     * @param assertion
+     *   assertion for the distribution result's committed value
      */
     def distribution(
       distribution: beam.Distribution
@@ -229,10 +237,10 @@ object JobTest {
     }
 
     /**
-     * Evaluate all [[org.apache.beam.sdk.metrics.Distribution Distributions]] in the
-     * pipeline being tested.
-     * @param assertion assertion on the collection of all job distribution results'
-     *                  committed values
+     * Evaluate all [[org.apache.beam.sdk.metrics.Distribution Distributions]] in the pipeline being
+     * tested.
+     * @param assertion
+     *   assertion on the collection of all job distribution results' committed values
      */
     def distributions(assertion: Map[beam.MetricName, beam.DistributionResult] => Any): Builder = {
       state = state.copy(
@@ -245,8 +253,10 @@ object JobTest {
 
     /**
      * Evaluate a [[org.apache.beam.sdk.metrics.Gauge Gauge]] in the pipeline being tested.
-     * @param gauge gauge to be evaluated
-     * @param assertion assertion for the gauge result's committed value
+     * @param gauge
+     *   gauge to be evaluated
+     * @param assertion
+     *   assertion for the gauge result's committed value
      */
     def gauge(gauge: beam.Gauge)(assertion: beam.GaugeResult => Any): Builder = {
       require(
@@ -264,7 +274,8 @@ object JobTest {
 
     /**
      * Evaluate all [[org.apache.beam.sdk.metrics.Gauge Gauges]] in the pipeline being tested.
-     * @param assertion assertion on the collection of all job gauge results' committed values
+     * @param assertion
+     *   assertion on the collection of all job gauge results' committed values
      */
     def gauges(assertion: Map[beam.MetricName, beam.GaugeResult] => Any): Builder = {
       state = state.copy(

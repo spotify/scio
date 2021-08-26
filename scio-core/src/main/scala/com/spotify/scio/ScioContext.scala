@@ -38,7 +38,7 @@ import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.{Pipeline, PipelineResult, io => beam}
+import org.apache.beam.sdk.{io => beam, Pipeline, PipelineResult}
 import org.joda.time
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
@@ -313,8 +313,8 @@ object ContextAndArgs {
 /**
  * ScioExecutionContext is the result of [[ScioContext#run()]].
  *
- * This is a handle to the underlying running job and allows getting the state,
- * checking if it's completed and to wait for it's execution.
+ * This is a handle to the underlying running job and allows getting the state, checking if it's
+ * completed and to wait for it's execution.
  */
 trait ScioExecutionContext {
   def pipelineResult: PipelineResult
@@ -341,8 +341,8 @@ trait ScioExecutionContext {
   ): ScioResult
 
   /**
-   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
-   * `FAILED`). Throw exception otherwise.
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or `FAILED`).
+   * Throw exception otherwise.
    */
   def waitUntilDone(
     duration: Duration = awaitDuration,
@@ -477,10 +477,14 @@ object ScioContext {
  * Main entry point for Scio functionality. A ScioContext represents a pipeline and can be used to
  * create SCollections and distributed caches on that cluster.
  *
- * @groupname dist_cache Distributed Cache
- * @groupname in_memory In-memory Collections
- * @groupname input Input Sources
- * @groupname Ungrouped Other Members
+ * @groupname dist_cache
+ *   Distributed Cache
+ * @groupname in_memory
+ *   In-memory Collections
+ * @groupname input
+ *   Input Sources
+ * @groupname Ungrouped
+ *   Other Members
  */
 class ScioContext private[scio] (
   val options: PipelineOptions,
@@ -612,10 +616,11 @@ class ScioContext private[scio] (
   /**
    * Runs the underlying pipeline.
    *
-   * Running closes the context and no further transformations can be applied to the
-   * pipeline once the context is closed.
+   * Running closes the context and no further transformations can be applied to the pipeline once
+   * the context is closed.
    *
-   * @return the [[ScioExecutionContext]] for the underlying job execution.
+   * @return
+   *   the [[ScioExecutionContext]] for the underlying job execution.
    */
   def run(): ScioExecutionContext = requireNotClosed {
     _onClose(())
@@ -783,11 +788,13 @@ class ScioContext private[scio] (
 
   /**
    * Generic read method for all `ScioIO[T]` implementations, which will invoke the provided IO's
-   * [[com.spotify.scio.io.ScioIO[T]#readWithContext]] method along with read configurations
-   * passed in. The IO class can delegate test-specific behavior if necessary.
+   * [[com.spotify.scio.io.ScioIO[T]#readWithContext]] method along with read configurations passed
+   * in. The IO class can delegate test-specific behavior if necessary.
    *
-   * @param io     an implementation of `ScioIO[T]` trait
-   * @param params configurations need to pass to perform underline read implementation
+   * @param io
+   *   an implementation of `ScioIO[T]` trait
+   * @param params
+   *   configurations need to pass to perform underline read implementation
    */
   def read[T](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     io.readWithContext(this, params)
@@ -898,8 +905,10 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
 
   /**
    * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance.
-   * @param uri Google Cloud Storage URI of the file to be distributed to all workers
-   * @param initFn function to initialized the distributed file
+   * @param uri
+   *   Google Cloud Storage URI of the file to be distributed to all workers
+   * @param initFn
+   *   function to initialized the distributed file
    *
    * {{{
    * // Prepare distributed cache as Map[Int, String]
@@ -927,8 +936,10 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
 
   /**
    * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance.
-   * @param uris Google Cloud Storage URIs of the files to be distributed to all workers
-   * @param initFn function to initialized the distributed files
+   * @param uris
+   *   Google Cloud Storage URIs of the files to be distributed to all workers
+   * @param initFn
+   *   function to initialized the distributed files
    * @group dist_cache
    */
   def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] =

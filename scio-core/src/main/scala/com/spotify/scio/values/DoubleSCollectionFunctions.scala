@@ -23,9 +23,8 @@ import com.spotify.scio.util.StatCounter
 class DoubleSCollectionFunctions(self: SCollection[Double]) {
 
   /**
-   * Return an SCollection with a single
-   * [[com.spotify.scio.util.StatCounter StatCounter]] object that captures the mean, variance and
-   * count of the SCollection's elements in one operation.
+   * Return an SCollection with a single [[com.spotify.scio.util.StatCounter StatCounter]] object
+   * that captures the mean, variance and count of the SCollection's elements in one operation.
    */
   def stats: SCollection[StatCounter] =
     self.combine(StatCounter(_))(_.merge(_))(_.merge(_))
@@ -59,12 +58,11 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
   // Ported from org.apache.spark.rdd.DoubleRDDFunctions
 
   /**
-   * Compute a histogram of the data using `bucketCount` number of buckets evenly spaced between
-   * the minimum and maximum of the SCollection. For example if the min value is 0 and the max is
-   * 100 and there are two buckets the resulting buckets will be `[0, 50)` `[50, 100]`.
-   * `bucketCount` must be at least 1. If the SCollection contains infinity, NaN throws an
-   * exception. If the elements in SCollection do not vary (max == min) always returns a single
-   * bucket.
+   * Compute a histogram of the data using `bucketCount` number of buckets evenly spaced between the
+   * minimum and maximum of the SCollection. For example if the min value is 0 and the max is 100
+   * and there are two buckets the resulting buckets will be `[0, 50)` `[50, 100]`. `bucketCount`
+   * must be at least 1. If the SCollection contains infinity, NaN throws an exception. If the
+   * elements in SCollection do not vary (max == min) always returns a single bucket.
    */
   def histogram(bucketCount: Int): (SCollection[Array[Double]], SCollection[Array[Long]]) = {
     // Compute the minimum and the maximum
@@ -96,17 +94,16 @@ class DoubleSCollectionFunctions(self: SCollection[Double]) {
 
   /**
    * Compute a histogram using the provided buckets. The buckets are all open to the right except
-   * for the last which is closed e.g. for the array `[1, 10, 20, 50]` the buckets are `[1, 10)
-   * [10, 20) [20, 50]` e.g `1<=x<10`, `10<=x<20`, `20<=x<=50`. And on the input of 1 and 50 we
-   * would have a histogram of `[1, 0, 1]`.
+   * for the last which is closed e.g. for the array `[1, 10, 20, 50]` the buckets are `[1, 10) [10,
+   * 20) [20, 50]` e.g `1<=x<10`, `10<=x<20`, `20<=x<=50`. And on the input of 1 and 50 we would
+   * have a histogram of `[1, 0, 1]`.
    *
-   * Note: if your histogram is evenly spaced (e.g. `[0, 10, 20, 30]`) this can be switched from
-   * an O(log n) insertion to O(1) per element. (where n = # buckets) if you set `evenBuckets` to
-   * true.
+   * Note: if your histogram is evenly spaced (e.g. `[0, 10, 20, 30]`) this can be switched from an
+   * O(log n) insertion to O(1) per element. (where n = # buckets) if you set `evenBuckets` to true.
    *
    * buckets must be sorted and not contain any duplicates. buckets array must be at least two
-   * elements. All NaN entries are treated the same. If you have a NaN bucket it must be the
-   * maximum value of the last position and all NaN entries will be counted in that bucket.
+   * elements. All NaN entries are treated the same. If you have a NaN bucket it must be the maximum
+   * value of the last position and all NaN entries will be counted in that bucket.
    */
   def histogram(buckets: Array[Double], evenBuckets: Boolean = false): SCollection[Array[Long]] =
     histogramImpl(self.context.parallelize(Seq(buckets)), evenBuckets)

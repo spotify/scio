@@ -26,27 +26,25 @@ object RandomSamplerUtils extends Serializable {
   val populationSize = 10000
 
   /**
-   * My statistical testing methodology is to run a Kolmogorov-Smirnov (KS) test
-   * between the random samplers and simple reference samplers (known to work correctly).
-   * The sampling gap sizes between chosen samples should show up as having the same
-   * distributions between test and reference, if things are working properly.  That is,
-   * the KS test will fail to strongly reject the null hypothesis that the distributions of
-   * sampling gaps are the same.
-   * There are no actual KS tests implemented for scala (that I can find) - and so what I
-   * have done here is pre-compute "D" - the KS statistic - that corresponds to a "weak"
-   * p-value for a particular sample size.  I can then test that my measured KS stats
-   * are less than D.  Computing D-values is easy, and implemented below.
+   * My statistical testing methodology is to run a Kolmogorov-Smirnov (KS) test between the random
+   * samplers and simple reference samplers (known to work correctly). The sampling gap sizes
+   * between chosen samples should show up as having the same distributions between test and
+   * reference, if things are working properly. That is, the KS test will fail to strongly reject
+   * the null hypothesis that the distributions of sampling gaps are the same. There are no actual
+   * KS tests implemented for scala (that I can find) - and so what I have done here is pre-compute
+   * "D" - the KS statistic - that corresponds to a "weak" p-value for a particular sample size. I
+   * can then test that my measured KS stats are less than D. Computing D-values is easy, and
+   * implemented below.
    *
    * I used the scipy 'kstwobign' distribution to pre-compute my D value:
    *
-   * def ksdval(q=0.1, n=1000):
-   *     en = np.sqrt(float(n) / 2.0)
-   *     return stats.kstwobign.isf(float(q)) / (en + 0.12 + 0.11 / en)
+   * def ksdval(q=0.1, n=1000): en = np.sqrt(float(n) / 2.0) return stats.kstwobign.isf(float(q)) /
+   * (en + 0.12 + 0.11 / en)
    *
-   * When comparing KS stats I take the median of a small number of independent test runs
-   * to compensate for the issue that any sampled statistic will show "false positive" with
-   * some probability.  Even when two distributions are the same, they will register as
-   * different 10% of the time at a p-value of 0.1
+   * When comparing KS stats I take the median of a small number of independent test runs to
+   * compensate for the issue that any sampled statistic will show "false positive" with some
+   * probability. Even when two distributions are the same, they will register as different 10% of
+   * the time at a p-value of 0.1
    */
   // This D value is the precomputed KS statistic for p-value 0.1, sample size 1000:
   val sampleSize = 1000

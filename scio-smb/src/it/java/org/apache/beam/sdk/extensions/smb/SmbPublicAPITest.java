@@ -63,9 +63,7 @@ public class SmbPublicAPITest {
         Collections.singletonList(
             new BucketedInput<>(
                 new TupleTag<>(),
-                Collections.singletonList(
-                    FileSystems.matchSingleFileSpec("in").resourceId()
-                ),
+                Collections.singletonList("in"),
                 ".avro",
                 new MyFileOperation())));
   }

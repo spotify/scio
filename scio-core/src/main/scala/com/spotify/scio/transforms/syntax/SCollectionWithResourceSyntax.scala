@@ -58,8 +58,8 @@ trait SCollectionWithResourceSyntax {
       self.parDo(new FlatMapFnWithResource(resource, resourceType, fn))
 
     /**
-     * Return a new [[SCollection]] containing only the elements that satisfy a predicate that
-     * takes in a resource and `ResourceType`
+     * Return a new [[SCollection]] containing only the elements that satisfy a predicate that takes
+     * in a resource and `ResourceType`
      */
     def filterWithResource[R](resource: => R, resourceType: ResourceType)(
       fn: (R, T) => Boolean

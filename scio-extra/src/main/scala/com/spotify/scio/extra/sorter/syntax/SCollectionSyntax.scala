@@ -34,19 +34,21 @@ import scala.jdk.CollectionConverters._
 final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2, V)])]) {
 
   /**
-   * Takes an [[SCollection]] with elements consisting of a primary key and iterables
-   * over (secondary key, value) pairs, and returns an [[SCollection]] of the same elements
-   * but with values sorted lexicographicly by the secondary key.
+   * Takes an [[SCollection]] with elements consisting of a primary key and iterables over
+   * (secondary key, value) pairs, and returns an [[SCollection]] of the same elements but with
+   * values sorted lexicographicly by the secondary key.
    *
-   * The secondary key needs to be encoded as a [[String]] or [[Array[Byte]].
-   * [[SortValues]] compares bytes lexicographically and may write secondary key-value pairs to disk.
+   * The secondary key needs to be encoded as a [[String]] or [[Array[Byte]]. [[SortValues]]
+   * compares bytes lexicographically and may write secondary key-value pairs to disk.
    *
-   * @note The primary key is explicit here only because this
-   * transform is typically used on a result of a [[PairSCollectionFunctions.groupByKey]].
+   * @note
+   *   The primary key is explicit here only because this transform is typically used on a result of
+   *   a [[PairSCollectionFunctions.groupByKey]].
    *
-   * @param memoryMB Sets the size of the memory buffer in megabytes. This controls both the buffer for initial in
-   *                 memory sorting and the buffer used when external sorting. Must be greater than zero and less
-   *                 than 2048.
+   * @param memoryMB
+   *   Sets the size of the memory buffer in megabytes. This controls both the buffer for initial in
+   *   memory sorting and the buffer used when external sorting. Must be greater than zero and less
+   *   than 2048.
    */
   @experimental
   def sortValues(memoryMB: Int)(implicit

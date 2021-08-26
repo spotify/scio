@@ -47,7 +47,8 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.extensions.sorter.BufferedExternalSorter;
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter;
 import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.fs.MoveOptions;
+import org.apache.beam.sdk.io.fs.MatchResult;
+import org.apache.beam.sdk.io.fs.MoveOptions.StandardMoveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Counter;
@@ -501,7 +502,10 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
               .apply(
                   "FinalizeTempFiles",
                   new RenameBuckets<>(
-                      filenamePolicy.forDestination(), bucketMetadata, fileOperations)));
+                      filenamePolicy.forTempFiles(tempDirectory).getDirectory(),
+                      filenamePolicy.forDestination(),
+                      bucketMetadata,
+                      fileOperations)));
     }
   }
 
@@ -560,14 +564,17 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
   static class RenameBuckets<V>
       extends PTransform<PCollection<KV<BucketShardId, ResourceId>>, PCollectionTuple> {
 
+    private final ResourceId tempDirectory;
     private final FileAssignment fileAssignment;
     private final BucketMetadata bucketMetadata;
     private final FileOperations<V> fileOperations;
 
     RenameBuckets(
+        ResourceId tempDirectory,
         FileAssignment fileAssignment,
         BucketMetadata bucketMetadata,
         FileOperations<V> fileOperations) {
+      this.tempDirectory = tempDirectory;
       this.fileAssignment = fileAssignment;
       this.bucketMetadata = bucketMetadata;
       this.fileOperations = fileOperations;
@@ -589,8 +596,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
               ParDo.of(
                       new DoFn<Integer, KV<BucketShardId, ResourceId>>() {
                         @ProcessElement
-                        public void processElement(ProcessContext c) {
+                        public void processElement(ProcessContext c) throws IOException {
                           moveFiles(
+                              tempDirectory,
                               bucketMetadata,
                               c.sideInput(writtenBuckets),
                               fileAssignment,
@@ -605,20 +613,15 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     static void moveFiles(
+        ResourceId tempDirectory,
         BucketMetadata<?, ?> bucketMetadata,
         Map<BucketShardId, ResourceId> writtenTmpBuckets,
         FileAssignment dstFileAssignment,
         FileOperations fileOperations,
         Consumer<KV<BucketShardId, ResourceId>> bucketDstConsumer,
         Consumer<ResourceId> metadataDstConsumer,
-        boolean writeNullKeyBucket) {
-      // Write metadata file first
-      final ResourceId metadataDst =
-          writeMetadataFile(dstFileAssignment.forMetadata(), bucketMetadata);
-
-      final List<ResourceId> filesToCleanUp = new ArrayList<>();
-      filesToCleanUp.add(metadataDst);
-
+        boolean writeNullKeyBucket)
+        throws IOException {
       // Transfer bucket files once metadata has been written
       final List<ResourceId> srcFiles = new ArrayList<>();
       final List<ResourceId> dstFiles = new ArrayList<>();
@@ -634,14 +637,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
         // If bucket hasn't been written, write empty file
         if (!writtenTmpBuckets.containsKey(id)) {
-          try {
-            fileOperations.createWriter(finalDst).close();
-            filesToCleanUp.add(finalDst);
-          } catch (IOException e) {
-            cleanupTempFiles(e, filesToCleanUp);
-            throw new RuntimeException("Failed to write empty file", e);
-          }
-
+          fileOperations.createWriter(finalDst).close();
           bucketDstConsumer.accept(KV.of(id, finalDst));
         } else {
           srcFiles.add(writtenTmpBuckets.get(id));
@@ -651,15 +647,35 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
       }
 
       LOG.info("Moving {} bucket files into {}", srcFiles.size(), dstFileAssignment.getDirectory());
-      try {
-        FileSystems.rename(srcFiles, dstFiles);
-      } catch (IOException e) {
-        cleanupTempFiles(e, filesToCleanUp);
-        throw new RuntimeException("Failed to rename temporary files", e);
-      }
-
+      // During a failure case, files may have been deleted in an earlier step. Thus
+      // we ignore missing files here.
+      FileSystems.rename(
+          srcFiles,
+          dstFiles,
+          StandardMoveOptions.IGNORE_MISSING_FILES,
+          StandardMoveOptions.SKIP_IF_DESTINATION_EXISTS);
       bucketDsts.forEach(bucketDstConsumer::accept);
+
+      // Write metadata file last
+      final ResourceId metadataDst =
+          writeMetadataFile(dstFileAssignment.forMetadata(), bucketMetadata);
       metadataDstConsumer.accept(metadataDst);
+
+      // Some writers, e.g. Parquet might produce extra temporary files like checksum.
+      final List<ResourceId> tempFiles = new ArrayList<>();
+      final List<MatchResult> matchResults =
+          FileSystems.match(Collections.singletonList(tempDirectory.toString() + "*"));
+      for (MatchResult result : matchResults) {
+        if (result.status() == MatchResult.Status.OK) {
+          for (MatchResult.Metadata metadata : result.metadata()) {
+            tempFiles.add(metadata.resourceId());
+          }
+        }
+      }
+      FileSystems.delete(tempFiles, StandardMoveOptions.IGNORE_MISSING_FILES);
+
+      FileSystems.delete(
+          Collections.singletonList(tempDirectory), StandardMoveOptions.IGNORE_MISSING_FILES);
     }
 
     @SuppressWarnings("unchecked")
@@ -688,7 +704,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         "Deleting temporary file {}",
         files.stream().map(ResourceId::toString).collect(Collectors.joining(", ")));
     try {
-      FileSystems.delete(files, MoveOptions.StandardMoveOptions.IGNORE_MISSING_FILES);
+      FileSystems.delete(files, StandardMoveOptions.IGNORE_MISSING_FILES);
     } catch (IOException e) {
       cause.addSuppressed(e);
     }

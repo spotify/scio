@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory
 /**
  * An approximate filter for instances of `T`, e.g. a Bloom filter. A Bloom filter offers an
  * approximate containment test with one-sided error: if it claims that an element is contained in
- * it, this might be in error, but if it claims that an element is not contained in it, then this
- * is definitely true.
+ * it, this might be in error, but if it claims that an element is not contained in it, then this is
+ * definitely true.
  */
 sealed trait ApproxFilter[T] extends Serializable {
 
@@ -44,8 +44,8 @@ sealed trait ApproxFilter[T] extends Serializable {
   def approxElementCount: Long
 
   /**
-   * Return the probability that [[mightContain]] will erroneously return `true` for an object
-   * that has not actually been put in the [[ApproxFilter]].
+   * Return the probability that [[mightContain]] will erroneously return `true` for an object that
+   * has not actually been put in the [[ApproxFilter]].
    */
   val expectedFpp: Double
 }
@@ -64,7 +64,7 @@ sealed trait ApproxFilterCompanion {
   type Filter[T] <: ApproxFilter[T]
 
   /**
-   * Settings in case the elements need to be partitioned into multiple [[ApproxFilter]]s to
+   * Settings in case the elements need to be partitioned into multiple [[ApproxFilter]] s to
    * maintain the desired `fpp` and size.
    */
   final private[hash] case class PartitionSettings(
@@ -75,7 +75,7 @@ sealed trait ApproxFilterCompanion {
 
   /**
    * Compute partition settings so that `expectedInsertions` can be spread across one or more
-   * [[ApproxFilter]]s while maintaining `fpp` and `maxBytes` in each filter.
+   * [[ApproxFilter]] s while maintaining `fpp` and `maxBytes` in each filter.
    *
    * For example, when `expectedInsertions = 1L << 27` and `fpp = 0.01`, a Guava
    * [[com.google.common.hash.BloomFilter BloomFilter]] needs 1286484758 bits or 153MB, which
@@ -95,8 +95,8 @@ sealed trait ApproxFilterCompanion {
    * Creates an [[ApproxFilter]] from an [[Iterable]] with the collection size as
    * `expectedInsertions` and default `fpp` of 0.03.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    */
   // Empirically (see [[com.twitter.algebird.BF.contains]])
   // `expectedInsertions` to number of unique elements ratio should be 1.1
@@ -107,8 +107,8 @@ sealed trait ApproxFilterCompanion {
    * Creates an [[ApproxFilter]] from an [[Iterable]] with the expected number of insertions and
    * default `fpp` of 0.03.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    */
   final def create[T: Hash](elems: Iterable[T], expectedInsertions: Long): Filter[T] =
     create(elems, expectedInsertions, 0.03)
@@ -117,8 +117,8 @@ sealed trait ApproxFilterCompanion {
    * Creates an [[ApproxFilter]] from an [[Iterable]] with the expected number of insertions and
    * expected false positive probability.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    */
   final def create[T: Hash](
     elems: Iterable[T],
@@ -161,8 +161,8 @@ sealed trait ApproxFilterCompanion {
    * Creates an [[ApproxFilter]] from an [[SCollection]] with the collection size as
    * `expectedInsertions` and default `fpp` of 0.03.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    */
   final def create[T: Hash](elems: SCollection[T]): SCollection[Filter[T]] =
     // size is unknown, count after groupBy
@@ -172,8 +172,8 @@ sealed trait ApproxFilterCompanion {
    * Creates an [[ApproxFilter]] from an [[SCollection]] with the expected number of insertions and
    * default `fpp` of 0.03.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    */
   final def create[T: Hash](
     elems: SCollection[T],
@@ -185,8 +185,8 @@ sealed trait ApproxFilterCompanion {
    * Creates an [[ApproxFilter]] from an [[SCollection]] with the expected number of insertions and
    * expected false positive probability.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    */
   final def create[T: Hash](
     elems: SCollection[T],
@@ -206,12 +206,13 @@ sealed trait ApproxFilterCompanion {
    * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the collection size as
    * `expectedInsertions` and false positive probability of 0.03.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    *
    * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
    * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
-   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on Dataflow.
+   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
+   * Dataflow.
    */
   final def createSideInput[T: Hash](
     elems: SCollection[T]
@@ -220,19 +221,21 @@ sealed trait ApproxFilterCompanion {
       .asSingletonSideInput(defaultValue = create(elems = Nil, expectedInsertions = 1L))
 
   /**
-   * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of insertions and
-   * expected false positive probability.
+   * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of
+   * insertions and expected false positive probability.
    *
-   * The `expectedInsertions` should be approximately the number of unique elements in the SCollection.
+   * The `expectedInsertions` should be approximately the number of unique elements in the
+   * SCollection.
    *
    * The default false positive probability is 0.03
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    *
    * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
    * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
-   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on Dataflow.
+   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
+   * Dataflow.
    */
   final def createSideInput[T: Hash](
     elems: SCollection[T],
@@ -242,17 +245,19 @@ sealed trait ApproxFilterCompanion {
       .asSingletonSideInput(defaultValue = create(elems = Nil, expectedInsertions = 1L))
 
   /**
-   * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of insertions and
-   * expected false positive probability.
+   * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of
+   * insertions and expected false positive probability.
    *
-   * The `expectedInsertions` should be approximately the number of unique elements in the SCollection.
+   * The `expectedInsertions` should be approximately the number of unique elements in the
+   * SCollection.
    *
-   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-   * will result in its saturation, and a sharp deterioration of its false positive probability.
+   * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
+   * result in its saturation, and a sharp deterioration of its false positive probability.
    *
    * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
    * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
-   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on Dataflow.
+   * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
+   * Dataflow.
    */
   final def createSideInput[T: Hash](
     elems: SCollection[T],
@@ -295,7 +300,7 @@ sealed trait ApproxFilterCompanion {
  * [[com.google.common.hash.BloomFilter BloomFilter]].
  *
  * Import `magnolify.guava.auto._` to get common instances of Guava
- * [[com.google.common.hash.Funnel Funnel]]s.
+ * [[com.google.common.hash.Funnel Funnel]] s.
  */
 class BloomFilter[T] private (private val impl: g.BloomFilter[T]) extends ApproxFilter[T] {
   override def mightContain(elem: T): Boolean = impl.mightContain(elem)

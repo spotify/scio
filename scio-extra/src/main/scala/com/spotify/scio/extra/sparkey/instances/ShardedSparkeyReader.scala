@@ -24,11 +24,13 @@ import scala.util.hashing.MurmurHash3
 import scala.jdk.CollectionConverters._
 
 /**
- * A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files,
- * sharded by their keys (via MurmurHash3). At most 32,768 Sparkey files are supported.
+ * A wrapper class around SparkeyReader that allows the reading of multiple Sparkey files, sharded
+ * by their keys (via MurmurHash3). At most 32,768 Sparkey files are supported.
  *
- * @param sparkeys a map of shard ID to sparkey reader
- * @param numShards the total count of shards used (needed for keying as some shards may be empty)
+ * @param sparkeys
+ *   a map of shard ID to sparkey reader
+ * @param numShards
+ *   the total count of shards used (needed for keying as some shards may be empty)
  */
 class ShardedSparkeyReader(val sparkeys: Map[Short, SparkeyReader], val numShards: Short)
     extends SparkeyReader {

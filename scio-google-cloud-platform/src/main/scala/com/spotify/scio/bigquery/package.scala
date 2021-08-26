@@ -35,9 +35,8 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
  *
  * There are two BigQuery dialects,
  * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql legacy]] and
- * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ standard]].
- * APIs that take a BigQuery query string as argument, e.g.
- * [[com.spotify.scio.bigquery.client.BigQuery.query.rows]],
+ * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ standard]]. APIs that take a
+ * BigQuery query string as argument, e.g. [[com.spotify.scio.bigquery.client.BigQuery.query.rows]],
  * [[com.spotify.scio.bigquery.client.BigQuery.query.schema]],
  * [[com.spotify.scio.bigquery.client.BigQuery.getTypedRows]] and
  * [[com.spotify.scio.bigquery.BigQueryType.fromQuery BigQueryType.fromQuery]], automatically

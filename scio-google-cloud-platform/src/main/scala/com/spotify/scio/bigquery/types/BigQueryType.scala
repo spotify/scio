@@ -44,10 +44,14 @@ import scala.util.Try
  * | TIME       | TIME         | `org.joda.time.LocalTime`                       |
  * | DATETIME   | DATETIME     | `org.joda.time.LocalDateTime`                   |
  *
- * @groupname trait Traits for annotated types
- * @groupname annotation Type annotations
- * @groupname converters Converters
- * @groupname Ungrouped Other Members
+ * @groupname trait
+ *   Traits for annotated types
+ * @groupname annotation
+ *   Type annotations
+ * @groupname converters
+ *   Converters
+ * @groupname Ungrouped
+ *   Other Members
  */
 object BigQueryType {
 
@@ -62,9 +66,9 @@ object BigQueryType {
   }
 
   /**
-   * Trait for companion objects of case classes generated with table.
-   * Instance of this trait are provided as implicits allowing static discovery.
-   * That trait provide evidence that a BQ table is statically known for a given type T.
+   * Trait for companion objects of case classes generated with table. Instance of this trait are
+   * provided as implicits allowing static discovery. That trait provide evidence that a BQ table is
+   * statically known for a given type T.
    * @group trait
    */
   trait Table[T] extends HasTable
@@ -114,9 +118,9 @@ object BigQueryType {
   }
 
   /**
-   * Trait for companion objects of case classes generated with storage API.
-   * Instance of this trait are provided as implicits allowing static discovery.
-   * That trait provide evidence that a BQ table is statically known for a given type T.
+   * Trait for companion objects of case classes generated with storage API. Instance of this trait
+   * are provided as implicits allowing static discovery. That trait provide evidence that a BQ
+   * table is statically known for a given type T.
    * @group trait
    */
   trait StorageOptions[T] extends HasStorageOptions
@@ -129,22 +133,24 @@ object BigQueryType {
 
     /**
      * SELECT query for case class schema.
-     * @return unformatted query
+     * @return
+     *   unformatted query
      */
     @deprecated("use queryRaw instead", "0.9.0")
     def query: String
 
     /**
      * SELECT query for case class schema.
-     * @return unformatted query
+     * @return
+     *   unformatted query
      */
     def queryRaw: String
   }
 
   /**
-   * Trait for companion objects of case classes generated with query.
-   * Instance of this trait are provided as implicits allowing static discovery.
-   * That trait provide evidence that a BQ query is statically known for a given type T.
+   * Trait for companion objects of case classes generated with query. Instance of this trait are
+   * provided as implicits allowing static discovery. That trait provide evidence that a BQ query is
+   * statically known for a given type T.
    * @group trait
    */
   trait Query[T] extends HasQuery
@@ -202,8 +208,8 @@ object BigQueryType {
   /**
    * Macro annotation for a BigQuery schema.
    *
-   * Generate case classes for a BigQuery schema. Note that `schema` must be a string literal of
-   * the JSON schema with optional `.stripMargin` at the end. For example:
+   * Generate case classes for a BigQuery schema. Note that `schema` must be a string literal of the
+   * JSON schema with optional `.stripMargin` at the end. For example:
    *
    * {{{
    * @BigQueryType.fromSchema(
@@ -232,23 +238,23 @@ object BigQueryType {
   /**
    * Macro annotation for a BigQuery table using the storage API.
    *
-   * Generate case classes for BigQuery storage API, including column projection and filtering.
-   * Note that `tableSpec` must be a string literal in the form of `project:dataset.table` with
-   * optional `.stripMargin` at the end. For example:
+   * Generate case classes for BigQuery storage API, including column projection and filtering. Note
+   * that `tableSpec` must be a string literal in the form of `project:dataset.table` with optional
+   * `.stripMargin` at the end. For example:
    *
    * {{{
    * @BigQueryType.fromStorage("project:dataset.table") class MyRecord
    * }}}
    *
-   * @param selectedFields names of the fields in the table that should be read. If empty, all
-   *                       fields will be read. If the specified field is a nested field, all the
-   *                       sub-fields in the field will be selected. Fields will always appear in
-   *                       the generated class in the same order as they appear in the table,
-   *                       regardless of the order specified in selectedFields.
-   * @param rowRestriction SQL text filtering statement, similar ti a WHERE clause in a query.
-   *                       Currently, we support combinations of predicates that are a comparison
-   *                       between a column and a constant value in SQL statement. Aggregates are
-   *                       not supported. For example:
+   * @param selectedFields
+   *   names of the fields in the table that should be read. If empty, all fields will be read. If
+   *   the specified field is a nested field, all the sub-fields in the field will be selected.
+   *   Fields will always appear in the generated class in the same order as they appear in the
+   *   table, regardless of the order specified in selectedFields.
+   * @param rowRestriction
+   *   SQL text filtering statement, similar ti a WHERE clause in a query. Currently, we support
+   *   combinations of predicates that are a comparison between a column and a constant value in SQL
+   *   statement. Aggregates are not supported. For example:
    *
    * {{{
    * "a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"
@@ -286,8 +292,8 @@ object BigQueryType {
   /**
    * Macro annotation for a BigQuery SELECT query.
    *
-   * Generate case classes for a BigQuery SELECT query. Note that `query` must be a string
-   * literal of the SELECT query with optional `.stripMargin` at the end. For example:
+   * Generate case classes for a BigQuery SELECT query. Note that `query` must be a string literal
+   * of the SELECT query with optional `.stripMargin` at the end. For example:
    *
    * {{{
    * @BigQueryType.fromQuery("SELECT field1, field2 FROM [project:dataset.table]")
@@ -347,7 +353,9 @@ object BigQueryType {
   /** Generate [[org.apache.avro.Schema Schema]] for a case class. */
   def avroSchemaOf[T: TypeTag]: Schema = SchemaProvider.avroSchemaOf[T]
 
-  /** Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class. */
+  /**
+   * Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class.
+   */
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
 
   /**

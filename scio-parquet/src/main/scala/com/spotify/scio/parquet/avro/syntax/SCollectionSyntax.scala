@@ -38,8 +38,8 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection of Avro records as a Parquet file.
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * @param schema
+   *   must be not null if `T` is of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def saveAsParquetAvroFile(
     path: String,
@@ -55,23 +55,23 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection of Avro records as a Parquet files written to dynamic destinations.
-   * @param path output location of the write operation
-   * @param filenameFunction an Either representing one of two functions which generates a filename. The Either must
-   *                         be a Left when writing dynamic files from windowed SCollections, or a Right when writing
-   *                         dynamic files from un-windowed SCollections. When the Either is a Left, the function's
-   *                         arguments represent
-   *                            (the shard number,
-   *                            the total number of shards,
-   *                            the bounded window,
-   *                            the pane info for the window)
-   *                         When the Either is a Right, the function's arguments represent
-   *                            (the shard number,
-   *                            the total number of shards)
-   * @param schema must be not null if `T` is of type
-   *               [[org.apache.avro.generic.GenericRecord GenericRecord]].
-   * @param numShards number of shards per output directory
-   * @param suffix defaults to .parquet
-   * @param compression defaults to snappy
+   * @param path
+   *   output location of the write operation
+   * @param filenameFunction
+   *   an Either representing one of two functions which generates a filename. The Either must be a
+   *   Left when writing dynamic files from windowed SCollections, or a Right when writing dynamic
+   *   files from un-windowed SCollections. When the Either is a Left, the function's arguments
+   *   represent (the shard number, the total number of shards, the bounded window, the pane info
+   *   for the window) When the Either is a Right, the function's arguments represent (the shard
+   *   number, the total number of shards)
+   * @param schema
+   *   must be not null if `T` is of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   * @param numShards
+   *   number of shards per output directory
+   * @param suffix
+   *   defaults to .parquet
+   * @param compression
+   *   defaults to snappy
    */
   def saveAsDynamicParquetAvroFile(
     path: String,

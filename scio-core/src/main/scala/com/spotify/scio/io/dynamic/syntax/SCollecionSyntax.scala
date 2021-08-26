@@ -92,8 +92,8 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
 }
 
 /**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
- * destinations methods.
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
+ * methods.
  */
 final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val self: SCollection[T])
     extends AnyVal {
@@ -139,8 +139,8 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
 }
 
 /**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
- * destinations methods.
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
+ * methods.
  */
 final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
   import DynamicSCollectionOps.writeDynamic

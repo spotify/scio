@@ -24,7 +24,7 @@ import com.google.cloud.bigquery.storage.v1beta1.Storage._
 import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.{StorageUtil, TableRow, Table => STable}
+import com.spotify.scio.bigquery.{StorageUtil, Table => STable, TableRow}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}

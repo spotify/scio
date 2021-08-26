@@ -89,11 +89,11 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     val prefix = StaticValueProvider.of(resource)
     val fileNamePolicy =
       params.filenameFunction
-        .map({
+        .map {
           case Left(f) =>
             createFilenamePolicy(resource, params.suffix, windowedFilenameFunction = f)
           case Right(f) => createFilenamePolicy(resource, params.suffix, filenameFunction = f)
-        })
+        }
         .getOrElse(
           DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
         )

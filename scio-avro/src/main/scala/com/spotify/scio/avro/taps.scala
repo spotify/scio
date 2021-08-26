@@ -55,8 +55,8 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: S
 }
 
 /**
- * Tap for reading [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files and applying
- * a parseFn to parse it to the given type [[T]]
+ * Tap for reading [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files and applying a
+ * parseFn to parse it to the given type [[T]]
  */
 final case class GenericRecordParseTap[T: Coder](
   path: String,
@@ -96,8 +96,7 @@ final case class AvroTaps(self: Taps) {
     self.mkTap(s"Object file: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
 
   /**
-   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro
-   * file.
+   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
    */
   def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
     self.mkTap(
@@ -107,8 +106,8 @@ final case class AvroTaps(self: Taps) {
     )
 
   /**
-   * Get a `Future[Tap[T]]` for
-   * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro file.
+   * Get a `Future[Tap[T]]` for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro
+   * file.
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =
     self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordTap[T](path))

@@ -401,7 +401,7 @@ private[types] object TypeProvider {
       case Literal(Constant(arg @ (_: String))) => arg
       // "string literal".stripMargin
       case Select(Literal(Constant(s: String)), TermName("stripMargin")) => s.stripMargin
-      case arg                                                           => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
+      case arg => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
     }
 
     val posList = MBuffer.empty[List[String]]
@@ -584,9 +584,8 @@ private[types] object NameProvider {
   private val m = MMap.empty[String, Int].withDefaultValue(0)
 
   /**
-   * Generate a unique name for a nested record.
-   * This is necessary since we create case classes for nested records and name them with their
-   * field names.
+   * Generate a unique name for a nested record. This is necessary since we create case classes for
+   * nested records and name them with their field names.
    */
   def getUniqueName(name: String): String = m.synchronized {
     val cName = toPascalCase(name) + '$'

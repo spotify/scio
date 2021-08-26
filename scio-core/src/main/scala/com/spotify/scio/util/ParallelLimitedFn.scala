@@ -26,7 +26,8 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 
 /**
  * Utility class to limit the number of parallel doFns
- * @param maxDoFns Max number of doFns
+ * @param maxDoFns
+ *   Max number of doFns
  */
 abstract private[scio] class ParallelLimitedFn[T, U](maxDoFns: Int)
     extends DoFnWithResource[T, U, Semaphore]

@@ -89,7 +89,7 @@ public class JsonSortedBucketIO {
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<TableRow> {
     @Nullable
-    abstract ImmutableList<ResourceId> getInputDirectories();
+    abstract ImmutableList<String> getInputDirectories();
 
     abstract String getFilenameSuffix();
 
@@ -104,9 +104,9 @@ public class JsonSortedBucketIO {
     abstract static class Builder {
       abstract Builder setTupleTag(TupleTag<TableRow> tupleTag);
 
-      abstract Builder setInputDirectories(ResourceId... inputDirectories);
+      abstract Builder setInputDirectories(String... inputDirectories);
 
-      abstract Builder setInputDirectories(List<ResourceId> inputDirectories);
+      abstract Builder setInputDirectories(List<String> inputDirectories);
 
       abstract Builder setFilenameSuffix(String filenameSuffix);
 
@@ -124,10 +124,7 @@ public class JsonSortedBucketIO {
 
     public Read from(List<String> inputDirectories) {
       return toBuilder()
-          .setInputDirectories(
-              inputDirectories.stream()
-                .map(dir -> FileSystems.matchNewResource(dir, true))
-                .collect(Collectors.toList()))
+          .setInputDirectories(inputDirectories)
           .build();
     }
 

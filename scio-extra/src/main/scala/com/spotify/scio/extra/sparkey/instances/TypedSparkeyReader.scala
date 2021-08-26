@@ -25,8 +25,8 @@ import com.spotify.sparkey.SparkeyReader
 import scala.jdk.CollectionConverters._
 
 /**
- * A wrapper around `SparkeyReader` that includes both a decoder (to map from each byte array
- * to a JVM type) and an optional in-memory cache.
+ * A wrapper around `SparkeyReader` that includes both a decoder (to map from each byte array to a
+ * JVM type) and an optional in-memory cache.
  */
 class TypedSparkeyReader[T](
   val sparkey: SparkeyReader,

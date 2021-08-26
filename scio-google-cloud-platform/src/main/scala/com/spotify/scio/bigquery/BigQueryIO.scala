@@ -179,8 +179,8 @@ final case class BigQueryTypedSelect[T: Coder](
 }
 
 /**
- * Get an SCollection for a BigQuery SELECT query.
- * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+ * Get an SCollection for a BigQuery SELECT query. Both
+ * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
  * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
  * supported. By default the query dialect will be automatically detected. To override this
  * behavior, start the query string with `#legacysql` or `#standardsql`.
@@ -277,10 +277,9 @@ object BigQueryTypedTable {
   /**
    * Creates a new instance of [[BigQueryTypedTable]] based on the supplied [[Format]].
    *
-   * NOTE: LogicalType support when using `Format.GenericRecord` has some caveats:
-   * Reading: Bigquery types DATE, TIME, DATIME will be read as STRING
-   * Writting: Supports LogicalTypes only for DATE and TIME.
-   *           DATETIME is not yet supported. https://issuetracker.google.com/issues/140681683
+   * NOTE: LogicalType support when using `Format.GenericRecord` has some caveats: Reading: Bigquery
+   * types DATE, TIME, DATIME will be read as STRING Writting: Supports LogicalTypes only for DATE
+   * and TIME. DATETIME is not yet supported. https://issuetracker.google.com/issues/140681683
    */
   def apply[F: Coder](table: Table, format: Format[F]): BigQueryTypedTable[F] =
     format match {

@@ -27,7 +27,8 @@ trait PipelineTestUtils {
 
   /**
    * Test pipeline components with a [[ScioContext]].
-   * @param fn code that tests the components and verifies the result
+   * @param fn
+   *   code that tests the components and verifies the result
    *
    * {{{
    * runWithContext { sc =>
@@ -56,9 +57,12 @@ trait PipelineTestUtils {
    * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
    * verified.
    *
-   * @param data input data
-   * @param fn transform to be tested
-   * @return output data
+   * @param data
+   *   input data
+   * @param fn
+   *   transform to be tested
+   * @return
+   *   output data
    *
    * {{{
    * runWithData(Seq(1, 2, 3)) { p =>
@@ -74,14 +78,18 @@ trait PipelineTestUtils {
   /**
    * Test pipeline components with in-memory data.
    *
-   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]]s and the
+   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]] s and the
    * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
    * verified.
    *
-   * @param data1 input data
-   * @param data2 input data
-   * @param fn transform to be tested
-   * @return output data
+   * @param data1
+   *   input data
+   * @param data2
+   *   input data
+   * @param fn
+   *   transform to be tested
+   * @return
+   *   output data
    */
   def runWithData[T1: Coder, T2: Coder, U: Coder](data1: Iterable[T1], data2: Iterable[T2])(
     fn: (SCollection[T1], SCollection[T2]) => SCollection[U]
@@ -91,15 +99,20 @@ trait PipelineTestUtils {
   /**
    * Test pipeline components with in-memory data.
    *
-   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]]s and the
+   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]] s and the
    * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
    * verified.
    *
-   * @param data1 input data
-   * @param data2 input data
-   * @param data3 input data
-   * @param fn transform to be tested
-   * @return output data
+   * @param data1
+   *   input data
+   * @param data2
+   *   input data
+   * @param data3
+   *   input data
+   * @param fn
+   *   transform to be tested
+   * @return
+   *   output data
    */
   def runWithData[T1: Coder, T2: Coder, T3: Coder, U: Coder](
     data1: Iterable[T1],
@@ -113,16 +126,22 @@ trait PipelineTestUtils {
   /**
    * Test pipeline components with in-memory data.
    *
-   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]]s and the
+   * Input data is passed to `fn` as [[com.spotify.scio.values.SCollection SCollection]] s and the
    * result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
    * verified.
    *
-   * @param data1 input data
-   * @param data2 input data
-   * @param data3 input data
-   * @param data4 input data
-   * @param fn transform to be tested
-   * @return output data
+   * @param data1
+   *   input data
+   * @param data2
+   *   input data
+   * @param data3
+   *   input data
+   * @param data4
+   *   input data
+   * @param fn
+   *   transform to be tested
+   * @return
+   *   output data
    */
   def runWithData[T1: Coder, T2: Coder, T3: Coder, T4: Coder, U: Coder](
     data1: Iterable[T1],
@@ -142,9 +161,11 @@ trait PipelineTestUtils {
    * The result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
    * verified.
    *
-   * @param fn transform to be tested
-   * @return a tuple containing the [[ScioResult]] and the materialized result of fn as a
-   *         [[scala.collection.Seq Seq]]
+   * @param fn
+   *   transform to be tested
+   * @return
+   *   a tuple containing the [[ScioResult]] and the materialized result of fn as a
+   *   [[scala.collection.Seq Seq]]
    */
   def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
     val sc = ScioContext()

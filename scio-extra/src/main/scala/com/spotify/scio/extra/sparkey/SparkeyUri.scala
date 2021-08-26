@@ -33,8 +33,8 @@ import scala.jdk.CollectionConverters._
  * Represents the base URI for a Sparkey index and log file, either on the local or a remote file
  * system. For remote file systems, `basePath` should be in the form
  * 'scheme://<bucket>/<path>/<sparkey-prefix>'. For local files, it should be in the form
- * '/<path>/<sparkey-prefix>'. Note that `basePath` must not be a folder or GCS bucket as it is
- * a base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
+ * '/<path>/<sparkey-prefix>'. Note that `basePath` must not be a folder or GCS bucket as it is a
+ * base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
  */
 trait SparkeyUri extends Serializable {
   val basePath: String
