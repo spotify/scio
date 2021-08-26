@@ -89,13 +89,15 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
     val sbf = MutableScalableBloomFilter[String](initialCapacity)
     (0 until 100).foreach(i => sbf += ("item" + i))
 
-    val roundtripped = MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(sbf))
+    val roundtripped =
+      MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(sbf))
     roundtripped.deserialize()
     assert(roundtripped == sbf)
 
     // add some new things
     (0 until 1000).foreach(i => roundtripped += "foo" + i)
-    val r2 = MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(roundtripped))
+    val r2 =
+      MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(roundtripped))
     r2.deserialize()
     assert(r2 == roundtripped)
 
