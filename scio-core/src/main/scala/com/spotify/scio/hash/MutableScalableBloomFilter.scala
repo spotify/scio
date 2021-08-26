@@ -61,7 +61,8 @@ object MutableScalableBloomFilter {
     growthRate: Int = 2,
     tighteningRatio: Double = 0.9
   ): MutableScalableBloomFilter[T] = {
-    if(initialCapacity <= 0) throw new IllegalArgumentException("initialCapacity must be positive.")
+    if (initialCapacity <= 0)
+      throw new IllegalArgumentException("initialCapacity must be positive.")
     MutableScalableBloomFilter(
       fpProb,
       initialCapacity,
@@ -252,8 +253,8 @@ case class MutableScalableBloomFilter[T](
     this
   }
 
-  def ++=(items: IterableOnce[T]): MutableScalableBloomFilter[T] = {
-    items.iterator.foreach(i => this += i) // no bulk insert for guava BFs
+  def ++=(items: TraversableOnce[T]): MutableScalableBloomFilter[T] = {
+    items.foreach(i => this += i) // no bulk insert for guava BFs
     this
   }
 }
