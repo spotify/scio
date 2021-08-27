@@ -50,7 +50,7 @@ class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
       case t @ NamedSysProp("BigQueryClient", key) =>
         val pname = Term.Name(toCamelCase(key.replaceAll("_KEY", "")))
         addImport(t.pos, importer"com.spotify.scio.bigquery.BigQuerySysProps") +
-          Patch.replaceTree(t, q"BigQuerySysProps.${pname}.value".toString)
+          Patch.replaceTree(t, q"BigQuerySysProps.$pname.value".toString)
       // Sys props
       case t @ StringSysProp("project") =>
         addImport(t.pos, importer"com.spotify.scio.CoreSysProps") +
@@ -84,7 +84,7 @@ class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
       case t @ NamedSysProp("Taps", key) =>
         val pname = Term.Name(toCamelCase(key.replaceAll("_KEY", "")))
         addImport(t.pos, importer"com.spotify.scio.io.TapsSysProps") +
-          Patch.replaceTree(t, q"TapsSysProps.${pname}.value".toString)
+          Patch.replaceTree(t, q"TapsSysProps.$pname.value".toString)
       case i @ Importee.Name(Name.Indeterminate("BigQueryClient")) =>
         Patch.removeImportee(i)
       case c =>
