@@ -270,6 +270,7 @@ lazy val assemblySettings = Seq(
       case s if s.endsWith("reflection-config.json") => MergeStrategy.rename
       case s if s.endsWith(".dtd")                   => MergeStrategy.rename
       case s if s.endsWith(".xsd")                   => MergeStrategy.rename
+      case s if s.endsWith(".fmpp")                  => MergeStrategy.last
       case PathList("META-INF", "services", "org.apache.hadoop.fs.FileSystem") =>
         MergeStrategy.filterDistinctLines
       case s => old(s)

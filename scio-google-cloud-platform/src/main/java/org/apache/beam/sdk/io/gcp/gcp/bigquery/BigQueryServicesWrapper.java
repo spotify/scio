@@ -32,6 +32,8 @@ import org.apache.beam.sdk.values.FailsafeValueInSingleWindow;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.values.ValueInSingleWindow;
+import org.joda.time.Instant;
 
 /** Wrap {@link BigQueryServices} and expose package private methods. */
 public class BigQueryServicesWrapper {

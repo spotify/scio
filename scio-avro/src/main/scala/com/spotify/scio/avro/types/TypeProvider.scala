@@ -47,7 +47,7 @@ private[types] object TypeProvider {
 
   // In order to use FileSystems functions we first need to register all FileSystemRegistrars
   // located on our class path.
-  registerFileSystemRegistrars()
+  //registerFileSystemRegistrars()
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
