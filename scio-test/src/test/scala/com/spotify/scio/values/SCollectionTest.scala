@@ -40,9 +40,8 @@ import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
-import org.apache.beam.sdk.util.CoderUtils
 
 class SCollectionTest extends PipelineSpec {
 
