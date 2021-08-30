@@ -39,7 +39,6 @@ val bigQueryStorageVersion = "1.18.1"
 val bigtableClientVersion = "1.19.1"
 val breezeVersion = "1.3"
 val caffeineVersion = "2.9.2"
-val caseappVersion = "2.1.0-M6"
 val catsVersion = "2.5.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.1"
@@ -401,8 +400,6 @@ lazy val `scio-core`: Project = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.github.alexarchambault" %% "case-app" % caseappVersion,
-      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion,
@@ -927,13 +924,10 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "mysql" % "mysql-connector-java" % "8.0.26",
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
-      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
-      "com.github.alexarchambault" %% "case-app-util" % caseappVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
