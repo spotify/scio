@@ -85,12 +85,34 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
   }
 
   it should "round-trip serialization" in {
-    val initialCapacity = 2
-    val sbf = MutableScalableBloomFilter[String](initialCapacity, 0.001, 2, 1.0)
+    val initialCapacity = 1000
+    val sbf = MutableScalableBloomFilter[String](initialCapacity)
     (0 until 100).foreach(i => sbf += ("item" + i))
+
     val roundtripped =
       MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(sbf))
     roundtripped.deserialize()
     assert(roundtripped == sbf)
+
+    // add some new things
+    (0 until 1000).foreach(i => roundtripped += "foo" + i)
+    val r2 =
+      MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(roundtripped))
+    r2.deserialize()
+    assert(r2 == roundtripped)
+
+    // add same things again
+    (0 until 10000).foreach(i => r2 += "foo" + i)
+    // add some new things
+    (0 until 10000).foreach(i => r2 += "baz" + i)
+    val r3 = MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(r2))
+    r3.deserialize()
+    assert(r3 == r2)
+  }
+
+  it should "require positive initialCapacity" in {
+    assertThrows[IllegalArgumentException] {
+      MutableScalableBloomFilter[String](0)
+    }
   }
 }

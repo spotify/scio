@@ -42,7 +42,7 @@ object MutableScalableBloomFilter {
    * Bloom Filters", Almeida, Baquero, et al.: http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf
    *
    * @param initialCapacity
-   *   The capacity of the first filter
+   *   The capacity of the first filter. Must be positive
    * @param fpProb
    *   The desired overall false positive probability
    * @param growthRate
@@ -60,16 +60,19 @@ object MutableScalableBloomFilter {
     fpProb: Double = 0.03,
     growthRate: Int = 2,
     tighteningRatio: Double = 0.9
-  ): MutableScalableBloomFilter[T] = MutableScalableBloomFilter(
-    fpProb,
-    initialCapacity,
-    growthRate,
-    tighteningRatio,
-    fpProb,
-    0L,
-    None,
-    Nil
-  )
+  ): MutableScalableBloomFilter[T] = {
+    require(initialCapacity > 0, "initialCapacity must be positive.")
+    MutableScalableBloomFilter(
+      fpProb,
+      initialCapacity,
+      growthRate,
+      tighteningRatio,
+      fpProb,
+      0L,
+      None,
+      Nil
+    )
+  }
 
   def toBytes[T](sbf: MutableScalableBloomFilter[T]): Array[Byte] = {
     // serialize each of the fields, excepting the implicit funnel
@@ -177,6 +180,7 @@ case class MutableScalableBloomFilter[T](
   // package private for testing purposes
 )(implicit private val funnel: g.Funnel[T])
     extends Serializable {
+  require(headCapacity > 0, "headCapacity must be positive.")
 
   // `SerializedBloomFilters` is never appended, so do deserialization check only once. package-private for testing.
   @transient private var deserialized = false
