@@ -32,8 +32,8 @@ import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 
 /**
- * An enhanced SCollection that provides access to one or more [[SideInput]]s for some transforms.
- * [[SideInput]]s are accessed via the additional [[SideInputContext]] argument.
+ * An enhanced SCollection that provides access to one or more [[SideInput]] s for some transforms.
+ * [[SideInput]] s are accessed via the additional [[SideInputContext]] argument.
  */
 class SCollectionWithSideInput[T] private[values] (
   coll: SCollection[T],
@@ -84,7 +84,8 @@ class SCollectionWithSideInput[T] private[values] (
   /**
    * Allows multiple outputs from [[SCollectionWithSideInput]].
    *
-   * @return map of side output to [[SCollection]]
+   * @return
+   *   map of side output to [[SCollection]]
    */
   private[values] def transformWithSideOutputs(
     sideOutputs: Seq[SideOutput[T]],

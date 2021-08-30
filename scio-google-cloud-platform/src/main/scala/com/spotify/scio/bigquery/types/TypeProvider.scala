@@ -195,6 +195,12 @@ private[types] object TypeProvider {
           desc.headOption.map(d => q"override def tableDescription: _root_.java.lang.String = $d")
         val defToPrettyString =
           q"override def toPrettyString(indent: Int = 0): String = ${p(c, s"$SBQ.types.SchemaUtil")}.toPrettyString(this.schema, ${cName.toString}, indent)"
+
+        val defSelectedFields =
+          q"def selectedFields: _root_.scala.List[_root_.java.lang.String] = ${fields.map {
+            case ValDef(_, fname, _, _) => fname.toString
+          }.toList}"
+
         val fnTrait =
           tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc
@@ -225,7 +231,7 @@ private[types] object TypeProvider {
             ${companion(c)(
             cName,
             traits,
-            Seq(defSchema, defAvroSchema, defToPrettyString) ++ defTblDesc,
+            Seq(defSchema, defAvroSchema, defToPrettyString, defSelectedFields) ++ defTblDesc,
             taggedFields.asInstanceOf[Seq[Tree]].size,
             maybeCompanion
           )}
@@ -401,7 +407,7 @@ private[types] object TypeProvider {
       case Literal(Constant(arg @ (_: String))) => arg
       // "string literal".stripMargin
       case Select(Literal(Constant(s: String)), TermName("stripMargin")) => s.stripMargin
-      case arg                                                           => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
+      case arg => c.abort(c.enclosingPosition, s"Unsupported argument $arg")
     }
 
     val posList = MBuffer.empty[List[String]]
@@ -584,9 +590,8 @@ private[types] object NameProvider {
   private val m = MMap.empty[String, Int].withDefaultValue(0)
 
   /**
-   * Generate a unique name for a nested record.
-   * This is necessary since we create case classes for nested records and name them with their
-   * field names.
+   * Generate a unique name for a nested record. This is necessary since we create case classes for
+   * nested records and name them with their field names.
    */
   def getUniqueName(name: String): String = m.synchronized {
     val cName = toPascalCase(name) + '$'

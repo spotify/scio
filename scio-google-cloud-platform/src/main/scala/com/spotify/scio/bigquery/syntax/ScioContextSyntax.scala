@@ -46,8 +46,8 @@ import com.spotify.scio.bigquery.coders.tableRowCoder
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * Get an SCollection for a BigQuery SELECT query. Both
+   * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
    * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
@@ -59,8 +59,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
 
   /**
-   * Get an SCollection for a BigQuery SELECT query.
-   * Both [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
+   * Get an SCollection for a BigQuery SELECT query. Both
+   * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
    * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
    * supported. By default the query dialect will be automatically detected. To override this
    * behavior, start the query string with `#legacysql` or `#standardsql`.
@@ -77,11 +77,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery table using the specified [[Format]].
    *
-   * Reading records as GenericRecord **should** offer better performance over
-   * TableRow records.
+   * Reading records as GenericRecord **should** offer better performance over TableRow records.
    *
-   * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME
-   *       are read as STRING.
+   * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME are read as
+   * STRING.
    */
   def bigQueryTable[F: Coder](table: Table, format: Format[F]): SCollection[F] =
     self.read(BigQueryTypedTable(table, format))
@@ -89,13 +88,15 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery table using the storage API.
    *
-   * @param selectedFields names of the fields in the table that should be read. If empty, all
-   *                       fields will be read. If the specified field is a nested field, all the
-   *                       sub-fields in the field will be selected.
-   * @param rowRestriction SQL text filtering statement, similar ti a WHERE clause in a query.
-   *                       Currently, we support combinations of predicates that are a comparison
-   *                       between a column and a constant value in SQL statement. Aggregates are
-   *                       not supported. For example:
+   * @param selectedFields
+   *   names of the fields in the table that should be read. If empty, all fields will be read. If
+   *   the specified field is a nested field, all the sub-fields in the field will be selected.
+   *   Fields will always appear in the generated class in the same order as they appear in the
+   *   table, regardless of the order specified in selectedFields.
+   * @param rowRestriction
+   *   SQL text filtering statement, similar ti a WHERE clause in a query. Currently, we support
+   *   combinations of predicates that are a comparison between a column and a constant value in SQL
+   *   statement. Aggregates are not supported. For example:
    *
    * {{{
    * "a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"
@@ -111,7 +112,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a BigQuery SELECT query using the storage API.
    *
-   * @param query SQL query
+   * @param query
+   *   SQL query
    */
   def bigQueryStorage(query: Query): SCollection[TableRow] =
     self.read(BigQueryStorageSelect(query))

@@ -25,8 +25,8 @@ trait SCollectionSyntax {
   implicit final class ZetaSCollection[T](private val scol: SCollection[T]) {
 
     /**
-     * Convert each element to [[ZetaSketchHll]].
-     * Only support for Int, Long, String and ByteString types.
+     * Convert each element to [[ZetaSketchHll]]. Only support for Int, Long, String and ByteString
+     * types.
      *
      * @Example
      * {{{
@@ -37,15 +37,16 @@ trait SCollectionSyntax {
      *
      * [[ZetaSketchHll]] has few extra methods to access precision, sparse precision.
      *
-     * @return [[SCollection]] of [[ZetaSketchHll]].
-     *         This will have the exactly the same number of element as input [[SCollection]]
+     * @return
+     *   [[SCollection]] of [[ZetaSketchHll]]. This will have the exactly the same number of element
+     *   as input [[SCollection]]
      */
     def asZetaSketchHll(implicit hp: HllPlus[T]): SCollection[ZetaSketchHll[T]] =
       scol.map(ZetaSketchHll.create[T](_))
 
     /**
-     * Calculate the approximate distinct count using HyperLogLog++ algorithm.
-     * Only support for Int, Long, String and ByteString types.
+     * Calculate the approximate distinct count using HyperLogLog++ algorithm. Only support for Int,
+     * Long, String and ByteString types.
      *
      * @Example
      * {{{
@@ -53,7 +54,8 @@ trait SCollectionSyntax {
      *   val approxDistCount: SCollection[Long] = input.approxDistinctCountWithZetaHll
      * }}}
      *
-     * @return - [[SCollection]] with one [[Long]] value.
+     * @return
+     *   - [[SCollection]] with one [[Long]] value.
      */
     def approxDistinctCountWithZetaHll(implicit hp: HllPlus[T]): SCollection[Long] =
       scol.aggregate(ZetaSketchHllAggregator())
@@ -62,8 +64,8 @@ trait SCollectionSyntax {
   implicit final class PairedZetaSCollection[K, V](private val kvScol: SCollection[(K, V)]) {
 
     /**
-     * Convert each value in key-value pair to [[ZetaSketchHll]].
-     * Only support for Int, Long, String and ByteString value types.
+     * Convert each value in key-value pair to [[ZetaSketchHll]]. Only support for Int, Long, String
+     * and ByteString value types.
      *
      * @Example
      * {{{
@@ -74,15 +76,16 @@ trait SCollectionSyntax {
      *
      * [[ZetaSketchHll]] has few extra methods to access precision, sparse precision.
      *
-     * @return key-value [[SCollection]] where value being [[ZetaSketchHll]].
-     *         This will have the similar number of elements as input [[SCollection]].
+     * @return
+     *   key-value [[SCollection]] where value being [[ZetaSketchHll]]. This will have the similar
+     *   number of elements as input [[SCollection]].
      */
     def asZetaSketchHllByKey(implicit hp: HllPlus[V]): SCollection[(K, ZetaSketchHll[V])] =
       kvScol.mapValues(ZetaSketchHll.create[V](_))
 
     /**
-     * Calculate the approximate distinct count using HyperLogLog++ algorithm.
-     * Only support for Int, Long, String and ByteString value types.
+     * Calculate the approximate distinct count using HyperLogLog++ algorithm. Only support for Int,
+     * Long, String and ByteString value types.
      *
      * @Example
      * {{{
@@ -90,7 +93,8 @@ trait SCollectionSyntax {
      *   val approxDistCount: SCollection[(K, Long)] = input.approxDistinctCountWithZetaHllByKey
      * }}}
      *
-     * @return - [[SCollection]] with one [[Long]] value per each unique key.
+     * @return
+     *   - [[SCollection]] with one [[Long]] value per each unique key.
      */
     def approxDistinctCountWithZetaHllByKey(implicit hp: HllPlus[V]): SCollection[(K, Long)] =
       kvScol.aggregateByKey(ZetaSketchHllAggregator())

@@ -17,7 +17,7 @@
 
 package com.spotify.scio.util
 
-import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
+import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.google.common.cache.{Cache => GCache, CacheBuilder => GCacheBuilder}
 import java.util.function.{Function => JFunction}
 import java.util.concurrent.{Callable => JCallable, ConcurrentHashMap => JConcurrentHashMap}

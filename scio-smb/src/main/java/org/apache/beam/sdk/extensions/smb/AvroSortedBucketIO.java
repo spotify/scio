@@ -124,7 +124,7 @@ public class AvroSortedBucketIO {
   @AutoValue
   public abstract static class Read<T extends GenericRecord> extends SortedBucketIO.Read<T> {
     @Nullable
-    abstract ImmutableList<ResourceId> getInputDirectories();
+    abstract ImmutableList<String> getInputDirectories();
 
     abstract String getFilenameSuffix();
 
@@ -143,9 +143,9 @@ public class AvroSortedBucketIO {
     abstract static class Builder<T extends GenericRecord> {
       abstract Builder<T> setTupleTag(TupleTag<T> tupleTag);
 
-      abstract Builder<T> setInputDirectories(List<ResourceId> inputDirectories);
+      abstract Builder<T> setInputDirectories(List<String> inputDirectories);
 
-      abstract Builder<T> setInputDirectories(ResourceId... inputDirectory);
+      abstract Builder<T> setInputDirectories(String... inputDirectory);
 
       abstract Builder<T> setFilenameSuffix(String filenameSuffix);
 
@@ -166,10 +166,7 @@ public class AvroSortedBucketIO {
     /** Reads from the given input directories. */
     public Read<T> from(List<String> inputDirectories) {
       return toBuilder()
-          .setInputDirectories(
-              inputDirectories.stream()
-                  .map(dir -> FileSystems.matchNewResource(dir, true))
-                  .collect(Collectors.toList()))
+          .setInputDirectories(inputDirectories)
           .build();
     }
 

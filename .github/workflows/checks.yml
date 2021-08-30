@@ -1,0 +1,52 @@
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java 11 setup
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+      - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
+  scalafix-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java 11 setup
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+      - run: "cd scalafix; sbt test"
+  mimaReport:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java ${{matrix.java}} setup
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: ${{matrix.java}}
+      - run: sbt "++${{matrix.scala}} mimaReportBinaryIssues"
+    strategy:
+      matrix:
+        java:
+          - 11
+        scala:
+          - 2.12.14
+          - 2.13.6

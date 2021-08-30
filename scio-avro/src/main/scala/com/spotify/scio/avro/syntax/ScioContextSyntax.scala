@@ -47,21 +47,20 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(GenericRecordIO(path, schema))
 
   /**
-   * Get an SCollection of type [[T]] for data stored in Avro format after applying
-   * parseFn to map a serialized [[org.apache.avro.generic.GenericRecord GenericRecord]]
-   * to type [[T]].
+   * Get an SCollection of type [[T]] for data stored in Avro format after applying parseFn to map a
+   * serialized [[org.apache.avro.generic.GenericRecord GenericRecord]] to type [[T]].
    *
-   * This API should be used with caution as the `parseFn` reads from a `GenericRecord` and hence
-   * is not type checked.
+   * This API should be used with caution as the `parseFn` reads from a `GenericRecord` and hence is
+   * not type checked.
    *
    * This is intended to be used when attempting to read `GenericRecord`s without specifying a
-   * schema (hence the writer schema is used to deserialize) and then directly converting
-   * to a type [[T]] using a `parseFn`. This avoids creation of an intermediate
-   * `SCollection[GenericRecord]` which can be in efficient because `Coder[GenericRecord]` is
-   * inefficient without a known Avro schema.
+   * schema (hence the writer schema is used to deserialize) and then directly converting to a type
+   * [[T]] using a `parseFn`. This avoids creation of an intermediate `SCollection[GenericRecord]`
+   * which can be in efficient because `Coder[GenericRecord]` is inefficient without a known Avro
+   * schema.
    *
-   * Example usage:
-   * This code reads Avro fields "id" and "name" and de-serializes only those two into CaseClass
+   * Example usage: This code reads Avro fields "id" and "name" and de-serializes only those two
+   * into CaseClass
    *
    * {{{
    *   val sColl: SCollection[CaseClass] =
@@ -75,8 +74,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(GenericRecordParseIO[T](path, parseFn))
 
   /**
-   * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]]
-   * for an Avro file.
+   * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
+   * Avro file.
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
     self.read(SpecificRecordIO[T](path))
@@ -97,8 +96,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Get an SCollection for a Protobuf file.
    *
-   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
-   * Avro's block file format.
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
    */
   def protobufFile[T <: Message: ClassTag](path: String): SCollection[T] =
     self.read(ProtobufIO[T](path))

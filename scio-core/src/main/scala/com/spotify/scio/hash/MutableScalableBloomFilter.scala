@@ -25,42 +25,54 @@ import com.spotify.scio.coders.Coder
 /**
  * A mutable, scalable wrapper around a Guava [[com.google.common.hash.BloomFilter BloomFilter]]
  *
- * Scalable bloom filters use a series of bloom filters, adding a new one and scaling its size by `growthRate`
- * once the previous filter is saturated in order to maintain the desired false positive probability `fpProb`.
- * A scalable bloom filter `contains` ("might contain") an item if any of its filters contains the item.
+ * Scalable bloom filters use a series of bloom filters, adding a new one and scaling its size by
+ * `growthRate` once the previous filter is saturated in order to maintain the desired false
+ * positive probability `fpProb`. A scalable bloom filter `contains` ("might contain") an item if
+ * any of its filters contains the item.
  *
- * Import `magnolify.guava.auto._` to get common instances of Guava [[com.google.common.hash.Funnel Funnel]]s.
+ * Import `magnolify.guava.auto._` to get common instances of Guava
+ * [[com.google.common.hash.Funnel Funnel]] s.
  *
  * Not thread-safe.
  */
 object MutableScalableBloomFilter {
 
   /**
-   * The default parameter values for this implementation are based on the findings in "Scalable Bloom Filters",
-   * Almeida, Baquero, et al.: http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf
+   * The default parameter values for this implementation are based on the findings in "Scalable
+   * Bloom Filters", Almeida, Baquero, et al.: http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf
    *
-   * @param initialCapacity   The capacity of the first filter
-   * @param fpProb            The desired overall false positive probability
-   * @param growthRate        The growth rate of each subsequent filter added to `filters`
-   * @param tighteningRatio   The tightening ratio applied to the current `fpProb` to maintain the false positive probability over the sequence of filters
-   * @tparam T                The type of objects inserted into the filter
-   * @return  A scalable bloom filter
+   * @param initialCapacity
+   *   The capacity of the first filter. Must be positive
+   * @param fpProb
+   *   The desired overall false positive probability
+   * @param growthRate
+   *   The growth rate of each subsequent filter added to `filters`
+   * @param tighteningRatio
+   *   The tightening ratio applied to the current `fpProb` to maintain the false positive
+   *   probability over the sequence of filters
+   * @tparam T
+   *   The type of objects inserted into the filter
+   * @return
+   *   A scalable bloom filter
    */
   def apply[T: g.Funnel](
     initialCapacity: Long,
     fpProb: Double = 0.03,
     growthRate: Int = 2,
     tighteningRatio: Double = 0.9
-  ): MutableScalableBloomFilter[T] = MutableScalableBloomFilter(
-    fpProb,
-    initialCapacity,
-    growthRate,
-    tighteningRatio,
-    fpProb,
-    0L,
-    None,
-    Nil
-  )
+  ): MutableScalableBloomFilter[T] = {
+    require(initialCapacity > 0, "initialCapacity must be positive.")
+    MutableScalableBloomFilter(
+      fpProb,
+      initialCapacity,
+      growthRate,
+      tighteningRatio,
+      fpProb,
+      0L,
+      None,
+      Nil
+    )
+  }
 
   def toBytes[T](sbf: MutableScalableBloomFilter[T]): Array[Byte] = {
     // serialize each of the fields, excepting the implicit funnel
@@ -132,16 +144,28 @@ case class SerializedBloomFilters(numFilters: Int, filterBytes: Array[Byte]) {
 }
 
 /**
- * @param fpProb            The desired false positive probability
- * @param headCapacity      The capacity of the filter at the head of `filters`
- * @param growthRate        The growth rate of each subsequent filter added to `filters`
- * @param tighteningRatio   The tightening ratio applied to the current `fpProb` to maintain the false positive probability over the sequence of filters
- * @param head              The underlying bloom filter currently being inserted into, or `None` if this scalable filter has just been initialized
- * @param tail              The underlying already-saturated bloom filters, lazily deserialized from bytes as necessary.
- * @param headFPProb        The false positive probability of the head of `filters`
- * @param headCount         The number of items currently in the filter at the head of `filters`
- * @param funnel            The funnel to turn `T`s into bytes
- * @tparam T                The type of objects inserted into the filter
+ * @param fpProb
+ *   The desired false positive probability
+ * @param headCapacity
+ *   The capacity of the filter at the head of `filters`
+ * @param growthRate
+ *   The growth rate of each subsequent filter added to `filters`
+ * @param tighteningRatio
+ *   The tightening ratio applied to the current `fpProb` to maintain the false positive probability
+ *   over the sequence of filters
+ * @param head
+ *   The underlying bloom filter currently being inserted into, or `None` if this scalable filter
+ *   has just been initialized
+ * @param tail
+ *   The underlying already-saturated bloom filters, lazily deserialized from bytes as necessary.
+ * @param headFPProb
+ *   The false positive probability of the head of `filters`
+ * @param headCount
+ *   The number of items currently in the filter at the head of `filters`
+ * @param funnel
+ *   The funnel to turn `T`s into bytes
+ * @tparam T
+ *   The type of objects inserted into the filter
  */
 case class MutableScalableBloomFilter[T](
   fpProb: Double,
@@ -156,6 +180,7 @@ case class MutableScalableBloomFilter[T](
   // package private for testing purposes
 )(implicit private val funnel: g.Funnel[T])
     extends Serializable {
+  require(headCapacity > 0, "headCapacity must be positive.")
 
   // `SerializedBloomFilters` is never appended, so do deserialization check only once. package-private for testing.
   @transient private var deserialized = false
@@ -173,8 +198,10 @@ case class MutableScalableBloomFilter[T](
   /**
    * Note: Will cause deserialization of any `SerializedBloomFilters`.
    *
-   * @param item  The item to check
-   * @return True if any of the backing filters 'might contain' `item`, false otherwise.
+   * @param item
+   *   The item to check
+   * @return
+   *   True if any of the backing filters 'might contain' `item`, false otherwise.
    */
   def mightContain(item: T): Boolean =
     head.exists(_.mightContain(item)) || deserialize().exists(f => f.mightContain(item))
@@ -182,7 +209,8 @@ case class MutableScalableBloomFilter[T](
   /**
    * Note: Will cause deserialization of any `SerializedBloomFilters`.
    *
-   * @return The sum of the approximate element count for all underlying filters.
+   * @return
+   *   The sum of the approximate element count for all underlying filters.
    */
   def approximateElementCount: Long =
     head.map(_.approximateElementCount()).getOrElse(0L) + deserialize()

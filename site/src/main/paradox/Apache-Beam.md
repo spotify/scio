@@ -29,13 +29,15 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details** |
 |:----------------:|:----------------:|:------------|
-| 0.10.0           | 2.28.0           | This version will be deprecated on February 22, 2022. |
-| 0.9.5            | 2.24.0           | This version will be deprecated on September 18, 2021. |
+| 0.10.4+          | 2.30.0           | This version will be deprecated on [TBD](https://cloud.google.com/dataflow/docs/support/sdk-version-support-status). |
+| 0.10.3           | 2.29.0           | This version will be deprecated on April 29, 2022. |
+| 0.10.0+          | 2.28.0           | This version will be deprecated on February 22, 2022. |
+| 0.9.5+           | 2.24.0           | This version will be deprecated on September 18, 2021. |
 | 0.9.3+           | 2.23.0           | This version will be deprecated on July 29, 2021. |
 | 0.9.2            | 2.22.0           | This version will be deprecated on June 8, 2021. |
 | 0.9.1            | 2.20.0           | This version will be deprecated on April 15, 2021. |
 | 0.9.0            | 2.20.0           |             |
-| 0.8.2            | 2.19.0           | This version will be deprecated on February 4, 2021. |
+| 0.8.2+           | 2.19.0           | This version will be deprecated on February 4, 2021. |
 | 0.8.1            | 2.18.0           | This version will be deprecated on January 23, 2021. |
 | 0.8.0            | 2.17.0           | This version will be deprecated on January 6, 2021. |
 | 0.7.4            | 2.11.0           | This version will be deprecated on March 1, 2020. |

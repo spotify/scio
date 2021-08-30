@@ -21,7 +21,7 @@ import com.spotify.scio.values._
 import com.spotify.scio.coders._
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 
 import scala.jdk.CollectionConverters._
 import scala.annotation.tailrec
@@ -138,10 +138,9 @@ object To {
   }
 
   /**
-   * Builds a function that reads a Row and convert it
-   * to a Row in the given Schema.
-   * The input Row needs to be compatible with the given Schema,
-   * that is, it may have more fields, or use LogicalTypes.
+   * Builds a function that reads a Row and convert it to a Row in the given Schema. The input Row
+   * needs to be compatible with the given Schema, that is, it may have more fields, or use
+   * LogicalTypes.
    */
   @inline private def transform(schema: BSchema): Row => Row = { t0 =>
     val iter = schema.getFields.iterator()
@@ -164,10 +163,11 @@ object To {
   }
 
   /**
-   * Convert instance of ${T} in this SCollection into instances of ${O}
-   * based on the Schemas on the 2 classes.
-   * The compatibility of the 2 schemas is NOT checked at compile time, so the execution may fail.
-   * @see To#apply
+   * Convert instance of ${T} in this SCollection into instances of ${O} based on the Schemas on the
+   * 2 classes. The compatibility of the 2 schemas is NOT checked at compile time, so the execution
+   * may fail.
+   * @see
+   *   To#apply
    */
   def unsafe[I: Schema, O: Schema: ClassTag]: To[I, O] = unsafe(unchecked)
 
@@ -184,8 +184,10 @@ object To {
 
   /**
    * FOR INTERNAL USE ONLY - Convert from I to O without performing any check.
-   * @see To#safe
-   * @see To#unsafe
+   * @see
+   *   To#safe
+   * @see
+   *   To#unsafe
    */
   def unchecked[I: Schema, O: Schema: ClassTag]: To[I, O] =
     new To[I, O] {
@@ -209,10 +211,10 @@ object To {
     }
 
   /**
-   * Convert instance of ${T} in this SCollection into instances of ${O}
-   * based on the Schemas on the 2 classes. The compatibility of thoses classes is checked
-   * at compile time.
-   * @see To#unsafe
+   * Convert instance of ${T} in this SCollection into instances of ${O} based on the Schemas on the
+   * 2 classes. The compatibility of thoses classes is checked at compile time.
+   * @see
+   *   To#unsafe
    */
   def safe[I: Schema, O: Schema]: To[I, O] =
     macro ToMacro.safeImpl[I, O]

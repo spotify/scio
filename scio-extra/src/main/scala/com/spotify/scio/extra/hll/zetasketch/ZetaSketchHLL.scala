@@ -24,8 +24,10 @@ import com.twitter.algebird.{Monoid, MonoidAggregator}
 /**
  * This is a wrapper for internal HyperLogLogPlusPlus implementation.
  *
- * @param arrOpt - serialized byte array to construct the initial HyperLogLogPlusPlus instance.
- * @param elemOpt - first element to add to the constructed new HyperLogLogPlusPlus instance.
+ * @param arrOpt
+ *   - serialized byte array to construct the initial HyperLogLogPlusPlus instance.
+ * @param elemOpt
+ *   - first element to add to the constructed new HyperLogLogPlusPlus instance.
  */
 final class ZetaSketchHll[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = None)(implicit
   hp: HllPlus[T]
@@ -47,19 +49,23 @@ final class ZetaSketchHll[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = N
   }
 
   /**
-   * Add a new element to this [[ZetaSketchHll]].
-   * Need to return a new instance to maintain the immutability of the [[hll]] value.
-   * @param elem - new element to add.
-   * @return - new [[ZetaSketchHll]] instance with the same type parameter.
+   * Add a new element to this [[ZetaSketchHll]]. Need to return a new instance to maintain the
+   * immutability of the [[hll]] value.
+   * @param elem
+   *   - new element to add.
+   * @return
+   *   - new [[ZetaSketchHll]] instance with the same type parameter.
    */
   def add(elem: T): ZetaSketchHll[T] =
     new ZetaSketchHll[T](Option(hll.serializeToByteArray()), Option(elem))
 
   /**
-   * Merge both this and that [[ZetaSketchHll]] instances.
-   * Need to return a new instance to maintain the immutability of this [[hll]] value and that [[hll]] value.
-   * @param that - [[ZetaSketchHll]] to merge with this.
-   * @return new instance of [[ZetaSketchHll]]
+   * Merge both this and that [[ZetaSketchHll]] instances. Need to return a new instance to maintain
+   * the immutability of this [[hll]] value and that [[hll]] value.
+   * @param that
+   *   - [[ZetaSketchHll]] to merge with this.
+   * @return
+   *   new instance of [[ZetaSketchHll]]
    */
   def merge(that: ZetaSketchHll[T]): ZetaSketchHll[T] = {
     val nhll = hp.hll(hll.serializeToByteArray())

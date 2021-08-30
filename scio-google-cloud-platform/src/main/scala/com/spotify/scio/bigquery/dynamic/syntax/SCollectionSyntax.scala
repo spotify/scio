@@ -35,8 +35,8 @@ import com.spotify.scio.bigquery.ExtendedErrorInfo
 import scala.reflect.runtime.universe._
 
 /**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
- * destinations methods.
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
+ * methods.
  */
 final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyVal {
 
@@ -101,16 +101,15 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
 }
 
 /**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
- * destinations methods.
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
+ * methods.
  */
 final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollection[T])
     extends AnyVal {
 
   /**
-   * Save this SCollection to dynamic BigQuery tables using the specified table function.
-   * Note that elements must be of type
-   * [[com.google.api.services.bigquery.model.TableRow TableRow]].
+   * Save this SCollection to dynamic BigQuery tables using the specified table function. Note that
+   * elements must be of type [[com.google.api.services.bigquery.model.TableRow TableRow]].
    */
   def saveAsBigQuery(
     schema: TableSchema,
@@ -126,15 +125,15 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
 }
 
 /**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic
- * destinations methods.
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
+ * methods.
  */
 final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SCollection[T])
     extends AnyVal {
 
   /**
-   * Save this SCollection to dynamic BigQuery tables using the specified table function.
-   * Note that element type `T` must be annotated with
+   * Save this SCollection to dynamic BigQuery tables using the specified table function. Note that
+   * element type `T` must be annotated with
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
   def saveAsTypedBigQuery(

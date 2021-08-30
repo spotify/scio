@@ -34,8 +34,8 @@ import scala.reflect.ClassTag
 final class ScioContextOps(@transient private val self: ScioContext) extends AnyVal {
 
   /**
-   * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by
-   * Parquet column projection may be incomplete and may fail serialization, you must
+   * Get an SCollection for a Parquet file as Avro records. Since Avro records produced by Parquet
+   * column projection may be incomplete and may fail serialization, you must
    * [[ParquetAvroFile.map map]] the result to extract projected fields from the Avro records.
    *
    * Note that due to limitations of the underlying `HadoopInputFormatIO`, dynamic work rebalancing
@@ -72,8 +72,8 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
   }
 
   /**
-   * Return a new SCollection by first applying a function to all Parquet Avro records of
-   * this Parquet file, and then flattening the results.
+   * Return a new SCollection by first applying a function to all Parquet Avro records of this
+   * Parquet file, and then flattening the results.
    */
   def flatMap[U: Coder](f: T => TraversableOnce[U]): SCollection[U] =
     this

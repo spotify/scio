@@ -82,22 +82,23 @@ Projects generated from [scio-template.g8](https://github.com/spotify/scio-templ
 Let's start with simple local-mode word count example:
 
 ```scala mdoc:invisible
+// The REPL loads the following for you.
 import com.spotify.scio._
 
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
-def wordCount = sc
+```scala mdoc:compile-only
+val wordCount = sc
     .textFile("README.md")
     .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
     .countByValue
     .map(_.toString)
     .saveAsTextFile("/tmp/local_wordcount")
 
-def scioResult = sc.run().waitUntilDone()
+val scioResult = sc.run().waitUntilDone()
 
-def values = scioResult.tap(wordCount).value.take(3)
+val values = scioResult.tap(wordCount).value.take(3)
 ```
 
 Make sure `README.md` is in the current directory. This example counts words in local file using a local runner (@javadoc[`DirectRunner`](org.apache.beam.runners.direct.DirectRunner) and writes result in a local file. The pipeline and actual computation starts on `sc.run()`. The last command take 3 lines from results and prints them.
@@ -116,16 +117,16 @@ import com.spotify.scio._
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
-def shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/hamlet.txt")
+```scala mdoc:compile-only
+val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/hamlet.txt")
 
-def wordCount = shakespeare
+val wordCount = shakespeare
     .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
     .countByValue
     .map(_.toString)
     .saveAsTextFile("/tmp/gcs-wordcount")
 
-def result = sc
+val result = sc
     .run()
     .waitUntilDone()
     .tap(wordCount)
@@ -165,16 +166,16 @@ import com.spotify.scio._
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
-def shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/*")
+```scala mdoc:compile-only
+val shakespeare = sc.textFile("gs://dataflow-samples/shakespeare/*")
 
-def wordCount = shakespeare
+val wordCount = shakespeare
     .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
     .countByValue
     .map(_.toString)
     .saveAsTextFile("gs://<gcs-output-dir>")
 
-def result = sc
+val result = sc
     .run()
     .waitUntilDone()
     .tap(wordCount)
@@ -226,17 +227,17 @@ import com.spotify.scio.bigquery._
 def sc: ScioContext = ???
 ```
 
-```scala mdoc
-def tornadoes = sc.bigQuerySelect(Query("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]"))
+```scala mdoc:compile-only
+val tornadoes = sc.bigQuerySelect(Query("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]"))
  
-def counts = tornadoes
+val counts = tornadoes
     .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getLong("month")) else Nil)
     .countByValue
     .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
     .take(3)
     .materialize
 
-def result = sc
+val result = sc
     .run()
     .waitUntilDone()
     .tap(counts)

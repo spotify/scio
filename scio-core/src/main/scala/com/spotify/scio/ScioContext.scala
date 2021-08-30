@@ -18,9 +18,8 @@
 package com.spotify.scio
 
 import java.beans.Introspector
-import java.io.{ByteArrayOutputStream, File, PrintStream}
+import java.io.File
 import java.net.URI
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -39,7 +38,7 @@ import org.apache.beam.sdk.metrics.Counter
 import org.apache.beam.sdk.options._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
-import org.apache.beam.sdk.{Pipeline, PipelineResult, io => beam}
+import org.apache.beam.sdk.{io => beam, Pipeline, PipelineResult}
 import org.joda.time
 import org.joda.time.Instant
 import org.slf4j.LoggerFactory
@@ -177,14 +176,13 @@ object ContextAndArgs {
   }
 
   import caseapp._
-  import caseapp.core.help._
   import caseapp.core.parser.ParserWithNameFormatter
 
   object TypedParser {
     final def apply[T]()(implicit parser: Parser[T], help: Help[T]): TypedParser[T] = {
       val parserOverride = parser match {
-        case p: ParserWithNameFormatter[T] => p
-        case p                             => p.nameFormatter(_.name)
+        case p: ParserWithNameFormatter[T, _] => p
+        case p                                => p.nameFormatter(_.name)
       }
       val helpOverride =
         help.withNameFormatter(parserOverride.defaultNameFormatter).asInstanceOf[Help[T]]
@@ -219,17 +217,7 @@ object ContextAndArgs {
         case Right((_, _, help, _)) if help =>
           Success(Left(Help[T].help))
         case Right((_, usage, _, _)) if usage =>
-          val sysProps = SysProps.properties.map(_.show).mkString("\n")
-          val baos = new ByteArrayOutputStream()
-          val pos = new PrintStream(baos)
-
-          for {
-            i <- PipelineOptionsFactory.getRegisteredOptions.asScala
-          } PipelineOptionsFactory.printHelp(pos, i)
-          pos.close()
-
-          val msg = sysProps + Help[T].help + new String(baos.toByteArray, StandardCharsets.UTF_8)
-          Success(Left(msg))
+          Success(Left(Help[T].help))
         case Right((Right(t), _, _, _)) =>
           val (opts, unused) = ScioContext.parseArguments[PipelineOptions](remainingArgs)
           val unusedMap = unused.asMap
@@ -294,6 +282,10 @@ object ContextAndArgs {
   def apply(args: Array[String]): (ScioContext, Args) =
     withParser(DefaultParser[PipelineOptions]()).apply(args)
 
+  @deprecated(
+    "Case-app based argument parsing will be removed in 0.11.0, use PipelineOptions instead",
+    "0.10.4"
+  )
   def typed[T](args: Array[String])(implicit tap: TypedArgsParser[T, Try]): (ScioContext, T) =
     withParser(tap.parser).apply(args)
 
@@ -321,8 +313,8 @@ object ContextAndArgs {
 /**
  * ScioExecutionContext is the result of [[ScioContext#run()]].
  *
- * This is a handle to the underlying running job and allows getting the state,
- * checking if it's completed and to wait for it's execution.
+ * This is a handle to the underlying running job and allows getting the state, checking if it's
+ * completed and to wait for it's execution.
  */
 trait ScioExecutionContext {
   def pipelineResult: PipelineResult
@@ -349,8 +341,8 @@ trait ScioExecutionContext {
   ): ScioResult
 
   /**
-   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or
-   * `FAILED`). Throw exception otherwise.
+   * Wait until the pipeline finishes with the State `DONE` (as opposed to `CANCELLED` or `FAILED`).
+   * Throw exception otherwise.
    */
   def waitUntilDone(
     duration: Duration = awaitDuration,
@@ -485,10 +477,14 @@ object ScioContext {
  * Main entry point for Scio functionality. A ScioContext represents a pipeline and can be used to
  * create SCollections and distributed caches on that cluster.
  *
- * @groupname dist_cache Distributed Cache
- * @groupname in_memory In-memory Collections
- * @groupname input Input Sources
- * @groupname Ungrouped Other Members
+ * @groupname dist_cache
+ *   Distributed Cache
+ * @groupname in_memory
+ *   In-memory Collections
+ * @groupname input
+ *   Input Sources
+ * @groupname Ungrouped
+ *   Other Members
  */
 class ScioContext private[scio] (
   val options: PipelineOptions,
@@ -620,10 +616,11 @@ class ScioContext private[scio] (
   /**
    * Runs the underlying pipeline.
    *
-   * Running closes the context and no further transformations can be applied to the
-   * pipeline once the context is closed.
+   * Running closes the context and no further transformations can be applied to the pipeline once
+   * the context is closed.
    *
-   * @return the [[ScioExecutionContext]] for the underlying job execution.
+   * @return
+   *   the [[ScioExecutionContext]] for the underlying job execution.
    */
   def run(): ScioExecutionContext = requireNotClosed {
     _onClose(())
@@ -791,11 +788,13 @@ class ScioContext private[scio] (
 
   /**
    * Generic read method for all `ScioIO[T]` implementations, which will invoke the provided IO's
-   * [[com.spotify.scio.io.ScioIO[T]#readWithContext]] method along with read configurations
-   * passed in. The IO class can delegate test-specific behavior if necessary.
+   * [[com.spotify.scio.io.ScioIO[T]#readWithContext]] method along with read configurations passed
+   * in. The IO class can delegate test-specific behavior if necessary.
    *
-   * @param io     an implementation of `ScioIO[T]` trait
-   * @param params configurations need to pass to perform underline read implementation
+   * @param io
+   *   an implementation of `ScioIO[T]` trait
+   * @param params
+   *   configurations need to pass to perform underline read implementation
    */
   def read[T](io: ScioIO[T])(params: io.ReadP): SCollection[T] =
     io.readWithContext(this, params)
@@ -809,16 +808,18 @@ class ScioContext private[scio] (
 
   /** Create a union of multiple SCollections. Supports empty lists. */
   // `T: Coder` context bound is required since `scs` might be empty.
-  def unionAll[T: Coder](scs: Iterable[SCollection[T]]): SCollection[T] =
+  def unionAll[T: Coder](scs: => Iterable[SCollection[T]]): SCollection[T] = {
+    val tfName = this.tfName // evaluate eagerly to avoid overriding `scs` names
     scs match {
       case Nil => empty()
       case contents =>
         wrap(
           PCollectionList
             .of(contents.map(_.internal).asJava)
-            .apply(this.tfName, Flatten.pCollections())
+            .apply(tfName, Flatten.pCollections())
         )
     }
+  }
 
   /** Form an empty SCollection. */
   def empty[T: Coder](): SCollection[T] = parallelize(Nil)
@@ -904,8 +905,10 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
 
   /**
    * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance.
-   * @param uri Google Cloud Storage URI of the file to be distributed to all workers
-   * @param initFn function to initialized the distributed file
+   * @param uri
+   *   Google Cloud Storage URI of the file to be distributed to all workers
+   * @param initFn
+   *   function to initialized the distributed file
    *
    * {{{
    * // Prepare distributed cache as Map[Int, String]
@@ -933,8 +936,10 @@ class DistCacheScioContext private[scio] (self: ScioContext) {
 
   /**
    * Create a new [[com.spotify.scio.values.DistCache DistCache]] instance.
-   * @param uris Google Cloud Storage URIs of the files to be distributed to all workers
-   * @param initFn function to initialized the distributed files
+   * @param uris
+   *   Google Cloud Storage URIs of the files to be distributed to all workers
+   * @param initFn
+   *   function to initialized the distributed files
    * @group dist_cache
    */
   def distCache[F](uris: Seq[String])(initFn: Seq[File] => F): DistCache[F] =

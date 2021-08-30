@@ -35,8 +35,8 @@ final class GenericRecordSCollectionOps(private val self: SCollection[GenericRec
     extends AnyVal {
 
   /**
-   * Save this SCollection of type
-   * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
+   * Save this SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an
+   * Avro file.
    */
   def saveAsAvroFile(
     path: String,
@@ -75,8 +75,8 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
     extends AnyVal {
 
   /**
-   * Save this SCollection of type
-   * [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro file.
+   * Save this SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an
+   * Avro file.
    */
   def saveAsAvroFile(
     path: String,
@@ -114,8 +114,8 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
   /**
    * Save this SCollection as a Protobuf file.
    *
-   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage
-   * Avro's block file format.
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
    */
   def saveAsProtobufFile(
     path: String,

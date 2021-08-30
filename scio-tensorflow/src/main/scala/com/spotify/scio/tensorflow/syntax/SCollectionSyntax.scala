@@ -32,24 +32,30 @@ import com.spotify.scio.tensorflow.{
 import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.TensorFlowModel
 
-/** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods. */
-final class PredictSCollectionOps[T](private val self: SCollection[T]) {
+/**
+ * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
+ */
+final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T]) {
 
   /**
    * Predict/infer/forward-pass on a TensorFlow Saved Model.
    *
-   * @param savedModelUri URI of Saved TensorFlow model
-   * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
-   * @param options   configuration parameters for the session specified as a
-   *                 `com.spotify.zoltar.tf.TensorFlowModel.Options`.
-   * @param inFn     translates input elements of T to map of input-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
-   *                 [[org.tensorflow.Tensor Tensor]]s.
-   * @param outFn    translates output of prediction from map of output-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
-   *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
-   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used
-   *                       to run the prediction.
+   * @param savedModelUri
+   *   URI of Saved TensorFlow model
+   * @param fetchOps
+   *   names of [[org.tensorflow.Operation]] s to fetch the results from
+   * @param options
+   *   configuration parameters for the session specified as a
+   *   `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param inFn
+   *   translates input elements of T to map of input-operation -> [[org.tensorflow.Tensor Tensor]].
+   *   This method takes ownership of the [[org.tensorflow.Tensor Tensor]] s.
+   * @param outFn
+   *   translates output of prediction from map of output-operation ->
+   *   [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes ownership of the
+   *   [[org.tensorflow.Tensor Tensor]] s.
+   * @param signatureName
+   *   name of [[org.tensorflow.framework.SignatureDef]] s to be used to run the prediction.
    */
   def predict[V: Coder, W](
     savedModelUri: String,
@@ -63,21 +69,24 @@ final class PredictSCollectionOps[T](private val self: SCollection[T]) {
     )
 
   /**
-   * Predict/infer/forward-pass on a TensorFlow Saved Model.
-   * Only exported ops can be fetched.
+   * Predict/infer/forward-pass on a TensorFlow Saved Model. Only exported ops can be fetched.
    *
-   * @param savedModelUri URI of Saved TensorFlow model
-   * @param options   configuration parameters for the session specified as a
-   *                 `com.spotify.zoltar.tf.TensorFlowModel.Options`.
-   * @param fetchOps names of [[Option]] of [[org.tensorflow.Operation]]s to fetch the results from
-   * @param inFn     translates input elements of T to map of input-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]]. This method takes ownership of the
-   *                 [[org.tensorflow.Tensor Tensor]]s.
-   * @param outFn    translates output of prediction from map of output-operation ->
-   *                 [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
-   *                 ownership of the [[org.tensorflow.Tensor Tensor]]s.
-   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used
-   *                       to run the prediction.
+   * @param savedModelUri
+   *   URI of Saved TensorFlow model
+   * @param options
+   *   configuration parameters for the session specified as a
+   *   `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param fetchOps
+   *   names of [[Option]] of [[org.tensorflow.Operation]] s to fetch the results from
+   * @param inFn
+   *   translates input elements of T to map of input-operation -> [[org.tensorflow.Tensor Tensor]].
+   *   This method takes ownership of the [[org.tensorflow.Tensor Tensor]] s.
+   * @param outFn
+   *   translates output of prediction from map of output-operation ->
+   *   [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes ownership of the
+   *   [[org.tensorflow.Tensor Tensor]] s.
+   * @param signatureName
+   *   name of [[org.tensorflow.framework.SignatureDef]] s to be used to run the prediction.
    */
   def predictWithSigDef[V: Coder, W](
     savedModelUri: String,
@@ -91,19 +100,23 @@ final class PredictSCollectionOps[T](private val self: SCollection[T]) {
     )
 
   /**
-   * Predict/infer/forward-pass on a TensorFlow Saved Model.
-   * Only exported ops can be fetched.
+   * Predict/infer/forward-pass on a TensorFlow Saved Model. Only exported ops can be fetched.
    *
-   * @param savedModelUri  URI of Saved TensorFlow model
-   * @param options        configuration parameters for the session specified as a
-   *                       `com.spotify.zoltar.tf.TensorFlowModel.Options`.
-   * @param exampleInputOp name of [[org.tensorflow.Operation]]s to feed an example.
-   * @param fetchOps names of [[org.tensorflow.Operation]]s to fetch the results from
-   * @param signatureName  name of [[org.tensorflow.framework.SignatureDef]]s to be used
-   *                       to run the prediction.
-   * @param outFn          translates output of prediction from map of output-operation ->
-   *                       [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes
-   *                       ownership of the [[org.tensorflow.Tensor Tensor]]s.
+   * @param savedModelUri
+   *   URI of Saved TensorFlow model
+   * @param options
+   *   configuration parameters for the session specified as a
+   *   `com.spotify.zoltar.tf.TensorFlowModel.Options`.
+   * @param exampleInputOp
+   *   name of [[org.tensorflow.Operation]] s to feed an example.
+   * @param fetchOps
+   *   names of [[org.tensorflow.Operation]] s to fetch the results from
+   * @param signatureName
+   *   name of [[org.tensorflow.framework.SignatureDef]] s to be used to run the prediction.
+   * @param outFn
+   *   translates output of prediction from map of output-operation ->
+   *   [[org.tensorflow.Tensor Tensor]], to elements of V. This method takes ownership of the
+   *   [[org.tensorflow.Tensor Tensor]] s.
    */
   def predictTfExamples[V: Coder](
     savedModelUri: String,
@@ -158,8 +171,8 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
   def mergeExamples(e: Seq[Example]): Example = SeqExampleSCollectionOps.mergeExamples(e)
 
   /**
-   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files.
-   * Caveat: if some feature names are repeated in different feature specs, they will be collapsed.
+   * Merge each [[Seq]] of [[Example]] and save them as TensorFlow TFRecord files. Caveat: if some
+   * feature names are repeated in different feature specs, they will be collapsed.
    *
    * @group output
    */
@@ -178,8 +191,9 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
 
   /**
    * Save this SCollection as a TensorFlow TFRecord file. Note that elements must be of type
-   * `Array[Byte]`. The recommended record encoding is `org.tensorflow.proto.example.Example` protocol
-   * buffers (which contain `org.tensorflow.proto.example.Features` as a field) serialized as bytes.
+   * `Array[Byte]`. The recommended record encoding is `org.tensorflow.proto.example.Example`
+   * protocol buffers (which contain `org.tensorflow.proto.example.Features` as a field) serialized
+   * as bytes.
    *
    * @group output
    */

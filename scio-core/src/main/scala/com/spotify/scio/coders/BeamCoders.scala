@@ -98,7 +98,7 @@ private[scio] object BeamCoders {
 
   /** Get key-value coders from a `SideInput[Map[K, Iterable[V]]]`. */
   def getMultiMapKV[K, V](si: SideInput[Map[K, Iterable[V]]]): (Coder[K], Coder[V]) = {
-    val coder = si.view.getPCollection.getCoder.asInstanceOf[beam.KvCoder[_, _]].getValueCoder
+    val coder = si.view.getPCollection.getCoder
     val (k, v) = unwrap(coder) match {
       // Beam's `View.asMultiMap`
       case (c: beam.KvCoder[K, V] @unchecked) => (c.getKeyCoder, c.getValueCoder)

@@ -18,13 +18,21 @@
 package com.spotify.scio.transforms
 
 import java.util.UUID
-
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.transforms.TestCloseableResource.{clientsOpen, clientsOpened}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.util.SerializableUtils
+import org.scalatest.BeforeAndAfter
 
-class DoFnWithResourceTest extends PipelineSpec {
+import java.util.concurrent.atomic.AtomicInteger
+
+class DoFnWithResourceTest extends PipelineSpec with BeforeAndAfter {
+
+  before {
+    TestCloseableResource.resetCounters()
+  }
+
   private def cloneAndProcess(doFn: DoFnWithResource[String, String, TestResource]) = {
     val clone = SerializableUtils.ensureSerializable(doFn)
     clone.setup()
@@ -96,10 +104,82 @@ class DoFnWithResourceTest extends PipelineSpec {
 
     runWithData(Seq("a", "b", "c"))(_.parDo(c1)) should contain theSameElementsAs Seq("A", "B", "C")
   }
+
+  it should "support per class closeable resources" in {
+    val i1 = new DoFnWithPerClassResourceCloseable
+    val i2 = new DoFnWithPerClassResourceCloseable
+
+    runWithData(Seq("a", "b", "c"))(_.parDo(i1).parDo(i2)) should contain theSameElementsAs Seq(
+      "A",
+      "B",
+      "C"
+    )
+
+    TestCloseableResource.clientsOpened.get() should equal(1)
+
+    TestCloseableResource.allResourcesClosed should be(true)
+  }
+
+  it should "support per instance closeable resources" in {
+    val i1 = new DoFnWithPerInstanceResourceCloseable
+    val i2 = new DoFnWithPerInstanceResourceCloseable
+
+    runWithData(Seq("a", "b", "c"))(_.parDo(i1).parDo(i2)) should contain theSameElementsAs Seq(
+      "A",
+      "B",
+      "C"
+    )
+
+    TestCloseableResource.clientsOpened.get() should equal(2)
+    TestCloseableResource.allResourcesClosed should be(true)
+  }
+
+  it should "support per core closeable resources" in {
+    val i1 = new DoFnWithPerCoreResourceCloseable
+    val i2 = new DoFnWithPerCoreResourceCloseable
+
+    runWithData(Seq("a", "b", "c"))(_.parDo(i1).parDo(i2)) should contain theSameElementsAs Seq(
+      "A",
+      "B",
+      "C"
+    )
+
+    TestCloseableResource.clientsOpened.get() should be >= 2
+    TestCloseableResource.allResourcesClosed should be(true)
+  }
 }
 
 private case class TestResource(id: String) {
   def processElement(input: String): String = input.toUpperCase
+}
+
+private object TestCloseableResource {
+  val clientsOpen = new AtomicInteger(0)
+  val clientsOpened = new AtomicInteger(0)
+
+  def resetCounters(): Unit = {
+    clientsOpen.set(0)
+    clientsOpened.set(0)
+  }
+
+  def allResourcesClosed: Boolean = clientsOpen.get() == 0
+}
+
+private case class TestCloseableResource() extends AutoCloseable {
+
+  clientsOpened.incrementAndGet()
+  clientsOpen.incrementAndGet()
+
+  def processElement(input: String): String = {
+    if (TestCloseableResource.allResourcesClosed) {
+      throw new Exception("Called when it was closed")
+    } else {
+      input.toUpperCase
+    }
+  }
+
+  override def close(): Unit =
+    clientsOpen.decrementAndGet()
 }
 
 abstract private class BaseDoFn extends DoFnWithResource[String, String, TestResource] {
@@ -121,6 +201,30 @@ private class DoFnWithPerInstanceResource extends BaseDoFn {
 }
 
 private class DoFnWithPerCoreResource extends BaseDoFn {
+  override def getResourceType: DoFnWithResource.ResourceType =
+    ResourceType.PER_CLONE
+}
+
+abstract private class BaseDoFnCloseable
+    extends DoFnWithResource[String, String, TestCloseableResource] {
+  override def createResource(): TestCloseableResource =
+    TestCloseableResource()
+  @ProcessElement
+  def processElement(c: ProcessContext): Unit =
+    c.output(getResource.processElement(c.element()))
+}
+
+private class DoFnWithPerClassResourceCloseable extends BaseDoFnCloseable {
+  override def getResourceType: DoFnWithResource.ResourceType =
+    ResourceType.PER_CLASS
+}
+
+private class DoFnWithPerInstanceResourceCloseable extends BaseDoFnCloseable {
+  override def getResourceType: DoFnWithResource.ResourceType =
+    ResourceType.PER_INSTANCE
+}
+
+private class DoFnWithPerCoreResourceCloseable extends BaseDoFnCloseable {
   override def getResourceType: DoFnWithResource.ResourceType =
     ResourceType.PER_CLONE
 }

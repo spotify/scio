@@ -25,10 +25,10 @@ Credentials(
 
 ## Automatic (CI)
 
-Checkout and update master
+Checkout and update the `main` branch.
 
 ```bash
-git checkout master
+git checkout main
 
 git pull
 ```
@@ -52,10 +52,8 @@ git push origin vX.Y.Z
 ## After successfully published artifacts
 
 - Run @github[scripts/bump_scio.sh](/scripts/bump_scio.sh) to update [homebrew formula](https://github.com/spotify/homebrew-public/blob/master/scio.rb) and `scioVersion` in downstream repos including [scio.g8](https://github.com/spotify/scio.g8), [featran](https://github.com/spotify/featran), etc.
-- Bump version in the internal `scio-cookie` and monorepo
-- Send internal announcement to scio-users@spotify.com and flatmap-announce@spotify.com
 - Send external announcement to scio-users@googlegroups.com and user@beam.apache.org
-- Announce on internal and public [Slack](https://slackin.spotify.com/)
+- Announce on public [Slack](https://slackin.spotify.com/)
 - Announce on Twitter
 
 <sup>*</sup>Starting with `0.4.0` all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order; Harry Potter spells starting with `0.8.0`; Latin names of cities in ascending alphabetical order starting `0.10.0`.
@@ -64,6 +62,10 @@ git push origin vX.Y.Z
 
 ### 0.10.x
 
+- [v0.10.4](https://github.com/spotify/scio/releases/tag/v0.10.4) - _"Edessa"_
+- [v0.10.3](https://github.com/spotify/scio/releases/tag/v0.10.3) - _"Dallasium"_
+- [v0.10.2](https://github.com/spotify/scio/releases/tag/v0.10.2) - _"Cantabrigia"_
+- [v0.10.1](https://github.com/spotify/scio/releases/tag/v0.10.1) - _"Belli Horizontis"_
 - [v0.10.0](https://github.com/spotify/scio/releases/tag/v0.10.0) - _"Aquae Sextiae"_
 
 ### 0.9.x

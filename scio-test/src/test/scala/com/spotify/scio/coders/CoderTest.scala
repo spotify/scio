@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{CoderException, Coder => BCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
@@ -33,6 +33,7 @@ import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.twitter.algebird.Moments
 
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
@@ -215,7 +216,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   object Avro {
-    import com.spotify.scio.avro.{User => AvUser, Account, Address}
+    import com.spotify.scio.avro.{Account, Address, User => AvUser}
 
     val accounts: List[Account] = List(new Account(1, "tyoe", "name", 12.5))
     val address =
@@ -596,6 +597,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "optimize for AnyVal" in {
     coderIsSerializable[AnyValExample]
     Coder[AnyValExample] shouldBe a[Transform[String, AnyValExample]]
+  }
+
+  it should "support Algebird's Moments" in {
+    coderIsSerializable[Moments]
+    new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
+    Moments(12) coderShould roundtrip()
   }
 
 }

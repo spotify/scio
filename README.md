@@ -1,5 +1,4 @@
-Scio
-====
+# Scio
 
 [![Build Status](https://img.shields.io/github/workflow/status/spotify/scio/ci)](https://github.com/spotify/scio/actions?query=workflow%3Aci)
 [![codecov.io](https://codecov.io/github/spotify/scio/coverage.svg?branch=master)](https://codecov.io/github/spotify/scio?branch=master)
@@ -21,7 +20,7 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 
 - Scala API close to that of Spark and Scalding core APIs
 - Unified batch and streaming programming model
-- Fully managed service<sup>*</sup>
+- Fully managed service<sup>\*</sup>
 - Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable
 - JDBC, [TensorFlow](http://tensorflow.org/) TFRecords, Cassandra, Elasticsearch and Parquet I/O
 - Interactive mode with Scio REPL
@@ -30,7 +29,7 @@ Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while e
 - Pipeline orchestration with [Scala Futures](http://docs.scala-lang.org/overviews/core/futures.html)
 - Distributed cache
 
-<sup>*</sup> provided by Google Cloud Dataflow
+<sup>\*</sup> provided by Google Cloud Dataflow
 
 # Quick Start
 
@@ -46,7 +45,7 @@ Switch to the new repo (default `scio-job`) and build it:
 
 ```
 cd scio-job
-sbt stage 
+sbt stage
 ```
 
 Run the included word count example:
@@ -77,17 +76,20 @@ Scio includes the following artifacts:
 - `scio-core`: core library
 - `scio-test`: test utilities, add to your project as a "test" dependency
 - `scio-avro`: add-on for Avro, can also be used standalone
-- `scio-bigquery`: add-on for BigQuery, can also be used standalone
-- `scio-bigtable`: add-on for Bigtable
+- `scio-google-cloud-platform`: add-on for Google Cloud IO's: BigQuery, Bigtable, Pub/Sub, Datastore, Spanner
 - `scio-cassandra*`: add-ons for Cassandra
 - `scio-elasticsearch*`: add-ons for Elasticsearch
 - `scio-extra`: extra utilities for working with collections, Breeze, etc., best effort support
 - `scio-jdbc`: add-on for JDBC IO
 - `scio-parquet`: add-on for Parquet
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
+- `scio-redis`: add-on for Redis
+- `scio-smb`: add-on for Sort Merge Bucket operations
+- `scio-sql`: add-on for staticly typed Beam SQL support
+- `scio-repl`: extension of the Scala REPL with Scio specific operations
 
 # License
 
-Copyright 2016 Spotify AB.
+Copyright 2021 Spotify AB.
 
 Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0

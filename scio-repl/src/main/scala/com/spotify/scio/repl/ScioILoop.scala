@@ -28,8 +28,10 @@ import scala.collection.compat.immutable.ArraySeq
 
 /**
  * ScioILoop - core of Scio REPL.
- * @param scioClassLoader [[ScioReplClassLoader]] used for runtime/in-memory classloading
- * @param args user arguments for Scio REPL
+ * @param scioClassLoader
+ *   [[ScioReplClassLoader]] used for runtime/in-memory classloading
+ * @param args
+ *   user arguments for Scio REPL
  */
 class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILoop(command) {
 
@@ -53,8 +55,8 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
   // =======================================================================
 
   /**
-   * REPL magic to get a new Scio context using arguments from the command line or :scioOpts.
-   * User may specify a name for the context val, default is `sc`.
+   * REPL magic to get a new Scio context using arguments from the command line or :scioOpts. User
+   * may specify a name for the context val, default is `sc`.
    */
   private def newScioCmdImpl(name: String) = {
     val sc = if (name.nonEmpty) name else "sc"
@@ -74,8 +76,8 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
     LoopCommand.cmd("newScio", "<[context-name] | sc>", "get a new Scio context", newScioCmdImpl)
 
   /**
-   * REPL magic to get a new __local__ Scio context.
-   * User may specify a name for the context val, default is `sc`.
+   * REPL magic to get a new __local__ Scio context. User may specify a name for the context val,
+   * default is `sc`.
    */
   private def newLocalScioCmdImpl(name: String) = {
     val sc = if (name.nonEmpty) name else "sc"

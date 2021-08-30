@@ -24,8 +24,8 @@ import com.twitter.algebird.Semigroup
 /**
  * Utilities for Breeze.
  *
- * Includes [[com.twitter.algebird.Semigroup Semigroup]]s for Breeze data types like
- * [[breeze.linalg.DenseVector DenseVector]]s and [[breeze.linalg.DenseMatrix DenseMatrix]]s.
+ * Includes [[com.twitter.algebird.Semigroup Semigroup]] s for Breeze data types like
+ * [[breeze.linalg.DenseVector DenseVector]] s and [[breeze.linalg.DenseMatrix DenseMatrix]] s.
  *
  * {{{
  * import com.spotify.scio.extra.Breeze._

@@ -49,11 +49,10 @@ final class TapOf[A] private extends TapT[A] {
 object TapOf { def apply[A]: TapT.Aux[A, A] = new TapOf[A] }
 
 /**
- * Base trait for all Read/Write IO classes. Every IO connector must implement this.
- * This trait has two abstract implicit methods #read, #write that need to be implemented
- * in every subtype. Look at the [[com.spotify.scio.io.TextIO]] subclass for a reference
- * implementation. IO connectors can choose to override #readTest and #writeTest if custom
- * test logic is necessary.
+ * Base trait for all Read/Write IO classes. Every IO connector must implement this. This trait has
+ * two abstract implicit methods #read, #write that need to be implemented in every subtype. Look at
+ * the [[com.spotify.scio.io.TextIO]] subclass for a reference implementation. IO connectors can
+ * choose to override #readTest and #writeTest if custom test logic is necessary.
  */
 trait ScioIO[T] {
   // abstract types for read/write params.
@@ -86,10 +85,10 @@ trait ScioIO[T] {
   }
 
   /**
-   * Write options also return a `ClosedTap`. Once the job completes you can open the `Tap`.
-   * Tap abstracts away the logic of reading the dataset directly as an Iterator[T] or
-   * re-opening it in another ScioContext. The Future is complete once the job finishes.
-   * This can be used to do light weight pipeline orchestration e.g. WordCountOrchestration.scala.
+   * Write options also return a `ClosedTap`. Once the job completes you can open the `Tap`. Tap
+   * abstracts away the logic of reading the dataset directly as an Iterator[T] or re-opening it in
+   * another ScioContext. The Future is complete once the job finishes. This can be used to do light
+   * weight pipeline orchestration e.g. WordCountOrchestration.scala.
    */
   def tap(read: ReadP): Tap[tapT.T]
 }

@@ -21,13 +21,12 @@ import java.io.File
 import java.nio.file.Files
 import java.util.Arrays
 
-import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
+import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.values.KV
 import org.apache.commons.io.FileUtils
 
 import scala.jdk.CollectionConverters._
@@ -567,8 +566,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
@@ -600,8 +598,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
@@ -632,8 +629,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }
@@ -664,8 +660,7 @@ class SparkeyTest extends PipelineSpec {
       .tap(sparkeyMaterialized)
       .value
       .next
-      .asInstanceOf[KV[Any, SparkeyUri]]
-      .getValue
+      .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
   }

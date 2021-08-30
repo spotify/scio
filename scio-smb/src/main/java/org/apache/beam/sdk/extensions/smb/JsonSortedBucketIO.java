@@ -21,7 +21,10 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
+
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -86,7 +89,7 @@ public class JsonSortedBucketIO {
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<TableRow> {
     @Nullable
-    abstract ImmutableList<ResourceId> getInputDirectories();
+    abstract ImmutableList<String> getInputDirectories();
 
     abstract String getFilenameSuffix();
 
@@ -101,9 +104,9 @@ public class JsonSortedBucketIO {
     abstract static class Builder {
       abstract Builder setTupleTag(TupleTag<TableRow> tupleTag);
 
-      abstract Builder setInputDirectories(ResourceId... inputDirectories);
+      abstract Builder setInputDirectories(String... inputDirectories);
 
-      abstract Builder setInputDirectories(List<ResourceId> inputDirectories);
+      abstract Builder setInputDirectories(List<String> inputDirectories);
 
       abstract Builder setFilenameSuffix(String filenameSuffix);
 
@@ -115,9 +118,13 @@ public class JsonSortedBucketIO {
     }
 
     /** Reads from the given input directory. */
-    public Read from(String inputDirectory) {
+    public Read from(String... inputDirectories) {
+      return from(Arrays.asList(inputDirectories));
+    }
+
+    public Read from(List<String> inputDirectories) {
       return toBuilder()
-          .setInputDirectories(FileSystems.matchNewResource(inputDirectory, true))
+          .setInputDirectories(inputDirectories)
           .build();
     }
 

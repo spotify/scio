@@ -61,11 +61,11 @@ final class BigQuery private (val client: Client) {
   /**
    * Get a typed iterator for a BigQuery SELECT query or table.
    *
-   * Note that `T` must be annotated with [[BigQueryType.fromSchema]],
-   * [[BigQueryType.fromTable]], [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
+   * Note that `T` must be annotated with [[BigQueryType.fromSchema]], [[BigQueryType.fromTable]],
+   * [[BigQueryType.fromQuery]], or [[BigQueryType.toTable]].
    *
-   * By default the source (table or query) specified in the annotation will be used, but it can
-   * be overridden with the `newSource` parameter. For example:
+   * By default the source (table or query) specified in the annotation will be used, but it can be
+   * overridden with the `newSource` parameter. For example:
    *
    * {{{
    * @BigQueryType.fromTable("bigquery-public-data:samples.gsod")
@@ -171,9 +171,8 @@ object BigQuery {
   /**
    * Get the default BigQueryClient instance.
    *
-   * Project must be set via `bigquery.project` system property.
-   * An optional JSON secret file can be set via `bigquery.secret`.
-   * For example, by adding the following code at the beginning of a job:
+   * Project must be set via `bigquery.project` system property. An optional JSON secret file can be
+   * set via `bigquery.secret`. For example, by adding the following code at the beginning of a job:
    * {{{
    * sys.props("bigquery.project") = "my-project"
    * sys.props("bigquery.secret") = "/path/to/secret.json"

@@ -28,9 +28,9 @@ import com.twitter.chill.IKryoRegistrar
 import org.apache.beam.sdk.coders.{
   AtomicCoder,
   ByteArrayCoder,
+  Coder => BCoder,
   SerializableCoder,
-  StringUtf8Coder,
-  Coder => BCoder
+  StringUtf8Coder
 }
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.schemas.SchemaCoder

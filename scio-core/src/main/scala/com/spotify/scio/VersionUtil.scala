@@ -40,9 +40,7 @@ private[scio] object VersionUtil {
   private[this] val Url = "https://api.github.com/repos/spotify/scio/releases"
 
   /**
-   * example versions:
-   * version = "0.10.0-beta1+42-828dca9a-SNAPSHOT"
-   * version = "0.10.0-beta1"
+   * example versions: version = "0.10.0-beta1+42-828dca9a-SNAPSHOT" version = "0.10.0-beta1"
    * version = "0.10.0-SNAPSHOT"
    */
   private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)((-\w+)?(\+\d+-\w+(\+\d+-\d+)?(-\w+)?)?)?""".r
@@ -137,9 +135,10 @@ private[scio] object VersionUtil {
   def checkRunnerVersion(runner: Class[_ <: PipelineRunner[_ <: PipelineResult]]): Unit = {
     val name = runner.getSimpleName
     val version = ReleaseInfo.getReleaseInfo.getVersion
-    require(
-      version == BuildInfo.beamVersion,
-      s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
-    )
+    if (version != BuildInfo.beamVersion) {
+      Logger.warn(
+        s"Mismatched version for $name, expected: ${BuildInfo.beamVersion}, actual: $version"
+      )
+    }
   }
 }

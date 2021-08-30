@@ -31,7 +31,7 @@ import org.apache.beam.sdk.extensions.sql.impl.{BeamSqlEnv, BeamTableStatistics}
 import org.apache.beam.sdk.extensions.sql.meta.provider.{ReadOnlyTableProvider, TableProvider}
 import org.apache.beam.sdk.extensions.sql.meta.{BaseBeamTable, BeamSqlTable}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.apache.beam.sdk.schemas.{SchemaCoder, Schema => BSchema}
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import org.apache.beam.sdk.values._
 import org.apache.commons.lang3.exception.ExceptionUtils
 
@@ -185,8 +185,8 @@ private object QueryMacros {
   import scala.reflect.macros.blackbox
 
   /**
-   * Make sure that A is a concrete type bc. SQL macros can only
-   * materialize Schema[A] is A is concrete
+   * Make sure that A is a concrete type bc. SQL macros can only materialize Schema[A] is A is
+   * concrete
    */
   def assertConcrete[A: c.WeakTypeTag](c: blackbox.Context): Unit = {
     import c.universe._

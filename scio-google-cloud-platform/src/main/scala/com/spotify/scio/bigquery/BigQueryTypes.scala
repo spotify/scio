@@ -40,24 +40,26 @@ sealed trait Source
 final case class Query(underlying: String) extends Source {
 
   /**
-   *  A helper method to replace the "$LATEST" placeholder in query to the latest common partition.
-   *  For example:
-   *  {{{
-   *  @BigQueryType.fromQuery("SELECT ... FROM `project.data.foo_%s`", "$LATEST")
-   *  class Foo
+   * A helper method to replace the "$LATEST" placeholder in query to the latest common partition.
+   * For example:
+   * {{{
+   *   @BigQueryType.fromQuery("SELECT ... FROM `project.data.foo_%s`", "$LATEST")
+   *   class Foo
    *
-   *  val bq: BigQuery = BigQuery.defaultInstance()
-   *  scioContext.bigQuerySelect(Foo.queryAsSource("$LATEST").latest(bq))
-   *  }}}
+   *   val bq: BigQuery = BigQuery.defaultInstance()
+   *   scioContext.bigQuerySelect(Foo.queryAsSource("$LATEST").latest(bq))
+   * }}}
    *
-   *  Or, if your query string is a dynamic value which uses a "$LATEST" placeholder,
-   *  {{{
-   *  val dynamicSQLStr = "SELECT ... FROM some_table_$LATEST"
-   *  scioContext.bigQuerySelect(Query(dynamicSQLStr).latest(bq))
-   *  }}}
+   * Or, if your query string is a dynamic value which uses a "$LATEST" placeholder,
+   * {{{
+   *   val dynamicSQLStr = "SELECT ... FROM some_table_$LATEST"
+   *   scioContext.bigQuerySelect(Query(dynamicSQLStr).latest(bq))
+   * }}}
    *
-   * @param bq [[BigQuery]] client
-   * @return [[Query]] with "$LATEST" replaced
+   * @param bq
+   *   [[BigQuery]] client
+   * @return
+   *   [[Query]] with "$LATEST" replaced
    */
   def latest(bq: BigQuery): Query =
     Query(BigQueryPartitionUtil.latestQuery(bq, underlying))
@@ -66,8 +68,8 @@ final case class Query(underlying: String) extends Source {
 }
 
 /**
- * [[Table]] abstracts the multiple ways of referencing Bigquery tables.
- * Tables can be referenced by a table spec `String` or by a table reference [[GTableReference]].
+ * [[Table]] abstracts the multiple ways of referencing Bigquery tables. Tables can be referenced by
+ * a table spec `String` or by a table reference [[GTableReference]].
  *
  * Example:
  * {{{
@@ -87,8 +89,8 @@ final case class Query(underlying: String) extends Source {
  *   val table = Table.Ref(tableReference)
  * }}}
  *
- * A helper method is provided to replace the "$LATEST" placeholder in the table name
- * to the latest common partition.
+ * A helper method is provided to replace the "$LATEST" placeholder in the table name to the latest
+ * common partition.
  * {{{
  *   val table = Table.Spec("some_project:some_data.some_table_$LATEST").latest()
  * }}}
