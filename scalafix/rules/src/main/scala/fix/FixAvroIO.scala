@@ -43,7 +43,7 @@ class FixAvroIO extends SemanticRule("FixAvroIO") {
         value.symbol.info.get.signature match {
           case s @ MethodSignature(_, _, TypeRef(_, symbol, List(arg))) =>
             addImport(t.pos, importer"com.spotify.scio.avro._") +
-              Patch.addRight(name, s"[${arg}]")
+              Patch.addRight(name, s"[$arg]")
           case _ =>
             Patch.empty
         }
