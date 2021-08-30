@@ -35,7 +35,7 @@ import com.spotify.zoltar.tf.TensorFlowModel
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
  */
-final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T]) {
+final class PredictSCollectionOps[T](private val self: SCollection[T]) {
 
   /**
    * Predict/infer/forward-pass on a TensorFlow Saved Model.
