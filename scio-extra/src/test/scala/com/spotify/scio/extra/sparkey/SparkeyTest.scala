@@ -17,10 +17,6 @@
 
 package com.spotify.scio.extra.sparkey
 
-import java.io.File
-import java.nio.file.Files
-import java.util.Arrays
-
 import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.spotify.scio._
 import com.spotify.scio.testing._
@@ -29,6 +25,9 @@ import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.commons.io.FileUtils
 
+import java.io.File
+import java.nio.file.Files
+import java.util.Arrays
 import scala.jdk.CollectionConverters._
 
 final case class TestCache[K, V](testId: String) extends CacheT[K, V, CCache[K, V]] {
@@ -663,5 +662,25 @@ class SparkeyTest extends PipelineSpec {
       .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
+  }
+
+  it should "not override the regular hashJoin method" in {
+
+    val sc = ScioContext()
+
+    val lhsInput = Seq((1, "a"), (2, "c"), (3, "e"), (4, "g"))
+    val rhsInput = Seq((1, "b"), (2, "d"), (3, "f"))
+
+    val rhs = sc.parallelize(rhsInput)
+    val lhs = sc.parallelize(lhsInput)
+
+    val result = lhs
+      .hashJoin(rhs)
+      .materialize
+
+    val scioResult = sc.run().waitUntilFinish()
+    val expectedOutput = List((1, ("a", "b")), (2, ("c", "d")), (3, ("e", "f")))
+
+    scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
   }
 }
