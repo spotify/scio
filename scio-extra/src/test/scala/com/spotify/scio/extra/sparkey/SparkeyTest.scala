@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.sparkey
 
-import com.github.benmanes.caffeine.cache.{Caffeine, Cache => CCache}
+import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
