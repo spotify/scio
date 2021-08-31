@@ -175,64 +175,6 @@ object ContextAndArgs {
     }
   }
 
-  import caseapp._
-  import caseapp.core.parser.ParserWithNameFormatter
-
-  object TypedParser {
-    final def apply[T]()(implicit parser: Parser[T], help: Help[T]): TypedParser[T] = {
-      val parserOverride = parser match {
-        case p: ParserWithNameFormatter[T, _] => p
-        case p                                => p.nameFormatter(_.name)
-      }
-      val helpOverride =
-        help.withNameFormatter(parserOverride.defaultNameFormatter).asInstanceOf[Help[T]]
-      new TypedParser()(parserOverride, helpOverride)
-    }
-  }
-
-  final class TypedParser[T: Parser: Help] private () extends ArgsParser[Try] {
-    override type ArgsType = T
-
-    override def parse(args: Array[String]): Try[Result] = {
-      // limit the options passed to case-app
-      // to options supported in T
-      // fail if there are unsupported options
-      val supportedCustomArgs =
-        Parser[T].args
-          .flatMap(a => a.name +: a.extraNames)
-          .map(Parser[T].defaultNameFormatter.format) ++ List("help", "usage")
-
-      val Reg = "^-{1,2}(.+)$".r
-      val (customArgs, remainingArgs) =
-        args.partition {
-          case Reg(a) =>
-            val name = a.takeWhile(_ != '=')
-            supportedCustomArgs.contains(name)
-          case _ => true
-        }
-
-      CaseApp.detailedParseWithHelp[T](customArgs) match {
-        case Left(error) =>
-          Failure(new Exception(error.message))
-        case Right((_, _, help, _)) if help =>
-          Success(Left(Help[T].help))
-        case Right((_, usage, _, _)) if usage =>
-          Success(Left(Help[T].help))
-        case Right((Right(t), _, _, _)) =>
-          val (opts, unused) = ScioContext.parseArguments[PipelineOptions](remainingArgs)
-          val unusedMap = unused.asMap
-          if (unusedMap.isEmpty) {
-            Success(Right((opts, t)))
-          } else {
-            val msg = "Unknown arguments: " + unusedMap.keys.mkString(", ")
-            Failure(new Exception(msg))
-          }
-        case Right((Left(error), _, _, _)) =>
-          Failure(new Exception(error.message))
-      }
-    }
-  }
-
   final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private ()
       extends ArgsParser[Try] {
     override type ArgsType = T
@@ -251,13 +193,7 @@ object ContextAndArgs {
     def parser: ArgsParser[F]
   }
 
-  sealed trait LowPrioTypedArgsParser {
-    implicit def caseApp[T: Parser: Help]: TypedArgsParser[T, Try] = new TypedArgsParser[T, Try] {
-      override def parser: ArgsParser[Try] = TypedParser[T]()
-    }
-  }
-
-  object TypedArgsParser extends LowPrioTypedArgsParser {
+  object TypedArgsParser {
     implicit def pipelineOptions[T <: PipelineOptions: ClassTag]: TypedArgsParser[T, Try] =
       new TypedArgsParser[T, Try] {
         override def parser: ArgsParser[Try] = PipelineOptionsParser[T]()
@@ -282,10 +218,6 @@ object ContextAndArgs {
   def apply(args: Array[String]): (ScioContext, Args) =
     withParser(DefaultParser[PipelineOptions]()).apply(args)
 
-  @deprecated(
-    "Case-app based argument parsing will be removed in 0.11.0, use PipelineOptions instead",
-    "0.10.4"
-  )
   def typed[T](args: Array[String])(implicit tap: TypedArgsParser[T, Try]): (ScioContext, T) =
     withParser(tap.parser).apply(args)
 
