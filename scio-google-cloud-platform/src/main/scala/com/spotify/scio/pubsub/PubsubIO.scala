@@ -292,7 +292,7 @@ final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
 ) extends PubsubIOWithoutAttributes[T] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = setup(beam.PubsubIO.readMessages(), params)
-    sc.applyTransform(t).unsafeContravary[T]
+    sc.applyTransform(t).contravary[T]
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
