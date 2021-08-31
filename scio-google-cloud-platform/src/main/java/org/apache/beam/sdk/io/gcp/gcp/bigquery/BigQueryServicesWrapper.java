@@ -66,6 +66,7 @@ public class BigQueryServicesWrapper {
                         PaneInfo.NO_FIRING,
                         r))
             .collect(Collectors.toList());
+
     return bqServices
         .getDatasetService(bqOptions)
         .insertAll(
@@ -77,7 +78,8 @@ public class BigQueryServicesWrapper {
             ErrorContainer.TABLE_ROW_ERROR_CONTAINER,
             false,
             false,
-            false);
+            false,
+            new ArrayList<>());
   }
 
   public Table getTable(TableReference tableReference) throws IOException, InterruptedException {
