@@ -33,6 +33,7 @@ import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import com.spotify.scio.avro.Account
 import com.twitter.algebird.Moments
 
 final case class UserId(bytes: Seq[Byte])
@@ -605,6 +606,21 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     Moments(12) coderShould roundtrip()
   }
 
+  it should "deserialize Avro string fields as java.lang.Strings by default" in {
+    implicit val hasJavaStringType: Equality[Account] =
+      (roundtripped: Account, original: Any) =>
+        roundtripped.getName.getClass == classOf[
+          String
+        ] && roundtripped.getType.getClass == classOf[String]
+
+    Account
+      .newBuilder()
+      .setId(0)
+      .setType("foo")
+      .setName("bar")
+      .setAmount(1.0)
+      .build() coderShould roundtrip()
+  }
 }
 
 object RecursiveCase {
