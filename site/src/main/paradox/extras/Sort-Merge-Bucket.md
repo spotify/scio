@@ -74,6 +74,56 @@ If the key field of one or more PCollection elements is null, those elements wil
 bucket file, `bucket-null-keys.avro`. This file will be ignored in SMB reads and transforms and must
 be manually read by a downstream user.
 
+## Avro String keys
+
+If you're using `AvroSortedBucketIO`, be aware of how Avro String fields are decoded. Configuration
+errors can result in the following runtime exception:
+
+```bash
+Cause: java.lang.ClassCastException: class org.apache.avro.util.Utf8 cannot be cast to class java.lang.String
+[info]   at org.apache.beam.sdk.coders.StringUtf8Coder.encode(StringUtf8Coder.java:37)
+[info]   at org.apache.beam.sdk.extensions.smb.BucketMetadata.encodeKeyBytes(BucketMetadata.java:222)
+```
+
+### SpecificRecords
+
+Scio 0.10.4 specifically has a bug in the default String decoding behavior for `SpecificRecords`: by default,
+they're decoded at runtime into `org.apache.avro.util.Utf8` objects, rather than `java.lang.String`s
+(the generated getter/setter signatures use `CharSequence` as an umbrella type). This bug has been fixed in
+Scio 0.11+. If you cannot upgrade, you can mitigate this by ensuring your specificRecord schema the property
+`java-class: java.lang.String` set in the key field. This can be done either in the avsc/avdl schema or in
+Java/Scala code:
+
+```scala
+val mySchema: org.apache.avro.Schema = ???
+mySchema
+  .getField("keyField")
+  .schema()
+  .addProp(
+    org.apache.avro.specific.SpecificData.CLASS_PROP,
+    "java.lang.String".asInstanceOf[Object]
+  )
+```
+
+Note: If you're using [sbt-avro](https://github.com/sbt/sbt-avro#examples) for schema generation, you can
+just set the SBT property `avroStringType := "String"` instead.
+
+### GenericRecords
+
+For GenericRecords, `org.apache.avro.util.Utf8` decoding has always been the default. If you're reading
+Avro GenericRecords in your SMB join, set the `avro.java.string: String` property in the Schema of the key field.
+
+```scala
+val mySchema: org.apache.avro.Schema = ???
+mySchema
+  .getField("keyField")
+  .schema()
+  .addProp(
+    org.apache.avro.generic.GenericData.STRING_PROP,
+    "String".asInstanceOf[Object]
+  )
+```
+
 ## Tuning parameters for SMB transforms
 
 SMB reads should be more performant and less resource-intensive than regular joins or groupBys.
