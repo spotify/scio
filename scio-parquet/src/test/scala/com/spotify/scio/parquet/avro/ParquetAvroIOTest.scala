@@ -158,7 +158,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
       .saveAsDynamicParquetAvroFile(
         dir.toString,
-        Left { (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) =>
+        Left { (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) =>
           val intervalWindow = window.asInstanceOf[IntervalWindow]
           val year = intervalWindow.start().get(DateTimeFieldType.year())
           val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
