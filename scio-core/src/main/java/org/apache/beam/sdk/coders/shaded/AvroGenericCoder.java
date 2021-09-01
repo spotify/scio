@@ -15,11 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.beam.sdk.coders.shaded;
 
-package com.spotify.scio.sql.j;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
 
-public enum Level {
-  LOW,
-  MEDIUM,
-  HIGH
+/**
+ *
+ * @todo NOTE: SHADED FROM apache/beam@9375df7. REMOVE WHEN BEAM 2.33.0 IS RELEASED.
+ * AvroCoder specialisation for GenericRecord.
+ */
+public class AvroGenericCoder extends AvroCoder<GenericRecord> {
+  AvroGenericCoder(Schema schema) {
+    super(GenericRecord.class, schema);
+  }
+
+  public static AvroGenericCoder of(Schema schema) {
+    return new AvroGenericCoder(schema);
+  }
 }

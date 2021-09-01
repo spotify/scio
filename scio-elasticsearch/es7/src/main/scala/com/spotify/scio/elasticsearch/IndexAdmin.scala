@@ -24,7 +24,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest
 import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.client._
 import org.elasticsearch.client.indices.{CreateIndexRequest, CreateIndexResponse}
-import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.core.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
 
 import org.slf4j.LoggerFactory

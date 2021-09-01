@@ -17,13 +17,7 @@
 
 package com.spotify.scio
 
-import caseapp._
-import com.spotify.scio.ContextAndArgs.{
-  ArgsParser,
-  PipelineOptionsParser,
-  TypedParser,
-  UsageOrHelpException
-}
+import com.spotify.scio.ContextAndArgs.{ArgsParser, PipelineOptionsParser, UsageOrHelpException}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -118,77 +112,6 @@ class ArgsTest extends AnyFlatSpec with Matchers {
     val args =
       Args(Array("--key1=value1", "--key2=value2", "--key2=value3", "--key3"))
     args.toString shouldBe "Args(--key1=value1, --key2=[value2, value3], --key3=true)"
-  }
-
-  @AppName("FooBar App")
-  @AppVersion(BuildInfo.version)
-  @ProgName("foobar")
-  case class Arguments(
-    @HelpMessage("Path of the file to read from")
-    @ExtraName("i")
-    input: String,
-    @HelpMessage("Path of the file to write to")
-    @ExtraName("o")
-    output: String
-  )
-
-  it should "support typed args" in {
-    val rawArgs = Array("--input=value1", "--output=value2")
-    val result = TypedParser[Arguments]().parse(rawArgs)
-
-    result should be a Symbol("success")
-  }
-
-  it should "fail on missing args" in {
-    val rawArgs = Array("--input=value1")
-    val result = TypedParser[Arguments]().parse(rawArgs)
-
-    result should be a Symbol("failure")
-  }
-
-  it should "fail on unused args" in {
-    val rawArgs = Array("--input=value1", "--output=value2", "--unused")
-    val result = TypedParser[Arguments]().parse(rawArgs)
-
-    result should be a Symbol("failure")
-  }
-
-  @AppName("Scio Examples")
-  @AppVersion(BuildInfo.version)
-  @ProgName("com.spotify.scio.examples.MinimalWordCount")
-  case class CamelCaseArguments(
-    @HelpMessage("Path of the file to read from")
-    @ExtraName("i")
-    input: String = "/path/to/input",
-    @HelpMessage("Path of the file to write to")
-    @ExtraName("o")
-    output: String,
-    camelCaseTest: String
-  )
-
-  it should "#1436: support camelCase" in {
-    val rawArgs = Array("--output=/path/to/output", "--camelCaseTest=value1")
-    val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
-    result should be a Symbol("success")
-  }
-
-  it should "#1770: fail kebab-case" in {
-    val rawArgs = Array("--output=/path/to/output", "--camel-case-test=value1")
-    val result = TypedParser[CamelCaseArguments]().parse(rawArgs)
-    result should be a Symbol("failure")
-  }
-
-  it should "print camelCase in help messages" in {
-    val msg =
-      TypedParser[CamelCaseArguments]()
-        .parse(Array("--help"))
-        .toOption
-        .flatMap(_.left.toOption)
-        .getOrElse("no help message")
-
-    assert(msg.contains("com.spotify.scio.examples.MinimalWordCount"))
-    assert(msg.contains("Path of the file to read from"))
-    assert(msg.contains("Path of the file to write to"))
   }
 
   trait Options extends PipelineOptions {

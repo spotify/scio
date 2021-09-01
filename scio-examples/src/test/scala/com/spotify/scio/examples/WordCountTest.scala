@@ -42,36 +42,12 @@ class WordCountTest extends PipelineSpec {
       .run()
   }
 
-  "BeamSqlWordCount" should "work" in {
-    JobTest[com.spotify.scio.examples.BeamSqlWordCount.type]
-      .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
-      .run()
-  }
-
-  "BeamSqlInterpolatorWordCount" should "work" in {
-    JobTest[com.spotify.scio.examples.BeamSqlInterpolatorWordCount.type]
-      .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
-      .run()
-  }
-
   "DebuggingWordCount" should "work" in {
     val in = Seq("Flourish a b", "Flourish c d", "Flourish e", "stomach a") ++ (1 to 100)
       .map("x" * _)
     JobTest[com.spotify.scio.examples.DebuggingWordCount.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), in)
-      .run()
-  }
-
-  "MinimalWordCounCaseAppExample" should "work" in {
-    JobTest[com.spotify.scio.examples.MinimalWordCounCaseAppExample.type]
-      .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), inData)
-      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 

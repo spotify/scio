@@ -33,13 +33,12 @@ val autoServiceVersion = "1.0"
 val autoValueVersion = "1.8.2"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.30.0"
-val bigdataossVersion = "2.1.6"
-val bigQueryStorageVersion = "1.18.1"
+val beamVersion = "2.32.0"
+val bigdataossVersion = "2.2.2"
+val bigQueryStorageVersion = "1.21.1"
 val bigtableClientVersion = "1.19.1"
 val breezeVersion = "1.3"
 val caffeineVersion = "2.9.2"
-val caseappVersion = "2.1.0-M6"
 val catsVersion = "2.5.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.1"
@@ -50,23 +49,23 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.18"
-val elasticsearch7Version = "7.13.4"
+val elasticsearch7Version = "7.14.0"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
-val gaxVersion = "1.60.1"
+val gaxVersion = "1.63.0"
 val gcsVersion = "1.8.0"
-val generatedGrpcBetaVersion = "1.19.2"
-val generatedDatastoreProtoVersion = "0.88.5"
-val googleClientsVersion = "1.31.1"
+val generatedGrpcBetaVersion = "1.22.0"
+val generatedDatastoreProtoVersion = "0.89.0"
+val googleClientsVersion = "1.31.3"
 val googleApiServicesBigQueryVersion = s"v2-rev20210410-1.31.0"
 val googleApiServicesDataflowVersion = s"v1b3-rev20210408-1.31.0"
 val googleApiServicesPubsubVersion = s"v1-rev20210322-1.31.0"
 val googleApiServicesStorageVersion = s"v1-rev20210127-1.31.0"
-val googleAuthVersion = "0.22.2"
-val googleCloudCoreVersion = "1.94.0"
-val googleCloudSpannerVersion = "3.2.1"
-val googleHttpClientsVersion = "1.38.1"
-val googleOauthClientVersion = "1.31.2"
+val googleAuthVersion = "0.25.2"
+val googleCloudCoreVersion = "1.94.6"
+val googleCloudSpannerVersion = "6.2.0"
+val googleHttpClientsVersion = "1.39.2"
+val googleOauthClientVersion = "1.31.4"
 val grpcVersion = "1.37.0"
 val guavaVersion = "30.1-jre"
 val hadoopVersion = "2.10.1"
@@ -270,6 +269,7 @@ lazy val assemblySettings = Seq(
       case s if s.endsWith("reflection-config.json") => MergeStrategy.rename
       case s if s.endsWith(".dtd")                   => MergeStrategy.rename
       case s if s.endsWith(".xsd")                   => MergeStrategy.rename
+      case s if s.endsWith(".fmpp")                  => MergeStrategy.last
       case PathList("META-INF", "services", "org.apache.hadoop.fs.FileSystem") =>
         MergeStrategy.filterDistinctLines
       case s => old(s)
@@ -375,7 +375,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-parquet`,
     `scio-tensorflow`,
     `scio-schemas`,
-    `scio-sql`,
     `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
@@ -401,8 +400,6 @@ lazy val `scio-core`: Project = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.github.alexarchambault" %% "case-app" % caseappVersion,
-      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion,
@@ -459,30 +456,6 @@ lazy val `scio-core`: Project = project
     IntegrationTest
   )
   .enablePlugins(BuildInfoPlugin)
-
-lazy val `scio-sql`: Project = project
-  .in(file("scio-sql"))
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(macroSettings)
-  .settings(
-    description := "Scio - SQL extension",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
-      "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
-    ),
-    Test / compileOrder := CompileOrder.JavaThenScala
-  )
-  .dependsOn(
-    `scio-macros`,
-    `scio-core`,
-    `scio-schemas` % "test",
-    `scio-avro` % "compile->test",
-    `scio-test`
-  )
 
 lazy val `scio-test`: Project = project
   .in(file("scio-test"))
@@ -928,13 +901,10 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "mysql" % "mysql-connector-java" % "8.0.26",
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "com.github.alexarchambault" %% "case-app" % caseappVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
-      "com.github.alexarchambault" %% "case-app-annotations" % caseappVersion,
-      "com.github.alexarchambault" %% "case-app-util" % caseappVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
@@ -975,7 +945,6 @@ lazy val `scio-examples`: Project = project
     `scio-extra`,
     `scio-elasticsearch7`,
     `scio-tensorflow`,
-    `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
     `scio-redis`,
@@ -1152,8 +1121,7 @@ lazy val site: Project = project
     `scio-schemas`,
     `scio-smb`,
     `scio-test`,
-    `scio-extra`,
-    `scio-sql`
+    `scio-extra`
   )
 
 // =======================================================================

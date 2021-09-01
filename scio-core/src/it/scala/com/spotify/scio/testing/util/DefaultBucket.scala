@@ -22,6 +22,7 @@ import java.nio.file.FileAlreadyExistsException
 
 import com.google.api.client.util.Sleeper
 import com.google.api.services.cloudresourcemanager.CloudResourceManager
+import com.google.api.services.cloudresourcemanager.model.Project
 import com.google.api.services.storage.model.Bucket
 import com.google.cloud.hadoop.util.{ResilientOperation, RetryDeterminer}
 import org.apache.beam.sdk.extensions.gcp.options.{GcpOptions, GcsOptions}
@@ -31,6 +32,7 @@ import org.apache.beam.sdk.extensions.gcp.util.BackOffAdapter
 import org.apache.beam.sdk.util.{BackOff, FluentBackoff}
 import org.joda.time.Duration
 import org.slf4j.{Logger, LoggerFactory}
+import java.util.concurrent.Callable
 
 private object DefaultBucket {
   private[this] val option: String => Option[String] = s => Option(s).filter(_.nonEmpty)
@@ -101,7 +103,9 @@ private object DefaultBucket {
     val getProject = crmClient.projects.get(projectId)
     try {
       val project = ResilientOperation.retry(
-        ResilientOperation.getGoogleRequestCallable(getProject),
+        new Callable[Project] {
+          override def call(): Project = getProject.execute()
+        },
         BackOffAdapter.toGcpBackOff(backoff),
         RetryDeterminer.SOCKET_ERRORS,
         classOf[IOException],
