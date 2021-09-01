@@ -90,7 +90,7 @@ Cause: java.lang.ClassCastException: class org.apache.avro.util.Utf8 cannot be c
 Scio 0.10.4 specifically has a bug in the default String decoding behavior for `SpecificRecords`: by default,
 they're decoded at runtime into `org.apache.avro.util.Utf8` objects, rather than `java.lang.String`s
 (the generated getter/setter signatures use `CharSequence` as an umbrella type). This bug has been fixed in
-Scio 0.11+. If you cannot upgrade, you can mitigate this by ensuring your specificRecord schema the property
+Scio 0.11+. If you cannot upgrade, you can mitigate this by ensuring your `SpecificRecord` schema has the property
 `java-class: java.lang.String` set in the key field. This can be done either in the avsc/avdl schema or in
 Java/Scala code:
 
