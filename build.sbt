@@ -375,7 +375,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-parquet`,
     `scio-tensorflow`,
     `scio-schemas`,
-    `scio-sql`,
     `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
@@ -457,30 +456,6 @@ lazy val `scio-core`: Project = project
     IntegrationTest
   )
   .enablePlugins(BuildInfoPlugin)
-
-lazy val `scio-sql`: Project = project
-  .in(file("scio-sql"))
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(macroSettings)
-  .settings(
-    description := "Scio - SQL extension",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
-      "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
-    ),
-    Test / compileOrder := CompileOrder.JavaThenScala
-  )
-  .dependsOn(
-    `scio-macros`,
-    `scio-core`,
-    `scio-schemas` % "test",
-    `scio-avro` % "compile->test",
-    `scio-test`
-  )
 
 lazy val `scio-test`: Project = project
   .in(file("scio-test"))
@@ -969,7 +944,6 @@ lazy val `scio-examples`: Project = project
     `scio-extra`,
     `scio-elasticsearch7`,
     `scio-tensorflow`,
-    `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
     `scio-redis`,
@@ -1146,8 +1120,7 @@ lazy val site: Project = project
     `scio-schemas`,
     `scio-smb`,
     `scio-test`,
-    `scio-extra`,
-    `scio-sql`
+    `scio-extra`
   )
 
 // =======================================================================
