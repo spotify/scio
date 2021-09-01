@@ -50,6 +50,10 @@ private[scio] object MagnoliaMacros {
             super.transform(
               q"_root_.magnolia.Param.apply[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, Array(), Array())"
             )
+          case q"Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, $_, $_)" =>
+            super.transform(
+              q"_root_.magnolia.Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, Array(), Array())"
+            )
           case q"new SealedTrait($typeName, $subtypes, $_, $_)" =>
             super.transform(
               q"new _root_.magnolia.SealedTrait($typeName, $subtypes, Array(), Array())"
