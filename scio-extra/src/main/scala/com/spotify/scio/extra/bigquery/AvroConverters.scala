@@ -28,6 +28,10 @@ import scala.jdk.CollectionConverters._
 object AvroConverters extends ToTableRow with ToTableSchema {
 
   @experimental
+  @deprecated(
+    "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
+    "0.11.0"
+  )
   def toTableRow[T <: IndexedRecord](record: T): TableRow = {
     val row = new TableRow
 
@@ -49,6 +53,10 @@ object AvroConverters extends ToTableRow with ToTableSchema {
    *   the equivalent BigQuery schema
    */
   @experimental
+  @deprecated(
+    "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
+    "0.11.0"
+  )
   def toTableSchema(avroSchema: Schema): TableSchema = {
     val fields = getFieldSchemas(avroSchema)
 
