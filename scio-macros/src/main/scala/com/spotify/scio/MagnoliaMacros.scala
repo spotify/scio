@@ -46,10 +46,6 @@ private[scio] object MagnoliaMacros {
             super.transform(
               Apply(tt, List(typeName, isObject, isValueClass, params, q"Array()", q"Array()"))
             )
-          case q"Param.apply[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, $_, $_)" =>
-            super.transform(
-              q"_root_.magnolia.Param.apply[$tc, $t, $p]($name, $idx, $repeated, $tcParam, $defaultVal, Array(), Array())"
-            )
           case q"Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, $_, $_)" =>
             super.transform(
               q"_root_.magnolia.Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, Array(), Array())"
