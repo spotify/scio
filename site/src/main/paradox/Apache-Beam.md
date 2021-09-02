@@ -16,7 +16,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio** | **SDK Dependency** | **Description**     |
 |:--------:|:------------------:|:--------------------|
-| 0.11.x   | Apache Beam 2.x.x  | scio-sql and case-app removed, shaded Beam Avro coder, `tensorflow-core-platform` 0.3.3 |
+| 0.11.x   | Apache Beam 2.x.x  | scio-sql and case-app removed, com.spotify.scio.extra.bigquery deprecated, shaded Beam Avro coder, `tensorflow-core-platform` 0.3.3 |
 | 0.10.x   | Apache Beam 2.x.x  | Coder implicits, `scio-google-cloud-platform` |
 | 0.9.x    | Apache Beam 2.x.x  | Drop Scala 2.11, add Scala 2.13, Guava based Bloom Filter |
 | 0.8.x    | Apache Beam 2.x.x  | Beam SQL, BigQuery storage API, ScioExecutionContext, Async `DoFn`s |
