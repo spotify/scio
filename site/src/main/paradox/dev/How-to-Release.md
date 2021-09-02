@@ -56,9 +56,13 @@ git push origin vX.Y.Z
 - Announce on public [Slack](https://slackin.spotify.com/)
 - Announce on Twitter
 
-<sup>*</sup>Starting with `0.4.0` all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order; Harry Potter spells starting with `0.8.0`; Latin names of cities in ascending alphabetical order starting `0.10.0`.
+<sup>*</sup>Starting with `0.4.0` all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order; Harry Potter spells starting with `0.8.0`; Latin names of cities in ascending alphabetical order starting `0.10.0`; Latin names of countries in ascending alphabetical order starting `0.11.0`.
 
 ## Past release names
+
+### 0.11.x
+
+- [v0.11.0](https://github.com/spotify/scio/releases/tag/v0.11.0) - _"Ariana"_
 
 ### 0.10.x
 
