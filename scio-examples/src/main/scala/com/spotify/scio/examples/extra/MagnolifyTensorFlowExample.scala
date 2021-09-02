@@ -73,7 +73,7 @@ object MagnolifyTensorFlowWriteExample {
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://[BUCKET]/[PATH]/wordcount-tf
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
-object Magnolify {
+object MagnolifyTensorFlowReadExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import MagnolifyTensorFlowExample._
 
