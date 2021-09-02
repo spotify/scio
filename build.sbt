@@ -50,7 +50,7 @@ val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.18"
 val elasticsearch7Version = "7.14.0"
-val featranVersion = "0.8.0-RC1"
+val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.63.0"
 val gcsVersion = "1.8.0"
@@ -82,13 +82,13 @@ val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.1"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
-val magnoliaVersion = "0.17.0"
+val magnoliaVersion = "1.0.0-M4"
 val magnolifyVersion = "0.4.4"
 val metricsVersion = "3.2.6"
 val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.34.Final"
 val opencensusVersion = "0.28.0"
-val parquetExtraVersion = "0.4.0"
+val parquetExtraVersion = "0.4.2"
 val parquetVersion = "1.12.0"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.17.3"
@@ -100,7 +100,7 @@ val shapelessVersion = "2.3.7"
 val slf4jVersion = "1.7.32"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
-val tensorFlowVersion = "0.2.0"
+val tensorFlowVersion = "0.3.2"
 val zoltarVersion = "0.6.0-M2"
 val scalaCollectionCompatVersion = "2.5.0"
 
@@ -443,7 +443,7 @@ lazy val `scio-core`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio"
@@ -495,7 +495,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
       "org.scalactic" %% "scalactic" % "3.2.9",
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
@@ -523,7 +523,7 @@ lazy val `scio-macros`: Project = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     )
   )
 
@@ -794,6 +794,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
@@ -917,7 +918,7 @@ lazy val `scio-examples`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     // exclude problematic sources if we don't have GCP credentials
     unmanagedSources / excludeFilter := {
@@ -1266,7 +1267,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.oauth-client" % "google-oauth-client-java6" % googleOauthClientVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
-  "com.propensive" %% "magnolia" % magnoliaVersion,
+  "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion,
   "com.squareup.okio" % "okio" % "1.13.0",
   "com.thoughtworks.paranamer" % "paranamer" % "2.8",
   "commons-cli" % "commons-cli" % "1.2",

@@ -17,8 +17,6 @@
 
 package com.spotify.scio.tensorflow.syntax
 
-import scala.reflect.ClassTag
-
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow._
 import org.tensorflow.proto.example.{Example, SequenceExample}
@@ -37,7 +35,7 @@ import com.spotify.zoltar.tf.TensorFlowModel
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with TensorFlow methods.
  */
-final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T]) {
+final class PredictSCollectionOps[T](private val self: SCollection[T]) {
 
   /**
    * Predict/infer/forward-pass on a TensorFlow Saved Model.
@@ -64,7 +62,7 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     fetchOps: Seq[String],
     options: TensorFlowModel.Options,
     signatureName: String = PredictSCollectionOps.DefaultSignatureName
-  )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+  )(inFn: T => Map[String, Tensor])(outFn: (T, Map[String, Tensor]) => V): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn
         .forRaw[T, V](savedModelUri, fetchOps, options, signatureName, inFn, outFn)
@@ -95,7 +93,7 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     options: TensorFlowModel.Options,
     fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
     signatureName: String = PredictSCollectionOps.DefaultSignatureName
-  )(inFn: T => Map[String, Tensor[_]])(outFn: (T, Map[String, Tensor[_]]) => V): SCollection[V] =
+  )(inFn: T => Map[String, Tensor])(outFn: (T, Map[String, Tensor]) => V): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn
         .forInput[T, V](savedModelUri, fetchOps, options, signatureName, inFn, outFn)
@@ -126,7 +124,7 @@ final class PredictSCollectionOps[T: ClassTag](private val self: SCollection[T])
     exampleInputOp: String = PredictSCollectionOps.DefaultExampleInputOp,
     fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
     signatureName: String = PredictSCollectionOps.DefaultSignatureName
-  )(outFn: (T, Map[String, Tensor[_]]) => V)(implicit ev: T <:< Example): SCollection[V] =
+  )(outFn: (T, Map[String, Tensor]) => V)(implicit ev: T <:< Example): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn.forTensorFlowExample[T, V](
         savedModelUri,
@@ -236,7 +234,7 @@ trait SCollectionSyntax {
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[PredictSCollectionOps]].
    */
-  implicit def tensorFlowPredictSCollectionOps[T: ClassTag](
+  implicit def tensorFlowPredictSCollectionOps[T](
     s: SCollection[T]
   ): PredictSCollectionOps[T] = new PredictSCollectionOps(s)
 
