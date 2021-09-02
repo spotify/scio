@@ -29,7 +29,8 @@ object AvroConverters extends ToTableRow with ToTableSchema {
 
   @experimental
   @deprecated(
-    "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
+    "com.spotify.scio.extra.bigquery package will be removed in 0.12.0," +
+      "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
     "0.11.0"
   )
   def toTableRow[T <: IndexedRecord](record: T): TableRow = {
@@ -54,7 +55,8 @@ object AvroConverters extends ToTableRow with ToTableSchema {
    */
   @experimental
   @deprecated(
-    "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
+    "com.spotify.scio.extra.bigquery package will be removed in 0.12.0," +
+      "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
     "0.11.0"
   )
   def toTableSchema(avroSchema: Schema): TableSchema = {

@@ -51,7 +51,8 @@ final class AvroToBigQuerySCollectionOps[T <: IndexedRecord: ClassTag](
    */
   @experimental
   @deprecated(
-    "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
+    "com.spotify.scio.extra.bigquery package will be removed in 0.12.0," +
+      "use saveAsBigQueryTable from the com.spotify.scio.bigquery package instead",
     "0.11.0"
   )
   def saveAvroAsBigQuery(
