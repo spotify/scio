@@ -49,8 +49,8 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.18"
-val elasticsearch7Version = "7.13.4"
-val featranVersion = "0.8.0-RC1"
+val elasticsearch7Version = "7.14.1"
+val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.63.0"
 val gcsVersion = "1.8.0"
@@ -82,13 +82,13 @@ val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.1"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
-val magnoliaVersion = "0.17.0"
+val magnoliaVersion = "1.0.0-M4"
 val magnolifyVersion = "0.4.4"
 val metricsVersion = "3.2.6"
 val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.34.Final"
 val opencensusVersion = "0.28.0"
-val parquetExtraVersion = "0.4.0"
+val parquetExtraVersion = "0.4.2"
 val parquetVersion = "1.12.0"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.17.3"
@@ -375,7 +375,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-parquet`,
     `scio-tensorflow`,
     `scio-schemas`,
-    `scio-sql`,
     `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
@@ -444,7 +443,7 @@ lazy val `scio-core`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio"
@@ -457,30 +456,6 @@ lazy val `scio-core`: Project = project
     IntegrationTest
   )
   .enablePlugins(BuildInfoPlugin)
-
-lazy val `scio-sql`: Project = project
-  .in(file("scio-sql"))
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(macroSettings)
-  .settings(
-    description := "Scio - SQL extension",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
-      "org.apache.beam" % "beam-vendor-calcite-1_20_0" % beamVendorVersion
-    ),
-    Test / compileOrder := CompileOrder.JavaThenScala
-  )
-  .dependsOn(
-    `scio-macros`,
-    `scio-core`,
-    `scio-schemas` % "test",
-    `scio-avro` % "compile->test",
-    `scio-test`
-  )
 
 lazy val `scio-test`: Project = project
   .in(file("scio-test"))
@@ -520,7 +495,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
       "org.scalactic" %% "scalactic" % "3.2.9",
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
@@ -548,7 +523,7 @@ lazy val `scio-macros`: Project = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.avro" % "avro" % avroVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     )
   )
 
@@ -819,6 +794,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion",
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
@@ -942,7 +918,7 @@ lazy val `scio-examples`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     // exclude problematic sources if we don't have GCP credentials
     unmanagedSources / excludeFilter := {
@@ -969,7 +945,6 @@ lazy val `scio-examples`: Project = project
     `scio-extra`,
     `scio-elasticsearch7`,
     `scio-tensorflow`,
-    `scio-sql`,
     `scio-test` % "compile->test",
     `scio-smb`,
     `scio-redis`,
@@ -1146,8 +1121,7 @@ lazy val site: Project = project
     `scio-schemas`,
     `scio-smb`,
     `scio-test`,
-    `scio-extra`,
-    `scio-sql`
+    `scio-extra`
   )
 
 // =======================================================================
@@ -1293,7 +1267,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.oauth-client" % "google-oauth-client-java6" % googleOauthClientVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
-  "com.propensive" %% "magnolia" % magnoliaVersion,
+  "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion,
   "com.squareup.okio" % "okio" % "1.13.0",
   "com.thoughtworks.paranamer" % "paranamer" % "2.8",
   "commons-cli" % "commons-cli" % "1.2",
