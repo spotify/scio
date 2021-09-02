@@ -623,7 +623,6 @@ private[coders] object CoderStackTrace {
     additionalMessage: Option[String],
     baseStack: Array[StackTraceElement]
   ): T = {
-    cause.printStackTrace()
     val messageItem = additionalMessage.map { msg =>
       new StackTraceElement(s"Due to $msg", "", "", 0)
     }
