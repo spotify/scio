@@ -34,7 +34,7 @@ object BigtableIT {
   val projectId = "data-integration-test"
   val instanceId = "scio-bigtable-it"
   val clusterId = "scio-bigtable-it-cluster"
-  val zoneId = "us-east1-b"
+  val zoneId = "us-central1-f"
   val tableId = "scio-bigtable-it-counts"
   val uuid: String = UUID.randomUUID().toString.substring(0, 8)
   val testData: Seq[(String, Long)] =
