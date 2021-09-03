@@ -35,8 +35,8 @@ sc.parallelize((<span class="num">1</span> to <span class="num">10</span>).map(x
 <span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey
 
 <span class="cmt">// specific location</span>
-<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>// with multiple shards, sharded by MurmurHash3 of the key
-val s1: SCollection[SparkeyUri] = s.asSparkey("gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;", numShards=2)
+<span class="kw">val</span> s1: SCollection[SparkeyUri] = s.asSparkey(<span class="lit">"gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-prefix&gt;"</span>)</pre><p>// with multiple shards, sharded by MurmurHash3 of the key val s1: SCollection[SparkeyUri] =
+s.asSparkey("gs://&lt;bucket&gt;/&lt;path&gt;/&lt;sparkey-dir&gt;", numShards=2) 
 }}}</p><p>The result <code>SCollection[SparkeyUri]</code> can be converted to a side input:</p><pre><span class="kw">val</span> s: SCollection[SparkeyUri] = sc.parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>)).asSparkey
 <span class="kw">val</span> side: SideInput[SparkeyReader] = s.asSparkeySideInput</pre><p>These two steps can be done with a syntactic sugar:</p><pre><span class="kw">val</span> side: SideInput[SparkeyReader] = sc
   .parallelize(<span class="std">Seq</span>(<span class="lit">"a"</span> -&gt; <span class="lit">"one"</span>, <span class="lit">"b"</span> -&gt; <span class="lit">"two"</span>))
