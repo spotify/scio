@@ -69,7 +69,7 @@ object CoderMaterializer {
         WrappedBCoder.create(
           nullCoder(
             o,
-            new RecordCoder(
+            RecordCoder(
               typeName,
               coders.map(c => c._1 -> nullCoder(o, beamImpl(o, c._2))),
               construct,
