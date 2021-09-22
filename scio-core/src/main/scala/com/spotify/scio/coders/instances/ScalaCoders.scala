@@ -511,8 +511,6 @@ trait ScalaCoders {
 
   implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] =
     Coder.transform(Coder[T])(bc => Coder.beam(new SortedSetCoder[T](bc)))
-
-  // implicit def enumerationCoder[E <: Enumeration]: Coder[E#Value] = ???
 }
 
 private[coders] object ScalaCoders extends ScalaCoders
