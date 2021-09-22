@@ -86,10 +86,10 @@ private object Reads {
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = {
-    val bqClient = client(sc)
 
     // check if selected fields are defined in the schema of the table
     if (selectedFields.nonEmpty) {
+      val bqClient = client(sc)
       val schemaFields = bqClient.tables.schema(table.ref).getFields.asScala.map(_.getName).toSet
       val notFoundFields = selectedFields.toSet -- schemaFields
 
