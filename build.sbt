@@ -79,7 +79,7 @@ val jodaTimeVersion = "2.10.12"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
-val kantanCsvVersion = "0.6.1"
+val kantanCsvVersion = "0.6.2"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "1.0.0-M4"
