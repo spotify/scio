@@ -87,19 +87,6 @@ private object Reads {
     rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = {
 
-    // check if selected fields are defined in the schema of the table
-    if (selectedFields.nonEmpty) {
-      val bqClient = client(sc)
-      val schemaFields = bqClient.tables.schema(table.ref).getFields.asScala.map(_.getName).toSet
-      val notFoundFields = selectedFields.toSet -- schemaFields
-
-      if (notFoundFields.nonEmpty) {
-        throw new IllegalArgumentException(
-          s"Fields '${notFoundFields.mkString(",")}' not found in the '${table.spec}' table"
-        )
-      }
-    }
-
     var read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)

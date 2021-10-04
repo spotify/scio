@@ -91,6 +91,9 @@ private[types] object TypeProvider {
 
     val (table, args, selectedFields, rowRestriction) = extractStorageArgs(c)
     val tableSpec = BigQueryPartitionUtil.latestTable(bigquery, formatString(table :: args))
+    BigQueryUtil.validateSelectedFields(
+      tableSpec, bigquery.tables.schema(tableSpec).getFields.asScala.map(_.getName), selectedFields)
+
     val avroSchema = bigquery.tables.storageReadSchema(tableSpec, selectedFields, rowRestriction)
     val schema = StorageUtil.toTableSchema(avroSchema)
     val traits = List(tq"${p(c, SType)}.HasStorageOptions")
