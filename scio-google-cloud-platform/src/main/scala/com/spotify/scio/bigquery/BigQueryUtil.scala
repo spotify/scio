@@ -37,19 +37,19 @@ object BigQueryUtil {
   def generateJobId(projectId: String): String =
     projectId + "-" + UUID.randomUUID().toString
 
-  /**
-   * Validates if all selectedFields are in the set of schemaFieldNames
-   */
-  def validateSelectedFields(tableSpec: String,
-                             schemaFieldNames: Iterable[String],
-                             selectedFields: List[String]): Unit = {
+  /** Validates if all selectedFields are in the set of schemaFieldNames */
+  def validateSelectedFields(
+    tableSpec: String,
+    schemaFieldNames: Iterable[String],
+    selectedFields: List[String]
+  ): Unit = {
     // check if selected fields are defined in the schema of the table
     if (selectedFields.nonEmpty) {
       val notFoundFields = selectedFields.toSet -- schemaFieldNames.toSet
 
       if (notFoundFields.nonEmpty) {
         throw new IllegalArgumentException(
-          s"Fields '${notFoundFields.mkString(",")}' not found in the '${tableSpec}' table"
+          s"Fields '${notFoundFields.mkString(",")}' not found in the '$tableSpec' table"
         )
       }
     }
