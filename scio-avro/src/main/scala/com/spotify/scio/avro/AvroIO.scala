@@ -228,6 +228,25 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
     GenericRecordTap(ScioUtil.addPartSuffix(path), schema)
 }
 
+final case class GenericRecordMultiFilesReadIO(schema: Schema)(paths: List[String]) extends
+  AvroIO[GenericRecord] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+
+  override def testId: String = s"AvroIO($paths)"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] =
+    sc.parallelize(paths).readFiles(beam.AvroIO.readFilesGenericRecords(schema))
+
+
+  override def tap(read: ReadP): Tap[GenericRecord] =
+    GenericRecordMultiFileTap(paths.map(path => ScioUtil.addPartSuffix(path)), schema)
+
+  override protected def write(data: SCollection[GenericRecord],
+                               params: Nothing): Tap[GenericRecord] = ???
+}
+
+
 /**
  * Given a parseFn, read [[org.apache.avro.generic.GenericRecord GenericRecord]] and apply a
  * function mapping [[GenericRecord => T]] before producing output. This IO applies the function at

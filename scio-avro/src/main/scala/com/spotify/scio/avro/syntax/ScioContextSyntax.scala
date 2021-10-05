@@ -84,13 +84,12 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-//  def avroFiles(paths: List[String],
-//                schema: Schema,
-//                hintMatchesManyFiles: Boolean = false): SCollection[GenericRecord] = {
-//    self.readFiles(
-//      path => avroFile(path, schema),
-//      beam.AvroIO.readFilesGenericRecords(schema))(paths, hintMatchesManyFiles)
-//  }
+  def avroGenericFiles(paths: List[String],
+                schema: Schema,
+                hintMatchesManyFiles: Boolean = false): SCollection[GenericRecord] =
+    self.readFiles(
+      path => GenericRecordIO(path, schema),
+      GenericRecordMultiFilesReadIO(schema))((), paths, hintMatchesManyFiles)
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying parseFn to map a
@@ -136,10 +135,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def avroFiles[T <: SpecificRecord: ClassTag: Coder](paths: List[String],
                                                       hintMatchesManyFiles: Boolean = false
-                                                     ): SCollection[T] = {
-    self.readFiles(SpecificRecordIO[T], SpecificRecordMultiFileReadIO[T])(
-      (), paths, hintMatchesManyFiles)
-  }
+                                                     ): SCollection[T] =
+    self.readFiles(
+      SpecificRecordIO[T], SpecificRecordMultiFileReadIO[T])((), paths, hintMatchesManyFiles)
 
   /**
    * Get a typed SCollection from an Avro schema.
