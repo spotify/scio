@@ -107,6 +107,18 @@ case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
   override def open(sc: ScioContext): SCollection[T] = sc.objectFile[T](path)
 }
 
+case class ObjectFileMultiFileTap[T: Coder](paths: List[String]) extends Tap[T] {
+  override def value: Iterator[T] = {
+    val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
+    paths.iterator.flatMap(path =>
+      FileStorage(path).avroFile[GenericRecord](AvroBytesUtil.schema).map { r =>
+        AvroBytesUtil.decode(elemCoder, r)
+      }
+    )
+  }
+  override def open(sc: ScioContext): SCollection[T] = sc.objectFiles[T](paths)
+}
+
 final case class AvroTaps(self: Taps) {
 
   /** Get a `Future[Tap[T]]` of a Protobuf file. */

@@ -22,17 +22,12 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.util.{Functions, ScioUtil}
+import com.spotify.scio.coders.{Coder}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
-import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io._
-import org.apache.beam.sdk.io.FileIO
-import org.apache.beam.sdk.transforms.ParDo
-import org.apache.beam.sdk.values.PCollection
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -57,21 +52,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-//  def objectFiles[T : Coder](paths: List[String], hintMatchesManyFiles: Boolean = false)
-//  : SCollection[T] = {
-//    val coder = CoderMaterializer.beamWithDefault(Coder[T])
-//
-//    self.readFiles(
-//      objectFile[T],
-//      new MultiFilePTransform[T] {
-//        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
-//          input
-//            .apply(beam.AvroIO.readFilesGenericRecords(AvroBytesUtil.schema))
-//            .apply(ParDo.of(Functions.mapFn[GenericRecord, T](r => AvroBytesUtil.decode(coder, r))))
-//        }
-//      }
-//    )(paths, hintMatchesManyFiles)
-//  }
+  def objectFiles[T : Coder](paths: List[String], hintMatchesManyFiles: Boolean = false)
+  : SCollection[T] =
+    self.readFiles(ObjectFileIO[T], ObjectFileMultiFileReadIO[T])((), paths, hintMatchesManyFiles)
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
     self.read(GenericRecordIO(path, schema))
@@ -194,10 +177,13 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-//  def protobufFiles[T <: Message: ClassTag](paths: List[String],
-//                                            hintMatchesManyFiles: Boolean = false)
-//  : SCollection[T] =
-//    objectFiles(paths, hintMatchesManyFiles)(Coder.protoMessageCoder[T])
+  def protobufFiles[T <: Message: ClassTag](paths: List[String],
+                                            hintMatchesManyFiles: Boolean = false)
+  : SCollection[T] =
+    self.readFiles(
+      ObjectFileIO[T],
+      paths => ObjectFileMultiFileReadIO[T](paths)(Coder.protoMessageCoder[T]))(
+      (), paths, hintMatchesManyFiles)
 }
 
 /** Enhanced with Avro methods. */

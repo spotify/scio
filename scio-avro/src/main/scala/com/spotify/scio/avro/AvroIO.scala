@@ -23,13 +23,15 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{avro, ScioContext}
+import com.spotify.scio.{ScioContext, avro}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.transforms.{DoFn, ParDo, SerializableFunction}
+import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
@@ -78,6 +80,36 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
 
   override def tap(read: ReadP): Tap[T] =
     ObjectFileTap[T](ScioUtil.addPartSuffix(path))
+}
+
+final case class ObjectFileMultiFileReadIO[T: Coder](paths: List[String]) extends ScioIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
+
+  /**
+   * Get an SCollection for an object file using default serialization.
+   *
+   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
+   * serialization is not guaranteed to be compatible across Scio releases.
+   */
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beamWithDefault(Coder[T])
+    sc.parallelize(paths).readFiles(
+      new MultiFilePTransform[T] {
+        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+          input
+            .apply(beam.AvroIO.readFilesGenericRecords(AvroBytesUtil.schema))
+            .apply(ParDo.of(Functions.mapFn[GenericRecord, T](r => AvroBytesUtil.decode(coder, r))))
+        }
+      }
+    )
+  }
+
+  override def tap(read: ReadP): Tap[T] =
+    ObjectFileMultiFileTap[T](paths.map(path => ScioUtil.addPartSuffix(path)))
+
+  override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
 }
 
 object ObjectFileIO {
