@@ -32,9 +32,7 @@ class AvroExampleTest extends PipelineSpec {
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
       .args("--input=in.avro", "--output=out.txt", "--method=specificIn")
       .input(AvroIO[Account]("in.avro"), input)
-      .output(TextIO("out.txt"))(coll => {
-        coll should containInAnyOrder(expected)
-      })
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 
@@ -51,9 +49,7 @@ class AvroExampleTest extends PipelineSpec {
       .args("--input=in1.avro,in2.avro", "--output=out.txt", "--method=specificMultiFilesIn")
       .input(AvroIO[Account]("in1.avro"), input1)
       .input(AvroIO[Account]("in2.avro"), input2)
-      .output(TextIO("out.txt"))(coll => {
-        coll should containInAnyOrder(expected)
-      })
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 

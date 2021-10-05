@@ -23,7 +23,7 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{ScioContext, avro}
+import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -95,15 +95,18 @@ final case class ObjectFileMultiFileReadIO[T: Coder](paths: List[String]) extend
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beamWithDefault(Coder[T])
-    sc.parallelize(paths).readFiles(
-      new MultiFilePTransform[T] {
-        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
-          input
-            .apply(beam.AvroIO.readFilesGenericRecords(AvroBytesUtil.schema))
-            .apply(ParDo.of(Functions.mapFn[GenericRecord, T](r => AvroBytesUtil.decode(coder, r))))
+    sc.parallelize(paths)
+      .readFiles(
+        new MultiFilePTransform[T] {
+          override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+            input
+              .apply(beam.AvroIO.readFilesGenericRecords(AvroBytesUtil.schema))
+              .apply(
+                ParDo.of(Functions.mapFn[GenericRecord, T](r => AvroBytesUtil.decode(coder, r)))
+              )
+          }
         }
-      }
-    )
+      )
   }
 
   override def tap(read: ReadP): Tap[T] =
@@ -205,9 +208,9 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
-final case class SpecificRecordMultiFileReadIO[T <: SpecificRecord: ClassTag: Coder]
-(paths: List[String])
-  extends AvroIO[T] {
+final case class SpecificRecordMultiFileReadIO[T <: SpecificRecord: ClassTag: Coder](
+  paths: List[String]
+) extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
 
@@ -260,8 +263,8 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
     GenericRecordTap(ScioUtil.addPartSuffix(path), schema)
 }
 
-final case class GenericRecordMultiFilesReadIO(schema: Schema)(paths: List[String]) extends
-  AvroIO[GenericRecord] {
+final case class GenericRecordMultiFilesReadIO(schema: Schema)(paths: List[String])
+    extends AvroIO[GenericRecord] {
   override type ReadP = Unit
   override type WriteP = Nothing
 
@@ -270,14 +273,14 @@ final case class GenericRecordMultiFilesReadIO(schema: Schema)(paths: List[Strin
   override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] =
     sc.parallelize(paths).readFiles(beam.AvroIO.readFilesGenericRecords(schema))
 
-
   override def tap(read: ReadP): Tap[GenericRecord] =
     GenericRecordMultiFileTap(paths.map(path => ScioUtil.addPartSuffix(path)), schema)
 
-  override protected def write(data: SCollection[GenericRecord],
-                               params: Nothing): Tap[GenericRecord] = ???
+  override protected def write(
+    data: SCollection[GenericRecord],
+    params: Nothing
+  ): Tap[GenericRecord] = ???
 }
-
 
 /**
  * Given a parseFn, read [[org.apache.avro.generic.GenericRecord GenericRecord]] and apply a
@@ -399,7 +402,7 @@ object AvroTyped {
   }
 
   final case class AvroMultiFilesIO[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String])
-    extends ScioIO[T] {
+      extends ScioIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing
     override val tapT: TapT.Aux[T, T] = TapOf[T]
@@ -407,15 +410,16 @@ object AvroTyped {
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val avroT = AvroType[T]
 
-      sc.parallelize(paths).readFiles(
-        new MultiFilePTransform[T] {
-          override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
-            input
-              .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
-              .apply(ParDo.of(Functions.mapFn(avroT.fromGenericRecord)))
+      sc.parallelize(paths)
+        .readFiles(
+          new MultiFilePTransform[T] {
+            override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+              input
+                .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
+                .apply(ParDo.of(Functions.mapFn(avroT.fromGenericRecord)))
+            }
           }
-        }
-      )
+        )
     }
 
     override def tap(read: ReadP): Tap[T] = {

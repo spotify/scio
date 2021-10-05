@@ -47,10 +47,10 @@ final case class GenericRecordTap(
 }
 
 final case class GenericRecordMultiFileTap(
-                                   paths: List[String],
-                                   @transient private val
-                                   schema: Schema
-                                 ) extends Tap[GenericRecord] {
+  paths: List[String],
+  @transient private val
+  schema: Schema
+) extends Tap[GenericRecord] {
   private lazy val s = Externalizer(schema)
 
   override def value: Iterator[GenericRecord] =
@@ -68,9 +68,9 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: S
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
 }
 
-final case class SpecificRecordMultiFileTap[T <: SpecificRecord: ClassTag: Coder]
-(paths: List[String])
-  extends Tap[T] {
+final case class SpecificRecordMultiFileTap[T <: SpecificRecord: ClassTag: Coder](
+  paths: List[String]
+) extends Tap[T] {
   override def value: Iterator[T] = paths.iterator.flatMap(path => FileStorage(path).avroFile[T]())
 
   override def open(sc: ScioContext): SCollection[T] = sc.avroFiles[T](paths)

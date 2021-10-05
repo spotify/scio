@@ -23,8 +23,8 @@ import org.apache.beam.sdk.{io => beam}
 
 package object io {
 
-  private [scio] type MultiFilePTransform[T] = PTransform[PCollection[beam.FileIO.ReadableFile],
-    PCollection[T]]
+  private[scio] type MultiFilePTransform[T] =
+    PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[T]]
 
   implicit def toScioContextOps(sc: ScioContext): ScioContextOps = new ScioContextOps(sc)
 

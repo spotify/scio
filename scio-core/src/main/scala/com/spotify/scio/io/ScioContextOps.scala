@@ -27,26 +27,28 @@ final class ScioContextOps(sc: ScioContext) {
    * Applies a read IO to a multi-file input. The way how files are read depends on the
    * hintMatchesManyFiles parameter.
    *
-   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
-   * to true for better performance and scalability. Note that it may decrease performance if the
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles to
+   * true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    *
-   * @param singleFileIO A function creating a read IO from the provided single path parameter.
-   * @param multiFileIO A function creating a read IO from the list of paths.
-   * @param paths List of paths to read the data from.
+   * @param singleFileIO
+   *   A function creating a read IO from the provided single path parameter.
+   * @param multiFileIO
+   *   A function creating a read IO from the list of paths.
+   * @param paths
+   *   List of paths to read the data from.
    * @param hintMatchesManyFiles
-   * If false (default value) then IOs are applied individually to each input file path and
-   * joined into a single output [[SCollection]] using the [[SCollection.unionAll]].
-   * If true then first all paths are read into an PCollection[ReadableFile] using
-   * [[org.apache.beam.sdk.io.FileIO.matchAll]]/[[org.apache.beam.sdk.io.FileIO.matchAll]] before
-   * applying a Beam IO.
+   *   If false (default value) then IOs are applied individually to each input file path and joined
+   *   into a single output [[SCollection]] using the [[SCollection.unionAll]]. If true then first
+   *   all paths are read into an PCollection[ReadableFile] using
+   *   [[org.apache.beam.sdk.io.FileIO.matchAll]]/[[org.apache.beam.sdk.io.FileIO.matchAll]] before
+   *   applying a Beam IO.
    */
-  private[scio] def readFiles[R, W1, W2, T : Coder](singleFileIO: String => ScioIO.Aux[T, R, W1],
-                                         multiFileIO: List[String] => ScioIO.Aux[T, R, W2])
-                                        (readP: R, paths: List[String],
-  hintMatchesManyFiles: Boolean = false)
-  : SCollection[T] = {
-    val coll = if(hintMatchesManyFiles && !sc.isTest) {
+  private[scio] def readFiles[R, W1, W2, T: Coder](
+    singleFileIO: String => ScioIO.Aux[T, R, W1],
+    multiFileIO: List[String] => ScioIO.Aux[T, R, W2]
+  )(readP: R, paths: List[String], hintMatchesManyFiles: Boolean = false): SCollection[T] = {
+    val coll = if (hintMatchesManyFiles && !sc.isTest) {
       sc.read(multiFileIO(paths))(readP)
     } else {
       sc.unionAll(paths.map(path => sc.read(singleFileIO(path))(readP)))

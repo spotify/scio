@@ -45,15 +45,17 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(ObjectFileIO[T](path))
 
   /**
-   * Same as [[objectFile]] but reads from a multi-file input. The way how files are read
-   * depends on the hintMatchesManyFiles parameter.
+   * Same as [[objectFile]] but reads from a multi-file input. The way how files are read depends on
+   * the hintMatchesManyFiles parameter.
    *
-   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
-   * to true for better performance and scalability. Note that it may decrease performance if the
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles to
+   * true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def objectFiles[T : Coder](paths: List[String], hintMatchesManyFiles: Boolean = false)
-  : SCollection[T] =
+  def objectFiles[T: Coder](
+    paths: List[String],
+    hintMatchesManyFiles: Boolean = false
+  ): SCollection[T] =
     self.readFiles(ObjectFileIO[T], ObjectFileMultiFileReadIO[T])((), paths, hintMatchesManyFiles)
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
@@ -63,16 +65,20 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Same as [[avroFile]] but reads from a multi-file input. The way how files are read depends on
    * the hintMatchesManyFiles parameter.
    *
-   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
-   * to true for better performance and scalability. Note that it may decrease performance if the
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles to
+   * true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def avroGenericFiles(paths: List[String],
-                schema: Schema,
-                hintMatchesManyFiles: Boolean = false): SCollection[GenericRecord] =
-    self.readFiles(
-      path => GenericRecordIO(path, schema),
-      GenericRecordMultiFilesReadIO(schema))((), paths, hintMatchesManyFiles)
+  def avroGenericFiles(
+    paths: List[String],
+    schema: Schema,
+    hintMatchesManyFiles: Boolean = false
+  ): SCollection[GenericRecord] =
+    self.readFiles(path => GenericRecordIO(path, schema), GenericRecordMultiFilesReadIO(schema))(
+      (),
+      paths,
+      hintMatchesManyFiles
+    )
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying parseFn to map a
@@ -112,15 +118,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Same as [[avroFile]] files from a multi-file input. The way how files are read depends on the
    * hintMatchesManyFiles parameter.
    *
-   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
-   * to true for better performance and scalability. Note that it may decrease performance if the
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles to
+   * true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def avroFiles[T <: SpecificRecord: ClassTag: Coder](paths: List[String],
-                                                      hintMatchesManyFiles: Boolean = false
-                                                     ): SCollection[T] =
-    self.readFiles(
-      SpecificRecordIO[T], SpecificRecordMultiFileReadIO[T])((), paths, hintMatchesManyFiles)
+  def avroFiles[T <: SpecificRecord: ClassTag: Coder](
+    paths: List[String],
+    hintMatchesManyFiles: Boolean = false
+  ): SCollection[T] =
+    self.readFiles(SpecificRecordIO[T], SpecificRecordMultiFileReadIO[T])(
+      (),
+      paths,
+      hintMatchesManyFiles
+    )
 
   /**
    * Get a typed SCollection from an Avro schema.
@@ -136,17 +146,22 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(AvroTyped.AvroIO[T](path))
 
   /**
-   * Same as [[typedAvroFile]] but reads from a multi-file input. The way how files are read
-   * depends on the hintMatchesManyFiles parameter.
+   * Same as [[typedAvroFile]] but reads from a multi-file input. The way how files are read depends
+   * on the hintMatchesManyFiles parameter.
    *
-   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
-   * to true for better performance and scalability. Note that it may decrease performance if the
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles to
+   * true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def typedAvroFiles[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String],
-                                                             hintMatchesManyFiles: Boolean = false)
-  : SCollection[T] =
-    self.readFiles(AvroTyped.AvroIO[T], AvroTyped.AvroMultiFilesIO[T])((), paths, hintMatchesManyFiles)
+  def typedAvroFiles[T <: HasAvroAnnotation: TypeTag: Coder](
+    paths: List[String],
+    hintMatchesManyFiles: Boolean = false
+  ): SCollection[T] =
+    self.readFiles(AvroTyped.AvroIO[T], AvroTyped.AvroMultiFilesIO[T])(
+      (),
+      paths,
+      hintMatchesManyFiles
+    )
 
   /**
    * Get an SCollection for a Protobuf file.
@@ -158,20 +173,21 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(ProtobufIO[T](path))
 
   /**
-   * Same as [[protobufFile]] but reads from a multi-file input. The way how files are read
-   * depends on the hintMatchesManyFiles parameter.
+   * Same as [[protobufFile]] but reads from a multi-file input. The way how files are read depends
+   * on the hintMatchesManyFiles parameter.
    *
-   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
-   * to true for better performance and scalability. Note that it may decrease performance if the
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles to
+   * true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def protobufFiles[T <: Message: ClassTag](paths: List[String],
-                                            hintMatchesManyFiles: Boolean = false)
-  : SCollection[T] =
+  def protobufFiles[T <: Message: ClassTag](
+    paths: List[String],
+    hintMatchesManyFiles: Boolean = false
+  ): SCollection[T] =
     self.readFiles(
       ObjectFileIO[T],
-      paths => ObjectFileMultiFileReadIO[T](paths)(Coder.protoMessageCoder[T]))(
-      (), paths, hintMatchesManyFiles)
+      paths => ObjectFileMultiFileReadIO[T](paths)(Coder.protoMessageCoder[T])
+    )((), paths, hintMatchesManyFiles)
 }
 
 /** Enhanced with Avro methods. */
