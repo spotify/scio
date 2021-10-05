@@ -397,4 +397,33 @@ object AvroTyped {
         .map(avroT.fromGenericRecord)
     }
   }
+
+  final case class AvroMultiFilesIO[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String])
+    extends ScioIO[T] {
+    override type ReadP = Unit
+    override type WriteP = Nothing
+    override val tapT: TapT.Aux[T, T] = TapOf[T]
+
+    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+      val avroT = AvroType[T]
+
+      sc.parallelize(paths).readFiles(
+        new MultiFilePTransform[T] {
+          override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+            input
+              .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
+              .apply(ParDo.of(Functions.mapFn(avroT.fromGenericRecord)))
+          }
+        }
+      )
+    }
+
+    override def tap(read: ReadP): Tap[T] = {
+      val avroT = AvroType[T]
+      GenericRecordMultiFileTap(paths.map(path => ScioUtil.addPartSuffix(path)), avroT.schema)
+        .map(avroT.fromGenericRecord)
+    }
+
+    override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
+  }
 }

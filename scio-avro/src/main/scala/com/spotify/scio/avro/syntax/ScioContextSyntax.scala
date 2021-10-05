@@ -22,7 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.{Coder}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -143,22 +143,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-//  def typedAvroFiles[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String],
-//                                                             hintMatchesManyFiles: Boolean = false)
-//  : SCollection[T] = {
-//    val avroT = AvroType[T]
-//
-//    self.readFiles(
-//      typedAvroFile[T],
-//      new MultiFilePTransform[T] {
-//        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
-//          input
-//            .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
-//            .apply(ParDo.of(Functions.mapFn(avroT.fromGenericRecord)))
-//        }
-//      }
-//    )(paths, hintMatchesManyFiles)
-//  }
+  def typedAvroFiles[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String],
+                                                             hintMatchesManyFiles: Boolean = false)
+  : SCollection[T] =
+    self.readFiles(AvroTyped.AvroIO[T], AvroTyped.AvroMultiFilesIO[T])((), paths, hintMatchesManyFiles)
 
   /**
    * Get an SCollection for a Protobuf file.
