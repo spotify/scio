@@ -54,6 +54,14 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: S
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
 }
 
+final case class SpecificRecordMultiFileTap[T <: SpecificRecord: ClassTag: Coder]
+(paths: List[String])
+  extends Tap[T] {
+  override def value: Iterator[T] = paths.iterator.flatMap(path => FileStorage(path).avroFile[T]())
+
+  override def open(sc: ScioContext): SCollection[T] = sc.avroFiles[T](paths)
+}
+
 /**
  * Tap for reading [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files and applying a
  * parseFn to parse it to the given type [[T]]

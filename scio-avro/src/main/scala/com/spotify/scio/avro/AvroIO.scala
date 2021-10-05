@@ -173,6 +173,26 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
+final case class SpecificRecordMultiFileReadIO[T <: SpecificRecord: ClassTag: Coder]
+(paths: List[String])
+  extends AvroIO[T] {
+  override type ReadP = Unit
+  override type WriteP = Nothing
+
+  override def testId: String = s"AvroIO($paths)"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val t = beam.AvroIO.readFiles(ScioUtil.classOf[T])
+
+    sc.parallelize(paths).readFiles(t)
+  }
+
+  override def tap(read: ReadP): Tap[T] =
+    SpecificRecordMultiFileTap[T](paths.map(path => ScioUtil.addPartSuffix(path)))
+
+  override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
+}
+
 final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam

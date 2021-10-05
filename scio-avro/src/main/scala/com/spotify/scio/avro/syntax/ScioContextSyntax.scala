@@ -57,21 +57,21 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def objectFiles[T : Coder](paths: List[String], hintMatchesManyFiles: Boolean = false)
-  : SCollection[T] = {
-    val coder = CoderMaterializer.beamWithDefault(Coder[T])
-
-    self.readFiles(
-      objectFile[T],
-      new MultiFilePTransform[T] {
-        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
-          input
-            .apply(beam.AvroIO.readFilesGenericRecords(AvroBytesUtil.schema))
-            .apply(ParDo.of(Functions.mapFn[GenericRecord, T](r => AvroBytesUtil.decode(coder, r))))
-        }
-      }
-    )(paths, hintMatchesManyFiles)
-  }
+//  def objectFiles[T : Coder](paths: List[String], hintMatchesManyFiles: Boolean = false)
+//  : SCollection[T] = {
+//    val coder = CoderMaterializer.beamWithDefault(Coder[T])
+//
+//    self.readFiles(
+//      objectFile[T],
+//      new MultiFilePTransform[T] {
+//        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+//          input
+//            .apply(beam.AvroIO.readFilesGenericRecords(AvroBytesUtil.schema))
+//            .apply(ParDo.of(Functions.mapFn[GenericRecord, T](r => AvroBytesUtil.decode(coder, r))))
+//        }
+//      }
+//    )(paths, hintMatchesManyFiles)
+//  }
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
     self.read(GenericRecordIO(path, schema))
@@ -137,8 +137,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def avroFiles[T <: SpecificRecord: ClassTag: Coder](paths: List[String],
                                                       hintMatchesManyFiles: Boolean = false
                                                      ): SCollection[T] = {
-    self.readFiles(
-      avroFile[T], beam.AvroIO.readFiles(ScioUtil.classOf[T]))(paths, hintMatchesManyFiles)
+    self.readFiles(SpecificRecordIO[T], SpecificRecordMultiFileReadIO[T])(
+      (), paths, hintMatchesManyFiles)
   }
 
   /**
@@ -162,22 +162,22 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def typedAvroFiles[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String],
-                                                             hintMatchesManyFiles: Boolean = false)
-  : SCollection[T] = {
-    val avroT = AvroType[T]
-
-    self.readFiles(
-      typedAvroFile[T],
-      new MultiFilePTransform[T] {
-        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
-          input
-            .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
-            .apply(ParDo.of(Functions.mapFn(avroT.fromGenericRecord)))
-        }
-      }
-    )(paths, hintMatchesManyFiles)
-  }
+//  def typedAvroFiles[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String],
+//                                                             hintMatchesManyFiles: Boolean = false)
+//  : SCollection[T] = {
+//    val avroT = AvroType[T]
+//
+//    self.readFiles(
+//      typedAvroFile[T],
+//      new MultiFilePTransform[T] {
+//        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+//          input
+//            .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
+//            .apply(ParDo.of(Functions.mapFn(avroT.fromGenericRecord)))
+//        }
+//      }
+//    )(paths, hintMatchesManyFiles)
+//  }
 
   /**
    * Get an SCollection for a Protobuf file.
@@ -196,10 +196,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    */
-  def protobufFiles[T <: Message: ClassTag](paths: List[String],
-                                            hintMatchesManyFiles: Boolean = false)
-  : SCollection[T] =
-    objectFiles(paths, hintMatchesManyFiles)(Coder.protoMessageCoder[T])
+//  def protobufFiles[T <: Message: ClassTag](paths: List[String],
+//                                            hintMatchesManyFiles: Boolean = false)
+//  : SCollection[T] =
+//    objectFiles(paths, hintMatchesManyFiles)(Coder.protoMessageCoder[T])
 }
 
 /** Enhanced with Avro methods. */

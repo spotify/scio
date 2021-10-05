@@ -20,9 +20,6 @@ package com.spotify.scio.io
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.PCollection
-import org.apache.beam.sdk.{io => beam}
 
 final class ScioContextOps(sc: ScioContext) {
 
@@ -34,8 +31,8 @@ final class ScioContextOps(sc: ScioContext) {
    * to true for better performance and scalability. Note that it may decrease performance if the
    * number of files is small.
    *
-   * @param singleFileTransform Function for reading a single file into an SCollection.
-   * @param multiFileTransform Beam's PTransform with ReadableFile as an input.
+   * @param singleFileIO A function creating a read IO from the provided single path parameter.
+   * @param multiFileIO A function creating a read IO from the list of paths.
    * @param paths List of paths to read the data from.
    * @param hintMatchesManyFiles
    * If false (default value) then IOs are applied individually to each input file path and
@@ -44,14 +41,15 @@ final class ScioContextOps(sc: ScioContext) {
    * [[org.apache.beam.sdk.io.FileIO.matchAll]]/[[org.apache.beam.sdk.io.FileIO.matchAll]] before
    * applying a Beam IO.
    */
-  private[scio] def readFiles[T : Coder](singleFileTransform: String => SCollection[T],
-                                         multiFileTransform: MultiFilePTransform[T])
-                                        (paths: List[String], hintMatchesManyFiles: Boolean = false)
+  private[scio] def readFiles[R, W1, W2, T : Coder](singleFileIO: String => ScioIO.Aux[T, R, W1],
+                                         multiFileIO: List[String] => ScioIO.Aux[T, R, W2])
+                                        (readP: R, paths: List[String],
+  hintMatchesManyFiles: Boolean = false)
   : SCollection[T] = {
     val coll = if(hintMatchesManyFiles && !sc.isTest) {
-      sc.parallelize(paths).readFiles(multiFileTransform)
+      sc.read(multiFileIO(paths))(readP)
     } else {
-      sc.unionAll(paths.map(singleFileTransform))
+      sc.unionAll(paths.map(path => sc.read(singleFileIO(path))(readP)))
     }
 
     coll.withName("Multiple Files Read")
