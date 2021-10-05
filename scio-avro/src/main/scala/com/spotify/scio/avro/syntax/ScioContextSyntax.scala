@@ -22,11 +22,17 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.util.{Functions, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.{io => beam}
+import com.spotify.scio.io._
+import org.apache.beam.sdk.io.FileIO
+import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.values.PCollection
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -43,8 +49,48 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def objectFile[T: Coder](path: String): SCollection[T] =
     self.read(ObjectFileIO[T](path))
 
+  /**
+   * Same as [[objectFile]] but reads from a multi-file input. The way how files are read
+   * depends on the hintMatchesManyFiles parameter.
+   *
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
+   * to true for better performance and scalability. Note that it may decrease performance if the
+   * number of files is small.
+   */
+  def objectFiles[T : Coder](paths: List[String], hintMatchesManyFiles: Boolean = false)
+  : SCollection[T] = {
+    val coder = CoderMaterializer.beamWithDefault(Coder[T])
+
+    self.readFiles(
+      objectFile[T],
+      new MultiFilePTransform[T] {
+        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+          input
+            .apply(beam.AvroIO.readFilesGenericRecords(AvroBytesUtil.schema))
+            .apply(ParDo.of(Functions.mapFn[GenericRecord, T](r => AvroBytesUtil.decode(coder, r))))
+        }
+      }
+    )(paths, hintMatchesManyFiles)
+  }
+
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
     self.read(GenericRecordIO(path, schema))
+
+  /**
+   * Same as [[avroFile]] but reads from a multi-file input. The way how files are read depends on
+   * the hintMatchesManyFiles parameter.
+   *
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
+   * to true for better performance and scalability. Note that it may decrease performance if the
+   * number of files is small.
+   */
+//  def avroFiles(paths: List[String],
+//                schema: Schema,
+//                hintMatchesManyFiles: Boolean = false): SCollection[GenericRecord] = {
+//    self.readFiles(
+//      path => avroFile(path, schema),
+//      beam.AvroIO.readFilesGenericRecords(schema))(paths, hintMatchesManyFiles)
+//  }
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying parseFn to map a
@@ -81,6 +127,21 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(SpecificRecordIO[T](path))
 
   /**
+   * Same as [[avroFile]] files from a multi-file input. The way how files are read depends on the
+   * hintMatchesManyFiles parameter.
+   *
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
+   * to true for better performance and scalability. Note that it may decrease performance if the
+   * number of files is small.
+   */
+  def avroFiles[T <: SpecificRecord: ClassTag: Coder](paths: List[String],
+                                                      hintMatchesManyFiles: Boolean = false
+                                                     ): SCollection[T] = {
+    self.readFiles(
+      avroFile[T], beam.AvroIO.readFiles(ScioUtil.classOf[T]))(paths, hintMatchesManyFiles)
+  }
+
+  /**
    * Get a typed SCollection from an Avro schema.
    *
    * Note that `T` must be annotated with
@@ -94,6 +155,31 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(AvroTyped.AvroIO[T](path))
 
   /**
+   * Same as [[typedAvroFile]] but reads from a multi-file input. The way how files are read
+   * depends on the hintMatchesManyFiles parameter.
+   *
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
+   * to true for better performance and scalability. Note that it may decrease performance if the
+   * number of files is small.
+   */
+  def typedAvroFiles[T <: HasAvroAnnotation: TypeTag: Coder](paths: List[String],
+                                                             hintMatchesManyFiles: Boolean = false)
+  : SCollection[T] = {
+    val avroT = AvroType[T]
+
+    self.readFiles(
+      typedAvroFile[T],
+      new MultiFilePTransform[T] {
+        override def expand(input: PCollection[FileIO.ReadableFile]): PCollection[T] = {
+          input
+            .apply(beam.AvroIO.readFilesGenericRecords(avroT.schema))
+            .apply(ParDo.of(Functions.mapFn(avroT.fromGenericRecord)))
+        }
+      }
+    )(paths, hintMatchesManyFiles)
+  }
+
+  /**
    * Get an SCollection for a Protobuf file.
    *
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
@@ -101,6 +187,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def protobufFile[T <: Message: ClassTag](path: String): SCollection[T] =
     self.read(ProtobufIO[T](path))
+
+  /**
+   * Same as [[protobufFile]] but reads from a multi-file input. The way how files are read
+   * depends on the hintMatchesManyFiles parameter.
+   *
+   * If the number of files is large (e.g. tens of thousands or more), set hintMatchesManyFiles
+   * to true for better performance and scalability. Note that it may decrease performance if the
+   * number of files is small.
+   */
+  def protobufFiles[T <: Message: ClassTag](paths: List[String],
+                                            hintMatchesManyFiles: Boolean = false)
+  : SCollection[T] =
+    objectFiles(paths, hintMatchesManyFiles)(Coder.protoMessageCoder[T])
 }
 
 /** Enhanced with Avro methods. */

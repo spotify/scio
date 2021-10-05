@@ -62,6 +62,9 @@ object AvroExample {
       // read dummy specific records
       case "specificIn" => specificIn(sc, args)
 
+      // read dummy specific records from multiple files
+      case "specificMultiFilesIn" => specificMultiFilesIn(sc, args)
+
       // write dummy generic records
       case "genericOut" => genericOut(sc, args)
 
@@ -96,6 +99,11 @@ object AvroExample {
 
   private def specificIn(sc: ScioContext, args: Args): ClosedTap[String] =
     sc.avroFile[Account](args("input"))
+      .map(_.toString)
+      .saveAsTextFile(args("output"))
+
+  private def specificMultiFilesIn(sc: ScioContext, args: Args): ClosedTap[String] =
+    sc.avroFiles[Account](args.list("input"), hintMatchesManyFiles = true)
       .map(_.toString)
       .saveAsTextFile(args("output"))
 

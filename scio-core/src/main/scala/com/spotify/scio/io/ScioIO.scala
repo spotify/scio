@@ -147,8 +147,8 @@ final case class CustomIO[T](id: String) extends TestIO[T] {
 }
 
 /**
- * Special version of [[ScioIO]] for use with [[SCollection.readAll]] and
- * [[SCollection.readAllBytes]].
+ * Special version of [[ScioIO]] for use with [[SCollection.readFilesAsBytes]],
+ * [[[SCollection.readFilesAsString]], [[[SCollection.readFiles]].
  */
 final case class ReadIO[T](id: String) extends TestIO[T] {
   override val tapT: TapT.Aux[T, T] = TapOf[T]
