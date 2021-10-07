@@ -46,34 +46,12 @@ final case class GenericRecordTap(
     sc.read(GenericRecordIO(path, s.get))
 }
 
-final case class GenericRecordMultiFileTap(
-  paths: List[String],
-  @transient private val
-  schema: Schema
-) extends Tap[GenericRecord] {
-  private lazy val s = Externalizer(schema)
-
-  override def value: Iterator[GenericRecord] =
-    paths.iterator.flatMap(path => FileStorage(path).avroFile[GenericRecord](s.get))
-
-  override def open(sc: ScioContext): SCollection[GenericRecord] =
-    sc.read(GenericRecordMultiFilesReadIO(s.get)(paths))
-}
-
 /** Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files. */
 final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile[T]()
 
   override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
-}
-
-final case class SpecificRecordMultiFileTap[T <: SpecificRecord: ClassTag: Coder](
-  paths: List[String]
-) extends Tap[T] {
-  override def value: Iterator[T] = paths.iterator.flatMap(path => FileStorage(path).avroFile[T]())
-
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFiles[T](paths)
 }
 
 /**
@@ -105,18 +83,6 @@ case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
     }
   }
   override def open(sc: ScioContext): SCollection[T] = sc.objectFile[T](path)
-}
-
-case class ObjectFileMultiFileTap[T: Coder](paths: List[String]) extends Tap[T] {
-  override def value: Iterator[T] = {
-    val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
-    paths.iterator.flatMap(path =>
-      FileStorage(path).avroFile[GenericRecord](AvroBytesUtil.schema).map { r =>
-        AvroBytesUtil.decode(elemCoder, r)
-      }
-    )
-  }
-  override def open(sc: ScioContext): SCollection[T] = sc.objectFiles[T](paths)
 }
 
 final case class AvroTaps(self: Taps) {

@@ -41,20 +41,18 @@ final class ScioContextOps(sc: ScioContext) {
    *   If false (default value) then IOs are applied individually to each input file path and joined
    *   into a single output [[SCollection]] using the [[SCollection.unionAll]]. If true then first
    *   all paths are read into an PCollection[ReadableFile] using
-   *   [[org.apache.beam.sdk.io.FileIO.matchAll]]/[[org.apache.beam.sdk.io.FileIO.matchAll]] before
-   *   applying a Beam IO.
+   *   [[org.apache.beam.sdk.io.FileIO.matchAll]]/[[org.apache.beam.sdk.io.FileIO.readMatches()]]
+   *   before applying a Beam IO.
    */
   private[scio] def readFiles[R, W1, W2, T: Coder](
     singleFileIO: String => ScioIO.Aux[T, R, W1],
     multiFileIO: List[String] => ScioIO.Aux[T, R, W2]
   )(readP: R, paths: List[String], hintMatchesManyFiles: Boolean = false): SCollection[T] = {
-    val coll = if (hintMatchesManyFiles && !sc.isTest) {
+    if (hintMatchesManyFiles && !sc.isTest) {
       sc.read(multiFileIO(paths))(readP)
     } else {
       sc.unionAll(paths.map(path => sc.read(singleFileIO(path))(readP)))
     }
-
-    coll.withName("Multiple Files Read")
   }
 
 }

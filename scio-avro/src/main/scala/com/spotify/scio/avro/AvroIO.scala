@@ -85,14 +85,9 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
 final case class ObjectFileMultiFileReadIO[T: Coder](paths: List[String]) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
-  override val tapT: TapT.Aux[T, T] = TapOf[T]
 
-  /**
-   * Get an SCollection for an object file using default serialization.
-   *
-   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
-   * serialization is not guaranteed to be compatible across Scio releases.
-   */
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
+
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beamWithDefault(Coder[T])
     sc.parallelize(paths)
@@ -109,10 +104,10 @@ final case class ObjectFileMultiFileReadIO[T: Coder](paths: List[String]) extend
       )
   }
 
-  override def tap(read: ReadP): Tap[T] =
-    ObjectFileMultiFileTap[T](paths.map(path => ScioUtil.addPartSuffix(path)))
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
+    throw new UnsupportedOperationException("ObjectFileMultiFileReadIO is read-only")
 
-  override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
+  override def tap(read: ReadP): Tap[tapT.T] = EmptyTap
 }
 
 object ObjectFileIO {
@@ -210,22 +205,22 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
 
 final case class SpecificRecordMultiFileReadIO[T <: SpecificRecord: ClassTag: Coder](
   paths: List[String]
-) extends AvroIO[T] {
+) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
 
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
   override def testId: String = s"AvroIO($paths)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val t = beam.AvroIO.readFiles(ScioUtil.classOf[T])
-
     sc.parallelize(paths).readFiles(t)
   }
 
-  override def tap(read: ReadP): Tap[T] =
-    SpecificRecordMultiFileTap[T](paths.map(path => ScioUtil.addPartSuffix(path)))
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
+    throw new UnsupportedOperationException("SpecificRecordMultiFileReadIO is read-only")
 
-  override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
+  override def tap(read: ReadP): Tap[tapT.T] = EmptyTap
 }
 
 final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
@@ -264,22 +259,20 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
 }
 
 final case class GenericRecordMultiFilesReadIO(schema: Schema)(paths: List[String])
-    extends AvroIO[GenericRecord] {
+    extends ScioIO[GenericRecord] {
   override type ReadP = Unit
   override type WriteP = Nothing
 
+  override val tapT: TapT.Aux[GenericRecord, Nothing] = EmptyTapOf[GenericRecord]
   override def testId: String = s"AvroIO($paths)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] =
     sc.parallelize(paths).readFiles(beam.AvroIO.readFilesGenericRecords(schema))
 
-  override def tap(read: ReadP): Tap[GenericRecord] =
-    GenericRecordMultiFileTap(paths.map(path => ScioUtil.addPartSuffix(path)), schema)
+  override protected def write(data: SCollection[GenericRecord], params: WriteP): Tap[Nothing] =
+    throw new UnsupportedOperationException("GenericRecordMultiFilesReadIO is read-only")
 
-  override protected def write(
-    data: SCollection[GenericRecord],
-    params: Nothing
-  ): Tap[GenericRecord] = ???
+  override def tap(read: ReadP): Tap[tapT.T] = EmptyTap
 }
 
 /**
@@ -405,7 +398,7 @@ object AvroTyped {
       extends ScioIO[T] {
     override type ReadP = Unit
     override type WriteP = Nothing
-    override val tapT: TapT.Aux[T, T] = TapOf[T]
+    override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val avroT = AvroType[T]
@@ -422,12 +415,9 @@ object AvroTyped {
         )
     }
 
-    override def tap(read: ReadP): Tap[T] = {
-      val avroT = AvroType[T]
-      GenericRecordMultiFileTap(paths.map(path => ScioUtil.addPartSuffix(path)), avroT.schema)
-        .map(avroT.fromGenericRecord)
-    }
+    override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
+      throw new UnsupportedOperationException("AvroMultiFilesIO is read-only")
 
-    override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
+    override def tap(read: ReadP): Tap[tapT.T] = EmptyTap
   }
 }
