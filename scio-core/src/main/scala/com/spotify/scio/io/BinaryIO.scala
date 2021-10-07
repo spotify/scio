@@ -19,6 +19,7 @@ package com.spotify.scio.io
 
 import java.io.{BufferedInputStream, InputStream, OutputStream}
 import java.nio.channels.{Channels, WritableByteChannel}
+
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.BinaryIO.BytesSink
 import com.spotify.scio.values.SCollection
@@ -27,6 +28,7 @@ import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import scala.jdk.CollectionConverters._
+
 import scala.util.Try
 
 /**
