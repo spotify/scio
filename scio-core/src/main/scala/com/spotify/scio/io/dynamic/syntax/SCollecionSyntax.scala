@@ -40,9 +40,10 @@ object DynamicSCollectionOps {
     path: String,
     numShards: Int,
     suffix: String,
-    destinationFn: A => String
-  ): FileIO.Write[String, A] =
-    FileIO
+    destinationFn: A => String,
+    tempDirectory: String
+  ): FileIO.Write[String, A] = {
+    val transform = FileIO
       .writeDynamic[String, A]()
       .to(path)
       .withNumShards(numShards)
@@ -51,6 +52,9 @@ object DynamicSCollectionOps {
       .withNaming(Functions.serializableFn { destination: String =>
         FileIO.Write.defaultNaming(s"$destination/part", suffix)
       })
+
+    Option(tempDirectory).fold(transform)(transform.withTempDirectory)
+  }
 }
 
 final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
@@ -64,7 +68,8 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
     numShards: Int = 0,
     suffix: String = ".avro",
     codec: CodecFactory = CodecFactory.deflateCodec(6),
-    metadata: Map[String, AnyRef] = Map.empty
+    metadata: Map[String, AnyRef] = Map.empty,
+    tempDirectory: String = null
   )(
     destinationFn: T => String
   )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
@@ -81,7 +86,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
         .withCodec(codec)
         .withMetadata(nm)
       val write =
-        writeDynamic(path, numShards, suffix, destinationFn)
+        writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
           .via(sink)
 
       self.applyInternal(write)
@@ -106,7 +111,8 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
     numShards: Int = 0,
     suffix: String = ".avro",
     codec: CodecFactory = CodecFactory.deflateCodec(6),
-    metadata: Map[String, AnyRef] = Map.empty
+    metadata: Map[String, AnyRef] = Map.empty,
+    tempDirectory: String = null
   )(
     destinationFn: T => String
   ): ClosedTap[Nothing] = {
@@ -128,7 +134,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
         .withCodec(codec)
         .withMetadata(nm)
       val write =
-        writeDynamic(path, numShards, suffix, destinationFn)
+        writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
           .via(sink)
 
       self.applyInternal(write)
@@ -150,7 +156,8 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
     path: String,
     numShards: Int = 0,
     suffix: String = ".txt",
-    compression: Compression = Compression.UNCOMPRESSED
+    compression: Compression = Compression.UNCOMPRESSED,
+    tempDirectory: String = null
   )(destinationFn: String => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       self.asInstanceOf[SCollection[String]]
@@ -162,7 +169,7 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
         "Text file with dynamic destinations cannot be used in a test context"
       )
     } else {
-      val write = writeDynamic(path, numShards, suffix, destinationFn)
+      val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
         .via(beam.TextIO.sink())
         .withCompression(compression)
       s.applyInternal(write)
@@ -181,7 +188,8 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     numShards: Int = 0,
     suffix: String = ".protobuf",
     codec: CodecFactory = CodecFactory.deflateCodec(6),
-    metadata: Map[String, AnyRef] = Map.empty
+    metadata: Map[String, AnyRef] = Map.empty,
+    tempDirectory: String = null
   )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val protoCoder = Coder.protoMessageCoder[T]
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
@@ -205,7 +213,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
         .withCodec(codec)
         .withMetadata(nm)
       val write =
-        writeDynamic(path, numShards, suffix, destinationFn)
+        writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
           .via(sink)
 
       self.applyInternal(write)
