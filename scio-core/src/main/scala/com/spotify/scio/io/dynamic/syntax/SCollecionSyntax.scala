@@ -41,7 +41,7 @@ object DynamicSCollectionOps {
     numShards: Int,
     suffix: String,
     destinationFn: A => String,
-    tempDirectory: String
+    tempDirectory: String = null
   ): FileIO.Write[String, A] = {
     val transform = FileIO
       .writeDynamic[String, A]()
