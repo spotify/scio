@@ -188,7 +188,7 @@ def main(out):
         sortMergeCoGroup(out, i)
 
     N = 22
-    for i in range(5, N + 1):
+    for i in range(4, N + 1):
         sortMergeTransform(out, i)
 
     print('}', file=out)

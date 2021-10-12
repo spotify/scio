@@ -3350,6 +3350,49 @@ final class SMBMultiJoin(private val self: ScioContext) {
       TargetParallelism.auto()
     )
 
+  def sortMergeTransform[KEY, A, B, C, D](
+    keyClass: Class[KEY],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D],
+    targetParallelism: TargetParallelism
+  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+    KEY,
+    (Iterable[A], Iterable[B], Iterable[C], Iterable[D])
+  ] = {
+    val (tupleTagA, tupleTagB, tupleTagC, tupleTagD) =
+      (a.getTupleTag, b.getTupleTag, c.getTupleTag, d.getTupleTag)
+    new sortedBucketScioContext.SortMergeTransformReadBuilder(
+      SortedBucketIO
+        .read(keyClass)
+        .of(a)
+        .and(b)
+        .and(c)
+        .and(d)
+        .withTargetParallelism(targetParallelism),
+      cgbkResult =>
+        (
+          cgbkResult.getAll(tupleTagA).asScala,
+          cgbkResult.getAll(tupleTagB).asScala,
+          cgbkResult.getAll(tupleTagC).asScala,
+          cgbkResult.getAll(tupleTagD).asScala
+        )
+    )
+  }
+
+  def sortMergeTransform[KEY, A, B, C, D](
+    keyClass: Class[KEY],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D]
+  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+    KEY,
+    (Iterable[A], Iterable[B], Iterable[C], Iterable[D])
+  ] =
+    sortMergeTransform(keyClass, a, b, c, d, TargetParallelism.auto())
+
   def sortMergeTransform[KEY, A, B, C, D, E](
     keyClass: Class[KEY],
     a: SortedBucketIO.Read[A],
