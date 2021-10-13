@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery.types
 import java.util.{List => JList}
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import org.apache.avro.Schema
-import org.apache.avro.Schema.Type
+import org.apache.avro.Schema.{Type => AvroSchemaType}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
@@ -163,7 +163,7 @@ object SchemaUtil {
                 val recordSchema = field.schema()
                 val recordPrefix = prefix + field.name()
                 (
-                  if (recordSchema.getType == Type.RECORD)
+                  if (recordSchema.getType == AvroSchemaType.RECORD)
                     q.enqueue((recordSchema, recordPrefix + "."))
                   else q,
                   ns + recordPrefix
@@ -175,7 +175,7 @@ object SchemaUtil {
       }
     }
 
-    if (schema.getType != Type.RECORD) {
+    if (schema.getType != AvroSchemaType.RECORD) {
       Set.empty
     } else {
       val queue = Queue((schema, ""))

@@ -86,7 +86,6 @@ private object Reads {
     selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
     rowRestriction: Option[String] = BigQueryStorage.ReadParam.DefaultRowRestriction
   ): SCollection[T] = {
-
     var read = typedRead
       .from(table.spec)
       .withMethod(Method.DIRECT_READ)
