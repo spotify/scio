@@ -31,7 +31,7 @@ private[coders] object AvroCoderMacros {
 
     q"""
     _root_.com.spotify.scio.coders.Coder.beam(
-      _root_.org.apache.beam.sdk.coders.shaded.AvroCoder.of[$companioned](
+      _root_.org.apache.beam.sdk.coders.AvroCoder.of[$companioned](
         classOf[$companioned],
         new $companioned().getSchema,
         true
