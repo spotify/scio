@@ -18,9 +18,12 @@
 package com.spotify.scio.bigquery.types
 
 import java.util.{List => JList}
-
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import org.apache.avro.Schema
+import org.apache.avro.Schema.Type
 
+import scala.annotation.tailrec
+import scala.collection.immutable.Queue
 import scala.jdk.CollectionConverters._
 
 /** Utility for BigQuery schemas. */
@@ -137,4 +140,46 @@ object SchemaUtil {
     "with",
     "yield"
   )
+
+  /**
+   * Traverses (using BFS) Avro records tree and returns the set of all path prefixed names of all
+   * fields in all records including names of record fields. E.g. for schema:
+   *
+   * { "type": "record", "fields": [ { "name": "r1", "type": { "type": "record", "fields": [ {
+   * "name": "str", "type": "string" }, { "name": "int", "type": "long" } ] } } ] }
+   *
+   * It would return Set(r1, r1.str, r1.int)
+   */
+  private[scio] def recordPathPrefixedFieldNames(schema: Schema): Set[String] = {
+    @tailrec
+    def go(records: Queue[(Schema, String)], names: Set[String]): Set[String] = {
+      if (records.isEmpty) {
+        names
+      } else {
+        records.dequeueOption match {
+          case Some(((record, prefix), queue)) =>
+            val (newRecords, newNames) = record.getFields.asScala.foldLeft((queue, names)) {
+              case ((q, ns), field) =>
+                val recordSchema = field.schema()
+                val recordPrefix = prefix + field.name()
+                (
+                  if (recordSchema.getType == Type.RECORD)
+                    q.enqueue((recordSchema, recordPrefix + "."))
+                  else q,
+                  ns + recordPrefix
+                )
+            }
+            go(newRecords, newNames)
+          case None => names
+        }
+      }
+    }
+
+    if (schema.getType != Type.RECORD) {
+      Set.empty
+    } else {
+      val queue = Queue((schema, ""))
+      go(queue, Set.empty)
+    }
+  }
 }

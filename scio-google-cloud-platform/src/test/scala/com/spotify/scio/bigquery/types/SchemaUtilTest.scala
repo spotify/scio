@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import org.apache.avro.Schema
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -147,6 +148,60 @@ class SchemaUtilTest extends AnyFlatSpec with Matchers {
     SchemaUtil.toPrettyString(schema, "Row", 0) should equal(
       s"""|@BigQueryType.toTable
           |case class Row($expectedFields)""".stripMargin
+    )
+  }
+
+  "recordPathPrefixedNames" should "return empty set of a schema with a non-record root type" in {
+    val schemaStr =
+      """
+        |{
+        |  "name": "str",
+        |  "type": "string"
+        |}
+        |""".stripMargin
+
+    val schema = new Schema.Parser().parse(schemaStr)
+    SchemaUtil.recordPathPrefixedFieldNames(schema) shouldBe Set.empty
+  }
+
+  "recordPathPrefixedNames" should "return set of record path prefixed field names" in {
+    val schemaStr =
+      """
+        |{
+        |"type": "record",
+        |"name": "n1",
+        |"fields": [
+        |    {
+        |        "name": "r1",
+        |        "type": {
+        |            "type": "record",
+        |            "name": "n2",
+        |            "fields": [
+        |                {
+        |                    "name": "str",
+        |                    "type": "string"
+        |                },
+        |                {
+        |                    "name": "int",
+        |                    "type": "long"
+        |                }
+        |            ]
+        |        }
+        |      },
+        |      {
+        |         "name": "f1",
+        |         "type": "string"
+        |      }
+        |   ]
+        |}
+        |""".stripMargin
+
+    val schema = new Schema.Parser().parse(schemaStr)
+    SchemaUtil.recordPathPrefixedFieldNames(schema) should contain theSameElementsAs Set(
+      "r1",
+      "r1.str",
+      "r1.int",
+      "f1"
     )
   }
 }

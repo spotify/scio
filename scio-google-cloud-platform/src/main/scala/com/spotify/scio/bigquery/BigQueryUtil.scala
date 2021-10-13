@@ -19,10 +19,11 @@ package com.spotify.scio.bigquery
 
 import java.io.StringReader
 import java.util.UUID
-
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model.TableSchema
+import com.spotify.scio.bigquery.types.SchemaUtil
+import org.apache.avro.Schema
 
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
@@ -40,11 +41,12 @@ object BigQueryUtil {
   /** Validates if all selectedFields are in the set of schemaFieldNames */
   def validateSelectedFields(
     tableSpec: String,
-    schemaFieldNames: Iterable[String],
+    avroSchema: Schema,
     selectedFields: List[String]
   ): Unit = {
     // check if selected fields are defined in the schema of the table
     if (selectedFields.nonEmpty) {
+      val schemaFieldNames = SchemaUtil.recordPathPrefixedFieldNames(avroSchema)
       val notFoundFields = selectedFields.toSet -- schemaFieldNames.toSet
 
       if (notFoundFields.nonEmpty) {
