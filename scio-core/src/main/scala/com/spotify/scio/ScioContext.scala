@@ -654,6 +654,9 @@ class ScioContext private[scio] (
   /** Whether this is a test context. */
   def isTest: Boolean = testId.isDefined
 
+  // The temp location of the job as specified by the `--tempLocation` parameter.
+  def tempLocation: String = this.options.getTempLocation
+
   // =======================================================================
   // Read operations
   // =======================================================================
