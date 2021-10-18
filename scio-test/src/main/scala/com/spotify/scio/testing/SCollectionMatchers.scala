@@ -94,7 +94,12 @@ private object ScioMatchers {
         val c = Matchers
           .containsInAnyOrder(ds: _*)
           .asInstanceOf[h.Matcher[JIterable[T]]]
-        Matchers.describedAs(message, c)
+        new h.BaseMatcher[JIterable[T]] {
+          override def matches(o: AnyRef): Boolean = c.matches(o)
+          override def describeTo(d: h.Description): Unit = d.appendText(message)
+          override def describeMismatch(i: AnyRef, d: h.Description): Unit =
+            c.describeMismatch(i, d)
+        }
       }
     }
 

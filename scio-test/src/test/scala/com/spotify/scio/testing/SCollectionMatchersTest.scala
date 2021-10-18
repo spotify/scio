@@ -111,6 +111,18 @@ class SCollectionMatchersTest extends PipelineSpec {
     runWithContext(_.parallelize(Seq(newTR(1))) shouldNot containInAnyOrder(Seq(newTR(2))))
   }
 
+  it should "support containsInAnyOrder containing %" in {
+    val assertionError = intercept[AssertionError] {
+      runWithContext {
+        _.parallelize(Seq("1")) should containInAnyOrder(Seq("%1"))
+      }
+    }
+    // expected value
+    assertionError.getMessage should include("\"%1\"")
+    // actual value
+    assertionError.getMessage should include("<\"1\">")
+  }
+
   it should "support containSingleValue" in {
     // should cases
     runWithContext(_.parallelize(Seq(1)) should containSingleValue(1))
