@@ -346,7 +346,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 lazy val protobufSettings = Def.settings(
   ProtobufConfig / version := protobufVersion,
   ProtobufConfig / protobufRunProtoc := (args =>
-    com.github.os72.protocjar.Protoc.runProtoc("-v3.11.4" +: args.toArray)
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.17.3" +: args.toArray)
   ),
   libraryDependencies += "com.google.protobuf" % "protobuf-java" % (ProtobufConfig / version).value % ProtobufConfig.name
 )
@@ -1339,7 +1339,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.tukaani" % "xz" % "1.8",
   "org.typelevel" %% "algebra" % algebraVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.xerial.snappy" % "snappy-java" % "1.1.4",
+  "org.xerial.snappy" % "snappy-java" % "1.1.8.4",
   "org.yaml" % "snakeyaml" % "1.12",
   "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
 )
