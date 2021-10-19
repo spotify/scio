@@ -13,7 +13,7 @@ jobs:
   publish-repl:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.3.5
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.3.5
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
