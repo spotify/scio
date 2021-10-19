@@ -605,22 +605,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
     Moments(12) coderShould roundtrip()
   }
-
-  it should "deserialize Avro string fields as java.lang.Strings by default" in {
-    implicit val hasJavaStringType: Equality[Account] =
-      (roundtripped: Account, _: Any) =>
-        roundtripped.getName.getClass == classOf[
-          String
-        ] && roundtripped.getType.getClass == classOf[String]
-
-    Account
-      .newBuilder()
-      .setId(0)
-      .setType("foo")
-      .setName("bar")
-      .setAmount(1.0)
-      .build() coderShould roundtrip()
-  }
 }
 
 object RecursiveCase {
