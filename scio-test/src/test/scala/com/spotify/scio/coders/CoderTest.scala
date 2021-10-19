@@ -33,7 +33,6 @@ import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.spotify.scio.avro.Account
 import com.twitter.algebird.Moments
 
 final case class UserId(bytes: Seq[Byte])
