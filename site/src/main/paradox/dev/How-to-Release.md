@@ -19,7 +19,7 @@ Credentials(
 
 ## Update documentation and version matrix
 
-- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics), [here](https://harrypotter.fandom.com/wiki/List_of_spells), [here](https://en.wikipedia.org/wiki/List_of_Latin_names_of_cities), or other interesting sources<sup>*</sup>
+- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics), [here](https://harrypotter.fandom.com/wiki/List_of_spells), [here](https://en.wikipedia.org/wiki/List_of_Latin_names_of_cities), [here](https://en.wikipedia.org/wiki/List_of_Latin_names_of_countries), or other interesting sources<sup>*</sup>
 - Update the list of release names below
 - If the release includes a Beam version bump, update the @ref:[version matrix](../Apache-Beam.md)
 
@@ -62,6 +62,7 @@ git push origin vX.Y.Z
 
 ### 0.11.x
 
+- [v0.11.1](https://github.com/spotify/scio/releases/tag/v0.11.1) - _"Armorica"_
 - [v0.11.0](https://github.com/spotify/scio/releases/tag/v0.11.0) - _"Ariana"_
 
 ### 0.10.x
