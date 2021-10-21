@@ -129,14 +129,20 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     numShards: Int,
     suffix: String,
     codec: CodecFactory,
-    metadata: Map[String, AnyRef]
-  ) =
-    write
+    metadata: Map[String, AnyRef],
+    tempDirectory: String
+  ) = {
+    val transform = write
       .to(ScioUtil.pathWithShards(path))
       .withNumShards(numShards)
       .withSuffix(suffix)
       .withCodec(codec)
       .withMetadata(metadata.asJava)
+
+    Option(tempDirectory)
+      .map(ScioUtil.toResourceId)
+      .fold(transform)(transform.withTempDirectory)
+  }
 }
 
 final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
@@ -164,7 +170,15 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO.write(cls)
     data.applyInternal(
-      avroOut(t, path, params.numShards, params.suffix, params.codec, params.metadata)
+      avroOut(
+        t,
+        path,
+        params.numShards,
+        params.suffix,
+        params.codec,
+        params.metadata,
+        params.tempDirectory
+      )
     )
     tap(())
   }
@@ -199,7 +213,15 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
   ): Tap[GenericRecord] = {
     val t = beam.AvroIO.writeGenericRecords(schema)
     data.applyInternal(
-      avroOut(t, path, params.numShards, params.suffix, params.codec, params.metadata)
+      avroOut(
+        t,
+        path,
+        params.numShards,
+        params.suffix,
+        params.codec,
+        params.metadata,
+        params.tempDirectory
+      )
     )
     tap(())
   }
@@ -249,13 +271,15 @@ object AvroIO {
     private[avro] val DefaultSuffix = ""
     private[avro] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
+    private[avro] val DefaultTempDirectory = null
   }
 
   final case class WriteParam private (
     numShards: Int = WriteParam.DefaultNumShards,
     private val _suffix: String = WriteParam.DefaultSuffix,
     codec: CodecFactory = WriteParam.DefaultCodec,
-    metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata
+    metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   ) {
     val suffix: String = _suffix + ".avro"
   }
@@ -278,14 +302,20 @@ object AvroTyped {
       numShards: Int,
       suffix: String,
       codec: CodecFactory,
-      metadata: Map[String, AnyRef]
-    ) =
-      write
+      metadata: Map[String, AnyRef],
+      tempDirectory: String
+    ) = {
+      val transform = write
         .to(ScioUtil.pathWithShards(path))
         .withNumShards(numShards)
         .withSuffix(suffix)
         .withCodec(codec)
         .withMetadata(metadata.asJava)
+
+      Option(tempDirectory)
+        .map(ScioUtil.toResourceId)
+        .fold(transform)(transform.withTempDirectory)
+    }
 
     /**
      * Get a typed SCollection from an Avro schema.
@@ -315,7 +345,15 @@ object AvroTyped {
         })
         .withSchema(avroT.schema)
       data.applyInternal(
-        typedAvroOut(t, path, params.numShards, params.suffix, params.codec, params.metadata)
+        typedAvroOut(
+          t,
+          path,
+          params.numShards,
+          params.suffix,
+          params.codec,
+          params.metadata,
+          params.tempDirectory
+        )
       )
       tap(())
     }

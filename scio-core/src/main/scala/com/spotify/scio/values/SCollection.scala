@@ -22,7 +22,7 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, WrappedBCoder}
+import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.estimators.{
   ApproxDistinctCounter,
   ApproximateUniqueCounter,
@@ -144,10 +144,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def name: String = internal.getName
 
   /** Assign a Coder to this SCollection. */
-  def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] = coder match {
-    case wc: WrappedBCoder[T] => context.wrap(internal.setCoder(wc.u))
-    case _                    => context.wrap(internal.setCoder(coder))
-  }
+  def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
+    context.wrap(internal.setCoder(coder))
 
   def setSchema(schema: Schema[T])(implicit ct: ClassTag[T]): SCollection[T] =
     if (!internal.hasSchema) {
@@ -1505,7 +1503,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     compression: Compression = TextIO.WriteParam.DefaultCompression,
     header: Option[String] = TextIO.WriteParam.DefaultHeader,
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
-    shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate
+    shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1513,7 +1512,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       this.map(_.toString)
     }
     s.write(TextIO(path))(
-      TextIO.WriteParam(suffix, numShards, compression, header, footer, shardNameTemplate)
+      TextIO.WriteParam(
+        suffix,
+        numShards,
+        compression,
+        header,
+        footer,
+        shardNameTemplate,
+        tempDirectory
+      )
     )
   }
 
@@ -1531,7 +1538,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     footer: Array[Byte] = BinaryIO.WriteParam.DefaultFooter,
     framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
-    fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming
+    fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming,
+    tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .covary_[Array[Byte]]
@@ -1546,7 +1554,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             footer,
             framePrefix,
             frameSuffix,
-            fileNaming
+            fileNaming,
+            tempDirectory
           )
       )
 

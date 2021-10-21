@@ -33,11 +33,11 @@ val autoServiceVersion = "1.0"
 val autoValueVersion = "1.8.2"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.32.0"
+val beamVersion = "2.33.0"
 val bigdataossVersion = "2.2.2"
 val bigQueryStorageVersion = "1.21.1"
 val bigtableClientVersion = "1.19.1"
-val breezeVersion = "1.3"
+val breezeVersion = "2.0"
 val caffeineVersion = "2.9.2"
 val catsVersion = "2.5.0"
 val chillVersion = "0.10.0"
@@ -48,8 +48,8 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "6.8.18"
-val elasticsearch7Version = "7.14.1"
+val elasticsearch6Version = "6.8.20"
+val elasticsearch7Version = "7.15.1"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.63.0"
@@ -75,11 +75,11 @@ val jacksonVersion = "2.12.5"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.9.0"
-val jodaTimeVersion = "2.10.10"
+val jodaTimeVersion = "2.10.12"
 val junitInterfaceVersion = "0.11"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
-val kantanCsvVersion = "0.6.1"
+val kantanCsvVersion = "0.6.2"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "1.0.0-M4"
@@ -89,13 +89,13 @@ val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.34.Final"
 val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.2"
-val parquetVersion = "1.12.0"
+val parquetVersion = "1.12.2"
 val protobufGenericVersion = "0.2.9"
-val protobufVersion = "3.17.3"
+val protobufVersion = "3.18.1"
 val scalacheckVersion = "1.15.4"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
-val scalatestVersion = "3.2.9"
+val scalatestVersion = "3.2.10"
 val shapelessVersion = "2.3.7"
 val slf4jVersion = "1.7.32"
 val sparkeyVersion = "3.2.1"
@@ -142,7 +142,7 @@ val commonSettings = Def
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.6",
-    crossScalaVersions := Seq("2.12.14", scalaVersion.value),
+    crossScalaVersions := Seq("2.12.15", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
@@ -893,13 +893,13 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.3.3",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.3.4",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.26",
+      "mysql" % "mysql-connector-java" % "8.0.27",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,

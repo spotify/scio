@@ -158,9 +158,23 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
 
   // FIXME: what about `Option[T]`
   private K extractScalaKey(V value) {
+    Object obj = value;
+    for (Method getter : getOrInitGetters(value.getClass())) {
+      try {
+        obj = getter.invoke(obj);
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        throw new IllegalStateException(
+            String.format("Failed to get field %s from class %s", getter.getName(), obj));
+      }
+    }
+    @SuppressWarnings("unchecked")
+    K key = (K) obj;
+    return key;
+  }
+
+  private synchronized Method[] getOrInitGetters(Class<?> cls) {
     if (getters == null) {
       getters = new Method[keyPath.length];
-      Class<?> cls = value.getClass();
       for (int i = 0; i < keyPath.length; i++) {
         Method getter = null;
         try {
@@ -173,18 +187,7 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
         cls = getter.getReturnType();
       }
     }
-    Object obj = value;
-    for (Method getter : getters) {
-      try {
-        obj = getter.invoke(obj);
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        throw new IllegalStateException(
-            String.format("Failed to get field %s from class %s", getter.getName(), obj));
-      }
-    }
-    @SuppressWarnings("unchecked")
-    K key = (K) obj;
-    return key;
+    return getters;
   }
 
   private static String[] toKeyPath(String keyField) {

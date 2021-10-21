@@ -10,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.3.5
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup
@@ -37,12 +37,12 @@ jobs:
             java: 11
             coverage: true
         exclude:
-          - scala: 2.12.14
+          - scala: 2.12.15
             java: 8
   repl-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.3.5
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java ${{matrix.java}} setup

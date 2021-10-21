@@ -68,6 +68,9 @@ final case class TextIO(path: String) extends ScioIO[String] {
 
     transform = params.header.fold(transform)(transform.withHeader)
     transform = params.footer.fold(transform)(transform.withFooter)
+    transform = Option(params.tempDirectory)
+      .map(ScioUtil.toResourceId)
+      .fold(transform)(transform.withTempDirectory)
 
     transform
   }
@@ -84,6 +87,7 @@ object TextIO {
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
     private[scio] val DefaultShardNameTemplate = "/part" + ShardNameTemplate.INDEX_OF_MAX
+    private[scio] val DefaultTempDirectory = null
   }
   final case class WriteParam(
     suffix: String = WriteParam.DefaultSuffix,
@@ -91,7 +95,8 @@ object TextIO {
     compression: Compression = WriteParam.DefaultCompression,
     header: Option[String] = WriteParam.DefaultHeader,
     footer: Option[String] = WriteParam.DefaultFooter,
-    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {
