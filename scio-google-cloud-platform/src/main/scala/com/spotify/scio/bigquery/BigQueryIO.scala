@@ -73,7 +73,7 @@ private object Reads {
       .newQueryJob(sqlQuery, flattenResults, labels)
       .map { job =>
         sc.onClose(_ => bigQueryClient.waitForJobs(job))
-        typedRead.from(job.table).withoutValidation()
+        typedRead.from(job.table).withoutValidation().withMethod(Method.DIRECT_READ)
       }
 
     sc.applyTransform(read.get)
