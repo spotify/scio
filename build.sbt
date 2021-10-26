@@ -76,7 +76,7 @@ val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.9.0"
 val jodaTimeVersion = "2.10.12"
-val junitInterfaceVersion = "0.11"
+val junitInterfaceVersion = "0.13.2"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.2"
@@ -484,7 +484,7 @@ lazy val `scio-test`: Project = project
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
-      "com.novocode" % "junit-interface" % junitInterfaceVersion,
+      "com.github.sbt" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
       "com.lihaoyi" %% "pprint" % "0.6.6",
       "com.chuusai" %% "shapeless" % shapelessVersion,
@@ -1050,7 +1050,7 @@ lazy val `scio-smb`: Project = project
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % Test,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
-      "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
+      "com.github.sbt" % "junit-interface" % junitInterfaceVersion % Test,
       "junit" % "junit" % junitVersion % Test,
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
