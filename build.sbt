@@ -76,7 +76,7 @@ val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.9.0"
 val jodaTimeVersion = "2.10.12"
-val junitInterfaceVersion = "0.11"
+val junitInterfaceVersion = "0.13.2"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.2"
@@ -346,7 +346,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 lazy val protobufSettings = Def.settings(
   ProtobufConfig / version := protobufVersion,
   ProtobufConfig / protobufRunProtoc := (args =>
-    com.github.os72.protocjar.Protoc.runProtoc("-v3.11.4" +: args.toArray)
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.17.3" +: args.toArray)
   ),
   libraryDependencies += "com.google.protobuf" % "protobuf-java" % (ProtobufConfig / version).value % ProtobufConfig.name
 )
@@ -484,7 +484,7 @@ lazy val `scio-test`: Project = project
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
-      "com.novocode" % "junit-interface" % junitInterfaceVersion,
+      "com.github.sbt" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
       "com.lihaoyi" %% "pprint" % "0.6.6",
       "com.chuusai" %% "shapeless" % shapelessVersion,
@@ -1050,7 +1050,7 @@ lazy val `scio-smb`: Project = project
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % Test,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
-      "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
+      "com.github.sbt" % "junit-interface" % junitInterfaceVersion % Test,
       "junit" % "junit" % junitVersion % Test,
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
@@ -1339,7 +1339,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.tukaani" % "xz" % "1.8",
   "org.typelevel" %% "algebra" % algebraVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.xerial.snappy" % "snappy-java" % "1.1.4",
+  "org.xerial.snappy" % "snappy-java" % "1.1.8.4",
   "org.yaml" % "snakeyaml" % "1.12",
   "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
 )
