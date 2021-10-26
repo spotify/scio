@@ -1,6 +1,6 @@
 addSbtPlugin("com.github.sbt" % "sbt-avro" % "3.3.0")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.10")
-addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.3")
+addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
 addSbtPlugin("com.github.sbt" % "sbt-protobuf" % "0.7.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.9.1")
