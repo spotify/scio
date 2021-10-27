@@ -121,15 +121,20 @@ def sortMergeTransform(out, n):
     print('\t\t' + mkTupleTag(vals),
           file=out)
 
-    print('\t\tnew sortedBucketScioContext.SortMergeTransformReadBuilder(', file=out)
-    print('\t\t\tSortedBucketIO', file=out)
-    print('\t\t\t.read(keyClass)', file=out)
-    print('\t\t\t.of(%s)' %vals[0].lower(), file=out)
+    print(('''
+        new sortedBucketScioContext.SortMergeTransformReadBuilder(
+        SortedBucketIO
+        .read(keyClass)
+        .of(%s)''').lstrip('\n') %vals[0].lower(), file=out)
+
     for x in vals[1:]:
-        print('\t\t\t.and(%s)' % x.lower(), file=out)
-    print('\t\t\t.withTargetParallelism(targetParallelism),', file=out)
-    print('\t\t\tcgbkResult =>', file=out)
-    print('\t\t\t(', file=out)
+        print('\t\t\t\t.and(%s)' % x.lower(), file=out)
+
+    print(('''
+        .withTargetParallelism(targetParallelism),
+        cgbkResult =>
+        (''').lstrip('\n'),file=out)
+
     print(',\n'.join(
         '\t\t\t\tcgbkResult.getAll(tupleTag%s).asScala' % x for x in vals), file=out)
     print('\t\t\t)', file=out)
