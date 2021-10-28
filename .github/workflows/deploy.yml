@@ -59,7 +59,7 @@ jobs:
         run: sbt scio-examples/compile site/makeSite
         env:
           SOCCO: true
-          _JAVA_OPTIONS: "-Xmx1500m"
+          _JAVA_OPTIONS: "-Xmx3000m"
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
