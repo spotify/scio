@@ -61,6 +61,9 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
         .withSuffix(params.suffix)
     }(transform.withNaming)
 
+    transform = Option(params.tempDirectory)
+      .fold(transform)(transform.withTempDirectory)
+
     data.applyInternal(transform)
     EmptyTap
   }
@@ -99,6 +102,7 @@ object BinaryIO {
     private[scio] val DefaultFooter = Array.emptyByteArray
     private[scio] val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
     private[scio] val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    private[scio] val DefaultTempDirectory = null
   }
 
   final case class WriteParam(
@@ -110,7 +114,8 @@ object BinaryIO {
     footer: Array[Byte] = WriteParam.DefaultFooter,
     framePrefix: Array[Byte] => Array[Byte] = WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = WriteParam.DefaultFrameSuffix,
-    fileNaming: Option[FileNaming] = WriteParam.DefaultFileNaming
+    fileNaming: Option[FileNaming] = WriteParam.DefaultFileNaming,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 
   final private class BytesSink(

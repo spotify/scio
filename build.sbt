@@ -33,7 +33,7 @@ val autoServiceVersion = "1.0"
 val autoValueVersion = "1.8.2"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.32.0"
+val beamVersion = "2.33.0"
 val bigdataossVersion = "2.2.2"
 val bigQueryStorageVersion = "1.21.1"
 val bigtableClientVersion = "1.19.1"
@@ -48,8 +48,8 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "6.8.19"
-val elasticsearch7Version = "7.14.2"
+val elasticsearch6Version = "6.8.20"
+val elasticsearch7Version = "7.15.1"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
 val gaxVersion = "1.63.0"
@@ -76,7 +76,7 @@ val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.9.0"
 val jodaTimeVersion = "2.10.12"
-val junitInterfaceVersion = "0.11"
+val junitInterfaceVersion = "0.13.2"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.2"
@@ -89,7 +89,7 @@ val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.34.Final"
 val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.2"
-val parquetVersion = "1.12.0"
+val parquetVersion = "1.12.2"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.18.1"
 val scalacheckVersion = "1.15.4"
@@ -346,7 +346,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 lazy val protobufSettings = Def.settings(
   ProtobufConfig / version := protobufVersion,
   ProtobufConfig / protobufRunProtoc := (args =>
-    com.github.os72.protocjar.Protoc.runProtoc("-v3.11.4" +: args.toArray)
+    com.github.os72.protocjar.Protoc.runProtoc("-v3.17.3" +: args.toArray)
   ),
   libraryDependencies += "com.google.protobuf" % "protobuf-java" % (ProtobufConfig / version).value % ProtobufConfig.name
 )
@@ -484,7 +484,7 @@ lazy val `scio-test`: Project = project
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
-      "com.novocode" % "junit-interface" % junitInterfaceVersion,
+      "com.github.sbt" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
       "com.lihaoyi" %% "pprint" % "0.6.6",
       "com.chuusai" %% "shapeless" % shapelessVersion,
@@ -899,7 +899,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.26",
+      "mysql" % "mysql-connector-java" % "8.0.27",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
@@ -1050,7 +1050,7 @@ lazy val `scio-smb`: Project = project
       "javax.annotation" % "javax.annotation-api" % "1.3.2",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % Test,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % Test,
-      "com.novocode" % "junit-interface" % junitInterfaceVersion % Test,
+      "com.github.sbt" % "junit-interface" % junitInterfaceVersion % Test,
       "junit" % "junit" % junitVersion % Test,
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
@@ -1339,7 +1339,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.tukaani" % "xz" % "1.8",
   "org.typelevel" %% "algebra" % algebraVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
-  "org.xerial.snappy" % "snappy-java" % "1.1.4",
+  "org.xerial.snappy" % "snappy-java" % "1.1.8.4",
   "org.yaml" % "snakeyaml" % "1.12",
   "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
 )

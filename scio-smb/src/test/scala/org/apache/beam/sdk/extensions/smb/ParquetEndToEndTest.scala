@@ -99,6 +99,7 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetAvroSortedBucketIO
           .write(classOf[CharSequence], "user", eventSchema)
           .to(eventsDir.toString)
+          .withNumBuckets(1)
       )
     sc1
       .parallelize(avroUsers)
@@ -106,6 +107,7 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetAvroSortedBucketIO
           .write(classOf[String], "name", userSchema)
           .to(usersDir.toString)
+          .withNumBuckets(1)
       )
     sc1.run()
 
@@ -142,6 +144,7 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetTypeSortedBucketIO
           .write[String, Event]("user")
           .to(eventsDir.toString)
+          .withNumBuckets(1)
       )
     sc1
       .parallelize(users)
@@ -149,6 +152,7 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetTypeSortedBucketIO
           .write[String, User]("name")
           .to(usersDir.toString)
+          .withNumBuckets(1)
       )
     sc1.run()
 
@@ -193,6 +197,7 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetAvroSortedBucketIO
           .write(classOf[CharSequence], "name", classOf[AvroGeneratedUser])
           .to(usersDir.toString)
+          .withNumBuckets(1)
       )
     sc1.run()
 
