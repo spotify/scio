@@ -17,7 +17,7 @@ REPOS=(
 )
 
 if ! [ -x "$(command -v hub)" ]; then
-  echo 'Error: hub is not installed. (`brew install hub`)'
+  echo 'Error: hub is not installed. See https://github.com/github/hub#installation'
   exit 1
 fi
 
