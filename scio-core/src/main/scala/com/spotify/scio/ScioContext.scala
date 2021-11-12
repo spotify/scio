@@ -142,12 +142,16 @@ private object RunnerContext {
     classLoader: ClassLoader
   ): Iterable[String] = {
     val sanitize: String => String = _.replace("\\", "/")
-    val matchesEnvDir: String => Boolean =
-      _.matches(s"${sanitize(sys.props("user.home"))}/\\..+/.+")
-    val classPathJars = PipelineResources
+    val sanitizedHome = sanitize(sys.props("user.home"))
+    val matchesWhitelistDir: String => Boolean = s => s.matches(s"${sanitizedHome}/\\.(ivy2|m2)/.+") || s.matches(s"${sanitizedHome}/\\.cache/coursier/.+")
+    val matchesEnvDir: String => Boolean = _.matches(s"${sanitizedHome}/\\..+/.+")
+    val classPathJars = org.apache.beam.runners.core.construction.resources.PipelineResources
       .detectClassPathResourcesToStage(classLoader, pipelineOptions)
       .asScala
-      .filterNot(sanitize.andThen(matchesEnvDir))
+      .filterNot { s =>
+        val x = sanitize(s)
+        matchesEnvDir(x) && !matchesWhitelistDir(x)
+      }
 
     logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
 
