@@ -143,7 +143,10 @@ private object RunnerContext {
   ): Iterable[String] = {
     val sanitize: String => String = _.replace("\\", "/")
     val sanitizedHome = sanitize(sys.props("user.home"))
-    val matchesWhitelistDir: String => Boolean = s => s.matches(s"${sanitizedHome}/\\.(ivy2|m2)/.+") || s.matches(s"${sanitizedHome}/\\.cache/coursier/.+")
+    val matchesWhitelistDir: String => Boolean = s =>
+      s.matches(s"${sanitizedHome}/\\.(ivy2|m2)/.+") || s.matches(
+        s"${sanitizedHome}/\\.cache/coursier/.+"
+      )
     val matchesEnvDir: String => Boolean = _.matches(s"${sanitizedHome}/\\..+/.+")
     val classPathJars = org.apache.beam.runners.core.construction.resources.PipelineResources
       .detectClassPathResourcesToStage(classLoader, pipelineOptions)
