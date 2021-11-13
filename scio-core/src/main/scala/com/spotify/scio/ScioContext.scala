@@ -135,26 +135,24 @@ private object RunnerContext {
     finalLocalArtifacts
   }
 
+  private val sanitizePath: String => String = _.replace("\\", "/")
+
+  private[scio] def isNonRepositoryEnvDir(s: String): Boolean = {
+    val sanitizedUserHome: String = sanitizePath(sys.props("user.home"))
+    s.matches(s"${sanitizedUserHome}/\\..+/.+") && !s.matches(
+      s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier)/.+"
+    )
+  }
+
   /** Borrowed from DataflowRunner. */
   private[this] def detectClassPathResourcesToStage(
     pipelineOptions: PipelineOptions,
     classLoader: ClassLoader
   ): Iterable[String] = {
-    val sanitize: String => String = _.replace("\\", "/")
-    val sanitizedHome = sanitize(sys.props("user.home"))
-    val matchesWhitelistDir: String => Boolean = s =>
-      s.matches(s"${sanitizedHome}/\\.(ivy2|m2)/.+") || s.matches(
-        s"${sanitizedHome}/\\.cache/coursier/.+"
-      )
-    val matchesEnvDir: String => Boolean = _.matches(s"${sanitizedHome}/\\..+/.+")
     val classPathJars = org.apache.beam.runners.core.construction.resources.PipelineResources
       .detectClassPathResourcesToStage(classLoader, pipelineOptions)
       .asScala
-      .filterNot { s =>
-        val x = sanitize(s)
-        matchesEnvDir(x) && !matchesWhitelistDir(x)
-      }
-
+      .filterNot(sanitizePath.andThen(isNonRepositoryEnvDir))
     logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
 
     classPathJars
