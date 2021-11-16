@@ -53,7 +53,6 @@ public class JsonSortedBucketIO {
   /** Returns a new {@link Write} for BigQuery {@link TableRow} JSON records. */
   public static <K> Write<K> write(Class<K> keyClass, String keyField) {
     return new AutoValue_JsonSortedBucketIO_Write.Builder<K>()
-        .setNumBuckets(SortedBucketIO.DEFAULT_NUM_BUCKETS)
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)

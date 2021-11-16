@@ -88,4 +88,13 @@ class ParquetTypeSortedBucketIOTest extends AnyFlatSpec with Matchers {
     write.getTempDirectoryOrDefault(pipeline).toString shouldBe tempDir
     transform.getTempDirectoryOrDefault(pipeline).toString shouldBe tempDir
   }
+
+  it should "check that numBuckets is set" in {
+    the[IllegalArgumentException] thrownBy {
+      ParquetTypeSortedBucketIO
+        .write[String, User]("name")
+        .to("/output")
+        .expand(null)
+    } should have message "numBuckets must be set to a nonzero value"
+  }
 }
