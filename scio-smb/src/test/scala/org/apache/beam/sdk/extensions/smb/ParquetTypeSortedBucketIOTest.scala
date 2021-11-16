@@ -68,7 +68,10 @@ class ParquetTypeSortedBucketIOTest extends AnyFlatSpec with Matchers {
     val tempDir = s"/tmp/temp-${UUID.randomUUID().toString}/"
     pipeline.getOptions.setTempLocation(tempDir)
 
-    val write = ParquetTypeSortedBucketIO.write[String, User]("name").to("/output")
+    val write = ParquetTypeSortedBucketIO
+      .write[String, User]("name")
+      .to("/output")
+      .withNumBuckets(1)
     val transform = SortedBucketIO
       .read(classOf[String])
       .of(

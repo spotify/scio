@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SortedBucketIO {
 
-  static final int DEFAULT_NUM_BUCKETS = 128;
+  static final int DEFAULT_NUM_BUCKETS = 0;
   static final int DEFAULT_NUM_SHARDS = 1;
   static final HashType DEFAULT_HASH_TYPE = HashType.MURMUR3_128;
   static final int DEFAULT_SORTER_MEMORY_MB = 1024;
@@ -304,6 +304,7 @@ public class SortedBucketIO {
     @Override
     public WriteResult expand(PCollection<V> input) {
       Preconditions.checkNotNull(getOutputDirectory(), "outputDirectory is not set");
+      Preconditions.checkArgument(getNumBuckets() > 0, "numBuckets must be set to a nonzero value");
 
       return input.apply(
           new SortedBucketSink<>(
