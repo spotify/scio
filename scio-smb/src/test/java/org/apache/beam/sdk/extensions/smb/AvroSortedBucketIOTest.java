@@ -93,4 +93,15 @@ public class AvroSortedBucketIOTest {
     Assert.assertEquals(tempDirectory, write.getTempDirectoryOrDefault(pipeline));
     Assert.assertEquals(tempDirectory, transform.getTempDirectoryOrDefault(pipeline));
   }
+
+  @Test
+  public void testNumBucketsRequiredParam() {
+    Throwable t = Assert.assertThrows(
+        IllegalArgumentException.class, () ->
+        AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
+            .to(folder.toString())
+            .expand(null)
+        );
+    Assert.assertEquals("numBuckets must be set to a nonzero value", t.getMessage());
+  }
 }
