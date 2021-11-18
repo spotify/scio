@@ -123,9 +123,7 @@ public class JsonSortedBucketIO {
     }
 
     public Read from(List<String> inputDirectories) {
-      return toBuilder()
-          .setInputDirectories(inputDirectories)
-          .build();
+      return toBuilder().setInputDirectories(inputDirectories).build();
     }
 
     /** Specifies the input filename suffix. */

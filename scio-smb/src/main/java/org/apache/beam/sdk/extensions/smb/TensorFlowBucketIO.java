@@ -124,9 +124,7 @@ public class TensorFlowBucketIO {
 
     /** Reads from the given input directory. */
     public Read from(String inputDirectory) {
-      return toBuilder()
-          .setInputDirectories(inputDirectory)
-          .build();
+      return toBuilder().setInputDirectories(inputDirectory).build();
     }
 
     /** Specifies the input filename suffix. */

@@ -135,27 +135,27 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
       semaphore.acquire();
       try {
         futures.computeIfAbsent(
-          uuid,
-          key -> addCallback(
-            asyncLookup((C) client.get(instanceId), input),
-            output -> {
-              semaphore.release();
-              try {
-                cacheSupplier.put(instanceId, input, output);
-                results.add(new Result(input, success(output), key, c.timestamp(), window));
-              } catch (Exception e) {
-                LOG.error("Failed to cache result", e);
-                throw e;
-              }
-              return null;
-            },
-            throwable -> {
-              semaphore.release();
-              results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
-              return null;
-            }
-          )
-        );
+            uuid,
+            key ->
+                addCallback(
+                    asyncLookup((C) client.get(instanceId), input),
+                    output -> {
+                      semaphore.release();
+                      try {
+                        cacheSupplier.put(instanceId, input, output);
+                        results.add(new Result(input, success(output), key, c.timestamp(), window));
+                      } catch (Exception e) {
+                        LOG.error("Failed to cache result", e);
+                        throw e;
+                      }
+                      return null;
+                    },
+                    throwable -> {
+                      semaphore.release();
+                      results.add(
+                          new Result(input, failure(throwable), key, c.timestamp(), window));
+                      return null;
+                    }));
       } catch (Exception e) {
         semaphore.release();
         LOG.error("Failed to process element", e);
