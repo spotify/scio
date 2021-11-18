@@ -34,7 +34,7 @@ private[coders] object AvroCoderMacros {
       _root_.org.apache.beam.sdk.coders.AvroCoder.of[$companioned](
         classOf[$companioned],
         new $companioned().getSchema,
-        true
+        false
       )
     )
     """
