@@ -61,6 +61,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   // Data structures for handling async requests
   private final Semaphore semaphore;
   private final ConcurrentMap<UUID, F> futures = new ConcurrentHashMap<>();
+  private final ConcurrentMap<A, F> inFlightRequests = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
   private long requestCount;
   private long resultCount;
@@ -123,6 +124,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   public void processElement(ProcessContext c, BoundedWindow window) {
     flush(r -> c.output(KV.of(r.input, r.output)));
 
+    // found in cache
     final A input = c.element();
     B cached = cacheSupplier.get(instanceId, input);
     if (cached != null) {
@@ -131,30 +133,64 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
     }
 
     final UUID uuid = UUID.randomUUID();
+
+    // element already has an in-flight request
+    F inFlight = inFlightRequests.get(input);
+    if (inFlight != null) {
+      try {
+        futures.computeIfAbsent(
+            uuid,
+            key -> addCallback(
+                inFlight,
+                output -> {
+                  results.add(new Result(input, success(output), key, c.timestamp(), window));
+                  return null;
+                },
+                throwable -> {
+                  results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
+                  return null;
+                }
+            )
+        );
+      } catch (Exception e) {
+        semaphore.release();
+        LOG.error("Failed to process element", e);
+        throw e;
+      }
+      requestCount++;
+      return;
+    }
+
     try {
       semaphore.acquire();
       try {
         futures.computeIfAbsent(
           uuid,
-          key -> addCallback(
-            asyncLookup((C) client.get(instanceId), input),
-            output -> {
-              semaphore.release();
-              try {
-                cacheSupplier.put(instanceId, input, output);
-                results.add(new Result(input, success(output), key, c.timestamp(), window));
-              } catch (Exception e) {
-                LOG.error("Failed to cache result", e);
-                throw e;
-              }
-              return null;
-            },
-            throwable -> {
-              semaphore.release();
-              results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
-              return null;
-            }
-          )
+          key -> {
+            final F future = asyncLookup((C) client.get(instanceId), input);
+            inFlightRequests.computeIfAbsent(input, k -> future);
+            return addCallback(
+                future,
+                output -> {
+                  semaphore.release();
+                  inFlightRequests.remove(input);
+                  try {
+                    cacheSupplier.put(instanceId, input, output);
+                    results.add(new Result(input, success(output), key, c.timestamp(), window));
+                  } catch (Exception e) {
+                    LOG.error("Failed to cache result", e);
+                    throw e;
+                  }
+                  return null;
+                },
+                throwable -> {
+                  semaphore.release();
+                  inFlightRequests.remove(input);
+                  results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
+                  return null;
+                }
+            );
+          }
         );
       } catch (Exception e) {
         semaphore.release();

@@ -17,23 +17,33 @@
 
 package com.spotify.scio.transforms
 
-import java.util.concurrent.{CompletableFuture, ConcurrentLinkedQueue}
+import java.util.concurrent.{
+  Callable,
+  CompletableFuture,
+  ConcurrentLinkedQueue,
+  Executors,
+  ThreadPoolExecutor
+}
 import java.util.function.Supplier
-
 import com.google.common.cache.{Cache, CacheBuilder}
-import com.google.common.util.concurrent.{Futures, ListenableFuture}
+import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
+import com.spotify.scio._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import com.spotify.scio.transforms.JavaAsyncConverters._
+import org.apache.beam.sdk.values.KV
+import org.apache.beam.sdk.options._
 
+import java.util.concurrent.atomic.AtomicInteger
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 class AsyncLookupDoFnTest extends PipelineSpec {
-  private def testDoFn[F, T: Coder](
-    doFn: BaseAsyncLookupDoFn[Int, String, AsyncClient, F, T]
+  private def testDoFn[F, T: Coder, C <: AsyncClient](
+    doFn: BaseAsyncLookupDoFn[Int, String, C, F, T]
   )(tryFn: T => String): Unit = {
     val output = runWithData(1 to 10)(_.parDo(doFn))
       .map(kv => (kv.getKey, tryFn(kv.getValue)))
@@ -67,6 +77,22 @@ class AsyncLookupDoFnTest extends PipelineSpec {
       (x, prefix + x.toString)
     }
     ()
+  }
+
+  "BaseAsyncDoFn" should "deduplicate simultaneous lookups on the same item" in {
+    val n = 100
+    val sc = ScioContext(PipelineOptionsFactory.fromArgs("--targetParallelism=1").create())
+    val f: ClosedTap[KV[Int, BaseAsyncLookupDoFn.Try[Int]]] = sc
+      .parallelize(List.fill(n)(10))
+      .parDo(new CountingGuavaLookupDoFn)
+      .materialize
+    val result: ScioResult = sc.run().waitUntilFinish()
+    val maxOutput = result
+      .tap(f)
+      .value
+      .map(kv => kv.getValue.get())
+      .max
+    maxOutput should be < n
   }
 
   "GuavaAsyncLookupDoFn" should "work" in {
@@ -120,6 +146,28 @@ object AsyncLookupDoFnTest {
 
 class AsyncClient {}
 
+/** Returns the count of lookups as the lookup result */
+class CountingAsyncClient extends AsyncClient with Serializable {
+  @transient private lazy val es = MoreExecutors.listeningDecorator(
+    MoreExecutors.getExitingExecutorService(
+      Executors
+        .newFixedThreadPool(5)
+        .asInstanceOf[ThreadPoolExecutor]
+    )
+  )
+
+  var count: AtomicInteger = new AtomicInteger(0)
+  def lookup(i: Int): ListenableFuture[Int] = {
+    val cnt = count.addAndGet(1)
+    es.submit(new Callable[Int] {
+      override def call(): Int = {
+        Thread.sleep(1000)
+        cnt
+      }
+    })
+  }
+}
+
 class GuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClient]() {
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] =
@@ -143,6 +191,12 @@ class FailingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClie
     } else {
       Futures.immediateFailedFuture(new RuntimeException("failure" + input))
     }
+}
+
+class CountingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, Int, CountingAsyncClient](100) {
+  override protected def newClient(): CountingAsyncClient = new CountingAsyncClient()
+  override def asyncLookup(session: CountingAsyncClient, input: Int): ListenableFuture[Int] =
+    session.lookup(input)
 }
 
 class JavaLookupDoFn extends JavaAsyncLookupDoFn[Int, String, AsyncClient]() {
