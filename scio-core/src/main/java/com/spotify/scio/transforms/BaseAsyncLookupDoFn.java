@@ -168,12 +168,12 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
           uuid,
           key -> {
             final F future = asyncLookup((C) client.get(instanceId), input);
-            inFlightRequests.computeIfAbsent(input, k -> future);
+            final boolean shouldRemove = future.equals(inFlightRequests.computeIfAbsent(input, k -> future));
             return addCallback(
                 future,
                 output -> {
                   semaphore.release();
-                  inFlightRequests.remove(input);
+                  if(shouldRemove) inFlightRequests.remove(input);
                   try {
                     cacheSupplier.put(instanceId, input, output);
                     results.add(new Result(input, success(output), key, c.timestamp(), window));
@@ -185,7 +185,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
                 },
                 throwable -> {
                   semaphore.release();
-                  inFlightRequests.remove(input);
+                  if(shouldRemove) inFlightRequests.remove(input);
                   results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
                   return null;
                 }

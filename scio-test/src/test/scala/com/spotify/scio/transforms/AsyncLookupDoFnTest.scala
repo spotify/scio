@@ -29,11 +29,9 @@ import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import com.spotify.scio.transforms.JavaAsyncConverters._
-import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.options._
 
 import java.util.concurrent.atomic.AtomicInteger
@@ -82,7 +80,7 @@ class AsyncLookupDoFnTest extends PipelineSpec {
   "BaseAsyncDoFn" should "deduplicate simultaneous lookups on the same item" in {
     val n = 100
     val sc = ScioContext(PipelineOptionsFactory.fromArgs("--targetParallelism=1").create())
-    val f: ClosedTap[KV[Int, BaseAsyncLookupDoFn.Try[Int]]] = sc
+    val f = sc
       .parallelize(List.fill(n)(10))
       .parDo(new CountingGuavaLookupDoFn)
       .materialize
@@ -157,7 +155,7 @@ class CountingAsyncClient extends AsyncClient with Serializable {
   )
 
   var count: AtomicInteger = new AtomicInteger(0)
-  def lookup(i: Int): ListenableFuture[Int] = {
+  def lookup: ListenableFuture[Int] = {
     val cnt = count.addAndGet(1)
     es.submit(new Callable[Int] {
       override def call(): Int = {
@@ -196,7 +194,7 @@ class FailingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClie
 class CountingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, Int, CountingAsyncClient](100) {
   override protected def newClient(): CountingAsyncClient = new CountingAsyncClient()
   override def asyncLookup(session: CountingAsyncClient, input: Int): ListenableFuture[Int] =
-    session.lookup(input)
+    session.lookup
 }
 
 class JavaLookupDoFn extends JavaAsyncLookupDoFn[Int, String, AsyncClient]() {
