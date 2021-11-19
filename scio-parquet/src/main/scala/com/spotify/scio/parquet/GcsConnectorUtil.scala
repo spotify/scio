@@ -52,16 +52,17 @@ private[parquet] object GcsConnectorUtil {
           "com.spotify.scio.parquet.ApplicationDefaultTokenProvider"
         )
       case _ =>
-        throw new IllegalStateException(
-          "No valid Google credentials were found. " +
-            "Check that application default is set."
-        )
+        job.getConfiguration
+          .setBoolean("fs.gs.auth.service.account.enable", false)
+        job.getConfiguration.unset("fs.gs.auth.null.enable")
     }
   }
 
   def unsetCredentials(job: Job): Unit = {
     job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")
     job.getConfiguration.unset("fs.gs.auth.access.token.provider.impl")
+    job.getConfiguration.unset("fs.gs.auth.null.enable")
+    job.getConfiguration.unset("fs.gs.auth.service.account.enable")
   }
 
   def setInputPaths(sc: ScioContext, job: Job, path: String): Unit = {
