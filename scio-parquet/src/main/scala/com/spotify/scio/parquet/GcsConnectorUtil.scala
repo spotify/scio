@@ -18,53 +18,50 @@
 package com.spotify.scio.parquet
 
 import com.google.auth.oauth2.{GoogleCredentials, ServiceAccountCredentials}
+import com.google.cloud.hadoop.util.AccessTokenProvider
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-import org.slf4j.LoggerFactory
 
 import java.io.File
 import java.util.Locale
 import scala.util.Try
 
 private[parquet] object GcsConnectorUtil {
-  private lazy val log = LoggerFactory.getLogger(getClass)
-
   def setCredentials(job: Job): Unit = {
     // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
     // requires the user's GCP credentials.
-    val keyFile = sys.env
+    lazy val applicationDefault = Try(GoogleCredentials.getApplicationDefault())
+
+    sys.env
       .get("GOOGLE_APPLICATION_CREDENTIALS")
       .filter(_.nonEmpty)
       .orElse {
-        Try(GoogleCredentials.getApplicationDefault()).toOption match {
+        applicationDefault.toOption match {
           case Some(_: ServiceAccountCredentials) => getWellKnownCredentialFile.map(_.toString)
-          case _ => None // ADC was not set, or was a personal user credential
+          case _                                  => None
         }
-      }
-
-    keyFile match {
-      case Some(path) => job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", path)
-      case None =>
-        log.warn(
-          "Application default credentials could not be resolved, using default Cloud SDK credentials"
+      } match {
+      case Some(serviceAccountKeyFile) =>
+        job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", serviceAccountKeyFile)
+      case _ if applicationDefault.isSuccess => // ADC exists but isn't a service account
+        job.getConfiguration.set(
+          "fs.gs.auth.access.token.provider.impl",
+          "com.spotify.scio.parquet.ApplicationDefaultTokenProvider"
         )
-        // Client id/secret of Google-managed project associated with the Cloud SDK
-        job.getConfiguration
-          .setBoolean("fs.gs.auth.service.account.enable", false)
-        job.getConfiguration.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
-        job.getConfiguration
-          .set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
+      case _ =>
+        throw new IllegalStateException(
+          "No valid Google credentials were found. " +
+            "Check that application default is set."
+        )
     }
   }
 
   def unsetCredentials(job: Job): Unit = {
     job.getConfiguration.unset("fs.gs.auth.service.account.json.keyfile")
-    job.getConfiguration.unset("fs.gs.auth.service.account.enable")
-    job.getConfiguration.unset("fs.gs.auth.service.account.enable")
-    job.getConfiguration.unset("fs.gs.auth.null.enable")
-    job.getConfiguration.unset("fs.gs.auth.client.secret")
+    job.getConfiguration.unset("fs.gs.auth.access.token.provider.impl")
   }
 
   def setInputPaths(sc: ScioContext, job: Job, path: String): Unit = {
@@ -93,4 +90,17 @@ private[parquet] object GcsConnectorUtil {
 
     if (credentialFilePath.exists()) Some(credentialFilePath) else None
   }
+}
+
+class ApplicationDefaultTokenProvider() extends AccessTokenProvider {
+  private lazy val adc = GoogleCredentials.getApplicationDefault()
+  private var conf: Option[Configuration] = None
+
+  override def getAccessToken: AccessTokenProvider.AccessToken = {
+    val gToken = Option(adc.getAccessToken).getOrElse { adc.refresh(); adc.getAccessToken }
+    new AccessTokenProvider.AccessToken(gToken.getTokenValue, gToken.getExpirationTime.getTime)
+  }
+  override def refresh(): Unit = adc.refresh()
+  override def setConf(c: Configuration): Unit = conf = Some(c)
+  override def getConf: Configuration = conf.orNull
 }
