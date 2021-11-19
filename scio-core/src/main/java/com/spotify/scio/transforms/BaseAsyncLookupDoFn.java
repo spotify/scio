@@ -153,7 +153,6 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
             )
         );
       } catch (Exception e) {
-        semaphore.release();
         LOG.error("Failed to process element", e);
         throw e;
       }
