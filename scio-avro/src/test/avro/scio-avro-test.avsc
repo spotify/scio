@@ -1,7 +1,45 @@
 {
   "type": "record",
   "name": "Test",
+  "namespace": "com.spotify.scio.avro",
   "fields": [
-    {"name": "test", "type": "int"}
+    {
+      "name": "field",
+      "type": "int"
+    },
+    {
+      "name": "logical_field",
+      "type": {
+        "type": "int",
+        "logicalType": "date"
+      }
+    },
+    {
+      "name": "nullable_logical_field",
+      "type": [
+        "null",
+        {
+          "type": "int",
+          "logicalType": "date"
+        }
+      ]
+    },
+    {
+      "name": "reflect_field",
+      "type": {
+        "type": "string",
+        "java-class": "java.math.BigDecimal"
+      }
+    },
+    {
+      "name": "nullable_reflect_field",
+      "type": [
+        "null",
+        {
+          "type": "string",
+          "java-class": "java.math.BigDecimal"
+        }
+      ]
+    }
   ]
 }

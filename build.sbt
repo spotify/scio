@@ -31,7 +31,7 @@ val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = "1.8.2"
+val avroVersion = "1.9.2"
 val beamVendorVersion = "0.1"
 val beamVersion = "2.36.0"
 val bigdataossVersion = "2.2.4"
@@ -559,7 +559,8 @@ lazy val `scio-avro`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
-    )
+    ),
+    avroStringType := "String"
   )
   .dependsOn(
     `scio-core` % "compile;it->it"

@@ -18,26 +18,32 @@
 package com.spotify.scio.avro
 
 import com.google.protobuf.Message
-import com.spotify.scio.avro.AvroIO.{GenericDatumWriterFactory, SpecificDatumWriterFactory}
+import com.spotify.scio.avro.AvroIO.{GenericDatumWriterFactory, SpecificDatumReaderFactory, SpecificDatumWriterFactory}
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{avro, ScioContext}
+import com.spotify.scio.{ScioContext, avro}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
-import org.apache.avro.io.DatumWriter
-import org.apache.avro.specific.{SpecificDatumWriter, SpecificRecord}
+import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.{DatumReader, DatumWriter}
+import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
+import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.io.AvroSink.DatumWriterFactory
+import org.apache.beam.sdk.io.AvroSource
+import org.apache.beam.sdk.io.AvroSource.DatumReaderFactory
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.transforms.{DoFn, PTransform, SerializableFunction}
+import org.apache.beam.sdk.values.{PBegin, PCollection}
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override type ReadP = Unit
@@ -158,18 +164,27 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
   override def testId: String = s"AvroIO($path)"
 
   /**
-   * Get an SCollection of [[org.apache.avro.specific.SpecificRecord SpecificRecord]]
-   * from an Avro file.
+   * Get an SCollection of [[org.apache.avro.specific.SpecificRecord SpecificRecord]] from an Avro
+   * file.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
-    val t = beam.AvroIO.read(cls).from(path)
-    sc.applyTransform(t)
+
+    // Adapt Beam to accept datum writer + coders
+    val source: AvroSource[T] = AvroSource
+      .from(StaticValueProvider.of(path))
+      .withEmptyMatchTreatment(EmptyMatchTreatment.DISALLOW)
+      .withDatumReaderFactory(new SpecificDatumReaderFactory[T]())
+      .withSchema(cls)
+      .withParseFn(_.asInstanceOf[T], AvroCoder.of(cls, false))
+
+    val r = new AvroIO.CustomRead(source)
+    sc.applyTransform(r)
   }
 
   /**
-   * Save this SCollection of [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as
-   * an Avro file.
+   * Save this SCollection of [[org.apache.avro.specific.SpecificRecord SpecificRecord]] as an Avro
+   * file.
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val cls = ScioUtil.classOf[T]
@@ -209,7 +224,9 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
     sc.applyTransform(t)
   }
 
-  /** Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file. */
+  /**
+   * Save this SCollection [[org.apache.avro.generic.GenericRecord GenericRecord]] as a Avro file.
+   */
   override protected def write(
     data: SCollection[GenericRecord],
     params: WriteP
@@ -234,9 +251,9 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
 }
 
 /**
- * Given a parseFn, read [[org.apache.avro.generic.GenericRecord GenericRecord]]
- * and apply a function mapping [[GenericRecord => T]] before producing output.
- * This IO applies the function at the time of de-serializing Avro GenericRecords.
+ * Given a parseFn, read [[org.apache.avro.generic.GenericRecord GenericRecord]] and apply a
+ * function mapping [[GenericRecord => T]] before producing output. This IO applies the function at
+ * the time of de-serializing Avro GenericRecords.
  *
  * This IO doesn't define write, and should not be used to write Avro GenericRecords.
  */
@@ -250,8 +267,7 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 
   /**
    * Get an SCollection[T] by applying the [[parseFn]] on
-   * [[org.apache.avro.generic.GenericRecord GenericRecord]]
-   * from an Avro file.
+   * [[org.apache.avro.generic.GenericRecord GenericRecord]] from an Avro file.
    */
   override protected def read(sc: ScioContext, params: Unit): SCollection[T] = {
     val t = beam.AvroIO
@@ -271,12 +287,31 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 
 object AvroIO {
 
+  class CustomRead[T <: SpecificRecord](source: AvroSource[T]) extends PTransform[PBegin, PCollection[T]] {
+    override def expand(input: PBegin): PCollection[T] = input.apply(
+      "Read",
+      org.apache.beam.sdk.io.Read.from(source)
+    )
+  }
+
+  class SpecificDatumReaderFactory[T <: SpecificRecord] extends DatumReaderFactory[T] {
+    override def apply(writer: Schema, reader: Schema): DatumReader[T] =
+      new SpecificDatumReader(writer, reader)
+  }
+
+  object GenericDatumReaderFactory extends DatumReaderFactory[GenericRecord] {
+    override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] =
+      new GenericDatumReader(writer, reader)
+  }
+
   class SpecificDatumWriterFactory[T <: SpecificRecord] extends DatumWriterFactory[T] {
-    override def apply(writer: Schema): DatumWriter[T] = new SpecificDatumWriter(writer)
+    override def apply(writer: Schema): DatumWriter[T] =
+      new SpecificDatumWriter(writer)
   }
 
   object GenericDatumWriterFactory extends DatumWriterFactory[GenericRecord] {
-    override def apply(writer: Schema): DatumWriter[GenericRecord] = new GenericDatumWriter(writer)
+    override def apply(writer: Schema): DatumWriter[GenericRecord] =
+      new GenericDatumWriter(writer)
   }
 
   object WriteParam {
