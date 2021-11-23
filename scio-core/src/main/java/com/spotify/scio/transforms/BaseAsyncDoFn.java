@@ -72,19 +72,18 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
 
     final UUID uuid = UUID.randomUUID();
     futures.computeIfAbsent(
-      uuid,
-      key -> addCallback(
-        processElement(c.element()),
-        r -> {
-          results.add(new Result(r, key, c.timestamp(), window));
-          return null;
-        },
-        t -> {
-          errors.add(t);
-          return null;
-        }
-      )
-    );
+        uuid,
+        key ->
+            addCallback(
+                processElement(c.element()),
+                r -> {
+                  results.add(new Result(r, key, c.timestamp(), window));
+                  return null;
+                },
+                t -> {
+                  errors.add(t);
+                  return null;
+                }));
   }
 
   private void flush(ProcessContext c) {

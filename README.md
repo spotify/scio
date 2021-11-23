@@ -85,7 +85,6 @@ Scio includes the following artifacts:
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
 - `scio-redis`: add-on for Redis
 - `scio-smb`: add-on for Sort Merge Bucket operations
-- `scio-sql`: add-on for staticly typed Beam SQL support
 - `scio-repl`: extension of the Scala REPL with Scio specific operations
 
 # License

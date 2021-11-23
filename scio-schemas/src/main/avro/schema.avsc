@@ -58,4 +58,19 @@
         {"name": "string_field", "type": ["null", "string"], "default": null},
         {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": null}
     ]
+},
+{
+    "name": "StringFieldTest",
+    "namespace": "com.spotify.scio.avro",
+    "type": "record",
+    "doc": "Record for testing string decoding",
+    "fields": [
+        {"name": "strField", "type": ["null", "string"]},
+        {"name": "mapField", "type": [
+            "null", {"type": "map", "values": "string"}
+        ], "default": null},
+        {"name": "arrayField", "type": [
+            "null", {"type": "array", "items": "string"}
+        ], "default": null}
+    ]
 }]

@@ -546,7 +546,7 @@ private[types] object TypeProvider {
           .replaceAll(
             s"@${classOf[BigQueryTag].getName}",
             ""
-          ) //BQ plugin does not need to know about BQTag
+          ) // BQ plugin does not need to know about BQTag
         parents match {
           case Nil =>
             s"case class $name($f)"

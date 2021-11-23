@@ -75,7 +75,7 @@ val jacksonVersion = "2.12.5"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.9.0"
-val jodaTimeVersion = "2.10.12"
+val jodaTimeVersion = "2.10.13"
 val junitInterfaceVersion = "0.13.2"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
@@ -101,8 +101,8 @@ val slf4jVersion = "1.7.32"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
 val tensorFlowVersion = "0.3.3"
-val zoltarVersion = "0.6.0-M2"
-val scalaCollectionCompatVersion = "2.6.0"
+val zoltarVersion = "0.6.0-M4"
+val scalaCollectionCompatVersion = "2.5.0"
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
@@ -494,7 +494,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.2.9",
+      "org.scalactic" %% "scalactic" % "3.2.10",
       "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,

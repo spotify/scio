@@ -91,12 +91,12 @@ public class BucketMetadataUtil {
     ResourceId canonicalMetadataDir = null;
     int start = 0;
     while (start < total) {
-      final List<ResourceId> input = directories
-          .stream()
-          .skip(start)
-          .limit(batchSize)
-          .map(dir -> FileSystems.matchNewResource(dir, true))
-          .collect(Collectors.toList());
+      final List<ResourceId> input =
+          directories.stream()
+              .skip(start)
+              .limit(batchSize)
+              .map(dir -> FileSystems.matchNewResource(dir, true))
+              .collect(Collectors.toList());
       final List<BucketMetadata<K, V>> result =
           input
               .parallelStream()
