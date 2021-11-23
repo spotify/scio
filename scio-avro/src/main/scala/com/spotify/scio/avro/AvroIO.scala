@@ -29,7 +29,7 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DatumReader, DatumWriter}
-import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
+import org.apache.avro.specific.{SpecificData, SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
 import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.io.AvroSink.DatumWriterFactory
 import org.apache.beam.sdk.io.AvroSource
@@ -294,9 +294,9 @@ object AvroIO {
     )
   }
 
-  class SpecificDatumReaderFactory[T <: SpecificRecord] extends DatumReaderFactory[T] {
+  class SpecificDatumReaderFactory[T <: SpecificRecord: ClassTag] extends DatumReaderFactory[T] {
     override def apply(writer: Schema, reader: Schema): DatumReader[T] =
-      new SpecificDatumReader(writer, reader)
+      new SpecificDatumReader(writer, SpecificData.get().getSchema(ScioUtil.classOf[T]))
   }
 
   object GenericDatumReaderFactory extends DatumReaderFactory[GenericRecord] {
