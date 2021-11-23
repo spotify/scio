@@ -89,8 +89,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
       Schema schema, FilterPredicate predicate, Configuration conf) {
-    return new ParquetAvroFileOperations<>(
-        schema, DEFAULT_COMPRESSION, conf, predicate);
+    return new ParquetAvroFileOperations<>(schema, DEFAULT_COMPRESSION, conf, predicate);
   }
 
   @Override
