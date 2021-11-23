@@ -165,9 +165,7 @@ public class AvroSortedBucketIO {
 
     /** Reads from the given input directories. */
     public Read<T> from(List<String> inputDirectories) {
-      return toBuilder()
-          .setInputDirectories(inputDirectories)
-          .build();
+      return toBuilder().setInputDirectories(inputDirectories).build();
     }
 
     /** Specifies the input filename suffix. */
@@ -187,8 +185,7 @@ public class AvroSortedBucketIO {
           getRecordClass() == null
               ? AvroFileOperations.of(getSchema())
               : (AvroFileOperations<T>)
-                  AvroFileOperations.of(
-                      (Class<SpecificRecordBase>) getRecordClass());
+                  AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass());
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectories(),

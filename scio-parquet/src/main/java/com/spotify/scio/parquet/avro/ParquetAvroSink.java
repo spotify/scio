@@ -108,9 +108,8 @@ public class ParquetAvroSink<T> extends FileBasedSink<T, Void, T> {
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      AvroParquetWriter.Builder<T> builder = AvroParquetWriter
-          .<T>builder(outputFile)
-          .withSchema(schema);
+      AvroParquetWriter.Builder<T> builder =
+          AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
       writer = WriterUtils.build(builder, conf.get(), compression);
     }
 

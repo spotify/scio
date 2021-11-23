@@ -182,9 +182,7 @@ public class ParquetAvroSortedBucketIO {
 
     /** Reads from the given input directories. */
     public Read<T> from(List<String> inputDirectories) {
-      return toBuilder()
-          .setInputDirectories(inputDirectories)
-          .build();
+      return toBuilder().setInputDirectories(inputDirectories).build();
     }
 
     /** Specifies the input filename suffix. */
