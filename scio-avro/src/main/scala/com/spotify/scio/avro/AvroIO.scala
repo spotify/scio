@@ -18,18 +18,27 @@
 package com.spotify.scio.avro
 
 import com.google.protobuf.Message
-import com.spotify.scio.avro.AvroIO.{GenericDatumWriterFactory, SpecificDatumReaderFactory, SpecificDatumWriterFactory}
+import com.spotify.scio.avro.AvroIO.{
+  GenericDatumWriterFactory,
+  SpecificDatumReaderFactory,
+  SpecificDatumWriterFactory
+}
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{ScioContext, avro}
+import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DatumReader, DatumWriter}
-import org.apache.avro.specific.{SpecificData, SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
+import org.apache.avro.specific.{
+  SpecificData,
+  SpecificDatumReader,
+  SpecificDatumWriter,
+  SpecificRecord
+}
 import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.io.AvroSink.DatumWriterFactory
 import org.apache.beam.sdk.io.AvroSource
@@ -287,7 +296,8 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 
 object AvroIO {
 
-  class CustomRead[T <: SpecificRecord](source: AvroSource[T]) extends PTransform[PBegin, PCollection[T]] {
+  class CustomRead[T <: SpecificRecord](source: AvroSource[T])
+      extends PTransform[PBegin, PCollection[T]] {
     override def expand(input: PBegin): PCollection[T] = input.apply(
       "Read",
       org.apache.beam.sdk.io.Read.from(source)
