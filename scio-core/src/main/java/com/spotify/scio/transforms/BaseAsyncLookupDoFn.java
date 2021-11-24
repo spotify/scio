@@ -37,7 +37,7 @@ import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
 /**
- * A {@link DoFn} that performs asynchronous lookup using the provided client.
+ * A {@link DoFn} that performs asynchronous lookup using the provided client. Lookup requests may be deduplicated.
  *
  * @param <A> input element type.
  * @param <B> client lookup value type.
@@ -57,6 +57,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   private final UUID instanceId;
 
   private final CacheSupplier<A, B, ?> cacheSupplier;
+  private final boolean deduplicate;
 
   // Data structures for handling async requests
   private final Semaphore semaphore;
@@ -81,13 +82,24 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   }
 
   /**
-   * Create a {@link BaseAsyncLookupDoFn} instance.
+   * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be de-duplicated.
    *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
    *     and retrying bundles.
    */
   public BaseAsyncLookupDoFn(int maxPendingRequests) {
-    this(maxPendingRequests, new NoOpCacheSupplier<>());
+    this(maxPendingRequests, true, new NoOpCacheSupplier<>());
+  }
+
+  /**
+   * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be de-duplicated.
+
+   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
+   *     and retrying bundles.
+   * @param cacheSupplier supplier for lookup cache.
+   */
+  public <K> BaseAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B, K> cacheSupplier) {
+    this(maxPendingRequests, true, cacheSupplier);
   }
 
   /**
@@ -95,11 +107,13 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
    *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
    *     and retrying bundles.
+   * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the same input
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> BaseAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B, K> cacheSupplier) {
+  public <K> BaseAsyncLookupDoFn(int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B, K> cacheSupplier) {
     this.instanceId = UUID.randomUUID();
     this.cacheSupplier = cacheSupplier;
+    this.deduplicate = deduplicate;
     this.semaphore = new Semaphore(maxPendingRequests);
   }
 
@@ -134,30 +148,32 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
 
     final UUID uuid = UUID.randomUUID();
 
-    // element already has an in-flight request
-    F inFlight = inFlightRequests.get(input);
-    if (inFlight != null) {
-      try {
-        futures.computeIfAbsent(
-            uuid,
-            key -> addCallback(
-                inFlight,
-                output -> {
-                  results.add(new Result(input, success(output), key, c.timestamp(), window));
-                  return null;
-                },
-                throwable -> {
-                  results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
-                  return null;
-                }
-            )
-        );
-      } catch (Exception e) {
-        LOG.error("Failed to process element", e);
-        throw e;
+    if(deduplicate) {
+      // element already has an in-flight request
+      F inFlight = inFlightRequests.get(input);
+      if (inFlight != null) {
+        try {
+          futures.computeIfAbsent(
+              uuid,
+              key -> addCallback(
+                  inFlight,
+                  output -> {
+                    results.add(new Result(input, success(output), key, c.timestamp(), window));
+                    return null;
+                  },
+                  throwable -> {
+                    results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
+                    return null;
+                  }
+              )
+          );
+        } catch (Exception e) {
+          LOG.error("Failed to process element", e);
+          throw e;
+        }
+        requestCount++;
+        return;
       }
-      requestCount++;
-      return;
     }
 
     try {
@@ -167,7 +183,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
           uuid,
           key -> {
             final F future = asyncLookup((C) client.get(instanceId), input);
-            final boolean shouldRemove = future.equals(inFlightRequests.computeIfAbsent(input, k -> future));
+            final boolean shouldRemove = deduplicate && future.equals(inFlightRequests.computeIfAbsent(input, k -> future));
             return addCallback(
                 future,
                 output -> {
