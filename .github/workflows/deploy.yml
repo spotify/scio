@@ -13,7 +13,7 @@ jobs:
   publish-repl:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.5
+      - uses: actions/checkout@v2.4.0
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.4.0
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -61,7 +61,7 @@ jobs:
           SOCCO: true
           _JAVA_OPTIONS: "-Xmx1500m"
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@4.1.5
+        uses: JamesIves/github-pages-deploy-action@4.1.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
