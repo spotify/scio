@@ -19,22 +19,17 @@ package com.spotify.scio.parquet.types
 
 import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
-import org.apache.beam.sdk.io.{
-  DefaultFilenamePolicy,
-  DynamicFileDestinations,
-  FileBasedSink,
-  FileSystems,
-  WriteFiles
-}
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -51,6 +46,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](path: String) ex
 
   private val cls = ScioUtil.classOf[T]
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
+  private val coder: Coder[T] = implicitly[Coder[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val job = Job.getInstance(params.conf)
@@ -69,6 +65,11 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](path: String) ex
       .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
         override def apply(input: Void): JBoolean = true
       })
+      .withValueTranslation(new SimpleFunction[T, T]() {
+        override def apply(input: T): T = input
+
+        override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
+      }, CoderMaterializer.beam(sc, coder))
       .withConfiguration(job.getConfiguration)
     sc.applyTransform(source).map(_.getValue)
   }
