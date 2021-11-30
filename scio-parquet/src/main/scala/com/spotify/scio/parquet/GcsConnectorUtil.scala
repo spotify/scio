@@ -27,34 +27,36 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 
 import java.io.File
 import java.util.Locale
-import scala.util.Try
+import scala.util.{Success, Try}
 
 private[parquet] object GcsConnectorUtil {
-  def setCredentials(job: Job): Unit = {
-    // These are needed since `FileInputFormat.setInputPaths` validates paths locally and
-    // requires the user's GCP credentials.
-    lazy val applicationDefault = Try(GoogleCredentials.getApplicationDefault())
 
-    sys.env
-      .get("GOOGLE_APPLICATION_CREDENTIALS")
-      .filter(_.nonEmpty)
-      .orElse {
-        applicationDefault.toOption match {
-          case Some(_: ServiceAccountCredentials) => getWellKnownCredentialFile.map(_.toString)
-          case _                                  => None
-        }
-      } match {
-      case Some(serviceAccountKeyFile) =>
-        job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", serviceAccountKeyFile)
-      case _ if applicationDefault.isSuccess => // ADC exists but isn't a service account
+  /**
+   * Attempts to set Hadoop credential configuration when running locally. This is needed since
+   * [[FileInputFormat.setInputPaths]] validates paths locally and requires the user's GCP
+   * credentials.
+   *
+   * In order of precedence, credentials will be searched for: (1) in the
+   * GOOGLE_APPLICATION_CREDENTIALS environment variable (2) in user's home
+   * .config/gcloud/application_default_credentials.json file
+   *
+   * If neither of these paths exist, `fs.gs.auth.null.enable` will be set (to enable unit testing).
+   */
+  def setCredentials(job: Job): Unit = {
+    Try(GoogleCredentials.getApplicationDefault()).map {
+      case _: ServiceAccountCredentials => getWellKnownCredentialFile.map(_.toString)
+      case _                            => None
+    } match {
+      case Success(Some(sa)) =>
+        job.getConfiguration.set("fs.gs.auth.service.account.json.keyfile", sa)
+      case Success(None) =>
         job.getConfiguration.set(
           "fs.gs.auth.access.token.provider.impl",
           "com.spotify.scio.parquet.ApplicationDefaultTokenProvider"
         )
       case _ =>
-        job.getConfiguration
-          .setBoolean("fs.gs.auth.service.account.enable", false)
-        job.getConfiguration.unset("fs.gs.auth.null.enable")
+        job.getConfiguration.setBoolean("fs.gs.auth.service.account.enable", false)
+        job.getConfiguration.setBoolean("fs.gs.auth.null.enable", true)
     }
   }
 
@@ -80,16 +82,21 @@ private[parquet] object GcsConnectorUtil {
 
   // Adapted from com.google.auth.oauth2.DefaultCredentialsProvider
   private def getWellKnownCredentialFile: Option[File] = {
-    val os = sys.props.getOrElse("os.name", "").toLowerCase(Locale.US)
-    val cloudRootPath = if (os.contains("windows")) {
-      new File(sys.env("APPDATA"))
-    } else {
-      new File(sys.props.getOrElse("user.home", ""), ".config")
-    }
-    val credentialFilePath =
-      new File(cloudRootPath, "gcloud/application_default_credentials.json")
-
-    if (credentialFilePath.exists()) Some(credentialFilePath) else None
+    sys.env
+      .get("GOOGLE_APPLICATION_CREDENTIALS")
+      .map(new File(_))
+      .filter(_.exists())
+      .orElse {
+        val os = sys.props.getOrElse("os.name", "").toLowerCase(Locale.US)
+        val cloudRootPath = if (os.contains("windows")) {
+          new File(sys.env("APPDATA"))
+        } else {
+          new File(sys.props.getOrElse("user.home", ""), ".config")
+        }
+        Some(
+          new File(cloudRootPath, "gcloud/application_default_credentials.json")
+        ).filter(_.exists())
+      }
   }
 }
 
