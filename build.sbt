@@ -33,7 +33,7 @@ val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.8.2"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.33.0"
+val beamVersion = "2.34.0"
 val bigdataossVersion = "2.2.2"
 val bigQueryStorageVersion = "1.21.1"
 val bigtableClientVersion = "1.19.1"
@@ -56,7 +56,7 @@ val gaxVersion = "1.63.0"
 val gcsVersion = "1.8.0"
 val generatedGrpcBetaVersion = "1.22.0"
 val generatedDatastoreProtoVersion = "0.89.0"
-val googleClientsVersion = "1.31.3"
+val googleClientsVersion = "1.32.1"
 val googleApiServicesBigQueryVersion = s"v2-rev20210410-1.31.0"
 val googleApiServicesDataflowVersion = s"v1b3-rev20210408-1.31.0"
 val googleApiServicesPubsubVersion = s"v1-rev20210322-1.31.0"
@@ -66,8 +66,8 @@ val googleCloudCoreVersion = "1.94.6"
 val googleCloudSpannerVersion = "6.2.0"
 val googleHttpClientsVersion = "1.39.2"
 val googleOauthClientVersion = "1.31.4"
-val grpcVersion = "1.37.0"
-val guavaVersion = "30.1-jre"
+val grpcVersion = "1.40.1"
+val guavaVersion = "30.1.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
 val httpCoreVersion = "4.4.14"
@@ -439,6 +439,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,

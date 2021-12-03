@@ -45,7 +45,7 @@ trait BeamTypeCoders {
 
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
 
-  implicit def readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder())
+  implicit def readableFileCoder: Coder[ReadableFile] = Coder.beam(ReadableFileCoder.of())
 
   implicit def matchResultMetadataCoder: Coder[MatchResult.Metadata] =
     Coder.beam(MetadataCoderV2.of())

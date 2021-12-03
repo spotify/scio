@@ -51,6 +51,6 @@ public class ChannelPoolCreator {
     final ClientInterceptor[] interceptors = getClientInterceptors(options);
 
     return new ChannelPool(
-        () -> BigtableSession.createNettyChannel(options.getAdminHost(), options, interceptors), 1);
+        () -> BigtableSession.createNettyChannel(options.getAdminHost(), options, false, interceptors), 1);
   }
 }
