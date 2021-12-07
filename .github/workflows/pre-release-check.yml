@@ -1,0 +1,40 @@
+name: pre-release-check
+
+env:
+  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+  GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test-key.json
+  GOOGLE_PROJECT_ID: data-integration-test
+  SBT_OPTS: -DbeamRunners=DataflowRunner
+  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1
+
+on:
+  workflow_dispatch # Manually triggered
+jobs:
+  test-dataflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java setup
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: ${{matrix.java}}
+      - name: Setup project
+        run: scripts/gha_setup.sh
+      - name: (Dataflow) IO Writes
+        run: sbt ${{ env.SBT_OPTS }} "++${{ matrix.scala }} scio-examples/runMain ${{ matrix.io_write }} ${{ env.DEFAULT_DATAFLOW_ARGS }} "
+      - name: (Dataflow) IO Reads
+        run: sbt ${{ env.SBT_OPTS }} "++${{ matrix.scala }} scio-examples/runMain ${{ matrix.io_read }} ${{ env.DEFAULT_DATAFLOW_ARGS }}"
+    strategy:
+      matrix:
+        java:
+          - 8
+          - 11
+        scala:
+          - 2.13.6
+        io_write:
+          - com.spotify.scio.examples.extra.AvroExample --method=specificOut --output=gs://data-integration-test-eu/AvroExample/Write/${{ env.GITHUB_RUN_ID }}
+        io_read:
+          - com.spotify.scio.examples.extra.AvroExample --method=specificIn --input=gs://data-integration-test-eu/AvroExample/Write/${{ env.GITHUB_RUN_ID }}/*.avro --output=gs://data-integration-test-eu/AvroExample/Read/${{ env.GITHUB_RUN_ID }}
