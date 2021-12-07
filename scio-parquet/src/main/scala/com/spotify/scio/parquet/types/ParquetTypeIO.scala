@@ -19,7 +19,7 @@ package com.spotify.scio.parquet.types
 
 import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
@@ -35,6 +35,7 @@ import org.apache.beam.sdk.io.{
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -69,6 +70,14 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](path: String) ex
       .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
         override def apply(input: Void): JBoolean = true
       })
+      .withValueTranslation(
+        new SimpleFunction[T, T]() {
+          override def apply(input: T): T = input
+
+          override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
+        },
+        CoderMaterializer.beam(sc, Coder[T])
+      )
       .withConfiguration(job.getConfiguration)
     sc.applyTransform(source).map(_.getValue)
   }
