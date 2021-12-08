@@ -28,7 +28,7 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.client._
 import org.elasticsearch.client.indices.{CreateIndexRequest, CreateIndexResponse}
 import org.elasticsearch.core.TimeValue
-import org.elasticsearch.common.xcontent.XContentType
+import org.elasticsearch.xcontent.XContentType
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
