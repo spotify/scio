@@ -22,7 +22,7 @@ import org.elasticsearch.action.delete.DeleteRequest
 import org.elasticsearch.action.index.IndexRequest
 import org.elasticsearch.action.support.IndicesOptions
 import org.elasticsearch.action.update.UpdateRequest
-import org.elasticsearch.common.xcontent.XContentType
+import org.elasticsearch.xcontent.XContentType
 import org.elasticsearch.index.VersionType
 import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
