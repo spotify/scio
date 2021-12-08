@@ -20,20 +20,15 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: ${{matrix.java}}
+          java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh
       - name: (Dataflow) IO Writes
-        run: sbt ${{ env.SBT_OPTS }} "++${{ matrix.scala }} scio-examples/runMain ${{ matrix.io_write }} ${{ env.DEFAULT_DATAFLOW_ARGS }} "
+        run: sbt ${{ env.SBT_OPTS }} "scio-examples/runMain ${{ matrix.io_write }} ${{ env.DEFAULT_DATAFLOW_ARGS }} "
       - name: (Dataflow) IO Reads
-        run: sbt ${{ env.SBT_OPTS }} "++${{ matrix.scala }} scio-examples/runMain ${{ matrix.io_read }} ${{ env.DEFAULT_DATAFLOW_ARGS }}"
+        run: sbt ${{ env.SBT_OPTS }} "scio-examples/runMain ${{ matrix.io_read }} ${{ env.DEFAULT_DATAFLOW_ARGS }}"
     strategy:
       matrix:
-        java:
-          - 8
-          - 11
-        scala:
-          - 2.13.6
         io_write:
           - com.spotify.scio.examples.extra.AvroExample --method=specificOut --output=gs://data-integration-test-eu/AvroExample/Write/${{ env.GITHUB_RUN_ID }}
         io_read:
