@@ -35,8 +35,8 @@ val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
 val beamVersion = "2.34.0"
 val bigdataossVersion = "2.2.2"
-val bigQueryStorageVersion = "1.21.1"
-val bigtableClientVersion = "1.19.1"
+val bigQueryStorageVersion = "2.1.0"
+val bigtableClientVersion = "1.23.1"
 val breezeVersion = "2.0"
 val caffeineVersion = "2.9.3"
 val catsVersion = "2.5.0"
@@ -52,18 +52,18 @@ val elasticsearch6Version = "6.8.20"
 val elasticsearch7Version = "7.16.0"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
-val gaxVersion = "1.63.0"
-val gcsVersion = "1.8.0"
+val gaxVersion = "2.3.0"
+val gcsVersion = "2.1.0"
 val generatedGrpcBetaVersion = "1.22.0"
 val generatedDatastoreProtoVersion = "0.89.0"
 val googleClientsVersion = "1.32.1"
-val googleApiServicesBigQueryVersion = s"v2-rev20210410-1.31.0"
-val googleApiServicesDataflowVersion = s"v1b3-rev20210408-1.31.0"
-val googleApiServicesPubsubVersion = s"v1-rev20210322-1.31.0"
-val googleApiServicesStorageVersion = s"v1-rev20210127-1.31.0"
-val googleAuthVersion = "0.25.2"
+val googleApiServicesBigQueryVersion = s"v2-rev20210813-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20210818-$googleClientsVersion"
+val googleApiServicesPubsubVersion = s"v1-rev20210809-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20210127-$googleClientsVersion"
+val googleAuthVersion = "1.1.0"
 val googleCloudCoreVersion = "1.94.6"
-val googleCloudSpannerVersion = "6.2.0"
+val googleCloudSpannerVersion = "6.12.1"
 val googleHttpClientsVersion = "1.39.2"
 val googleOauthClientVersion = "1.31.4"
 val grpcVersion = "1.40.1"
@@ -577,8 +577,8 @@ lazy val `scio-google-cloud-platform`: Project = project
       ),
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.120.2",
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % "1.20.2",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.125.0",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % bigQueryStorageVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
