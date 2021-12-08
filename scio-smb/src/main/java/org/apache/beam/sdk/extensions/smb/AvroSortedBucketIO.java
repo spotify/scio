@@ -78,7 +78,6 @@ public class AvroSortedBucketIO {
   private static <K, T extends GenericRecord> Write.Builder<K, T> newBuilder(
       Class<K> keyClass, String keyField) {
     return new AutoValue_AvroSortedBucketIO_Write.Builder<K, T>()
-        .setNumBuckets(SortedBucketIO.DEFAULT_NUM_BUCKETS)
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)

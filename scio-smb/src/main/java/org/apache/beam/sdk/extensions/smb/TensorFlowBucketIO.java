@@ -58,7 +58,6 @@ public class TensorFlowBucketIO {
    */
   public static <K> Write<K> write(Class<K> keyClass, String keyField) {
     return new AutoValue_TensorFlowBucketIO_Write.Builder<K>()
-        .setNumBuckets(SortedBucketIO.DEFAULT_NUM_BUCKETS)
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)

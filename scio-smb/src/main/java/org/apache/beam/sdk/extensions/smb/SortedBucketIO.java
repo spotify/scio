@@ -51,7 +51,6 @@ import org.slf4j.LoggerFactory;
  */
 public class SortedBucketIO {
 
-  static final int DEFAULT_NUM_BUCKETS = 128;
   static final int DEFAULT_NUM_SHARDS = 1;
   static final HashType DEFAULT_HASH_TYPE = HashType.MURMUR3_128;
   static final int DEFAULT_SORTER_MEMORY_MB = 1024;
@@ -258,7 +257,8 @@ public class SortedBucketIO {
   }
 
   public abstract static class Write<K, V> extends PTransform<PCollection<V>, WriteResult> {
-    abstract int getNumBuckets();
+    @Nullable
+    abstract Integer getNumBuckets();
 
     abstract int getNumShards();
 
@@ -304,6 +304,9 @@ public class SortedBucketIO {
     @Override
     public WriteResult expand(PCollection<V> input) {
       Preconditions.checkNotNull(getOutputDirectory(), "outputDirectory is not set");
+      Preconditions.checkArgument(
+          getNumBuckets() != null && getNumBuckets() > 0,
+          "numBuckets must be set to a nonzero value");
 
       return input.apply(
           new SortedBucketSink<>(
@@ -332,6 +335,9 @@ public class SortedBucketIO {
     @Override
     public WriteResult expand(PCollection<KV<K, V>> input) {
       Preconditions.checkNotNull(write.getOutputDirectory(), "outputDirectory is not set");
+      Preconditions.checkArgument(
+          write.getNumBuckets() != null && write.getNumBuckets() > 0,
+          "numBuckets must be set to a nonzero value");
 
       final ResourceId outputDirectory = write.getOutputDirectory();
       ResourceId tempDirectory = write.getTempDirectory();
