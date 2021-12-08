@@ -18,16 +18,16 @@
 package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
-
-import com.spotify.scio.coders.{AvroCoderMacros, Coder}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.{SpecificData, SpecificFixed}
+import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecordBase}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.ClassTag
 
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
   // TODO: can we find something more efficient than String ?
@@ -99,10 +99,8 @@ final private class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extend
 }
 
 private object SpecificFixedCoder {
-  def apply[A <: SpecificFixed: ClassTag]: Coder[A] = {
-    val cls = classTag[A].runtimeClass.asInstanceOf[Class[A]]
-    Coder.beam(new SpecificFixedCoder[A](cls))
-  }
+  def apply[A <: SpecificFixed: ClassTag]: Coder[A] =
+    Coder.beam(new SpecificFixedCoder[A](ScioUtil.classOf[A]))
 }
 
 trait AvroCoders {
@@ -123,9 +121,8 @@ trait AvroCoders {
   def avroGenericRecordCoder: Coder[GenericRecord] =
     Coder.beam(new SlowGenericRecordCoder)
 
-  import org.apache.avro.specific.SpecificRecordBase
-  implicit def genAvro[T <: SpecificRecordBase]: Coder[T] =
-    macro AvroCoderMacros.staticInvokeCoder[T]
+  implicit def genAvro[T <: SpecificRecordBase: ClassTag]: Coder[T] =
+    Coder.beam(AvroCoder.of(ScioUtil.classOf[T]))
 
   implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
     SpecificFixedCoder[T]

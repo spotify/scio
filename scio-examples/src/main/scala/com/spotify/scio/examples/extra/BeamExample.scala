@@ -96,7 +96,7 @@ object BeamExample {
       // Beam `PTransform`
       .applyTransform(window)
       // Scio `map` transform
-      .map(a => KV.of(a.getName.toString, a.getAmount))
+      .map(a => KV.of(a.getName.toString, a.getAmount: java.lang.Double))
       // Beam `PTransform`
       .applyTransform(sumByKey)
       // Scio `map` transform

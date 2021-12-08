@@ -18,36 +18,20 @@
 package com.spotify.scio.avro
 
 import com.google.protobuf.Message
-import com.spotify.scio.avro.AvroIO.{
-  GenericDatumWriterFactory,
-  SpecificDatumReaderFactory,
-  SpecificDatumWriterFactory
-}
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{avro, ScioContext}
+import com.spotify.scio.{ScioContext, avro}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.avro.io.{DatumReader, DatumWriter}
-import org.apache.avro.specific.{
-  SpecificData,
-  SpecificDatumReader,
-  SpecificDatumWriter,
-  SpecificRecord
-}
-import org.apache.beam.sdk.coders.AvroCoder
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.AvroSink.DatumWriterFactory
-import org.apache.beam.sdk.io.AvroSource
-import org.apache.beam.sdk.io.AvroSource.DatumReaderFactory
-import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.io.{AvroSink, AvroSource}
+import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{DoFn, PTransform, SerializableFunction}
-import org.apache.beam.sdk.values.{PBegin, PCollection}
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
@@ -167,7 +151,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
 
 final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends AvroIO[T] {
-  override type ReadP = Unit
+  override type ReadP = AvroIO.ReadParam
   override type WriteP = AvroIO.WriteParam
 
   override def testId: String = s"AvroIO($path)"
@@ -178,17 +162,12 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
-
-    // Adapt Beam to accept datum writer + coders
-    val source: AvroSource[T] = AvroSource
-      .from(StaticValueProvider.of(path))
-      .withEmptyMatchTreatment(EmptyMatchTreatment.DISALLOW)
-      .withDatumReaderFactory(new SpecificDatumReaderFactory[T]())
-      .withSchema(cls)
-      .withParseFn(_.asInstanceOf[T], AvroCoder.of(cls, false))
-
-    val r = new AvroIO.CustomRead(source)
-    sc.applyTransform(r)
+    val t = beam.AvroIO
+      .read(cls)
+      .from(path)
+      .withDatumReaderFactory(new AvroSource.DefaultDatumReaderFactory[T](cls, params.useReflection))
+      .withCoder(CoderMaterializer.beam(sc, Coder[T]))
+    sc.applyTransform(t)
   }
 
   /**
@@ -201,7 +180,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
       avroOut(
         write = beam.AvroIO.write(cls),
         path = path,
-        factory = new SpecificDatumWriterFactory[T],
+        factory = new AvroSink.DefaultDatumWriterFactory(cls, params.useReflection),
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
@@ -209,11 +188,10 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
         params.tempDirectory
       )
     )
-    tap(())
+    tap(params.toReadParam)
   }
 
-  override def tap(read: ReadP): Tap[T] =
-    SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
+  override def tap(read: ReadP): Tap[T] = SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
 }
 
 final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
@@ -244,7 +222,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
       avroOut(
         write = beam.AvroIO.writeGenericRecords(schema),
         path = path,
-        factory = GenericDatumWriterFactory,
+        factory = new AvroSink.DefaultDatumWriterFactory(classOf[GenericRecord], params.useReflection),
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
@@ -296,33 +274,13 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 
 object AvroIO {
 
-  class CustomRead[T <: SpecificRecord](source: AvroSource[T])
-      extends PTransform[PBegin, PCollection[T]] {
-    override def expand(input: PBegin): PCollection[T] = input.apply(
-      "Read",
-      org.apache.beam.sdk.io.Read.from(source)
-    )
+  object ReadParam {
+    private[avro] val DefaultUseReflection = true
   }
 
-  class SpecificDatumReaderFactory[T <: SpecificRecord: ClassTag] extends DatumReaderFactory[T] {
-    override def apply(writer: Schema, reader: Schema): DatumReader[T] =
-      new SpecificDatumReader(writer, SpecificData.get().getSchema(ScioUtil.classOf[T]))
-  }
-
-  object GenericDatumReaderFactory extends DatumReaderFactory[GenericRecord] {
-    override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] =
-      new GenericDatumReader(writer, reader)
-  }
-
-  class SpecificDatumWriterFactory[T <: SpecificRecord] extends DatumWriterFactory[T] {
-    override def apply(writer: Schema): DatumWriter[T] =
-      new SpecificDatumWriter(writer)
-  }
-
-  object GenericDatumWriterFactory extends DatumWriterFactory[GenericRecord] {
-    override def apply(writer: Schema): DatumWriter[GenericRecord] =
-      new GenericDatumWriter(writer)
-  }
+  final case class ReadParam private(
+    useReflection: Boolean = ReadParam.DefaultUseReflection
+  )
 
   object WriteParam {
     private[avro] val DefaultNumShards = 0
@@ -330,6 +288,7 @@ object AvroIO {
     private[avro] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
     private[avro] val DefaultTempDirectory = null
+    private[avro] val DefaultUseReflection = true
   }
 
   final case class WriteParam private (
@@ -337,9 +296,12 @@ object AvroIO {
     private val _suffix: String = WriteParam.DefaultSuffix,
     codec: CodecFactory = WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    useReflection: Boolean = WriteParam.DefaultUseReflection
   ) {
     val suffix: String = _suffix + ".avro"
+
+    def toReadParam: ReadParam = ReadParam(useReflection = useReflection)
   }
 
   @inline final def apply[T](id: String): AvroIO[T] =
@@ -397,10 +359,7 @@ object AvroTyped {
       val avroT = AvroType[T]
       val t = beam.AvroIO
         .writeCustomTypeToGenericRecords()
-        .withFormatFunction(new SerializableFunction[T, GenericRecord] {
-          override def apply(input: T): GenericRecord =
-            avroT.toGenericRecord(input)
-        })
+        .withFormatFunction((input: T) => avroT.toGenericRecord(input))
         .withSchema(avroT.schema)
       data.applyInternal(
         typedAvroOut(

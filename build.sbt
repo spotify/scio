@@ -157,6 +157,7 @@ val commonSettings = Def
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
     resolvers += Resolver.sonatypeRepo("public"),
+    resolvers += Resolver.mavenLocal,
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),

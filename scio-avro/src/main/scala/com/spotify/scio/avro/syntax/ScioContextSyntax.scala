@@ -77,8 +77,13 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
    * Avro file.
    */
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
-    self.read(SpecificRecordIO[T](path))
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](
+                                                      path: String,
+                                                      userReflection: Boolean = AvroIO.WriteParam.DefaultUseReflection
+                                                    ): SCollection[T] = {
+    val param = AvroIO.ReadParam(userReflection)
+    self.read(SpecificRecordIO[T](path))(param)
+  }
 
   /**
    * Get a typed SCollection from an Avro schema.
