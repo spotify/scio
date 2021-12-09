@@ -22,7 +22,7 @@ import com.spotify.scio.examples.extra.ParquetExample.{AccountFull, AccountProje
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
-import com.spotify.scio.io.{TextIO, TextTap}
+import com.spotify.scio.io.TextIO
 
 class ParquetExampleTest extends PipelineSpec {
 
