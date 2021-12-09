@@ -104,7 +104,7 @@ object ParquetExample {
   }
 
   private def avroGenericIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    // We can also passed an Avro schema directly to project into Avro GenericRecords.
+    // We can also pass an Avro schema directly to project into Avro GenericRecords.
     sc.parquetAvroFile[GenericRecord](args("input"), Account.getClassSchema)
 
       // Map out projected fields into something type safe
