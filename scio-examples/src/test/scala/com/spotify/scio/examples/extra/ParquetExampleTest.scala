@@ -26,7 +26,7 @@ import com.spotify.scio.io.TextIO
 
 class ParquetExampleTest extends PipelineSpec {
 
-  "ParquetExample" should "work for specific input" in {
+  "ParquetExample" should "work for SpecificRecord input" in {
     val expected = ParquetExample.fakeData
       .map(x => AccountProjection(x.getId, x.getName.toString))
       .map(_.toString)
@@ -51,7 +51,7 @@ class ParquetExampleTest extends PipelineSpec {
       .run()
   }
 
-  it should "work for specific output" in {
+  it should "work for SpecificRecord output" in {
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--output=out.parquet", "--method=avroOut")
       .output(ParquetAvroIO[Account]("out.parquet"))(coll =>
