@@ -33,7 +33,7 @@ public class ChannelPoolCreator {
     try {
       final ClientInterceptor interceptor =
           CredentialInterceptorCache.getInstance()
-              .getCredentialsInterceptor(options.getCredentialOptions(), options.getRetryOptions());
+              .getCredentialsInterceptor(options.getCredentialOptions());
       // If credentials are unset (i.e. via local emulator), CredentialsInterceptor will return null
       if (interceptor == null) {
         return new ClientInterceptor[] {};
