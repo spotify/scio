@@ -518,7 +518,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     }
 
     private def sortMergeTransform(t: SortedBucketIO.CoGbkTransform[K, W]): ClosedTap[Nothing] = {
-      self.applyInternal("sortMergeTransform", t)
+      self.applyInternal(t)
       ClosedTap[Nothing](EmptyTap)
     }
   }
