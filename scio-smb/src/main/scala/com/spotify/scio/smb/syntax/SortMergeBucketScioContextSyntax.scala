@@ -514,7 +514,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       }
 
       val t = transform.via(fn)
-      self.applyInternal(self.tfName(Some("sortMergeTransform")), t)
+      val tfName = self.tfName(Some("sortMergeTransform"))
+      self.applyInternal(tfName, t)
       ClosedTap[Nothing](EmptyTap)
     }
   }
