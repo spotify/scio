@@ -18,74 +18,57 @@ package com.spotify.scio.examples.extra
  */
 
 import com.spotify.scio.avro.Account
-import com.spotify.scio.examples.extra.ParquetExample.{AccountInput, AccountOutput}
+import com.spotify.scio.examples.extra.ParquetExample.{AccountFull, AccountProjection}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
-import com.spotify.scio.io.TextIO
+import com.spotify.scio.io.{TextIO, TextTap}
 
 class ParquetExampleTest extends PipelineSpec {
 
-  lazy val dummyData: IndexedSeq[Account] = (1 to 100)
-    .map(i =>
-      Account
-        .newBuilder()
-        .setId(i)
-        .setType(if (i % 3 == 0) "current" else "checking")
-        .setName(s"account $i")
-        .setAmount(i.toDouble)
-        .build()
-    )
-
   "ParquetExample" should "work for specific input" in {
-    val input =
-      Seq(new Account(1, "checking", "Alice", 1000.0), new Account(2, "checking", "Bob", 1500.0))
-
-    val expected = input
-      .map(x => AccountOutput(x.getId(), x.getName.toString))
+    val expected = ParquetExample.fakeData
+      .map(x => AccountProjection(x.getId, x.getName.toString))
       .map(_.toString)
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--input=in.parquet", "--output=out.txt", "--method=avroSpecificIn")
-      .input(ParquetAvroIO[Account]("in.parquet"), input)
+      .input(ParquetAvroIO[Account]("in.parquet"), ParquetExample.fakeData)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 
-  "ParquetExample" should "work for typed input" in {
-    val input =
-      Seq(AccountInput(1, "checking", "Alice", 1000.0), AccountInput(2, "checking", "Bob", 1500.0))
+  it should "work for typed input" in {
+    val input = ParquetExample.fakeData
+      .map(x => AccountProjection(x.getId, x.getName.toString))
 
     val expected = input.map(_.toString)
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--input=in.parquet", "--output=out.txt", "--method=typedIn")
-      .input(ParquetTypeIO[AccountInput]("in.parquet"), input)
+      .input(ParquetTypeIO[AccountProjection]("in.parquet"), input)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()
   }
 
-  "ParquetExample" should "work for specific output" in {
-    val expected = dummyData
-
+  it should "work for specific output" in {
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--output=out.parquet", "--method=avroOut")
       .output(ParquetAvroIO[Account]("out.parquet"))(coll =>
-        coll should containInAnyOrder(expected)
+        coll should containInAnyOrder(ParquetExample.fakeData)
       )
       .run()
   }
 
-  "ParquetExample" should "work for typed output" in {
-    val expected = dummyData
-      .map(x => AccountOutput(x.getId, x.getName.toString))
+  it should "work for typed output" in {
+    val expected = ParquetExample.fakeData
+      .map(a => AccountFull(a.getId, a.getType.toString, a.getName.toString, a.getAmount))
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--output=out.parquet", "--method=typedOut")
-      .output(ParquetTypeIO[AccountOutput]("out.parquet"))(coll =>
+      .output(ParquetTypeIO[AccountFull]("out.parquet"))(coll =>
         coll should containInAnyOrder(expected)
       )
       .run()
   }
-
 }
