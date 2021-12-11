@@ -487,7 +487,7 @@ lazy val `scio-test`: Project = project
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.github.sbt" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
-      "com.lihaoyi" %% "pprint" % "0.6.6",
+      "com.lihaoyi" %% "pprint" % "0.7.0",
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
