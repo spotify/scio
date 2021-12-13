@@ -17,6 +17,9 @@
 
 package com.spotify.scio.elasticsearch
 
+import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest.AliasActions
@@ -25,8 +28,7 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.client._
 import org.elasticsearch.client.indices.{CreateIndexRequest, CreateIndexResponse}
 import org.elasticsearch.core.TimeValue
-import org.elasticsearch.common.xcontent.XContentType
-
+import org.elasticsearch.xcontent.XContentType
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
@@ -36,7 +38,27 @@ object IndexAdmin {
   private[this] val Logger = LoggerFactory.getLogger(getClass)
 
   private def indicesClient[A](esOptions: ElasticsearchOptions)(f: IndicesClient => A): Try[A] = {
-    val client = new RestHighLevelClient(RestClient.builder(esOptions.nodes: _*))
+    val builder = RestClient
+      .builder(esOptions.nodes: _*)
+      .setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback {
+        override def customizeHttpClient(
+          httpClientBuilder: HttpAsyncClientBuilder
+        ): HttpAsyncClientBuilder = {
+          val credentialsProdiver = esOptions.usernameAndPassword.map { case (username, password) =>
+            val credentials = new BasicCredentialsProvider()
+            credentials.setCredentials(
+              AuthScope.ANY,
+              new UsernamePasswordCredentials(username, password)
+            )
+            credentials
+          }
+          credentialsProdiver match {
+            case Some(provider) => httpClientBuilder.setDefaultCredentialsProvider(provider)
+            case None           => httpClientBuilder
+          }
+        }
+      })
+    val client = new RestHighLevelClient(builder)
 
     val result = Try(f(client.indices()))
     client.close()

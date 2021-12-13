@@ -136,19 +136,24 @@ private object RunnerContext {
     finalLocalArtifacts
   }
 
+  private val sanitizePath: String => String = _.replace("\\", "/")
+
+  private[scio] def isNonRepositoryEnvDir(s: String): Boolean = {
+    val sanitizedUserHome: String = sanitizePath(sys.props("user.home"))
+    s.matches(s"${sanitizedUserHome}/\\..+/.+") && !s.matches(
+      s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier)/.+"
+    )
+  }
+
   /** Borrowed from DataflowRunner. */
   private[this] def detectClassPathResourcesToStage(
     pipelineOptions: PipelineOptions,
     classLoader: ClassLoader
   ): Iterable[String] = {
-    val sanitize: String => String = _.replace("\\", "/")
-    val matchesEnvDir: String => Boolean =
-      _.matches(s"${sanitize(sys.props("user.home"))}/\\..+/.+")
     val classPathJars = PipelineResources
       .detectClassPathResourcesToStage(classLoader, pipelineOptions)
       .asScala
-      .filterNot(sanitize.andThen(matchesEnvDir))
-
+      .filterNot(sanitizePath.andThen(isNonRepositoryEnvDir))
     logger.debug(s"Classpath jars: ${classPathJars.mkString(":")}")
 
     classPathJars

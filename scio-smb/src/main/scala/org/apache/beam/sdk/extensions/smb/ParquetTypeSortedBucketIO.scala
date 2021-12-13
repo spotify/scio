@@ -84,7 +84,7 @@ object ParquetTypeSortedBucketIO {
     keyField: String,
     compression: CompressionCodecName = ParquetTypeFileOperations.DefaultCompression,
     configuration: Configuration = new Configuration(),
-    numBuckets: Int = SortedBucketIO.DEFAULT_NUM_BUCKETS,
+    numBuckets: Integer = null,
     numShards: Int = SortedBucketIO.DEFAULT_NUM_SHARDS,
     filenamePrefix: String = SortedBucketIO.DEFAULT_FILENAME_PREFIX,
     hashType: HashType = SortedBucketIO.DEFAULT_HASH_TYPE,
@@ -130,7 +130,7 @@ object ParquetTypeSortedBucketIO {
     def withConfiguration(configuration: Configuration): Write[K, T] =
       this.copy(configuration = configuration)
 
-    override def getNumBuckets: Int = numBuckets
+    override def getNumBuckets: Integer = numBuckets
     override def getNumShards: Int = numShards
     override def getFilenamePrefix: String = filenamePrefix
     override def getKeyClass: Class[K] = keyClass

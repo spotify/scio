@@ -25,20 +25,20 @@ import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
-val algebirdVersion = "0.13.8"
-val algebraVersion = "2.2.3"
+val algebirdVersion = "0.13.9"
+val algebraVersion = "2.7.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
-val autoServiceVersion = "1.0"
+val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.8.2"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.33.0"
+val beamVersion = "2.34.0"
 val bigdataossVersion = "2.2.2"
-val bigQueryStorageVersion = "1.21.1"
-val bigtableClientVersion = "1.19.1"
+val bigQueryStorageVersion = "2.1.0"
+val bigtableClientVersion = "1.23.1"
 val breezeVersion = "2.0"
-val caffeineVersion = "2.9.2"
+val caffeineVersion = "2.9.3"
 val catsVersion = "2.5.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.1"
@@ -49,33 +49,33 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.20"
-val elasticsearch7Version = "7.15.1"
+val elasticsearch7Version = "7.16.0"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
-val gaxVersion = "1.63.0"
-val gcsVersion = "1.8.0"
+val gaxVersion = "2.3.0"
+val gcsVersion = "2.1.0"
 val generatedGrpcBetaVersion = "1.22.0"
 val generatedDatastoreProtoVersion = "0.89.0"
-val googleClientsVersion = "1.31.3"
-val googleApiServicesBigQueryVersion = s"v2-rev20210410-1.31.0"
-val googleApiServicesDataflowVersion = s"v1b3-rev20210408-1.31.0"
-val googleApiServicesPubsubVersion = s"v1-rev20210322-1.31.0"
-val googleApiServicesStorageVersion = s"v1-rev20210127-1.31.0"
-val googleAuthVersion = "0.25.2"
+val googleClientsVersion = "1.32.1"
+val googleApiServicesBigQueryVersion = s"v2-rev20210813-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20210818-$googleClientsVersion"
+val googleApiServicesPubsubVersion = s"v1-rev20210809-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20210127-$googleClientsVersion"
+val googleAuthVersion = "1.1.0"
 val googleCloudCoreVersion = "1.94.6"
-val googleCloudSpannerVersion = "6.2.0"
+val googleCloudSpannerVersion = "6.12.1"
 val googleHttpClientsVersion = "1.39.2"
 val googleOauthClientVersion = "1.31.4"
-val grpcVersion = "1.37.0"
-val guavaVersion = "30.1-jre"
+val grpcVersion = "1.40.1"
+val guavaVersion = "30.1.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.12.5"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
-val jnaVersion = "5.9.0"
-val jodaTimeVersion = "2.10.12"
+val jnaVersion = "5.10.0"
+val jodaTimeVersion = "2.10.13"
 val junitInterfaceVersion = "0.13.2"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
@@ -83,7 +83,7 @@ val kantanCsvVersion = "0.6.2"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
 val magnoliaVersion = "1.0.0-M4"
-val magnolifyVersion = "0.4.4"
+val magnolifyVersion = "0.4.5"
 val metricsVersion = "3.2.6"
 val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.34.Final"
@@ -102,7 +102,7 @@ val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.6"
 val tensorFlowVersion = "0.3.3"
 val zoltarVersion = "0.6.0-M2"
-val scalaCollectionCompatVersion = "2.5.0"
+val scalaCollectionCompatVersion = "2.6.0"
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
@@ -439,6 +439,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
@@ -494,7 +495,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.2.9",
+      "org.scalactic" %% "scalactic" % "3.2.10",
       "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
@@ -576,8 +577,8 @@ lazy val `scio-google-cloud-platform`: Project = project
       ),
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.120.2",
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % "1.20.2",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.125.0",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % bigQueryStorageVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
@@ -893,7 +894,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.3.4",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.4.1",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,

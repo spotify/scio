@@ -33,7 +33,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<InputT, OutputT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DoFnWithResource.class);
-  private static final ConcurrentMap<String, Pair<AtomicInteger, Object>> resources = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Pair<AtomicInteger, Object>> resources =
+      new ConcurrentHashMap<>();
 
   private final String instanceId;
   private String resourceId = null;
@@ -126,8 +127,7 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
             LOG.debug("Creating resource {}", resourceId);
             AtomicInteger resourceUsersCounter = new AtomicInteger(1);
             return Pair.of(resourceUsersCounter, createResource());
-          }
-          else {
+          } else {
             int newCurrentUsers = value.getLeft().incrementAndGet();
             LOG.debug("Incrementing resource {} users to {}", resourceId, newCurrentUsers);
             return value;

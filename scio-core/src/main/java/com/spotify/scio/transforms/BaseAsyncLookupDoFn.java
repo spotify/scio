@@ -37,7 +37,8 @@ import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
 /**
- * A {@link DoFn} that performs asynchronous lookup using the provided client. Lookup requests may be deduplicated.
+ * A {@link DoFn} that performs asynchronous lookup using the provided client. Lookup requests may
+ * be deduplicated.
  *
  * @param <A> input element type.
  * @param <B> client lookup value type.
@@ -82,7 +83,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   }
 
   /**
-   * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be de-duplicated.
+   * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be
+   * de-duplicated.
    *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
    *     and retrying bundles.
@@ -92,8 +94,9 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   }
 
   /**
-   * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be de-duplicated.
-
+   * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be
+   * de-duplicated.
+   *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
    *     and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
@@ -107,10 +110,12 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
    *
    * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
    *     and retrying bundles.
-   * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the same input
+   * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the
+   *     same input
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> BaseAsyncLookupDoFn(int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B, K> cacheSupplier) {
+  public <K> BaseAsyncLookupDoFn(
+      int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B, K> cacheSupplier) {
     this.instanceId = UUID.randomUUID();
     this.cacheSupplier = cacheSupplier;
     this.deduplicate = deduplicate;
@@ -148,25 +153,25 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
 
     final UUID uuid = UUID.randomUUID();
 
-    if(deduplicate) {
+    if (deduplicate) {
       // element already has an in-flight request
       F inFlight = inFlightRequests.get(input);
       if (inFlight != null) {
         try {
           futures.computeIfAbsent(
               uuid,
-              key -> addCallback(
-                  inFlight,
-                  output -> {
-                    results.add(new Result(input, success(output), key, c.timestamp(), window));
-                    return null;
-                  },
-                  throwable -> {
-                    results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
-                    return null;
-                  }
-              )
-          );
+              key ->
+                  addCallback(
+                      inFlight,
+                      output -> {
+                        results.add(new Result(input, success(output), key, c.timestamp(), window));
+                        return null;
+                      },
+                      throwable -> {
+                        results.add(
+                            new Result(input, failure(throwable), key, c.timestamp(), window));
+                        return null;
+                      }));
         } catch (Exception e) {
           LOG.error("Failed to process element", e);
           throw e;
@@ -180,33 +185,35 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
       semaphore.acquire();
       try {
         futures.computeIfAbsent(
-          uuid,
-          key -> {
-            final F future = asyncLookup((C) client.get(instanceId), input);
-            final boolean shouldRemove = deduplicate && future.equals(inFlightRequests.computeIfAbsent(input, k -> future));
-            return addCallback(
-                future,
-                output -> {
-                  semaphore.release();
-                  if(shouldRemove) inFlightRequests.remove(input);
-                  try {
-                    cacheSupplier.put(instanceId, input, output);
-                    results.add(new Result(input, success(output), key, c.timestamp(), window));
-                  } catch (Exception e) {
-                    LOG.error("Failed to cache result", e);
-                    throw e;
-                  }
-                  return null;
-                },
-                throwable -> {
-                  semaphore.release();
-                  if(shouldRemove) inFlightRequests.remove(input);
-                  results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
-                  return null;
-                }
-            );
-          }
-        );
+            uuid,
+            key -> {
+              final F future = asyncLookup((C) client.get(instanceId), input);
+              boolean sameFuture = false;
+              if (deduplicate) {
+                sameFuture = future.equals(inFlightRequests.computeIfAbsent(input, k -> future));
+              }
+              final boolean shouldRemove = deduplicate && sameFuture;
+              return addCallback(
+                  future,
+                  output -> {
+                    semaphore.release();
+                    if (shouldRemove) inFlightRequests.remove(input);
+                    try {
+                      cacheSupplier.put(instanceId, input, output);
+                      results.add(new Result(input, success(output), key, c.timestamp(), window));
+                    } catch (Exception e) {
+                      LOG.error("Failed to cache result", e);
+                      throw e;
+                    }
+                    return null;
+                  },
+                  throwable -> {
+                    semaphore.release();
+                    if (shouldRemove) inFlightRequests.remove(input);
+                    results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
+                    return null;
+                  });
+            });
       } catch (Exception e) {
         semaphore.release();
         LOG.error("Failed to process element", e);

@@ -78,7 +78,6 @@ public class AvroSortedBucketIO {
   private static <K, T extends GenericRecord> Write.Builder<K, T> newBuilder(
       Class<K> keyClass, String keyField) {
     return new AutoValue_AvroSortedBucketIO_Write.Builder<K, T>()
-        .setNumBuckets(SortedBucketIO.DEFAULT_NUM_BUCKETS)
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
@@ -165,9 +164,7 @@ public class AvroSortedBucketIO {
 
     /** Reads from the given input directories. */
     public Read<T> from(List<String> inputDirectories) {
-      return toBuilder()
-          .setInputDirectories(inputDirectories)
-          .build();
+      return toBuilder().setInputDirectories(inputDirectories).build();
     }
 
     /** Specifies the input filename suffix. */
@@ -187,8 +184,7 @@ public class AvroSortedBucketIO {
           getRecordClass() == null
               ? AvroFileOperations.of(getSchema())
               : (AvroFileOperations<T>)
-                  AvroFileOperations.of(
-                      (Class<SpecificRecordBase>) getRecordClass());
+                  AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass());
       return new BucketedInput<>(
           getTupleTag(),
           getInputDirectories(),

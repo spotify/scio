@@ -68,7 +68,10 @@ class ParquetTypeSortedBucketIOTest extends AnyFlatSpec with Matchers {
     val tempDir = s"/tmp/temp-${UUID.randomUUID().toString}/"
     pipeline.getOptions.setTempLocation(tempDir)
 
-    val write = ParquetTypeSortedBucketIO.write[String, User]("name").to("/output")
+    val write = ParquetTypeSortedBucketIO
+      .write[String, User]("name")
+      .to("/output")
+      .withNumBuckets(1)
     val transform = SortedBucketIO
       .read(classOf[String])
       .of(
@@ -84,5 +87,14 @@ class ParquetTypeSortedBucketIOTest extends AnyFlatSpec with Matchers {
 
     write.getTempDirectoryOrDefault(pipeline).toString shouldBe tempDir
     transform.getTempDirectoryOrDefault(pipeline).toString shouldBe tempDir
+  }
+
+  it should "check that numBuckets is set" in {
+    the[IllegalArgumentException] thrownBy {
+      ParquetTypeSortedBucketIO
+        .write[String, User]("name")
+        .to("/output")
+        .expand(null)
+    } should have message "numBuckets must be set to a nonzero value"
   }
 }
