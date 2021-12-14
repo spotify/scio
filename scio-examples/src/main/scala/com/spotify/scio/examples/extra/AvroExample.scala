@@ -77,7 +77,7 @@ object AvroExample {
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
-    sc.run()
+    sc.run().waitUntilDone()
     ()
   }
 
