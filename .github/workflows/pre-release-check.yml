@@ -2,7 +2,7 @@ name: pre-release-check
 
 env:
   ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-  GOOGLE_APPLICATION_CREDENTIALS: scripts/data-integration-test-key.json
+  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
   GOOGLE_PROJECT_ID: data-integration-test
   SBT_OPTS: -DbeamRunners=DataflowRunner
   DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1
