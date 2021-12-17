@@ -51,7 +51,7 @@ class AvroIOSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
 
   "AvroIO" should "support full avro spec when writing" in {
     val ctx = ScioContext()
-    val param = AvroIO.WriteParam(useReflection = false)
+    val param = AvroIO.WriteParam(useReflectApi = false)
     ctx.parallelize(dataset).write(SpecificRecordIO[Test](output.path))(param)
     val result = ctx.run()
     result.waitUntilFinish()
@@ -61,7 +61,7 @@ class AvroIOSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
 
   it should "support full avro spec when reading" in {
     val ctx = ScioContext()
-    val param = AvroIO.ReadParam(useReflection = false)
+    val param = AvroIO.ReadParam(useReflectApi = false)
     val files = output / Path("part-*")
     val decoded = ctx.read(SpecificRecordIO[Test](files.path))(param).materialize
     val result = ctx.run().waitUntilFinish()

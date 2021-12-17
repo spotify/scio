@@ -79,7 +79,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](
                                                       path: String,
-                                                      userReflection: Boolean = AvroIO.WriteParam.DefaultUseReflection
+                                                      userReflection: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
                                                     ): SCollection[T] = {
     val param = AvroIO.ReadParam(userReflection)
     self.read(SpecificRecordIO[T](path))(param)

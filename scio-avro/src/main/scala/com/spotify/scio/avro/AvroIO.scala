@@ -23,7 +23,7 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{ScioContext, avro}
+import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -165,7 +165,9 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val t = beam.AvroIO
       .read(cls)
       .from(path)
-      .withDatumReaderFactory(new AvroSource.DefaultDatumReaderFactory[T](cls, params.useReflection))
+      .withDatumReaderFactory(
+        new AvroSource.DefaultDatumReaderFactory[T](cls, params.useReflectApi)
+      )
       .withCoder(CoderMaterializer.beam(sc, Coder[T]))
     sc.applyTransform(t)
   }
@@ -180,7 +182,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
       avroOut(
         write = beam.AvroIO.write(cls),
         path = path,
-        factory = new AvroSink.DefaultDatumWriterFactory(cls, params.useReflection),
+        factory = new AvroSink.DefaultDatumWriterFactory(cls, params.useReflectApi),
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
@@ -222,7 +224,8 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
       avroOut(
         write = beam.AvroIO.writeGenericRecords(schema),
         path = path,
-        factory = new AvroSink.DefaultDatumWriterFactory(classOf[GenericRecord], params.useReflection),
+        factory =
+          new AvroSink.DefaultDatumWriterFactory(classOf[GenericRecord], params.useReflectApi),
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
@@ -275,11 +278,11 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 object AvroIO {
 
   object ReadParam {
-    private[avro] val DefaultUseReflection = true
+    private[avro] val DefaultUseReflectApi = true
   }
 
-  final case class ReadParam private(
-    useReflection: Boolean = ReadParam.DefaultUseReflection
+  final case class ReadParam private (
+    useReflectApi: Boolean = ReadParam.DefaultUseReflectApi
   )
 
   object WriteParam {
@@ -288,7 +291,7 @@ object AvroIO {
     private[avro] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
     private[avro] val DefaultTempDirectory = null
-    private[avro] val DefaultUseReflection = true
+    private[avro] val DefaultUseReflectApi = true
   }
 
   final case class WriteParam private (
@@ -297,11 +300,11 @@ object AvroIO {
     codec: CodecFactory = WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    useReflection: Boolean = WriteParam.DefaultUseReflection
+    useReflectApi: Boolean = WriteParam.DefaultUseReflectApi
   ) {
     val suffix: String = _suffix + ".avro"
 
-    def toReadParam: ReadParam = ReadParam(useReflection = useReflection)
+    def toReadParam: ReadParam = ReadParam(useReflectApi = useReflectApi)
   }
 
   @inline final def apply[T](id: String): AvroIO[T] =
