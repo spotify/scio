@@ -48,19 +48,19 @@ object Pretty {
         printer.defaultIndent
       )
     def render(tree: Tree): Str =
-      Str.join(renderer.rec(tree, 0, 0).iter.toSeq: _*)
+      Str.join(renderer.rec(tree, 0, 0).iter.toIterable)
     Tree.Lazy { _ =>
       val fields =
         for {
           f <- g.getSchema().getFields().asScala
-        } yield Str.join(
+        } yield Str(
           render(renderFieldName(f.name)),
           ": ",
           render(treeifyAvro(g.get(f.name())))
         )
       List(
         Color.LightGray("{ ").toString +
-          fields.reduce((a, b) => Str.join(a, ", ", b)) +
+          fields.reduce((a, b) => Str(a, ", ", b)) +
           Color.LightGray(" }")
       ).iterator
     }
@@ -80,7 +80,7 @@ object Pretty {
     case g: GenericRecord =>
       renderGenericRecord(g)
     case x =>
-      printer.treeify(x)
+      printer.treeify(x, true, true)
   }
 
   private[this] val jsonFactory = Transport.getJsonFactory
