@@ -31,8 +31,8 @@ jobs:
           - 8
           - 11
         scala:
-          - 2.12.14
-          - 2.13.6
+          - 2.12.15
+          - 2.13.7
         exclude:
           - scala: 2.12.15
             java: graalvm-ce-java8@21.0.0
