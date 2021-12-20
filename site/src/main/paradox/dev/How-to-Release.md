@@ -62,6 +62,7 @@ git push origin vX.Y.Z
 
 ### 0.11.x
 
+- [v0.11.2](https://github.com/spotify/scio/releases/tag/v0.11.2) - _"Batavia"_
 - [v0.11.1](https://github.com/spotify/scio/releases/tag/v0.11.1) - _"Armorica"_
 - [v0.11.0](https://github.com/spotify/scio/releases/tag/v0.11.0) - _"Ariana"_
 
