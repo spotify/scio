@@ -203,7 +203,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.0+0-a51b635f+20210903-1451*
+<i class="md-icon" title="Version">label_outline</i> 0.11.2+3-4adef074*
 </label>
 </li>
 </ul>
@@ -246,7 +246,7 @@ spotify/scio
 <h2><a href="#new-features" name="new-features" class="anchor"><span class="anchor-link"></span></a>New features</h2>
 <h3><a href="#beamsql" name="beamsql" class="anchor"><span class="anchor-link"></span></a>BeamSQL</h3>
 <p>Beam SQL integration is added in this release! This integration comes in many flavors, from fluent api to string interpolation with both offering the possibility to typecheck the provided query at compile time.</p>
-<p>A simple use case of this api is reflected in the example below. This example uses the fluent api to query the <code>SCollection[User]</code> and extract <code>username</code> and <code>age</code>. <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>`query`</code></a> return&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.32.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a> which is <code>Beam</code>&rsquo;s underlying type that contains the values and the <a href="https://beam.apache.org/releases/javadoc/2.32.0/?org/apache/beam/sdk/values/Schema.html" title="org.apache.beam.sdk.values.Schema"><code>Schema</code></a> of the extracted data.</p>
+<p>A simple use case of this api is reflected in the example below. This example uses the fluent api to query the <code>SCollection[User]</code> and extract <code>username</code> and <code>age</code>. <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>`query`</code></a> return&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.34.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a> which is <code>Beam</code>&rsquo;s underlying type that contains the values and the <a href="https://beam.apache.org/releases/javadoc/2.34.0/?org/apache/beam/sdk/values/Schema.html" title="org.apache.beam.sdk.values.Schema"><code>Schema</code></a> of the extracted data.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.sql._
 import com.spotify.scio.values._
 import org.apache.beam.sdk.values.Row
@@ -257,7 +257,7 @@ def users: SCollection[User] = ???
 
 def result: SCollection[Row] = users.query(&quot;select username, age from SCOLLECTION&quot;)
 </code></pre>
-<p>In the following example we go a little bit further. Using <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>queryAs</code></a> we can express the expected return type <code>(String, Int)</code> instead of <a href="https://beam.apache.org/releases/javadoc/2.32.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a>. Query typecheck only happens at runtime</p>
+<p>In the following example we go a little bit further. Using <a href="https://spotify.github.io/scio/api/com/spotify/scio/sql/SqlCollection1.html" title="com.spotify.scio.sql.SqlCollection1"><code>queryAs</code></a> we can express the expected return type <code>(String, Int)</code> instead of <a href="https://beam.apache.org/releases/javadoc/2.34.0/?org/apache/beam/sdk/values/Row.html" title="org.apache.beam.sdk.values.Row"><code>Row</code></a>. Query typecheck only happens at runtime</p>
 <p>This will fail at runtime if the expected return type doesn&rsquo;t match the inferred schema for the given query.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.sql._
 import com.spotify.scio.values._
@@ -459,8 +459,8 @@ def safe: SCollection[ToExample] = examples.to[ToExample](To.safe)
 </code></pre>
 <h2><a href="#deprecations-and-breaking-changes" name="deprecations-and-breaking-changes" class="anchor"><span class="anchor-link"></span></a>Deprecations and Breaking changes</h2>
 <h3><a href="#scala-concurrent-future-removed-from-scioios" name="scala-concurrent-future-removed-from-scioios" class="anchor"><span class="anchor-link"></span></a>scala.concurrent.Future removed from <code>ScioIO</code>s</h3>
-<p>The removal of <a href="http://www.scala-lang.org/api/2.13.6/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a> led to some semantic and behaviour changes.</p>
-<p><code>ScioIO</code>s no longer return <a href="http://www.scala-lang.org/api/2.13.6/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a></p>
+<p>The removal of <a href="http://www.scala-lang.org/api/2.13.7/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a> led to some semantic and behaviour changes.</p>
+<p><code>ScioIO</code>s no longer return <a href="http://www.scala-lang.org/api/2.13.7/scala/concurrent/Future.html" title="scala.concurrent.Future"><code>Future</code></a></p>
 <pre class="prettyprint"><code class="language-diff">trait ScioIO[T] {
   ....
 - protected def write(data: SCollection[T], params: WriteP): Future[Tap[tapT.T]]
@@ -540,7 +540,7 @@ def table: Table = Table.Ref(tableReference)
 <p>Async <code>DoFn</code>s were refactored.</p>
 <p><code>AsyncLookupDoFn</code> was renamed to <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/BaseAsyncLookupDoFn.html" title="com.spotify.scio.transforms.BaseAsyncLookupDoFn"><code>`BaseAsyncLookupDoFn`</code></a> and we now have better support for <code>Guava</code>, <code>Java 8</code> and scala <code>Future</code> lookup DoFn&rsquo;s through the following implementations <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/GuavaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.GuavaAsyncLookupDoFn"><code>`GuavaAsyncLookupDoFn`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/JavaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.JavaAsyncLookupDoFn"><code>`JavaAsyncLookupDoFn`</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/ScalaAsyncLookupDoFn.html" title="com.spotify.scio.transforms.ScalaAsyncLookupDoFn"><code>`ScalaAsyncLookupDoFn`</code></a>.</p>
 <h3><a href="#remove-support-for-lisp-case-cli-arguments" name="remove-support-for-lisp-case-cli-arguments" class="anchor"><span class="anchor-link"></span></a>Remove support for lisp-case CLI arguments</h3>
-<p>In order to be consistent with Beam&rsquo;s way of passing arguments into the application and construct <a href="https://beam.apache.org/releases/javadoc/2.32.0/?org/apache/beam/sdk/options/PipelineOptions.html" title="org.apache.beam.sdk.options.PipelineOptions"><code>`PipelineOptions`</code></a>, we decided to drop support for <code>lisp-case</code> arguments.</p>
+<p>In order to be consistent with Beam&rsquo;s way of passing arguments into the application and construct <a href="https://beam.apache.org/releases/javadoc/2.34.0/?org/apache/beam/sdk/options/PipelineOptions.html" title="org.apache.beam.sdk.options.PipelineOptions"><code>`PipelineOptions`</code></a>, we decided to drop support for <code>lisp-case</code> arguments.</p>
 <p>What this means is that if you were passing arguments like <code>--foo-bar</code> now you need to pass it as <code>--fooBar</code>.</p>
 </div>
 <div>
@@ -550,7 +550,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.0+0-a51b635f+20210903-1451*
+0.11.2+3-4adef074*
 </span>
 </div>
 </article>
@@ -592,7 +592,7 @@ Scio v0.9.0
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2021 Spotify AB
+Copyright (C) 2020 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>
