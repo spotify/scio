@@ -1157,6 +1157,7 @@ lazy val siteSettings = Def.settings(
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
     "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
   ),
+  dependencyOverrides += "com.lihaoyi" %% "pprint" % "0.6.6",
   // unidoc
   ScalaUnidoc / siteSubdirName := "api",
   ScalaUnidoc / scalacOptions := Seq.empty,
@@ -1218,7 +1219,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.5").cross(CrossVersion.full)),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.6").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {
