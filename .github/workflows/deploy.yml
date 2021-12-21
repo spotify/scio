@@ -19,7 +19,7 @@ jobs:
       - name: Java 11 setup
         uses: actions/setup-java@v2
         with:
-          distribution: adopt
+          distribution: temurin
           java-version: 11
       - run: sbt scio-repl/assembly
       - name: Create Release
@@ -51,7 +51,7 @@ jobs:
       - name: Java 11 setup
         uses: actions/setup-java@v2
         with:
-          distribution: adopt
+          distribution: temurin
           java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh

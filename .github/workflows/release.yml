@@ -15,7 +15,7 @@ jobs:
       - name: Java 11 setup
         uses: actions/setup-java@v2
         with:
-          distribution: adopt
+          distribution: temurin
           java-version: 11
       - uses: olafurpg/setup-gpg@v3
       - name: Publish ${{ github.ref }}
