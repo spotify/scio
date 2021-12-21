@@ -181,24 +181,33 @@ trait PipelineTestUtils {
   }
 
   /**
-   * @param genA
-   * @param fn
-   * @param line
-   * @param name
-   * @tparam A
-   * @tparam T
+   * Generate an instance of `A` from `genA` using a random seed.
+   *
    * @return
+   *   The result of `fn` applied to the generated `A`, or `None` on generation failure.
    */
   def withGen[A, T](genA: Gen[A])(
     fn: A => T
   )(implicit line: sourcecode.Line, name: sourcecode.Name): Option[T] =
     withGen(genA, Seed.random())(fn)(line, name)
 
+  /**
+   * Generate an instance of `A` from `genA` using a the seed specified by `base64Seed`.
+   *
+   * @return
+   *   The result of `fn` applied to the generated `A`, or `None` on generation failure.
+   */
   def withGen[A, T](genA: Gen[A], base64Seed: String)(
     fn: A => T
   )(implicit line: sourcecode.Line, name: sourcecode.Name): Option[T] =
     withGen(genA, Seed.fromBase64(base64Seed).get)(fn)(line, name)
 
+  /**
+   * Generate an instance of `A` from `genA` using a the seed specified by `seed`.
+   *
+   * @return
+   *   The result of `fn` applied to the generated `A`, or `None` on generation failure.
+   */
   def withGen[A, T](genA: Gen[A], seed: Seed)(
     fn: A => T
   )(implicit line: sourcecode.Line, name: sourcecode.Name): Option[T] = {
