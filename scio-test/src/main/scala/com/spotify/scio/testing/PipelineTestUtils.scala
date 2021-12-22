@@ -220,10 +220,10 @@ trait PipelineTestUtils {
         )
         None
       case Some(a) =>
-        val r = Try(fn(a))
+        val r = Try(fn(a)).map(Some(_))
         if (r.isFailure)
           logger.error(s"Failure at ${name.value}:${line.value}. Seed: ${seed.toBase64}")
-        r.map(Option(_)).get
+        r.get
     }
   }
 }
