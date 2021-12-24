@@ -68,7 +68,7 @@ object WindowedWordCount {
       .transform("windowed counter") {
         // Apply windowing logic
         _.withFixedWindows(windowSize)
-        // Split input lines, filter out empty tokens and expand into a collection of tokens
+          // Split input lines, filter out empty tokens and expand into a collection of tokens
           .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
           // Count occurrences of each unique `String` within each window to get `(String, Long)`
           .countByValue

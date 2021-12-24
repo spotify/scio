@@ -65,7 +65,7 @@ object WordCount {
       .transform("counter") {
         // Split input lines, filter out empty tokens and expand into a collection of tokens
         _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-        // Count occurrences of each unique `String` to get `(String, Long)`
+          // Count occurrences of each unique `String` to get `(String, Long)`
           .countByValue
       }
       // Map `(String, Long)` tuples into strings
