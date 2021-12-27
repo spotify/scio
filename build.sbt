@@ -82,6 +82,7 @@ val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.2"
 val kryoVersion =
   "4.0.2" // explicitly depend on 4.0.1+ due to https://github.com/EsotericSoftware/kryo/pull/516
+val log4jVersion = "2.17.0"
 val magnoliaVersion = "1.0.0-M4"
 val magnolifyVersion = "0.4.6"
 val metricsVersion = "3.2.6"
@@ -1313,7 +1314,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "javax.annotation" % "javax.annotation-api" % "1.3.2",
   "joda-time" % "joda-time" % jodaTimeVersion,
   "junit" % "junit" % junitVersion,
-  "log4j" % "log4j" % "1.2.17",
   "net.java.dev.jna" % "jna" % jnaVersion,
   "org.apache.avro" % "avro" % avroVersion,
   "org.apache.commons" % "commons-compress" % commonsCompressVersion,
@@ -1321,6 +1321,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.apache.commons" % "commons-math3" % commonsMath3Version,
   "org.apache.httpcomponents" % "httpclient" % "4.5.10",
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+  "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
+  "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
   "org.apache.thrift" % "libthrift" % "0.9.2",
   "org.checkerframework" % "checker-qual" % "3.1.0",
   "org.codehaus.jackson" % "jackson-core-asl" % "1.9.13",
@@ -1337,7 +1339,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.scalactic" %% "scalactic" % scalatestVersion,
   "org.scalatest" %% "scalatest" % scalatestVersion,
   "org.slf4j" % "slf4j-api" % slf4jVersion,
-  "org.slf4j" % "slf4j-log4j12" % slf4jVersion,
   "org.tukaani" % "xz" % "1.8",
   "org.typelevel" %% "algebra" % algebraVersion,
   "org.typelevel" %% "cats-core" % catsVersion,
