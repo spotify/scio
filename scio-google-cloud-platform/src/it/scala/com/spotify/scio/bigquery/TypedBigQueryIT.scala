@@ -60,9 +60,8 @@ object TypedBigQueryIT {
   implicit val arbTime: Arbitrary[LocalTime] = Arbitrary(epochGen.map(new LocalTime(_)))
   implicit val arbDatetime: Arbitrary[LocalDateTime] = Arbitrary(epochGen.map(new LocalDateTime(_)))
 
-  private val recordGen = {
+  private val recordGen =
     implicitly[Arbitrary[Record]].arbitrary
-  }
 
   private def table(name: String) = {
     val TIME_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmmss")

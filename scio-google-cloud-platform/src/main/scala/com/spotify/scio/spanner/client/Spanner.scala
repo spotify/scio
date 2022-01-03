@@ -21,9 +21,8 @@ import com.google.cloud.spanner._
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
 
 object Spanner {
-  private lazy val defaultInstance: Spanner = {
+  private lazy val defaultInstance: Spanner =
     SpannerOptions.newBuilder().build().getService
-  }
 
   def databaseClient(config: SpannerConfig, instance: Spanner = defaultInstance): DatabaseClient =
     instance.getDatabaseClient(

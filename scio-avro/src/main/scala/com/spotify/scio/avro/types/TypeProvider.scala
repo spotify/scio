@@ -350,9 +350,15 @@ private[types] object TypeProvider {
         Seq()
       }
 
-    q"""object ${TermName(name.toString)} extends ${p(c, ScioAvroType)}.HasAvroSchema[$name] with ..$traits {
+    q"""object ${TermName(name.toString)} extends ${p(
+      c,
+      ScioAvroType
+    )}.HasAvroSchema[$name] with ..$traits {
           override def toPrettyString(indent: Int = 0): String =
-            ${p(c, s"$ScioAvro.types.SchemaUtil")}.toPrettyString(this.getClass.getName, this.schema, indent)
+            ${p(
+      c,
+      s"$ScioAvro.types.SchemaUtil"
+    )}.toPrettyString(this.getClass.getName, this.schema, indent)
           override def fromGenericRecord: (${p(c, ApacheAvro)}.generic.GenericRecord => $name) =
             ${p(c, ScioAvroType)}.fromGenericRecord[$name]
           override def toGenericRecord: ($name => ${p(c, ApacheAvro)}.generic.GenericRecord) =
