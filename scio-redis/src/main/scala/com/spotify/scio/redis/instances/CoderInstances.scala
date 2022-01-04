@@ -29,6 +29,7 @@ trait CoderInstances {
   implicit def lPushCoder[T: Coder: RedisType]: Coder[LPush[T]] = Coder.gen[LPush[T]]
   implicit def rPushCoder[T: Coder: RedisType]: Coder[RPush[T]] = Coder.gen[RPush[T]]
   implicit def pfAddCoder[T: Coder: RedisType]: Coder[PFAdd[T]] = Coder.gen[PFAdd[T]]
+  implicit def zAddCoder[T: Coder: RedisType]: Coder[ZAdd[T]] = Coder.gen[ZAdd[T]]
 
   private[this] def coders: Map[Int, Coder[_]] = Map(
     1 -> appendCoder[String],
@@ -46,7 +47,9 @@ trait CoderInstances {
     13 -> rPushCoder[String],
     14 -> rPushCoder[Array[Byte]],
     15 -> pfAddCoder[String],
-    16 -> pfAddCoder[Array[Byte]]
+    16 -> pfAddCoder[Array[Byte]],
+    17 -> zAddCoder[String],
+    18 -> zAddCoder[Array[Byte]]
   )
 
   implicit def redisMutationCoder[T <: RedisMutation]: Coder[T] =
@@ -67,6 +70,8 @@ trait CoderInstances {
       case RedisMutation(_: RPush[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 14
       case RedisMutation(_: PFAdd[String @unchecked], RedisType.StringRedisType)          => 15
       case RedisMutation(_: PFAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 16
+      case RedisMutation(_: ZAdd[String @unchecked], RedisType.StringRedisType)           => 17
+      case RedisMutation(_: ZAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)   => 18
     }
 
 }

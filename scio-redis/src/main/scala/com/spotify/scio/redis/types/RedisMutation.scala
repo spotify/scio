@@ -54,3 +54,13 @@ final case class RPush[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(i
 final case class PFAdd[T](key: T, value: Seq[T], ttl: Option[Duration] = None)(implicit
   val rt: RedisType[T]
 ) extends RedisMutation
+final case class ZAdd[T](key: T, scoreMembers: Map[T, Double], ttl: Option[Duration] = None)(
+  implicit val rt: RedisType[T]
+) extends RedisMutation
+object ZAdd {
+  def apply[T: RedisType](key: T, score: Double, member: T): ZAdd[T] =
+    ZAdd(key, Map(member -> score))
+
+  def apply[T: RedisType](key: T, score: Double, member: T, ttl: Option[Duration]): ZAdd[T] =
+    ZAdd(key, Map(member -> score))
+}
