@@ -62,5 +62,5 @@ object ZAdd {
     ZAdd(key, Map(member -> score))
 
   def apply[T: RedisType](key: T, score: Double, member: T, ttl: Option[Duration]): ZAdd[T] =
-    ZAdd(key, Map(member -> score))
+    ZAdd(key, Map(member -> score), ttl)
 }
