@@ -52,7 +52,7 @@ val elasticsearch6Version = "6.8.22"
 val elasticsearch7Version = "7.16.2"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.12.1"
-val gaxVersion = "2.3.0"
+val gaxVersion = "2.6.1"
 val gcsVersion = "2.1.0"
 val generatedGrpcBetaVersion = "1.22.0"
 val generatedDatastoreProtoVersion = "0.89.0"
@@ -66,12 +66,12 @@ val googleCloudCoreVersion = "1.94.6"
 val googleCloudSpannerVersion = "6.12.1"
 val googleHttpClientsVersion = "1.40.1"
 val googleOauthClientVersion = "1.31.4"
-val grpcVersion = "1.41.1"
+val grpcVersion = "1.41.0"
 val guavaVersion = "31.0.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
 val httpCoreVersion = "4.4.14"
-val jacksonVersion = "2.12.6"
+val jacksonVersion = "2.13.0"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
 val jnaVersion = "5.10.0"
@@ -99,7 +99,7 @@ val scalatestVersion = "3.2.10"
 val shapelessVersion = "2.3.7"
 val slf4jVersion = "1.7.32"
 val sparkeyVersion = "3.2.1"
-val sparkVersion = "2.4.6"
+val sparkVersion = "2.4.8"
 val tensorFlowVersion = "0.3.3"
 val zoltarVersion = "0.6.0-M2"
 val scalaCollectionCompatVersion = "2.6.0"
@@ -1243,7 +1243,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
-  "com.google.api.grpc" % "proto-google-common-protos" % "1.17.0",
+  "com.google.api.grpc" % "proto-google-common-protos" % "2.6.0",
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax" % gaxVersion,
   "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
@@ -1253,12 +1253,12 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
   "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-  "com.google.cloud" % "google-cloud-core-grpc" % "1.93.7",
-  "com.google.cloud" % "google-cloud-core-http" % "1.93.7",
-  "com.google.cloud" % "google-cloud-core" % "1.93.7",
+  "com.google.cloud" % "google-cloud-core-grpc" % "2.2.0",
+  "com.google.cloud" % "google-cloud-core-http" % "2.2.0",
+  "com.google.cloud" % "google-cloud-core" % "2.2.0",
   "com.google.cloud" % "google-cloud-storage" % gcsVersion,
   "com.google.code.findbugs" % "jsr305" % "3.0.2",
-  "com.google.code.gson" % "gson" % "2.8.6",
+  "com.google.code.gson" % "gson" % "2.8.9",
   "com.google.errorprone" % "error_prone_annotations" % "2.3.4",
   "com.google.guava" % "guava" % guavaVersion,
   "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -1273,7 +1273,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.squareup.okio" % "okio" % "1.13.0",
   "com.thoughtworks.paranamer" % "paranamer" % "2.8",
   "commons-cli" % "commons-cli" % "1.2",
-  "commons-codec" % "commons-codec" % "1.14",
+  "commons-codec" % "commons-codec" % "1.15",
   "commons-collections" % "commons-collections" % "3.2.2",
   "commons-io" % "commons-io" % commonsIoVersion,
   "commons-lang" % "commons-lang" % "2.6",
@@ -1319,7 +1319,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.apache.commons" % "commons-compress" % commonsCompressVersion,
   "org.apache.commons" % "commons-lang3" % commonsLang3Version,
   "org.apache.commons" % "commons-math3" % commonsMath3Version,
-  "org.apache.httpcomponents" % "httpclient" % "4.5.10",
+  "org.apache.httpcomponents" % "httpclient" % "4.5.13",
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
   "org.apache.thrift" % "libthrift" % "0.9.2",
   "org.checkerframework" % "checker-qual" % "3.1.0",
