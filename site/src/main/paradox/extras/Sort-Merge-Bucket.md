@@ -144,7 +144,7 @@ records are randomly assigned per-bundle. Two records with the same key may end 
 - `numBuckets` * `numShards` = total # of files written to disk.
 
 ### sorterMemoryMb
-- If your job gets stuck in the sorting phase (since the `GroupByKey` and `SortValues` transforms
+If your job gets stuck in the sorting phase (since the `GroupByKey` and `SortValues` transforms
   may get fused--you can reference the @javadoc[Counter](org.apache.beam.sdk.metrics.Counter)s
   `SortedBucketSink-bucketsInitiatedSorting` and `SortedBucketSink-bucketsCompletedSorting`
   to get an idea of where your job fails), you can increase sorter memory
@@ -178,6 +178,7 @@ desired parallelism of the SMB read operation. For a given set of sources, `targ
 set to any number between the least and greatest numbers of buckets among sources. This can be
 dynamically configured using `TargetParallelism.min()` or `TargetParallelism.max()`, which at graph
 construction time will determine the least or greatest amount of parallelism based on sources.
+
 Alternately, `TargetParallelism.of(Integer value)` can be used to statically configure a custom value,
 or `{@link TargetParallelism#auto()}` can be used to let the runner decide how to split the SMB read
 at runtime based on the combined byte size of the inputs--this is also the default behavior if
@@ -217,13 +218,13 @@ When selecting a target parallelism for your SMB operation, there are tradeoffs 
 Performance can suffer when reading an SMB source across many partitions if the total number of files
 (`numBuckets` * `numShards` * `numPartitions`) is too large (on the order of hundreds of thousands to millions of files).
 We've observed errors and timeouts as a result of too many simultaneous filesystem connections. To that end,
-we've added two @javadoc[PipelineOptions](org.apache.beam.sdk.options.PipelineOptions), settable either via command-line args
+we've added two @javadoc[PipelineOptions](org.apache.beam.sdk.options.PipelineOptions) to Scio 0.10.3, settable either via command-line args
 or using @javadoc[SortedBucketOptions](org.apache.beam.sdk.extensions.smb.SortedBucketOptions) directly.
 
   - `--sortedBucketReadBufferSize` (default: 10000): an Integer that determines the number of _elements_ to read and buffer
-    in-memory from _each file_ at a time. For example, by default, each file will have 10,000 elements read and buffered into
-    an array at worker startup. Then, the sort-merge algorithm will request them one at a time as needed. Once 10,000 elements
-    have been requested, the file will buffer another 10,000.
+    from _each file_ at a time. For example, by default, each file will have 10,000 elements read and buffered into
+    an in-memory array at worker startup. Then, the sort-merge algorithm will request them one at a time as needed. Once 10,000 elements
+    have been requested, the file will buffer the next 10,000.
 
     *Note*: this can be quite memory-intensive and require bumping the worker memory. If you have a
     small number of files, or don't need this optimization, you can turn it off by setting `--sortedBucketReadBufferSize=0`.
