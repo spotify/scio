@@ -153,7 +153,6 @@ val commonSettings = Def
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
     resolvers += Resolver.sonatypeRepo("public"),
-    externalResolvers += "apache.beam.newrelease" at "https://repository.apache.org/content/repositories/orgapachebeam-1241",
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
