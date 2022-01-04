@@ -126,18 +126,24 @@ mySchema
 
 ## Tuning parameters for SMB transforms
 
+### numBuckets/numShards
 SMB reads should be more performant and less resource-intensive than regular joins or groupBys.
 However, SMB writes are more expensive than their regular counterparts, since they involve an extra
-group-by (bucketing) and sorting step.
-
-Additionally, non-SMB writes (i.e. implementations of
+group-by (bucketing) and sorting step.  Additionally, non-SMB writes (i.e. implementations of
 @javadoc[FileBasedSink](org.apache.beam.sdk.io.FileBasedSink)) use hints from the runner to determine
-an optimal number of output files. With SMB, you must specify the number of buckets and shards
-(`numBuckets` * `numShards` = total # of files) up front.
+an optimal number of output files. Unfortunately, SMB doesn't have access to those runtime hints;
+you must specify the number of buckets and shards as static values up front.
+
+In SMB, *buckets* correspond to the hashed value of the SMB key % a given power of 2. A record with a given key will _always_ be hashed
+into the same bucket. On the file system, buckets consist of one or more *sharded files* in which
+records are randomly assigned per-bundle. Two records with the same key may end up in different shard files within a bucket.
  
 - A good starting point is to look at your output data as it has been written by a non-SMB sink,
-  and pick the closest power of 2 as your initial `numBuckets`, and set `numShards` to 1.
+  and pick the closest power of 2 as your initial `numBuckets` and set `numShards` to 1.
 - If you anticipate having hot keys, try increasing `numShards` to randomly split data within a bucket.
+- `numBuckets` * `numShards` = total # of files written to disk.
+
+### sorterMemoryMb
 - If your job gets stuck in the sorting phase (since the `GroupByKey` and `SortValues` transforms
   may get fused--you can reference the @javadoc[Counter](org.apache.beam.sdk.metrics.Counter)s
   `SortedBucketSink-bucketsInitiatedSorting` and `SortedBucketSink-bucketsCompletedSorting`
@@ -204,8 +210,28 @@ When selecting a target parallelism for your SMB operation, there are tradeoffs 
     style="margin: 10px auto; width: 75%" /></div>
 
     From there, you can try increasing or decreasing the parallelism by specifying a different
-    `TargetParallelism` parameter to your SMB read.
+    `TargetParallelism` parameter to your SMB read. Often auto-parallelism will select a low value and
+    using `TargetParallelism.max()` can help.
 
+### Read buffering
+Performance can suffer when reading an SMB source across many partitions if the total number of files
+(`numBuckets` * `numShards` * `numPartitions`) is too large (on the order of hundreds of thousands to millions of files).
+We've observed errors and timeouts as a result of too many simultaneous filesystem connections. To that end,
+we've added two @javadoc[PipelineOptions](org.apache.beam.sdk.options.PipelineOptions), settable either via command-line args
+or using @javadoc[SortedBucketOptions](org.apache.beam.sdk.extensions.smb.SortedBucketOptions) directly.
+
+  - `--sortedBucketReadBufferSize` (default: 10000): an Integer that determines the number of _elements_ to read and buffer
+    in-memory from _each file_ at a time. For example, by default, each file will have 10,000 elements read and buffered into
+    an array at worker startup. Then, the sort-merge algorithm will request them one at a time as needed. Once 10,000 elements
+    have been requested, the file will buffer another 10,000.
+
+    *Note*: this can be quite memory-intensive and require bumping the worker memory. If you have a
+    small number of files, or don't need this optimization, you can turn it off by setting `--sortedBucketReadBufferSize=0`.
+  - `--sortedBucketReadDiskBufferMb` (default: unset): an Integer that, if set, will force each worker to
+    actually copy the specified # of megabytes from the remote filesystem into the worker's local temp directory,
+    rather than streaming directly from FS. This caching is done eagerly: each worker will read as much as it can of each file
+    in the order they're requested, and more space will be freed up once a file is fully read. Note that this is
+    a _per worker limit_.
 
 ## Testing
 Currently, mocking data for SMB transforms is not supported in the `com.spotify.scio.testing.JobTest` framework. See
