@@ -5,7 +5,7 @@ env:
   GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
   GOOGLE_PROJECT_ID: data-integration-test
   SBT_OPTS: -DbeamRunners=DataflowRunner
-  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1  --tempLocation=gs://dataflow-tmp-europe-west1
+  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1  --tempLocation=gs://dataflow-tmp-europe-west1/gha
 
 on:
   workflow_dispatch # Manually triggered
