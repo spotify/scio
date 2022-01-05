@@ -21,9 +21,15 @@ import org.apache.beam.sdk.options._
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
+import org.scalacheck.Gen
+import org.scalacheck.rng.Seed
+import org.slf4j.LoggerFactory
+
+import scala.util.Try
 
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
+  private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * Test pipeline components with a [[ScioContext]].
@@ -172,5 +178,52 @@ trait PipelineTestUtils {
     val f = fn(sc).materialize
     val result: ScioResult = sc.run().waitUntilFinish() // block non-test runner
     (result, result.tap(f).value.toSeq)
+  }
+
+  /**
+   * Generate an instance of `A` from `genA` using a random seed.
+   *
+   * @return
+   *   The result of `fn` applied to the generated `A`, or `None` on generation failure.
+   */
+  def withGen[A, T](genA: Gen[A])(
+    fn: A => T
+  )(implicit line: sourcecode.Line, name: sourcecode.FileName): Option[T] =
+    withGen(genA, Seed.random())(fn)(line, name)
+
+  /**
+   * Generate an instance of `A` from `genA` using a the seed specified by `base64Seed`.
+   *
+   * @return
+   *   The result of `fn` applied to the generated `A`, or `None` on generation failure.
+   */
+  def withGen[A, T](genA: Gen[A], base64Seed: String)(
+    fn: A => T
+  )(implicit line: sourcecode.Line, name: sourcecode.FileName): Option[T] =
+    withGen(genA, Seed.fromBase64(base64Seed).get)(fn)(line, name)
+
+  /**
+   * Generate an instance of `A` from `genA` using a the seed specified by `seed`.
+   *
+   * @return
+   *   The result of `fn` applied to the generated `A`, or `None` on generation failure.
+   */
+  def withGen[A, T](genA: Gen[A], seed: Seed)(
+    fn: A => T
+  )(implicit line: sourcecode.Line, name: sourcecode.FileName): Option[T] = {
+    genA.apply(Gen.Parameters.default, seed) match {
+      case None =>
+        logger.error(
+          s"Failed to generate a valid value at ${name.value}:${line.value}. " +
+            s"Consider rewriting Gen instances to be less failure-prone. " +
+            s"Seed: ${seed.toBase64}"
+        )
+        None
+      case Some(a) =>
+        val r = Try(fn(a)).map(Some(_))
+        if (r.isFailure)
+          logger.error(s"Failure at ${name.value}:${line.value}. Seed: ${seed.toBase64}")
+        r.get
+    }
   }
 }
