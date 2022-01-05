@@ -188,7 +188,7 @@ trait PipelineTestUtils {
    */
   def withGen[A, T](genA: Gen[A])(
     fn: A => T
-  )(implicit line: sourcecode.Line, name: sourcecode.Name): Option[T] =
+  )(implicit line: sourcecode.Line, name: sourcecode.FileName): Option[T] =
     withGen(genA, Seed.random())(fn)(line, name)
 
   /**
@@ -199,7 +199,7 @@ trait PipelineTestUtils {
    */
   def withGen[A, T](genA: Gen[A], base64Seed: String)(
     fn: A => T
-  )(implicit line: sourcecode.Line, name: sourcecode.Name): Option[T] =
+  )(implicit line: sourcecode.Line, name: sourcecode.FileName): Option[T] =
     withGen(genA, Seed.fromBase64(base64Seed).get)(fn)(line, name)
 
   /**
@@ -210,7 +210,7 @@ trait PipelineTestUtils {
    */
   def withGen[A, T](genA: Gen[A], seed: Seed)(
     fn: A => T
-  )(implicit line: sourcecode.Line, name: sourcecode.Name): Option[T] = {
+  )(implicit line: sourcecode.Line, name: sourcecode.FileName): Option[T] = {
     genA.apply(Gen.Parameters.default, seed) match {
       case None =>
         logger.error(
