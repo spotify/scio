@@ -112,8 +112,10 @@ Global / excludeLint += site / Paradox / sourceManaged
 
 def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
-  val Version(x, y, z) = currentVersion
-  if (z == "0") None else Some(s"$x.$y.${z.toInt - 1}")
+  currentVersion match {
+    case Version(x, y, z) if z != "0" => Some(s"$x.$y.${z.toInt - 1}")
+    case _ => None
+  }
 }
 
 lazy val mimaSettings = Def.settings(
