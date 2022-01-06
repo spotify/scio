@@ -1,19 +1,23 @@
 name: pre-release-check
 
 env:
-  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
-  GOOGLE_PROJECT_ID: data-integration-test
-  SBT_OPTS: -DbeamRunners=DataflowRunner
-  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1  --tempLocation=gs://dataflow-tmp-europe-west1/gha
+  SBT_OPTS: -DbeamRunners=DataflowRunner -Dbigquery.project=data-integration-test
+  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1 --tempLocation=gs://dataflow-tmp-europe-west1/gha
 
 on:
   workflow_dispatch # Manually triggered
 jobs:
   test-dataflow:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v2.4.0
+      - id: gcloud-auth
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java setup
@@ -21,8 +25,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - name: Setup project
-        run: scripts/gha_setup.sh
       - name: (Dataflow) IO Writes
         run: sbt ${{ env.SBT_OPTS }} "scio-examples/runMain ${{ matrix.io_write }} ${{ env.DEFAULT_DATAFLOW_ARGS }} "
       - name: (Dataflow) IO Reads
