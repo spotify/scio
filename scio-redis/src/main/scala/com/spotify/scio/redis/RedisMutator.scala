@@ -20,9 +20,10 @@ package com.spotify.scio.redis
 import com.spotify.scio.redis.types._
 import redis.clients.jedis.{Pipeline, Response}
 
-import java.lang.{Long => JLong}
+import java.lang.{Double => jDouble, Long => JLong}
 import com.spotify.scio.redis.types.RedisType.{ByteArrayRedisType, StringRedisType}
 import redis.clients.jedis.util.SafeEncoder
+import scala.jdk.CollectionConverters._
 
 sealed abstract class RedisMutator[T] extends Serializable {
   def mutate(client: Pipeline, mutation: T): List[Response[_]]
@@ -139,6 +140,31 @@ object RedisMutator {
       }
     }
 
+  implicit def zaddMutator[T]: RedisMutator[ZAdd[T]] =
+    new RedisMutator[ZAdd[T]] {
+      override def mutate(client: Pipeline, mutation: ZAdd[T]): List[Response[JLong]] = {
+        val (key, scoreMembers) = mutation.rt match {
+          case ByteArrayRedisType =>
+            (
+              mutation.key,
+              mutation.scoreMembers.map { case (k, v) =>
+                k -> jDouble.valueOf(v)
+              }
+            )
+          case StringRedisType =>
+            (
+              SafeEncoder.encode(mutation.key),
+              mutation.scoreMembers.map { case (k, v) =>
+                SafeEncoder.encode(k) -> jDouble.valueOf(v)
+              }
+            )
+        }
+
+        client.zadd(key, scoreMembers.asJava) ::
+          mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+      }
+    }
+
   implicit def redisMutator[T <: RedisMutation]: RedisMutator[T] = new RedisMutator[T] {
     override def mutate(client: Pipeline, mutation: T): List[Response[_]] = {
       mutation match {
@@ -150,6 +176,7 @@ object RedisMutator {
         case mt @ LPush(_, _, _)  => lpushMutator.mutate(client, mt)
         case mt @ RPush(_, _, _)  => rpushMutator.mutate(client, mt)
         case mt @ PFAdd(_, _, _)  => pfaddMutator.mutate(client, mt)
+        case mt @ ZAdd(_, _, _)   => zaddMutator.mutate(client, mt)
       }
     }
   }
