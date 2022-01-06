@@ -114,7 +114,7 @@ def previousVersion(currentVersion: String): Option[String] = {
   val Version = """(\d+)\.(\d+)\.(\d+).*""".r
   currentVersion match {
     case Version(x, y, z) if z != "0" => Some(s"$x.$y.${z.toInt - 1}")
-    case _ => None
+    case _                            => None
   }
 }
 
