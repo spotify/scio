@@ -58,7 +58,7 @@ final case class ZAdd[T](key: T, scoreMembers: Map[T, Double], ttl: Option[Durat
   implicit val rt: RedisType[T]
 ) extends RedisMutation
 object ZAdd {
-  def apply[T: RedisType](key: T, score: Double, member: T): ZAdd[T] =
+  final def apply[T: RedisType](key: T, score: Double, member: T): ZAdd[T] =
     ZAdd(key, Map(member -> score))
 
   def apply[T: RedisType](key: T, score: Double, member: T, ttl: Option[Duration]): ZAdd[T] =
