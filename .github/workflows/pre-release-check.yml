@@ -1,11 +1,9 @@
 name: pre-release-check
 
 env:
-  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
   GOOGLE_PROJECT_ID: data-integration-test
   SBT_OPTS: -DbeamRunners=DataflowRunner
-  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1  --tempLocation=gs://dataflow-tmp-europe-west1/gha
+  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1 --tempLocation=gs://dataflow-tmp-europe-west1/gha
 
 on:
   workflow_dispatch # Manually triggered
@@ -14,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2.4.0
+      - uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java setup
@@ -21,7 +22,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - name: Setup project
+      - name: set JVM opts
         run: scripts/gha_setup.sh
       - name: (Dataflow) IO Writes
         run: sbt ${{ env.SBT_OPTS }} "scio-examples/runMain ${{ matrix.io_write }} ${{ env.DEFAULT_DATAFLOW_ARGS }} "
@@ -30,6 +31,6 @@ jobs:
     strategy:
       matrix:
         io_write:
-          - com.spotify.scio.examples.extra.AvroExample --method=specificOut --output=gs://data-integration-test-eu/AvroExample/Write/${{ github.run_id }}
+          - com.spotify.scio.examples.extra.AvroExample --method=specificOut --output=gs://data-integration-test-prerelease-it/AvroExample/Write/${{ github.run_id }}
         io_read:
-          - com.spotify.scio.examples.extra.AvroExample --method=specificIn --input=gs://data-integration-test-eu/AvroExample/Write/${{ github.run_id }}/*.avro --output=gs://data-integration-test-eu/AvroExample/Read/${{ github.run_id }}
+          - com.spotify.scio.examples.extra.AvroExample --method=specificIn --input=gs://data-integration-test-prerelease-it/AvroExample/Write/${{ github.run_id }}/*.avro --output=gs://data-integration-test-eu/AvroExample/Read/${{ github.run_id }}
