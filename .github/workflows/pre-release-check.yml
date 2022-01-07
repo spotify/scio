@@ -3,7 +3,6 @@ name: pre-release-check
 env:
   GOOGLE_PROJECT_ID: data-integration-test
   SBT_OPTS: -DbeamRunners=DataflowRunner
-  DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1 --tempLocation=gs://dataflow-tmp-europe-west1/gha
 
 on:
   workflow_dispatch # Manually triggered
@@ -24,13 +23,5 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
-      - name: (Dataflow) IO Writes
-        run: sbt ${{ env.SBT_OPTS }} "scio-examples/runMain ${{ matrix.io_write }} ${{ env.DEFAULT_DATAFLOW_ARGS }} "
-      - name: (Dataflow) IO Reads
-        run: sbt ${{ env.SBT_OPTS }} "scio-examples/runMain ${{ matrix.io_read }} ${{ env.DEFAULT_DATAFLOW_ARGS }}"
-    strategy:
-      matrix:
-        io_write:
-          - com.spotify.scio.examples.extra.AvroExample --method=specificOut --output=gs://data-integration-test-prerelease-it/AvroExample/Write/${{ github.run_id }}
-        io_read:
-          - com.spotify.scio.examples.extra.AvroExample --method=specificIn --input=gs://data-integration-test-prerelease-it/AvroExample/Write/${{ github.run_id }}/*.avro --output=gs://data-integration-test-eu/AvroExample/Read/${{ github.run_id }}
+      - name: Run Dataflow jobs
+        run: sbt ${{ env.SBT_OPTS }} "scio-examples/it:runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"
