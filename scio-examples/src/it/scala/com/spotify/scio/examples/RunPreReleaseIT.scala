@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 
 object RunPreReleaseIT {
 
-  implicit val ec: ExecutionContext = ExecutionContext.global
+  implicit private val ec: ExecutionContext = ExecutionContext.global
 
   private val defaultArgs = Array(
     "--runner=DataflowRunner",
@@ -39,7 +39,7 @@ object RunPreReleaseIT {
     )
   }
 
-  def avro(runId: String): Future[Unit] = {
+  private def avro(runId: String): Future[Unit] = {
     val out1 = gcsPath[AvroExample.type]("specificOut", runId)
     val out2 = gcsPath[AvroExample.type]("specificIn", runId)
 
@@ -51,7 +51,7 @@ object RunPreReleaseIT {
       )
   }
 
-  def parquet(runId: String): List[Future[Unit]] = {
+  private def parquet(runId: String): List[Future[Unit]] = {
     val out1 = gcsPath[ParquetExample.type]("avroOut", runId)
     val out2 = gcsPath[ParquetExample.type]("typedIn", runId)
     val out3 = gcsPath[ParquetExample.type]("avroSpecificIn", runId)
@@ -74,11 +74,11 @@ object RunPreReleaseIT {
     )
   }
 
-  def invokeJob[T: ClassTag](args: String*): Future[Unit] =
+  private def invokeJob[T: ClassTag](args: String*): Future[Unit] =
     Future {
       val cls = ScioUtil.classOf[T]
       val jobObjName = cls.getName.replaceAll("\\$$", "")
-      log.info(s"Running Dataflow job ${cls.getName}")
+      log.info(s"Running Dataflow job ${cls.getName}...")
       Try(
         Class
           .forName(jobObjName)
