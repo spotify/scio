@@ -1,7 +1,8 @@
 name: pre-release-check
 
 env:
-  SBT_OPTS: -DbeamRunners=DataflowRunner -Dbigquery.project=data-integration-test
+  GOOGLE_PROJECT_ID: data-integration-test
+  SBT_OPTS: -DbeamRunners=DataflowRunner
   DEFAULT_DATAFLOW_ARGS: --runner=DataflowRunner --project=data-integration-test --region=europe-west1 --tempLocation=gs://dataflow-tmp-europe-west1/gha
 
 on:
@@ -9,13 +10,9 @@ on:
 jobs:
   test-dataflow:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@v2.4.0
-      - id: gcloud-auth
-        uses: google-github-actions/auth@v0
+      - uses: google-github-actions/auth@v0
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - name: cache SBT
@@ -25,6 +22,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
+      - name: set JVM opts
+        run: scripts/gha_setup.sh
       - name: (Dataflow) IO Writes
         run: sbt ${{ env.SBT_OPTS }} "scio-examples/runMain ${{ matrix.io_write }} ${{ env.DEFAULT_DATAFLOW_ARGS }} "
       - name: (Dataflow) IO Reads
