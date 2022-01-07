@@ -31,6 +31,6 @@ jobs:
     strategy:
       matrix:
         io_write:
-          - com.spotify.scio.examples.extra.AvroExample --method=specificOut --output=gs://data-integration-test-eu/AvroExample/Write/${{ github.run_id }}
+          - com.spotify.scio.examples.extra.AvroExample --method=specificOut --output=gs://data-integration-test-prerelease-it/AvroExample/Write/${{ github.run_id }}
         io_read:
-          - com.spotify.scio.examples.extra.AvroExample --method=specificIn --input=gs://data-integration-test-eu/AvroExample/Write/${{ github.run_id }}/*.avro --output=gs://data-integration-test-eu/AvroExample/Read/${{ github.run_id }}
+          - com.spotify.scio.examples.extra.AvroExample --method=specificIn --input=gs://data-integration-test-prerelease-it/AvroExample/Write/${{ github.run_id }}/*.avro --output=gs://data-integration-test-eu/AvroExample/Read/${{ github.run_id }}
