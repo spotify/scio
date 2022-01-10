@@ -34,7 +34,7 @@ object RunPreReleaseIT {
           parquet(runId) :+ avro(runId)
         )
         .map(_ => log.info("All Dataflow jobs ran successfully."))
-        .recover(e => log.error("At least one Dataflow job failed", e)),
+        .recover(e => throw new RuntimeException("At least one Dataflow job failed", e)),
       Duration(1, TimeUnit.HOURS)
     )
   }
