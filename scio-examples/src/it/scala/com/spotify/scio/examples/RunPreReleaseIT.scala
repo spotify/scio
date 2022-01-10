@@ -47,7 +47,7 @@ object RunPreReleaseIT {
       .successful(log.info("Starting Avro IO tests... "))
       .flatMap(_ => invokeJob[AvroExample.type]("--method=specificOut", s"--output=$out1"))
       .flatMap(_ =>
-        invokeJob[AvroExample.type]("--method=specificIn", s"--input=$out1", s"--output=$out2")
+        invokeJob[AvroExample.type]("--method=specificIn", s"--input=$out1/*", s"--output=$out2")
       )
   }
 
@@ -62,12 +62,12 @@ object RunPreReleaseIT {
 
     List(
       write.flatMap(_ =>
-        invokeJob[ParquetExample.type]("--method=typedIn", s"--input=$out1", s"--output=$out2")
+        invokeJob[ParquetExample.type]("--method=typedIn", s"--input=$out1/*", s"--output=$out2")
       ),
       write.flatMap(_ =>
         invokeJob[ParquetExample.type](
           "--method=avroSpecificIn",
-          s"--input=$out1",
+          s"--input=$out1/*",
           s"--output=$out3"
         )
       )
