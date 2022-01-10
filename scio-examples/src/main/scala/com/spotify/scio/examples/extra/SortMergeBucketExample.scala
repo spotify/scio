@@ -184,7 +184,7 @@ object SortMergeBucketTransformExample {
         .transformOutput(classOf[String], "name", classOf[Account])
         .to(args("output"))
     ).via { case (key, (users, accounts), outputCollector) =>
-      users.foreach { user =>
+      users.foreach { _ =>
         outputCollector.accept(
           Account
             .newBuilder()
