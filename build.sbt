@@ -51,7 +51,7 @@ val datastoreV1ProtoClientVersion = "1.6.3"
 val elasticsearch6Version = "6.8.22"
 val elasticsearch7Version = "7.16.2"
 val featranVersion = "0.8.0-RC2"
-val flinkVersion = "1.12.1"
+val flinkVersion = "1.13.5"
 val gaxVersion = "2.6.1"
 val gcsVersion = "2.1.0"
 val generatedGrpcBetaVersion = "1.22.0"
@@ -310,15 +310,17 @@ lazy val sparkRunnerDependencies = Seq(
   "org.apache.spark" %% "spark-streaming" % sparkVersion
 )
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.12" % beamVersion excludeAll (
+  "org.apache.beam" % "beam-runners-flink-1.13" % beamVersion excludeAll (
     ExclusionRule("com.twitter", "chill_2.11"),
     ExclusionRule("org.apache.flink", "flink-clients_2.11"),
     ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
-    ExclusionRule("org.apache.flink", "flink-streaming-java_2.11")
+    ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+    ExclusionRule("org.apache.flink", "flink-optimizer_2.11")
   ),
   "org.apache.flink" %% "flink-clients" % flinkVersion,
   "org.apache.flink" %% "flink-runtime" % flinkVersion,
-  "org.apache.flink" %% "flink-streaming-java" % flinkVersion
+  "org.apache.flink" %% "flink-streaming-java" % flinkVersion,
+  "org.apache.flink" %% "flink-optimizer" % flinkVersion
 )
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
@@ -430,11 +432,12 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
-      "org.apache.beam" % "beam-runners-flink-1.12" % beamVersion % Provided excludeAll (
+      "org.apache.beam" % "beam-runners-flink-1.13" % beamVersion % Provided excludeAll (
         ExclusionRule("com.twitter", "chill_2.11"),
         ExclusionRule("org.apache.flink", "flink-clients_2.11"),
         ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
-        ExclusionRule("org.apache.flink", "flink-streaming-java_2.11")
+        ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+        ExclusionRule("org.apache.flink", "flink-optimizer_2.11")
       ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
