@@ -34,28 +34,43 @@ def mkClassTags(n):
     arg_list = ['{}: Coder'.format(element) for element in mkVals(n)]
     return ', '.join(['KEY: Coder'] + arg_list)
 
+def mkTransformClassTags(n):
+    return ', '.join(['KEY'] + mkVals(n))
+
 
 def mkFnArgs(n):
     return ', '.join(['keyClass: Class[KEY]'] +
-        [x.lower() + ': SortedBucketIO.Read[%s]' % x
-        for x in mkVals(n)])
+                     [x.lower() + ': SortedBucketIO.Read[%s]' % x
+                      for x in mkVals(n)])
 
 
-def mkFnRetVal(n, aWrapper=None, otherWrapper=None):
+def fnRetValHelper(n, aWrapper=None, otherWrapper=None):
     def wrap(wrapper, x):
         return x if wrapper is None else wrapper + '[%s]' % x
     vals = (wrap(aWrapper if x == 'A' else otherWrapper, x) for x in mkVals(n))
+    return vals
+
+
+def mkCogroupFnRetVal(n, aWrapper=None, otherWrapper=None):
+    vals = fnRetValHelper(n, aWrapper, otherWrapper)
     return 'SCollection[(KEY, (%s))]' % ', '.join(vals)
 
+def mkTransformFnRetVal(n, aWrapper=None, otherWrapper=None):
+    vals = fnRetValHelper(n, aWrapper, otherWrapper)
+    return 'SortedBucketScioContext#SortMergeTransformReadBuilder[KEY, (%s)]' % ', '.join(vals)
+
+def mkTupleTag(vals):
+    return 'val (%s) = (%s)' % (
+        ', '.join('tupleTag' + x for x in vals),
+        ', '.join('%s.getTupleTag' % x.lower() for x in vals))
 # Functions
 
-def sortCoGroup(out, n):
+def sortMergeCoGroup(out, n):
     vals = mkVals(n)
-
     args = mkFnArgs(n)
 
     print('\tdef sortMergeCoGroup[%s](%s): %s = {' % (
-        mkClassTags(n), args + ', ' + 'targetParallelism: TargetParallelism', mkFnRetVal(n, 'Iterable', 'Iterable')),
+        mkClassTags(n), args + ', ' + 'targetParallelism: TargetParallelism', mkCogroupFnRetVal(n, 'Iterable', 'Iterable')),
           file=out)
 
     print('\t\tval input = SortedBucketIO', file=out)
@@ -65,10 +80,7 @@ def sortCoGroup(out, n):
         print('\t\t.and(%s)' % x.lower(), file=out)
     print('\t\t.withTargetParallelism(targetParallelism)', file=out)
 
-    print('\t\tval (%s) = (%s)' % (
-        ', '.join('tupleTag' + x for x in vals),
-        ', '.join('%s.getTupleTag' % x.lower() for x in vals)),
-          file=out)
+    print('\t\t' + mkTupleTag(vals), file=out)
     print('''
     val tfName = self.tfName
         
@@ -92,11 +104,51 @@ def sortCoGroup(out, n):
     print(file=out)
 
     print('\tdef sortMergeCoGroup[%s](%s): %s = {' % (
-        mkClassTags(n), args, mkFnRetVal(n, 'Iterable', 'Iterable')),
+        mkClassTags(n), args, mkCogroupFnRetVal(n, 'Iterable', 'Iterable')),
           file=out)
     print('\t\tsortMergeCoGroup(keyClass, %s, TargetParallelism.auto())' % mkArgs(n), file=out)
     print('  }', file=out)
     print(file=out)
+
+def sortMergeTransform(out, n):
+    vals = mkVals(n)
+    args = mkFnArgs(n)
+
+    print('\tdef sortMergeTransform[%s](%s): %s = {' % (
+        mkTransformClassTags(n), args + ', ' + 'targetParallelism: TargetParallelism',  mkTransformFnRetVal(n, 'Iterable', 'Iterable')),
+          file=out)
+
+    print('\t\t' + mkTupleTag(vals),
+          file=out)
+
+    print(('''
+        new sortedBucketScioContext.SortMergeTransformReadBuilder(
+        SortedBucketIO
+        .read(keyClass)
+        .of(%s)''').lstrip('\n') %vals[0].lower(), file=out)
+
+    for x in vals[1:]:
+        print('\t\t\t\t.and(%s)' % x.lower(), file=out)
+
+    print(('''
+        .withTargetParallelism(targetParallelism),
+        cgbkResult =>
+        (''').lstrip('\n'),file=out)
+
+    print(',\n'.join(
+        '\t\t\t\tcgbkResult.getAll(tupleTag%s).asScala' % x for x in vals), file=out)
+    print('\t\t\t)', file=out)
+    print('\t\t)', file=out)
+    print('  }', file=out)
+    print(file=out)
+
+    print('\tdef sortMergeTransform[%s](%s): %s = {' % (
+        mkTransformClassTags(n), args,  mkTransformFnRetVal(n, 'Iterable', 'Iterable')),
+          file=out)
+    print('\t\tsortMergeTransform(keyClass, %s, TargetParallelism.auto())' % mkArgs(n), file=out)
+    print('  }', file=out)
+    print(file=out)
+
 
 
 
@@ -127,20 +179,28 @@ def main(out):
         import com.spotify.scio.coders.Coder
         import com.spotify.scio.values._
         import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, TargetParallelism}
+        import com.spotify.scio.smb.syntax.SortedBucketScioContext
         
         import scala.jdk.CollectionConverters._
 
         final class SMBMultiJoin(private val self: ScioContext) {
+        
+        private[this] val sortedBucketScioContext = new SortedBucketScioContext(self)
         ''').replace('  # NOQA', '').lstrip('\n'), file=out)
 
     N = 22
     for i in range(5, N + 1):
-        sortCoGroup(out, i)
+        sortMergeCoGroup(out, i)
+
+    N = 22
+    for i in range(4, N + 1):
+        sortMergeTransform(out, i)
+
     print('}', file=out)
 
     print(textwrap.dedent('''
             object SMBMultiJoin {
-                def apply(sc: ScioContext): SMBMultiJoin = new SMBMultiJoin(sc)
+                final def apply(sc: ScioContext): SMBMultiJoin = new SMBMultiJoin(sc)
             }
         ''').rstrip('\n'), file=out)
 

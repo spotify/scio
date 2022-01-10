@@ -1,8 +1,6 @@
 name: deploy
 
 env:
-  ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
-  GOOGLE_APPLICATION_CREDENTIALS: scripts/gha-it.json
   GOOGLE_PROJECT_ID: data-integration-test
 
 on:
@@ -46,6 +44,9 @@ jobs:
     steps:
       - name: Checkout tag
         uses: actions/checkout@v2.4.0
+      - uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -53,7 +54,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - name: Setup project
+      - name: set JVM opts
         run: scripts/gha_setup.sh
       - name: Build documentation
         run: sbt scio-examples/compile site/makeSite
@@ -61,7 +62,7 @@ jobs:
           SOCCO: true
           _JAVA_OPTIONS: "-Xmx1500m"
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@4.1.8
+        uses: JamesIves/github-pages-deploy-action@4.2.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
