@@ -29,7 +29,7 @@ import scala.jdk.CollectionConverters._
 
 final class SMBMultiJoin(private val self: ScioContext) {
 
-  val sortedBucketScioContext = new SortedBucketScioContext(self)
+  private[this] val sortedBucketScioContext = new SortedBucketScioContext(self)
 
   def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder](
     keyClass: Class[KEY],
@@ -3357,7 +3357,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     c: SortedBucketIO.Read[C],
     d: SortedBucketIO.Read[D],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D])
   ] = {
@@ -3387,7 +3387,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     b: SortedBucketIO.Read[B],
     c: SortedBucketIO.Read[C],
     d: SortedBucketIO.Read[D]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D])
   ] =
@@ -3401,7 +3401,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     d: SortedBucketIO.Read[D],
     e: SortedBucketIO.Read[E],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E])
   ] = {
@@ -3434,7 +3434,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     c: SortedBucketIO.Read[C],
     d: SortedBucketIO.Read[D],
     e: SortedBucketIO.Read[E]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E])
   ] =
@@ -3449,7 +3449,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     e: SortedBucketIO.Read[E],
     f: SortedBucketIO.Read[F],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F])
   ] = {
@@ -3485,7 +3485,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     d: SortedBucketIO.Read[D],
     e: SortedBucketIO.Read[E],
     f: SortedBucketIO.Read[F]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F])
   ] =
@@ -3501,7 +3501,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     f: SortedBucketIO.Read[F],
     g: SortedBucketIO.Read[G],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G])
   ] = {
@@ -3547,7 +3547,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     e: SortedBucketIO.Read[E],
     f: SortedBucketIO.Read[F],
     g: SortedBucketIO.Read[G]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G])
   ] =
@@ -3564,7 +3564,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     g: SortedBucketIO.Read[G],
     h: SortedBucketIO.Read[H],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3623,7 +3623,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     f: SortedBucketIO.Read[F],
     g: SortedBucketIO.Read[G],
     h: SortedBucketIO.Read[H]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3650,7 +3650,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     h: SortedBucketIO.Read[H],
     i: SortedBucketIO.Read[I],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3724,7 +3724,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     g: SortedBucketIO.Read[G],
     h: SortedBucketIO.Read[H],
     i: SortedBucketIO.Read[I]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3753,7 +3753,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     i: SortedBucketIO.Read[I],
     j: SortedBucketIO.Read[J],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3833,7 +3833,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     h: SortedBucketIO.Read[H],
     i: SortedBucketIO.Read[I],
     j: SortedBucketIO.Read[J]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3864,7 +3864,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     j: SortedBucketIO.Read[J],
     k: SortedBucketIO.Read[K],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3950,7 +3950,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     i: SortedBucketIO.Read[I],
     j: SortedBucketIO.Read[J],
     k: SortedBucketIO.Read[K]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -3983,7 +3983,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     k: SortedBucketIO.Read[K],
     l: SortedBucketIO.Read[L],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4075,7 +4075,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     j: SortedBucketIO.Read[J],
     k: SortedBucketIO.Read[K],
     l: SortedBucketIO.Read[L]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4110,7 +4110,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     l: SortedBucketIO.Read[L],
     m: SortedBucketIO.Read[M],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4208,7 +4208,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     k: SortedBucketIO.Read[K],
     l: SortedBucketIO.Read[L],
     m: SortedBucketIO.Read[M]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4245,7 +4245,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     m: SortedBucketIO.Read[M],
     n: SortedBucketIO.Read[N],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4349,7 +4349,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     l: SortedBucketIO.Read[L],
     m: SortedBucketIO.Read[M],
     n: SortedBucketIO.Read[N]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4388,7 +4388,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     n: SortedBucketIO.Read[N],
     o: SortedBucketIO.Read[O],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4498,7 +4498,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     m: SortedBucketIO.Read[M],
     n: SortedBucketIO.Read[N],
     o: SortedBucketIO.Read[O]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4557,7 +4557,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     o: SortedBucketIO.Read[O],
     p: SortedBucketIO.Read[P],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4673,7 +4673,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     n: SortedBucketIO.Read[N],
     o: SortedBucketIO.Read[O],
     p: SortedBucketIO.Read[P]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4735,7 +4735,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     p: SortedBucketIO.Read[P],
     q: SortedBucketIO.Read[Q],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4857,7 +4857,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     o: SortedBucketIO.Read[O],
     p: SortedBucketIO.Read[P],
     q: SortedBucketIO.Read[Q]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -4922,7 +4922,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     q: SortedBucketIO.Read[Q],
     r: SortedBucketIO.Read[R],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5050,7 +5050,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     p: SortedBucketIO.Read[P],
     q: SortedBucketIO.Read[Q],
     r: SortedBucketIO.Read[R]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5118,7 +5118,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     r: SortedBucketIO.Read[R],
     s: SortedBucketIO.Read[S],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5252,7 +5252,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     q: SortedBucketIO.Read[Q],
     r: SortedBucketIO.Read[R],
     s: SortedBucketIO.Read[S]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5323,7 +5323,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     s: SortedBucketIO.Read[S],
     t: SortedBucketIO.Read[T],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5463,7 +5463,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     r: SortedBucketIO.Read[R],
     s: SortedBucketIO.Read[S],
     t: SortedBucketIO.Read[T]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5537,7 +5537,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     t: SortedBucketIO.Read[T],
     u: SortedBucketIO.Read[U],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5683,7 +5683,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     s: SortedBucketIO.Read[S],
     t: SortedBucketIO.Read[T],
     u: SortedBucketIO.Read[U]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5760,7 +5760,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     u: SortedBucketIO.Read[U],
     v: SortedBucketIO.Read[V],
     targetParallelism: TargetParallelism
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5912,7 +5912,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
     t: SortedBucketIO.Read[T],
     u: SortedBucketIO.Read[U],
     v: SortedBucketIO.Read[V]
-  ): sortedBucketScioContext.SortMergeTransformReadBuilder[
+  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     (
       Iterable[A],
@@ -5969,5 +5969,5 @@ final class SMBMultiJoin(private val self: ScioContext) {
 }
 
 object SMBMultiJoin {
-  def apply(sc: ScioContext): SMBMultiJoin = new SMBMultiJoin(sc)
+  final def apply(sc: ScioContext): SMBMultiJoin = new SMBMultiJoin(sc)
 }

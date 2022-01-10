@@ -57,7 +57,7 @@ def mkCogroupFnRetVal(n, aWrapper=None, otherWrapper=None):
 
 def mkTransformFnRetVal(n, aWrapper=None, otherWrapper=None):
     vals = fnRetValHelper(n, aWrapper, otherWrapper)
-    return 'sortedBucketScioContext.SortMergeTransformReadBuilder[KEY, (%s)]' % ', '.join(vals)
+    return 'SortedBucketScioContext#SortMergeTransformReadBuilder[KEY, (%s)]' % ', '.join(vals)
 
 def mkTupleTag(vals):
     return 'val (%s) = (%s)' % (
@@ -185,7 +185,7 @@ def main(out):
 
         final class SMBMultiJoin(private val self: ScioContext) {
         
-        val sortedBucketScioContext = new SortedBucketScioContext(self)
+        private[this] val sortedBucketScioContext = new SortedBucketScioContext(self)
         ''').replace('  # NOQA', '').lstrip('\n'), file=out)
 
     N = 22
@@ -200,7 +200,7 @@ def main(out):
 
     print(textwrap.dedent('''
             object SMBMultiJoin {
-                def apply(sc: ScioContext): SMBMultiJoin = new SMBMultiJoin(sc)
+                final def apply(sc: ScioContext): SMBMultiJoin = new SMBMultiJoin(sc)
             }
         ''').rstrip('\n'), file=out)
 
