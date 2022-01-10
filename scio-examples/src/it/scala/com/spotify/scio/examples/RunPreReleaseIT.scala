@@ -1,7 +1,6 @@
 package com.spotify.scio.examples
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.examples.extra.{AvroExample, ParquetExample}
 import com.spotify.scio.util.ScioUtil
 import org.slf4j.LoggerFactory
 
@@ -31,7 +30,7 @@ object RunPreReleaseIT {
     Await.result(
       Future
         .sequence(
-          parquet(runId) :+ avro(runId)
+          parquet(runId) ++ avro(runId) ++ smb(runId)
         )
         .map(_ => log.info("All Dataflow jobs ran successfully."))
         .recover(e => throw new RuntimeException("At least one Dataflow job failed", e)),
@@ -39,19 +38,25 @@ object RunPreReleaseIT {
     )
   }
 
-  private def avro(runId: String): Future[Unit] = {
+  private def avro(runId: String): List[Future[Unit]] = {
+    import com.spotify.scio.examples.extra.AvroExample
+
     val out1 = gcsPath[AvroExample.type]("specificOut", runId)
     val out2 = gcsPath[AvroExample.type]("specificIn", runId)
 
-    Future
-      .successful(log.info("Starting Avro IO tests... "))
-      .flatMap(_ => invokeJob[AvroExample.type]("--method=specificOut", s"--output=$out1"))
-      .flatMap(_ =>
-        invokeJob[AvroExample.type]("--method=specificIn", s"--input=$out1/*", s"--output=$out2")
-      )
+    List(
+      Future
+        .successful(log.info("Starting Avro IO tests... "))
+        .flatMap(_ => invokeJob[AvroExample.type]("--method=specificOut", s"--output=$out1"))
+        .flatMap(_ =>
+          invokeJob[AvroExample.type]("--method=specificIn", s"--input=$out1/*", s"--output=$out2")
+        )
+    )
   }
 
   private def parquet(runId: String): List[Future[Unit]] = {
+    import com.spotify.scio.examples.extra.ParquetExample
+
     val out1 = gcsPath[ParquetExample.type]("avroOut", runId)
     val out2 = gcsPath[ParquetExample.type]("typedIn", runId)
     val out3 = gcsPath[ParquetExample.type]("avroSpecificIn", runId)
@@ -69,6 +74,39 @@ object RunPreReleaseIT {
           "--method=avroSpecificIn",
           s"--input=$out1/*",
           s"--output=$out3"
+        )
+      )
+    )
+  }
+
+  private def smb(runId: String): List[Future[Unit]] = {
+    import com.spotify.scio.examples.extra.{
+      SortMergeBucketWriteExample,
+      SortMergeBucketJoinExample,
+      SortMergeBucketTransformExample
+    }
+    val out1 = gcsPath[SortMergeBucketWriteExample.type]("users", runId)
+    val out2 = gcsPath[SortMergeBucketWriteExample.type]("accounts", runId)
+
+    val write = Future
+      .successful(log.info("Starting SMB IO tests... "))
+      .flatMap(_ =>
+        invokeJob[SortMergeBucketWriteExample.type](s"--users=$out1", s"--accounts=$out2")
+      )
+
+    List(
+      write.flatMap(_ =>
+        invokeJob[SortMergeBucketJoinExample.type](
+          s"--users=$out1",
+          s"--accounts=$out2",
+          s"--output=${gcsPath[SortMergeBucketJoinExample.type]("join", runId)}"
+        )
+      ),
+      write.flatMap(_ =>
+        invokeJob[SortMergeBucketTransformExample.type](
+          s"--users=$out1",
+          s"--accounts=$out2",
+          s"--output=${gcsPath[SortMergeBucketTransformExample.type]("transform", runId)}"
         )
       )
     )
