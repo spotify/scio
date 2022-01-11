@@ -26,10 +26,12 @@ import org.apache.avro.generic.IndexedRecord
 import scala.jdk.CollectionConverters._
 
 object AvroConverters extends ToTableRow with ToTableSchema {
+
   /**
    * Converts `record` into a TableRow by traversing the schema and converting each field
    * @param record
-   * @return record converted into a BigQuery TableRow
+   * @return
+   *   record converted into a BigQuery TableRow
    */
   @experimental
   def toTableRow[T <: IndexedRecord](record: T): TableRow = {
