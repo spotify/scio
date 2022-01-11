@@ -23,12 +23,14 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{avro, ScioContext}
+import com.spotify.scio.{ScioContext, avro}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.{DatumReader, DatumWriter}
+import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
 import org.apache.beam.sdk.io.AvroSink.DatumWriterFactory
+import org.apache.beam.sdk.io.AvroSource.DatumReaderFactory
 import org.apache.beam.sdk.io.{AvroSink, AvroSource}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
@@ -149,6 +151,21 @@ sealed trait AvroIO[T] extends ScioIO[T] {
   }
 }
 
+final class SpecificDatumFactory[T: ClassTag] extends DatumReaderFactory[T] with DatumWriterFactory[T] {
+  override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+    val datumReader = new SpecificDatumReader(ScioUtil.classOf[T])
+    datumReader.setExpected(writer)
+    datumReader.setSchema(reader)
+    datumReader
+  }
+
+  override def apply(writer: Schema): DatumWriter[T] = {
+    val datumWriter = new SpecificDatumWriter(ScioUtil.classOf[T])
+    datumWriter.setSchema(writer)
+    datumWriter
+  }
+}
+
 final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends AvroIO[T] {
   override type ReadP = AvroIO.ReadParam
@@ -165,9 +182,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val t = beam.AvroIO
       .read(cls)
       .from(path)
-      .withDatumReaderFactory(
-        new AvroSource.DefaultDatumReaderFactory[T](cls, params.useReflectApi)
-      )
+      .withDatumReaderFactory(if (params.useReflectApi) null else new SpecificDatumFactory[T])
       .withCoder(CoderMaterializer.beam(sc, Coder[T]))
     sc.applyTransform(t)
   }
@@ -182,7 +197,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
       avroOut(
         write = beam.AvroIO.write(cls),
         path = path,
-        factory = new AvroSink.DefaultDatumWriterFactory(cls, params.useReflectApi),
+        factory = if (params.useReflectApi) null else new SpecificDatumFactory[T],
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
@@ -224,8 +239,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
       avroOut(
         write = beam.AvroIO.writeGenericRecords(schema),
         path = path,
-        factory =
-          new AvroSink.DefaultDatumWriterFactory(classOf[GenericRecord], params.useReflectApi),
+        factory = s => new GenericDatumWriter(s),
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
