@@ -29,31 +29,35 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.avro.Account
 import com.spotify.scio.coders.Coder
-import org.apache.avro.Schema.Field
+import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericData, GenericRecord}
-import org.apache.avro.{JsonProperties, Schema}
-import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
-import org.apache.beam.sdk.extensions.smb.TargetParallelism
+import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, TargetParallelism}
 import org.apache.beam.sdk.values.TupleTag
 
-import scala.jdk.CollectionConverters._
 import scala.util.Random
 
 object SortMergeBucketExample {
-  lazy val UserDataSchema: Schema = Schema.createRecord(
-    "UserData",
-    "doc",
-    "com.spotify.scio.examples.extra",
-    false,
-    List(
-      new Field("userId", Schema.create(Schema.Type.INT), "doc", JsonProperties.NULL_VALUE),
-      new Field("age", Schema.create(Schema.Type.INT), "doc", JsonProperties.NULL_VALUE)
-    ).asJava
+  lazy val UserDataSchema: Schema = new Schema.Parser().parse(
+    """
+      |{
+      |    "name": "UserData",
+      |    "namespace": "com.spotify.examples.extra",
+      |    "type": "record",
+      |    "fields": [
+      |        {
+      |            "name": "userId",
+      |            "type": ["null", {"type": "string", "avro.java.string": "String"}]
+      |        },
+      |        {
+      |          "name": "age", "type": "int"
+      |        }
+      |    ]}
+      |""".stripMargin
   )
 
-  def user(id: Int, age: Int): GenericRecord = {
+  def user(id: String, age: Int): GenericRecord = {
     val gr = new GenericData.Record(UserDataSchema)
     gr.put("userId", id)
     gr.put("age", age)
@@ -72,10 +76,10 @@ object SortMergeBucketWriteExample {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
     sc.parallelize(0 until 500)
-      .map(i => SortMergeBucketExample.user(i, i % 100))
+      .map(i => SortMergeBucketExample.user(i.toString, i % 100))
       .saveAsSortedBucket(
         AvroSortedBucketIO
-          .write(classOf[Integer], "userId", SortMergeBucketExample.UserDataSchema)
+          .write(classOf[String], "userId", SortMergeBucketExample.UserDataSchema)
           .to(args("users"))
           .withTempDirectory(sc.options.getTempLocation)
           .withCodec(CodecFactory.snappyCodec())
@@ -91,14 +95,14 @@ object SortMergeBucketWriteExample {
         Account
           .newBuilder()
           .setId(i)
-          .setName(s"user$i")
+          .setName(i.toString)
           .setType(s"type${i % 5}")
           .setAmount(Random.nextDouble() * 1000)
           .build()
       }
       .saveAsSortedBucket(
         AvroSortedBucketIO
-          .write[Integer, Account](classOf[Integer], "id", classOf[Account])
+          .write[String, Account](classOf[String], "name", classOf[Account])
           .to(args("accounts"))
           .withSorterMemoryMb(128)
           .withTempDirectory(sc.options.getTempLocation)
@@ -120,21 +124,21 @@ object SortMergeBucketJoinExample {
   implicit val coder: Coder[GenericRecord] =
     Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
-  case class UserAccountData(userId: Int, age: Int, balance: Double) {
+  case class UserAccountData(userId: String, age: Int, balance: Double) {
     override def toString: String = s"$userId\t$age\t$balance"
   }
 
   def main(cmdLineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
-    val mapFn: ((Integer, (GenericRecord, Account))) => UserAccountData = {
+    val mapFn: ((String, (GenericRecord, Account))) => UserAccountData = {
       case (userId, (userData, account)) =>
         UserAccountData(userId, userData.get("age").toString.toInt, account.getAmount)
     }
 
     // #SortMergeBucketExample_join
     sc.sortMergeJoin(
-      classOf[Integer],
+      classOf[String],
       AvroSortedBucketIO
         .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
         // 1. Only 1 user per user ID
@@ -171,21 +175,21 @@ object SortMergeBucketTransformExample {
     )
 
     sc.sortMergeTransform(
-      classOf[Integer],
+      classOf[String],
       readLhs,
       readRhs,
       TargetParallelism.auto()
     ).to(
       AvroSortedBucketIO
-        .transformOutput(classOf[Integer], "id", classOf[Account])
+        .transformOutput(classOf[String], "name", classOf[Account])
         .to(args("output"))
     ).via { case (key, (users, accounts), outputCollector) =>
-      users.foreach { user =>
+      users.foreach { _ =>
         outputCollector.accept(
           Account
             .newBuilder()
-            .setId(key)
-            .setName(user.get("userId").toString)
+            .setId(key.toInt)
+            .setName(key)
             .setType("combinedAmount")
             .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
             .build()

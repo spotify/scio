@@ -885,6 +885,7 @@ lazy val `scio-examples`: Project = project
   .in(file("scio-examples"))
   .settings(commonSettings)
   .settings(soccoSettings)
+  .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
@@ -943,6 +944,7 @@ lazy val `scio-examples`: Project = project
       ForkOptions().withRunJVMOptions((Test / javaOptions).value.toVector)
     )
   )
+  .configs(IntegrationTest)
   .dependsOn(
     `scio-core`,
     `scio-google-cloud-platform`,
