@@ -17,10 +17,11 @@
 
 package com.spotify.scio.bigquery.client
 
-import java.io.{File, FileInputStream}
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 
+import java.io.{File, FileInputStream}
 import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
+import com.google.api.client.http.{HttpRequest, HttpRequestInitializer, HttpResponseException}
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.rpc.FixedHeaderProvider
@@ -42,7 +43,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe.TypeTag
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /** A simple BigQuery client. */
 final class BigQuery private (val client: Client) {
@@ -217,7 +218,40 @@ object BigQuery {
 
     def credentials: Credentials = _credentials
 
-    lazy val underlying: Bigquery = {
+    def execute[T](fn: Bigquery => AbstractGoogleClientRequest[T]): T = {
+      def getAuthenticatedUser: String = {
+        import com.google.auth.oauth2.{
+          ExternalAccountCredentials,
+          ImpersonatedCredentials,
+          ServiceAccountCredentials,
+          UserCredentials
+        }
+
+        BigQuerySysProps.Secret.valueOption
+          .map(loc => new FileInputStream(new File(loc)))
+          .map(GoogleCredentials.fromStream)
+          .getOrElse(GoogleCredentials.getApplicationDefault) match {
+          case sa: ServiceAccountCredentials  => sa.getAccount
+          case uc: UserCredentials            => uc.getClientId
+          case ic: ImpersonatedCredentials    => ic.getAccount
+          case ec: ExternalAccountCredentials => ec.getClientId
+          case other: GoogleCredentials => s"User with unknown credential type ${other.getClass}"
+        }
+      }
+
+      Try(fn(underlying).execute()) match {
+        case Success(response) => response
+        case Failure(e: HttpResponseException) if e.getStatusCode == 403 =>
+          throw new RuntimeException(
+            s"Authenticated user $getAuthenticatedUser did not have permissions to execute BigQuery request",
+            e
+          )
+        case Failure(e) =>
+          throw e
+      }
+    }
+
+    private lazy val underlying: Bigquery = {
       val requestInitializer = new ChainingHttpRequestInitializer(
         new HttpCredentialsAdapter(credentials),
         new HttpRequestInitializer {
