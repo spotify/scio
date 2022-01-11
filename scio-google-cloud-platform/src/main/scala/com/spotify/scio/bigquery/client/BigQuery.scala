@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery.client
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 
 import java.io.{File, FileInputStream}
@@ -219,33 +220,33 @@ object BigQuery {
     def credentials: Credentials = _credentials
 
     def execute[T](fn: Bigquery => AbstractGoogleClientRequest[T]): T = {
-      def getAuthenticatedUser: String = {
+      def getAuthenticatedUser: (String, String) = {
         import com.google.auth.oauth2.{
-          ExternalAccountCredentials,
           ImpersonatedCredentials,
           ServiceAccountCredentials,
           UserCredentials
         }
 
-        BigQuerySysProps.Secret.valueOption
-          .map(loc => new FileInputStream(new File(loc)))
-          .map(GoogleCredentials.fromStream)
-          .getOrElse(GoogleCredentials.getApplicationDefault) match {
-          case sa: ServiceAccountCredentials  => sa.getAccount
-          case uc: UserCredentials            => uc.getClientId
-          case ic: ImpersonatedCredentials    => ic.getAccount
-          case ec: ExternalAccountCredentials => ec.getClientId
-          case other: GoogleCredentials => s"User with unknown credential type ${other.getClass}"
+        _credentials match {
+          case sa: ServiceAccountCredentials => ("service account", sa.getAccount)
+          case uc: UserCredentials           => ("user", uc.getClientId)
+          case ic: ImpersonatedCredentials   => ("impersonated account", ic.getAccount)
+          case other: Credentials => ("user", s"unknown credential type ${other.getClass.getName}")
         }
       }
 
       Try(fn(underlying).execute()) match {
         case Success(response) => response
-        case Failure(e: HttpResponseException) if e.getStatusCode == 403 =>
-          throw new RuntimeException(
-            s"Authenticated user $getAuthenticatedUser did not have permissions to execute BigQuery request",
-            e
-          )
+        case Failure(e: GoogleJsonResponseException) if e.getStatusCode == 403 =>
+          val adc = getAuthenticatedUser
+          throw new HttpResponseException.Builder(e.getStatusCode, e.getStatusMessage, e.getHeaders)
+            .setContent(e.getContent)
+            .setMessage(s"""
+                   |[${getClass.getName}] Authenticated ${adc._1} was ${adc._2}
+                   |
+                   |${e.getMessage}
+                   |""".stripMargin)
+            .build()
         case Failure(e) =>
           throw e
       }
