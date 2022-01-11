@@ -239,14 +239,16 @@ object BigQuery {
         case Success(response) => response
         case Failure(e: GoogleJsonResponseException) if e.getStatusCode == 403 =>
           val adc = getAuthenticatedUser
-          throw new HttpResponseException.Builder(e.getStatusCode, e.getStatusMessage, e.getHeaders)
-            .setContent(e.getContent)
-            .setMessage(s"""
+          throw new GoogleJsonResponseException(
+            new HttpResponseException.Builder(e.getStatusCode, e.getStatusMessage, e.getHeaders)
+              .setContent(e.getContent)
+              .setMessage(s"""
                    |[${getClass.getName}] Authenticated ${adc._1} was ${adc._2}
                    |
                    |${e.getMessage}
-                   |""".stripMargin)
-            .build()
+                   |""".stripMargin),
+            e.getDetails
+          )
         case Failure(e) =>
           throw e
       }
