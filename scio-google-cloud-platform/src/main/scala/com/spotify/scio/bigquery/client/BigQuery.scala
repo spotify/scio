@@ -243,9 +243,9 @@ object BigQuery {
             new HttpResponseException.Builder(e.getStatusCode, e.getStatusMessage, e.getHeaders)
               .setContent(e.getContent)
               .setMessage(s"""
-                   |[${getClass.getName}] Authenticated ${adc._1} was ${adc._2}
-                   |
                    |${e.getMessage}
+                   |
+                   |[${getClass.getName}] Authenticated ${adc._1}: ${adc._2}
                    |""".stripMargin),
             e.getDetails
           )
