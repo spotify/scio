@@ -867,8 +867,7 @@ lazy val `scio-schemas`: Project = project
     publish / skip := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.avro" % "avro" % avroVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion
+      "org.apache.avro" % "avro" % avroVersion
     ),
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
