@@ -36,8 +36,8 @@ object ParquetExample {
    * These case classes represent both full and projected field mappings from the [[Account]] Avro
    * record.
    */
-  case class AccountFull(id: Int, `type`: String, name: String, amount: Double)
-  case class AccountProjection(id: Int, name: String)
+  case class AccountFull(id: Int, `type`: String, name: Option[String], amount: Double)
+  case class AccountProjection(id: Int, name: Option[String])
 
   /**
    * A Hadoop [[Configuration]] can optionally be passed for Parquet reads and writes to improve
@@ -99,7 +99,7 @@ object ParquetExample {
     sc.parquetAvroFile[Account](args("input"), projection, predicate)
       // The result Account records are not complete Avro objects. Only the projected columns are present while the rest are null.
       // These objects may fail serialization and it’s recommended that you map them out to tuples or case classes right after reading.
-      .map(x => AccountProjection(x.getId, x.getName.toString))
+      .map(x => AccountProjection(x.getId, Some(x.getName.toString)))
       .saveAsTextFile(args("output"))
   }
 
@@ -108,7 +108,7 @@ object ParquetExample {
     sc.parquetAvroFile[GenericRecord](args("input"), Account.getClassSchema)
 
       // Map out projected fields into something type safe
-      .map(r => AccountProjection(r.get("id").asInstanceOf[Int], r.get("name").toString))
+      .map(r => AccountProjection(r.get("id").asInstanceOf[Int], Some(r.get("name").toString)))
       .saveAsTextFile(args("output"))
 
   private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] =
@@ -123,7 +123,7 @@ object ParquetExample {
 
   private def typedOut(sc: ScioContext, args: Args): ClosedTap[AccountFull] =
     sc.parallelize(fakeData)
-      .map(x => AccountFull(x.getId, x.getType.toString, x.getName.toString, x.getAmount))
+      .map(x => AccountFull(x.getId, x.getType.toString, Some(x.getName.toString), x.getAmount))
       .saveAsTypedParquetFile(
         args("output")
       )
