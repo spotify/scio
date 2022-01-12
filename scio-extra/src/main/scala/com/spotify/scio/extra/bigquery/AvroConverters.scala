@@ -26,6 +26,7 @@ import org.apache.avro.generic.IndexedRecord
 import scala.jdk.CollectionConverters._
 
 object AvroConverters extends ToTableRow with ToTableSchema {
+
   /**
    * Converts `record` into a TableRow by traversing the schema and converting each field
    * @param record
