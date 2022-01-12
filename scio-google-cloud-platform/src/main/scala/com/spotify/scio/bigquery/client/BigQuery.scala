@@ -217,6 +217,8 @@ object BigQuery {
       "Invalid projectId. It should be a non-empty string"
     )
 
+    private val CodeUnauthorized = 403
+
     def credentials: Credentials = _credentials
 
     def execute[T](fn: Bigquery => AbstractGoogleClientRequest[T]): T = {
@@ -237,15 +239,15 @@ object BigQuery {
 
       Try(fn(underlying).execute()) match {
         case Success(response) => response
-        case Failure(e: GoogleJsonResponseException) if e.getStatusCode == 403 =>
-          val adc = getAuthenticatedUser
+        case Failure(e: GoogleJsonResponseException) if e.getStatusCode == CodeUnauthorized =>
+          val (accountType, accountName) = getAuthenticatedUser
           throw new GoogleJsonResponseException(
             new HttpResponseException.Builder(e.getStatusCode, e.getStatusMessage, e.getHeaders)
               .setContent(e.getContent)
               .setMessage(s"""
                    |${e.getMessage}
                    |
-                   |[${getClass.getName}] Authenticated ${adc._1}: ${adc._2}
+                   |[${getClass.getName}] Authenticated $accountType: $accountName
                    |""".stripMargin),
             e.getDetails
           )
