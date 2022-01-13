@@ -218,7 +218,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   object Avro {
     import com.spotify.scio.avro.{Account, Address, User => AvUser}
 
-    val accounts: List[Account] = List(new Account(1, "tyoe", "name", 12.5))
+    val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
     val address =
       new Address("street1", "street2", "city", "state", "01234", "Sweden")
     val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
