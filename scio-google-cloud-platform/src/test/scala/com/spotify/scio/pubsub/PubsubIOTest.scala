@@ -21,7 +21,7 @@ import com.spotify.scio.testing.PipelineSpec
 import com.google.protobuf.Message
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import com.spotify.scio._
-import com.spotify.scio.avro.Account
+import com.spotify.scio.avro.{Account, AccountStatus}
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import com.spotify.scio.pubsub._
@@ -62,7 +62,7 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
   }
 
   it should "support deprecated readAvro" in {
-    val xs = (1 to 100).map(x => new Account(x, "", "", x.toDouble))
+    val xs = (1 to 100).map(x => new Account(x, "", "", x.toDouble, AccountStatus.Active))
     testJobTest(xs)(PubsubIO.readAvro[Account](_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
   }
 

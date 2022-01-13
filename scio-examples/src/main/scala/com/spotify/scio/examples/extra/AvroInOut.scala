@@ -43,6 +43,7 @@ object AvroInOut {
           .setType("checking")
           .setName(r.getStringField)
           .setAmount(r.getDoubleField)
+          .setAccountStatus(AccountStatus.Active)
           .build()
       }
       // Save result as Avro files

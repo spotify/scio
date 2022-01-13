@@ -25,7 +25,8 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
-import com.spotify.scio.avro.Account
+import com.spotify.scio.avro.{Account, AccountStatus}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import org.apache.hadoop.conf.Configuration
 import org.apache.avro.generic.GenericRecord
@@ -61,6 +62,7 @@ object ParquetExample {
           .setType(if (i % 3 == 0) "current" else "checking")
           .setName(s"account $i")
           .setAmount(i.toDouble)
+          .setAccountStatus(if (i % 2 == 0) AccountStatus.Active else AccountStatus.Inactive)
           .build()
       )
 
@@ -103,13 +105,23 @@ object ParquetExample {
       .saveAsTextFile(args("output"))
   }
 
-  private def avroGenericIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    // We can also pass an Avro schema directly to project into Avro GenericRecords.
-    sc.parquetAvroFile[GenericRecord](args("input"), Account.getClassSchema)
+  private def avroGenericIn(sc: ScioContext, args: Args): ClosedTap[String] = {
+    val schema = Account.getClassSchema
+    implicit val genericRecordCoder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
 
+    val parquetIn = sc.parquetAvroFile[GenericRecord](args("input"), schema)
+
+    // Catches a specific bug with encoding GenericRecords read by parquet-avro
+    parquetIn
+      .map(identity)
+      .count
+
+    // We can also pass an Avro schema directly to project into Avro GenericRecords.
+    parquetIn
       // Map out projected fields into something type safe
       .map(r => AccountProjection(r.get("id").asInstanceOf[Int], Some(r.get("name").toString)))
       .saveAsTextFile(args("output"))
+  }
 
   private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] =
     sc.typedParquetFile[AccountProjection](args("input"))
