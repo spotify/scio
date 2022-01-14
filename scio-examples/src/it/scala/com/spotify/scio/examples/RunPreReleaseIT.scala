@@ -44,15 +44,19 @@ object RunPreReleaseIT {
     val (_, args) = ContextAndArgs(cmdLineArgs)
     val runId = args("runId")
 
-    Await.result(
-      Future
-        .sequence(
-          parquet(runId) ++ avro(runId) ++ smb(runId)
-        )
-        .map(_ => log.info("All Dataflow jobs ran successfully."))
-        .recover(e => throw new RuntimeException("At least one Dataflow job failed", e)),
-      Duration(1, TimeUnit.HOURS)
-    )
+    try {
+      Await.result(
+        Future
+          .sequence(
+            parquet(runId) ++ avro(runId) ++ smb(runId)
+          )
+          .map(_ => log.info("All Dataflow jobs ran successfully.")),
+        Duration(1, TimeUnit.HOURS)
+      )
+    } catch {
+      case (t: Throwable) =>
+        throw new RuntimeException("At least one Dataflow job failed", t)
+    }
   }
 
   private def avro(runId: String): List[Future[Unit]] = {
