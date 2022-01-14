@@ -90,7 +90,7 @@ When using `org.scalacheck.Gen` to create test data in a pipeline test, use `wit
 import org.scalacheck.Gen
 import com.spotify.scio.testing.PipelineSpec
 
-class MyClass extends PipelineSpec {
+class MyClass extends PipelineSpec with GenTestUtils {
     "My pipeline" should "run with generated inputs" in {
         val inputGen = Gen.listOfN(10, Gen.choose(1, 10))
         withGen(inputGen) { input =>

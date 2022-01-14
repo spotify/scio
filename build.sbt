@@ -480,7 +480,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       // DataFlow testing requires junit and hamcrest

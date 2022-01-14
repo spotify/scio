@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
 import scala.util.Try
 
 /** Trait with utility methods for unit testing pipelines. */
-trait PipelineGenTestUtils {
+trait GenTestUtils {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
