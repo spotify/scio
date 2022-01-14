@@ -1,7 +1,7 @@
 # Changelog
 
 ## Important changes in 0.11.3
-- Fixed a severe Parquet IO issue introduced in 0.11.2. Incompatible versions of `com.google.http-client:google-http-client:1.40.0` and `com.google.cloud.bigdataoss:gcsio:2.2.2` were leading to jobs reading Parquet getting stuck. The mitigation is to pin `google-http-client` to `1.39.2` in your build.sbt:
+- Fixed a severe Parquet IO issue introduced in 0.11.2. Incompatible versions of `com.google.http-client:google-http-client:1.40.0` and `com.google.cloud.bigdataoss:gcsio:2.2.2` were leading to jobs reading Parquet getting stuck. The mitigation for 0.11.2 is to pin `google-http-client` to `1.39.2` in your build.sbt:
   ```scala
     dependencyOverrides ++= Seq(
     "com.google.http-client" % "google-http-client" % "1.39.2"
