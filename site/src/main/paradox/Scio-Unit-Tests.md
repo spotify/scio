@@ -87,6 +87,8 @@ Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLa
 
 When using `org.scalacheck.Gen` to create test data in a pipeline test, use `withGen` to capture the random seed and print it on failure:
 ```scala mdoc
+import org.scalacheck.Gen
+
 val inputGen = Gen.listOfN(10, Gen.choose(1, 10))
 withGen(inputGen) { input =>
   throw new RuntimeException("woops")
