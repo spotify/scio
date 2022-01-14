@@ -193,6 +193,7 @@ spotify/scio
   <li><a href="Apache-Beam.html#versions" class="header">Versions</a>
   <ul>
     <li><a href="Apache-Beam.html#version-matrices" class="header">Version matrices</a></li>
+    <li><a href="Apache-Beam.html#beam-dependencies" class="header">Beam dependencies</a></li>
     <li><a href="Apache-Beam.html#release-cycle-and-backport-procedures" class="header">Release cycle and backport procedures</a></li>
   </ul></li>
 </ul>
@@ -202,7 +203,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.2+9-cdf939ea*
+<i class="md-icon" title="Version">label_outline</i> 0.11.3+0-e5da26c0+20220114-1338*
 </label>
 </li>
 </ul>
@@ -218,6 +219,7 @@ spotify/scio
   <li><a href="Apache-Beam.html#versions" class="header">Versions</a>
   <ul>
     <li><a href="Apache-Beam.html#version-matrices" class="header">Version matrices</a></li>
+    <li><a href="Apache-Beam.html#beam-dependencies" class="header">Beam dependencies</a></li>
     <li><a href="Apache-Beam.html#release-cycle-and-backport-procedures" class="header">Release cycle and backport procedures</a></li>
   </ul></li>
 </ul>
@@ -315,6 +317,16 @@ spotify/scio
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td align="center">0.11.3 </td>
+      <td align="center">2.35.0 </td>
+      <td align="left">This version will be deprecated on December 29, 2022. </td>
+    </tr>
+    <tr>
+      <td align="center">0.11.2 </td>
+      <td align="center">2.34.0 </td>
+      <td align="left">This version will be deprecated on November 11, 2022. </td>
+    </tr>
     <tr>
       <td align="center">0.11.1 </td>
       <td align="center">2.33.0 </td>
@@ -447,6 +459,8 @@ spotify/scio
     </tr>
   </tbody>
 </table>
+<h2><a href="#beam-dependencies" name="beam-dependencies" class="anchor"><span class="anchor-link"></span></a>Beam dependencies</h2>
+<p>Scio&rsquo;s other library dependencies are kept in sync with Beam&rsquo;s to avoid compatibility issues. You can find Beam&rsquo;s dependency list in its <a href="https://github.com/apache/beam/blob/v2.35.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy">Groovy config</a> (substitute the version tag in the URL with the desired Beam version). Additionally, Beam keeps many of its Google dependencies in sync with a <a href="https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/24.0.0/artifact_details.html">central BOM</a> (subsitute the version tag in the URL with the value of <code>google_cloud_platform_libraries_bom</code> from Beam). Scio users who suspect incompatibility issues in their pipelines (common issues are GRPC, Netty, or Guava) can run <code>sbt evicted</code> and <code>sbt dependencyTree</code> to ensure their direct and transitive dependencies don&rsquo;t conflict with Scio or Beam.</p>
 <h2><a href="#release-cycle-and-backport-procedures" name="release-cycle-and-backport-procedures" class="anchor"><span class="anchor-link"></span></a>Release cycle and backport procedures</h2>
 <p>Scio has a frequent release cycle, roughly every 2-4 weeks, as compared to months for the upstream Apache Beam. We also aim to stay a step ahead by pulling changes from upstream and contributing new ones back.</p>
 <p>Let&rsquo;s call the Beam version that Scio depends on <code>current</code>, and upstream master <code>latest</code>. Here&rsquo;re the procedures for backporting changes.</p>
@@ -460,7 +474,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.2+9-cdf939ea*
+0.11.3+0-e5da26c0+20220114-1338*
 </span>
 </div>
 </article>
