@@ -3,7 +3,7 @@ package com.spotify.scio.testing
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 
-class GenTestUtilsTest extends GenTestUtils with PipelineSpec {
+class GenTestUtilsTest extends PipelineSpec with GenTestUtils {
   "PipelineTestUtils.withGen" should "generate a test case and have an optional return value" in {
     val x = withGen(Gen.const(1))(i => i)
     assert(x.contains(1))
