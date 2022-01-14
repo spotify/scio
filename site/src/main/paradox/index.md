@@ -96,7 +96,7 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 * @ref:[Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md)
 * @ref:[Runners](Runners.md)
 * @ref:[Data guideline](Scio-data-guideline.md)
-* @ref:[Versions](Apache-Beam.md)
+* @ref:[Beam Compatibility Guide](Apache-Beam.md)
 * @ref:[Changelog](Changelog.md)
 * @ref:[FAQ](FAQ.md)
 * @ref:[Powered By](Powered-By.md)
