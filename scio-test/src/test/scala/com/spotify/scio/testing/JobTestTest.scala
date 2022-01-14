@@ -17,11 +17,14 @@
 
 package com.spotify.scio.testing
 
+import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils.{newGenericRecord, newSpecificRecord}
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.transforms.{BaseAsyncLookupDoFn, GuavaAsyncDoFn, GuavaLookupDoFn}
 import com.spotify.scio.util.MockedPrintStream
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -31,6 +34,8 @@ import org.scalatest.exceptions.TestFailedException
 
 import scala.io.Source
 import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge}
+import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.values.KV
 
 object ObjectFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -100,6 +105,36 @@ object DistCacheJob {
     sc.textFile(args("input"))
       .flatMap(x => dc().map(x + _))
       .saveAsTextFile(args("output"))
+    sc.run()
+    ()
+  }
+}
+
+object MockTransformJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val in = sc.textFile(args("input")).map(_.toInt)
+    // both transforms map their input Int to a String
+    val out = args.optional("kv") match {
+      case Some("true") =>
+        // outputs a KV[Int, Try[String]]
+        in.applyTransform("myTransform", ParDo.of(new GuavaLookupDoFn))
+          .map(_.getValue.get())
+      case _ =>
+        // outputs a String
+        in.applyTransform(
+          "myTransform",
+          ParDo.of(
+            new GuavaAsyncDoFn[Int, String, None.type]() {
+              override def processElement(input: Int): ListenableFuture[String] =
+                Futures.immediateFuture(input.toString)
+              override def getResourceType: ResourceType = ResourceType.PER_CLASS
+              override def createResource(): None.type = None
+            }
+          )
+        )
+    }
+    out.saveAsTextFile(args("output"))
     sc.run()
     ()
   }
@@ -349,6 +384,56 @@ class JobTestTest extends PipelineSpec {
     an[AssertionError] should be thrownBy { testCustomIOJob("10", "20") }
     an[AssertionError] should be thrownBy {
       testCustomIOJob("10", "20", "30", "40")
+    }
+  }
+
+  def testMockTransform[T, U](
+    mockTransform: MockTransform[T, U],
+    values: Map[T, U],
+    kv: Boolean = false
+  ): Unit = {
+    val args = scala.collection.mutable.ListBuffer("--input=in.txt", "--output=out.txt")
+    if (kv) args += "--kv=true"
+    JobTest[MockTransformJob.type]
+      .args(args.toList: _*)
+      .input(TextIO("in.txt"), Seq("1", "2"))
+      .mockTransform(mockTransform, values)
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(List("10", "20")))
+      .run()
+  }
+
+  it should "pass correct string MockTransform" in {
+    testMockTransform(
+      MockTransform[Int, String]("myTransform"),
+      Map(1 -> "10", 2 -> "20", 3 -> "30")
+    )
+  }
+
+  it should "fail incorrect string MockTransform" in {
+    an[IllegalArgumentException] should be thrownBy {
+      testMockTransform(
+        MockTransform[Int, Int]("myTransform"),
+        Map(1 -> 1, 2 -> 2, 3 -> 3)
+      )
+    }
+  }
+
+  it should "pass correct string lookup MockTransform" in {
+    testMockTransform(
+      MockTransform[Int, KV[Int, BaseAsyncLookupDoFn.Try[String]]]("myTransform"),
+      Map(1 -> "10", 2 -> "20", 3 -> "30")
+        .map { case (k, v) => k -> KV.of(k, new BaseAsyncLookupDoFn.Try(v)) },
+      kv = true
+    )
+  }
+
+  it should "fail incorrect string lookup MockTransform" in {
+    an[IllegalArgumentException] should be thrownBy {
+      testMockTransform(
+        MockTransform[Int, String]("myTransform"),
+        Map(1 -> "10", 2 -> "20", 3 -> "30"),
+        kv = true
+      )
     }
   }
 

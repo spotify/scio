@@ -20,7 +20,6 @@ package com.spotify.scio.values
 import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.estimators.{
@@ -30,7 +29,7 @@ import com.spotify.scio.estimators.{
 }
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
-import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.testing.{MockTransform, TestDataManager}
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -193,7 +192,19 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
-    ensureSerializable(coder).fold(throw _, pApply(name, transform).setCoder)
+    val xform: PTransform[_ >: PCollection[T], PCollection[U]] = if (context.isTest) {
+      val id = context.testId.get
+      TestDataManager
+        .getTransform(id)
+        .apply[T, U](
+          MockTransform[T, U](name),
+          internal.getCoder,
+          coder
+        )
+    } else {
+      transform
+    }
+    ensureSerializable(coder).fold(throw _, pApply(name, xform).setCoder)
   }
 
   private[scio] def pApply[U](

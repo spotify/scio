@@ -17,11 +17,24 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio.coders.Coder
+import com.google.common.util.concurrent.{Futures, ListenableFuture}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.ScioIO
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+import com.spotify.scio.transforms.{
+  BaseAsyncLookupDoFn,
+  DoFnWithResource,
+  GuavaAsyncDoFn,
+  GuavaAsyncLookupDoFn
+}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
+import org.apache.beam.sdk.coders
 import org.apache.beam.sdk.testing.TestStream
+import org.apache.beam.sdk.transforms.{PTransform, ParDo}
+import org.apache.beam.sdk.values.{KV, PCollection}
+import org.apache.commons.io.output.NullOutputStream
+
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
 import scala.jdk.CollectionConverters._
@@ -119,12 +132,68 @@ private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   }
 }
 
+private[scio] class TestTransform(val m: Map[String, Map[_, _]]) {
+  val s: MSet[String] =
+    java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
+
+  def apply[T, U](
+    t: MockTransform[T, U],
+    tCoder: coders.Coder[T],
+    uCoder: coders.Coder[U]
+  ): PTransform[_ >: PCollection[T], PCollection[U]] = {
+    val key = t.name
+    require(
+      m.contains(key),
+      s"Missing mock transform: $key, available: ${m.keys.mkString("[", ", ", "]")}"
+    )
+    require(!s.contains(key), s"Mock transform $key has already been used once.")
+    s.add(key)
+    val xxx = m(key)
+    if (xxx.nonEmpty) {
+      try {
+        tCoder.encode(xxx.keys.head.asInstanceOf[T], NullOutputStream.NULL_OUTPUT_STREAM)
+      } catch {
+        case e: ClassCastException =>
+          throw new IllegalArgumentException(
+            s"Input for mock transform $key does not match pipeline transform. Found: ${xxx.keys.head.getClass}",
+            e
+          )
+      }
+      try {
+        uCoder.encode(xxx.values.head.asInstanceOf[U], NullOutputStream.NULL_OUTPUT_STREAM)
+      } catch {
+        case e: ClassCastException =>
+          throw new IllegalArgumentException(
+            s"Output for mock transform $key does not match pipeline transform. Found: ${xxx.values.head.getClass}",
+            e
+          )
+      }
+    }
+    val values = xxx.asInstanceOf[Map[T, U]]
+    val xform: PTransform[_ >: PCollection[T], PCollection[U]] = ParDo.of(
+      new GuavaAsyncDoFn[T, U, None.type]() {
+        override def processElement(input: T): ListenableFuture[U] =
+          Futures.immediateFuture(values(input))
+        override def getResourceType: ResourceType = ResourceType.PER_CLASS
+        override def createResource(): None.type = None
+      }
+    )
+    xform
+  }
+
+  def validate(): Unit = {
+    val d = m.keySet -- s
+    require(d.isEmpty, "Unmatched mock transform: " + d.mkString(", "))
+  }
+}
+
 private[scio] object TestDataManager {
   private val inputs = TrieMap.empty[String, TestInput]
   private val outputs = TrieMap.empty[String, TestOutput]
   private val distCaches = TrieMap.empty[String, TestDistCache]
   private val closed = TrieMap.empty[String, Boolean]
   private val results = TrieMap.empty[String, ScioResult]
+  private val mockedTransforms = TrieMap.empty[String, TestTransform]
 
   private def getValue[V](key: String, m: TrieMap[String, V], ioMsg: String): V = {
     require(m.contains(key), s"Missing test data. Are you $ioMsg outside of JobTest?")
@@ -140,21 +209,27 @@ private[scio] object TestDataManager {
   def getDistCache(testId: String): TestDistCache =
     getValue(testId, distCaches, "using dist cache")
 
+  def getTransform(testId: String): TestTransform =
+    getValue(testId, mockedTransforms, "using transform")
+
   def setup(
     testId: String,
     ins: Map[String, JobInputSource[_]],
     outs: Map[String, SCollection[_] => Any],
-    dcs: Map[DistCacheIO[_], _]
+    dcs: Map[DistCacheIO[_], _],
+    xforms: Map[String, Map[_, _]]
   ): Unit = {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))
     distCaches += (testId -> new TestDistCache(dcs))
+    mockedTransforms += (testId -> new TestTransform(xforms))
   }
 
   def tearDown(testId: String, f: ScioResult => Unit = _ => ()): Unit = {
     inputs.remove(testId).foreach(_.validate())
     outputs.remove(testId).foreach(_.validate())
     distCaches.remove(testId).get.validate()
+    mockedTransforms.remove(testId).foreach(_.validate())
     ensureClosed(testId)
     val result = results.remove(testId).get
     f(result)
@@ -179,3 +254,5 @@ object DistCacheIO {
   def apply[T](uris: Seq[String]): DistCacheIO[T] =
     DistCacheIO(uris.mkString("\t"))
 }
+
+case class MockTransform[T, U](name: String)

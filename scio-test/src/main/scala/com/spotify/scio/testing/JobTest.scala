@@ -18,13 +18,14 @@
 package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
-
 import com.spotify.scio.ScioResult
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.testing.TestStream
+import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
@@ -80,6 +81,7 @@ object JobTest {
     counters: Set[MetricsAssertion[beam.Counter, Long]] = Set.empty,
     distributions: Set[MetricsAssertion[beam.Distribution, beam.DistributionResult]] = Set.empty,
     gauges: Set[MetricsAssertion[beam.Gauge, beam.GaugeResult]] = Set.empty,
+    mockTransforms: Map[String, Map[_, _]] = Map.empty,
     wasRunInvoked: Boolean = false
   )
 
@@ -169,6 +171,16 @@ object JobTest {
     def distCacheFunc[T](key: DistCacheIO[T], initFn: () => T): Builder = {
       require(!state.distCaches.contains(key), "Duplicate test dist cache: " + key)
       state = state.copy(distCaches = state.distCaches + (key -> initFn))
+      this
+    }
+
+    /** TODO */
+    def mockTransform[T, U](xform: MockTransform[T, U], value: Map[T, U]): Builder = {
+      require(
+        !state.mockTransforms.contains(xform.name),
+        "Duplicate mock transform name: " + xform.name
+      )
+      state = state.copy(mockTransforms = state.mockTransforms + (xform.name -> value))
       this
     }
 
@@ -295,7 +307,8 @@ object JobTest {
         testId,
         state.input,
         state.output,
-        state.distCaches
+        state.distCaches,
+        state.mockTransforms
       )
 
     /**
