@@ -44,6 +44,9 @@ jobs:
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v2.4.0
+      - uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
