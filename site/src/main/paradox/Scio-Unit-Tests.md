@@ -88,17 +88,22 @@ Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLa
 When using `org.scalacheck.Gen` to create test data in a pipeline test, use `withGen` to capture the random seed and print it on failure:
 ```scala mdoc
 import org.scalacheck.Gen
+import com.spotify.scio.testing.PipelineSpec
 
-val inputGen = Gen.listOfN(10, Gen.choose(1, 10))
-withGen(inputGen) { input =>
-  throw new RuntimeException("woops")
+class MyClass extends PipelineSpec {
+    "My pipeline" should "run with generated inputs" in {
+        val inputGen = Gen.listOfN(10, Gen.choose(1, 10))
+        withGen(inputGen) { input =>
+          throw new RuntimeException("woops")
+        }
+    }
 }
 // will log:
 // Failure at MyTest:3. Seed: m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=
 ```
 
 To reproduce a test failure, a static seed can be passed as either a base-64 string or an `org.scalacheck.rng.Seed`:
-```scala mdoc
+```scala
 withGen(inputGen, "m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=") { input =>
   // ...
 }
