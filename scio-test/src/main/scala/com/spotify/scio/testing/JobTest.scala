@@ -174,7 +174,19 @@ object JobTest {
       this
     }
 
-    /** TODO */
+    /**
+     * Replace a PTransform in the pipeline being tested. `xform.name` must match the name used for
+     * `applyTransform` in the pipeline. If `T` or `U` do not match the pipeline transform types, an
+     * error will be thrown at runtime.
+     *
+     * @param xform
+     * @param value
+     *   A mapping of input to output data
+     * @tparam T
+     *   input type of the transform
+     * @tparam U
+     *   output type of the transform
+     */
     def mockTransform[T, U](xform: MockTransform[T, U], value: Map[T, U]): Builder = {
       require(
         !state.mockTransforms.contains(xform.name),
