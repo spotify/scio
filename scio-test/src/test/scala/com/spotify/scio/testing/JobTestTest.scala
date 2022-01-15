@@ -403,41 +403,56 @@ class JobTestTest extends PipelineSpec {
   }
 
   def testMockTransform[T, U](
-    mockTransform: MockTransform[T, U],
-    values: Map[T, U],
+    optMock: Option[(MockTransform[T, U], Map[T, U])] = None,
     kv: Boolean = false
   ): Unit = {
     val args = scala.collection.mutable.ListBuffer("--input=in.txt", "--output=out.txt")
     if (kv) args += "--kv=true"
-    JobTest[MockTransformJob.type]
+    var jt = JobTest[MockTransformJob.type]
       .args(args.toList: _*)
       .input(TextIO("in.txt"), Seq("1", "2"))
-      .mockTransform(mockTransform, values)
-      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(List("10", "20")))
-      .run()
+    jt = optMock match {
+      case None => jt
+      case Some((mockTransform, values)) =>
+        jt.mockTransform(mockTransform, values)
+    }
+    jt.output(TextIO("out.txt")) { coll =>
+      val expected = if (optMock.isDefined) List("10", "20") else List("1", "2")
+      coll should containInAnyOrder(expected)
+    }.run()
+  }
+
+  it should "pass without MockTransform" in {
+    testMockTransform()
   }
 
   it should "pass correct string MockTransform" in {
     testMockTransform(
-      MockTransform[Int, String]("myTransform"),
-      Map(1 -> "10", 2 -> "20", 3 -> "30")
+      Some(
+        MockTransform[Int, String]("myTransform"),
+        Map(1 -> "10", 2 -> "20", 3 -> "30")
+      )
     )
   }
 
   it should "fail incorrect string MockTransform" in {
     an[IllegalArgumentException] should be thrownBy {
       testMockTransform(
-        MockTransform[Int, Int]("myTransform"),
-        Map(1 -> 1, 2 -> 2, 3 -> 3)
+        Some(
+          MockTransform[Int, Int]("myTransform"),
+          Map(1 -> 1, 2 -> 2, 3 -> 3)
+        )
       )
     }
   }
 
   it should "pass correct string lookup MockTransform" in {
     testMockTransform(
-      MockTransform[Int, KV[Int, BaseAsyncLookupDoFn.Try[String]]]("myTransform"),
-      Map(1 -> "10", 2 -> "20", 3 -> "30")
-        .map { case (k, v) => k -> KV.of(k, new BaseAsyncLookupDoFn.Try(v)) },
+      Some(
+        MockTransform[Int, KV[Int, BaseAsyncLookupDoFn.Try[String]]]("myTransform"),
+        Map(1 -> "10", 2 -> "20", 3 -> "30")
+          .map { case (k, v) => k -> KV.of(k, new BaseAsyncLookupDoFn.Try(v)) }
+      ),
       kv = true
     )
   }
@@ -445,8 +460,10 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect string lookup MockTransform" in {
     an[IllegalArgumentException] should be thrownBy {
       testMockTransform(
-        MockTransform[Int, String]("myTransform"),
-        Map(1 -> "10", 2 -> "20", 3 -> "30"),
+        Some(
+          MockTransform[Int, String]("myTransform"),
+          Map(1 -> "10", 2 -> "20", 3 -> "30")
+        ),
         kv = true
       )
     }

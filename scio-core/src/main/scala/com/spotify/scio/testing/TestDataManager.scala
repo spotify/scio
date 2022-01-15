@@ -135,45 +135,47 @@ private[scio] class TestTransform(val m: Map[String, Map[_, _]]) {
     t: MockTransform[T, U],
     tCoder: coders.Coder[T],
     uCoder: coders.Coder[U]
-  ): PTransform[_ >: PCollection[T], PCollection[U]] = {
+  ): Option[PTransform[_ >: PCollection[T], PCollection[U]]] = {
     val key = t.name
-    require(
-      m.contains(key),
-      s"Missing mock transform: $key, available: ${m.keys.mkString("[", ", ", "]")}"
-    )
-    require(!s.contains(key), s"Mock transform $key has already been used once.")
-    s.add(key)
-    val xxx = m(key)
-    if (xxx.nonEmpty) {
-      try {
-        tCoder.encode(xxx.keys.head.asInstanceOf[T], NullOutputStream.NULL_OUTPUT_STREAM)
-      } catch {
-        case e: ClassCastException =>
-          throw new IllegalArgumentException(
-            s"Input for mock transform $key does not match pipeline transform. Found: ${xxx.keys.head.getClass}",
-            e
-          )
+    if (!m.contains(key)) {
+      None
+    } else {
+      require(!s.contains(key), s"Mock transform $key has already been used once.")
+      s.add(key)
+      val xxx = m(key)
+      if (xxx.nonEmpty) {
+        try {
+          tCoder.encode(xxx.keys.head.asInstanceOf[T], NullOutputStream.NULL_OUTPUT_STREAM)
+        } catch {
+          case e: ClassCastException =>
+            throw new IllegalArgumentException(
+              s"Input for mock transform $key does not match pipeline transform. Found: ${xxx.keys.head.getClass}",
+              e
+            )
+        }
+        try {
+          uCoder.encode(xxx.values.head.asInstanceOf[U], NullOutputStream.NULL_OUTPUT_STREAM)
+        } catch {
+          case e: ClassCastException =>
+            throw new IllegalArgumentException(
+              s"Output for mock transform $key does not match pipeline transform. Found: ${xxx.values.head.getClass}",
+              e
+            )
+        }
       }
-      try {
-        uCoder.encode(xxx.values.head.asInstanceOf[U], NullOutputStream.NULL_OUTPUT_STREAM)
-      } catch {
-        case e: ClassCastException =>
-          throw new IllegalArgumentException(
-            s"Output for mock transform $key does not match pipeline transform. Found: ${xxx.values.head.getClass}",
-            e
-          )
-      }
+      val values = xxx.asInstanceOf[Map[T, U]]
+      val xform: Option[PTransform[_ >: PCollection[T], PCollection[U]]] = Some(
+        ParDo.of(
+          new GuavaAsyncDoFn[T, U, Unit]() {
+            override def processElement(input: T): ListenableFuture[U] =
+              Futures.immediateFuture(values(input))
+            override def getResourceType: ResourceType = ResourceType.PER_CLASS
+            override def createResource(): Unit = ()
+          }
+        )
+      )
+      xform
     }
-    val values = xxx.asInstanceOf[Map[T, U]]
-    val xform: PTransform[_ >: PCollection[T], PCollection[U]] = ParDo.of(
-      new GuavaAsyncDoFn[T, U, Unit]() {
-        override def processElement(input: T): ListenableFuture[U] =
-          Futures.immediateFuture(values(input))
-        override def getResourceType: ResourceType = ResourceType.PER_CLASS
-        override def createResource(): Unit = ()
-      }
-    )
-    xform
   }
 
   def validate(): Unit = {

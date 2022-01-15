@@ -192,17 +192,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
-    val xform: PTransform[_ >: PCollection[T], PCollection[U]] = if (context.isTest) {
-      val id = context.testId.get
-      TestDataManager
-        .getTransform(id)
-        .apply[T, U](
-          MockTransform[T, U](name),
-          internal.getCoder,
-          coder
-        )
-    } else {
-      transform
+    val xform: PTransform[_ >: PCollection[T], PCollection[U]] = {
+      if (!context.isTest) {
+        transform
+      } else {
+        val id = context.testId.get
+        val optXForm = TestDataManager
+          .getTransform(id)
+          .apply[T, U](
+            MockTransform[T, U](name),
+            internal.getCoder,
+            coder
+          )
+        optXForm.getOrElse(transform)
+      }
     }
     ensureSerializable(coder).fold(throw _, pApply(name, xform).setCoder)
   }
