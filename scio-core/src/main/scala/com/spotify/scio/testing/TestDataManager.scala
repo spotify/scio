@@ -18,21 +18,16 @@
 package com.spotify.scio.testing
 
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.scio.transforms.{
-  BaseAsyncLookupDoFn,
-  DoFnWithResource,
-  GuavaAsyncDoFn,
-  GuavaAsyncLookupDoFn
-}
+import com.spotify.scio.transforms.GuavaAsyncDoFn
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.coders
 import org.apache.beam.sdk.testing.TestStream
 import org.apache.beam.sdk.transforms.{PTransform, ParDo}
-import org.apache.beam.sdk.values.{KV, PCollection}
+import org.apache.beam.sdk.values.PCollection
 import org.apache.commons.io.output.NullOutputStream
 
 import scala.collection.concurrent.TrieMap

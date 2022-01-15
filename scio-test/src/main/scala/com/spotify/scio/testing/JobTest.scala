@@ -24,8 +24,6 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.testing.TestStream
-import org.apache.beam.sdk.transforms.PTransform
-import org.apache.beam.sdk.values.PCollection
 import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
