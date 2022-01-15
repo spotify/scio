@@ -122,17 +122,19 @@ object MockTransformJob {
           .map(_.getValue.get())
       case _ =>
         // outputs a String
+        // #JobTestTest_example_1
         in.applyTransform(
           "myTransform",
           ParDo.of(
-            new GuavaAsyncDoFn[Int, String, None.type]() {
+            new GuavaAsyncDoFn[Int, String, Unit]() {
               override def processElement(input: Int): ListenableFuture[String] =
                 Futures.immediateFuture(input.toString)
               override def getResourceType: ResourceType = ResourceType.PER_CLASS
-              override def createResource(): None.type = None
+              override def createResource(): Unit = ()
             }
           )
         )
+        // #JobTestTest_example_1
     }
     out.saveAsTextFile(args("output"))
     sc.run()
@@ -385,6 +387,19 @@ class JobTestTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       testCustomIOJob("10", "20", "30", "40")
     }
+  }
+
+  def mockTransformExample: Unit = {
+    JobTest[MockTransformJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("1", "2"))
+      // #JobTestTest_example_2
+      .mockTransform(
+        MockTransform[Int, String]("myTransform"),
+        Map(1 -> "10", 2 -> "20")
+      )
+      // #JobTestTest_example_2
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(List("10", "20")))
   }
 
   def testMockTransform[T, U](

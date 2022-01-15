@@ -171,11 +171,11 @@ private[scio] class TestTransform(val m: Map[String, Map[_, _]]) {
     }
     val values = xxx.asInstanceOf[Map[T, U]]
     val xform: PTransform[_ >: PCollection[T], PCollection[U]] = ParDo.of(
-      new GuavaAsyncDoFn[T, U, None.type]() {
+      new GuavaAsyncDoFn[T, U, Unit]() {
         override def processElement(input: T): ListenableFuture[U] =
           Futures.immediateFuture(values(input))
         override def getResourceType: ResourceType = ResourceType.PER_CLASS
-        override def createResource(): None.type = None
+        override def createResource(): Unit = ()
       }
     )
     xform

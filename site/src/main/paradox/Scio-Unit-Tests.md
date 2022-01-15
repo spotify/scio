@@ -101,3 +101,29 @@ withGen(inputGen, "m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=") { input =>
   // ...
 }
 ```
+
+### Test with asynchronous DoFns (or other PTransforms)
+
+Scio provides a method to mock an arbitrary, _named_, `PTransform` in a test context.
+This is primarily useful for mocking requests to external services.
+
+In this example, the `GuavaAsyncDoFn` stands in for a transform that contacts an external service.
+The `DoFn` is integrated into the pipeline by creating a `ParDo` `PTransform` by way of `ParDo.of` and then applying the transform to the pipeline via `applyTransform`.
+
+@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_1 }
+
+In a `JobTest`, the `mockTransform` method can be used to replace the results of a named `PTransform` with mock data:
+
+@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_2 }
+
+Due to type erasure it is possible to provide the incorrect types for the input or output of the transform and the error will not be caught until runtime.
+In this case, an `IllegalArgumentException` will be thrown wrapping a `ClassCastException` whose message contains the correct type:
+
+```
+java.lang.IllegalArgumentException: Input for mock transform myTransform does not match pipeline transform. Found: class java.lang.String
+  at com.spotify.scio.testing.TestTransform.apply(TestDataManager.scala:159)
+  ...
+Cause: java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Integer
+  at org.apache.beam.sdk.coders.VarIntCoder.encode(VarIntCoder.java:33)
+  ...
+```
