@@ -199,11 +199,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         val id = context.testId.get
         val optXForm = TestDataManager
           .getTransform(id)
-          .apply[T, U](
-            MockTransform[T, U](name),
-            internal.getCoder,
-            coder
-          )
+          .flatMap { t =>
+            t.apply[T, U](
+              MockTransform[T, U](name),
+              internal.getCoder,
+              coder
+            )
+          }
         optXForm.getOrElse(transform)
       }
     }

@@ -206,8 +206,7 @@ private[scio] object TestDataManager {
   def getDistCache(testId: String): TestDistCache =
     getValue(testId, distCaches, "using dist cache")
 
-  def getTransform(testId: String): TestTransform =
-    getValue(testId, mockedTransforms, "using transform")
+  def getTransform(testId: String): Option[TestTransform] = mockedTransforms.get(testId)
 
   def setup(
     testId: String,
