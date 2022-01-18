@@ -34,11 +34,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   /** Get an SCollection for a Parquet file as case classes `T`. */
   def typedParquetFile[T: ClassTag: Coder: ParquetType](
     path: String,
-    skipClone: Boolean = ReadParam.DefaultSkipClone,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    skipClone: Boolean = ReadParam.DefaultSkipClone
   ): SCollection[T] =
-    self.read(ParquetTypeIO[T](path))(ParquetTypeIO.ReadParam(predicate, skipClone, conf))
+    self.read(ParquetTypeIO[T](path))(ParquetTypeIO.ReadParam(predicate, conf, skipClone))
 }
 trait ScioContextSyntax {
   implicit def parquetTypeScioContext(c: ScioContext): ScioContextOps = new ScioContextOps(c)

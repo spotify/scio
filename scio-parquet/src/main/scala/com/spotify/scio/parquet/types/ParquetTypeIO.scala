@@ -116,8 +116,8 @@ object ParquetTypeIO {
   }
   final case class ReadParam[T] private (
     predicate: FilterPredicate = null,
-    skipClone: Boolean = ReadParam.DefaultSkipClone,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    skipClone: Boolean = ReadParam.DefaultSkipClone
   )
 
   object WriteParam {
