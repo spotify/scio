@@ -26,7 +26,13 @@ import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
+import org.apache.beam.sdk.io.{
+  DefaultFilenamePolicy,
+  DynamicFileDestinations,
+  FileBasedSink,
+  FileSystems,
+  WriteFiles
+}
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
