@@ -21,17 +21,12 @@ import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
+import com.spotify.scio.parquet.types.ParquetTypeIO.ReadParam.DefaultSkipClone
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
-import org.apache.beam.sdk.io.{
-  DefaultFilenamePolicy,
-  DynamicFileDestinations,
-  FileBasedSink,
-  FileSystems,
-  WriteFiles
-}
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
@@ -46,8 +41,7 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
-  path: String,
-  skipClone: Boolean
+  path: String
 ) extends ScioIO[T] {
   override type ReadP = ParquetTypeIO.ReadParam[T]
   override type WriteP = ParquetTypeIO.WriteParam[T]
@@ -82,7 +76,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
         CoderMaterializer.beam(sc, Coder[T])
       )
       .withConfiguration(job.getConfiguration)
-      .withSkipValueClone(skipClone)
+      .withSkipValueClone(params.skipClone)
     sc.applyTransform(source).map(_.getValue)
   }
 
@@ -117,6 +111,7 @@ object ParquetTypeIO {
   }
   final case class ReadParam[T] private (
     predicate: FilterPredicate = null,
+    skipClone: Boolean = ReadParam.DefaultSkipClone,
     conf: Configuration = ReadParam.DefaultConfiguration
   )
 

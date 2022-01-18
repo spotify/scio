@@ -38,7 +38,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration
   ): SCollection[T] =
-    self.read(ParquetTypeIO[T](path, skipClone))(ParquetTypeIO.ReadParam(predicate, conf))
+    self.read(ParquetTypeIO[T](path))(ParquetTypeIO.ReadParam(predicate, skipClone, conf))
 }
 trait ScioContextSyntax {
   implicit def parquetTypeScioContext(c: ScioContext): ScioContextOps = new ScioContextOps(c)
