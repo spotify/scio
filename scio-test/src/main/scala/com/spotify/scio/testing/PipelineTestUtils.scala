@@ -21,11 +21,9 @@ import org.apache.beam.sdk.options._
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
-import org.slf4j.LoggerFactory
 
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
-  private[this] val logger = LoggerFactory.getLogger(this.getClass)
 
   /**
    * Test pipeline components with a [[ScioContext]].
