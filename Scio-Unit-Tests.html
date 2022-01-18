@@ -197,7 +197,6 @@ spotify/scio
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-windowing" class="header">Test for pipeline with windowing</a></li>
-    <li><a href="Scio-Unit-Tests.html#test-using-scalacheck-generators" class="header">Test using scalacheck generators</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -206,7 +205,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.3+0-e5da26c0+20220114-1346*
+<i class="md-icon" title="Version">label_outline</i> 0.11.4+0-96102140+20220118-1836*
 </label>
 </li>
 </ul>
@@ -226,7 +225,6 @@ spotify/scio
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-windowing" class="header">Test for pipeline with windowing</a></li>
-    <li><a href="Scio-Unit-Tests.html#test-using-scalacheck-generators" class="header">Test using scalacheck generators</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -355,27 +353,6 @@ spotify/scio
   }
 }</code></pre>
 <p>Scio provides more <code>SCollection</code> assertions such as <code>inWindow</code>, <code>inCombinedNonLatePanes</code>, <code>inFinalPane</code>, and <code>inOnlyPane</code>. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
-<h3><a href="#test-using-scalacheck-generators" name="test-using-scalacheck-generators" class="anchor"><span class="anchor-link"></span></a>Test using scalacheck generators</h3>
-<p>When using <code>org.scalacheck.Gen</code> to create test data in a pipeline test, use <code>withGen</code> to capture the random seed and print it on failure:</p>
-<pre class="prettyprint"><code class="language-scala mdoc">import org.scalacheck.Gen
-import com.spotify.scio.testing.PipelineSpec
-
-class MyClass extends PipelineSpec {
-    &quot;My pipeline&quot; should &quot;run with generated inputs&quot; in {
-        val inputGen = Gen.listOfN(10, Gen.choose(1, 10))
-        withGen(inputGen) { input =&gt;
-          throw new RuntimeException(&quot;woops&quot;)
-        }
-    }
-}
-// will log:
-// Failure at MyTest:3. Seed: m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=
-</code></pre>
-<p>To reproduce a test failure, a static seed can be passed as either a base-64 string or an <code>org.scalacheck.rng.Seed</code>:</p>
-<pre class="prettyprint"><code class="language-scala">withGen(inputGen, &quot;m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=&quot;) { input =&gt;
-  // ...
-}
-</code></pre>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/Scio-Unit-Tests.md" title="Edit this page" class="md-source-file md-edit">
@@ -384,7 +361,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.3+0-e5da26c0+20220114-1346*
+0.11.4+0-96102140+20220118-1836*
 </span>
 </div>
 </article>
