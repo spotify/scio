@@ -23,8 +23,6 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import org.slf4j.LoggerFactory
 
-import scala.util.Try
-
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)

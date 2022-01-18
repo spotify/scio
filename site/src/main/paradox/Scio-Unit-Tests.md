@@ -82,29 +82,3 @@ To run the test, we use the `runWithContext`, this will run calculateTeamScores 
 @@snip [LeaderBoardTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala) { #LeaderBoardTest_example_3 }
 
 Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLatePanes`, `inFinalPane`, and `inOnlyPane`. You can find the full list [here](https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html). More information on testing unbounded pipelines can be found [here](https://beam.apache.org/blog/2016/10/20/test-stream.html).
-
-### Test using scalacheck generators
-
-When using `org.scalacheck.Gen` to create test data in a pipeline test, use `withGen` to capture the random seed and print it on failure:
-```scala mdoc
-import org.scalacheck.Gen
-import com.spotify.scio.testing.PipelineSpec
-
-class MyClass extends PipelineSpec with GenTestUtils {
-    "My pipeline" should "run with generated inputs" in {
-        val inputGen = Gen.listOfN(10, Gen.choose(1, 10))
-        withGen(inputGen) { input =>
-          throw new RuntimeException("woops")
-        }
-    }
-}
-// will log:
-// Failure at MyTest:3. Seed: m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=
-```
-
-To reproduce a test failure, a static seed can be passed as either a base-64 string or an `org.scalacheck.rng.Seed`:
-```scala
-withGen(inputGen, "m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=") { input =>
-  // ...
-}
-```
