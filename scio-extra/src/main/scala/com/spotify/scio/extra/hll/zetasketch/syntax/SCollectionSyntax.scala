@@ -29,11 +29,11 @@ trait SCollectionSyntax {
      * types.
      *
      * @Example
-     * {{{
+     *   {{{
      *   val input: SCollection[T] = ...
      *   val zCol: SCollection[ZetaSketchHll[T]] = input.asZetaSketchHll
      *   val approxDistCount: SCollection[Long] = zCol.sumHll.approxDistinctCount
-     * }}}
+     *   }}}
      *
      * [[ZetaSketchHll]] has few extra methods to access precision, sparse precision.
      *
@@ -49,10 +49,10 @@ trait SCollectionSyntax {
      * Long, String and ByteString types.
      *
      * @Example
-     * {{{
+     *   {{{
      *   val input: SCollection[T] = ...
      *   val approxDistCount: SCollection[Long] = input.approxDistinctCountWithZetaHll
-     * }}}
+     *   }}}
      *
      * @return
      *   - [[SCollection]] with one [[Long]] value.
@@ -68,11 +68,11 @@ trait SCollectionSyntax {
      * and ByteString value types.
      *
      * @Example
-     * {{{
+     *   {{{
      *   val input: SCollection[(K, V)] = ...
      *   val zCol: SCollection[(K, ZetaSketchHll[V])] = input.asZetaSketchHllByKey
      *   val approxDistCount: SCollection[(K, Long)] = zCol.sumHllByKey.approxDistinctCountByKey
-     * }}}
+     *   }}}
      *
      * [[ZetaSketchHll]] has few extra methods to access precision, sparse precision.
      *
@@ -88,10 +88,10 @@ trait SCollectionSyntax {
      * Long, String and ByteString value types.
      *
      * @Example
-     * {{{
+     *   {{{
      *   val input: SCollection[(K, V)] = ...
      *   val approxDistCount: SCollection[(K, Long)] = input.approxDistinctCountWithZetaHllByKey
-     * }}}
+     *   }}}
      *
      * @return
      *   - [[SCollection]] with one [[Long]] value per each unique key.

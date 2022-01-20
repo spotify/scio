@@ -27,13 +27,13 @@ final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SColl
  * implicit conversion.
  *
  * @groupname cogroup
- *   CoGroup Operations
+ * CoGroup Operations
  * @groupname join
- *   Join Operations
+ * Join Operations
  * @groupname per_key
- *   Per Key Aggregations
+ * Per Key Aggregations
  * @groupname transform
- *   Transformations
+ * Transformations
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 

@@ -415,13 +415,13 @@ object ScioContext {
  * create SCollections and distributed caches on that cluster.
  *
  * @groupname dist_cache
- *   Distributed Cache
+ * Distributed Cache
  * @groupname in_memory
- *   In-memory Collections
+ * In-memory Collections
  * @groupname input
- *   Input Sources
+ * Input Sources
  * @groupname Ungrouped
- *   Other Members
+ * Other Members
  */
 class ScioContext private[scio] (
   val options: PipelineOptions,

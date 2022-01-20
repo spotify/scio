@@ -43,9 +43,9 @@ import com.spotify.scio.jdbc.JdbcConnectionOptions
  * @param shard
  *   An implementation of the [[com.spotify.scio.jdbc.sharded.Shard]] trait which knows how to shard
  *   a column of a type S. Example of sharding by a column of type Long:
- * {{{
+ *   {{{
  *               sc.jdbcShardedSelect(getShardedReadOptions(opts), Shard.range[Long])
- * }}}
+ *   }}}
  */
 final case class JdbcShardedReadOptions[T, S](
   connectionOptions: JdbcConnectionOptions,
