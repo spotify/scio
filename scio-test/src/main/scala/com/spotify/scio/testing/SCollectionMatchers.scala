@@ -307,7 +307,7 @@ trait SCollectionMatchers extends EqInstances {
    * early pane for each key.
    */
   def inEarlyPane[T: ClassTag, B: ClassTag](
-      window: BoundedWindow
+    window: BoundedWindow
   )(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
       case value: SingleMatcher[T, _] =>
