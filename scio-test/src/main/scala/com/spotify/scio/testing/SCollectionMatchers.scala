@@ -303,6 +303,20 @@ trait SCollectionMatchers extends EqInstances {
     }
 
   /**
+   * SCollection assertion only applied to the specified window, running the checker only on the
+   * early pane for each key.
+   */
+  def inEarlyPane[T: ClassTag, B: ClassTag](
+      window: BoundedWindow
+  )(matcher: MatcherBuilder[T]): Matcher[T] =
+    matcher match {
+      case value: SingleMatcher[T, _] =>
+        value.matcher(_.inEarlyPane(window))
+      case value: IterableMatcher[T, _] =>
+        value.matcher(_.inEarlyPane(window))
+    }
+
+  /**
    * SCollection assertion only applied to the specified window. The assertion expect outputs to be
    * produced to the provided window exactly once.
    */
