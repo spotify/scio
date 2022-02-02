@@ -48,8 +48,8 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "7.17.0"
-val elasticsearch7Version = "7.16.3"
+val elasticsearch6Version = "6.8.23"
+val elasticsearch7Version = "7.17.0"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.13.5"
 val gaxVersion = "2.6.1"
@@ -88,14 +88,14 @@ val metricsVersion = "3.2.6"
 val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.34.Final"
 val opencensusVersion = "0.28.0"
-val parquetExtraVersion = "0.4.2"
+val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.2"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.18.2"
 val scalacheckVersion = "1.15.4"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
-val scalatestVersion = "3.2.10"
+val scalatestVersion = "3.2.11"
 val shapelessVersion = "2.3.7"
 val slf4jVersion = "1.7.33"
 val sparkeyVersion = "3.2.1"
@@ -500,7 +500,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.2.10",
+      "org.scalactic" %% "scalactic" % "3.2.11",
       "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,

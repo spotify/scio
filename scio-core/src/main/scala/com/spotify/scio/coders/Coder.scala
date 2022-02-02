@@ -423,14 +423,14 @@ final private[scio] case class RecordCoder[T](
  *
  * The CoderGrammar can be used as follows:
  *   - To find the Coder being implicitly derived by Scio. (Debugging)
- * {{{
+ *     {{{
  *     def c: Coder[MyType] = Coder[MyType]
- * }}}
+ *     }}}
  *
  *   - To generate an implicit instance to be in scope for type T, use [[Coder.gen]]
- * {{{
+ *     {{{
  *     implicit def coderT: Coder[T] = Coder.gen[T]
- * }}}
+ *     }}}
  *
  * Note: Implicit Coders for all parameters of the constructor of type T should be in scope for
  * [[Coder.gen]] to be able to derive the Coder.
