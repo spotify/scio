@@ -32,7 +32,7 @@ import com.spotify.sparkey.CompressionType
  * we can't reuse the implementations there as SideInput[T] is not covariant over T.
  *
  * @groupname join
- *   Join Operations
+ * Join Operations
  */
 class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
 
@@ -61,11 +61,11 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * The right side must fit on disk. The SideInput can be used reused for multiple joins.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asLargeMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashJoin(si)
    *   val joined2 = pairSColl2Left.hashJoin(si)
-   * }}}
+   *   }}}
    *
    * @group join
    */
@@ -87,10 +87,10 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * Perform a left outer join by replicating `rhs` to all workers. The right side must fit on disk.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight
    *   val joined = pairSColl1Left.largeHashLeftOuterJoin(pairSCollRight)
-   * }}}
+   *   }}}
    * @group join
    * @param rhs
    *   The SCollection[(K, W)] treated as right side of the join.
@@ -111,11 +111,11 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * Perform a left outer join with a MultiMap `SideInput[SparkeyMap[K, Iterable[V]]`
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asLargeMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashLeftOuterJoin(si)
    *   val joined2 = pairSColl2Left.hashLeftOuterJoin(si)
-   * }}}
+   *   }}}
    * @group join
    */
   def largeHashLeftOuterJoin[W: Coder](
@@ -155,11 +155,11 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    * Perform a full outer join with a `SideInput[SparkeyMap[K, Iterable[W]]]`.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asLargeMultiMapSideInput
    *   val joined1 = pairSColl1Left.hashFullOuterJoin(si)
    *   val joined2 = pairSColl2Left.hashFullOuterJoin(si)
-   * }}}
+   *   }}}
    *
    * @group join
    */

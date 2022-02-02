@@ -43,13 +43,13 @@ private object PairSCollectionFunctions {
  * Extra functions available on SCollections of (key, value) pairs through an implicit conversion.
  *
  * @groupname cogroup
- *   CoGroup Operations
+ * CoGroup Operations
  * @groupname join
- *   Join Operations
+ * Join Operations
  * @groupname per_key
- *   Per Key Aggregations
+ * Per Key Aggregations
  * @groupname transform
- *   Transformations
+ * Transformations
  */
 class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   import TupleFunctions._
@@ -644,11 +644,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * [[ApproxDistinctCounter]] estimator.
    *
    * @example
-   * {{{
+   *   {{{
    *   val input: SCollection[(K, V)] = ...
    *   val distinctCount: SCollection[(K, Long)] =
    *       input.approximateDistinctCountPerKey(ApproximateUniqueCounter(sampleSize))
-   * }}}
+   *   }}}
    *
    * There are two known subclass of [[ApproxDistinctCounter]] available for HLL++ implementations
    * in the `scio-extra` module.
@@ -778,11 +778,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * SCollections.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asApproxFilterSideInput(BloomFilter, 1000000)
    *   val filtered1 = pairSColl1.sparseIntersectByKey(si)
    *   val filtered2 = pairSColl2.sparseIntersectByKey(si)
-   * }}}
+   *   }}}
    * @group per_key
    */
   def sparseIntersectByKey[AF <: ApproxFilter[K]](sideInput: SideInput[AF]): SCollection[(K, V)] =

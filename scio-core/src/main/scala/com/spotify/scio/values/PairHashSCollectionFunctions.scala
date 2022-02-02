@@ -24,7 +24,7 @@ import com.spotify.scio.coders.{BeamCoders, Coder}
  * implicit conversion.
  *
  * @groupname join
- *   Join Operations
+ * Join Operations
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
@@ -48,11 +48,11 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * The right side is tiny and fits in memory. The SideInput can be used reused for multiple joins.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asMultiMapSingletonSideInput
    *   val joined1 = pairSColl1Left.hashJoin(si)
    *   val joined2 = pairSColl2Left.hashJoin(si)
-   * }}}
+   *   }}}
    *
    * @group join
    */
@@ -77,10 +77,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * and fit in memory.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight  // Should be tiny
    *   val joined = pairSColl1Left.hashLeftOuterJoin(pairSCollRight)
-   * }}}
+   *   }}}
    * @group join
    * @param rhs
    *   The tiny SCollection[(K, W)] treated as right side of the join.
@@ -94,11 +94,11 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Perform a left outer join with a MultiMap `SideInput[Map[K, Iterable[V]]`
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asMultiMapSingletonSideInput
    *   val joined1 = pairSColl1Left.hashLeftOuterJoin(si)
    *   val joined2 = pairSColl2Left.hashLeftOuterJoin(si)
-   * }}}
+   *   }}}
    * @group join
    */
   def hashLeftOuterJoin[W](
@@ -131,11 +131,11 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Perform a full outer join with a `SideInput[Map[K, Iterable[W]]]`.
    *
    * @example
-   * {{{
+   *   {{{
    *   val si = pairSCollRight.asMultiMapSingletonSideInput
    *   val joined1 = pairSColl1Left.hashFullOuterJoin(si)
    *   val joined2 = pairSColl2Left.hashFullOuterJoin(si)
-   * }}}
+   *   }}}
    *
    * @group join
    */
