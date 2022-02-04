@@ -30,6 +30,8 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details** |
 |:----------------:|:----------------:|:------------|
+| 0.11.3           | 2.35.0           | This version will be deprecated on December 29, 2022. |
+| 0.11.2           | 2.34.0           | This version will be deprecated on November 11, 2022. |
 | 0.11.1           | 2.33.0           | This version will be deprecated on October 7, 2022. |
 | 0.11.0           | 2.32.0           | This version will be deprecated on August 25, 2022. |
 | 0.10.4+          | 2.30.0           | This version will be deprecated on June 10, 2022. |
@@ -56,6 +58,11 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 | 0.4.1+           | 2.1.0            | Deprecated as of August 23, 2018. |
 | 0.4.0            | 2.0.0            | Deprecated as of May 17, 2018. |
 | 0.3.0+           | 0.6.0            | Unsupported |
+
+## Beam dependencies
+
+Scio's other library dependencies are kept in sync with Beam's to avoid compatibility issues. You can find
+Beam's dependency list in its [Groovy config](https://github.com/apache/beam/blob/v2.35.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy) (substitute the version tag in the URL with the desired Beam version). Additionally, Beam keeps many of its Google dependencies in sync with a [central BOM](https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/24.0.0/artifact_details.html) (subsitute the version tag in the URL with the value of `google_cloud_platform_libraries_bom` from Beam). Scio users who suspect incompatibility issues in their pipelines (common issues are GRPC, Netty, or Guava) can run `sbt evicted` and `sbt dependencyTree` to ensure their direct and transitive dependencies don't conflict with Scio or Beam.
 
 ## Release cycle and backport procedures
 

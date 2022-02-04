@@ -1,5 +1,13 @@
 # Changelog
 
+## Important changes in 0.11.3
+- Fixed a severe Parquet IO issue introduced in 0.11.2. Incompatible versions of `com.google.http-client:google-http-client:1.40.0` and `com.google.cloud.bigdataoss:gcsio:2.2.2` were leading to jobs reading Parquet getting stuck. The mitigation for 0.11.2 is to pin `google-http-client` to `1.39.2` in your build.sbt:
+  ```scala
+    dependencyOverrides ++= Seq(
+    "com.google.http-client" % "google-http-client" % "1.39.2"
+    )
+  ```
+
 ## Breaking changes since Scio 0.10.0 (@ref:[v0.10.0 Migration Guide](migrations/v0.10.0-Migration-Guide.md))
 - Move GCP modules to `scio-google-cloud-platform`
 - Simplify coder implicits

@@ -99,7 +99,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
     val sc1 = ScioContext()
     val nestedRecords =
-      (1 to 10).map(x => new Account(x, x.toString, x.toString, x.toDouble))
+      (1 to 10).map(x => new Account(x, x.toString, x.toString, x.toDouble, AccountStatus.Active))
     sc1
       .parallelize(nestedRecords)
       .saveAsParquetAvroFile(dir.toString)

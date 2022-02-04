@@ -28,7 +28,7 @@ class ParquetExampleTest extends PipelineSpec {
 
   "ParquetExample" should "work for SpecificRecord input" in {
     val expected = ParquetExample.fakeData
-      .map(x => AccountProjection(x.getId, x.getName.toString))
+      .map(x => AccountProjection(x.getId, Some(x.getName.toString)))
       .map(_.toString)
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
@@ -40,7 +40,7 @@ class ParquetExampleTest extends PipelineSpec {
 
   it should "work for typed input" in {
     val input = ParquetExample.fakeData
-      .map(x => AccountProjection(x.getId, x.getName.toString))
+      .map(x => AccountProjection(x.getId, Some(x.getName.toString)))
 
     val expected = input.map(_.toString)
 
@@ -62,7 +62,7 @@ class ParquetExampleTest extends PipelineSpec {
 
   it should "work for typed output" in {
     val expected = ParquetExample.fakeData
-      .map(a => AccountFull(a.getId, a.getType.toString, a.getName.toString, a.getAmount))
+      .map(a => AccountFull(a.getId, a.getType.toString, Some(a.getName.toString), a.getAmount))
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--output=out.parquet", "--method=typedOut")

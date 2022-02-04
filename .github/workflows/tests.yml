@@ -31,9 +31,9 @@ jobs:
           - 11
         scala:
           - 2.12.15
-          - 2.13.7
+          - 2.13.8
         include:
-          - scala: 2.13.7
+          - scala: 2.13.8
             java: 11
             coverage: true
         exclude:
@@ -59,4 +59,4 @@ jobs:
           - 11
         scala:
           - 2.12.15
-          - 2.13.7
+          - 2.13.8

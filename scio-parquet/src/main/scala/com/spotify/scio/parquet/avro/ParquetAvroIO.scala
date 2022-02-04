@@ -26,6 +26,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
@@ -45,7 +46,6 @@ import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import java.lang.{Boolean => JBoolean}
-
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.Either
@@ -200,6 +200,16 @@ object ParquetAvroIO {
       job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
       job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
       job.getConfiguration.setClass("value.class", avroClass, avroClass)
+
+      // Needed to make GenericRecord read by parquet-avro work with Beam's
+      // org.apache.beam.sdk.coders.AvroCoder.
+      if (ScioUtil.classOf[A] == classOf[GenericRecord]) {
+        job.getConfiguration.setBoolean("parquet.avro.compatible", false)
+        job.getConfiguration.set(
+          "parquet.avro.data.supplier",
+          "org.apache.parquet.avro.GenericDataSupplier"
+        )
+      }
 
       AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
       if (projection != null) {

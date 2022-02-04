@@ -109,12 +109,24 @@ object DistCacheJob {
   }
 }
 
+object SourceTransformOverrideJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    // #JobTestTest_example_4
+    sc.withName("ReadInput")
+      .textFile(args("input"))
+    // #JobTestTest_example_4
+      .saveAsTextFile(args("output"))
+    sc.run()
+    ()
+  }
+}
+
 object TransformOverrideJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.textFile(args("input"))
       .map(_.toInt)
-      // #JobTestTest_example_1
       .applyTransform(
         "myTransform",
         ParDo.of(
@@ -126,7 +138,6 @@ object TransformOverrideJob {
           }
         )
       )
-      // #JobTestTest_example_1
       .saveAsTextFile(args("output"))
     sc.run()
     ()
@@ -136,22 +147,13 @@ object TransformOverrideJob {
 object TransformOverrideKVJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    // #JobTestTest_example_1
     sc.textFile(args("input"))
       .map(_.toInt)
       .applyTransform("myTransform", ParDo.of(new GuavaLookupDoFn))
       .map(_.getValue.get())
       .saveAsTextFile(args("output"))
-    sc.run()
-    ()
-  }
-}
-
-object SourceTransformOverrideJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.withName("ReadInput")
-      .textFile(args("input"))
-      .saveAsTextFile(args("output"))
+    // #JobTestTest_example_1
     sc.run()
     ()
   }
@@ -895,12 +897,15 @@ class JobTestTest extends PipelineSpec {
   }
 
   "transformOverride" should "pass with a source override" in {
-    val expected = List("10", "11", "12")
     JobTest[SourceTransformOverrideJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
-      .transformOverride(TransformOverride.ofSource[String]("ReadInput", expected))
-      .output(TextIO("out.txt"))(_ should containInAnyOrder(expected))
+      .transformOverride(
+        // #JobTestTest_example_5
+        TransformOverride.ofSource[String]("ReadInput", List("10", "11", "12"))
+        // #JobTestTest_example_5
+      )
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "11", "12")))
       .run()
   }
 
@@ -908,14 +913,12 @@ class JobTestTest extends PipelineSpec {
     JobTest[TransformOverrideJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
-      // #JobTestTest_example_2
       .transformOverride(
         TransformOverride.of[Int, String](
           "myTransform",
           Map(1 -> "10", 2 -> "20", 3 -> "30")
         )
       )
-      // #JobTestTest_example_2
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
       .run()
   }
@@ -924,14 +927,12 @@ class JobTestTest extends PipelineSpec {
     JobTest[TransformOverrideJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
-      // #JobTestTest_example_2
       .transformOverride(
         TransformOverride.of[Int, String](
           "myTransform",
           (i: Int) => s"${i * 10}"
         )
       )
-      // #JobTestTest_example_2
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
       .run()
   }
@@ -969,12 +970,14 @@ class JobTestTest extends PipelineSpec {
     JobTest[TransformOverrideKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
+      // #JobTestTest_example_2
       .transformOverride(
         TransformOverride.ofAsyncLookup[Int, String](
           "myTransform",
           Map(1 -> "10", 2 -> "20", 3 -> "30")
         )
       )
+      // #JobTestTest_example_2
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
       .run()
   }
@@ -984,10 +987,12 @@ class JobTestTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
       .transformOverride(
+        // #JobTestTest_example_3
         TransformOverride.ofAsyncLookup[Int, String](
           "myTransform",
           (i: Int) => s"${i * 10}"
         )
+        // #JobTestTest_example_3
       )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
       .run()

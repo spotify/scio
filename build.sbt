@@ -48,10 +48,10 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
-val elasticsearch6Version = "6.8.22"
-val elasticsearch7Version = "7.16.2"
+val elasticsearch6Version = "6.8.23"
+val elasticsearch7Version = "7.17.0"
 val featranVersion = "0.8.0-RC2"
-val flinkVersion = "1.12.1"
+val flinkVersion = "1.13.5"
 val gaxVersion = "2.6.1"
 val gcsVersion = "2.1.0"
 val generatedGrpcBetaVersion = "1.22.0"
@@ -66,7 +66,7 @@ val googleCloudCoreVersion = "1.94.6"
 val googleCloudSpannerVersion = "6.12.1"
 val googleHttpClientsVersion = "1.40.1"
 val googleOauthClientVersion = "1.31.4"
-val grpcVersion = "1.41.0"
+val grpcVersion = "1.41.1"
 val guavaVersion = "31.0.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
@@ -88,16 +88,16 @@ val metricsVersion = "3.2.6"
 val nettyVersion = "4.1.52.Final"
 val nettyTcNativeVersion = "2.0.34.Final"
 val opencensusVersion = "0.28.0"
-val parquetExtraVersion = "0.4.2"
+val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.2"
 val protobufGenericVersion = "0.2.9"
 val protobufVersion = "3.18.2"
 val scalacheckVersion = "1.15.4"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
-val scalatestVersion = "3.2.10"
+val scalatestVersion = "3.2.11"
 val shapelessVersion = "2.3.7"
-val slf4jVersion = "1.7.32"
+val slf4jVersion = "1.7.33"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.8"
 val tensorFlowVersion = "0.3.3"
@@ -143,7 +143,7 @@ val commonSettings = Def
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
-    scalaVersion := "2.13.7",
+    scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.15", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions := Scalac.docOptions.value,
@@ -310,15 +310,17 @@ lazy val sparkRunnerDependencies = Seq(
   "org.apache.spark" %% "spark-streaming" % sparkVersion
 )
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.12" % beamVersion excludeAll (
+  "org.apache.beam" % "beam-runners-flink-1.13" % beamVersion excludeAll (
     ExclusionRule("com.twitter", "chill_2.11"),
     ExclusionRule("org.apache.flink", "flink-clients_2.11"),
     ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
-    ExclusionRule("org.apache.flink", "flink-streaming-java_2.11")
+    ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+    ExclusionRule("org.apache.flink", "flink-optimizer_2.11")
   ),
   "org.apache.flink" %% "flink-clients" % flinkVersion,
   "org.apache.flink" %% "flink-runtime" % flinkVersion,
-  "org.apache.flink" %% "flink-streaming-java" % flinkVersion
+  "org.apache.flink" %% "flink-streaming-java" % flinkVersion,
+  "org.apache.flink" %% "flink-optimizer" % flinkVersion
 )
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
@@ -430,11 +432,12 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
-      "org.apache.beam" % "beam-runners-flink-1.12" % beamVersion % Provided excludeAll (
+      "org.apache.beam" % "beam-runners-flink-1.13" % beamVersion % Provided excludeAll (
         ExclusionRule("com.twitter", "chill_2.11"),
         ExclusionRule("org.apache.flink", "flink-clients_2.11"),
         ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
-        ExclusionRule("org.apache.flink", "flink-streaming-java_2.11")
+        ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+        ExclusionRule("org.apache.flink", "flink-optimizer_2.11")
       ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
@@ -497,7 +500,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.2.10",
+      "org.scalactic" %% "scalactic" % "3.2.11",
       "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
@@ -882,6 +885,7 @@ lazy val `scio-examples`: Project = project
   .in(file("scio-examples"))
   .settings(commonSettings)
   .settings(soccoSettings)
+  .settings(itSettings)
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
@@ -902,7 +906,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.27",
+      "mysql" % "mysql-connector-java" % "8.0.28",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
@@ -940,6 +944,7 @@ lazy val `scio-examples`: Project = project
       ForkOptions().withRunJVMOptions((Test / javaOptions).value.toVector)
     )
   )
+  .configs(IntegrationTest)
   .dependsOn(
     `scio-core`,
     `scio-google-cloud-platform`,
@@ -1221,7 +1226,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.6").cross(CrossVersion.full)),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.7").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {

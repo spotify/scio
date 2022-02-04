@@ -83,47 +83,42 @@ To run the test, we use the `runWithContext`, this will run calculateTeamScores 
 
 Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLatePanes`, `inFinalPane`, and `inOnlyPane`. You can find the full list [here](https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html). More information on testing unbounded pipelines can be found [here](https://beam.apache.org/blog/2016/10/20/test-stream.html).
 
-### Test using scalacheck generators
+### Test with transform overrides
 
-When using `org.scalacheck.Gen` to create test data in a pipeline test, use `withGen` to capture the random seed and print it on failure:
-```scala mdoc
-val inputGen = Gen.listOfN(10, Gen.choose(1, 10))
-withGen(inputGen) { input =>
-  throw new RuntimeException("woops")
-}
-// will log:
-// Failure at MyTest:3. Seed: m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=
-```
+Scio provides a method to replace arbitrary _named_ `PTransform`s in a test context; this is primarily useful for mocking requests to external services.
 
-To reproduce a test failure, a static seed can be passed as either a base-64 string or an `org.scalacheck.rng.Seed`:
-```scala mdoc
-withGen(inputGen, "m82pUlOaHUcyWDadIbOIdEOR7GW4ebmN1oR0a0vbLpG=") { input =>
-  // ...
-}
-```
-
-### Test with asynchronous DoFns (or other PTransforms)
-
-Scio provides a method to mock an arbitrary, _named_, `PTransform` in a test context.
-This is primarily useful for mocking requests to external services.
-
-In this example, the `GuavaAsyncDoFn` stands in for a transform that contacts an external service.
-The `DoFn` is integrated into the pipeline by creating a `ParDo` `PTransform` by way of `ParDo.of` and then applying the transform to the pipeline via `applyTransform`.
+In this example, the `GuavaLookupDoFn` stands in for a transform that contacts an external service.
+A `ParDo` `PTransform` is created from the `DoFn` (`ParDo.of`), then applied to the pipeline (`applyTransform`) with a unique name (`myTransform`).
 
 @@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_1 }
 
-In a `JobTest`, the `mockTransform` method can be used to replace the results of a named `PTransform` with mock data:
+In a `JobTest`, a `PTransformOverride` can be passed to the `transformOverride` method to replace transforms in the original pipeline.
+Scio provides convenience methods for constructing `PTransformOverride`s in the `com.spotify.scio.testing.TransformOverride` object.
+Continuing the example above, `TransformOverride.ofAsyncLookup` can be used to map static mock data into the expected output format
+for the transform, here `KV[Int, BaseAsyncLookupDoFn.Try[String]]`.
 
 @@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_2 }
 
-Due to type erasure it is possible to provide the incorrect types for the input or output of the transform and the error will not be caught until runtime.
-In this case, an `IllegalArgumentException` will be thrown wrapping a `ClassCastException` whose message contains the correct type:
+It is also possible to provide a function rather than a static map:
+
+@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_3 }
+
+`TransformOverride.of` overrides transforms of type `PTransform[PCollection[T], PCollection[U]]` as in the case of `BaseAsyncDoFn` subclasses.
+`TransformOverride.ofKV` overrides transforms of type `PTransform[PCollection[T], PCollection[KV[T, U]]]`.
+
+Sources can also be overridden with `TransformOverride.ofSource`. For example, this source:
+
+@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_4 }
+
+Can be overridden with static mock data:
+
+@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_5 }
+
+Due to type erasure it is possible to provide the incorrect types for the transform and the error will not be caught until runtime.
+Typically a `ClassCastException` will be thrown whose message contains the correct type:
 
 ```
-java.lang.IllegalArgumentException: Input for mock transform myTransform does not match pipeline transform. Found: class java.lang.String
-  at com.spotify.scio.testing.TestTransform.apply(TestDataManager.scala:159)
-  ...
-Cause: java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Integer
+java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Integer
   at org.apache.beam.sdk.coders.VarIntCoder.encode(VarIntCoder.java:33)
   ...
 ```

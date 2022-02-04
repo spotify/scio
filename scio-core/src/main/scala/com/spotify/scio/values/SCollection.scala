@@ -105,17 +105,17 @@ object SCollection {
  * operations available only on SCollections of `Double`s.
  *
  * @groupname collection
- *   Collection Operations
+ * Collection Operations
  * @groupname hash
- *   Hash Operations
+ * Hash Operations
  * @groupname output
- *   Output Sinks
+ * Output Sinks
  * @groupname side
- *   Side Input and Output Operations
+ * Side Input and Output Operations
  * @groupname transform
- *   Transformations
+ * Transformations
  * @groupname window
- *   Windowing Operations
+ * Windowing Operations
  */
 sealed trait SCollection[T] extends PCollectionWrapper[T] {
   self =>
@@ -541,10 +541,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * the [[ApproxDistinctCounter]] estimator.
    *
    * @Example
-   * {{{
+   *   {{{
    *   val input: SCollection[T] = ...
    *   val distinctCount: SCollection[Long] = input.countApproxDistinct(ApproximateUniqueCounter(sampleSize))
-   * }}}
+   *   }}}
    *
    * There are two different HLL++ implementations available in the `scio-extra` module.
    *   - [[com.spotify.scio.extra.hll.sketching.SketchHllPlusPlus]]

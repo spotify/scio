@@ -6,8 +6,16 @@
     "fields": [
         {"name": "id", "type": "int"},
         {"name": "type", "type": "string"},
-        {"name": "name", "type": "string"},
-        {"name": "amount", "type": "double"}
+        {"name": "name", "type": ["null", "string"]},
+        {"name": "amount", "type": "double"},
+        {
+         "name": "account_status",
+         "type": [
+              "null",
+              {"type": "enum", "name": "AccountStatus", "symbols": ["Active", "Inactive"]}
+           ],
+         "default": null
+        }
     ]
 }, {
     "type": "record",

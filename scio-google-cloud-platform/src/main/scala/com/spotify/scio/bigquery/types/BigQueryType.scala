@@ -45,13 +45,13 @@ import scala.util.Try
  * | DATETIME   | DATETIME     | `org.joda.time.LocalDateTime`                   |
  *
  * @groupname trait
- *   Traits for annotated types
+ * Traits for annotated types
  * @groupname annotation
- *   Type annotations
+ * Type annotations
  * @groupname converters
- *   Converters
+ * Converters
  * @groupname Ungrouped
- *   Other Members
+ * Other Members
  */
 object BigQueryType {
 
