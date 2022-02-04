@@ -165,6 +165,7 @@ private[scio] object TestDataManager {
     inputs.remove(testId).foreach(_.validate())
     outputs.remove(testId).foreach(_.validate())
     distCaches.remove(testId).get.validate()
+    transformOverrides.remove(testId)
     ensureClosed(testId)
     val result = results.remove(testId).get
     f(result)
@@ -183,7 +184,7 @@ private[scio] object TestDataManager {
   }
 
   def overrideTransforms(testId: String, pipeline: Pipeline): Unit =
-    transformOverrides(testId).overrideTransforms(pipeline)
+    transformOverrides.get(testId).foreach(_.overrideTransforms(pipeline))
 }
 
 case class DistCacheIO[T](uri: String)
