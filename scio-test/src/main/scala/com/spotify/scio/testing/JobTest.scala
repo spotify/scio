@@ -23,6 +23,7 @@ import com.spotify.scio.io.ScioIO
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
+import org.apache.beam.sdk.runners.PTransformOverride
 import org.apache.beam.sdk.testing.TestStream
 import org.apache.beam.sdk.{metrics => beam}
 
@@ -79,7 +80,7 @@ object JobTest {
     counters: Set[MetricsAssertion[beam.Counter, Long]] = Set.empty,
     distributions: Set[MetricsAssertion[beam.Distribution, beam.DistributionResult]] = Set.empty,
     gauges: Set[MetricsAssertion[beam.Gauge, beam.GaugeResult]] = Set.empty,
-    mockTransforms: Map[String, Map[_, _]] = Map.empty,
+    transformOverrides: Set[PTransformOverride] = Set.empty,
     wasRunInvoked: Boolean = false
   )
 
@@ -173,24 +174,13 @@ object JobTest {
     }
 
     /**
-     * Replace a PTransform in the pipeline being tested. `xform.name` must match the name used for
-     * `applyTransform` in the pipeline. If `T` or `U` do not match the pipeline transform types, an
-     * error will be thrown at runtime.
+     * Replace a PTransform in the pipeline being tested.
      *
-     * @param xform
-     * @param value
-     *   A mapping of input to output data
-     * @tparam T
-     *   input type of the transform
-     * @tparam U
-     *   output type of the transform
+     * @param xformOverride
+     *   A [[org.apache.beam.sdk.runners.PTransformOverride PTransformOverride]]
      */
-    def mockTransform[T, U](xform: MockTransform[T, U], value: Map[T, U]): Builder = {
-      require(
-        !state.mockTransforms.contains(xform.name),
-        "Duplicate mock transform name: " + xform.name
-      )
-      state = state.copy(mockTransforms = state.mockTransforms + (xform.name -> value))
+    def transformOverride(xformOverride: PTransformOverride): Builder = {
+      state = state.copy(transformOverrides = state.transformOverrides + xformOverride)
       this
     }
 
@@ -318,7 +308,7 @@ object JobTest {
         state.input,
         state.output,
         state.distCaches,
-        state.mockTransforms
+        state.transformOverrides
       )
 
     /**

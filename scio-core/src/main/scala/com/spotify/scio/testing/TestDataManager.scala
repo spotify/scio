@@ -17,18 +17,13 @@
 
 package com.spotify.scio.testing
 
-import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ScioIO
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.scio.transforms.GuavaAsyncDoFn
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.sdk.coders
+import org.apache.beam.sdk.runners.PTransformOverride
+import org.apache.beam.sdk.Pipeline
 import org.apache.beam.sdk.testing.TestStream
-import org.apache.beam.sdk.transforms.{PTransform, ParDo}
-import org.apache.beam.sdk.values.PCollection
-import org.apache.commons.io.output.NullOutputStream
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
@@ -127,61 +122,8 @@ private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   }
 }
 
-private[scio] class TestTransform(val m: Map[String, Map[_, _]]) {
-  val s: MSet[String] =
-    java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
-
-  def apply[T, U](
-    t: MockTransform[T, U],
-    tCoder: coders.Coder[T],
-    uCoder: coders.Coder[U]
-  ): Option[PTransform[_ >: PCollection[T], PCollection[U]]] = {
-    val key = t.name
-    if (!m.contains(key)) {
-      None
-    } else {
-      require(!s.contains(key), s"Mock transform $key has already been used once.")
-      s.add(key)
-      val xxx = m(key)
-      if (xxx.nonEmpty) {
-        try {
-          tCoder.encode(xxx.keys.head.asInstanceOf[T], NullOutputStream.NULL_OUTPUT_STREAM)
-        } catch {
-          case e: ClassCastException =>
-            throw new IllegalArgumentException(
-              s"Input for mock transform $key does not match pipeline transform. Found: ${xxx.keys.head.getClass}",
-              e
-            )
-        }
-        try {
-          uCoder.encode(xxx.values.head.asInstanceOf[U], NullOutputStream.NULL_OUTPUT_STREAM)
-        } catch {
-          case e: ClassCastException =>
-            throw new IllegalArgumentException(
-              s"Output for mock transform $key does not match pipeline transform. Found: ${xxx.values.head.getClass}",
-              e
-            )
-        }
-      }
-      val values = xxx.asInstanceOf[Map[T, U]]
-      val xform: Option[PTransform[_ >: PCollection[T], PCollection[U]]] = Some(
-        ParDo.of(
-          new GuavaAsyncDoFn[T, U, Unit]() {
-            override def processElement(input: T): ListenableFuture[U] =
-              Futures.immediateFuture(values(input))
-            override def getResourceType: ResourceType = ResourceType.PER_CLASS
-            override def createResource(): Unit = ()
-          }
-        )
-      )
-      xform
-    }
-  }
-
-  def validate(): Unit = {
-    val d = m.keySet -- s
-    require(d.isEmpty, "Unmatched mock transform: " + d.mkString(", "))
-  }
+private[scio] class TestTransform(val overrides: Set[PTransformOverride]) {
+  def overrideTransforms(pipeline: Pipeline): Unit = pipeline.replaceAll(overrides.toList.asJava)
 }
 
 private[scio] object TestDataManager {
@@ -190,7 +132,7 @@ private[scio] object TestDataManager {
   private val distCaches = TrieMap.empty[String, TestDistCache]
   private val closed = TrieMap.empty[String, Boolean]
   private val results = TrieMap.empty[String, ScioResult]
-  private val mockedTransforms = TrieMap.empty[String, TestTransform]
+  private val transformOverrides = TrieMap.empty[String, TestTransform]
 
   private def getValue[V](key: String, m: TrieMap[String, V], ioMsg: String): V = {
     require(m.contains(key), s"Missing test data. Are you $ioMsg outside of JobTest?")
@@ -206,26 +148,23 @@ private[scio] object TestDataManager {
   def getDistCache(testId: String): TestDistCache =
     getValue(testId, distCaches, "using dist cache")
 
-  def getTransform(testId: String): Option[TestTransform] = mockedTransforms.get(testId)
-
   def setup(
     testId: String,
     ins: Map[String, JobInputSource[_]],
     outs: Map[String, SCollection[_] => Any],
     dcs: Map[DistCacheIO[_], _],
-    xforms: Map[String, Map[_, _]]
+    xformOverrides: Set[PTransformOverride]
   ): Unit = {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))
     distCaches += (testId -> new TestDistCache(dcs))
-    mockedTransforms += (testId -> new TestTransform(xforms))
+    transformOverrides += (testId -> new TestTransform(xformOverrides))
   }
 
   def tearDown(testId: String, f: ScioResult => Unit = _ => ()): Unit = {
     inputs.remove(testId).foreach(_.validate())
     outputs.remove(testId).foreach(_.validate())
     distCaches.remove(testId).get.validate()
-    mockedTransforms.remove(testId).foreach(_.validate())
     ensureClosed(testId)
     val result = results.remove(testId).get
     f(result)
@@ -242,6 +181,9 @@ private[scio] object TestDataManager {
     require(closed(testId), "ScioContext was not executed. Did you forget .run()?")
     closed -= testId
   }
+
+  def overrideTransforms(testId: String, pipeline: Pipeline): Unit =
+    transformOverrides(testId).overrideTransforms(pipeline)
 }
 
 case class DistCacheIO[T](uri: String)
@@ -250,5 +192,3 @@ object DistCacheIO {
   def apply[T](uris: Seq[String]): DistCacheIO[T] =
     DistCacheIO(uris.mkString("\t"))
 }
-
-case class MockTransform[T, U](name: String)

@@ -29,7 +29,7 @@ import com.spotify.scio.estimators.{
 }
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
-import com.spotify.scio.testing.{MockTransform, TestDataManager}
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -192,24 +192,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
     val coder = CoderMaterializer.beam(context, Coder[U])
-    val xform: PTransform[_ >: PCollection[T], PCollection[U]] = {
-      if (!context.isTest) {
-        transform
-      } else {
-        val id = context.testId.get
-        val optXForm = TestDataManager
-          .getTransform(id)
-          .flatMap { t =>
-            t.apply[T, U](
-              MockTransform[T, U](name),
-              internal.getCoder,
-              coder
-            )
-          }
-        optXForm.getOrElse(transform)
-      }
-    }
-    ensureSerializable(coder).fold(throw _, pApply(name, xform).setCoder)
+    ensureSerializable(coder).fold(throw _, pApply(name, transform).setCoder)
   }
 
   private[scio] def pApply[U](
