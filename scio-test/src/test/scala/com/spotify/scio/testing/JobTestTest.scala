@@ -115,7 +115,7 @@ object SourceTransformOverrideJob {
     // #JobTestTest_example_4
     sc.withName("ReadInput")
       .textFile(args("input"))
-    // #JobTestTest_example_4
+      // #JobTestTest_example_4
       .saveAsTextFile(args("output"))
     sc.run()
     ()
