@@ -122,17 +122,13 @@ private[scio] class TestDistCache(val m: Map[DistCacheIO[_], _]) {
   }
 }
 
-private[scio] class TestTransform(val overrides: Set[PTransformOverride]) {
-  def overrideTransforms(pipeline: Pipeline): Unit = pipeline.replaceAll(overrides.toList.asJava)
-}
-
 private[scio] object TestDataManager {
   private val inputs = TrieMap.empty[String, TestInput]
   private val outputs = TrieMap.empty[String, TestOutput]
   private val distCaches = TrieMap.empty[String, TestDistCache]
   private val closed = TrieMap.empty[String, Boolean]
   private val results = TrieMap.empty[String, ScioResult]
-  private val transformOverrides = TrieMap.empty[String, TestTransform]
+  private val transformOverrides = TrieMap.empty[String, Set[PTransformOverride]]
 
   private def getValue[V](key: String, m: TrieMap[String, V], ioMsg: String): V = {
     require(m.contains(key), s"Missing test data. Are you $ioMsg outside of JobTest?")
@@ -158,7 +154,7 @@ private[scio] object TestDataManager {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))
     distCaches += (testId -> new TestDistCache(dcs))
-    transformOverrides += (testId -> new TestTransform(xformOverrides))
+    transformOverrides += (testId -> xformOverrides)
   }
 
   def tearDown(testId: String, f: ScioResult => Unit = _ => ()): Unit = {
@@ -183,8 +179,11 @@ private[scio] object TestDataManager {
     closed -= testId
   }
 
-  def overrideTransforms(testId: String, pipeline: Pipeline): Unit =
-    transformOverrides.get(testId).foreach(_.overrideTransforms(pipeline))
+  def overrideTransforms(testId: String, pipeline: Pipeline): Unit = {
+    transformOverrides.get(testId).foreach { overrides =>
+      pipeline.replaceAll(overrides.toList.asJava)
+    }
+  }
 }
 
 case class DistCacheIO[T](uri: String)
