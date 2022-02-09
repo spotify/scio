@@ -899,7 +899,7 @@ class JobTestTest extends PipelineSpec {
   "transformOverride" should "pass with a source override" in {
     JobTest[SourceTransformOverrideJob.type]
       .args("--input=in.txt", "--output=out.txt")
-      .input(TextIO("in.txt"), Seq("1", "2", "3"))
+      .input(TextIO("in.txt"), Seq.empty[String]) // still required for pipeline construction
       .transformOverride(
         // #JobTestTest_example_5
         TransformOverride.ofSource[String]("ReadInput", List("10", "11", "12"))
@@ -923,7 +923,7 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass with an function override" in {
+  it should "pass with a function override" in {
     JobTest[TransformOverrideJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
@@ -935,6 +935,66 @@ class JobTestTest extends PipelineSpec {
       )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
       .run()
+  }
+
+  it should "fail with an incorrect override output type" in {
+    an[ClassCastException] should be thrownBy {
+      try {
+        JobTest[TransformOverrideJob.type]
+          .args("--input=in.txt", "--output=out.txt")
+          .input(TextIO("in.txt"), Seq("1", "2"))
+          .transformOverride(
+            TransformOverride.of[Int, Int](
+              "myTransform",
+              Map(1 -> 10, 2 -> 20, 3 -> 30)
+            )
+          )
+          .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+          .run()
+      } catch {
+        case e: PipelineExecutionException => throw Option(e.getCause).getOrElse(e)
+      }
+    }
+  }
+
+  it should "fail with an incorrect override input type" in {
+    an[IllegalArgumentException] should be thrownBy {
+      try {
+        JobTest[TransformOverrideJob.type]
+          .args("--input=in.txt", "--output=out.txt")
+          .input(TextIO("in.txt"), Seq("1", "2"))
+          .transformOverride(
+            TransformOverride.of[String, String](
+              "myTransform",
+              Map("10" -> "10")
+            )
+          )
+          .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+          .run()
+      } catch {
+        case e: PipelineExecutionException => throw Option(e.getCause).getOrElse(e)
+      }
+    }
+  }
+
+  it should "fail with an incorrect function override input type" in {
+    an[IllegalArgumentException] should be thrownBy {
+      try {
+        JobTest[TransformOverrideJob.type]
+          .args("--input=in.txt", "--output=out.txt")
+          .input(TextIO("in.txt"), Seq("1", "2"))
+          .transformOverride(
+            TransformOverride.of[String, String](
+              "myTransform",
+              (i: String) => s"${i.toInt * 10}"
+            )
+          )
+          .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+          .run()
+      } catch {
+        case e: PipelineExecutionException => throw Option(e.getCause).getOrElse(e)
+      }
+    }
   }
 
   it should "pass with a KV override" in {

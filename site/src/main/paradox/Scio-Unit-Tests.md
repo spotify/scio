@@ -115,7 +115,17 @@ Can be overridden with static mock data:
 @@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_5 }
 
 Due to type erasure it is possible to provide the incorrect types for the transform and the error will not be caught until runtime.
-Typically a `ClassCastException` will be thrown whose message contains the correct type:
+
+If you've specified the incorrect input type, scio will attempt to detect the error and throw an `IllegalArgumentException`,
+which will be wrapped in a `PipelineExecutionException` at runtime:
+```
+org.apache.beam.sdk.Pipeline$PipelineExecutionException:
+    java.lang.IllegalArgumentException:
+        Input for override transform myTransform does not match pipeline transform. Expected: class java.lang.Integer Found: class java.lang.String
+```
+
+If you've specified the incorrect output type, there is little scio can do to detect the error.
+Typically, a coder will throw a `ClassCastException` whose message will contain the correct type:
 
 ```
 java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Integer
