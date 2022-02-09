@@ -35,6 +35,7 @@ import org.scalatest.exceptions.TestFailedException
 import scala.io.Source
 import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge}
 import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.values.KV
 
 object ObjectFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -154,6 +155,31 @@ object TransformOverrideKVJob {
       .map(_.getValue.get())
       .saveAsTextFile(args("output"))
     // #JobTestTest_example_1
+    sc.run()
+    ()
+  }
+}
+
+object TransformOverrideKVJobFail {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.textFile(args("input"))
+      .map(_.toInt)
+      .applyTransform(ParDo.of(new GuavaLookupDoFn))
+      .applyTransform(
+        "myTransform",
+        ParDo.of(
+          new GuavaAsyncDoFn[KV[Int, BaseAsyncLookupDoFn.Try[String]], String, Unit]() {
+            override def processElement(
+              input: KV[Int, BaseAsyncLookupDoFn.Try[String]]
+            ): ListenableFuture[String] =
+              Futures.immediateFuture(input.getValue.get())
+            override def getResourceType: ResourceType = ResourceType.PER_CLASS
+            override def createResource(): Unit = ()
+          }
+        )
+      )
+      .saveAsTextFile(args("output"))
     sc.run()
     ()
   }
@@ -937,26 +963,6 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "fail with an incorrect override output type" in {
-    an[ClassCastException] should be thrownBy {
-      try {
-        JobTest[TransformOverrideJob.type]
-          .args("--input=in.txt", "--output=out.txt")
-          .input(TextIO("in.txt"), Seq("1", "2"))
-          .transformOverride(
-            TransformOverride.of[Int, Int](
-              "myTransform",
-              Map(1 -> 10, 2 -> 20, 3 -> 30)
-            )
-          )
-          .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
-          .run()
-      } catch {
-        case e: PipelineExecutionException => throw Option(e.getCause).getOrElse(e)
-      }
-    }
-  }
-
   it should "fail with an incorrect override input type" in {
     an[IllegalArgumentException] should be thrownBy {
       try {
@@ -987,6 +993,48 @@ class JobTestTest extends PipelineSpec {
             TransformOverride.of[String, String](
               "myTransform",
               (i: String) => s"${i.toInt * 10}"
+            )
+          )
+          .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+          .run()
+      } catch {
+        case e: PipelineExecutionException => throw Option(e.getCause).getOrElse(e)
+      }
+    }
+  }
+
+  it should "fail differently with an incorrect override generic input type" in {
+    // this test describes rather than prescribes current behavior, ideally we would throw IllegalArgumentException
+    an[ClassCastException] should be thrownBy {
+      try {
+        JobTest[TransformOverrideKVJobFail.type]
+          .args("--input=in.txt", "--output=out.txt")
+          .input(TextIO("in.txt"), Seq("1", "2"))
+          .transformOverride(
+            TransformOverride.of[KV[String, BaseAsyncLookupDoFn.Try[Int]], String](
+              "myTransform",
+              (i: KV[String, BaseAsyncLookupDoFn.Try[Int]]) => s"${i.getValue.get() * 10}"
+            )
+          )
+          .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+          .run()
+      } catch {
+        case e: PipelineExecutionException => throw Option(e.getCause).getOrElse(e)
+      }
+    }
+  }
+
+  it should "fail with an incorrect override output type" in {
+    // this test describes rather than prescribes current behavior, ideally we would throw IllegalArgumentException
+    an[ClassCastException] should be thrownBy {
+      try {
+        JobTest[TransformOverrideJob.type]
+          .args("--input=in.txt", "--output=out.txt")
+          .input(TextIO("in.txt"), Seq("1", "2"))
+          .transformOverride(
+            TransformOverride.of[Int, Int](
+              "myTransform",
+              Map(1 -> 10, 2 -> 20, 3 -> 30)
             )
           )
           .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))

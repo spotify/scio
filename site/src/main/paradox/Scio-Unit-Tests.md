@@ -120,15 +120,15 @@ If you've specified the incorrect input type, scio will attempt to detect the er
 which will be wrapped in a `PipelineExecutionException` at runtime:
 ```
 org.apache.beam.sdk.Pipeline$PipelineExecutionException:
-    java.lang.IllegalArgumentException:
-        Input for override transform myTransform does not match pipeline transform. Expected: class java.lang.Integer Found: class java.lang.String
+  java.lang.IllegalArgumentException:
+    Input for override transform myTransform does not match pipeline transform. Expected: class java.lang.Integer Found: class java.lang.String
 ```
 
 If you've specified the incorrect output type, there is little scio can do to detect the error.
 Typically, a coder will throw a `ClassCastException` whose message will contain the correct type:
 
 ```
-java.lang.ClassCastException: java.lang.String cannot be cast to java.lang.Integer
-  at org.apache.beam.sdk.coders.VarIntCoder.encode(VarIntCoder.java:33)
-  ...
+org.apache.beam.sdk.Pipeline$PipelineExecutionException:
+  java.lang.ClassCastException:
+    java.lang.String cannot be cast to java.lang.Integer
 ```

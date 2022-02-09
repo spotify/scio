@@ -86,7 +86,7 @@ object TransformOverride {
    *   with a transform mapping elements via `fn`.
    */
   def of[T: ClassTag, U](name: String, fn: T => U): PTransformOverride = {
-    val wrappedFn = fn.compose { (t: T) =>
+    val wrappedFn = fn.compose { t: T =>
       typeValidation(
         s"Input for override transform $name does not match pipeline transform.",
         t.getClass,
