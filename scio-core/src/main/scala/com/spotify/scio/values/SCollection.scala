@@ -33,6 +33,7 @@ import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
+import com.spotify.scio.values.SCollection.logger
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
@@ -644,8 +645,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[PairSCollectionFunctions.reduceByKey]] will provide much better performance.
    * @group transform
    */
-  def groupBy[K: Coder](f: T => K): SCollection[(K, Iterable[T])] =
+  def groupBy[K: Coder](f: T => K): SCollection[(K, Iterable[T])] = {
+    if (context.isTest) {
+      logger.warn(
+        "groupBy will materialize all values for a key to a single worker," +
+          " which is a very common cause of memory issues." +
+          " Consider using `PairSCollectionFunctions.aggregateByKey` or `PairSCollectionFunctions.reduceByKey` instead."
+      )
+    }
     groupMap(f)(identity)
+  }
 
   /**
    * Return an SCollection of grouped items. Each group consists of a key and a sequence of elements
