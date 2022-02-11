@@ -20,13 +20,14 @@ package com.spotify.scio.redis
 import org.apache.beam.sdk.io.redis.RedisConnectionConfiguration
 import org.apache.beam.sdk.transforms.DoFn._
 import org.apache.beam.sdk.transforms.DoFn
-import redis.clients.jedis.{Jedis, Pipeline}
-import redis.clients.jedis.Response
+import redis.clients.jedis.{Jedis, Response, Transaction}
+
 import java.util.concurrent.ConcurrentLinkedQueue
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder
 import org.apache.beam.sdk.transforms.display.DisplayData
 import org.joda.time.Instant
+
 import scala.concurrent.{Future, Promise}
 import scala.util._
 import scala.concurrent.{Await, ExecutionContext}
@@ -39,7 +40,7 @@ abstract class RedisDoFn[I, O](
 ) extends DoFn[I, O] {
 
   @transient private var jedis: Jedis = _
-  @transient private var pipeline: Pipeline = _
+  @transient private var transaction: Transaction = _
   private val results: ConcurrentLinkedQueue[Future[Result]] = new ConcurrentLinkedQueue()
   private val requests: ConcurrentLinkedQueue[(List[Response[_]], Promise[List[_]])] =
     new ConcurrentLinkedQueue()
@@ -49,11 +50,11 @@ abstract class RedisDoFn[I, O](
   private case class Result(input: I, output: O, ts: Instant, w: BoundedWindow)
 
   final class Client extends Serializable {
-    type Request = Pipeline => List[Response[_]]
+    type Request = Transaction => List[Response[_]]
 
     def request(request: Request): Future[List[_]] = {
       val promise = Promise[List[_]]()
-      requests.add((request(pipeline), promise))
+      requests.add((request(transaction), promise))
       promise.future
     }
   }
@@ -64,8 +65,7 @@ abstract class RedisDoFn[I, O](
   def executionContext: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   private def flush(fn: Result => Unit): Unit = {
-    pipeline.exec
-    pipeline.sync()
+    transaction.exec
 
     implicit val ec = executionContext
     val iter = requests.iterator()
@@ -97,8 +97,7 @@ abstract class RedisDoFn[I, O](
 
   @StartBundle
   def startBundle(): Unit = {
-    pipeline = jedis.pipelined
-    pipeline.multi
+    transaction = jedis.multi
     batchCount = 0
   }
 
@@ -113,16 +112,14 @@ abstract class RedisDoFn[I, O](
     batchCount += 1
     if (batchCount >= batchSize) {
       flush(r => c.output(r.output))
-      pipeline.multi
+      transaction.multi
       batchCount = 0
     }
   }
 
   @FinishBundle
   def finishBundle(c: FinishBundleContext): Unit = {
-    if (pipeline.isInMulti) {
-      flush(r => c.output(r.output, r.ts, r.w))
-    }
+    flush(r => c.output(r.output, r.ts, r.w))
     batchCount = 0
   }
 

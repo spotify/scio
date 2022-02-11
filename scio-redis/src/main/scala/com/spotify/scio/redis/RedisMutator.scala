@@ -18,20 +18,21 @@
 package com.spotify.scio.redis
 
 import com.spotify.scio.redis.types._
-import redis.clients.jedis.{Pipeline, Response}
+import redis.clients.jedis.{Response, Transaction}
 
 import java.lang.{Double => jDouble, Long => JLong}
 import com.spotify.scio.redis.types.RedisType.{ByteArrayRedisType, StringRedisType}
 import redis.clients.jedis.util.SafeEncoder
+
 import scala.jdk.CollectionConverters._
 
 sealed abstract class RedisMutator[T] extends Serializable {
-  def mutate(client: Pipeline, mutation: T): List[Response[_]]
+  def mutate(transaction: Transaction, mutation: T): List[Response[_]]
 }
 
 object RedisMutator {
   implicit def appendMutator[T]: RedisMutator[Append[T]] = new RedisMutator[Append[T]] {
-    override def mutate(client: Pipeline, mutation: Append[T]): List[Response[JLong]] = {
+    override def mutate(transaction: Transaction, mutation: Append[T]): List[Response[JLong]] = {
       val (key, value) = mutation.rt match {
         case ByteArrayRedisType =>
           (mutation.key, mutation.value)
@@ -39,15 +40,15 @@ object RedisMutator {
           (SafeEncoder.encode(mutation.key), SafeEncoder.encode(mutation.value))
       }
 
-      client.append(key, value) ::
+      transaction.append(key, value) ::
         mutation.ttl
-          .map(expireTime => client.pexpire(key, expireTime.getMillis))
+          .map(expireTime => transaction.pexpire(key, expireTime.getMillis))
           .toList
     }
   }
 
   implicit def setMutator[T]: RedisMutator[Set[T]] = new RedisMutator[Set[T]] {
-    override def mutate(client: Pipeline, mutation: Set[T]): List[Response[_]] = {
+    override def mutate(transaction: Transaction, mutation: Set[T]): List[Response[_]] = {
       val (key, value) = mutation.rt match {
         case ByteArrayRedisType =>
           (mutation.key, mutation.value)
@@ -55,36 +56,36 @@ object RedisMutator {
           (SafeEncoder.encode(mutation.key), SafeEncoder.encode(mutation.value))
       }
 
-      mutation.ttl.fold(client.set(key, value)) { ttl =>
-        client.psetex(key, ttl.getMillis(), value)
+      mutation.ttl.fold(transaction.set(key, value)) { ttl =>
+        transaction.psetex(key, ttl.getMillis(), value)
       } :: Nil
     }
   }
 
   implicit def incrByMutator[T]: RedisMutator[IncrBy[T]] = new RedisMutator[IncrBy[T]] {
-    override def mutate(client: Pipeline, mutation: IncrBy[T]): List[Response[JLong]] = {
+    override def mutate(transaction: Transaction, mutation: IncrBy[T]): List[Response[JLong]] = {
       val key = mutation.rt match {
         case ByteArrayRedisType => mutation.key
         case StringRedisType    => SafeEncoder.encode(mutation.key)
       }
-      client.incrBy(key, mutation.value) ::
-        mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+      transaction.incrBy(key, mutation.value) ::
+        mutation.ttl.map(expireTime => transaction.pexpire(key, expireTime.getMillis)).toList
     }
   }
 
   implicit def decrByMutator[T]: RedisMutator[DecrBy[T]] = new RedisMutator[DecrBy[T]] {
-    override def mutate(client: Pipeline, mutation: DecrBy[T]): List[Response[JLong]] = {
+    override def mutate(transaction: Transaction, mutation: DecrBy[T]): List[Response[JLong]] = {
       val key = mutation.rt match {
         case ByteArrayRedisType => mutation.key
         case StringRedisType    => SafeEncoder.encode(mutation.key)
       }
-      client.decrBy(key, mutation.value) ::
-        mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+      transaction.decrBy(key, mutation.value) ::
+        mutation.ttl.map(expireTime => transaction.pexpire(key, expireTime.getMillis)).toList
     }
   }
 
   implicit def saddMutator[T]: RedisMutator[SAdd[T]] = new RedisMutator[SAdd[T]] {
-    override def mutate(client: Pipeline, mutation: SAdd[T]): List[Response[JLong]] = {
+    override def mutate(transaction: Transaction, mutation: SAdd[T]): List[Response[JLong]] = {
       val (key, value) = mutation.rt match {
         case ByteArrayRedisType =>
           (mutation.key, mutation.value)
@@ -92,13 +93,13 @@ object RedisMutator {
           (SafeEncoder.encode(mutation.key), mutation.value.map(SafeEncoder.encode(_)))
       }
 
-      client.sadd(key, value: _*) ::
-        mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+      transaction.sadd(key, value: _*) ::
+        mutation.ttl.map(expireTime => transaction.pexpire(key, expireTime.getMillis)).toList
     }
   }
 
   implicit def lpushMutator[T]: RedisMutator[LPush[T]] = new RedisMutator[LPush[T]] {
-    override def mutate(client: Pipeline, mutation: LPush[T]): List[Response[JLong]] = {
+    override def mutate(transaction: Transaction, mutation: LPush[T]): List[Response[JLong]] = {
       val (key, value) = mutation.rt match {
         case ByteArrayRedisType =>
           (mutation.key, mutation.value)
@@ -106,13 +107,13 @@ object RedisMutator {
           (SafeEncoder.encode(mutation.key), mutation.value.map(SafeEncoder.encode(_)))
       }
 
-      client.lpush(key, value: _*) ::
-        mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+      transaction.lpush(key, value: _*) ::
+        mutation.ttl.map(expireTime => transaction.pexpire(key, expireTime.getMillis)).toList
     }
   }
 
   implicit def rpushMutator[T]: RedisMutator[RPush[T]] = new RedisMutator[RPush[T]] {
-    override def mutate(client: Pipeline, mutation: RPush[T]): List[Response[JLong]] = {
+    override def mutate(transaction: Transaction, mutation: RPush[T]): List[Response[JLong]] = {
       val (key, value) = mutation.rt match {
         case ByteArrayRedisType =>
           (mutation.key, mutation.value)
@@ -120,14 +121,14 @@ object RedisMutator {
           (SafeEncoder.encode(mutation.key), mutation.value.map(SafeEncoder.encode(_)))
       }
 
-      client.rpush(key, value: _*) ::
-        mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+      transaction.rpush(key, value: _*) ::
+        mutation.ttl.map(expireTime => transaction.pexpire(key, expireTime.getMillis)).toList
     }
   }
 
   implicit def pfaddMutator[T]: RedisMutator[PFAdd[T]] =
     new RedisMutator[PFAdd[T]] {
-      override def mutate(client: Pipeline, mutation: PFAdd[T]): List[Response[JLong]] = {
+      override def mutate(transaction: Transaction, mutation: PFAdd[T]): List[Response[JLong]] = {
         val (key, value) = mutation.rt match {
           case ByteArrayRedisType =>
             (mutation.key, mutation.value)
@@ -135,14 +136,14 @@ object RedisMutator {
             (SafeEncoder.encode(mutation.key), mutation.value.map(SafeEncoder.encode(_)))
         }
 
-        client.pfadd(key, value: _*) ::
-          mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+        transaction.pfadd(key, value: _*) ::
+          mutation.ttl.map(expireTime => transaction.pexpire(key, expireTime.getMillis)).toList
       }
     }
 
   implicit def zaddMutator[T]: RedisMutator[ZAdd[T]] =
     new RedisMutator[ZAdd[T]] {
-      override def mutate(client: Pipeline, mutation: ZAdd[T]): List[Response[JLong]] = {
+      override def mutate(transaction: Transaction, mutation: ZAdd[T]): List[Response[JLong]] = {
         val (key, scoreMembers) = mutation.rt match {
           case ByteArrayRedisType =>
             (
@@ -160,28 +161,30 @@ object RedisMutator {
             )
         }
 
-        client.zadd(key, scoreMembers.asJava) ::
-          mutation.ttl.map(expireTime => client.pexpire(key, expireTime.getMillis)).toList
+        transaction.zadd(key, scoreMembers.asJava) ::
+          mutation.ttl.map(expireTime => transaction.pexpire(key, expireTime.getMillis)).toList
       }
     }
 
   implicit def redisMutator[T <: RedisMutation]: RedisMutator[T] = new RedisMutator[T] {
-    override def mutate(client: Pipeline, mutation: T): List[Response[_]] = {
+    override def mutate(transaction: Transaction, mutation: T): List[Response[_]] = {
       mutation match {
-        case mt @ Append(_, _, _) => appendMutator.mutate(client, mt)
-        case mt @ Set(_, _, _)    => setMutator.mutate(client, mt)
-        case mt @ IncrBy(_, _, _) => incrByMutator.mutate(client, mt)
-        case mt @ DecrBy(_, _, _) => decrByMutator.mutate(client, mt)
-        case mt @ SAdd(_, _, _)   => saddMutator.mutate(client, mt)
-        case mt @ LPush(_, _, _)  => lpushMutator.mutate(client, mt)
-        case mt @ RPush(_, _, _)  => rpushMutator.mutate(client, mt)
-        case mt @ PFAdd(_, _, _)  => pfaddMutator.mutate(client, mt)
-        case mt @ ZAdd(_, _, _)   => zaddMutator.mutate(client, mt)
+        case mt @ Append(_, _, _) => appendMutator.mutate(transaction, mt)
+        case mt @ Set(_, _, _)    => setMutator.mutate(transaction, mt)
+        case mt @ IncrBy(_, _, _) => incrByMutator.mutate(transaction, mt)
+        case mt @ DecrBy(_, _, _) => decrByMutator.mutate(transaction, mt)
+        case mt @ SAdd(_, _, _)   => saddMutator.mutate(transaction, mt)
+        case mt @ LPush(_, _, _)  => lpushMutator.mutate(transaction, mt)
+        case mt @ RPush(_, _, _)  => rpushMutator.mutate(transaction, mt)
+        case mt @ PFAdd(_, _, _)  => pfaddMutator.mutate(transaction, mt)
+        case mt @ ZAdd(_, _, _)   => zaddMutator.mutate(transaction, mt)
       }
     }
   }
 
-  def mutate[T <: RedisMutation: RedisMutator](client: Pipeline)(value: T): List[Response[_]] =
-    implicitly[RedisMutator[T]].mutate(client, value)
+  def mutate[T <: RedisMutation: RedisMutator](transaction: Transaction)(
+    value: T
+  ): List[Response[_]] =
+    implicitly[RedisMutator[T]].mutate(transaction, value)
 
 }
