@@ -31,6 +31,7 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.util.CallSites.thisWasCalledExternally
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.spotify.scio.values.SCollection.logger
@@ -646,7 +647,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def groupBy[K: Coder](f: T => K): SCollection[(K, Iterable[T])] = {
-    if (context.isTest) {
+    if (!context.isTest && thisWasCalledExternally) {
       logger.warn(
         "groupBy will materialize all values for a key to a single worker," +
           " which is a very common cause of memory issues." +
