@@ -33,9 +33,9 @@ val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.35.0"
+val beamVersion = "2.36.0"
 val bigdataossVersion = "2.2.4"
-val bigQueryStorageVersion = "2.4.2"
+val bigQueryStorageVersion = "2.8.1"
 val bigtableClientVersion = "1.25.1"
 val breezeVersion = "2.0"
 val caffeineVersion = "2.9.3"
@@ -52,21 +52,21 @@ val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.0"
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.13.5"
-val gaxVersion = "2.6.1"
-val gcsVersion = "2.1.0"
-val generatedGrpcBetaVersion = "1.22.0"
+val gaxVersion = "2.8.1"
+val gcsVersion = "2.2.3"
+val generatedGrpcBetaVersion = "2.5.1"
 val generatedDatastoreProtoVersion = "0.89.0"
 val googleClientsVersion = "1.32.1"
-val googleApiServicesBigQueryVersion = s"v2-rev20211017-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20211129-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20210818-$googleClientsVersion"
-val googleApiServicesPubsubVersion = s"v1-rev20211012-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20211018-$googleClientsVersion"
-val googleAuthVersion = "1.2.1"
-val googleCloudCoreVersion = "1.94.6"
-val googleCloudSpannerVersion = "6.12.1"
-val googleHttpClientsVersion = "1.40.1"
-val googleOauthClientVersion = "1.31.4"
-val grpcVersion = "1.41.1"
+val googleApiServicesPubsubVersion = s"v1-rev20211130-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20211201-$googleClientsVersion"
+val googleAuthVersion = "1.3.0"
+val googleCloudCoreVersion = "2.3.5"
+val googleCloudSpannerVersion = "6.17.4"
+val googleHttpClientsVersion = "1.41.0"
+val googleOauthClientVersion = "1.32.1"
+val grpcVersion = "1.43.2"
 val guavaVersion = "31.0.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
@@ -91,12 +91,12 @@ val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.2"
 val protobufGenericVersion = "0.2.9"
-val protobufVersion = "3.18.2"
+val protobufVersion = "3.19.2"
 val scalacheckVersion = "1.15.4"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
 val scalatestVersion = "3.2.11"
-val shapelessVersion = "2.3.7"
+val shapelessVersion = "2.3.8"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.8"
@@ -582,7 +582,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       ),
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.128.2",
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % "0.132.1",
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % bigQueryStorageVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % generatedGrpcBetaVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
@@ -641,7 +641,7 @@ lazy val `scio-cassandra3`: Project = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.11.0",
-      ("org.apache.cassandra" % "cassandra-all" % "3.11.11")
+      ("org.apache.cassandra" % "cassandra-all" % "3.11.12")
         .exclude("ch.qos.logback", "logback-classic")
         .exclude("org.slf4j", "log4j-over-slf4j"),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
@@ -900,7 +900,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.4.2",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.4.3",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,

@@ -120,7 +120,7 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
           ec: ExecutionContext
         ): Future[Unit] =
           client
-            .request(pipeline => RedisMutator.mutate(pipeline)(value))
+            .request(transaction => RedisMutator.mutate(transaction)(value))
             .map(_ => ())
       }
 
