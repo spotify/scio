@@ -17,14 +17,15 @@
 
 package com.spotify.scio.parquet.types
 
-import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
+import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
+import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.{
   DefaultFilenamePolicy,
   DynamicFileDestinations,
@@ -32,10 +33,7 @@ import org.apache.beam.sdk.io.{
   FileSystems,
   WriteFiles
 }
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.SimpleFunction
-import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -52,37 +50,24 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   override type WriteP = ParquetTypeIO.WriteParam[T]
   override val tapT: TapT.Aux[T, T] = TapOf[T]
 
-  private val cls = ScioUtil.classOf[T]
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val job = Job.getInstance(params.conf)
-    GcsConnectorUtil.setInputPaths(sc, job, path)
-    tpe.setupInput(job)
-    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
-    job.getConfiguration.setClass("value.class", cls, cls)
-
     if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
+      ParquetInputFormat.setFilterPredicate(params.conf, params.predicate)
     }
 
-    val source = HadoopFormatIO
-      .read[JBoolean, T]
-      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-        override def apply(input: Void): JBoolean = true
-      })
-      .withValueTranslation(
-        new SimpleFunction[T, T]() {
-          override def apply(input: T): T = input
+    val coder = CoderMaterializer.beam(sc, implicitly[Coder[T]])
 
-          override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
-        },
-        CoderMaterializer.beam(sc, Coder[T])
+    sc.customInput(
+      "TypedParquetIO",
+      ParquetRead.read(
+        ReadSupportFactory.typed,
+        new SerializableConfiguration(params.conf),
+        path,
+        identity[T]
       )
-      .withConfiguration(job.getConfiguration)
-      .withSkipValueClone(params.skipClone)
-    sc.applyTransform(source).map(_.getValue)
+    ).setCoder(coder)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
@@ -112,12 +97,10 @@ object ParquetTypeIO {
   object ReadParam {
     private[types] val DefaultPredicate = null
     private[types] val DefaultConfiguration = new Configuration()
-    private[types] val DefaultSkipClone = true
   }
   final case class ReadParam[T] private (
     predicate: FilterPredicate = null,
-    conf: Configuration = ReadParam.DefaultConfiguration,
-    skipClone: Boolean = ReadParam.DefaultSkipClone
+    conf: Configuration = ReadParam.DefaultConfiguration
   )
 
   object WriteParam {
