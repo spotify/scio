@@ -7,7 +7,7 @@ import org.apache.beam.sdk.io.range.OffsetRange
 import org.apache.beam.sdk.transforms.DoFn._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.splittabledofn.{OffsetRangeTracker, RestrictionTracker}
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.{ImmutableSet, Maps}
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet
 import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.api.InitContext
@@ -83,7 +83,7 @@ class ParquetReadFn[T, R](
     tracker: RestrictionTracker[OffsetRange, Long],
     outputReceiver: DoFn.OutputReceiver[R]
   ): Unit = {
-    logger.info(
+    logger.debug(
       "start {} to {}",
       tracker.currentRestriction.getFrom,
       tracker.currentRestriction.getTo
@@ -98,13 +98,14 @@ class ParquetReadFn[T, R](
       val fileSchema = parquetFileMetadata.getSchema
       val fileMetadata = parquetFileMetadata.getKeyValueMetaData
       val readSupport = readSupportFactory.readSupport
+      fileMetadata.asScala.mapValues(v => ImmutableSet.of(v)).asJava
+
       val readContext = readSupport.init(
         new InitContext(
           hadoopConf,
-          Maps.transformValues[String, String, JSet[String]](
-            fileMetadata,
-            v => ImmutableSet.of(v).asInstanceOf[JSet[String]]
-          ),
+          fileMetadata.asScala
+            .mapValues(v => ImmutableSet.of(v).asInstanceOf[JSet[String]])
+            .asJava,
           fileSchema
         )
       )
@@ -121,8 +122,8 @@ class ParquetReadFn[T, R](
       while (tracker.tryClaim(currentRowGroupIndex)) {
         val pages = reader.readNextRowGroup
 
-        logger.info(
-          "block {} read in memory. row count = {}",
+        logger.debug(
+          "row group {} read in memory. row count = {}",
           currentRowGroupIndex,
           pages.getRowCount
         )
@@ -141,10 +142,10 @@ class ParquetReadFn[T, R](
           projectionFn
         )
 
-        logger.info(
-          "Finish processing {} rows from block {} in file {}",
-          pages.getRowCount,
-          currentRowGroupIndex,
+        logger.debug(
+          "Finish processing {} rows from row group {} in file {}",
+          pages.getRowCount.toString,
+          currentRowGroupIndex.toString,
           file.toString
         )
 
@@ -170,16 +171,16 @@ class ParquetReadFn[T, R](
         if (record == null) {
           // it happens when a record is filtered out in this block
           logger.debug(
-            "record is filtered out by reader in block {} in file {}",
+            "record is filtered out by reader in row group {} in file {}",
             rowGroupIndex,
             file.toString
           )
         } else if (recordReader.shouldSkipCurrentRecord) {
           // this record is being filtered via the filter2 package
           logger.debug(
-            "skipping record at {} in block {} in file {}",
-            currentRow,
-            rowGroupIndex,
+            "skipping record at {} in row group {} in file {}",
+            currentRow.toString,
+            rowGroupIndex.toString,
             file.toString
           )
 
@@ -191,12 +192,8 @@ class ParquetReadFn[T, R](
       } catch {
         case e: RuntimeException =>
           throw new ParquetDecodingException(
-            format(
-              "Can not read value at %d in block %d in file %s",
-              currentRow,
-              rowGroupIndex,
-              file.toString
-            ),
+            s"Can not read value at $currentRow in row group" +
+              s" $rowGroupIndex in file ${file.toString}",
             e
           )
       }
