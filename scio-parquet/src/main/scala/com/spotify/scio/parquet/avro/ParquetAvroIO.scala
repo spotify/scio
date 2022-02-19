@@ -27,7 +27,6 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
@@ -194,7 +193,7 @@ object ParquetAvroIO {
       val hadoopConf = new Configuration(conf)
       // Needed to make GenericRecord read by parquet-avro work with Beam's
       // org.apache.beam.sdk.coders.AvroCoder.
-      if (ScioUtil.classOf[A] == classOf[GenericRecord]) {
+      if (!isSpecific) {
         hadoopConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
         hadoopConf.set(
           AvroReadSupport.AVRO_DATA_SUPPLIER,
