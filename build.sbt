@@ -817,8 +817,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "com.google.auto.value" % "auto-value" % autoValueVersion
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     )
   )
   .dependsOn(
