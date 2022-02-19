@@ -16,7 +16,6 @@ import org.apache.parquet.io.{ColumnIOFactory, ParquetDecodingException, RecordR
 import org.apache.parquet.{HadoopReadOptions, ParquetReadOptions}
 import org.slf4j.LoggerFactory
 
-import java.lang.String.format
 import java.util.{Set => JSet}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -98,14 +97,13 @@ class ParquetReadFn[T, R](
       val fileSchema = parquetFileMetadata.getSchema
       val fileMetadata = parquetFileMetadata.getKeyValueMetaData
       val readSupport = readSupportFactory.readSupport
-      fileMetadata.asScala.mapValues(v => ImmutableSet.of(v)).asJava
 
       val readContext = readSupport.init(
         new InitContext(
           hadoopConf,
-          fileMetadata.asScala
-            .mapValues(v => ImmutableSet.of(v).asInstanceOf[JSet[String]])
-            .asJava,
+          fileMetadata.asScala.map { case (k, v) =>
+            k -> ImmutableSet.of(v).asInstanceOf[JSet[String]]
+          }.asJava,
           fileSchema
         )
       )
