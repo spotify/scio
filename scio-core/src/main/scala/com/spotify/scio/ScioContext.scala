@@ -583,6 +583,7 @@ class ScioContext private[scio] (
 
   private[scio] def execute(): ScioExecutionContext = {
     val sc = this
+    if (isTest) TestDataManager.overrideTransforms(testId.get, pipeline)
     val pr = pipeline.run()
 
     new ScioExecutionContext {

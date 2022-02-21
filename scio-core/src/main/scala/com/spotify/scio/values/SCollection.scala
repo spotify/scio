@@ -20,7 +20,6 @@ package com.spotify.scio.values
 import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.estimators.{
