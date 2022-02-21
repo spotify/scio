@@ -21,7 +21,10 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
+import org.apache.beam.sdk.runners.PTransformOverride
+import org.apache.beam.sdk.Pipeline
 import org.apache.beam.sdk.testing.TestStream
+
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
 import scala.jdk.CollectionConverters._
@@ -125,6 +128,7 @@ private[scio] object TestDataManager {
   private val distCaches = TrieMap.empty[String, TestDistCache]
   private val closed = TrieMap.empty[String, Boolean]
   private val results = TrieMap.empty[String, ScioResult]
+  private val transformOverrides = TrieMap.empty[String, Set[PTransformOverride]]
 
   private def getValue[V](key: String, m: TrieMap[String, V], ioMsg: String): V = {
     require(m.contains(key), s"Missing test data. Are you $ioMsg outside of JobTest?")
@@ -144,17 +148,20 @@ private[scio] object TestDataManager {
     testId: String,
     ins: Map[String, JobInputSource[_]],
     outs: Map[String, SCollection[_] => Any],
-    dcs: Map[DistCacheIO[_], _]
+    dcs: Map[DistCacheIO[_], _],
+    xformOverrides: Set[PTransformOverride]
   ): Unit = {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))
     distCaches += (testId -> new TestDistCache(dcs))
+    transformOverrides += (testId -> xformOverrides)
   }
 
   def tearDown(testId: String, f: ScioResult => Unit = _ => ()): Unit = {
     inputs.remove(testId).foreach(_.validate())
     outputs.remove(testId).foreach(_.validate())
     distCaches.remove(testId).get.validate()
+    transformOverrides.remove(testId)
     ensureClosed(testId)
     val result = results.remove(testId).get
     f(result)
@@ -170,6 +177,12 @@ private[scio] object TestDataManager {
   def ensureClosed(testId: String): Unit = {
     require(closed(testId), "ScioContext was not executed. Did you forget .run()?")
     closed -= testId
+  }
+
+  def overrideTransforms(testId: String, pipeline: Pipeline): Unit = {
+    transformOverrides.get(testId).foreach { overrides =>
+      pipeline.replaceAll(overrides.toList.asJava)
+    }
   }
 }
 

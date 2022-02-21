@@ -87,7 +87,7 @@ object BigtableWriteExample {
       .map(kv => BigtableExample.toMutation(kv._1, kv._2))
       .saveAsBigtable(btProjectId, btInstanceId, btTableId)
 
-    sc.run()
+    sc.run().waitUntilDone()
 
     // Bring down the number of nodes after the job ends to save cost. There is no need to wait
     // after bumping the nodes down.
