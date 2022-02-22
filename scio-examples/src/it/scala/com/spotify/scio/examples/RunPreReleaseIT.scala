@@ -33,9 +33,17 @@ object RunPreReleaseIT {
 
   private val defaultArgs = Array(
     "--runner=DataflowRunner",
-    "--project=data-integration-test",
+    "--project=data-integration-test"
+  )
+
+  private val euw1Args = Array(
     "--region=europe-west1",
     "--tempLocation=gs://dataflow-tmp-europe-west1/gha"
+  )
+
+  private val usc1Args = Array(
+    "--region=us-central1",
+    "--tempLocation=gs://dataflow-tmp-us-central1/gha"
   )
 
   private val log = LoggerFactory.getLogger(getClass)
@@ -48,7 +56,7 @@ object RunPreReleaseIT {
       Await.result(
         Future
           .sequence(
-            parquet(runId) ++ avro(runId) ++ smb(runId) ++ bigquery(runId)
+            bigquery(runId)
           )
           .map(_ => log.info("All Dataflow jobs ran successfully.")),
         Duration(1, TimeUnit.HOURS)
@@ -85,14 +93,22 @@ object RunPreReleaseIT {
 
     val write = Future
       .successful(log.info("Starting Parquet IO tests... "))
-      .flatMap(_ => invokeJob[ParquetExample.type]("--method=avroOut", s"--output=$out1"))
+      .flatMap(_ =>
+        invokeJob[ParquetExample.type](euw1Args: _*, "--method=avroOut", s"--output=$out1")
+      )
 
     List(
       write.flatMap(_ =>
-        invokeJob[ParquetExample.type]("--method=typedIn", s"--input=$out1/*", s"--output=$out2")
+        invokeJob[ParquetExample.type](
+          euw1Args: _*,
+          "--method=typedIn",
+          s"--input=$out1/*",
+          s"--output=$out2"
+        )
       ),
       write.flatMap(_ =>
         invokeJob[ParquetExample.type](
+          euw1Args: _*,
           "--method=avroSpecificIn",
           s"--input=$out1/*",
           s"--output=$out3"
@@ -100,6 +116,7 @@ object RunPreReleaseIT {
       ),
       write.flatMap(_ =>
         invokeJob[ParquetExample.type](
+          euw1Args: _*,
           "--method=avroGenericIn",
           s"--input=$out1/*",
           s"--output=$out4"
@@ -120,12 +137,17 @@ object RunPreReleaseIT {
     val write = Future
       .successful(log.info("Starting SMB IO tests... "))
       .flatMap(_ =>
-        invokeJob[SortMergeBucketWriteExample.type](s"--users=$out1", s"--accounts=$out2")
+        invokeJob[SortMergeBucketWriteExample.type](
+          euw1Args: _*,
+          s"--users=$out1",
+          s"--accounts=$out2"
+        )
       )
 
     List(
       write.flatMap(_ =>
         invokeJob[SortMergeBucketJoinExample.type](
+          euw1Args: _*,
           s"--users=$out1",
           s"--accounts=$out2",
           s"--output=${gcsPath[SortMergeBucketJoinExample.type]("join", runId)}"
@@ -133,6 +155,7 @@ object RunPreReleaseIT {
       ),
       write.flatMap(_ =>
         invokeJob[SortMergeBucketTransformExample.type](
+          euw1Args: _*,
           s"--users=$out1",
           s"--accounts=$out2",
           s"--output=${gcsPath[SortMergeBucketTransformExample.type]("transform", runId)}"
@@ -151,11 +174,13 @@ object RunPreReleaseIT {
     List(
       start.flatMap(_ =>
         invokeJob[TypedStorageBigQueryTornadoes.type](
+          usc1Args: _*,
           s"--output=data-integration-test:gha_it.typed_storage_$runId"
         )
       ),
       start.flatMap(_ =>
         invokeJob[TypedBigQueryTornadoes.type](
+          usc1Args: _*,
           s"--output=data-integration-test:gha_it.typed_row_$runId"
         )
       )
