@@ -143,12 +143,23 @@ object RunPreReleaseIT {
 
   private def bigquery(runId: String): List[Future[Unit]] = {
     import com.spotify.scio.examples.extra.TypedStorageBigQueryTornadoes
+    import com.spotify.scio.examples.extra.TypedBigQueryTornadoes
 
-    List(Future
+    val start = Future
       .successful(log.info("Starting BigQuery tests... "))
-      .flatMap(_ =>
-        invokeJob[TypedStorageBigQueryTornadoes.type](s"--output=data-integration-test:gha_it.storage_$runId")
-      ))
+
+    List(
+      start.flatMap(_ =>
+        invokeJob[TypedStorageBigQueryTornadoes.type](
+          s"--output=data-integration-test:gha_it.typed_storage_$runId"
+        )
+      ),
+      start.flatMap(_ =>
+        invokeJob[TypedBigQueryTornadoes.type](
+          s"--output=data-integration-test:gha_it.typed_row_$runId"
+        )
+      )
+    )
   }
 
   private def invokeJob[T: ClassTag](args: String*): Future[Unit] =
