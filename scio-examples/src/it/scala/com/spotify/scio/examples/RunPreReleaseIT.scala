@@ -142,8 +142,7 @@ object RunPreReleaseIT {
   }
 
   private def bigquery(runId: String): List[Future[Unit]] = {
-    import com.spotify.scio.examples.extra.TypedStorageBigQueryTornadoes
-    import com.spotify.scio.examples.extra.TypedBigQueryTornadoes
+    import com.spotify.scio.examples.extra.{TypedBigQueryTornadoes, TypedStorageBigQueryTornadoes}
 
     val start = Future
       .successful(log.info("Starting BigQuery tests... "))
