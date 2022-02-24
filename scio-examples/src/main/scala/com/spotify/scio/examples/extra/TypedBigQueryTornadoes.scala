@@ -56,7 +56,7 @@ object TypedBigQueryTornadoes {
         createDisposition = CREATE_IF_NEEDED
       )
 
-    sc.run()
+    sc.run().waitUntilDone()
     ()
   }
 }

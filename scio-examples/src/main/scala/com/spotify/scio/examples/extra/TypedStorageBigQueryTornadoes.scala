@@ -60,7 +60,7 @@ object TypedStorageBigQueryTornadoes {
         createDisposition = CREATE_IF_NEEDED
       )
 
-    sc.run()
+    sc.run().waitUntilDone()
     ()
   }
 }

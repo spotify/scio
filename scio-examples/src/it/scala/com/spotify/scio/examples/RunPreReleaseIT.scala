@@ -34,8 +34,8 @@ object RunPreReleaseIT {
   private val defaultArgs = Array(
     "--runner=DataflowRunner",
     "--project=data-integration-test",
-    "--region=europe-west1",
-    "--tempLocation=gs://dataflow-tmp-europe-west1/gha"
+    "--region=us-central1",
+    "--tempLocation=gs://dataflow-tmp-us-central1/gha"
   )
 
   private val log = LoggerFactory.getLogger(getClass)
@@ -48,7 +48,7 @@ object RunPreReleaseIT {
       Await.result(
         Future
           .sequence(
-            parquet(runId) ++ avro(runId) ++ smb(runId)
+            parquet(runId) ++ avro(runId) ++ smb(runId) ++ bigquery(runId)
           )
           .map(_ => log.info("All Dataflow jobs ran successfully.")),
         Duration(1, TimeUnit.HOURS)
@@ -141,6 +141,26 @@ object RunPreReleaseIT {
     )
   }
 
+  private def bigquery(runId: String): List[Future[Unit]] = {
+    import com.spotify.scio.examples.extra.{TypedBigQueryTornadoes, TypedStorageBigQueryTornadoes}
+
+    val start = Future
+      .successful(log.info("Starting BigQuery tests... "))
+
+    List(
+      start.flatMap(_ =>
+        invokeJob[TypedStorageBigQueryTornadoes.type](
+          s"--output=data-integration-test:gha_it_us.typed_storage"
+        )
+      ),
+      start.flatMap(_ =>
+        invokeJob[TypedBigQueryTornadoes.type](
+          s"--output=data-integration-test:gha_it_us.typed_row"
+        )
+      )
+    )
+  }
+
   private def invokeJob[T: ClassTag](args: String*): Future[Unit] =
     Future {
       val cls = ScioUtil.classOf[T]
@@ -159,5 +179,5 @@ object RunPreReleaseIT {
     }
 
   private def gcsPath[T: ClassTag](methodName: String, runId: String): String =
-    s"gs://data-integration-test-prerelease-it/${ScioUtil.classOf[T].getSimpleName}/$methodName/$runId"
+    s"gs://data-integration-test-us/${ScioUtil.classOf[T].getSimpleName}/$methodName/$runId"
 }
