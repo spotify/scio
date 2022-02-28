@@ -31,10 +31,8 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.CallSites.thisWasCalledExternally
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
-import com.spotify.scio.values.SCollection.logger
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
@@ -647,8 +645,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def groupBy[K: Coder](f: T => K): SCollection[(K, Iterable[T])] = {
-    if (!context.isTest && thisWasCalledExternally) {
-      logger.warn(
+    if (!context.isTest && CallSites.thisWasCalledExternally) {
+      SCollection.logger.warn(
         "groupBy will materialize all values for a key to a single worker," +
           " which is a very common cause of memory issues." +
           " Consider using aggregateByKey/reduceByKey on a keyed SCollection instead."
