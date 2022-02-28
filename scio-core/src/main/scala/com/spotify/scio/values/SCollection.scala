@@ -645,7 +645,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def groupBy[K: Coder](f: T => K): SCollection[(K, Iterable[T])] = {
-    if (!context.isTest && CallSites.thisWasCalledExternally) {
+    if (!context.isTest && CallSites.wasCalledExternally) {
       SCollection.logger.warn(
         "groupBy will materialize all values for a key to a single worker," +
           " which is a very common cause of memory issues." +
