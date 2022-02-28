@@ -651,7 +651,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       logger.warn(
         "groupBy will materialize all values for a key to a single worker," +
           " which is a very common cause of memory issues." +
-          " Consider using `PairSCollectionFunctions.aggregateByKey` or `PairSCollectionFunctions.reduceByKey` instead."
+          " Consider using aggregateByKey/reduceByKey on a keyed SCollection instead."
       )
     }
     groupMap(f)(identity)
