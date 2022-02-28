@@ -43,6 +43,17 @@ private[scio] object CallSites {
   private def isPCollectionApply(e: StackTraceElement): Boolean =
     e.getClassName == s"$beamNs.sdk.values.PCollection" && e.getMethodName == "apply"
 
+  def wasCalledExternally: Boolean = {
+    val className = Thread
+      .currentThread()
+      .getStackTrace
+      .drop(3) // drop `getStackTrace`, `isInternalCall` and the frame/method where this method is called from
+      .head
+      .getClass
+      .getName
+    isExternalClass(className)
+  }
+
   def getAppName: String =
     Thread
       .currentThread()
