@@ -45,7 +45,9 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
-final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](path: String) extends ScioIO[T] {
+final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
+  path: String
+) extends ScioIO[T] {
   override type ReadP = ParquetTypeIO.ReadParam[T]
   override type WriteP = ParquetTypeIO.WriteParam[T]
   override val tapT: TapT.Aux[T, T] = TapOf[T]
@@ -79,6 +81,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](path: String) ex
         CoderMaterializer.beam(sc, Coder[T])
       )
       .withConfiguration(job.getConfiguration)
+      .withSkipValueClone(params.skipClone)
     sc.applyTransform(source).map(_.getValue)
   }
 
@@ -109,10 +112,12 @@ object ParquetTypeIO {
   object ReadParam {
     private[types] val DefaultPredicate = null
     private[types] val DefaultConfiguration = new Configuration()
+    private[types] val DefaultSkipClone = true
   }
   final case class ReadParam[T] private (
     predicate: FilterPredicate = null,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    skipClone: Boolean = ReadParam.DefaultSkipClone
   )
 
   object WriteParam {
