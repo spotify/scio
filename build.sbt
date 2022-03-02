@@ -48,8 +48,10 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
+// scala-steward:off
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.1"
+// scala-steward:on
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.13.5"
 val gaxVersion = "2.8.1"
@@ -671,11 +673,9 @@ lazy val `scio-elasticsearch6`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // scala-steward:off
       "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
       "org.elasticsearch.client" % "transport" % elasticsearch6Version
-      // scala-steward:on
     )
   )
   .dependsOn(
@@ -696,12 +696,10 @@ lazy val `scio-elasticsearch7`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      // scala-steward:off
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
-      // scala-steward:on
     )
   )
   .dependsOn(
@@ -927,9 +925,7 @@ lazy val `scio-examples`: Project = project
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      // scala-steward:off
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      // scala-steward:on
       "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     // exclude problematic sources if we don't have GCP credentials
