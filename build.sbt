@@ -48,8 +48,10 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val datastoreV1ProtoClientVersion = "1.6.3"
+// scala-steward:off
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.1"
+// scala-steward:on
 val featranVersion = "0.8.0-RC2"
 val flinkVersion = "1.13.5"
 val gaxVersion = "2.8.1"
@@ -697,7 +699,6 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
-      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
     )
   )
