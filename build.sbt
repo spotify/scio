@@ -671,9 +671,11 @@ lazy val `scio-elasticsearch6`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // scala-steward:off
       "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
       "org.elasticsearch.client" % "transport" % elasticsearch6Version
+      // scala-steward:on
     )
   )
   .dependsOn(
@@ -694,11 +696,12 @@ lazy val `scio-elasticsearch7`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+      // scala-steward:off
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
-      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
+      // scala-steward:on
     )
   )
   .dependsOn(
