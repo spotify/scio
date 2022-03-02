@@ -1165,7 +1165,7 @@ lazy val siteSettings = Def.settings(
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
     "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
   ),
-  dependencyOverrides += "com.lihaoyi" %% "pprint" % "0.6.6",
+  dependencyOverrides += "com.lihaoyi" %% "pprint" % "0.7.1",
   // unidoc
   ScalaUnidoc / siteSubdirName := "api",
   ScalaUnidoc / scalacOptions := Seq.empty,

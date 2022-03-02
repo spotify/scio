@@ -90,29 +90,29 @@ Scio provides a method to replace arbitrary _named_ `PTransform`s in a test cont
 In this example, the `GuavaLookupDoFn` stands in for a transform that contacts an external service.
 A `ParDo` `PTransform` is created from the `DoFn` (`ParDo.of`), then applied to the pipeline (`applyTransform`) with a unique name (`myTransform`).
 
-@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_1 }
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_1 }
 
 In a `JobTest`, a `PTransformOverride` can be passed to the `transformOverride` method to replace transforms in the original pipeline.
 Scio provides convenience methods for constructing `PTransformOverride`s in the `com.spotify.scio.testing.TransformOverride` object.
 Continuing the example above, `TransformOverride.ofAsyncLookup` can be used to map static mock data into the expected output format
 for the transform, here `KV[Int, BaseAsyncLookupDoFn.Try[String]]`.
 
-@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_2 }
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_2 }
 
 It is also possible to provide a function rather than a static map:
 
-@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_3 }
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_3 }
 
 `TransformOverride.of` overrides transforms of type `PTransform[PCollection[T], PCollection[U]]` as in the case of `BaseAsyncDoFn` subclasses.
 `TransformOverride.ofKV` overrides transforms of type `PTransform[PCollection[T], PCollection[KV[T, U]]]`.
 
 Sources can also be overridden with `TransformOverride.ofSource`. For example, this source:
 
-@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_4 }
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_4 }
 
 Can be overridden with static mock data:
 
-@@snip [JobTestTest.scala](scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_5 }
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_5 }
 
 Due to type erasure it is possible to provide the incorrect types for the transform and the error will not be caught until runtime.
 
