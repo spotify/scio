@@ -927,7 +927,9 @@ lazy val `scio-examples`: Project = project
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+      // scala-steward:off
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
+      // scala-steward:on
       "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     // exclude problematic sources if we don't have GCP credentials
