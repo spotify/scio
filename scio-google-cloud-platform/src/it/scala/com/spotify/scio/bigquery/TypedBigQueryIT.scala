@@ -52,6 +52,7 @@ object TypedBigQueryIT {
 
   // Workaround for millis rounding error
   val epochGen: Gen[Long] = Gen.chooseNum[Long](0L, 1000000000000L).map(x => x / 1000 * 1000)
+  implicit val arbString: Arbitrary[String] = Arbitrary(Gen.alphaStr)
   implicit val arbByteString: Arbitrary[ByteString] = Arbitrary(
     Gen.alphaStr.map(ByteString.copyFromUtf8)
   )
