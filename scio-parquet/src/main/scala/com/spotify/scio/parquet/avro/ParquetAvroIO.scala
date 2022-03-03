@@ -40,7 +40,7 @@ import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
-import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport}
+import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport, GenericDataSupplier}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
@@ -197,7 +197,7 @@ object ParquetAvroIO {
         hadoopConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
         hadoopConf.set(
           AvroReadSupport.AVRO_DATA_SUPPLIER,
-          "org.apache.parquet.avro.GenericDataSupplier"
+          classOf[GenericDataSupplier].getCanonicalName
         )
       }
 

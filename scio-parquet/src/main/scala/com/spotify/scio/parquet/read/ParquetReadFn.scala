@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory
 
 import java.util.{Set => JSet}
 import scala.jdk.CollectionConverters._
-import scala.util.Try
 
 class ParquetReadFn[T, R](
   readSupportFactory: ReadSupportFactory[T],
@@ -40,10 +39,11 @@ class ParquetReadFn[T, R](
   def getInitialRestriction(@Element file: ReadableFile): OffsetRange = {
     val reader = parquetFileReader(file)
 
-    val offsetRangeResult = Try(new OffsetRange(0, reader.getRowGroups.size)).toEither
-    reader.close()
-
-    offsetRangeResult.fold(throw _, identity)
+    try {
+      new OffsetRange(0, reader.getRowGroups.size)
+    } finally {
+      reader.close()
+    }
   }
 
   @NewTracker def newTracker(@Restriction restriction: OffsetRange) =
@@ -63,17 +63,15 @@ class ParquetReadFn[T, R](
   ): Unit = {
     val reader = parquetFileReader(file)
 
-    val splitResult = Try {
+    try {
       splitRowGroupsWithLimit(
         restriction.getFrom,
         restriction.getTo,
         reader.getRowGroups.asScala.toSeq
       ).foreach(output.output)
-    }.toEither
-
-    reader.close()
-
-    splitResult.fold(throw _, identity)
+    } finally {
+      reader.close()
+    }
   }
 
   @ProcessElement
@@ -87,7 +85,7 @@ class ParquetReadFn[T, R](
       tracker.currentRestriction.getFrom,
       tracker.currentRestriction.getTo
     )
-    val options: ParquetReadOptions = HadoopReadOptions.builder(conf.get()).build
+    val options = HadoopReadOptions.builder(conf.get()).build
 
     val reader = ParquetFileReader.open(BeamInputFile.of(file.openSeekable), options)
     try {
@@ -201,16 +199,15 @@ class ParquetReadFn[T, R](
   private def getRecordCountAndSize(file: ReadableFile, restriction: OffsetRange) = {
     val reader = parquetFileReader(file)
 
-    val countSize = Try {
+    try {
       reader.getRowGroups.asScala
         .slice(restriction.getFrom.toInt, restriction.getTo.toInt)
         .foldLeft((0.0, 0.0)) { case ((count, size), rowGroup) =>
           (count + rowGroup.getRowCount, size + rowGroup.getTotalByteSize)
         }
-    }.toEither
-    reader.close()
-
-    countSize.fold(throw _, identity)
+    } finally {
+      reader.close()
+    }
   }
 
   def splitRowGroupsWithLimit(
