@@ -13,7 +13,7 @@ import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.api.InitContext
 import org.apache.parquet.hadoop.metadata.BlockMetaData
 import org.apache.parquet.io.{ColumnIOFactory, ParquetDecodingException, RecordReader}
-import org.apache.parquet.{HadoopReadOptions, ParquetReadOptions}
+import org.apache.parquet.HadoopReadOptions
 import org.slf4j.LoggerFactory
 
 import java.util.{Set => JSet}
@@ -100,7 +100,7 @@ class ParquetReadFn[T, R](
         new InitContext(
           hadoopConf,
           fileMetadata.asScala.map { case (k, v) =>
-            k -> ImmutableSet.of(v).asInstanceOf[JSet[String]]
+            k -> (ImmutableSet.of(v): JSet[String])
           }.asJava,
           fileSchema
         )
