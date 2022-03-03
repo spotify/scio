@@ -182,7 +182,7 @@ spotify/scio
   <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
   <li><a href="../Runners.html" class="page">Runners</a></li>
   <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
-  <li><a href="../Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="../Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
   <li><a href="../Changelog.html" class="page">Changelog</a></li>
   <li><a href="../FAQ.html" class="page">FAQ</a></li>
   <li><a href="../Powered-By.html" class="page">Powered By</a></li>
@@ -202,7 +202,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.4+0-96102140+20220118-1836*
+<i class="md-icon" title="Version">label_outline</i> 0.11.5+0-d3d83309+20220303-1612*
 </label>
 </li>
 </ul>
@@ -232,7 +232,7 @@ spotify/scio
 <h1><a href="#hyperloglog" name="hyperloglog" class="anchor"><span class="anchor-link"></span></a>HyperLogLog</h1>
 <p><strong>HyperLogLog</strong> is an algorithm to estimate the cardinality of a large dataset. Counting distinct in a large dataset requires linear space. Hll algorithm approximate the cardinality with a small memory footprint.</p>
 <p><a href="https://research.google/pubs/pub40671/">HyperLogLog++</a> is an improved version of <code>HyperLogLog</code> algorithms presented by Google. It more accurately estimates distinct count in large and small data streams.</p>
-<p>HyperLogLgo++ algorithm has been integrated with Apache Beam with help of <a href="https://github.com/google/zetasketch">ZetaSketch</a> library, which is comply with <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/hll_functions">Google Cloud BigQuery</a> sketches. More about Apache beam integration can find <a href="https://s.apache.org/hll-in-beam">here</a>.</p>
+<p>HyperLogLog++ algorithm has been integrated with Apache Beam with help of <a href="https://github.com/google/zetasketch">ZetaSketch</a> library, which is comply with <a href="https://cloud.google.com/bigquery/docs/reference/standard-sql/hll_functions">Google Cloud BigQuery</a> sketches. More about Apache beam integration can find <a href="https://s.apache.org/hll-in-beam">here</a>.</p>
 <h2><a href="#hyperloglog-integration-" name="hyperloglog-integration-" class="anchor"><span class="anchor-link"></span></a>HyperLogLog++ Integration.</h2>
 <p>Scio distinct count API has been extended to support HyperLogLog algorithms using ApproxDistinctCount Interface. <code>scio-extra</code> module provide two different implementations of this interface,</p>
 <ul>
@@ -308,7 +308,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.4+0-96102140+20220118-1836*
+0.11.5+0-d3d83309+20220303-1612*
 </span>
 </div>
 </article>

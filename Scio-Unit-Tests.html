@@ -182,7 +182,7 @@ spotify/scio
   <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
   <li><a href="Runners.html" class="page">Runners</a></li>
   <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
-  <li><a href="Apache-Beam.html" class="page">Versions</a></li>
+  <li><a href="Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
   <li><a href="Changelog.html" class="page">Changelog</a></li>
   <li><a href="FAQ.html" class="page">FAQ</a></li>
   <li><a href="Powered-By.html" class="page">Powered By</a></li>
@@ -197,6 +197,7 @@ spotify/scio
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-windowing" class="header">Test for pipeline with windowing</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-with-transform-overrides" class="header">Test with transform overrides</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -205,7 +206,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.4+0-96102140+20220118-1836*
+<i class="md-icon" title="Version">label_outline</i> 0.11.5+0-d3d83309+20220303-1612*
 </label>
 </li>
 </ul>
@@ -225,6 +226,7 @@ spotify/scio
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-sideoutput" class="header">Test for pipeline with sideoutput</a></li>
     <li><a href="Scio-Unit-Tests.html#test-partial-pipeline" class="header">Test partial pipeline</a></li>
     <li><a href="Scio-Unit-Tests.html#test-for-pipeline-with-windowing" class="header">Test for pipeline with windowing</a></li>
+    <li><a href="Scio-Unit-Tests.html#test-with-transform-overrides" class="header">Test with transform overrides</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -353,6 +355,43 @@ spotify/scio
   }
 }</code></pre>
 <p>Scio provides more <code>SCollection</code> assertions such as <code>inWindow</code>, <code>inCombinedNonLatePanes</code>, <code>inFinalPane</code>, and <code>inOnlyPane</code>. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
+<h3><a href="#test-with-transform-overrides" name="test-with-transform-overrides" class="anchor"><span class="anchor-link"></span></a>Test with transform overrides</h3>
+<p>Scio provides a method to replace arbitrary <em>named</em> <code>PTransform</code>s in a test context; this is primarily useful for mocking requests to external services.</p>
+<p>In this example, the <code>GuavaLookupDoFn</code> stands in for a transform that contacts an external service. A <code>ParDo</code> <code>PTransform</code> is created from the <code>DoFn</code> (<code>ParDo.of</code>), then applied to the pipeline (<code>applyTransform</code>) with a unique name (<code>myTransform</code>).</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L152-L156" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.textFile(args(&quot;input&quot;))
+  .map(_.toInt)
+  .applyTransform(&quot;myTransform&quot;, ParDo.of(new GuavaLookupDoFn))
+  .map(_.getValue.get())
+  .saveAsTextFile(args(&quot;output&quot;))</code></pre>
+<p>In a <code>JobTest</code>, a <code>PTransformOverride</code> can be passed to the <code>transformOverride</code> method to replace transforms in the original pipeline. Scio provides convenience methods for constructing <code>PTransformOverride</code>s in the <code>com.spotify.scio.testing.TransformOverride</code> object. Continuing the example above, <code>TransformOverride.ofAsyncLookup</code> can be used to map static mock data into the expected output format for the transform, here <code>KV[Int, BaseAsyncLookupDoFn.Try[String]]</code>.</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1082-L1087" target="_blank" title="Go to snippet source">source</a><code class="language-scala">.transformOverride(
+  TransformOverride.ofAsyncLookup[Int, String](
+    &quot;myTransform&quot;,
+    Map(1 -&gt; &quot;10&quot;, 2 -&gt; &quot;20&quot;, 3 -&gt; &quot;30&quot;)
+  )
+)</code></pre>
+<p>It is also possible to provide a function rather than a static map:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1099-L1102" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofAsyncLookup[Int, String](
+  &quot;myTransform&quot;,
+  (i: Int) =&gt; s&quot;${i * 10}&quot;
+)</code></pre>
+<p><code>TransformOverride.of</code> overrides transforms of type <code>PTransform[PCollection[T], PCollection[U]]</code> as in the case of <code>BaseAsyncDoFn</code> subclasses. <code>TransformOverride.ofKV</code> overrides transforms of type <code>PTransform[PCollection[T], PCollection[KV[T, U]]]</code>.</p>
+<p>Sources can also be overridden with <code>TransformOverride.ofSource</code>. For example, this source:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L117-L118" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.withName(&quot;ReadInput&quot;)
+  .textFile(args(&quot;input&quot;))</code></pre>
+<p>Can be overridden with static mock data:</p>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L931" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofSource[String](&quot;ReadInput&quot;, List(&quot;10&quot;, &quot;11&quot;, &quot;12&quot;))</code></pre>
+<p>Due to type erasure it is possible to provide the incorrect types for the transform and the error will not be caught until runtime.</p>
+<p>If you&rsquo;ve specified the incorrect input type, scio will attempt to detect the error and throw an <code>IllegalArgumentException</code>, which will be wrapped in a <code>PipelineExecutionException</code> at runtime:</p>
+<pre><code>org.apache.beam.sdk.Pipeline$PipelineExecutionException:
+  java.lang.IllegalArgumentException:
+    Input for override transform myTransform does not match pipeline transform. Expected: class java.lang.Integer Found: class java.lang.String
+</code></pre>
+<p>If you&rsquo;ve specified the incorrect output type, there is little scio can do to detect the error. Typically, a coder will throw a <code>ClassCastException</code> whose message will contain the correct type:</p>
+<pre><code>org.apache.beam.sdk.Pipeline$PipelineExecutionException:
+  java.lang.ClassCastException:
+    java.lang.String cannot be cast to java.lang.Integer
+</code></pre>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/Scio-Unit-Tests.md" title="Edit this page" class="md-source-file md-edit">
@@ -361,7 +400,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.4+0-96102140+20220118-1836*
+0.11.5+0-d3d83309+20220303-1612*
 </span>
 </div>
 </article>
