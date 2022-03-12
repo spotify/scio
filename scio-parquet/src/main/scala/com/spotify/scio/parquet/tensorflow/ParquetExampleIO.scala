@@ -21,6 +21,7 @@ import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.{
@@ -43,7 +44,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.tensorflow.proto.example.Example
+import org.tensorflow.proto.example.{Example, Features}
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
@@ -77,6 +78,21 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       })
       .withConfiguration(job.getConfiguration)
     sc.applyTransform(source).map(_.getValue)
+  }
+
+  override protected def readTest(sc: ScioContext, params: ReadP): SCollection[Example] = {
+    // The projection function is not part of the test input, so it must be applied directly
+    val fieldsSet = params.projection.toSet
+    val predicateFn = (example: Example) => {
+      val features =
+        example.getFeatures.getFeatureMap.asScala.view.filterKeys(fieldsSet.contains).toMap
+      Example.newBuilder().setFeatures(Features.newBuilder().putAllFeature(features.asJava)).build()
+    }
+
+    TestDataManager
+      .getInput(sc.testId.get)(ParquetExampleIO(path))
+      .toSCollection(sc)
+      .map(predicateFn)
   }
 
   override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
