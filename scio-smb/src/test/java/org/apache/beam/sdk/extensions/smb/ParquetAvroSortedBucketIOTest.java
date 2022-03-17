@@ -17,6 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import java.util.Optional;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.AvroGeneratedUser;
@@ -80,7 +81,7 @@ public class ParquetAvroSortedBucketIOTest {
     final ResourceId tempDirectory = TestUtils.fromFolder(temporaryFolder);
     pipeline.getOptions().setTempLocation(tempDirectory.toString());
 
-    final SortedBucketIO.Write<String, GenericRecord> write =
+    final SortedBucketIO.Write<String, Void, GenericRecord> write =
         ParquetAvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.getClassSchema())
             .to(folder.toString());
 

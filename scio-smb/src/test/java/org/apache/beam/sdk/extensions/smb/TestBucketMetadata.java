@@ -23,18 +23,20 @@ import java.util.Objects;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
-class TestBucketMetadata extends BucketMetadata<String, String> {
+class TestBucketMetadata extends BucketMetadata<String, Void, String> {
   @JsonProperty("keyIndex")
   private Integer keyIndex = 0;
 
-  static TestBucketMetadata of(int numBuckets, int numShards)
-      throws CannotProvideCoderException, NonDeterministicException {
+  static TestBucketMetadata of(int numBuckets, int numShards) {
     return of(numBuckets, numShards, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
   }
 
-  static TestBucketMetadata of(int numBuckets, int numShards, String filenamePrefix)
-      throws CannotProvideCoderException, NonDeterministicException {
-    return new TestBucketMetadata(numBuckets, numShards, HashType.MURMUR3_32, filenamePrefix);
+  static TestBucketMetadata of(int numBuckets, int numShards, String filenamePrefix) {
+    try {
+      return new TestBucketMetadata(numBuckets, numShards, HashType.MURMUR3_32, filenamePrefix);
+    } catch (CannotProvideCoderException | NonDeterministicException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   TestBucketMetadata withKeyIndex(int keyIndex) {
@@ -59,7 +61,7 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
       @JsonProperty("hashType") HashType hashType,
       @JsonProperty("filenamePrefix") String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, String.class, hashType, filenamePrefix);
+    super(version, numBuckets, numShards, String.class, null, hashType, filenamePrefix);
   }
 
   @Override
@@ -83,16 +85,28 @@ class TestBucketMetadata extends BucketMetadata<String, String> {
   }
 
   @Override
-  public boolean isPartitionCompatible(BucketMetadata other) {
-    return keyIndex.equals(((TestBucketMetadata) other).keyIndex);
+  public boolean isPartitionCompatibleForPrimaryKey(final BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    TestBucketMetadata that = (TestBucketMetadata) o;
+    return keyIndex.equals(that.keyIndex);
   }
 
   @Override
-  public String extractKey(String value) {
+  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(final BucketMetadata other) {
+    throw new IllegalArgumentException();
+  }
+
+  @Override
+  public String extractKeyPrimary(final String value) {
     try {
       return value.substring(keyIndex, 1);
     } catch (StringIndexOutOfBoundsException e) {
       return null;
     }
+  }
+
+  @Override
+  public Void extractKeySecondary(final String value) {
+    throw new IllegalArgumentException();
   }
 }

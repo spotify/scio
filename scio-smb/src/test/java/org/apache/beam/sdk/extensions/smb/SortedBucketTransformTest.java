@@ -24,12 +24,15 @@ import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn;
@@ -70,12 +73,19 @@ public class SortedBucketTransformTest {
   private static final List<Integer> inputSI = ImmutableList.of(1, 2, 3, 4, 5, 6);
   private static final List<String> inputSI2 = ImmutableList.of("z", "x", "y");
 
+  private static final Function<SortedBucketIO.ComparableKeyBytes, String> keyFn =
+      SortedBucketIO.ComparableKeyBytes.keyFnPrimary(StringUtf8Coder.of());
+  private static final Comparator<SortedBucketIO.ComparableKeyBytes> keyComparator =
+      new SortedBucketIO.PrimaryKeyComparator();
+  private static final SortedBucketTransform.NewBucketMetadataFn<?, ?, String> newBucketMetadataFn =
+      (SortedBucketTransform.NewBucketMetadataFn<String, Void, String>)
+          (numBuckets, numShards, hashType) -> TestBucketMetadata.of(numBuckets, numShards);
+
   // Predicate will filter out c2 from RHS input
   private static final Set<String> expected = ImmutableSet.of("d1-d2", "e1-e2");
   private static final Set<String> expectedWithSides =
       ImmutableSet.of("d1-d2-1,2,3,4,5,6-x,y,z", "e1-e2-1,2,3,4,5,6-x,y,z");
-
-  private static List<BucketedInput<?, ?>> sources;
+  private static final Predicate<String> predicate = (xs, s) -> !s.startsWith("c");
 
   private static final TransformFn<String, String> mergeFunction =
       (keyGroup, outputConsumer) ->
@@ -89,6 +99,24 @@ public class SortedBucketTransformTest {
                           .getAll(new TupleTag<String>("rhs"))
                           .forEach(rhs -> outputConsumer.accept(lhs + "-" + rhs)));
 
+  private static List<BucketedInput<?>> makeSources(SortedBucketSource.Keying keying) {
+    return ImmutableList.of(
+        BucketedInput.of(
+            keying,
+            new TupleTag<>("lhs"),
+            Collections.singletonList(inputLhsFolder.getRoot().getAbsolutePath()),
+            ".txt",
+            new TestFileOperations(),
+            null),
+        BucketedInput.of(
+            keying,
+            new TupleTag<>("rhs"),
+            Collections.singletonList(inputRhsFolder.getRoot().getAbsolutePath()),
+            ".txt",
+            new TestFileOperations(),
+            predicate));
+  }
+
   @BeforeClass
   public static void writeData() throws Exception {
     sinkPipeline
@@ -96,7 +124,7 @@ public class SortedBucketTransformTest {
         .apply(
             "SinkLHS",
             new SortedBucketSink<>(
-                TestBucketMetadata.of(4, 3),
+                TestBucketMetadataWithSecondary.of(4, 3),
                 fromFolder(inputLhsFolder),
                 fromFolder(tempFolder),
                 ".txt",
@@ -108,7 +136,7 @@ public class SortedBucketTransformTest {
         .apply(
             "SinkRHS",
             new SortedBucketSink<>(
-                TestBucketMetadata.of(2, 1),
+                TestBucketMetadataWithSecondary.of(2, 1),
                 fromFolder(inputRhsFolder),
                 fromFolder(tempFolder),
                 ".txt",
@@ -116,65 +144,90 @@ public class SortedBucketTransformTest {
                 1));
 
     sinkPipeline.run().waitUntilFinish();
-
-    final Predicate<String> predicate = (xs, s) -> !s.startsWith("c");
-
-    sources =
-        ImmutableList.of(
-            new BucketedInput<String, String>(
-                new TupleTag<>("lhs"),
-                inputLhsFolder.getRoot().getAbsolutePath(),
-                ".txt",
-                new TestFileOperations()),
-            new BucketedInput<String, String>(
-                new TupleTag<>("rhs"),
-                Collections.singletonList(inputRhsFolder.getRoot().getAbsolutePath()),
-                ".txt",
-                new TestFileOperations(),
-                predicate));
   }
 
   @Test
   public void testSortedBucketTransformMinParallelism() throws Exception {
-    test(TargetParallelism.min(), 2);
+    test(SortedBucketSource.Keying.PRIMARY, TargetParallelism.min(), 2);
+  }
+
+  @Test
+  public void testSortedBucketTransformMinParallelismSecondary() throws Exception {
+    test(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.min(), 2);
   }
 
   @Test
   public void testSortedBucketTransformMaxParallelism() throws Exception {
-    test(TargetParallelism.max(), 4);
+    test(SortedBucketSource.Keying.PRIMARY, TargetParallelism.max(), 4);
+  }
+
+  @Test
+  public void testSortedBucketTransformMaxParallelismSecondary() throws Exception {
+    test(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.max(), 4);
   }
 
   @Test
   public void testSortedBucketTransformAutoParallelism() throws Exception {
-    test(TargetParallelism.auto(), -1);
+    test(SortedBucketSource.Keying.PRIMARY, TargetParallelism.auto(), -1);
+  }
+
+  @Test
+  public void testSortedBucketTransformAutoParallelismSecondary() throws Exception {
+    test(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.auto(), -1);
   }
 
   @Test
   public void testSortedBucketTransformCustomParallelism() throws Exception {
-    test(TargetParallelism.of(8), 8);
+    test(SortedBucketSource.Keying.PRIMARY, TargetParallelism.of(8), 8);
+  }
+
+  @Test
+  public void testSortedBucketTransformCustomParallelismSecondary() throws Exception {
+    test(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.of(8), 8);
   }
 
   @Test
   public void testSortedBucketWithSidesTransformMinParallelism() throws Exception {
-    testWithSides(TargetParallelism.min(), 2);
+    testWithSides(SortedBucketSource.Keying.PRIMARY, TargetParallelism.min(), 2);
+  }
+
+  @Test
+  public void testSortedBucketWithSidesTransformMinParallelismSecondary() throws Exception {
+    testWithSides(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.min(), 2);
   }
 
   @Test
   public void testSortedBucketWithSidesTransformMaxParallelism() throws Exception {
-    testWithSides(TargetParallelism.max(), 4);
+    testWithSides(SortedBucketSource.Keying.PRIMARY, TargetParallelism.max(), 4);
+  }
+
+  @Test
+  public void testSortedBucketWithSidesTransformMaxParallelismSecondary() throws Exception {
+    testWithSides(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.max(), 4);
   }
 
   @Test
   public void testSortedBucketWithSidesTransformAutoParallelism() throws Exception {
-    testWithSides(TargetParallelism.auto(), -1);
+    testWithSides(SortedBucketSource.Keying.PRIMARY, TargetParallelism.auto(), -1);
+  }
+
+  @Test
+  public void testSortedBucketWithSidesTransformAutoParallelismSecondary() throws Exception {
+    testWithSides(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.auto(), -1);
   }
 
   @Test
   public void testSortedBucketWithSidesTransformCustomParallelism() throws Exception {
-    testWithSides(TargetParallelism.of(8), 8);
+    testWithSides(SortedBucketSource.Keying.PRIMARY, TargetParallelism.of(8), 8);
   }
 
-  private void testWithSides(TargetParallelism targetParallelism, int expectedNumBuckets)
+  @Test
+  public void testSortedBucketWithSidesTransformCustomParallelismSecondary() throws Exception {
+    testWithSides(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY, TargetParallelism.of(8), 8);
+  }
+
+  private void testWithSides(
+      SortedBucketSource.Keying keying, TargetParallelism targetParallelism, int expectedNumBuckets)
       throws Exception {
     final PCollectionView<List<Integer>> ints =
         transformPipeline.apply("CreateSI", Create.of(inputSI)).apply("SI", View.asList());
@@ -205,34 +258,38 @@ public class SortedBucketTransformTest {
         };
 
     transformPipeline.apply(
-        new SortedBucketTransform<>(
-            String.class,
-            sources,
+        new SortedBucketTransform<String, String>(
+            makeSources(keying),
+            keyFn,
+            keyComparator,
             targetParallelism,
             null,
             sideMergeFunction,
             fromFolder(outputFolder),
             fromFolder(tempFolder),
             Arrays.asList(ints, chars),
-            (numBuckets, numShards, hashType) -> TestBucketMetadata.of(numBuckets, numShards),
+            newBucketMetadataFn,
             new TestFileOperations(),
             ".txt",
             SortedBucketIO.DEFAULT_FILENAME_PREFIX));
     runAndValidate(targetParallelism, expectedNumBuckets, expectedWithSides);
   }
 
-  private void test(TargetParallelism targetParallelism, int expectedNumBuckets) throws Exception {
+  private void test(
+      SortedBucketSource.Keying keying, TargetParallelism targetParallelism, int expectedNumBuckets)
+      throws Exception {
     transformPipeline.apply(
         new SortedBucketTransform<>(
-            String.class,
-            sources,
+            makeSources(keying),
+            keyFn,
+            keyComparator,
             targetParallelism,
             mergeFunction,
             null,
             fromFolder(outputFolder),
             fromFolder(tempFolder),
             null,
-            (numBuckets, numShards, hashType) -> TestBucketMetadata.of(numBuckets, numShards),
+            newBucketMetadataFn,
             new TestFileOperations(),
             ".txt",
             SortedBucketIO.DEFAULT_FILENAME_PREFIX));
@@ -272,7 +329,7 @@ public class SortedBucketTransformTest {
     final FileAssignment fileAssignment =
         new SMBFilenamePolicy(fromFolder(folder), SortedBucketIO.DEFAULT_FILENAME_PREFIX, ".txt")
             .forDestination();
-    BucketMetadata<String, String> metadata =
+    BucketMetadata<String, Void, String> metadata =
         BucketMetadata.from(
             Channels.newInputStream(FileSystems.open(fileAssignment.forMetadata())));
     final Map<BucketShardId, List<String>> bucketsToOutputs = new HashMap<>();

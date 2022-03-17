@@ -22,8 +22,11 @@ import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisp
 
 import com.google.protobuf.ByteString;
 import java.nio.charset.Charset;
+import java.util.Optional;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.coders.VarIntCoder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -65,16 +68,19 @@ public class TensorFlowBucketMetadataTest {
                     .build())
             .build();
 
-    Assert.assertArrayEquals(
-        "data".getBytes(Charset.defaultCharset()),
+    final TensorFlowBucketMetadata<byte[], Long> metadata1 =
         new TensorFlowBucketMetadata<>(
-                1,
-                1,
-                byte[].class,
-                HashType.MURMUR3_32,
-                "bytes",
-                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-            .extractKey(example));
+            1,
+            1,
+            byte[].class,
+            Long.class,
+            HashType.MURMUR3_32,
+            "bytes",
+            "int",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+    Assert.assertArrayEquals(
+        "data".getBytes(Charset.defaultCharset()), metadata1.extractKeyPrimary(example));
+    Assert.assertEquals((Long) 12345L, metadata1.extractKeySecondary(example));
 
     Assert.assertEquals(
         ByteString.copyFrom("data".getBytes()),
@@ -85,7 +91,7 @@ public class TensorFlowBucketMetadataTest {
                 HashType.MURMUR3_32,
                 "bytes",
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-            .extractKey(example));
+            .extractKeyPrimary(example));
 
     Assert.assertEquals(
         "data",
@@ -96,18 +102,20 @@ public class TensorFlowBucketMetadataTest {
                 HashType.MURMUR3_32,
                 "bytes",
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-            .extractKey(example));
+            .extractKeyPrimary(example));
 
-    Assert.assertEquals(
-        (Long) 12345L,
+    final TensorFlowBucketMetadata<Long, String> metadata2 =
         new TensorFlowBucketMetadata<>(
-                1,
-                1,
-                Long.class,
-                HashType.MURMUR3_32,
-                "int",
-                SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-            .extractKey(example));
+            1,
+            1,
+            Long.class,
+            String.class,
+            HashType.MURMUR3_32,
+            "int",
+            "bytes",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+    Assert.assertEquals((Long) 12345L, metadata2.extractKeyPrimary(example));
+    Assert.assertEquals("data", metadata2.extractKeySecondary(example));
 
     Assert.assertThrows(
         NonDeterministicException.class,
@@ -119,7 +127,7 @@ public class TensorFlowBucketMetadataTest {
                     HashType.MURMUR3_32,
                     "float",
                     SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-                .extractKey(example));
+                .extractKeyPrimary(example));
 
     Assert.assertThrows(
         IllegalStateException.class,
@@ -131,18 +139,20 @@ public class TensorFlowBucketMetadataTest {
                     HashType.MURMUR3_32,
                     "bytes",
                     SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-                .extractKey(example));
+                .extractKeyPrimary(example));
   }
 
   @Test
   public void testDisplayData() throws Exception {
-    final TensorFlowBucketMetadata<byte[]> metadata =
+    final TensorFlowBucketMetadata<byte[], String> metadata =
         new TensorFlowBucketMetadata<>(
             2,
             1,
             byte[].class,
+            String.class,
             HashType.MURMUR3_32,
             "bytes",
+            "string",
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final DisplayData displayData = DisplayData.from(metadata);
@@ -150,34 +160,74 @@ public class TensorFlowBucketMetadataTest {
     MatcherAssert.assertThat(displayData, hasDisplayItem("numShards", 1));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("version", BucketMetadata.CURRENT_VERSION));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyField", "bytes"));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClass", byte[].class));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("hashType", HashType.MURMUR3_32.toString()));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoder", ByteArrayCoder.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyFieldPrimary", "bytes"));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClassPrimary", byte[].class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoderPrimary", ByteArrayCoder.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyFieldSecondary", "string"));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClassSecondary", String.class));
+    MatcherAssert.assertThat(
+        displayData, hasDisplayItem("keyCoderSecondary", StringUtf8Coder.class));
   }
 
   @Test
   public void testSameSourceCompatibility() throws Exception {
-    final TensorFlowBucketMetadata<byte[]> metadata1 =
+    final TensorFlowBucketMetadata<byte[], String> metadata1 =
         new TensorFlowBucketMetadata<>(
-            2, 1, byte[].class, HashType.MURMUR3_32, "foo", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
-
-    final TensorFlowBucketMetadata<byte[]> metadata2 =
+            2,
+            1,
+            byte[].class,
+            String.class,
+            HashType.MURMUR3_32,
+            "foo",
+            "bar",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+    final TensorFlowBucketMetadata<byte[], String> metadata2 =
         new TensorFlowBucketMetadata<>(
-            2, 1, byte[].class, HashType.MURMUR3_32, "bar", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+            2,
+            1,
+            byte[].class,
+            String.class,
+            HashType.MURMUR3_32,
+            "bar",
+            "foo",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     ;
-
-    final TensorFlowBucketMetadata<byte[]> metadata3 =
+    final TensorFlowBucketMetadata<byte[], String> metadata3 =
         new TensorFlowBucketMetadata<>(
-            4, 1, byte[].class, HashType.MURMUR3_32, "bar", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
-
-    final TensorFlowBucketMetadata<String> metadata4 =
+            4,
+            1,
+            byte[].class,
+            String.class,
+            HashType.MURMUR3_32,
+            "bar",
+            "foo",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+    final TensorFlowBucketMetadata<String, Long> metadata4 =
+        new TensorFlowBucketMetadata<>(
+            4,
+            1,
+            String.class,
+            Long.class,
+            HashType.MURMUR3_32,
+            "bar",
+            "foo",
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+    final TensorFlowBucketMetadata<String, Void> metadata5 =
         new TensorFlowBucketMetadata<>(
             4, 1, String.class, HashType.MURMUR3_32, "bar", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
-    Assert.assertFalse(metadata1.isPartitionCompatible(metadata2));
-    Assert.assertTrue(metadata2.isPartitionCompatible(metadata3));
-    Assert.assertFalse(metadata3.isPartitionCompatible(metadata4));
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryKey(metadata2));
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata2));
+
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryKey(metadata3));
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata3));
+
+    Assert.assertFalse(metadata3.isPartitionCompatibleForPrimaryKey(metadata4));
+    Assert.assertFalse(metadata3.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata4));
+
+    Assert.assertTrue(metadata4.isPartitionCompatibleForPrimaryKey(metadata5));
+    Assert.assertFalse(metadata4.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata5));
   }
 }

@@ -36,14 +36,16 @@ public class BucketMetadataTest {
 
   @Test
   public void testCoding() throws Exception {
-    final BucketMetadata<String, String> metadata =
-        new TestBucketMetadata(1, 16, 4, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
-    final BucketMetadata<String, String> copy = BucketMetadata.from(metadata.toString());
+    final BucketMetadata<String, String, String> metadata =
+        new TestBucketMetadataWithSecondary(
+            BucketMetadata.CURRENT_VERSION, 16, 4, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
+    final BucketMetadata<String, String, String> copy = BucketMetadata.from(metadata.toString());
 
     Assert.assertEquals(metadata.getVersion(), copy.getVersion());
     Assert.assertEquals(metadata.getNumBuckets(), copy.getNumBuckets());
     Assert.assertEquals(metadata.getNumShards(), copy.getNumShards());
     Assert.assertEquals(metadata.getKeyClass(), copy.getKeyClass());
+    Assert.assertEquals(metadata.getKeyClassSecondary(), copy.getKeyClassSecondary());
     Assert.assertEquals(metadata.getHashType(), copy.getHashType());
     Assert.assertEquals(metadata.getFilenamePrefix(), copy.getFilenamePrefix());
   }
@@ -54,20 +56,31 @@ public class BucketMetadataTest {
     Assert.assertThrows(
         NonDeterministicException.class,
         () ->
-            new BucketMetadata(
+            new BucketMetadata<Double, Void, Object>(
                 BucketMetadata.CURRENT_VERSION,
                 1,
                 1,
                 Double.class,
+                null,
                 HashType.MURMUR3_32,
                 DEFAULT_FILENAME_PREFIX) {
               @Override
-              public Object extractKey(Object value) {
+              public Double extractKeyPrimary(Object value) {
                 return null;
               }
 
               @Override
-              public boolean isPartitionCompatible(BucketMetadata other) {
+              public Void extractKeySecondary(Object value) {
+                return null;
+              }
+
+              @Override
+              public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata other) {
+                return false;
+              }
+
+              @Override
+              public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata other) {
                 return false;
               }
             });
@@ -75,22 +88,36 @@ public class BucketMetadataTest {
 
   @Test
   public void testSubTyping() throws Exception {
-    final BucketMetadata<String, String> test =
+    final BucketMetadata<String, Void, String> test =
         new TestBucketMetadata(16, 4, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
-    final BucketMetadata<String, GenericRecord> avro =
-        new AvroBucketMetadata<>(
+    final BucketMetadata<String, String, String> testSecondary =
+        new TestBucketMetadataWithSecondary(16, 4, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
+    final BucketMetadata<String, Void, GenericRecord> avro =
+        new AvroBucketMetadata<String, Void, GenericRecord>(
             16,
             4,
             String.class,
+            null,
             HashType.MURMUR3_32,
             "favorite_color",
+            null,
             DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
-    final BucketMetadata<String, TableRow> json =
+    final BucketMetadata<String, Void, TableRow> json =
         new JsonBucketMetadata<>(
-            16, 4, String.class, HashType.MURMUR3_32, "keyField", DEFAULT_FILENAME_PREFIX);
+            16,
+            4,
+            String.class,
+            null,
+            HashType.MURMUR3_32,
+            "keyField",
+            null,
+            DEFAULT_FILENAME_PREFIX);
 
     Assert.assertEquals(TestBucketMetadata.class, BucketMetadata.from(test.toString()).getClass());
+    Assert.assertEquals(
+        TestBucketMetadataWithSecondary.class,
+        BucketMetadata.from(testSecondary.toString()).getClass());
     Assert.assertEquals(AvroBucketMetadata.class, BucketMetadata.from(avro.toString()).getClass());
     Assert.assertEquals(JsonBucketMetadata.class, BucketMetadata.from(json.toString()).getClass());
   }
@@ -107,56 +134,78 @@ public class BucketMetadataTest {
         new TestBucketMetadata(0, 1, 1, HashType.MURMUR3_128, DEFAULT_FILENAME_PREFIX);
     final TestBucketMetadata m5 =
         new TestBucketMetadata(1, 1, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
+    final TestBucketMetadata m6 =
+        new TestBucketMetadata(2, 1, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
 
     Assert.assertTrue(m1.isCompatibleWith(m2));
     Assert.assertTrue(m1.isCompatibleWith(m3));
     Assert.assertFalse(m1.isCompatibleWith(m4));
-    Assert.assertFalse(m1.isCompatibleWith(m5));
+    Assert.assertTrue("version 0 and version 1 should be compatible", m1.isCompatibleWith(m5));
+    Assert.assertFalse(
+        "version 0 and version 2 are presumed incompatible", m1.isCompatibleWith(m6));
+    Assert.assertFalse(
+        "version 1 and version 2 are presumed incompatible", m5.isCompatibleWith(m6));
   }
 
-  // Test that old BucketMetadata file format missing filenamePrefix will default to "bucket"
   @Test
-  public void testFilenamePrefixDefault() throws Exception {
+  public void testDefaultFields() throws Exception {
     final String serializedAvro =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.AvroBucketMetadata\",\"version\":0,\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\"}";
-    Assert.assertEquals(
-        DEFAULT_FILENAME_PREFIX,
-        ((AvroBucketMetadata) BucketMetadata.from(serializedAvro)).getFilenamePrefix());
-
     final String serializedJson =
         "{\"type\":\"org.apache.beam.sdk.extensions.smb.JsonBucketMetadata\",\"version\":0,\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\"}";
+    final String serializedTensorflow =
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.TensorFlowBucketMetadata\",\"version\":0,\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\"}";
+
+    // Test that old BucketMetadata file format missing filenamePrefix will default to "bucket"
     Assert.assertEquals(
         DEFAULT_FILENAME_PREFIX,
         ((JsonBucketMetadata) BucketMetadata.from(serializedJson)).getFilenamePrefix());
-
-    final String serializedTensorflow =
-        "{\"type\":\"org.apache.beam.sdk.extensions.smb.TensorFlowBucketMetadata\",\"version\":0,\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\"}";
+    Assert.assertEquals(
+        DEFAULT_FILENAME_PREFIX,
+        ((AvroBucketMetadata) BucketMetadata.from(serializedAvro)).getFilenamePrefix());
     Assert.assertEquals(
         DEFAULT_FILENAME_PREFIX,
         ((TensorFlowBucketMetadata) BucketMetadata.from(serializedTensorflow)).getFilenamePrefix());
+
+    // Test that key class secondary defaults to null when reading from version 0
+    Assert.assertNull(
+        ((JsonBucketMetadata) BucketMetadata.from(serializedJson)).getKeyClassSecondary());
+    Assert.assertNull(
+        ((AvroBucketMetadata) BucketMetadata.from(serializedAvro)).getKeyClassSecondary());
+    Assert.assertNull(
+        ((TensorFlowBucketMetadata) BucketMetadata.from(serializedTensorflow))
+            .getKeyClassSecondary());
   }
 
   @Test
   public void testNullKeyEncoding() throws Exception {
     final TestBucketMetadata m =
         new TestBucketMetadata(0, 1, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
-
-    Assert.assertNull(m.extractKey(""));
-    Assert.assertNull(m.getKeyBytes(""));
+    Assert.assertNull(m.extractKeyPrimary(""));
+    Assert.assertNull(m.getKeyBytesPrimary(""));
+    final TestBucketMetadataWithSecondary m2 =
+        new TestBucketMetadataWithSecondary(0, 1, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
+    Assert.assertNull(m2.extractKeyPrimary(""));
+    Assert.assertNull(m2.getKeyBytesPrimary(""));
+    Assert.assertNull(m2.extractKeySecondary("a"));
+    Assert.assertNull(m2.getKeyBytesSecondary("a"));
   }
 
   @Test
   public void testDisplayData() throws Exception {
-    final TestBucketMetadata m =
-        new TestBucketMetadata(3, 2, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
+    final TestBucketMetadataWithSecondary m =
+        new TestBucketMetadataWithSecondary(3, 2, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
 
     final DisplayData displayData = DisplayData.from(m);
     MatcherAssert.assertThat(displayData, hasDisplayItem("numBuckets", 2));
     MatcherAssert.assertThat(displayData, hasDisplayItem("numShards", 1));
     MatcherAssert.assertThat(displayData, hasDisplayItem("version", 3));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClass", String.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClassPrimary", String.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyClassSecondary", String.class));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("hashType", HashType.MURMUR3_32.toString()));
-    MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoder", StringUtf8Coder.class));
+    MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoderPrimary", StringUtf8Coder.class));
+    MatcherAssert.assertThat(
+        displayData, hasDisplayItem("keyCoderSecondary", StringUtf8Coder.class));
   }
 }

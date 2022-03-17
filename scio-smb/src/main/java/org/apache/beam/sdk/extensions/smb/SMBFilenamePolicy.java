@@ -136,7 +136,7 @@ public final class SMBFilenamePolicy implements Serializable {
       return directory.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
     }
 
-    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?> metadata) {
+    public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?, ?> metadata) {
       return forBucket(id, metadata.getNumBuckets(), metadata.getNumShards());
     }
 

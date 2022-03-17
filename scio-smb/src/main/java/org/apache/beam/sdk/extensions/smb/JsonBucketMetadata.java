@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.bigquery.model.TableRow;
 import java.util.Arrays;
-import java.util.Objects;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
@@ -33,16 +33,17 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for BigQuery {@link TableRow} JSON
  * records.
  */
-public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
+public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow> {
 
   @JsonProperty private final String keyField;
-
-  @JsonIgnore private String[] keyPath;
+  @JsonProperty private final String keyFieldSecondary;
+  @JsonIgnore private final String[] keyPath;
+  @JsonIgnore private final String[] keyPathSecondary;
 
   public JsonBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
+      Class<K1> keyClassPrimary,
       BucketMetadata.HashType hashType,
       String keyField,
       String filenamePrefix)
@@ -51,9 +52,33 @@ public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        keyClass,
+        keyClassPrimary,
+        null,
         hashType,
         keyField,
+        null,
+        filenamePrefix);
+  }
+
+  public JsonBucketMetadata(
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      Class<K2> keyClassSecondary,
+      BucketMetadata.HashType hashType,
+      String keyField,
+      String keyFieldSecondary,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        BucketMetadata.CURRENT_VERSION,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyClassSecondary,
+        hashType,
+        keyField,
+        keyFieldSecondary,
         filenamePrefix);
   }
 
@@ -62,18 +87,30 @@ public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
       @JsonProperty("version") int version,
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("keyClass") Class<K> keyClass,
+      @JsonProperty("keyClass") Class<K1> keyClassPrimary,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
       @JsonProperty("hashType") BucketMetadata.HashType hashType,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
+    super(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyClassSecondary,
+        hashType,
+        filenamePrefix);
+    assert ((keyClassSecondary != null && keyFieldSecondary != null)
+        || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
+    this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = keyField.split("\\.");
+    this.keyPathSecondary = keyFieldSecondary == null ? null : keyFieldSecondary.split("\\.");
   }
 
-  @Override
-  public K extractKey(TableRow value) {
+  private <K> K extractKey(String[] keyPath, TableRow value) {
     TableRow node = value;
     for (int i = 0; i < keyPath.length - 1; i++) {
       node = (TableRow) node.get(keyPath[i]);
@@ -84,19 +121,51 @@ public class JsonBucketMetadata<K> extends BucketMetadata<K, TableRow> {
   }
 
   @Override
-  public void populateDisplayData(Builder builder) {
-    super.populateDisplayData(builder);
-    builder.add(DisplayData.item("keyField", keyField));
+  public K1 extractKeyPrimary(TableRow value) {
+    return extractKey(keyPath, value);
   }
 
   @Override
-  public boolean isPartitionCompatible(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    JsonBucketMetadata<?> that = (JsonBucketMetadata<?>) o;
+  public K2 extractKeySecondary(TableRow value) {
+    assert (keyPathSecondary != null);
+    return extractKey(keyPathSecondary, value);
+  }
+
+  @Override
+  public void populateDisplayData(Builder builder) {
+    super.populateDisplayData(builder);
+    builder.add(DisplayData.item("keyFieldPrimary", keyField));
+    if (keyFieldSecondary != null)
+      builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
+  }
+
+  @Override
+  public boolean isPartitionCompatibleForPrimaryKey(final BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    JsonBucketMetadata<?, ?> that = (JsonBucketMetadata<?, ?>) o;
     return getKeyClass() == that.getKeyClass()
         && keyField.equals(that.keyField)
         && Arrays.equals(keyPath, that.keyPath);
+  }
+
+  @Override
+  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(final BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    JsonBucketMetadata<?, ?> that = (JsonBucketMetadata<?, ?>) o;
+    boolean allSecondaryPresent =
+        getKeyClassSecondary() != null
+            && that.getKeyClassSecondary() != null
+            && keyFieldSecondary != null
+            && that.keyFieldSecondary != null
+            && keyPathSecondary != null
+            && that.keyPathSecondary != null;
+    // you messed up
+    if (!allSecondaryPresent) return false;
+    return getKeyClass() == that.getKeyClass()
+        && getKeyClassSecondary() == that.getKeyClassSecondary()
+        && keyField.equals(that.keyField)
+        && keyFieldSecondary.equals(that.keyFieldSecondary)
+        && Arrays.equals(keyPath, that.keyPath)
+        && Arrays.equals(keyPathSecondary, that.keyPathSecondary);
   }
 }

@@ -24,7 +24,7 @@ import com.google.auto.value.AutoValue;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -51,27 +51,50 @@ public class JsonSortedBucketIO {
   }
 
   /** Returns a new {@link Write} for BigQuery {@link TableRow} JSON records. */
-  public static <K> Write<K> write(Class<K> keyClass, String keyField) {
-    return new AutoValue_JsonSortedBucketIO_Write.Builder<K>()
+  public static <K1> Write<K1, Void> write(Class<K1> keyClassPrimary, String keyFieldPrimary) {
+    return JsonSortedBucketIO.write(keyClassPrimary, null, keyFieldPrimary, null);
+  }
+
+  /** Returns a new {@link Write} for BigQuery {@link TableRow} JSON records. */
+  public static <K1, K2> Write<K1, K2> write(
+      Class<K1> keyClassPrimary,
+      Class<K2> keyClassSecondary,
+      String keyFieldPrimary,
+      String keyFieldSecondary) {
+    return new AutoValue_JsonSortedBucketIO_Write.Builder<K1, K2>()
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
-        .setKeyClass(keyClass)
-        .setKeyField(keyField)
+        .setKeyClassPrimary(keyClassPrimary)
+        .setKeyClassSecondary(keyClassSecondary)
+        .setKeyFieldPrimary(keyFieldPrimary)
+        .setKeyFieldSecondary(keyFieldSecondary)
         .setKeyCacheSize(0)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setCompression(Compression.UNCOMPRESSED)
         .build();
   }
 
-  /** Returns a new {@link TransformOutput} for Avro generic records. */
-  public static <K> TransformOutput<K> transformOutput(Class<K> keyClass, String keyField) {
-    return new AutoValue_JsonSortedBucketIO_TransformOutput.Builder<K>()
+  /** Returns a new {@link TransformOutput} for Json records. */
+  public static <K1> TransformOutput<K1, Void> transformOutput(
+      Class<K1> keyClassPrimary, String keyFieldPrimary) {
+    return transformOutput(keyClassPrimary, null, keyFieldPrimary, null);
+  }
+
+  /** Returns a new {@link TransformOutput} for Json records. */
+  public static <K1, K2> TransformOutput<K1, K2> transformOutput(
+      Class<K1> keyClassPrimary,
+      Class<K2> keyClassSecondary,
+      String keyFieldPrimary,
+      String keyFieldSecondary) {
+    return new AutoValue_JsonSortedBucketIO_TransformOutput.Builder<K1, K2>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-        .setKeyClass(keyClass)
-        .setKeyField(keyField)
+        .setKeyClassPrimary(keyClassPrimary)
+        .setKeyClassSecondary(keyClassSecondary)
+        .setKeyFieldPrimary(keyFieldPrimary)
+        .setKeyFieldSecondary(keyFieldSecondary)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setCompression(Compression.UNCOMPRESSED)
         .build();
@@ -136,8 +159,9 @@ public class JsonSortedBucketIO {
     }
 
     @Override
-    protected BucketedInput<?, TableRow> toBucketedInput() {
-      return new BucketedInput<>(
+    protected BucketedInput<TableRow> toBucketedInput(final SortedBucketSource.Keying keying) {
+      return BucketedInput.of(
+          keying,
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
@@ -154,97 +178,104 @@ public class JsonSortedBucketIO {
    * Writes to BigQuery {@link TableRow} JSON sorted-bucket files using {@link SortedBucketSink}.
    */
   @AutoValue
-  public abstract static class Write<K> extends SortedBucketIO.Write<K, TableRow> {
+  public abstract static class Write<K1, K2> extends SortedBucketIO.Write<K1, K2, TableRow> {
     // JSON specific
     @Nullable
-    abstract String getKeyField();
+    abstract String getKeyFieldPrimary();
+
+    @Nullable
+    abstract String getKeyFieldSecondary();
 
     abstract Compression getCompression();
 
-    abstract Builder<K> toBuilder();
+    abstract Builder<K1, K2> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K> {
+    abstract static class Builder<K1, K2> {
       // Common
-      abstract Builder<K> setNumBuckets(int numBuckets);
+      abstract Builder<K1, K2> setNumBuckets(int numBuckets);
 
-      abstract Builder<K> setNumShards(int numShards);
+      abstract Builder<K1, K2> setNumShards(int numShards);
 
-      abstract Builder<K> setKeyClass(Class<K> keyClass);
+      abstract Builder<K1, K2> setKeyClassPrimary(Class<K1> keyClassPrimary);
 
-      abstract Builder<K> setHashType(HashType hashType);
+      abstract Builder<K1, K2> setKeyClassSecondary(Class<K2> keyClassSecondary);
 
-      abstract Builder<K> setOutputDirectory(ResourceId outputDirectory);
+      abstract Builder<K1, K2> setHashType(HashType hashType);
 
-      abstract Builder<K> setTempDirectory(ResourceId tempDirectory);
+      abstract Builder<K1, K2> setOutputDirectory(ResourceId outputDirectory);
 
-      abstract Builder<K> setFilenamePrefix(String filenamePrefix);
+      abstract Builder<K1, K2> setTempDirectory(ResourceId tempDirectory);
 
-      abstract Builder<K> setFilenameSuffix(String filenameSuffix);
+      abstract Builder<K1, K2> setFilenamePrefix(String filenamePrefix);
 
-      abstract Builder<K> setSorterMemoryMb(int sorterMemoryMb);
+      abstract Builder<K1, K2> setFilenameSuffix(String filenameSuffix);
 
-      abstract Builder<K> setKeyCacheSize(int cacheSize);
+      abstract Builder<K1, K2> setSorterMemoryMb(int sorterMemoryMb);
+
+      abstract Builder<K1, K2> setKeyCacheSize(int cacheSize);
 
       // JSON specific
-      abstract Builder<K> setKeyField(String keyField);
+      abstract Builder<K1, K2> setKeyFieldPrimary(String keyFieldPrimary);
 
-      abstract Builder<K> setCompression(Compression compression);
+      abstract Builder<K1, K2> setKeyFieldSecondary(String keyFieldSecondary);
 
-      abstract Write<K> build();
+      abstract Builder<K1, K2> setCompression(Compression compression);
+
+      abstract Write<K1, K2> build();
     }
 
     /** Specifies the number of buckets for partitioning. */
-    public Write<K> withNumBuckets(int numBuckets) {
+    public Write<K1, K2> withNumBuckets(int numBuckets) {
       return toBuilder().setNumBuckets(numBuckets).build();
     }
 
     /** Specifies the number of shards for partitioning. */
-    public Write<K> withNumShards(int numShards) {
+    public Write<K1, K2> withNumShards(int numShards) {
       return toBuilder().setNumShards(numShards).build();
     }
 
     /** Specifies the {@link HashType} for partitioning. */
-    public Write<K> withHashType(HashType hashType) {
+    public Write<K1, K2> withHashType(HashType hashType) {
       return toBuilder().setHashType(hashType).build();
     }
 
     /** Writes to the given output directory. */
-    public Write<K> to(String outputDirectory) {
+    public Write<K1, K2> to(String outputDirectory) {
       return toBuilder()
           .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
           .build();
     }
 
     /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
-    public Write<K> withTempDirectory(String tempDirectory) {
+    public Write<K1, K2> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
           .build();
     }
 
     /** Specifies the output filename suffix. */
-    public Write<K> withSuffix(String filenameSuffix) {
+    public Write<K1, K2> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
     /** Specifies the output filename prefix (i.e. "bucket" or "part"). */
-    public Write<K> withFilenamePrefix(String filenamePrefix) {
+    public Write<K1, K2> withFilenamePrefix(String filenamePrefix) {
       return toBuilder().setFilenamePrefix(filenamePrefix).build();
     }
 
     /** Specifies the sorter memory in MB. */
-    public Write<K> withSorterMemoryMb(int sorterMemoryMb) {
+    public Write<K1, K2> withSorterMemoryMb(int sorterMemoryMb) {
       return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
     }
 
     /** Specifies the size of an optional key-to-hash cache in the ExtractKeys transform. */
-    public Write<K> withKeyCacheOfSize(int keyCacheSize) {
+    public Write<K1, K2> withKeyCacheOfSize(int keyCacheSize) {
       return toBuilder().setKeyCacheSize(keyCacheSize).build();
     }
 
     /** Specifies the output file {@link Compression}. */
-    public Write<K> withCompression(Compression compression) {
+    public Write<K1, K2> withCompression(Compression compression) {
       return toBuilder().setCompression(compression).build();
     }
 
@@ -254,14 +285,16 @@ public class JsonSortedBucketIO {
     }
 
     @Override
-    BucketMetadata<K, TableRow> getBucketMetadata() {
+    BucketMetadata<K1, K2, TableRow> getBucketMetadata() {
       try {
         return new JsonBucketMetadata<>(
             getNumBuckets(),
             getNumShards(),
-            getKeyClass(),
+            getKeyClassPrimary(),
+            getKeyClassSecondary(),
             getHashType(),
-            getKeyField(),
+            getKeyFieldPrimary(),
+            getKeyFieldSecondary(),
             getFilenamePrefix());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
@@ -274,65 +307,72 @@ public class JsonSortedBucketIO {
    * SortedBucketTransform}.
    */
   @AutoValue
-  public abstract static class TransformOutput<K>
-      extends SortedBucketIO.TransformOutput<K, TableRow> {
+  public abstract static class TransformOutput<K1, K2>
+      extends SortedBucketIO.TransformOutput<K1, K2, TableRow> {
 
     // JSON specific
     @Nullable
-    abstract String getKeyField();
+    abstract String getKeyFieldPrimary();
+
+    @Nullable
+    abstract String getKeyFieldSecondary();
 
     abstract Compression getCompression();
 
-    abstract Builder<K> toBuilder();
+    abstract Builder<K1, K2> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K> {
+    abstract static class Builder<K1, K2> {
 
       // Common
-      abstract Builder<K> setKeyClass(Class<K> keyClass);
+      abstract Builder<K1, K2> setKeyClassPrimary(Class<K1> keyClassPrimary);
 
-      abstract Builder<K> setOutputDirectory(ResourceId outputDirectory);
+      abstract Builder<K1, K2> setKeyClassSecondary(Class<K2> keyClassSecondary);
 
-      abstract Builder<K> setTempDirectory(ResourceId tempDirectory);
+      abstract Builder<K1, K2> setOutputDirectory(ResourceId outputDirectory);
 
-      abstract Builder<K> setFilenameSuffix(String filenameSuffix);
+      abstract Builder<K1, K2> setTempDirectory(ResourceId tempDirectory);
 
-      abstract Builder<K> setFilenamePrefix(String filenamePrefix);
+      abstract Builder<K1, K2> setFilenameSuffix(String filenameSuffix);
+
+      abstract Builder<K1, K2> setFilenamePrefix(String filenamePrefix);
 
       // JSON specific
-      abstract Builder<K> setKeyField(String keyField);
+      abstract Builder<K1, K2> setKeyFieldPrimary(String keyFieldPrimary);
 
-      abstract Builder<K> setCompression(Compression compression);
+      abstract Builder<K1, K2> setKeyFieldSecondary(String keyFieldSecondary);
 
-      abstract TransformOutput<K> build();
+      abstract Builder<K1, K2> setCompression(Compression compression);
+
+      abstract TransformOutput<K1, K2> build();
     }
 
     /** Writes to the given output directory. */
-    public TransformOutput<K> to(String outputDirectory) {
+    public TransformOutput<K1, K2> to(String outputDirectory) {
       return toBuilder()
           .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
           .build();
     }
 
     /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
-    public TransformOutput<K> withTempDirectory(String tempDirectory) {
+    public TransformOutput<K1, K2> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
           .build();
     }
 
     /** Specifies the output filename suffix. */
-    public TransformOutput<K> withSuffix(String filenameSuffix) {
+    public TransformOutput<K1, K2> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
     /** Specifies the output filename prefix. */
-    public TransformOutput<K> withFilenamePrefix(String filenamePrefix) {
+    public TransformOutput<K1, K2> withFilenamePrefix(String filenamePrefix) {
       return toBuilder().setFilenamePrefix(filenamePrefix).build();
     }
 
     /** Specifies the output file {@link Compression}. */
-    public TransformOutput<K> withCompression(Compression compression) {
+    public TransformOutput<K1, K2> withCompression(Compression compression) {
       return toBuilder().setCompression(compression).build();
     }
 
@@ -342,15 +382,24 @@ public class JsonSortedBucketIO {
     }
 
     @Override
-    NewBucketMetadataFn<K, TableRow> getNewBucketMetadataFn() {
-      final String keyField = getKeyField();
-      final Class<K> keyClass = getKeyClass();
+    NewBucketMetadataFn<K1, K2, TableRow> getNewBucketMetadataFn() {
+      final String keyFieldPrimary = getKeyFieldPrimary();
+      final String keyFieldSeconary = getKeyFieldSecondary();
+      final Class<K1> keyClassPrimary = getKeyClassPrimary();
+      final Class<K2> keyClassSecondary = getKeyClassSecondary();
       final String filenamePrefix = getFilenamePrefix();
 
       return (numBuckets, numShards, hashType) -> {
         try {
           return new JsonBucketMetadata<>(
-              numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix);
+              numBuckets,
+              numShards,
+              keyClassPrimary,
+              keyClassSecondary,
+              hashType,
+              keyFieldPrimary,
+              keyFieldSeconary,
+              filenamePrefix);
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);
         }

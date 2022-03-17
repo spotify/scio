@@ -77,7 +77,7 @@ public class AvroSortedBucketIOTest {
     final ResourceId tempDirectory = TestUtils.fromFolder(temporaryFolder);
     pipeline.getOptions().setTempLocation(tempDirectory.toString());
 
-    final SortedBucketIO.Write<String, AvroGeneratedUser> write =
+    final SortedBucketIO.Write<String, Void, AvroGeneratedUser> write =
         AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
             .to(folder.toString());
 
@@ -96,12 +96,13 @@ public class AvroSortedBucketIOTest {
 
   @Test
   public void testNumBucketsRequiredParam() {
-    Throwable t = Assert.assertThrows(
-        IllegalArgumentException.class, () ->
-        AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
-            .to(folder.toString())
-            .expand(null)
-        );
+    Throwable t =
+        Assert.assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
+                    .to(folder.toString())
+                    .expand(null));
     Assert.assertEquals("numBuckets must be set to a nonzero value", t.getMessage());
   }
 }
