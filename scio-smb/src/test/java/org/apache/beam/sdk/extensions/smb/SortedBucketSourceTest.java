@@ -674,7 +674,7 @@ public class SortedBucketSourceTest {
     testPrimary(lhsInput, rhsInput, null, null, targetParallelism);
   }
 
-  class Fuck<KeyType, K2> {
+  class TestInput<KeyType, K2> {
     TupleTag<String> tag;
     Map<BucketShardId, List<String>> input;
     BucketMetadata<String, K2, String> metadata;
@@ -682,7 +682,7 @@ public class SortedBucketSourceTest {
     Map<KeyType, List<String>> expected;
     Function<String, KeyType> keyFn;
 
-    public Fuck(
+    public TestInput(
         TupleTag<String> tag,
         Map<BucketShardId, List<String>> input,
         BucketMetadata<String, K2, String> metadata,
@@ -698,7 +698,7 @@ public class SortedBucketSourceTest {
     }
   }
 
-  private Fuck<String, Void> fuckPrimary(
+  private TestInput<String, Void> testInputPrimary(
       String tagName,
       Map<BucketShardId, List<String>> input,
       Predicate<String> predicate,
@@ -711,7 +711,7 @@ public class SortedBucketSourceTest {
     final TupleTag<String> tag = new TupleTag<>(tagName);
     TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards, prefix);
     Function<String, String> keyFn = metadata::extractKeyPrimary;
-    return new Fuck<>(
+    return new TestInput<>(
         tag,
         input,
         metadata,
@@ -720,7 +720,7 @@ public class SortedBucketSourceTest {
         filter(groupByKey(input, keyFn), predicate));
   }
 
-  private Fuck<KV<String, String>, String> fuckSecondary(
+  private TestInput<KV<String, String>, String> testInputSecondary(
       String tagName,
       Map<BucketShardId, List<String>> input,
       Predicate<String> predicate,
@@ -735,7 +735,7 @@ public class SortedBucketSourceTest {
         TestBucketMetadataWithSecondary.of(numBuckets, numShards, prefix);
     Function<String, KV<String, String>> keyFn =
         v -> KV.of(metadata.extractKeyPrimary(v), metadata.extractKeySecondary(v));
-    return new Fuck<>(
+    return new TestInput<>(
         tag,
         input,
         metadata,
@@ -753,16 +753,16 @@ public class SortedBucketSourceTest {
       TargetParallelism targetParallelism)
       throws Exception {
     final TestFileOperations fileOperations = new TestFileOperations();
-    Fuck<String, Void> lhs =
-        fuckPrimary(
+    TestInput<String, Void> lhs =
+        testInputPrimary(
             "LHS",
             lhsInput,
             lhsPredicate,
             fileOperations,
             LHS_FILENAME_PREFIX,
             Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()));
-    Fuck<String, Void> rhs =
-        fuckPrimary(
+    TestInput<String, Void> rhs =
+        testInputPrimary(
             "RHS",
             rhsInput,
             rhsPredicate,
@@ -788,16 +788,16 @@ public class SortedBucketSourceTest {
       TargetParallelism targetParallelism)
       throws Exception {
     final TestFileOperations fileOperations = new TestFileOperations();
-    Fuck<KV<String, String>, String> lhs =
-        fuckSecondary(
+    TestInput<KV<String, String>, String> lhs =
+        testInputSecondary(
             "LHS",
             lhsInput,
             lhsPredicate,
             fileOperations,
             LHS_FILENAME_PREFIX,
             Collections.singletonList(lhsFolder.getRoot().getAbsolutePath()));
-    Fuck<KV<String, String>, String> rhs =
-        fuckSecondary(
+    TestInput<KV<String, String>, String> rhs =
+        testInputSecondary(
             "RHS",
             rhsInput,
             rhsPredicate,
@@ -817,7 +817,7 @@ public class SortedBucketSourceTest {
   }
 
   private <KeyType, K2> void test(
-      Fuck<KeyType, K2> lhs, Fuck<KeyType, K2> rhs, SortedBucketSource<KeyType> src)
+      TestInput<KeyType, K2> lhs, TestInput<KeyType, K2> rhs, SortedBucketSource<KeyType> src)
       throws Exception {
     write(lhsPolicy.forDestination(), lhs.metadata, lhs.input);
     write(rhsPolicy.forDestination(), rhs.metadata, rhs.input);
@@ -898,8 +898,8 @@ public class SortedBucketSourceTest {
             "lhs",
             LHS_FILENAME_PREFIX,
             (b, s) -> TestBucketMetadata.of(b, s, LHS_FILENAME_PREFIX));
-    Fuck<String, Void> lhs =
-        fuckPrimary(
+    TestInput<String, Void> lhs =
+        testInputPrimary(
             "LHS",
             allLhsValues,
             null,
@@ -914,8 +914,8 @@ public class SortedBucketSourceTest {
             "rhs",
             RHS_FILENAME_PREFIX,
             (b, s) -> TestBucketMetadata.of(b, s, RHS_FILENAME_PREFIX));
-    Fuck<String, Void> rhs =
-        fuckPrimary(
+    TestInput<String, Void> rhs =
+        testInputPrimary(
             "RHS",
             allRhsValues,
             null,
@@ -948,8 +948,8 @@ public class SortedBucketSourceTest {
             "lhs",
             LHS_FILENAME_PREFIX,
             (b, s) -> TestBucketMetadataWithSecondary.of(b, s, LHS_FILENAME_PREFIX));
-    Fuck<KV<String, String>, String> lhs =
-        fuckSecondary(
+    TestInput<KV<String, String>, String> lhs =
+        testInputSecondary(
             "LHS",
             allLhsValues,
             null,
@@ -964,8 +964,8 @@ public class SortedBucketSourceTest {
             "rhs",
             RHS_FILENAME_PREFIX,
             (b, s) -> TestBucketMetadataWithSecondary.of(b, s, RHS_FILENAME_PREFIX));
-    Fuck<KV<String, String>, String> rhs =
-        fuckSecondary(
+    TestInput<KV<String, String>, String> rhs =
+        testInputSecondary(
             "RHS",
             allRhsValues,
             null,
