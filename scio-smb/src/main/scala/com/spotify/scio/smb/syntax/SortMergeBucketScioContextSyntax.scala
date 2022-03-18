@@ -772,7 +772,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   class SortMergeTransformWriteBuilder[KeyType, R, W](
     transform: AbsCoGbkTransform[KeyType, W],
     toR: CoGbkResult => R
-  ) {
+  ) extends Serializable {
     def withSideInputs(
       sides: SideInput[_]*
     ): SortMergeTransformWithSideInputsWriteBuilder[KeyType, R, W] =
