@@ -139,7 +139,7 @@ public class SinkBenchmark {
                                 .collect(Collectors.toList())))
             .setCoder(TableRowJsonCoder.of());
 
-    final AvroSortedBucketIO.Write<CharSequence, AvroGeneratedUser> avroWrite =
+    final AvroSortedBucketIO.Write<CharSequence, Void, AvroGeneratedUser> avroWrite =
         AvroSortedBucketIO.write(CharSequence.class, "name", AvroGeneratedUser.class)
             .to(sinkOptions.getAvroDestination())
             .withTempDirectory(sinkOptions.getTempLocation())
@@ -150,7 +150,7 @@ public class SinkBenchmark {
             .withCodec(CodecFactory.snappyCodec());
     avroData.apply(avroWrite);
 
-    final JsonSortedBucketIO.Write<String> jsonWrite =
+    final JsonSortedBucketIO.Write<String, Void> jsonWrite =
         JsonSortedBucketIO.write(String.class, "user")
             .to(sinkOptions.getJsonDestination())
             .withTempDirectory(sinkOptions.getTempLocation())
