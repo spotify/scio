@@ -65,23 +65,24 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
 
       val location = extractLocation(sqlQuery).getOrElse(BigQueryConfig.location)
       tableService.prepareStagingDataset(location)
-      val temp = tableService.createTemporary(location)
+      val tempTable = tableService.createTemporary(location)
+      val tempTableRef = tempTable.getTableReference
 
       // Create temporary table view and get schema
-      Logger.info(s"Creating temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
+      Logger.info(s"Creating temporary view ${bq.BigQueryHelpers.toTableSpec(tempTableRef)}")
       val view = new ViewDefinition().setQuery(sqlQuery)
-      val viewTable = new Table().setView(view).setTableReference(temp)
+      val viewTable = tempTable.setView(view)
       val schema = client.underlying
         .tables()
-        .insert(temp.getProjectId, temp.getDatasetId, viewTable)
+        .insert(tempTableRef.getProjectId, tempTableRef.getDatasetId, viewTable)
         .execute()
         .getSchema
 
       // Delete temporary table
-      Logger.info(s"Deleting temporary view ${bq.BigQueryHelpers.toTableSpec(temp)}")
+      Logger.info(s"Deleting temporary view ${bq.BigQueryHelpers.toTableSpec(tempTableRef)}")
       client.underlying
         .tables()
-        .delete(temp.getProjectId, temp.getDatasetId, temp.getTableId)
+        .delete(tempTableRef.getProjectId, tempTableRef.getDatasetId, tempTableRef.getTableId)
         .execute()
 
       schema
@@ -143,7 +144,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
       val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
       val tempTable = tableService.createTemporary(location)
 
-      delayedQueryJob(query.copy(destinationTable = tempTable))
+      delayedQueryJob(query.copy(destinationTable = tempTable.getTableReference))
     }
 
   private[scio] def newCachedQueryJob(query: QueryJobConfig): Try[QueryJob] =
@@ -163,7 +164,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
           Logger.info(s"Cache invalid for query: `${query.sql}`")
 
           val location = extractLocation(query.sql).getOrElse(BigQueryConfig.location)
-          val newTemp = tableService.createTemporary(location)
+          val newTemp = tableService.createTemporary(location).getTableReference
 
           Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(newTemp)}")
 
@@ -177,7 +178,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
           val temp = tableService.createTemporary(
             extractLocation(query.sql)
               .getOrElse(BigQueryConfig.location)
-          )
+          ).getTableReference
 
           Logger.info(s"Cache miss for query: `${query.sql}`")
           Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
