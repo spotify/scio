@@ -157,7 +157,8 @@ abstract public class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
   protected abstract Function<SortedBucketIO.ComparableKeyBytes, KeyType> toKeyFn();
 
-  protected abstract SortedBucketSource<KeyType> createFn(
+  /** @return A split source of the implementing subtype */
+  protected abstract SortedBucketSource<KeyType> createSplitSource(
       int splitNum, int totalParallelism, long estSplitSize);
 
   protected abstract Comparator<SortedBucketIO.ComparableKeyBytes> comparator();
@@ -227,7 +228,7 @@ abstract public class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     final int totalParallelism = numSplits * effectiveParallelism;
     return IntStream.range(0, numSplits)
         .boxed()
-        .map(splitNum -> createFn(splitNum, totalParallelism, estSplitSize))
+        .map(splitNum -> createSplitSource(splitNum, totalParallelism, estSplitSize))
         .collect(Collectors.toList());
   }
 

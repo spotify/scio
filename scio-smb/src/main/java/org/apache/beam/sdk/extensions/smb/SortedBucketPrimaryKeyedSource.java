@@ -41,7 +41,7 @@ public class SortedBucketPrimaryKeyedSource<K> extends SortedBucketSource<K> {
   }
 
   @Override
-  public SortedBucketSource<K> createFn(
+  public SortedBucketSource<K> createSplitSource(
       final int splitNum, final int totalParallelism, final long estSplitSize) {
     return new SortedBucketPrimaryKeyedSource<>(
         keyClassPrimary,

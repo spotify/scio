@@ -70,7 +70,7 @@ public class BucketMetadataUtil {
 
   private <V> Map<ResourceId, BucketMetadata<?, ?, V>> fetchMetadata(List<String> directories) {
     final int total = directories.size();
-    final Map<ResourceId, BucketMetadata<?, ?, V>> md = new ConcurrentHashMap<>();
+    final Map<ResourceId, BucketMetadata<?, ?, V>> metadata = new ConcurrentHashMap<>();
     int start = 0;
     while (start < total) {
       directories.stream()
@@ -78,10 +78,10 @@ public class BucketMetadataUtil {
           .limit(batchSize)
           .map(dir -> FileSystems.matchNewResource(dir, true))
           .parallel()
-          .forEach(dir -> md.put(dir, BucketMetadata.get(dir)));
+          .forEach(dir -> metadata.put(dir, BucketMetadata.get(dir)));
       start += batchSize;
     }
-    return md;
+    return metadata;
   }
 
   private <V> SourceMetadata<V> getSourceMetadata(

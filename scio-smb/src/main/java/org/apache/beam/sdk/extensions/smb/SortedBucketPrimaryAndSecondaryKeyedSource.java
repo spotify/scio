@@ -52,7 +52,7 @@ public class SortedBucketPrimaryAndSecondaryKeyedSource<K1, K2>
   }
 
   @Override
-  public SortedBucketSource<KV<K1, K2>> createFn(
+  public SortedBucketSource<KV<K1, K2>> createSplitSource(
       final int splitNum, final int totalParallelism, final long estSplitSize) {
     return new SortedBucketPrimaryAndSecondaryKeyedSource<>(
         keyClassPrimary,

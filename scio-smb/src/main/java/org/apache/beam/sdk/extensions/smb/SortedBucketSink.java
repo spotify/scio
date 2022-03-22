@@ -98,7 +98,7 @@ import org.slf4j.LoggerFactory;
  * Integer bucket using {@link BucketMetadata#getBucketId(byte[])}. Next, a {@link GroupByKey}
  * transform is applied to create a {@link PCollection} of {@code N} elements, where {@code N} is
  * the number of buckets specified by {@link BucketMetadata#getNumBuckets()}, then a {@code
- * SortShards} transform is used to sort elements within each bucket group, optionally sorting by
+ * SortBucketShard} transform is used to sort elements within each bucket group, optionally sorting by
  * the secondary key bytes from {@link BucketMetadata#getKeyBytesSecondary(Object)}. Finally, the
  * write operation is performed, where each bucket is first written to a {@link
  * SortedBucketSink#tempDirectory} and then copied to its final destination.
@@ -175,7 +175,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
 
     final PCollection<KV<BucketShardId, V>> bucketedInput =
         input.apply(
-            "BucketAndShard", ParDo.of(BucketAndShardDoFn.of(bucketMetadata, keyCacheSize)));
+            "ExtractBucketAndShards", ParDo.of(ExtractBucketAndShardDoFn.of(bucketMetadata, keyCacheSize)));
 
     return sink(
         bucketedInput,
@@ -201,9 +201,9 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
         .setCoder(KvCoder.of(BucketShardIdCoder.of(), valueCoder))
         .apply("GroupByKey", GroupByKey.create())
         .apply(
-            "SortShards",
+            "SortBucketShards",
             ParDo.of(
-                new SortShardDoFn<>(
+                new SortBucketShardDoFn<>(
                     transformName,
                     BufferedExternalSorter.options()
                         .withExternalSorterType(ExternalSorter.Options.SorterType.NATIVE)
@@ -217,7 +217,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
   }
 
   /** Extract bucket and shard id for grouping */
-  private static class BucketAndShardDoFn<K1, V, InputT>
+  private static class ExtractBucketAndShardDoFn<K1, V, InputT>
       extends DoFn<InputT, KV<BucketShardId, V>> {
     // Substitute null keys in the output KV<byte[], V> so that they survive serialization
     static final byte[] NULL_SORT_KEY = new byte[0];
@@ -229,7 +229,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     static <K1, V> DoFn<V, KV<BucketShardId, V>> of(
         BucketMetadata<K1, ?, V> bucketMetadata, int keyCacheSize) {
       if (keyCacheSize == 0) {
-        return new BucketAndShardDoFn<>(bucketMetadata, bucketMetadata::extractKeyPrimary, v -> v);
+        return new ExtractBucketAndShardDoFn<>(bucketMetadata, bucketMetadata::extractKeyPrimary, v -> v);
       } else {
         return new ExtractKeysWithCache<>(
             bucketMetadata, bucketMetadata::extractKeyPrimary, v -> v, keyCacheSize);
@@ -239,13 +239,13 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     static <K1, V> DoFn<KV<K1, V>, KV<BucketShardId, V>> preKeyed(
         BucketMetadata<K1, ?, V> bucketMetadata, int keyCacheSize) {
       if (keyCacheSize == 0) {
-        return new BucketAndShardDoFn<>(bucketMetadata, KV::getKey, KV::getValue);
+        return new ExtractBucketAndShardDoFn<>(bucketMetadata, KV::getKey, KV::getValue);
       } else {
         return new ExtractKeysWithCache<>(bucketMetadata, KV::getKey, KV::getValue, keyCacheSize);
       }
     }
 
-    private BucketAndShardDoFn(
+    private ExtractBucketAndShardDoFn(
         BucketMetadata<K1, ?, V> bucketMetadata,
         SerializableFunction<InputT, K1> primaryKeyFn,
         SerializableFunction<InputT, V> valueFn) {
@@ -349,7 +349,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
                     () -> {
                       cacheMisses.inc();
                       final BucketShardId bId =
-                          BucketAndShardDoFn.getBucketShardId(primaryKey, bucketMetadata, shardId);
+                          ExtractBucketAndShardDoFn.getBucketShardId(primaryKey, bucketMetadata, shardId);
                       getResource().put(primaryKey, bId.getBucketId());
                       return bId;
                     });
@@ -366,7 +366,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     }
   }
 
-  private static class SortShardDoFn<K1, K2, V>
+  private static class SortBucketShardDoFn<K1, K2, V>
       extends DoFn<KV<BucketShardId, Iterable<V>>, KV<BucketShardId, Iterable<byte[]>>> {
     private final BufferedExternalSorter.Options sorterOptions;
     private final BucketMetadata<K1, K2, V> bucketMetadata;
@@ -375,7 +375,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     private final Counter bucketsInitiatedSorting;
     private final Counter bucketsCompletedSorting;
 
-    public SortShardDoFn(
+    public SortBucketShardDoFn(
         String transformName,
         BufferedExternalSorter.Options sorterOptions,
         BucketMetadata<K1, K2, V> bucketMetadata,
@@ -404,7 +404,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
           final byte[] keyBytesPrimary = bucketMetadata.getKeyBytesPrimary(value);
           primarySorter.add(
               KV.of(
-                  keyBytesPrimary == null ? BucketAndShardDoFn.NULL_SORT_KEY : keyBytesPrimary,
+                  keyBytesPrimary == null ? ExtractBucketAndShardDoFn.NULL_SORT_KEY : keyBytesPrimary,
                   valueBytes));
         }
         final Iterable<KV<byte[], byte[]>> primarySorted = primarySorter.sort();
@@ -458,7 +458,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
                   KV.of(
                       keyBytesSecondary != null
                           ? keyBytesSecondary
-                          : BucketAndShardDoFn.NULL_SORT_KEY,
+                          : ExtractBucketAndShardDoFn.NULL_SORT_KEY,
                       valueBytes));
             } catch (IOException e) {
               throw new RuntimeException("Exception sorting buckets", e);
@@ -843,8 +843,8 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
           "SortedBucketSink cannot be applied to a non-bounded PCollection");
       final PCollection<KV<BucketShardId, V>> bucketedInput =
           input.apply(
-              "BucketAndShard",
-              ParDo.of(BucketAndShardDoFn.preKeyed(bucketMetadata, keyCacheSize)));
+              "ExtractBucketAndShards",
+              ParDo.of(ExtractBucketAndShardDoFn.preKeyed(bucketMetadata, keyCacheSize)));
 
       if (verifyKeyExtraction) {
         input
