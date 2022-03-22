@@ -23,7 +23,6 @@ import java.util.stream.Collectors
 
 import com.google.api.services.bigquery.model.{Dataset, DatasetReference}
 import com.google.protobuf.ByteString
-import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.client.BigQuery
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -34,10 +33,9 @@ import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 object PopulateTestData {
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit =
     BigQueryTestData.populate("data-integration-test")
-    GcsTestData.populate("neville-test-us")
-  }
+    GcsTestData.populate("data-integration-test-eu")
 }
 
 object GcsTestData {
