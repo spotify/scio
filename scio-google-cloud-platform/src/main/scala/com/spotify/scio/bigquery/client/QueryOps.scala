@@ -175,10 +175,12 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
       .recoverWith {
         case NonFatal(e: GoogleJsonResponseException) if isInvalidQuery(e) => Failure(e)
         case NonFatal(_) =>
-          val temp = tableService.createTemporary(
-            extractLocation(query.sql)
-              .getOrElse(BigQueryConfig.location)
-          ).getTableReference
+          val temp = tableService
+            .createTemporary(
+              extractLocation(query.sql)
+                .getOrElse(BigQueryConfig.location)
+            )
+            .getTableReference
 
           Logger.info(s"Cache miss for query: `${query.sql}`")
           Logger.info(s"New destination table: ${bq.BigQueryHelpers.toTableSpec(temp)}")
