@@ -59,7 +59,7 @@ class MockBigQuery private (private val bq: BigQuery) {
     )
 
     val t = bq.tables.table(original)
-    val temp = bq.tables.createTemporary(t.getLocation)
+    val temp = bq.tables.createTemporary(t.getLocation).getTableReference
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
   }
