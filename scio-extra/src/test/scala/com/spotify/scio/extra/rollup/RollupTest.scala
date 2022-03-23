@@ -166,4 +166,20 @@ class RollupTest extends PipelineSpec {
     runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
   }
 
+  it should "not double-count a user with multiple values of rollup dimensions, and not correct for 0 values" in {
+
+    val input = Seq(
+      ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web")), MsPlayed(100L), (1L, 1L,0L)),
+      ("user1", FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("mobile")), MsPlayed(200L), (1L, 0L, 0L))
+    )
+
+    val expected = Seq(
+      ((FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("web"))), (MsPlayed(100L), (1L, 1L, 0L))),
+      ((FixedDims("2020-01-01", "sweden"), RollupDims1D(Some("mobile"))), (MsPlayed(200L), (1L, 0L, 0L))),
+      ((FixedDims("2020-01-01", "sweden"), RollupDims1D(None)), (MsPlayed(300L), (1L, 1L, 0L)))
+    )
+
+    runWithData(input)(_.rollupAndCount(groupingSets)) should contain theSameElementsAs expected
+  }
+
 }

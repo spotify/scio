@@ -87,6 +87,26 @@ private[scio] object BeamCoders {
     (Coder.beam(a), Coder.beam(b), Coder.beam(c), Coder.beam(d))
   }
 
+  def getTuple5Coders[A, B, C, D, E](
+                                      coll: SCollection[(A, B, C, D, E)]
+                                    ): (Coder[A], Coder[B], Coder[C], Coder[D], Coder[E]) = {
+    val coder = coll.internal.getCoder
+    val (a, b, c, d, e) = unwrap(coder) match {
+      case c: scio.Tuple5Coder[A, B, C, D, E] => (c.ac, c.bc, c.cc, c.dc, c.ec)
+      case c: RecordCoder[(A, B, C, D, E)] =>
+        (
+          c.cs.find(_._1 == "_1").get._2.asInstanceOf[beam.Coder[A]],
+          c.cs.find(_._1 == "_2").get._2.asInstanceOf[beam.Coder[B]],
+          c.cs.find(_._1 == "_3").get._2.asInstanceOf[beam.Coder[C]],
+          c.cs.find(_._1 == "_4").get._2.asInstanceOf[beam.Coder[D]],
+          c.cs.find(_._1 == "_5").get._2.asInstanceOf[beam.Coder[E]]
+        )
+      case _ =>
+        throw new IllegalArgumentException(s"Failed to extract tuples coders from: $coder")
+    }
+    (Coder.beam(a), Coder.beam(b), Coder.beam(c), Coder.beam(d), Coder.beam(e))
+  }
+
   private def getIterableV[V](coder: beam.Coder[Iterable[V]]): beam.Coder[V] =
     unwrap(coder) match {
       case (c: scio.BaseSeqLikeCoder[Iterable, V] @unchecked) => c.elemCoder
