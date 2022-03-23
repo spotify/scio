@@ -23,7 +23,7 @@ import com.twitter.algebird.Group
 
 trait SCollectionSyntax {
 
-  implicit final class RollupOps[U, D, R, M](self: SCollection[(U, D, R, M)]) {
+  implicit final class RollupOps[U, D, R, M, M2 <: Product](self: SCollection[(U, D, R, M, M2)]) {
 
     /**
      * Takes an [[SCollection]] with elements consisting of three sets of dimensions and one measure
@@ -45,15 +45,16 @@ trait SCollectionSyntax {
      *   element for each combination of rollups that we want to provide
      */
     def rollupAndCount(
-      rollupFunction: R => Set[R]
-    )(implicit g: Group[M]): SCollection[((D, R), (M, Long))] = {
-      implicit val (coderU, coderD, coderR, coderM) = BeamCoders.getTuple4Coders(self)
+                        rollupFunction: R => Set[R],
+                        identity: M2
+                      )(implicit g: Group[M], g2: Group[M2]): SCollection[((D, R), (M, M2))] = {
+      implicit val (coderU, coderD, coderR, coderM, coderM2) = BeamCoders.getTuple5Coders(self)
 
       val doubleCounting = self
         .withName("RollupAndCountDuplicates")
         .transform {
-          _.map { case (_, dims, rollupDims, measure) =>
-            ((dims, rollupDims), (measure, 1L))
+          _.map { case (_, dims, rollupDims, measure, distinctMeasure) =>
+            ((dims, rollupDims), (measure, distinctMeasure))
           }.sumByKey
             .flatMap { case (dims @ (_, rollupDims), measure) =>
               rollupFunction(rollupDims)
@@ -64,20 +65,22 @@ trait SCollectionSyntax {
       val correctingCounts = self
         .withName("RollupAndCountCorrection")
         .transform {
-          _.map { case (uniqueKey, dims, rollupDims, _) =>
-            ((uniqueKey, dims), rollupDims)
+          _.map { case (uniqueKey, dims, rollupDims, _, distinctMeasure) =>
+            ((uniqueKey, dims), (rollupDims, distinctMeasure))
           }.groupByKey
             .filterValues(_.size > 1)
             .flatMapValues { values =>
-              val rollupMap = collection.mutable.Map.empty[R, Long]
-              for (r <- values) {
-                for (newDim <- rollupFunction(r)) {
+              val rollupMap = collection.mutable.Map.empty[R, M2]
+              for ((d, v) <- values) {
+                for (newDim <- rollupFunction(d)) {
                   // Add 1 to correction count. We only care to correct for excessive counts
-                  rollupMap(newDim) = rollupMap.getOrElse(newDim, 1L) - 1L
+                  // FIXME: Cannot use identity, what if (1L, 1L)  - (1L, 0L)... We correct 1L...
+                  // Need to do min(X, 0) on each element in Tuple to filter out positive values
+                  rollupMap(newDim) = g2.minus(rollupMap.getOrElse(newDim, identity), v)
                 }
               }
               // We only care about correcting cases where we actually double-count
-              rollupMap.iterator.filter(_._2 < 0L)
+              rollupMap.iterator.filterNot(_._2.equals(g2.zero))
             }
             .map { case ((_, dims), (rollupDims, count)) => ((dims, rollupDims), (g.zero, count)) }
         }
