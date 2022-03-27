@@ -494,7 +494,7 @@ lazy val `scio-test`: Project = project
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.github.sbt" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
-      "com.lihaoyi" %% "pprint" % "0.7.1",
+      "com.lihaoyi" %% "pprint" % "0.7.3",
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -1165,7 +1165,7 @@ lazy val siteSettings = Def.settings(
     "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion,
     "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion
   ),
-  dependencyOverrides += "com.lihaoyi" %% "pprint" % "0.7.1",
+  dependencyOverrides += "com.lihaoyi" %% "pprint" % "0.7.3",
   // unidoc
   ScalaUnidoc / siteSubdirName := "api",
   ScalaUnidoc / scalacOptions := Seq.empty,
