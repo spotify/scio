@@ -37,6 +37,9 @@ object BigQueryConfig {
   /** Default cache behavior is enabled. */
   private[this] val CacheEnabledDefault: Boolean = true
 
+  /** Default debug auth behavior is disabled. */
+  private[this] val DebugAuthEnabledDefault: Boolean = false
+
   /** Default priority is batch. */
   private[this] val PriorityDefault: QueryPriority = QueryPriority.BATCH
 
@@ -52,6 +55,11 @@ object BigQueryConfig {
     BigQuerySysProps.CacheEnabled.valueOption
       .flatMap(x => Try(x.toBoolean).toOption)
       .getOrElse(CacheEnabledDefault)
+
+  def isDebugAuthEnabled: Boolean =
+    BigQuerySysProps.DebugAuth.valueOption
+      .flatMap(x => Try(x.toBoolean).toOption)
+      .getOrElse(DebugAuthEnabledDefault)
 
   def cacheDirectory: Path =
     BigQuerySysProps.CacheDirectory.valueOption.map(Paths.get(_)).getOrElse(CacheDirectoryDefault)
