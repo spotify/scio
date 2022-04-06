@@ -45,11 +45,13 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
     val job = Job.getInstance(params.conf)
 
-    if (params.projection != null) {
-      ExampleParquetInputFormat.setFields(job, params.projection.asJava)
+    Option(params.projection).foreach { projection =>
+      ExampleParquetInputFormat.setFields(job, projection.asJava)
+      params.conf.set(ExampleParquetInputFormat.FIELDS_KEY, String.join(",", projection: _*))
     }
-    if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(params.conf, params.predicate)
+
+    Option(params.predicate).foreach { predicate =>
+      ParquetInputFormat.setFilterPredicate(params.conf, predicate)
     }
 
     val coder = CoderMaterializer.beam(sc, Coder[Example])
