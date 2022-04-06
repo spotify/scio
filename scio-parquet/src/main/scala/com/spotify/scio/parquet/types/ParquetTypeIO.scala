@@ -59,8 +59,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
     val coder = CoderMaterializer.beam(sc, implicitly[Coder[T]])
 
-    sc.customInput(
-      "TypedParquetIO",
+    sc.applyTransform(
       ParquetRead.read(
         ReadSupportFactory.typed,
         new SerializableConfiguration(params.conf),

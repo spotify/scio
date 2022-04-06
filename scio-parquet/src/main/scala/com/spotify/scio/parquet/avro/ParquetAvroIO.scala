@@ -212,8 +212,7 @@ object ParquetAvroIO {
       val tCoder = sc.pipeline.getCoderRegistry.getCoder(ScioUtil.classOf[T])
       val cleanedProjectionFn = ClosureCleaner.clean(projectionFn)
 
-      sc.customInput(
-        "AvroParquetIO",
+      sc.applyTransform(
         ParquetRead.read[A, T](
           ReadSupportFactory.avro,
           new SerializableConfiguration(hadoopConf),

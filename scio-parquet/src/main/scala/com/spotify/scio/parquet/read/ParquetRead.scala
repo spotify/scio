@@ -19,8 +19,7 @@ object ParquetRead {
     new PTransform[PBegin, PCollection[R]] {
       override def expand(input: PBegin): PCollection[R] = {
         input
-          .apply(Create.ofProvider(StaticValueProvider.of(filePattern), StringUtf8Coder.of))
-          .apply(FileIO.matchAll)
+          .apply(FileIO.`match`().filepattern(filePattern))
           .apply(FileIO.readMatches)
           .apply(readFiles(readSupportFactory, conf, projectionFn))
       }

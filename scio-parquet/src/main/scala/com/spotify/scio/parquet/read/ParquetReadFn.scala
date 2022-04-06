@@ -81,7 +81,7 @@ class ParquetReadFn[T, R](
     outputReceiver: DoFn.OutputReceiver[R]
   ): Unit = {
     logger.debug(
-      "start {} to {}",
+      "reading file from offset {} to {}",
       tracker.currentRestriction.getFrom,
       tracker.currentRestriction.getTo
     )
@@ -189,7 +189,7 @@ class ParquetReadFn[T, R](
         case e: RuntimeException =>
           throw new ParquetDecodingException(
             s"Can not read value at $currentRow in row group" +
-              s" $rowGroupIndex in file ${file.toString}",
+              s" $rowGroupIndex in file $file",
             e
           )
       }
