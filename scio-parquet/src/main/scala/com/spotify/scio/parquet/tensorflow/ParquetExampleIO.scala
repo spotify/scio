@@ -23,8 +23,19 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import me.lyh.parquet.tensorflow.{ExampleParquetInputFormat, ExampleParquetReader, ExampleReadSupport, Schema}
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
+import me.lyh.parquet.tensorflow.{
+  ExampleParquetInputFormat,
+  ExampleParquetReader,
+  ExampleReadSupport,
+  Schema
+}
+import org.apache.beam.sdk.io.{
+  DefaultFilenamePolicy,
+  DynamicFileDestinations,
+  FileBasedSink,
+  FileSystems,
+  WriteFiles
+}
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
