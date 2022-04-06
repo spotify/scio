@@ -158,7 +158,7 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
 
     Logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
 
-    client.underlying.jobs().insert(client.project, job).execute()
+    client.execute(_.jobs().insert(client.project, job))
 
     val loadJob = LoadJob(sources, Some(jobReference), tableRef)
 

@@ -73,10 +73,10 @@ val guavaVersion = "31.0.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
 val httpCoreVersion = "4.4.14"
-val jacksonVersion = "2.13.0"
+val jacksonVersion = "2.13.2"
 val javaLshVersion = "0.12"
 val jlineVersion = "2.14.6"
-val jnaVersion = "5.10.0"
+val jnaVersion = "5.11.0"
 val jodaTimeVersion = "2.10.14"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -98,7 +98,7 @@ val scalacheckVersion = "1.15.4"
 val scalaMacrosVersion = "2.1.1"
 val scalatestplusVersion = "3.1.0.0-RC2"
 val scalatestVersion = "3.2.11"
-val shapelessVersion = "2.3.8"
+val shapelessVersion = "2.3.9"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.8"
@@ -901,7 +901,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % generatedDatastoreProtoVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % generatedGrpcBetaVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.4.4",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.5.0",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
