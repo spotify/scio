@@ -162,7 +162,7 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     ()
   }
 
-  it should "read Examples with projection and predicate" in {
+  it should "read Examples with projection and predicate in non-test context" in {
     val sc = ScioContext()
     val data = sc.parquetExampleFile(s"$dir/*.parquet", projection, predicate)
     val expected = examples
@@ -174,5 +174,13 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     data should containInAnyOrder(expected)
     sc.run()
     ()
+  }
+
+  it should "read Examples with projection in a JobTest context" in {
+    val projected = examples.map(projectFields(projection))
+
+    testJobTest(projected)(ParquetExampleIO(_))(_.parquetExampleFile(_, projection = projection))(
+      _.saveAsParquetExampleFile(_, schema)
+    )
   }
 }

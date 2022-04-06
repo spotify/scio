@@ -17,12 +17,15 @@ package com.spotify.scio.examples.extra
  * under the License.
  */
 
+import com.google.protobuf.ByteString
 import com.spotify.scio.avro.Account
 import com.spotify.scio.examples.extra.ParquetExample.{AccountFull, AccountProjection}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
+import com.spotify.scio.parquet.tensorflow._
 import com.spotify.scio.io.TextIO
+import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList}
 
 class ParquetExampleTest extends PipelineSpec {
 
@@ -69,6 +72,40 @@ class ParquetExampleTest extends PipelineSpec {
       .output(ParquetTypeIO[AccountFull]("out.parquet"))(coll =>
         coll should containInAnyOrder(expected)
       )
+      .run()
+  }
+
+  it should "work for Example output" in {
+    val expected = ParquetExample.fakeData.map(ParquetExample.toExample)
+
+    JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
+      .args("--output=example-out", "--method=exampleOut")
+      .output(ParquetExampleIO("example-out"))(coll => coll should containInAnyOrder(expected))
+      .run()
+  }
+
+  it should "work for Example input" in {
+    val input = ParquetExample.fakeData.map(ParquetExample.toExample)
+    val projectedOutput = ParquetExample.fakeData
+      .map { account =>
+        val features = Features
+          .newBuilder()
+          .putFeature(
+            "amount",
+            Feature
+              .newBuilder()
+              .setFloatList(FloatList.newBuilder().addValue(account.getAmount.toFloat))
+              .build()
+          )
+
+        Example.newBuilder().setFeatures(features).build()
+      }
+      .map(_.toString)
+
+    JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
+      .args("--input=example-in", "--method=exampleIn", "--output=example-out")
+      .input(ParquetExampleIO("example-in"), input)
+      .output(TextIO("example-out"))(coll => coll should containInAnyOrder(projectedOutput))
       .run()
   }
 }
