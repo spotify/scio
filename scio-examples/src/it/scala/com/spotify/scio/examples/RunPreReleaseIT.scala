@@ -48,7 +48,7 @@ object RunPreReleaseIT {
       Await.result(
         Future
           .sequence(
-            parquet(runId)
+            parquet(runId) ++ avro(runId) ++ smb(runId) ++ bigquery(runId)
           )
           .map(_ => log.info("All Dataflow jobs ran successfully.")),
         Duration(1, TimeUnit.HOURS)
@@ -88,30 +88,30 @@ object RunPreReleaseIT {
     val start = Future
       .successful(log.info("Starting Parquet IO tests... "))
 
-    val write = List(
-      start.flatMap(_ => invokeJob[ParquetExample.type]("--method=avroOut", s"--output=$out1")),
+    val avroWrite =
+      start.flatMap(_ => invokeJob[ParquetExample.type]("--method=avroOut", s"--output=$out1"))
+    val exampleWrite =
       start.flatMap(_ => invokeJob[ParquetExample.type]("--method=exampleOut", s"--output=$out5"))
-    )
 
     List(
-      write.flatMap(_ =>
+      avroWrite.flatMap(_ =>
         invokeJob[ParquetExample.type]("--method=typedIn", s"--input=$out1/*", s"--output=$out2")
       ),
-      write.flatMap(_ =>
+      avroWrite.flatMap(_ =>
         invokeJob[ParquetExample.type](
           "--method=avroSpecificIn",
           s"--input=$out1/*",
           s"--output=$out3"
         )
       ),
-      write.flatMap(_ =>
+      avroWrite.flatMap(_ =>
         invokeJob[ParquetExample.type](
           "--method=avroGenericIn",
           s"--input=$out1/*",
           s"--output=$out4"
         )
       ),
-      write.flatMap(_ =>
+      exampleWrite.flatMap(_ =>
         invokeJob[ParquetExample.type](
           "--method=exampleIn",
           s"--input=$out5/*",
