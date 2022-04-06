@@ -90,12 +90,11 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         projectionOpt match {
           case None => example
           case Some(projection) =>
-            val projectedFeatures = example.getFeatures.getFeatureMap.asScala
-              .filter { case (k, _) => projection.contains(k) }
-              .asJava
+            val projectedFeatures = example.getFeatures.getFeatureMap.asScala.filter {
+              case (k, _) => projection.contains(k)
+            }.asJava
 
-            example
-              .toBuilder
+            example.toBuilder
               .setFeatures(Features.newBuilder().putAllFeature(projectedFeatures))
               .build()
         }
