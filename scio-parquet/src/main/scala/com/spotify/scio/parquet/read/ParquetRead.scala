@@ -1,11 +1,9 @@
 package com.spotify.scio.parquet.read
 
-import org.apache.beam.sdk.coders.StringUtf8Coder
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.{Create, PTransform, ParDo, SerializableFunction}
+import org.apache.beam.sdk.transforms.{PTransform, ParDo, SerializableFunction}
 import org.apache.beam.sdk.values.{PBegin, PCollection}
 
 object ParquetRead {
