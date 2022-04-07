@@ -22,14 +22,18 @@
 // --input=[INPUT]/*.parquet --output=[OUTPUT] --method=[METHOD]"`
 package com.spotify.scio.examples.extra
 
+import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
+import com.spotify.scio.parquet.tensorflow._
 import com.spotify.scio.avro.{Account, AccountStatus}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
+import me.lyh.parquet.tensorflow.{Schema => ExampleSchema}
 import org.apache.hadoop.conf.Configuration
 import org.apache.avro.generic.GenericRecord
+import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList}
 
 object ParquetExample {
 
@@ -86,6 +90,12 @@ object ParquetExample {
       // Write dummy Parquet records using case classes
       case "typedOut" => typedOut(sc, args)
 
+      // Write dummy Parquet Avro records
+      case "exampleOut" => exampleOut(sc, args)
+
+      // Write dummy Parquet records using case classes
+      case "exampleIn" => exampleIn(sc, args)
+
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
@@ -140,4 +150,41 @@ object ParquetExample {
         args("output")
       )
 
+  private[extra] def toExample(account: Account): Example = {
+    val features = Features
+      .newBuilder()
+      .putFeature(
+        "amount",
+        Feature
+          .newBuilder()
+          .setFloatList(FloatList.newBuilder().addValue(account.getAmount.toFloat))
+          .build()
+      )
+      .putFeature(
+        "type",
+        Feature
+          .newBuilder()
+          .setBytesList(
+            BytesList.newBuilder().addValue(ByteString.copyFromUtf8(account.getType.toString))
+          )
+          .build()
+      )
+
+    Example.newBuilder().setFeatures(features).build()
+  }
+
+  private def exampleIn(sc: ScioContext, args: Args): ClosedTap[String] =
+    sc.parquetExampleFile(args("input"), projection = Seq("amount"))
+      .saveAsTextFile(args("output"))
+
+  private def exampleOut(sc: ScioContext, args: Args): ClosedTap[Example] = {
+    val schema = ExampleSchema
+      .newBuilder()
+      .required("amount", ExampleSchema.Type.FLOAT)
+      .required("type", ExampleSchema.Type.BYTES)
+      .named("Example")
+
+    sc.parallelize(fakeData.map(toExample))
+      .saveAsParquetExampleFile(args("output"), schema)
+  }
 }
