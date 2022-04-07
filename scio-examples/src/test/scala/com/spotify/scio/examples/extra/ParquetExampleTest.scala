@@ -17,7 +17,6 @@ package com.spotify.scio.examples.extra
  * under the License.
  */
 
-import com.google.protobuf.ByteString
 import com.spotify.scio.avro.Account
 import com.spotify.scio.examples.extra.ParquetExample.{AccountFull, AccountProjection}
 import com.spotify.scio.testing.PipelineSpec
@@ -25,7 +24,7 @@ import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.parquet.tensorflow._
 import com.spotify.scio.io.TextIO
-import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList}
+import org.tensorflow.proto.example.{Example, Feature, Features, FloatList}
 
 class ParquetExampleTest extends PipelineSpec {
 
