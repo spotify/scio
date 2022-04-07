@@ -159,7 +159,7 @@ final private[client] class TableOps(client: Client) {
   /** Get table metadata. */
   def table(tableRef: TableReference): Table = {
     val p = Option(tableRef.getProjectId).getOrElse(client.project)
-    client.underlying.tables().get(p, tableRef.getDatasetId, tableRef.getTableId).execute()
+    client.execute(_.tables().get(p, tableRef.getDatasetId, tableRef.getTableId))
   }
 
   /** Get list of tables in a dataset. */
@@ -168,12 +168,19 @@ final private[client] class TableOps(client: Client) {
 
   /** Get list of tables in a dataset. */
   def tableReferences(projectId: Option[String], datasetId: String): Seq[TableReference] = {
+    var nextPageToken: String = null
+    def getNextPage: TableList = {
+      client.execute { bq =>
+        val req = bq.tables().list(projectId.getOrElse(client.project), datasetId)
+        nextPageToken = req.getPageToken
+        req
+      }
+    }
+    var rep = getNextPage
     val b = Seq.newBuilder[TableReference]
-    val req = client.underlying.tables().list(projectId.getOrElse(client.project), datasetId)
-    var rep = req.execute()
     Option(rep.getTables).foreach(_.asScala.foreach(b += _.getTableReference))
     while (rep.getNextPageToken != null) {
-      rep = req.setPageToken(rep.getNextPageToken).execute()
+      rep = getNextPage
       Option(rep.getTables)
         .foreach(_.asScala.foreach(b += _.getTableReference))
     }
@@ -268,14 +275,14 @@ final private[client] class TableOps(client: Client) {
 
   /** Delete table */
   private[bigquery] def delete(table: TableReference): Unit = {
-    client.underlying
-      .tables()
-      .delete(
-        Option(table.getProjectId).getOrElse(client.project),
-        table.getDatasetId,
-        table.getTableId
-      )
-      .execute()
+    client.execute(
+      _.tables()
+        .delete(
+          Option(table.getProjectId).getOrElse(client.project),
+          table.getDatasetId,
+          table.getTableId
+        )
+    )
     ()
   }
 
@@ -283,7 +290,7 @@ final private[client] class TableOps(client: Client) {
   private[bigquery] def prepareStagingDataset(location: String): Unit = {
     val datasetId = stagingDatasetId(location)
     try {
-      client.underlying.datasets().get(client.project, datasetId).execute()
+      client.execute(_.datasets().get(client.project, datasetId))
       Logger.info(s"Staging dataset ${client.project}:$datasetId already exists")
     } catch {
       case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
@@ -294,10 +301,10 @@ final private[client] class TableOps(client: Client) {
           .setDefaultTableExpirationMs(StagingDatasetTableExpirationMs)
           .setDescription(StagingDatasetDescription)
           .setLocation(location)
-        client.underlying
-          .datasets()
-          .insert(client.project, ds)
-          .execute()
+        client.execute(
+          _.datasets()
+            .insert(client.project, ds)
+        )
         ()
       case NonFatal(e) => throw e
     }
