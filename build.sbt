@@ -95,6 +95,7 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.1"
+val elasticsearch8Version = "8.1.2"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
@@ -733,6 +734,25 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
+  )
+
+lazy val `scio-elasticsearch8`: Project = project
+  .in(file("scio-elasticsearch/es8"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    description := "Scio add-on for writing to Elasticsearch",
+    libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version
     )
   )
   .dependsOn(
