@@ -96,12 +96,13 @@ public class AvroSortedBucketIOTest {
 
   @Test
   public void testNumBucketsRequiredParam() {
-    Throwable t = Assert.assertThrows(
-        IllegalArgumentException.class, () ->
-        AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
-            .to(folder.toString())
-            .expand(null)
-        );
+    Throwable t =
+        Assert.assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
+                    .to(folder.toString())
+                    .expand(null));
     Assert.assertEquals("numBuckets must be set to a nonzero value", t.getMessage());
   }
 }
