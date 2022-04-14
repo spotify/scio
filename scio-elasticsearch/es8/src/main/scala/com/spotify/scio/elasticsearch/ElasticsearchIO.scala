@@ -58,7 +58,6 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
       .withFlushInterval(params.flushInterval)
       .withNumOfShard(shards)
       .withMaxBulkRequestSize(params.maxBulkRequestSize)
-      .withMaxBulkRequestBytes(params.maxBulkRequestBytes)
       .withMaxRetries(params.retry.maxRetries)
       .withRetryPause(params.retry.retryPause)
       .withError((t: BulkExecutionException) => params.errorFn(t))
@@ -79,7 +78,6 @@ object ElasticsearchIO {
     private[elasticsearch] val DefaultFlushInterval = Duration.standardSeconds(1)
     private[elasticsearch] val DefaultNumShards = -1
     private[elasticsearch] val DefaultMaxBulkRequestSize = 3000
-    private[elasticsearch] val DefaultMaxBulkRequestBytes = 5L * 1024L * 1024L
     private[elasticsearch] val DefaultMaxRetries = 3
     private[elasticsearch] val DefaultRetryPause = Duration.millis(35000)
     private[elasticsearch] val DefaultRetryConfig = RetryConfig(
@@ -94,7 +92,6 @@ object ElasticsearchIO {
     flushInterval: Duration = WriteParam.DefaultFlushInterval,
     numOfShards: Long = WriteParam.DefaultNumShards,
     maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-    maxBulkRequestBytes: Long = WriteParam.DefaultMaxBulkRequestBytes,
     retry: RetryConfig = WriteParam.DefaultRetryConfig
   )
 

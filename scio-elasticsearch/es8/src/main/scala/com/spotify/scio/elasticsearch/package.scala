@@ -64,7 +64,6 @@ package object elasticsearch extends CoderInstances {
       flushInterval: Duration = WriteParam.DefaultFlushInterval,
       numOfShards: Long = WriteParam.DefaultNumShards,
       maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
-      maxBulkRequestBytes: Long = WriteParam.DefaultMaxBulkRequestBytes,
       errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
       retry: RetryConfig = WriteParam.DefaultRetryConfig
     )(f: T => Iterable[BulkOperation]): ClosedTap[Nothing] = {
@@ -74,7 +73,6 @@ package object elasticsearch extends CoderInstances {
         flushInterval,
         numOfShards,
         maxBulkRequestSize,
-        maxBulkRequestBytes,
         retry
       )
       self.write(ElasticsearchIO[T](esOptions))(param)
