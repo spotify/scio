@@ -952,6 +952,9 @@ lazy val `scio-examples`: Project = project
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -1011,7 +1014,7 @@ lazy val `scio-examples`: Project = project
     `scio-schemas`,
     `scio-jdbc`,
     `scio-extra`,
-    `scio-elasticsearch7`,
+    `scio-elasticsearch8`,
     `scio-tensorflow`,
     `scio-test` % "compile->test",
     `scio-smb`,
