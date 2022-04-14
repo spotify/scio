@@ -22,7 +22,7 @@ import com.spotify.scio.testing._
 
 class ElasticsearchIOTest extends ScioIOSpec {
 
-  type Document = Map[String, Any]
+  type Document = Map[String, String]
 
   "ElasticsearchIO" should "work with output" in {
     val xs = 1 to 100

@@ -26,7 +26,8 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.JsonpMapper;
+import co.elastic.clients.json.SimpleJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.Closeable;
 import java.io.IOException;
@@ -180,6 +181,8 @@ public class ElasticsearchIO {
       private final ThrowingConsumer<BulkExecutionException> error;
       private final UsernamePasswordCredentials credentials;
 
+      private final JsonpMapperFactory mapperFactory;
+
       private Bound(
           final HttpHost[] nodes,
           final Duration flushInterval,
@@ -190,7 +193,8 @@ public class ElasticsearchIO {
           final int maxRetries,
           final Duration retryPause,
           final ThrowingConsumer<BulkExecutionException> error,
-          final UsernamePasswordCredentials credentials) {
+          final UsernamePasswordCredentials credentials,
+          final JsonpMapperFactory mapperFactory) {
         this.nodes = nodes;
         this.flushInterval = flushInterval;
         this.toBulkOperations = toBulkOperations;
@@ -201,6 +205,7 @@ public class ElasticsearchIO {
         this.retryPause = retryPause;
         this.error = error;
         this.credentials = credentials;
+        this.mapperFactory = mapperFactory;
       }
 
       Bound() {
@@ -214,7 +219,8 @@ public class ElasticsearchIO {
             DEFAULT_RETRIES,
             DEFAULT_RETRY_PAUSE,
             defaultErrorHandler(),
-            null);
+            null,
+            SimpleJsonpMapper::new);
       }
 
       public Bound<T> withNodes(HttpHost[] nodes) {
@@ -228,7 +234,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
@@ -242,7 +249,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withFunction(
@@ -257,7 +265,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withNumOfShard(long numOfShard) {
@@ -271,7 +280,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
@@ -285,7 +295,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
@@ -299,7 +310,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withMaxBulkRequestBytes(long maxBulkRequestBytes) {
@@ -313,7 +325,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withMaxRetries(int maxRetries) {
@@ -327,7 +340,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withRetryPause(Duration retryPause) {
@@ -341,7 +355,8 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withCredentials(UsernamePasswordCredentials credentials) {
@@ -355,7 +370,23 @@ public class ElasticsearchIO {
             maxRetries,
             retryPause,
             error,
-            credentials);
+            credentials,
+            mapperFactory);
+      }
+
+      public Bound<T> withMapperFactory(JsonpMapperFactory mapperFactory) {
+        return new Bound<>(
+            nodes,
+            flushInterval,
+            toBulkOperations,
+            numOfShard,
+            maxBulkRequestSize,
+            maxBulkRequestBytes,
+            maxRetries,
+            retryPause,
+            error,
+            credentials,
+            mapperFactory);
       }
 
       @Override
@@ -363,6 +394,7 @@ public class ElasticsearchIO {
         checkNotNull(nodes);
         checkNotNull(toBulkOperations);
         checkNotNull(flushInterval);
+        checkNotNull(mapperFactory);
         checkArgument(numOfShard >= 0);
         checkArgument(maxBulkRequestSize > 0);
         checkArgument(maxBulkRequestBytes > 0L);
@@ -379,7 +411,8 @@ public class ElasticsearchIO {
                       error,
                       maxRetries,
                       retryPause,
-                      credentials)));
+                      credentials,
+                      mapperFactory)));
         } else {
           input
               .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
@@ -404,7 +437,8 @@ public class ElasticsearchIO {
                           error,
                           maxRetries,
                           retryPause,
-                          credentials)));
+                          credentials,
+                          mapperFactory)));
         }
         return PDone.in(input.getPipeline());
       }
@@ -451,10 +485,11 @@ public class ElasticsearchIO {
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
           Duration retryPause,
-          UsernamePasswordCredentials credentials) {
+          UsernamePasswordCredentials credentials,
+          JsonpMapperFactory mapperFactory) {
         this.maxBulkRequestSize = maxBulkRequestSize;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
-        this.clientSupplier = new ClientSupplier(nodes, credentials);
+        this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
         this.toBulkOperations = toBulkOperations;
         this.error = error;
         this.maxRetries = maxRetries;
@@ -515,12 +550,12 @@ public class ElasticsearchIO {
           return;
         }
         final BulkRequest request = BulkRequest.of(b -> b.operations(chunk));
-        chunk.clear();
         try {
           requestFn.apply(request);
         } catch (Exception e) {
           retryFn.apply(request);
         }
+        chunk.clear();
       }
     }
 
@@ -545,10 +580,11 @@ public class ElasticsearchIO {
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
           Duration retryPause,
-          UsernamePasswordCredentials credentials) {
+          UsernamePasswordCredentials credentials,
+          JsonpMapperFactory mapperFactory) {
         this.maxBulkRequestSize = maxBulkRequestSize;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
-        this.clientSupplier = new ClientSupplier(nodes, credentials);
+        this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
         this.toBulkOperations = toBulkOperations;
         this.error = error;
         this.maxRetries = maxRetries;
@@ -610,12 +646,12 @@ public class ElasticsearchIO {
           return;
         }
         final BulkRequest request = BulkRequest.of(r -> r.operations(chunk));
-        chunk.clear();
         try {
           requestFn.apply(request);
         } catch (Exception e) {
           retryFn.apply(request);
         }
+        chunk.clear();
       }
     }
 
@@ -667,13 +703,19 @@ public class ElasticsearchIO {
       private final HttpHost[] nodes;
       private final UsernamePasswordCredentials credentials;
 
+      private final JsonpMapperFactory mapperFactory;
+
       public ClientSupplier(final HttpHost[] nodes) {
-        this(nodes, null);
+        this(nodes, null, SimpleJsonpMapper::new);
       }
 
-      public ClientSupplier(final HttpHost[] nodes, UsernamePasswordCredentials credentials) {
+      public ClientSupplier(
+          final HttpHost[] nodes,
+          final UsernamePasswordCredentials credentials,
+          final JsonpMapperFactory mapperFactory) {
         this.nodes = nodes;
         this.credentials = credentials;
+        this.mapperFactory = mapperFactory;
       }
 
       @Override
@@ -697,7 +739,7 @@ public class ElasticsearchIO {
               asyncBuilder -> asyncBuilder.setDefaultCredentialsProvider(provider));
         }
         final RestClient restClient = builder.build();
-        return new RestClientTransport(restClient, new JacksonJsonpMapper());
+        return new RestClientTransport(restClient, mapperFactory.create());
       }
     }
 

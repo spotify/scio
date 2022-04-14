@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
+import co.elastic.clients.json.{JsonpMapper, SimpleJsonpMapper}
 import com.spotify.scio.elasticsearch.ElasticsearchIO.{RetryConfig, WriteParam}
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
@@ -33,9 +34,11 @@ import org.joda.time.Duration
  * }}}
  */
 package object elasticsearch extends CoderInstances {
+
   final case class ElasticsearchOptions(
     nodes: Seq[HttpHost],
-    usernameAndPassword: Option[(String, String)] = None
+    usernameAndPassword: Option[(String, String)] = None,
+    mapperFactory: () => JsonpMapper = () => new SimpleJsonpMapper()
   )
 
   implicit

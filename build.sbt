@@ -709,7 +709,8 @@ lazy val `scio-elasticsearch6`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
-      "org.elasticsearch.client" % "transport" % elasticsearch6Version
+      "org.elasticsearch.client" % "transport" % elasticsearch6Version,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     )
   )
   .dependsOn(
@@ -733,7 +734,8 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
+      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     )
   )
   .dependsOn(
@@ -751,8 +753,8 @@ lazy val `scio-elasticsearch8`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
     )
   )
   .dependsOn(

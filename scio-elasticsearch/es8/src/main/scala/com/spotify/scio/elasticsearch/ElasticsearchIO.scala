@@ -32,6 +32,8 @@ import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
 import org.apache.http.auth.UsernamePasswordCredentials
 
+import scala.util.chaining._
+
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = ElasticsearchIO.WriteParam[T]
@@ -42,10 +44,9 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
 
   /** Save this SCollection into Elasticsearch. */
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    val shards = if (params.numOfShards >= 0) {
-      params.numOfShards
-    } else {
-      esOptions.nodes.size
+    val shards = if (params.numOfShards >= 0) params.numOfShards else esOptions.nodes.size
+    val credentials =  esOptions.usernameAndPassword.map {
+      case (username, password) => new UsernamePasswordCredentials(username, password)
     }
 
     val write = beam.ElasticsearchIO.Write
@@ -61,15 +62,10 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
       .withMaxRetries(params.retry.maxRetries)
       .withRetryPause(params.retry.retryPause)
       .withError((t: BulkExecutionException) => params.errorFn(t))
+      .pipe(w => credentials.map(w.withCredentials).getOrElse(w))
+      .withMapperFactory(esOptions.mapperFactory.apply _)
 
-    data.applyInternal(
-      esOptions.usernameAndPassword
-        .map { case (username, password) =>
-          write.withCredentials(new UsernamePasswordCredentials(username, password))
-        }
-        .getOrElse(write)
-    )
-
+    data.applyInternal(write)
     EmptyTap
   }
 
@@ -86,11 +82,10 @@ object ElasticsearchIO {
     private[elasticsearch] val DefaultMaxBulkRequestBytes = 5L * 1024L * 1024L
     private[elasticsearch] val DefaultMaxRetries = 3
     private[elasticsearch] val DefaultRetryPause = Duration.millis(35000)
-    private[elasticsearch] val DefaultRetryConfig =
-      RetryConfig(
-        maxRetries = WriteParam.DefaultMaxRetries,
-        retryPause = WriteParam.DefaultRetryPause
-      )
+    private[elasticsearch] val DefaultRetryConfig = RetryConfig(
+      maxRetries = WriteParam.DefaultMaxRetries,
+      retryPause = WriteParam.DefaultRetryPause
+    )
   }
 
   final case class WriteParam[T] private (
