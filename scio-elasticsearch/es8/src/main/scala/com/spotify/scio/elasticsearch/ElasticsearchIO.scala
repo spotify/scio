@@ -18,20 +18,17 @@
 package com.spotify.scio.elasticsearch
 
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
-
-import java.lang.{Iterable => JIterable}
-import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
-import org.apache.beam.sdk.io.{elasticsearch => beam}
+import com.spotify.scio.io._
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
+import org.apache.beam.sdk.io.{elasticsearch => beam}
 import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.http.auth.UsernamePasswordCredentials
 import org.joda.time.Duration
 
+import java.lang.{Iterable => JIterable}
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.io.TapT
-import org.apache.http.auth.UsernamePasswordCredentials
-
 import scala.util.chaining._
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
@@ -45,8 +42,8 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   /** Save this SCollection into Elasticsearch. */
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val shards = if (params.numOfShards >= 0) params.numOfShards else esOptions.nodes.size
-    val credentials =  esOptions.usernameAndPassword.map {
-      case (username, password) => new UsernamePasswordCredentials(username, password)
+    val credentials = esOptions.usernameAndPassword.map { case (username, password) =>
+      new UsernamePasswordCredentials(username, password)
     }
 
     val write = beam.ElasticsearchIO.Write
@@ -62,7 +59,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
       .withRetryPause(params.retry.retryPause)
       .withError((t: BulkExecutionException) => params.errorFn(t))
       .pipe(w => credentials.map(w.withCredentials).getOrElse(w))
-      .withMapperFactory(esOptions.mapperFactory.apply _)
+      .withMapperFactory(() => esOptions.mapperFactory.apply())
 
     data.applyInternal(write)
     EmptyTap

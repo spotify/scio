@@ -20,8 +20,8 @@ package com.spotify.scio.elasticsearch
 import co.elastic.clients.elasticsearch.ElasticsearchClient
 import co.elastic.clients.elasticsearch._types.Time
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping
-import co.elastic.clients.elasticsearch.indices.update_aliases.{Action, RemoveAction}
 import co.elastic.clients.elasticsearch.indices._
+import co.elastic.clients.elasticsearch.indices.update_aliases.Action
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.rest_client.RestClientTransport
 import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
@@ -29,6 +29,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client._
 import org.slf4j.LoggerFactory
 
+import scala.collection.compat._
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
