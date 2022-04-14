@@ -710,7 +710,7 @@ lazy val `scio-elasticsearch6`: Project = project
       "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
       "org.elasticsearch.client" % "transport" % elasticsearch6Version,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )
   .dependsOn(
@@ -735,7 +735,7 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )
   .dependsOn(
@@ -754,7 +754,7 @@ lazy val `scio-elasticsearch8`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )
   .dependsOn(
