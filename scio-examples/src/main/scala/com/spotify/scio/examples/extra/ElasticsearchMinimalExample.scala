@@ -63,9 +63,9 @@ object ElasticsearchMinimalExample {
     val clusterOpts = ElasticsearchOptions(
       nodes = nodes,
       mapperFactory = () => {
-        val mapper = new JacksonJsonpMapper() // use jackson for user json serialization
-        mapper.objectMapper().registerModule(DefaultScalaModule)
-        mapper.objectMapper().registerModule(new JavaTimeModule())
+        val mapper = new JacksonJsonpMapper() // Use jackson for user json serialization
+        mapper.objectMapper().registerModule(DefaultScalaModule) // Add scala support
+        mapper.objectMapper().registerModule(new JavaTimeModule()) // Add java.time support
         mapper
       }
     )
@@ -73,22 +73,21 @@ object ElasticsearchMinimalExample {
     // Provide an elasticsearch indexer to transform collections to indexable ES documents
     val indexRequestBuilder = indexer(index)
 
-    // Open text file as `SCollection[String]`. The input can be either a single file or a
-    // wildcard matching multiple files.
-    sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
-      .transform[(String, Long)]("counter") {
-        // Split input lines, filter out empty tokens and expand into a collection of tokens
-        _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-          // Count occurrences of each unique `String` to get `(String, Long)`
-          .countByValue
-      }
+    sc
+      // Open text file as `SCollection[String]`. The input can be either a single file or a
+      // wildcard matching multiple files.
+      .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+      // Split input lines and expand into a collection of tokens
+      .flatMap(_.split("[^a-zA-Z']+"))
+      // Filter out empty tokens
+      .filter(_.nonEmpty)
+      // Count occurrences of each unique `String` to get `(String, Long)`
+      .countByValue
       // Save each collection as an ES document
       .saveAsElasticsearch(clusterOpts)(indexRequestBuilder)
 
     // Run pipeline
     sc.run().waitUntilFinish()
-
-    ()
   }
 
   private def indexer(index: String): ((String, Long)) => Iterable[BulkOperation] = {
