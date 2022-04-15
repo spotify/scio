@@ -751,10 +751,11 @@ lazy val `scio-elasticsearch8`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )

@@ -26,8 +26,10 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.json.SimpleJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
+import jakarta.json.Json;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -56,6 +58,8 @@ import org.apache.beam.sdk.util.Sleeper;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
+import org.apache.commons.io.output.CountingOutputStream;
+import org.apache.commons.io.output.NullOutputStream;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -157,6 +161,10 @@ public class ElasticsearchIO {
 
       private static final int CHUNK_SIZE = 3000;
 
+      // 5 megabytes - recommended as a sensible default payload size (see
+      // https://www.elastic.co/guide/en/elasticsearch/reference/7.9/getting-started-index.html#getting-started-batch-processing)
+      private static final long CHUNK_BYTES = 5L * 1024L * 1024L;
+
       private static final int DEFAULT_RETRIES = 3;
       private static final Duration DEFAULT_RETRY_PAUSE = Duration.millis(35000);
 
@@ -165,6 +173,7 @@ public class ElasticsearchIO {
       private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final long numOfShard;
       private final int maxBulkRequestSize;
+      private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
       private final ThrowingConsumer<BulkExecutionException> error;
@@ -178,6 +187,7 @@ public class ElasticsearchIO {
           final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           final long numOfShard,
           final int maxBulkRequestSize,
+          final long maxBulkRequestBytes,
           final int maxRetries,
           final Duration retryPause,
           final ThrowingConsumer<BulkExecutionException> error,
@@ -188,6 +198,7 @@ public class ElasticsearchIO {
         this.toBulkOperations = toBulkOperations;
         this.numOfShard = numOfShard;
         this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.maxRetries = maxRetries;
         this.retryPause = retryPause;
         this.error = error;
@@ -202,6 +213,7 @@ public class ElasticsearchIO {
             null,
             0,
             CHUNK_SIZE,
+            CHUNK_BYTES,
             DEFAULT_RETRIES,
             DEFAULT_RETRY_PAUSE,
             defaultErrorHandler(),
@@ -216,6 +228,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -230,6 +243,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -245,6 +259,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -259,6 +274,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -273,6 +289,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -287,6 +304,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -301,6 +319,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -315,6 +334,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -329,6 +349,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -343,6 +364,7 @@ public class ElasticsearchIO {
             toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
+            maxBulkRequestBytes,
             maxRetries,
             retryPause,
             error,
@@ -358,6 +380,7 @@ public class ElasticsearchIO {
         checkNotNull(mapperFactory);
         checkArgument(numOfShard >= 0);
         checkArgument(maxBulkRequestSize > 0);
+        checkArgument(maxBulkRequestBytes > 0L);
         checkArgument(maxRetries >= 0);
         checkArgument(retryPause.getMillis() >= 0);
         if (numOfShard == 0) {
@@ -366,6 +389,7 @@ public class ElasticsearchIO {
                   new ElasticsearchWriter<>(
                       nodes,
                       maxBulkRequestSize,
+                      maxBulkRequestBytes,
                       toBulkOperations,
                       error,
                       maxRetries,
@@ -391,6 +415,7 @@ public class ElasticsearchIO {
                       new ElasticsearchShardWriter<>(
                           nodes,
                           maxBulkRequestSize,
+                          maxBulkRequestBytes,
                           toBulkOperations,
                           error,
                           maxRetries,
@@ -421,10 +446,12 @@ public class ElasticsearchIO {
     private static class ElasticsearchWriter<T> extends DoFn<T, Void> {
 
       private List<BulkOperation> chunk;
+      private long chunkBytes;
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final ThrowingConsumer<BulkExecutionException> error;
       private final int maxBulkRequestSize;
+      private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
 
@@ -434,6 +461,7 @@ public class ElasticsearchIO {
       public ElasticsearchWriter(
           HttpHost[] nodes,
           int maxBulkRequestSize,
+          long maxBulkRequestBytes,
           SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
@@ -441,6 +469,7 @@ public class ElasticsearchIO {
           UsernamePasswordCredentials credentials,
           JsonpMapperFactory mapperFactory) {
         this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
         this.toBulkOperations = toBulkOperations;
         this.error = error;
@@ -469,6 +498,7 @@ public class ElasticsearchIO {
       @StartBundle
       public void startBundle(StartBundleContext c) {
         chunk = new ArrayList<>();
+        chunkBytes = 0;
       }
 
       @FinishBundle
@@ -481,12 +511,13 @@ public class ElasticsearchIO {
         final T t = c.element();
         final Iterable<BulkOperation> operations = toBulkOperations.apply(t);
         for (BulkOperation operation : operations) {
-          if (chunk.size() < maxBulkRequestSize) {
-            chunk.add(operation);
-          } else {
+          long bytes = operationSize(clientSupplier, operation);
+          if ((chunk.size() + 1) > maxBulkRequestSize
+              || (chunkBytes + bytes) > maxBulkRequestBytes) {
             flush();
-            chunk.add(operation);
           }
+          chunk.add(operation);
+          chunkBytes += bytes;
         }
       }
 
@@ -501,15 +532,19 @@ public class ElasticsearchIO {
           retryFn.apply(request);
         }
         chunk.clear();
+        chunkBytes = 0;
       }
     }
 
     private static class ElasticsearchShardWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
 
+      private List<BulkOperation> chunk;
+      private long chunkBytes;
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final ThrowingConsumer<BulkExecutionException> error;
       private final int maxBulkRequestSize;
+      private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
 
@@ -519,6 +554,7 @@ public class ElasticsearchIO {
       public ElasticsearchShardWriter(
           HttpHost[] nodes,
           int maxBulkRequestSize,
+          long maxBulkRequestBytes,
           SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
@@ -526,6 +562,7 @@ public class ElasticsearchIO {
           UsernamePasswordCredentials credentials,
           JsonpMapperFactory mapperFactory) {
         this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
         this.toBulkOperations = toBulkOperations;
         this.error = error;
@@ -539,9 +576,7 @@ public class ElasticsearchIO {
             this.clientSupplier.get().ping().value(), "Elasticsearch client not reachable");
 
         final FluentBackoff backoffConfig =
-            FluentBackoff.DEFAULT
-                .withMaxRetries(this.maxRetries)
-                .withInitialBackoff(this.retryPause);
+            FluentBackoff.DEFAULT.withMaxRetries(maxRetries).withInitialBackoff(retryPause);
         this.requestFn = request(clientSupplier, error);
         this.retryFn = retry(requestFn, backoffConfig);
       }
@@ -551,11 +586,16 @@ public class ElasticsearchIO {
         this.clientSupplier.getTransport().close();
       }
 
+      @StartBundle
+      public void startBundle(StartBundleContext c) {
+        chunk = new ArrayList<>();
+        chunkBytes = 0;
+      }
+
       @SuppressWarnings("Duplicates")
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         final Iterable<T> values = c.element().getValue();
-
         final Iterable<BulkOperation> operations =
             () ->
                 StreamSupport.stream(values.spliterator(), false)
@@ -563,20 +603,18 @@ public class ElasticsearchIO {
                     .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false))
                     .iterator();
 
-        List<BulkOperation> chunk = new ArrayList<>();
         for (BulkOperation operation : operations) {
-          if (chunk.size() < maxBulkRequestSize) {
-            chunk.add(operation);
-          } else {
-            flush(chunk);
-            chunk.add(operation);
+          long bytes = operationSize(clientSupplier, operation);
+          if ((chunk.size() + 1) > maxBulkRequestSize
+              || (chunkBytes + bytes) > maxBulkRequestSize) {
+            flush();
           }
+          chunk.add(operation);
         }
-
-        flush(chunk);
+        flush();
       }
 
-      private void flush(List<BulkOperation> chunk) throws Exception {
+      private void flush() throws Exception {
         if (chunk.isEmpty()) {
           return;
         }
@@ -587,7 +625,15 @@ public class ElasticsearchIO {
           retryFn.apply(request);
         }
         chunk.clear();
+        chunkBytes = 0;
       }
+    }
+
+    private static long operationSize(
+        final ClientSupplier clientSupplier, final BulkOperation operation) {
+      final CountingOutputStream os = new CountingOutputStream(NullOutputStream.NULL_OUTPUT_STREAM);
+      operation.serialize(Json.createGenerator(os), clientSupplier.getJsonMapper());
+      return os.getByteCount();
     }
 
     private static ProcessFunction<BulkRequest, BulkResponse> request(
@@ -654,6 +700,10 @@ public class ElasticsearchIO {
 
       public RestClientTransport getTransport() {
         return transport.updateAndGet(c -> c == null ? createTransport() : c);
+      }
+
+      public JsonpMapper getJsonMapper() {
+        return getTransport().jsonpMapper();
       }
 
       private RestClientTransport createTransport() {
