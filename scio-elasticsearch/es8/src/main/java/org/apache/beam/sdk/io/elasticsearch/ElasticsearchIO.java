@@ -28,7 +28,6 @@ import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.json.SimpleJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -121,7 +120,7 @@ public class ElasticsearchIO {
      * Returns a transform for writing to Elasticsearch cluster.
      *
      * @param error applies given function if specified in case of Elasticsearch error with bulk
-     *              writes. Default behavior throws IOException.
+     *     writes. Default behavior throws IOException.
      */
     public static <T> Bound withError(ThrowingConsumer<BulkExecutionException> error) {
       return new Bound<>().withError(error);
@@ -135,7 +134,7 @@ public class ElasticsearchIO {
      * Returns a transform for writing to Elasticsearch cluster.
      *
      * @param maxRetries Maximum number of retries to attempt for saving any single chunk of bulk
-     *                   requests to the Elasticsearch cluster.
+     *     requests to the Elasticsearch cluster.
      */
     public static <T> Bound withMaxRetries(int maxRetries) {
       return new Bound<>().withMaxRetries(maxRetries);
@@ -239,11 +238,11 @@ public class ElasticsearchIO {
       }
 
       public Bound<T> withFunction(
-          SerializableFunction<T, Iterable<BulkOperation>> toIndexRequest) {
+          SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations) {
         return new Bound<>(
             nodes,
             flushInterval,
-            toIndexRequest,
+            toBulkOperations,
             numOfShard,
             maxBulkRequestSize,
             maxRetries,
@@ -451,8 +450,8 @@ public class ElasticsearchIO {
 
       @Setup
       public void setup() throws Exception {
-        checkArgument(this.clientSupplier.get().ping().value(),
-            "Elasticsearch client not reachable");
+        checkArgument(
+            this.clientSupplier.get().ping().value(), "Elasticsearch client not reachable");
 
         final FluentBackoff backoffConfig =
             FluentBackoff.DEFAULT
@@ -464,7 +463,7 @@ public class ElasticsearchIO {
 
       @Teardown
       public void teardown() throws Exception {
-        this.clientSupplier.close();
+        this.clientSupplier.getTransport().close();
       }
 
       @StartBundle
@@ -537,8 +536,7 @@ public class ElasticsearchIO {
       @Setup
       public void setup() throws Exception {
         checkArgument(
-            this.clientSupplier.get().ping().value(),
-            "Elasticsearch client not reachable");
+            this.clientSupplier.get().ping().value(), "Elasticsearch client not reachable");
 
         final FluentBackoff backoffConfig =
             FluentBackoff.DEFAULT
@@ -550,7 +548,7 @@ public class ElasticsearchIO {
 
       @Teardown
       public void teardown() throws Exception {
-        this.clientSupplier.close();
+        this.clientSupplier.getTransport().close();
       }
 
       @SuppressWarnings("Duplicates")
@@ -558,11 +556,12 @@ public class ElasticsearchIO {
       public void processElement(ProcessContext c) throws Exception {
         final Iterable<T> values = c.element().getValue();
 
-        final Iterable<BulkOperation> operations = () -> StreamSupport
-            .stream(values.spliterator(), false)
-            .map(toBulkOperations::apply)
-            .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false))
-            .iterator();
+        final Iterable<BulkOperation> operations =
+            () ->
+                StreamSupport.stream(values.spliterator(), false)
+                    .map(toBulkOperations::apply)
+                    .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false))
+                    .iterator();
 
         List<BulkOperation> chunk = new ArrayList<>();
         for (BulkOperation operation : operations) {
@@ -632,18 +631,12 @@ public class ElasticsearchIO {
       };
     }
 
-    private static class ClientSupplier implements Supplier<ElasticsearchClient>, Closeable,
-        Serializable {
+    private static class ClientSupplier implements Supplier<ElasticsearchClient>, Serializable {
 
       private final AtomicReference<RestClientTransport> transport = new AtomicReference<>();
       private final HttpHost[] nodes;
       private final UsernamePasswordCredentials credentials;
-
       private final JsonpMapperFactory mapperFactory;
-
-      public ClientSupplier(final HttpHost[] nodes) {
-        this(nodes, null, SimpleJsonpMapper::new);
-      }
 
       public ClientSupplier(
           final HttpHost[] nodes,
@@ -656,14 +649,11 @@ public class ElasticsearchIO {
 
       @Override
       public ElasticsearchClient get() {
-        return new ElasticsearchClient(
-            transport.updateAndGet(c -> c == null ? createTransport() : c));
-
+        return new ElasticsearchClient(getTransport());
       }
 
-      @Override
-      public void close() throws IOException {
-        transport.getAndSet(null).close();
+      public RestClientTransport getTransport() {
+        return transport.updateAndGet(c -> c == null ? createTransport() : c);
       }
 
       private RestClientTransport createTransport() {
@@ -685,26 +675,47 @@ public class ElasticsearchIO {
       };
     }
 
-    /**
-     * An exception that puts information about the failures in the bulk execution.
-     */
+    /** An exception that puts information about the failures in the bulk execution. */
     public static class BulkExecutionException extends IOException {
 
       private final Iterable<ErrorCause> failures;
 
       BulkExecutionException(BulkResponse bulkResponse) {
-        // super(bulkResponse.items()); TODO
-        this.failures =
-            bulkResponse.items()
-                .stream()
-                .map(BulkResponseItem::error)
-                .filter(Objects::nonNull)
-                .map(ErrorCause::causedBy)
-                .collect(Collectors.toList());
+        super(buildFailureMessage(bulkResponse));
+        this.failures = buildFailures(bulkResponse);
       }
 
       public Iterable<ErrorCause> getFailures() {
         return failures;
+      }
+
+      private static Iterable<ErrorCause> buildFailures(BulkResponse bulkResponse) {
+        return bulkResponse.items().stream()
+            .map(BulkResponseItem::error)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+      }
+
+      private static String buildFailureMessage(BulkResponse bulkResponse) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("failure in bulk execution:");
+        for (BulkResponseItem item : bulkResponse.items()) {
+          final ErrorCause cause = item.error();
+          if (cause != null) {
+            sb.append("\n[")
+                .append(item)
+                .append("]: index [")
+                .append(item.index())
+                .append("], type [")
+                .append(item.operationType())
+                .append("], id [")
+                .append(item.id())
+                .append("], message [")
+                .append(cause.reason())
+                .append("]");
+          }
+        }
+        return sb.toString();
       }
     }
   }

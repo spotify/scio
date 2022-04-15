@@ -6,5 +6,4 @@ import java.io.Serializable;
 public interface JsonpMapperFactory extends Serializable {
 
   JsonpMapper create();
-
 }
