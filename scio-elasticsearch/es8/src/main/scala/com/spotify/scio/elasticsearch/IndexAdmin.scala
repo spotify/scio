@@ -29,7 +29,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client._
 import org.slf4j.LoggerFactory
 
-import scala.collection.compat._
+import scala.collection.compat._ // scalafix:ok
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
