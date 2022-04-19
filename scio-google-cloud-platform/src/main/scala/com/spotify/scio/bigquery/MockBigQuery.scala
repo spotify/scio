@@ -24,7 +24,7 @@ import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -45,7 +45,7 @@ object MockBigQuery {
  * [[queryResult]] to query them.
  */
 class MockBigQuery private (private val bq: BigQuery) {
-  private val mapping = MMap.empty[TableReference, TableReference]
+  private val mapping = mutable.Map.empty[TableReference, TableReference]
 
   /** Mock a BigQuery table. Each table can be mocked only once in a test class. */
   def mockTable(original: String): MockTable =
@@ -61,6 +61,32 @@ class MockBigQuery private (private val bq: BigQuery) {
     val t = bq.tables.table(original)
     val temp = bq.tables.createTemporary(t.getLocation).getTableReference
     mapping += (original -> temp)
+    new MockTable(bq, t.getSchema, original, temp)
+  }
+
+  /**
+   * Mock a BigQuery wildcard table using the table prefix and the suffix matched by the wildcard.
+   * Each table can be mocked only once in a test class.
+   */
+  def mockWildcardTable(prefix: String, suffix: String): MockTable = {
+    val original = BigQueryHelpers.parseTableSpec(prefix + suffix)
+    val wildcard = new TableReference()
+      .setProjectId(original.getProjectId)
+      .setDatasetId(original.getDatasetId)
+      .setTableId(original.getTableId.dropRight(suffix.length) + "*")
+
+    require(
+      !mapping.contains(wildcard),
+      s"Table ${BigQueryHelpers.toTableSpec(wildcard)} already registered for mocking"
+    )
+
+    val t = bq.tables.table(original)
+    val temp = bq.tables.createTemporary(t.getLocation, Some(suffix)).getTableReference
+    val tmpWildcard = new TableReference()
+      .setProjectId(temp.getProjectId)
+      .setDatasetId(temp.getDatasetId)
+      .setTableId(temp.getTableId.dropRight(suffix.length) + "*")
+    mapping += (wildcard -> tmpWildcard)
     new MockTable(bq, t.getSchema, original, temp)
   }
 

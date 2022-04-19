@@ -65,6 +65,46 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
     mbq.queryResult(sqlQuery) should contain theSameElementsAs expected
   }
 
+  // see https://cloud.google.com/bigquery/docs/querying-wildcard-tables
+  it should "support wildcard tables" in {
+    val prefix = "bigquery-public-data.noaa_gsod.gsod202"
+    val suffix = "2"
+    val wildcardSqlQuery =
+      """SELECT
+        |  max,
+        |  year,
+        |  mo,
+        |  da,
+        |FROM
+        |  `bigquery-public-data.noaa_gsod.gsod202*`
+        |WHERE
+        |  max != 9999.9 # code for missing data
+        |  AND _TABLE_SUFFIX BETWEEN '0' AND '9'
+        |ORDER BY
+        |  max DESC
+        |LIMIT 1
+        |""".stripMargin
+
+    def gsod(max: Double, year: Int, mo: Int, da: Int): TableRow =
+      TableRow(
+        "max" -> max,
+        "year" -> year.toString,
+        "mo" -> mo.toString,
+        "da" -> da.toString
+      )
+
+    val inData = Seq(
+      gsod(55.0, 2022, 2, 11),
+      gsod(50.7, 2022, 1, 13),
+      gsod(50.5, 2022, 1, 13),
+      gsod(9999.9, 2022, 1, 1)
+    )
+
+    val mbq = MockBigQuery()
+    mbq.mockWildcardTable(prefix, suffix).withData(inData)
+    mbq.queryResult(wildcardSqlQuery) should contain only inData.head
+  }
+
   // =======================================================================
   // Integration test with type-safe mock data
   // =======================================================================
