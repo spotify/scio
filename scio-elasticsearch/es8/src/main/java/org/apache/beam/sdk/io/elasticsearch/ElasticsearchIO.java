@@ -134,6 +134,10 @@ public class ElasticsearchIO {
       return new Bound<>().withMaxBulkRequestSize(maxBulkRequestSize);
     }
 
+    public static <T> Bound withMaxBulkRequestBytes(long maxBulkRequestBytes) {
+      return new Bound<>().withMaxBulkRequestBytes(maxBulkRequestBytes);
+    }
+
     /**
      * Returns a transform for writing to Elasticsearch cluster.
      *
@@ -298,6 +302,21 @@ public class ElasticsearchIO {
       }
 
       public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
+        return new Bound<>(
+            nodes,
+            flushInterval,
+            toBulkOperations,
+            numOfShard,
+            maxBulkRequestSize,
+            maxBulkRequestBytes,
+            maxRetries,
+            retryPause,
+            error,
+            credentials,
+            mapperFactory);
+      }
+
+      public Bound<T> withMaxBulkRequestBytes(long maxBulkRequestBytes) {
         return new Bound<>(
             nodes,
             flushInterval,
