@@ -36,6 +36,10 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
   override type WriteP = ElasticsearchIO.WriteParam[T]
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
+  // remove the mapperFactory from the test id
+  override def testId: String =
+    s"ElasticsearchIO(${esOptions.nodes}, ${esOptions.usernameAndPassword})"
+
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("Can't read from Elasticsearch")
 
@@ -49,8 +53,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
     val write = beam.ElasticsearchIO.Write
       .withNodes(esOptions.nodes.toArray)
       .withFunction(new SerializableFunction[T, JIterable[BulkOperation]]() {
-        override def apply(t: T): JIterable[BulkOperation] =
-          params.f(t).asJava
+        override def apply(t: T): JIterable[BulkOperation] = params.f(t).asJava
       })
       .withFlushInterval(params.flushInterval)
       .withNumOfShard(shards)

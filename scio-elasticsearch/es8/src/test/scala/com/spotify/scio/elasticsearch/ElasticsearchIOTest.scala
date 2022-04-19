@@ -30,8 +30,10 @@ class ElasticsearchIOTest extends ScioIOSpec {
     def opts(): ElasticsearchOptions = ElasticsearchOptions(Nil)
 
     testJobTestOutput(xs)(_ => ElasticsearchIO(opts())) { case (data, _) =>
-      data.saveAsElasticsearch(opts())(_ =>
-        Seq(BulkOperation.of(_.index(IndexOperation.of[Document](_.index("index").id("id")))))
+      data.saveAsElasticsearch(opts())(id =>
+        Seq(
+          BulkOperation.of(_.index(IndexOperation.of[Document](_.index("index").id(id.toString))))
+        )
       )
     }
   }
