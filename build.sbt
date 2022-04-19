@@ -1239,7 +1239,7 @@ lazy val siteSettings = Def.settings(
     `scio-avro`,
     `scio-google-cloud-platform`,
     `scio-cassandra3`,
-    `scio-elasticsearch6`,
+    `scio-elasticsearch8`,
     `scio-extra`,
     `scio-jdbc`,
     `scio-parquet`,
