@@ -18,22 +18,22 @@
 package com.spotify.scio.io.dynamic.syntax
 
 import com.google.protobuf.Message
+import com.spotify.scio.coders.AvroBytesUtil.AvroByteDatumWriter
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.util.{Functions, ProtobufUtil}
+import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.coders.StringUtf8Coder
-import org.apache.beam.sdk.io.AvroIO.RecordFormatter
 import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.{io => beam}
 
+import java.util.{HashMap => JHashMap}
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
-import java.util.{HashMap => JHashMap}
 
 object DynamicSCollectionOps {
   private[syntax] def writeDynamic[A](
@@ -124,13 +124,8 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
       val nm = new JHashMap[String, AnyRef]()
       nm.putAll(metadata.asJava)
       val sink = beam.AvroIO
-        .sinkViaGenericRecords(
-          schema,
-          new RecordFormatter[T] {
-            override def formatRecord(element: T, schema: Schema): GenericRecord =
-              element
-          }
-        )
+        .sink[T](schema)
+        .withDatumWriterFactory((writer: Schema) => new GenericDatumWriter(writer))
         .withCodec(codec)
         .withMetadata(nm)
       val write =
@@ -193,7 +188,6 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
   )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val protoCoder = Coder.protoMessageCoder[T]
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
-    val avroSchema = AvroBytesUtil.schema
     val nm = new JHashMap[String, AnyRef]()
     nm.putAll((metadata ++ ProtobufUtil.schemaMetadataOf(ct)).asJava)
 
@@ -202,19 +196,15 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
         "Protobuf file with dynamic destinations cannot be used in a test context"
       )
     } else {
+      // will generate an avro schema based on reflection,
+      // but later ignored by the AvroByteDatumWriter
       val sink = beam.AvroIO
-        .sinkViaGenericRecords(
-          avroSchema,
-          new RecordFormatter[T] {
-            override def formatRecord(element: T, schema: Schema): GenericRecord =
-              AvroBytesUtil.encode(elemCoder, element)
-          }
-        )
+        .sink(ScioUtil.classOf[T])
+        .withDatumWriterFactory((_: Schema) => new AvroByteDatumWriter(elemCoder))
         .withCodec(codec)
         .withMetadata(nm)
-      val write =
-        writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
-          .via(sink)
+      val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
+        .via(sink)
 
       self.applyInternal(write)
     }

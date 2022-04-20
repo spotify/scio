@@ -18,9 +18,9 @@
 package com.spotify.scio.coders
 
 import java.nio.ByteBuffer
-
 import org.apache.avro.{Schema => ASchema}
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.{GenericData, GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.{DatumWriter, Encoder}
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
@@ -55,4 +55,11 @@ private[scio] object AvroBytesUtil {
       java.util.Arrays.copyOfRange(bb.array(), bb.position(), bb.limit())
     CoderUtils.decodeFromByteArray(coder, bytes)
   }
+
+  final class AvroByteDatumWriter[T](coder: BCoder[T]) extends DatumWriter[T] {
+    private val delegate = new GenericDatumWriter[GenericRecord](schema)
+    override def setSchema(schema: ASchema): Unit = {}
+    override def write(datum: T, out: Encoder): Unit = delegate.write(encode(coder, datum), out)
+  }
+
 }
