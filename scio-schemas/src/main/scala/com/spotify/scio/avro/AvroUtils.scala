@@ -22,6 +22,8 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 
 import scala.jdk.CollectionConverters._
 
+import java.nio.ByteBuffer
+
 object AvroUtils {
   private def f(name: String, tpe: Schema.Type) =
     new Schema.Field(
@@ -42,10 +44,13 @@ object AvroUtils {
       f("float_field", Schema.Type.FLOAT),
       f("double_field", Schema.Type.DOUBLE),
       f("boolean_field", Schema.Type.BOOLEAN),
+      f("bytes_field", Schema.Type.BYTES),
       f("string_field", Schema.Type.STRING),
       fArr("array_field", Schema.Type.STRING)
     ).asJava
   )
+
+  private def byteBuffer(i: Int): ByteBuffer = ByteBuffer.wrap(Array(i.toByte))
 
   def newGenericRecord(i: Int): GenericRecord = {
     val r = new GenericData.Record(schema)
@@ -54,6 +59,7 @@ object AvroUtils {
     r.put("float_field", 1f * i)
     r.put("double_field", 1.0 * i)
     r.put("boolean_field", true)
+    r.put("bytes_field", byteBuffer(i))
     r.put("string_field", "hello")
     r.put("array_field", List[CharSequence]("a", "b", "c").asJava)
     r
@@ -66,6 +72,7 @@ object AvroUtils {
       i.toFloat,
       i.toDouble,
       true,
+      byteBuffer(i),
       "hello",
       List[CharSequence]("a", "b", "c").asJava
     )

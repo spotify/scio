@@ -22,12 +22,16 @@ import com.spotify.scio.examples.extra.AvroExample.{AccountFromSchema, AccountTo
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
 
+import java.nio.ByteBuffer
+
 class AvroExampleTest extends PipelineSpec {
+  private def byteBuffer(i: Int): ByteBuffer = ByteBuffer.wrap(Array(i.toByte))
+
   "AvroExample" should "work for specific input" in {
     val input =
       Seq(
-        new Account(1, "checking", "Alice", 1000.0, AccountStatus.Active),
-        new Account(2, "checking", "Bob", 1500.0, AccountStatus.Active)
+        new Account(1, "checking", "Alice", 1000.0, byteBuffer(123), AccountStatus.Active),
+        new Account(2, "checking", "Bob", 1500.0, byteBuffer(234), AccountStatus.Active)
       )
 
     val expected = input.map(_.toString)
@@ -46,6 +50,7 @@ class AvroExampleTest extends PipelineSpec {
           .newBuilder()
           .setId(i)
           .setAmount(i.toDouble)
+          .setBytes(byteBuffer(i))
           .setName("account" + i)
           .setType("checking")
           .build()

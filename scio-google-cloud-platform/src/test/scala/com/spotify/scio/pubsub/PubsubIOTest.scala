@@ -29,6 +29,8 @@ import com.spotify.scio.pubsub.coders._
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.joda.time.Instant
 
+import java.nio.ByteBuffer
+
 class PubsubIOTest extends PipelineSpec with ScioIOSpec {
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
@@ -62,7 +64,9 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
   }
 
   it should "support deprecated readAvro" in {
-    val xs = (1 to 100).map(x => new Account(x, "", "", x.toDouble, AccountStatus.Active))
+    val xs = (1 to 100).map(x =>
+      new Account(x, "", "", x.toDouble, ByteBuffer.wrap(Array(x.toByte)), AccountStatus.Active)
+    )
     testJobTest(xs)(PubsubIO.readAvro[Account](_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
   }
 

@@ -8,6 +8,7 @@
         {"name": "type", "type": "string"},
         {"name": "name", "type": ["null", "string"]},
         {"name": "amount", "type": "double"},
+        {"name": "bytes", "type": "bytes"},
         {
          "name": "account_status",
          "type": [
@@ -63,6 +64,7 @@
         {"name": "float_field", "type": ["null", "float"], "default": null},
         {"name": "double_field", "type": ["null", "double"], "default": null},
         {"name": "boolean_field", "type": ["null", "boolean"], "default": null},
+        {"name": "bytes_field", "type": ["null", "bytes"], "default": null},
         {"name": "string_field", "type": ["null", "string"], "default": null},
         {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": null}
     ]

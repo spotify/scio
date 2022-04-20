@@ -32,6 +32,7 @@ import com.spotify.scio.io.ClosedTap
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 
+import java.nio.ByteBuffer
 import scala.jdk.CollectionConverters._
 
 object AvroExample {
@@ -88,6 +89,7 @@ object AvroExample {
           .newBuilder()
           .setId(i)
           .setAmount(i.toDouble)
+          .setBytes(ByteBuffer.wrap(Array(i.toByte)))
           .setName("account" + i)
           .setType("checking")
           .build()

@@ -20,18 +20,30 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.avro._
 import com.spotify.scio.testing._
 
+import java.nio.ByteBuffer
 import scala.jdk.CollectionConverters._
 
 class AvroInOutTest extends PipelineSpec {
+  private def byteBuffer(i: Int): ByteBuffer = ByteBuffer.wrap(Array(i.toByte))
+
   val input: Seq[TestRecord] = Seq(
-    new TestRecord(1, 0L, 0f, 1000.0, false, "Alice", List[CharSequence]("a").asJava),
-    new TestRecord(2, 0L, 0f, 1500.0, false, "Bob", List[CharSequence]("b").asJava)
+    new TestRecord(
+      1,
+      0L,
+      0f,
+      1000.0,
+      false,
+      byteBuffer(123),
+      "Alice",
+      List[CharSequence]("a").asJava
+    ),
+    new TestRecord(2, 0L, 0f, 1500.0, false, byteBuffer(234), "Bob", List[CharSequence]("b").asJava)
   )
 
   val expected: Seq[Account] =
     Seq(
-      new Account(1, "checking", "Alice", 1000.0, AccountStatus.Active),
-      new Account(2, "checking", "Bob", 1500.0, AccountStatus.Active)
+      new Account(1, "checking", "Alice", 1000.0, byteBuffer(123), AccountStatus.Active),
+      new Account(2, "checking", "Bob", 1500.0, byteBuffer(234), AccountStatus.Active)
     )
 
   "AvroInOut" should "work" in {

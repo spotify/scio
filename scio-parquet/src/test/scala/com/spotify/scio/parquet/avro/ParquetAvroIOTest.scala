@@ -18,6 +18,7 @@
 package com.spotify.scio.parquet.avro
 
 import java.io.File
+import java.nio.ByteBuffer
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
@@ -99,7 +100,16 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
     val sc1 = ScioContext()
     val nestedRecords =
-      (1 to 10).map(x => new Account(x, x.toString, x.toString, x.toDouble, AccountStatus.Active))
+      (1 to 10).map(x =>
+        new Account(
+          x,
+          x.toString,
+          x.toString,
+          x.toDouble,
+          ByteBuffer.wrap(Array(x.toByte)),
+          AccountStatus.Active
+        )
+      )
     sc1
       .parallelize(nestedRecords)
       .saveAsParquetAvroFile(dir.toString)
@@ -281,7 +291,16 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       .args("--input=input", "--output=output")
       .input(
         ParquetAvroIO[Account]("input"),
-        List(Account.newBuilder().setId(1).setName("foo").setType("bar").setAmount(2.0).build())
+        List(
+          Account
+            .newBuilder()
+            .setId(1)
+            .setName("foo")
+            .setType("bar")
+            .setAmount(2.0)
+            .setBytes(ByteBuffer.wrap(Array(123.toByte)))
+            .build()
+        )
       )
       .output(TextIO("output"))(_ should containSingleValue(("foo", 2.0).toString))
       .run()

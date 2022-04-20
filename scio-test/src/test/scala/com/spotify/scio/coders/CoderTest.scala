@@ -35,6 +35,8 @@ import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.twitter.algebird.Moments
 
+import java.nio.ByteBuffer
+
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
 
@@ -218,7 +220,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   object Avro {
     import com.spotify.scio.avro.{Account, Address, User => AvUser}
 
-    val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
+    val accounts: List[Account] = List(
+      new Account(1, "type", "name", 12.5, ByteBuffer.wrap(Array(123.toByte)), null)
+    )
     val address =
       new Address("street1", "street2", "city", "state", "01234", "Sweden")
     val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
@@ -231,6 +235,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "Derive serializable coders" in {
     coderIsSerializable[Int]
+    coderIsSerializable[ByteBuffer]
     coderIsSerializable[String]
     coderIsSerializable[List[Int]]
     coderIsSerializable(Coder.kryo[Int])

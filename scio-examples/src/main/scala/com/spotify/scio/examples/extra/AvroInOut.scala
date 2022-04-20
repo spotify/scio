@@ -43,6 +43,7 @@ object AvroInOut {
           .setType("checking")
           .setName(r.getStringField)
           .setAmount(r.getDoubleField)
+          .setBytes(r.getBytesField)
           .setAccountStatus(AccountStatus.Active)
           .build()
       }
