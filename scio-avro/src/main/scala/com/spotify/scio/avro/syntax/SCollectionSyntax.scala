@@ -46,9 +46,9 @@ final class GenericRecordSCollectionOps(private val self: SCollection[GenericRec
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    userReflection: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
+    useReflectApi: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
   ): ClosedTap[GenericRecord] = {
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, userReflection)
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, useReflectApi)
     self.write(GenericRecordIO(path, schema))(param)
   }
 }
@@ -68,10 +68,10 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    userReflection: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
+    useReflectApi: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
   )(implicit coder: Coder[T]): ClosedTap[T] = {
     val param =
-      ObjectFileIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, userReflection)
+      ObjectFileIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, useReflectApi)
     self.write(ObjectFileIO(path))(param)
   }
 }
@@ -90,9 +90,9 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    userReflection: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
+    useReflectApi: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, userReflection)
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, useReflectApi)
     self.write(SpecificRecordIO[T](path))(param)
   }
 }
@@ -111,9 +111,9 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    userReflection: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
+    useReflectApi: Boolean = AvroIO.WriteParam.DefaultUseReflectApi
   )(implicit ct: ClassTag[T], tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, userReflection)
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, useReflectApi)
     self.write(AvroTyped.AvroIO[T](path))(param)
   }
 }

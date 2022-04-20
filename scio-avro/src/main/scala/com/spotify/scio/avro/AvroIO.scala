@@ -151,21 +151,6 @@ sealed trait AvroIO[T] extends ScioIO[T] {
   }
 }
 
-final class SpecificDatumFactory[T: ClassTag] extends DatumReaderFactory[T] with DatumWriterFactory[T] {
-  override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
-    val datumReader = new SpecificDatumReader(ScioUtil.classOf[T])
-    datumReader.setExpected(writer)
-    datumReader.setSchema(reader)
-    datumReader
-  }
-
-  override def apply(writer: Schema): DatumWriter[T] = {
-    val datumWriter = new SpecificDatumWriter(ScioUtil.classOf[T])
-    datumWriter.setSchema(writer)
-    datumWriter
-  }
-}
-
 final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends AvroIO[T] {
   override type ReadP = AvroIO.ReadParam
@@ -182,7 +167,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val t = beam.AvroIO
       .read(cls)
       .from(path)
-      .withDatumReaderFactory(if (params.useReflectApi) null else new SpecificDatumFactory[T])
+      .withDatumReaderFactory(AvroSource.defaultReaderFactory(cls, params.useReflectApi))
       .withCoder(CoderMaterializer.beam(sc, Coder[T]))
     sc.applyTransform(t)
   }
@@ -197,7 +182,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
       avroOut(
         write = beam.AvroIO.write(cls),
         path = path,
-        factory = if (params.useReflectApi) null else new SpecificDatumFactory[T],
+        factory = AvroSink.defaultWriterFactory(cls, params.useReflectApi),
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
@@ -239,7 +224,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
       avroOut(
         write = beam.AvroIO.writeGenericRecords(schema),
         path = path,
-        factory = s => new GenericDatumWriter(s),
+        factory = AvroSink.GENERIC_DATUM_WRITER_FACTORY,
         numShards = params.numShards,
         suffix = params.suffix,
         codec = params.codec,
