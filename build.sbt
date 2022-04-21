@@ -25,6 +25,8 @@ import de.heikoseeberger.sbtheader.CommentCreator
 
 ThisBuild / turbo := true
 
+// check libraries-bom version used by beam
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/index.html
 val algebirdVersion = "0.13.9"
 val algebraVersion = "2.7.0"
 val annoy4sVersion = "0.10.0"
@@ -35,7 +37,7 @@ val avroVersion = "1.8.2"
 val beamVendorVersion = "0.1"
 val beamVersion = "2.38.0"
 val bigdataossVersion = "2.2.4"
-val bigQueryStorageVersion = "2.8.1"
+val bigQueryStorageVersion = "2.10.0"
 val bigtableClientVersion = "1.25.1"
 val breezeVersion = "2.0"
 val caffeineVersion = "2.9.3"
@@ -53,9 +55,9 @@ val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.1"
 // scala-steward:on
 val featranVersion = "0.8.0-RC2"
-val flinkVersion = "1.13.5"
-val gaxVersion = "2.8.1"
-val gcsVersion = "2.2.3"
+val flinkVersion = "1.14.3"
+val gaxVersion = "2.11.0"
+val gcsVersion = "2.4.0"
 val generatedGrpcBetaVersion = "2.5.1"
 val generatedDatastoreProtoVersion = "0.89.0"
 val googleClientsVersion = "1.32.1"
@@ -63,12 +65,11 @@ val googleApiServicesBigQueryVersion = s"v2-rev20211129-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20210818-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20211130-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20211201-$googleClientsVersion"
-val googleAuthVersion = "1.3.0"
-val googleCloudCoreVersion = "2.3.5"
-val googleCloudSpannerVersion = "6.17.4"
-val googleHttpClientsVersion = "1.41.0"
+val googleAuthVersion = "1.4.0"
+val googleCloudSpannerVersion = "6.20.0"
+val googleHttpClientsVersion = "1.41.2"
 val googleOauthClientVersion = "1.32.1"
-val grpcVersion = "1.43.2"
+val grpcVersion = "1.44.0"
 val guavaVersion = "31.0.1-jre"
 val hadoopVersion = "2.10.1"
 val hamcrestVersion = "2.2"
@@ -101,7 +102,7 @@ val scalatestVersion = "3.2.12"
 val shapelessVersion = "2.3.9"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.2"
-val sparkVersion = "2.4.8"
+val sparkVersion = "3.1.2"
 val tensorFlowVersion = "0.4.1"
 val zoltarVersion = "0.6.0"
 val scalaCollectionCompatVersion = "2.7.0"
@@ -305,24 +306,24 @@ lazy val dataflowRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
 )
 lazy val sparkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-spark" % beamVersion exclude (
-    "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
-  ),
+  "org.apache.beam" % "beam-runners-spark" % beamVersion,
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-streaming" % sparkVersion
 )
+
+// only available for scala 2.11 & 2.12
+// https://issues.apache.org/jira/browse/FLINK-13414
+// beam-runners-flink-1.14 by default pulls 2.11 scala libs,
+// exclude those libs and add them manually with proper scala version
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.13" % beamVersion excludeAll (
+  "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion excludeAll (
     ExclusionRule("com.twitter", "chill_2.11"),
     ExclusionRule("org.apache.flink", "flink-clients_2.11"),
-    ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
     ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
-    ExclusionRule("org.apache.flink", "flink-optimizer_2.11")
   ),
+  "com.twitter" %% "chill" % chillVersion,
   "org.apache.flink" %% "flink-clients" % flinkVersion,
-  "org.apache.flink" %% "flink-runtime" % flinkVersion,
   "org.apache.flink" %% "flink-streaming-java" % flinkVersion,
-  "org.apache.flink" %% "flink-optimizer" % flinkVersion
 )
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
@@ -594,7 +595,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
+      "com.google.cloud" % "google-cloud-core" % gcsVersion,
       "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
       // From BeamModulePlugin.groovy
@@ -1239,9 +1240,9 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
   Nil
 }
 
-//strict should only be enabled when updating/adding depedencies
+// strict should only be enabled when updating/adding depedencies
 // ThisBuild / conflictManager := ConflictManager.strict
-//To update this list we need to check against the dependencies being evicted
+// To update this list we need to check against the dependencies being evicted
 ThisBuild / dependencyOverrides ++= Seq(
   "org.threeten" % "threetenbp" % "1.4.1",
   "org.conscrypt" % "conscrypt-openjdk-uber" % "2.2.1",
@@ -1261,15 +1262,16 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
   "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-  "com.google.cloud" % "google-cloud-core-grpc" % "2.2.0",
-  "com.google.cloud" % "google-cloud-core-http" % "2.2.0",
-  "com.google.cloud" % "google-cloud-core" % "2.2.0",
+  "com.google.cloud" % "google-cloud-core-grpc" % gcsVersion,
+  "com.google.cloud" % "google-cloud-core-http" % gcsVersion,
+  "com.google.cloud" % "google-cloud-core" % gcsVersion,
   "com.google.cloud" % "google-cloud-storage" % gcsVersion,
   "com.google.code.findbugs" % "jsr305" % "3.0.2",
   "com.google.code.gson" % "gson" % "2.8.9",
   "com.google.errorprone" % "error_prone_annotations" % "2.3.4",
   "com.google.guava" % "guava" % guavaVersion,
   "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+  "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientsVersion,
   "com.google.j2objc" % "j2objc-annotations" % "1.3",
