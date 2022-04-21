@@ -305,6 +305,9 @@ lazy val directRunnerDependencies = Seq(
 lazy val dataflowRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion
 )
+
+// only available for scala 2.12
+// scala 2.13 is supported from spark 3.2.0
 lazy val sparkRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-spark" % beamVersion,
   "org.apache.spark" %% "spark-core" % sparkVersion,
@@ -323,7 +326,7 @@ lazy val flinkRunnerDependencies = Seq(
   ),
   "com.twitter" %% "chill" % chillVersion,
   "org.apache.flink" %% "flink-clients" % flinkVersion,
-  "org.apache.flink" %% "flink-streaming-java" % flinkVersion,
+  "org.apache.flink" %% "flink-streaming-java" % flinkVersion
 )
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
