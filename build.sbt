@@ -102,7 +102,7 @@ val shapelessVersion = "2.3.8"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.1"
 val sparkVersion = "2.4.8"
-val tensorFlowVersion = "0.4.1"
+val tensorFlowVersion = "0.3.3"
 val zoltarVersion = "0.6.0-M2"
 val scalaCollectionCompatVersion = "2.7.0"
 
