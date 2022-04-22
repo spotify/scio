@@ -72,10 +72,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
     tempDirectory: String = null
   )(
     destinationFn: T => String
-  )(
-    implicit
-    ct: ClassTag[T]
-  ): ClosedTap[Nothing] = {
+  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
         "Avro file with dynamic destinations cannot be used in a test context"
@@ -161,10 +158,7 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
     suffix: String = ".txt",
     compression: Compression = Compression.UNCOMPRESSED,
     tempDirectory: String = null
-  )(destinationFn: String => String)(
-    implicit
-    ct: ClassTag[T]
-  ): ClosedTap[Nothing] = {
+  )(destinationFn: String => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       self.asInstanceOf[SCollection[String]]
     } else {
@@ -196,10 +190,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     codec: CodecFactory = CodecFactory.deflateCodec(6),
     metadata: Map[String, AnyRef] = Map.empty,
     tempDirectory: String = null
-  )(destinationFn: T => String)(
-    implicit
-    ct: ClassTag[T]
-  ): ClosedTap[Nothing] = {
+  )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val protoCoder = Coder.protoMessageCoder[T]
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
     val avroSchema = AvroBytesUtil.schema

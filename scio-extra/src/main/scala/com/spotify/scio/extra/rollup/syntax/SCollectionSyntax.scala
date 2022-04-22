@@ -46,10 +46,7 @@ trait SCollectionSyntax {
      */
     def rollupAndCount(
       rollupFunction: R => Set[R]
-    )(
-      implicit
-      g: Group[M]
-    ): SCollection[((D, R), (M, Long))] = {
+    )(implicit g: Group[M]): SCollection[((D, R), (M, Long))] = {
       implicit val (coderU, coderD, coderR, coderM) = BeamCoders.getTuple4Coders(self)
 
       val doubleCounting = self

@@ -237,8 +237,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
  *
  * This IO doesn't define write, and should not be used to write Avro GenericRecords.
  */
-final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord => T)(
-  implicit
+final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord => T)(implicit
   coder: Coder[T]
 ) extends AvroIO[T] {
   override type ReadP = Unit

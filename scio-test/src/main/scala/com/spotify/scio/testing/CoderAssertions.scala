@@ -33,29 +33,17 @@ object CoderAssertions {
   implicit class CoderAssertionsImplicits[T](private val value: T) extends AnyVal {
     def coderShould(
       coderAssertion: CoderAssertion[T]
-    )(
-      implicit
-      c: Coder[T],
-      eq: Equality[T]
-    ): Assertion =
+    )(implicit c: Coder[T], eq: Equality[T]): Assertion =
       coderAssertion.assert(value)
   }
 
   trait CoderAssertion[T] {
-    def assert(value: T)(
-      implicit
-      c: Coder[T],
-      eq: Equality[T]
-    ): Assertion
+    def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion
   }
 
   def roundtrip[T](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
     new CoderAssertion[T] {
-      override def assert(value: T)(
-        implicit
-        c: Coder[T],
-        eq: Equality[T]
-      ): Assertion = {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
         checkRoundtripWithCoder(beamCoder, value)
       }
@@ -65,11 +53,7 @@ object CoderAssertions {
     opts: PipelineOptions = DefaultPipelineOptions
   ): CoderAssertion[T] =
     new CoderAssertion[T] {
-      override def assert(value: T)(
-        implicit
-        c: Coder[T],
-        eq: Equality[T]
-      ): Assertion = {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val kryoCoder = CoderMaterializer.beamWithDefault(Coder.kryo[T], o = opts)
         checkRoundtripWithCoder(kryoCoder, value)
       }
@@ -77,11 +61,7 @@ object CoderAssertions {
 
   def notFallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
     new CoderAssertion[T] {
-      override def assert(value: T)(
-        implicit
-        c: Coder[T],
-        eq: Equality[T]
-      ): Assertion = {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         c should !==(Coder.kryo[T])
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
         checkRoundtripWithCoder[T](beamCoder, value)
@@ -90,11 +70,7 @@ object CoderAssertions {
 
   def fallback[T: ClassTag](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
     new CoderAssertion[T] {
-      override def assert(value: T)(
-        implicit
-        c: Coder[T],
-        eq: Equality[T]
-      ): Assertion = {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         c should ===(Coder.kryo[T])
         roundtripKryo(opts).assert(value)
       }
@@ -104,11 +80,7 @@ object CoderAssertions {
     opts: PipelineOptions = DefaultPipelineOptions
   ): CoderAssertion[T] =
     new CoderAssertion[T] {
-      override def assert(value: T)(
-        implicit
-        c: Coder[T],
-        eq: Equality[T]
-      ): Assertion = {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
         beamCoder.consistentWithEquals() shouldBe true
       }
@@ -118,27 +90,19 @@ object CoderAssertions {
     opts: PipelineOptions = DefaultPipelineOptions
   ): CoderAssertion[T] =
     new CoderAssertion[T] {
-      override def assert(value: T)(
-        implicit
-        c: Coder[T],
-        eq: Equality[T]
-      ): Assertion = {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
         noException should be thrownBy beamCoder.verifyDeterministic()
       }
     }
 
-  def coderIsSerializable[A](
-    implicit
-    c: Coder[A]
-  ): Assertion =
+  def coderIsSerializable[A](implicit c: Coder[A]): Assertion =
     coderIsSerializable(CoderMaterializer.beamWithDefault(c))
 
   private def coderIsSerializable[A](beamCoder: BCoder[A]): Assertion =
     noException should be thrownBy SerializableUtils.ensureSerializable(beamCoder)
 
-  private def checkRoundtripWithCoder[T](beamCoder: BCoder[T], value: T)(
-    implicit
+  private def checkRoundtripWithCoder[T](beamCoder: BCoder[T], value: T)(implicit
     eq: Equality[T]
   ): Assertion = {
     val bytes = CoderUtils.encodeToByteArray(beamCoder, value)

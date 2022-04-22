@@ -69,8 +69,7 @@ abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T
     }
 }
 
-abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
-  implicit
+abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
   ev: M[T] => IterableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
   override def encode(value: M[T], outStream: OutputStream): Unit = {
@@ -104,8 +103,7 @@ abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(
   override def toString: String = s"SeqLikeCoder($bc)"
 }
 
-abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(
-  implicit
+abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
   ev: M[T] => IterableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
 
@@ -445,10 +443,7 @@ trait ScalaCoders {
   implicit def eitherCoder[A: Coder, B: Coder]: Coder[Either[A, B]] =
     Coder.gen[Either[A, B]]
 
-  implicit def optionCoder[T, S[_] <: Option[_]](
-    implicit
-    c: Coder[T]
-  ): Coder[S[T]] =
+  implicit def optionCoder[T, S[_] <: Option[_]](implicit c: Coder[T]): Coder[S[T]] =
     Coder
       .transform(c)(bc => Coder.beam(new OptionCoder[T](bc)))
       .asInstanceOf[Coder[S[T]]]
@@ -499,8 +494,7 @@ trait ScalaCoders {
   implicit def arrayByteCoder: Coder[Array[Byte]] =
     Coder.beam(ByteArrayCoder.of())
 
-  implicit def wrappedArrayCoder[T: Coder: ClassTag](
-    implicit
+  implicit def wrappedArrayCoder[T: Coder: ClassTag](implicit
     wrap: Array[T] => m.WrappedArray[T]
   ): Coder[m.WrappedArray[T]] =
     Coder.xmap(Coder[Array[T]])(wrap, _.toArray)

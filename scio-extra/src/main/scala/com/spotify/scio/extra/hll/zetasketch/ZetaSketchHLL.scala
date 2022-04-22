@@ -29,8 +29,7 @@ import com.twitter.algebird.{Monoid, MonoidAggregator}
  * @param elemOpt
  *   - first element to add to the constructed new HyperLogLogPlusPlus instance.
  */
-final class ZetaSketchHll[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = None)(
-  implicit
+final class ZetaSketchHll[T](arrOpt: Option[Array[Byte]], elemOpt: Option[T] = None)(implicit
   hp: HllPlus[T]
 ) extends Serializable {
 
@@ -92,10 +91,7 @@ object ZetaSketchHll {
 
   def create[T: HllPlus](arr: Array[Byte]) = new ZetaSketchHll[T](Option(arr))
 
-  def create[T](p: Int)(
-    implicit
-    hp: HllPlus[T]
-  ): ZetaSketchHll[T] = create(
+  def create[T](p: Int)(implicit hp: HllPlus[T]): ZetaSketchHll[T] = create(
     hp.hll(p).serializeToByteArray()
   )
 

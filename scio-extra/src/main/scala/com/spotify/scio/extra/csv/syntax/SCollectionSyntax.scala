@@ -29,8 +29,7 @@ import org.apache.beam.sdk.transforms.ParDo
 trait SCollectionSyntax {
   implicit final class WritableCsvSCollection[T](private val self: SCollection[T]) {
     @experimental
-    def saveAsCsvFile(path: String, params: CsvIO.WriteParam = CsvIO.DefaultWriteParams)(
-      implicit
+    def saveAsCsvFile(path: String, params: CsvIO.WriteParam = CsvIO.DefaultWriteParams)(implicit
       coder: Coder[T],
       enc: HeaderEncoder[T]
     ): ClosedTap[Nothing] = self.write(CsvIO.Write[T](path))(params)

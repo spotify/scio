@@ -34,10 +34,7 @@ object Shard {
 
   def range[T: RangeShard]: Shard[T] = implicitly[RangeShard[T]]
 
-  def prefix[T](prefixLength: Int)(
-    implicit
-    shardF: Int => PrefixShard[T]
-  ): Shard[T] =
+  def prefix[T](prefixLength: Int)(implicit shardF: Int => PrefixShard[T]): Shard[T] =
     shardF(prefixLength)
 
   implicit val longRangeJdbcShardable: RangeShard[Long] = NumericRangeShard[Long](
@@ -88,10 +85,8 @@ object Shard {
 final class NumericRangeShard[T](
   decoder: (ResultSet, String) => T,
   partitionLength: (Range[T], Int) => T
-)(
-  implicit
-  numeric: Numeric[T]
-) extends RangeShard[T] {
+)(implicit numeric: Numeric[T])
+    extends RangeShard[T] {
 
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =
     decoder(resultSet, columnName)
@@ -165,8 +160,7 @@ object NumericRangeShard {
 
 }
 
-final class RangeStringShard[T <: ShardString](
-  implicit
+final class RangeStringShard[T <: ShardString](implicit
   rangeStringShardCodec: RangeShardStringCodec[T]
 ) extends RangeShard[T] {
   def columnValueDecoder(resultSet: ResultSet, columnName: String): T =

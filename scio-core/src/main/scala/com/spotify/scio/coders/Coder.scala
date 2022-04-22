@@ -458,10 +458,7 @@ sealed trait CoderGrammar {
    *     implicit def jiKryo: Coder[Interval] = Coder.kryo[Interval]
    * }}}
    */
-  def kryo[T](
-    implicit
-    ct: ClassTag[T]
-  ): Coder[T] =
+  def kryo[T](implicit ct: ClassTag[T]): Coder[T] =
     Fallback[T](ct)
   def transform[A, B](c: Coder[A])(f: BCoder[A] => Coder[B]): Coder[B] =
     Transform(c, f)
@@ -528,10 +525,7 @@ object Coder
     with JodaCoders
     with BeamTypeCoders
     with LowPriorityCoders {
-  @inline final def apply[T](
-    implicit
-    c: Coder[T]
-  ): Coder[T] = c
+  @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 
   implicit val charCoder: Coder[Char] = ScalaCoders.charCoder
   implicit val byteCoder: Coder[Byte] = ScalaCoders.byteCoder
@@ -565,8 +559,7 @@ object Coder
   implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] = ScalaCoders.listBufferCoder
   implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] = ScalaCoders.arrayCoder
   implicit val arrayByteCoder: Coder[Array[Byte]] = ScalaCoders.arrayByteCoder
-  implicit def wrappedArrayCoder[T: Coder: ClassTag](
-    implicit
+  implicit def wrappedArrayCoder[T: Coder: ClassTag](implicit
     wrap: Array[T] => m.WrappedArray[T]
   ): Coder[m.WrappedArray[T]] = ScalaCoders.wrappedArrayCoder
   implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] = ScalaCoders.mutableMapCoder
@@ -580,10 +573,7 @@ object Coder
   implicit def jlistCoder[T: Coder]: Coder[java.util.List[T]] = JavaCoders.jlistCoder
   implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
   implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
-  implicit def jTryCoder[A](
-    implicit
-    c: Coder[Try[A]]
-  ): Coder[BaseAsyncLookupDoFn.Try[A]] =
+  implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
     JavaCoders.jTryCoder
   implicit val jBitSetCoder: Coder[java.util.BitSet] = JavaCoders.jBitSetCoder
   implicit val jShortCoder: Coder[java.lang.Short] = JavaCoders.jShortCoder
@@ -605,10 +595,7 @@ object Coder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 
-  def fallback[T](
-    implicit
-    lp: shapeless.LowPriority
-  ): Coder[T] =
+  def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =
     macro CoderMacros.issueFallbackWarning[T]
 }
 

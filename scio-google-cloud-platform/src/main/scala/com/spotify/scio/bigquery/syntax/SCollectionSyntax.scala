@@ -126,11 +126,7 @@ final class SCollectionBeamSchemaOps[T: ClassTag](private val self: SCollection[
     createDisposition: CreateDisposition = TypedWriteParam.DefaultCreateDisposition,
     tableDescription: String = TypedWriteParam.DefaultTableDescription,
     timePartitioning: TimePartitioning = TypedWriteParam.DefaultTimePartitioning
-  )(
-    implicit
-    schema: Schema[T],
-    coder: Coder[T]
-  ): ClosedTap[T] = {
+  )(implicit schema: Schema[T], coder: Coder[T]): ClosedTap[T] = {
     val param =
       TypedWriteParam(
         writeDisposition,
@@ -182,12 +178,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning,
     writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition
-  )(
-    implicit
-    tt: TypeTag[T],
-    ct: ClassTag[T],
-    coder: Coder[T]
-  ): ClosedTap[T] = {
+  )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
     self.write(BigQueryTyped.Table[T](table))(param)
   }

@@ -123,10 +123,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
    * [[PairSCollectionFunctions.foldByKey(implicit* PairSCollectionFunctions.foldByKey]] with hot
    * key fanout.
    */
-  def foldByKey(
-    implicit
-    mon: Monoid[V]
-  ): SCollection[(K, V)] =
+  def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, mon))))(
       kvToTuple
     )
@@ -136,10 +133,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, op))))(kvToTuple)
 
   /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
-  def sumByKey(
-    implicit
-    sg: Semigroup[V]
-  ): SCollection[(K, V)] = {
+  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
     SCollection.logger.warn(
       "combineByKey/sumByKey does not support default value and may fail in some streaming " +
         "scenarios. Consider aggregateByKey/foldByKey instead."

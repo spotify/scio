@@ -85,10 +85,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(
-    implicit
-    hasher: CMSHasher[K]
-  ): SCollection[(K, (V, W))] = {
+  )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] = {
     require(
       sampleFraction <= 1.0 && sampleFraction > 0.0,
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
@@ -206,10 +203,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(
-    implicit
-    hasher: CMSHasher[K]
-  ): SCollection[(K, (V, Option[W]))] = {
+  )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] = {
     require(
       sampleFraction <= 1.0 && sampleFraction > 0.0,
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"
@@ -326,10 +320,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     delta: Double = 1e-10,
     sampleFraction: Double = 1.0,
     withReplacement: Boolean = true
-  )(
-    implicit
-    hasher: CMSHasher[K]
-  ): SCollection[(K, (Option[V], Option[W]))] = {
+  )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] = {
     require(
       sampleFraction <= 1.0 && sampleFraction > 0.0,
       "Sample fraction has to be between (0.0, 1.0] - default is 1.0"

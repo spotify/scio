@@ -203,10 +203,7 @@ object SavedBundlePredictDoFn {
     options: TensorFlowModel.Options,
     signatureName: String,
     outFn: (T, Map[String, Tensor]) => V
-  )(
-    implicit
-    ev: T <:< Example
-  ): SavedBundlePredictDoFn[T, V] =
+  )(implicit ev: T <:< Example): SavedBundlePredictDoFn[T, V] =
     new SavedBundlePredictDoFn[T, V](uri, signatureName, options) {
       private lazy val exportedFetchOps =
         model.outputsNameMap().asScala.toMap

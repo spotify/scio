@@ -84,10 +84,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
     )
 
   /** [[SCollection.fold(implicit* SCollection.fold]] with fan out. */
-  def fold(
-    implicit
-    mon: Monoid[T]
-  ): SCollection[T] =
+  def fold(implicit mon: Monoid[T]): SCollection[T] =
     coll.pApply(Combine.globally(Functions.reduceFn(context, mon)).withFanout(fanout))
 
   /** [[SCollection.reduce]] with fan out. */
@@ -97,10 +94,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
     )
 
   /** [[SCollection.sum]] with fan out. */
-  def sum(
-    implicit
-    sg: Semigroup[T]
-  ): SCollection[T] = {
+  def sum(implicit sg: Semigroup[T]): SCollection[T] = {
     SCollection.logger.warn(
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."

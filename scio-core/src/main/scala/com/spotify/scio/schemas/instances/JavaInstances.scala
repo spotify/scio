@@ -56,20 +56,13 @@ trait JavaInstances {
   implicit val jBooleanSchema: Type[java.lang.Boolean] =
     Type[java.lang.Boolean](FieldType.BOOLEAN)
 
-  implicit def jListSchema[T](
-    implicit
-    s: Schema[T]
-  ): Schema[java.util.List[T]] =
+  implicit def jListSchema[T](implicit s: Schema[T]): Schema[java.util.List[T]] =
     ArrayType(s, identity, identity)
 
-  implicit def jArrayListSchema[T](
-    implicit
-    s: Schema[T]
-  ): Schema[java.util.ArrayList[T]] =
+  implicit def jArrayListSchema[T](implicit s: Schema[T]): Schema[java.util.ArrayList[T]] =
     ArrayType(s, identity, l => new util.ArrayList[T](l))
 
-  implicit def jMapSchema[K, V](
-    implicit
+  implicit def jMapSchema[K, V](implicit
     ks: Schema[K],
     vs: Schema[V]
   ): Schema[java.util.Map[K, V]] =

@@ -24,8 +24,7 @@ import org.scalatest.matchers.should.Matchers
 class PartitionSettingsTest extends AnyFlatSpec with Matchers {
 
   def test[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double, maxBytes: Int)(
-    implicit
-    hash: c.Hash[Long]
+    implicit hash: c.Hash[Long]
   ): Unit = {
     val actualInsertions = (expectedInsertions / 1.1).toLong // to prevent filter saturation
     val settings = c.partitionSettings(expectedInsertions, fpp, maxBytes)
@@ -39,10 +38,7 @@ class PartitionSettingsTest extends AnyFlatSpec with Matchers {
     ()
   }
 
-  def test[C <: ApproxFilterCompanion](c: C)(
-    implicit
-    hash: c.Hash[Long]
-  ): Unit = {
+  def test[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[Long]): Unit = {
     val kb = 1024
     val mb = 1024 * 1024
 

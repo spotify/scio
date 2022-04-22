@@ -38,12 +38,7 @@ final class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration
-  )(
-    implicit
-    ct: ClassTag[T],
-    coder: Coder[T],
-    pt: ParquetType[T]
-  ): ClosedTap[T] =
+  )(implicit ct: ClassTag[T], coder: Coder[T], pt: ParquetType[T]): ClosedTap[T] =
     self.write(ParquetTypeIO[T](path))(WriteParam(numShards, suffix, compression, conf))
 }
 

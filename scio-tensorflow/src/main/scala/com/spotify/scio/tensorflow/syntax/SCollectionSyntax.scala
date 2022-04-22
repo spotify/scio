@@ -124,10 +124,7 @@ final class PredictSCollectionOps[T](private val self: SCollection[T]) {
     exampleInputOp: String = PredictSCollectionOps.DefaultExampleInputOp,
     fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
     signatureName: String = PredictSCollectionOps.DefaultSignatureName
-  )(outFn: (T, Map[String, Tensor]) => V)(
-    implicit
-    ev: T <:< Example
-  ): SCollection[V] =
+  )(outFn: (T, Map[String, Tensor]) => V)(implicit ev: T <:< Example): SCollection[V] =
     self.parDo(
       SavedBundlePredictDoFn.forTensorFlowExample[T, V](
         savedModelUri,
@@ -205,10 +202,7 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
     suffix: String = TFRecordIO.WriteParam.DefaultSuffix,
     compression: Compression = TFRecordIO.WriteParam.DefaultCompression,
     numShards: Int = TFRecordIO.WriteParam.DefaultNumShards
-  )(
-    implicit
-    ev: T <:< Array[Byte]
-  ): ClosedTap[Array[Byte]] = {
+  )(implicit ev: T <:< Array[Byte]): ClosedTap[Array[Byte]] = {
     val param = TFRecordIO.WriteParam(suffix, compression, numShards)
     self.covary[Array[Byte]].write(TFRecordIO(path))(param)
   }

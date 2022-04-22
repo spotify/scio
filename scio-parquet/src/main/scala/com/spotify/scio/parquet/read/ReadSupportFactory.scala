@@ -11,10 +11,7 @@ sealed trait ReadSupportFactory[T] extends Serializable {
 }
 
 object ReadSupportFactory {
-  def typed[T](
-    implicit
-    pt: ParquetType[T]
-  ): ReadSupportFactory[T] = new ReadSupportFactory[T] {
+  def typed[T](implicit pt: ParquetType[T]): ReadSupportFactory[T] = new ReadSupportFactory[T] {
     def readSupport: ReadSupport[T] = pt.readSupport
   }
 

@@ -39,10 +39,7 @@ package object hash {
      * @param c
      *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
      */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C)(
-      implicit
-      hash: c.Hash[T]
-    ): c.Filter[T] =
+    def asApproxFilter[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[T]): c.Filter[T] =
       c.create(self)
 
     /**
@@ -55,8 +52,7 @@ package object hash {
      * @param c
      *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
      */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(
-      implicit
+    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(implicit
       hash: c.Hash[T]
     ): c.Filter[T] =
       c.create(self, expectedInsertions)
@@ -72,8 +68,7 @@ package object hash {
      *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
      */
     def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(
-      implicit
-      hash: c.Hash[T]
+      implicit hash: c.Hash[T]
     ): c.Filter[T] =
       c.create(self, expectedInsertions, fpp)
   }
@@ -92,10 +87,7 @@ package object hash {
      */
     def asApproxFilter[C <: ApproxFilterCompanion](
       c: C
-    )(
-      implicit
-      hash: c.Hash[T]
-    ): SCollection[c.Filter[T]] =
+    )(implicit hash: c.Hash[T]): SCollection[c.Filter[T]] =
       c.create(self)
 
     /**
@@ -108,8 +100,7 @@ package object hash {
      * @param c
      *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
      */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(
-      implicit
+    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(implicit
       hash: c.Hash[T]
     ): SCollection[c.Filter[T]] =
       c.create(self, expectedInsertions)
@@ -125,8 +116,7 @@ package object hash {
      *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
      */
     def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(
-      implicit
-      hash: c.Hash[T]
+      implicit hash: c.Hash[T]
     ): SCollection[c.Filter[T]] =
       c.create(self, expectedInsertions, fpp)
 
@@ -144,8 +134,7 @@ package object hash {
      */
     def asApproxFilterSideInput[C <: ApproxFilterCompanion](
       c: C
-    )(
-      implicit
+    )(implicit
       hash: c.Hash[T]
     ): SideInput[c.Filter[T]] =
       c.createSideInput(self)
@@ -170,8 +159,7 @@ package object hash {
     def asApproxFilterSideInput[C <: ApproxFilterCompanion](
       c: C,
       expectedInsertions: Long
-    )(
-      implicit
+    )(implicit
       hash: c.Hash[T]
     ): SideInput[c.Filter[T]] =
       c.createSideInput(self, expectedInsertions)
@@ -195,8 +183,7 @@ package object hash {
       c: C,
       expectedInsertions: Long,
       fpp: Double
-    )(
-      implicit
+    )(implicit
       hash: c.Hash[T]
     ): SideInput[c.Filter[T]] =
       c.createSideInput(self, expectedInsertions, fpp)

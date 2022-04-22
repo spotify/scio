@@ -53,8 +53,7 @@ package object json extends AutoDerivation {
   final case class DecodeError(error: io.circe.Error, input: String)
 
   /** Enhanced version of [[ScioContext]] with JSON methods. */
-  implicit
-  final class JsonScioContext(private val self: ScioContext) extends AnyVal {
+  implicit final class JsonScioContext(private val self: ScioContext) extends AnyVal {
     @experimental
     def jsonFile[T: Decoder: Coder](
       path: String,

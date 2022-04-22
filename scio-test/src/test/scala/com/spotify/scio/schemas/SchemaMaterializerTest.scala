@@ -130,8 +130,7 @@ final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
     case class Foo(a: String, b: Option[Bar])
     case class Baz(a: Foo, b: Locale)
 
-    implicit
-    val localeSchema: Schema[Locale] =
+    implicit val localeSchema: Schema[Locale] =
       LogicalType[Locale, String](
         BSchema.FieldType.STRING,
         l => l.toLanguageTag(),

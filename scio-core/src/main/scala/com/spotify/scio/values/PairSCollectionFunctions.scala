@@ -244,10 +244,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(
-    implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
+  )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
     implicit val wCoder = rhs.valueCoder
     SCollection.unionAll(
       split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
@@ -280,10 +277,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(
-    implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, (V, W))] =
+  )(implicit funnel: Funnel[K]): SCollection[(K, (V, W))] =
     self.transform { me =>
       implicit val wCoder = rhs.valueCoder
       SCollection.unionAll(
@@ -317,10 +311,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(
-    implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, (V, Option[W]))] =
+  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Option[W]))] =
     self.transform { me =>
       implicit val wCoder = rhs.valueCoder
       SCollection.unionAll(
@@ -355,10 +346,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(
-    implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, (Option[V], W))] =
+  )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], W))] =
     self.transform { me =>
       implicit val wCoder = rhs.valueCoder
       SCollection.unionAll(
@@ -383,8 +371,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhsSColl: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double
-  )(
-    implicit
+  )(implicit
     funnel: Funnel[K]
   ): Seq[(SCollection[(K, V)], SCollection[(K, V)], SCollection[(K, W)])] = {
     val rhsBfSIs = BloomFilter.createPartitionedSideInputs(rhsSColl.keys, rhsNumKeys, fpProb)
@@ -423,8 +410,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   A fraction in range (0, 1) which would be the accepted false positive probability when
    *   discarding elements of `rhs` in the pre-filter step.
    */
-  def sparseLookup[A](rhs: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(
-    implicit
+  def sparseLookup[A](rhs: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(implicit
     funnel: Funnel[K]
   ): SCollection[(K, (V, Iterable[A]))] = self.transform { sColl =>
     implicit val aCoder = rhs.valueCoder
@@ -463,8 +449,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   Having a value close to the actual number improves the false positives in intermediate steps
    *   which means less shuffle.
    */
-  def sparseLookup[A](rhs: SCollection[(K, A)], thisNumKeys: Long)(
-    implicit
+  def sparseLookup[A](rhs: SCollection[(K, A)], thisNumKeys: Long)(implicit
     funnel: Funnel[K]
   ): SCollection[(K, (V, Iterable[A]))] = sparseLookup(rhs, thisNumKeys, 0.01)
 
@@ -488,37 +473,35 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs2: SCollection[(K, B)],
     thisNumKeys: Long,
     fpProb: Double
-  )(
-    implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform { sColl =>
-    implicit val aCoder = rhs1.valueCoder
-    implicit val bCoder = rhs2.valueCoder
-    val selfBfSideInputs =
-      BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
-    val n = selfBfSideInputs.size
+  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform {
+    sColl =>
+      implicit val aCoder = rhs1.valueCoder
+      implicit val bCoder = rhs2.valueCoder
+      val selfBfSideInputs =
+        BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
+      val n = selfBfSideInputs.size
 
-    val thisParts = sColl.hashPartitionByKey(n)
-    val rhs1Parts = rhs1.hashPartitionByKey(n)
-    val rhs2Parts = rhs2.hashPartitionByKey(n)
+      val thisParts = sColl.hashPartitionByKey(n)
+      val rhs1Parts = rhs1.hashPartitionByKey(n)
+      val rhs2Parts = rhs2.hashPartitionByKey(n)
 
-    SCollection.unionAll(
-      thisParts.zip(selfBfSideInputs).zip(rhs1Parts).zip(rhs2Parts).map {
-        case (((lhs, lhsBfSi), rhs1), rhs2) =>
-          lhs
-            .cogroup(
-              rhs1
-                .withSideInputs(lhsBfSi)
-                .filter((e, c) => c(lhsBfSi).mightContain(e._1))
-                .toSCollection,
-              rhs2
-                .withSideInputs(lhsBfSi)
-                .filter((e, c) => c(lhsBfSi).mightContain(e._1))
-                .toSCollection
-            )
-            .flatMap { case (k, (iV, iA, iB)) => iV.map(v => (k, (v, iA, iB))) }
-      }
-    )
+      SCollection.unionAll(
+        thisParts.zip(selfBfSideInputs).zip(rhs1Parts).zip(rhs2Parts).map {
+          case (((lhs, lhsBfSi), rhs1), rhs2) =>
+            lhs
+              .cogroup(
+                rhs1
+                  .withSideInputs(lhsBfSi)
+                  .filter((e, c) => c(lhsBfSi).mightContain(e._1))
+                  .toSCollection,
+                rhs2
+                  .withSideInputs(lhsBfSi)
+                  .filter((e, c) => c(lhsBfSi).mightContain(e._1))
+                  .toSCollection
+              )
+              .flatMap { case (k, (iV, iA, iB)) => iV.map(v => (k, (v, iA, iB))) }
+        }
+      )
   }
 
   /**
@@ -537,10 +520,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs1: SCollection[(K, A)],
     rhs2: SCollection[(K, B)],
     thisNumKeys: Long
-  )(
-    implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
+  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
     sparseLookup(rhs1, rhs2, thisNumKeys, 0.01)
 
   // =======================================================================
@@ -602,10 +582,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def approxQuantilesByKey(
     numQuantiles: Int
-  )(
-    implicit
-    ord: Ordering[V]
-  ): SCollection[(K, Iterable[V])] =
+  )(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
     this.applyPerKey(ApproximateQuantiles.perKey(numQuantiles, ord))(kvListToTuple)
 
   /**
@@ -741,10 +718,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * and "zero value" for `V`. This could be more powerful and better optimized in some cases.
    * @group per_key
    */
-  def foldByKey(
-    implicit
-    mon: Monoid[V]
-  ): SCollection[(K, V)] =
+  def foldByKey(implicit mon: Monoid[V]): SCollection[(K, V)] =
     this.applyPerKey(Combine.perKey(Functions.reduceFn(context, mon)))(kvToTuple)
 
   /**
@@ -853,10 +827,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhsNumKeys: Long,
     computeExact: Boolean = false,
     fpProb: Double = 0.01
-  )(
-    implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, V)] =
+  )(implicit funnel: Funnel[K]): SCollection[(K, V)] =
     self.transform { me =>
       val rhsBfs = BloomFilter.createPartitionedSideInputs(rhs, rhsNumKeys, fpProb)
       val n = rhsBfs.size
@@ -913,10 +884,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   // Scala lambda is simpler and more powerful than transforms.Max
-  def maxByKey(
-    implicit
-    ord: Ordering[V]
-  ): SCollection[(K, V)] =
+  def maxByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
     this.reduceByKey(ord.max)
 
   /**
@@ -926,10 +894,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   // Scala lambda is simpler and more powerful than transforms.Min
-  def minByKey(
-    implicit
-    ord: Ordering[V]
-  ): SCollection[(K, V)] =
+  def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
     this.reduceByKey(ord.min)
 
   /**
@@ -989,10 +954,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * and better optimized than [[reduceByKey]] in some cases.
    * @group per_key
    */
-  def sumByKey(
-    implicit
-    sg: Semigroup[V]
-  ): SCollection[(K, V)] = {
+  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
     PairSCollectionFunctions.logger.warn(
       "combineByKey/sumByKey does not support default value and may fail in some streaming " +
         "scenarios. Consider aggregateByKey/foldByKey instead."
@@ -1016,10 +978,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   a new SCollection of (key, top `num` values) pairs
    * @group per_key
    */
-  def topByKey(num: Int)(
-    implicit
-    ord: Ordering[V]
-  ): SCollection[(K, Iterable[V])] =
+  def topByKey(num: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
     this.applyPerKey(Top.perKey[K, V, Ordering[V]](num, ord))(kvListToTuple)
 
   /**
@@ -1033,10 +992,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Return an SCollection having its values flattened.
    * @group transform
    */
-  def flattenValues[U: Coder](
-    implicit
-    ev: V <:< TraversableOnce[U]
-  ): SCollection[(K, U)] =
+  def flattenValues[U: Coder](implicit ev: V <:< TraversableOnce[U]): SCollection[(K, U)] =
     self.flatMapValues(_.asInstanceOf[TraversableOnce[U]])
 
   // =======================================================================

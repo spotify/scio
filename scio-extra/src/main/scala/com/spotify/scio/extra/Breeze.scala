@@ -35,8 +35,7 @@ import com.twitter.algebird.Semigroup
  * }}}
  */
 object Breeze {
-  implicit def breezeSemigroup[M[_], T](
-    implicit
+  implicit def breezeSemigroup[M[_], T](implicit
     add: OpAdd.Impl2[M[T], M[T], M[T]],
     addInto: OpAdd.InPlaceImpl2[M[T], M[T]],
     copy: CanCopy[M[T]]

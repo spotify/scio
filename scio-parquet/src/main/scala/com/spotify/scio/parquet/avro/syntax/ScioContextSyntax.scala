@@ -82,10 +82,7 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
       .asInstanceOf[SCollection[TraversableOnce[U]]]
       .flatten
 
-  private[avro] def toSCollection(
-    implicit
-    c: Coder[T]
-  ): SCollection[T] = {
+  private[avro] def toSCollection(implicit c: Coder[T]): SCollection[T] = {
     if (projection != null) {
       logger.warn(
         "Materializing Parquet Avro records with projection may cause " +

@@ -41,10 +41,7 @@ trait SCollectionSyntax {
      *   [[SCollection]] of [[ZetaSketchHll]]. This will have the exactly the same number of element
      *   as input [[SCollection]]
      */
-    def asZetaSketchHll(
-      implicit
-      hp: HllPlus[T]
-    ): SCollection[ZetaSketchHll[T]] =
+    def asZetaSketchHll(implicit hp: HllPlus[T]): SCollection[ZetaSketchHll[T]] =
       scol.map(ZetaSketchHll.create[T](_))
 
     /**
@@ -60,10 +57,7 @@ trait SCollectionSyntax {
      * @return
      *   - [[SCollection]] with one [[Long]] value.
      */
-    def approxDistinctCountWithZetaHll(
-      implicit
-      hp: HllPlus[T]
-    ): SCollection[Long] =
+    def approxDistinctCountWithZetaHll(implicit hp: HllPlus[T]): SCollection[Long] =
       scol.aggregate(ZetaSketchHllAggregator())
   }
 
@@ -86,10 +80,7 @@ trait SCollectionSyntax {
      *   key-value [[SCollection]] where value being [[ZetaSketchHll]]. This will have the similar
      *   number of elements as input [[SCollection]].
      */
-    def asZetaSketchHllByKey(
-      implicit
-      hp: HllPlus[V]
-    ): SCollection[(K, ZetaSketchHll[V])] =
+    def asZetaSketchHllByKey(implicit hp: HllPlus[V]): SCollection[(K, ZetaSketchHll[V])] =
       kvScol.mapValues(ZetaSketchHll.create[V](_))
 
     /**
@@ -105,10 +96,7 @@ trait SCollectionSyntax {
      * @return
      *   - [[SCollection]] with one [[Long]] value per each unique key.
      */
-    def approxDistinctCountWithZetaHllByKey(
-      implicit
-      hp: HllPlus[V]
-    ): SCollection[(K, Long)] =
+    def approxDistinctCountWithZetaHllByKey(implicit hp: HllPlus[V]): SCollection[(K, Long)] =
       kvScol.aggregateByKey(ZetaSketchHllAggregator())
   }
 

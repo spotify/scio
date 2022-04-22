@@ -74,10 +74,7 @@ object SCollection {
   /** Implicit conversion from SCollection to DoubleSCollectionFunctions. */
   implicit def makeDoubleSCollectionFunctions[T](
     s: SCollection[T]
-  )(
-    implicit
-    num: Numeric[T]
-  ): DoubleSCollectionFunctions =
+  )(implicit num: Numeric[T]): DoubleSCollectionFunctions =
     new DoubleSCollectionFunctions(s.map(num.toDouble))
 
   /** Implicit conversion from SCollection to PairSCollectionFunctions. */
@@ -149,10 +146,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
 
-  def setSchema(schema: Schema[T])(
-    implicit
-    ct: ClassTag[T]
-  ): SCollection[T] =
+  def setSchema(schema: Schema[T])(implicit ct: ClassTag[T]): SCollection[T] =
     if (!internal.hasSchema) {
       val (s, to, from) = SchemaMaterializer.materialize(schema)
       val td = TypeDescriptor.of(ScioUtil.classOf[T])
@@ -305,10 +299,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def covary[U >: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary_[U](
-    implicit
-    ev: T <:< U
-  ): SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary_[U](implicit ev: T <:< U): SCollection[U] = this.asInstanceOf[SCollection[U]]
 
   /** lifts this [[SCollection]] to the specified type */
   def contravary[U <: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
@@ -621,11 +612,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   // Cannot use `U: Coder` context bound here because `U` depends on `ev`.
-  def flatten[U](
-    implicit
-    ev: T => TraversableOnce[U],
-    coder: Coder[U]
-  ): SCollection[U] =
+  def flatten[U](implicit ev: T => TraversableOnce[U], coder: Coder[U]): SCollection[U] =
     flatMap(ev)
 
   /**
@@ -642,10 +629,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * "zero value" for `T`. This could be more powerful and better optimized in some cases.
    * @group transform
    */
-  def fold(
-    implicit
-    mon: Monoid[T]
-  ): SCollection[T] =
+  def fold(implicit mon: Monoid[T]): SCollection[T] =
     this.pApply(Combine.globally(Functions.reduceFn(context, mon)))
 
   /**
@@ -741,10 +725,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   // Scala lambda is simpler and more powerful than transforms.Max
-  def max(
-    implicit
-    ord: Ordering[T]
-  ): SCollection[T] =
+  def max(implicit ord: Ordering[T]): SCollection[T] =
     this.reduce(ord.max)
 
   /**
@@ -753,10 +734,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   a new SCollection with the mean of elements
    * @group transform
    */
-  def mean(
-    implicit
-    ev: Numeric[T]
-  ): SCollection[Double] = this.transform { in =>
+  def mean(implicit ev: Numeric[T]): SCollection[Double] = this.transform { in =>
     val e = ev // defeat closure
     in.map(e.toDouble)
       .asInstanceOf[SCollection[JDouble]]
@@ -771,10 +749,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   // Scala lambda is simpler and more powerful than transforms.Min
-  def min(
-    implicit
-    ord: Ordering[T]
-  ): SCollection[T] =
+  def min(implicit ord: Ordering[T]): SCollection[T] =
     this.reduce(ord.min)
 
   /**
@@ -784,10 +759,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   elements
    * @group transform
    */
-  def quantilesApprox(numQuantiles: Int)(
-    implicit
-    ord: Ordering[T]
-  ): SCollection[Iterable[T]] =
+  def quantilesApprox(numQuantiles: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.transform {
       _.pApply(ApproximateQuantiles.globally(numQuantiles, ord))
         .map((_: JIterable[T]).asScala)
@@ -900,10 +872,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * better optimized than [[reduce]] in some cases.
    * @group transform
    */
-  def sum(
-    implicit
-    sg: Semigroup[T]
-  ): SCollection[T] = {
+  def sum(implicit sg: Semigroup[T]): SCollection[T] = {
     SCollection.logger.warn(
       "combine/sum does not support default value and may fail in some streaming scenarios. " +
         "Consider aggregate/fold instead."
@@ -926,10 +895,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def top(
     num: Int
-  )(
-    implicit
-    ord: Ordering[T]
-  ): SCollection[Iterable[T]] =
+  )(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.transform {
       _.pApply(Top.of(num, ord)).map((l: JIterable[T]) => l.asScala)
     }
@@ -1314,10 +1280,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @see
    *   [[readFilesAsBytes]], [[readFilesAsString]]
    */
-  def readFiles(
-    implicit
-    ev: T <:< String
-  ): SCollection[String] =
+  def readFiles(implicit ev: T <:< String): SCollection[String] =
     readFiles(beam.TextIO.readFiles())
 
   /**
@@ -1328,10 +1291,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @see
    *   [[readFilesAsBytes]], [[readFilesAsString]]
    */
-  def readFilesAsBytes(
-    implicit
-    ev: T <:< String
-  ): SCollection[Array[Byte]] =
+  def readFilesAsBytes(implicit ev: T <:< String): SCollection[Array[Byte]] =
     readFiles(_.readFullyAsBytes())
 
   /**
@@ -1342,10 +1302,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @see
    *   [[readFilesAsBytes]], [[readFilesAsString]]
    */
-  def readFilesAsString(
-    implicit
-    ev: T <:< String
-  ): SCollection[String] =
+  def readFilesAsString(implicit ev: T <:< String): SCollection[String] =
     readFiles(_.readFullyAsUTF8String())
 
   /**
@@ -1356,10 +1313,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def readFiles[A: Coder](
     f: beam.FileIO.ReadableFile => A
-  )(
-    implicit
-    ev: T <:< String
-  ): SCollection[A] =
+  )(implicit ev: T <:< String): SCollection[A] =
     readFiles(DirectoryTreatment.SKIP, Compression.AUTO)(f)
 
   /**
@@ -1375,10 +1329,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def readFiles[A: Coder](directoryTreatment: DirectoryTreatment, compression: Compression)(
     f: beam.FileIO.ReadableFile => A
-  )(
-    implicit
-    ev: T <:< String
-  ): SCollection[A] = {
+  )(implicit ev: T <:< String): SCollection[A] = {
     val transform =
       ParDo
         .of(Functions.mapFn[beam.FileIO.ReadableFile, A](f))
@@ -1401,10 +1352,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     filesTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]],
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
-  )(
-    implicit
-    ev: T <:< String
-  ): SCollection[A] =
+  )(implicit ev: T <:< String): SCollection[A] =
     if (context.isTest) {
       val id = context.testId.get
       this.flatMap(s => TestDataManager.getInput(id)(ReadIO(ev(s))).asIterable.get)
@@ -1564,10 +1512,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
-  )(
-    implicit
-    ct: ClassTag[T]
-  ): ClosedTap[String] = {
+  )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
     } else {
@@ -1602,10 +1547,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
     fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming,
     tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory
-  )(
-    implicit
-    ev: T <:< Array[Byte]
-  ): ClosedTap[Nothing] =
+  )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .covary_[Array[Byte]]
       .write(BinaryIO(path))(

@@ -187,12 +187,7 @@ package object sparkey extends SparkeyReaderInstances {
     compressionType: CompressionType,
     compressionBlockSize: Int,
     elements: Iterable[(K, V)]
-  )(
-    implicit
-    w: SparkeyWritable[K, V],
-    koder: Coder[K],
-    voder: Coder[V]
-  ): SparkeyUri = {
+  )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
     val writer = new SparkeyWriter(uri, compressionType, compressionBlockSize, maxMemoryUsage)
     val it = elements.iterator
     while (it.hasNext) {
@@ -238,10 +233,7 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(
-      implicit
-      w: SparkeyWritable[K, V]
-    ): SCollection[SparkeyUri] = {
+    )(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = {
       require(numShards > 0, s"numShards must be greater than 0, found $numShards")
       if (compressionType != CompressionType.NONE) {
         require(
@@ -324,10 +316,7 @@ package object sparkey extends SparkeyReaderInstances {
      *   A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
     @experimental
-    def asSparkey(
-      implicit
-      w: SparkeyWritable[K, V]
-    ): SCollection[SparkeyUri] = this.asSparkey()
+    def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = this.asSparkey()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
@@ -343,10 +332,7 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(
-      implicit
-      w: SparkeyWritable[K, V]
-    ): SideInput[SparkeyReader] =
+    )(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
       self
         .asSparkey(
           numShards = numShards,
@@ -362,10 +348,7 @@ package object sparkey extends SparkeyReaderInstances {
      * required that each key of the input be associated with a single value.
      */
     @experimental
-    def asSparkeySideInput(
-      implicit
-      w: SparkeyWritable[K, V]
-    ): SideInput[SparkeyReader] =
+    def asSparkeySideInput(implicit w: SparkeyWritable[K, V]): SideInput[SparkeyReader] =
       self.asSparkeySideInput()
 
     /**
@@ -377,8 +360,7 @@ package object sparkey extends SparkeyReaderInstances {
      */
     @experimental
     @deprecated("Use asLargeMapSideInput if no cache is required.", since = "0.10.1")
-    def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(
-      implicit
+    def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(implicit
       w: SparkeyWritable[K, V]
     ): SideInput[TypedSparkeyReader[T]] =
       self.asSparkey.asTypedSparkeySideInput[T](decoder)
@@ -398,10 +380,7 @@ package object sparkey extends SparkeyReaderInstances {
       compressionBlockSize: Int = DefaultCompressionBlockSize
     )(
       decoder: Array[Byte] => T
-    )(
-      implicit
-      w: SparkeyWritable[K, V]
-    ): SideInput[TypedSparkeyReader[T]] =
+    )(implicit w: SparkeyWritable[K, V]): SideInput[TypedSparkeyReader[T]] =
       self
         .asSparkey(
           numShards = numShards,
@@ -492,10 +471,7 @@ package object sparkey extends SparkeyReaderInstances {
       numShards: Short = DefaultSideInputNumShards,
       compressionType: CompressionType = DefaultCompressionType,
       compressionBlockSize: Int = DefaultCompressionBlockSize
-    )(
-      implicit
-      w: SparkeyWritable[K, V]
-    ): SideInput[CachedStringSparkeyReader] =
+    )(implicit w: SparkeyWritable[K, V]): SideInput[CachedStringSparkeyReader] =
       self
         .asSparkey(
           numShards = numShards,

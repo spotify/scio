@@ -95,10 +95,6 @@ object CoderMaterializer {
         LazyCoder[T](t, o)(c)
     }
 
-  def kvCoder[K, V](ctx: ScioContext)(
-    implicit
-    k: Coder[K],
-    v: Coder[V]
-  ): KvCoder[K, V] =
+  def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K], v: Coder[V]): KvCoder[K, V] =
     KvCoder.of(beam(ctx, k), beam(ctx, v))
 }
