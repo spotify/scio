@@ -67,8 +67,7 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
 
   // see https://cloud.google.com/bigquery/docs/querying-wildcard-tables
   it should "support wildcard tables" in {
-    val prefix = "bigquery-public-data.noaa_gsod.gsod202"
-    val suffix = "2"
+    val prefix = "bigquery-public-data.noaa_gsod.gsod20"
     val wildcardSqlQuery =
       """SELECT
         |  max,
@@ -76,10 +75,10 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
         |  mo,
         |  da,
         |FROM
-        |  `bigquery-public-data.noaa_gsod.gsod202*`
+        |  `bigquery-public-data.noaa_gsod.gsod20*`
         |WHERE
         |  max != 9999.9 # code for missing data
-        |  AND _TABLE_SUFFIX BETWEEN '0' AND '9'
+        |  AND _TABLE_SUFFIX BETWEEN '20' AND '29'
         |ORDER BY
         |  max DESC
         |LIMIT 1
@@ -93,16 +92,33 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
         "da" -> da.toString
       )
 
-    val inData = Seq(
-      gsod(55.0, 2022, 2, 11),
-      gsod(50.7, 2022, 1, 13),
-      gsod(50.5, 2022, 1, 13),
-      gsod(9999.9, 2022, 1, 1)
+    val suffixData = Map(
+      "21" -> Seq(
+        gsod(54.2, 2021, 6, 30),
+        gsod(53.2, 2021, 6, 22),
+        gsod(53.1, 2021, 7, 1),
+        gsod(9999.9, 2021, 1, 1)
+      ),
+      "20" -> Seq(
+        gsod(54.0, 2020, 6, 8),
+        gsod(52.2, 2020, 7, 31),
+        gsod(52.1, 2020, 7, 30),
+        gsod(9999.9, 2020, 1, 1)
+      ),
+      // not part of the 20s decade. will be ignored
+      "19" -> Seq(
+        gsod(54.5, 2019, 8, 29),
+        gsod(54.4, 2019, 8, 30),
+        gsod(54.4, 2019, 8, 29),
+        gsod(9999.9, 2019, 1, 1)
+      )
     )
 
     val mbq = MockBigQuery()
-    mbq.mockWildcardTable(prefix, suffix).withData(inData)
-    mbq.queryResult(wildcardSqlQuery) should contain only inData.head
+    suffixData.foreach { case (suffix, inData) =>
+      mbq.mockWildcardTable(prefix, suffix).withData(inData)
+    }
+    mbq.queryResult(wildcardSqlQuery) should contain only suffixData("21").head
   }
 
   // =======================================================================
@@ -166,6 +182,17 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
     the[IllegalArgumentException] thrownBy {
       mbq.mockTable(tableRef)
     } should have message s"requirement failed: Table $tableRef already registered for mocking"
+  }
+
+  it should "fail duplicate mockWildcardTable" in {
+    val prefix = "bigquery-public-data.noaa_gsod.gsod20"
+    val suffix = "20"
+    val table = "bigquery-public-data:noaa_gsod.gsod2020"
+    val mbq = MockBigQuery()
+    mbq.mockWildcardTable(prefix, suffix)
+    the[IllegalArgumentException] thrownBy {
+      mbq.mockWildcardTable(prefix, suffix)
+    } should have message s"requirement failed: Table $table already registered for mocking"
   }
 
   it should "fail duplicate mock data" in {
