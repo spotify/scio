@@ -31,7 +31,10 @@ sealed trait FallbackEqInstances {
 
 trait EqInstances extends FallbackEqInstances {
   // == does not compare arrays for value equality, but for reference equality.
-  implicit def arrayEq[T](implicit eqT: Eq[T]): Eq[Array[T]] =
+  implicit def arrayEq[T](
+    implicit
+    eqT: Eq[T]
+  ): Eq[Array[T]] =
     new Eq[Array[T]] {
       def eqv(xs: Array[T], ys: Array[T]): Boolean =
         (xs.length == ys.length) &&

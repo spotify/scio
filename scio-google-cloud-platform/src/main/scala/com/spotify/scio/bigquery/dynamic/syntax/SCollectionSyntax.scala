@@ -141,7 +141,10 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
     createDisposition: CreateDisposition = null
   )(
     tableFn: ValueInSingleWindow[T] => TableDestination
-  )(implicit tt: TypeTag[T]): ClosedTap[Nothing] = {
+  )(
+    implicit
+    tt: TypeTag[T]
+  ): ClosedTap[Nothing] = {
     val bqt = BigQueryType[T]
     val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
 

@@ -67,7 +67,10 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory
-  )(implicit coder: Coder[T]): ClosedTap[T] = {
+  )(
+    implicit
+    coder: Coder[T]
+  ): ClosedTap[T] = {
     val param = ObjectFileIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory)
     self.write(ObjectFileIO(path))(param)
   }
@@ -87,7 +90,11 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(
+    implicit
+    ct: ClassTag[T],
+    coder: Coder[T]
+  ): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory)
     self.write(SpecificRecordIO[T](path))(param)
   }
@@ -107,7 +114,12 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory
-  )(implicit ct: ClassTag[T], tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(
+    implicit
+    ct: ClassTag[T],
+    tt: TypeTag[T],
+    coder: Coder[T]
+  ): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory)
     self.write(AvroTyped.AvroIO[T](path))(param)
   }
@@ -128,7 +140,11 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(
+    implicit
+    ct: ClassTag[T],
+    coder: Coder[T]
+  ): ClosedTap[T] = {
     val param = ProtobufIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory)
     self.write(ProtobufIO[T](path))(param)
   }

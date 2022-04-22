@@ -42,7 +42,10 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   class SColl[T](val internal: List[T]) {
 
     /** Sum with an implicit Semigroup. */
-    def sum(implicit sg: Semigroup[T]): T = internal.reduce(sg.plus)
+    def sum(
+      implicit
+      sg: Semigroup[T]
+    ): T = internal.reduce(sg.plus)
 
     /**
      * Aggregate with an implicit Aggregator.
@@ -73,7 +76,10 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
     Gen.listOfN(n, g).map(new SColl(_))
 
   // Arbitrary for non-empty SColl[T]
-  implicit def arbSColl[T](implicit a: Arbitrary[T]): Arbitrary[SColl[T]] =
+  implicit def arbSColl[T](
+    implicit
+    a: Arbitrary[T]
+  ): Arbitrary[SColl[T]] =
     Arbitrary(sCollOf(a.arbitrary))
 
   // =======================================================================

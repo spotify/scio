@@ -148,7 +148,8 @@ object RedisLookUpStringsExample {
     sc.parallelize(Seq("key1", "key2", "unknownKey"))
       .parDo(
         new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
-          override def request(value: String, client: Client)(implicit
+          override def request(value: String, client: Client)(
+            implicit
             ec: ExecutionContext
           ): Future[(String, Option[String])] =
             client

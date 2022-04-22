@@ -96,7 +96,10 @@ object MutableScalableBloomFilter {
 
   def fromBytes[T](
     bytes: Array[Byte]
-  )(implicit funnel: g.Funnel[T]): MutableScalableBloomFilter[T] = {
+  )(
+    implicit
+    funnel: g.Funnel[T]
+  ): MutableScalableBloomFilter[T] = {
     val bais = new ByteArrayInputStream(bytes)
     val dis = new DataInputStream(bais)
 
@@ -129,7 +132,10 @@ object MutableScalableBloomFilter {
     )
   }
 
-  implicit def coder[T](implicit funnel: g.Funnel[T]): Coder[MutableScalableBloomFilter[T]] =
+  implicit def coder[T](
+    implicit
+    funnel: g.Funnel[T]
+  ): Coder[MutableScalableBloomFilter[T]] =
     Coder.xmap[Array[Byte], MutableScalableBloomFilter[T]](Coder.arrayByteCoder)(
       bytes => fromBytes[T](bytes)(funnel),
       sbf => toBytes[T](sbf)
@@ -137,7 +143,10 @@ object MutableScalableBloomFilter {
 }
 
 case class SerializedBloomFilters(numFilters: Int, filterBytes: Array[Byte]) {
-  def deserialize[T](implicit funnel: g.Funnel[T]): List[g.BloomFilter[T]] = {
+  def deserialize[T](
+    implicit
+    funnel: g.Funnel[T]
+  ): List[g.BloomFilter[T]] = {
     val bais = new ByteArrayInputStream(filterBytes)
     (1 to numFilters).map(_ => g.BloomFilter.readFrom[T](bais, funnel)).toList
   }
@@ -178,8 +187,10 @@ case class MutableScalableBloomFilter[T](
   private var head: Option[g.BloomFilter[T]],
   private var tail: List[Either[g.BloomFilter[T], SerializedBloomFilters]]
   // package private for testing purposes
-)(implicit private val funnel: g.Funnel[T])
-    extends Serializable {
+)(
+  implicit
+  private val funnel: g.Funnel[T]
+) extends Serializable {
   require(headCapacity > 0, "headCapacity must be positive.")
 
   // `SerializedBloomFilters` is never appended, so do deserialization check only once. package-private for testing.

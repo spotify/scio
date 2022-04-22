@@ -366,12 +366,18 @@ object JobTest {
   }
 
   /** Create a new JobTest.Builder instance. */
-  def apply(className: String)(implicit bo: BeamOptions): Builder =
+  def apply(className: String)(
+    implicit
+    bo: BeamOptions
+  ): Builder =
     new Builder(BuilderState(className))
       .args(bo.opts: _*)
 
   /** Create a new JobTest.Builder instance. */
-  def apply[T: ClassTag](implicit bo: BeamOptions): Builder = {
+  def apply[T: ClassTag](
+    implicit
+    bo: BeamOptions
+  ): Builder = {
     val className = ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
     apply(className).args(bo.opts: _*)
   }

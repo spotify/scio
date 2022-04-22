@@ -89,7 +89,10 @@ abstract class RedisDoFn[I, O](
     requests.clear()
   }
 
-  def request(value: I, client: Client)(implicit ec: ExecutionContext): Future[O]
+  def request(value: I, client: Client)(
+    implicit
+    ec: ExecutionContext
+  ): Future[O]
 
   @Setup
   def setup(): Unit =

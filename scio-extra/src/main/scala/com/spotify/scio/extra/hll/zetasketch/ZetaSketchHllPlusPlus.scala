@@ -40,7 +40,8 @@ import org.apache.beam.sdk.values.{KV, PCollection}
  *   the number of buckets used to store information about the distinct elements. should be in the
  *   range `[10, 24]`, default precision value is `15`.
  */
-case class ZetaSketchHllPlusPlus[T](p: Int = HllCount.DEFAULT_PRECISION)(implicit
+case class ZetaSketchHllPlusPlus[T](p: Int = HllCount.DEFAULT_PRECISION)(
+  implicit
   zs: ZetaSketchable[T]
 ) extends ApproxDistinctCounter[T] {
 

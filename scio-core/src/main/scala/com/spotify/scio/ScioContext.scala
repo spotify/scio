@@ -223,7 +223,10 @@ object ContextAndArgs {
   def apply(args: Array[String]): (ScioContext, Args) =
     withParser(DefaultParser[PipelineOptions]()).apply(args)
 
-  def typed[T](args: Array[String])(implicit tap: TypedArgsParser[T, Try]): (ScioContext, T) =
+  def typed[T](args: Array[String])(
+    implicit
+    tap: TypedArgsParser[T, Try]
+  ): (ScioContext, T) =
     withParser(tap.parser).apply(args)
 
   private[scio] class UsageOrHelpException extends Exception with NoStackTrace
@@ -781,7 +784,11 @@ class ScioContext private[scio] (
    */
   def parallelize[K, V](
     elems: Map[K, V]
-  )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
+  )(
+    implicit
+    koder: Coder[K],
+    voder: Coder[V]
+  ): SCollection[(K, V)] =
     requireNotClosed {
       val kvc = CoderMaterializer.kvCoder[K, V](this)
       this

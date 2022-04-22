@@ -41,7 +41,10 @@ import org.apache.beam.sdk.values.TupleTag
 import scala.collection.{mutable, SortedSet}
 
 object Schema extends JodaInstances with AvroInstances with LowPrioritySchemaDerivation {
-  @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
+  @inline final def apply[T](
+    implicit
+    c: Schema[T]
+  ): Schema[T] = c
 
   implicit val jByteSchema: Type[java.lang.Byte] = JavaInstances.jByteSchema
   implicit val jBytesSchema: Type[Array[java.lang.Byte]] = JavaInstances.jBytesSchema
@@ -155,7 +158,10 @@ final case class Record[T] private (
 }
 
 object Record {
-  @inline final def apply[T](implicit r: Record[T]): Record[T] = r
+  @inline final def apply[T](
+    implicit
+    r: Record[T]
+  ): Record[T] = r
 }
 
 final case class RawRecord[T](

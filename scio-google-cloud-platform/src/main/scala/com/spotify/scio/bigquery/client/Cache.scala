@@ -35,7 +35,10 @@ private[client] object Cache {
   }
 
   object Show {
-    @inline final def apply[T](implicit t: Show[T]): Show[T] = t
+    @inline final def apply[T](
+      implicit
+      t: Show[T]
+    ): Show[T] = t
 
     implicit val showTableSchema: Show[TableSchema] = new Show[TableSchema] {
       override def show(t: TableSchema): String = t.toPrettyString()
@@ -56,7 +59,10 @@ private[client] object Cache {
   }
 
   object Read {
-    @inline final def apply[T](implicit t: Read[T]): Read[T] = t
+    @inline final def apply[T](
+      implicit
+      t: Read[T]
+    ): Read[T] = t
 
     implicit val readTableSchema: Read[TableSchema] = new Read[TableSchema] {
       override def read(s: String): Option[TableSchema] =

@@ -55,19 +55,35 @@ trait JavaCoders extends JavaBeanCoders {
     Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => java.nio.file.Paths.get(s), _.toString)
 
   import java.lang.{Iterable => JIterable}
-  implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[JIterable[T]] =
+  implicit def jIterableCoder[T](
+    implicit
+    c: Coder[T]
+  ): Coder[JIterable[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.IterableCoder.of(bc)))
 
-  implicit def jlistCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
+  implicit def jlistCoder[T](
+    implicit
+    c: Coder[T]
+  ): Coder[java.util.List[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.ListCoder.of(bc)))
 
-  implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
+  implicit def jArrayListCoder[T](
+    implicit
+    c: Coder[T]
+  ): Coder[java.util.ArrayList[T]] =
     Coder.xmap(jlistCoder[T])(new java.util.ArrayList(_), identity)
 
-  implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
+  implicit def jMapCoder[K, V](
+    implicit
+    ck: Coder[K],
+    cv: Coder[V]
+  ): Coder[java.util.Map[K, V]] =
     Coder.transform(ck)(bk => Coder.transform(cv)(bv => Coder.beam(bcoders.MapCoder.of(bk, bv))))
 
-  implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
+  implicit def jTryCoder[A](
+    implicit
+    c: Coder[Try[A]]
+  ): Coder[BaseAsyncLookupDoFn.Try[A]] =
     Coder.xmap(c)(
       {
         case Success(value)     => new BaseAsyncLookupDoFn.Try(value)

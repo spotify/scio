@@ -25,7 +25,10 @@ sealed trait IsJavaBean[T]
 object IsJavaBean {
   implicit def isJavaBean[T]: IsJavaBean[T] = macro IsJavaBean.isJavaBeanImpl[T]
 
-  def apply[T](implicit i: IsJavaBean[T]): IsJavaBean[T] = i
+  def apply[T](
+    implicit
+    i: IsJavaBean[T]
+  ): IsJavaBean[T] = i
 
   private def checkGetterAndSetters(c: blackbox.Context)(t: c.universe.Type): Unit = {
     val getters =

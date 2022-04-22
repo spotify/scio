@@ -51,7 +51,10 @@ trait SCollectionSyntax {
       timestampAttribute: String = null,
       maxBatchSize: Option[Int] = None,
       maxBatchBytesSize: Option[Int] = None
-    )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
+    )(
+      implicit
+      ct: ClassTag[T]
+    ): ClosedTap[Nothing] = {
       val io = PubsubIO[T](topic, idAttribute, timestampAttribute)
       coll.write(io)(PubsubIO.WriteParam(maxBatchSize, maxBatchBytesSize))
     }
@@ -75,7 +78,10 @@ trait SCollectionSyntax {
       timestampAttribute: String = null,
       maxBatchSize: Option[Int] = None,
       maxBatchBytesSize: Option[Int] = None
-    )(implicit ev: T <:< (V, Map[String, String])): ClosedTap[Nothing] = {
+    )(
+      implicit
+      ev: T <:< (V, Map[String, String])
+    ): ClosedTap[Nothing] = {
       implicit val vCoder =
         BeamCoders.getTupleCoders(coll.covary_[(V, Map[String, String])])._1
       val io = PubsubIO.withAttributes[V](topic, idAttribute, timestampAttribute)

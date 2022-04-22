@@ -48,7 +48,11 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(
+    implicit
+    ct: ClassTag[T],
+    coder: Coder[T]
+  ): ClosedTap[T] = {
     val param = WriteParam(schema, numShards, suffix, compression, None, conf)
     self.write(ParquetAvroIO[T](path))(param)
   }
@@ -81,7 +85,11 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(
+    implicit
+    ct: ClassTag[T],
+    coder: Coder[T]
+  ): ClosedTap[T] = {
     if (
       (self.internal.getWindowingStrategy != WindowingStrategy
         .globalDefault() && filenameFunction.isRight) ||

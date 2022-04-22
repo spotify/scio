@@ -116,7 +116,8 @@ final case class RedisWrite[T <: RedisMutation: RedisMutator](
 
     private val WriteFn =
       new RedisDoFn[T, Unit](connectionConfig, batchSize) {
-        override def request(value: T, client: Client)(implicit
+        override def request(value: T, client: Client)(
+          implicit
           ec: ExecutionContext
         ): Future[Unit] =
           client

@@ -25,7 +25,10 @@ import magnolify.guava.auto._
 import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 
 class ApproxFilterTest extends PipelineSpec {
-  def test[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[Int]): Unit = {
+  def test[C <: ApproxFilterCompanion](c: C)(
+    implicit
+    hash: c.Hash[Int]
+  ): Unit = {
     val filterName = c.getClass.getSimpleName.stripSuffix("$")
 
     // make `expectedInsertions` to number of unique items ratio 1.1 to prevent filter saturation

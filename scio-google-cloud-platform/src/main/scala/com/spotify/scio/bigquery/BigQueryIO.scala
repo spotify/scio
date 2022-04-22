@@ -266,7 +266,10 @@ object BigQueryTypedTable {
 
   private[this] def genericRecord(
     table: Table
-  )(implicit c: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] =
+  )(
+    implicit
+    c: Coder[GenericRecord]
+  ): BigQueryTypedTable[GenericRecord] =
     BigQueryTypedTable(
       _.getRecord(),
       identity[GenericRecord],
@@ -491,7 +494,8 @@ object BigQueryTyped {
     type Aux[T <: HasAnnotation, F0[_ <: HasAnnotation] <: ScioIO[_]] =
       IO[T] { type F[A <: HasAnnotation] = F0[A] }
 
-    implicit def tableIO[T <: HasAnnotation: TypeTag: Coder](implicit
+    implicit def tableIO[T <: HasAnnotation: TypeTag: Coder](
+      implicit
       t: BigQueryType.Table[T]
     ): Aux[T, Table] =
       new IO[T] {
@@ -499,7 +503,8 @@ object BigQueryTyped {
         def impl: Table[T] = Table(STable.Spec(t.table))
       }
 
-    implicit def queryIO[T <: HasAnnotation: TypeTag: Coder](implicit
+    implicit def queryIO[T <: HasAnnotation: TypeTag: Coder](
+      implicit
       t: BigQueryType.Query[T]
     ): Aux[T, Select] =
       new IO[T] {
@@ -507,7 +512,8 @@ object BigQueryTyped {
         def impl: Select[T] = Select(Query(t.queryRaw))
       }
 
-    implicit def storageIO[T <: HasAnnotation: TypeTag: Coder](implicit
+    implicit def storageIO[T <: HasAnnotation: TypeTag: Coder](
+      implicit
       t: BigQueryType.StorageOptions[T]
     ): Aux[T, Storage] =
       new IO[T] {
@@ -526,7 +532,10 @@ object BigQueryTyped {
    *
    * The source (table) specified in the annotation will be used
    */
-  @inline final def apply[T <: HasAnnotation](implicit t: IO[T]): t.F[T] =
+  @inline final def apply[T <: HasAnnotation](
+    implicit
+    t: IO[T]
+  ): t.F[T] =
     t.impl
 
   /**

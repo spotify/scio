@@ -67,8 +67,11 @@ case class ParquetTypeFileOperations[T](
   compression: CompressionCodecName,
   conf: SerializableConfiguration,
   predicate: FilterPredicate
-)(implicit val pt: ParquetType[T], val coder: Coder[T])
-    extends FileOperations[T](Compression.UNCOMPRESSED, MimeTypes.BINARY) {
+)(
+  implicit
+  val pt: ParquetType[T],
+  val coder: Coder[T]
+) extends FileOperations[T](Compression.UNCOMPRESSED, MimeTypes.BINARY) {
 
   override def populateDisplayData(builder: DisplayData.Builder): Unit = {
     super.populateDisplayData(builder)
@@ -87,8 +90,10 @@ case class ParquetTypeFileOperations[T](
 private case class ParquetTypeReader[T](
   conf: SerializableConfiguration,
   predicate: FilterPredicate
-)(implicit val pt: ParquetType[T])
-    extends FileOperations.Reader[T] {
+)(
+  implicit
+  val pt: ParquetType[T]
+) extends FileOperations.Reader[T] {
   @transient private var reader: ParquetReader[T] = _
   @transient private var current: T = _
 
@@ -114,8 +119,10 @@ private case class ParquetTypeReader[T](
 private case class ParquetTypeSink[T](
   compression: CompressionCodecName,
   conf: SerializableConfiguration
-)(implicit val pt: ParquetType[T])
-    extends FileIO.Sink[T] {
+)(
+  implicit
+  val pt: ParquetType[T]
+) extends FileIO.Sink[T] {
   @transient private var writer: ParquetWriter[T] = _
 
   override def open(channel: WritableByteChannel): Unit = {

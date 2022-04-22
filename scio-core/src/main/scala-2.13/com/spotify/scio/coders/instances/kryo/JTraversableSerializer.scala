@@ -31,8 +31,10 @@ import scala.collection.compat._
  */
 private[coders] class JTraversableSerializer[T, C <: Traversable[T]](
   val bufferSize: Int = 64 * 1024
-)(implicit cbf: Factory[T, C])
-    extends KSerializer[C] {
+)(
+  implicit
+  cbf: Factory[T, C]
+) extends KSerializer[C] {
   override def write(kser: Kryo, out: Output, obj: C): Unit = {
     val i = obj.iterator
     val chunked = new OutputChunked(out, bufferSize)

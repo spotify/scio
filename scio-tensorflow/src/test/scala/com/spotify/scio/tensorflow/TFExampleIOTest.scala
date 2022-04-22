@@ -24,7 +24,8 @@ import magnolify.tensorflow._
 object TFExampleIOTest {
   case class Record(i: Int, s: String)
 
-  implicit val efInt: ExampleField.Primitive[Int] = ExampleField.from[Long](_.toInt)(_.toLong)
+  implicit
+  val efInt: ExampleField.Primitive[Int] = ExampleField.from[Long](_.toInt)(_.toLong)
   implicit val efString: ExampleField.Primitive[String] =
     ExampleField.from[ByteString](_.toStringUtf8)(ByteString.copyFromUtf8)
   val recordT: ExampleType[Record] = ExampleType[Record]
