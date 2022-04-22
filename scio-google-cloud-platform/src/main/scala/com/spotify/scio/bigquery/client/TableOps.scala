@@ -132,7 +132,7 @@ final private[client] class TableOps(client: Client) {
   ): Schema =
     Cache.getOrElse(
       s"""$tableSpec;${selectedFields
-        .mkString(",")};$rowRestriction""",
+          .mkString(",")};$rowRestriction""",
       Cache.SchemaCache
     ) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
