@@ -124,7 +124,7 @@ object PopulateTestData {
       .setDatasetReference(new DatasetReference().setProjectId(projectId).setDatasetId(datasetId))
       .setLocation(location)
     try {
-      bq.client.underlying.datasets().insert(projectId, ds).execute()
+      bq.client.execute(_.datasets().insert(projectId, ds))
     } catch {
       case e: GoogleJsonResponseException
           if e.getStatusCode == 409 && e.getDetails.getMessage.contains("Already Exists") =>
