@@ -438,7 +438,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided exclude (
         "com.fasterxml.jackson.module", "jackson-module-scala_2.11"
       ),
-      "org.apache.beam" % "beam-runners-flink-1.13" % beamVersion % Provided excludeAll (
+      "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion % Provided excludeAll (
         ExclusionRule("com.twitter", "chill_2.11"),
         ExclusionRule("org.apache.flink", "flink-clients_2.11"),
         ExclusionRule("org.apache.flink", "flink-runtime_2.11"),
