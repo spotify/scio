@@ -100,7 +100,7 @@ object Scalac {
 
   val docOptions = Def.setting {
     val base =
-      baseOptions.value ++ scalaVersionOptions.value ++ List("-skip-packages", "org.apache")
+      baseOptions.value ++ scalaVersionOptions.value
 
     VersionNumber(scalaVersion.value) match {
       case v if v.matchesSemVer(SemanticSelector("2.12.x")) => base ++ List("-no-java-comments")
