@@ -117,13 +117,13 @@ def previousVersion(currentVersion: String): Option[String] = {
     """(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?<preRelease>-.*)?(?<build>\+.*)?""".r
   currentVersion match {
     case Version(x, y, z, null, null) if z != "0" =>
-      // release
+      // patch release
       Some(s"$x.$y.${z.toInt - 1}")
     case Version(x, y, z, null, _) =>
-      // build
+      // post release build
       Some(s"$x.$y.$z")
     case Version(x, y, z, _, _) if z != "0" =>
-      // pre-release
+      // patch pre-release
       Some(s"$x.$y.${z.toInt - 1}")
     case _ =>
       None
