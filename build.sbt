@@ -113,10 +113,20 @@ Global / excludeLint += sonatypeProfileName
 Global / excludeLint += site / Paradox / sourceManaged
 
 def previousVersion(currentVersion: String): Option[String] = {
-  val Version = """(\d+)\.(\d+)\.(\d+).*""".r
+  val Version =
+    """(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?<preRelease>-.*)?(?<build>\+.*)?""".r
   currentVersion match {
-    case Version(x, y, z) if z != "0" => Some(s"$x.$y.${z.toInt - 1}")
-    case _                            => None
+    case Version(x, y, z, null, null) if z != "0" =>
+      // release
+      Some(s"$x.$y.${z.toInt - 1}")
+    case Version(x, y, z, null, _) =>
+      // build
+      Some(s"$x.$y.$z")
+    case Version(x, y, z, _, _) if z != "0" =>
+      // pre-release
+      Some(s"$x.$y.${z.toInt - 1}")
+    case _ =>
+      None
   }
 }
 
