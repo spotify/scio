@@ -632,10 +632,7 @@ public class SortedBucketIO {
     private final Coder<V> valueCoder;
     private final boolean verifyKeyExtraction;
 
-    public PreKeyedWrite(
-        Write<K, ?, V> write,
-        Coder<V> valueCoder,
-        boolean verifyKeyExtraction) {
+    public PreKeyedWrite(Write<K, ?, V> write, Coder<V> valueCoder, boolean verifyKeyExtraction) {
       this.write = write;
       this.valueCoder = valueCoder;
       this.verifyKeyExtraction = verifyKeyExtraction;

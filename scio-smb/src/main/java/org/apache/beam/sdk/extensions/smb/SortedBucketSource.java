@@ -90,7 +90,7 @@ import org.slf4j.LoggerFactory;
  *     representation (see: {@link BucketMetadata#getKeyBytesPrimary(Object)} and {@link
  *     BucketMetadata#getKeyBytesSecondary(Object)}).
  */
-abstract public class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyType, CoGbkResult>> {
+public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyType, CoGbkResult>> {
   public enum Keying {
     PRIMARY,
     PRIMARY_AND_SECONDARY

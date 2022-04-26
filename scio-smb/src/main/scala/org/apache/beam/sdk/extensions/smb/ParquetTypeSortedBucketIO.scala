@@ -167,10 +167,10 @@ object ParquetTypeSortedBucketIO {
         numBuckets,
         numShards,
         keyClassPrimary,
-        getKeyClassSecondary,
-        hashType,
         keyFieldPrimary,
+        getKeyClassSecondary,
         keyFieldSecondary.orNull,
+        hashType,
         filenamePrefix,
         recordClass
       )
@@ -233,10 +233,10 @@ object ParquetTypeSortedBucketIO {
           numBuckets,
           numShards,
           _keyClassPrimary,
-          _keyClassSecondary,
-          hashType,
           _keyFieldPrimary,
+          _keyClassSecondary,
           _keyFieldSecondary,
+          hashType,
           _filenamePrefix,
           _recordClass
         )

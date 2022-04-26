@@ -19,7 +19,6 @@ package org.apache.beam.sdk.extensions.smb;
 
 import com.google.auto.value.AutoValue;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -58,7 +57,7 @@ public class TensorFlowBucketIO {
    * records.
    */
   public static <K1> Write<K1, Void> write(Class<K1> keyClassPrimary, String keyFieldPrimary) {
-    return write(keyClassPrimary, null, keyFieldPrimary, null);
+    return write(keyClassPrimary, keyFieldPrimary, null, null);
   }
 
   /**
@@ -67,8 +66,8 @@ public class TensorFlowBucketIO {
    */
   public static <K1, K2> Write<K1, K2> write(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary) {
     return new AutoValue_TensorFlowBucketIO_Write.Builder<K1, K2>()
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
@@ -87,13 +86,13 @@ public class TensorFlowBucketIO {
 
   public static <K1> TransformOutput<K1, Void> transformOutput(
       Class<K1> keyClassPrimary, String keyFieldPrimary) {
-    return transformOutput(keyClassPrimary, null, keyFieldPrimary, null);
+    return transformOutput(keyClassPrimary, keyFieldPrimary, null, null);
   }
 
   public static <K1, K2> TransformOutput<K1, K2> transformOutput(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary) {
     return new AutoValue_TensorFlowBucketIO_TransformOutput.Builder<K1, K2>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
@@ -297,10 +296,10 @@ public class TensorFlowBucketIO {
             getNumBuckets(),
             getNumShards(),
             getKeyClassPrimary(),
-            getKeyClassSecondary(),
-            getHashType(),
             getKeyFieldPrimary(),
+            getKeyClassSecondary(),
             getKeyFieldSecondary(),
+            getHashType(),
             getFilenamePrefix());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
@@ -401,10 +400,10 @@ public class TensorFlowBucketIO {
               numBuckets,
               numShards,
               keyClassPrimary,
-              keyClassSecondary,
-              hashType,
               keyFieldPrimary,
+              keyClassSecondary,
               keyFieldSecondary,
+              hashType,
               filenamePrefix);
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);

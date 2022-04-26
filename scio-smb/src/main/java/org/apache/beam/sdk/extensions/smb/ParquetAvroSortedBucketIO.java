@@ -18,7 +18,6 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.google.auto.value.AutoValue;
-import java.util.Optional;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
@@ -70,7 +69,7 @@ public class ParquetAvroSortedBucketIO {
   public static <K1> Write<K1, Void, GenericRecord> write(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Schema schema) {
     return ParquetAvroSortedBucketIO.<K1, Void, GenericRecord>newBuilder(
-            keyClassPrimary, null, keyFieldPrimary, null)
+            keyClassPrimary, keyFieldPrimary, null, null)
         .setSchema(schema)
         .build();
   }
@@ -78,12 +77,12 @@ public class ParquetAvroSortedBucketIO {
   /** Returns a new {@link Write} for Avro generic records. */
   public static <K1, K2> Write<K1, K2, GenericRecord> write(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Schema schema) {
     return ParquetAvroSortedBucketIO.newBuilder(
-            keyClassPrimary, keyClassSecondary, keyFieldPrimary, keyFieldSecondary)
+            keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
         .setSchema(schema)
         .build();
   }
@@ -92,7 +91,7 @@ public class ParquetAvroSortedBucketIO {
   public static <K1, T extends SpecificRecordBase> Write<K1, Void, T> write(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return ParquetAvroSortedBucketIO.<K1, Void, T>newBuilder(
-            keyClassPrimary, null, keyFieldPrimary, null)
+            keyClassPrimary, keyFieldPrimary, null, null)
         .setRecordClass(recordClass)
         .build();
   }
@@ -100,20 +99,20 @@ public class ParquetAvroSortedBucketIO {
   /** Returns a new {@link Write} for Avro specific records. */
   public static <K1, K2, T extends SpecificRecordBase> Write<K1, K2, T> write(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Class<T> recordClass) {
     return ParquetAvroSortedBucketIO.<K1, K2, T>newBuilder(
-            keyClassPrimary, keyClassSecondary, keyFieldPrimary, keyFieldSecondary)
+            keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
         .setRecordClass(recordClass)
         .build();
   }
 
   private static <K1, K2, T extends GenericRecord> Write.Builder<K1, K2, T> newBuilder(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary) {
     return new AutoValue_ParquetAvroSortedBucketIO_Write.Builder<K1, K2, T>()
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
@@ -134,14 +133,14 @@ public class ParquetAvroSortedBucketIO {
   public static <K1> TransformOutput<K1, Void, GenericRecord> transformOutput(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Schema schema) {
     return ParquetAvroSortedBucketIO.transformOutput(
-        keyClassPrimary, null, keyFieldPrimary, null, schema);
+        keyClassPrimary, keyFieldPrimary, null, null, schema);
   }
 
   /** Returns a new {@link TransformOutput} for Avro generic records. */
   public static <K1, K2> TransformOutput<K1, K2, GenericRecord> transformOutput(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Schema schema) {
     return new AutoValue_ParquetAvroSortedBucketIO_TransformOutput.Builder<K1, K2, GenericRecord>()
@@ -161,14 +160,14 @@ public class ParquetAvroSortedBucketIO {
   public static <K1, T extends SpecificRecordBase> TransformOutput<K1, Void, T> transformOutput(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return ParquetAvroSortedBucketIO.transformOutput(
-        keyClassPrimary, null, keyFieldPrimary, null, recordClass);
+        keyClassPrimary, keyFieldPrimary, null, null, recordClass);
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
   public static <K1, K2, T extends SpecificRecordBase> TransformOutput<K1, K2, T> transformOutput(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Class<T> recordClass) {
     return new AutoValue_ParquetAvroSortedBucketIO_TransformOutput.Builder<K1, K2, T>()
@@ -400,10 +399,10 @@ public class ParquetAvroSortedBucketIO {
             getNumBuckets(),
             getNumShards(),
             getKeyClassPrimary(),
-            getKeyClassSecondary(),
-            getHashType(),
             getKeyFieldPrimary(),
+            getKeyClassSecondary(),
             getKeyFieldSecondary(),
+            getHashType(),
             getFilenamePrefix(),
             schema);
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
@@ -557,10 +556,10 @@ public class ParquetAvroSortedBucketIO {
               numBuckets,
               numShards,
               keyClassPrimary,
-              keyClassSecondary,
-              hashType,
               keyFieldPrimary,
+              keyClassSecondary,
               keyFieldSeconary,
+              hashType,
               filenamePrefix,
               schemaSupplier.get());
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {

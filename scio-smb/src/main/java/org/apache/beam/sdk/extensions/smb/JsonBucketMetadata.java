@@ -44,8 +44,8 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      HashType hashType,
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     this(
@@ -53,10 +53,10 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
         numBuckets,
         numShards,
         keyClassPrimary,
-        null,
-        hashType,
         keyField,
         null,
+        null,
+        hashType,
         filenamePrefix);
   }
 
@@ -64,10 +64,10 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     this(
@@ -75,10 +75,10 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
         numBuckets,
         numShards,
         keyClassPrimary,
-        keyClassSecondary,
-        hashType,
         keyField,
+        keyClassSecondary,
         keyFieldSecondary,
+        hashType,
         filenamePrefix);
   }
 
@@ -88,10 +88,10 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
       @JsonProperty("keyClass") Class<K1> keyClassPrimary,
-      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
       @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") HashType hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     super(

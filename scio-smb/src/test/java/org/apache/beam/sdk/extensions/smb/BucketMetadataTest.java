@@ -97,10 +97,10 @@ public class BucketMetadataTest {
             16,
             4,
             String.class,
-            null,
-            HashType.MURMUR3_32,
             "favorite_color",
             null,
+            null,
+            HashType.MURMUR3_32,
             DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
     final BucketMetadata<String, Void, TableRow> json =
@@ -108,10 +108,10 @@ public class BucketMetadataTest {
             16,
             4,
             String.class,
-            null,
-            HashType.MURMUR3_32,
             "keyField",
             null,
+            null,
+            HashType.MURMUR3_32,
             DEFAULT_FILENAME_PREFIX);
 
     Assert.assertEquals(TestBucketMetadata.class, BucketMetadata.from(test.toString()).getClass());

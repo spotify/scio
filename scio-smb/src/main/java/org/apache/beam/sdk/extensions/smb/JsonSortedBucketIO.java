@@ -24,7 +24,6 @@ import com.google.auto.value.AutoValue;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -52,14 +51,14 @@ public class JsonSortedBucketIO {
 
   /** Returns a new {@link Write} for BigQuery {@link TableRow} JSON records. */
   public static <K1> Write<K1, Void> write(Class<K1> keyClassPrimary, String keyFieldPrimary) {
-    return JsonSortedBucketIO.write(keyClassPrimary, null, keyFieldPrimary, null);
+    return JsonSortedBucketIO.write(keyClassPrimary, keyFieldPrimary, null, null);
   }
 
   /** Returns a new {@link Write} for BigQuery {@link TableRow} JSON records. */
   public static <K1, K2> Write<K1, K2> write(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary) {
     return new AutoValue_JsonSortedBucketIO_Write.Builder<K1, K2>()
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
@@ -79,14 +78,14 @@ public class JsonSortedBucketIO {
   /** Returns a new {@link TransformOutput} for Json records. */
   public static <K1> TransformOutput<K1, Void> transformOutput(
       Class<K1> keyClassPrimary, String keyFieldPrimary) {
-    return transformOutput(keyClassPrimary, null, keyFieldPrimary, null);
+    return transformOutput(keyClassPrimary, keyFieldPrimary, null, null);
   }
 
   /** Returns a new {@link TransformOutput} for Json records. */
   public static <K1, K2> TransformOutput<K1, K2> transformOutput(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary) {
     return new AutoValue_JsonSortedBucketIO_TransformOutput.Builder<K1, K2>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
@@ -291,10 +290,10 @@ public class JsonSortedBucketIO {
             getNumBuckets(),
             getNumShards(),
             getKeyClassPrimary(),
-            getKeyClassSecondary(),
-            getHashType(),
             getKeyFieldPrimary(),
+            getKeyClassSecondary(),
             getKeyFieldSecondary(),
+            getHashType(),
             getFilenamePrefix());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
@@ -395,10 +394,10 @@ public class JsonSortedBucketIO {
               numBuckets,
               numShards,
               keyClassPrimary,
-              keyClassSecondary,
-              hashType,
               keyFieldPrimary,
+              keyClassSecondary,
               keyFieldSeconary,
+              hashType,
               filenamePrefix);
         } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
           throw new IllegalStateException(e);

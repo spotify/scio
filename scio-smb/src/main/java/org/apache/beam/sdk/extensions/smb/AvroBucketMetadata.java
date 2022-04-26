@@ -48,10 +48,10 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Class<V> recordClass)
       throws CannotProvideCoderException, NonDeterministicException {
@@ -60,18 +60,18 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
         numBuckets,
         numShards,
         keyClassPrimary,
-        keyClassSecondary,
-        hashType,
         AvroUtils.validateKeyField(
             keyField,
             keyClassPrimary,
             new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
+        keyClassSecondary,
         keyFieldSecondary == null
             ? null
             : AvroUtils.validateKeyField(
                 keyFieldSecondary,
                 keyClassSecondary,
                 new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
+        hashType,
         filenamePrefix);
   }
 
@@ -79,10 +79,10 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, NonDeterministicException {
@@ -91,12 +91,12 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
         numBuckets,
         numShards,
         keyClassPrimary,
-        keyClassSecondary,
-        hashType,
         AvroUtils.validateKeyField(keyField, keyClassPrimary, schema),
+        keyClassSecondary,
         keyFieldSecondary == null
             ? null
             : AvroUtils.validateKeyField(keyFieldSecondary, keyClassSecondary, schema),
+        hashType,
         filenamePrefix);
   }
 
@@ -106,10 +106,10 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
       @JsonProperty("keyClass") Class<K1> keyClassPrimary,
-      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
       @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") HashType hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     super(

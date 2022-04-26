@@ -21,7 +21,6 @@ import com.google.auto.value.AutoValue;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -64,7 +63,7 @@ public class AvroSortedBucketIO {
   public static <K1> Write<K1, Void, GenericRecord> write(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Schema schema) {
     return AvroSortedBucketIO.<K1, Void, GenericRecord>newBuilder(
-            keyClassPrimary, null, keyFieldPrimary, null)
+            keyClassPrimary, keyFieldPrimary, null, null)
         .setSchema(schema)
         .build();
   }
@@ -72,12 +71,12 @@ public class AvroSortedBucketIO {
   /** Returns a new {@link Write} for Avro generic records. */
   public static <K1, K2> Write<K1, K2, GenericRecord> write(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Schema schema) {
     return AvroSortedBucketIO.newBuilder(
-            keyClassPrimary, keyClassSecondary, keyFieldPrimary, keyFieldSecondary)
+            keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
         .setSchema(schema)
         .build();
   }
@@ -85,7 +84,7 @@ public class AvroSortedBucketIO {
   /** Returns a new {@link Write} for Avro specific records. */
   public static <K1, T extends SpecificRecordBase> Write<K1, Void, T> write(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
-    return AvroSortedBucketIO.<K1, Void, T>newBuilder(keyClassPrimary, null, keyFieldPrimary, null)
+    return AvroSortedBucketIO.<K1, Void, T>newBuilder(keyClassPrimary, keyFieldPrimary, null, null)
         .setRecordClass(recordClass)
         .build();
   }
@@ -93,20 +92,20 @@ public class AvroSortedBucketIO {
   /** Returns a new {@link Write} for Avro specific records. */
   public static <K1, K2, T extends SpecificRecordBase> Write<K1, K2, T> write(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Class<T> recordClass) {
     return AvroSortedBucketIO.<K1, K2, T>newBuilder(
-            keyClassPrimary, keyClassSecondary, keyFieldPrimary, keyFieldSecondary)
+            keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
         .setRecordClass(recordClass)
         .build();
   }
 
   private static <K1, K2, T extends GenericRecord> Write.Builder<K1, K2, T> newBuilder(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary) {
     return new AutoValue_AvroSortedBucketIO_Write.Builder<K1, K2, T>()
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
@@ -126,15 +125,15 @@ public class AvroSortedBucketIO {
   public static <K1>
       TransformOutput<K1, Void, org.apache.avro.generic.GenericRecord> transformOutput(
           Class<K1> keyClassPrimary, String keyFieldPrimary, Schema schema) {
-    return AvroSortedBucketIO.transformOutput(keyClassPrimary, null, keyFieldPrimary, null, schema);
+    return AvroSortedBucketIO.transformOutput(keyClassPrimary, keyFieldPrimary, null, null, schema);
   }
 
   /** Returns a new {@link TransformOutput} for Avro generic records. */
   public static <K1, K2>
       TransformOutput<K1, K2, org.apache.avro.generic.GenericRecord> transformOutput(
           Class<K1> keyClassPrimary,
-          Class<K2> keyClassSecondary,
           String keyFieldPrimary,
+          Class<K2> keyClassSecondary,
           String keyFieldSecondary,
           Schema schema) {
     return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K1, K2, GenericRecord>()
@@ -153,14 +152,14 @@ public class AvroSortedBucketIO {
   public static <K1, T extends SpecificRecordBase> TransformOutput<K1, Void, T> transformOutput(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return AvroSortedBucketIO.transformOutput(
-        keyClassPrimary, null, keyFieldPrimary, null, recordClass);
+        keyClassPrimary, keyFieldPrimary, null, null, recordClass);
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
   public static <K1, K2, T extends SpecificRecordBase> TransformOutput<K1, K2, T> transformOutput(
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
       String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Class<T> recordClass) {
     return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K1, K2, T>()
@@ -376,10 +375,10 @@ public class AvroSortedBucketIO {
                 getNumBuckets(),
                 getNumShards(),
                 getKeyClassPrimary(),
-                getKeyClassSecondary(),
-                getHashType(),
                 getKeyFieldPrimary(),
+                getKeyClassSecondary(),
                 getKeyFieldSecondary(),
+                getHashType(),
                 getFilenamePrefix(),
                 getSchema())
             : (AvroBucketMetadata<K1, K2, T>)
@@ -387,10 +386,10 @@ public class AvroSortedBucketIO {
                     getNumBuckets(),
                     getNumShards(),
                     getKeyClassPrimary(),
-                    getKeyClassSecondary(),
-                    getHashType(),
                     getKeyFieldPrimary(),
+                    getKeyClassSecondary(),
                     getKeyFieldSecondary(),
+                    getHashType(),
                     getFilenamePrefix(),
                     getRecordClass());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
@@ -533,10 +532,10 @@ public class AvroSortedBucketIO {
                 numBuckets,
                 numShards,
                 keyClassPrimary,
-                keyClassSecondary,
-                hashType,
                 keyFieldPrimary,
+                keyClassSecondary,
                 keyFieldSecondary,
+                hashType,
                 filenamePrefix,
                 schemaSupplier.get());
           } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
@@ -550,10 +549,10 @@ public class AvroSortedBucketIO {
                 numBuckets,
                 numShards,
                 keyClassPrimary,
-                keyClassSecondary,
-                hashType,
                 keyFieldPrimary,
+                keyClassSecondary,
                 keyFieldSecondary,
+                hashType,
                 filenamePrefix,
                 recordClass);
           } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {

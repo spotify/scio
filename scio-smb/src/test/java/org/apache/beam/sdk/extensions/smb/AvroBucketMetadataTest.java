@@ -107,10 +107,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 Long.class,
-                null,
-                HashType.MURMUR3_32,
                 "id",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
             .extractKeyPrimary(user));
@@ -121,10 +121,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 ByteBuffer.class,
-                null,
-                HashType.MURMUR3_32,
                 "location.countryId",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
             .extractKeyPrimary(user));
@@ -135,10 +135,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 ByteBuffer.class,
-                null,
-                HashType.MURMUR3_32,
                 "locationUnion.countryId",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
             .extractKeyPrimary(user));
@@ -149,10 +149,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 ByteBuffer.class,
-                null,
-                HashType.MURMUR3_32,
                 "locationUnion.postalCode",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
             .extractKeyPrimary(user));
@@ -163,10 +163,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                null,
-                HashType.MURMUR3_32,
                 "suffix",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA)
             .extractKeyPrimary(user));
@@ -190,10 +190,10 @@ public class AvroBucketMetadataTest {
             1,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.class);
     final AvroBucketMetadata<Integer, String, AvroGeneratedUser> metadata2 =
@@ -201,10 +201,10 @@ public class AvroBucketMetadataTest {
             1,
             1,
             Integer.class,
-            String.class,
-            HashType.MURMUR3_32,
             "favorite_number",
+            String.class,
             "favorite_color",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.class);
 
@@ -223,10 +223,10 @@ public class AvroBucketMetadataTest {
             1,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final BucketMetadata<String, Integer, GenericRecord> copy =
@@ -246,10 +246,10 @@ public class AvroBucketMetadataTest {
             1,
             1,
             String.class,
-            null,
-            HashType.MURMUR3_32,
             "favorite_color",
             null,
+            null,
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -263,10 +263,10 @@ public class AvroBucketMetadataTest {
             2,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -292,10 +292,10 @@ public class AvroBucketMetadataTest {
             2,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "name",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -304,10 +304,10 @@ public class AvroBucketMetadataTest {
             2,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -316,10 +316,10 @@ public class AvroBucketMetadataTest {
             4,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -328,10 +328,10 @@ public class AvroBucketMetadataTest {
             4,
             1,
             Integer.class,
-            String.class,
-            HashType.MURMUR3_32,
             "favorite_number",
+            String.class,
             "favorite_color",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -340,10 +340,10 @@ public class AvroBucketMetadataTest {
             4,
             1,
             Integer.class,
-            String.class,
-            HashType.MURMUR3_32,
             "favorite_number",
+            String.class,
             "name",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
             AvroGeneratedUser.SCHEMA$);
 
@@ -367,10 +367,10 @@ public class AvroBucketMetadataTest {
         1,
         1,
         ByteBuffer.class,
-        ByteBuffer.class,
-        HashType.MURMUR3_32,
         "location.countryId",
+        ByteBuffer.class,
         "location.postalCode",
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         RECORD_SCHEMA);
 
@@ -381,10 +381,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                null,
-                HashType.MURMUR3_32,
                 "location.countryId",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA));
 
@@ -395,10 +395,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 ByteBuffer.class,
-                String.class,
-                HashType.MURMUR3_32,
                 "location.countryId",
+                String.class,
                 "location.postalCode",
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 RECORD_SCHEMA));
   }
@@ -416,10 +416,10 @@ public class AvroBucketMetadataTest {
         1,
         1,
         String.class,
-        null,
-        HashType.MURMUR3_32,
         "unionField",
         null,
+        null,
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         legalUnionSchema);
 
@@ -430,10 +430,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                null,
-                HashType.MURMUR3_32,
                 "unionField",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 illegalUnionSchema1));
 
@@ -444,10 +444,10 @@ public class AvroBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                null,
-                HashType.MURMUR3_32,
                 "unionField",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 illegalUnionSchema2));
   }

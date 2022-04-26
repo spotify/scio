@@ -56,10 +56,10 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Class<V> recordClass)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -68,12 +68,12 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
         numBuckets,
         numShards,
         (Class<K1>) toJavaType(keyClassPrimary),
-        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
-        hashType,
         validateKeyField(keyField, toJavaType(keyClassPrimary), recordClass),
+        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
         keyFieldSecondary == null
             ? null
             : validateKeyField(keyFieldSecondary, toJavaType(keyClassSecondary), recordClass),
+        hashType,
         filenamePrefix);
   }
 
@@ -82,8 +82,8 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      HashType hashType,
       String filenamePrefix,
       Class<V> recordClass)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -92,10 +92,10 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
         numBuckets,
         numShards,
         (Class<K1>) toJavaType(keyClassPrimary),
-        null,
-        hashType,
         validateKeyField(keyField, toJavaType(keyClassPrimary), recordClass),
         null,
+        null,
+        hashType,
         filenamePrefix);
   }
 
@@ -104,10 +104,10 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      Class<K2> keyClassSecondary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      Class<K2> keyClassSecondary,
       String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -116,12 +116,12 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
         numBuckets,
         numShards,
         (Class<K1>) toJavaType(keyClassPrimary),
-        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
-        hashType,
         AvroUtils.validateKeyField(keyField, toJavaType(keyClassPrimary), schema),
+        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
         keyFieldSecondary == null
             ? null
             : AvroUtils.validateKeyField(keyFieldSecondary, toJavaType(keyClassSecondary), schema),
+        hashType,
         filenamePrefix);
   }
 
@@ -130,8 +130,8 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
       int numBuckets,
       int numShards,
       Class<K1> keyClassPrimary,
-      BucketMetadata.HashType hashType,
       String keyField,
+      HashType hashType,
       String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -140,10 +140,10 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
         numBuckets,
         numShards,
         (Class<K1>) toJavaType(keyClassPrimary),
-        null,
-        hashType,
         AvroUtils.validateKeyField(keyField, toJavaType(keyClassPrimary), schema),
         null,
+        null,
+        hashType,
         filenamePrefix);
   }
 
@@ -153,10 +153,10 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
       @JsonProperty("keyClass") Class<K1> keyClassPrimary,
-      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
       @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") HashType hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
     super(

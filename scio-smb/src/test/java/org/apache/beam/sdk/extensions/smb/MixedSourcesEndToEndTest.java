@@ -20,7 +20,6 @@ package org.apache.beam.sdk.extensions.smb;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.protobuf.ByteString;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,17 +27,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
-import org.apache.beam.sdk.coders.IterableCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
@@ -58,7 +54,6 @@ import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -183,7 +178,7 @@ public class MixedSourcesEndToEndTest {
                 .withCoder(AvroCoder.of(GR_USER_SCHEMA)))
         .apply(
             AvroSortedBucketIO.write(
-                    ByteBuffer.class, ByteBuffer.class, "firstname", "lastname", GR_USER_SCHEMA)
+                    ByteBuffer.class, "firstname", ByteBuffer.class, "lastname", GR_USER_SCHEMA)
                 .to(sourceFolder1.getRoot().getPath())
                 .withTempDirectory(tmpFolder1.getRoot().getPath())
                 .withNumBuckets(8)
@@ -211,7 +206,7 @@ public class MixedSourcesEndToEndTest {
                     Json("i", "i", "MX"))
                 .withCoder(TableRowJsonCoder.of()))
         .apply(
-            JsonSortedBucketIO.write(String.class, String.class, "firstname", "lastname")
+            JsonSortedBucketIO.write(String.class, "firstname", String.class, "lastname")
                 .to(sourceFolder2.getRoot().getPath())
                 .withTempDirectory(tmpFolder2.getRoot().getPath())
                 .withNumBuckets(8)

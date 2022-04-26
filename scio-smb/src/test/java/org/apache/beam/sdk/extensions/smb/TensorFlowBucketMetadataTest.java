@@ -22,11 +22,9 @@ import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisp
 
 import com.google.protobuf.ByteString;
 import java.nio.charset.Charset;
-import java.util.Optional;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
-import org.apache.beam.sdk.coders.VarIntCoder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -73,10 +71,10 @@ public class TensorFlowBucketMetadataTest {
             1,
             1,
             byte[].class,
-            Long.class,
-            HashType.MURMUR3_32,
             "bytes",
+            Long.class,
             "int",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     Assert.assertArrayEquals(
         "data".getBytes(Charset.defaultCharset()), metadata1.extractKeyPrimary(example));
@@ -88,8 +86,8 @@ public class TensorFlowBucketMetadataTest {
                 1,
                 1,
                 ByteString.class,
-                HashType.MURMUR3_32,
                 "bytes",
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKeyPrimary(example));
 
@@ -99,8 +97,8 @@ public class TensorFlowBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                HashType.MURMUR3_32,
                 "bytes",
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKeyPrimary(example));
 
@@ -109,10 +107,10 @@ public class TensorFlowBucketMetadataTest {
             1,
             1,
             Long.class,
-            String.class,
-            HashType.MURMUR3_32,
             "int",
+            String.class,
             "bytes",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     Assert.assertEquals((Long) 12345L, metadata2.extractKeyPrimary(example));
     Assert.assertEquals("data", metadata2.extractKeySecondary(example));
@@ -124,8 +122,8 @@ public class TensorFlowBucketMetadataTest {
                     1,
                     1,
                     Float.class,
-                    HashType.MURMUR3_32,
                     "float",
+                    HashType.MURMUR3_32,
                     SortedBucketIO.DEFAULT_FILENAME_PREFIX)
                 .extractKeyPrimary(example));
 
@@ -136,8 +134,8 @@ public class TensorFlowBucketMetadataTest {
                     1,
                     1,
                     Integer.class,
-                    HashType.MURMUR3_32,
                     "bytes",
+                    HashType.MURMUR3_32,
                     SortedBucketIO.DEFAULT_FILENAME_PREFIX)
                 .extractKeyPrimary(example));
   }
@@ -149,10 +147,10 @@ public class TensorFlowBucketMetadataTest {
             2,
             1,
             byte[].class,
-            String.class,
-            HashType.MURMUR3_32,
             "bytes",
+            String.class,
             "string",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final DisplayData displayData = DisplayData.from(metadata);
@@ -178,20 +176,20 @@ public class TensorFlowBucketMetadataTest {
             2,
             1,
             byte[].class,
-            String.class,
-            HashType.MURMUR3_32,
             "foo",
+            String.class,
             "bar",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     final TensorFlowBucketMetadata<byte[], String> metadata2 =
         new TensorFlowBucketMetadata<>(
             2,
             1,
             byte[].class,
-            String.class,
-            HashType.MURMUR3_32,
             "bar",
+            String.class,
             "foo",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     ;
     final TensorFlowBucketMetadata<byte[], String> metadata3 =
@@ -199,24 +197,24 @@ public class TensorFlowBucketMetadataTest {
             4,
             1,
             byte[].class,
-            String.class,
-            HashType.MURMUR3_32,
             "bar",
+            String.class,
             "foo",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     final TensorFlowBucketMetadata<String, Long> metadata4 =
         new TensorFlowBucketMetadata<>(
             4,
             1,
             String.class,
-            Long.class,
-            HashType.MURMUR3_32,
             "bar",
+            Long.class,
             "foo",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     final TensorFlowBucketMetadata<String, Void> metadata5 =
         new TensorFlowBucketMetadata<>(
-            4, 1, String.class, HashType.MURMUR3_32, "bar", SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+            4, 1, String.class, "bar", HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryKey(metadata2));
     Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata2));

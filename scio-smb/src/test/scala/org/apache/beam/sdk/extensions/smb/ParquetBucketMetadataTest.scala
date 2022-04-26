@@ -57,8 +57,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[Long],
-      HashType.MURMUR3_32,
       "id",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
@@ -68,8 +68,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[ByteBuffer],
-      HashType.MURMUR3_32,
       "location.countryId",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
@@ -79,8 +79,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[ByteBuffer],
-      HashType.MURMUR3_32,
       "location.postalCode",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
@@ -90,8 +90,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "suffix",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
@@ -105,8 +105,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -116,8 +116,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[Int],
-      HashType.MURMUR3_32,
       "favorite_number",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -132,8 +132,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[Long],
-      HashType.MURMUR3_32,
       "id",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[User]
     )
@@ -143,8 +143,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "location.countryId",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[User]
     )
@@ -154,8 +154,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[Int],
-      HashType.MURMUR3_32,
       "location.postalCode",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[User]
     )
@@ -168,10 +168,10 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[String],
-      null,
-      HashType.MURMUR3_32,
       "favorite_color",
       null,
+      null,
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX
     )
     val copy = BucketMetadata.from(metadata.toString)
@@ -187,8 +187,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -200,8 +200,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       2,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -222,8 +222,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       2,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "name",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -231,8 +231,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       2,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -240,8 +240,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       4,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -249,8 +249,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       4,
       1,
       classOf[Int],
-      HashType.MURMUR3_32,
       "favorite_number",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -266,8 +266,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
         1,
         1,
         classOf[String],
-        HashType.MURMUR3_32,
         "location.countryId",
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         RECORD_SCHEMA
       )
@@ -279,8 +279,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
         1,
         1,
         classOf[ByteBuffer],
-        HashType.MURMUR3_32,
         "location.countryId",
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         classOf[User]
       )

@@ -50,10 +50,10 @@ public class JsonBucketMetadataTest {
                 1,
                 1,
                 Integer.class,
-                null,
-                HashType.MURMUR3_32,
                 "age",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKeyPrimary(user));
 
@@ -63,10 +63,10 @@ public class JsonBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                null,
-                HashType.MURMUR3_32,
                 "location.currentCountry",
                 null,
+                null,
+                HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKeyPrimary(user));
 
@@ -88,10 +88,10 @@ public class JsonBucketMetadataTest {
             1,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final BucketMetadata<String, Integer, TableRow> copy = BucketMetadata.from(metadata.toString());
@@ -110,10 +110,10 @@ public class JsonBucketMetadataTest {
             1,
             1,
             String.class,
-            null,
-            HashType.MURMUR3_32,
             "favorite_color",
             null,
+            null,
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     Assert.assertEquals(BucketMetadata.CURRENT_VERSION, metadata.getVersion());
@@ -126,10 +126,10 @@ public class JsonBucketMetadataTest {
             2,
             1,
             String.class,
-            Integer.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Integer.class,
             "favorite_number",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final DisplayData displayData = DisplayData.from(metadata);
@@ -154,10 +154,10 @@ public class JsonBucketMetadataTest {
             2,
             1,
             String.class,
-            String.class,
-            HashType.MURMUR3_32,
             "favorite_country",
+            String.class,
             "favorite_color",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final JsonBucketMetadata<String, String> metadata2 =
@@ -165,10 +165,10 @@ public class JsonBucketMetadataTest {
             2,
             1,
             String.class,
-            String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            String.class,
             "favorite_country",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final JsonBucketMetadata<String, String> metadata3 =
@@ -176,10 +176,10 @@ public class JsonBucketMetadataTest {
             4,
             1,
             String.class,
-            String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            String.class,
             "favorite_country",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final JsonBucketMetadata<Long, Long> metadata4 =
@@ -187,10 +187,10 @@ public class JsonBucketMetadataTest {
             4,
             1,
             Long.class,
-            Long.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            Long.class,
             "favorite_country",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final JsonBucketMetadata<Long, String> metadata5 =
@@ -198,10 +198,10 @@ public class JsonBucketMetadataTest {
             4,
             1,
             Long.class,
-            String.class,
-            HashType.MURMUR3_32,
             "favorite_color",
+            String.class,
             "favorite_country",
+            HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryKey(metadata2));
