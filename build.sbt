@@ -377,7 +377,11 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
 
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
-  .settings(publish / skip := true, assembly / aggregate := false)
+  .settings(
+    publish / skip := true,
+    mimaPreviousArtifacts := Set.empty,
+    assembly / aggregate := false
+  )
   .aggregate(
     `scio-core`,
     `scio-test`,
@@ -879,6 +883,7 @@ lazy val `scio-schemas`: Project = project
   .settings(
     description := "Avro/Proto schemas for testing",
     publish / skip := true,
+    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.avro" % "avro" % avroVersion
@@ -901,6 +906,7 @@ lazy val `scio-examples`: Project = project
   .settings(macroSettings)
   .settings(
     publish / skip := true,
+    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -1029,7 +1035,8 @@ lazy val `scio-jmh`: Project = project
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
     ),
-    publish / skip := true
+    publish / skip := true,
+    mimaPreviousArtifacts := Set.empty
   )
   .dependsOn(
     `scio-core`,
