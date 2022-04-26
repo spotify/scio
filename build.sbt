@@ -113,10 +113,20 @@ Global / excludeLint += sonatypeProfileName
 Global / excludeLint += site / Paradox / sourceManaged
 
 def previousVersion(currentVersion: String): Option[String] = {
-  val Version = """(\d+)\.(\d+)\.(\d+).*""".r
+  val Version =
+    """(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?<preRelease>-.*)?(?<build>\+.*)?""".r
   currentVersion match {
-    case Version(x, y, z) if z != "0" => Some(s"$x.$y.${z.toInt - 1}")
-    case _                            => None
+    case Version(x, y, z, null, null) if z != "0" =>
+      // patch release
+      Some(s"$x.$y.${z.toInt - 1}")
+    case Version(x, y, z, null, _) =>
+      // post release build
+      Some(s"$x.$y.$z")
+    case Version(x, y, z, _, _) if z != "0" =>
+      // patch pre-release
+      Some(s"$x.$y.${z.toInt - 1}")
+    case _ =>
+      None
   }
 }
 
@@ -367,7 +377,11 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
 
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)
-  .settings(publish / skip := true, assembly / aggregate := false)
+  .settings(
+    publish / skip := true,
+    mimaPreviousArtifacts := Set.empty,
+    assembly / aggregate := false
+  )
   .aggregate(
     `scio-core`,
     `scio-test`,
@@ -783,6 +797,8 @@ lazy val `scio-parquet`: Project = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
+    // TODO enable MiMa after next release
+    mimaPreviousArtifacts := Set.empty,
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
     Compile / compile := Def.task {
@@ -869,6 +885,7 @@ lazy val `scio-schemas`: Project = project
   .settings(
     description := "Avro/Proto schemas for testing",
     publish / skip := true,
+    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.avro" % "avro" % avroVersion
@@ -891,6 +908,7 @@ lazy val `scio-examples`: Project = project
   .settings(macroSettings)
   .settings(
     publish / skip := true,
+    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -1019,7 +1037,8 @@ lazy val `scio-jmh`: Project = project
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion
     ),
-    publish / skip := true
+    publish / skip := true,
+    mimaPreviousArtifacts := Set.empty
   )
   .dependsOn(
     `scio-core`,
