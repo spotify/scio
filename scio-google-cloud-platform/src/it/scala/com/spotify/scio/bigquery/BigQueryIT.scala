@@ -81,7 +81,6 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
         |  AND _TABLE_SUFFIX BETWEEN '20' AND '29'
         |ORDER BY
         |  max DESC
-        |LIMIT 1
         |""".stripMargin
 
     def gsod(max: Double, year: Int, mo: Int, da: Int): TableRow =
@@ -118,7 +117,14 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
     suffixData.foreach { case (suffix, inData) =>
       mbq.mockWildcardTable(prefix, suffix).withData(inData)
     }
-    mbq.queryResult(wildcardSqlQuery) should contain only suffixData("21").head
+    mbq.queryResult(wildcardSqlQuery) should contain theSameElementsInOrderAs Seq(
+      gsod(54.2, 2021, 6, 30),
+      gsod(54.0, 2020, 6, 8),
+      gsod(53.2, 2021, 6, 22),
+      gsod(53.1, 2021, 7, 1),
+      gsod(52.2, 2020, 7, 31),
+      gsod(52.1, 2020, 7, 30)
+    )
   }
 
   // =======================================================================
