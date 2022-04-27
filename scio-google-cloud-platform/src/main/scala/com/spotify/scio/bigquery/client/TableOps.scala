@@ -311,17 +311,24 @@ final private[client] class TableOps(client: Client) {
   }
 
   /* Creates a reference to a temporary table in the staging dataset */
-  private[bigquery] def createTemporary(location: String): Table = {
-    val now = Instant.now().toString(TimeFormatter)
-    val tableId = TablePrefix + "_" + now + "_" + Random.nextInt(Int.MaxValue)
-    val tableReference = new TableReference()
-      .setProjectId(client.project)
-      .setDatasetId(stagingDatasetId(location))
-      .setTableId(tableId)
+  private[bigquery] def createTemporary(location: String): Table =
+    createTemporary(temporaryTableReference(location))
 
+  /* Creates a reference to a temporary table in the staging dataset */
+  private[bigquery] def createTemporary(tableReference: TableReference): Table =
     new Table()
       .setTableReference(tableReference)
       .setExpirationTime(System.currentTimeMillis() + StagingDatasetTableExpirationMs)
+
+  private[bigquery] def temporaryTableReference(location: String): TableReference = {
+    val now = Instant.now().toString(TimeFormatter)
+    val rand = Random.nextInt(Int.MaxValue)
+    val tableId = TablePrefix + "_" + now + "_" + rand
+
+    new TableReference()
+      .setProjectId(client.project)
+      .setDatasetId(stagingDatasetId(location))
+      .setTableId(tableId)
   }
 
   private def stagingDatasetId(location: String): String =
