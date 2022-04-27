@@ -124,16 +124,28 @@ public class ElasticsearchIO {
      * Returns a transform for writing to Elasticsearch cluster.
      *
      * @param error applies given function if specified in case of Elasticsearch error with bulk
-     *     writes. Default behavior throws IOException.
+     *              writes. Default behavior throws IOException.
      */
     public static <T> Bound withError(ThrowingConsumer<BulkExecutionException> error) {
       return new Bound<>().withError(error);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param maxBulkRequestSize max number of operations in a BulkRequest. BulkRequest will be
+     *                           flushed once maxBulkRequestSize is reached.
+     */
     public static <T> Bound withMaxBulkRequestSize(int maxBulkRequestSize) {
       return new Bound<>().withMaxBulkRequestSize(maxBulkRequestSize);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param maxBulkRequestBytes max bytes of all operations in a BulkRequest. BulkRequest will be
+     *                            flushed once maxBulkRequestBytes is reached.
+     */
     public static <T> Bound withMaxBulkRequestBytes(long maxBulkRequestBytes) {
       return new Bound<>().withMaxBulkRequestBytes(maxBulkRequestBytes);
     }
@@ -142,7 +154,7 @@ public class ElasticsearchIO {
      * Returns a transform for writing to Elasticsearch cluster.
      *
      * @param maxRetries Maximum number of retries to attempt for saving any single chunk of bulk
-     *     requests to the Elasticsearch cluster.
+     *                   requests to the Elasticsearch cluster.
      */
     public static <T> Bound withMaxRetries(int maxRetries) {
       return new Bound<>().withMaxRetries(maxRetries);
@@ -157,6 +169,11 @@ public class ElasticsearchIO {
       return new Bound<>().withRetryPause(retryPause);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param credentials username and password to connect to the cluster.
+     */
     public static <T> Bound withCredentials(UsernamePasswordCredentials credentials) {
       return new Bound<>().withCredentials(credentials);
     }
@@ -744,7 +761,9 @@ public class ElasticsearchIO {
       };
     }
 
-    /** An exception that puts information about the failures in the bulk execution. */
+    /**
+     * An exception that puts information about the failures in the bulk execution.
+     */
     public static class BulkExecutionException extends IOException {
 
       private final Iterable<ErrorCause> failures;
