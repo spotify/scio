@@ -90,8 +90,8 @@ class MockBigQuery private (private val bq: BigQuery) {
       }
     )
 
-    val ref = tempWildcard.clone().setTableId(tempWildcard.getTableId.dropRight(1) + suffix)
-    val temp = bq.tables.createTemporary(ref).getTableReference
+    val temp = tempWildcard.clone().setTableId(tempWildcard.getTableId.dropRight(1) + suffix)
+    bq.tables.createTemporary(temp)
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
   }
