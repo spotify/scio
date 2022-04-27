@@ -119,6 +119,8 @@ val scalatestplusVersion = "3.1.0.0-RC2"
 val scalacticVersion = "3.2.11"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.12"
+// see https://github.com/scalatest/scalatest/issues/2092
+val scalaXmlVersion = "1.3.0" // scala-steward:off
 val shapelessVersion = "2.3.9"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.2"
@@ -1324,5 +1326,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "net.java.dev.jna" % "jna" % jnaVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
+  "org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion,
   "org.threeten" % "threetenbp" % threetenbpVersion
 )
