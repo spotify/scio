@@ -63,7 +63,7 @@ package object elasticsearch extends CoderInstances {
       esOptions: ElasticsearchOptions,
       flushInterval: Duration = WriteParam.DefaultFlushInterval,
       numOfShards: Long = WriteParam.DefaultNumShards,
-      maxBulkRequestSize: Int = WriteParam.DefaultMaxBulkRequestSize,
+      maxBulkRequestOperations: Int = WriteParam.DefaultMaxBulkRequestOperations,
       maxBulkRequestBytes: Long = WriteParam.DefaultMaxBulkRequestBytes,
       errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,
       retry: RetryConfig = WriteParam.DefaultRetryConfig
@@ -73,7 +73,7 @@ package object elasticsearch extends CoderInstances {
         errorFn,
         flushInterval,
         numOfShards,
-        maxBulkRequestSize,
+        maxBulkRequestOperations,
         maxBulkRequestBytes,
         retry
       )

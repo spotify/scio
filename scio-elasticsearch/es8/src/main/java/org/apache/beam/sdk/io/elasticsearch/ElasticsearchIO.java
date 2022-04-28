@@ -133,11 +133,11 @@ public class ElasticsearchIO {
     /**
      * Returns a transform for writing to Elasticsearch cluster.
      *
-     * @param maxBulkRequestSize max number of operations in a BulkRequest. BulkRequest will be
-     *                           flushed once maxBulkRequestSize is reached.
+     * @param maxBulkRequestOperations max number of operations in a BulkRequest. BulkRequest will be
+     *                           flushed once maxBulkRequestOperations is reached.
      */
-    public static <T> Bound withMaxBulkRequestSize(int maxBulkRequestSize) {
-      return new Bound<>().withMaxBulkRequestSize(maxBulkRequestSize);
+    public static <T> Bound withMaxBulkRequestOperations(int maxBulkRequestOperations) {
+      return new Bound<>().withMaxBulkRequestOperations(maxBulkRequestOperations);
     }
 
     /**
@@ -193,7 +193,7 @@ public class ElasticsearchIO {
       private final Duration flushInterval;
       private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final long numOfShard;
-      private final int maxBulkRequestSize;
+      private final int maxBulkRequestOperations;
       private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
@@ -207,7 +207,7 @@ public class ElasticsearchIO {
           final Duration flushInterval,
           final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           final long numOfShard,
-          final int maxBulkRequestSize,
+          final int maxBulkRequestOperations,
           final long maxBulkRequestBytes,
           final int maxRetries,
           final Duration retryPause,
@@ -218,7 +218,7 @@ public class ElasticsearchIO {
         this.flushInterval = flushInterval;
         this.toBulkOperations = toBulkOperations;
         this.numOfShard = numOfShard;
-        this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestOperations = maxBulkRequestOperations;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.maxRetries = maxRetries;
         this.retryPause = retryPause;
@@ -248,7 +248,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -263,7 +263,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -279,7 +279,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -294,7 +294,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -309,7 +309,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -318,13 +318,13 @@ public class ElasticsearchIO {
             mapperFactory);
       }
 
-      public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
+      public Bound<T> withMaxBulkRequestOperations(int maxBulkRequestOperations) {
         return new Bound<>(
             nodes,
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -339,7 +339,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -354,7 +354,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -369,7 +369,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -384,7 +384,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -399,7 +399,7 @@ public class ElasticsearchIO {
             flushInterval,
             toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
@@ -415,7 +415,7 @@ public class ElasticsearchIO {
         checkNotNull(flushInterval);
         checkNotNull(mapperFactory);
         checkArgument(numOfShard >= 0);
-        checkArgument(maxBulkRequestSize > 0);
+        checkArgument(maxBulkRequestOperations > 0);
         checkArgument(maxBulkRequestBytes > 0L);
         checkArgument(maxRetries >= 0);
         checkArgument(retryPause.getMillis() >= 0);
@@ -424,7 +424,7 @@ public class ElasticsearchIO {
               ParDo.of(
                   new ElasticsearchWriter<>(
                       nodes,
-                      maxBulkRequestSize,
+                      maxBulkRequestOperations,
                       maxBulkRequestBytes,
                       toBulkOperations,
                       error,
@@ -450,7 +450,7 @@ public class ElasticsearchIO {
                   ParDo.of(
                       new ElasticsearchShardWriter<>(
                           nodes,
-                          maxBulkRequestSize,
+                          maxBulkRequestOperations,
                           maxBulkRequestBytes,
                           toBulkOperations,
                           error,
@@ -486,7 +486,7 @@ public class ElasticsearchIO {
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final ThrowingConsumer<BulkExecutionException> error;
-      private final int maxBulkRequestSize;
+      private final int maxBulkRequestOperations;
       private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
@@ -496,7 +496,7 @@ public class ElasticsearchIO {
 
       public ElasticsearchWriter(
           HttpHost[] nodes,
-          int maxBulkRequestSize,
+          int maxBulkRequestOperations,
           long maxBulkRequestBytes,
           SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           ThrowingConsumer<BulkExecutionException> error,
@@ -504,7 +504,7 @@ public class ElasticsearchIO {
           Duration retryPause,
           UsernamePasswordCredentials credentials,
           JsonpMapperFactory mapperFactory) {
-        this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestOperations = maxBulkRequestOperations;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
         this.toBulkOperations = toBulkOperations;
@@ -548,7 +548,7 @@ public class ElasticsearchIO {
         final Iterable<BulkOperation> operations = toBulkOperations.apply(t);
         for (BulkOperation operation : operations) {
           long bytes = operationSize(clientSupplier, operation);
-          if ((chunk.size() + 1) > maxBulkRequestSize
+          if ((chunk.size() + 1) > maxBulkRequestOperations
               || (chunkBytes + bytes) > maxBulkRequestBytes) {
             flush();
           }
@@ -579,7 +579,7 @@ public class ElasticsearchIO {
       private final ClientSupplier clientSupplier;
       private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final ThrowingConsumer<BulkExecutionException> error;
-      private final int maxBulkRequestSize;
+      private final int maxBulkRequestOperations;
       private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
@@ -589,7 +589,7 @@ public class ElasticsearchIO {
 
       public ElasticsearchShardWriter(
           HttpHost[] nodes,
-          int maxBulkRequestSize,
+          int maxBulkRequestOperations,
           long maxBulkRequestBytes,
           SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           ThrowingConsumer<BulkExecutionException> error,
@@ -597,7 +597,7 @@ public class ElasticsearchIO {
           Duration retryPause,
           UsernamePasswordCredentials credentials,
           JsonpMapperFactory mapperFactory) {
-        this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestOperations = maxBulkRequestOperations;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
         this.toBulkOperations = toBulkOperations;
@@ -641,8 +641,8 @@ public class ElasticsearchIO {
 
         for (BulkOperation operation : operations) {
           long bytes = operationSize(clientSupplier, operation);
-          if ((chunk.size() + 1) > maxBulkRequestSize
-              || (chunkBytes + bytes) > maxBulkRequestSize) {
+          if ((chunk.size() + 1) > maxBulkRequestOperations
+              || (chunkBytes + bytes) > maxBulkRequestOperations) {
             flush();
           }
           chunk.add(operation);
