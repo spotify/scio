@@ -307,3 +307,34 @@ See @ref:[the FAQ](../FAQ.md#how-to-make-intellij-idea-work-with-type-safe-bigqu
 ### Custom types and validation
 
 See @ref:[OverrideTypeProvider](../internals/OverrideTypeProvider.md) for details about the custom types and validation mechanism.
+
+## BigQuery authentication
+
+BigQuery authentication works a bit differently than other IO types and can be hard to reason about. File-based IOs, for example, are read from directly on each remote worker node. In contrast,
+for BigQuery reads, Scio will actually launch a [Bigquery export job](https://cloud.google.com/bigquery/docs/exporting-data) from the main class process before submitting a Dataflow job request.
+This export job extracts the requested BQ data to a temporary GCS location, from which the job workers can read directly from. Thus, your launcher code must be credentialed with the [required permissions](https://cloud.google.com/bigquery/docs/exporting-data#required_permissions)
+to export data.
+
+This credential will be picked up from the values of `bigquery.project` and `bigquery.secret`, if set. If they are not, Scio will attempt to find an active
+[Application Default Credential](https://cloud.google.com/docs/authentication/production#automatically) and set the billing project to the value from @javadoc[DefaultProjectFactory](org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory).
+As of Scio 0.11.6, you can set the SBT option `bigquery.debug_auth=true`, which enables Scio to log the active credential used in BigQuery queries that return a 403 FORBIDDEN status.
+
+Note that BigQuery Storage APIs don't require an export job as they can read from BigQuery directly.
+
+## BigQuery configurations in SBT
+
+Scio offers several BigQuery options that can be configured as SBT options - either in a root-level `.sbtopts` file or in your SBT process as `sbt -D{$OPT_KEY}=${OPT_VALUE} ...`:
+
+| Option                            | Description                                                                                                                                                                                                                                        |
+|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bigquery.project`                | Specifies the billing project to use for queries. Defaults to the default project associated with the active GCP configuration (see @javadoc[DefaultProjectFactory](org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory)). |
+| `bigquery.secret`                 | Specifies a file path containing a BigQuery credential. Defaults to the [Application Default Credential](https://cloud.google.com/docs/authentication/production#automatically).                                                                   |
+| `bigquery.connect_timeout`        | Timeout in milliseconds to establish a connection. Default is 20000 (20 seconds). 0 for an infinite timeout.                                                                                                                                       |
+| `bigquery.read_timeout`           | Timeout in milliseconds to read data from an established connection. Default is 20000 (20 seconds). 0 for an infinite timeout.                                                                                                                     |                                                                                                                                                                                                    |
+| `bigquery.priority`               | Determines whether queries are executed in "BATCH" or "INTERACTIVE" mode. Default: BATCH.                                                                                                                                                          |
+| `bigquery.debug_auth`             | Enables logging active BigQuery user information on auth errors. Default: false.                                                                                                                                                                   |
+| `bigquery.types.debug`            | Enables verbose logging of macro generation steps. Default: false.                                                                                                                                                                                 |
+| `bigquery.cache.enabled`          | Enables scio bigquery caching. Default: true.                                                                                                                                                                                                      |
+| `generated.class.cache.directory` | BigQuery generated class cache directory. Defaults to a directory in `java.io.tmpdir`.                                                                                                                                                             |
+| `bigquery.cache.directory`        | BigQuery local schema cache directory. Defaults to a directory in `java.io.tmpdir`.                                                                                                                                                                |
+| `bigquery.plugin.disable.dump`    | Disable macro class dump. Default: false.                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                          |

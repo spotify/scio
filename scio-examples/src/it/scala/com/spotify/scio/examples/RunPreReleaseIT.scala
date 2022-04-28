@@ -82,27 +82,40 @@ object RunPreReleaseIT {
     val out2 = gcsPath[ParquetExample.type]("typedIn", runId)
     val out3 = gcsPath[ParquetExample.type]("avroSpecificIn", runId)
     val out4 = gcsPath[ParquetExample.type]("avroGenericIn", runId)
+    val out5 = gcsPath[ParquetExample.type]("exampleOut", runId)
+    val out6 = gcsPath[ParquetExample.type]("exampleIn", runId)
 
-    val write = Future
+    val start = Future
       .successful(log.info("Starting Parquet IO tests... "))
-      .flatMap(_ => invokeJob[ParquetExample.type]("--method=avroOut", s"--output=$out1"))
+
+    val avroWrite =
+      start.flatMap(_ => invokeJob[ParquetExample.type]("--method=avroOut", s"--output=$out1"))
+    val exampleWrite =
+      start.flatMap(_ => invokeJob[ParquetExample.type]("--method=exampleOut", s"--output=$out5"))
 
     List(
-      write.flatMap(_ =>
+      avroWrite.flatMap(_ =>
         invokeJob[ParquetExample.type]("--method=typedIn", s"--input=$out1/*", s"--output=$out2")
       ),
-      write.flatMap(_ =>
+      avroWrite.flatMap(_ =>
         invokeJob[ParquetExample.type](
           "--method=avroSpecificIn",
           s"--input=$out1/*",
           s"--output=$out3"
         )
       ),
-      write.flatMap(_ =>
+      avroWrite.flatMap(_ =>
         invokeJob[ParquetExample.type](
           "--method=avroGenericIn",
           s"--input=$out1/*",
           s"--output=$out4"
+        )
+      ),
+      exampleWrite.flatMap(_ =>
+        invokeJob[ParquetExample.type](
+          "--method=exampleIn",
+          s"--input=$out5/*",
+          s"--output=$out6"
         )
       )
     )

@@ -173,11 +173,11 @@ private[types] object TypeProvider {
 
         q"""$caseClassTree
             ${companion(c)(
-          name,
-          docTrait ++ fnTrait,
-          schemaMethod ++ docMethod,
-          fields.asInstanceOf[Seq[c.Tree]]
-        )}
+            name,
+            docTrait ++ fnTrait,
+            schemaMethod ++ docMethod,
+            fields.asInstanceOf[Seq[c.Tree]]
+          )}
         """
       case t =>
         val error =
@@ -351,14 +351,14 @@ private[types] object TypeProvider {
       }
 
     q"""object ${TermName(name.toString)} extends ${p(
-      c,
-      ScioAvroType
-    )}.HasAvroSchema[$name] with ..$traits {
+        c,
+        ScioAvroType
+      )}.HasAvroSchema[$name] with ..$traits {
           override def toPrettyString(indent: Int = 0): String =
             ${p(
-      c,
-      s"$ScioAvro.types.SchemaUtil"
-    )}.toPrettyString(this.getClass.getName, this.schema, indent)
+        c,
+        s"$ScioAvro.types.SchemaUtil"
+      )}.toPrettyString(this.getClass.getName, this.schema, indent)
           override def fromGenericRecord: (${p(c, ApacheAvro)}.generic.GenericRecord => $name) =
             ${p(c, ScioAvroType)}.fromGenericRecord[$name]
           override def toGenericRecord: ($name => ${p(c, ApacheAvro)}.generic.GenericRecord) =
@@ -437,16 +437,16 @@ private[types] object TypeProvider {
     (Seq(caseClass) ++ records).map {
       case q"case class $name(..$fields) { ..$_ }" =>
         s"case class $name(${fields
-          .map { case ValDef(_, fname, ftpt, _) =>
-            s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
-          }
-          .mkString(", ")})"
+            .map { case ValDef(_, fname, ftpt, _) =>
+              s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+            }
+            .mkString(", ")})"
       case q"case class $name(..$fields) extends $annotation { ..$_ }" =>
         s"case class $name(${fields
-          .map { case ValDef(_, fname, ftpt, _) =>
-            s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
-          }
-          .mkString(", ")}) extends $annotation"
+            .map { case ValDef(_, fname, ftpt, _) =>
+              s"${SchemaUtil.escapeNameIfReserved(fname.toString)} : $ftpt"
+            }
+            .mkString(", ")}) extends $annotation"
       case _ => ""
     }
   }

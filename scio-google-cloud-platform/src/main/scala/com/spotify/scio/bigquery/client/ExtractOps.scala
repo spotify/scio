@@ -125,7 +125,7 @@ final private[client] class ExtractOps(client: Client, jobService: JobOps) {
 
     Logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
 
-    client.underlying.jobs().insert(client.project, job).execute()
+    client.execute(_.jobs().insert(client.project, job))
 
     val extractJob = ExtractJob(destinationUris, Some(jobReference), tableRef)
 

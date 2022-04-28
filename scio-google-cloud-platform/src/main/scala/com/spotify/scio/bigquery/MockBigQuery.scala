@@ -24,7 +24,7 @@ import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
-import scala.collection.mutable.{Map => MMap}
+import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -45,7 +45,7 @@ object MockBigQuery {
  * [[queryResult]] to query them.
  */
 class MockBigQuery private (private val bq: BigQuery) {
-  private val mapping = MMap.empty[TableReference, TableReference]
+  private val mapping = mutable.Map.empty[TableReference, TableReference]
 
   /** Mock a BigQuery table. Each table can be mocked only once in a test class. */
   def mockTable(original: String): MockTable =
@@ -59,7 +59,39 @@ class MockBigQuery private (private val bq: BigQuery) {
     )
 
     val t = bq.tables.table(original)
-    val temp = bq.tables.createTemporary(t.getLocation)
+    val temp = bq.tables.createTemporary(t.getLocation).getTableReference
+    mapping += (original -> temp)
+    new MockTable(bq, t.getSchema, original, temp)
+  }
+
+  /**
+   * Mock a BigQuery wildcard table using the table prefix and the suffix matched by the wildcard.
+   * Each table can be mocked only once in a test class.
+   */
+  def mockWildcardTable(prefix: String, suffix: String): MockTable = {
+    val original = BigQueryHelpers.parseTableSpec(prefix + suffix)
+    require(
+      !mapping.contains(original),
+      s"Table ${BigQueryHelpers.toTableSpec(original)} already registered for mocking"
+    )
+
+    // fake table reference, only used in the mapping for query replacement
+    val t = bq.tables.table(original)
+    val wildcard = new TableReference()
+      .setProjectId(original.getProjectId)
+      .setDatasetId(original.getDatasetId)
+      .setTableId(original.getTableId.dropRight(suffix.length) + "*")
+    val tempWildcard = mapping.getOrElseUpdate(
+      wildcard, {
+        // fake table reference, only used in the mapping for query replacement
+        val w = bq.tables.temporaryTableReference(t.getLocation)
+        w.setTableId(w.getTableId + "_*")
+        w
+      }
+    )
+
+    val temp = tempWildcard.clone().setTableId(tempWildcard.getTableId.dropRight(1) + suffix)
+    bq.tables.createTemporary(temp)
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
   }
