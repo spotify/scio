@@ -502,7 +502,7 @@ lazy val `scio-test`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % "3.2.12",
+      "org.scalactic" %% "scalactic" % "3.2.11",
       "com.softwaremill.magnolia" %% "magnolia-core" % magnoliaVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
