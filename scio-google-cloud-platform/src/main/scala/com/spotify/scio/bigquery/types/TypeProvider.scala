@@ -198,8 +198,8 @@ private[types] object TypeProvider {
 
         val defSelectedFields =
           q"def selectedFields: _root_.scala.List[_root_.java.lang.String] = ${fields.map {
-            case ValDef(_, fname, _, _) => fname.toString
-          }.toList}"
+              case ValDef(_, fname, _, _) => fname.toString
+            }.toList}"
 
         val fnTrait =
           tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
@@ -229,12 +229,12 @@ private[types] object TypeProvider {
         (
           q"""$caseClassTree
             ${companion(c)(
-            cName,
-            traits,
-            Seq(defSchema, defAvroSchema, defToPrettyString, defSelectedFields) ++ defTblDesc,
-            taggedFields.asInstanceOf[Seq[Tree]].size,
-            maybeCompanion
-          )}
+              cName,
+              traits,
+              Seq(defSchema, defAvroSchema, defToPrettyString, defSelectedFields) ++ defTblDesc,
+              taggedFields.asInstanceOf[Seq[Tree]].size,
+              maybeCompanion
+            )}
         """,
           caseClassTree,
           cName.toString
@@ -351,12 +351,12 @@ private[types] object TypeProvider {
         (
           q"""$caseClassTree
             ${companion(c)(
-            cName,
-            traits ++ defTblTrait,
-            Seq(defSchema, defAvroSchema, defToPrettyString) ++ overrides ++ defTblDesc,
-            fields.size,
-            maybeCompanion
-          )}
+              cName,
+              traits ++ defTblTrait,
+              Seq(defSchema, defAvroSchema, defToPrettyString) ++ overrides ++ defTblDesc,
+              fields.size,
+              maybeCompanion
+            )}
             ..$records
         """,
           caseClassTree,

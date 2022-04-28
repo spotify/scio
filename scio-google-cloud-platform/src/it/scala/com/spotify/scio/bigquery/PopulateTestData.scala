@@ -17,50 +17,16 @@
 
 package com.spotify.scio.bigquery
 
-import java.nio.channels.Channels
-import java.nio.file.{Files, Path, Paths}
-import java.util.stream.Collectors
-
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{Dataset, DatasetReference}
 import com.google.protobuf.ByteString
-import com.spotify.scio.bigquery._
 import com.spotify.scio.bigquery.client.BigQuery
-import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.beam.sdk.util.MimeTypes
 import org.joda.time._
+import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 
 object PopulateTestData {
-  def main(args: Array[String]): Unit = {
-    BigQueryTestData.populate("data-integration-test")
-    GcsTestData.populate("neville-test-us")
-  }
-}
-
-object GcsTestData {
-  def populate(bucket: String): Unit = {
-    FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
-
-    val root = Paths.get("src/it/resources")
-    Files
-      .walk(root)
-      .collect(Collectors.toList[Path])
-      .asScala
-      .filter(Files.isRegularFile(_))
-      .foreach { src =>
-        val resourceId =
-          FileSystems.matchNewResource(s"gs://$bucket/${root.relativize(src)}", false)
-        val dst = Channels.newOutputStream(FileSystems.create(resourceId, MimeTypes.BINARY))
-        Files.copy(src, dst)
-        dst.close()
-      }
-  }
-}
-
-object BigQueryTestData {
   @BigQueryType.toTable
   case class Shakespeare(
     corpus_date: Option[Int],
@@ -119,6 +85,10 @@ object BigQueryTestData {
   @BigQueryType.toTable
   case class Nested(required: Record, optional: Option[Record], repeated: List[Record])
 
+  private lazy val log = LoggerFactory.getLogger(getClass)
+
+  def main(args: Array[String]): Unit = populate("data-integration-test")
+
   def populate(projectId: String): Unit = {
     val bq = BigQuery.defaultInstance()
 
@@ -154,8 +124,11 @@ object BigQueryTestData {
       .setDatasetReference(new DatasetReference().setProjectId(projectId).setDatasetId(datasetId))
       .setLocation(location)
     try {
-      bq.client.underlying.datasets().insert(projectId, ds).execute()
+      bq.client.execute(_.datasets().insert(projectId, ds))
     } catch {
+      case e: GoogleJsonResponseException
+          if e.getStatusCode == 409 && e.getDetails.getMessage.contains("Already Exists") =>
+        log.info(s"Dataset $projectId:$datasetId exists.")
       case NonFatal(e) => e.printStackTrace()
     }
     ()
@@ -181,6 +154,11 @@ object BigQueryTestData {
     bq.writeTypedRows(s"$projectId:partition_b.table_20170101", data, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:partition_b.table_20170102", data, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:partition_c.table_20170104", data, WRITE_TRUNCATE)
+
+    log.info(
+      s"Populated $projectId:samples_eu.shakespeare, $projectId:partition_a, " +
+        s"$projectId:partition_b and $projectId:partition_c."
+    )
     ()
   }
 
@@ -197,6 +175,9 @@ object BigQueryTestData {
     bq.writeTypedRows(s"$projectId:storage.optional", optional, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:storage.repeated", repeated, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:storage.nested", nested, WRITE_TRUNCATE)
+    log.info(
+      s"Populated $projectId:storage, $projectId:optional, $projectId:repeated, and $projectId:nested."
+    )
     ()
   }
 
