@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import com.google.api.services.bigquery.model.{TableRow => GTableRow}
+import com.spotify.scio.bigquery.instances.CoderInstances
 import com.spotify.scio.bigquery.syntax.{
   SCollectionSyntax,
   ScioContextSyntax,
@@ -47,7 +48,8 @@ package object bigquery
     extends ScioContextSyntax
     with SCollectionSyntax
     with TableRowSyntax
-    with TableReferenceSyntax {
+    with TableReferenceSyntax
+    with CoderInstances {
 
   /** Alias for BigQuery `CreateDisposition`. */
   val CREATE_IF_NEEDED = Write.CreateDisposition.CREATE_IF_NEEDED
