@@ -750,6 +750,8 @@ lazy val `scio-elasticsearch8`: Project = project
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
+    // TODO enable MiMa after 1st release
+    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
       "commons-io" % "commons-io" % commonsIoVersion,
