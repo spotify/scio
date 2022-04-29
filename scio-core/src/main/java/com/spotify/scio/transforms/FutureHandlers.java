@@ -94,7 +94,7 @@ public class FutureHandlers {
       CompletableFuture[] array =
           StreamSupport.stream(futures.spliterator(), false).toArray(CompletableFuture[]::new);
       // combine & wait upon all futures, ignoring the result & any errors thrown
-      CompletableFuture.allOf(array).whenComplete((r, t) -> {}).get();
+      CompletableFuture.allOf(array).handle((r, t) -> "done").get();
     }
 
     @Override
