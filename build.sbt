@@ -50,7 +50,7 @@ val hadoopVersion = "2.10.1"
 val httpCoreVersion = "4.4.14"
 val javaxAnnotationApiVersion = "1.3.2"
 val nettyTcNativeVersion = "2.0.46.Final"
-val nettyVersion = "4.1.52.Final"
+val nettyVersion = "4.1.76.Final"
 val sparkVersion = "3.1.2"
 val threetenbpVersion = "1.4.4" // from google-cloud-platform/build.gradle
 // dependent versions
