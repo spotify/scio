@@ -86,6 +86,8 @@ val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.0"
 val caffeineVersion = "2.9.3"
+val cassandraDriverVersion = "3.11.2"
+val cassandraVersion = "3.11.12"
 val catsVersion = "2.7.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.1"
@@ -676,10 +678,11 @@ lazy val `scio-cassandra3`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.11.1",
-      ("org.apache.cassandra" % "cassandra-all" % "3.11.12")
-        .exclude("ch.qos.logback", "logback-classic")
-        .exclude("org.slf4j", "log4j-over-slf4j"),
+      "com.datastax.cassandra" % "cassandra-driver-core" % cassandraDriverVersion,
+      "org.apache.cassandra" % "cassandra-all" % cassandraVersion excludeAll (
+        ExclusionRule("ch.qos.logback", "logback-classic"),
+        ExclusionRule("org.slf4j", "log4j-over-slf4j")
+      ),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
