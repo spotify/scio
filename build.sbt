@@ -75,7 +75,7 @@ val googleCloudDatastore = "0.93.4"
 val googleCloudSpannerVersion = "6.20.0"
 val googleHttpClientsVersion = "1.41.2"
 val googleIAMVersion = "1.2.1"
-val grpcVersion = "1.44.0"
+val grpcVersion = "1.44.1"
 val jacksonVersion = "2.13.1"
 val protobufVersion = "3.19.3"
 
