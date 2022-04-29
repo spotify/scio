@@ -86,6 +86,8 @@ val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.0"
 val caffeineVersion = "2.9.3"
+val cassandraDriverVersion = "3.11.2"
+val cassandraVersion = "3.11.12"
 val catsVersion = "2.7.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.1"
@@ -94,7 +96,7 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val elasticsearch6Version = "6.8.23"
-val elasticsearch7Version = "7.17.1"
+val elasticsearch7Version = "7.17.3"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
@@ -111,11 +113,10 @@ val metricsVersion = "3.2.6"
 val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.2"
-val pprintVersion = "0.7.1"
+val pprintVersion = "0.7.3"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.16.0"
 val scalaCollectionCompatVersion = "2.7.0"
-val scalatestplusVersion = "3.1.0.0-RC2"
 val scalacticVersion = "3.2.11"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.12"
@@ -125,6 +126,8 @@ val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.2"
 val tensorFlowVersion = "0.4.1"
 val zoltarVersion = "0.6.0"
+// dependent versions
+val scalatestplusVersion = s"$scalatestVersion.0"
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
@@ -514,7 +517,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
       "org.scalatest" %% "scalatest" % scalatestVersion,
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
@@ -588,7 +591,7 @@ lazy val `scio-avro`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
@@ -650,7 +653,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
@@ -675,10 +678,11 @@ lazy val `scio-cassandra3`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
-      "com.datastax.cassandra" % "cassandra-driver-core" % "3.11.1",
-      ("org.apache.cassandra" % "cassandra-all" % "3.11.12")
-        .exclude("ch.qos.logback", "logback-classic")
-        .exclude("org.slf4j", "log4j-over-slf4j"),
+      "com.datastax.cassandra" % "cassandra-driver-core" % cassandraDriverVersion,
+      "org.apache.cassandra" % "cassandra-all" % cassandraVersion excludeAll (
+        ExclusionRule("ch.qos.logback", "logback-classic"),
+        ExclusionRule("org.slf4j", "log4j-over-slf4j")
+      ),
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
