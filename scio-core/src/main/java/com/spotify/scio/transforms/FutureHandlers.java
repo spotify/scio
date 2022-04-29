@@ -93,7 +93,8 @@ public class FutureHandlers {
         throws InterruptedException, ExecutionException {
       CompletableFuture[] array =
           StreamSupport.stream(futures.spliterator(), false).toArray(CompletableFuture[]::new);
-      CompletableFuture.allOf(array).get();
+      // combine & wait upon all futures, ignoring the result & any errors thrown
+      CompletableFuture.allOf(array).whenComplete((r, t) -> {}).get();
     }
 
     @Override
