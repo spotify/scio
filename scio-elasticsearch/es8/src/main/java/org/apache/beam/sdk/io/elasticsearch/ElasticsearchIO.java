@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Spotify AB.
+ * Copyright 2022 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,25 @@ package org.apache.beam.sdk.io.elasticsearch;
 import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
 import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkNotNull;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ErrorCause;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.json.JsonpMapper;
+import co.elastic.clients.json.SimpleJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import jakarta.json.Json;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
@@ -49,18 +58,15 @@ import org.apache.beam.sdk.util.Sleeper;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PDone;
-import org.elasticsearch.action.DocWriteRequest;
-import org.elasticsearch.action.bulk.BulkItemResponse;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.apache.commons.io.output.CountingOutputStream;
+import org.apache.commons.io.output.NullOutputStream;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,21 +82,12 @@ public class ElasticsearchIO {
         "Error writing to ES after %d attempt(s). No more attempts allowed";
 
     /**
-     * Returns a transform for writing to Elasticsearch cluster for a given name.
+     * Returns a transform for writing to the Elasticsearch cluster for the given nodes.
      *
-     * @param clusterName name of the Elasticsearch cluster
+     * @param nodes addresses for the Elasticsearch cluster
      */
-    public static <T> Bound<T> withClusterName(String clusterName) {
-      return new Bound<T>().withClusterName(clusterName);
-    }
-
-    /**
-     * Returns a transform for writing to the Elasticsearch cluster for a given servers.
-     *
-     * @param servers endpoints for the Elasticsearch cluster
-     */
-    public static <T> Bound<T> withServers(InetSocketAddress[] servers) {
-      return new Bound<T>().withServers(servers);
+    public static <T> Bound<T> withNodes(HttpHost[] nodes) {
+      return new Bound<T>().withNodes(nodes);
     }
 
     /**
@@ -109,7 +106,7 @@ public class ElasticsearchIO {
      * @param function creates IndexRequest required by Elasticsearch client
      */
     public static <T> Bound withFunction(
-        SerializableFunction<T, Iterable<DocWriteRequest<?>>> function) {
+        SerializableFunction<T, Iterable<BulkOperation>> function) {
       return new Bound<T>().withFunction(function);
     }
 
@@ -127,16 +124,28 @@ public class ElasticsearchIO {
      * Returns a transform for writing to Elasticsearch cluster.
      *
      * @param error applies given function if specified in case of Elasticsearch error with bulk
-     *     writes. Default behavior throws IOException.
+     *              writes. Default behavior throws IOException.
      */
     public static <T> Bound withError(ThrowingConsumer<BulkExecutionException> error) {
       return new Bound<>().withError(error);
     }
 
-    public static <T> Bound withMaxBulkRequestSize(int maxBulkRequestSize) {
-      return new Bound<>().withMaxBulkRequestSize(maxBulkRequestSize);
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param maxBulkRequestOperations max number of operations in a BulkRequest. BulkRequest will be
+     *                           flushed once maxBulkRequestOperations is reached.
+     */
+    public static <T> Bound withMaxBulkRequestOperations(int maxBulkRequestOperations) {
+      return new Bound<>().withMaxBulkRequestOperations(maxBulkRequestOperations);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param maxBulkRequestBytes max bytes of all operations in a BulkRequest. BulkRequest will be
+     *                            flushed once maxBulkRequestBytes is reached.
+     */
     public static <T> Bound withMaxBulkRequestBytes(long maxBulkRequestBytes) {
       return new Bound<>().withMaxBulkRequestBytes(maxBulkRequestBytes);
     }
@@ -145,7 +154,7 @@ public class ElasticsearchIO {
      * Returns a transform for writing to Elasticsearch cluster.
      *
      * @param maxRetries Maximum number of retries to attempt for saving any single chunk of bulk
-     *     requests to the Elasticsearch cluster.
+     *                   requests to the Elasticsearch cluster.
      */
     public static <T> Bound withMaxRetries(int maxRetries) {
       return new Bound<>().withMaxRetries(maxRetries);
@@ -160,54 +169,66 @@ public class ElasticsearchIO {
       return new Bound<>().withRetryPause(retryPause);
     }
 
+    /**
+     * Returns a transform for writing to Elasticsearch cluster.
+     *
+     * @param credentials username and password to connect to the cluster.
+     */
+    public static <T> Bound withCredentials(UsernamePasswordCredentials credentials) {
+      return new Bound<>().withCredentials(credentials);
+    }
+
     public static class Bound<T> extends PTransform<PCollection<T>, PDone> {
 
       private static final int CHUNK_SIZE = 3000;
 
       // 5 megabytes - recommended as a sensible default payload size (see
-      // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/getting-started-index.html#getting-started-batch-processing)
+      // https://www.elastic.co/guide/en/elasticsearch/reference/7.9/getting-started-index.html#getting-started-batch-processing)
       private static final long CHUNK_BYTES = 5L * 1024L * 1024L;
 
       private static final int DEFAULT_RETRIES = 3;
       private static final Duration DEFAULT_RETRY_PAUSE = Duration.millis(35000);
 
-      private final String clusterName;
-      private final InetSocketAddress[] servers;
+      private final HttpHost[] nodes;
       private final Duration flushInterval;
-      private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
+      private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final long numOfShard;
-      private final int maxBulkRequestSize;
+      private final int maxBulkRequestOperations;
       private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
       private final ThrowingConsumer<BulkExecutionException> error;
+      private final UsernamePasswordCredentials credentials;
+
+      private final JsonpMapperFactory mapperFactory;
 
       private Bound(
-          final String clusterName,
-          final InetSocketAddress[] servers,
+          final HttpHost[] nodes,
           final Duration flushInterval,
-          final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+          final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           final long numOfShard,
-          final int maxBulkRequestSize,
+          final int maxBulkRequestOperations,
           final long maxBulkRequestBytes,
-          int maxRetries,
-          Duration retryPause,
-          final ThrowingConsumer<BulkExecutionException> error) {
-        this.clusterName = clusterName;
-        this.servers = servers;
+          final int maxRetries,
+          final Duration retryPause,
+          final ThrowingConsumer<BulkExecutionException> error,
+          final UsernamePasswordCredentials credentials,
+          final JsonpMapperFactory mapperFactory) {
+        this.nodes = nodes;
         this.flushInterval = flushInterval;
-        this.toDocWriteRequests = toDocWriteRequests;
+        this.toBulkOperations = toBulkOperations;
         this.numOfShard = numOfShard;
-        this.maxBulkRequestSize = maxBulkRequestSize;
+        this.maxBulkRequestOperations = maxBulkRequestOperations;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
         this.maxRetries = maxRetries;
         this.retryPause = retryPause;
         this.error = error;
+        this.credentials = credentials;
+        this.mapperFactory = mapperFactory;
       }
 
       Bound() {
         this(
-            null,
             null,
             null,
             null,
@@ -216,173 +237,201 @@ public class ElasticsearchIO {
             CHUNK_BYTES,
             DEFAULT_RETRIES,
             DEFAULT_RETRY_PAUSE,
-            defaultErrorHandler());
+            defaultErrorHandler(),
+            null,
+            SimpleJsonpMapper::new);
       }
 
-      public Bound<T> withClusterName(String clusterName) {
+      public Bound<T> withNodes(HttpHost[] nodes) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
-      }
-
-      public Bound<T> withServers(InetSocketAddress[] servers) {
-        return new Bound<>(
-            clusterName,
-            servers,
-            flushInterval,
-            toDocWriteRequests,
-            numOfShard,
-            maxBulkRequestSize,
-            maxBulkRequestBytes,
-            maxRetries,
-            retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withFlushInterval(Duration flushInterval) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withFunction(
-          SerializableFunction<T, Iterable<DocWriteRequest<?>>> toIndexRequest) {
+          SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toIndexRequest,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withNumOfShard(long numOfShard) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withError(ThrowingConsumer<BulkExecutionException> error) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
-      public Bound<T> withMaxBulkRequestSize(int maxBulkRequestSize) {
+      public Bound<T> withMaxBulkRequestOperations(int maxBulkRequestOperations) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withMaxBulkRequestBytes(long maxBulkRequestBytes) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withMaxRetries(int maxRetries) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
       }
 
       public Bound<T> withRetryPause(Duration retryPause) {
         return new Bound<>(
-            clusterName,
-            servers,
+            nodes,
             flushInterval,
-            toDocWriteRequests,
+            toBulkOperations,
             numOfShard,
-            maxBulkRequestSize,
+            maxBulkRequestOperations,
             maxBulkRequestBytes,
             maxRetries,
             retryPause,
-            error);
+            error,
+            credentials,
+            mapperFactory);
+      }
+
+      public Bound<T> withCredentials(UsernamePasswordCredentials credentials) {
+        return new Bound<>(
+            nodes,
+            flushInterval,
+            toBulkOperations,
+            numOfShard,
+            maxBulkRequestOperations,
+            maxBulkRequestBytes,
+            maxRetries,
+            retryPause,
+            error,
+            credentials,
+            mapperFactory);
+      }
+
+      public Bound<T> withMapperFactory(JsonpMapperFactory mapperFactory) {
+        return new Bound<>(
+            nodes,
+            flushInterval,
+            toBulkOperations,
+            numOfShard,
+            maxBulkRequestOperations,
+            maxBulkRequestBytes,
+            maxRetries,
+            retryPause,
+            error,
+            credentials,
+            mapperFactory);
       }
 
       @Override
       public PDone expand(final PCollection<T> input) {
-        checkNotNull(clusterName);
-        checkNotNull(servers);
-        checkNotNull(toDocWriteRequests);
+        checkNotNull(nodes);
+        checkNotNull(toBulkOperations);
         checkNotNull(flushInterval);
+        checkNotNull(mapperFactory);
         checkArgument(numOfShard >= 0);
-        checkArgument(maxBulkRequestSize > 0);
-        checkArgument(maxBulkRequestBytes > 0);
+        checkArgument(maxBulkRequestOperations > 0);
+        checkArgument(maxBulkRequestBytes > 0L);
         checkArgument(maxRetries >= 0);
         checkArgument(retryPause.getMillis() >= 0);
         if (numOfShard == 0) {
           input.apply(
               ParDo.of(
                   new ElasticsearchWriter<>(
-                      clusterName,
-                      servers,
-                      maxBulkRequestSize,
+                      nodes,
+                      maxBulkRequestOperations,
                       maxBulkRequestBytes,
-                      toDocWriteRequests,
+                      toBulkOperations,
                       error,
                       maxRetries,
-                      retryPause)));
+                      retryPause,
+                      credentials,
+                      mapperFactory)));
         } else {
           input
               .apply("Assign To Shard", ParDo.of(new AssignToShard<>(numOfShard)))
@@ -400,14 +449,15 @@ public class ElasticsearchIO {
                   "Write to Elasticsearch",
                   ParDo.of(
                       new ElasticsearchShardWriter<>(
-                          clusterName,
-                          servers,
-                          maxBulkRequestSize,
+                          nodes,
+                          maxBulkRequestOperations,
                           maxBulkRequestBytes,
-                          toDocWriteRequests,
+                          toBulkOperations,
                           error,
                           maxRetries,
-                          retryPause)));
+                          retryPause,
+                          credentials,
+                          mapperFactory)));
         }
         return PDone.in(input.getPipeline());
       }
@@ -431,14 +481,12 @@ public class ElasticsearchIO {
 
     private static class ElasticsearchWriter<T> extends DoFn<T, Void> {
 
-      private BulkRequest chunk;
-      private long currentSize;
-      private long currentBytes;
-
+      private List<BulkOperation> chunk;
+      private long chunkBytes;
       private final ClientSupplier clientSupplier;
-      private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
+      private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final ThrowingConsumer<BulkExecutionException> error;
-      private final int maxBulkRequestSize;
+      private final int maxBulkRequestOperations;
       private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
@@ -447,18 +495,19 @@ public class ElasticsearchIO {
       private ProcessFunction<BulkRequest, BulkResponse> retryFn;
 
       public ElasticsearchWriter(
-          String clusterName,
-          InetSocketAddress[] servers,
-          int maxBulkRequestSize,
+          HttpHost[] nodes,
+          int maxBulkRequestOperations,
           long maxBulkRequestBytes,
-          SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+          SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
-          Duration retryPause) {
-        this.maxBulkRequestSize = maxBulkRequestSize;
+          Duration retryPause,
+          UsernamePasswordCredentials credentials,
+          JsonpMapperFactory mapperFactory) {
+        this.maxBulkRequestOperations = maxBulkRequestOperations;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
-        this.clientSupplier = new ClientSupplier(clusterName, servers);
-        this.toDocWriteRequests = toDocWriteRequests;
+        this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
+        this.toBulkOperations = toBulkOperations;
         this.error = error;
         this.maxRetries = maxRetries;
         this.retryPause = retryPause;
@@ -466,6 +515,9 @@ public class ElasticsearchIO {
 
       @Setup
       public void setup() throws Exception {
+        checkArgument(
+            this.clientSupplier.get().ping().value(), "Elasticsearch client not reachable");
+
         final FluentBackoff backoffConfig =
             FluentBackoff.DEFAULT
                 .withMaxRetries(this.maxRetries)
@@ -474,11 +526,15 @@ public class ElasticsearchIO {
         this.retryFn = retry(requestFn, backoffConfig);
       }
 
+      @Teardown
+      public void teardown() throws Exception {
+        this.clientSupplier.getTransport().close();
+      }
+
       @StartBundle
       public void startBundle(StartBundleContext c) {
-        chunk = new BulkRequest();
-        currentSize = 0;
-        currentBytes = 0;
+        chunk = new ArrayList<>();
+        chunkBytes = 0;
       }
 
       @FinishBundle
@@ -489,41 +545,41 @@ public class ElasticsearchIO {
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         final T t = c.element();
-        final Iterable<DocWriteRequest<?>> requests = toDocWriteRequests.apply(t);
-        for (DocWriteRequest request : requests) {
-          long requestBytes = documentSize(request);
-          if (currentSize < maxBulkRequestSize
-              && (currentBytes + requestBytes) < maxBulkRequestBytes) {
-            chunk.add(request);
-            currentSize += 1;
-            currentBytes += requestBytes;
-          } else {
+        final Iterable<BulkOperation> operations = toBulkOperations.apply(t);
+        for (BulkOperation operation : operations) {
+          long bytes = operationSize(clientSupplier, operation);
+          if ((chunk.size() + 1) > maxBulkRequestOperations
+              || (chunkBytes + bytes) > maxBulkRequestBytes) {
             flush();
-            chunk = new BulkRequest().add(request);
-            currentSize = 1;
-            currentBytes = requestBytes;
           }
+          chunk.add(operation);
+          chunkBytes += bytes;
         }
       }
 
       private void flush() throws Exception {
-        if (chunk.numberOfActions() < 1) {
+        if (chunk.isEmpty()) {
           return;
         }
+        final BulkRequest request = BulkRequest.of(b -> b.operations(chunk));
         try {
-          requestFn.apply(chunk);
+          requestFn.apply(request);
         } catch (Exception e) {
-          retryFn.apply(chunk);
+          retryFn.apply(request);
         }
+        chunk.clear();
+        chunkBytes = 0;
       }
     }
 
     private static class ElasticsearchShardWriter<T> extends DoFn<KV<Long, Iterable<T>>, Void> {
 
+      private List<BulkOperation> chunk;
+      private long chunkBytes;
       private final ClientSupplier clientSupplier;
-      private final SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests;
+      private final SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations;
       private final ThrowingConsumer<BulkExecutionException> error;
-      private final int maxBulkRequestSize;
+      private final int maxBulkRequestOperations;
       private final long maxBulkRequestBytes;
       private final int maxRetries;
       private final Duration retryPause;
@@ -532,18 +588,19 @@ public class ElasticsearchIO {
       private ProcessFunction<BulkRequest, BulkResponse> retryFn;
 
       public ElasticsearchShardWriter(
-          String clusterName,
-          InetSocketAddress[] servers,
-          int maxBulkRequestSize,
+          HttpHost[] nodes,
+          int maxBulkRequestOperations,
           long maxBulkRequestBytes,
-          SerializableFunction<T, Iterable<DocWriteRequest<?>>> toDocWriteRequests,
+          SerializableFunction<T, Iterable<BulkOperation>> toBulkOperations,
           ThrowingConsumer<BulkExecutionException> error,
           int maxRetries,
-          Duration retryPause) {
-        this.maxBulkRequestSize = maxBulkRequestSize;
+          Duration retryPause,
+          UsernamePasswordCredentials credentials,
+          JsonpMapperFactory mapperFactory) {
+        this.maxBulkRequestOperations = maxBulkRequestOperations;
         this.maxBulkRequestBytes = maxBulkRequestBytes;
-        this.clientSupplier = new ClientSupplier(clusterName, servers);
-        this.toDocWriteRequests = toDocWriteRequests;
+        this.clientSupplier = new ClientSupplier(nodes, credentials, mapperFactory);
+        this.toBulkOperations = toBulkOperations;
         this.error = error;
         this.maxRetries = maxRetries;
         this.retryPause = retryPause;
@@ -551,73 +608,77 @@ public class ElasticsearchIO {
 
       @Setup
       public void setup() throws Exception {
+        checkArgument(
+            this.clientSupplier.get().ping().value(), "Elasticsearch client not reachable");
+
         final FluentBackoff backoffConfig =
-            FluentBackoff.DEFAULT
-                .withMaxRetries(this.maxRetries)
-                .withInitialBackoff(this.retryPause);
+            FluentBackoff.DEFAULT.withMaxRetries(maxRetries).withInitialBackoff(retryPause);
         this.requestFn = request(clientSupplier, error);
         this.retryFn = retry(requestFn, backoffConfig);
+      }
+
+      @Teardown
+      public void teardown() throws Exception {
+        this.clientSupplier.getTransport().close();
+      }
+
+      @StartBundle
+      public void startBundle(StartBundleContext c) {
+        chunk = new ArrayList<>();
+        chunkBytes = 0;
       }
 
       @SuppressWarnings("Duplicates")
       @ProcessElement
       public void processElement(ProcessContext c) throws Exception {
         final Iterable<T> values = c.element().getValue();
+        final Iterable<BulkOperation> operations =
+            () ->
+                StreamSupport.stream(values.spliterator(), false)
+                    .map(toBulkOperations::apply)
+                    .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false))
+                    .iterator();
 
-        // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
-        // so do nothing if number of actions is zero.
-        if (!values.iterator().hasNext()) {
-          LOG.info("ElasticsearchWriter: no requests to send");
-          return;
-        }
-
-        final Stream<DocWriteRequest> docWriteRequests =
-            StreamSupport.stream(values.spliterator(), false)
-                .map(toDocWriteRequests::apply)
-                .flatMap(ar -> StreamSupport.stream(ar.spliterator(), false));
-
-        int currentSize = 0;
-        long currentBytes = 0L;
-        BulkRequest chunk = new BulkRequest();
-
-        for (DocWriteRequest request : (Iterable<DocWriteRequest>) docWriteRequests::iterator) {
-          long requestBytes = documentSize(request);
-          if (currentSize < maxBulkRequestSize
-              && (currentBytes + requestBytes) < maxBulkRequestBytes) {
-            chunk.add(request);
-            currentSize += 1;
-            currentBytes += requestBytes;
-          } else {
-            flush(chunk);
-            chunk = new BulkRequest().add(request);
-            currentSize = 1;
-            currentBytes = requestBytes;
+        for (BulkOperation operation : operations) {
+          long bytes = operationSize(clientSupplier, operation);
+          if ((chunk.size() + 1) > maxBulkRequestOperations
+              || (chunkBytes + bytes) > maxBulkRequestOperations) {
+            flush();
           }
+          chunk.add(operation);
         }
-
-        flush(chunk);
+        flush();
       }
 
-      private void flush(BulkRequest chunk) throws Exception {
-        if (chunk.numberOfActions() < 1) {
+      private void flush() throws Exception {
+        if (chunk.isEmpty()) {
           return;
         }
-
+        final BulkRequest request = BulkRequest.of(r -> r.operations(chunk));
         try {
-          requestFn.apply(chunk);
+          requestFn.apply(request);
         } catch (Exception e) {
-          retryFn.apply(chunk);
+          retryFn.apply(request);
         }
+        chunk.clear();
+        chunkBytes = 0;
       }
+    }
+
+    private static long operationSize(
+        final ClientSupplier clientSupplier, final BulkOperation operation) {
+      final CountingOutputStream os = new CountingOutputStream(NullOutputStream.NULL_OUTPUT_STREAM);
+      operation.serialize(Json.createGenerator(os), clientSupplier.getJsonMapper());
+      return os.getByteCount();
     }
 
     private static ProcessFunction<BulkRequest, BulkResponse> request(
         final ClientSupplier clientSupplier,
         final ThrowingConsumer<BulkExecutionException> bulkErrorHandler) {
       return chunk -> {
-        final BulkResponse bulkItemResponse = clientSupplier.get().bulk(chunk).get();
+        final BulkResponse bulkItemResponse = clientSupplier.get().bulk(chunk);
 
-        if (bulkItemResponse.hasFailures()) {
+        if (bulkItemResponse.errors()) {
           bulkErrorHandler.accept(new BulkExecutionException(bulkItemResponse));
         }
 
@@ -652,36 +713,45 @@ public class ElasticsearchIO {
       };
     }
 
-    private static class ClientSupplier implements Supplier<Client>, Serializable {
+    private static class ClientSupplier implements Supplier<ElasticsearchClient>, Serializable {
 
-      private final AtomicReference<Client> CLIENT = new AtomicReference<>();
-      private final String clusterName;
-      private final InetSocketAddress[] addresses;
+      private final AtomicReference<RestClientTransport> transport = new AtomicReference<>();
+      private final HttpHost[] nodes;
+      private final UsernamePasswordCredentials credentials;
+      private final JsonpMapperFactory mapperFactory;
 
-      public ClientSupplier(final String clusterName, final InetSocketAddress[] addresses) {
-        this.clusterName = clusterName;
-        this.addresses = addresses;
+      public ClientSupplier(
+          final HttpHost[] nodes,
+          final UsernamePasswordCredentials credentials,
+          final JsonpMapperFactory mapperFactory) {
+        this.nodes = nodes;
+        this.credentials = credentials;
+        this.mapperFactory = mapperFactory;
       }
 
       @Override
-      public Client get() {
-        if (CLIENT.get() == null) {
-          synchronized (CLIENT) {
-            if (CLIENT.get() == null) {
-              CLIENT.set(create(clusterName, addresses));
-            }
-          }
-        }
-        return CLIENT.get();
+      public ElasticsearchClient get() {
+        return new ElasticsearchClient(getTransport());
       }
 
-      private TransportClient create(String clusterName, InetSocketAddress[] addresses) {
-        final Settings settings = Settings.builder().put("cluster.name", clusterName).build();
+      public RestClientTransport getTransport() {
+        return transport.updateAndGet(c -> c == null ? createTransport() : c);
+      }
 
-        TransportAddress[] transportAddresses =
-            Arrays.stream(addresses).map(TransportAddress::new).toArray(TransportAddress[]::new);
+      public JsonpMapper getJsonMapper() {
+        return getTransport().jsonpMapper();
+      }
 
-        return new PreBuiltTransportClient(settings).addTransportAddresses(transportAddresses);
+      private RestClientTransport createTransport() {
+        final RestClientBuilder builder = RestClient.builder(nodes);
+        if (credentials != null) {
+          final CredentialsProvider provider = new BasicCredentialsProvider();
+          provider.setCredentials(AuthScope.ANY, credentials);
+          builder.setHttpClientConfigCallback(
+              asyncBuilder -> asyncBuilder.setDefaultCredentialsProvider(provider));
+        }
+        final RestClient restClient = builder.build();
+        return new RestClientTransport(restClient, mapperFactory.create());
       }
     }
 
@@ -691,35 +761,50 @@ public class ElasticsearchIO {
       };
     }
 
-    /** An exception that puts information about the failures in the bulk execution. */
+    /**
+     * An exception that puts information about the failures in the bulk execution.
+     */
     public static class BulkExecutionException extends IOException {
 
-      private final Iterable<Throwable> failures;
+      private final Iterable<ErrorCause> failures;
 
       BulkExecutionException(BulkResponse bulkResponse) {
-        super(bulkResponse.buildFailureMessage());
-        this.failures =
-            Arrays.stream(bulkResponse.getItems())
-                .map(BulkItemResponse::getFailure)
-                .filter(Objects::nonNull)
-                .map(BulkItemResponse.Failure::getCause)
-                .collect(Collectors.toList());
+        super(buildFailureMessage(bulkResponse));
+        this.failures = buildFailures(bulkResponse);
       }
 
-      public Iterable<Throwable> getFailures() {
+      public Iterable<ErrorCause> getFailures() {
         return failures;
       }
-    }
-  }
 
-  private static long documentSize(DocWriteRequest request) {
-    if (request instanceof IndexRequest) {
-      return ((IndexRequest) request).source().length();
-    } else if (request instanceof UpdateRequest) {
-      return ((UpdateRequest) request).doc().source().length();
-    } else if (request instanceof DeleteRequest) {
-      return 0;
+      private static Iterable<ErrorCause> buildFailures(BulkResponse bulkResponse) {
+        return bulkResponse.items().stream()
+            .map(BulkResponseItem::error)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+      }
+
+      private static String buildFailureMessage(BulkResponse bulkResponse) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("failure in bulk execution:");
+        for (BulkResponseItem item : bulkResponse.items()) {
+          final ErrorCause cause = item.error();
+          if (cause != null) {
+            sb.append("\n[")
+                .append(item)
+                .append("]: index [")
+                .append(item.index())
+                .append("], type [")
+                .append(item.operationType())
+                .append("], id [")
+                .append(item.id())
+                .append("], message [")
+                .append(cause.reason())
+                .append("]");
+          }
+        }
+        return sb.toString();
+      }
     }
-    throw new IllegalArgumentException("Encountered unknown subclass of DocWriteRequest");
   }
 }

@@ -96,6 +96,7 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.3"
+val elasticsearch8Version = "8.1.2"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
@@ -415,6 +416,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-cassandra3`,
     `scio-elasticsearch6`,
     `scio-elasticsearch7`,
+    `scio-elasticsearch8`,
     `scio-extra`,
     `scio-jdbc`,
     `scio-parquet`,
@@ -711,7 +713,8 @@ lazy val `scio-elasticsearch6`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
-      "org.elasticsearch.client" % "transport" % elasticsearch6Version
+      "org.elasticsearch.client" % "transport" % elasticsearch6Version,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )
   .dependsOn(
@@ -735,7 +738,30 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
       "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version
+      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
+  )
+
+lazy val `scio-elasticsearch8`: Project = project
+  .in(file("scio-elasticsearch/es8"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    description := "Scio add-on for writing to Elasticsearch",
+    // TODO enable MiMa after 1st release
+    mimaPreviousArtifacts := Set.empty,
+    libraryDependencies ++= Seq(
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
+      "commons-io" % "commons-io" % commonsIoVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
   )
   .dependsOn(
@@ -933,6 +959,9 @@ lazy val `scio-examples`: Project = project
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -992,7 +1021,7 @@ lazy val `scio-examples`: Project = project
     `scio-schemas`,
     `scio-jdbc`,
     `scio-extra`,
-    `scio-elasticsearch7`,
+    `scio-elasticsearch8`,
     `scio-tensorflow`,
     `scio-test` % "compile->test",
     `scio-smb`,
@@ -1215,7 +1244,7 @@ lazy val siteSettings = Def.settings(
     `scio-avro`,
     `scio-google-cloud-platform`,
     `scio-cassandra3`,
-    `scio-elasticsearch6`,
+    `scio-elasticsearch8`,
     `scio-extra`,
     `scio-jdbc`,
     `scio-parquet`,

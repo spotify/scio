@@ -27,65 +27,81 @@
 // --input=[INPUT] --index=[INDEX] --esHost=[HOST] --esPort=[PORT]"`
 package com.spotify.scio.examples.extra
 
+import co.elastic.clients.elasticsearch.core.bulk.{BulkOperation, IndexOperation}
+import co.elastic.clients.json.jackson.JacksonJsonpMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio._
 import com.spotify.scio.elasticsearch._
 import com.spotify.scio.examples.common.ExampleData
-
 import org.apache.http.HttpHost
-import org.elasticsearch.action.index.IndexRequest
+
+import java.time.LocalDate
 
 object ElasticsearchMinimalExample {
+
+  final case class Document(
+    user: String,
+    postDate: LocalDate,
+    word: String,
+    count: Long
+  )
+
   def main(cliArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cliArgs)
 
     val host = args.getOrElse("esHost", "localhost")
-    val port = args.getOrElse("esPort", "9200").toInt
+    val port = args.int("esPort", 9200)
 
     // Output es index to write into
     val index = args.getOrElse("index", "defaultindex")
 
     val primaryHost = new HttpHost(host, port)
-    val servers: Seq[HttpHost] = Seq(primaryHost)
+    val nodes = Seq(primaryHost)
 
-    val clusterOpts = ElasticsearchOptions(servers)
+    val clusterOpts = ElasticsearchOptions(
+      nodes = nodes,
+      mapperFactory = () => {
+        // Use jackson for user json serialization
+        val mapper = new JacksonJsonpMapper()
+        // Add scala support
+        mapper.objectMapper().registerModule(DefaultScalaModule)
+        // Add java.time support
+        mapper.objectMapper().registerModule(new JavaTimeModule())
+        mapper
+      }
+    )
 
     // Provide an elasticsearch indexer to transform collections to indexable ES documents
     val indexRequestBuilder = indexer(index)
 
-    // Open text file as `SCollection[String]`. The input can be either a single file or a
-    // wildcard matching multiple files.
-    sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
-      .transform("counter") {
-        // Split input lines, filter out empty tokens and expand into a collection of tokens
-        _.flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
-          // Count occurrences of each unique `String` to get `(String, Long)`
-          .countByValue
-      }
+    sc
+      // Open text file as `SCollection[String]`. The input can be either a single file or a
+      // wildcard matching multiple files.
+      .textFile(args.getOrElse("input", ExampleData.KING_LEAR))
+      // Split input lines and expand into a collection of tokens
+      .flatMap(_.split("[^a-zA-Z']+"))
+      // Filter out empty tokens
+      .filter(_.nonEmpty)
+      // Count occurrences of each unique `String` to get `(String, Long)`
+      .countByValue
       // Save each collection as an ES document
       .saveAsElasticsearch(clusterOpts)(indexRequestBuilder)
 
     // Run pipeline
     sc.run().waitUntilFinish()
-
-    ()
   }
 
-  private val indexer = (index: String) =>
-    (message: (String, Long)) => {
-      val request = new IndexRequest(index)
-        .id(message._1)
-        .source(
-          "user",
-          "example",
-          "postDate",
-          new java.util.Date(),
-          "word",
-          message._1.toString,
-          "count",
-          message._2.toString
-        )
-
-      Iterable(request)
-    }
+  private def indexer(index: String): ((String, Long)) => Iterable[BulkOperation] = {
+    case (word, count) =>
+      val document = Document(
+        user = "example",
+        postDate = LocalDate.now(),
+        word = word,
+        count = count
+      )
+      val op = IndexOperation.of[Document](_.index(index).document(document))
+      Some(BulkOperation.of(_.index(op)))
+  }
 }
