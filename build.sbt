@@ -27,7 +27,7 @@ ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
 val beamVersion = "2.38.0"
-// scala-steward:off
+
 // check version used by beam
 // https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val animalSnifferAnnotationsVersion = "1.20"
@@ -78,7 +78,6 @@ val googleIAMVersion = "1.2.1"
 val grpcVersion = "1.44.0"
 val jacksonVersion = "2.13.1"
 val protobufVersion = "3.19.3"
-// scala-steward:on
 
 val algebirdVersion = "0.13.9"
 val algebraVersion = "2.7.0"
@@ -940,7 +939,7 @@ lazy val `scio-examples`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastore,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.5.0",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
