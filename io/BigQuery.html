@@ -196,6 +196,8 @@ spotify/scio
     <li><a href="../io/BigQuery.html#type-annotations" class="header">Type annotations</a></li>
     <li><a href="../io/BigQuery.html#bigquery-reads-using-schema" class="header">BigQuery reads using <code>Schema</code></a></li>
     <li><a href="../io/BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
+    <li><a href="../io/BigQuery.html#bigquery-authentication" class="header">BigQuery authentication</a></li>
+    <li><a href="../io/BigQuery.html#bigquery-configurations-in-sbt" class="header">BigQuery configurations in SBT</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -204,7 +206,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.5+0-d3d83309+20220303-1612*
+<i class="md-icon" title="Version">label_outline</i> 0.11.6+0-0f28b77e+20220429-1621*
 </label>
 </li>
 </ul>
@@ -223,6 +225,8 @@ spotify/scio
     <li><a href="../io/BigQuery.html#type-annotations" class="header">Type annotations</a></li>
     <li><a href="../io/BigQuery.html#bigquery-reads-using-schema" class="header">BigQuery reads using <code>Schema</code></a></li>
     <li><a href="../io/BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
+    <li><a href="../io/BigQuery.html#bigquery-authentication" class="header">BigQuery authentication</a></li>
+    <li><a href="../io/BigQuery.html#bigquery-configurations-in-sbt" class="header">BigQuery configurations in SBT</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -464,6 +468,68 @@ def result =
 <p>See <a href="../FAQ.html#how-to-make-intellij-idea-work-with-type-safe-bigquery-classes-">the FAQ</a> for making IntelliJ happy with type safe BigQuery.</p>
 <h3><a href="#custom-types-and-validation" name="custom-types-and-validation" class="anchor"><span class="anchor-link"></span></a>Custom types and validation</h3>
 <p>See <a href="../internals/OverrideTypeProvider.html">OverrideTypeProvider</a> for details about the custom types and validation mechanism.</p>
+<h2><a href="#bigquery-authentication" name="bigquery-authentication" class="anchor"><span class="anchor-link"></span></a>BigQuery authentication</h2>
+<p>BigQuery authentication works a bit differently than other IO types and can be hard to reason about. File-based IOs, for example, are read from directly on each remote worker node. In contrast, for BigQuery reads, Scio will actually launch a <a href="https://cloud.google.com/bigquery/docs/exporting-data">Bigquery export job</a> from the main class process before submitting a Dataflow job request. This export job extracts the requested BQ data to a temporary GCS location, from which the job workers can read directly from. Thus, your launcher code must be credentialed with the <a href="https://cloud.google.com/bigquery/docs/exporting-data#required_permissions">required permissions</a> to export data.</p>
+<p>This credential will be picked up from the values of <code>bigquery.project</code> and <code>bigquery.secret</code>, if set. If they are not, Scio will attempt to find an active <a href="https://cloud.google.com/docs/authentication/production#automatically">Application Default Credential</a> and set the billing project to the value from <a href="https://beam.apache.org/releases/javadoc/2.38.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>. As of Scio 0.11.6, you can set the SBT option <code>bigquery.debug_auth=true</code>, which enables Scio to log the active credential used in BigQuery queries that return a 403 FORBIDDEN status.</p>
+<p>Note that BigQuery Storage APIs don&rsquo;t require an export job as they can read from BigQuery directly.</p>
+<h2><a href="#bigquery-configurations-in-sbt" name="bigquery-configurations-in-sbt" class="anchor"><span class="anchor-link"></span></a>BigQuery configurations in SBT</h2>
+<p>Scio offers several BigQuery options that can be configured as SBT options - either in a root-level <code>.sbtopts</code> file or in your SBT process as <code>sbt -D{$OPT_KEY}=${OPT_VALUE} ...</code>:</p>
+<table>
+  <thead>
+    <tr>
+      <th>Option </th>
+      <th>Description </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>bigquery.project</code> </td>
+      <td>Specifies the billing project to use for queries. Defaults to the default project associated with the active GCP configuration (see <a href="https://beam.apache.org/releases/javadoc/2.38.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>). </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.secret</code> </td>
+      <td>Specifies a file path containing a BigQuery credential. Defaults to the <a href="https://cloud.google.com/docs/authentication/production#automatically">Application Default Credential</a>. </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.connect_timeout</code> </td>
+      <td>Timeout in milliseconds to establish a connection. Default is 20000 (20 seconds). 0 for an infinite timeout. </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.read_timeout</code> </td>
+      <td>Timeout in milliseconds to read data from an established connection. Default is 20000 (20 seconds). 0 for an infinite timeout. </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.priority</code> </td>
+      <td>Determines whether queries are executed in &ldquo;BATCH&rdquo; or &ldquo;INTERACTIVE&rdquo; mode. Default: BATCH. </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.debug_auth</code> </td>
+      <td>Enables logging active BigQuery user information on auth errors. Default: false. </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.types.debug</code> </td>
+      <td>Enables verbose logging of macro generation steps. Default: false. </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.cache.enabled</code> </td>
+      <td>Enables scio bigquery caching. Default: true. </td>
+    </tr>
+    <tr>
+      <td><code>generated.class.cache.directory</code> </td>
+      <td>BigQuery generated class cache directory. Defaults to a directory in <code>java.io.tmpdir</code>. </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.cache.directory</code> </td>
+      <td>BigQuery local schema cache directory. Defaults to a directory in <code>java.io.tmpdir</code>. </td>
+    </tr>
+    <tr>
+      <td><code>bigquery.plugin.disable.dump</code> </td>
+      <td>Disable macro class dump. Default: false. </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/io/BigQuery.md" title="Edit this page" class="md-source-file md-edit">
@@ -472,7 +538,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.5+0-d3d83309+20220303-1612*
+0.11.6+0-0f28b77e+20220429-1621*
 </span>
 </div>
 </article>
