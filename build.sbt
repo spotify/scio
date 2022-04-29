@@ -115,7 +115,6 @@ val pprintVersion = "0.7.1"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.16.0"
 val scalaCollectionCompatVersion = "2.7.0"
-val scalatestplusVersion = "3.1.0.0-RC2"
 val scalacticVersion = "3.2.11"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.12"
@@ -125,6 +124,8 @@ val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.2"
 val tensorFlowVersion = "0.4.1"
 val zoltarVersion = "0.6.0"
+// dependent versions
+val scalatestplusVersion = s"$scalatestVersion.0"
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
@@ -514,7 +515,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
       "org.scalatest" %% "scalatest" % scalatestVersion,
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
@@ -588,7 +589,7 @@ lazy val `scio-avro`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
@@ -650,7 +651,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
