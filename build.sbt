@@ -76,7 +76,7 @@ val googleCloudSpannerVersion = "6.20.0"
 val googleHttpClientsVersion = "1.41.2"
 val googleIAMVersion = "1.2.1"
 val grpcVersion = "1.44.0"
-val jacksonVersion = "2.13.1"
+val jacksonVersion = "2.13.2"
 val protobufVersion = "3.19.3"
 
 val algebirdVersion = "0.13.9"
