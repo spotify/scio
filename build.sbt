@@ -62,7 +62,7 @@ val googleApiServicesStorageVersion = s"v1-rev20211201-$googleClientsVersion"
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/index.html
 val bigQueryStorageBetaVersion = "0.134.0"
-val bigQueryStorageVersion = "2.10.0"
+val bigQueryStorageVersion = "2.10.1"
 val checkerFrameworkVersion = "3.21.2"
 val errorProneAnnotationsVersion = "2.11.0"
 val floggerVersion = "0.7.4"
