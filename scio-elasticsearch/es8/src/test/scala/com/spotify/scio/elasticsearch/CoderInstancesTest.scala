@@ -32,7 +32,7 @@ class CoderInstancesTest extends AnyFlatSpec with Matchers with CoderInstances {
   import com.spotify.scio.testing.CoderAssertions._
 
   type Document = Map[String, Any]
-  val document = Map("key" -> 42)
+  val document: Document = Map("key" -> 42)
 
   val indexOperation: IndexOperation[Document] =
     IndexOperation.of(_.index("index").id("id").document(document))
