@@ -103,7 +103,7 @@ class BigQueryPartitionUtilIT extends AnyFlatSpec with Matchers {
 
   "latestTable" should "work" in {
     val input = "data-integration-test:partition_a.table_$LATEST"
-    val expected = input.replace("$LATEST", "20170103")
+    val expected = input.replace("$LATEST", "20170302")
     BigQueryPartitionUtil.latestTable(bq, input) shouldBe expected
   }
 
