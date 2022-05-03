@@ -753,8 +753,6 @@ lazy val `scio-elasticsearch8`: Project = project
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
-    // TODO enable MiMa after 1st release
-    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
       "commons-io" % "commons-io" % commonsIoVersion,
@@ -845,8 +843,6 @@ lazy val `scio-parquet`: Project = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
-    // TODO enable MiMa after next release
-    mimaPreviousArtifacts := Set.empty,
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
     Compile / compile := Def.task {
