@@ -21,6 +21,8 @@ package com.spotify.scio.util
 
 import com.spotify.scio.coders.Coder
 
+import scala.collection.compat._ // scalafix:ok
+
 /**
  * A class for tracking the statistics of a set of numbers (count, mean and variance) in a
  * numerically robust way. Includes support for merging two StatCounters. Based on Welford and
@@ -55,7 +57,7 @@ class StatCounter(values: TraversableOnce[Double]) extends Serializable {
 
   /** Add multiple values into this StatCounter, updating the internal statistics. */
   def merge(values: TraversableOnce[Double]): StatCounter = {
-    values.foreach(v => merge(v))
+    values.iterator.foreach(v => merge(v))
     this
   }
 

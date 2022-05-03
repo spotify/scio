@@ -17,7 +17,7 @@
 
 package com.spotify.scio.avro
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{StaticAnnotation, nowarn}
 
 package object types {
 
@@ -35,5 +35,6 @@ package object types {
    *                 @doc("user age") age: Int)
    * }}}
    */
+  @nowarn("msg=parameter value value in class doc is never used")
   class doc(value: String) extends StaticAnnotation
 }

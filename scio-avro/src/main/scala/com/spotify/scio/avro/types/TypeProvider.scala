@@ -21,7 +21,6 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.channels.Channels
 import java.nio.file.{Path, Paths}
-
 import com.spotify.scio.CoreSysProps
 import com.spotify.scio.avro.AvroSysProps
 import com.spotify.scio.avro.types.MacroUtil._
@@ -38,6 +37,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
 import org.slf4j.LoggerFactory
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.reflect.macros._
 import scala.util.Try
@@ -139,6 +139,7 @@ private[types] object TypeProvider {
     }
   }
 
+  @nowarn
   def toSchemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)

@@ -29,6 +29,8 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import com.spotify.scio.util.Cache
 
+import scala.annotation.nowarn
+
 private[types] object SchemaProvider {
   private[this] val AvroSchemaCache = Cache.concurrentHashMap[String, Schema]
   private[this] val TableSchemaCache = Cache.concurrentHashMap[Type, TableSchema]
@@ -117,6 +119,7 @@ private[types] object SchemaProvider {
   private def getFields(t: Type): Iterable[(Symbol, Option[String])] =
     t.decls.filter(isField) zip fieldDescs(t)
 
+  @nowarn
   private def fieldDescs(t: Type): Iterable[Option[String]] = {
     val tpe = "com.spotify.scio.bigquery.types.description"
     t.typeSymbol.asClass.primaryConstructor.typeSignature.paramLists.head.map {

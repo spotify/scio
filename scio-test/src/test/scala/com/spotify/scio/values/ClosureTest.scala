@@ -19,6 +19,8 @@ package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
 
+import scala.annotation.nowarn
+
 class ClosureTest extends PipelineSpec {
   "SCollection" should "support lambda" in {
     runWithContext { sc =>
@@ -132,8 +134,10 @@ class NotSerializableObj {
 
 class NestedClosuresNotSerializable {
   val irrelevantInt: Int = 1
+  @nowarn("msg=parameter value name in method closure is never used")
   def closure(name: String)(body: => Int => Int): Int => Int = body
   def getMapFn: Int => Int = closure("one") {
+    @nowarn("msg=local method x in method getMapFn is never used")
     def x = irrelevantInt // scalafix:ok
     def y = 2
     val fn = { a: Int => a + y }

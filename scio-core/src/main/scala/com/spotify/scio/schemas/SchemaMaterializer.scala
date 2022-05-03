@@ -19,13 +19,14 @@ package com.spotify.scio.schemas
 
 import java.util
 import java.util.function.BiConsumer
-
 import scala.reflect.ClassTag
 import scala.jdk.CollectionConverters._
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.Row
 import BSchema.{Field => BField, FieldType => BFieldType}
+
+import scala.collection.compat.immutable.ArraySeq
 
 object SchemaMaterializer {
   @inline private[scio] def fieldType[A](schema: Schema[A]): BFieldType =
@@ -72,7 +73,7 @@ object SchemaMaterializer {
       values.update(i, dispatchDecode(schema)(v.asInstanceOf[schema.Repr]))
       i = i + 1
     }
-    record.construct(values)
+    record.construct(ArraySeq.unsafeWrapArray(values))
   }
 
   private[scio] def decode[A](schema: Type[A])(v: schema.Repr): A = v

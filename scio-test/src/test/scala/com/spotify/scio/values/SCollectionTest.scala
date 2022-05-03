@@ -19,8 +19,6 @@ package com.spotify.scio.values
 
 import java.io.PrintStream
 import java.nio.file.Files
-
-import com.google.api.client.util.Charsets
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
@@ -42,6 +40,8 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
+
+import java.nio.charset.StandardCharsets
 
 class SCollectionTest extends PipelineSpec {
 
@@ -763,7 +763,7 @@ class SCollectionTest extends PipelineSpec {
         r should containInAnyOrder(Seq(1, 2, 3))
       }
     }
-    Files.readAllLines(outFile, Charsets.UTF_8) should contain theSameElementsAs Seq("1", "2", "3")
+    Files.readAllLines(outFile, StandardCharsets.UTF_8) should contain theSameElementsAs Seq("1", "2", "3")
   }
 
   it should "support Combine.globally() with default value" in {

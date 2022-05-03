@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.annotation.{StaticAnnotation, compileTimeOnly, nowarn}
 import scala.reflect.macros.blackbox
 
 @compileTimeOnly(
@@ -28,6 +28,8 @@ final class registerSysProps extends StaticAnnotation {
 }
 
 private object registerSysPropsMacro {
+
+  @nowarn
   def impl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 

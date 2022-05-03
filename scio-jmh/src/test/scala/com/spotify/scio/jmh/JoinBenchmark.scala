@@ -25,6 +25,9 @@ import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
 import scala.jdk.CollectionConverters._
+import scala.collection.compat._ // scalafix:ok
+
+
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
@@ -70,7 +73,7 @@ class JoinBenchmark {
         a <- as.asScala.iterator
         b <- bs.asScala.iterator
       } yield (a, b)
-    val i = xs.toIterator
+    val i = xs.iterator
     while (i.hasNext) c.output(i.next())
   }
 

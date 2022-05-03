@@ -25,6 +25,7 @@ import com.spotify.scio.avro._
 import com.spotify.sparkey.SparkeyReader.Entry
 import com.spotify.sparkey.{IndexHeader, LogHeader, Sparkey, SparkeyReader}
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.io.Source
 
@@ -47,6 +48,7 @@ object SimpleDistCacheJob {
 
 class NonSerializable(val noDefaultCntr: String) extends Serializable {
   // make sure it's not kryo/java serializable
+  @nowarn("msg=private val t in class NonSerializable is never used")
   private val t = new Thread() // scalafix:ok
 }
 

@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.annotation.{StaticAnnotation, compileTimeOnly, nowarn}
 import scala.reflect.runtime.universe._
 
 /**
@@ -83,6 +83,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -126,6 +127,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
@@ -155,6 +157,7 @@ object AvroType {
    * Also generate a companion object with convenience methods.
    * @group annotation
    */
+  @nowarn
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )

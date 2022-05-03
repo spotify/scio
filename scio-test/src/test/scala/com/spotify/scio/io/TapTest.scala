@@ -20,8 +20,6 @@ package com.spotify.scio.io
 import java.io._
 import java.nio.ByteBuffer
 import java.util.UUID
-
-import com.google.api.client.util.Charsets
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.AvroUtils._
@@ -32,12 +30,13 @@ import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
-
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.options.ScioOptions
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericData
 import org.apache.avro.Schema
+
+import java.nio.charset.StandardCharsets
 
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: Coder](tap: Tap[T], expected: Set[T]): Unit = {
@@ -155,7 +154,7 @@ class TapTest extends TapSpec {
         val file = new File(dir, "part-%05d-%05d.%s".format(i, nFiles, ext))
         val os = new CompressorStreamFactory()
           .createCompressorOutputStream(cType, new FileOutputStream(file))
-        data(i).foreach(l => IOUtils.write(l + "\n", os, Charsets.UTF_8))
+        data(i).foreach(l => IOUtils.write(l + "\n", os, StandardCharsets.UTF_8))
         os.close()
       }
       verifyTap(TextTap(ScioUtil.addPartSuffix(dir.getPath, ext)), data.flatten.toSet)

@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{StaticAnnotation, nowarn}
 
 package object types {
 
@@ -32,6 +32,7 @@ package object types {
    *                 @description("user age") age: Int)
    * }}}
    */
+  @nowarn("msg=parameter value value in class description is never used")
   final class description(value: String) extends StaticAnnotation with Serializable
 
   /**

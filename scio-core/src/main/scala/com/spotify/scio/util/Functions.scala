@@ -33,6 +33,7 @@ import org.apache.beam.sdk.transforms.Partition.PartitionFn
 import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFunction, SimpleFunction}
 
 import scala.jdk.CollectionConverters._
+import scala.collection.compat._ // scalafix:ok
 
 private[scio] object Functions {
   private[this] val BufferSize = 20
@@ -232,7 +233,7 @@ private[scio] object Functions {
       private[this] val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-        val i = g(c.element()).toIterator
+        val i = g(c.element()).iterator
         while (i.hasNext) c.output(i.next())
       }
     }

@@ -50,6 +50,7 @@ import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
+import scala.collection.compat._ // scalafix:ok
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -777,13 +778,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def randomSplit(weights: Array[Double]): Array[SCollection[T]] = {
     val sum = weights.sum
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
-    val m = TreeMap(normalizedCumWeights.zipWithIndex: _*) // Map[lower bound, split]
+    val m = TreeMap(normalizedCumWeights.toIndexedSeq.zipWithIndex: _*) // Map[lower bound, split]
 
     val sides = (1 until weights.length).map(_ => SideOutput[T]())
     val (head, tail) = this
       .withSideOutputs(sides: _*)
       .flatMap { (x, c) =>
-        val i = m.to(ThreadLocalRandom.current().nextDouble()).last._2
+        val i = m.rangeTo(ThreadLocalRandom.current().nextDouble()).last._2
         if (i == 0) {
           Seq(x) // Main output
         } else {

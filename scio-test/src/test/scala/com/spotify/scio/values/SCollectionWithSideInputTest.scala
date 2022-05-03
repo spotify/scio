@@ -112,7 +112,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
           .asMultiMapSingletonSideInput
       val s = p1
         .withSideInputs(p2)
-        .flatMap((_, s) => s(p2).mapValues(_.toSet))
+        .flatMap((_, s) => s(p2).map { case (k, v) => k -> v.toSet })
         .toSCollection
       s should containInAnyOrder(sideData.map(kv => (kv._1, Set(kv._2, kv._2 + 10))))
     }
@@ -338,7 +338,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
       val p2 = SideInput.wrapMultiMap(i2)
       val s = p1
         .withSideInputs(p2)
-        .flatMap((_, s) => s(p2).mapValues(_.toSet))
+        .flatMap((_, s) => s(p2).map { case (k, v) => k -> v.toSet })
         .toSCollection
       s should containInAnyOrder(sideData.map(kv => (kv._1, Set(kv._2, kv._2 + 10))))
     }

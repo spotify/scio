@@ -17,10 +17,10 @@
 
 package com.spotify.scio.bigquery.types
 
+import com.google.api.client.json.gson.GsonFactory
+
 import java.nio.file.{Path, Paths}
 import java.util.{List => JList}
-
-import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.CoreSysProps
 import com.spotify.scio.bigquery.client.BigQuery
@@ -37,6 +37,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
 import org.slf4j.LoggerFactory
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.reflect.macros._
@@ -45,6 +46,7 @@ private[types] object TypeProvider {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQuery = BigQuery.defaultInstance()
 
+  @nowarn
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
@@ -338,7 +340,7 @@ private[types] object TypeProvider {
         val defTblTrait =
           defTblDesc.map(_ => tq"${p(c, SType)}.HasTableDescription").toSeq
         val defSchema = {
-          schema.setFactory(new JacksonFactory)
+          schema.setFactory(GsonFactory.getDefaultInstance)
           q"override def schema: ${p(c, GModel)}.TableSchema = ${p(c, SUtil)}.parseSchema(${schema.toString})"
         }
         val defAvroSchema =
@@ -529,6 +531,7 @@ private[types] object TypeProvider {
         .resolve("generated-classes")
     }
 
+  @nowarn
   private def pShowCode(
     c: blackbox.Context
   )(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {

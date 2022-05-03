@@ -19,7 +19,6 @@ package com.spotify.scio.datastore
 
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.testing._
-import com.spotify.scio.datastore._
 import com.google.datastore.v1.Entity
 import com.google.datastore.v1.client.DatastoreHelper
 

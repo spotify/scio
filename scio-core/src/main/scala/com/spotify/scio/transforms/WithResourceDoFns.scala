@@ -22,6 +22,8 @@ import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.DoFn
 
+import scala.collection.compat._ // scalafix:ok
+
 class CollectFnWithResource[T, U, R] private[transforms] (
   resource: => R,
   resourceType: ResourceType,
@@ -68,7 +70,7 @@ class FlatMapFnWithResource[T, U, R] private[transforms] (
   val g: (R, T) => TraversableOnce[U] = ClosureCleaner.clean(f)
   @ProcessElement
   def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-    val i = g(getResource, c.element()).toIterator
+    val i = g(getResource, c.element()).iterator
     while (i.hasNext) c.output(i.next())
   }
 }

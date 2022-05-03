@@ -19,6 +19,7 @@ package com.spotify.scio.coders
 
 import com.spotify.scio.{FeatureFlag, MacroSettings, MagnoliaMacros}
 
+import scala.annotation.nowarn
 import scala.reflect.macros._
 
 private[coders] object CoderMacros {
@@ -39,6 +40,7 @@ private[coders] object CoderMacros {
         """.stripMargin
     )
 
+  @nowarn("msg=parameter value lp in method issueFallbackWarning is never used")
   def issueFallbackWarning[T: c.WeakTypeTag](
     c: whitebox.Context
   )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {

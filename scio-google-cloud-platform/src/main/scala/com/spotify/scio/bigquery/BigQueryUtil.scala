@@ -19,14 +19,13 @@ package com.spotify.scio.bigquery
 
 import java.io.StringReader
 import java.util.UUID
-
 import com.google.api.client.json.JsonObjectParser
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.bigquery.model.TableSchema
 
 /** Utility for BigQuery data types. */
 object BigQueryUtil {
-  private lazy val jsonObjectParser = new JsonObjectParser(new JacksonFactory)
+  private lazy val jsonObjectParser = new JsonObjectParser(GsonFactory.getDefaultInstance)
 
   /** Parse a schema string. */
   def parseSchema(schemaString: String): TableSchema =
