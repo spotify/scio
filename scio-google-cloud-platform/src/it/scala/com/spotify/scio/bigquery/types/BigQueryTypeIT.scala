@@ -187,13 +187,13 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     tableReference.setProjectId("data-integration-test")
     tableReference.setDatasetId("partition_a")
     tableReference.setTableId("table_$LATEST")
-    Table.Ref(tableReference).latest().ref.getTableId shouldBe "table_20170103"
+    Table.Ref(tableReference).latest().ref.getTableId shouldBe "table_20170302"
 
     Table
       .Spec("data-integration-test:partition_a.table_$LATEST")
       .latest()
       .ref
-      .getTableId shouldBe "table_20170103"
+      .getTableId shouldBe "table_20170302"
   }
 
   it should "type check annotation arguments" in {
