@@ -61,6 +61,7 @@ The data variable hold the test data and `sc.parallelize` will transform the inp
 
 ### Test for pipeline with windowing
 We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found @github[here](/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the @github[LeaderBoard.calculateTeamScores](/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options:
+
 * Calculate the scores every time the window ends
 * Calculate an early/"speculative" result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring)
 * Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.
