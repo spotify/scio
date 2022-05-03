@@ -22,6 +22,7 @@ import com.google.api.services.bigquery.model.{Dataset, DatasetReference}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.client.BigQuery
 import org.joda.time._
+import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
@@ -148,9 +149,14 @@ object PopulateTestData {
     )
 
     val data = List(ToTableT("a", 1), ToTableT("b", 2))
-    bq.writeTypedRows(s"$projectId:partition_a.table_20170101", data, WRITE_TRUNCATE)
-    bq.writeTypedRows(s"$projectId:partition_a.table_20170102", data, WRITE_TRUNCATE)
-    bq.writeTypedRows(s"$projectId:partition_a.table_20170103", data, WRITE_TRUNCATE)
+    val format = DateTimeFormat.forPattern("yyyyMMdd")
+    val date = new LocalDate(2017, 1, 1)
+    // make sure pagination is working
+    (0 to 60).map { i =>
+      val partition = date.plusDays(i).toString(format)
+      bq.writeTypedRows(s"$projectId:partition_a.table_$partition", data, WRITE_TRUNCATE)
+    }
+
     bq.writeTypedRows(s"$projectId:partition_b.table_20170101", data, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:partition_b.table_20170102", data, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:partition_c.table_20170104", data, WRITE_TRUNCATE)

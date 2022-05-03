@@ -168,19 +168,20 @@ final private[client] class TableOps(client: Client) {
 
   /** Get list of tables in a dataset. */
   def tableReferences(projectId: Option[String], datasetId: String): Seq[TableReference] = {
-    var nextPageToken: String = null
-    def getNextPage: TableList = {
+
+    def getNextPage(token: Option[String]): TableList = {
       client.execute { bq =>
         val req = bq.tables().list(projectId.getOrElse(client.project), datasetId)
-        nextPageToken = req.getPageToken
+        token.foreach(req.setPageToken)
         req
       }
     }
-    var rep = getNextPage
+
+    var rep = getNextPage(None)
     val b = Seq.newBuilder[TableReference]
     Option(rep.getTables).foreach(_.asScala.foreach(b += _.getTableReference))
     while (rep.getNextPageToken != null) {
-      rep = getNextPage
+      rep = getNextPage(Some(rep.getNextPageToken))
       Option(rep.getTables)
         .foreach(_.asScala.foreach(b += _.getTableReference))
     }
