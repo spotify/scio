@@ -206,7 +206,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.6+0-0f28b77e+20220429-1621*
+<i class="md-icon" title="Version">label_outline</i> 0.11.7+0-5f2b213f+20220503-1509*
 </label>
 </li>
 </ul>
@@ -321,7 +321,12 @@ spotify/scio
   }
 }</code></pre>
 <h3><a href="#test-for-pipeline-with-windowing" name="test-for-pipeline-with-windowing" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with windowing</h3>
-<p>We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala">here</a>. LeaderBoardTest also extends <code>PipelineSpec</code>. The function under test is the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131">LeaderBoard.calculateTeamScores</a>. This function calculates teams scores within a fixed window with the following the window options: * Calculate the scores every time the window ends * Calculate an early/&ldquo;speculative&rdquo; result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring) * Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.</p>
+<p>We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala">here</a>. LeaderBoardTest also extends <code>PipelineSpec</code>. The function under test is the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131">LeaderBoard.calculateTeamScores</a>. This function calculates teams scores within a fixed window with the following the window options:</p>
+<ul>
+  <li>Calculate the scores every time the window ends</li>
+  <li>Calculate an early/&ldquo;speculative&rdquo; result from partial data, 5 minutes after the first element in our window is processed (withEarlyFiring)</li>
+  <li>Accept late entries (and recalculates based on them) only if they arrive within the allowedLateness duration.</li>
+</ul>
 <p>In this test, we are testing calculateTeamScores for when all of the elements arrive on time, i.e. before the watermark.</p>
 <p>First, we have to create an input stream representing an unbounded <code>SCollection</code> of type GameActionInfo using the <code>testStreamOf</code>. Each element is assigned a timestamp representing when each event occurred. In the code snippet above, we start at epoch equal zero, by setting watermark to 0 in the advanceWatermarkTo.</p>
 <p>We add GameActionInfo elements with varying timestamps, and we advanced the watermark to 3 minutes. At this point, all elements are on time because they came before the watermark advances to 3 minutes.</p>
@@ -400,7 +405,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.6+0-0f28b77e+20220429-1621*
+0.11.7+0-5f2b213f+20220503-1509*
 </span>
 </div>
 </article>
