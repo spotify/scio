@@ -17,7 +17,7 @@
 
 package com.spotify.scio.avro
 
-import scala.annotation.{StaticAnnotation, nowarn}
+import scala.annotation.{nowarn, StaticAnnotation}
 
 package object types {
 

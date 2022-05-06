@@ -31,6 +31,8 @@ import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
 import magnolify.bigtable._
 
+import scala.collection.compat._ // scalafix:ok
+
 object MagnolifyBigtableExample {
   // Define case class representation of TensorFlow `Example`
   case class WordCount(cnt: Long)
@@ -67,7 +69,7 @@ object MagnolifyBigtableWriteExample {
       // for saving to Bigtable table.
       .map { case (word, count) =>
         val mutations =
-          WordCountType(WordCount(count), columnFamily = "counts").iterator.toIterable
+          WordCountType(WordCount(count), columnFamily = "counts").iterator.to(Iterable)
         ByteString.copyFromUtf8(word) -> mutations
       }
       .saveAsBigtable(btProjectId, btInstanceId, btTableId)

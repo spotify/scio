@@ -46,7 +46,6 @@ private[types] object TypeProvider {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val bigquery: BigQuery = BigQuery.defaultInstance()
 
-  @nowarn
   def tableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 
@@ -177,6 +176,7 @@ private[types] object TypeProvider {
       .filter(_.children.head.toString.matches("^new description$"))
       .map(_.children.tail.head)
 
+  @nowarn("msg=match may not be exhaustive")
   def toTableImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
@@ -404,6 +404,7 @@ private[types] object TypeProvider {
   ): (String, List[String], List[String], Option[String]) = {
     import c.universe._
 
+    @nowarn("msg=match may not be exhaustive")
     def str(tree: c.Tree) = tree match {
       // "argument literal"
       case Literal(Constant(arg @ (_: String))) => arg

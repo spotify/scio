@@ -33,7 +33,7 @@ object TFSequenceExampleIOTest {
         "i",
         Feature
           .newBuilder()
-          .setInt64List(Int64List.newBuilder().addValue(r.i).build())
+          .setInt64List(Int64List.newBuilder().addValue(r.i.toLong).build())
           .build()
       )
       .build()

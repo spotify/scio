@@ -25,6 +25,8 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge}
 
+import scala.collection.compat._ // scalafix:ok
+
 object MetricsExample {
   // ## Creating metrics
 
@@ -49,7 +51,7 @@ object MetricsExample {
     sc.initCounter(count)
 
     // ## Accessing metrics
-    sc.parallelize(1 to 100)
+    sc.parallelize(1L to 100L)
       .filter { i =>
         // Access metrics inside a lambda function
         sum.inc(i)
@@ -84,7 +86,7 @@ object MetricsExample {
     println("sum2: " + s2)
 
     // Values at steps
-    val s2steps = result.counterAtSteps(sum2).mapValues(_.committed.get)
+    val s2steps = result.counterAtSteps(sum2).view.mapValues(_.committed.get).toMap
     s2steps.foreach { case (step, value) =>
       println(s"sum2 at $step: " + value)
     }
@@ -113,7 +115,7 @@ object MetricsExample {
     require(d.getMean == (1 to 100).sum / 100.0)
 
     // Dynamic metricsk
-    result.allCounters
+    result.allCounters.view
       .filterKeys(_.getName.startsWith("even_"))
       .foreach { case (name, value) =>
         println(name.getName + ": " + value.committed.get)

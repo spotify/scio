@@ -193,7 +193,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
   }
 
   val timestampedData: IndexedSeq[(Int, Instant)] =
-    (1 to 100).map(x => (x, new Instant(x * DateTimeConstants.MILLIS_PER_SECOND)))
+    (1 to 100).map(x => (x, new Instant(x.toLong * DateTimeConstants.MILLIS_PER_SECOND)))
 
   it should "support windowed asSingletonSideInput" in {
     runWithContext { sc =>

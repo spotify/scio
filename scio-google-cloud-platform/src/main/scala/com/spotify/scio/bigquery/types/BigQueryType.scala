@@ -21,7 +21,7 @@ import com.google.api.services.bigquery.model.{TableRow, TableSchema}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.{StaticAnnotation, compileTimeOnly, nowarn}
+import scala.annotation.{compileTimeOnly, nowarn, StaticAnnotation}
 import scala.reflect.runtime.universe._
 import scala.util.Try
 

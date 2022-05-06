@@ -123,8 +123,7 @@ class SCollectionWithSideInput[T] private[values] (
       .withOutputTags(_mainTag.tupleTag, sideTags)
 
     val pCollectionWrapper = this.internal.apply(name, transform)
-    pCollectionWrapper.getAll.asScala
-      .view
+    pCollectionWrapper.getAll.asScala.view
       .mapValues(
         context
           .wrap(_)

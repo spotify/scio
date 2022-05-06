@@ -37,7 +37,7 @@ object DatastoreJob {
 class DatastoreIOTest extends PipelineSpec with ScioIOSpec {
 
   "DatastoreIO" should "work" in {
-    val xs = (1 to 100).map { x =>
+    val xs = (1L to 100L).map { x =>
       Entity
         .newBuilder()
         .putProperties("int", DatastoreHelper.makeValue(x).build())
@@ -46,7 +46,7 @@ class DatastoreIOTest extends PipelineSpec with ScioIOSpec {
     testJobTest(xs)(DatastoreIO(_))(_.datastore(_, null))(_.saveAsDatastore(_))
   }
 
-  def newEntity(i: Int): Entity =
+  def newEntity(i: Long): Entity =
     Entity
       .newBuilder()
       .setKey(DatastoreHelper.makeKey())
@@ -56,20 +56,20 @@ class DatastoreIOTest extends PipelineSpec with ScioIOSpec {
   def testDatastore(xs: Seq[Entity]): Unit =
     JobTest[DatastoreJob.type]
       .args("--input=store.in", "--output=store.out")
-      .input(DatastoreIO("store.in"), (1 to 3).map(newEntity))
+      .input(DatastoreIO("store.in"), (1L to 3L).map(newEntity))
       .output(DatastoreIO("store.out"))(coll => coll should containInAnyOrder(xs))
       .run()
 
   it should "pass correct DatastoreJob" in {
-    testDatastore((1 to 3).map(newEntity))
+    testDatastore((1L to 3L).map(newEntity))
   }
 
   it should "fail incorrect DatastoreJob" in {
     an[AssertionError] should be thrownBy {
-      testDatastore((1 to 2).map(newEntity))
+      testDatastore((1L to 2L).map(newEntity))
     }
     an[AssertionError] should be thrownBy {
-      testDatastore((1 to 4).map(newEntity))
+      testDatastore((1L to 4L).map(newEntity))
     }
   }
 

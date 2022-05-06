@@ -22,6 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import de.heikoseeberger.sbtheader.CommentCreator
+import _root_.io.github.davidgregory084.DevMode
 
 ThisBuild / turbo := true
 
@@ -130,6 +131,25 @@ val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
 
+ThisBuild / tpolecatDefaultOptionsMode := DevMode
+ThisBuild / tpolecatDevModeOptions ~= { opts =>
+  val excludes = Set(
+    ScalacOptions.warnDeadCode,
+    ScalacOptions.privateWarnDeadCode,
+    ScalacOptions.warnValueDiscard,
+    ScalacOptions.privateWarnValueDiscard
+  )
+
+  val extras = Set(
+    Scalac.macroAnnotationsOption,
+    Scalac.parallelismOption,
+    Scalac.targetOption,
+    Scalac.warnMacrosOption
+  )
+
+  opts.filterNot(excludes).union(extras)
+}
+
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
 Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
@@ -181,8 +201,6 @@ val commonSettings = Def
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.16", scalaVersion.value),
-    scalacOptions ++= Scalac.commonsOptions.value,
-    Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     // protobuf-lite is an older subset of protobuf-java and causes issues
@@ -955,6 +973,10 @@ lazy val `scio-examples`: Project = project
   .settings(
     publish / skip := true,
     mimaPreviousArtifacts := Set.empty,
+    tpolecatExcludeOptions ++= Set(
+      ScalacOptions.warnUnusedLocals,
+      ScalacOptions.privateWarnUnusedLocals
+    ),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
@@ -1034,7 +1056,7 @@ lazy val `scio-repl`: Project = project
   .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
-    scalacOptions := Scalac.replOptions.value,
+    tpolecatExcludeOptions ++= ScalacOptions.defaultConsoleExclude,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,

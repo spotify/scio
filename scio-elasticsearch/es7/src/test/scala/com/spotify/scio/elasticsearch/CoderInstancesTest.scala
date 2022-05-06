@@ -108,7 +108,7 @@ case class FooDocWriteRequest(_index: String, id: String) extends DocWriteReques
 
   override def indices(): Array[String] = Array("foo")
 
-  override def ramBytesUsed(): Long = _index.size + id.size
+  override def ramBytesUsed(): Long = _index.size.toLong + id.size.toLong
 
   override def isRequireAlias(): Boolean = false
 }

@@ -280,7 +280,7 @@ object MetricsJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
-    sc.parallelize(1 to 10)
+    sc.parallelize(1L to 10L)
       .map { x =>
         counter.inc()
         distribution.update(x)

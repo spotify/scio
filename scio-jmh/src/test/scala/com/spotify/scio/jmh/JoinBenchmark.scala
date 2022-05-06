@@ -27,7 +27,6 @@ import org.openjdk.jmh.infra.Blackhole
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._ // scalafix:ok
 
-
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)

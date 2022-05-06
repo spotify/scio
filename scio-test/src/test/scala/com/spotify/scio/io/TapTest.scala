@@ -164,9 +164,9 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf proto version 2" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     // use java protos otherwise we would have to pull in pb-scala
-    def mkProto(t: (String, Int)): SimplePBV2 =
+    def mkProto(t: (String, Long)): SimplePBV2 =
       SimplePBV2
         .newBuilder()
         .setPlays(t._2)
@@ -183,7 +183,7 @@ class TapTest extends TapSpec {
   }
 
   // use java protos otherwise we would have to pull in pb-scala
-  private def mkProto3(t: (String, Int)): SimplePBV3 =
+  private def mkProto3(t: (String, Long)): SimplePBV3 =
     SimplePBV3
       .newBuilder()
       .setPlays(t._2)
@@ -192,7 +192,7 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf proto version 3" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val t = runWithFileFuture {
       _.parallelize(data)
         .map(mkProto3)
@@ -205,7 +205,7 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf write with nullableCoders" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val actual = data.map(mkProto3)
     val t = runWithFileFuture { sc =>
       sc.optionsAs[ScioOptions].setNullableCoders(true)
@@ -224,7 +224,7 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf read with nullableCoders" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val actual = data.map(mkProto3)
     val t = runWithFileFuture {
       _.parallelize(actual)

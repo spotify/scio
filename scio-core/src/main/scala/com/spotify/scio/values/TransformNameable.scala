@@ -27,8 +27,8 @@ trait TransformNameable {
 
   private[scio] def tfName(default: Option[String]): String = {
     val n = nameProvider match {
-      case p: CallSiteNameProvider.type => default.getOrElse(p.name)
-      case ConstNameProvider(name)      => name
+      case CallSiteNameProvider    => default.getOrElse(CallSiteNameProvider.name)
+      case ConstNameProvider(name) => name
     }
     nameProvider = CallSiteNameProvider
     n
@@ -45,7 +45,7 @@ trait TransformNameable {
   }
 }
 
-private trait TransformNameProvider {
+sealed private trait TransformNameProvider {
   def name: String
 }
 

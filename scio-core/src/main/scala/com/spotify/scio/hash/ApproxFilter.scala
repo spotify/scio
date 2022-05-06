@@ -101,7 +101,7 @@ sealed trait ApproxFilterCompanion {
   // Empirically (see [[com.twitter.algebird.BF.contains]])
   // `expectedInsertions` to number of unique elements ratio should be 1.1
   final def create[T: Hash](elems: Iterable[T]): Filter[T] =
-    create(elems, elems.size)
+    create(elems, elems.size.toLong)
 
   /**
    * Creates an [[ApproxFilter]] from an [[Iterable]] with the expected number of insertions and
@@ -196,7 +196,7 @@ sealed trait ApproxFilterCompanion {
     elems.transform {
       _.groupBy(_ => ()).values
         .map { xs =>
-          val n = if (expectedInsertions > 0) expectedInsertions else xs.size
+          val n = if (expectedInsertions > 0) expectedInsertions else xs.size.toLong
           create(xs, n, fpp)
         }
     }

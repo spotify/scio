@@ -139,7 +139,6 @@ private[types] object TypeProvider {
     }
   }
 
-  @nowarn
   def toSchemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     checkMacroEnclosed(c)
@@ -429,6 +428,7 @@ private[types] object TypeProvider {
         .resolve("generated-classes")
     }
 
+  @nowarn("msg=match may not be exhaustive")
   private def pShowCode(
     c: blackbox.Context
   )(records: Seq[c.Tree], caseClass: c.Tree): Seq[String] = {

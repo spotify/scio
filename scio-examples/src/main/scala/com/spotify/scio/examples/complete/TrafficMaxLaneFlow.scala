@@ -68,8 +68,8 @@ object TrafficMaxLaneFlow {
 
     // arguments
     val input = args.getOrElse("input", ExampleData.TRAFFIC)
-    val windowDuration = args.getOrElse("windowDuration", "60").toInt
-    val windowSlideEvery = args.getOrElse("windowSlideEvery", "5").toInt
+    val windowDuration = args.long("windowDuration", 60)
+    val windowSlideEvery = args.long("windowSlideEvery", 5)
 
     val sc = ScioContext(opts)
 

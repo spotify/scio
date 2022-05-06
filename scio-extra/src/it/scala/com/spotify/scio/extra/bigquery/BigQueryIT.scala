@@ -49,7 +49,7 @@ final class BigQueryIT extends AnyFlatSpec with Matchers {
 
     val data: Seq[GenericRecord] = (1 to 100).map { i =>
       Account.toGenericRecord(
-        Account(i, "checking", s"account$i", i.toDouble, ByteString.copyFromUtf8("%20cフーバー"))
+        Account(i.toLong, "checking", s"account$i", i.toDouble, ByteString.copyFromUtf8("%20cフーバー"))
       )
     }
 

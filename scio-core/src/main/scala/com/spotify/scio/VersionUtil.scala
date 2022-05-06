@@ -59,12 +59,12 @@ private[scio] object VersionUtil {
   private lazy val latest: Option[String] = Try {
     val transport = new NetHttpTransport()
     val response = transport
-      .createRequestFactory((request: HttpRequest) => {
+      .createRequestFactory { (request: HttpRequest) =>
         request.setConnectTimeout(Timeout)
         request.setReadTimeout(Timeout)
         request.setParser(new JsonObjectParser(GsonFactory.getDefaultInstance))
         ()
-      })
+      }
       .buildGetRequest(new GenericUrl(Url))
       .execute()
       .parseAs(classOf[java.util.List[java.util.Map[String, AnyRef]]])

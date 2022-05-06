@@ -154,7 +154,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       // Explicit optional arguments `Duration.Zero` and `WindowOptions()` as a workaround for the
       // mysterious "Could not find proxy for val sc1" compiler error
       // take each records int value and multiply it by half hour, so we should have 2 records in each hour window
-      .timestampBy(x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000), Duration.ZERO)
+      .timestampBy(x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000L), Duration.ZERO)
       .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
       .saveAsDynamicParquetAvroFile(
         dir.toString,
@@ -261,7 +261,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       val sc = ScioContext()
       sc.parallelize(genericRecords)
         .timestampBy(
-          x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000),
+          x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000L),
           Duration.ZERO
         )
         .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())

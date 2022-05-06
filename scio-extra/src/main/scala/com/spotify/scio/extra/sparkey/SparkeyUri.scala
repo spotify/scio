@@ -86,9 +86,9 @@ private[sparkey] class SparkeyWriter(
   maxMemoryUsage: Long = -1
 ) {
   private val localFile = uri match {
-    case u: LocalSparkeyUri => u.basePath
-    case _: RemoteSparkeyUri =>
-      Files.createTempDirectory("sparkey-").resolve("data").toString
+    case u: LocalSparkeyUri   => u.basePath
+    case _: RemoteSparkeyUri  => Files.createTempDirectory("sparkey-").resolve("data").toString
+    case _: ShardedSparkeyUri => throw new NotImplementedError("Unsupported ShardedSparkeyUri")
   }
 
   private lazy val delegate = {

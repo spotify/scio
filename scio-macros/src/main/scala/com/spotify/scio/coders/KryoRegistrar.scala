@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders
 
-import scala.annotation.{StaticAnnotation, compileTimeOnly, nowarn}
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.reflect.macros._
 
 /**
@@ -34,7 +34,6 @@ class KryoRegistrar extends StaticAnnotation {
 
 private object KryoRegistrarMacro {
 
-  @nowarn
   def impl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 

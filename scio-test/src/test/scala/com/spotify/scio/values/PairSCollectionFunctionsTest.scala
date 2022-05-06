@@ -395,7 +395,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
   it should "support batchByKey" in {
     runWithContext { sc =>
-      val batchSize = 2
+      val batchSize = 2L
       val nonEmpty = sc
         .parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20)))
         .batchByKey(batchSize)

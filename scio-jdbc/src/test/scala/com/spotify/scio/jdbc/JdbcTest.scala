@@ -91,10 +91,10 @@ class JdbcTest extends PipelineSpec {
 
   it should "connnect via JDBC without a password" in {
     val args = Seq(
-        "--cloudSqlUsername=john",
-        "--cloudSqlDb=mydb",
-        "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
-      )
+      "--cloudSqlUsername=john",
+      "--cloudSqlDb=mydb",
+      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
+    )
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args.toArray)
     val readOpts = JdbcJob.getReadOptions(opts)
     val writeOpts = JdbcJob.getWriteOptions(opts)

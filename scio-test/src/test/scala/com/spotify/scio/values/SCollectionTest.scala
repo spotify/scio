@@ -583,7 +583,10 @@ class SCollectionTest extends PipelineSpec {
   it should "support withFixedWindows()" in {
     runWithContext { sc =>
       val p =
-        sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+        sc.parallelizeTimestamped(
+          Seq("a", "b", "c", "d", "e", "f"),
+          (0L to 5L).map(new Instant(_))
+        )
       val r = p.withFixedWindows(Duration.millis(3)).top(10).map(_.toSet)
       r should containInAnyOrder(Seq(Set("a", "b", "c"), Set("d", "e", "f")))
     }
@@ -591,8 +594,10 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support withSlidingWindows()" in {
     runWithContext { sc =>
-      val p =
-        sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c", "d", "e", "f"),
+        (0L to 5L).map(new Instant(_))
+      )
       val r = p
         .withSlidingWindows(Duration.millis(2), Duration.millis(2))
         .top(10)
@@ -602,8 +607,10 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "#2745: not throw an exception for valid values" in runWithContext { sc =>
-    val p =
-      sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+    val p = sc.parallelizeTimestamped(
+      Seq("a", "b", "c", "d", "e", "f"),
+      (0L to 5L).map(new Instant(_))
+    )
     val r = p
       .withSlidingWindows(
         size = Duration.standardHours(24),
@@ -620,7 +627,7 @@ class SCollectionTest extends PipelineSpec {
       val p =
         sc.parallelizeTimestamped(
           Seq("a", "b", "c", "d", "e"),
-          Seq(0, 5, 10, 44, 55).map(new Instant(_))
+          Seq(0L, 5L, 10L, 44L, 55L).map(new Instant(_))
         )
       val r = p
         .withSessionWindows(Duration.millis(10))
@@ -632,8 +639,10 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support withGlobalWindow()" in {
     runWithContext { sc =>
-      val p =
-        sc.parallelizeTimestamped(Seq("a", "b", "c", "d", "e", "f"), (0 to 5).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c", "d", "e", "f"),
+        (0L to 5L).map(new Instant(_))
+      )
       val r = p
         .withFixedWindows(Duration.millis(3))
         .withGlobalWindow()
@@ -646,7 +655,10 @@ class SCollectionTest extends PipelineSpec {
   it should "support withPaneInfo" in {
     runWithContext { sc =>
       val pane = PaneInfo.createPane(true, true, Timing.UNKNOWN, 0, 0)
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c"),
+        Seq(1L, 2L, 3L).map(new Instant(_))
+      )
       val r = p.withPaneInfo.map(kv => (kv._1, kv._2))
       r should containInAnyOrder(Seq(("a", pane), ("b", pane), ("c", pane)))
     }
@@ -654,7 +666,10 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support withTimestamp" in {
     runWithContext { sc =>
-      val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), Seq(1, 2, 3).map(new Instant(_)))
+      val p = sc.parallelizeTimestamped(
+        Seq("a", "b", "c"),
+        Seq(1L, 2L, 3L).map(new Instant(_))
+      )
       val r = p.withTimestamp.map(kv => (kv._1, kv._2.getMillis))
       r should containInAnyOrder(Seq(("a", 1L), ("b", 2L), ("c", 3L)))
     }
@@ -664,9 +679,10 @@ class SCollectionTest extends PipelineSpec {
     def w2s(window: BoundedWindow): String = window match {
       case w: GlobalWindow   => s"GlobalWindow(${w.maxTimestamp()})"
       case w: IntervalWindow => s"IntervalWindow(${w.start()}, ${w.end()})"
+      case _                 => ???
     }
 
-    val timestamps = Seq(1, 2, 3).map(t => new Instant(t * DateTimeConstants.MILLIS_PER_MINUTE))
+    val timestamps = Seq(1L, 2L, 3L).map(t => new Instant(t * DateTimeConstants.MILLIS_PER_MINUTE))
 
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(Seq("a", "b", "c"), timestamps)
@@ -702,7 +718,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
       val r = p
-        .timestampBy(new Instant(_))
+        .timestampBy(t => new Instant(t.toLong))
         .withTimestamp
         .map(kv => (kv._1, kv._2.getMillis))
       r should containInAnyOrder(Seq((1, 1L), (2, 2L), (3, 3L)))
@@ -713,7 +729,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
       val r = p
-        .timestampBy(new Instant(_), Duration.millis(1))
+        .timestampBy(t => new Instant(t.toLong), Duration.millis(1))
         .withTimestamp
         .map(kv => (kv._1, kv._2.getMillis))
       r should containInAnyOrder(Seq((1, 1L), (2, 2L), (3, 3L)))
@@ -763,7 +779,11 @@ class SCollectionTest extends PipelineSpec {
         r should containInAnyOrder(Seq(1, 2, 3))
       }
     }
-    Files.readAllLines(outFile, StandardCharsets.UTF_8) should contain theSameElementsAs Seq("1", "2", "3")
+    Files.readAllLines(outFile, StandardCharsets.UTF_8) should contain theSameElementsAs Seq(
+      "1",
+      "2",
+      "3"
+    )
   }
 
   it should "support Combine.globally() with default value" in {

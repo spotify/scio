@@ -53,7 +53,7 @@ object WordCount {
         _.map { w =>
           // Trim input lines, update distribution metric
           val trimmed = w.trim
-          lineDist.update(trimmed.length)
+          lineDist.update(trimmed.length.toLong)
           trimmed
         }.filter { w =>
           // Filter out empty lines, update counter metrics

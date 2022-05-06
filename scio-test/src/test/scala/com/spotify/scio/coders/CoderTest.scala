@@ -216,9 +216,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "have a Coder for Nothing" in {
     val bnc = CoderMaterializer.beamWithDefault[Nothing](Coder[Nothing])
-    bnc
-      .asInstanceOf[BCoder[Any]]
-      .encode(null, null) shouldBe () // make sure the code does nothing
+    noException shouldBe thrownBy {
+      bnc.asInstanceOf[BCoder[Any]].encode(null, null)
+    }
     an[IllegalStateException] should be thrownBy {
       bnc.decode(new ByteArrayInputStream(Array()))
     }
