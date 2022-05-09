@@ -20,6 +20,7 @@
 package com.spotify.scio.util.random
 
 import java.util.{Random => JRandom}
+
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StartBundle}
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}

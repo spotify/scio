@@ -147,7 +147,8 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     Scalac.maxClassfileName,
     Scalac.parallelismOption,
     Scalac.targetOption,
-    Scalac.warnMacrosOption
+    Scalac.warnMacrosOption,
+    Scalac.warnConfOption
   )
 
   opts.filterNot(excludes).union(extras)

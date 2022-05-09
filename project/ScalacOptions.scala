@@ -64,6 +64,16 @@ object Scalac {
 
   val targetOption = new ScalacOption("-target:jvm-1.8" :: Nil)
 
+  // silence all scala library deprecation warnings from 2.13
+  // since we still support 2.12
+  // unused-imports origin will be supported in next 2.13.9
+  // https://github.com/scala/scala/pull/9939
+  val warnConfOption = new ScalacOption(
+    "-Wconf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
+      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s"
+      :: Nil
+  )
+
   val warnMacrosOption = new ScalacOption(
     "-Ywarn-macros:after" :: Nil,
     version => version.isBetween(V2_12_0, V3_0_0)

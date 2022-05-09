@@ -404,7 +404,6 @@ private[types] object TypeProvider {
   ): (String, List[String], List[String], Option[String]) = {
     import c.universe._
 
-    @nowarn("msg=match may not be exhaustive")
     def str(tree: c.Tree) = tree match {
       // "argument literal"
       case Literal(Constant(arg @ (_: String))) => arg
@@ -425,6 +424,7 @@ private[types] object TypeProvider {
           case q"rowRestriction = $s"          => namedArgs("rowRestriction") = List(str(s))
           case q"List(..$xs)"                  => posList += xs.map(str)
           case q"$s"                           => posList += List(str(s))
+          case _                               => throw new Exception("Invalid macro application")
         }
         val posArgs = List("args", "selectedFields", "rowRestriction").zip(posList).toMap
         val dups = posArgs.keySet intersect namedArgs.keySet

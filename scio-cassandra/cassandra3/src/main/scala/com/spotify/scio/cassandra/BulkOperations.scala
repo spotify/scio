@@ -70,7 +70,7 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
       .zipWithIndex
       .filter(t => partitionKeys.contains(t._1))
       .map(_._2)
-      .toIndexedSeq
+      .toSeq
     val dataTypes = variables.iterator.map(v => DataTypeExternalizer(v.getType)).toSeq
     cluster.close()
 
