@@ -138,7 +138,7 @@ class NestedClosuresNotSerializable {
   def closure(name: String)(body: => Int => Int): Int => Int = body
   def getMapFn: Int => Int = closure("one") {
     @nowarn("msg=local method x in method getMapFn is never used")
-    def x = irrelevantInt // scalafix:ok
+    def x = irrelevantInt
     def y = 2
     val fn = { a: Int => a + y }
     fn

@@ -143,14 +143,20 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
   val extras = Set(
     Scalac.delambdafyInlineOption,
     Scalac.macroAnnotationsOption,
+    Scalac.macroSettingsOption,
+    Scalac.maxClassfileName,
     Scalac.parallelismOption,
     Scalac.targetOption,
-    Scalac.warnMacrosOption,
-    Scalac.extraMacroSettingsOption
+    Scalac.warnMacrosOption
   )
 
   opts.filterNot(excludes).union(extras)
 }
+
+ThisBuild / doc / tpolecatDevModeOptions ++= Set(
+  Scalac.docSkipPackageOption,
+  Scalac.docNoJavaCommentOption
+)
 
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
@@ -203,6 +209,9 @@ val commonSettings = Def
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.16", scalaVersion.value),
+    // this setting is not derived in sbt-tpolecat
+    // https://github.com/typelevel/sbt-tpolecat/issues/36
+    inTask(doc)(TpolecatPlugin.projectSettings),
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     // protobuf-lite is an older subset of protobuf-java and causes issues
@@ -1050,6 +1059,7 @@ lazy val `scio-examples`: Project = project
     `scio-redis`,
     `scio-parquet`
   )
+  .disablePlugins(ScalafixPlugin)
 
 lazy val `scio-repl`: Project = project
   .in(file("scio-repl"))
@@ -1058,7 +1068,6 @@ lazy val `scio-repl`: Project = project
   .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
-    tpolecatExcludeOptions ++= ScalacOptions.defaultConsoleExclude,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,

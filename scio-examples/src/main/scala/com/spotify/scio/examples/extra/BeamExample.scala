@@ -90,7 +90,7 @@ object BeamExample {
       sc.customInput("Input", pubsubIn(args("inputTopic")))
 
     // Underlying Beam `PCollection[Account]`
-    val p: PCollection[Account] = accounts.internal // scalafix:ok
+    val p: PCollection[Account] = accounts.internal
 
     accounts
       // Beam `PTransform`

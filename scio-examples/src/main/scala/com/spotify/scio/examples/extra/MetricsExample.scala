@@ -25,7 +25,7 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio._
 import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge}
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 object MetricsExample {
   // ## Creating metrics

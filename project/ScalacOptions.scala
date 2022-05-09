@@ -22,14 +22,38 @@ import _root_.io.github.davidgregory084.ScalaVersion._
 
 object Scalac {
 
+  val docNoJavaCommentOption = new ScalacOption(
+    "-no-java-comments" :: Nil,
+    version => version.isBetween(V2_12_0, V2_13_0)
+  )
+
+  val docSkipPackageOption = new ScalacOption(
+    "-skip-packages" :: "org.apache" :: Nil
+  )
+
   // Set the strategy used for translating lambdas into JVM code to "inline"
   val delambdafyInlineOption = new ScalacOption(
     "-Ydelambdafy:inline" :: Nil
   )
 
+  private val javaVersion = VersionNumber(sys.props("java.version"))
+  val releaseOption = new ScalacOption(
+    "-release" :: "8" :: Nil,
+    _ => javaVersion.matchesSemVer(SemanticSelector(">1.8"))
+  )
+
   val macroAnnotationsOption = new ScalacOption(
     "-Ymacro-annotations" :: Nil,
     version => version.isBetween(V2_13_0, V3_0_0)
+  )
+
+  val macroSettingsOption = new ScalacOption(
+    "-Xmacro-settings:show-coder-fallback=true" :: Nil
+  )
+
+  val maxClassfileName = new ScalacOption(
+    "-Xmax-classfile-name" :: "100" :: Nil,
+    version => version.isBetween(V2_12_0, V2_13_0)
   )
 
   private val parallelism = math.min(Runtime.getRuntime.availableProcessors(), 16)
@@ -40,19 +64,9 @@ object Scalac {
 
   val targetOption = new ScalacOption("-target:jvm-1.8" :: Nil)
 
-  private val javaVersion = VersionNumber(sys.props("java.version"))
-  val releaseOption = new ScalacOption(
-    "-release" :: "8" :: Nil,
-    _ => javaVersion.matchesSemVer(SemanticSelector(">1.8"))
-  )
-
   val warnMacrosOption = new ScalacOption(
     "-Ywarn-macros:after" :: Nil,
     version => version.isBetween(V2_12_0, V3_0_0)
-  )
-
-  val extraMacroSettingsOption = new ScalacOption(
-    "-Xmacro-settings:show-coder-fallback=true" :: Nil
   )
 
 }
