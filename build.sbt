@@ -141,10 +141,12 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
   )
 
   val extras = Set(
+    Scalac.delambdafyInlineOption,
     Scalac.macroAnnotationsOption,
     Scalac.parallelismOption,
     Scalac.targetOption,
-    Scalac.warnMacrosOption
+    Scalac.warnMacrosOption,
+    Scalac.extraMacroSettingsOption
   )
 
   opts.filterNot(excludes).union(extras)

@@ -15,13 +15,17 @@
  * under the License.
  */
 
-import sbt._, Keys._
 import sbt.librarymanagement.{SemanticSelector, VersionNumber}
 import java.lang.Runtime
 import _root_.io.github.davidgregory084.ScalacOption
 import _root_.io.github.davidgregory084.ScalaVersion._
 
 object Scalac {
+
+  // Set the strategy used for translating lambdas into JVM code to "inline"
+  val delambdafyInlineOption = new ScalacOption(
+    "-Ydelambdafy:inline" :: Nil
+  )
 
   val macroAnnotationsOption = new ScalacOption(
     "-Ymacro-annotations" :: Nil,
@@ -46,4 +50,9 @@ object Scalac {
     "-Ywarn-macros:after" :: Nil,
     version => version.isBetween(V2_12_0, V3_0_0)
   )
+
+  val extraMacroSettingsOption = new ScalacOption(
+    "-Xmacro-settings:show-coder-fallback=true" :: Nil
+  )
+
 }
