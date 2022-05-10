@@ -148,6 +148,7 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     Scalac.parallelismOption,
     Scalac.targetOption,
     Scalac.warnMacrosOption,
+    Scalac.privateWarnMacrosOption,
     Scalac.warnConfOption
   )
 
