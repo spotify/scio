@@ -63,7 +63,7 @@ class BigtableDoFnTest extends PipelineSpec {
 }
 
 object BigtableDoFnTest {
-  val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
+  val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]
 }
 
 class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {

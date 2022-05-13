@@ -98,7 +98,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
   }
 
   it should "support TableRow" in {
-    val r = new TableRow().set("repeated_field", List("a", "b").asJava)
+    val r = new TableRow.set("repeated_field", List("a", "b").asJava)
     r coderShould roundtripKryo()
   }
 

@@ -34,7 +34,7 @@ trait AvroInstances {
     // RawRecord[T](new AvroRecordSchema())
     import org.apache.avro.reflect.ReflectData
     val rc = classTag[T].runtimeClass.asInstanceOf[Class[T]]
-    val provider = new AvroRecordSchema()
+    val provider = new AvroRecordSchema
     val td = TypeDescriptor.of(rc)
     val schema = provider.schemaFor(td)
     val avroSchema =
@@ -71,7 +71,7 @@ object AvroInstances {
   private class SerializableSchema(@transient private val schema: org.apache.avro.Schema)
       extends Serializable {
     private[this] val stringSchema = schema.toString
-    def get: org.apache.avro.Schema = new org.apache.avro.Schema.Parser().parse(stringSchema)
+    def get: org.apache.avro.Schema = new org.apache.avro.Schema.Parser.parse(stringSchema)
   }
 
   // Workaround BEAM-6742

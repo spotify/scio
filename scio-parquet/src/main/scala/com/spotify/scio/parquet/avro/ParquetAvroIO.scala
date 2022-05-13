@@ -165,7 +165,7 @@ object ParquetAvroIO {
   object ReadParam {
     private[avro] val DefaultProjection = null
     private[avro] val DefaultPredicate = null
-    private[avro] val DefaultConfiguration = new Configuration()
+    private[avro] val DefaultConfiguration = new Configuration
 
     @deprecated(
       "Use ReadParam(projectionFn, projection, predicate, conf) instead",
@@ -225,10 +225,10 @@ object ParquetAvroIO {
       HadoopFormatIO
         .read[JBoolean, T]()
         // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-        .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+        .withKeyTranslation(new SimpleFunction[Void, JBoolean] {
           override def apply(input: Void): JBoolean = true
         })
-        .withValueTranslation(new SimpleFunction[A, T]() {
+        .withValueTranslation(new SimpleFunction[A, T] {
           // Workaround for incomplete Avro objects
           // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
           // to serialized them. Lifting the mapping function here fixes the problem.
@@ -246,7 +246,7 @@ object ParquetAvroIO {
     private[avro] val DefaultSuffix = ".parquet"
     private[avro] val DefaultCompression = CompressionCodecName.GZIP
     private[avro] val DefaultFilenameFunction = None
-    private[avro] val DefaultConfiguration = new Configuration()
+    private[avro] val DefaultConfiguration = new Configuration
   }
 
   final case class WriteParam private (

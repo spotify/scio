@@ -51,7 +51,7 @@ object ParquetExample {
    * See more here: https://spotify.github.io/scio/io/Parquet.html#performance-tuning
    */
   private val fineTunedParquetWriterConfig: Configuration = {
-    val conf: Configuration = new Configuration()
+    val conf: Configuration = new Configuration
     conf.setInt("parquet.block.size", 1073741824) // 1 * 1024 * 1024 * 1024 = 1 GiB
     conf.set("fs.gs.inputstream.fadvise", "RANDOM")
     conf

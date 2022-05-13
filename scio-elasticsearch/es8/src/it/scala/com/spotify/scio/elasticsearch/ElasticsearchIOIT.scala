@@ -37,7 +37,7 @@ object ElasticsearchIOIT {
 
   val ImageName: DockerImageName = {
     // get the elasticsearch version for the java client properties
-    val properties = new Properties()
+    val properties = new Properties
     val is = classOf[ApiClient[_, _]].getResourceAsStream("version.properties")
     try {
       properties.load(is)
@@ -51,7 +51,7 @@ object ElasticsearchIOIT {
 
   // Use Jackson for custom types, with scala case class support
   def createScalaMapper(): JsonpMapper =
-    new JacksonJsonpMapper().tap(_.objectMapper().registerModule(DefaultScalaModule))
+    new JacksonJsonpMapper.tap(_.objectMapper().registerModule(DefaultScalaModule))
 }
 
 class ElasticsearchIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
@@ -67,7 +67,7 @@ class ElasticsearchIOIT extends PipelineSpec with Eventually with ForAllTestCont
 
   lazy val client: ElasticsearchClient = {
     val credentials = new UsernamePasswordCredentials(Username, Password)
-    val provider = new BasicCredentialsProvider()
+    val provider = new BasicCredentialsProvider
     provider.setCredentials(AuthScope.ANY, credentials)
     val restClient = RestClient
       .builder(new HttpHost(container.host, container.mappedPort(9200)))

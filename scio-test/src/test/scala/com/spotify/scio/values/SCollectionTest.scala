@@ -497,7 +497,7 @@ class SCollectionTest extends PipelineSpec {
     import RandomSamplerUtils._
     for (fraction <- List(0.05, 0.2, 1.0)) {
       val sample = runWithData(population)(_.sample(true, fraction))
-      (sample.size.toDouble / populationSize) shouldBe fraction +- 0.05
+      sample.size.toDouble / populationSize shouldBe fraction +- 0.05
       sample.toSet.size should be < sample.size
     }
   }
@@ -506,7 +506,7 @@ class SCollectionTest extends PipelineSpec {
     import RandomSamplerUtils._
     for (fraction <- List(0.05, 0.2, 1.0)) {
       val sample = runWithData(population)(_.sample(false, fraction))
-      (sample.size.toDouble / populationSize) shouldBe fraction +- 0.05
+      sample.size.toDouble / populationSize shouldBe fraction +- 0.05
       sample.toSet.size shouldBe sample.size
     }
   }

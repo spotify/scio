@@ -70,7 +70,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
 
       // Create temporary table view and get schema
       Logger.info(s"Creating temporary view ${bq.BigQueryHelpers.toTableSpec(tempTableRef)}")
-      val view = new ViewDefinition().setQuery(sqlQuery)
+      val view = new ViewDefinition.setQuery(sqlQuery)
       val viewTable = tempTable.setView(view)
       val schema = client
         .execute(
@@ -234,7 +234,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
   /* Creates and submits a query job */
   private def run(config: QueryJobConfig): Try[Job] = {
     def run = Try {
-      val queryConfig = new JobConfigurationQuery()
+      val queryConfig = new JobConfigurationQuery
         .setQuery(config.sql)
         .setUseLegacySql(config.useLegacySql)
         .setFlattenResults(config.flattenResults)
@@ -252,13 +252,13 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
       }
 
       val jobConfig =
-        new JobConfiguration()
+        new JobConfiguration
           .setQuery(queryConfig)
           .setDryRun(config.dryRun)
           .setLabels(config.labels.asJava)
       val fullJobId = BigQueryUtil.generateJobId(client.project)
-      val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
-      val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+      val jobReference = new JobReference.setProjectId(client.project).setJobId(fullJobId)
+      val job = new Job.setConfiguration(jobConfig).setJobReference(jobReference)
       client.execute(_.jobs().insert(client.project, job))
     }
     if (config.useLegacySql) {

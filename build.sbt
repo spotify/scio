@@ -165,7 +165,7 @@ lazy val mimaSettings = Def.settings(
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
 
 lazy val keepExistingHeader =
-  HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
+  HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator {
     override def apply(text: String, existingText: Option[String]): String =
       existingText
         .getOrElse(
@@ -614,12 +614,10 @@ lazy val `scio-google-cloud-platform`: Project = project
   .settings(
     description := "Scio add-on for Google Cloud Platform",
     libraryDependencies ++= Seq(
-      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
-        ExclusionRule(organization = "io.grpc")
-      ),
-      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
-        ExclusionRule(organization = "io.grpc")
-      ),
+      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll
+        ExclusionRule(organization = "io.grpc"),
+      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll
+        ExclusionRule(organization = "io.grpc"),
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % bigQueryStorageBetaVersion,
@@ -1046,12 +1044,10 @@ lazy val `scio-repl`: Project = project
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud.bigdataoss", "gcsio")
-      ),
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion excludeAll (
-        ExclusionRule("com.google.cloud.bigdataoss", "gcsio")
-      ),
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion excludeAll
+        ExclusionRule("com.google.cloud.bigdataoss", "gcsio"),
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion excludeAll
+        ExclusionRule("com.google.cloud.bigdataoss", "gcsio"),
       "org.apache.avro" % "avro" % avroVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.commons" % "commons-text" % commonsTextVersion,

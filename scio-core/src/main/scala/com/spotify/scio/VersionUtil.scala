@@ -57,7 +57,7 @@ private[scio] object VersionUtil {
       |""".stripMargin
 
   private lazy val latest: Option[String] = Try {
-    val transport = new NetHttpTransport()
+    val transport = new NetHttpTransport
     val response = transport
       .createRequestFactory(new HttpRequestInitializer {
         override def initialize(request: HttpRequest): Unit = {

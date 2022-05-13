@@ -153,7 +153,7 @@ class TapTest extends TapSpec {
       dir.mkdir()
       for (i <- 0 until nFiles) {
         val file = new File(dir, "part-%05d-%05d.%s".format(i, nFiles, ext))
-        val os = new CompressorStreamFactory()
+        val os = new CompressorStreamFactory
           .createCompressorOutputStream(cType, new FileOutputStream(file))
         data(i).foreach(l => IOUtils.write(l + "\n", os, Charsets.UTF_8))
         os.close()

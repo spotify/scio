@@ -74,8 +74,8 @@ private[scio] class BernoulliSampler[T](val fraction: Double) extends RandomSamp
 
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
-    fraction >= (0.0 - RandomSampler.roundingEpsilon)
-      && fraction <= (1.0 + RandomSampler.roundingEpsilon),
+    fraction >= 0.0 - RandomSampler.roundingEpsilon
+      && fraction <= 1.0 + RandomSampler.roundingEpsilon,
     s"Sampling fraction ($fraction) must be on interval [0, 1]"
   )
 
@@ -110,7 +110,7 @@ private[scio] class PoissonSampler[T](val fraction: Double)
 
   /** Epsilon slop to avoid failure from floating point jitter. */
   require(
-    fraction >= (0.0 - RandomSampler.roundingEpsilon),
+    fraction >= 0.0 - RandomSampler.roundingEpsilon,
     s"Sampling fraction ($fraction) must be >= 0"
   )
 
@@ -161,7 +161,7 @@ private[scio] class BernoulliValueSampler[K, V](fractions: Map[K, Double])
   /** Epsilon slop to avoid failure from floating point jitter */
   require(
     fractions.values.forall { f =>
-      f >= (0.0 - RandomSampler.roundingEpsilon) && f <= (1.0 + RandomSampler.roundingEpsilon)
+      f >= 0.0 - RandomSampler.roundingEpsilon && f <= 1.0 + RandomSampler.roundingEpsilon
     },
     s"Sampling fractions must be on interval [0, 1]"
   )
@@ -190,7 +190,7 @@ private[scio] class PoissonValueSampler[K, V](fractions: Map[K, Double])
 
   /** Epsilon slop to avoid failure from floating point jitter. */
   require(
-    fractions.values.forall(f => f >= (0.0 - RandomSampler.roundingEpsilon)),
+    fractions.values.forall(f => f >= 0.0 - RandomSampler.roundingEpsilon),
     s"Sampling fractions must be >= 0"
   )
 

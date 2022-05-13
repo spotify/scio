@@ -50,9 +50,9 @@ class IoCommands(options: PipelineOptions) {
   def readAvro[T: ClassTag](path: String): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
     val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      new SpecificDatumReader[T]()
+      new SpecificDatumReader[T]
     } else {
-      new GenericDatumReader[T]()
+      new GenericDatumReader[T]
     }
     new DataFileStream[T](inputStream(path), reader).iterator().asScala
   }
@@ -91,7 +91,7 @@ class IoCommands(options: PipelineOptions) {
       if (classOf[SpecificRecordBase] isAssignableFrom cls) {
         (new SpecificDatumWriter[T](cls), data.head.asInstanceOf[SpecificRecordBase].getSchema)
       } else {
-        (new GenericDatumWriter[T](), data.head.asInstanceOf[GenericRecord].getSchema)
+        (new GenericDatumWriter[T], data.head.asInstanceOf[GenericRecord].getSchema)
       }
     val fileWriter = new DataFileWriter[T](writer)
       .create(schema, outputStream(path, MimeTypes.BINARY))

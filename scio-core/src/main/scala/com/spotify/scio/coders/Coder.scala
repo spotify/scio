@@ -148,7 +148,7 @@ final private case class DisjunctionCoder[T, Id](
         verify("id", idCoder)
 
     problems match {
-      case (_, e) :: _ =>
+      case _, e :: _ =>
         val reasons = problems.map { case (reason, _) => reason }
         throw new NonDeterministicException(this, reasons.asJava, e)
       case Nil =>
@@ -363,7 +363,7 @@ final private[scio] case class RecordCoder[T](
     }
 
     problems match {
-      case (_, e) :: _ =>
+      case _, e :: _ =>
         val reasons = problems.map { case (reason, _) => reason }
         throw new NonDeterministicException(this, reasons.asJava, e)
       case Nil =>

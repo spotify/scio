@@ -32,7 +32,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.jdk.CollectionConverters._
 
 class ToTableRowTest extends AnyFlatSpec with Matchers {
-  val expectedOutput: TableRow = new TableRow()
+  val expectedOutput: TableRow = new TableRow
     .set("booleanField", true)
     .set("intField", 1)
     .set("stringField", "someString")
@@ -41,8 +41,8 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     .set("floatField", 1f)
     .set("bytesField", BaseEncoding.base64().encode("%20cフーバー".getBytes))
     .set("unionField", "someUnion")
-    .set("arrayField", List(new TableRow().set("nestedField", "nestedValue")).asJava)
-    .set("mapField", List(new TableRow().set("key", "mapKey").set("value", 1.0d)).asJava)
+    .set("arrayField", List(new TableRow.set("nestedField", "nestedValue")).asJava)
+    .set("mapField", List(new TableRow.set("key", "mapKey").set("value", 1.0d)).asJava)
     .set("enumField", Kind.FOO.toString)
     .set("fixedField", BaseEncoding.base64().encode("%20cフーバー".getBytes))
 
@@ -106,7 +106,7 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
   val timestampMicros = 4325L
   val decimal = new JBigDecimal("3.14")
 
-  val expectedLogicalTypeOutput: TableRow = new TableRow()
+  val expectedLogicalTypeOutput: TableRow = new TableRow
     .set("intField", 1)
     .set("stringField", "someString")
     .set("booleanField", true)

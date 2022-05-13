@@ -42,7 +42,7 @@ object HllPlus {
     type In = Integer
 
     override def hll(p: Int): HyperLogLogPlusPlus[In] =
-      new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForIntegers()
+      new HyperLogLogPlusPlus.Builder.normalPrecision(p).buildForIntegers()
 
     override def convert(t: Int): Integer = t
   }
@@ -51,7 +51,7 @@ object HllPlus {
     override type In = java.lang.Long
 
     override def hll(p: Int): HyperLogLogPlusPlus[In] =
-      new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForLongs()
+      new HyperLogLogPlusPlus.Builder.normalPrecision(p).buildForLongs()
 
     override def convert(t: Long): lang.Long = t
   }
@@ -60,7 +60,7 @@ object HllPlus {
     override type In = java.lang.String
 
     override def hll(p: Int): HyperLogLogPlusPlus[In] =
-      new HyperLogLogPlusPlus.Builder().normalPrecision(p).buildForStrings()
+      new HyperLogLogPlusPlus.Builder.normalPrecision(p).buildForStrings()
 
     override def convert(t: String): String = t
   }
@@ -69,7 +69,7 @@ object HllPlus {
     override type In = ByteString
 
     override def hll(p: Int): HyperLogLogPlusPlus[In] =
-      new HyperLogLogPlusPlus.Builder()
+      new HyperLogLogPlusPlus.Builder
         .normalPrecision(p)
         .buildForBytes()
         .asInstanceOf[HyperLogLogPlusPlus[ByteString]]

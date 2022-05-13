@@ -98,7 +98,7 @@ class ScioContextIT extends AnyFlatSpec with Matchers {
     val graph = DataflowPipelineTranslator.jobToString(newJob)
 
     import com.fasterxml.jackson.databind.ObjectMapper
-    val objectMapper = new ObjectMapper()
+    val objectMapper = new ObjectMapper
     val rootNode = objectMapper.readTree(graph)
     val path = "/steps/0/properties/output_info/0/encoding/component_encodings/0/@type"
     val coder = rootNode.at(path).asText

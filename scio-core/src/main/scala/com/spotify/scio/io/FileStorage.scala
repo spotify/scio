@@ -83,7 +83,7 @@ final private[scio] class FileStorage(protected[scio] val path: String) {
       .reduce(_ ++ _)
 
   def textFile: Iterator[String] = {
-    val factory = new CompressorStreamFactory()
+    val factory = new CompressorStreamFactory
     def wrapInputStream(in: InputStream) = {
       val buffered = new BufferedInputStream(in)
       try {

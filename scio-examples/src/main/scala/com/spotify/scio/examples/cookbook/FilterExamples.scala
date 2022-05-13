@@ -39,12 +39,12 @@ object FilterExamples {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Schema for result BigQuery table
-    val schema = new TableSchema().setFields(
+    val schema = new TableSchema.setFields(
       List(
-        new TableFieldSchema().setName("year").setType("INTEGER"),
-        new TableFieldSchema().setName("month").setType("INTEGER"),
-        new TableFieldSchema().setName("day").setType("INTEGER"),
-        new TableFieldSchema().setName("mean_temp").setType("FLOAT")
+        new TableFieldSchema.setName("year").setType("INTEGER"),
+        new TableFieldSchema.setName("month").setType("INTEGER"),
+        new TableFieldSchema.setName("day").setType("INTEGER"),
+        new TableFieldSchema.setName("mean_temp").setType("FLOAT")
       ).asJava
     )
 

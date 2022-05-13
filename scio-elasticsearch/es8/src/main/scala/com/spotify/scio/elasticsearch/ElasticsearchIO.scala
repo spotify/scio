@@ -52,7 +52,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
 
     val write = beam.ElasticsearchIO.Write
       .withNodes(esOptions.nodes.toArray)
-      .withFunction(new SerializableFunction[T, JIterable[BulkOperation]]() {
+      .withFunction(new SerializableFunction[T, JIterable[BulkOperation]] {
         override def apply(t: T): JIterable[BulkOperation] = params.f(t).asJava
       })
       .withFlushInterval(params.flushInterval)

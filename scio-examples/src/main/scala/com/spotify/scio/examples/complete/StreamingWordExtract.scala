@@ -42,8 +42,8 @@ object StreamingWordExtract {
 
     val sc = ScioContext(opts)
 
-    val schema = new TableSchema()
-      .setFields(List(new TableFieldSchema().setName("string_field").setType("STRING")).asJava)
+    val schema = new TableSchema
+      .setFields(List(new TableFieldSchema.setName("string_field").setType("STRING")).asJava)
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))

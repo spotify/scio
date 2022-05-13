@@ -73,13 +73,13 @@ class StatCounter(values: TraversableOnce[Double]) extends Serializable {
       } else if (other.n != 0) {
         val delta = other.mu - mu
         if (other.n * 10 < n) {
-          mu = mu + (delta * other.n) / (n + other.n)
+          mu = mu + delta * other.n / (n + other.n)
         } else if (n * 10 < other.n) {
-          mu = other.mu - (delta * n) / (n + other.n)
+          mu = other.mu - delta * n / (n + other.n)
         } else {
           mu = (mu * n + other.mu * other.n) / (n + other.n)
         }
-        m2 += other.m2 + (delta * delta * n * other.n) / (n + other.n)
+        m2 += other.m2 + delta * delta * n * other.n / (n + other.n)
         n += other.n
         maxValue = math.max(maxValue, other.maxValue)
         minValue = math.min(minValue, other.minValue)

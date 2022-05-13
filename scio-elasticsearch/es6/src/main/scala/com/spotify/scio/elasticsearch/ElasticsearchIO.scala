@@ -51,7 +51,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
       beam.ElasticsearchIO.Write
         .withClusterName(esOptions.clusterName)
         .withServers(esOptions.servers.toArray)
-        .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]]() {
+        .withFunction(new SerializableFunction[T, JIterable[DocWriteRequest[_]]] {
           override def apply(t: T): JIterable[DocWriteRequest[_]] =
             params.f(t).asJava
         })

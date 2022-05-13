@@ -25,17 +25,17 @@ private[scio] object CallSites {
   private val beamNs = "org.apache.beam"
 
   private val methodMap = Map("$plus$plus" -> "++")
-  private val nameCache = new ConcurrentHashMap[(String, String, Boolean), Int]()
+  private val nameCache = new ConcurrentHashMap[(String, String, Boolean), Int]
 
   private def isExternalClass(c: String): Boolean =
     // Not in our code base or an interpreter
-    (!c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(beamNs)) ||
+    !c.startsWith(scioNs) && !c.startsWith("scala.") && !c.startsWith(beamNs) ||
       c.startsWith(s"$scioNs.examples.") || // unless if it's in examples
       c.startsWith(s"$scioNs.values.NamedTransformTest") || // or this test
       c.startsWith(s"$scioNs.values.SimpleJob") || // or this test
       c.startsWith(s"$scioNs.values.ClosureTest") || // or this test
       // or benchmarks/ITs
-      (c.startsWith(scioNs) && (c.contains("Benchmark$") || c.contains("IT")))
+      c.startsWith(scioNs) && (c.contains("Benchmark$") || c.contains("IT"))
 
   private def isTransform(e: StackTraceElement): Boolean =
     e.getClassName == s"$scioNs.values.SCollectionImpl" && e.getMethodName == "transform"

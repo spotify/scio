@@ -44,7 +44,7 @@ private[coders] object GrpcSerializers {
   }
 
   class StatusRuntimeExceptionSerializer extends KSerializer[StatusRuntimeException] {
-    lazy val statusSer = new StatusSerializer()
+    lazy val statusSer = new StatusSerializer
 
     override def write(kryo: Kryo, output: Output, e: StatusRuntimeException): Unit = {
       kryo.writeObject(output, e.getStatus, statusSer)

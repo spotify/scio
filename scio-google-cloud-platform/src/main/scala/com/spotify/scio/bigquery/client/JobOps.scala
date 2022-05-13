@@ -31,7 +31,7 @@ import scala.jdk.CollectionConverters._
 private[client] object JobOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
 
-  private val PeriodFormatter = new PeriodFormatterBuilder()
+  private val PeriodFormatter = new PeriodFormatterBuilder
     .appendHours()
     .appendSuffix("h")
     .appendMinutes()

@@ -41,7 +41,7 @@ trait SideInput[T] extends Serializable {
   def getCache[I, O](context: DoFn[I, O]#ProcessContext, window: BoundedWindow): T = {
     if (
       cache == null || this.window != window ||
-      (updateCacheOnGlobalWindow && window == GlobalWindow.INSTANCE)
+      updateCacheOnGlobalWindow && window == GlobalWindow.INSTANCE
     ) {
       this.window = window
       cache = get(context)

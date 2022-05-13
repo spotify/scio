@@ -59,13 +59,13 @@ class ConverterProviderSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChe
     forAll { o: OptionalFields =>
       val r = AvroType.toGenericRecord[OptionalFields](o)
       // GenericRecord object should only contain a key if the corresponding Option[T] is defined
-      o.boolF.isDefined shouldBe (r.get("boolF") != null)
-      o.intF.isDefined shouldBe (r.get("intF") != null)
-      o.longF.isDefined shouldBe (r.get("longF") != null)
-      o.floatF.isDefined shouldBe (r.get("floatF") != null)
-      o.doubleF.isDefined shouldBe (r.get("doubleF") != null)
-      o.stringF.isDefined shouldBe (r.get("stringF") != null)
-      o.byteStringF.isDefined shouldBe (r.get("byteStringF") != null)
+      o.boolF.isDefined shouldBe r.get("boolF") != null
+      o.intF.isDefined shouldBe r.get("intF") != null
+      o.longF.isDefined shouldBe r.get("longF") != null
+      o.floatF.isDefined shouldBe r.get("floatF") != null
+      o.doubleF.isDefined shouldBe r.get("doubleF") != null
+      o.stringF.isDefined shouldBe r.get("stringF") != null
+      o.byteStringF.isDefined shouldBe r.get("byteStringF") != null
     }
   }
 
@@ -103,10 +103,10 @@ class ConverterProviderSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChe
     forAll { o: OptionalNestedFields =>
       val r = AvroType.toGenericRecord[OptionalNestedFields](o)
       // TableRow object should only contain a key if the corresponding Option[T] is defined
-      o.basic.isDefined shouldBe (r.get("basic") != null)
-      o.optional.isDefined shouldBe (r.get("optional") != null)
-      o.array.isDefined shouldBe (r.get("array") != null)
-      o.map.isDefined shouldBe (r.get("map") != null)
+      o.basic.isDefined shouldBe r.get("basic") != null
+      o.optional.isDefined shouldBe r.get("optional") != null
+      o.array.isDefined shouldBe r.get("array") != null
+      o.map.isDefined shouldBe r.get("map") != null
     }
   }
 

@@ -28,7 +28,7 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
     val shard = Shard.range[HexUpperString]
     val queries = shard.partition(Range(HexUpperString("1"), HexUpperString("27")), 3)
 
-    queries must contain theSameElementsAs (
+    queries must contain theSameElementsAs
       Seq(
         RangeShardQuery(
           Range(HexUpperString("1"), HexUpperString("D")),
@@ -46,7 +46,6 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
           quoteValues = true
         )
       )
-    )
   }
 
   "base64 shardable" must "correctly partition a range of base64 strings" in {
@@ -54,7 +53,7 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
     val shard = Shard.range[Base64String]
     val queries = shard.partition(Range(Base64String("AQ=="), Base64String("Jw==")), 3)
 
-    queries must contain theSameElementsAs (
+    queries must contain theSameElementsAs
       Seq(
         RangeShardQuery(
           Range(Base64String("AQ=="), Base64String("DQ==")),
@@ -72,7 +71,6 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
           quoteValues = true
         )
       )
-    )
   }
 
   "hex uuid lower shardable" must "partition a range of uuid strings in the lower case" in {
@@ -85,7 +83,7 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       3
     )
 
-    queries must contain theSameElementsAs (
+    queries must contain theSameElementsAs
       Seq(
         RangeShardQuery(
           Range(
@@ -112,7 +110,6 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
           quoteValues = true
         )
       )
-    )
   }
 
   "hex uuid upper shardable" must "partition a range of uuid strings in the upper case" in {
@@ -125,7 +122,7 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       3
     )
 
-    queries must contain theSameElementsAs (
+    queries must contain theSameElementsAs
       Seq(
         RangeShardQuery(
           Range(
@@ -152,6 +149,5 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
           quoteValues = true
         )
       )
-    )
   }
 }

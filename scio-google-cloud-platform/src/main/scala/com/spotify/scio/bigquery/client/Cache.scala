@@ -71,7 +71,7 @@ private[client] object Cache {
     implicit val readAvroSchema: Read[Schema] = new Read[Schema] {
       override def read(s: String): Option[Schema] =
         Try {
-          new Schema.Parser().parse(s)
+          new Schema.Parser.parse(s)
         }.toOption
     }
   }

@@ -34,7 +34,7 @@ import java.nio.channels.{ReadableByteChannel, WritableByteChannel}
 
 object ParquetTypeFileOperations {
   val DefaultCompression = CompressionCodecName.GZIP
-  val DefaultConfiguration = new Configuration()
+  val DefaultConfiguration = new Configuration
 
   def apply[T: Coder: ParquetType](): ParquetTypeFileOperations[T] = apply(DefaultCompression)
 

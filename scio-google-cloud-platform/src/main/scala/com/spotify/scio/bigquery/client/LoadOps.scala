@@ -131,7 +131,7 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
   ): Try[TableReference] = Try {
     val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
 
-    val jobConfigLoad = new JobConfigurationLoad()
+    val jobConfigLoad = new JobConfigurationLoad
       .setSourceUris(sources.asJava)
       .setSourceFormat(sourceFormat)
       .setDestinationTable(tableRef)
@@ -149,12 +149,12 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
     skipLeadingRows.foreach(jobConfigLoad.setSkipLeadingRows(_))
     ignoreUnknownValues.foreach(jobConfigLoad.setIgnoreUnknownValues(_))
 
-    val jobConfig = new JobConfiguration()
+    val jobConfig = new JobConfiguration
       .setLoad(jobConfigLoad)
 
     val fullJobId = BigQueryUtil.generateJobId(client.project)
-    val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
-    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+    val jobReference = new JobReference.setProjectId(client.project).setJobId(fullJobId)
+    val job = new Job.setConfiguration(jobConfig).setJobReference(jobReference)
 
     Logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
 

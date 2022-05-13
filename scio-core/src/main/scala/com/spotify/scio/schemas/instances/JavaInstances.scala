@@ -69,7 +69,7 @@ trait JavaInstances {
     MapType(ks, vs, identity, identity)
 
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
-    RawRecord[T](new JavaBeanSchema())
+    RawRecord[T](new JavaBeanSchema)
 
   implicit def javaEnumSchema[T <: java.lang.Enum[T]: ClassTag]: Schema[T] =
     Type[T](FieldType.logicalType(new LogicalType[T, String] {

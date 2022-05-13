@@ -501,7 +501,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     def via(
       transformFn: (K, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
     ): ClosedTap[Nothing] = {
-      val fn = new SortedBucketTransform.TransformFn[K, W]() {
+      val fn = new SortedBucketTransform.TransformFn[K, W] {
         override def writeTransform(
           keyGroup: KV[K, CoGbkResult],
           outputConsumer: SortedBucketTransform.SerializableConsumer[W]
@@ -535,7 +535,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     ): ClosedTap[Nothing] = {
       val sideViews: java.lang.Iterable[PCollectionView[_]] = sides.map(_.view).asJava
 
-      val fn = new SortedBucketTransform.TransformFnWithSideInputContext[K, W]() {
+      val fn = new SortedBucketTransform.TransformFnWithSideInputContext[K, W] {
         override def writeTransform(
           keyGroup: KV[K, CoGbkResult],
           c: DoFn[BucketItem, MergedBucket]#ProcessContext,

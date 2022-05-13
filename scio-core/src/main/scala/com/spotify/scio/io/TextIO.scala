@@ -100,7 +100,7 @@ object TextIO {
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {
-    val factory = new CompressorStreamFactory()
+    val factory = new CompressorStreamFactory
 
     def wrapInputStream(in: InputStream) = {
       val buffered = new BufferedInputStream(in)

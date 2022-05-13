@@ -38,7 +38,7 @@ package object elasticsearch extends CoderInstances {
   final case class ElasticsearchOptions(
     nodes: Seq[HttpHost],
     usernameAndPassword: Option[(String, String)] = None,
-    mapperFactory: () => JsonpMapper = () => new SimpleJsonpMapper()
+    mapperFactory: () => JsonpMapper = () => new SimpleJsonpMapper
   )
 
   implicit

@@ -40,7 +40,7 @@ object StorageUtil {
   def toTableSchema(avroSchema: Schema): TableSchema = {
     val fields = getFieldSchemas(avroSchema)
 
-    new TableSchema().setFields(fields.asJava)
+    new TableSchema.setFields(fields.asJava)
   }
 
   private def getFieldSchemas(avroSchema: Schema): List[TableFieldSchema] =
@@ -58,7 +58,7 @@ object StorageUtil {
       case _ =>
         ("REQUIRED", schema)
     }
-    val tableField = new TableFieldSchema().setName(field.name).setMode(mode)
+    val tableField = new TableFieldSchema.setName(field.name).setMode(mode)
     setRawType(tableField, tpe)
     tableField
   }

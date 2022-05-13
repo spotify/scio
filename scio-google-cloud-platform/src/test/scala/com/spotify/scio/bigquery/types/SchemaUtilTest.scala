@@ -25,26 +25,26 @@ import scala.jdk.CollectionConverters._
 
 class SchemaUtilTest extends AnyFlatSpec with Matchers {
   def newSchema(mode: String): TableSchema =
-    new TableSchema().setFields(
+    new TableSchema.setFields(
       List(
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("boolF")
           .setType("BOOLEAN")
           .setMode(mode),
-        new TableFieldSchema().setName("intF").setType("INTEGER").setMode(mode),
-        new TableFieldSchema().setName("floatF").setType("FLOAT").setMode(mode),
-        new TableFieldSchema()
+        new TableFieldSchema.setName("intF").setType("INTEGER").setMode(mode),
+        new TableFieldSchema.setName("floatF").setType("FLOAT").setMode(mode),
+        new TableFieldSchema
           .setName("stringF")
           .setType("STRING")
           .setMode(mode),
-        new TableFieldSchema().setName("bytesF").setType("BYTES").setMode(mode),
-        new TableFieldSchema()
+        new TableFieldSchema.setName("bytesF").setType("BYTES").setMode(mode),
+        new TableFieldSchema
           .setName("timestampF")
           .setType("TIMESTAMP")
           .setMode(mode),
-        new TableFieldSchema().setName("dateF").setType("DATE").setMode(mode),
-        new TableFieldSchema().setName("timeF").setType("TIME").setMode(mode),
-        new TableFieldSchema()
+        new TableFieldSchema.setName("dateF").setType("DATE").setMode(mode),
+        new TableFieldSchema.setName("timeF").setType("TIME").setMode(mode),
+        new TableFieldSchema
           .setName("datetimeF")
           .setType("DATETIME")
           .setMode(mode)
@@ -80,25 +80,25 @@ class SchemaUtilTest extends AnyFlatSpec with Matchers {
 
   it should "support records" in {
     val fields = List(
-      new TableFieldSchema()
+      new TableFieldSchema
         .setName("f1")
         .setType("INTEGER")
         .setMode("REQUIRED"),
-      new TableFieldSchema().setName("f2").setType("FLOAT").setMode("REQUIRED")
+      new TableFieldSchema.setName("f2").setType("FLOAT").setMode("REQUIRED")
     ).asJava
-    val schema = new TableSchema().setFields(
+    val schema = new TableSchema.setFields(
       List(
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("r1")
           .setType("RECORD")
           .setFields(fields)
           .setMode("REQUIRED"),
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("r2")
           .setType("RECORD")
           .setFields(fields)
           .setMode("NULLABLE"),
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("r3")
           .setType("RECORD")
           .setFields(fields)
@@ -138,8 +138,8 @@ class SchemaUtilTest extends AnyFlatSpec with Matchers {
     val expectedFields = SchemaUtil.scalaReservedWords
       .map(e => s"`$e`")
       .mkString(start = "", sep = ": Long, ", end = ": Long")
-    val schema = new TableSchema().setFields(SchemaUtil.scalaReservedWords.map { name =>
-      new TableFieldSchema()
+    val schema = new TableSchema.setFields(SchemaUtil.scalaReservedWords.map { name =>
+      new TableFieldSchema
         .setName(name)
         .setType("INTEGER")
         .setMode("REQUIRED")

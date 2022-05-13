@@ -66,7 +66,7 @@ private[scio] object ArtisanJoin {
           throw new RuntimeException(msg)
       }
     }
-    val (tagA, tagB) = (new TupleTag[A](), new TupleTag[B]())
+    val (tagA, tagB) = (new TupleTag[A], new TupleTag[B])
     val keyed = KeyedPCollectionTuple
       .of(tagA, a.toKV.internal)
       .and(tagB, b.toKV.internal)

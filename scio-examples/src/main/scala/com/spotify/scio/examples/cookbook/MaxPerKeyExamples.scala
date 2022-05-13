@@ -36,10 +36,10 @@ object MaxPerKeyExamples {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Schema for result BigQuery table
-    val schema = new TableSchema().setFields(
+    val schema = new TableSchema.setFields(
       List(
-        new TableFieldSchema().setName("month").setType("INTEGER"),
-        new TableFieldSchema().setName("max_mean_temp").setType("FLOAT")
+        new TableFieldSchema.setName("month").setType("INTEGER"),
+        new TableFieldSchema.setName("max_mean_temp").setType("FLOAT")
       ).asJava
     )
 

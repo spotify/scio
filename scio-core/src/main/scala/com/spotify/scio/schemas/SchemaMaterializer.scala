@@ -94,7 +94,7 @@ object SchemaMaterializer {
   }
 
   private def decode[F[_, _], A, B](schema: MapType[F, A, B])(v: schema.Repr): F[A, B] = {
-    val h = new util.HashMap[A, B]()
+    val h = new util.HashMap[A, B]
 
     v.forEach(new BiConsumer[schema.keySchema.Repr, schema.valueSchema.Repr] {
       override def accept(t: schema.keySchema.Repr, u: schema.valueSchema.Repr): Unit = {
@@ -156,7 +156,7 @@ object SchemaMaterializer {
   private def encode[F[_, _], A, B](schema: MapType[F, A, B], fieldType: BFieldType)(
     v: F[A, B]
   ): schema.Repr = {
-    val h: util.Map[schema.keySchema.Repr, schema.valueSchema.Repr] = new util.HashMap()
+    val h: util.Map[schema.keySchema.Repr, schema.valueSchema.Repr] = new util.HashMap
     schema
       .toMap(v)
       .forEach(new BiConsumer[A, B] {

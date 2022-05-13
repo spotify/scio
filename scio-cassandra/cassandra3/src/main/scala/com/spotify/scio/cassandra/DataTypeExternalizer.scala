@@ -36,7 +36,7 @@ private[cassandra] object DataTypeExternalizer {
 
 final private[cassandra] class DataTypeExternalizer extends Externalizer[DataType] {
   override protected def kryo: KryoInstantiator =
-    new DataTypeKryoInstantiator().setReferences(true)
+    new DataTypeKryoInstantiator.setReferences(true)
 }
 
 final private class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator {
@@ -51,7 +51,7 @@ final private class DataTypeKryoInstantiator extends EmptyScalaKryoInstantiator 
 private trait ImmutableCollectionSerializer[M] extends KSerializer[M] {
   def readList[T](kser: Kryo, in: Input): JCollection[T] = {
     val size = in.readInt(true)
-    val list = new JArrayList[T]()
+    val list = new JArrayList[T]
     (1 to size).foreach(_ => list.add(kser.readClassAndObject(in).asInstanceOf[T]))
     list
   }

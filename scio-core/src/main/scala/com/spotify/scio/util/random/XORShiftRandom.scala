@@ -44,11 +44,11 @@ private[random] class XORShiftRandom(init: Long) extends JavaRandom(init) {
   // we need to just override next - this will be called by nextInt, nextDouble,
   // nextGaussian, nextLong, etc.
   override protected def next(bits: Int): Int = {
-    var nextSeed = seed ^ (seed << 21)
-    nextSeed ^= (nextSeed >>> 35)
-    nextSeed ^= (nextSeed << 4)
+    var nextSeed = seed ^ seed << 21
+    nextSeed ^= nextSeed >>> 35
+    nextSeed ^= nextSeed << 4
     seed = nextSeed
-    (nextSeed & ((1L << bits) - 1)).asInstanceOf[Int]
+    (nextSeed & (1L << bits) - 1).asInstanceOf[Int]
   }
 
   override def setSeed(s: Long): Unit =
@@ -62,6 +62,6 @@ private[random] object XORShiftRandom {
     val bytes = ByteBuffer.allocate(java.lang.Long.SIZE).putLong(seed).array()
     val lowBits = MurmurHash3.bytesHash(bytes)
     val highBits = MurmurHash3.bytesHash(bytes, lowBits)
-    (highBits.toLong << 32) | (lowBits.toLong & 0xffffffffL)
+    highBits.toLong << 32 | lowBits.toLong & 0xffffffffL
   }
 }

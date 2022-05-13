@@ -115,7 +115,7 @@ final private class PollingTaps(private[this] val backOff: BackOff) extends Taps
               }
               polls = pending
             }
-          } while (BackOffUtils.next(sleeper, backOff))
+          } while BackOffUtils.next(sleeper, backOff)
           polls.foreach(p => p.promise.failure(new TapNotAvailableException(p.name)))
         }
       }

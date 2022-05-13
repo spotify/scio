@@ -51,7 +51,7 @@ private[bigquery] trait ToTableSchema {
 
   private[bigquery] def getFieldSchemas(avroSchema: Schema): List[TableFieldSchema] =
     avroSchema.getFields.asScala.map { field =>
-      val tableField = new TableFieldSchema()
+      val tableField = new TableFieldSchema
         .setName(field.name)
 
       Option(field.doc).foreach(tableField.setDescription)
@@ -130,11 +130,11 @@ private[bigquery] trait ToTableSchema {
     field.setMode("REPEATED")
     field.setType("RECORD")
 
-    val keyField = new TableFieldSchema()
+    val keyField = new TableFieldSchema
       .setName("key")
       .setType("STRING")
       .setMode("REQUIRED")
-    val valueField = new TableFieldSchema().setName("value")
+    val valueField = new TableFieldSchema.setName("value")
     setFieldType(valueField, schema.getValueType)
 
     field.setFields(List(keyField, valueField).asJava)

@@ -34,7 +34,7 @@ object SideOutput {
 
   /** Create a new [[SideOutput]] instance. */
   def apply[T: Coder](): SideOutput[T] = new SideOutput[T] {
-    override private[scio] val tupleTag: TupleTag[T] = new TupleTag[T]()
+    override private[scio] val tupleTag: TupleTag[T] = new TupleTag[T]
     override private[scio] val coder = Coder[T]
   }
 }

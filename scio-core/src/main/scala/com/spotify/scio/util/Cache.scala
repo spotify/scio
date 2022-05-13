@@ -46,7 +46,7 @@ object Cache {
   }
 
   def concurrentHashMap[K, V]: CacheT[K, V, JConcurrentHashMap[K, V]] =
-    concurrentHashMap(new JConcurrentHashMap[K, V]())
+    concurrentHashMap(new JConcurrentHashMap[K, V])
 
   def concurrentHashMap[K, V](
     chm: JConcurrentHashMap[K, V]

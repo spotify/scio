@@ -49,7 +49,7 @@ object ParquetTypeSortedBucketIO {
     filenameSuffix: String = DefaultSuffix,
     filterPredicate: FilterPredicate = null,
     predicate: Predicate[T] = null,
-    configuration: Configuration = new Configuration()
+    configuration: Configuration = new Configuration
   ) extends SortedBucketIO.Read[T] {
     def from(inputDirectories: String*): Read[T] =
       this.copy(inputDirectories = inputDirectories)
@@ -83,7 +83,7 @@ object ParquetTypeSortedBucketIO {
   case class Write[K: ClassTag, T: ClassTag: Coder: ParquetType](
     keyField: String,
     compression: CompressionCodecName = ParquetTypeFileOperations.DefaultCompression,
-    configuration: Configuration = new Configuration(),
+    configuration: Configuration = new Configuration,
     numBuckets: Integer = null,
     numShards: Int = SortedBucketIO.DEFAULT_NUM_SHARDS,
     filenamePrefix: String = SortedBucketIO.DEFAULT_FILENAME_PREFIX,
@@ -159,7 +159,7 @@ object ParquetTypeSortedBucketIO {
   case class TransformOutput[K: ClassTag, T: ClassTag: Coder: ParquetType](
     keyField: String,
     compression: CompressionCodecName = ParquetTypeFileOperations.DefaultCompression,
-    configuration: Configuration = new Configuration(),
+    configuration: Configuration = new Configuration,
     filenamePrefix: String = SortedBucketIO.DEFAULT_FILENAME_PREFIX,
     outputDirectory: ResourceId = null,
     tempDirectory: ResourceId = null,

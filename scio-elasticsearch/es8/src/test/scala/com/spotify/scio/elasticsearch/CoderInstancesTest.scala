@@ -43,11 +43,11 @@ class CoderInstancesTest extends AnyFlatSpec with Matchers with CoderInstances {
   val updateOperation: UpdateOperation[Document, Document] =
     UpdateOperation.of(_.index("index3").id("id3").action(_.doc(document)))
 
-  private val mapper = new JacksonJsonpMapper()
+  private val mapper = new JacksonJsonpMapper
 
   implicit class RichJsonpSerializable[T <: JsonpSerializable](value: T) {
     def toJson: String = {
-      val writer = new StringWriter()
+      val writer = new StringWriter
       value.serialize(Json.createGenerator(writer), mapper)
       writer.toString
     }

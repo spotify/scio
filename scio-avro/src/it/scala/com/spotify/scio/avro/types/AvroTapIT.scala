@@ -29,7 +29,7 @@ import scala.concurrent.duration.Duration
 
 // scio-test/it:runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
 final class AvroTapIT extends AnyFlatSpec with Matchers {
-  private val schema = new Parser().parse("""{
+  private val schema = new Parser.parse("""{
                                                     |  "type" : "record",
                                                     |  "name" : "Root",
                                                     |  "fields" : [ {

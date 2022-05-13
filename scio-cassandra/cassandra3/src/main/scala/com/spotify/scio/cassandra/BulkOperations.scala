@@ -117,7 +117,7 @@ private[cassandra] class BulkOperations(val opts: CassandraOptions, val parallel
     }
 
   private def newWriter: CqlBulkRecordWriter = {
-    val conf = new Configuration()
+    val conf = new Configuration
     CqlBulkRecordWriterUtil.newWriter(
       conf,
       opts.seedNodeHost,

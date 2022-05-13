@@ -76,7 +76,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 object BinaryIO {
 
   private[scio] def openInputStreamsFor(path: String): Iterator[InputStream] = {
-    val factory = new CompressorStreamFactory()
+    val factory = new CompressorStreamFactory
 
     def wrapInputStream(in: InputStream) = {
       val buffered = new BufferedInputStream(in)

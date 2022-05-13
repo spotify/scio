@@ -41,11 +41,11 @@ abstract class RedisDoFn[I, O](
 
   @transient private var jedis: Jedis = _
   @transient private var transaction: Transaction = _
-  private val results: ConcurrentLinkedQueue[Future[Result]] = new ConcurrentLinkedQueue()
+  private val results: ConcurrentLinkedQueue[Future[Result]] = new ConcurrentLinkedQueue
   private val requests: ConcurrentLinkedQueue[(List[Response[_]], Promise[List[_]])] =
-    new ConcurrentLinkedQueue()
+    new ConcurrentLinkedQueue
   private var batchCount = 0
-  private val client = new Client()
+  private val client = new Client
 
   private case class Result(input: I, output: O, ts: Instant, w: BoundedWindow)
 

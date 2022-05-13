@@ -101,7 +101,7 @@ object Schemas {
   }
   import FieldMode._
 
-  def parseSchema(str: String): Schema = new Schema.Parser().parse(str)
+  def parseSchema(str: String): Schema = new Schema.Parser.parse(str)
 
   def basicFields(mode: FieldMode = NONE): String =
     s"""

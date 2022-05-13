@@ -55,7 +55,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   def outputTensorNames: Seq[String]
 
-  override def createResource(): Resource[M] = new ConcurrentHashMap[String, (AtomicInteger, M)]()
+  override def createResource(): Resource[M] = new ConcurrentHashMap[String, (AtomicInteger, M)]
 
   override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
 

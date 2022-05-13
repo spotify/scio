@@ -64,11 +64,11 @@ object ElasticsearchMinimalExample {
       nodes = nodes,
       mapperFactory = () => {
         // Use jackson for user json serialization
-        val mapper = new JacksonJsonpMapper()
+        val mapper = new JacksonJsonpMapper
         // Add scala support
         mapper.objectMapper().registerModule(DefaultScalaModule)
         // Add java.time support
-        mapper.objectMapper().registerModule(new JavaTimeModule())
+        mapper.objectMapper().registerModule(new JavaTimeModule)
         mapper
       }
     )

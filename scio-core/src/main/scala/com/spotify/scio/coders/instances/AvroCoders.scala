@@ -42,7 +42,7 @@ final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
   override def decode(is: InputStream): GenericRecord = {
     val schemaStr = sc.decode(is)
-    val schema = new Schema.Parser().parse(schemaStr)
+    val schema = new Schema.Parser.parse(schemaStr)
     val coder = AvroCoder.of(schema)
     coder.decode(is)
   }

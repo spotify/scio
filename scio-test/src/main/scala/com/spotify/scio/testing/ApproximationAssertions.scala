@@ -81,9 +81,9 @@ object ApproximationAssertions {
   ): ApproximationAssertion[Iterable[Long]] = { (actual: Iterable[Long]) =>
     actual.size shouldBe expected.size
     (actual zip expected).foreach { case (act, expt) =>
-      val error = ((expt / 100) * errorPct).toLong
-      act should be <= (expt + error)
-      act should be >= (expt - error)
+      val error = (expt / 100 * errorPct).toLong
+      act should be <= expt + error
+      act should be >= expt - error
     }
     Succeeded
   }
@@ -109,9 +109,9 @@ object ApproximationAssertions {
     val ex = expected.toMap
     actual.foreach { case (k, act) =>
       val expt = ex(k)
-      val error = ((expt / 100) * errorPct).toLong
-      act should be <= (expt + error)
-      act should be >= (expt - error)
+      val error = (expt / 100 * errorPct).toLong
+      act should be <= expt + error
+      act should be >= expt - error
     }
     Succeeded
   }

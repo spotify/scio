@@ -55,7 +55,7 @@ class GroupByBenchmark {
     """
 
   val avroSchema: Schema =
-    new Schema.Parser().parse(schema)
+    new Schema.Parser.parse(schema)
 
   private def runWithContext[T](fn: ScioContext => T): ScioExecutionContext = {
     val opts = PipelineOptionsFactory.as(classOf[PipelineOptions])

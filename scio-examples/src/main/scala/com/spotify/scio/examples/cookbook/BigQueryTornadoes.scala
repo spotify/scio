@@ -37,10 +37,10 @@ object BigQueryTornadoes {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Schema for result BigQuery table
-    val schema = new TableSchema().setFields(
+    val schema = new TableSchema.setFields(
       List(
-        new TableFieldSchema().setName("month").setType("INTEGER"),
-        new TableFieldSchema().setName("tornado_count").setType("INTEGER")
+        new TableFieldSchema.setName("month").setType("INTEGER"),
+        new TableFieldSchema.setName("tornado_count").setType("INTEGER")
       ).asJava
     )
 

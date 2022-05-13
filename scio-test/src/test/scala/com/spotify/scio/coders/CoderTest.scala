@@ -299,7 +299,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     "Coder[Unit]" should compile
 
     import java.util.BitSet
-    val bs = new BitSet()
+    val bs = new BitSet
     (1 to 100000).foreach(x => bs.set(x))
     bs coderShould notFallback()
 
@@ -584,10 +584,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "support GenericJson types" in {
     coderIsSerializable[TableSchema]
 
-    val tableSchema = new TableSchema().setFields(
+    val tableSchema = new TableSchema.setFields(
       List(
-        new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
-        new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
+        new TableFieldSchema.setName("word").setType("STRING").setMode("NULLABLE"),
+        new TableFieldSchema.setName("word_count").setType("INTEGER").setMode("NULLABLE")
       ).asJava
     )
 

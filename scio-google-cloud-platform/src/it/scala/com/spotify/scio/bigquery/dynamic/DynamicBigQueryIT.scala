@@ -33,7 +33,7 @@ object DynamicBigQueryIT {
   val datasetId = "bigquery_dynamic_it"
 
   def tableRef(prefix: String, name: String): TableReference =
-    new TableReference()
+    new TableReference
       .setProjectId(projectId)
       .setDatasetId(datasetId)
       .setTableId(prefix + "_" + name)

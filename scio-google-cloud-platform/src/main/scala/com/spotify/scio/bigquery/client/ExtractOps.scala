@@ -108,7 +108,7 @@ final private[client] class ExtractOps(client: Client, jobService: JobOps) {
   ): Unit = {
     val tableRef = bq.BigQueryHelpers.parseTableSpec(sourceTable)
 
-    val jobConfigExtract = new JobConfigurationExtract()
+    val jobConfigExtract = new JobConfigurationExtract
       .setSourceTable(tableRef)
       .setDestinationUris(destinationUris.asJava)
       .setDestinationFormat(format)
@@ -117,11 +117,11 @@ final private[client] class ExtractOps(client: Client, jobService: JobOps) {
     fieldDelimiter.foreach(jobConfigExtract.setFieldDelimiter)
     printHeader.foreach(jobConfigExtract.setPrintHeader(_))
 
-    val jobConfig = new JobConfiguration().setExtract(jobConfigExtract)
+    val jobConfig = new JobConfiguration.setExtract(jobConfigExtract)
 
     val fullJobId = BigQueryUtil.generateJobId(client.project)
-    val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
-    val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
+    val jobReference = new JobReference.setProjectId(client.project).setJobId(fullJobId)
+    val job = new Job.setConfiguration(jobConfig).setJobReference(jobReference)
 
     Logger.info(s"Extracting table $sourceTable to ${destinationUris.mkString(", ")}")
 

@@ -49,7 +49,7 @@ import scala.reflect.runtime.universe._
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 
 private object Reads {
-  private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
+  private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]
 
   @inline private def client(sc: ScioContext): BigQuery =
     cache.computeIfAbsent(

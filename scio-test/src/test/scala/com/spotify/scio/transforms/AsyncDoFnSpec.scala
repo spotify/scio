@@ -74,7 +74,7 @@ class JavaAsyncDoFnTester extends AsyncDoFnTester[CompletableFuture, Completable
     new JavaAsyncDoFn[Int, String, Unit] {
       override def getResourceType: ResourceType = ResourceType.PER_CLASS
       override def processElement(input: Int): CompletableFuture[String] = {
-        val p = new CompletableFuture[String]()
+        val p = new CompletableFuture[String]
         pending.append((input, p))
         p
       }

@@ -34,7 +34,7 @@ private object TFRecordCodec {
   private val footerLength: Int = java.lang.Integer.SIZE / java.lang.Byte.SIZE
   private val crc32c = Hashing.crc32c()
 
-  private def mask(crc: Int): Int = ((crc >>> 15) | (crc << 17)) + 0xa282ead8
+  private def mask(crc: Int): Int = (crc >>> 15 | crc << 17) + 0xa282ead8
 
   def read(input: InputStream): Array[Byte] = {
     val headerBytes = readFully(input, headerLength)
@@ -73,7 +73,7 @@ private object TFRecordCodec {
   }
 
   def wrapInputStream(stream: InputStream, compression: Compression): InputStream = {
-    val deflateParam = new DeflateParameters()
+    val deflateParam = new DeflateParameters
     deflateParam.setWithZlibHeader(true)
 
     compression match {
@@ -102,7 +102,7 @@ private object TFRecordCodec {
     if (b1 != -1) pushback.unread(b1)
     val zero: Byte = 0x00
     val header = Ints.fromBytes(zero, zero, b2.toByte, b1.toByte)
-    (b1 != -1 && b2 != -1) && header == GZIPInputStream.GZIP_MAGIC
+    b1 != -1 && b2 != -1 && header == GZIPInputStream.GZIP_MAGIC
   }
 
   private def isInflaterInputStream(pushback: PushbackInputStream): Boolean = {
@@ -110,6 +110,6 @@ private object TFRecordCodec {
     val b2 = pushback.read()
     if (b2 != -1) pushback.unread(b2)
     if (b1 != -1) pushback.unread(b1)
-    (b1 != -1 && b2 != -1) && (b1 == 0x78 && (b1 * 256 + b2) % 31 == 0)
+    b1 != -1 && b2 != -1 && (b1 == 0x78 && (b1 * 256 + b2) % 31 == 0)
   }
 }

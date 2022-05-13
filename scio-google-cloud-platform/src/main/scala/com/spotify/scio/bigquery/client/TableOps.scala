@@ -96,7 +96,7 @@ final private[client] class TableOps(client: Client) {
       )
       .build()
 
-    val schema = new Schema.Parser().parse(session.getAvroSchema.getSchema)
+    val schema = new Schema.Parser.parse(session.getAvroSchema.getSchema)
     val reader = new GenericDatumReader[GenericRecord](schema)
     val responses = client.storage.readRowsCallable().call(readRowsRequest).asScala
 
@@ -149,7 +149,7 @@ final private[client] class TableOps(client: Client) {
         .setParent(s"projects/${client.project}")
         .build()
       val session = client.storage.createReadSession(request)
-      new Schema.Parser().parse(session.getAvroSchema.getSchema)
+      new Schema.Parser.parse(session.getAvroSchema.getSchema)
     }
 
   /** Get table metadata. */
@@ -191,7 +191,7 @@ final private[client] class TableOps(client: Client) {
   def create(table: Table): Unit = withBigQueryService(_.createTable(table))
 
   def create(table: TableReference, schema: TableSchema): Unit =
-    create(new Table().setTableReference(table).setSchema(schema))
+    create(new Table.setTableReference(table).setSchema(schema))
 
   def create(tableSpec: String, schema: TableSchema): Unit =
     create(bq.BigQueryHelpers.parseTableSpec(tableSpec), schema)
@@ -226,7 +226,7 @@ final private[client] class TableOps(client: Client) {
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition
   ): Long = withBigQueryService { service =>
-    val table = new Table().setTableReference(tableReference).setSchema(schema)
+    val table = new Table.setTableReference(tableReference).setSchema(schema)
     if (createDisposition == CreateDisposition.CREATE_IF_NEEDED) {
       service.createTable(table)
     }
@@ -296,8 +296,8 @@ final private[client] class TableOps(client: Client) {
     } catch {
       case e: GoogleJsonResponseException if ApiErrorExtractor.INSTANCE.itemNotFound(e) =>
         Logger.info(s"Creating staging dataset ${client.project}:$datasetId")
-        val dsRef = new DatasetReference().setProjectId(client.project).setDatasetId(datasetId)
-        val ds = new Dataset()
+        val dsRef = new DatasetReference.setProjectId(client.project).setDatasetId(datasetId)
+        val ds = new Dataset
           .setDatasetReference(dsRef)
           .setDefaultTableExpirationMs(StagingDatasetTableExpirationMs)
           .setDescription(StagingDatasetDescription)
@@ -317,7 +317,7 @@ final private[client] class TableOps(client: Client) {
 
   /* Creates a reference to a temporary table in the staging dataset */
   private[bigquery] def createTemporary(tableReference: TableReference): Table =
-    new Table()
+    new Table
       .setTableReference(tableReference)
       .setExpirationTime(System.currentTimeMillis() + StagingDatasetTableExpirationMs)
 
@@ -326,7 +326,7 @@ final private[client] class TableOps(client: Client) {
     val rand = Random.nextInt(Int.MaxValue)
     val tableId = TablePrefix + "_" + now + "_" + rand
 
-    new TableReference()
+    new TableReference
       .setProjectId(client.project)
       .setDatasetId(stagingDatasetId(location))
       .setTableId(tableId)

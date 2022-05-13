@@ -99,7 +99,7 @@ object Pretty {
       .flatMap(x => Try(x.toBoolean).toOption)
       .getOrElse {
         // Crude test to check if the terminal seems to support colors
-        (System.console() != null) && (System.getenv().get("TERM") != null)
+        System.console() != null && System.getenv().get("TERM") != null
       }
 
   val printer: PPrinter =

@@ -39,10 +39,10 @@ object CombinePerKeyExamples {
     val minWordLength = 9
 
     // Schema for result BigQuery table
-    val schema = new TableSchema().setFields(
+    val schema = new TableSchema.setFields(
       List(
-        new TableFieldSchema().setName("word").setType("STRING"),
-        new TableFieldSchema().setName("all_plays").setType("STRING")
+        new TableFieldSchema.setName("word").setType("STRING"),
+        new TableFieldSchema.setName("all_plays").setType("STRING")
       ).asJava
     )
 

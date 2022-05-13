@@ -41,7 +41,7 @@ object IndexAdmin {
   )(f: ElasticsearchIndicesClient => A): Try[A] = {
     val provider = esOptions.usernameAndPassword.map { case (username, password) =>
       val credentials = new UsernamePasswordCredentials(username, password)
-      val provider = new BasicCredentialsProvider()
+      val provider = new BasicCredentialsProvider
       provider.setCredentials(AuthScope.ANY, credentials)
       provider
     }
@@ -49,7 +49,7 @@ object IndexAdmin {
     val builder = RestClient.builder(esOptions.nodes: _*)
     provider.foreach(p => builder.setHttpClientConfigCallback(_.setDefaultCredentialsProvider(p)))
     val restClient = builder.build()
-    val transport = new RestClientTransport(restClient, new JacksonJsonpMapper())
+    val transport = new RestClientTransport(restClient, new JacksonJsonpMapper)
     val client = new ElasticsearchClient(transport)
     val result = Try(f(client.indices()))
     transport.close()

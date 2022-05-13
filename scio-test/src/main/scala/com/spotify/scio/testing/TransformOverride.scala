@@ -35,7 +35,7 @@ object TransformOverride {
     inFn: AppliedPTransform[In, Out, XForm] => In,
     replacement: XForm
   ): PTransformOverrideFactory[In, Out, XForm] =
-    new PTransformOverrideFactory[In, Out, XForm]() {
+    new PTransformOverrideFactory[In, Out, XForm] {
       override def mapOutputs(
         outputs: util.Map[TupleTag[_], PCollection[_]],
         newOutput: Out
@@ -98,7 +98,7 @@ object TransformOverride {
     val overrideFactory =
       factory[PCollection[T], PCollection[U], PTransform[PCollection[T], PCollection[U]]](
         t => PTransformReplacements.getSingletonMainInput(t),
-        new PTransform[PCollection[T], PCollection[U]]() {
+        new PTransform[PCollection[T], PCollection[U]] {
           override def expand(input: PCollection[T]): PCollection[U] =
             input.apply(MapElements.via(Functions.simpleFn(wrappedFn)))
         }

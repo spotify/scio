@@ -55,7 +55,7 @@ object AvroConverters extends ToTableRow with ToTableSchema {
   @experimental
   def toTableSchema(avroSchema: Schema): TableSchema = {
     val fields = getFieldSchemas(avroSchema)
-    new TableSchema().setFields(fields.asJava)
+    new TableSchema.setFields(fields.asJava)
   }
 
   final case class AvroConversionException(

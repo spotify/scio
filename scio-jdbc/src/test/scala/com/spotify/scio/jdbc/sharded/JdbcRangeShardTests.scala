@@ -27,13 +27,12 @@ class JdbcRangeShardTests extends AnyFlatSpec {
     val shard = Shard.range[Long]
     val queries = shard.partition(Range(1, 39), 3)
 
-    queries must contain theSameElementsAs (
+    queries must contain theSameElementsAs
       Seq(
         RangeShardQuery(Range(1, 13), upperBoundInclusive = false, quoteValues = false),
         RangeShardQuery(Range(13, 25), upperBoundInclusive = false, quoteValues = false),
         RangeShardQuery(Range(25, 39), upperBoundInclusive = true, quoteValues = false)
       )
-    )
   }
 
   "long shardable" must "correctly partition a range of longs into a single partition" in {
@@ -41,9 +40,8 @@ class JdbcRangeShardTests extends AnyFlatSpec {
     val shard = Shard.range[Long]
     val queries = shard.partition(Range(1, 39), 1)
 
-    queries must contain theSameElementsAs (
+    queries must contain theSameElementsAs
       Seq(RangeShardQuery(Range(1, 39), upperBoundInclusive = true, quoteValues = false))
-    )
   }
 
 }

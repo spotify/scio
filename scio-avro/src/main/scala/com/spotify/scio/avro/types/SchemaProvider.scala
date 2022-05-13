@@ -32,7 +32,7 @@ import scala.reflect.runtime.universe._
 
 private[types] object SchemaProvider {
   private[this] val m: ConcurrentHashMap[Type, Schema] =
-    new ConcurrentHashMap[Type, Schema]()
+    new ConcurrentHashMap[Type, Schema]
 
   def schemaOf[T: TypeTag]: Schema = {
     val tpe = typeOf[T]

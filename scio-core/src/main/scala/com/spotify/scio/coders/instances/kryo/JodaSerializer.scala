@@ -44,8 +44,8 @@ private[coders] class JodaLocalDateTimeSerializer extends Serializer[LocalDateTi
 
     val millis = input.readLong()
     val hour = (millis / 3600000L).toInt
-    val minute = ((millis % 3600000L) / 60000).toInt
-    val second = ((millis % 60000L) / 1000).toInt
+    val minute = (millis % 3600000L / 60000).toInt
+    val second = (millis % 60000L / 1000).toInt
     val ms = (millis % 1000L).toInt
 
     new LocalDateTime(year, month, day, hour, minute, second, ms)

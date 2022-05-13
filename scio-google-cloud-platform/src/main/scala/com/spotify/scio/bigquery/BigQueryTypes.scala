@@ -152,7 +152,7 @@ object ExtendedErrorInfo {
  */
 object TableRow {
   @inline def apply(fields: (String, _)*): TableRow =
-    fields.foldLeft(new GTableRow())((r, kv) => r.set(kv._1, kv._2))
+    fields.foldLeft(new GTableRow)((r, kv) => r.set(kv._1, kv._2))
 }
 
 /** Utility for BigQuery `TIMESTAMP` type. */
@@ -161,22 +161,22 @@ object Timestamp {
   private[this] val Formatter =
     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS ZZZ")
 
-  private[this] val Parser = new DateTimeFormatterBuilder()
+  private[this] val Parser = new DateTimeFormatterBuilder
     .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
     .appendOptional(
-      new DateTimeFormatterBuilder()
+      new DateTimeFormatterBuilder
         .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser
     )
     .appendOptional(
-      new DateTimeFormatterBuilder()
+      new DateTimeFormatterBuilder
         .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser
     )
     .appendOptional(
-      new DateTimeFormatterBuilder()
+      new DateTimeFormatterBuilder
         .append(null, Array(" ZZZ", "ZZ").map(p => DateTimeFormat.forPattern(p).getParser))
         .toParser
     )
@@ -224,7 +224,7 @@ object Time {
   // [H]H:[M]M:[S]S[.DDDDDD]
   private[this] val Formatter =
     DateTimeFormat.forPattern("HH:mm:ss.SSSSSS").withZoneUTC()
-  private[this] val Parser = new DateTimeFormatterBuilder()
+  private[this] val Parser = new DateTimeFormatterBuilder
     .append(DateTimeFormat.forPattern("HH:mm:ss").getParser)
     .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
     .toFormatter
@@ -249,16 +249,16 @@ object DateTime {
   private[this] val Formatter =
     DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
 
-  private[this] val Parser = new DateTimeFormatterBuilder()
+  private[this] val Parser = new DateTimeFormatterBuilder
     .append(DateTimeFormat.forPattern("yyyy-MM-dd"))
     .appendOptional(
-      new DateTimeFormatterBuilder()
+      new DateTimeFormatterBuilder
         .append(DateTimeFormat.forPattern(" HH:mm:ss").getParser)
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser
     )
     .appendOptional(
-      new DateTimeFormatterBuilder()
+      new DateTimeFormatterBuilder
         .append(DateTimeFormat.forPattern("'T'HH:mm:ss").getParser)
         .appendOptional(DateTimeFormat.forPattern(".SSSSSS").getParser)
         .toParser
@@ -282,7 +282,7 @@ case class TimePartitioning(
   requirePartitionFilter: Boolean = false
 ) {
   def asJava: GTimePartitioning = {
-    var p = new GTimePartitioning()
+    var p = new GTimePartitioning
       .setType(`type`)
       .setRequirePartitionFilter(requirePartitionFilter)
     if (field != null) p = p.setField(field)

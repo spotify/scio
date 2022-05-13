@@ -47,7 +47,7 @@ object SimpleDistCacheJob {
 
 class NonSerializable(val noDefaultCntr: String) extends Serializable {
   // make sure it's not kryo/java serializable
-  private val t = new Thread() // scalafix:ok
+  private val t = new Thread // scalafix:ok
 }
 
 object NonSerializableDistCacheJob {

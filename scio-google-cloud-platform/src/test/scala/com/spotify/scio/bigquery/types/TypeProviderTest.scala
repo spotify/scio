@@ -106,7 +106,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   "BigQueryTag" should "be a serializable annotation" in {
-    SerializableUtils.ensureSerializable[BigQueryTag](new BigQueryTag())
+    SerializableUtils.ensureSerializable[BigQueryTag](new BigQueryTag)
   }
 
   @BigQueryType.fromSchema("""
@@ -164,13 +164,13 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[TableRow => RecordWithRequiredPrimitives]
-      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
+    classOf[TableRow => RecordWithRequiredPrimitives]
+      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[ToTable => RecordWithRequiredPrimitives]
-      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
+    classOf[ToTable => RecordWithRequiredPrimitives]
+      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass shouldBe true
   }
 
   @BigQueryType.fromSchema("""
@@ -335,11 +335,11 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromTableRow in companion object" in {
-    (classOf[TableRow => ToTable] isAssignableFrom ToTable.fromTableRow.getClass) shouldBe true
+    classOf[TableRow => ToTable] isAssignableFrom ToTable.fromTableRow.getClass shouldBe true
   }
 
   it should "support .toTableRow in companion object" in {
-    (classOf[ToTable => TableRow] isAssignableFrom ToTable.toTableRow.getClass) shouldBe true
+    classOf[ToTable => TableRow] isAssignableFrom ToTable.toTableRow.getClass shouldBe true
   }
 
   it should "support .selectedFields in companion object" in {
@@ -350,8 +350,8 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     val cls5 =
       classOf[Function5[Long, Double, Boolean, String, Instant, ToTable]]
     val cls2 = classOf[Function2[Int, String, Record]]
-    (cls5 isAssignableFrom ToTable.getClass) shouldBe true
-    (cls2 isAssignableFrom Record.getClass) shouldBe true
+    cls5 isAssignableFrom ToTable.getClass shouldBe true
+    cls2 isAssignableFrom Record.getClass shouldBe true
   }
 
   it should "create companion object that is functionally equal to its apply method" in {
@@ -457,17 +457,17 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "support .fromTableRow in companion object with >22 fields" in {
     val cls = classOf[TableRow => TwentyThree]
-    (cls isAssignableFrom TwentyThree.fromTableRow.getClass) shouldBe true
+    cls isAssignableFrom TwentyThree.fromTableRow.getClass shouldBe true
   }
 
   it should "support .fromAvro in companion object with >22 fields" in {
     val cls = classOf[GenericRecord => TwentyThree]
-    (cls isAssignableFrom TwentyThree.fromAvro.getClass) shouldBe true
+    cls isAssignableFrom TwentyThree.fromAvro.getClass shouldBe true
   }
 
   it should "support .toAvro in companion object with >22 fields" in {
     val cls = classOf[TwentyThree => GenericRecord]
-    (cls isAssignableFrom TwentyThree.toAvro.getClass) shouldBe true
+    cls isAssignableFrom TwentyThree.toAvro.getClass shouldBe true
   }
 
   @BigQueryType.toTable
@@ -495,10 +495,10 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     Artisanal1Field.getClass.getMethods
       .map(_.getName) should not contain "tupled"
     RecordWithRequiredPrimitives.schema should not be null
-    (classOf[TableRow => RecordWithRequiredPrimitives]
-      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
-    (classOf[ToTable => RecordWithRequiredPrimitives]
-      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
+    classOf[TableRow => RecordWithRequiredPrimitives]
+      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass shouldBe true
+    classOf[ToTable => RecordWithRequiredPrimitives]
+      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass shouldBe true
     Artisanal1FieldWithBody(3).bar shouldBe 42L
     Artisanal1FieldWithBody(3).foo shouldBe "foo"
     Artisanal1FieldWithBody(3).InnerObject.innerObjectInnerMethod shouldBe "so artisanal"

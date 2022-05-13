@@ -44,7 +44,7 @@ import scala.collection.mutable
  */
 object Iterators {
   private[extra] def lowerBound(idx: Long, size: Long, offset: Long): Long =
-    if (idx < offset) offset - size else ((idx - offset) / size) * size + offset
+    if (idx < offset) offset - size else (idx - offset) / size * size + offset
 
   private[extra] def upperBound(idx: Long, size: Long, offset: Long): Long =
     if (idx < offset) offset else ((idx - offset) / size + 1) * size + offset

@@ -27,7 +27,7 @@ import scala.jdk.CollectionConverters._
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
-sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializable {
+sealed trait To[I, O] extends SCollection[I] => SCollection[O] with Serializable {
   def coder: Coder[O]
   def convert(i: I): O
 

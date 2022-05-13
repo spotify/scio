@@ -76,7 +76,7 @@ object MutableScalableBloomFilter {
 
   def toBytes[T](sbf: MutableScalableBloomFilter[T]): Array[Byte] = {
     // serialize each of the fields, excepting the implicit funnel
-    val baos = new ByteArrayOutputStream()
+    val baos = new ByteArrayOutputStream
     val dos: DataOutputStream = new DataOutputStream(baos)
 
     dos.writeDouble(sbf.fpProb)
@@ -110,7 +110,7 @@ object MutableScalableBloomFilter {
     val head = if (numFilters > 0) Some(g.BloomFilter.readFrom[T](dis, funnel)) else None
     val tail: List[Either[g.BloomFilter[T], SerializedBloomFilters]] = {
       if (numFilters > 1) {
-        val baos = new ByteArrayOutputStream()
+        val baos = new ByteArrayOutputStream
         ByteStreams.copy(dis, baos)
         List(Right(SerializedBloomFilters(numFilters - 1, baos.toByteArray)))
       } else {

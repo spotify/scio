@@ -83,10 +83,10 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     conf: Configuration = WriteParam.DefaultConfiguration
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     if (
-      (self.internal.getWindowingStrategy != WindowingStrategy
-        .globalDefault() && filenameFunction.isRight) ||
-      (self.internal.getWindowingStrategy == WindowingStrategy
-        .globalDefault() && filenameFunction.isLeft)
+      self.internal.getWindowingStrategy != WindowingStrategy
+        .globalDefault() && filenameFunction.isRight ||
+      self.internal.getWindowingStrategy == WindowingStrategy
+        .globalDefault() && filenameFunction.isLeft
     ) {
       throw new NotImplementedError(
         "The filenameFunction value passed to saveAsDynamicParquetAvroFile does not" +

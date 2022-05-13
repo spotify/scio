@@ -55,7 +55,7 @@ private[scio] object ScioUtil {
     implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
 
   def getScalaJsonMapper: ObjectMapper =
-    new ObjectMapper().registerModule(DefaultScalaModule)
+    new ObjectMapper.registerModule(DefaultScalaModule)
 
   def addPartSuffix(path: String, ext: String = ""): String =
     if (path.endsWith("/")) s"${path}part-*$ext" else s"$path/part-*$ext"
@@ -63,7 +63,7 @@ private[scio] object ScioUtil {
   def getTempFile(context: ScioContext, fileOrPath: String = null): String = {
     val fop = Option(fileOrPath).getOrElse("scio-materialize-" + UUID.randomUUID().toString)
     val uri = URI.create(fop)
-    if ((ScioUtil.isLocalUri(uri) && uri.toString.startsWith("/")) || uri.isAbsolute) {
+    if (ScioUtil.isLocalUri(uri) && uri.toString.startsWith("/") || uri.isAbsolute) {
       fop
     } else {
       val filename = fop

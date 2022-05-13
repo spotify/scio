@@ -158,7 +158,7 @@ object GameStats {
       .cross(globalMeanScore)
       .filter { case ((_, score), gmc) =>
         // Filter keeps users who have a score higher than 2.5x the average score
-        score > (gmc * 2.5)
+        score > gmc * 2.5
       }
       // Keys are the (user, sumScore) tuples
       .keys

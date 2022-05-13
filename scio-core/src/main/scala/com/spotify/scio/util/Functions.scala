@@ -124,7 +124,7 @@ private[scio] object Functions {
         val (_, l) = accumulator
         l.add(input)
         if (l.size() >= BufferSize) {
-          (fold(accumulator), new JArrayList[T]())
+          (fold(accumulator), new JArrayList[T])
         } else {
           accumulator
         }
@@ -133,7 +133,7 @@ private[scio] object Functions {
       override def extractOutput(accumulator: (U, JList[T])): U = fold(accumulator)
 
       override def mergeAccumulators(accumulators: JIterable[(U, JList[T])]): (U, JList[T]) = {
-        val empty = new JArrayList[T]()
+        val empty = new JArrayList[T]
         Fns.reduce(accumulators) { case (a, b) => (c(fold(a), fold(b)), empty) }
       }
 
@@ -176,13 +176,13 @@ private[scio] object Functions {
       }
 
       override def createAccumulator(): (Option[C], JList[T]) =
-        (None, new JArrayList[T]())
+        (None, new JArrayList[T])
 
       override def addInput(accumulator: (Option[C], JList[T]), input: T): (Option[C], JList[T]) = {
         val (_, l) = accumulator
         l.add(input)
         if (l.size() >= BufferSize) {
-          (foldOption(accumulator), new JArrayList[T]())
+          (foldOption(accumulator), new JArrayList[T])
         } else {
           accumulator
         }
@@ -202,7 +202,7 @@ private[scio] object Functions {
         accumulators: JIterable[(Option[C], JList[T])]
       ): (Option[C], JList[T]) = {
         val iter = accumulators.iterator()
-        val empty = new JArrayList[T]()
+        val empty = new JArrayList[T]
 
         if (!iter.hasNext) {
           (None, empty)
@@ -270,7 +270,7 @@ private[scio] object Functions {
     }
 
   abstract private class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
-    override def createAccumulator(): JList[T] = new JArrayList[T]()
+    override def createAccumulator(): JList[T] = new JArrayList[T]
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
       accumulator.add(input)
@@ -294,11 +294,11 @@ private[scio] object Functions {
 
     override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
       val iter = accumulators.iterator()
-      val partial: JArrayList[T] = new JArrayList[T]()
+      val partial: JArrayList[T] = new JArrayList[T]
       while (iter.hasNext) {
         reduceOption(iter.next()).foreach(partial.add(_))
       }
-      val r = new JArrayList[T]()
+      val r = new JArrayList[T]
       reduceOption(partial).foreach(r.add)
       r
     }
@@ -326,13 +326,13 @@ private[scio] object Functions {
 
       override def mergeAccumulators(accumulators: JIterable[JList[T]]): JList[T] = {
         val iter = accumulators.iterator()
-        val acc: JArrayList[T] = new JArrayList[T]()
+        val acc: JArrayList[T] = new JArrayList[T]
         while (iter.hasNext) {
           Fns.reduceOption(iter.next())(_sg.plus(_, _)).foreach(acc.add(_))
         }
 
         val combined: T = _sg.sumOption(acc.asScala).get
-        val list = new JArrayList[T]()
+        val list = new JArrayList[T]
         list.add(combined)
         list
       }

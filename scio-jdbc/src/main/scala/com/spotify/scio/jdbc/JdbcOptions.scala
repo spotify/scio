@@ -103,5 +103,5 @@ final case class JdbcWriteOptions[T](
   preparedStatementSetter: (T, PreparedStatement) => Unit = null,
   batchSize: Long = JdbcIoOptions.BeamDefaultBatchSize,
   retryConfiguration: RetryConfiguration = JdbcIoOptions.BeamDefaultRetryConfiguration,
-  retryStrategy: SQLException => Boolean = new DefaultRetryStrategy().apply
+  retryStrategy: SQLException => Boolean = new DefaultRetryStrategy.apply
 ) extends JdbcIoOptions

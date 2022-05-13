@@ -167,7 +167,7 @@ final class BigQuery private (val client: Client) {
 object BigQuery {
   private lazy val instance: BigQuery =
     BigQuerySysProps.Project.valueOption.map(BigQuery(_)).getOrElse {
-      Option(new DefaultProjectFactory().create(null))
+      Option(new DefaultProjectFactory.create(null))
         .map(BigQuery(_))
         .getOrElse {
           val flag = BigQuerySysProps.Project.flag

@@ -39,7 +39,7 @@ import org.apache.beam.sdk.values.TupleTag
 import scala.util.Random
 
 object SortMergeBucketExample {
-  lazy val UserDataSchema: Schema = new Schema.Parser().parse(
+  lazy val UserDataSchema: Schema = new Schema.Parser.parse(
     """
       |{
       |    "name": "UserData",

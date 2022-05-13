@@ -60,7 +60,7 @@ class MockBigQuery private (private val bq: BigQuery) {
 
     val t = bq.tables.table(original)
     val temp = bq.tables.createTemporary(t.getLocation).getTableReference
-    mapping += (original -> temp)
+    mapping += original -> temp
     new MockTable(bq, t.getSchema, original, temp)
   }
 
@@ -77,7 +77,7 @@ class MockBigQuery private (private val bq: BigQuery) {
 
     // fake table reference, only used in the mapping for query replacement
     val t = bq.tables.table(original)
-    val wildcard = new TableReference()
+    val wildcard = new TableReference
       .setProjectId(original.getProjectId)
       .setDatasetId(original.getDatasetId)
       .setTableId(original.getTableId.dropRight(suffix.length) + "*")
@@ -92,7 +92,7 @@ class MockBigQuery private (private val bq: BigQuery) {
 
     val temp = tempWildcard.clone().setTableId(tempWildcard.getTableId.dropRight(1) + suffix)
     bq.tables.createTemporary(temp)
-    mapping += (original -> temp)
+    mapping += original -> temp
     new MockTable(bq, t.getSchema, original, temp)
   }
 

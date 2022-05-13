@@ -109,7 +109,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "return correct schema for plain records" in {
     RecordWithBasicTypes.schema shouldBe
-      new Schema.Parser().parse("""
+      new Schema.Parser.parse("""
                                  |{
                                  |  "type": "record",
                                  |  "name": "Record",
@@ -127,13 +127,13 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[GenericRecord => RecordWithBasicTypes]
-      isAssignableFrom RecordWithBasicTypes.fromGenericRecord.getClass) shouldBe true
+    classOf[GenericRecord => RecordWithBasicTypes]
+      isAssignableFrom RecordWithBasicTypes.fromGenericRecord.getClass shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[RecordWithBasicTypes => GenericRecord]
-      isAssignableFrom RecordWithBasicTypes.toGenericRecord.getClass) shouldBe true
+    classOf[RecordWithBasicTypes => GenericRecord]
+      isAssignableFrom RecordWithBasicTypes.toGenericRecord.getClass shouldBe true
   }
 
   it should "support round trip conversion from GenericRecord" in {
@@ -319,7 +319,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "return correct schema for nested objects" in {
     RecordWithRecords.schema shouldBe
-      new Schema.Parser()
+      new Schema.Parser
         .parse("""
                                   |{
                                   |  "type" : "record",
@@ -629,7 +629,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "returns correct schema for plain objects" in {
     ToSchema.schema should be
-    new Schema.Parser()
+    new Schema.Parser
       .parse("""
                                   |{
                                   |  "type": "record",
@@ -649,13 +649,13 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support .fromGenericRecord in companion object" in {
-    (classOf[GenericRecord => ToSchema] isAssignableFrom
-      ToSchema.fromGenericRecord.getClass) shouldBe true
+    classOf[GenericRecord => ToSchema] isAssignableFrom
+      ToSchema.fromGenericRecord.getClass shouldBe true
   }
 
   it should "support .toGenericRecord in companion object" in {
-    (classOf[ToSchema => GenericRecord] isAssignableFrom
-      ToSchema.toGenericRecord.getClass) shouldBe true
+    classOf[ToSchema => GenericRecord] isAssignableFrom
+      ToSchema.toGenericRecord.getClass shouldBe true
   }
 
   it should "support round trip conversion from GenericRecord" in {
@@ -666,7 +666,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "create companion object that is a Function subtype" in {
     val cls = classOf[Function7[Boolean, Int, Long, Float, Double, String, ByteString, ToSchema]]
-    (cls isAssignableFrom ToSchema.getClass) shouldBe true
+    cls isAssignableFrom ToSchema.getClass shouldBe true
   }
 
   it should "create companion object that is functionally equal to its apply method" in {
@@ -689,7 +689,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "returns correct schema for objects containing fields named as scala reserved word" in {
     ReservedName.schema should be
-    new Schema.Parser()
+    new Schema.Parser
       .parse("""
                                 |{
                                 |  "type": "record",
@@ -713,7 +713,7 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "create companion object that is a Function subtype for single field record" in {
     val cls = classOf[Function1[Long, Artisanal1FieldToSchema]]
-    (cls isAssignableFrom Artisanal1FieldToSchema.getClass) shouldBe true
+    cls isAssignableFrom Artisanal1FieldToSchema.getClass shouldBe true
   }
 
   @AvroType.toSchema
@@ -808,12 +808,12 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "support .fromGenericRecord in companion object with >22 fields" in {
     val cls = classOf[GenericRecord => TwentyThree]
-    (cls isAssignableFrom TwentyThree.fromGenericRecord.getClass) shouldBe true
+    cls isAssignableFrom TwentyThree.fromGenericRecord.getClass shouldBe true
   }
 
   it should "support .toGenericRecord in companion object with >22 fields" in {
     val cls = classOf[TwentyThree => GenericRecord]
-    (cls isAssignableFrom TwentyThree.toGenericRecord.getClass) shouldBe true
+    cls isAssignableFrom TwentyThree.toGenericRecord.getClass shouldBe true
   }
 
   @AvroType.toSchema

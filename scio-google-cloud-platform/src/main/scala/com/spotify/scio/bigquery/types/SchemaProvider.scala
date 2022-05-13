@@ -46,7 +46,7 @@ private[types] object SchemaProvider {
           case t if isCaseClass(t) => toFields(t)
           case t                   => throw new RuntimeException(s"Unsupported type $t")
         }
-        val r = new TableSchema().setFields(fields.toList.asJava)
+        val r = new TableSchema.setFields(fields.toList.asJava)
         debug(s"SchemaProvider.schemaOf[${typeOf[T]}]:")
         debug(r)
         r
@@ -60,7 +60,7 @@ private[types] object SchemaProvider {
     desc: Option[String],
     nested: Iterable[TableFieldSchema]
   ): TableFieldSchema = {
-    val s = new TableFieldSchema().setMode(mode).setName(name).setType(tpe)
+    val s = new TableFieldSchema.setMode(mode).setName(name).setType(tpe)
     if (nested.nonEmpty) {
       s.setFields(nested.toList.asJava)
     }

@@ -67,7 +67,7 @@ abstract private[coders] class JWrapperCBF[T] extends CanBuildFrom[Iterable[T], 
   def asScala(xs: java.util.List[T]): Iterable[T]
 
   class JIterableWrapperBuilder extends mutable.Builder[T, Iterable[T]] {
-    private val xs = new java.util.ArrayList[T]()
+    private val xs = new java.util.ArrayList[T]
 
     override def +=(elem: T): this.type = {
       xs.add(elem)

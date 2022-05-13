@@ -30,7 +30,7 @@ private[scio] object InMemorySink {
     data.transform {
       _.groupBy(_ => ()).values
         .map { values =>
-          cache += (id -> values)
+          cache += id -> values
           ()
         }
     }

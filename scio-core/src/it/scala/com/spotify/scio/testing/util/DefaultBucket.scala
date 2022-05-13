@@ -55,7 +55,7 @@ private object DefaultBucket {
     val gcsOptions = options.as(classOf[GcsOptions])
     val bucketName = "dataflow-staging-" + region + "-" + projectNumber
     LOG.info("No staging location provided, attempting to use default bucket: {}", bucketName)
-    val bucket = new Bucket().setName(bucketName).setLocation(region)
+    val bucket = new Bucket.setName(bucketName).setLocation(region)
     // Always try to create the bucket before checking access, so that we do not
     // race with other pipelines that may be attempting to do the same thing.
     try gcsOptions.getGcsUtil.createBucket(projectId, bucket)

@@ -151,10 +151,10 @@ private[scio] object TestDataManager {
     dcs: Map[DistCacheIO[_], _],
     xformOverrides: Set[PTransformOverride]
   ): Unit = {
-    inputs += (testId -> new TestInput(ins))
-    outputs += (testId -> new TestOutput(outs))
-    distCaches += (testId -> new TestDistCache(dcs))
-    transformOverrides += (testId -> xformOverrides)
+    inputs += testId -> new TestInput(ins)
+    outputs += testId -> new TestOutput(outs)
+    distCaches += testId -> new TestDistCache(dcs)
+    transformOverrides += testId -> xformOverrides
   }
 
   def tearDown(testId: String, f: ScioResult => Unit = _ => ()): Unit = {

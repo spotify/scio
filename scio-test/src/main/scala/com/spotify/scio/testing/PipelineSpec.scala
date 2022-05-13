@@ -68,7 +68,7 @@ trait PipelineSpec
   }
 
   override def run(testName: Option[String], args: Args): Status = {
-    if (beamOpts == null && !args.runTestInNewInstance && (expectedTestCount(args.filter) > 0)) {
+    if (beamOpts == null && !args.runTestInNewInstance && expectedTestCount(args.filter) > 0) {
       beamOpts = BeamOptions(getBeamOptions(args.configMap))
     }
     super.run(testName, args)

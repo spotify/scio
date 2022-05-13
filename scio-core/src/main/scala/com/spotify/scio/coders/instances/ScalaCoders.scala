@@ -273,7 +273,7 @@ private[coders] class MapCoder[K, V](val kc: BCoder[K], val vc: BCoder[V])
     while (i < l) {
       val k = kc.decode(is)
       val v = vc.decode(is)
-      builder += (k -> v)
+      builder += k -> v
       i = i + 1
     }
     builder.result()
@@ -335,7 +335,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
     while (i < l) {
       val k = kc.decode(is)
       val v = vc.decode(is)
-      builder += (k -> v)
+      builder += k -> v
       i = i + 1
     }
     builder.result()

@@ -82,7 +82,7 @@ object AvroTypeIT {
 class AvroTypeIT extends AnyFlatSpec with Matchers {
   import AvroTypeIT._
 
-  private val expectedSchema = new Parser().parse("""{
+  private val expectedSchema = new Parser.parse("""{
                                                   |  "type" : "record",
                                                   |  "name" : "Root",
                                                   |  "fields" : [ {

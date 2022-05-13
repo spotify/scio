@@ -52,7 +52,7 @@ private[types] object TypeProvider {
       case Nil => c.abort(c.enclosingPosition, "Missing table specification")
       case l   => l
     }
-    val (table: String, _) :: _ = args
+    val table: String, _ :: _ = args
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args.map(_._1)))
     val schema = bigquery.tables.schema(tableSpec)
@@ -78,7 +78,7 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val (schemaString: String, _) :: _ = extractArgs(c) match {
+    val schemaString: String, _ :: _ = extractArgs(c) match {
       case Nil => c.abort(c.enclosingPosition, "Missing schema")
       case l   => l
     }
@@ -123,7 +123,7 @@ private[types] object TypeProvider {
       case Nil => c.abort(c.enclosingPosition, "Missing query")
       case l   => l
     }
-    val (queryFormat: String, _) :: queryArgs = extractedArgs
+    val queryFormat: String, _ :: queryArgs = extractedArgs
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs.map(_._1)))
     val schema = bigquery.query.schema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")

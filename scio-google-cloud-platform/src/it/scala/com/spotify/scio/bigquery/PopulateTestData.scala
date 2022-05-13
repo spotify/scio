@@ -121,8 +121,8 @@ object PopulateTestData {
     datasetId: String,
     location: String
   ): Unit = {
-    val ds = new Dataset()
-      .setDatasetReference(new DatasetReference().setProjectId(projectId).setDatasetId(datasetId))
+    val ds = new Dataset
+      .setDatasetReference(new DatasetReference.setProjectId(projectId).setDatasetId(datasetId))
       .setLocation(location)
     try {
       bq.client.execute(_.datasets().insert(projectId, ds))

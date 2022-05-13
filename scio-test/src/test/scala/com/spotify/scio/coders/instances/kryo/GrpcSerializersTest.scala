@@ -28,7 +28,7 @@ import scala.jdk.CollectionConverters._
 class GrpcSerializersTest extends AnyFlatSpec with Matchers {
 
   "StatusRuntimeException" should "roundtrip with nullable fields present" in {
-    val metadata = new Metadata()
+    val metadata = new Metadata
     metadata.put(Metadata.Key.of[String]("k", Metadata.ASCII_STRING_MARSHALLER), "v")
 
     roundtrip(

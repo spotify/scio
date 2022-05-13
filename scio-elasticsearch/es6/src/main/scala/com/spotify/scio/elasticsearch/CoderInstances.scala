@@ -84,15 +84,15 @@ trait CoderInstances {
     }
   }
 
-  private val indexRequestBCoder = writableBCoder[IndexRequest](() => new IndexRequest())
+  private val indexRequestBCoder = writableBCoder[IndexRequest](() => new IndexRequest)
   implicit val indexRequestCoder: Coder[IndexRequest] =
     Coder.beam[IndexRequest](indexRequestBCoder)
 
-  private val deleteRequestBCoder = writableBCoder[DeleteRequest](() => new DeleteRequest())
+  private val deleteRequestBCoder = writableBCoder[DeleteRequest](() => new DeleteRequest)
   implicit val deleteRequestCoder: Coder[DeleteRequest] =
     Coder.beam[DeleteRequest](deleteRequestBCoder)
 
-  private val updateRequestBCoder = writableBCoder[UpdateRequest](() => new UpdateRequest())
+  private val updateRequestBCoder = writableBCoder[UpdateRequest](() => new UpdateRequest)
   implicit val updateRequestCoder: Coder[UpdateRequest] =
     Coder.beam[UpdateRequest](updateRequestBCoder)
 }

@@ -179,7 +179,7 @@ class ScioContextTest extends PipelineSpec {
   }
 
   it should "truncate app arguments when they are overly long" in {
-    val longArg = "--argument=" + ("a" * 55000)
+    val longArg = "--argument=" + "a" * 55000
     val (opts, _) = ScioContext.parseArguments[ScioOptions](Array(longArg))
     def numBytes(s: String): Int = s.getBytes(StandardCharsets.UTF_8.name).length
     val expectedNumBytes = 50000 + numBytes(" [...]")

@@ -270,7 +270,7 @@ class SCollectionMatchersTest extends PipelineSpec {
     }
     an[AssertionError] should be thrownBy {
       runWithContext {
-        _.parallelize(s.tail :+ ("a" -> 10)) should equalMapOf(s.toMap)
+        _.parallelize(s.tail :+ "a" -> 10) should equalMapOf(s.toMap)
       }
     }
 

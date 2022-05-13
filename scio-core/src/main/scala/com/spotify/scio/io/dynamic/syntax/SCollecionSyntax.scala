@@ -79,7 +79,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
       )
     } else {
       val cls = ct.runtimeClass.asInstanceOf[Class[T]]
-      val nm = new JHashMap[String, AnyRef]()
+      val nm = new JHashMap[String, AnyRef]
       nm.putAll(metadata.asJava)
       val sink = beam.AvroIO
         .sink(cls)
@@ -121,7 +121,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
         "Avro file with dynamic destinations cannot be used in a test context"
       )
     } else {
-      val nm = new JHashMap[String, AnyRef]()
+      val nm = new JHashMap[String, AnyRef]
       nm.putAll(metadata.asJava)
       val sink = beam.AvroIO
         .sinkViaGenericRecords(
@@ -194,7 +194,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     val protoCoder = Coder.protoMessageCoder[T]
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
     val avroSchema = AvroBytesUtil.schema
-    val nm = new JHashMap[String, AnyRef]()
+    val nm = new JHashMap[String, AnyRef]
     nm.putAll((metadata ++ ProtobufUtil.schemaMetadataOf(ct)).asJava)
 
     if (self.context.isTest) {

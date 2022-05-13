@@ -152,7 +152,7 @@ object TriggerExample {
       val timestamp = Instant.now()
       if (Math.random() < THRESHOLD) {
         val range = MAX_DELAY - MIN_DELAY
-        val delayInMinutes = (Math.random() * range) + MIN_DELAY
+        val delayInMinutes = Math.random() * range + MIN_DELAY
         val delayInMillis = DateTimeConstants.MILLIS_PER_MINUTE * delayInMinutes
         new Instant(timestamp.getMillis - delayInMillis)
       } else {

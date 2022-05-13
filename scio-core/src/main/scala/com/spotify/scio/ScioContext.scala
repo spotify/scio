@@ -171,8 +171,7 @@ object ContextAndArgs {
     def parse(args: Array[String]): F[Result]
   }
 
-  final case class DefaultParser[T <: PipelineOptions: ClassTag] private ()
-      extends ArgsParser[Try] {
+  final case class DefaultParser[T <: PipelineOptions: ClassTag] private extends ArgsParser[Try] {
     override type ArgsType = Args
 
     override def parse(args: Array[String]): Try[Result] = Try {
@@ -180,7 +179,7 @@ object ContextAndArgs {
     }
   }
 
-  final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private ()
+  final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private
       extends ArgsParser[Try] {
     override type ArgsType = T
 
@@ -214,8 +213,8 @@ object ContextAndArgs {
           Console.out.println(usageOrHelp)
 
           UsageOrHelpException.attachUncaughtExceptionHandler()
-          throw new UsageOrHelpException()
-        case Success(Right((_opts, _args))) =>
+          throw new UsageOrHelpException
+        case Success(Right(_opts, _args)) =>
           (new ScioContext(_opts, Nil), _args.asInstanceOf[T])
       }
 
@@ -332,7 +331,7 @@ object ScioContext {
       name = method.getName
       str <-
         if (
-          (!name.startsWith("get") && !name.startsWith("is")) ||
+          !name.startsWith("get") && !name.startsWith("is") ||
           method.getParameterTypes.nonEmpty || method.getReturnType == classOf[Unit]
         ) {
           None

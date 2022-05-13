@@ -44,7 +44,7 @@ private[scio] object ItUtils {
       sys.props(PROJECT_KEY)
     } else {
       // fallback to local setting
-      new DefaultProjectFactory().create(null)
+      new DefaultProjectFactory.create(null)
     }
 
   /** Get GCP temp location for integration test. */
@@ -84,7 +84,7 @@ private[scio] object ItUtils {
     httpRequestInitializer: HttpRequestInitializer
   ): HttpRequestInitializer =
     if (credential == null) {
-      new ChainingHttpRequestInitializer(new NullCredentialInitializer(), httpRequestInitializer)
+      new ChainingHttpRequestInitializer(new NullCredentialInitializer, httpRequestInitializer)
     } else {
       new ChainingHttpRequestInitializer(
         new HttpCredentialsAdapter(credential),

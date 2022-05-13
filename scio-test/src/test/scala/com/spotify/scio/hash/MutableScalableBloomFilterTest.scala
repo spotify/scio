@@ -57,13 +57,13 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
     val sbf = MutableScalableBloomFilter[String](initialCapacity, 0.001, 2, 1.0)
     assert(sbf.numFilters == 0)
 
-    (0 until 100).foreach(i => sbf += ("item" + i))
+    (0 until 100).foreach(i => sbf += "item" + i)
     assert(sbf.numFilters == 6) // filter sizes: 2 + 4 + 8 + 16 + 32 + 64 = 126 > 100
 
     val sbf2 = MutableScalableBloomFilter[String](initialCapacity, 0.001, 4, 1.0)
     assert(sbf2.numFilters == 0)
 
-    (0 until 100).foreach(i => sbf2 += ("item" + i))
+    (0 until 100).foreach(i => sbf2 += "item" + i)
     assert(sbf2.numFilters == 4) // filter sizes: 2 + 8 + 64 + 512 > 100
   }
 
@@ -87,7 +87,7 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
   it should "round-trip serialization" in {
     val initialCapacity = 1000
     val sbf = MutableScalableBloomFilter[String](initialCapacity)
-    (0 until 100).foreach(i => sbf += ("item" + i))
+    (0 until 100).foreach(i => sbf += "item" + i)
 
     val roundtripped =
       MutableScalableBloomFilter.fromBytes[String](MutableScalableBloomFilter.toBytes(sbf))

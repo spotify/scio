@@ -135,7 +135,7 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
 
   it should "pass correct PubsubIO with attributes" in {
     testPubsubWithAttributesJob(
-      Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
+      Map(PubsubWithAttributesJob.timestampAttribute -> new Instant.toString),
       "aX",
       "bX",
       "cX"
@@ -145,14 +145,14 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
   it should "fail incorrect PubsubIO with attributes" in {
     an[AssertionError] should be thrownBy {
       testPubsubWithAttributesJob(
-        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
+        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant.toString),
         "aX",
         "bX"
       )
     }
     an[AssertionError] should be thrownBy {
       testPubsubWithAttributesJob(
-        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
+        Map(PubsubWithAttributesJob.timestampAttribute -> new Instant.toString),
         "aX",
         "bX",
         "cX",

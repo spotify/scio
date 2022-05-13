@@ -66,7 +66,7 @@ class VersionUtilTest extends AnyFlatSpec with Matchers {
     )
     for (i <- versions.indices) {
       VersionUtil.checkVersion(versions(i), Some(versions(i)), ignore = false) shouldBe Nil
-      for (j <- (i + 1) until versions.length) {
+      for (j <- i + 1 until versions.length) {
         verifyNewVersion(versions(i), versions(j))
       }
     }

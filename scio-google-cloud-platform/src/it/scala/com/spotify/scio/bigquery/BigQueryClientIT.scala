@@ -99,20 +99,20 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
   }
 
   "QueryService.getSchema" should "work with legacy syntax" in {
-    val expected = new TableSchema().setFields(
+    val expected = new TableSchema.setFields(
       List(
-        new TableFieldSchema().setName("word").setType("STRING").setMode("REQUIRED"),
-        new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("REQUIRED")
+        new TableFieldSchema.setName("word").setType("STRING").setMode("REQUIRED"),
+        new TableFieldSchema.setName("word_count").setType("INTEGER").setMode("REQUIRED")
       ).asJava
     )
     bq.query.schema(legacyQuery) shouldBe expected
   }
 
   it should "work with SQL syntax" in {
-    val expected = new TableSchema().setFields(
+    val expected = new TableSchema.setFields(
       List(
-        new TableFieldSchema().setName("word").setType("STRING").setMode("NULLABLE"),
-        new TableFieldSchema().setName("word_count").setType("INTEGER").setMode("NULLABLE")
+        new TableFieldSchema.setName("word").setType("STRING").setMode("NULLABLE"),
+        new TableFieldSchema.setName("word_count").setType("INTEGER").setMode("NULLABLE")
       ).asJava
     )
     bq.query.schema(sqlQuery) shouldBe expected

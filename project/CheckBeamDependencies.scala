@@ -33,7 +33,7 @@ object CheckBeamDependencies extends AutoPlugin {
   }
   import autoImport._
 
-  private[this] val beamDeps = new ConcurrentHashMap[String, Map[String, Set[String]]]()
+  private[this] val beamDeps = new ConcurrentHashMap[String, Map[String, Set[String]]]
 
   private def resolveBeamDependencies(deps: Seq[(String, String)]): Map[String, Set[String]] =
     deps

@@ -69,11 +69,11 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     val source = HadoopFormatIO
       .read[JBoolean, T]
       // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+      .withKeyTranslation(new SimpleFunction[Void, JBoolean] {
         override def apply(input: Void): JBoolean = true
       })
       .withValueTranslation(
-        new SimpleFunction[T, T]() {
+        new SimpleFunction[T, T] {
           override def apply(input: T): T = input
 
           override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
@@ -111,7 +111,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 object ParquetTypeIO {
   object ReadParam {
     private[types] val DefaultPredicate = null
-    private[types] val DefaultConfiguration = new Configuration()
+    private[types] val DefaultConfiguration = new Configuration
     private[types] val DefaultSkipClone = true
   }
   final case class ReadParam[T] private (
@@ -124,7 +124,7 @@ object ParquetTypeIO {
     private[types] val DefaultNumShards = 0
     private[types] val DefaultSuffix = ".parquet"
     private[types] val DefaultCompression = CompressionCodecName.GZIP
-    private[types] val DefaultConfiguration = new Configuration()
+    private[types] val DefaultConfiguration = new Configuration
   }
 
   final case class WriteParam[T] private (

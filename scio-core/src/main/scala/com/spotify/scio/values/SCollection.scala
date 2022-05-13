@@ -266,7 +266,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   private[scio] def transform_[U <: POutput](name: String)(f: SCollection[T] => U): U = {
     applyInternal(
       name,
-      new PTransform[PCollection[T], U]() {
+      new PTransform[PCollection[T], U] {
         override def expand(input: PCollection[T]): U = f(context.wrap(input))
       }
     )
@@ -824,7 +824,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     weightA: Double,
     weightB: Double
   ): (SCollection[T], SCollection[T], SCollection[T]) = {
-    require(weightA > 0.0 && weightB > 0.0 && (weightA + weightB) < 1.0)
+    require(weightA > 0.0 && weightB > 0.0 && weightA + weightB < 1.0)
     val splits = randomSplit(Array(weightA, weightB, 1d - (weightA + weightB)))
     (splits(0), splits(1), splits(2))
   }
@@ -1179,7 +1179,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group window
    */
   def withGlobalWindow(options: WindowOptions = WindowOptions()): SCollection[T] =
-    this.withWindowFn(new GlobalWindows(), options)
+    this.withWindowFn(new GlobalWindows, options)
 
   /**
    * Window values into by years.
@@ -1359,7 +1359,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     } else {
       this
         .covary_[String]
-        .applyTransform(new PTransform[PCollection[String], PCollection[A]]() {
+        .applyTransform(new PTransform[PCollection[String], PCollection[A]] {
           override def expand(input: PCollection[String]): PCollection[A] =
             input
               .apply(beam.FileIO.matchAll())

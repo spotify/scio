@@ -32,7 +32,7 @@ private[coders] class GenericAvroSerializer extends KSerializer[GenericRecord] {
   private lazy val cache: MMap[String, AvroCoder[GenericRecord]] = MMap()
 
   private def getCoder(schemaStr: String): AvroCoder[GenericRecord] =
-    cache.getOrElseUpdate(schemaStr, AvroCoder.of(new Schema.Parser().parse(schemaStr)))
+    cache.getOrElseUpdate(schemaStr, AvroCoder.of(new Schema.Parser.parse(schemaStr)))
   private def getCoder(schemaStr: String, schema: Schema): AvroCoder[GenericRecord] =
     cache.getOrElseUpdate(schemaStr, AvroCoder.of(schema))
 

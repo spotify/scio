@@ -45,7 +45,7 @@ object IndexAdmin {
           httpClientBuilder: HttpAsyncClientBuilder
         ): HttpAsyncClientBuilder = {
           val credentialsProdiver = esOptions.usernameAndPassword.map { case (username, password) =>
-            val credentials = new BasicCredentialsProvider()
+            val credentials = new BasicCredentialsProvider
             credentials.setCredentials(
               AuthScope.ANY,
               new UsernamePasswordCredentials(username, password)
@@ -156,7 +156,7 @@ object IndexAdmin {
       "Only one index per alias can be assigned to be the write index at a time"
     )
 
-    val request = indices.foldLeft(new IndicesAliasesRequest()) {
+    val request = indices.foldLeft(new IndicesAliasesRequest) {
       case (request, (idx, isWriteIndex)) =>
         request.addAliasAction(
           new AliasActions(AliasActions.Type.ADD)

@@ -26,74 +26,74 @@ import scala.jdk.CollectionConverters._
 class ToTableSchemaTest extends AnyFlatSpec with Matchers {
   "toTableSchema" should "convert an Avro Schema to a BigQuery TableSchema" in {
     AvroConverters.toTableSchema(AvroExample.SCHEMA$) shouldEqual
-      new TableSchema().setFields(
+      new TableSchema.setFields(
         List(
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("intField")
             .setType("INTEGER")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("stringField")
             .setType("STRING")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("booleanField")
             .setType("BOOLEAN")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("longField")
             .setType("INTEGER")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("doubleField")
             .setType("FLOAT")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("floatField")
             .setType("FLOAT")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("bytesField")
             .setType("BYTES")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("unionField")
             .setType("STRING")
             .setMode("NULLABLE"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("arrayField")
             .setType("RECORD")
             .setMode("REPEATED")
             .setDescription("some array doc")
             .setFields(
               List(
-                new TableFieldSchema()
+                new TableFieldSchema
                   .setName("nestedField")
                   .setMode("REQUIRED")
                   .setType("STRING")
               ).asJava
             ),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("mapField")
             .setType("RECORD")
             .setMode("REPEATED")
             .setFields(
               List(
-                new TableFieldSchema()
+                new TableFieldSchema
                   .setName("key")
                   .setType("STRING")
                   .setMode("REQUIRED"),
-                new TableFieldSchema()
+                new TableFieldSchema
                   .setName("value")
                   .setType("FLOAT")
                   .setMode("REQUIRED")
               ).asJava
             ),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("enumField")
             .setType("STRING")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("fixedField")
             .setType("BYTES")
             .setMode("REQUIRED")
@@ -103,57 +103,57 @@ class ToTableSchemaTest extends AnyFlatSpec with Matchers {
 
   "toTableSchema" should "convert an Avro Schema with Logical Types to a BigQuery TableSchema" in {
     AvroConverters.toTableSchema(AvroExampleWithLogicalType.SCHEMA$) shouldEqual
-      new TableSchema().setFields(
+      new TableSchema.setFields(
         List(
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("intField")
             .setType("INTEGER")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("stringField")
             .setType("STRING")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("booleanField")
             .setType("BOOLEAN")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("longField")
             .setType("INTEGER")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("doubleField")
             .setType("FLOAT")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("floatField")
             .setType("FLOAT")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("bytesField")
             .setType("BYTES")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("decimalField")
             .setType("NUMERIC")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("dateField")
             .setType("DATE")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("timeMillisField")
             .setType("TIME")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("timeMicrosField")
             .setType("INTEGER")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("timestampMillisField")
             .setType("TIMESTAMP")
             .setMode("REQUIRED"),
-          new TableFieldSchema()
+          new TableFieldSchema
             .setName("timestampMicrosField")
             .setType("INTEGER")
             .setMode("REQUIRED")

@@ -185,7 +185,7 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
     if (sys.props(key) != null) {
       create(sys.props(key))
     } else {
-      val defaultProject = new DefaultProjectFactory().create(null)
+      val defaultProject = new DefaultProjectFactory.create(null)
       if (defaultProject != null) {
         echo(s"Using '$defaultProject' as your BigQuery project.")
         create(defaultProject)

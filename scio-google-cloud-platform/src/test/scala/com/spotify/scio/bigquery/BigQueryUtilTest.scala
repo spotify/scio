@@ -26,34 +26,34 @@ import scala.jdk.CollectionConverters._
 
 class BigQueryUtilTest extends AnyFlatSpec with Matchers {
   "parseSchema" should "work" in {
-    val schema = new TableSchema().setFields(
+    val schema = new TableSchema.setFields(
       List(
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("f1")
           .setType("INTEGER")
           .setMode("REQUIRED"),
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("f2")
           .setType("FLOAT")
           .setMode("NULLABLE"),
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("f3")
           .setType("TIMESTAMP")
           .setMode("REPEATED"),
-        new TableFieldSchema()
+        new TableFieldSchema
           .setName("f4")
           .setMode("RECORD")
           .setFields(
             List(
-              new TableFieldSchema()
+              new TableFieldSchema
                 .setName("f5")
                 .setType("BOOLEAN")
                 .setMode("REQUIRED"),
-              new TableFieldSchema()
+              new TableFieldSchema
                 .setName("f6")
                 .setType("STRING")
                 .setMode("NULLABLE"),
-              new TableFieldSchema()
+              new TableFieldSchema
                 .setName("f6")
                 .setType("STRING")
                 .setMode("REPEATED")

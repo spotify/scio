@@ -134,7 +134,7 @@ object IndexAdmin {
       "Only one index per alias can be assigned to be the write index at a time"
     )
 
-    val request = indices.foldLeft(new IndicesAliasesRequest()) {
+    val request = indices.foldLeft(new IndicesAliasesRequest) {
       case (request, (idx, isWriteIndex)) =>
         request.addAliasAction(
           new AliasActions(AliasActions.Type.ADD)

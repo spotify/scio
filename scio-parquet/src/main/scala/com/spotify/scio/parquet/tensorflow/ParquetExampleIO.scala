@@ -73,7 +73,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     val source = HadoopFormatIO
       .read[JBoolean, Example]()
       // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+      .withKeyTranslation(new SimpleFunction[Void, JBoolean] {
         override def apply(input: Void): JBoolean = true
       })
       .withConfiguration(job.getConfiguration)
@@ -133,7 +133,7 @@ object ParquetExampleIO {
   object ReadParam {
     private[tensorflow] val DefaultProjection = null
     private[tensorflow] val DefaultPredicate = null
-    private[tensorflow] val DefaultConfiguration = new Configuration()
+    private[tensorflow] val DefaultConfiguration = new Configuration
   }
   final case class ReadParam private (
     projection: Seq[String] = ReadParam.DefaultProjection,
@@ -145,7 +145,7 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultNumShards = 0
     private[tensorflow] val DefaultSuffix = ".parquet"
     private[tensorflow] val DefaultCompression = CompressionCodecName.GZIP
-    private[tensorflow] val DefaultConfiguration = new Configuration()
+    private[tensorflow] val DefaultConfiguration = new Configuration
   }
 
   final case class WriteParam private (

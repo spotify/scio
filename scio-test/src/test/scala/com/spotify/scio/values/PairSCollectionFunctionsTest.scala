@@ -568,7 +568,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         _.sampleByKey(true, Map("a" -> fraction, "b" -> fraction))
       }
       sample.groupBy(_._1).values.foreach { s =>
-        (s.size.toDouble / populationSize) shouldBe fraction +- 0.05
+        s.size.toDouble / populationSize shouldBe fraction +- 0.05
         s.toSet.size should be < sample.size
       }
     }
@@ -581,7 +581,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
         _.sampleByKey(false, Map("a" -> fraction, "b" -> fraction))
       }
       sample.groupBy(_._1).values.foreach { s =>
-        (s.size.toDouble / populationSize) shouldBe fraction +- 0.05
+        s.size.toDouble / populationSize shouldBe fraction +- 0.05
         s.toSet.size should be < sample.size
       }
     }

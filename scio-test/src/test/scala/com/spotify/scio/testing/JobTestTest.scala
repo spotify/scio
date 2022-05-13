@@ -131,7 +131,7 @@ object TransformOverrideJob {
       .applyTransform(
         "myTransform",
         ParDo.of(
-          new GuavaAsyncDoFn[Int, String, Unit]() {
+          new GuavaAsyncDoFn[Int, String, Unit] {
             override def processElement(input: Int): ListenableFuture[String] =
               Futures.immediateFuture(input.toString)
             override def getResourceType: ResourceType = ResourceType.PER_CLASS
@@ -169,7 +169,7 @@ object TransformOverrideKVJobFail {
       .applyTransform(
         "myTransform",
         ParDo.of(
-          new GuavaAsyncDoFn[KV[Int, BaseAsyncLookupDoFn.Try[String]], String, Unit]() {
+          new GuavaAsyncDoFn[KV[Int, BaseAsyncLookupDoFn.Try[String]], String, Unit] {
             override def processElement(
               input: KV[Int, BaseAsyncLookupDoFn.Try[String]]
             ): ListenableFuture[String] =
@@ -772,7 +772,7 @@ class JobTestTest extends PipelineSpec {
   it should "enforce run() on JobTest from class type" in {
     val stdOutMock = new MockedPrintStream
     Console.withOut(stdOutMock) {
-      new JobTestFromType()
+      new JobTestFromType
         .execute("JobTestFromType should work", color = false)
     }
     stdOutMock.message.mkString("") should include regex runMissedMessage
@@ -781,7 +781,7 @@ class JobTestTest extends PipelineSpec {
   it should "enforce run() on multi JobTest" in {
     val stdOutMock = new MockedPrintStream
     Console.withOut(stdOutMock) {
-      new MultiJobTest().execute("MultiJobTest should work", color = false)
+      new MultiJobTest.execute("MultiJobTest should work", color = false)
     }
 
     val msg =
@@ -802,7 +802,7 @@ class JobTestTest extends PipelineSpec {
   it should "enforce run() on JobTest from string class" in {
     val stdOutMock = new MockedPrintStream
     Console.withOut(stdOutMock) {
-      new JobTestFromString()
+      new JobTestFromString
         .execute("JobTestFromString should work", color = false)
     }
     stdOutMock.message.mkString("") should include regex runMissedMessage
@@ -811,7 +811,7 @@ class JobTestTest extends PipelineSpec {
   it should "not enforce run() on internal JobTest" in {
     val stdOutMock = new MockedPrintStream
     Console.withOut(stdOutMock) {
-      new OriginalJobTest()
+      new OriginalJobTest
         .execute("OriginalJobTest should work", color = false)
     }
     stdOutMock.message.mkString("") shouldNot include regex runMissedMessage

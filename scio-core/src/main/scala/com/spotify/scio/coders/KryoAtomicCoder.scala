@@ -103,11 +103,11 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     // workaround
     k.register(
       classOf[Wrappers.JIterableWrapper[_]],
-      new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any])
+      new JTraversableSerializer[Any, Iterable[Any]](new JIterableWrapperCBF[Any])
     )
     k.register(
       classOf[Wrappers.JCollectionWrapper[_]],
-      new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any])
+      new JTraversableSerializer[Any, Iterable[Any]](new JCollectionWrapperCBF[Any])
     )
     // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them
     // as regular Scala collections as a workaround
@@ -273,8 +273,8 @@ private[scio] object KryoAtomicCoder {
           k.setReferences(options.referenceTracking)
           k.setRegistrationRequired(options.registrationRequired)
 
-          new ScioKryoRegistrar()(k)
-          new AlgebirdRegistrar()(k)
+          new ScioKryoRegistrar(k)
+          new AlgebirdRegistrar(k)
 
           KryoRegistrarLoader.load(k)
 

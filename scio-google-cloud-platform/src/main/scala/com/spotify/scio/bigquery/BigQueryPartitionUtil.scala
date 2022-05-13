@@ -45,12 +45,12 @@ private[bigquery] object BigQueryPartitionUtil {
     val m1 = QUERY_TABLE_SPEC_LEGACY.matcher(sqlQuery)
     while (m1.find()) {
       val t = m1.group(0)
-      b += (s"[$t]" -> BigQueryHelpers.parseTableSpec(t))
+      b += s"[$t]" -> BigQueryHelpers.parseTableSpec(t)
     }
     val m2 = QUERY_TABLE_SPEC_STANDARD.matcher(sqlQuery)
     while (m2.find()) {
       val t = m2.group(0)
-      b += (s"`$t`" -> BigQueryHelpers.parseTableSpec(t.replaceFirst("\\.", ":")))
+      b += s"`$t`" -> BigQueryHelpers.parseTableSpec(t.replaceFirst("\\.", ":"))
     }
     b.result()
   }

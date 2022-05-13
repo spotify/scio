@@ -85,7 +85,7 @@ class ClosureTest extends PipelineSpec {
   it should "support lambda with class member from closure" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3))
-      val r = new Foo().bar(p)
+      val r = new Foo.bar(p)
       r should containInAnyOrder(Seq(10, 20, 30))
     }
   }
@@ -93,7 +93,7 @@ class ClosureTest extends PipelineSpec {
   it should "print readable error message for unserializable fn" in {
     val thrown = the[IllegalArgumentException] thrownBy
       runWithContext { sc =>
-        val o = new NotSerializableObj()
+        val o = new NotSerializableObj
         sc.parallelize(Seq(1, 2, 3))
           .map(_ * o.x)
       }
@@ -103,7 +103,7 @@ class ClosureTest extends PipelineSpec {
 
   it should "support multi-nested closures" in {
     runWithContext { sc =>
-      val fn = new NestedClosuresNotSerializable().getMapFn
+      val fn = new NestedClosuresNotSerializable.getMapFn
       val p = sc
         .parallelize(Seq(1, 2, 3))
         .map(fn)

@@ -51,7 +51,7 @@ private[types] object TypeProvider {
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     val schemaString = extractStrings(c, "Missing schema").head
-    val schema = new Schema.Parser().parse(schemaString)
+    val schema = new Schema.Parser.parse(schemaString)
     schemaToType(c)(schema, annottees)
   }
 
@@ -62,7 +62,7 @@ private[types] object TypeProvider {
     if (fileInputStream.isFailure) {
       throw new RuntimeException(s"Error reading schema file $file")
     }
-    val schema = new Schema.Parser().parse(fileInputStream.get)
+    val schema = new Schema.Parser.parse(fileInputStream.get)
     schemaToType(c)(schema, annottees)
   }
 
@@ -112,7 +112,7 @@ private[types] object TypeProvider {
     try {
       reader = new DataFileStream(
         Channels.newInputStream(FileSystems.open(avroFile)),
-        new GenericDatumReader[Void]()
+        new GenericDatumReader[Void]
       )
       reader.getSchema
     } finally {
