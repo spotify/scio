@@ -26,6 +26,12 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
     UNSET
   }
 
+  private enum KeyGroupOutputSize {
+    EMPTY,
+    LAZY,
+    NONZERO
+  }
+
   private KV<FinalKeyT, CoGbkResult> head = null;
   private boolean initialized = false;
 
@@ -107,6 +113,15 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
               .mapToObj(i -> new ArrayList<>())
               .collect(Collectors.toList());
 
+      // when predicates are applied to all outputs, a key group may have no values and should not
+      // be emitted. maintain counters of per-output record counts and if _all_ are EMPTY then do
+      // not emit the key group. LAZY outputs may be empty but cannot be assumed to be empty, so
+      // the key group will be emitted in this case.
+      List<KeyGroupOutputSize> valueOutputSizes =
+          IntStream.range(0, resultSchema.size())
+              .mapToObj(i -> KeyGroupOutputSize.EMPTY)
+              .collect(Collectors.toList());
+
       // minKey will be accepted or rejected by the first source which has it.
       // acceptKeyGroup short-circuits the 'emit' logic below once a decision is made on minKey.
       AcceptKeyGroup acceptKeyGroup = AcceptKeyGroup.UNSET;
@@ -130,6 +145,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
             int outputIndex = resultSchema.getIndex(src.tupleTag);
 
             if (!materialize) {
+              valueOutputSizes.set(outputIndex, KeyGroupOutputSize.LAZY);
               // lazy data iterator
               valueMap.set(
                   outputIndex,
@@ -156,6 +172,9 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
                       runningKeyGroupSize++;
                     }
                   });
+              KeyGroupOutputSize sz =
+                  values.isEmpty() ? KeyGroupOutputSize.EMPTY : KeyGroupOutputSize.NONZERO;
+              valueOutputSizes.set(outputIndex, sz);
             }
           } else {
             acceptKeyGroup = AcceptKeyGroup.REJECT;
@@ -166,14 +185,18 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
       }
 
       if (acceptKeyGroup == AcceptKeyGroup.ACCEPT) {
-        final KV<byte[], CoGbkResult> next =
-            KV.of(minKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
-        try {
-          // new head found, we're done
-          head = KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue());
-          break;
-        } catch (Exception e) {
-          throw new RuntimeException("Failed to decode key group", e);
+        // if _all_ outputs are known-empty, omit this key group
+        boolean allEmpty = valueOutputSizes.stream().allMatch(s -> s == KeyGroupOutputSize.EMPTY);
+        if (!allEmpty) {
+          final KV<byte[], CoGbkResult> next =
+              KV.of(minKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
+          try {
+            // new head found, we're done
+            head = KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue());
+            break;
+          } catch (Exception e) {
+            throw new RuntimeException("Failed to decode key group", e);
+          }
         }
       }
     }
