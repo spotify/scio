@@ -112,7 +112,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
               .mapToObj(i -> new ArrayList<>())
               .collect(Collectors.toList());
 
-      // When predicates are applied, a sources containing a key may have no values after filtering.
+      // When a predicate is applied, a source containing a key may have no values after filtering.
       // Sources containing minKey are by default known to be NONEMPTY. Once all sources are
       // consumed, if all are known to be empty, the key group can be dropped.
       List<KeyGroupOutputSize> valueOutputSizes =
