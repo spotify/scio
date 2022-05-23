@@ -28,8 +28,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
 
   private enum KeyGroupOutputSize {
     EMPTY,
-    LAZY,
-    NONZERO
+    NONEMPTY
   }
 
   private KV<FinalKeyT, CoGbkResult> head = null;
@@ -113,10 +112,9 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
               .mapToObj(i -> new ArrayList<>())
               .collect(Collectors.toList());
 
-      // when predicates are applied to all outputs, a key group may have no values and should not
-      // be emitted. maintain counters of per-output record counts and if _all_ are EMPTY then do
-      // not emit the key group. LAZY outputs may be empty but cannot be assumed to be empty, so
-      // the key group will be emitted in this case.
+      // When a predicate is applied, a source containing a key may have no values after filtering.
+      // Sources containing minKey are by default known to be NONEMPTY. Once all sources are
+      // consumed, if all are known to be empty, the key group can be dropped.
       List<KeyGroupOutputSize> valueOutputSizes =
           IntStream.range(0, resultSchema.size())
               .mapToObj(i -> KeyGroupOutputSize.EMPTY)
@@ -145,7 +143,8 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
             int outputIndex = resultSchema.getIndex(src.tupleTag);
 
             if (!materialize) {
-              valueOutputSizes.set(outputIndex, KeyGroupOutputSize.LAZY);
+              // this source contains minKey, so is known to contain at least one value
+              valueOutputSizes.set(outputIndex, KeyGroupOutputSize.NONEMPTY);
               // lazy data iterator
               valueMap.set(
                   outputIndex,
@@ -173,7 +172,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
                     }
                   });
               KeyGroupOutputSize sz =
-                  values.isEmpty() ? KeyGroupOutputSize.EMPTY : KeyGroupOutputSize.NONZERO;
+                  values.isEmpty() ? KeyGroupOutputSize.EMPTY : KeyGroupOutputSize.NONEMPTY;
               valueOutputSizes.set(outputIndex, sz);
             }
           } else {
@@ -185,7 +184,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
       }
 
       if (acceptKeyGroup == AcceptKeyGroup.ACCEPT) {
-        // if _all_ outputs are known-empty, omit this key group
+        // if all outputs are known-empty, omit this key group
         boolean allEmpty = valueOutputSizes.stream().allMatch(s -> s == KeyGroupOutputSize.EMPTY);
         if (!allEmpty) {
           final KV<byte[], CoGbkResult> next =
