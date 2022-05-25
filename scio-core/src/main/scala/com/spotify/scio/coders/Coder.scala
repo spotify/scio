@@ -104,10 +104,8 @@ final case class Record[T] private (
   destruct: T => Array[Any]
 ) extends Coder[T] {
   override def toString: String = {
-    val str = cs.map { case (k, v) =>
-      s"($k, $v)"
-    }
-    s"Record($typeName, ${str.mkString(", ")})"
+    val str = cs.map { case (k, v) => s"($k, $v)" }.mkString(", ")
+    s"Record($typeName, $str)"
   }
 }
 
@@ -244,17 +242,21 @@ final private[scio] case class LazyCoder[T](
 }
 
 // XXX: Workaround a NPE deep down the stack in Beam
-// info]   java.lang.NullPointerException: null value in entry: T=null
-private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
-
-  /**
-   * Eagerly compute a stack trace on materialization to provide a helpful stacktrace if an
-   * exception happens
-   */
-  private[this] val materializationStackTrace: Array[StackTraceElement] =
-    CoderStackTrace.prepare
+// [info]   java.lang.NullPointerException: null value in entry: T=null
+// Contains the materialization stack trace to provide a helpful stacktrace if an exception happens
+private[scio] class WrappedBCoder[T](
+  val u: BCoder[T],
+  materializationStackTrace: Array[StackTraceElement]
+) extends BCoder[T] {
 
   override def toString: String = u.toString
+
+  override def equals(obj: Any): Boolean = obj match {
+    case wbc: WrappedBCoder[T] => wbc.u == u
+    case _                     => false
+  }
+
+  override def hashCode(): Int = u.hashCode()
 
   @inline private def catching[A](a: => A) =
     try {
@@ -264,7 +266,7 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
         // prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
         // backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers
         // above here; we therefore must alter the type of exceptions passing through this block.
-        throw CoderStackTrace.append(ex, None, materializationStackTrace)
+        throw CoderStackTrace.append(ex, materializationStackTrace)
     }
 
   override def encode(value: T, os: OutputStream): Unit =
@@ -293,11 +295,16 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
 }
 
 private[scio] object WrappedBCoder {
-  def create[T](u: BCoder[T]): BCoder[T] =
+
+  def apply[T](u: BCoder[T], materializeStack: Boolean): BCoder[T] =
     u match {
-      case WrappedBCoder(_) => u
-      case _                => new WrappedBCoder(u)
+      case wbc: WrappedBCoder[T] => wbc
+      case _ if materializeStack => new WrappedBCoder(u, CoderStackTrace.prepare)
+      case _                     => new WrappedBCoder(u, Array.empty)
     }
+
+  def unapply[T](c: WrappedBCoder[T]): Some[BCoder[T]] = Some(c.u)
+
 }
 
 // Coder used internally specifically for Magnolia derived coders.
@@ -309,15 +316,12 @@ final private[scio] case class RecordCoder[T](
   construct: Seq[Any] => T,
   destruct: T => Array[Any]
 ) extends StructuredCoder[T] {
-  private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
     try {
       f
     } catch {
-      case e: Exception =>
-        // allow Flink memory management, see WrappedBCoder#catching comment.
-        throw CoderStackTrace.append(e, Some(msg), materializationStackTrace)
+      case e: Exception => throw CoderStackTrace.append(e, msg)
     }
 
   override def encode(value: T, os: OutputStream): Unit = {
@@ -610,6 +614,7 @@ trait LowPriorityCoders extends LowPriorityCoderDerivation {
 }
 
 private[coders] object CoderStackTrace {
+
   val CoderStackElemMarker = new StackTraceElement(
     "### Coder materialization stack ###",
     "",
@@ -625,6 +630,16 @@ private[coders] object CoderStackTrace {
       .take(10)
 
   def append[T <: Throwable](
+    cause: T,
+    additionalMessage: String
+  ): T = append(cause, Some(additionalMessage), Array.empty)
+
+  def append[T <: Throwable](
+    cause: T,
+    baseStack: Array[StackTraceElement]
+  ): T = append(cause, None, baseStack)
+
+  private def append[T <: Throwable](
     cause: T,
     additionalMessage: Option[String],
     baseStack: Array[StackTraceElement]

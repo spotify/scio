@@ -46,11 +46,12 @@ object CoderMaterializer {
   final def beam[T](
     o: PipelineOptions,
     coder: Coder[T]
-  ): BCoder[T] = beamImpl(CoderOptions(o), coder)
+  ): BCoder[T] = beamImpl(CoderOptions(o), coder, materializeStack = true)
 
   final private[scio] def beamImpl[T](
     o: CoderOptions,
-    coder: Coder[T]
+    coder: Coder[T],
+    materializeStack: Boolean = false
   ): BCoder[T] =
     coder match {
       case RawBeam(c) => c
@@ -58,41 +59,35 @@ object CoderMaterializer {
       case Beam(c) if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
         nullCoder(o, c)
       case Beam(c) =>
-        WrappedBCoder.create(nullCoder(o, c))
+        WrappedBCoder(nullCoder(o, c), materializeStack)
       case Fallback(_) =>
         val kryoCoder = new KryoAtomicCoder[T](o.kryo)
-        WrappedBCoder.create(nullCoder(o, kryoCoder))
+        WrappedBCoder(nullCoder(o, kryoCoder), materializeStack)
       case Transform(c, f) =>
         val u = f(beamImpl(o, c))
-        WrappedBCoder.create(beamImpl(o, u))
+        WrappedBCoder(beamImpl(o, u), materializeStack)
       case Record(typeName, coders, construct, destruct) =>
-        WrappedBCoder.create(
-          nullCoder(
-            o,
-            RecordCoder(
-              typeName,
-              coders.map(c => c._1 -> nullCoder(o, beamImpl(o, c._2))),
-              construct,
-              destruct
-            )
-          )
+        val recordCoder = RecordCoder(
+          typeName,
+          coders.map(c => c._1 -> nullCoder(o, beamImpl(o, c._2))),
+          construct,
+          destruct
         )
+        WrappedBCoder(nullCoder(o, recordCoder), materializeStack)
       case Disjunction(typeName, idCoder, id, coders) =>
-        WrappedBCoder.create(
-          nullCoder(
-            o,
-            DisjunctionCoder(
-              typeName,
-              beamImpl(o, idCoder),
-              id,
-              coders.iterator.map { case (k, u) => (k, beamImpl(o, u)) }.toMap
-            )
-          )
+        val disjunctionCoder = DisjunctionCoder(
+          typeName,
+          beamImpl(o, idCoder),
+          id,
+          coders.iterator.map { case (k, u) => (k, beamImpl(o, u)) }.toMap
         )
+        WrappedBCoder(nullCoder(o, disjunctionCoder), materializeStack)
       case KVCoder(koder, voder) =>
-        WrappedBCoder.create(KvCoder.of(beamImpl(o, koder), beamImpl(o, voder)))
+        val kvCoder = KvCoder.of(beamImpl(o, koder), beamImpl(o, voder))
+        WrappedBCoder(kvCoder, materializeStack)
       case Ref(t, c) =>
-        LazyCoder[T](t, o)(c)
+        val lazyCoder = LazyCoder[T](t, o)(c)
+        WrappedBCoder(lazyCoder, materializeStack)
     }
 
   def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K], v: Coder[V]): KvCoder[K, V] =
