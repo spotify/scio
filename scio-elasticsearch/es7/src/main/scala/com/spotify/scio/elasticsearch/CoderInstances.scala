@@ -18,9 +18,8 @@
 package com.spotify.scio.elasticsearch
 
 import java.io.{InputStream, OutputStream}
-
 import com.spotify.scio.coders._
-import org.apache.beam.sdk.coders.{AtomicCoder, CoderException}
+import org.apache.beam.sdk.coders.{AtomicCoder, CoderException, CustomCoder}
 import org.elasticsearch.action.DocWriteRequest
 import org.elasticsearch.action.delete.DeleteRequest
 import org.elasticsearch.action.index.IndexRequest
@@ -74,7 +73,7 @@ trait CoderInstances {
 
   private def writableBCoder[T <: Writeable](
     constructor: StreamInput => T
-  ): org.apache.beam.sdk.coders.Coder[T] = new AtomicCoder[T] {
+  ): org.apache.beam.sdk.coders.Coder[T] = new CustomCoder[T] {
     override def encode(value: T, outStream: OutputStream): Unit =
       value.writeTo(new OutputStreamStreamOutput(outStream))
     override def decode(inStream: InputStream): T =

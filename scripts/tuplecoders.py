@@ -41,8 +41,9 @@ def coder_class(out, n, scala_version):
     bounds = mkBounds(n)
     print(
         f"""
-final private[coders] class Tuple{n}Coder[{','.join(types)}]({','.join(f'val {t.lower()}c: BCoder[{t}]' for t in types)}) extends AtomicCoder[({','.join(types)})] {{
+final private[coders] class Tuple{n}Coder[{','.join(types)}]({','.join(f'val {t.lower()}c: BCoder[{t}]' for t in types)}) extends StructuredCoder[({','.join(types)})] {{
   private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
 
   @inline def onErrorMsg[{t_type}](msg: => (String, String))(f: => {t_type}): {t_type} =
     try {{
@@ -186,6 +187,7 @@ def main(out, scala_version):
         import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
         import scala.jdk.CollectionConverters._
+        import java.util.{{List => JList}}
         """
         )
         .replace("  # NOQA", "")

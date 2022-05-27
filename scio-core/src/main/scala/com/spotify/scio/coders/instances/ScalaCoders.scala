@@ -35,6 +35,9 @@ import scala.util.Try
 import scala.collection.compat._
 import scala.collection.compat.extra.Wrappers
 import scala.collection.AbstractIterable
+import scala.jdk.CollectionConverters._
+
+import java.util.{List => JList}
 
 private object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
@@ -50,8 +53,8 @@ private object NothingCoder extends AtomicCoder[Nothing] {
 }
 
 abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
-    extends AtomicCoder[M[T]] {
-  override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
+    extends StructuredCoder[M[T]] {
+  override def getCoderArguments: JList[_ <: BCoder[_]] =
     Collections.singletonList(elemCoder)
 
   // delegate methods for determinism and equality checks
@@ -137,7 +140,7 @@ abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
   override def toString: String = s"BufferedSeqLikeCoder($bc)"
 }
 
-private class OptionCoder[T](bc: BCoder[T]) extends AtomicCoder[Option[T]] {
+private class OptionCoder[T](bc: BCoder[T]) extends StructuredCoder[Option[T]] {
   private[this] val bcoder = BooleanCoder.of()
 
   override def encode(value: Option[T], os: OutputStream): Unit = {
@@ -150,7 +153,7 @@ private class OptionCoder[T](bc: BCoder[T]) extends AtomicCoder[Option[T]] {
     if (isDefined) Some(bc.decode(is)) else None
   }
 
-  override def getCoderArguments: java.util.List[_ <: BCoder[_]] =
+  override def getCoderArguments: JList[_ <: BCoder[_]] =
     Collections.singletonList(bc)
 
   override def verifyDeterministic(): Unit = bc.verifyDeterministic()
@@ -252,7 +255,7 @@ private class BitSetCoder extends AtomicCoder[BitSet] {
 }
 
 private[coders] class MapCoder[K, V](val kc: BCoder[K], val vc: BCoder[V])
-    extends AtomicCoder[Map[K, V]] {
+    extends StructuredCoder[Map[K, V]] {
   private[this] val lc = VarIntCoder.of()
 
   override def encode(value: Map[K, V], os: OutputStream): Unit = {
@@ -314,9 +317,12 @@ private[coders] class MapCoder[K, V](val kc: BCoder[K], val vc: BCoder[V])
 
   override def toString: String =
     s"MapCoder($kc, $vc)"
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(kc, vc).asJava
 }
 
-private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends AtomicCoder[m.Map[K, V]] {
+private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
+    extends StructuredCoder[m.Map[K, V]] {
   private[this] val lc = VarIntCoder.of()
 
   override def encode(value: m.Map[K, V], os: OutputStream): Unit = {
@@ -376,6 +382,8 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V]) extends Atomic
 
   override def toString: String =
     s"MutableMapCoder($kc, $vc)"
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(kc, vc).asJava
 }
 
 private object SFloatCoder extends BCoder[Float] {
@@ -383,7 +391,7 @@ private object SFloatCoder extends BCoder[Float] {
 
   override def encode(value: Float, outStream: OutputStream): Unit = bc.encode(value, outStream)
   override def decode(inStream: InputStream): Float = bc.decode(inStream)
-  override def getCoderArguments: util.List[_ <: BCoder[_]] = bc.getCoderArguments
+  override def getCoderArguments: JList[_ <: BCoder[_]] = bc.getCoderArguments
   override def verifyDeterministic(): Unit = bc.verifyDeterministic()
   override def structuralValue(value: Float): AnyRef =
     if (value.isNaN) {
@@ -399,7 +407,7 @@ private object SDoubleCoder extends BCoder[Double] {
 
   override def encode(value: Double, outStream: OutputStream): Unit = bc.encode(value, outStream)
   override def decode(inStream: InputStream): Double = bc.decode(inStream)
-  override def getCoderArguments: util.List[_ <: BCoder[_]] = bc.getCoderArguments
+  override def getCoderArguments: JList[_ <: BCoder[_]] = bc.getCoderArguments
   override def verifyDeterministic(): Unit = bc.verifyDeterministic()
   override def structuralValue(value: Double): AnyRef =
     if (value.isNaN) {

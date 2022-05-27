@@ -20,7 +20,6 @@ package com.spotify.scio.coders
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.esotericsoftware.kryo.serializers.JavaSerializer
@@ -32,7 +31,7 @@ import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
+import org.apache.beam.sdk.coders.{CoderException => BCoderException, CustomCoder, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.VarInt
@@ -133,11 +132,11 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
   }
 }
 
-final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
-    extends AtomicCoder[T] {
-  import KryoAtomicCoder._
+final private[scio] class KryoCustomCoder[T](private val options: KryoOptions)
+    extends CustomCoder[T] {
+  import KryoCustomCoder._
 
-  private[this] val instanceId = KryoAtomicCoder.nextInstanceId()
+  private[this] val instanceId = KryoCustomCoder.nextInstanceId()
 
   override def encode(value: T, os: OutputStream): Unit =
     withKryoState(instanceId, options) { kryoState =>
@@ -249,7 +248,7 @@ final private[scio] case class KryoState(
   outputChunked: OutputChunked
 )
 
-private[scio] object KryoAtomicCoder {
+private[scio] object KryoCustomCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val Header = -1
   private val atomicInstanceIds = new AtomicInteger(0)
