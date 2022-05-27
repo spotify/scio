@@ -136,7 +136,10 @@ final private[scio] class KryoCustomCoder[T](private val options: KryoOptions)
     extends CustomCoder[T] {
   import KryoCustomCoder._
 
-  private[this] val instanceId = KryoCustomCoder.nextInstanceId()
+  private[KryoCustomCoder] val instanceId = KryoCustomCoder.nextInstanceId()
+
+  // Kryo serialization is deterministic
+  override def verifyDeterministic(): Unit = {}
 
   override def encode(value: T, os: OutputStream): Unit =
     withKryoState(instanceId, options) { kryoState =>
@@ -239,6 +242,18 @@ final private[scio] class KryoCustomCoder[T](private val options: KryoOptions)
       output.flush()
       s.getCount + VarInt.getLength(s.getCount)
     }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: KryoCustomCoder[_] =>
+      instanceId == that.instanceId &&
+      options == that.options
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(instanceId, options)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
 }
 
 /** Used for sharing Kryo instance and buffers. */
