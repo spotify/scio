@@ -134,10 +134,11 @@ val scalatestplusVersion = s"$scalatestVersion.0"
 ThisBuild / tpolecatDefaultOptionsMode := DevMode
 ThisBuild / tpolecatDevModeOptions ~= { opts =>
   val excludes = Set(
-    ScalacOptions.warnDeadCode,
+    ScalacOptions.lintPackageObjectClasses,
     ScalacOptions.privateWarnDeadCode,
-    ScalacOptions.warnValueDiscard,
-    ScalacOptions.privateWarnValueDiscard
+    ScalacOptions.privateWarnValueDiscard,
+    ScalacOptions.warnDeadCode,
+    ScalacOptions.warnValueDiscard
   )
 
   val extras = Set(
@@ -146,10 +147,10 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     Scalac.macroSettingsOption,
     Scalac.maxClassfileName,
     Scalac.parallelismOption,
-    Scalac.targetOption,
-    Scalac.warnMacrosOption,
     Scalac.privateWarnMacrosOption,
-    Scalac.warnConfOption
+    Scalac.targetOption,
+    Scalac.warnConfOption,
+    Scalac.warnMacrosOption
   )
 
   opts.filterNot(excludes).union(extras)
