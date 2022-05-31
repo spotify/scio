@@ -26,7 +26,7 @@ import org.apache.beam.sdk.coders.{Coder => BCoder, StructuredCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
-import java.util
+import java.util.{List => JList}
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._
@@ -172,7 +172,7 @@ final private case class DisjunctionCoder[T, Id](
       coders(id(value)).structuralValue(value)
     }
 
-  override def getCoderArguments: util.List[_ <: BCoder[_]] = coders.values.toList.asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = coders.values.toList.asJava
 }
 
 final private[scio] case class LazyCoder[T](
@@ -185,7 +185,7 @@ final private[scio] case class LazyCoder[T](
 
   def decode(inStream: InputStream): T = bcoder.decode(inStream)
   def encode(value: T, outStream: OutputStream): Unit = bcoder.encode(value, outStream)
-  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = bcoder.getCoderArguments()
+  def getCoderArguments(): JList[_ <: BCoder[_]] = bcoder.getCoderArguments()
 
   /**
    * Traverse this coder graph and create a version of it without any loop. Fixes:
@@ -273,7 +273,7 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
   override def decode(is: InputStream): T =
     catching(u.decode(is))
 
-  override def getCoderArguments: java.util.List[_ <: BCoder[_]] = u.getCoderArguments
+  override def getCoderArguments: JList[_ <: BCoder[_]] = u.getCoderArguments
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = u.verifyDeterministic()
@@ -419,7 +419,7 @@ final private[scio] case class RecordCoder[T](
     }
   }
 
-  override def getCoderArguments: util.List[_ <: BCoder[_]] = cs.map(_._2).toList.asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = cs.map(_._2).toList.asJava
 }
 
 /**
@@ -507,7 +507,7 @@ sealed trait CoderGrammar {
       override def registerByteSizeObserver(value: B, observer: ElementByteSizeObserver): Unit =
         bc.registerByteSizeObserver(t(value), observer)
 
-      override def getCoderArguments: util.List[_ <: BCoder[_]] = List(bc).asJava
+      override def getCoderArguments: JList[_ <: BCoder[_]] = List(bc).asJava
     }
     Transform[A, B](c, bc => Coder.beam(toB(bc)))
   }
@@ -576,7 +576,7 @@ object Coder
   implicit val uriCoder: Coder[java.net.URI] = JavaCoders.uriCoder
   implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
   implicit def jIterableCoder[T: Coder]: Coder[java.lang.Iterable[T]] = JavaCoders.jIterableCoder
-  implicit def jlistCoder[T: Coder]: Coder[java.util.List[T]] = JavaCoders.jlistCoder
+  implicit def jlistCoder[T: Coder]: Coder[JList[T]] = JavaCoders.jlistCoder
   implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
   implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
   implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
