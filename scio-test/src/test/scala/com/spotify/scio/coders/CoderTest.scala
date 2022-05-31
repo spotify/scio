@@ -620,7 +620,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     hashCodesAreDifferent(Coder[Option[String]], Coder[Option[Int]])
     hashCodesAreDifferent(
       Coder.xmap[String, Int](Coder[String])(_.toInt, _.toString),
-      Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt))
+      Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt)
+    )
   }
 }
 
