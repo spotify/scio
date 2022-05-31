@@ -18,7 +18,6 @@
 package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
-import java.util
 import java.util.Collections
 
 import com.spotify.scio.coders.Coder
