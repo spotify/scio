@@ -41,9 +41,9 @@ import org.apache.beam.sdk.testing.CoderProperties
 case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
 
-class KryoCustomCoderTest extends PipelineSpec {
+class KryoAtomicCoderTest extends PipelineSpec {
   type CoderFactory = () => BCoder[Any]
-  val cf: () => KryoCustomCoder[Any] = () => new KryoCustomCoder[Any](KryoOptions())
+  val cf: () => KryoAtomicCoder[Any] = () => new KryoAtomicCoder[Any](KryoOptions())
 
   "KryoAtomicCoder" should "support Scala collections" in {
     Seq(1, 2, 3) coderShould roundtripKryo()

@@ -69,22 +69,22 @@ class CoderBenchmark {
 
   val tenTimes: List[SpecializedUserForDerived] = List.fill(10)(specializedUserForDerived)
 
-  val kryoCoder = new KryoCustomCoder[User](KryoOptions())
-  val kryoJavaCoder = new KryoCustomCoder[j.User](KryoOptions())
+  val kryoCoder = new KryoAtomicCoder[User](KryoOptions())
+  val kryoJavaCoder = new KryoAtomicCoder[j.User](KryoOptions())
   val javaCoder: SerializableCoder[User] = SerializableCoder.of(classOf[User])
   val specializedCoder = new SpecializedCoder
-  val specializedKryoCoder = new KryoCustomCoder[SpecializedUser](KryoOptions())
+  val specializedKryoCoder = new KryoAtomicCoder[SpecializedUser](KryoOptions())
   val derivedCoder: BCoder[SpecializedUserForDerived] =
     CoderMaterializer.beamWithDefault(Coder[SpecializedUserForDerived])
   val derivedListCoder: BCoder[List[SpecializedUserForDerived]] =
     CoderMaterializer.beamWithDefault(Coder[List[SpecializedUserForDerived]])
 
-  val specializedMapKryoCoder = new KryoCustomCoder[Map[String, Long]](KryoOptions())
+  val specializedMapKryoCoder = new KryoAtomicCoder[Map[String, Long]](KryoOptions())
   val derivedMapCoder: BCoder[Map[String, Long]] =
     CoderMaterializer.beamWithDefault(Coder[Map[String, Long]])
   val mapExample: Map[String, Long] = (1 to 1000).map(x => (s"stringvalue$x", x.toLong)).toMap
 
-  val specializedStringListKryoCoder = new KryoCustomCoder[List[String]](KryoOptions())
+  val specializedStringListKryoCoder = new KryoAtomicCoder[List[String]](KryoOptions())
   val derivedStringListCoder: BCoder[List[String]] =
     CoderMaterializer.beamWithDefault(Coder[List[String]])
   val stringListExample: List[String] = (1 to 1000).map(x => s"stringvalue$x").toList

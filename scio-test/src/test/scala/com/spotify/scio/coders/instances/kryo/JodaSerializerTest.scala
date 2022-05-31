@@ -17,7 +17,7 @@
 
 package com.spotify.scio.coders.instances.kryo
 
-import com.spotify.scio.coders.{CoderTestUtils, KryoCustomCoder, KryoOptions}
+import com.spotify.scio.coders.{CoderTestUtils, KryoAtomicCoder, KryoOptions}
 import org.joda.time.{DateTime, DateTimeZone, LocalDate, LocalDateTime, LocalTime}
 import org.scalacheck._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -63,7 +63,7 @@ class JodaSerializerTest extends AnyFlatSpec with Checkers {
     Arbitrary.arbitrary[LocalDateTime].map(_.toLocalDate)
   }
 
-  val coder = new KryoCustomCoder[Any](KryoOptions())
+  val coder = new KryoAtomicCoder[Any](KryoOptions())
 
   def roundTripProp[T](value: T): Prop = Prop.secure {
     CoderTestUtils.testRoundTrip(coder, value)

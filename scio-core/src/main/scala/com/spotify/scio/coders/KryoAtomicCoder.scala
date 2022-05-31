@@ -20,6 +20,7 @@ package com.spotify.scio.coders
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
+
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.esotericsoftware.kryo.serializers.JavaSerializer
@@ -31,7 +32,7 @@ import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.coders.{CoderException => BCoderException, CustomCoder, InstantCoder}
+import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.VarInt
@@ -132,14 +133,11 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
   }
 }
 
-final private[scio] class KryoCustomCoder[T](private val options: KryoOptions)
-    extends CustomCoder[T] {
-  import KryoCustomCoder._
+final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
+    extends AtomicCoder[T] {
+  import KryoAtomicCoder._
 
-  private[KryoCustomCoder] val instanceId = KryoCustomCoder.nextInstanceId()
-
-  // Kryo serialization is deterministic
-  override def verifyDeterministic(): Unit = {}
+  private[this] val instanceId = KryoAtomicCoder.nextInstanceId()
 
   override def encode(value: T, os: OutputStream): Unit =
     withKryoState(instanceId, options) { kryoState =>
@@ -242,18 +240,6 @@ final private[scio] class KryoCustomCoder[T](private val options: KryoOptions)
       output.flush()
       s.getCount + VarInt.getLength(s.getCount)
     }
-
-  override def equals(other: Any): Boolean = other match {
-    case that: KryoCustomCoder[_] =>
-      instanceId == that.instanceId &&
-      options == that.options
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq(instanceId, options)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-  }
 }
 
 /** Used for sharing Kryo instance and buffers. */
@@ -263,7 +249,7 @@ final private[scio] case class KryoState(
   outputChunked: OutputChunked
 )
 
-private[scio] object KryoCustomCoder {
+private[scio] object KryoAtomicCoder {
   private val logger = LoggerFactory.getLogger(this.getClass)
   private val Header = -1
   private val atomicInstanceIds = new AtomicInteger(0)

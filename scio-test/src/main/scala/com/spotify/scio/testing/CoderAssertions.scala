@@ -99,9 +99,8 @@ object CoderAssertions {
   def coderIsSerializable[A](implicit c: Coder[A]): Assertion =
     coderIsSerializable(CoderMaterializer.beamWithDefault(c))
 
-  private def coderIsSerializable[A](beamCoder: BCoder[A]): Assertion = {
+  private def coderIsSerializable[A](beamCoder: BCoder[A]): Assertion =
     noException should be thrownBy SerializableUtils.ensureSerializable(beamCoder)
-  }
 
   private def checkRoundtripWithCoder[T](beamCoder: BCoder[T], value: T)(implicit
     eq: Equality[T]
