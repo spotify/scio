@@ -18,9 +18,10 @@
 package com.spotify.scio.extra.sorter.syntax
 
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.extra.sorter.SortingKey
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.coders.IterableCoder
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType
 import org.apache.beam.sdk.extensions.sorter.{BufferedExternalSorter, SortValues}
 import org.apache.beam.sdk.values.KV
@@ -57,8 +58,9 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
       .options()
       .withExternalSorterType(SorterType.NATIVE)
       .withMemoryMB(memoryMB)
-    // Coder implicit expansion fails. Create coder manually
-    val coder = Coder.kv(k1Coder, Coder.jIterableCoder(Coder.kv(k2Coder, vCoder)))
+    // SortValues expects an IterableCoder. Use a raw coder to avoid wrapping
+    val valueCoder = CoderMaterializer.beam(self.context, Coder.kv(k2Coder, vCoder))
+    val coder = Coder.kv(k1Coder, Coder.raw(IterableCoder.of(valueCoder)))
     c.withName("TupleToKv")
       .map { case (k1, vs) => KV.of(k1, vs.map { case (k2, v) => KV.of(k2, v) }.asJava) }(coder)
       .withName("SortValues")
