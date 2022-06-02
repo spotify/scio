@@ -270,8 +270,14 @@ private[scio] class WrappedBCoder[T](
   override def encode(value: T, os: OutputStream): Unit =
     catching(u.encode(value, os))
 
+  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
+    catching(u.encode(value, os, context))
+
   override def decode(is: InputStream): T =
     catching(u.decode(is))
+
+  override def decode(is: InputStream, context: BCoder.Context): T =
+    catching(u.decode(is, context))
 
   override def getCoderArguments: JList[_ <: BCoder[_]] = u.getCoderArguments
 
