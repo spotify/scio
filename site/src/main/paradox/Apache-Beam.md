@@ -1,4 +1,4 @@
-# Versions
+# Apache Beam Compatibility
 
 Starting from version 0.3.0, Scio moved from Google Cloud [Dataflow Java SDK](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) to [Apache Beam](https://beam.apache.org/) as its core dependencies and introduced a few breaking changes.
 
@@ -28,36 +28,39 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 | 0.2.x    | Dataflow Java SDK  | SQL-2011 support    |
 | 0.1.x    | Dataflow Java SDK  | First releases      |
 
-| **Scio Version** | **Beam Version** | **Details** |
-|:----------------:|:----------------:|:------------|
-| 0.11.3           | 2.35.0           | This version will be deprecated on December 29, 2022. |
-| 0.11.2           | 2.34.0           | This version will be deprecated on November 11, 2022. |
-| 0.11.1           | 2.33.0           | This version will be deprecated on October 7, 2022. |
-| 0.11.0           | 2.32.0           | This version will be deprecated on August 25, 2022. |
-| 0.10.4+          | 2.30.0           | This version will be deprecated on June 10, 2022. |
-| 0.10.3           | 2.29.0           | This version will be deprecated on April 29, 2022. |
-| 0.10.0+          | 2.28.0           | This version will be deprecated on February 22, 2022. |
-| 0.9.5+           | 2.24.0           | This version will be deprecated on September 18, 2021. |
-| 0.9.3+           | 2.23.0           | This version will be deprecated on July 29, 2021. |
-| 0.9.2            | 2.22.0           | This version will be deprecated on June 8, 2021. |
-| 0.9.1            | 2.20.0           | This version will be deprecated on April 15, 2021. |
-| 0.9.0            | 2.20.0           |             |
-| 0.8.2+           | 2.19.0           | This version will be deprecated on February 4, 2021. |
-| 0.8.1            | 2.18.0           | This version will be deprecated on January 23, 2021. |
-| 0.8.0            | 2.17.0           | This version will be deprecated on January 6, 2021. |
-| 0.7.4            | 2.11.0           | This version will be deprecated on March 1, 2020. |
-| 0.7.3            | 2.10.0           | This version will be deprecated on February 11, 2020. |
-| 0.7.2            | 2.10.0           | |
-| 0.7.0+           | 2.9.0            | This version will be deprecated on December 13, 2019. |
-| 0.6.0            | 2.6.0            | This version will be deprecated on August 8, 2019. |
-| 0.5.7            | 2.6.0            | |
-| 0.5.6            | 2.5.0            | This version will be deprecated on June 6, 2019. |
-| 0.5.1+           | 2.4.0            | Deprecated as of March 20, 2019. |
-| 0.5.0            | 2.2.0            | Deprecated as of December 2, 2018. |
-| 0.4.6+           | 2.2.0            | |
-| 0.4.1+           | 2.1.0            | Deprecated as of August 23, 2018. |
-| 0.4.0            | 2.0.0            | Deprecated as of May 17, 2018. |
-| 0.3.0+           | 0.6.0            | Unsupported |
+| **Scio Version** | **Beam Version** | **Details**                                          |
+|:----------------:|:----------------:|:-----------------------------------------------------|
+|     0.11.6+      |      2.38.0      | This version will be deprecated on April 20, 2023.   |
+|      0.11.5      |      2.36.0      | This version will be deprecated on February 7, 2023. |
+|      0.11.4      |      2.35.0      | This version will be deprecated on December 29, 2022. |
+|      0.11.3      |      2.35.0      | This version will be deprecated on December 29, 2022. |
+|      0.11.2      |      2.34.0      | This version will be deprecated on November 11, 2022. |
+|      0.11.1      |      2.33.0      | This version will be deprecated on October 7, 2022.  |
+|      0.11.0      |      2.32.0      | This version will be deprecated on August 25, 2022.  |
+|     0.10.4+      |      2.30.0      | This version will be deprecated on June 10, 2022.    |
+|      0.10.3      |      2.29.0      | Deprecated as of April 29, 2022.                     |
+|     0.10.0+      |      2.28.0      | Deprecated as of February 22, 2022.                  |
+|      0.9.5+      |      2.24.0      | Deprecated as of September 18, 2021.                 |
+|      0.9.3+      |      2.23.0      | Deprecated as of July 29, 2021.                      |
+|      0.9.2       |      2.22.0      | Deprecated as of June 8, 2021.                       |
+|      0.9.1       |      2.20.0      | Deprecated as of April 15, 2021.                     |
+|      0.9.0       |      2.20.0      |                                                      |
+|      0.8.2+      |      2.19.0      | Deprecated as of February 4, 2021.                   |
+|      0.8.1       |      2.18.0      | Deprecated as of January 23, 2021.                   |
+|      0.8.0       |      2.17.0      | Deprecated as of January 6, 2021.                    |
+|      0.7.4       |      2.11.0      | Deprecated as of March 1, 2020.                      |
+|      0.7.3       |      2.10.0      | Deprecated as of February 11, 2020.                  |
+|      0.7.2       |      2.10.0      |                                                      |
+|      0.7.0+      |      2.9.0       | Deprecated as of December 13, 2019.                  |
+|      0.6.0       |      2.6.0       | Deprecated as of August 8, 2019.                     |
+|      0.5.7       |      2.6.0       |                                                      |
+|      0.5.6       |      2.5.0       | Deprecated as of June 6, 2019.                       |
+|      0.5.1+      |      2.4.0       | Deprecated as of March 20, 2019.                     |
+|      0.5.0       |      2.2.0       | Deprecated as of December 2, 2018.                   |
+|      0.4.6+      |      2.2.0       |                                                      |
+|      0.4.1+      |      2.1.0       | Deprecated as of August 23, 2018.                    |
+|      0.4.0       |      2.0.0       | Deprecated as of May 17, 2018.                       |
+|      0.3.0+      |      0.6.0       | Unsupported                                          |
 
 ## Beam dependencies
 

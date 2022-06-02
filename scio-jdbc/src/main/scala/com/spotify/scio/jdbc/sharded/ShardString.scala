@@ -68,7 +68,7 @@ object RangeShardStringCodec {
     uuidStringBuilder: String => S
   ): RangeShardStringCodec[S] =
     new RangeShardStringCodec[S] {
-      def encode(bigInt: BigInt): S = lift(bigInt.toString(16))
+      def encode(bigInt: BigInt): S = lift(f"$bigInt%032x")
       def decode(str: S): BigInt = BigInt(str.value.replaceAll("-", ""), 16)
       def lift(str: String): S = uuidStringBuilder(
         Seq(

@@ -53,4 +53,9 @@ object BigQuerySysProps {
     "Timeout in milliseconds to read data from an established connection. " +
       "Default is 20000 (20 seconds). 0 for an infinite timeout."
   )
+
+  val DebugAuth: SysProp = SysProp(
+    "bigquery.debug_auth",
+    "System property key to enable logging active BigQuery user information on auth errors"
+  )
 }

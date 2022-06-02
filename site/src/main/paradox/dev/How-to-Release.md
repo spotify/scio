@@ -62,6 +62,11 @@ git push origin vX.Y.Z
 
 ### 0.11.x
 
+- [v0.11.7](https://github.com/spotify/scio/releases/tag/v0.11.7) - _"Creta"_
+- [v0.11.6](https://github.com/spotify/scio/releases/tag/v0.11.6) - _"Colchis"_
+- [v0.11.5](https://github.com/spotify/scio/releases/tag/v0.11.5) - _"Cambria"_
+- [v0.11.4](https://github.com/spotify/scio/releases/tag/v0.11.4) - _"Britannia"_
+- [v0.11.3](https://github.com/spotify/scio/releases/tag/v0.11.3) - _"Bithynia"_
 - [v0.11.2](https://github.com/spotify/scio/releases/tag/v0.11.2) - _"Batavia"_
 - [v0.11.1](https://github.com/spotify/scio/releases/tag/v0.11.1) - _"Armorica"_
 - [v0.11.0](https://github.com/spotify/scio/releases/tag/v0.11.0) - _"Ariana"_

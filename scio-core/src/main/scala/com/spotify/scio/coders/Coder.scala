@@ -197,11 +197,11 @@ final private[scio] case class LazyCoder[T](
       c match {
         // Stop the recursion. We already traversed that Coder
         case ref: Ref[_] if types.contains(ref.typeName) =>
-          Coder[Nothing].asInstanceOf[Coder[B]]
+          Coder.nothingCoder.asInstanceOf[Coder[B]]
         case Disjunction(typeName, _, _, _) if types.contains(typeName) =>
-          Coder[Nothing].asInstanceOf[Coder[B]]
+          Coder.nothingCoder.asInstanceOf[Coder[B]]
         case Record(typeName, _, _, _) if types.contains(typeName) =>
-          Coder[Nothing].asInstanceOf[Coder[B]]
+          Coder.nothingCoder.asInstanceOf[Coder[B]]
         //
         case ref: Ref[_]     => go(ref.value, types + ref.typeName)
         case c @ RawBeam(_)  => c

@@ -53,7 +53,7 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
       |}
     """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
-    val table = bq.tables.createTemporary(location = "EU")
+    val table = bq.tables.createTemporary(location = "EU").getTableReference
     val tableRef = bq.load.json(sources, table.asTableSpec, schema = Some(schema))
     tableRef.map { ref =>
       val insertQuery = s"insert into `${ref.asTableSpec}` values (1603, 'alien', 9000, 'alien')"
@@ -171,7 +171,7 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
         |}
       """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.csv")
-    val table = bq.tables.createTemporary(location = "EU")
+    val table = bq.tables.createTemporary(location = "EU").getTableReference
     val tableRef =
       bq.load.csv(sources, table.asTableSpec, skipLeadingRows = 1, schema = Some(schema))
     val createdTable = tableRef.map(bq.tables.table)
@@ -192,7 +192,7 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
         |}
       """.stripMargin)
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.json")
-    val table = bq.tables.createTemporary(location = "EU")
+    val table = bq.tables.createTemporary(location = "EU").getTableReference
     val tableRef = bq.load.json(sources, table.asTableSpec, schema = Some(schema))
     val createdTable = tableRef.map(bq.tables.table)
     createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)
@@ -201,7 +201,7 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
 
   "Load.avro" should "work" in {
     val sources = List("gs://data-integration-test-eu/shakespeare-sample-10.avro")
-    val table = bq.tables.createTemporary(location = "EU")
+    val table = bq.tables.createTemporary(location = "EU").getTableReference
     val tableRef = bq.load.avro(sources, table.asTableSpec)
     val createdTable = tableRef.map(bq.tables.table)
     createdTable.map(_.getNumRows.intValue()) shouldBe Success(10)

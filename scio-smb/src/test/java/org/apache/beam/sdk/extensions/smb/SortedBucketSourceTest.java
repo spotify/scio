@@ -264,7 +264,16 @@ public class SortedBucketSourceTest {
 
   @Test
   @Category(NeedsRunner.class)
-  public void testSingleSourceGbkWithSecondaryWithPredicate() throws Exception {}
+  public void testSingleSourceGbkWithPredicateEmpty() throws Exception {
+    testSingleSourceGbkPrimary((vs, v) -> v.startsWith("z")); // matches no values
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testSingleSourceGbkWithSecondaryWithPredicate() throws Exception {
+    // FIXME
+    throw new IllegalArgumentException();
+  }
 
   Map<BucketShardId, List<String>> singleSourceGbkInput =
       ImmutableMap.of(
@@ -1081,6 +1090,12 @@ public class SortedBucketSourceTest {
                 });
         filtered.put(e.getKey(), value);
       }
+      // if predicate removes all values, remove key group
+      List<KeyType> toRemove =
+          filtered.keySet().stream()
+              .filter(k -> filtered.get(k).isEmpty())
+              .collect(Collectors.toList());
+      toRemove.forEach(filtered::remove);
       return filtered;
     }
   }

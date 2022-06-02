@@ -643,8 +643,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * [[PairSCollectionFunctions.reduceByKey]] will provide much better performance.
    * @group transform
    */
-  def groupBy[K: Coder](f: T => K): SCollection[(K, Iterable[T])] =
+  def groupBy[K: Coder](f: T => K): SCollection[(K, Iterable[T])] = {
+    if (!context.isTest && CallSites.wasCalledExternally) {
+      SCollection.logger.warn(
+        "groupBy will materialize all values for a key to a single worker," +
+          " which is a very common cause of memory issues." +
+          " Consider using aggregateByKey/reduceByKey on a keyed SCollection instead."
+      )
+    }
     groupMap(f)(identity)
+  }
 
   /**
    * Return an SCollection of grouped items. Each group consists of a key and a sequence of elements

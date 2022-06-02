@@ -17,10 +17,17 @@
 
 package com.spotify.scio.bigquery.client
 
-import java.io.{File, FileInputStream}
+import com.google.api.client.googleapis.json.GoogleJsonResponseException
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 
+import java.io.{File, FileInputStream}
 import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.http.{HttpRequest, HttpRequestInitializer}
+import com.google.api.client.http.{
+  HttpRequest,
+  HttpRequestInitializer,
+  HttpResponseException,
+  HttpStatusCodes
+}
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.rpc.FixedHeaderProvider
@@ -42,7 +49,7 @@ import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe.TypeTag
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /** A simple BigQuery client. */
 final class BigQuery private (val client: Client) {
@@ -217,7 +224,45 @@ object BigQuery {
 
     def credentials: Credentials = _credentials
 
-    lazy val underlying: Bigquery = {
+    def execute[T](fn: Bigquery => AbstractGoogleClientRequest[T]): T = {
+      def getAuthenticatedUser: String = {
+        import com.google.auth.oauth2.{
+          ImpersonatedCredentials,
+          ServiceAccountCredentials,
+          UserCredentials
+        }
+
+        _credentials match {
+          case sa: ServiceAccountCredentials => s"service account ${sa.getAccount}"
+          case uc: UserCredentials =>
+            s"user ${uc.getClientId} in project ${Option(uc.getQuotaProjectId).filterNot(_.isEmpty).getOrElse("unknown")}"
+          case ic: ImpersonatedCredentials =>
+            s"impersonated account ${ic.getAccount} in project ${Option(ic.getQuotaProjectId).filterNot(_.isEmpty).getOrElse("unknown")}"
+          case other: Credentials =>
+            s"${other.getAuthenticationType} with credential type ${other.getClass.getName}"
+        }
+      }
+
+      Try(fn(underlying).execute()) match {
+        case Success(response) => response
+        case Failure(e: GoogleJsonResponseException)
+            if e.getStatusCode == HttpStatusCodes.STATUS_CODE_FORBIDDEN && BigQueryConfig.isDebugAuthEnabled =>
+          throw new GoogleJsonResponseException(
+            new HttpResponseException.Builder(e.getStatusCode, e.getStatusMessage, e.getHeaders)
+              .setContent(e.getContent)
+              .setMessage(s"""
+                   |${e.getMessage}
+                   |
+                   |[${BigQuery.getClass.getName}${BigQuerySysProps.DebugAuth.flag}] Active credential was $getAuthenticatedUser
+                   |""".stripMargin),
+            e.getDetails
+          )
+        case Failure(e) =>
+          throw e
+      }
+    }
+
+    private lazy val underlying: Bigquery = {
       val requestInitializer = new ChainingHttpRequestInitializer(
         new HttpCredentialsAdapter(credentials),
         new HttpRequestInitializer {
