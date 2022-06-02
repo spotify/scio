@@ -486,7 +486,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     null.asInstanceOf[jDouble] coderShould roundtrip(opts)
     null.asInstanceOf[jLong] coderShould roundtrip(opts)
     null.asInstanceOf[jShort] coderShould roundtrip(opts)
+    null.asInstanceOf[(String, Top)] coderShould roundtrip(opts)
     (null, null).asInstanceOf[(String, Top)] coderShould roundtrip(opts)
+    null.asInstanceOf[DummyCC] coderShould roundtrip(opts)
     DummyCC(null) coderShould roundtrip(opts)
     null.asInstanceOf[Top] coderShould roundtrip(opts)
     null.asInstanceOf[Either[String, Int]] coderShould roundtrip(opts)
@@ -495,30 +497,21 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val example: T = ("Hello", 42, TA(1, "World"))
     val nullExample1: T = ("Hello", 42, TA(1, null))
     val nullExample2: T = ("Hello", 42, null)
+    val nullExample3: T = null
     example coderShould roundtrip(opts)
     nullExample1 coderShould roundtrip(opts)
     nullExample2 coderShould roundtrip(opts)
+    nullExample3 coderShould roundtrip(opts)
 
     val nullBCoder = CoderMaterializer.beamWithDefault(Coder[T], o = opts)
     nullBCoder.isRegisterByteSizeObserverCheap(nullExample1)
     nullBCoder.isRegisterByteSizeObserverCheap(nullExample2)
+    nullBCoder.isRegisterByteSizeObserverCheap(nullExample3)
 
-    val noopObserver =
-      new org.apache.beam.sdk.util.common.ElementByteSizeObserver {
-        def reportElementSize(s: Long): Unit = ()
-      }
-
+    val noopObserver: org.apache.beam.sdk.util.common.ElementByteSizeObserver = (_: Long) => ()
     nullBCoder.registerByteSizeObserver(nullExample1, noopObserver)
     nullBCoder.registerByteSizeObserver(nullExample2, noopObserver)
-
-    import com.spotify.scio.avro.TestRecord
-    val record: GenericRecord = TestRecord
-      .newBuilder()
-      .setStringField(null)
-      .build()
-
-    val nullExample3 = (record, record.get("string_field"))
-    nullExample3 coderShould roundtrip(opts)
+    nullBCoder.registerByteSizeObserver(nullExample3, noopObserver)
   }
 
   it should "have a useful stacktrace when a Coder throws" in {

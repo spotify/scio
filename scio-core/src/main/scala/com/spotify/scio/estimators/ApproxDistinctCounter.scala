@@ -17,7 +17,7 @@
 
 package com.spotify.scio.estimators
 
-import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{transforms => beam}
@@ -62,9 +62,7 @@ case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCo
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
     implicit val (keyCoder, _): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
     in.toKV
-      .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))(
-        Coder.raw(CoderMaterializer.kvCoder[K, java.lang.Long](in.context))
-      )
+      .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))
       .map(klToTuple)
   }
 }
@@ -87,9 +85,7 @@ case class ApproximateUniqueCounterByError[T](maximumEstimationError: Double = 0
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
     implicit val (keyCoder, _): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
     in.toKV
-      .applyTransform(beam.ApproximateUnique.perKey[K, T](maximumEstimationError))(
-        Coder.raw(CoderMaterializer.kvCoder[K, java.lang.Long](in.context))
-      )
+      .applyTransform(beam.ApproximateUnique.perKey[K, T](maximumEstimationError))
       .map(klToTuple)
   }
 

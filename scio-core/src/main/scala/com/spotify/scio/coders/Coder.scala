@@ -203,10 +203,10 @@ final private[scio] case class LazyCoder[T](
         case Record(typeName, _, _, _) if types.contains(typeName) =>
           Coder.nothingCoder.asInstanceOf[Coder[B]]
         //
-        case ref: Ref[_]     => go(ref.value, types + ref.typeName)
-        case c @ RawBeam(_)  => c
-        case c @ Beam(_)     => c
-        case c @ Fallback(_) => c
+        case ref: Ref[_]    => go(ref.value, types + ref.typeName)
+        case c: RawBeam[_]  => c
+        case c: Beam[_]     => c
+        case c: Fallback[_] => c
         case Transform(c, f) =>
           val c2 = f(CoderMaterializer.beamImpl(o, c))
           go(c2, types)
@@ -241,8 +241,6 @@ final private[scio] case class LazyCoder[T](
     }
 }
 
-// XXX: Workaround a NPE deep down the stack in Beam
-// [info]   java.lang.NullPointerException: null value in entry: T=null
 // Contains the materialization stack trace to provide a helpful stacktrace if an exception happens
 private[scio] class WrappedBCoder[T](
   val u: BCoder[T],
@@ -252,7 +250,7 @@ private[scio] class WrappedBCoder[T](
   override def toString: String = u.toString
 
   override def equals(obj: Any): Boolean = obj match {
-    case wbc: WrappedBCoder[T] => wbc.u == u
+    case wbc: WrappedBCoder[_] => wbc.u == u
     case _                     => false
   }
 
@@ -280,12 +278,7 @@ private[scio] class WrappedBCoder[T](
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = u.verifyDeterministic()
   override def consistentWithEquals(): Boolean = u.consistentWithEquals()
-  override def structuralValue(value: T): AnyRef =
-    if (consistentWithEquals()) {
-      value.asInstanceOf[AnyRef]
-    } else {
-      u.structuralValue(value)
-    }
+  override def structuralValue(value: T): AnyRef = u.structuralValue(value)
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean =
@@ -296,13 +289,7 @@ private[scio] class WrappedBCoder[T](
 
 private[scio] object WrappedBCoder {
 
-  def apply[T](u: BCoder[T], materializeStack: Boolean): BCoder[T] =
-    u match {
-      case wbc: WrappedBCoder[T] => wbc
-      case _ if materializeStack => new WrappedBCoder(u, CoderStackTrace.prepare)
-      case _                     => new WrappedBCoder(u, Array.empty)
-    }
-
+  def apply[T](u: BCoder[T]): BCoder[T] = new WrappedBCoder(u, CoderStackTrace.prepare)
   def unapply[T](c: WrappedBCoder[T]): Some[BCoder[T]] = Some(c.u)
 
 }
