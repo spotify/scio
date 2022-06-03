@@ -18,13 +18,12 @@
 package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
-
 import com.spotify.scio.coders.{AvroCoderMacros, Coder}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.{SpecificData, SpecificFixed}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, StringUtf8Coder}
+import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, CustomCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import scala.reflect.{classTag, ClassTag}
@@ -72,7 +71,7 @@ final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
  * @see
  *   [[org.apache.beam.sdk.coders.AvroCoder]]
  */
-final private class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends AtomicCoder[A] {
+final private class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends CustomCoder[A] {
   // lazy because AVRO Schema isn't serializable
   @transient private[this] lazy val schema: Schema = SpecificData.get().getSchema(cls)
   private[this] val size = SpecificData.get().getSchema(cls).getFixedSize
