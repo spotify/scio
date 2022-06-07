@@ -132,7 +132,7 @@ object SortMergeBucketJoinExample {
     override def toString: String = s"$userId\t$age\t$balance"
   }
 
-  def main(cmdLineArgs: Array[String]): Unit = {
+  def pipeline(cmdLineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
     val mapFn: ((String, (GenericRecord, Account))) => UserAccountData = {
@@ -157,6 +157,11 @@ object SortMergeBucketJoinExample {
       .saveAsTextFile(args("output"))
     // #SortMergeBucketExample_join
 
+    sc
+  }
+
+  def main(cmdLineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdLineArgs)
     sc.run().waitUntilDone()
     ()
   }
@@ -165,7 +170,7 @@ object SortMergeBucketJoinExample {
 object SortMergeBucketTransformExample {
   import com.spotify.scio.smb._
 
-  def main(cmdLineArgs: Array[String]): Unit = {
+  def pipeline(cmdLineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
     // #SortMergeBucketExample_transform
@@ -201,7 +206,11 @@ object SortMergeBucketTransformExample {
       }
     }
     // #SortMergeBucketExample_transform
+    sc
+  }
 
+  def main(cmdLineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdLineArgs)
     sc.run().waitUntilDone()
     ()
   }
