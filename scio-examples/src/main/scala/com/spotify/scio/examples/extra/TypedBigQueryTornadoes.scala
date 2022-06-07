@@ -24,7 +24,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigquery._
-import com.spotify.scio.ContextAndArgs
+import com.spotify.scio.{ContextAndArgs, ScioContext}
 
 object TypedBigQueryTornadoes {
   // Annotate input class with schema inferred from a BigQuery SELECT.
@@ -40,7 +40,7 @@ object TypedBigQueryTornadoes {
   @BigQueryType.toTable
   case class Result(month: Long, tornado_count: Long)
 
-  def main(cmdlineArgs: Array[String]): Unit = {
+  def pipeline(cmdlineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Get input from BigQuery and convert elements from `TableRow` to `Row`.
@@ -56,6 +56,11 @@ object TypedBigQueryTornadoes {
         createDisposition = CREATE_IF_NEEDED
       )
 
+    sc
+  }
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdlineArgs)
     sc.run().waitUntilDone()
     ()
   }

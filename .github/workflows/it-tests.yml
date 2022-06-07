@@ -25,7 +25,7 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
-      - run: sbt "++${{matrix.scala}} it:test"
+      - run: sbt "++${{matrix.scala}} IntegrationTest/test"
     strategy:
       matrix:
         java:

@@ -26,7 +26,7 @@
 // --inputL=[INPUT]--inputR=[INPUT] --output=[OUTPUT]"`
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.ContextAndArgs
+import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.avro.Account
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
@@ -72,7 +72,7 @@ object SortMergeBucketWriteExample {
   implicit val coder: Coder[GenericRecord] =
     Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
-  def main(cmdLineArgs: Array[String]): Unit = {
+  def pipeline(cmdLineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
     sc.parallelize(0 until 500)
@@ -113,8 +113,12 @@ object SortMergeBucketWriteExample {
           .withNumShards(1)
       )
     // #SortMergeBucketExample_sink
+    sc
+  }
+
+  def main(cmdLineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdLineArgs)
     sc.run().waitUntilDone()
-    ()
   }
 }
 

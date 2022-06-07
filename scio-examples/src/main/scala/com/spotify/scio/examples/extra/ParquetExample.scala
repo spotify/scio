@@ -70,7 +70,7 @@ object ParquetExample {
           .build()
       )
 
-  def main(cmdlineArgs: Array[String]): Unit = {
+  def pipeline(cmdlineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val m = args("method")
@@ -99,6 +99,11 @@ object ParquetExample {
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
+    sc
+  }
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdlineArgs)
     sc.run().waitUntilDone()
     ()
   }
