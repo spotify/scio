@@ -105,7 +105,7 @@ object ApproximationAssertions {
     errorPct: Double
   ): ApproximationAssertion[Iterable[(K, Long)]] = { (actual: Iterable[(K, Long)]) =>
     actual.size shouldBe expected.size
-    (actual zip expected)
+    actual zip expected
     val ex = expected.toMap
     actual.foreach { case (k, act) =>
       val expt = ex(k)
