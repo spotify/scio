@@ -22,12 +22,6 @@ import _root_.io.github.davidgregory084.ScalaVersion._
 
 object Scalac {
 
-  private val parallelism = math.min(Runtime.getRuntime.availableProcessors(), 16)
-  val parallelismOption = new ScalacOption(
-    "-Ybackend-parallelism" :: parallelism.toString :: Nil,
-    version => version.isBetween(V2_12_0, V3_0_0)
-  )
-
   // Set the strategy used for translating lambdas into JVM code to "inline"
   val delambdafyInlineOption = new ScalacOption(
     "-Ydelambdafy:inline" :: Nil
@@ -49,12 +43,6 @@ object Scalac {
 
   // JVM
   val targetOption = new ScalacOption("-target:jvm-1.8" :: Nil)
-
-  private val javaVersion = VersionNumber(sys.props("java.version"))
-  val releaseOption = new ScalacOption(
-    "-release" :: "8" :: Nil,
-    _ => javaVersion.matchesSemVer(SemanticSelector(">1.8"))
-  )
 
   // Warn
   val privateWarnMacrosOption = new ScalacOption(

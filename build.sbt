@@ -141,16 +141,18 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     ScalacOptions.warnValueDiscard
   )
 
+  val parallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
   val extras = Set(
     Scalac.delambdafyInlineOption,
     Scalac.macroAnnotationsOption,
     Scalac.macroSettingsOption,
     Scalac.maxClassfileName,
-    Scalac.parallelismOption,
     Scalac.privateWarnMacrosOption,
     Scalac.targetOption,
     Scalac.warnConfOption,
-    Scalac.warnMacrosOption
+    Scalac.warnMacrosOption,
+    ScalacOptions.privateBackendParallelism(parallelism),
+    ScalacOptions.release("8")
   )
 
   opts.filterNot(excludes).union(extras)
