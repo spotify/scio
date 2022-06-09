@@ -95,7 +95,7 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val elasticsearch6Version = "6.8.23"
-val elasticsearch7Version = "7.17.3"
+val elasticsearch7Version = "7.17.4"
 val elasticsearch8Version = "8.2.2"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
@@ -272,21 +272,22 @@ lazy val publishSettings = Def.settings(
   sonatypeProfileName := "com.spotify"
 )
 
-lazy val itSettings = Def.settings(
-  Defaults.itSettings,
-  IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-  // exclude all sources if we don't have GCP credentials
-  IntegrationTest / unmanagedSources / excludeFilter := {
-    if (BuildCredentials.exists) {
-      HiddenFileFilter
-    } else {
-      HiddenFileFilter || "*.scala"
-    }
-  },
-  inConfig(IntegrationTest)(run / fork := true),
-  inConfig(IntegrationTest)(BloopDefaults.configSettings),
-  inConfig(IntegrationTest)(scalafmtConfigSettings),
-  inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
+lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
+  Def.settings(
+    classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    // exclude all sources if we don't have GCP credentials
+    unmanagedSources / excludeFilter := {
+      if (BuildCredentials.exists) {
+        HiddenFileFilter
+      } else {
+        HiddenFileFilter || "*.scala"
+      }
+    },
+    fork := true,
+    BloopDefaults.configSettings,
+    scalafmtConfigSettings,
+    scalafixConfigSettings(IntegrationTest)
+  )
 )
 
 lazy val assemblySettings = Seq(

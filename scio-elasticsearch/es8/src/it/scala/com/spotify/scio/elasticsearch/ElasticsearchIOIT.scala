@@ -61,6 +61,7 @@ class ElasticsearchIOIT extends PipelineSpec with Eventually with ForAllTestCont
   override val container: ElasticsearchContainer = ElasticsearchContainer(ImageName)
     .configure(
       _.withEnv("discovery.type", "single-node") // not a cluster
+        .withEnv("xpack.security.http.ssl.enabled", "false") // disable ssl
         .withEnv("ES_JAVA_OPTS", "-Xms1g -Xmx1g") // limit memory for testing
         .withPassword(Password)
     )
