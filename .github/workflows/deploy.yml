@@ -20,24 +20,11 @@ jobs:
           distribution: temurin
           java-version: 11
       - run: sbt scio-repl/assembly
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
       - name: Upload Repl
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: scio-repl/target/scala-2.13/scio-repl.jar
-          asset_name: scio-repl.jar
-          asset_content_type: application/java-archive
+          draft: true
+          files: scio-repl/target/scala-2.13/scio-repl.jar
   publish-docs:
     name: Publish documentation
     runs-on: ubuntu-latest
