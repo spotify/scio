@@ -205,7 +205,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.7+0-5f2b213f+20220503-1509*
+<i class="md-icon" title="Version">label_outline</i> 0.11.8+0-177fb671+20220609-1644*
 </label>
 </li>
 </ul>
@@ -310,7 +310,7 @@ spotify/scio
       <li><code>ScioContext#sortMergeJoin</code> (2 sources)</li>
       <li><code>ScioContext#sortMergeCoGroup</code> (1-4 sources)</li>
     </ul>
-    <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L140-L153" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.sortMergeJoin(
+    <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L144-L157" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.sortMergeJoin(
   classOf[String],
   AvroSortedBucketIO
     .read(new TupleTag[GenericRecord](&quot;lhs&quot;), SortMergeBucketExample.UserDataSchema)
@@ -331,7 +331,7 @@ spotify/scio
       <li>
       <p><code>ScioContext#sortMergeTransform</code> (1-3 sources)</p></li>
     </ul>
-    <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L168-L198" target="_blank" title="Go to snippet source">source</a><code class="language-scala">val (readLhs, readRhs) = (
+    <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala#L177-L207" target="_blank" title="Go to snippet source">source</a><code class="language-scala">val (readLhs, readRhs) = (
   AvroSortedBucketIO
     .read(new TupleTag[GenericRecord](&quot;lhs&quot;), SortMergeBucketExample.UserDataSchema)
     .from(args(&quot;users&quot;)),
@@ -459,7 +459,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.7+0-5f2b213f+20220503-1509*
+0.11.8+0-177fb671+20220609-1644*
 </span>
 </div>
 </article>
