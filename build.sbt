@@ -283,7 +283,7 @@ lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
         HiddenFileFilter || "*.scala"
       }
     },
-    fork := true,
+    run / fork := true,
     BloopDefaults.configSettings,
     scalafmtConfigSettings,
     scalafixConfigSettings(IntegrationTest)
