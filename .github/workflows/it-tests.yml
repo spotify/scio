@@ -35,7 +35,7 @@ jobs:
           - 2.12.15
           - 2.13.7
         exclude:
-          - scala: 2.12.15
+          - scala: 2.12.16
             java: graalvm-ce-java8@21.0.0
 
   build-docs:
