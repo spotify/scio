@@ -30,20 +30,16 @@ val beamVersion = "2.39.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
-val animalSnifferAnnotationsVersion = "1.20"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
-val bigdataossVersion = "2.2.4"
-val bigtableClientVersion = "1.25.1"
+val bigdataossVersion = "2.2.6"
+val bigtableClientVersion = "1.26.3"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
 val datastoreV1ProtoClientVersion = "2.1.3"
 val flinkVersion = "1.14.3"
-val gcsVersion = "2.4.0"
 val googleClientsVersion = "1.32.1"
-val googleCommonsProtoVersion = "2.7.2"
-val googleHttpClientJacksonVersion = "1.29.2"
 val googleOauthClientVersion = "1.32.1"
 val guavaVersion = "31.0.1-jre"
 val hadoopVersion = "2.10.1"
@@ -61,6 +57,7 @@ val googleApiServicesStorageVersion = s"v1-rev20211201-$googleClientsVersion"
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/index.html
+val animalSnifferAnnotationsVersion = "1.20"
 val bigQueryStorageBetaVersion = "0.134.0"
 val bigQueryStorageVersion = "2.10.0"
 val checkerFrameworkVersion = "3.21.2"
@@ -72,11 +69,16 @@ val googleApiCommonVersion = "2.1.3"
 val googleAuthVersion = "1.4.0"
 val googleCloudBigTableVersion = "2.5.3"
 val googleCloudDatastore = "0.93.4"
+val googleCloudMonitoringVersion = "3.2.4"
 val googleCloudSpannerVersion = "6.20.0"
+val googleCloudVersion = "2.4.0"
+val googleCommonsProtoVersion = "2.7.2"
 val googleHttpClientsVersion = "1.41.2"
 val googleIAMVersion = "1.2.1"
 val grpcVersion = "1.44.0"
-val jacksonVersion = "2.13.3"
+val jacksonVersion = "2.13.1"
+val opencensusContribGrpcMetricsVersion = "0.12.3"
+val opencensusVersion = "0.31.0"
 val protobufVersion = "3.19.3"
 
 val algebirdVersion = "0.13.9"
@@ -110,7 +112,6 @@ val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.0.0-M4"
 val magnolifyVersion = "0.4.8"
 val metricsVersion = "3.2.6"
-val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
 val pprintVersion = "0.7.3"
@@ -350,13 +351,11 @@ lazy val sparkRunnerDependencies = Seq(
 
 // only available for scala 2.11 & 2.12
 // https://issues.apache.org/jira/browse/FLINK-13414
-// beam-runners-flink-1.14 by default pulls 2.11 scala libs,
+// beam-runners-flink-1.14 by default pulls 2.12 scala libs,
 // exclude those libs and add them manually with proper scala version
 lazy val flinkRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion excludeAll (
-    ExclusionRule("com.twitter", "chill_2.11"),
-    ExclusionRule("org.apache.flink", "flink-clients_2.11"),
-    ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+    ExclusionRule("com.twitter", "chill_2.12")
   ),
   "com.twitter" %% "chill" % chillVersion,
   "org.apache.flink" %% "flink-clients" % flinkVersion,
@@ -476,9 +475,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion % Provided excludeAll (
-        ExclusionRule("com.twitter", "chill_2.11"),
-        ExclusionRule("org.apache.flink", "flink-clients_2.11"),
-        ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+        ExclusionRule("com.twitter", "chill_2.12")
       ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
@@ -633,11 +630,9 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-core" % gcsVersion,
-      "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
+      "com.google.cloud" % "google-cloud-core" % googleCloudVersion,
+      "com.google.cloud" % "google-cloud-storage" % googleCloudVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
-      // From BeamModulePlugin.groovy
-      "com.google.http-client" % "google-http-client-jackson" % googleHttpClientJacksonVersion,
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -1336,7 +1331,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value" % autoValueVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-  "com.google.cloud" % "google-cloud-core" % gcsVersion,
+  "com.google.cloud" % "google-cloud-core" % googleCloudVersion,
+  "com.google.cloud" % "google-cloud-monitoring" % googleCloudMonitoringVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
   "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
   "com.google.errorprone" % "error_prone_annotations" % errorProneAnnotationsVersion,
@@ -1378,6 +1374,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-api" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
+  "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
   "net.java.dev.jna" % "jna" % jnaVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
