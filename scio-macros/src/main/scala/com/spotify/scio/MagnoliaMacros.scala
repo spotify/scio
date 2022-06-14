@@ -37,7 +37,7 @@ private[scio] object MagnoliaMacros {
 
     val magnoliaTree = Magnolia.gen[T](c)
 
-    // format:off
+    // format: off
     // Remove annotations from magnolia since they are
     // not serializable and we don't use them anyway
     val removeAnnotations = new Transformer {
@@ -64,7 +64,7 @@ private[scio] object MagnoliaMacros {
         }
       }
     }
-    // format:on
+    // format: on
 
     removeAnnotations.transform(magnoliaTree)
   }
