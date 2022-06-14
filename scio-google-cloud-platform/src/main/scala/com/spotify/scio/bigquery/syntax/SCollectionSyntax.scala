@@ -119,27 +119,6 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
 
 }
 
-final class SCollectionBeamSchemaOps[T: ClassTag](private val self: SCollection[T]) {
-  def saveAsBigQueryTable(
-    table: Table,
-    writeDisposition: WriteDisposition = TypedWriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = TypedWriteParam.DefaultCreateDisposition,
-    tableDescription: String = TypedWriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = TypedWriteParam.DefaultTimePartitioning
-  )(implicit schema: Schema[T], coder: Coder[T]): ClosedTap[T] = {
-    val param =
-      TypedWriteParam(
-        writeDisposition,
-        createDisposition,
-        tableDescription,
-        timePartitioning
-      )
-    self
-      .write(BigQueryTyped.BeamSchema(table))(param)
-      .asInstanceOf[ClosedTap[T]]
-  }
-}
-
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollection[T])
     extends AnyVal {
@@ -194,11 +173,6 @@ trait SCollectionSyntax {
     sc: SCollection[T]
   ): SCollectionGenericRecordOps[T] =
     new SCollectionGenericRecordOps[T](sc)
-
-  implicit def bigQuerySCollectionBeamSchemaOps[T: ClassTag](
-    sc: SCollection[T]
-  ): SCollectionBeamSchemaOps[T] =
-    new SCollectionBeamSchemaOps[T](sc)
 
   implicit def bigQuerySCollectionTypedOps[T <: HasAnnotation](
     sc: SCollection[T]
