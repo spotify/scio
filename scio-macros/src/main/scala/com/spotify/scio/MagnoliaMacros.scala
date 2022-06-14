@@ -37,33 +37,34 @@ private[scio] object MagnoliaMacros {
 
     val magnoliaTree = Magnolia.gen[T](c)
 
+    // format:off
     // Remove annotations from magnolia since they are
     // not serializable and we don't use them anyway
-
     val removeAnnotations = new Transformer {
-      override def transform(tree: Tree): c.universe.Tree =
+      override def transform(tree: Tree): c.universe.Tree = {
         tree match {
-          case Apply(tt: TypeTree, List(typeName, isObject, isValueClass, params, _, _))
-              if tt.symbol.name == TypeName("CaseClass") =>
+          case q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, $_, $_, $_)" if caseClass.symbol.name == TypeName("CaseClass") =>
             super.transform(
-              Apply(tt, List(typeName, isObject, isValueClass, params, q"Array()", q"Array()"))
+              q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
             )
-          case q"Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, $_, $_)" =>
+          case q"Param.apply[$tc_, $t_, $p_]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, $_, $_, $_)" =>
             super.transform(
-              q"_root_.magnolia.Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, Array(), Array())"
+              q"_root_.magnolia1.Param[$tc_, $t_, $p_]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
             )
-          case q"new SealedTrait($typeName, $subtypes, $_, $_)" =>
+          case q"new SealedTrait($typeName, $subtypesArray, $_, $_, $_)" =>
             super.transform(
-              q"new _root_.magnolia.SealedTrait($typeName, $subtypes, Array(), Array())"
+              q"new _root_.magnolia1.SealedTrait($typeName, $subtypesArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
             )
-          case q"Subtype[$tc, $t, $p]($typeName, $id, $_, $_, $coder, $cast0, $cast1)" =>
+          case q"Subtype[$tc_, $t_, $s_]($name, $idx, $_, $_, $_, $tc, $isType, $asType)" =>
             super.transform(
-              q"_root_.magnolia.Subtype[$tc, $t, $p]($typeName, $id, Array(), Array(), $coder, $cast0, $cast1)"
+              q"_root_.magnolia1.Subtype[$tc_, $t_,$s_]($name, $idx, Array.empty[Any], Array.empty[Any], Array.empty[Any], $tc, $isType, $asType)"
             )
           case t =>
             super.transform(t)
         }
+      }
     }
+    // format:on
 
     removeAnnotations.transform(magnoliaTree)
   }
