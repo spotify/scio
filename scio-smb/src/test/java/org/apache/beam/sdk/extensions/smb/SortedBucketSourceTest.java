@@ -46,7 +46,6 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.metrics.MetricResult;
@@ -65,7 +64,6 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -248,6 +246,12 @@ public class SortedBucketSourceTest {
   public void testSingleSourceGbkWithPredicate() throws Exception {
     testSingleSourceGbk((vs, v) -> v.startsWith("x"));
     testSingleSourceGbk((vs, v) -> v.endsWith("1"));
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testSingleSourceGbkWithPredicateEmpty() throws Exception {
+    testSingleSourceGbk((vs, v) -> v.startsWith("z")); // matches no values
   }
 
   private void testSingleSourceGbk(Predicate<String> predicate) throws Exception {
@@ -779,6 +783,12 @@ public class SortedBucketSourceTest {
                 });
         filtered.put(e.getKey(), value);
       }
+      // if predicate removes all values, remove key group
+      List<String> toRemove =
+          filtered.keySet().stream()
+              .filter(k -> filtered.get(k).isEmpty())
+              .collect(Collectors.toList());
+      toRemove.forEach(filtered::remove);
       return filtered;
     }
   }

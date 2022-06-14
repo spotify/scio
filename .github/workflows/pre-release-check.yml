@@ -24,4 +24,4 @@ jobs:
       - name: set JVM opts
         run: scripts/gha_setup.sh
       - name: Run Dataflow jobs
-        run: sbt ${{ env.SBT_OPTS }} "scio-examples/it:runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"
+        run: sbt ${{ env.SBT_OPTS }} "scio-examples/IntegrationTest/runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"

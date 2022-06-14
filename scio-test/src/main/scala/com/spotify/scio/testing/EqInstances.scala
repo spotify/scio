@@ -35,7 +35,7 @@ trait EqInstances extends FallbackEqInstances {
     new Eq[Array[T]] {
       def eqv(xs: Array[T], ys: Array[T]): Boolean =
         (xs.length == ys.length) &&
-          (xs.zip(ys)).forall { case (x, y) => eqT.eqv(x, y) }
+          xs.zip(ys).forall { case (x, y) => eqT.eqv(x, y) }
     }
 }
 

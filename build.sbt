@@ -76,7 +76,7 @@ val googleCloudSpannerVersion = "6.20.0"
 val googleHttpClientsVersion = "1.41.2"
 val googleIAMVersion = "1.2.1"
 val grpcVersion = "1.44.0"
-val jacksonVersion = "2.13.1"
+val jacksonVersion = "2.13.3"
 val protobufVersion = "3.19.3"
 
 val algebirdVersion = "0.13.9"
@@ -89,14 +89,14 @@ val cassandraDriverVersion = "3.11.2"
 val cassandraVersion = "3.11.13"
 val catsVersion = "2.7.0"
 val chillVersion = "0.10.0"
-val circeVersion = "0.14.1"
+val circeVersion = "0.14.2"
 val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val elasticsearch6Version = "6.8.23"
-val elasticsearch7Version = "7.17.3"
-val elasticsearch8Version = "8.2.0"
+val elasticsearch7Version = "7.17.4"
+val elasticsearch8Version = "8.2.2"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
@@ -112,7 +112,7 @@ val magnolifyVersion = "0.4.8"
 val metricsVersion = "3.2.6"
 val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.3"
-val parquetVersion = "1.12.2"
+val parquetVersion = "1.12.3"
 val pprintVersion = "0.7.3"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.16.0"
@@ -125,7 +125,7 @@ val shapelessVersion = "2.3.9"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.2"
 val tensorFlowVersion = "0.4.1"
-val testContainersVersion = "0.40.5"
+val testContainersVersion = "0.40.8"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -180,7 +180,7 @@ val commonSettings = Def
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.8",
-    crossScalaVersions := Seq("2.12.15", scalaVersion.value),
+    crossScalaVersions := Seq("2.12.16", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
@@ -272,21 +272,22 @@ lazy val publishSettings = Def.settings(
   sonatypeProfileName := "com.spotify"
 )
 
-lazy val itSettings = Def.settings(
-  Defaults.itSettings,
-  IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-  // exclude all sources if we don't have GCP credentials
-  IntegrationTest / unmanagedSources / excludeFilter := {
-    if (BuildCredentials.exists) {
-      HiddenFileFilter
-    } else {
-      HiddenFileFilter || "*.scala"
-    }
-  },
-  inConfig(IntegrationTest)(run / fork := true),
-  inConfig(IntegrationTest)(BloopDefaults.configSettings),
-  inConfig(IntegrationTest)(scalafmtConfigSettings),
-  inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
+lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
+  Def.settings(
+    classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    // exclude all sources if we don't have GCP credentials
+    unmanagedSources / excludeFilter := {
+      if (BuildCredentials.exists) {
+        HiddenFileFilter
+      } else {
+        HiddenFileFilter || "*.scala"
+      }
+    },
+    run / fork := true,
+    BloopDefaults.configSettings,
+    scalafmtConfigSettings,
+    scalafixConfigSettings(IntegrationTest)
+  )
 )
 
 lazy val assemblySettings = Seq(
@@ -974,7 +975,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastore,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.6.0",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.6.1",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,

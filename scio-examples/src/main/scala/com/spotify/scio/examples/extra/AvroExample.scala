@@ -51,7 +51,7 @@ object AvroExample {
   @AvroType.toSchema
   case class AccountToSchema(id: Int, `type`: String, name: String, amount: Double)
 
-  def main(cmdlineArgs: Array[String]): Unit = {
+  def pipeline(cmdlineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val m = args("method")
@@ -77,6 +77,11 @@ object AvroExample {
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
+    sc
+  }
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val sc = pipeline(cmdlineArgs)
     sc.run().waitUntilDone()
     ()
   }

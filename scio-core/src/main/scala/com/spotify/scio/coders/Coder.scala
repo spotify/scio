@@ -18,15 +18,15 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
-
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.instances._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{AtomicCoder, Coder => BCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, StructuredCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
+import java.util.{List => JList}
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._
@@ -121,7 +121,7 @@ final private case class DisjunctionCoder[T, Id](
   idCoder: BCoder[Id],
   id: T => Id,
   coders: Map[Id, BCoder[T]]
-) extends AtomicCoder[T] {
+) extends StructuredCoder[T] {
   def encode(value: T, os: OutputStream): Unit = {
     val i = id(value)
     idCoder.encode(i, os)
@@ -171,6 +171,8 @@ final private case class DisjunctionCoder[T, Id](
     } else {
       coders(id(value)).structuralValue(value)
     }
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] = coders.values.toList.asJava
 }
 
 final private[scio] case class LazyCoder[T](
@@ -183,7 +185,7 @@ final private[scio] case class LazyCoder[T](
 
   def decode(inStream: InputStream): T = bcoder.decode(inStream)
   def encode(value: T, outStream: OutputStream): Unit = bcoder.encode(value, outStream)
-  def getCoderArguments(): java.util.List[_ <: BCoder[_]] = bcoder.getCoderArguments()
+  def getCoderArguments(): JList[_ <: BCoder[_]] = bcoder.getCoderArguments()
 
   /**
    * Traverse this coder graph and create a version of it without any loop. Fixes:
@@ -271,7 +273,7 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
   override def decode(is: InputStream): T =
     catching(u.decode(is))
 
-  override def getCoderArguments: java.util.List[_ <: BCoder[_]] = u.getCoderArguments
+  override def getCoderArguments: JList[_ <: BCoder[_]] = u.getCoderArguments
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = u.verifyDeterministic()
@@ -306,7 +308,7 @@ final private[scio] case class RecordCoder[T](
   cs: Array[(String, BCoder[Any])],
   construct: Seq[Any] => T,
   destruct: T => Array[Any]
-) extends AtomicCoder[T] {
+) extends StructuredCoder[T] {
   private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
@@ -416,6 +418,8 @@ final private[scio] case class RecordCoder[T](
       i += 1
     }
   }
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] = cs.map(_._2).toList.asJava
 }
 
 /**
@@ -481,7 +485,7 @@ sealed trait CoderGrammar {
    * of (Long, Long)
    */
   def xmap[A, B](c: Coder[A])(f: A => B, t: B => A): Coder[B] = {
-    @inline def toB(bc: BCoder[A]) = new AtomicCoder[B] {
+    @inline def toB(bc: BCoder[A]) = new StructuredCoder[B] {
       override def encode(value: B, os: OutputStream): Unit =
         bc.encode(t(value), os)
       override def decode(is: InputStream): B =
@@ -502,6 +506,8 @@ sealed trait CoderGrammar {
         bc.isRegisterByteSizeObserverCheap(t(value))
       override def registerByteSizeObserver(value: B, observer: ElementByteSizeObserver): Unit =
         bc.registerByteSizeObserver(t(value), observer)
+
+      override def getCoderArguments: JList[_ <: BCoder[_]] = List(bc).asJava
     }
     Transform[A, B](c, bc => Coder.beam(toB(bc)))
   }
@@ -570,7 +576,7 @@ object Coder
   implicit val uriCoder: Coder[java.net.URI] = JavaCoders.uriCoder
   implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
   implicit def jIterableCoder[T: Coder]: Coder[java.lang.Iterable[T]] = JavaCoders.jIterableCoder
-  implicit def jlistCoder[T: Coder]: Coder[java.util.List[T]] = JavaCoders.jlistCoder
+  implicit def jlistCoder[T: Coder]: Coder[JList[T]] = JavaCoders.jlistCoder
   implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
   implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
   implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =

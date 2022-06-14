@@ -28,6 +28,6 @@ jobs:
       - name: Temporarily remove conflicting Scala classes # some IT test classes won't compile because they depend on macros based on test data that's missing
         run: find scio-google-cloud-platform/src/it/scala/com/spotify/scio/bigquery -type f ! -name 'PopulateTestData.scala' -delete
       - name: Populate BQ test data
-        run: sbt "scio-google-cloud-platform/it:runMain com.spotify.scio.bigquery.PopulateTestData"
+        run: sbt "scio-google-cloud-platform/IntegrationTest/runMain com.spotify.scio.bigquery.PopulateTestData"
       - name: Populate GCS test data
-        run: sbt "scio-test/it:runMain com.spotify.scio.PopulateTestData"
+        run: sbt "scio-test/IntegrationTest/runMain com.spotify.scio.PopulateTestData"

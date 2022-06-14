@@ -34,6 +34,7 @@ import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.twitter.algebird.Moments
+import org.scalatest.Assertion
 
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
@@ -603,6 +604,24 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     coderIsSerializable[Moments]
     new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
     Moments(12) coderShould roundtrip()
+  }
+
+  it should "return different hashCodes for different instances of parameterized Coders" in {
+    def hashCodesAreDifferent[T1, T2](c1: Coder[T1], c2: Coder[T2]): Assertion = {
+      val hashCodeThis = CoderMaterializer.beamWithDefault(c1).hashCode()
+      val hashCodeThat = CoderMaterializer.beamWithDefault(c2).hashCode()
+
+      hashCodeThis shouldNot equal(hashCodeThat)
+    }
+
+    hashCodesAreDifferent(Coder[(String, Int)], Coder[(String, String)])
+    hashCodesAreDifferent(Coder[Map[String, Int]], Coder[Map[String, String]])
+    hashCodesAreDifferent(Coder[List[String]], Coder[List[Int]])
+    hashCodesAreDifferent(Coder[Option[String]], Coder[Option[Int]])
+    hashCodesAreDifferent(
+      Coder.xmap[String, Int](Coder[String])(_.toInt, _.toString),
+      Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt)
+    )
   }
 }
 
