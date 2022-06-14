@@ -20,6 +20,7 @@ package com.spotify.scio
 import scala.reflect.macros._
 
 private[scio] object MagnoliaMacros {
+  import magnolia1._
 
   // Add a level of indirection to prevent the macro from capturing
   // $outer which would make the Coder serialization fail
@@ -34,7 +35,7 @@ private[scio] object MagnoliaMacros {
       )
     }
 
-    val magnoliaTree = magnolia.Magnolia.gen[T](c)
+    val magnoliaTree = Magnolia.gen[T](c)
 
     // Remove annotations from magnolia since they are
     // not serializable and we don't use them anyway
