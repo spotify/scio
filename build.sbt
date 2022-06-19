@@ -80,7 +80,7 @@ val jacksonVersion = "2.13.3"
 val protobufVersion = "3.19.3"
 
 val algebirdVersion = "0.13.9"
-val algebraVersion = "2.7.0"
+val algebraVersion = "2.8.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.0"
