@@ -628,7 +628,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     )
   }
 
-  it should "support Guava Funnels" in {
+  it should "support Guava Bloom Filters" in {
     import com.google.common.hash.{BloomFilter, Funnels}
 
     implicit val funnel = Funnels.stringFunnel(Charset.forName("UTF-8"))
