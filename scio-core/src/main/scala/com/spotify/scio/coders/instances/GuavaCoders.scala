@@ -28,6 +28,7 @@ class GuavaBloomFilterCoder[T](implicit val funnel: g.Funnel[T])
     value.writeTo(outStream)
   override def decode(inStream: InputStream): BloomFilter[T] =
     BloomFilter.readFrom[T](inStream, funnel)
+  override def verifyDeterministic(): Unit = {}
 }
 
 trait GuavaCoders {

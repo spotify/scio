@@ -36,6 +36,8 @@ import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.twitter.algebird.Moments
 import org.scalatest.Assertion
 
+import java.nio.charset.Charset
+
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
 
@@ -447,7 +449,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "support specific fixed data" in {
     val bytes = (0 to 15).map(_.toByte).toArray
-    new FixedSpecificDataExample(bytes) coderShould roundtrip()
+    val specificFixed = new FixedSpecificDataExample(bytes)
+    specificFixed coderShould beDeterministic()
+    specificFixed coderShould roundtrip()
   }
 
   it should "#1604: not throw on null" in {
@@ -622,6 +626,16 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       Coder.xmap[String, Int](Coder[String])(_.toInt, _.toString),
       Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt)
     )
+  }
+
+  it should "support Guava Funnels" in {
+    import com.google.common.hash.{BloomFilter, Funnels}
+
+    implicit val funnel = Funnels.stringFunnel(Charset.forName("UTF-8"))
+    val bloomFilter = BloomFilter.create(funnel, 5)
+
+    bloomFilter coderShould roundtrip()
+    bloomFilter coderShould beDeterministic()
   }
 }
 
