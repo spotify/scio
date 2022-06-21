@@ -632,7 +632,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     import com.google.common.hash.{BloomFilter, Funnels}
 
     implicit val funnel = Funnels.stringFunnel(Charset.forName("UTF-8"))
-    val bloomFilter = BloomFilter.create(funnel, 5)
+    val bloomFilter = BloomFilter.create(funnel, 5L)
 
     bloomFilter coderShould roundtrip()
     bloomFilter coderShould beDeterministic()
