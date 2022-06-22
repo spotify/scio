@@ -95,6 +95,8 @@ final private class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extend
   override def consistentWithEquals(): Boolean = true
 
   override def structuralValue(value: A): AnyRef = value
+
+  override def verifyDeterministic(): Unit = {}
 }
 
 private object SpecificFixedCoder {
