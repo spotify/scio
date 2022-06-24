@@ -51,8 +51,8 @@ class WordCountTest extends PipelineSpec {
       .run()
   }
 
-  "MinimalWordCounPipelineOptionsExample" should "work" in {
-    JobTest[com.spotify.scio.examples.MinimalWordCounPipelineOptionsExample.type]
+  "MinimalWordCountPipelineOptionsExample" should "work" in {
+    JobTest[com.spotify.scio.examples.MinimalWordCountPipelineOptionsExample.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), inData)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))

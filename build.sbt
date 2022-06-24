@@ -26,24 +26,20 @@ import de.heikoseeberger.sbtheader.CommentCreator
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.38.0"
+val beamVersion = "2.39.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
-val animalSnifferAnnotationsVersion = "1.20"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
-val bigdataossVersion = "2.2.4"
-val bigtableClientVersion = "1.25.1"
+val bigdataossVersion = "2.2.6"
+val bigtableClientVersion = "1.26.3"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
 val datastoreV1ProtoClientVersion = "2.1.3"
 val flinkVersion = "1.14.3"
-val gcsVersion = "2.4.0"
 val googleClientsVersion = "1.32.1"
-val googleCommonsProtoVersion = "2.7.2"
-val googleHttpClientJacksonVersion = "1.29.2"
 val googleOauthClientVersion = "1.32.1"
 val guavaVersion = "31.0.1-jre"
 val hadoopVersion = "2.10.1"
@@ -61,6 +57,7 @@ val googleApiServicesStorageVersion = s"v1-rev20211201-$googleClientsVersion"
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/index.html
+val animalSnifferAnnotationsVersion = "1.20"
 val bigQueryStorageBetaVersion = "0.134.0"
 val bigQueryStorageVersion = "2.10.0"
 val checkerFrameworkVersion = "3.21.2"
@@ -72,15 +69,20 @@ val googleApiCommonVersion = "2.1.3"
 val googleAuthVersion = "1.4.0"
 val googleCloudBigTableVersion = "2.5.3"
 val googleCloudDatastore = "0.93.4"
+val googleCloudMonitoringVersion = "3.2.4"
 val googleCloudSpannerVersion = "6.20.0"
+val googleCloudVersion = "2.4.0"
+val googleCommonsProtoVersion = "2.7.2"
 val googleHttpClientsVersion = "1.41.2"
 val googleIAMVersion = "1.2.1"
 val grpcVersion = "1.44.0"
 val jacksonVersion = "2.13.1"
+val opencensusContribGrpcMetricsVersion = "0.12.3"
+val opencensusVersion = "0.31.0"
 val protobufVersion = "3.19.3"
 
 val algebirdVersion = "0.13.9"
-val algebraVersion = "2.7.0"
+val algebraVersion = "2.8.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.0"
@@ -89,14 +91,14 @@ val cassandraDriverVersion = "3.11.2"
 val cassandraVersion = "3.11.13"
 val catsVersion = "2.7.0"
 val chillVersion = "0.10.0"
-val circeVersion = "0.14.1"
+val circeVersion = "0.14.2"
 val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.9"
 val elasticsearch6Version = "6.8.23"
-val elasticsearch7Version = "7.17.3"
-val elasticsearch8Version = "8.2.0"
+val elasticsearch7Version = "7.17.4"
+val elasticsearch8Version = "8.2.3"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
@@ -110,9 +112,8 @@ val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.0.0-M4"
 val magnolifyVersion = "0.4.8"
 val metricsVersion = "3.2.6"
-val opencensusVersion = "0.28.0"
 val parquetExtraVersion = "0.4.3"
-val parquetVersion = "1.12.2"
+val parquetVersion = "1.12.3"
 val pprintVersion = "0.7.3"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.16.0"
@@ -125,7 +126,7 @@ val shapelessVersion = "2.3.9"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.2"
 val tensorFlowVersion = "0.4.1"
-val testContainersVersion = "0.40.5"
+val testContainersVersion = "0.40.8"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -180,7 +181,7 @@ val commonSettings = Def
     headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.8",
-    crossScalaVersions := Seq("2.12.15", scalaVersion.value),
+    crossScalaVersions := Seq("2.12.16", scalaVersion.value),
     scalacOptions ++= Scalac.commonsOptions.value,
     Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
@@ -272,21 +273,22 @@ lazy val publishSettings = Def.settings(
   sonatypeProfileName := "com.spotify"
 )
 
-lazy val itSettings = Def.settings(
-  Defaults.itSettings,
-  IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-  // exclude all sources if we don't have GCP credentials
-  IntegrationTest / unmanagedSources / excludeFilter := {
-    if (BuildCredentials.exists) {
-      HiddenFileFilter
-    } else {
-      HiddenFileFilter || "*.scala"
-    }
-  },
-  inConfig(IntegrationTest)(run / fork := true),
-  inConfig(IntegrationTest)(BloopDefaults.configSettings),
-  inConfig(IntegrationTest)(scalafmtConfigSettings),
-  inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
+lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
+  Def.settings(
+    classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    // exclude all sources if we don't have GCP credentials
+    unmanagedSources / excludeFilter := {
+      if (BuildCredentials.exists) {
+        HiddenFileFilter
+      } else {
+        HiddenFileFilter || "*.scala"
+      }
+    },
+    run / fork := true,
+    BloopDefaults.configSettings,
+    scalafmtConfigSettings,
+    scalafixConfigSettings(IntegrationTest)
+  )
 )
 
 lazy val assemblySettings = Seq(
@@ -349,13 +351,11 @@ lazy val sparkRunnerDependencies = Seq(
 
 // only available for scala 2.11 & 2.12
 // https://issues.apache.org/jira/browse/FLINK-13414
-// beam-runners-flink-1.14 by default pulls 2.11 scala libs,
+// beam-runners-flink-1.14 by default pulls 2.12 scala libs,
 // exclude those libs and add them manually with proper scala version
 lazy val flinkRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion excludeAll (
-    ExclusionRule("com.twitter", "chill_2.11"),
-    ExclusionRule("org.apache.flink", "flink-clients_2.11"),
-    ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+    ExclusionRule("com.twitter", "chill_2.12")
   ),
   "com.twitter" %% "chill" % chillVersion,
   "org.apache.flink" %% "flink-clients" % flinkVersion,
@@ -475,9 +475,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion % Provided excludeAll (
-        ExclusionRule("com.twitter", "chill_2.11"),
-        ExclusionRule("org.apache.flink", "flink-clients_2.11"),
-        ExclusionRule("org.apache.flink", "flink-streaming-java_2.11"),
+        ExclusionRule("com.twitter", "chill_2.12")
       ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
@@ -632,11 +630,9 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-core" % gcsVersion,
-      "com.google.cloud" % "google-cloud-storage" % gcsVersion % "test,it",
+      "com.google.cloud" % "google-cloud-core" % googleCloudVersion,
+      "com.google.cloud" % "google-cloud-storage" % googleCloudVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
-      // From BeamModulePlugin.groovy
-      "com.google.http-client" % "google-http-client-jackson" % googleHttpClientJacksonVersion,
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -974,7 +970,7 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastore,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.6.0",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.6.1",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
@@ -1335,7 +1331,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value" % autoValueVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-  "com.google.cloud" % "google-cloud-core" % gcsVersion,
+  "com.google.cloud" % "google-cloud-core" % googleCloudVersion,
+  "com.google.cloud" % "google-cloud-monitoring" % googleCloudMonitoringVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
   "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
   "com.google.errorprone" % "error_prone_annotations" % errorProneAnnotationsVersion,
@@ -1377,6 +1374,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-api" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
+  "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
   "net.java.dev.jna" % "jna" % jnaVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,

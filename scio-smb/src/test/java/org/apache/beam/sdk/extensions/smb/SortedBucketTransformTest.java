@@ -69,7 +69,8 @@ public class SortedBucketTransformTest {
   @Rule public final TemporaryFolder outputFolder = new TemporaryFolder();
 
   private static final List<String> inputLhs = ImmutableList.of("", "a1", "b1", "c1", "d1", "e1");
-  private static final List<String> inputRhs = ImmutableList.of("", "c2", "d2", "e2", "f2", "g2");
+  private static final List<String> inputRhs =
+      ImmutableList.of("", "c2", "d2", "e2", "f2", "g2", "h2");
   private static final List<Integer> inputSI = ImmutableList.of(1, 2, 3, 4, 5, 6);
   private static final List<String> inputSI2 = ImmutableList.of("z", "x", "y");
 
@@ -85,7 +86,7 @@ public class SortedBucketTransformTest {
   private static final Set<String> expected = ImmutableSet.of("d1-d2", "e1-e2");
   private static final Set<String> expectedWithSides =
       ImmutableSet.of("d1-d2-1,2,3,4,5,6-x,y,z", "e1-e2-1,2,3,4,5,6-x,y,z");
-  private static final Predicate<String> predicate = (xs, s) -> !s.startsWith("c");
+  private static final Predicate<String> predicate = (xs, s) -> !s.startsWith("c") && !s.startsWith("h");
 
   private static final TransformFn<String, String> mergeFunction =
       (keyGroup, outputConsumer) ->

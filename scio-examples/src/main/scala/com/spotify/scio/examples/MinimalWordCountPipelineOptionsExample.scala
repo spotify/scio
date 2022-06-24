@@ -24,11 +24,11 @@ import org.apache.beam.sdk.options.Validation.Required
 
 // Usage:
 // `sbt "runMain
-// com.spotify.scio.examples.MinimalWordCounPipelineOptionsExample
+// com.spotify.scio.examples.MinimalWordCountPipelineOptionsExample
 // --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/minimal_wordcount"`
-object MinimalWordCounPipelineOptionsExample {
+object MinimalWordCountPipelineOptionsExample {
   trait Arguments extends PipelineOptions {
     @Default.String("gs://apache-beam-samples/shakespeare/kinglear.txt")
     def getInput: String
