@@ -77,7 +77,7 @@ public class AvroSortedBucketIOTest {
     final ResourceId tempDirectory = TestUtils.fromFolder(temporaryFolder);
     pipeline.getOptions().setTempLocation(tempDirectory.toString());
 
-    final SortedBucketIO.Write<String, AvroGeneratedUser> write =
+    final SortedBucketIO.Write<String, Void, AvroGeneratedUser> write =
         AvroSortedBucketIO.write(String.class, "name", AvroGeneratedUser.class)
             .to(folder.toString());
 

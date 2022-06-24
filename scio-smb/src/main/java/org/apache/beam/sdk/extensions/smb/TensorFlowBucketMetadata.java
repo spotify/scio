@@ -20,6 +20,7 @@ package org.apache.beam.sdk.extensions.smb;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.protobuf.ByteString;
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -32,25 +33,50 @@ import org.tensorflow.proto.example.FloatList;
 import org.tensorflow.proto.example.Int64List;
 
 /** {@link BucketMetadata} for TensorFlow {@link Example} records. */
-public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
+public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Example> {
 
   @JsonProperty private final String keyField;
+  @JsonProperty private final String keyFieldSecondary;
 
   public TensorFlowBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      HashType hashType,
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     this(
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        keyClass,
-        hashType,
+        keyClassPrimary,
         keyField,
+        null,
+        null,
+        hashType,
+        filenamePrefix);
+  }
+
+  public TensorFlowBucketMetadata(
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        BucketMetadata.CURRENT_VERSION,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyField,
+        keyClassSecondary,
+        keyFieldSecondary,
+        hashType,
         filenamePrefix);
   }
 
@@ -59,55 +85,92 @@ public class TensorFlowBucketMetadata<K> extends BucketMetadata<K, Example> {
       @JsonProperty("version") int version,
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("keyClass") Class<K> keyClass,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
+      @JsonProperty("keyClass") Class<K1> keyClassPrimary,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
+      @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") HashType hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
+    super(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyClassSecondary,
+        hashType,
+        filenamePrefix);
     this.keyField = keyField;
+    this.keyFieldSecondary = keyFieldSecondary;
+  }
+
+  @Override
+  public K1 extractKeyPrimary(Example value) {
+    return extractKey(keyField, getKeyClass(), value);
+  }
+
+  @Override
+  public K2 extractKeySecondary(Example value) {
+    assert (keyFieldSecondary != null && getKeyClassSecondary() != null);
+    return extractKey(keyFieldSecondary, getKeyClassSecondary(), value);
   }
 
   @SuppressWarnings("unchecked")
-  @Override
-  public K extractKey(Example value) {
+  private <K> K extractKey(String keyField, Class<K> keyClazz, Example value) {
     Feature feature = value.getFeatures().getFeatureMap().get(keyField);
-    if (getKeyClass() == byte[].class) {
+    if (keyClazz == byte[].class) {
       BytesList values = feature.getBytesList();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
       return (K) values.getValue(0).toByteArray();
-    } else if (getKeyClass() == ByteString.class) {
+    } else if (keyClazz == ByteString.class) {
       BytesList values = feature.getBytesList();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
       return (K) values.getValue(0);
-    } else if (getKeyClass() == String.class) {
+    } else if (keyClazz == String.class) {
       BytesList values = feature.getBytesList();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
       return (K) values.getValue(0).toStringUtf8();
-    } else if (getKeyClass() == Long.class) {
+    } else if (keyClazz == Long.class) {
       Int64List values = feature.getInt64List();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
       return (K) Long.valueOf(values.getValue(0));
-    } else if (getKeyClass() == Float.class) {
+    } else if (keyClazz == Float.class) {
       FloatList values = feature.getFloatList();
       Preconditions.checkState(values.getValueCount() == 1, "Number of feature in keyField != 1");
       return (K) Float.valueOf(values.getValue(0));
     }
-    throw new IllegalStateException("Unsupported key class " + getKeyClass());
+    throw new IllegalStateException("Unsupported key class " + keyClazz);
   }
 
   @Override
   public void populateDisplayData(Builder builder) {
     super.populateDisplayData(builder);
-    builder.add(DisplayData.item("keyField", keyField));
+    builder.add(DisplayData.item("keyFieldPrimary", keyField));
+    if (keyFieldSecondary != null)
+      builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
   }
 
   @Override
-  public boolean isPartitionCompatible(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    TensorFlowBucketMetadata<?> that = (TensorFlowBucketMetadata<?>) o;
+  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    TensorFlowBucketMetadata<?, ?> that = (TensorFlowBucketMetadata<?, ?>) o;
     return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
+  }
+
+  @Override
+  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    TensorFlowBucketMetadata<?, ?> that = (TensorFlowBucketMetadata<?, ?>) o;
+    boolean allSecondaryPresent =
+        getKeyClassSecondary() != null
+            && that.getKeyClassSecondary() != null
+            && keyFieldSecondary != null
+            && that.keyFieldSecondary != null;
+    // you messed up
+    if (!allSecondaryPresent) return false;
+    return getKeyClass() == that.getKeyClass()
+        && getKeyClassSecondary() == that.getKeyClassSecondary()
+        && keyField.equals(that.keyField)
+        && keyFieldSecondary.equals(that.keyFieldSecondary);
   }
 }

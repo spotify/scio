@@ -21,7 +21,6 @@ import com.google.auto.value.AutoValue;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
@@ -31,7 +30,6 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadataFn;
 import org.apache.beam.sdk.io.FileSystems;
@@ -62,55 +60,116 @@ public class AvroSortedBucketIO {
   }
 
   /** Returns a new {@link Write} for Avro generic records. */
-  public static <K> Write<K, GenericRecord> write(
-      Class<K> keyClass, String keyField, Schema schema) {
-    return AvroSortedBucketIO.newBuilder(keyClass, keyField).setSchema(schema).build();
+  public static <K1> Write<K1, Void, GenericRecord> write(
+      Class<K1> keyClassPrimary, String keyFieldPrimary, Schema schema) {
+    return AvroSortedBucketIO.<K1, Void, GenericRecord>newBuilder(
+            keyClassPrimary, keyFieldPrimary, null, null)
+        .setSchema(schema)
+        .build();
+  }
+
+  /** Returns a new {@link Write} for Avro generic records. */
+  public static <K1, K2> Write<K1, K2, GenericRecord> write(
+      Class<K1> keyClassPrimary,
+      String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      Schema schema) {
+    return AvroSortedBucketIO.newBuilder(
+            keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
+        .setSchema(schema)
+        .build();
   }
 
   /** Returns a new {@link Write} for Avro specific records. */
-  public static <K, T extends SpecificRecordBase> Write<K, T> write(
-      Class<K> keyClass, String keyField, Class<T> recordClass) {
-    return AvroSortedBucketIO.<K, T>newBuilder(keyClass, keyField)
+  public static <K1, T extends SpecificRecordBase> Write<K1, Void, T> write(
+      Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
+    return AvroSortedBucketIO.<K1, Void, T>newBuilder(keyClassPrimary, keyFieldPrimary, null, null)
         .setRecordClass(recordClass)
         .build();
   }
 
-  private static <K, T extends GenericRecord> Write.Builder<K, T> newBuilder(
-      Class<K> keyClass, String keyField) {
-    return new AutoValue_AvroSortedBucketIO_Write.Builder<K, T>()
+  /** Returns a new {@link Write} for Avro specific records. */
+  public static <K1, K2, T extends SpecificRecordBase> Write<K1, K2, T> write(
+      Class<K1> keyClassPrimary,
+      String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      Class<T> recordClass) {
+    return AvroSortedBucketIO.<K1, K2, T>newBuilder(
+            keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
+        .setRecordClass(recordClass)
+        .build();
+  }
+
+  private static <K1, K2, T extends GenericRecord> Write.Builder<K1, K2, T> newBuilder(
+      Class<K1> keyClassPrimary,
+      String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary) {
+    return new AutoValue_AvroSortedBucketIO_Write.Builder<K1, K2, T>()
         .setNumShards(SortedBucketIO.DEFAULT_NUM_SHARDS)
         .setHashType(SortedBucketIO.DEFAULT_HASH_TYPE)
         .setSorterMemoryMb(SortedBucketIO.DEFAULT_SORTER_MEMORY_MB)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
-        .setKeyClass(keyClass)
-        .setKeyField(keyField)
+        .setKeyClassPrimary(keyClassPrimary)
+        .setKeyClassSecondary(keyClassSecondary)
+        .setKeyFieldPrimary(keyFieldPrimary)
+        .setKeyFieldSecondary(keyFieldSecondary)
         .setKeyCacheSize(0)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setCodec(AvroFileOperations.defaultCodec());
   }
 
   /** Returns a new {@link TransformOutput} for Avro generic records. */
-  public static <K> TransformOutput<K, org.apache.avro.generic.GenericRecord> transformOutput(
-      Class<K> keyClass, String keyField, Schema schema) {
-    return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K, GenericRecord>()
+  public static <K1>
+      TransformOutput<K1, Void, org.apache.avro.generic.GenericRecord> transformOutput(
+          Class<K1> keyClassPrimary, String keyFieldPrimary, Schema schema) {
+    return AvroSortedBucketIO.transformOutput(keyClassPrimary, keyFieldPrimary, null, null, schema);
+  }
+
+  /** Returns a new {@link TransformOutput} for Avro generic records. */
+  public static <K1, K2>
+      TransformOutput<K1, K2, org.apache.avro.generic.GenericRecord> transformOutput(
+          Class<K1> keyClassPrimary,
+          String keyFieldPrimary,
+          Class<K2> keyClassSecondary,
+          String keyFieldSecondary,
+          Schema schema) {
+    return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K1, K2, GenericRecord>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setCodec(AvroFileOperations.defaultCodec())
-        .setKeyField(keyField)
-        .setKeyClass(keyClass)
+        .setKeyClassPrimary(keyClassPrimary)
+        .setKeyClassSecondary(keyClassSecondary)
+        .setKeyFieldPrimary(keyFieldPrimary)
+        .setKeyFieldSecondary(keyFieldSecondary)
         .setSchema(schema)
         .build();
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
-  public static <K, T extends SpecificRecordBase> TransformOutput<K, T> transformOutput(
-      Class<K> keyClass, String keyField, Class<T> recordClass) {
-    return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K, T>()
+  public static <K1, T extends SpecificRecordBase> TransformOutput<K1, Void, T> transformOutput(
+      Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
+    return AvroSortedBucketIO.transformOutput(
+        keyClassPrimary, keyFieldPrimary, null, null, recordClass);
+  }
+
+  /** Returns a new {@link TransformOutput} for Avro specific records. */
+  public static <K1, K2, T extends SpecificRecordBase> TransformOutput<K1, K2, T> transformOutput(
+      Class<K1> keyClassPrimary,
+      String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      Class<T> recordClass) {
+    return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K1, K2, T>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
         .setCodec(AvroFileOperations.defaultCodec())
-        .setKeyField(keyField)
-        .setKeyClass(keyClass)
+        .setKeyClassPrimary(keyClassPrimary)
+        .setKeyClassSecondary(keyClassSecondary)
+        .setKeyFieldPrimary(keyFieldPrimary)
+        .setKeyFieldSecondary(keyFieldSecondary)
         .setRecordClass(recordClass)
         .build();
   }
@@ -178,14 +237,16 @@ public class AvroSortedBucketIO {
     }
 
     @Override
-    protected BucketedInput<?, T> toBucketedInput() {
+    protected SortedBucketSource.BucketedInput<T> toBucketedInput(
+        final SortedBucketSource.Keying keying) {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =
           getRecordClass() == null
               ? AvroFileOperations.of(getSchema())
               : (AvroFileOperations<T>)
                   AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass());
-      return new BucketedInput<>(
+      return SortedBucketSource.BucketedInput.of(
+          keying,
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
@@ -200,10 +261,13 @@ public class AvroSortedBucketIO {
 
   /** Writes to Avro sorted-bucket files using {@link SortedBucketSink}. */
   @AutoValue
-  public abstract static class Write<K, T extends GenericRecord>
-      extends SortedBucketIO.Write<K, T> {
+  public abstract static class Write<K1, K2, T extends GenericRecord>
+      extends SortedBucketIO.Write<K1, K2, T> {
     @Nullable
-    abstract String getKeyField();
+    abstract String getKeyFieldPrimary();
+
+    @Nullable
+    abstract String getKeyFieldSecondary();
 
     @Nullable
     abstract Schema getSchema();
@@ -216,74 +280,78 @@ public class AvroSortedBucketIO {
     @Nullable
     abstract Map<String, Object> getMetadata();
 
-    abstract Builder<K, T> toBuilder();
+    abstract Builder<K1, K2, T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K, T extends GenericRecord> {
+    abstract static class Builder<K1, K2, T extends GenericRecord> {
       // Common
-      abstract Builder<K, T> setNumBuckets(int numBuckets);
+      abstract Builder<K1, K2, T> setNumBuckets(int numBuckets);
 
-      abstract Builder<K, T> setNumShards(int numShards);
+      abstract Builder<K1, K2, T> setNumShards(int numShards);
 
-      abstract Builder<K, T> setKeyClass(Class<K> keyClass);
+      abstract Builder<K1, K2, T> setKeyClassPrimary(Class<K1> keyClassPrimary);
 
-      abstract Builder<K, T> setHashType(HashType hashType);
+      abstract Builder<K1, K2, T> setKeyClassSecondary(Class<K2> keyClassSecondary);
 
-      abstract Builder<K, T> setOutputDirectory(ResourceId outputDirectory);
+      abstract Builder<K1, K2, T> setHashType(HashType hashType);
 
-      abstract Builder<K, T> setTempDirectory(ResourceId tempDirectory);
+      abstract Builder<K1, K2, T> setOutputDirectory(ResourceId outputDirectory);
 
-      abstract Builder<K, T> setFilenameSuffix(String filenameSuffix);
+      abstract Builder<K1, K2, T> setTempDirectory(ResourceId tempDirectory);
 
-      abstract Builder<K, T> setSorterMemoryMb(int sorterMemoryMb);
+      abstract Builder<K1, K2, T> setFilenameSuffix(String filenameSuffix);
+
+      abstract Builder<K1, K2, T> setSorterMemoryMb(int sorterMemoryMb);
 
       // Avro specific
-      abstract Builder<K, T> setKeyField(String keyField);
+      abstract Builder<K1, K2, T> setKeyFieldPrimary(String keyFieldPrimary);
 
-      abstract Builder<K, T> setSchema(Schema schema);
+      abstract Builder<K1, K2, T> setKeyFieldSecondary(String keyFieldSecondary);
 
-      abstract Builder<K, T> setRecordClass(Class<T> recordClass);
+      abstract Builder<K1, K2, T> setSchema(Schema schema);
 
-      abstract Builder<K, T> setCodec(CodecFactory codec);
+      abstract Builder<K1, K2, T> setRecordClass(Class<T> recordClass);
 
-      abstract Builder<K, T> setMetadata(Map<String, Object> metadata);
+      abstract Builder<K1, K2, T> setCodec(CodecFactory codec);
 
-      abstract Builder<K, T> setKeyCacheSize(int cacheSize);
+      abstract Builder<K1, K2, T> setMetadata(Map<String, Object> metadata);
 
-      abstract Builder<K, T> setFilenamePrefix(String filenamePrefix);
+      abstract Builder<K1, K2, T> setKeyCacheSize(int cacheSize);
 
-      abstract Write<K, T> build();
+      abstract Builder<K1, K2, T> setFilenamePrefix(String filenamePrefix);
+
+      abstract Write<K1, K2, T> build();
     }
 
     /** Specifies the number of buckets for partitioning. */
-    public Write<K, T> withNumBuckets(int numBuckets) {
+    public Write<K1, K2, T> withNumBuckets(int numBuckets) {
       return toBuilder().setNumBuckets(numBuckets).build();
     }
 
     /** Specifies the number of shards for partitioning. */
-    public Write<K, T> withNumShards(int numShards) {
+    public Write<K1, K2, T> withNumShards(int numShards) {
       return toBuilder().setNumShards(numShards).build();
     }
 
     /** Specifies the {@link HashType} for partitioning. */
-    public Write<K, T> withHashType(HashType hashType) {
+    public Write<K1, K2, T> withHashType(HashType hashType) {
       return toBuilder().setHashType(hashType).build();
     }
 
     /** Specifies the Avro metadata. */
-    public Write<K, T> withMetadata(Map<String, Object> metadata) {
+    public Write<K1, K2, T> withMetadata(Map<String, Object> metadata) {
       return toBuilder().setMetadata(metadata).build();
     }
 
     /** Writes to the given output directory. */
-    public Write<K, T> to(String outputDirectory) {
+    public Write<K1, K2, T> to(String outputDirectory) {
       return toBuilder()
           .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
           .build();
     }
 
     /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
-    public Write<K, T> withTempDirectory(String tempDirectory) {
+    public Write<K1, K2, T> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
           .build();
@@ -300,63 +368,74 @@ public class AvroSortedBucketIO {
 
     @SuppressWarnings("unchecked")
     @Override
-    BucketMetadata<K, T> getBucketMetadata() {
+    BucketMetadata<K1, K2, T> getBucketMetadata() {
       try {
         return getRecordClass() == null
-            ? new AvroBucketMetadata<>(
+            ? new AvroBucketMetadata<K1, K2, T>(
                 getNumBuckets(),
                 getNumShards(),
-                getKeyClass(),
+                getKeyClassPrimary(),
+                getKeyFieldPrimary(),
+                getKeyClassSecondary(),
+                getKeyFieldSecondary(),
                 getHashType(),
-                getKeyField(),
                 getFilenamePrefix(),
                 getSchema())
-            : (AvroBucketMetadata<K, T>)
-                new AvroBucketMetadata<>(
+            : (AvroBucketMetadata<K1, K2, T>)
+                new AvroBucketMetadata<K1, K2, T>(
                     getNumBuckets(),
                     getNumShards(),
-                    getKeyClass(),
+                    getKeyClassPrimary(),
+                    getKeyFieldPrimary(),
+                    getKeyClassSecondary(),
+                    getKeyFieldSecondary(),
                     getHashType(),
-                    getKeyField(),
                     getFilenamePrefix(),
-                    (Class<SpecificRecordBase>) getRecordClass());
+                    getRecordClass());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
     }
 
     /** Specifies the output filename suffix. */
-    public Write<K, T> withSuffix(String filenameSuffix) {
+    public Write<K1, K2, T> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
     /** Specifies the output filename prefix (i.e. "bucket" or "part"). */
-    public Write<K, T> withFilenamePrefix(String filenamePrefix) {
+    public Write<K1, K2, T> withFilenamePrefix(String filenamePrefix) {
       return toBuilder().setFilenamePrefix(filenamePrefix).build();
     }
 
     /** Specifies the sorter memory in MB. */
-    public Write<K, T> withSorterMemoryMb(int sorterMemoryMb) {
+    public Write<K1, K2, T> withSorterMemoryMb(int sorterMemoryMb) {
       return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
     }
 
     /** Specifies the size of an optional key-to-hash cache in the ExtractKeys transform. */
-    public Write<K, T> withKeyCacheOfSize(int keyCacheSize) {
+    public Write<K1, K2, T> withKeyCacheOfSize(int keyCacheSize) {
       return toBuilder().setKeyCacheSize(keyCacheSize).build();
     }
 
     /** Specifies the output file {@link CodecFactory}. */
-    public Write<K, T> withCodec(CodecFactory codec) {
+    public Write<K1, K2, T> withCodec(CodecFactory codec) {
       return toBuilder().setCodec(codec).build();
     }
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Transform
+  ////////////////////////////////////////////////////////////////////////////////
+
   /** Writes to Avro sorted-bucket files using {@link SortedBucketTransform}. */
   @AutoValue
-  public abstract static class TransformOutput<K, T extends GenericRecord>
-      extends SortedBucketIO.TransformOutput<K, T> {
+  public abstract static class TransformOutput<K1, K2, T extends GenericRecord>
+      extends SortedBucketIO.TransformOutput<K1, K2, T> {
+
+    abstract String getKeyFieldPrimary();
+
     @Nullable
-    abstract String getKeyField();
+    abstract String getKeyFieldSecondary();
 
     @Nullable
     abstract Schema getSchema();
@@ -366,58 +445,62 @@ public class AvroSortedBucketIO {
 
     abstract CodecFactory getCodec();
 
-    abstract Builder<K, T> toBuilder();
+    abstract Builder<K1, K2, T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K, T extends GenericRecord> {
-      abstract Builder<K, T> setKeyClass(Class<K> keyClass);
+    abstract static class Builder<K1, K2, T extends GenericRecord> {
+      abstract Builder<K1, K2, T> setKeyClassPrimary(Class<K1> keyClass);
 
-      abstract Builder<K, T> setOutputDirectory(ResourceId outputDirectory);
+      abstract Builder<K1, K2, T> setKeyClassSecondary(Class<K2> keyClass);
 
-      abstract Builder<K, T> setTempDirectory(ResourceId tempDirectory);
+      abstract Builder<K1, K2, T> setOutputDirectory(ResourceId outputDirectory);
 
-      abstract Builder<K, T> setFilenameSuffix(String filenameSuffix);
+      abstract Builder<K1, K2, T> setTempDirectory(ResourceId tempDirectory);
 
-      abstract Builder<K, T> setFilenamePrefix(String filenamePrefix);
+      abstract Builder<K1, K2, T> setFilenameSuffix(String filenameSuffix);
+
+      abstract Builder<K1, K2, T> setFilenamePrefix(String filenamePrefix);
 
       // Avro specific
-      abstract Builder<K, T> setKeyField(String keyField);
+      abstract Builder<K1, K2, T> setKeyFieldPrimary(String keyFieldPrimary);
 
-      abstract Builder<K, T> setSchema(Schema schema);
+      abstract Builder<K1, K2, T> setKeyFieldSecondary(String keyFieldPrimary);
 
-      abstract Builder<K, T> setRecordClass(Class<T> recordClass);
+      abstract Builder<K1, K2, T> setSchema(Schema schema);
 
-      abstract Builder<K, T> setCodec(CodecFactory codec);
+      abstract Builder<K1, K2, T> setRecordClass(Class<T> recordClass);
 
-      abstract TransformOutput<K, T> build();
+      abstract Builder<K1, K2, T> setCodec(CodecFactory codec);
+
+      abstract TransformOutput<K1, K2, T> build();
     }
 
     /** Writes to the given output directory. */
-    public TransformOutput<K, T> to(String outputDirectory) {
+    public TransformOutput<K1, K2, T> to(String outputDirectory) {
       return toBuilder()
           .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
           .build();
     }
 
     /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
-    public TransformOutput<K, T> withTempDirectory(String tempDirectory) {
+    public TransformOutput<K1, K2, T> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
           .build();
     }
 
     /** Specifies the output filename suffix. */
-    public TransformOutput<K, T> withSuffix(String filenameSuffix) {
+    public TransformOutput<K1, K2, T> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
     }
 
     /** Specifies the output filename prefix. */
-    public TransformOutput<K, T> withFilenamePrefix(String filenamePrefix) {
+    public TransformOutput<K1, K2, T> withFilenamePrefix(String filenamePrefix) {
       return toBuilder().setFilenamePrefix(filenamePrefix).build();
     }
 
     /** Specifies the output file {@link CodecFactory}. */
-    public TransformOutput<K, T> withCodec(CodecFactory codec) {
+    public TransformOutput<K1, K2, T> withCodec(CodecFactory codec) {
       return toBuilder().setCodec(codec).build();
     }
 
@@ -431,9 +514,11 @@ public class AvroSortedBucketIO {
     }
 
     @Override
-    NewBucketMetadataFn<K, T> getNewBucketMetadataFn() {
-      final String keyField = getKeyField();
-      final Class<K> keyClass = getKeyClass();
+    NewBucketMetadataFn<K1, K2, T> getNewBucketMetadataFn() {
+      final String keyFieldPrimary = getKeyFieldPrimary();
+      final String keyFieldSecondary = getKeyFieldSecondary();
+      final Class<K1> keyClassPrimary = getKeyClassPrimary();
+      final Class<K2> keyClassSecondary = getKeyClassSecondary();
       final String filenamePrefix = getFilenamePrefix();
       final Class<T> recordClass = getRecordClass();
 
@@ -446,9 +531,11 @@ public class AvroSortedBucketIO {
             return new AvroBucketMetadata<>(
                 numBuckets,
                 numShards,
-                keyClass,
+                keyClassPrimary,
+                keyFieldPrimary,
+                keyClassSecondary,
+                keyFieldSecondary,
                 hashType,
-                keyField,
                 filenamePrefix,
                 schemaSupplier.get());
           } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
@@ -459,7 +546,15 @@ public class AvroSortedBucketIO {
         return (numBuckets, numShards, hashType) -> {
           try {
             return new AvroBucketMetadata<>(
-                numBuckets, numShards, keyClass, hashType, keyField, filenamePrefix, recordClass);
+                numBuckets,
+                numShards,
+                keyClassPrimary,
+                keyFieldPrimary,
+                keyClassSecondary,
+                keyFieldSecondary,
+                hashType,
+                filenamePrefix,
+                recordClass);
           } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
             throw new IllegalStateException(e);
           }

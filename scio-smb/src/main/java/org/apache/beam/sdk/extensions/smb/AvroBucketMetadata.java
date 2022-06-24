@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
@@ -35,18 +36,22 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 /**
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for Avro {@link GenericRecord} records.
  */
-public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetadata<K, V> {
+public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketMetadata<K1, K2, V> {
 
   @JsonProperty private final String keyField;
+  @JsonProperty private final String keyFieldSecondary;
 
   @JsonIgnore private final String[] keyPath;
+  @JsonIgnore private final String[] keyPathSecondary;
 
   public AvroBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Class<V> recordClass)
       throws CannotProvideCoderException, NonDeterministicException {
@@ -54,21 +59,30 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        keyClass,
-        hashType,
+        keyClassPrimary,
         AvroUtils.validateKeyField(
             keyField,
-            keyClass,
+            keyClassPrimary,
             new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
+        keyClassSecondary,
+        keyFieldSecondary == null
+            ? null
+            : AvroUtils.validateKeyField(
+                keyFieldSecondary,
+                keyClassSecondary,
+                new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
+        hashType,
         filenamePrefix);
   }
 
   public AvroBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, NonDeterministicException {
@@ -76,9 +90,13 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        keyClass,
+        keyClassPrimary,
+        AvroUtils.validateKeyField(keyField, keyClassPrimary, schema),
+        keyClassSecondary,
+        keyFieldSecondary == null
+            ? null
+            : AvroUtils.validateKeyField(keyFieldSecondary, keyClassSecondary, schema),
         hashType,
-        AvroUtils.validateKeyField(keyField, keyClass, schema),
         filenamePrefix);
   }
 
@@ -87,14 +105,28 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
       @JsonProperty("version") int version,
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("keyClass") Class<K> keyClass,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
+      @JsonProperty("keyClass") Class<K1> keyClassPrimary,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
+      @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") HashType hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
+    super(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyClassSecondary,
+        hashType,
+        filenamePrefix);
+    assert ((keyClassSecondary != null && keyFieldSecondary != null)
+        || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
+    this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = AvroUtils.toKeyPath(keyField);
+    this.keyPathSecondary =
+        keyFieldSecondary == null ? null : AvroUtils.toKeyPath(keyFieldSecondary);
   }
 
   @Override
@@ -103,7 +135,17 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
   }
 
   @Override
-  public K extractKey(V value) {
+  public K1 extractKeyPrimary(V value) {
+    return extractKey(keyPath, value);
+  }
+
+  @Override
+  public K2 extractKeySecondary(V value) {
+    assert (keyPathSecondary != null);
+    return extractKey(keyPathSecondary, value);
+  }
+
+  private <K> K extractKey(String[] keyPath, V value) {
     GenericRecord node = value;
     for (int i = 0; i < keyPath.length - 1; i++) {
       node = (GenericRecord) node.get(keyPath[i]);
@@ -116,17 +158,38 @@ public class AvroBucketMetadata<K, V extends GenericRecord> extends BucketMetada
   @Override
   public void populateDisplayData(Builder builder) {
     super.populateDisplayData(builder);
-    builder.add(DisplayData.item("keyField", keyField));
+    builder.add(DisplayData.item("keyFieldPrimary", keyField));
+    if (keyFieldSecondary != null)
+      builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
   }
 
   @Override
-  public boolean isPartitionCompatible(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    AvroBucketMetadata<?, ?> that = (AvroBucketMetadata<?, ?>) o;
+  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
     return getKeyClass() == that.getKeyClass()
         && keyField.equals(that.keyField)
         && Arrays.equals(keyPath, that.keyPath);
+  }
+
+  @Override
+  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
+    boolean allSecondaryPresent =
+        getKeyClassSecondary() != null
+            && that.getKeyClassSecondary() != null
+            && keyFieldSecondary != null
+            && that.keyFieldSecondary != null
+            && keyPathSecondary != null
+            && that.keyPathSecondary != null;
+    // you messed up
+    if (!allSecondaryPresent) return false;
+    return getKeyClass() == that.getKeyClass()
+        && getKeyClassSecondary() == that.getKeyClassSecondary()
+        && keyField.equals(that.keyField)
+        && keyFieldSecondary.equals(that.keyFieldSecondary)
+        && Arrays.equals(keyPath, that.keyPath)
+        && Arrays.equals(keyPathSecondary, that.keyPathSecondary);
   }
 }

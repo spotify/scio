@@ -23,7 +23,7 @@ import java.util.Collections;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
-import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
 import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
@@ -58,31 +58,46 @@ public class SmbPublicAPITest {
         new MyFileOperation(),
         1);
 
-    new SortedBucketSource<>(
+    new SortedBucketPrimaryKeyedSource<>(
         String.class,
         Collections.singletonList(
-            new BucketedInput<>(
+            new PrimaryKeyedBucketedInput<String>(
                 new TupleTag<>(),
                 Collections.singletonList("in"),
                 ".avro",
-                new MyFileOperation())));
+                new MyFileOperation(), null)
+        ),
+        TargetParallelism.auto(),
+        null
+    );
   }
 
-  private static class MyMetadata extends BucketMetadata<String, String> {
+  private static class MyMetadata extends BucketMetadata<String, Void, String> {
     private MyMetadata(int numBuckets, int numShards, Class<String> keyClass, BucketMetadata.HashType hashType)
         throws CannotProvideCoderException, Coder.NonDeterministicException {
       super(BucketMetadata.CURRENT_VERSION, numBuckets, numShards, keyClass, hashType);
     }
 
     @Override
-    public boolean isPartitionCompatible(BucketMetadata other) {
+    public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata other) {
       return true;
     }
 
     @Override
-    public String extractKey(String value) {
+    public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata other) {
+      return false;
+    }
+
+    @Override
+    public String extractKeyPrimary(final String value) {
       return null;
     }
+
+    @Override
+    public Void extractKeySecondary(final String value) {
+      return null;
+    }
+
   }
 
   private static class MyFileOperation extends FileOperations<String> {

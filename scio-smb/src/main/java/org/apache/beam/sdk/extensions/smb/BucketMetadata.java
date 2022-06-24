@@ -23,10 +23,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.nio.channels.Channels;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,6 +40,8 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.CoderException;
 import org.apache.beam.sdk.coders.CoderRegistry;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
@@ -53,20 +57,23 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
  * <h3>Key encoding</h3>
  *
  * <p>{@link BucketMetadata} controls over how values {@code <V>} are mapped to a key type {@code
- * <K>} (see: {@link #extractKey(Object)}), and how those bytes are encoded into {@code byte[]}
- * (see: {@link #getKeyBytes(Object)}). Therefore, in order for two sources to be compatible in a
- * {@link SortedBucketSource} transform, the {@link #keyClass} does not have to be the same, as long
- * as the final byte encoding is equivalent. A {@link #coderOverrides()} method is provided for any
- * encoding overrides: for example, in Avro sources the {@link CharSequence} type should be encoded
- * as a UTF-8 string.
+ * <K1>} (see: {@link #extractKeyPrimary(Object)}) and {@code <K2>} (see: {@link
+ * #extractKeySecondary(Object)}), and how those bytes are encoded into {@code byte[]} (see: {@link
+ * #getKeyBytesPrimary(Object)}, {@link #getKeyBytesSecondary(Object)}). Therefore, in order for two
+ * sources to be compatible in a {@link SortedBucketSource} transform, the {@link #keyClass} does
+ * not have to be the same, as long as the final byte encoding is equivalent. A {@link
+ * #coderOverrides()} method is provided for any encoding overrides: for example, in Avro sources
+ * the {@link CharSequence} type should be encoded as a UTF-8 string.
  *
- * @param <K> the type of the keys that values in a bucket are sorted with
+ * @param <K1> the type of the primary keys that values in a bucket are sorted with
+ * @param <K2> the type of the secondary keys that values in a bucket are sorted with, `Void` if no
+ *     secondary key
  * @param <V> the type of the values in a bucket
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
-public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayData {
+public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisplayData {
 
-  @JsonIgnore public static final int CURRENT_VERSION = 0;
+  @JsonIgnore public static final int CURRENT_VERSION = 1;
 
   // Represents the current major version of the Beam SMB module. Storage format may differ
   // across versions and require internal code branching to ensure backwards compatibility.
@@ -76,7 +83,9 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   @JsonProperty private final int numShards;
 
-  @JsonProperty private final Class<K> keyClass;
+  @JsonProperty private final Class<K1> keyClass;
+
+  @JsonProperty private final Class<K2> keyClassSecondary;
 
   @JsonProperty private final HashType hashType;
 
@@ -84,19 +93,33 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   @JsonIgnore private final HashFunction hashFunction;
 
-  @JsonIgnore private final Coder<K> keyCoder;
+  @JsonIgnore private final Coder<K1> keyCoder;
+
+  @JsonIgnore private final Coder<K2> keyCoderSecondary;
 
   public BucketMetadata(
-      int version, int numBuckets, int numShards, Class<K> keyClass, HashType hashType)
+      int version, int numBuckets, int numShards, Class<K1> keyClass, HashType hashType)
       throws CannotProvideCoderException, NonDeterministicException {
-    this(version, numBuckets, numShards, keyClass, hashType, null);
+    this(version, numBuckets, numShards, keyClass, null, hashType, null);
   }
 
   public BucketMetadata(
       int version,
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
+      Class<K1> keyClass,
+      Class<K2> keyClassSecondary,
+      HashType hashType)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(version, numBuckets, numShards, keyClass, keyClassSecondary, hashType, null);
+  }
+
+  public BucketMetadata(
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClass,
+      Class<K2> keyClassSecondary,
       HashType hashType,
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
@@ -108,23 +131,35 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     this.numBuckets = numBuckets;
     this.numShards = numShards;
     this.keyClass = keyClass;
+    this.keyClassSecondary = keyClassSecondary;
     this.hashType = hashType;
     this.hashFunction = hashType.create();
-    this.keyCoder = getKeyCoder();
+    this.keyCoder = getKeyCoder(keyClass);
+    this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
     this.filenamePrefix =
         filenamePrefix != null ? filenamePrefix : SortedBucketIO.DEFAULT_FILENAME_PREFIX;
   }
 
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   @JsonIgnore
-  Coder<K> getKeyCoder() throws CannotProvideCoderException, NonDeterministicException {
+  private <K> Coder<K> getKeyCoder(Class<K> keyClazz)
+      throws CannotProvideCoderException, NonDeterministicException {
     @SuppressWarnings("unchecked")
-    Coder<K> coder = (Coder<K>) coderOverrides().get(keyClass);
-    if (coder == null) {
-      coder = CoderRegistry.createDefault().getCoder(keyClass);
-    }
+    Coder<K> coder = (Coder<K>) coderOverrides().get(keyClazz);
+    if (coder == null) coder = CoderRegistry.createDefault().getCoder(keyClazz);
     coder.verifyDeterministic();
     return coder;
+  }
+
+  @JsonIgnore
+  public Coder<K1> getKeyCoder() {
+    return keyCoder;
+  }
+
+  @JsonIgnore
+  public Coder<K2> getKeyCoderSecondary() {
+    return keyCoderSecondary;
   }
 
   @JsonIgnore
@@ -138,8 +173,12 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     builder.add(DisplayData.item("numShards", numShards));
     builder.add(DisplayData.item("version", version));
     builder.add(DisplayData.item("hashType", hashType.toString()));
-    builder.add(DisplayData.item("keyClass", keyClass));
-    builder.add(DisplayData.item("keyCoder", keyCoder.getClass()));
+    builder.add(DisplayData.item("keyClassPrimary", keyClass));
+    if (keyClassSecondary != null)
+      builder.add(DisplayData.item("keyClassSecondary", keyClassSecondary));
+    builder.add(DisplayData.item("keyCoderPrimary", keyCoder.getClass()));
+    if (keyCoderSecondary != null)
+      builder.add(DisplayData.item("keyCoderSecondary", keyCoderSecondary.getClass()));
     builder.add(DisplayData.item("filenamePrefix", filenamePrefix));
   }
 
@@ -163,7 +202,8 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   boolean isCompatibleWith(BucketMetadata other) {
     return other != null
-        && this.version == other.version
+        // version 1 is backwards compatible with version 0
+        && (this.version <= 1 && other.version <= 1)
         && this.hashType == other.hashType
         // This check should be redundant since power of two is checked in BucketMetadata
         // constructor, but it's cheap to double-check.
@@ -194,8 +234,12 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     return allBucketShardIds;
   }
 
-  public Class<K> getKeyClass() {
+  public Class<K1> getKeyClass() {
     return keyClass;
+  }
+
+  public Class<K2> getKeyClassSecondary() {
+    return keyClassSecondary;
   }
 
   public HashType getHashType() {
@@ -208,29 +252,52 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
 
   /* Business logic */
 
-  byte[] getKeyBytes(V value) {
-    return encodeKeyBytes(extractKey(value));
+  byte[] getKeyBytesPrimary(V value) {
+    return encodeKeyBytesPrimary(extractKeyPrimary(value));
   }
 
-  byte[] encodeKeyBytes(K key) {
-    if (key == null) {
-      return null;
-    }
+  byte[] encodeKeyBytesPrimary(K1 key) {
+    return encodeKeyBytes(key, keyCoder);
+  }
 
+  byte[] getKeyBytesSecondary(V value) {
+    assert (keyCoderSecondary != null);
+    return encodeKeyBytes(extractKeySecondary(value), keyCoderSecondary);
+  }
+
+  <K> byte[] encodeKeyBytes(K key, Coder<K> coder) {
+    if (key == null) return null;
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try {
-      keyCoder.encode(key, baos);
+      coder.encode(key, baos);
     } catch (Exception e) {
       throw new RuntimeException("Could not encode key " + key, e);
     }
-
     return baos.toByteArray();
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput
-  public abstract boolean isPartitionCompatible(BucketMetadata other);
+  public abstract boolean isPartitionCompatibleForPrimaryKey(BucketMetadata other);
 
-  public abstract K extractKey(V value);
+  public abstract boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata other);
+
+  public abstract K1 extractKeyPrimary(V value);
+
+  public abstract K2 extractKeySecondary(V value);
+
+  public SortedBucketIO.ComparableKeyBytes primaryComparableKeyBytes(V value) {
+    return new SortedBucketIO.ComparableKeyBytes(getKeyBytesPrimary(value), null);
+  }
+
+  public SortedBucketIO.ComparableKeyBytes primaryAndSecondaryComparableKeyBytes(V value) {
+    assert (keyCoderSecondary != null);
+    return new SortedBucketIO.ComparableKeyBytes(
+        getKeyBytesPrimary(value), getKeyBytesSecondary(value));
+  }
+
+  public boolean hasSecondaryKey() {
+    return keyClassSecondary != null;
+  }
 
   int getBucketId(byte[] keyBytes) {
     return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % numBuckets;
@@ -241,22 +308,36 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
   }
 
   ////////////////////////////////////////
+  public static <V> BucketMetadata<?, ?, V> get(ResourceId directory) {
+    final ResourceId resourceId = SMBFilenamePolicy.FileAssignment.forDstMetadata(directory);
+    try {
+      InputStream inputStream = Channels.newInputStream(FileSystems.open(resourceId));
+      return BucketMetadata.from(inputStream);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(
+          "Could not find SMB metadata for source directory " + directory, e);
+    } catch (IOException e) {
+      throw new RuntimeException("Error fetching bucket metadata " + resourceId, e);
+    }
+  }
+
+  ////////////////////////////////////////
   // Serialization
   ////////////////////////////////////////
 
   @JsonIgnore private static ObjectMapper objectMapper = new ObjectMapper();
 
-  public static <K, V> BucketMetadata<K, V> from(String src) throws IOException {
+  public static <K1, K2, V> BucketMetadata<K1, K2, V> from(String src) throws IOException {
     return objectMapper.readerFor(BucketMetadata.class).readValue(src);
   }
 
-  public static <K, V> BucketMetadata<K, V> from(InputStream src) throws IOException {
+  public static <K1, K2, V> BucketMetadata<K1, K2, V> from(InputStream src) throws IOException {
     // readValue will close the input stream
     return objectMapper.readerFor(BucketMetadata.class).readValue(src);
   }
 
-  public static <K, V> void to(BucketMetadata<K, V> bucketMetadata, OutputStream outputStream)
-      throws IOException {
+  public static <K1, K2, V> void to(
+      BucketMetadata<K1, K2, V> bucketMetadata, OutputStream outputStream) throws IOException {
 
     objectMapper.writeValue(outputStream, bucketMetadata);
   }
@@ -271,17 +352,18 @@ public abstract class BucketMetadata<K, V> implements Serializable, HasDisplayDa
     }
   }
 
-  static class BucketMetadataCoder<K, V> extends AtomicCoder<BucketMetadata<K, V>> {
+  static class BucketMetadataCoder<K1, K2, V> extends AtomicCoder<BucketMetadata<K1, K2, V>> {
     private static final StringUtf8Coder stringCoder = StringUtf8Coder.of();
 
     @Override
-    public void encode(BucketMetadata<K, V> value, OutputStream outStream)
+    public void encode(BucketMetadata<K1, K2, V> value, OutputStream outStream)
         throws CoderException, IOException {
       stringCoder.encode(value.toString(), outStream);
     }
 
     @Override
-    public BucketMetadata<K, V> decode(InputStream inStream) throws CoderException, IOException {
+    public BucketMetadata<K1, K2, V> decode(InputStream inStream)
+        throws CoderException, IOException {
       return BucketMetadata.from(stringCoder.decode(inStream));
     }
   }

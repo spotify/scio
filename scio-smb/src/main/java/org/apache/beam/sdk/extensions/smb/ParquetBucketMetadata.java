@@ -19,6 +19,7 @@ package org.apache.beam.sdk.extensions.smb;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
@@ -32,11 +33,13 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 
-public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
+public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> {
 
   @JsonProperty private final String keyField;
+  @JsonProperty private final String keyFieldSecondary;
 
   @JsonIgnore private final String[] keyPath;
+  @JsonIgnore private final String[] keyPathSecondary;
 
   // Parquet is a file format only. `V` can be Avro records, Scala case classes, etc.
   private enum RecordType {
@@ -52,9 +55,11 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
   public ParquetBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Class<V> recordClass)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -62,9 +67,13 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        (Class<K>) toJavaType(keyClass),
+        (Class<K1>) toJavaType(keyClassPrimary),
+        validateKeyField(keyField, toJavaType(keyClassPrimary), recordClass),
+        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
+        keyFieldSecondary == null
+            ? null
+            : validateKeyField(keyFieldSecondary, toJavaType(keyClassSecondary), recordClass),
         hashType,
-        validateKeyField(keyField, toJavaType(keyClass), recordClass),
         filenamePrefix);
   }
 
@@ -72,9 +81,33 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
   public ParquetBucketMetadata(
       int numBuckets,
       int numShards,
-      Class<K> keyClass,
-      BucketMetadata.HashType hashType,
+      Class<K1> keyClassPrimary,
       String keyField,
+      HashType hashType,
+      String filenamePrefix,
+      Class<V> recordClass)
+      throws CannotProvideCoderException, Coder.NonDeterministicException {
+    this(
+        BucketMetadata.CURRENT_VERSION,
+        numBuckets,
+        numShards,
+        (Class<K1>) toJavaType(keyClassPrimary),
+        validateKeyField(keyField, toJavaType(keyClassPrimary), recordClass),
+        null,
+        null,
+        hashType,
+        filenamePrefix);
+  }
+
+  @SuppressWarnings("unchecked")
+  public ParquetBucketMetadata(
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
       String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
@@ -82,9 +115,35 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
         BucketMetadata.CURRENT_VERSION,
         numBuckets,
         numShards,
-        (Class<K>) toJavaType(keyClass),
+        (Class<K1>) toJavaType(keyClassPrimary),
+        AvroUtils.validateKeyField(keyField, toJavaType(keyClassPrimary), schema),
+        keyClassSecondary == null ? null : (Class<K2>) toJavaType(keyClassSecondary),
+        keyFieldSecondary == null
+            ? null
+            : AvroUtils.validateKeyField(keyFieldSecondary, toJavaType(keyClassSecondary), schema),
         hashType,
-        AvroUtils.validateKeyField(keyField, toJavaType(keyClass), schema),
+        filenamePrefix);
+  }
+
+  @SuppressWarnings("unchecked")
+  public ParquetBucketMetadata(
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      String keyField,
+      HashType hashType,
+      String filenamePrefix,
+      Schema schema)
+      throws CannotProvideCoderException, Coder.NonDeterministicException {
+    this(
+        BucketMetadata.CURRENT_VERSION,
+        numBuckets,
+        numShards,
+        (Class<K1>) toJavaType(keyClassPrimary),
+        AvroUtils.validateKeyField(keyField, toJavaType(keyClassPrimary), schema),
+        null,
+        null,
+        hashType,
         filenamePrefix);
   }
 
@@ -93,14 +152,27 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
       @JsonProperty("version") int version,
       @JsonProperty("numBuckets") int numBuckets,
       @JsonProperty("numShards") int numShards,
-      @JsonProperty("keyClass") Class<K> keyClass,
-      @JsonProperty("hashType") BucketMetadata.HashType hashType,
+      @JsonProperty("keyClass") Class<K1> keyClassPrimary,
       @JsonProperty("keyField") String keyField,
+      @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
+      @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
+      @JsonProperty("hashType") HashType hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, Coder.NonDeterministicException {
-    super(version, numBuckets, numShards, keyClass, hashType, filenamePrefix);
+    super(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyClassSecondary,
+        hashType,
+        filenamePrefix);
+    assert ((keyClassSecondary != null && keyFieldSecondary != null)
+        || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
+    this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = toKeyPath(keyField);
+    this.keyPathSecondary = keyFieldSecondary == null ? null : toKeyPath(keyFieldSecondary);
   }
 
   @Override
@@ -112,43 +184,74 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
   @Override
   public void populateDisplayData(DisplayData.Builder builder) {
     super.populateDisplayData(builder);
-    builder.add(DisplayData.item("keyField", keyField));
+    builder.add(DisplayData.item("keyFieldPrimary", keyField));
+    if (keyFieldSecondary != null)
+      builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
   }
 
   @Override
-  public boolean isPartitionCompatible(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ParquetBucketMetadata<?, ?> that = (ParquetBucketMetadata<?, ?>) o;
+  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
     return getKeyClass() == that.getKeyClass()
         && keyField.equals(that.keyField)
         && Arrays.equals(keyPath, that.keyPath);
   }
 
   @Override
-  public K extractKey(V value) {
+  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
+    boolean allSecondaryPresent =
+        getKeyClassSecondary() != null
+            && that.getKeyClassSecondary() != null
+            && keyFieldSecondary != null
+            && that.keyFieldSecondary != null
+            && keyPathSecondary != null
+            && that.keyPathSecondary != null;
+    // you messed up
+    if (!allSecondaryPresent) return false;
+    return getKeyClass() == that.getKeyClass()
+        && getKeyClassSecondary() == that.getKeyClassSecondary()
+        && keyField.equals(that.keyField)
+        && keyFieldSecondary.equals(that.keyFieldSecondary)
+        && Arrays.equals(keyPath, that.keyPath)
+        && Arrays.equals(keyPathSecondary, that.keyPathSecondary);
+  }
+
+  @Override
+  public K1 extractKeyPrimary(V value) {
+    return extractKey(getKeyClass(), keyPath, value);
+  }
+
+  @Override
+  public K2 extractKeySecondary(V value) {
+    assert (keyPathSecondary != null && getKeyClassSecondary() != null);
+    return extractKey(getKeyClassSecondary(), keyPathSecondary, value);
+  }
+
+  private <K> K extractKey(Class<K> keyClazz, String[] keyPath, V value) {
     if (recordType == null) {
       recordType = getRecordType(value.getClass());
     }
     switch (recordType) {
       case AVRO:
-        return extractAvroKey(value);
+        return extractAvroKey(keyClazz, keyPath, value);
       case SCALA:
-        return extractScalaKey(value);
+        return extractScalaKey(keyPath, value);
       default:
         throw new IllegalStateException("Unexpected value: " + recordType);
     }
   }
 
-  private K extractAvroKey(V value) {
+  private <K> K extractAvroKey(Class<K> keyClazz, String[] keyPath, V value) {
     GenericRecord node = (GenericRecord) value;
     for (int i = 0; i < keyPath.length - 1; i++) {
       node = (GenericRecord) node.get(keyPath[i]);
     }
     Object keyObj = node.get(keyPath[keyPath.length - 1]);
     // Always convert CharSequence to String, in case reader and writer disagree
-    if (getKeyClass() == CharSequence.class || getKeyClass() == String.class) {
+    if (keyClazz == CharSequence.class || keyClazz == String.class) {
       keyObj = keyObj.toString();
     }
     @SuppressWarnings("unchecked")
@@ -157,9 +260,9 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
   }
 
   // FIXME: what about `Option[T]`
-  private K extractScalaKey(V value) {
+  private <K> K extractScalaKey(String[] keyPath, V value) {
     Object obj = value;
-    for (Method getter : getOrInitGetters(value.getClass())) {
+    for (Method getter : getOrInitGetters(keyPath, value.getClass())) {
       try {
         obj = getter.invoke(obj);
       } catch (IllegalAccessException | InvocationTargetException e) {
@@ -172,7 +275,7 @@ public class ParquetBucketMetadata<K, V> extends BucketMetadata<K, V> {
     return key;
   }
 
-  private synchronized Method[] getOrInitGetters(Class<?> cls) {
+  private synchronized Method[] getOrInitGetters(String[] keyPath, Class<?> cls) {
     if (getters == null) {
       getters = new Method[keyPath.length];
       for (int i = 0; i < keyPath.length; i++) {

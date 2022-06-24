@@ -53,123 +53,125 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       .set("suffix", "Jr")
       .build()
 
-    val idMeta = new ParquetBucketMetadata[Long, GenericRecord](
+    val idMeta = new ParquetBucketMetadata[Long, Void, GenericRecord](
       1,
       1,
       classOf[Long],
-      HashType.MURMUR3_32,
       "id",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
-    idMeta.extractKey(user) shouldBe 10L
+    idMeta.extractKeyPrimary(user) shouldBe 10L
 
-    val countryIdMeta = new ParquetBucketMetadata[ByteBuffer, GenericRecord](
+    val countryIdMeta = new ParquetBucketMetadata[ByteBuffer, Void, GenericRecord](
       1,
       1,
       classOf[ByteBuffer],
-      HashType.MURMUR3_32,
       "location.countryId",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
-    countryIdMeta.extractKey(user) shouldBe countryId
+    countryIdMeta.extractKeyPrimary(user) shouldBe countryId
 
-    val postalCodeMeta = new ParquetBucketMetadata[ByteBuffer, GenericRecord](
+    val postalCodeMeta = new ParquetBucketMetadata[ByteBuffer, Void, GenericRecord](
       1,
       1,
       classOf[ByteBuffer],
-      HashType.MURMUR3_32,
       "location.postalCode",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
-    postalCodeMeta.extractKey(user) shouldBe postalCode
+    postalCodeMeta.extractKeyPrimary(user) shouldBe postalCode
 
-    val suffixMeta = new ParquetBucketMetadata[String, GenericRecord](
+    val suffixMeta = new ParquetBucketMetadata[String, Void, GenericRecord](
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "suffix",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       RECORD_SCHEMA
     )
-    suffixMeta.extractKey(user) shouldBe "Jr"
+    suffixMeta.extractKeyPrimary(user) shouldBe "Jr"
   }
 
   it should "work with specific records" in {
     val user = new AvroGeneratedUser("foo", 50, "green")
 
-    val colorMeta = new ParquetBucketMetadata[String, AvroGeneratedUser](
+    val colorMeta = new ParquetBucketMetadata[String, Void, AvroGeneratedUser](
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
-    colorMeta.extractKey(user) shouldBe "green"
+    colorMeta.extractKeyPrimary(user) shouldBe "green"
 
-    val numberMeta = new ParquetBucketMetadata[Int, AvroGeneratedUser](
+    val numberMeta = new ParquetBucketMetadata[Int, Void, AvroGeneratedUser](
       1,
       1,
       classOf[Int],
-      HashType.MURMUR3_32,
       "favorite_number",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
-    numberMeta.extractKey(user) shouldBe 50
+    numberMeta.extractKeyPrimary(user) shouldBe 50
   }
 
   it should "work with case classes" in {
     import ParquetBucketMetadataTest._
     val user = User(10L, "Johnny", Location(12345, "US"))
 
-    val idMeta = new ParquetBucketMetadata[Long, User](
+    val idMeta = new ParquetBucketMetadata[Long, Void, User](
       1,
       1,
       classOf[Long],
-      HashType.MURMUR3_32,
       "id",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[User]
     )
-    idMeta.extractKey(user) shouldBe 10L
+    idMeta.extractKeyPrimary(user) shouldBe 10L
 
-    val countryIdMeta = new ParquetBucketMetadata[String, User](
+    val countryIdMeta = new ParquetBucketMetadata[String, Void, User](
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "location.countryId",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[User]
     )
-    countryIdMeta.extractKey(user) shouldBe "US"
+    countryIdMeta.extractKeyPrimary(user) shouldBe "US"
 
-    val postalCodeMeta = new ParquetBucketMetadata[Int, User](
+    val postalCodeMeta = new ParquetBucketMetadata[Int, Void, User](
       1,
       1,
       classOf[Int],
-      HashType.MURMUR3_32,
       "location.postalCode",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[User]
     )
-    postalCodeMeta.extractKey(user) shouldBe 12345
+    postalCodeMeta.extractKeyPrimary(user) shouldBe 12345
   }
 
   it should "round trip" in {
-    val metadata = new ParquetBucketMetadata[String, AvroGeneratedUser](
+    val metadata = new ParquetBucketMetadata[String, Void, AvroGeneratedUser](
       1,
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      null,
+      null,
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX
     )
     val copy = BucketMetadata.from(metadata.toString)
@@ -185,8 +187,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       1,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -198,8 +200,8 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
       2,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
@@ -209,63 +211,63 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
     displayData.get("numBuckets") shouldBe Some(2)
     displayData.get("numShards") shouldBe Some(1)
     displayData.get("version") shouldBe Some(BucketMetadata.CURRENT_VERSION)
-    displayData.get("keyField") shouldBe Some("favorite_color")
-    displayData.get("keyClass") shouldBe Some(classOf[String].getName)
+    displayData.get("keyFieldPrimary") shouldBe Some("favorite_color")
+    displayData.get("keyClassPrimary") shouldBe Some(classOf[String].getName)
     displayData.get("hashType") shouldBe Some(HashType.MURMUR3_32.toString)
-    displayData.get("keyCoder") shouldBe Some(classOf[StringUtf8Coder].getName)
+    displayData.get("keyCoderPrimary") shouldBe Some(classOf[StringUtf8Coder].getName)
   }
 
   it should "check source compatibility" in {
-    val metadata1 = new ParquetBucketMetadata[String, AvroGeneratedUser](
+    val metadata1 = new ParquetBucketMetadata[String, Void, AvroGeneratedUser](
       2,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "name",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
-    val metadata2 = new ParquetBucketMetadata[String, AvroGeneratedUser](
+    val metadata2 = new ParquetBucketMetadata[String, Void, AvroGeneratedUser](
       2,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
-    val metadata3 = new ParquetBucketMetadata[String, AvroGeneratedUser](
+    val metadata3 = new ParquetBucketMetadata[String, Void, AvroGeneratedUser](
       4,
       1,
       classOf[String],
-      HashType.MURMUR3_32,
       "favorite_color",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
-    val metadata4 = new ParquetBucketMetadata[Int, AvroGeneratedUser](
+    val metadata4 = new ParquetBucketMetadata[Int, Void, AvroGeneratedUser](
       4,
       1,
       classOf[Int],
-      HashType.MURMUR3_32,
       "favorite_number",
+      HashType.MURMUR3_32,
       SortedBucketIO.DEFAULT_FILENAME_PREFIX,
       classOf[AvroGeneratedUser]
     )
 
-    metadata1.isPartitionCompatible(metadata2) shouldBe false
-    metadata2.isPartitionCompatible(metadata3) shouldBe true
-    metadata3.isPartitionCompatible(metadata4) shouldBe false
+    metadata1.isPartitionCompatibleForPrimaryKey(metadata2) shouldBe false
+    metadata2.isPartitionCompatibleForPrimaryKey(metadata3) shouldBe true
+    metadata3.isPartitionCompatibleForPrimaryKey(metadata4) shouldBe false
   }
 
   it should "check key type" in {
     an[IllegalArgumentException] shouldBe thrownBy {
-      new ParquetBucketMetadata[String, GenericRecord](
+      new ParquetBucketMetadata[String, Void, GenericRecord](
         1,
         1,
         classOf[String],
-        HashType.MURMUR3_32,
         "location.countryId",
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         RECORD_SCHEMA
       )
@@ -273,12 +275,12 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
 
     an[IllegalArgumentException] shouldBe thrownBy {
       import ParquetBucketMetadataTest._
-      new ParquetBucketMetadata[ByteBuffer, User](
+      new ParquetBucketMetadata[ByteBuffer, Void, User](
         1,
         1,
         classOf[ByteBuffer],
-        HashType.MURMUR3_32,
         "location.countryId",
+        HashType.MURMUR3_32,
         SortedBucketIO.DEFAULT_FILENAME_PREFIX,
         classOf[User]
       )

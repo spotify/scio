@@ -90,50 +90,92 @@ public class SortedBucketSinkTest {
                                   j ->
                                       String.format(
                                           "%s%02d", String.valueOf((char) i.intValue()), j))),
-              Stream.of("") // Include an element with a null key
-              )
+              // Include an element with a null key, and an element with a null secondary key
+              Stream.of("", "a"))
           .toArray(String[]::new);
 
   @Test
   @Category(NeedsRunner.class)
   public void testOneBucketOneShard() throws Exception {
-    test(1, 1, false);
+    testPrimary(1, 1, false);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testOneBucketOneShardSecondary() throws Exception {
+    testSecondary(1, 1, false);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testOneBucketOneShardWithKeyCache() throws Exception {
-    test(1, 1, true);
+    testPrimary(1, 1, true);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testOneBucketOneShardWithKeyCacheSecondary() throws Exception {
+    testSecondary(1, 1, true);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testMultiBucketOneShard() throws Exception {
-    test(2, 1, false);
+    testPrimary(2, 1, false);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testMultiBucketOneShardSecondary() throws Exception {
+    testSecondary(2, 1, false);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testOneBucketMultiShard() throws Exception {
-    test(1, 2, false);
+    testPrimary(1, 2, false);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testOneBucketMultiShardSecondary() throws Exception {
+    testSecondary(1, 2, false);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testMultiBucketMultiShard() throws Exception {
-    test(2, 2, false);
+    testPrimary(2, 2, false);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testMultiBucketMultiShardSecondary() throws Exception {
+    testSecondary(2, 2, false);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testOneBucketOneShardKeyedPCollectionWithKeyCache() throws Exception {
-    testKeyedCollection(1, 1, true);
+    testKeyedPrimary(1, 1, true);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testOneBucketOneShardKeyedPCollectionWithKeyCacheSecondary() throws Exception {
+    testKeyedSecondary(1, 1, true);
   }
 
   @Test
   @Category(NeedsRunner.class)
   public void testMultiBucketMultiShardKeyedPCollection() throws Exception {
-    testKeyedCollection(2, 2, false);
+    testKeyedPrimary(2, 2, false);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testMultiBucketMultiShardKeyedPCollectionSecondary() throws Exception {
+    testKeyedSecondary(2, 2, false);
   }
 
   @SuppressWarnings("unchecked")
@@ -147,7 +189,7 @@ public class SortedBucketSinkTest {
     output.deleteOnExit();
     temp.deleteOnExit();
 
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, Void, String> sink =
         new SortedBucketSink<>(
             metadata,
             LocalResources.fromFile(output, true),
@@ -172,7 +214,7 @@ public class SortedBucketSinkTest {
     final TestBucketMetadata metadata = TestBucketMetadata.of(1, 1, "custom-prefix");
 
     final ResourceId outputDirectory = fromFolder(output);
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, Void, String> sink =
         new SortedBucketSink<>(
             metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
 
@@ -197,7 +239,7 @@ public class SortedBucketSinkTest {
     final TestBucketMetadata metadata = TestBucketMetadata.of(2, 2);
 
     final ResourceId outputDirectory = fromFolder(output);
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, Void, String> sink =
         new SortedBucketSink<>(
             metadata, outputDirectory, fromFolder(temp), ".txt", new TestFileOperations(), 1);
 
@@ -227,7 +269,7 @@ public class SortedBucketSinkTest {
   @Category(NeedsRunner.class)
   public void testWritesNoFilesIfPriorStepsFail() throws Exception {
     // An exception will be thrown during the temp file write transform
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, Void, String> sink =
         new SortedBucketSink<>(
             TestBucketMetadata.of(1, 1),
             fromFolder(output),
@@ -251,11 +293,20 @@ public class SortedBucketSinkTest {
     Assert.assertEquals(0, output.getRoot().listFiles().length);
   }
 
-  private void test(int numBuckets, int numShards, boolean useKeyCache) throws Exception {
+  private void testPrimary(int numBuckets, int numShards, boolean useKeyCache) throws Exception {
     final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
+    test(metadata, useKeyCache);
+  }
 
+  private void testSecondary(int numBuckets, int numShards, boolean useKeyCache) throws Exception {
+    final TestBucketMetadataWithSecondary metadata =
+        TestBucketMetadataWithSecondary.of(numBuckets, numShards);
+    test(metadata, useKeyCache);
+  }
+
+  private void test(BucketMetadata<String, ?, String> metadata, boolean useKeyCache) {
     final int keyCacheSize = useKeyCache ? 100 : 0;
-    final SortedBucketSink<String, String> sink =
+    final SortedBucketSink<String, ?, String> sink =
         new SortedBucketSink<>(
             metadata,
             fromFolder(output),
@@ -281,11 +332,22 @@ public class SortedBucketSinkTest {
     pipeline.run();
   }
 
-  private void testKeyedCollection(int numBuckets, int numShards, boolean useKeyCache)
+  private void testKeyedPrimary(int numBuckets, int numShards, boolean useKeyCache)
       throws Exception {
     final TestBucketMetadata metadata = TestBucketMetadata.of(numBuckets, numShards);
-    final int keyCacheSize = useKeyCache ? 100 : 0;
+    testKeyedCollection(metadata, useKeyCache);
+  }
 
+  private void testKeyedSecondary(int numBuckets, int numShards, boolean useKeyCache)
+      throws Exception {
+    final TestBucketMetadataWithSecondary metadata =
+        TestBucketMetadataWithSecondary.of(numBuckets, numShards);
+    testKeyedCollection(metadata, useKeyCache);
+  }
+
+  private void testKeyedCollection(BucketMetadata<String, ?, String> metadata, boolean useKeyCache)
+      throws Exception {
+    final int keyCacheSize = useKeyCache ? 100 : 0;
     final SortedBucketPreKeyedSink<String, String> sink =
         new SortedBucketPreKeyedSink<>(
             metadata,
@@ -302,7 +364,9 @@ public class SortedBucketSinkTest {
     final Reshuffle.ViaRandomKey<KV<String, String>> reshuffle = Reshuffle.viaRandomKey();
 
     final List<KV<String, String>> keyedInput =
-        Stream.of(input).map(s -> KV.of(metadata.extractKey(s), s)).collect(Collectors.toList());
+        Stream.of(input)
+            .map(s -> KV.of(metadata.extractKeyPrimary(s), s))
+            .collect(Collectors.toList());
 
     check(
         pipeline
@@ -321,7 +385,7 @@ public class SortedBucketSinkTest {
 
   static void check(
       WriteResult writeResult,
-      TestBucketMetadata metadata,
+      BucketMetadata<String, ?, String> metadata,
       Consumer<Map<BucketShardId, List<String>>> checkFn) {
     @SuppressWarnings("unchecked")
     final PCollection<ResourceId> writtenMetadata =
@@ -357,7 +421,7 @@ public class SortedBucketSinkTest {
             });
   }
 
-  private static BucketMetadata<String, String> readMetadata(ResourceId file) {
+  private static BucketMetadata<String, Void, String> readMetadata(ResourceId file) {
     try {
       return BucketMetadata.from(Channels.newInputStream(FileSystems.open(file)));
     } catch (IOException e) {
@@ -398,8 +462,12 @@ public class SortedBucketSinkTest {
 
   interface SerializableConsumer<T> extends Consumer<T>, Serializable {}
 
+  @SuppressWarnings("unchecked")
   static SerializableConsumer<Map<BucketShardId, List<String>>> assertValidSmbFormat(
-      TestBucketMetadata metadata, String[] expectedInput) {
+      // TestMetadata is BucketMetadata<String, Void, String>
+      // TestMetadataWithSecondary is BucketMetadata<String, String, String>
+      BucketMetadata<String, ?, String> metadata, String[] expectedInput) {
+    final boolean hasSecondary = metadata.getKeyClassSecondary() != null;
     final int nullBucketId = BucketShardId.ofNullKey().getBucketId();
 
     return writtenBuckets -> {
@@ -409,27 +477,36 @@ public class SortedBucketSinkTest {
       writtenBuckets.forEach(
           (bucketShardId, writtenRecords) -> {
             String prevKey = "UNSET";
+            String prevSecondaryKey = "UNSET";
             final Integer bucketId = bucketShardId.getBucketId();
             for (String record : writtenRecords) {
               seenItems.add(record);
 
               if (prevKey.equals("UNSET")) {
-                prevKey = metadata.extractKey(record);
+                prevKey = metadata.extractKeyPrimary(record);
                 keysToBuckets.put(prevKey, bucketId);
+                if (hasSecondary) prevSecondaryKey = (String) metadata.extractKeySecondary(record);
                 continue;
               }
 
-              final String currKey = metadata.extractKey(record);
+              final String currKey = metadata.extractKeyPrimary(record);
               Assert.assertEquals(
                   "Record " + record + " was not written to correct bucket",
                   bucketShardId.getBucketId(),
                   currKey == null
                       ? nullBucketId
-                      : metadata.getBucketId(metadata.getKeyBytes(record)));
+                      : metadata.getBucketId(metadata.getKeyBytesPrimary(record)));
 
               Assert.assertTrue(
                   "Keys in " + bucketShardId + " are not in sorted order.",
                   currKey == null || prevKey.compareTo(currKey) <= 0);
+
+              if (hasSecondary) {
+                final String currSecondaryKey = (String) metadata.extractKeySecondary(record);
+                Assert.assertTrue(
+                    "Secondary keys in " + bucketShardId + " are not in sorted order.",
+                    currSecondaryKey == null || prevSecondaryKey.compareTo(currSecondaryKey) <= 0);
+              }
 
               final Integer existingKeyBucket = keysToBuckets.get(currKey);
               Assert.assertTrue(

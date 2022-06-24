@@ -21,8 +21,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO.ComparableKeyBytes;
 
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
@@ -30,20 +30,17 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterator
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.PeekingIterator;
 
 // FIXME: current limitation: must exhaust Iterator<ValueT> before starting the next key group
-class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<ValueT>>> {
-  private final List<PeekingIterator<ValueT>> iterators;
-  private final Function<ValueT, KeyT> keyFn;
-  private final Comparator<KeyT> keyComparator;
+class KeyGroupIterator<V> implements Iterator<KV<ComparableKeyBytes, Iterator<V>>> {
+  private final List<PeekingIterator<KV<ComparableKeyBytes, V>>> iterators;
+  final Comparator<ComparableKeyBytes> keyComparator;
 
-  private Iterator<ValueT> currentGroup = null;
+  private Iterator<V> currentGroup = null;
 
   KeyGroupIterator(
-      List<Iterator<ValueT>> iterators,
-      Function<ValueT, KeyT> keyFn,
-      Comparator<KeyT> keyComparator) {
+      List<Iterator<KV<ComparableKeyBytes, V>>> iterators,
+      Comparator<ComparableKeyBytes> keyComparator) {
     this.iterators =
         iterators.stream().map(Iterators::peekingIterator).collect(Collectors.toList());
-    this.keyFn = keyFn;
     this.keyComparator = keyComparator;
   }
 
@@ -53,47 +50,52 @@ class KeyGroupIterator<KeyT, ValueT> implements Iterator<KV<KeyT, Iterator<Value
     return iterators.stream().anyMatch(PeekingIterator::hasNext);
   }
 
-  private KeyT min() {
+  private ComparableKeyBytes min() {
     return iterators.stream()
         .filter(Iterator::hasNext)
-        .map(it -> keyFn.apply(it.peek()))
+        .map(it -> it.peek().getKey())
         .min(keyComparator)
         .get();
   }
 
   @Override
-  public KV<KeyT, Iterator<ValueT>> next() {
+  public KV<ComparableKeyBytes, Iterator<V>> next() {
     checkState();
-    KeyT k = min();
+    ComparableKeyBytes k = min();
 
-    Iterator<ValueT> vi =
-        new Iterator<ValueT>() {
+    /* The key `k` is fixed for all usages of this iterator. Here we iterate over
+     * all shards, and if we find the min key at the head of a shard, there is
+     * another `V` value to be consumed. Otherwise, we increment `currentIteratorIdx`
+     * to move on to the next shard, eventually having checked all shards for the
+     * minimum key, at which point this iterator can be garbage collected.
+     */
+    Iterator<V> vi =
+        new Iterator<V>() {
           private int currentIterator = 0;
 
           @Override
           public boolean hasNext() {
-            PeekingIterator<ValueT> currentIt;
+            PeekingIterator<KV<ComparableKeyBytes, V>> currentIt;
             while (currentIterator < iterators.size()) {
               currentIt = iterators.get(currentIterator);
               if (currentIt.hasNext()) {
-                KeyT nextK = keyFn.apply(currentIt.peek());
+                ComparableKeyBytes nextK = currentIt.peek().getKey();
                 if (keyComparator.compare(k, nextK) == 0) {
                   return true;
                 }
               }
               currentIterator++;
             }
-
             currentGroup = null;
             return false;
           }
 
           @Override
-          public ValueT next() {
+          public V next() {
             if (!hasNext()) {
               throw new NoSuchElementException();
             }
-            return iterators.get(currentIterator).next();
+            return iterators.get(currentIterator).next().getValue();
           }
         };
 

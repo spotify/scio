@@ -1,25 +1,29 @@
 package org.apache.beam.sdk.extensions.smb;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.beam.sdk.coders.Coder;
+
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO.ComparableKeyBytes;
+
 import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Function;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.primitives.UnsignedBytes;
 
+/**
+ * @param <KeyType> The key type of the final transform, e.g. `K` for a primary-keyed or `KV<K1,
+ *     K2>` for a secondary-keyed read.
+ */
 @SuppressWarnings("unchecked")
-public class MultiSourceKeyGroupReader<FinalKeyT> {
+public class MultiSourceKeyGroupReader<KeyType> {
   private enum AcceptKeyGroup {
     ACCEPT,
     REJECT,
@@ -31,44 +35,47 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
     NONEMPTY
   }
 
-  private KV<FinalKeyT, CoGbkResult> head = null;
+  private KV<KeyType, CoGbkResult> head = null;
   private boolean initialized = false;
 
-  private final Coder<FinalKeyT> keyCoder;
+  private final Function<ComparableKeyBytes, KeyType> keyFn;
 
   private int runningKeyGroupSize = 0;
   private final Distribution keyGroupSize;
   private final boolean materializeKeyGroup;
-  private final Comparator<byte[]> bytesComparator = UnsignedBytes.lexicographicalComparator();
+  private final Comparator<ComparableKeyBytes> keyComparator;
 
   private final CoGbkResultSchema resultSchema;
-  private final List<BucketIterator<?, ?>> bucketedInputs;
+  private final List<BucketIterator<?>> bucketedInputs;
   private final Function<byte[], Boolean> keyGroupFilter;
 
   public MultiSourceKeyGroupReader(
-      List<SortedBucketSource.BucketedInput<?, ?>> sources,
-      SourceSpec<FinalKeyT> sourceSpec,
+      List<SortedBucketSource.BucketedInput<?>> sources,
+      Function<ComparableKeyBytes, KeyType> keyFn,
+      CoGbkResultSchema resultSchema,
+      BucketMetadata<?, ?, ?> someArbitraryBucketMetadata,
+      Comparator<ComparableKeyBytes> keyComparator,
       Distribution keyGroupSize,
       boolean materializeKeyGroup,
       int bucketId,
       int effectiveParallelism,
       PipelineOptions options) {
-    this.keyCoder = sourceSpec.keyCoder;
+    this.keyFn = keyFn;
     this.keyGroupSize = keyGroupSize;
     this.materializeKeyGroup = materializeKeyGroup;
-
-    // source TupleTags `and`-ed together
-    this.resultSchema = SortedBucketSource.BucketedInput.schemaOf(sources);
+    this.keyComparator = keyComparator;
+    this.resultSchema = resultSchema;
     this.bucketedInputs =
         sources.stream()
             .map(src -> new BucketIterator<>(src, bucketId, effectiveParallelism, options))
             .collect(Collectors.toList());
+    // this only operates on the primary key
     this.keyGroupFilter =
         (bytes) ->
-            sources.get(0).getMetadata().rehashBucket(bytes, effectiveParallelism) == bucketId;
+            someArbitraryBucketMetadata.rehashBucket(bytes, effectiveParallelism) == bucketId;
   }
 
-  public KV<FinalKeyT, CoGbkResult> readNext() {
+  public KV<KeyType, CoGbkResult> readNext() {
     advance();
     return head;
   }
@@ -90,7 +97,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
           .forEach(BucketIterator::advance);
 
       // only operate on the non-exhausted sources
-      List<BucketIterator<?, ?>> activeSources =
+      List<BucketIterator<?>> activeSources =
           bucketedInputs.stream().filter(BucketIterator::notExhausted).collect(Collectors.toList());
 
       // once all sources are exhausted, set head to empty and return
@@ -101,10 +108,11 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
 
       // process keys in order, but since not all sources
       // have all keys, find the minimum available key
-      final List<byte[]> consideredKeys =
+      final List<ComparableKeyBytes> consideredKeys =
           activeSources.stream().map(BucketIterator::currentKey).collect(Collectors.toList());
-      byte[] minKey = consideredKeys.stream().min(bytesComparator).orElse(null);
-      final boolean emitBasedOnMinKeyBucketing = keyGroupFilter.apply(minKey);
+      // because we have checked that there are active sources, there will always be a min key
+      ComparableKeyBytes minKey = consideredKeys.stream().min(keyComparator).get();
+      final boolean emitBasedOnMinKeyBucketing = keyGroupFilter.apply(minKey.primary);
 
       // output accumulator
       final List<Iterable<?>> valueMap =
@@ -123,9 +131,9 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
       // minKey will be accepted or rejected by the first source which has it.
       // acceptKeyGroup short-circuits the 'emit' logic below once a decision is made on minKey.
       AcceptKeyGroup acceptKeyGroup = AcceptKeyGroup.UNSET;
-      for (BucketIterator<?, ?> src : activeSources) {
+      for (BucketIterator<?> src : activeSources) {
         // for each source, if the current key is equal to the minimum, consume it
-        if (src.notExhausted() && bytesComparator.compare(minKey, src.currentKey()) == 0) {
+        if (src.notExhausted() && keyComparator.compare(minKey, src.currentKey()) == 0) {
           // if this key group has been previously accepted by a preceding source, emit.
           // "  "    "   "     "   "    "          rejected by a preceding source, don't emit.
           // if this is the first source for this key group, emit if either the source settings or
@@ -187,11 +195,11 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
         // if all outputs are known-empty, omit this key group
         boolean allEmpty = valueOutputSizes.stream().allMatch(s -> s == KeyGroupOutputSize.EMPTY);
         if (!allEmpty) {
-          final KV<byte[], CoGbkResult> next =
+          final KV<ComparableKeyBytes, CoGbkResult> next =
               KV.of(minKey, CoGbkResultUtil.newCoGbkResult(resultSchema, valueMap));
           try {
             // new head found, we're done
-            head = KV.of(keyCoder.decode(new ByteArrayInputStream(next.getKey())), next.getValue());
+            head = KV.of(keyFn.apply(next.getKey()), next.getValue());
             break;
           } catch (Exception e) {
             throw new RuntimeException("Failed to decode key group", e);
@@ -201,16 +209,16 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
     }
   }
 
-  private static class BucketIterator<K, V> {
+  private static class BucketIterator<V> {
     public final TupleTag<?> tupleTag;
     public final boolean emitByDefault;
 
-    private final KeyGroupIterator<byte[], V> iter;
+    private final KeyGroupIterator<V> iter;
     final SortedBucketSource.Predicate<V> predicate;
-    private KV<byte[], Iterator<V>> head;
+    private KV<ComparableKeyBytes, Iterator<V>> head;
 
     BucketIterator(
-        SortedBucketSource.BucketedInput<K, V> source,
+        SortedBucketSource.BucketedInput<V> source,
         int bucketId,
         int parallelism,
         PipelineOptions options) {
@@ -218,7 +226,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
       this.tupleTag = source.getTupleTag();
       this.iter = source.createIterator(bucketId, parallelism, options);
 
-      int numBuckets = source.getMetadata().getNumBuckets();
+      int numBuckets = source.getSourceMetadata().leastNumBuckets();
       // The canonical # buckets for this source. If # buckets >= the parallelism of the job,
       // we know that the key doesn't need to be re-hashed as it's already in the right bucket.
       this.emitByDefault = numBuckets >= parallelism;
@@ -226,7 +234,7 @@ public class MultiSourceKeyGroupReader<FinalKeyT> {
       advance();
     }
 
-    public byte[] currentKey() {
+    public ComparableKeyBytes currentKey() {
       return head.getKey();
     }
 
