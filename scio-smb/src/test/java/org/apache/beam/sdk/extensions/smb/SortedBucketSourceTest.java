@@ -258,8 +258,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testSingleSourceGbkWithPredicate() throws Exception {
-    testSingleSourceGbkPrimary((vs, v) -> v.startsWith("x"));
-    testSingleSourceGbkPrimary((vs, v) -> v.endsWith("1"));
+    testSingleSourceGbkPrimary((vs, v) -> v.startsWith("x") || v.endsWith("1"));
   }
 
   @Test
@@ -271,8 +270,7 @@ public class SortedBucketSourceTest {
   @Test
   @Category(NeedsRunner.class)
   public void testSingleSourceGbkWithSecondaryWithPredicate() throws Exception {
-    // FIXME
-    throw new IllegalArgumentException();
+    testSingleSourceGbkSecondary((vs, v) -> v.startsWith("x") && v.endsWith("1"));
   }
 
   Map<BucketShardId, List<String>> singleSourceGbkInput =
