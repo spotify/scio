@@ -347,9 +347,8 @@ lazy val sparkRunnerDependencies = Seq(
 
 lazy val flinkRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion,
-  "com.twitter" %% "chill" % chillVersion,
-  "org.apache.flink" %% "flink-clients" % flinkVersion,
-  "org.apache.flink" %% "flink-streaming-java" % flinkVersion
+  "org.apache.flink" % "flink-clients" % flinkVersion,
+  "org.apache.flink" % "flink-streaming-java" % flinkVersion
 )
 lazy val beamRunners = settingKey[String]("beam runners")
 lazy val beamRunnersEval = settingKey[Seq[ModuleID]]("beam runners")
