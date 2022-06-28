@@ -102,7 +102,6 @@ val elasticsearch8Version = "8.2.3"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
-val jnaVersion = "5.11.0"
 val jodaTimeVersion = "2.10.14"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -801,7 +800,6 @@ lazy val `scio-extra`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test",
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "net.java.dev.jna" % "jna" % jnaVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       "io.circe" %% "circe-core" % circeVersion,
@@ -1375,7 +1373,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
-  "net.java.dev.jna" % "jna" % jnaVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
   "org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion,
