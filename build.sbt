@@ -26,7 +26,7 @@ import de.heikoseeberger.sbtheader.CommentCreator
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.39.0"
+val beamVersion = "2.40.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
@@ -37,11 +37,11 @@ val bigdataossVersion = "2.2.6"
 val bigtableClientVersion = "1.26.3"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
-val datastoreV1ProtoClientVersion = "2.1.3"
-val flinkVersion = "1.14.3"
+val datastoreV1ProtoClientVersion = "2.2.10"
+val flinkVersion = "1.15.0"
 val googleClientsVersion = "1.32.1"
-val googleOauthClientVersion = "1.32.1"
-val guavaVersion = "31.0.1-jre"
+val googleOauthClientVersion = "1.33.3"
+val guavaVersion = "31.1-jre"
 val hadoopVersion = "2.10.1"
 val httpCoreVersion = "4.4.14"
 val javaxAnnotationApiVersion = "1.3.2"
@@ -57,29 +57,28 @@ val googleApiServicesStorageVersion = s"v1-rev20211201-$googleClientsVersion"
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/index.html
-val animalSnifferAnnotationsVersion = "1.20"
-val bigQueryStorageBetaVersion = "0.134.0"
-val bigQueryStorageVersion = "2.10.0"
-val checkerFrameworkVersion = "3.21.2"
-val errorProneAnnotationsVersion = "2.11.0"
+val animalSnifferAnnotationsVersion = "1.21"
+val bigQueryStorageBetaVersion = "0.136.2"
+val bigQueryStorageVersion = "2.12.2"
+val checkerFrameworkVersion = "3.21.4"
+val errorProneAnnotationsVersion = "2.13.1"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.96.0"
-val gaxVersion = "2.11.0"
-val googleApiCommonVersion = "2.1.3"
-val googleAuthVersion = "1.4.0"
-val googleCloudBigTableVersion = "2.5.3"
-val googleCloudDatastore = "0.93.4"
-val googleCloudMonitoringVersion = "3.2.4"
-val googleCloudSpannerVersion = "6.20.0"
-val googleCloudVersion = "2.4.0"
-val googleCommonsProtoVersion = "2.7.2"
-val googleHttpClientsVersion = "1.41.2"
-val googleIAMVersion = "1.2.1"
-val grpcVersion = "1.44.0"
-val jacksonVersion = "2.13.1"
-val opencensusContribGrpcMetricsVersion = "0.12.3"
+val gaxHttpJsonVersion = "0.101.0"
+val gaxVersion = "2.16.0"
+val googleApiCommonVersion = "2.1.5"
+val googleAuthVersion = "1.6.0"
+val googleCloudBigTableVersion = "2.6.2"
+val googleCloudDatastore = "0.95.0"
+val googleCloudMonitoringVersion = "3.2.9"
+val googleCloudSpannerVersion = "6.23.3"
+val googleCloudVersion = "2.6.0"
+val googleCommonsProtoVersion = "2.8.3"
+val googleHttpClientsVersion = "1.41.7"
+val googleIAMVersion = "1.3.1"
+val grpcVersion = "1.45.1"
+val jacksonVersion = "2.13.2"
 val opencensusVersion = "0.31.0"
-val protobufVersion = "3.19.3"
+val protobufVersion = "3.19.4"
 
 val algebirdVersion = "0.13.9"
 val algebraVersion = "2.8.0"
@@ -185,9 +184,7 @@ val commonSettings = Def
     Compile / doc / scalacOptions := Scalac.docOptions.value,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
-    // protobuf-lite is an older subset of protobuf-java and causes issues
     excludeDependencies ++= Seq(
-      "com.google.protobuf" % "protobuf-lite",
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
     resolvers += Resolver.sonatypeRepo("public"),
@@ -348,14 +345,8 @@ lazy val sparkRunnerDependencies = Seq(
   "org.apache.spark" %% "spark-streaming" % sparkVersion
 )
 
-// only available for scala 2.11 & 2.12
-// https://issues.apache.org/jira/browse/FLINK-13414
-// beam-runners-flink-1.14 by default pulls 2.12 scala libs,
-// exclude those libs and add them manually with proper scala version
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion excludeAll (
-    ExclusionRule("com.twitter", "chill_2.12")
-  ),
+  "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion,
   "com.twitter" %% "chill" % chillVersion,
   "org.apache.flink" %% "flink-clients" % flinkVersion,
   "org.apache.flink" %% "flink-streaming-java" % flinkVersion
@@ -473,9 +464,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided,
-      "org.apache.beam" % "beam-runners-flink-1.14" % beamVersion % Provided excludeAll (
-        ExclusionRule("com.twitter", "chill_2.12")
-      ),
+      "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
@@ -611,12 +600,8 @@ lazy val `scio-google-cloud-platform`: Project = project
   .settings(
     description := "Scio add-on for Google Cloud Platform",
     libraryDependencies ++= Seq(
-      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion excludeAll (
-        ExclusionRule(organization = "io.grpc")
-      ),
-      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion excludeAll (
-        ExclusionRule(organization = "io.grpc")
-      ),
+      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
+      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
       "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta2" % bigQueryStorageBetaVersion,
@@ -1357,8 +1342,8 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.grpc" % "grpc-netty-shaded" % grpcVersion,
   "io.grpc" % "grpc-okhttp" % grpcVersion,
   "io.grpc" % "grpc-protobuf" % grpcVersion,
-  "io.grpc" % "grpc-protobuf-lite" % grpcVersion,
   "io.grpc" % "grpc-stub" % grpcVersion,
+  "io.grpc" % "grpc-xds" % grpcVersion,
   "io.netty" % "netty-all" % nettyVersion,
   "io.netty" % "netty-buffer" % nettyVersion,
   "io.netty" % "netty-codec" % nettyVersion,
