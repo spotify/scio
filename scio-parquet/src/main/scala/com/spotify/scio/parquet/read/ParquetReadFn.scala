@@ -1,7 +1,6 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.BeamInputFile
-import com.spotify.scio.parquet.read.ParquetReadFn.{File, Granularity, RowGroup}
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.range.OffsetRange
@@ -20,36 +19,22 @@ import org.slf4j.LoggerFactory
 import java.util.{Set => JSet}
 import scala.jdk.CollectionConverters._
 
-object ParquetReadFn {
-  sealed private trait Granularity
-  private case object File extends Granularity
-  private case object RowGroup extends Granularity
+class ParquetReadFn[T, R](
+  readSupportFactory: ReadSupportFactory[T],
+  conf: SerializableConfiguration,
+  projectionFn: SerializableFunction[T, R]
+) extends DoFn[ReadableFile, R] {
+  // Constants
+  private val SplitLimit = 64000000L
+  private lazy val EntireFileRange = new OffsetRange(0, 1)
 
-  def apply[T, R](
-    readSupportFactory: ReadSupportFactory[T],
-    conf: SerializableConfiguration,
-    projectionFn: SerializableFunction[T, R]
-  ): ParquetReadFn[T, R] = {
-    val granularity = conf.get().get(ParquetConfiguration.ParquetReadSplitGranularity) match {
+  private val logger = LoggerFactory.getLogger(this.getClass)
+  private lazy val granularity =
+    conf.get().get(ParquetConfiguration.ParquetReadSplitGranularity) match {
       case ParquetConfiguration.ReadGranularityFile     => File
       case ParquetConfiguration.ReadGranularityRowGroup => RowGroup
       case _                                            => File
     }
-
-    new ParquetReadFn[T, R](readSupportFactory, conf, projectionFn, granularity)
-  }
-}
-
-class ParquetReadFn[T, R](
-  readSupportFactory: ReadSupportFactory[T],
-  conf: SerializableConfiguration,
-  projectionFn: SerializableFunction[T, R],
-  granularity: Granularity
-) extends DoFn[ReadableFile, R] {
-  private val logger = LoggerFactory.getLogger(this.getClass)
-
-  private val SplitLimit = 64000000L
-  private lazy val EntireFileRange = new OffsetRange(0, 1)
 
   private def parquetFileReader(file: ReadableFile): ParquetFileReader = {
     val options = HadoopReadOptions.builder(conf.get()).build
@@ -286,3 +271,7 @@ class ParquetReadFn[T, R](
     offsets.reverse
   }
 }
+
+sealed private trait Granularity
+private case object File extends Granularity
+private case object RowGroup extends Granularity

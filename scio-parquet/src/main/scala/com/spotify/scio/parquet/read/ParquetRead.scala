@@ -28,7 +28,7 @@ object ParquetRead {
     conf: SerializableConfiguration,
     projectionFn: SerializableFunction[T, R]
   ): ParDo.SingleOutput[ReadableFile, R] = {
-    val sdf = ParquetReadFn[T, R](readSupportFactory, conf, projectionFn)
+    val sdf = new ParquetReadFn[T, R](readSupportFactory, conf, projectionFn)
     ParDo.of(sdf)
   }
 }
