@@ -21,7 +21,7 @@ import java.util.{Set => JSet}
 import scala.jdk.CollectionConverters._
 
 object ParquetReadFn {
-  private sealed trait Granularity
+  sealed private trait Granularity
   private case object File extends Granularity
   private case object RowGroup extends Granularity
 
@@ -46,9 +46,9 @@ class ParquetReadFn[T, R](
   projectionFn: SerializableFunction[T, R],
   granularity: Granularity
 ) extends DoFn[ReadableFile, R] {
-
   private val logger = LoggerFactory.getLogger(this.getClass)
-  private val SPLIT_LIMIT = 64000000L
+
+  private val SplitLimit = 64000000L
   private lazy val EntireFileRange = new OffsetRange(0, 1)
 
   private def parquetFileReader(file: ReadableFile): ParquetFileReader = {
@@ -78,7 +78,7 @@ class ParquetReadFn[T, R](
   @GetSize
   def getSize(@Element file: ReadableFile, @Restriction restriction: OffsetRange): Double = {
     granularity match {
-      case File => file.getMetadata.sizeBytes()
+      case File => file.getMetadata.sizeBytes().toDouble
       case RowGroup =>
         val (_, size) = getRecordCountAndSize(file, restriction)
         size
@@ -276,7 +276,7 @@ class ParquetReadFn[T, R](
         case ((offsets, start, size), (rowGroup, end)) =>
           val currentSize = size + rowGroup.getTotalByteSize
 
-          if (currentSize > SPLIT_LIMIT || endGroup - 1 == end) {
+          if (currentSize > SplitLimit || endGroup - 1 == end) {
             (new OffsetRange(start, end + 1) +: offsets, end + 1, 0.0)
           } else {
             (offsets, start, currentSize)
