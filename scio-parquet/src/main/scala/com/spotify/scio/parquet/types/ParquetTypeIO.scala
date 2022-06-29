@@ -86,7 +86,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val job = Job.getInstance()
+    val job = Job.getInstance(params.conf)
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
       GcsConnectorUtil.setCredentials(job)
     }
