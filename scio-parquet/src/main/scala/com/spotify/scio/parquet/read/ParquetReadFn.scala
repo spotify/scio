@@ -26,7 +26,7 @@ class ParquetReadFn[T, R](
 ) extends DoFn[ReadableFile, R] {
   // Constants
   private val SplitLimit = 64000000L
-  private lazy val EntireFileRange = new OffsetRange(0, 1)
+  private val EntireFileRange = new OffsetRange(0, 1)
 
   private val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val granularity =

@@ -14,7 +14,7 @@ import java.util.UUID
 case class Record(strField: String)
 
 class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
-  val records = (1 to 2000).map(_ => Record(UUID.randomUUID().toString)).toList
+  val records = (1 to 500).map(_ => Record(UUID.randomUUID().toString)).toList
 
   val directory = {
     val d = Files.createTempDirectory("parquet")
@@ -53,7 +53,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
-    readElements.size should equal(2000)
+    readElements.size should equal(500)
     readElements should contain theSameElementsAs records
   }
 
@@ -70,7 +70,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
-    readElements.size should equal(2000)
+    readElements.size should equal(500)
     readElements should contain theSameElementsAs records
   }
 
@@ -87,7 +87,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
-    readElements.size should equal(2000)
+    readElements.size should equal(500)
     readElements should contain theSameElementsAs records
   }
 
@@ -104,7 +104,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
-    readElements.size should equal(2000)
+    readElements.size should equal(500)
     readElements should contain theSameElementsAs records
   }
 }
