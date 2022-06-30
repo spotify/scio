@@ -230,7 +230,7 @@ class ParquetReadFn[T, R](
     }
     logger.debug(
       "Finish processing {} rows from row group {} in file {}",
-      rowCount,
+      rowCount.toString,
       rowGroupIndex.toString,
       file.toString
     )
