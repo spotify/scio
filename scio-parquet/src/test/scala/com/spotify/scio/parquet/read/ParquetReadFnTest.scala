@@ -14,9 +14,9 @@ import java.util.UUID
 case class Record(strField: String)
 
 class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
-  val records = (1 to 500).map(_ => Record(UUID.randomUUID().toString)).toList
+  private val records = (1 to 500).map(_ => Record(UUID.randomUUID().toString)).toList
 
-  val directory = {
+  private val directory = {
     val d = Files.createTempDirectory("parquet")
     d.toFile.deleteOnExit()
     d.toString
