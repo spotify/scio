@@ -1,7 +1,7 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.parquet.read.ParquetConfiguration
+import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.parquet.types._
 import org.apache.hadoop.conf.Configuration
 import org.scalatest.BeforeAndAfterAll
@@ -43,8 +43,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   "Parquet ReadFn" should "read at file-level granularity for files with multiple row groups" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetConfiguration.ParquetReadSplitGranularity,
-      ParquetConfiguration.ReadGranularityFile
+      ParquetReadConfiguration.ParquetReadSplitGranularity,
+      ParquetReadConfiguration.ReadGranularityFile
     )
 
     val sc = ScioContext()
@@ -60,8 +60,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   it should "read at file-level granularity for files with a single row group" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetConfiguration.ParquetReadSplitGranularity,
-      ParquetConfiguration.ReadGranularityFile
+      ParquetReadConfiguration.ParquetReadSplitGranularity,
+      ParquetReadConfiguration.ReadGranularityFile
     )
 
     val sc = ScioContext()
@@ -77,8 +77,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   it should "read at row-group granularity for files with multiple row groups" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetConfiguration.ParquetReadSplitGranularity,
-      ParquetConfiguration.ReadGranularityRowGroup
+      ParquetReadConfiguration.ParquetReadSplitGranularity,
+      ParquetReadConfiguration.ReadGranularityRowGroup
     )
 
     val sc = ScioContext()
@@ -94,8 +94,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   it should "read at row-group granularity for files with a single row groups" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetConfiguration.ParquetReadSplitGranularity,
-      ParquetConfiguration.ReadGranularityRowGroup
+      ParquetReadConfiguration.ParquetReadSplitGranularity,
+      ParquetReadConfiguration.ReadGranularityRowGroup
     )
 
     val sc = ScioContext()

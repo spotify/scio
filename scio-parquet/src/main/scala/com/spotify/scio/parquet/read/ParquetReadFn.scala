@@ -1,6 +1,7 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.BeamInputFile
+import com.spotify.scio.parquet.read.ParquetReadFn._
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.range.OffsetRange
@@ -19,21 +20,28 @@ import org.slf4j.LoggerFactory
 import java.util.{Set => JSet}
 import scala.jdk.CollectionConverters._
 
+object ParquetReadFn {
+  sealed private trait Granularity
+  private case object File extends Granularity
+  private case object RowGroup extends Granularity
+
+  // Constants
+  private val SplitLimit = 64000000L
+  private val EntireFileRange = new OffsetRange(0, 1)
+}
+
 class ParquetReadFn[T, R](
   readSupportFactory: ReadSupportFactory[T],
   conf: SerializableConfiguration,
   projectionFn: SerializableFunction[T, R]
 ) extends DoFn[ReadableFile, R] {
-  // Constants
-  private val SplitLimit = 64000000L
-  private val EntireFileRange = new OffsetRange(0, 1)
-
   private val logger = LoggerFactory.getLogger(this.getClass)
+
   private lazy val granularity =
-    conf.get().get(ParquetConfiguration.ParquetReadSplitGranularity) match {
-      case ParquetConfiguration.ReadGranularityFile     => File
-      case ParquetConfiguration.ReadGranularityRowGroup => RowGroup
-      case _                                            => File
+    conf.get().get(ParquetReadConfiguration.SplitGranularity) match {
+      case ParquetReadConfiguration.SplitGranularityFile     => File
+      case ParquetReadConfiguration.SplitGranularityRowGroup => RowGroup
+      case _                                                 => File
     }
 
   private def parquetFileReader(file: ReadableFile): ParquetFileReader = {
@@ -135,23 +143,20 @@ class ParquetReadFn[T, R](
           val tryClaim = tracker.tryClaim(tracker.currentRestriction().getFrom)
           var pages = reader.readNextRowGroup()
           while (tryClaim && pages != null) {
-            try {
-              val recordReader = columnIO.getRecordReader(
-                pages,
-                recordConverter,
-                if (options.useRecordFilter) filter else FilterCompat.NOOP
-              )
-              readRowGroup(
-                0,
-                pages.getRowCount,
-                file,
-                recordReader,
-                outputReceiver,
-                projectionFn
-              )
-            } finally {
-              pages = reader.readNextRowGroup()
-            }
+            val recordReader = columnIO.getRecordReader(
+              pages,
+              recordConverter,
+              if (options.useRecordFilter) filter else FilterCompat.NOOP
+            )
+            readRowGroup(
+              0,
+              pages.getRowCount,
+              file,
+              recordReader,
+              outputReceiver,
+              projectionFn
+            )
+            pages = reader.readNextRowGroup()
           }
         case RowGroup =>
           var currentRowGroupIndex = tracker.currentRestriction.getFrom
@@ -230,9 +235,9 @@ class ParquetReadFn[T, R](
     }
     logger.debug(
       "Finish processing {} rows from row group {} in file {}",
-      rowCount.toString,
-      rowGroupIndex.toString,
-      file.toString
+      rowCount,
+      rowGroupIndex,
+      file
     )
   }
 
@@ -271,7 +276,3 @@ class ParquetReadFn[T, R](
     offsets.reverse
   }
 }
-
-sealed private trait Granularity
-private case object File extends Granularity
-private case object RowGroup extends Granularity
