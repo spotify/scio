@@ -43,8 +43,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   "Parquet ReadFn" should "read at file-level granularity for files with multiple row groups" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetReadConfiguration.ParquetReadSplitGranularity,
-      ParquetReadConfiguration.ReadGranularityFile
+      ParquetReadConfiguration.SplitGranularity,
+      ParquetReadConfiguration.SplitGranularityFile
     )
 
     val sc = ScioContext()
@@ -60,8 +60,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   it should "read at file-level granularity for files with a single row group" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetReadConfiguration.ParquetReadSplitGranularity,
-      ParquetReadConfiguration.ReadGranularityFile
+      ParquetReadConfiguration.SplitGranularity,
+      ParquetReadConfiguration.SplitGranularityFile
     )
 
     val sc = ScioContext()
@@ -77,8 +77,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   it should "read at row-group granularity for files with multiple row groups" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetReadConfiguration.ParquetReadSplitGranularity,
-      ParquetReadConfiguration.ReadGranularityRowGroup
+      ParquetReadConfiguration.SplitGranularity,
+      ParquetReadConfiguration.SplitGranularityRowGroup
     )
 
     val sc = ScioContext()
@@ -94,8 +94,8 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
   it should "read at row-group granularity for files with a single row groups" in {
     val granularityConf = new Configuration()
     granularityConf.set(
-      ParquetReadConfiguration.ParquetReadSplitGranularity,
-      ParquetReadConfiguration.ReadGranularityRowGroup
+      ParquetReadConfiguration.SplitGranularity,
+      ParquetReadConfiguration.SplitGranularityRowGroup
     )
 
     val sc = ScioContext()

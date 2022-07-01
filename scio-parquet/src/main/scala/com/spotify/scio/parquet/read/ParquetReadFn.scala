@@ -142,6 +142,7 @@ class ParquetReadFn[T, R](
         case File =>
           val tryClaim = tracker.tryClaim(tracker.currentRestriction().getFrom)
           var pages = reader.readNextRowGroup()
+          // Must check tryClaim before reading so work isn't duplicated across workers
           while (tryClaim && pages != null) {
             val recordReader = columnIO.getRecordReader(
               pages,
