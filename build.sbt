@@ -26,7 +26,7 @@ import de.heikoseeberger.sbtheader.CommentCreator
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.39.0"
+val beamVersion = "2.40.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
