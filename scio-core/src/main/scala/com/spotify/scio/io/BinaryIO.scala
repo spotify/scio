@@ -19,16 +19,17 @@ package com.spotify.scio.io
 
 import java.io.{BufferedInputStream, InputStream, OutputStream}
 import java.nio.channels.{Channels, WritableByteChannel}
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.BinaryIO.BytesSink
+import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
+import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.commons.compress.compressors.CompressorStreamFactory
-import scala.jdk.CollectionConverters._
 
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 /**
@@ -48,12 +49,21 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     throw new UnsupportedOperationException("BinaryIO is write-only")
 
   override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] = {
+
+
     var transform = FileIO
       .write[Array[Byte]]
       .via(new BytesSink(params.header, params.footer, params.framePrefix, params.frameSuffix))
       .withCompression(params.compression)
       .withNumShards(params.numShards)
-      .to(pathWithShards(path))
+
+      transform = transform.to(pathWithShards(path))
+
+    FIXME FIXME YOU LEFT OFF HERE
+    // FileIO has windowed support on by default?
+//    val isWindowed = data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+//    if(isWindowed) transform = transform.withWindowedWrites()
+
 
     transform = params.fileNaming.fold {
       transform
@@ -103,6 +113,8 @@ object BinaryIO {
     private[scio] val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
     private[scio] val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
     private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultBoundedFilenameFunction = null
+    private[scio] val DefaultUnboundedFilenameFunction = null
   }
 
   final case class WriteParam(
@@ -115,7 +127,9 @@ object BinaryIO {
     framePrefix: Array[Byte] => Array[Byte] = WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = WriteParam.DefaultFrameSuffix,
     fileNaming: Option[FileNaming] = WriteParam.DefaultFileNaming,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    boundedFilenameFunction: BoundedFilenameFunction = WriteParam.DefaultBoundedFilenameFunction,
+    unboundedFilenameFunction: UnboundedFilenameFunction = WriteParam.DefaultUnboundedFilenameFunction
   )
 
   final private class BytesSink(

@@ -18,6 +18,7 @@
 package com.spotify.scio.avro.syntax
 
 import com.google.protobuf.Message
+import com.spotify.scio.JavaConverters.FilenamePolicy
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
@@ -27,6 +28,7 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -90,6 +92,23 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory)
     self.write(SpecificRecordIO[T](path))(param)
+  }
+
+  def saveAsDynamicAvroFile(
+    filenameFunction: Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String],
+  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
+    WindowedFilenamePolicy.writeWindowedFiles()
+      .withOutputDirectory(options.getOutputDirectory())
+      .withOutputFilenamePrefix(options.getOutputFilenamePrefix())
+      .withShardTemplate(options.getOutputShardTemplate())
+      .withSuffix(options.getOutputFilenameSuffix())
+      .withYearPattern(options.getYearPattern())
+      .withMonthPattern(options.getMonthPattern())
+      .withDayPattern(options.getDayPattern())
+      .withHourPattern(options.getHourPattern())
+      .withMinutePattern(options.getMinutePattern())
+
+    ???
   }
 }
 

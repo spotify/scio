@@ -22,14 +22,11 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
-import com.spotify.scio.estimators.{
-  ApproxDistinctCounter,
-  ApproximateUniqueCounter,
-  ApproximateUniqueCounterByError
-}
+import com.spotify.scio.estimators.{ApproxDistinctCounter, ApproximateUniqueCounter, ApproximateUniqueCounterByError}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
 import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -1511,7 +1508,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     header: Option[String] = TextIO.WriteParam.DefaultHeader,
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
+    boundedFilenameFunction: BoundedFilenameFunction = TextIO.WriteParam.DefaultBoundedFilenameFunction,
+    unboundedFilenameFunction: UnboundedFilenameFunction = TextIO.WriteParam.DefaultUnboundedFilenameFunction
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1526,7 +1525,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         header,
         footer,
         shardNameTemplate,
-        tempDirectory
+        tempDirectory,
+        boundedFilenameFunction,
+        unboundedFilenameFunction
       )
     )
   }
@@ -1546,7 +1547,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
     fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming,
-    tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory,
+    boundedFilenameFunction: BoundedFilenameFunction = BinaryIO.WriteParam.DefaultBoundedFilenameFunction,
+    unboundedFilenameFunction: UnboundedFilenameFunction = BinaryIO.WriteParam.DefaultUnboundedFilenameFunction
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .covary_[Array[Byte]]
@@ -1562,7 +1565,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             framePrefix,
             frameSuffix,
             fileNaming,
-            tempDirectory
+            tempDirectory,
+            boundedFilenameFunction,
+            unboundedFilenameFunction
           )
       )
 

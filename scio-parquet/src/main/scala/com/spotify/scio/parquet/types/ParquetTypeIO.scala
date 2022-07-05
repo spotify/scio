@@ -23,19 +23,14 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
-import org.apache.beam.sdk.io.{
-  DefaultFilenamePolicy,
-  DynamicFileDestinations,
-  FileBasedSink,
-  FileSystems,
-  WriteFiles
-}
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
-import org.apache.beam.sdk.values.TypeDescriptor
+import org.apache.beam.sdk.values.{TypeDescriptor, WindowingStrategy}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -86,21 +81,24 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val job = Job.getInstance()
+    val isWindowed = data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+    val (prefix, destinations) = ScioUtil.dynamicDestinations[T](
+      path, params.suffix,
+      isWindowed,
+      params.boundedFilenameFunction,
+      params.unboundedFilenameFunction
+    )
+
+    val job = Job.getInstance(params.conf)
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
       GcsConnectorUtil.setCredentials(job)
     }
-
-    val resource =
-      FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
-    val prefix = StaticValueProvider.of(resource)
-    val usedFilenamePolicy =
-      DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
-    val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
-    val sink =
-      new ParquetTypeSink[T](prefix, destinations, tpe, job.getConfiguration, params.compression)
-    val t = WriteFiles.to(sink).withNumShards(params.numShards)
-    data.applyInternal(t)
+    val sink = new ParquetTypeSink[T](prefix, destinations, tpe, job.getConfiguration, params.compression)
+    val transform = {
+      val write = WriteFiles.to(sink).withNumShards(params.numShards)
+      if(isWindowed) write.withWindowedWrites() else write
+    }
+    data.applyInternal(transform)
     tap(ParquetTypeIO.ReadParam[T]())
   }
 
@@ -125,13 +123,17 @@ object ParquetTypeIO {
     private[types] val DefaultSuffix = ".parquet"
     private[types] val DefaultCompression = CompressionCodecName.GZIP
     private[types] val DefaultConfiguration = new Configuration()
+    private[avro] val DefaultBoundedFilenameFunction = None
+    private[avro] val DefaultUnboundedFilenameFunction = None
   }
 
   final case class WriteParam[T] private (
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    boundedFilenameFunction: Option[BoundedFilenameFunction] = WriteParam.DefaultBoundedFilenameFunction,
+    unboundedFilenameFunction: Option[UnboundedFilenameFunction] = WriteParam.DefaultUnboundedFilenameFunction
   )
 }
 

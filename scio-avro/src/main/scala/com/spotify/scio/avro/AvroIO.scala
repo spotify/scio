@@ -23,11 +23,14 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{avro, ScioContext}
+import com.spotify.scio.{ScioContext, avro}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink}
+import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.{io => beam}
@@ -133,9 +136,8 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     tempDirectory: String
   ) = {
     val transform = write
-      .to(ScioUtil.pathWithShards(path))
+      .to(ScioUtil.defaultFilenamePolicy(path, suffix))
       .withNumShards(numShards)
-      .withSuffix(suffix)
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 

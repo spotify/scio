@@ -21,11 +21,17 @@ import java.net.URI
 import java.util.UUID
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.google.common.base.Preconditions
 import com.spotify.scio.ScioContext
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
-import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems}
 import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.options.ValueProvider
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 
@@ -96,4 +102,69 @@ private[scio] object ScioUtil {
 
   def toResourceId(directory: String): ResourceId =
     FileSystems.matchNewResource(directory, true)
+
+  def defaultFilenamePolicy(path: String, suffix: String): FileBasedSink.FilenamePolicy = {
+    val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
+    val prefix = StaticValueProvider.of(resource)
+    DefaultFilenamePolicy.fromStandardParameters(prefix, null, suffix, false)
+  }
+
+  // TODO these should move out of this Util class
+  // TODO make an interface for these instead ala SerializableFunction?
+  type BoundedFilenameFunction = (Int, Int) => String
+  type UnboundedFilenameFunction = (Int, Int, BoundedWindow, PaneInfo) => String
+
+  val DefaultBoundedFilenameFunction: BoundedFilenameFunction = (_, _) => {
+    throw new NotImplementedError("requires a filename function")
+  }
+
+  val DefaultUnboundedFilenameFunction: UnboundedFilenameFunction = (_, _, _, _) => {
+    throw new NotImplementedError("requires a windowed filename function for windowed SCollections")
+  }
+
+  def dynamicDestinations[T](
+    path: String,
+    suffix: String,
+    isWindowed: Boolean,
+    boundedFilenameFunction: BoundedFilenameFunction = null,
+    windowedFilenameFunction: UnboundedFilenameFunction = null
+  ): (ValueProvider[ResourceId], FileBasedSink.DynamicDestinations[T, Void, T]) = {
+    val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
+    val prefix = StaticValueProvider.of(resource)
+    val fileNamePolicy = {
+      val hasFunction = (boundedFilenameFunction != null) || (windowedFilenameFunction != null)
+      if (hasFunction) {
+        if(isWindowed) Preconditions.checkArgument(windowedFilenameFunction != null, "If SCollection is windowed, windowedFilenameFunction must be provided")
+        if(!isWindowed) Preconditions.checkArgument(boundedFilenameFunction != null, "If SCollection is unwindowed, boundedFilenameFunction must be provided")
+        createFilenamePolicy(resource, suffix, boundedFilenameFunction, windowedFilenameFunction)
+      } else {
+        DefaultFilenamePolicy.fromStandardParameters(prefix, null, suffix, isWindowed)
+      }
+    }
+    (prefix, DynamicFileDestinations.constant[T](fileNamePolicy))
+  }
+
+  def createFilenamePolicy(
+    baseFileName: ResourceId,
+    filenameSuffix: String,
+    boundedFilenameFunction: BoundedFilenameFunction = null,
+    windowedFilenameFunction: UnboundedFilenameFunction = null
+  ): FilenamePolicy = {
+    Preconditions.checkArgument(
+      (boundedFilenameFunction != null) || (windowedFilenameFunction != null),
+      "At least one of boundedFilenameFunction or windowedFilenameFunction must be provided"
+    )
+    val windowFn = Option(windowedFilenameFunction).getOrElse(DefaultUnboundedFilenameFunction)
+    val unwindowFn = Option(boundedFilenameFunction).getOrElse(DefaultBoundedFilenameFunction)
+    new FileBasedSink.FilenamePolicy {
+      private def resolve(filename: String): ResourceId =
+        baseFileName.getCurrentDirectory.resolve(filename + filenameSuffix, StandardResolveOptions.RESOLVE_FILE)
+
+      override def windowedFilename(shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo, outputFileHints: FileBasedSink.OutputFileHints): ResourceId =
+        resolve(windowFn(shardNumber, numShards, window, paneInfo))
+
+      override def unwindowedFilename(shardNumber: Int, numShards: Int, outputFileHints: FileBasedSink.OutputFileHints): ResourceId =
+        resolve(unwindowFn(shardNumber, numShards))
+    }
+  }
 }

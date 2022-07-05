@@ -23,20 +23,16 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io._
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
-import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SimpleFunction
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.{TypeDescriptor, WindowingStrategy}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
@@ -48,7 +44,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import java.lang.{Boolean => JBoolean}
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
-import scala.util.Either
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
@@ -74,30 +69,21 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    val isWindowed = data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+    val (prefix, destinations) = ScioUtil.dynamicDestinations[T](
+      path, params.suffix,
+      isWindowed,
+      params.boundedFilenameFunction,
+      params.unboundedFilenameFunction
+    )
+
     val job = Job.getInstance(params.conf)
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
       GcsConnectorUtil.setCredentials(job)
     }
 
-    val writerSchema = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      ReflectData.get().getSchema(cls)
-    } else {
-      params.schema
-    }
-    val resource =
-      FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
-    val prefix = StaticValueProvider.of(resource)
-    val fileNamePolicy =
-      params.filenameFunction
-        .map {
-          case Left(f) =>
-            createFilenamePolicy(resource, params.suffix, windowedFilenameFunction = f)
-          case Right(f) => createFilenamePolicy(resource, params.suffix, filenameFunction = f)
-        }
-        .getOrElse(
-          DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
-        )
-    val destinations = DynamicFileDestinations.constant[T](fileNamePolicy)
+    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
+    val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
     val sink = new ParquetAvroSink[T](
       prefix,
       destinations,
@@ -105,60 +91,16 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       job.getConfiguration,
       params.compression
     )
-    val t =
-      if (data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()) {
-        WriteFiles.to(sink).withNumShards(params.numShards).withWindowedWrites()
-      } else {
-        WriteFiles.to(sink).withNumShards(params.numShards)
-      }
-    data.applyInternal(t)
+    val transform = {
+      val write = WriteFiles.to(sink).withNumShards(params.numShards)
+      if(isWindowed) write.withWindowedWrites() else write
+    }
+    data.applyInternal(transform)
     tap(ParquetAvroIO.ReadParam[T, T](identity[T] _, writerSchema, null))
   }
 
   override def tap(params: ReadP): Tap[T] =
     ParquetAvroTap(ScioUtil.addPartSuffix(path), params)
-
-  def createFilenamePolicy(
-    baseFileName: ResourceId,
-    filenameSuffix: String,
-    windowedFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String = (_, _, _, _) =>
-      throw new NotImplementedError(
-        "saveAsDynamicParquetAvroFile for windowed SCollections requires a windowed filename function"
-      ),
-    filenameFunction: (Int, Int) => String = (_, _) =>
-      throw new NotImplementedError("saveAsDynamicParquetAvroFile requires a filename function")
-  ): FilenamePolicy = {
-
-    new FileBasedSink.FilenamePolicy {
-      override def windowedFilename(
-        shardNumber: Int,
-        numShards: Int,
-        window: BoundedWindow,
-        paneInfo: PaneInfo,
-        outputFileHints: FileBasedSink.OutputFileHints
-      ): ResourceId = {
-        val filename = windowedFilenameFunction(shardNumber, numShards, window, paneInfo)
-        baseFileName.getCurrentDirectory.resolve(
-          filename + filenameSuffix,
-          StandardResolveOptions.RESOLVE_FILE
-        )
-      }
-
-      override def unwindowedFilename(
-        shardNumber: Int,
-        numShards: Int,
-        outputFileHints: FileBasedSink.OutputFileHints
-      ): ResourceId = {
-        val filename = filenameFunction(shardNumber, numShards)
-        baseFileName.getCurrentDirectory.resolve(
-          filename + filenameSuffix,
-          StandardResolveOptions.RESOLVE_FILE
-        )
-      }
-    }
-
-  }
-
 }
 
 object ParquetAvroIO {
@@ -245,8 +187,9 @@ object ParquetAvroIO {
     private[avro] val DefaultNumShards = 0
     private[avro] val DefaultSuffix = ".parquet"
     private[avro] val DefaultCompression = CompressionCodecName.GZIP
-    private[avro] val DefaultFilenameFunction = None
     private[avro] val DefaultConfiguration = new Configuration()
+    private[avro] val DefaultBoundedFilenameFunction = null
+    private[avro] val DefaultUnboundedFilenameFunction = null
   }
 
   final case class WriteParam private (
@@ -254,10 +197,9 @@ object ParquetAvroIO {
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    filenameFunction: Option[
-      Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String]
-    ] = WriteParam.DefaultFilenameFunction,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    boundedFilenameFunction: BoundedFilenameFunction = WriteParam.DefaultBoundedFilenameFunction,
+    unboundedFilenameFunction: UnboundedFilenameFunction = WriteParam.DefaultUnboundedFilenameFunction
   )
 }
 
