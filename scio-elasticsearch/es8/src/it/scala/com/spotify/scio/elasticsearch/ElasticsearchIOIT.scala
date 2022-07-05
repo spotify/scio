@@ -19,6 +19,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.elasticsearch.client.RestClient
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Second, Seconds, Span}
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy
 import org.testcontainers.utility.DockerImageName
 
 import java.util.{Properties, UUID}
@@ -27,7 +28,10 @@ import scala.util.chaining._
 object ElasticsearchIOIT {
 
   val Username = "elastic"
-  val Password = "scio"
+  val Password = "changeme"
+  // See https://github.com/testcontainers/testcontainers-java/pull/5521
+  // remove after update of test-containers
+  val StartRegex = ".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)"
 
   final case class Person(
     name: String,
@@ -61,9 +65,9 @@ class ElasticsearchIOIT extends PipelineSpec with Eventually with ForAllTestCont
   override val container: ElasticsearchContainer = ElasticsearchContainer(ImageName)
     .configure(
       _.withEnv("discovery.type", "single-node") // not a cluster
-        .withEnv("xpack.security.http.ssl.enabled", "false") // disable ssl
+        .withEnv("xpack.security.enabled", "false") // disable ssl
         .withEnv("ES_JAVA_OPTS", "-Xms1g -Xmx1g") // limit memory for testing
-        .withPassword(Password)
+        .setWaitStrategy(new LogMessageWaitStrategy().withRegEx(StartRegex))
     )
 
   lazy val client: ElasticsearchClient = {
