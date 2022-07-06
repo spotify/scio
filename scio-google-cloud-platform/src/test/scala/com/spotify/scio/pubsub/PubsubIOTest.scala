@@ -39,7 +39,10 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
     (sc, out) => sc.write(fn(out))(param)
 
   val saveAsPubSub: (SCollection[String], String) => ClosedTap[_] = writeFn(PubsubIO.string(_))
-  val saveAsPubSubWithAttributes: (SCollection[(String, Map[String,String])], String) => ClosedTap[_] = writeFn(PubsubIO.withAttributes[String](_))
+  val saveAsPubSubWithAttributes
+    : (SCollection[(String, Map[String, String])], String) => ClosedTap[_] = writeFn(
+    PubsubIO.withAttributes[String](_)
+  )
 
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
