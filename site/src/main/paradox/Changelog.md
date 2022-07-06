@@ -1,5 +1,11 @@
 # Changelog
 
+## Breaking changes since 0.12.0 (@ref:[v0.12.0 Migration Guide](migrations/v0.12.0-Migration-Guide.md))
+- Removed `com.spotify.scio.extra.bigquery`
+- Removed `com.spotify.scio.pubsub` specializations
+- Changed type signatures of SMB methods to accommodate secondary-keyed SMB
+- Removed beam-sql support
+
 ## Important changes in 0.11.3
 - Fixed a severe Parquet IO issue introduced in 0.11.2. Incompatible versions of `com.google.http-client:google-http-client:1.40.0` and `com.google.cloud.bigdataoss:gcsio:2.2.2` were leading to jobs reading Parquet getting stuck. The mitigation for 0.11.2 is to pin `google-http-client` to `1.39.2` in your build.sbt:
   ```scala

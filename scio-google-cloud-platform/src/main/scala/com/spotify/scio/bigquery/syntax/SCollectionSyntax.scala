@@ -87,7 +87,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     extends AnyVal {
 
   /**
-   * Save this SCollection as a BigQuery table using Avro writting function. Note that elements must
+   * Save this SCollection as a BigQuery table using Avro writing function. Note that elements must
    * be of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
    */
   def saveAsBigQueryTable(
