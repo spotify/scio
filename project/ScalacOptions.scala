@@ -19,6 +19,7 @@ import sbt.librarymanagement.{SemanticSelector, VersionNumber}
 import java.lang.Runtime
 import _root_.io.github.davidgregory084.ScalacOption
 import _root_.io.github.davidgregory084.ScalaVersion._
+import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport.ScalacOptions
 
 object Scalac {
 
@@ -40,6 +41,11 @@ object Scalac {
     "-Xmax-classfile-name" :: "100" :: Nil,
     version => version.isBetween(V2_12_0, V2_13_0)
   )
+
+  private val parallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
+  val privateBackendParallelism = ScalacOptions.privateBackendParallelism(parallelism)
+
+  val release8 = ScalacOptions.release("8")
 
   // JVM
   val targetOption = new ScalacOption("-target:jvm-1.8" :: Nil)

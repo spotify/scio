@@ -141,18 +141,17 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     ScalacOptions.warnValueDiscard
   )
 
-  val parallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
   val extras = Set(
     Scalac.delambdafyInlineOption,
     Scalac.macroAnnotationsOption,
     Scalac.macroSettingsOption,
     Scalac.maxClassfileName,
+    Scalac.privateBackendParallelism,
     Scalac.privateWarnMacrosOption,
+    Scalac.release8,
     Scalac.targetOption,
     Scalac.warnConfOption,
-    Scalac.warnMacrosOption,
-    ScalacOptions.privateBackendParallelism(parallelism),
-    ScalacOptions.release("8")
+    Scalac.warnMacrosOption
   )
 
   opts.filterNot(excludes).union(extras)
@@ -1072,6 +1071,8 @@ lazy val `scio-repl`: Project = project
   .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
+    // drop repl compatibility with java 8
+    tpolecatDevModeOptions ~= { _.filterNot(_ == Scalac.release8) },
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
