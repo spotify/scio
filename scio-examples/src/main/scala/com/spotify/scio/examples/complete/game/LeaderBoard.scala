@@ -78,7 +78,7 @@ object LeaderBoard {
 
     // Read in streaming data from PubSub and parse each row as `GameActionInfo` events
     val gameEvents = sc
-      .pubsubTopic[String](args("topic"), timestampAttribute = "timestamp_ms")
+      .read(PubsubIO.string(args("topic"), timestampAttribute = "timestamp_ms"))(PubsubIO.ReadParam(PubsubIO.Topic))
       .flatMap(UserScore.parseEvent)
 
     calculateTeamScores(gameEvents, teamWindowDuration, allowedLateness)

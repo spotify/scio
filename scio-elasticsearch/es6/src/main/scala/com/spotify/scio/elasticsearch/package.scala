@@ -54,7 +54,7 @@ package object elasticsearch extends CoderInstances {
      * @param errorFn
      *   function to handle error when performing Elasticsearch bulk writes
      */
-    @deprecated("Elasticsearch 6 reached End of Life", since = "0.11.6")
+    @deprecated("Elasticsearch 6 reached End of Life. Will be removed in 0.13.0", since = "0.11.6")
     def saveAsElasticsearch(
       esOptions: ElasticsearchOptions,
       flushInterval: Duration = WriteParam.DefaultFlushInterval,

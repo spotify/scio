@@ -22,21 +22,31 @@ import com.google.protobuf.Message
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import com.spotify.scio._
 import com.spotify.scio.avro.{Account, AccountStatus}
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import com.spotify.scio.pubsub.coders._
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.joda.time.Instant
 
 class PubsubIOTest extends PipelineSpec with ScioIOSpec {
+  def readFn[T](fn: String => PubsubIO[T], readType: PubsubIO.ReadType): (ScioContext, String) => SCollection[T] =
+    (sc, in) => sc.read(fn(in))(PubsubIO.ReadParam(readType))
+
+  def writeFn[T](fn: String => PubsubIO[T], param: PubsubIO.WriteParam = PubsubIO.WriteParam()): (SCollection[T], String) => ClosedTap[_] =
+    (sc, out) => sc.write(fn(out))(param)
+
+  val saveAsPubSub = writeFn(PubsubIO.string(_))
+
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+    testJobTest(xs)(PubsubIO.string(_))(readFn(PubsubIO.string(_), PubsubIO.Subscription))(saveAsPubSub)
   }
 
   it should "work with topic" in {
     val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO(_))(_.pubsubTopic(_))(_.saveAsPubsub(_))
+    testJobTest(xs)(PubsubIO.string(_))(readFn(PubsubIO.string(_), PubsubIO.Topic))(saveAsPubSub)
   }
 
   it should "work with subscription and attributes" in {
@@ -54,30 +64,10 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
   }
 
   it should "#2582: not throw an ClassCastException when created" in {
-    PubsubIO[String]("String IO")
-    PubsubIO[com.spotify.scio.avro.Account]("SpecificRecordBase IO")
-    PubsubIO[Message]("Message IO")
-    PubsubIO[beam.PubsubMessage]("Message IO")
-  }
-
-  it should "support deprecated readAvro" in {
-    val xs = (1 to 100).map(x => new Account(x, "", "", x.toDouble, AccountStatus.Active))
-    testJobTest(xs)(PubsubIO.readAvro[Account](_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
-  }
-
-  it should "support deprecated readString" in {
-    val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO.readString(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
-  }
-
-  it should "support deprecated readProto" in {
-    val xs = (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
-    testJobTest(xs)(PubsubIO.readProto(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
-  }
-
-  it should "support deprecated readCoder" in {
-    val xs = 1 to 100
-    testJobTest(xs)(PubsubIO.readCoder(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+    PubsubIO.string("String IO")
+    PubsubIO.avro[com.spotify.scio.avro.Account]("SpecificRecordBase IO")
+    PubsubIO.proto[Message]("Message IO")
+    PubsubIO.pubsub[beam.PubsubMessage]("Message IO")
   }
 
   def testPubsubJob(xs: String*): Unit =

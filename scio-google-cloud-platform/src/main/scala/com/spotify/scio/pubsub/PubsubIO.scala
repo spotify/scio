@@ -66,59 +66,12 @@ object PubsubIO {
     maxBatchBytesSize: Option[Int] = None
   )
 
-  // The following method is unsafe and exists to preserve compatibility with
-  // the previous implementation while the underlying `PubsubIO` implementations
-  // have been refactored and are more type safe.
-  @deprecated(
-    "Use readString, readAvro, readProto, readPubsub or readCoder instead.",
-    since = "0.8.0"
-  )
-  def apply[T: ClassTag: Coder](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = ScioUtil.classOf[T] match {
-    case cls if classOf[String] isAssignableFrom cls =>
-      StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
-        .asInstanceOf[PubsubIO[T]]
-    case cls if classOf[SpecificRecordBase] isAssignableFrom cls =>
-      type X = T with SpecificRecordBase
-      AvroPubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        classTag[T].asInstanceOf[ClassTag[X]]
-      ).asInstanceOf[PubsubIO[T]]
-    case cls if classOf[Message] isAssignableFrom cls =>
-      type X = T with Message
-      MessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)(
-        classTag[T].asInstanceOf[ClassTag[X]]
-      ).asInstanceOf[PubsubIO[T]]
-    case cls if classOf[beam.PubsubMessage] isAssignableFrom cls =>
-      type X = T with beam.PubsubMessage
-      PubSubMessagePubsubIOWithoutAttributes[X](name, idAttribute, timestampAttribute)
-        .asInstanceOf[PubsubIO[T]]
-    case _ =>
-      FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
-  }
-
-  @deprecated("Use PubsubIO.string", since = "0.10.0")
-  def readString(
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[String] = string(name, idAttribute, timestampAttribute)
-
   def string(
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[String] =
     StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
-
-  @deprecated("Use PubsubIO.avro", since = "0.10.0")
-  def readAvro[T <: SpecificRecordBase: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = avro(name, idAttribute, timestampAttribute)
 
   def avro[T <: SpecificRecordBase: ClassTag](
     name: String,
@@ -127,13 +80,6 @@ object PubsubIO {
   ): PubsubIO[T] =
     AvroPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  @deprecated("Use PubsubIO.proto", since = "0.10.0")
-  def readProto[T <: Message: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = proto(name, idAttribute, timestampAttribute)
-
   def proto[T <: Message: ClassTag](
     name: String,
     idAttribute: String = null,
@@ -141,26 +87,12 @@ object PubsubIO {
   ): PubsubIO[T] =
     MessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  @deprecated("Use PubsubIO.pubsub", since = "0.10.0")
-  def readPubsub[T <: beam.PubsubMessage: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = pubsub(name, idAttribute, timestampAttribute)
-
   def pubsub[T <: beam.PubsubMessage: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     PubSubMessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
-
-  @deprecated("Use PubsubIO.coder", since = "0.10.0")
-  def readCoder[T: Coder: ClassTag](
-    name: String,
-    idAttribute: String = null,
-    timestampAttribute: String = null
-  ): PubsubIO[T] = coder(name, idAttribute, timestampAttribute)
 
   def coder[T: Coder: ClassTag](
     name: String,
