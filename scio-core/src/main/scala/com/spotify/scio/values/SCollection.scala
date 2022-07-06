@@ -252,7 +252,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     name: String,
     transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]]
   ): SCollection[KV[K, V]] =
-    applyTransform(name, transform)(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
+    applyTransform(name, transform)
 
   /** Apply a transform. */
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
@@ -670,7 +670,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val cf = ClosureCleaner.clean(f)
       val cg = ClosureCleaner.clean(g)
 
-      _.map(t => KV.of(cf(t), cg(t)))(Coder.raw(CoderMaterializer.kvCoder[K, U](context)))
+      _.map(t => KV.of(cf(t), cg(t)))
         .pApply(GroupByKey.create[K, U]())
         .map(kvIterableToTuple)
     }
@@ -691,7 +691,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform {
       val cf = ClosureCleaner.clean(f)
 
-      _.map(t => KV.of(cf(t), t))(Coder.raw(CoderMaterializer.kvCoder[K, T](context)))
+      _.map(t => KV.of(cf(t), t))
         .pApply(Combine.perKey(Functions.reduceFn(context, g)))
         .map(kvToTuple)
     }
