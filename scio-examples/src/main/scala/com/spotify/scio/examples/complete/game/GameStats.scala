@@ -74,7 +74,9 @@ object GameStats {
 
     // Read streaming events from PubSub topic, using ms of events as their ID
     val rawEvents = sc
-      .read(PubsubIO.string(args("topic"), idAttribute = "timestamp_ms"))(PubsubIO.ReadParam(PubsubIO.Topic))
+      .read(PubsubIO.string(args("topic"), idAttribute = "timestamp_ms"))(
+        PubsubIO.ReadParam(PubsubIO.Topic)
+      )
       // Parse input as a `GameActionInfo` event
       .flatMap(UserScore.parseEvent)
 

@@ -26,18 +26,26 @@ import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.joda.time.Instant
 
 class PubsubIOTest extends PipelineSpec with ScioIOSpec {
-  def readFn[T](fn: String => PubsubIO[T], readType: PubsubIO.ReadType): (ScioContext, String) => SCollection[T] =
+  def readFn[T](
+    fn: String => PubsubIO[T],
+    readType: PubsubIO.ReadType
+  ): (ScioContext, String) => SCollection[T] =
     (sc, in) => sc.read(fn(in))(PubsubIO.ReadParam(readType))
 
-  def writeFn[T](fn: String => PubsubIO[T], param: PubsubIO.WriteParam = PubsubIO.WriteParam()): (SCollection[T], String) => ClosedTap[_] =
+  def writeFn[T](
+    fn: String => PubsubIO[T],
+    param: PubsubIO.WriteParam = PubsubIO.WriteParam()
+  ): (SCollection[T], String) => ClosedTap[_] =
     (sc, out) => sc.write(fn(out))(param)
 
   val saveAsPubSub = writeFn(PubsubIO.string(_))
-  val saveAsPubSubWithAttributes= writeFn(PubsubIO.withAttributes[String](_))
+  val saveAsPubSubWithAttributes = writeFn(PubsubIO.withAttributes[String](_))
 
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO.string(_))(readFn(PubsubIO.string(_), PubsubIO.Subscription))(saveAsPubSub)
+    testJobTest(xs)(PubsubIO.string(_))(readFn(PubsubIO.string(_), PubsubIO.Subscription))(
+      saveAsPubSub
+    )
   }
 
   it should "work with topic" in {
@@ -47,12 +55,16 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
 
   it should "work with subscription and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    testJobTest(xs)(PubsubIO.withAttributes[String](_))(readFn(PubsubIO.withAttributes(_), PubsubIO.Subscription))(saveAsPubSubWithAttributes)
+    testJobTest(xs)(PubsubIO.withAttributes[String](_))(
+      readFn(PubsubIO.withAttributes(_), PubsubIO.Subscription)
+    )(saveAsPubSubWithAttributes)
   }
 
   it should "work with topic and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    testJobTest(xs)(PubsubIO.withAttributes[String](_))(readFn(PubsubIO.withAttributes(_), PubsubIO.Topic))(saveAsPubSubWithAttributes)
+    testJobTest(xs)(PubsubIO.withAttributes[String](_))(
+      readFn(PubsubIO.withAttributes(_), PubsubIO.Topic)
+    )(saveAsPubSubWithAttributes)
   }
 
   def testPubsubJob(xs: String*): Unit =
@@ -167,9 +179,13 @@ object PubsubWithAttributesJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.read(PubsubIO.withAttributes[String](args("input"), timestampAttribute = timestampAttribute))(PubsubIO.ReadParam(PubsubIO.Topic))
+    sc.read(
+      PubsubIO.withAttributes[String](args("input"), timestampAttribute = timestampAttribute)
+    )(PubsubIO.ReadParam(PubsubIO.Topic))
       .map(kv => (kv._1 + "X", kv._2))
-      .write(PubsubIO.withAttributes[String](args("output"), timestampAttribute = timestampAttribute))(PubsubIO.WriteParam())
+      .write(
+        PubsubIO.withAttributes[String](args("output"), timestampAttribute = timestampAttribute)
+      )(PubsubIO.WriteParam())
     sc.run()
     ()
   }
