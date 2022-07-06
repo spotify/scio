@@ -27,12 +27,8 @@ object ParquetRead {
     readSupportFactory: ReadSupportFactory[T],
     conf: SerializableConfiguration,
     projectionFn: SerializableFunction[T, R]
-  ): PTransform[PCollection[ReadableFile], PCollection[R]] =
-    new PTransform[PCollection[ReadableFile], PCollection[R]] {
-      override def expand(input: PCollection[ReadableFile]): PCollection[R] = {
-        val sdf = new ParquetReadFn[T, R](readSupportFactory, conf, projectionFn)
-        input.apply(ParDo.of(sdf))
-      }
-    }
-
+  ): ParDo.SingleOutput[ReadableFile, R] = {
+    val sdf = new ParquetReadFn[T, R](readSupportFactory, conf, projectionFn)
+    ParDo.of(sdf)
+  }
 }
