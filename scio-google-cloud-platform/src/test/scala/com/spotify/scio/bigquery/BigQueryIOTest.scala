@@ -78,15 +78,6 @@ final class BigQueryIOTest extends ScioIOSpec {
     )
   }
 
-  it should "work with typed BigQuery" in {
-    val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
-      BigQueryIO(_)
-    )((sc, s) => sc.typedBigQueryTable[BQRecord](Table.Spec(s)))((coll, s) =>
-      coll.saveAsTypedBigQueryTable(Table.Spec(s))
-    )
-  }
-
   /**
    * The `BigQueryIO`'s write, runs Beam's BQ IO which creates a `Read` Transform to return the
    * insert errors.

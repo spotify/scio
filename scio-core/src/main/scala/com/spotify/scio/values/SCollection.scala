@@ -28,7 +28,7 @@ import com.spotify.scio.estimators.{
   ApproximateUniqueCounterByError
 }
 import com.spotify.scio.io._
-import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -272,25 +272,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     )
   }
-
-  /**
-   * Go from an SCollection of type [[T]] to an SCollection of [[U]] given the Schemas of both types
-   * [[T]] and [[U]].
-   *
-   * There are two constructors for [[To]]:
-   *
-   * Type safe (Schema compatibility is verified during compilation)
-   * {{{
-   *   SCollection[T]#to(To.safe[T, U])
-   * }}}
-   *
-   * Unsafe conversion from [[T]] to [[U]]. Schema compatibility is not checked during compile time.
-   * {{{
-   *   SCollection[T]#to[U](To.unsafe)
-   * }}}
-   */
-  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
-  def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   // =======================================================================
   // Collection operations

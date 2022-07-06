@@ -18,73 +18,63 @@
 package com.spotify.scio.pubsub
 
 import com.spotify.scio.testing.PipelineSpec
-import com.google.protobuf.Message
-import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import com.spotify.scio._
-import com.spotify.scio.avro.{Account, AccountStatus}
-import com.spotify.scio.proto.Track.TrackPB
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing._
-import com.spotify.scio.pubsub.coders._
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.joda.time.Instant
 
 class PubsubIOTest extends PipelineSpec with ScioIOSpec {
+  def readFn[T](
+    fn: String => PubsubIO[T],
+    readType: PubsubIO.ReadType
+  ): (ScioContext, String) => SCollection[T] =
+    (sc, in) => sc.read(fn(in))(PubsubIO.ReadParam(readType))
+
+  def writeFn[T](
+    fn: String => PubsubIO[T],
+    param: PubsubIO.WriteParam = PubsubIO.WriteParam()
+  ): (SCollection[T], String) => ClosedTap[_] =
+    (sc, out) => sc.write(fn(out))(param)
+
+  val saveAsPubSub: (SCollection[String], String) => ClosedTap[_] = writeFn(PubsubIO.string(_))
+  val saveAsPubSubWithAttributes
+    : (SCollection[(String, Map[String, String])], String) => ClosedTap[_] = writeFn(
+    PubsubIO.withAttributes[String](_)
+  )
+
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+    testJobTest(xs)(PubsubIO.string(_))(readFn(PubsubIO.string(_), PubsubIO.Subscription))(
+      saveAsPubSub
+    )
   }
 
   it should "work with topic" in {
     val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO(_))(_.pubsubTopic(_))(_.saveAsPubsub(_))
+    testJobTest(xs)(PubsubIO.string(_))(readFn(PubsubIO.string(_), PubsubIO.Topic))(saveAsPubSub)
   }
 
   it should "work with subscription and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubSubscriptionWithAttributes(_))(
-      _.saveAsPubsubWithAttributes[String](_)
-    )
+    testJobTest(xs)(PubsubIO.withAttributes[String](_))(
+      readFn(PubsubIO.withAttributes(_), PubsubIO.Subscription)
+    )(saveAsPubSubWithAttributes)
   }
 
   it should "work with topic and attributes" in {
     val xs = (1 to 100).map(x => (x.toString, Map.empty[String, String]))
-    val io = (s: String) => PubsubIO[(String, Map[String, String])](s)
-    testJobTest(xs)(io)(_.pubsubTopicWithAttributes(_))(_.saveAsPubsubWithAttributes[String](_))
-  }
-
-  it should "#2582: not throw an ClassCastException when created" in {
-    PubsubIO[String]("String IO")
-    PubsubIO[com.spotify.scio.avro.Account]("SpecificRecordBase IO")
-    PubsubIO[Message]("Message IO")
-    PubsubIO[beam.PubsubMessage]("Message IO")
-  }
-
-  it should "support deprecated readAvro" in {
-    val xs = (1 to 100).map(x => new Account(x, "", "", x.toDouble, AccountStatus.Active))
-    testJobTest(xs)(PubsubIO.readAvro[Account](_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
-  }
-
-  it should "support deprecated readString" in {
-    val xs = (1 to 100).map(_.toString)
-    testJobTest(xs)(PubsubIO.readString(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
-  }
-
-  it should "support deprecated readProto" in {
-    val xs = (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
-    testJobTest(xs)(PubsubIO.readProto(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
-  }
-
-  it should "support deprecated readCoder" in {
-    val xs = 1 to 100
-    testJobTest(xs)(PubsubIO.readCoder(_))(_.pubsubSubscription(_))(_.saveAsPubsub(_))
+    testJobTest(xs)(PubsubIO.withAttributes[String](_))(
+      readFn(PubsubIO.withAttributes(_), PubsubIO.Topic)
+    )(saveAsPubSubWithAttributes)
   }
 
   def testPubsubJob(xs: String*): Unit =
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
-      .input(PubsubIO[String]("in"), Seq("a", "b", "c"))
-      .output(PubsubIO[String]("out"))(coll => coll should containInAnyOrder(xs))
+      .input(PubsubIO.string("in"), Seq("a", "b", "c"))
+      .output(PubsubIO.string("out"))(coll => coll should containInAnyOrder(xs))
       .run()
 
   it should "pass correct PubsubIO" in {
@@ -102,10 +92,10 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
     JobTest[PubsubJob.type]
       .args("--input=in", "--output=out")
       .inputStream(
-        PubsubIO[String]("in"),
+        PubsubIO.string("in"),
         testStreamOf[String].addElements("a", "b", "c").advanceWatermarkToInfinity()
       )
-      .output(PubsubIO[String]("out"))(coll => coll should containInAnyOrder(xs))
+      .output(PubsubIO.string("out"))(coll => coll should containInAnyOrder(xs))
       .run()
 
   it should "pass correct PubsubIO with TestStream input" in {
@@ -118,16 +108,15 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
   }
 
   def testPubsubWithAttributesJob(timestampAttribute: Map[String, String], xs: String*): Unit = {
-    type M = Map[String, String]
     val m = Map("a" -> "1", "b" -> "2", "c" -> "3") ++ timestampAttribute
     JobTest[PubsubWithAttributesJob.type]
       .args("--input=in", "--output=out")
       .input(
-        PubsubIO[(String, M)]("in", null, PubsubWithAttributesJob.timestampAttribute),
+        PubsubIO.withAttributes[String]("in", null, PubsubWithAttributesJob.timestampAttribute),
         Seq("a", "b", "c").map((_, m))
       )
       .output(
-        PubsubIO[(String, M)]("out", null, PubsubWithAttributesJob.timestampAttribute)
+        PubsubIO.withAttributes[String]("out", null, PubsubWithAttributesJob.timestampAttribute)
       )(coll => coll should containInAnyOrder(xs.map((_, m))))
       .run()
   }
@@ -180,9 +169,9 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
 object PubsubJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubTopic[String](args("input"))
+    sc.read(PubsubIO.string(args("input")))(PubsubIO.ReadParam(PubsubIO.Topic))
       .map(_ + "X")
-      .saveAsPubsub(args("output"))
+      .write(PubsubIO.string(args("output")))(PubsubIO.WriteParam())
     sc.run()
     ()
   }
@@ -193,9 +182,13 @@ object PubsubWithAttributesJob {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.pubsubTopicWithAttributes[String](args("input"), timestampAttribute = timestampAttribute)
+    sc.read(
+      PubsubIO.withAttributes[String](args("input"), timestampAttribute = timestampAttribute)
+    )(PubsubIO.ReadParam(PubsubIO.Topic))
       .map(kv => (kv._1 + "X", kv._2))
-      .saveAsPubsubWithAttributes[String](args("output"), timestampAttribute = timestampAttribute)
+      .write(
+        PubsubIO.withAttributes[String](args("output"), timestampAttribute = timestampAttribute)
+      )(PubsubIO.WriteParam())
     sc.run()
     ()
   }
