@@ -39,7 +39,7 @@ object AnnoyExamples {
       ss2 += v2(i) * v2(i)
       i += 1
     }
-    (dp / math.sqrt(ss1 * ss2)).toFloat
+    (dp / math.sqrt((ss1 * ss2).toDouble)).toFloat
   }
 }
 

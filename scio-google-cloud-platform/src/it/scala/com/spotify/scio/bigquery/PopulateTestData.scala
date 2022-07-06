@@ -173,7 +173,7 @@ object PopulateTestData {
     val optional = (0 until 10).toList.map(newOptional)
     val repeated = (0 until 10).toList.map(newRepeated)
     val nested = (0 until 10).toList.map { i =>
-      val r = Record(i, s"s$i")
+      val r = Record(i.toLong, s"s$i")
       Nested(r, Some(r), List(r))
     }
 
@@ -192,12 +192,12 @@ object PopulateTestData {
     val dt = t.toDateTime(DateTimeZone.UTC)
     Required(
       true,
-      i,
-      i,
+      i.toLong,
+      i.toDouble,
       BigDecimal(i),
       s"s$i",
       ByteString.copyFromUtf8(s"s$i"),
-      t.plus(Duration.millis(i)),
+      t.plus(Duration.millis(i.toLong)),
       dt.toLocalDate.plusDays(i),
       dt.toLocalTime.plusMillis(i),
       dt.toLocalDateTime.plusMillis(i)
@@ -209,12 +209,12 @@ object PopulateTestData {
     val dt = t.toDateTime(DateTimeZone.UTC)
     Optional(
       Some(true),
-      Some(i),
-      Some(i),
+      Some(i.toLong),
+      Some(i.toDouble),
       Some(BigDecimal(i)),
       Some(s"s$i"),
       Some(ByteString.copyFromUtf8(s"s$i")),
-      Some(t.plus(Duration.millis(i))),
+      Some(t.plus(Duration.millis(i.toLong))),
       Some(dt.toLocalDate.plusDays(i)),
       Some(dt.toLocalTime.plusMillis(i)),
       Some(dt.toLocalDateTime.plusMillis(i))
@@ -226,12 +226,12 @@ object PopulateTestData {
     val dt = t.toDateTime(DateTimeZone.UTC)
     Repeated(
       List(true),
-      List(i),
-      List(i),
+      List(i.toLong),
+      List(i.toDouble),
       List(BigDecimal(i)),
       List(s"s$i"),
       List(ByteString.copyFromUtf8(s"s$i")),
-      List(t.plus(Duration.millis(i))),
+      List(t.plus(Duration.millis(i.toLong))),
       List(dt.toLocalDate.plusDays(i)),
       List(dt.toLocalTime.plusMillis(i)),
       List(dt.toLocalDateTime.plusMillis(i))

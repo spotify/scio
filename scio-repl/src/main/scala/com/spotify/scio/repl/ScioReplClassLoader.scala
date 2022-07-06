@@ -35,6 +35,7 @@ object ScioReplClassLoader {
             MethodType.methodType(classOf[ClassLoader])
           )
           .invoke()
+          .asInstanceOf[ClassLoader]
       } catch { case _: Throwable => null }
     }
   }

@@ -50,13 +50,13 @@ object JdbcShardedSelectJob {
 class JdbcShardedSelectTest extends PipelineSpec {
 
   it should "pass correct sharded JDBC read" in {
-    val args = Array(
+    val args = Seq(
       "--cloudSqlUsername=john",
       "--cloudSqlPassword=secret",
       "--cloudSqlDb=mydb",
       "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
     )
-    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args.toArray)
     val readOpts = JdbcShardedSelectJob.getShardedReadOptions(opts)
 
     JobTest[JdbcShardedSelectJob.type]

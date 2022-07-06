@@ -24,6 +24,8 @@ import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import com.twitter.chill.ClosureCleaner
 import org.joda.time.Instant
 
+import scala.collection.compat._ // scalafix:ok
+
 private[scio] object FunctionsWithWindowedValue {
   def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] =
     new NamedDoFn[T, T] {
@@ -53,7 +55,7 @@ private[scio] object FunctionsWithWindowedValue {
         window: BoundedWindow
       ): Unit = {
         val wv = WindowedValue(element, timestamp, window, pane)
-        val i = g(wv).toIterator
+        val i = g(wv).iterator
         while (i.hasNext) {
           val v = i.next()
           outputReceiver.outputWithTimestamp(v.value, v.timestamp)

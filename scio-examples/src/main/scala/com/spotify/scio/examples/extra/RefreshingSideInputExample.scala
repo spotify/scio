@@ -109,7 +109,7 @@ object RefreshingSideInputExample {
   }
 
   private def toLotteryTicket(message: String): Option[LotteryTicket] =
-    Try(LotteryTicket(message.split(",").map(_.toInt))) match {
+    Try(LotteryTicket(message.split(",").map(_.toInt).toSeq)) match {
       case Success(s) if s.numbers.size == ticketSize => Some(s)
       case _ =>
         logger.error(s"Malformed message: $message")

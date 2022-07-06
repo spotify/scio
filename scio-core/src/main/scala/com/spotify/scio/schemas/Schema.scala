@@ -139,7 +139,7 @@ object LogicalType {
     }
   }
 
-  def unapply[T](logicalType: LogicalType[T]): Option[BSchema.FieldType] =
+  def unapply[T](logicalType: LogicalType[T]): Some[BSchema.FieldType] =
     Some(logicalType.underlying)
 }
 

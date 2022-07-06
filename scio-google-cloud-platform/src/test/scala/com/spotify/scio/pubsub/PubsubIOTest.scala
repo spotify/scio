@@ -24,7 +24,6 @@ import com.spotify.scio._
 import com.spotify.scio.avro.{Account, AccountStatus}
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
-import com.spotify.scio.pubsub._
 import com.spotify.scio.pubsub.coders._
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.joda.time.Instant

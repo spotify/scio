@@ -21,6 +21,8 @@ import com.spotify.scio.extra.Collections._
 import org.scalacheck._
 import org.scalatest._
 
+import scala.collection.compat._ // scalafix:ok
+
 class CollectionsSpec extends PropertySpec {
   val posInts: Gen[Int] = Gen.posNum[Int]
   val intLists: Gen[List[Int]] = Arbitrary.arbitrary[List[Int]]
@@ -35,13 +37,8 @@ class CollectionsSpec extends PropertySpec {
 
       verify(xs.top(num), maxExpected)
       verify(xs.top(num)(Ordering[Int].reverse), minExpected)
-      verify(xs.toArray.top(num), maxExpected)
-      verify(xs.toBuffer.top(num), maxExpected)
-      verify(xs.toIndexedSeq.top(num), maxExpected)
-      verify(xs.top(num), maxExpected)
-      verify(xs.top(num), maxExpected)
-      verify(xs.toStream.top(num), maxExpected)
-      verify(xs.toVector.top(num), maxExpected)
+      verify(xs.to(Array).top(num), maxExpected)
+      verify(xs.to(Iterable).top(num), maxExpected)
     }
   }
 
@@ -61,12 +58,8 @@ class CollectionsSpec extends PropertySpec {
         actual.iterator.map { case (k, v) => k -> v.toList.sorted }.toMap shouldBe expected
       verify(xs.topByKey(num), maxExpected)
       verify(xs.topByKey(num)(Ordering[Int].reverse), minExpected)
-      verify(xs.toArray.topByKey(num), maxExpected)
-      verify(xs.toIndexedSeq.topByKey(num), maxExpected)
-      verify(xs.topByKey(num), maxExpected)
-      verify(xs.topByKey(num), maxExpected)
-      verify(xs.toStream.topByKey(num), maxExpected)
-      verify(xs.toVector.topByKey(num), maxExpected)
+      verify(xs.to(Array).topByKey(num), maxExpected)
+      verify(xs.to(Iterable).topByKey(num), maxExpected)
     }
   }
 }

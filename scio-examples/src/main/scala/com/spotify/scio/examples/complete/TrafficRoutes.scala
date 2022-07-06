@@ -55,8 +55,8 @@ object TrafficRoutes {
 
     // arguments
     val input = args.getOrElse("input", ExampleData.TRAFFIC)
-    val windowDuration = args.getOrElse("windowDuration", "3").toInt
-    val windowSlideEvery = args.getOrElse("windowSlideEvery", "1").toInt
+    val windowDuration = args.long("windowDuration", 3)
+    val windowSlideEvery = args.long("windowSlideEvery", 1)
 
     val sc = ScioContext(opts)
 

@@ -70,11 +70,11 @@ object LeaderBoard {
         .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
     // Duration in minutes over which to calculate team scores, defaults to 1 hour
     val teamWindowDuration =
-      Duration.standardMinutes(args.int("teamWindowDuration", 60))
+      Duration.standardMinutes(args.long("teamWindowDuration", 60))
     // Data that comes in from our streaming pipeline after this duration isn't considered in our
     // processing. Measured in minutes, defaults to 2 hours
     val allowedLateness =
-      Duration.standardMinutes(args.int("allowedLateness", 120))
+      Duration.standardMinutes(args.long("allowedLateness", 120))
 
     // Read in streaming data from PubSub and parse each row as `GameActionInfo` events
     val gameEvents = sc

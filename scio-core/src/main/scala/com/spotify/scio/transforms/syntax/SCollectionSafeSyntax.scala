@@ -24,6 +24,8 @@ import org.apache.beam.sdk.transforms.DoFn.{Element, MultiOutputReceiver, Proces
 import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
+import scala.collection.compat._ // scalafix:ok
+
 trait SCollectionSafeSyntax {
 
   /**
@@ -54,7 +56,7 @@ trait SCollectionSafeSyntax {
         ): Unit = {
           val i =
             try {
-              g(element).toIterator
+              g(element).iterator
             } catch {
               case e: Throwable =>
                 multiOutputReceiver.get[(T, Throwable)](errorTag).output((element, e))

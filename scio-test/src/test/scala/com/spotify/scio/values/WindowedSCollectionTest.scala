@@ -24,7 +24,7 @@ class WindowedSCollectionTest extends PipelineSpec {
   "WindowedSCollection" should "support filter()" in {
     runWithContext { sc =>
       val p =
-        sc.parallelizeTimestamped(Seq("a", "b", "c", "d"), Seq(1, 2, 3, 4).map(new Instant(_)))
+        sc.parallelizeTimestamped(Seq("a", "b", "c", "d"), Seq(1L, 2L, 3L, 4L).map(new Instant(_)))
       val r = p.toWindowed
         .filter(v => v.timestamp.getMillis % 2 == 0)
         .toSCollection
@@ -37,7 +37,7 @@ class WindowedSCollectionTest extends PipelineSpec {
   it should "support flatMap()" in {
     runWithContext { sc =>
       val p =
-        sc.parallelizeTimestamped(Seq("a", "b"), Seq(1, 2).map(new Instant(_)))
+        sc.parallelizeTimestamped(Seq("a", "b"), Seq(1L, 2L).map(new Instant(_)))
       val r = p.toWindowed
         .flatMap(v => Seq(v.copy(v.value + "1"), v.copy(v.value + "2")))
         .toSCollection
@@ -50,7 +50,7 @@ class WindowedSCollectionTest extends PipelineSpec {
   it should "support keyBy()" in {
     runWithContext { sc =>
       val p =
-        sc.parallelizeTimestamped(Seq("a", "b"), Seq(1, 2).map(new Instant(_)))
+        sc.parallelizeTimestamped(Seq("a", "b"), Seq(1L, 2L).map(new Instant(_)))
       val r =
         p.toWindowed.keyBy(v => v.value + v.timestamp.getMillis).toSCollection
       r should containInAnyOrder(Seq(("a1", "a"), ("b2", "b")))
@@ -60,7 +60,7 @@ class WindowedSCollectionTest extends PipelineSpec {
   it should "support map()" in {
     runWithContext { sc =>
       val p =
-        sc.parallelizeTimestamped(Seq("a", "b"), Seq(1, 2).map(new Instant(_)))
+        sc.parallelizeTimestamped(Seq("a", "b"), Seq(1L, 2L).map(new Instant(_)))
       val r = p.toWindowed
         .map(v => v.copy(v.value + v.timestamp.getMillis))
         .toSCollection

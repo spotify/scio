@@ -341,7 +341,7 @@ object ScioContext {
         }
     } yield s"--$str($$|=)".r
 
-    val patterns = registeredPatterns + "--help($$|=)".r
+    val patterns = registeredPatterns.toSet + "--help($$|=)".r
 
     // Split cmdlineArgs into 2 parts, optArgs for PipelineOptions and appArgs for Args
     val (optArgs, appArgs) =

@@ -22,6 +22,7 @@ import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import de.heikoseeberger.sbtheader.CommentCreator
+import _root_.io.github.davidgregory084.DevMode
 
 ThisBuild / turbo := true
 
@@ -130,6 +131,36 @@ val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
 
+ThisBuild / tpolecatDefaultOptionsMode := DevMode
+ThisBuild / tpolecatDevModeOptions ~= { opts =>
+  val excludes = Set(
+    ScalacOptions.lintPackageObjectClasses,
+    ScalacOptions.privateWarnDeadCode,
+    ScalacOptions.privateWarnValueDiscard,
+    ScalacOptions.warnDeadCode,
+    ScalacOptions.warnValueDiscard
+  )
+
+  val extras = Set(
+    Scalac.delambdafyInlineOption,
+    Scalac.macroAnnotationsOption,
+    Scalac.macroSettingsOption,
+    Scalac.maxClassfileName,
+    Scalac.privateBackendParallelism,
+    Scalac.privateWarnMacrosOption,
+    Scalac.release8,
+    Scalac.targetOption,
+    Scalac.warnConfOption,
+    Scalac.warnMacrosOption
+  )
+
+  opts.filterNot(excludes).union(extras)
+}
+
+ThisBuild / doc / tpolecatDevModeOptions ++= Set(
+  Scalac.docNoJavaCommentOption
+)
+
 ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
 val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
 Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
@@ -181,8 +212,9 @@ val commonSettings = Def
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.16", scalaVersion.value),
-    scalacOptions ++= Scalac.commonsOptions.value,
-    Compile / doc / scalacOptions := Scalac.docOptions.value,
+    // this setting is not derived in sbt-tpolecat
+    // https://github.com/typelevel/sbt-tpolecat/issues/36
+    inTask(doc)(TpolecatPlugin.projectSettings),
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     // protobuf-lite is an older subset of protobuf-java and causes issues
@@ -955,6 +987,10 @@ lazy val `scio-examples`: Project = project
   .settings(
     publish / skip := true,
     mimaPreviousArtifacts := Set.empty,
+    tpolecatExcludeOptions ++= Set(
+      ScalacOptions.warnUnusedLocals,
+      ScalacOptions.privateWarnUnusedLocals
+    ),
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
@@ -1026,6 +1062,7 @@ lazy val `scio-examples`: Project = project
     `scio-redis`,
     `scio-parquet`
   )
+  .disablePlugins(ScalafixPlugin)
 
 lazy val `scio-repl`: Project = project
   .in(file("scio-repl"))
@@ -1034,7 +1071,8 @@ lazy val `scio-repl`: Project = project
   .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
-    scalacOptions := Scalac.replOptions.value,
+    // drop repl compatibility with java 8
+    tpolecatDevModeOptions ~= { _.filterNot(_ == Scalac.release8) },
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,

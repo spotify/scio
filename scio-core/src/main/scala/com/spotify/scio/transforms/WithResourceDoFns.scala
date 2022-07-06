@@ -20,6 +20,8 @@ import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 
+import scala.collection.compat._ // scalafix:ok
+
 class CollectFnWithResource[T, U, R] private[transforms] (
   resource: => R,
   resourceType: ResourceType,
@@ -72,7 +74,7 @@ class FlatMapFnWithResource[T, U, R] private[transforms] (
     @Element element: T,
     outputReceiver: OutputReceiver[U]
   ): Unit = {
-    val i = g(getResource, element).toIterator
+    val i = g(getResource, element).iterator
     while (i.hasNext) outputReceiver.output(i.next())
   }
 }

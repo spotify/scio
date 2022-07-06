@@ -49,7 +49,7 @@ final private case class TestWrapper[T: Eq](get: T) {
   override def equals(other: Any): Boolean =
     other match {
       case TestWrapper(o: T @unchecked) => Eq[T].eqv(get, o)
-      case o                            => get.equals(o)
+      case o                            => get == o
     }
 }
 

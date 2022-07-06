@@ -28,6 +28,7 @@ import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{PCollection, TupleTag, TupleTagList}
 
 import scala.jdk.CollectionConverters._
+import scala.collection.compat._ // scalafix:ok
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 
@@ -125,7 +126,7 @@ class SCollectionWithSideInput[T] private[values] (
       .withOutputTags(_mainTag.tupleTag, sideTags)
 
     val pCollectionWrapper = this.internal.apply(name, transform)
-    pCollectionWrapper.getAll.asScala
+    pCollectionWrapper.getAll.asScala.view
       .mapValues(
         context
           .wrap(_)

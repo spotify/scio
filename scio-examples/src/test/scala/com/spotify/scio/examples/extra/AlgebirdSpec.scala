@@ -218,7 +218,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   // =======================================================================
 
   val hllBits = 8
-  val hllError: Double = 1.04 / math.sqrt(math.pow(2, hllBits)) // 0.065
+  val hllError: Double = 1.04 / math.sqrt(math.pow(2, hllBits.toDouble)) // 0.065
   val hllInput: Gen[List[SColl[String]]] = Gen.listOfN(100, sCollOf(Gen.alphaStr))
 
   property("sum with HyperLogLog") {
@@ -230,7 +230,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
           .sum(m)
           .approximateSize
           // approximate bounds should contain exact distinct count
-          .boundsContain(xs.internal.toSet.size)
+          .boundsContain(xs.internal.toSet.size.toLong)
         !pass
       }.toDouble / xss.size
       e should be < hllError
@@ -244,7 +244,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
           .aggregate(HyperLogLogAggregator(hllBits).composePrepare(_.getBytes))
           .approximateSize
           // approximate bounds should contain exact distinct count
-          .boundsContain(xs.internal.toSet.size)
+          .boundsContain(xs.internal.toSet.size.toLong)
         !pass
       }.toDouble / xss.size
       e should be < hllError
@@ -286,7 +286,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
   property("sum with QTree") {
     forAll(posInts) { xs =>
       val qt = xs
-        .map(QTree(_))
+        .map(x => QTree(x.toLong))
         .sum(new QTreeSemigroup[Long](10))
       val l = xs.internal.length
       val bounds = Seq(0.25, 0.50, 0.75).map(qt.quantileBounds)
@@ -306,7 +306,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
         Seq(0.25, 0.50, 0.75).map(p => xs.aggregate(QTreeAggregator(p, 10)))
       val expected = Seq(l / 4, l / 2, l / 4 * 3).map(s)
       // approximate bounds should contain exact 25, 50 and 75 percentile
-      bounds.zip(expected).forall { case (b, x) => b.contains(x) } shouldBe true
+      bounds.zip(expected).forall { case (b, x) => b.contains(x.toDouble) } shouldBe true
     }
   }
 
@@ -322,7 +322,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
       val expected = xs.internal.groupBy(identity).mapValues(_.size)
       expected.forall { case (item, freq) =>
         // approximate bounds of each item should contain exact frequency
-        cms.frequency(item).boundsContain(freq)
+        cms.frequency(item).boundsContain(freq.toLong)
       } shouldBe true
     }
   }
@@ -334,7 +334,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
       val expected = xs.internal.groupBy(identity).mapValues(_.size)
       expected.forall { case (item, freq) =>
         // approximate bounds of each item should contain exact frequency
-        cms.frequency(item).boundsContain(freq)
+        cms.frequency(item).boundsContain(freq.toLong)
       } shouldBe true
     }
   }
@@ -356,7 +356,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
         .map(_._1)
         .reduce(_ * decayFactor + _) / normalization
       val actual = xs
-        .map { case (v, t) => DecayedValue.build(v, t, halfLife) }
+        .map { case (v, t) => DecayedValue.build(v, t.toDouble, halfLife) }
         .sum(DecayedValue.monoidWithEpsilon(1e-3))
         .average(halfLife)
       // approximate decayed value should be close to exact value
@@ -376,7 +376,7 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
         .aggregate(
           Aggregator
             .fromMonoid(DecayedValue.monoidWithEpsilon(1e-3))
-            .composePrepare { case (v, t) => DecayedValue.build(v, t, halfLife) }
+            .composePrepare { case (v, t) => DecayedValue.build(v, t.toDouble, halfLife) }
         )
         .average(halfLife)
       // approximate decayed value should be close to exact value

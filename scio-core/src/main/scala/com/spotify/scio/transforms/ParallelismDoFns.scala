@@ -20,6 +20,8 @@ import com.spotify.scio.util.ParallelLimitedFn
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn
 
+import scala.collection.compat._ // scalafix:ok
+
 class ParallelCollectFn[T, U](parallelism: Int)(pfn: PartialFunction[T, U])
     extends ParallelLimitedFn[T, U](parallelism) {
   val isDefined: T => Boolean = ClosureCleaner.clean(pfn.isDefinedAt(_)) // defeat closure
@@ -50,7 +52,7 @@ class ParallelFlatMapFn[T, U](parallelism: Int)(f: T => TraversableOnce[U])
     extends ParallelLimitedFn[T, U](parallelism: Int) {
   val g: T => TraversableOnce[U] = ClosureCleaner.clean(f) // defeat closure
   def parallelProcessElement(c: DoFn[T, U]#ProcessContext): Unit = {
-    val i = g(c.element()).toIterator
+    val i = g(c.element()).iterator
     while (i.hasNext) c.output(i.next())
   }
 }

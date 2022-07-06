@@ -40,7 +40,7 @@ import scala.util.Try
 final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = Nothing
   override type WriteP = BinaryIO.WriteParam
-  final override val tapT: TapT.Aux[Array[Byte], Nothing] = EmptyTapOf[Array[Byte]]
+  override val tapT: TapT.Aux[Array[Byte], Nothing] = EmptyTapOf[Array[Byte]]
 
   override def testId: String = s"BinaryIO($path)"
 
