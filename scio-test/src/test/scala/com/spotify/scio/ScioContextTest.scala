@@ -261,12 +261,13 @@ class ScioContextTest extends PipelineSpec {
     noException shouldBe thrownBy(sc.run())
   }
 
-  "RunnerContext" should "include ~/.m2, ~/.ivy2, and ~/.cache/coursier dirs, but not other env dirs" in {
+  "RunnerContext" should "include ~/.m2, ~/.ivy2, ~/.cache/coursier, and ~/.sbt/boot/ dirs, but not other env dirs" in {
     val userDir = sys.props("user.home").replace("\\", "/")
     val paths1 = List(
       s"$userDir/.m2/repository/com/spotify/foo/0.0.1/foo-0.0.1.jar",
       s"$userDir/.ivy2/local/com/spotify/foo/0.0.1/jars/foo-0.0.1.jar",
-      s"$userDir/.cache/coursier/v1/https/repo1.maven.org/maven2/com/spotify/foo/0.0.1/foo-0.0.1.jar"
+      s"$userDir/.cache/coursier/v1/https/repo1.maven.org/maven2/com/spotify/foo/0.0.1/foo-0.0.1.jar",
+      s"$userDir/.sbt/boot/scala-2.12.14/lib/foo.jar"
     )
     val paths2 = paths1 :+ s"$userDir/.env/a/b/c/foo-0.0.1.jar"
 
