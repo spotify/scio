@@ -159,7 +159,6 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
 }
 
 ThisBuild / doc / tpolecatDevModeOptions ++= Set(
-  Scalac.docSkipPackageOption,
   Scalac.docNoJavaCommentOption
 )
 

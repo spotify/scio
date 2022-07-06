@@ -69,9 +69,4 @@ object Scalac {
     "-no-java-comments" :: Nil,
     version => version.isBetween(V2_12_0, V2_13_0)
   )
-
-  val docSkipPackageOption = new ScalacOption(
-    "-skip-packages" :: "org.apache" :: Nil
-  )
-
 }
