@@ -141,7 +141,7 @@ private object RunnerContext {
   private[scio] def isNonRepositoryEnvDir(s: String): Boolean = {
     val sanitizedUserHome: String = sanitizePath(sys.props("user.home"))
     s.matches(s"${sanitizedUserHome}/\\..+/.+") && !s.matches(
-      s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/.*/lib)/.+"
+      s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/[^/]*/lib)/.+"
     )
   }
 
