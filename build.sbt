@@ -40,6 +40,7 @@ val commonsCompressVersion = "1.21"
 val datastoreV1ProtoClientVersion = "2.2.10"
 val flinkVersion = "1.15.0"
 val googleClientsVersion = "1.32.1"
+val googleCloudDatastoreVersion = "0.93.10"
 val googleOauthClientVersion = "1.33.3"
 val guavaVersion = "31.1-jre"
 val hadoopVersion = "2.10.1"
@@ -68,7 +69,6 @@ val gaxVersion = "2.16.0"
 val googleApiCommonVersion = "2.1.5"
 val googleAuthVersion = "1.6.0"
 val googleCloudBigTableVersion = "2.6.2"
-val googleCloudDatastore = "0.95.0"
 val googleCloudMonitoringVersion = "3.2.9"
 val googleCloudSpannerVersion = "6.23.3"
 val googleCloudVersion = "2.6.0"
@@ -950,7 +950,7 @@ lazy val `scio-examples`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastore,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.cloud.sql" % "mysql-socket-factory" % "1.6.1",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
@@ -1305,7 +1305,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastore,
+  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,
   "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
