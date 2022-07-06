@@ -24,6 +24,7 @@ import org.apache.beam.sdk.transforms.windowing.PaneInfo
 import org.apache.beam.sdk.values.{PCollectionView, TupleTag}
 import org.joda.time.Instant
 
+import scala.collection.compat._ // scalafix:ok
 import scala.collection.mutable.{Buffer => MBuffer}
 
 class RandomSamplerTest extends PipelineSpec {
@@ -115,11 +116,13 @@ class RandomSamplerTest extends PipelineSpec {
 
     val actual = test(sampler, keyedPopulation)
       .groupBy(_._1)
+      .view
       .mapValues { vs =>
         val a = vs.map(_._2).toArray
         scala.util.Sorting.quickSort(a)
         a
       }
+      .toMap
     val k1 = medianKSD(gaps(expected("a")), gaps(actual("a")))
     val k2 = medianKSD(gaps(expected("b")), gaps(actual("b")))
     (k1, k2)

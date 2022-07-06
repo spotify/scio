@@ -28,7 +28,7 @@ import com.google.api.client.http.{
   HttpResponseException,
   HttpStatusCodes
 }
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.rpc.FixedHeaderProvider
 import com.google.api.services.bigquery.Bigquery
@@ -272,7 +272,7 @@ object BigQuery {
           }
         }
       )
-      new Bigquery.Builder(new NetHttpTransport, new JacksonFactory, requestInitializer)
+      new Bigquery.Builder(new NetHttpTransport, GsonFactory.getDefaultInstance, requestInitializer)
         .setApplicationName("scio")
         .build()
     }

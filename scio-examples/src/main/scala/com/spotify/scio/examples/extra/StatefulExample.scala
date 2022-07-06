@@ -36,7 +36,7 @@ object StatefulExample {
 
   class StatefulDoFn extends DoFnT {
     // Declare mutable state
-    @StateId("count") private val count = StateSpecs.value[JInt]() // scalafix:ok
+    @StateId("count") private val count = StateSpecs.value[JInt]()
 
     @ProcessElement
     def processElement(

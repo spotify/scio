@@ -33,7 +33,7 @@ class FileFormatTest extends PipelineSpec {
   private val protobufs = (1 to 100)
     .map(x =>
       com.google.protobuf.Timestamp.newBuilder
-        .setSeconds(x * 1000)
+        .setSeconds(x * 1000L)
         .setNanos(x)
         .build
     )

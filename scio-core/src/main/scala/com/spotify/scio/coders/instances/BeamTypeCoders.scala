@@ -18,10 +18,11 @@
 package com.spotify.scio.coders.instances
 
 import com.google.api.client.json.GenericJson
-import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.client.json.JsonObjectParser
+import com.google.api.client.json.gson.GsonFactory
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
+
 import java.io.StringReader
 import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.io.FileIO.ReadableFile
@@ -30,6 +31,7 @@ import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.beam.sdk.values.{KV, Row}
+
 import scala.reflect.ClassTag
 
 trait BeamTypeCoders {
@@ -58,5 +60,5 @@ trait BeamTypeCoders {
 }
 
 private[coders] object BeamTypeCoders extends BeamTypeCoders {
-  private lazy val DefaultJsonObjectParser = new JsonObjectParser(new JacksonFactory)
+  private lazy val DefaultJsonObjectParser = new JsonObjectParser(GsonFactory.getDefaultInstance)
 }

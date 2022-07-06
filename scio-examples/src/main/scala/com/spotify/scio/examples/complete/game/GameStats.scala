@@ -66,11 +66,11 @@ object GameStats {
         .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
         .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
     // Duration in minutes for windowing of user and team score sums, defaults to 1 hour
-    val fixedWindowDuration = args.int("fixedWindowDuration", 60)
+    val fixedWindowDuration = args.long("fixedWindowDuration", 60)
     // Duration in minutes for length of inactivity after which to start a session, defaults to 5m
-    val sessionGap = args.int("sessionGap", 5)
+    val sessionGap = args.long("sessionGap", 5)
     // Duration in minutes for windowing of user activities, defaults to 30 min
-    val userActivityWindowDuration = args.int("userActivityWindowDuration", 30)
+    val userActivityWindowDuration = args.long("userActivityWindowDuration", 30)
 
     // Read streaming events from PubSub topic, using ms of events as their ID
     val rawEvents = sc

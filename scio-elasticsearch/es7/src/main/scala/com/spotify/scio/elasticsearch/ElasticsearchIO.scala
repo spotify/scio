@@ -45,7 +45,7 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
     val shards = if (params.numOfShards >= 0) {
       params.numOfShards
     } else {
-      esOptions.nodes.size
+      esOptions.nodes.size.toLong
     }
 
     val write = beam.ElasticsearchIO.Write
@@ -81,7 +81,7 @@ object ElasticsearchIO {
   object WriteParam {
     private[elasticsearch] val DefaultErrorFn: BulkExecutionException => Unit = m => throw m
     private[elasticsearch] val DefaultFlushInterval = Duration.standardSeconds(1)
-    private[elasticsearch] val DefaultNumShards = -1
+    private[elasticsearch] val DefaultNumShards = -1L
     private[elasticsearch] val DefaultMaxBulkRequestSize = 3000
     private[elasticsearch] val DefaultMaxBulkRequestBytes = 5L * 1024L * 1024L
     private[elasticsearch] val DefaultMaxRetries = 3

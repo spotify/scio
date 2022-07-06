@@ -196,7 +196,7 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
     override def outputWithTimestamp[T](tag: TupleTag[T], output: T, timestamp: Instant): Unit = ???
 
     // test input
-    override def timestamp(): Instant = new Instant(nextElement)
+    override def timestamp(): Instant = new Instant(nextElement.toLong)
     override def element(): Int = nextElement
     override def output(output: String): Unit = outputBuffer.append(output)
   }

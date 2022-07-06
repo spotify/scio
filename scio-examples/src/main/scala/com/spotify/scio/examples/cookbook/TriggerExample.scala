@@ -60,7 +60,7 @@ object TriggerExample {
     // arguments
     val input = args.getOrElse("input", ExampleData.TRAFFIC)
     val windowDuration =
-      Duration.standardMinutes(args.int("windowDuration", 30))
+      Duration.standardMinutes(args.long("windowDuration", 30))
 
     val sc = ScioContext(opts)
 
@@ -183,7 +183,7 @@ object TriggerExample {
   def totalFlow(flowInfo: SCollection[(String, Int)], triggerType: String): SCollection[Record] =
     flowInfo.groupByKey.toWindowed.map { wv =>
       val (key, values) = wv.value
-      var sum = 0
+      var sum = 0L
       var numberOfRecords = 0L
       values.foreach { v =>
         sum += v

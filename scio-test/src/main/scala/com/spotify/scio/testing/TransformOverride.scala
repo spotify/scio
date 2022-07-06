@@ -59,7 +59,6 @@ object TransformOverride {
   )
 
   private def typeValidation[A, B](failMsg: String, aIn: Class[A], bIn: Class[B]): Unit = {
-    import scala.language.existentials
     // get normal java types instead of primitives
     val (a, b) = (primitiveMapping.getOrElse(aIn, aIn), primitiveMapping.getOrElse(bIn, bIn))
     if (!a.isAssignableFrom(b))

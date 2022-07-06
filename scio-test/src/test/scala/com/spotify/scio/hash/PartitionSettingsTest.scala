@@ -29,7 +29,7 @@ class PartitionSettingsTest extends AnyFlatSpec with Matchers {
     val actualInsertions = (expectedInsertions / 1.1).toLong // to prevent filter saturation
     val settings = c.partitionSettings(expectedInsertions, fpp, maxBytes)
     val filters = (0 until settings.partitions).map { i =>
-      val part = Range.Long(i, actualInsertions, settings.partitions)
+      val part = Range.Long(i.toLong, actualInsertions, settings.partitions.toLong)
       c.create(part, settings.expectedInsertions, fpp)
     }
 

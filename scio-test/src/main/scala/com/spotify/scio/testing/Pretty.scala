@@ -26,6 +26,8 @@ import pprint.PPrinter
 import com.google.api.client.json.GenericJson
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 
+import scala.collection.compat._ // scalafix:ok
+
 @registerSysProps
 object PrettySysProps {
   val PrettyPrint: SysProp =
@@ -48,7 +50,7 @@ object Pretty {
         printer.defaultIndent
       )
     def render(tree: Tree): Str =
-      Str.join(renderer.rec(tree, 0, 0).iter.toIterable)
+      Str.join(renderer.rec(tree, 0, 0).iter.iterator.to(Iterable))
     Tree.Lazy { _ =>
       val fields =
         for {

@@ -165,7 +165,7 @@ object CassandraIT {
       i.toShort,
       i,
       i.toLong,
-      JBigDecimal.valueOf(i),
+      JBigDecimal.valueOf(i.toLong),
       i.toFloat,
       i.toDouble,
       i % 2 == 0,
@@ -176,7 +176,7 @@ object CassandraIT {
       u1,
       u2,
       s"varchar$i",
-      BigInteger.valueOf(i),
+      BigInteger.valueOf(i.toLong),
       List(s"list$i").asJava,
       Set(s"set$i").asJava,
       Map(s"key$i" -> i).asJava

@@ -28,6 +28,7 @@ final class registerSysProps extends StaticAnnotation {
 }
 
 private object registerSysPropsMacro {
+
   def impl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
 

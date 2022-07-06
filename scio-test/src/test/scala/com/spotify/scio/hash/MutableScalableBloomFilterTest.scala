@@ -23,7 +23,9 @@ import scala.util.Random
 
 class MutableScalableBloomFilterTest extends PipelineSpec {
   def compoundedErrorRate(fpProb: Double, tighteningRatio: Double, numFilters: Int): Double =
-    1 - (0 to numFilters).foldLeft(1.0)(_ * 1 - fpProb * math.pow(tighteningRatio, _))
+    1 - (0 to numFilters).foldLeft(1.0)((e, i) =>
+      e * 1 - fpProb * math.pow(tighteningRatio, i.toDouble)
+    )
 
   "A MutableScalableBloomFilter" should "not grow for repeated items" in {
     val sbf = MutableScalableBloomFilter[String](256, 0.01)
@@ -53,7 +55,7 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
   }
 
   it should "grow at the given growth rate" in {
-    val initialCapacity = 2
+    val initialCapacity = 2L
     val sbf = MutableScalableBloomFilter[String](initialCapacity, 0.001, 2, 1.0)
     assert(sbf.numFilters == 0)
 
@@ -85,7 +87,7 @@ class MutableScalableBloomFilterTest extends PipelineSpec {
   }
 
   it should "round-trip serialization" in {
-    val initialCapacity = 1000
+    val initialCapacity = 1000L
     val sbf = MutableScalableBloomFilter[String](initialCapacity)
     (0 until 100).foreach(i => sbf += ("item" + i))
 

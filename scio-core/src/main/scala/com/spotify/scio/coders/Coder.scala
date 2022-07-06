@@ -73,7 +73,7 @@ final private[scio] class Ref[T](val typeName: String, c: => Coder[T]) extends C
 
 private[scio] object Ref {
   def apply[T](t: String, c: => Coder[T]): Ref[T] = new Ref[T](t, c)
-  def unapply[T](c: Ref[T]): Option[(String, Coder[T])] = Option((c.typeName, c.value))
+  def unapply[T](c: Ref[T]): Some[(String, Coder[T])] = Some((c.typeName, c.value))
 }
 
 final case class RawBeam[T] private (beam: BCoder[T]) extends Coder[T] {
