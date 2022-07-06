@@ -32,9 +32,7 @@ import com.spotify.scio.bigquery.{
   TableRowJsonIO
 }
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._
-import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._

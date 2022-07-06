@@ -28,7 +28,7 @@ import com.spotify.scio.estimators.{
   ApproximateUniqueCounterByError
 }
 import com.spotify.scio.io._
-import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}

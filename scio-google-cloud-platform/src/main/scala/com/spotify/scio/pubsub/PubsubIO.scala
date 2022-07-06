@@ -33,7 +33,7 @@ import org.apache.beam.sdk.util.CoderUtils
 import org.joda.time.Instant
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.ClassTag
 
 sealed trait PubsubIO[T] extends ScioIO[T] {
   override type ReadP = PubsubIO.ReadParam
