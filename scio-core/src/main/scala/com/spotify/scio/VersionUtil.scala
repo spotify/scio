@@ -101,6 +101,10 @@ private[scio] object VersionUtil {
       Some(
         MessagePattern("0.10", "https://spotify.github.io/scio/migrations/v0.10.0-Migration-Guide")
       )
+    case (SemVer(0, minor, _, _), SemVer(0, 12, _, _)) if minor < 12 =>
+      Some(
+        MessagePattern("0.12", "https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide")
+      )
     case _ => None
   }
 
