@@ -273,7 +273,7 @@ object BigQueryTypedTable {
    * Creates a new instance of [[BigQueryTypedTable]] based on the supplied [[Format]].
    *
    * NOTE: LogicalType support when using `Format.GenericRecord` has some caveats: Reading: Bigquery
-   * types DATE, TIME, DATIME will be read as STRING Writting: Supports LogicalTypes only for DATE
+   * types DATE, TIME, DATIME will be read as STRING. Writing: Supports LogicalTypes only for DATE
    * and TIME. DATETIME is not yet supported. https://issuetracker.google.com/issues/140681683
    */
   def apply[F: Coder](table: Table, format: Format[F]): BigQueryTypedTable[F] =
