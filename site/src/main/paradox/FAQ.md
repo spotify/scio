@@ -278,7 +278,8 @@ object BQPartitionedJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    sc.pubsubSubscription[String]("projects/data-university/topics/data-university")
+
+    sc.read(PubsubIO.string("projects/data-university/topics/data-university"))(PubsubIO.ReadParam(PubsubIO.Subscription))
       .withFixedWindows(Duration.standardSeconds(30))
       // Convert to `TableRow`
       .map(myStringToTableRowConversion)
