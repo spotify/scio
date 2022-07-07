@@ -316,6 +316,7 @@ object StorageIT {
   @BigQueryType.fromStorage("data-integration-test:partition_a.table_%s", List("$LATEST"))
   class StorageLatest
 
+  // to compile locally, you must first run `gcloud config set project data-integration-test`
   @BigQueryType.fromStorage("partition_a.table_%s", List("$LATEST"))
   class StorageEnvProject
 
