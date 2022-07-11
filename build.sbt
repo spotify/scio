@@ -109,7 +109,7 @@ val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.2"
 val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.1.2"
-val magnolifyVersion = "0.4.8+10-0c6f9747-SNAPSHOT"
+val magnolifyVersion = "0.5.0"
 val metricsVersion = "3.2.6"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
@@ -219,7 +219,7 @@ val commonSettings = Def
     excludeDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
-    resolvers ++= Seq(Resolver.sonatypeRepo("public"), Resolver.sonatypeRepo("snapshots")),
+    resolvers += Resolver.sonatypeRepo("public"),
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
