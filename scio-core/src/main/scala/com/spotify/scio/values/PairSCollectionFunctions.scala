@@ -19,7 +19,7 @@ package com.spotify.scio.values
 
 import com.google.common.hash.Funnel
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.estimators.{
   ApproxDistinctCounter,
   ApproximateUniqueCounter,
@@ -59,14 +59,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
 
   private[scio] def toKV: SCollection[KV[K, V]] =
-    self.map(kv => KV.of(kv._1, kv._2))(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
+    self.map(kv => KV.of(kv._1, kv._2))
 
   private[values] def applyPerKey[UI: Coder, UO: Coder](
     t: PTransform[_ >: PCollection[KV[K, V]], PCollection[KV[K, UI]]]
   )(f: KV[K, UI] => (K, UO)): SCollection[(K, UO)] = {
     self.transform(
       _.withName("TupleToKv").toKV
-        .applyTransform(t)(Coder.raw(CoderMaterializer.kvCoder[K, UI](context)))
+        .applyTransform(t)
         .withName("KvToTuple")
         .map(f)
     )

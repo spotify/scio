@@ -20,8 +20,6 @@ package com.spotify.scio.io
 import java.io._
 import java.nio.ByteBuffer
 import java.util.UUID
-
-import com.google.api.client.util.Charsets
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.AvroUtils._
@@ -32,12 +30,13 @@ import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
-
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.options.ScioOptions
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.generic.GenericData
 import org.apache.avro.Schema
+
+import java.nio.charset.StandardCharsets
 
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: Coder](tap: Tap[T], expected: Set[T]): Unit = {
@@ -155,7 +154,7 @@ class TapTest extends TapSpec {
         val file = new File(dir, "part-%05d-%05d.%s".format(i, nFiles, ext))
         val os = new CompressorStreamFactory()
           .createCompressorOutputStream(cType, new FileOutputStream(file))
-        data(i).foreach(l => IOUtils.write(l + "\n", os, Charsets.UTF_8))
+        data(i).foreach(l => IOUtils.write(l + "\n", os, StandardCharsets.UTF_8))
         os.close()
       }
       verifyTap(TextTap(ScioUtil.addPartSuffix(dir.getPath, ext)), data.flatten.toSet)
@@ -165,9 +164,9 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf proto version 2" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     // use java protos otherwise we would have to pull in pb-scala
-    def mkProto(t: (String, Int)): SimplePBV2 =
+    def mkProto(t: (String, Long)): SimplePBV2 =
       SimplePBV2
         .newBuilder()
         .setPlays(t._2)
@@ -184,7 +183,7 @@ class TapTest extends TapSpec {
   }
 
   // use java protos otherwise we would have to pull in pb-scala
-  private def mkProto3(t: (String, Int)): SimplePBV3 =
+  private def mkProto3(t: (String, Long)): SimplePBV3 =
     SimplePBV3
       .newBuilder()
       .setPlays(t._2)
@@ -193,7 +192,7 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf proto version 3" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val t = runWithFileFuture {
       _.parallelize(data)
         .map(mkProto3)
@@ -206,7 +205,7 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf write with nullableCoders" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val actual = data.map(mkProto3)
     val t = runWithFileFuture { sc =>
       sc.optionsAs[ScioOptions].setNullableCoders(true)
@@ -225,7 +224,7 @@ class TapTest extends TapSpec {
 
   it should "support saveAsProtobuf read with nullableCoders" in {
     val dir = tmpDir
-    val data = Seq(("a", 1), ("b", 2), ("c", 3))
+    val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val actual = data.map(mkProto3)
     val t = runWithFileFuture {
       _.parallelize(actual)

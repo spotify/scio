@@ -25,6 +25,8 @@ import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StartBundle}
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
 
+import scala.annotation.nowarn
+
 private[scio] object RandomSampler {
 
   /** Default random number generator used by random samplers. */
@@ -43,6 +45,7 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
+  @nowarn("msg=parameter value c in method startBundle is never used")
   @StartBundle
   def startBundle(c: DoFn[T, T]#StartBundleContext): Unit = rng = init
 
@@ -133,6 +136,7 @@ abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, D
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
+  @nowarn("msg=parameter value c in method startBundle is never used")
   @StartBundle
   def startBundle(c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
     rngs = fractions.iterator.map { case (k, v) =>

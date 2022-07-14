@@ -27,10 +27,14 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction, dynamicDestinations}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
-import org.apache.beam.sdk.io.{Compression, FileBasedSink, FileSystems, TextIO => BTextIO}
+import org.apache.beam.sdk.io.{Compression, FileSystems, ShardNameTemplate, TextIO => BTextIO}
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
+import java.io.{BufferedInputStream, InputStream, SequenceInputStream}
+import java.nio.channels.Channels
+import java.nio.charset.StandardCharsets
+import java.util.Collections
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 import org.apache.beam.sdk.io.ShardNameTemplate
@@ -52,9 +56,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
   override protected def write(data: SCollection[String], params: WriteP): Tap[String] = {
     var transform = BTextIO.write()
       .withNumShards(params.numShards)
-      .withWritableByteChannelFactory(
-        FileBasedSink.CompressionType.fromCanonical(params.compression)
-      )
+      .withCompression(params.compression)
     transform = params.header.fold(transform)(transform.withHeader)
     transform = params.footer.fold(transform)(transform.withFooter)
     transform = Option(params.tempDirectory)
@@ -133,7 +135,7 @@ object TextIO {
     }
 
     val input = getDirectoryInputStream(path, wrapInputStream)
-    IOUtils.lineIterator(input, Charsets.UTF_8).asScala
+    IOUtils.lineIterator(input, StandardCharsets.UTF_8).asScala
   }
 
   private def getDirectoryInputStream(

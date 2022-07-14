@@ -564,7 +564,7 @@ class SparkeyTest extends PipelineSpec {
     val basePath = scioResult
       .tap(sparkeyMaterialized)
       .value
-      .next
+      .next()
       .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
@@ -596,7 +596,7 @@ class SparkeyTest extends PipelineSpec {
     val basePath = scioResult
       .tap(sparkeyMaterialized)
       .value
-      .next
+      .next()
       .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
@@ -627,7 +627,7 @@ class SparkeyTest extends PipelineSpec {
     val basePath = scioResult
       .tap(sparkeyMaterialized)
       .value
-      .next
+      .next()
       .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))
@@ -658,7 +658,7 @@ class SparkeyTest extends PipelineSpec {
     val basePath = scioResult
       .tap(sparkeyMaterialized)
       .value
-      .next
+      .next()
       .asInstanceOf[SparkeyUri]
       .basePath
     FileUtils.deleteDirectory(new File(basePath))

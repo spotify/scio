@@ -24,7 +24,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.estimators.{ApproxDistinctCounter, ApproximateUniqueCounter, ApproximateUniqueCounterByError}
 import com.spotify.scio.io._
-import com.spotify.scio.schemas.{Schema, SchemaMaterializer, To}
+import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
 import com.spotify.scio.util._
@@ -47,6 +47,7 @@ import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
+import scala.collection.compat._ // scalafix:ok
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -249,7 +250,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     name: String,
     transform: PTransform[_ >: PCollection[T], PCollection[KV[K, V]]]
   ): SCollection[KV[K, V]] =
-    applyTransform(name, transform)(Coder.raw(CoderMaterializer.kvCoder[K, V](context)))
+    applyTransform(name, transform)
 
   /** Apply a transform. */
   def transform[U](f: SCollection[T] => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
@@ -268,25 +269,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       }
     )
   }
-
-  /**
-   * Go from an SCollection of type [[T]] to an SCollection of [[U]] given the Schemas of both types
-   * [[T]] and [[U]].
-   *
-   * There are two constructors for [[To]]:
-   *
-   * Type safe (Schema compatibility is verified during compilation)
-   * {{{
-   *   SCollection[T]#to(To.safe[T, U])
-   * }}}
-   *
-   * Unsafe conversion from [[T]] to [[U]]. Schema compatibility is not checked during compile time.
-   * {{{
-   *   SCollection[T]#to[U](To.unsafe)
-   * }}}
-   */
-  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
-  def to[U](to: To[T, U]): SCollection[U] = transform(to)
 
   // =======================================================================
   // Collection operations
@@ -667,7 +649,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val cf = ClosureCleaner.clean(f)
       val cg = ClosureCleaner.clean(g)
 
-      _.map(t => KV.of(cf(t), cg(t)))(Coder.raw(CoderMaterializer.kvCoder[K, U](context)))
+      _.map(t => KV.of(cf(t), cg(t)))
         .pApply(GroupByKey.create[K, U]())
         .map(kvIterableToTuple)
     }
@@ -688,7 +670,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform {
       val cf = ClosureCleaner.clean(f)
 
-      _.map(t => KV.of(cf(t), t))(Coder.raw(CoderMaterializer.kvCoder[K, T](context)))
+      _.map(t => KV.of(cf(t), t))
         .pApply(Combine.perKey(Functions.reduceFn(context, g)))
         .map(kvToTuple)
     }
@@ -774,13 +756,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def randomSplit(weights: Array[Double]): Array[SCollection[T]] = {
     val sum = weights.sum
     val normalizedCumWeights = weights.map(_ / sum).scanLeft(0.0d)(_ + _)
-    val m = TreeMap(normalizedCumWeights.zipWithIndex: _*) // Map[lower bound, split]
+    val m = TreeMap(normalizedCumWeights.toIndexedSeq.zipWithIndex: _*) // Map[lower bound, split]
 
     val sides = (1 until weights.length).map(_ => SideOutput[T]())
     val (head, tail) = this
       .withSideOutputs(sides: _*)
       .flatMap { (x, c) =>
-        val i = m.to(ThreadLocalRandom.current().nextDouble()).last._2
+        val i = m.rangeTo(ThreadLocalRandom.current().nextDouble()).last._2
         if (i == 0) {
           Seq(x) // Main output
         } else {

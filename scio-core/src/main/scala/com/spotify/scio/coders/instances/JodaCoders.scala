@@ -86,13 +86,13 @@ final private class JodaLocalDateTimeCoder extends AtomicCoder[LocalDateTime] {
   override def decode(is: InputStream): LocalDateTime = {
     val dis = new DataInputStream(is)
 
-    val year = dis.readShort()
-    val month = dis.readShort()
-    val day = dis.readShort()
-    val hour = dis.readShort()
-    val minute = dis.readShort()
-    val second = dis.readShort()
-    val ms = dis.readShort()
+    val year = dis.readShort().toInt
+    val month = dis.readShort().toInt
+    val day = dis.readShort().toInt
+    val hour = dis.readShort().toInt
+    val minute = dis.readShort().toInt
+    val second = dis.readShort().toInt
+    val ms = dis.readShort().toInt
 
     new LocalDateTime(year, month, day, hour, minute, second, ms)
   }
@@ -113,9 +113,9 @@ final private class JodaLocalDateCoder extends AtomicCoder[LocalDate] {
   override def decode(is: InputStream): LocalDate = {
     val dis = new DataInputStream(is)
 
-    val year = dis.readShort()
-    val month = dis.readShort()
-    val day = dis.readShort()
+    val year = dis.readShort().toInt
+    val month = dis.readShort().toInt
+    val day = dis.readShort().toInt
 
     new LocalDate(year, month, day)
   }
@@ -137,10 +137,10 @@ final private class JodaLocalTimeCoder extends AtomicCoder[LocalTime] {
   override def decode(is: InputStream): LocalTime = {
     val dis = new DataInputStream(is)
 
-    val hour = dis.readShort()
-    val minute = dis.readShort()
-    val second = dis.readShort()
-    val ms = dis.readShort()
+    val hour = dis.readShort().toInt
+    val minute = dis.readShort().toInt
+    val second = dis.readShort().toInt
+    val ms = dis.readShort().toInt
 
     new LocalTime(hour, minute, second, ms)
   }

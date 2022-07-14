@@ -121,7 +121,7 @@ private case class ParquetTypeSink[T](
   override def open(channel: WritableByteChannel): Unit = {
     // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
     val rowGroupSize =
-      conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE)
+      conf.get().getLong(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE)
     writer = pt
       .writeBuilder(new ParquetOutputFile(channel))
       .withCompressionCodec(compression)

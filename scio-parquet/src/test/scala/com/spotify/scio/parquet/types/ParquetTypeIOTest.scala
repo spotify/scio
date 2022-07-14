@@ -63,14 +63,6 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     ()
   }
 
-  it should "read case classes with skip clone disabled" in {
-    val sc = ScioContext()
-    val data = sc.typedParquetFile[Wide](s"$dir/*.parquet", skipClone = false)
-    data should containInAnyOrder(records)
-    sc.run()
-    ()
-  }
-
   it should "read case classes with projection" in {
     val sc = ScioContext()
     val data = sc.typedParquetFile[Narrow](s"$dir/*.parquet")

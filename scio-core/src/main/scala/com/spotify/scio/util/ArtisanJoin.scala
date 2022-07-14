@@ -72,7 +72,7 @@ private[scio] object ArtisanJoin {
       .and(tagB, b.toKV.internal)
       .apply(s"CoGroupByKey@$name", CoGroupByKey.create())
 
-    implicit val (kCoder, aCoder, bCoder) = (a.keyCoder, a.valueCoder, b.valueCoder)
+    implicit val kCoder: Coder[KEY] = a.keyCoder
 
     type DF = DoFn[KV[KEY, CoGbkResult], (KEY, (A1, B1))]
     a.context

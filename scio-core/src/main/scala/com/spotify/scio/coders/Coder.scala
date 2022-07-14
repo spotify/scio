@@ -73,7 +73,7 @@ final private[scio] class Ref[T](val typeName: String, c: => Coder[T]) extends C
 
 private[scio] object Ref {
   def apply[T](t: String, c: => Coder[T]): Ref[T] = new Ref[T](t, c)
-  def unapply[T](c: Ref[T]): Option[(String, Coder[T])] = Option((c.typeName, c.value))
+  def unapply[T](c: Ref[T]): Some[(String, Coder[T])] = Some((c.typeName, c.value))
 }
 
 final case class RawBeam[T] private (beam: BCoder[T]) extends Coder[T] {
@@ -104,10 +104,8 @@ final case class Record[T] private (
   destruct: T => Array[Any]
 ) extends Coder[T] {
   override def toString: String = {
-    val str = cs.map { case (k, v) =>
-      s"($k, $v)"
-    }
-    s"Record($typeName, ${str.mkString(", ")})"
+    val str = cs.map { case (k, v) => s"($k, $v)" }.mkString(", ")
+    s"Record($typeName, $str)"
   }
 }
 
@@ -205,10 +203,10 @@ final private[scio] case class LazyCoder[T](
         case Record(typeName, _, _, _) if types.contains(typeName) =>
           Coder.nothingCoder.asInstanceOf[Coder[B]]
         //
-        case ref: Ref[_]     => go(ref.value, types + ref.typeName)
-        case c @ RawBeam(_)  => c
-        case c @ Beam(_)     => c
-        case c @ Fallback(_) => c
+        case ref: Ref[_]    => go(ref.value, types + ref.typeName)
+        case c: RawBeam[_]  => c
+        case c: Beam[_]     => c
+        case c: Fallback[_] => c
         case Transform(c, f) =>
           val c2 = f(CoderMaterializer.beamImpl(o, c))
           go(c2, types)
@@ -243,18 +241,20 @@ final private[scio] case class LazyCoder[T](
     }
 }
 
-// XXX: Workaround a NPE deep down the stack in Beam
-// info]   java.lang.NullPointerException: null value in entry: T=null
-private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
-
-  /**
-   * Eagerly compute a stack trace on materialization to provide a helpful stacktrace if an
-   * exception happens
-   */
-  private[this] val materializationStackTrace: Array[StackTraceElement] =
-    CoderStackTrace.prepare
+// Contains the materialization stack trace to provide a helpful stacktrace if an exception happens
+private[scio] class WrappedBCoder[T](
+  val u: BCoder[T],
+  materializationStackTrace: Array[StackTraceElement]
+) extends BCoder[T] {
 
   override def toString: String = u.toString
+
+  override def equals(obj: Any): Boolean = obj match {
+    case wbc: WrappedBCoder[_] => wbc.u == u
+    case _                     => false
+  }
+
+  override def hashCode(): Int = u.hashCode()
 
   @inline private def catching[A](a: => A) =
     try {
@@ -264,26 +264,27 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
         // prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
         // backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers
         // above here; we therefore must alter the type of exceptions passing through this block.
-        throw CoderStackTrace.append(ex, None, materializationStackTrace)
+        throw CoderStackTrace.append(ex, materializationStackTrace)
     }
 
   override def encode(value: T, os: OutputStream): Unit =
     catching(u.encode(value, os))
 
+  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
+    catching(u.encode(value, os, context))
+
   override def decode(is: InputStream): T =
     catching(u.decode(is))
+
+  override def decode(is: InputStream, context: BCoder.Context): T =
+    catching(u.decode(is, context))
 
   override def getCoderArguments: JList[_ <: BCoder[_]] = u.getCoderArguments
 
   // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit = u.verifyDeterministic()
   override def consistentWithEquals(): Boolean = u.consistentWithEquals()
-  override def structuralValue(value: T): AnyRef =
-    if (consistentWithEquals()) {
-      value.asInstanceOf[AnyRef]
-    } else {
-      u.structuralValue(value)
-    }
+  override def structuralValue(value: T): AnyRef = u.structuralValue(value)
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean =
@@ -293,11 +294,10 @@ private[scio] case class WrappedBCoder[T](u: BCoder[T]) extends BCoder[T] {
 }
 
 private[scio] object WrappedBCoder {
-  def create[T](u: BCoder[T]): BCoder[T] =
-    u match {
-      case WrappedBCoder(_) => u
-      case _                => new WrappedBCoder(u)
-    }
+
+  def apply[T](u: BCoder[T]): BCoder[T] = new WrappedBCoder(u, CoderStackTrace.prepare)
+  def unapply[T](c: WrappedBCoder[T]): Some[BCoder[T]] = Some(c.u)
+
 }
 
 // Coder used internally specifically for Magnolia derived coders.
@@ -309,15 +309,12 @@ final private[scio] case class RecordCoder[T](
   construct: Seq[Any] => T,
   destruct: T => Array[Any]
 ) extends StructuredCoder[T] {
-  private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
     try {
       f
     } catch {
-      case e: Exception =>
-        // allow Flink memory management, see WrappedBCoder#catching comment.
-        throw CoderStackTrace.append(e, Some(msg), materializationStackTrace)
+      case e: Exception => throw CoderStackTrace.append(e, msg)
     }
 
   override def encode(value: T, os: OutputStream): Unit = {
@@ -610,6 +607,7 @@ trait LowPriorityCoders extends LowPriorityCoderDerivation {
 }
 
 private[coders] object CoderStackTrace {
+
   val CoderStackElemMarker = new StackTraceElement(
     "### Coder materialization stack ###",
     "",
@@ -625,6 +623,16 @@ private[coders] object CoderStackTrace {
       .take(10)
 
   def append[T <: Throwable](
+    cause: T,
+    additionalMessage: String
+  ): T = append(cause, Some(additionalMessage), Array.empty)
+
+  def append[T <: Throwable](
+    cause: T,
+    baseStack: Array[StackTraceElement]
+  ): T = append(cause, None, baseStack)
+
+  private def append[T <: Throwable](
     cause: T,
     additionalMessage: Option[String],
     baseStack: Array[StackTraceElement]

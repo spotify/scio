@@ -103,7 +103,7 @@ class ScioILoop(command: CompilerCommand, args: List[String]) extends compat.ILo
       // update options
       val newOpts = args.split("\\s+")
       intp.beQuietDuring {
-        intp.interpret(optsFromArgs(newOpts))
+        intp.interpret(optsFromArgs(ArraySeq.unsafeWrapArray(newOpts)))
         scioOpts = newOpts
         echo("Scio options updated. Use :newScio to get a new Scio context.")
       }

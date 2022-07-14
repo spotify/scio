@@ -26,7 +26,6 @@ import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
-import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io.TapT
@@ -38,12 +37,12 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.TruncateTimestamps
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, BigQueryUtils, SchemaAndRecord, TableDestination}
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import org.apache.beam.sdk.values.ValueInSingleWindow
 
@@ -277,7 +276,7 @@ object BigQueryTypedTable {
    * Creates a new instance of [[BigQueryTypedTable]] based on the supplied [[Format]].
    *
    * NOTE: LogicalType support when using `Format.GenericRecord` has some caveats: Reading: Bigquery
-   * types DATE, TIME, DATIME will be read as STRING Writting: Supports LogicalTypes only for DATE
+   * types DATE, TIME, DATIME will be read as STRING. Writing: Supports LogicalTypes only for DATE
    * and TIME. DATETIME is not yet supported. https://issuetracker.google.com/issues/140681683
    */
   def apply[F: Coder](table: Table, format: Format[F]): BigQueryTypedTable[F] =
@@ -654,98 +653,6 @@ object BigQueryTyped {
       ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
     }
 
-  }
-
-  object BeamSchema {
-    trait WriteParam {
-      val writeDisposition: WriteDisposition
-      val createDisposition: CreateDisposition
-      val tableDescription: String
-      val timePartitioning: TimePartitioning
-      val extendedErrorInfo: ExtendedErrorInfo
-      val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
-    }
-
-    object WriteParam extends Writes.WriteParamDefauls {
-      @inline final def apply(
-        wd: WriteDisposition,
-        cd: CreateDisposition,
-        td: String,
-        tp: TimePartitioning,
-        ei: ExtendedErrorInfo
-      )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
-        val writeDisposition: WriteDisposition = wd
-        val createDisposition: CreateDisposition = cd
-        val tableDescription: String = td
-        val timePartitioning: TimePartitioning = tp
-        val extendedErrorInfo: ei.type = ei
-        val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
-      }
-
-      @inline final def apply(
-        wd: WriteDisposition = DefaultWriteDisposition,
-        cd: CreateDisposition = DefaultCreateDisposition,
-        td: String = DefaultTableDescription,
-        tp: TimePartitioning = DefaultTimePartitioning
-      ): WriteParam = apply(wd, cd, td, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
-    }
-
-    def defaultParseFn[T: Schema]: SchemaAndRecord => T = {
-      val (schema, _, fromRow) = SchemaMaterializer.materialize(Schema[T])
-      input =>
-        fromRow {
-          BigQueryUtils.toBeamRow(
-            input.getRecord,
-            schema,
-            ConversionOptions.builder().setTruncateTimestamps(TruncateTimestamps.TRUNCATE).build()
-          )
-        }
-    }
-
-    def apply[T: Schema: Coder: ClassTag](table: STable): BeamSchema[T] =
-      new BeamSchema(table, defaultParseFn)
-  }
-
-  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
-  final case class BeamSchema[T: Schema: Coder: ClassTag](
-    table: STable,
-    parseFn: SchemaAndRecord => T
-  ) extends BigQueryIO[T] {
-    override type ReadP = Unit
-    override type WriteP = BeamSchema.WriteParam
-
-    override def testId: String = s"BigQueryIO(${table.spec})"
-
-    private[this] lazy val underlying: BigQueryTypedTable[T] = {
-      val (s, toRow, fromRow) = SchemaMaterializer.materialize(Schema[T])
-      BigQueryTypedTable[T](
-        parseFn,
-        (t: T) => BigQueryUtils.toTableRow(toRow(t)),
-        (tr: TableRow) => fromRow(BigQueryUtils.toBeamRow(s, tr)),
-        table
-      )
-    }
-
-    override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-      sc.read(underlying)
-
-    override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-      val ps = BigQueryTypedTable.WriteParam(
-        null,
-        params.writeDisposition,
-        params.createDisposition,
-        params.tableDescription,
-        params.timePartitioning,
-        params.extendedErrorInfo
-      )(params.insertErrorTransform)
-
-      data
-        .setSchema(Schema[T])
-        .write(underlying.copy(writer = underlying.writer.useBeamSchema()))(ps)
-      tap(())
-    }
-
-    override def tap(read: ReadP): Tap[T] = BigQueryTypedTap[T](table, underlying.fn)
   }
 
   /** Get a typed SCollection for a BigQuery table using the storage API. */

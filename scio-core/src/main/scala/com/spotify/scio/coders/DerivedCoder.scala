@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 private object Derived extends Serializable {
   import magnolia._
 
-  @inline private def catching[T](msg: => String, stack: Array[StackTraceElement])(v: => T): T =
+  @inline private def catching[T](msg: => String)(v: => T): T =
     try {
       v
     } catch {
@@ -29,7 +29,7 @@ private object Derived extends Serializable {
         backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
          here; we therefore must alter the type of exceptions passing through this block.
          */
-        throw CoderStackTrace.append(e, Some(msg), stack)
+        throw CoderStackTrace.append(e, msg)
     }
 
   def combineCoder[T](
@@ -47,17 +47,12 @@ private object Derived extends Serializable {
           i = i + 1
         }
 
-        val materializationStack = CoderStackTrace.prepare
-
         @inline def destruct(v: T): Array[Any] = {
           val arr = new Array[Any](ps.length)
           var i = 0
           while (i < ps.length) {
             val p = ps(i)
-            catching(
-              s"Error while dereferencing parameter ${p.label} in $v",
-              materializationStack
-            ) {
+            catching(s"Error while dereferencing parameter ${p.label} in $v") {
               arr.update(i, p.dereference(v))
               i = i + 1
             }
@@ -67,7 +62,7 @@ private object Derived extends Serializable {
 
         val constructor: Seq[Any] => T =
           ps =>
-            catching(s"Error while constructing object from parameters $ps", materializationStack)(
+            catching(s"Error while constructing object from parameters $ps")(
               rawConstruct(ps)
             )
 

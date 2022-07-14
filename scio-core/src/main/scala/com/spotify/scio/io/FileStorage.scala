@@ -21,8 +21,6 @@ import java.io._
 import java.nio.ByteBuffer
 import java.nio.channels.{Channels, SeekableByteChannel}
 import java.util.Collections
-
-import com.google.api.client.util.Charsets
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
@@ -35,6 +33,8 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
+import java.nio.charset.StandardCharsets
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
@@ -93,7 +93,7 @@ final private[scio] class FileStorage(protected[scio] val path: String) {
       }
     }
     val input = getDirectoryInputStream(path, wrapInputStream)
-    IOUtils.lineIterator(input, Charsets.UTF_8).asScala
+    IOUtils.lineIterator(input, StandardCharsets.UTF_8).asScala
   }
 
   def tableRowJsonFile: Iterator[TableRow] =
@@ -131,6 +131,7 @@ final private[scio] class FileStorage(protected[scio] val path: String) {
     }
   }
 
+  @nowarn("msg=parameter value path in method getDirectoryInputStream is never used")
   private[scio] def getDirectoryInputStream(
     path: String,
     wrapperFn: InputStream => InputStream = identity

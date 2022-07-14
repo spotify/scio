@@ -33,7 +33,7 @@ private[coders] class ByteStringSerializer extends KSerializer[ByteString] {
     output.writeInt(len)
     val bytes = byteStr.iterator
     while (bytes.hasNext) {
-      output.write(bytes.nextByte())
+      output.writeByte(bytes.nextByte())
     }
   }
 }

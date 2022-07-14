@@ -21,8 +21,7 @@ import java.beans.Introspector
 import java.io.File
 import java.net.URI
 import java.nio.file.Files
-
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.{Coder, CoderMaterializer, KVCoder}
 import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
@@ -141,7 +140,7 @@ private object RunnerContext {
   private[scio] def isNonRepositoryEnvDir(s: String): Boolean = {
     val sanitizedUserHome: String = sanitizePath(sys.props("user.home"))
     s.matches(s"${sanitizedUserHome}/\\..+/.+") && !s.matches(
-      s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier)/.+"
+      s"${sanitizedUserHome}/\\.(ivy2|m2|cache/coursier|sbt/boot/[^/]*/lib)/.+"
     )
   }
 
@@ -341,7 +340,7 @@ object ScioContext {
         }
     } yield s"--$str($$|=)".r
 
-    val patterns = registeredPatterns + "--help($$|=)".r
+    val patterns = registeredPatterns.toSet + "--help($$|=)".r
 
     // Split cmdlineArgs into 2 parts, optArgs for PipelineOptions and appArgs for Args
     val (optArgs, appArgs) =
@@ -783,9 +782,9 @@ class ScioContext private[scio] (
     elems: Map[K, V]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     requireNotClosed {
-      val kvc = CoderMaterializer.kvCoder[K, V](this)
+      val coder = CoderMaterializer.beam(this, KVCoder(koder, voder))
       this
-        .applyTransform(Create.of(elems.asJava).withCoder(kvc))
+        .applyTransform(Create.of(elems.asJava).withCoder(coder))
         .map(kv => (kv.getKey, kv.getValue))
     }
 

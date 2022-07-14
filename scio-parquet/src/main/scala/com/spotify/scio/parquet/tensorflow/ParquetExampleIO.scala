@@ -17,28 +17,19 @@
 
 package com.spotify.scio.parquet.tensorflow
 
-import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ScioIO, Tap, TapOf}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
+import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import me.lyh.parquet.tensorflow.{
-  ExampleParquetInputFormat,
-  ExampleParquetReader,
-  ExampleReadSupport,
-  Schema
-}
-import org.apache.beam.sdk.io.{
-  DefaultFilenamePolicy,
-  DynamicFileDestinations,
-  FileBasedSink,
-  FileSystems,
-  WriteFiles
-}
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
+import me.lyh.parquet.tensorflow.{ExampleParquetInputFormat, ExampleParquetReader, Schema}
+import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
+import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
@@ -46,9 +37,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.{Example, Features}
 
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.io.TapT
-import com.spotify.scio.testing.TestDataManager
-import org.apache.hadoop.conf.Configuration
 
 final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = ParquetExampleIO.ReadParam
@@ -57,27 +45,26 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
     val job = Job.getInstance(params.conf)
-    GcsConnectorUtil.setInputPaths(sc, job, path)
-    job.setInputFormatClass(classOf[ExampleParquetInputFormat])
-    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
-    job.getConfiguration.setClass("value.class", classOf[Example], classOf[Example])
 
-    ParquetInputFormat.setReadSupportClass(job, classOf[ExampleReadSupport])
-    if (params.projection != null) {
-      ExampleParquetInputFormat.setFields(job, params.projection.asJava)
-    }
-    if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
+    Option(params.projection).foreach { projection =>
+      ExampleParquetInputFormat.setFields(job, projection.asJava)
+      params.conf.set(ExampleParquetInputFormat.FIELDS_KEY, String.join(",", projection: _*))
     }
 
-    val source = HadoopFormatIO
-      .read[JBoolean, Example]()
-      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-        override def apply(input: Void): JBoolean = true
-      })
-      .withConfiguration(job.getConfiguration)
-    sc.applyTransform(source).map(_.getValue)
+    Option(params.predicate).foreach { predicate =>
+      ParquetInputFormat.setFilterPredicate(params.conf, predicate)
+    }
+
+    val coder = CoderMaterializer.beam(sc, Coder[Example])
+
+    sc.applyTransform(
+      ParquetRead.read(
+        ReadSupportFactory.example,
+        new SerializableConfiguration(params.conf),
+        path,
+        identity[Example]
+      )
+    ).setCoder(coder)
   }
 
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[Example] = {

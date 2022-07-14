@@ -18,9 +18,9 @@
 package com.spotify.scio
 
 import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.http.{GenericUrl, HttpRequest, HttpRequestInitializer}
+import com.google.api.client.http.{GenericUrl, HttpRequest}
 import com.google.api.client.json.JsonObjectParser
-import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.client.json.gson.GsonFactory
 import org.apache.beam.sdk.util.ReleaseInfo
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
@@ -59,15 +59,12 @@ private[scio] object VersionUtil {
   private lazy val latest: Option[String] = Try {
     val transport = new NetHttpTransport()
     val response = transport
-      .createRequestFactory(new HttpRequestInitializer {
-        override def initialize(request: HttpRequest): Unit = {
-          request.setConnectTimeout(Timeout)
-          request.setReadTimeout(Timeout)
-          request.setParser(new JsonObjectParser(new JacksonFactory))
-
-          ()
-        }
-      })
+      .createRequestFactory { (request: HttpRequest) =>
+        request.setConnectTimeout(Timeout)
+        request.setReadTimeout(Timeout)
+        request.setParser(new JsonObjectParser(GsonFactory.getDefaultInstance))
+        ()
+      }
       .buildGetRequest(new GenericUrl(Url))
       .execute()
       .parseAs(classOf[java.util.List[java.util.Map[String, AnyRef]]])
@@ -103,6 +100,10 @@ private[scio] object VersionUtil {
     case (SemVer(0, minor, _, _), SemVer(0, 10, _, _)) if minor < 10 =>
       Some(
         MessagePattern("0.10", "https://spotify.github.io/scio/migrations/v0.10.0-Migration-Guide")
+      )
+    case (SemVer(0, minor, _, _), SemVer(0, 12, _, _)) if minor < 12 =>
+      Some(
+        MessagePattern("0.12", "https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide")
       )
     case _ => None
   }

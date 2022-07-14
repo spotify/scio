@@ -23,6 +23,8 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import com.twitter.chill.ClosureCleaner
 
+import scala.collection.compat._ // scalafix:ok
+
 private[scio] object FunctionsWithSideInput {
   trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {
     def sideInputContext(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): SideInputContext[T] =
@@ -45,7 +47,7 @@ private[scio] object FunctionsWithSideInput {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit = {
-        val i = g(c.element(), sideInputContext(c, w)).toIterator
+        val i = g(c.element(), sideInputContext(c, w)).iterator
         while (i.hasNext) c.output(i.next())
       }
     }

@@ -86,7 +86,7 @@ class AsyncDoFnTest extends PipelineSpec {
 private object Client {
   def process(input: Int): String = {
     require(input >= 0, "input must be >= 0")
-    Thread.sleep(input * 10)
+    Thread.sleep(input * 10L)
     "output-" + input
   }
 }

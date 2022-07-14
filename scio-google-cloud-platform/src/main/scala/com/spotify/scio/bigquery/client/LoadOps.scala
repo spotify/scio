@@ -24,6 +24,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
 import org.slf4j.LoggerFactory
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
@@ -112,6 +113,7 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
       encoding = encoding
     )
 
+  @nowarn("msg=private default argument in class LoadOps is never used")
   private def execute(
     sources: List[String],
     sourceFormat: String,

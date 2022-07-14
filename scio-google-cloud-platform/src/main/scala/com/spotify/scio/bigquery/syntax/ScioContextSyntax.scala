@@ -32,9 +32,7 @@ import com.spotify.scio.bigquery.{
   TableRowJsonIO
 }
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.schemas.Schema
 import com.spotify.scio.values._
-import org.apache.beam.sdk.io.gcp.bigquery.SchemaAndRecord
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -139,17 +137,6 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       self.read(BigQueryTyped.dynamic[T](newSource))
     }
   }
-
-  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
-  def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T] =
-    self.read(BigQueryTyped.BeamSchema(table))
-
-  @deprecated("Beam SQL support will be removed in 0.11.0", since = "0.10.1")
-  def typedBigQueryTable[T: Schema: Coder: ClassTag](
-    table: Table,
-    parseFn: SchemaAndRecord => T
-  ): SCollection[T] =
-    self.read(BigQueryTyped.BeamSchema(table, parseFn))
 
   /**
    * Get a typed SCollection for a BigQuery storage API.

@@ -20,6 +20,7 @@ package com.spotify.scio
 import scala.reflect.macros._
 
 private[scio] object MagnoliaMacros {
+
   // Add a level of indirection to prevent the macro from capturing
   // $outer which would make the Coder serialization fail
   def genWithoutAnnotations[T: c.WeakTypeTag](c: whitebox.Context): c.Tree = {

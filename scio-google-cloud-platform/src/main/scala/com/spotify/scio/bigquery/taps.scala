@@ -142,7 +142,7 @@ final case class BigQueryTaps(self: Taps) {
       () => {
         val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
         val rowRestriction = Option(readOptions.getRowRestriction)
-        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap()
+        BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction).tap(())
       }
     )
 
@@ -158,7 +158,7 @@ final case class BigQueryTaps(self: Taps) {
         val selectedFields = readOptions.getSelectedFieldsList.asScala.toList
         val rowRestriction = Option(readOptions.getRowRestriction)
         BigQueryStorage(Table.Ref(table), selectedFields, rowRestriction)
-          .tap()
+          .tap(())
           .map(fn)
       }
     )

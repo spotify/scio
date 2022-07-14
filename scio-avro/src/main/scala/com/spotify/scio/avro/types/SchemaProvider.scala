@@ -20,7 +20,6 @@ package com.spotify.scio.avro.types
 import java.util.Collections.{emptyList, emptyMap}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
-
 import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.MacroUtil._
 import org.apache.avro.{JsonProperties, Schema}
@@ -103,7 +102,7 @@ private[types] object SchemaProvider {
     t.typeSymbol.annotations
       .find(_.tree.tpe.toString == tpe)
       .map { a =>
-        val q"new $t($v)" = a.tree
+        val q"new $_($v)" = a.tree
         val Literal(Constant(s)) = v
         s.toString
       }
@@ -115,7 +114,7 @@ private[types] object SchemaProvider {
       _.annotations
         .find(_.tree.tpe.toString == tpe)
         .map { a =>
-          val q"new $t($v)" = a.tree
+          val q"new $_($v)" = a.tree
           val Literal(Constant(s)) = v
           s.toString
         }

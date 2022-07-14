@@ -37,7 +37,7 @@ class ScioResultTest extends PipelineSpec {
       val c = ScioMetrics.counter("c")
       val d = ScioMetrics.distribution("d")
       val g = ScioMetrics.gauge("g")
-      sc.parallelize(Seq(1, 2, 3))
+      sc.parallelize(Seq(1L, 2L, 3L))
         .map { x =>
           c.inc()
           d.update(x)

@@ -84,7 +84,7 @@ object RefreshingSideInputExample {
 
     // Sample PubSub topic modeling lottery tickets as a comma-separated list of numbers.
     // For example, a message might contain the string "10,7,3,1,9"
-    sc.pubsubTopic[String](args("input"))
+    sc.read(PubsubIO.string(args("input")))(PubsubIO.ReadParam(PubsubIO.Topic))
       .flatMap(toLotteryTicket)
       .withFixedWindows(Duration.standardSeconds(5))
       .withTimestamp
@@ -109,7 +109,7 @@ object RefreshingSideInputExample {
   }
 
   private def toLotteryTicket(message: String): Option[LotteryTicket] =
-    Try(LotteryTicket(message.split(",").map(_.toInt))) match {
+    Try(LotteryTicket(message.split(",").map(_.toInt).toSeq)) match {
       case Success(s) if s.numbers.size == ticketSize => Some(s)
       case _ =>
         logger.error(s"Malformed message: $message")

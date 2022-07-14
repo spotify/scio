@@ -90,7 +90,7 @@ private[bigquery] trait ToTableRow {
       .toList
       .asJava
 
-  private def toTableRowFromMap(map: Iterable[Any], field: Schema.Field): util.List[_] =
+  private def toTableRowFromMap(map: Iterable[(Any, Any)], field: Schema.Field): util.List[_] =
     map
       .map { case (k, v) =>
         new TableRow()

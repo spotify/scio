@@ -41,12 +41,12 @@ class StorageIT extends AnyFlatSpec with Matchers {
     val expected = (0 until 10).map { i =>
       Required(
         true,
-        i,
-        i,
+        i.toLong,
+        i.toDouble,
         BigDecimal(i),
         s"s$i",
         ByteString.copyFromUtf8(s"s$i"),
-        t.plus(Duration.millis(i)),
+        t.plus(Duration.millis(i.toLong)),
         dt.toLocalDate.plusDays(i),
         dt.toLocalTime.plusMillis(i),
         dt.toLocalDateTime.plusMillis(i)
@@ -91,12 +91,12 @@ class StorageIT extends AnyFlatSpec with Matchers {
     val expected = (0 until 10).map { i =>
       Repeated(
         List(true),
-        List(i),
-        List(i),
+        List(i.toLong),
+        List(i.toDouble),
         List(BigDecimal(i)),
         List(s"s$i"),
         List(ByteString.copyFromUtf8(s"s$i")),
-        List(t.plus(Duration.millis(i))),
+        List(t.plus(Duration.millis(i.toLong))),
         List(dt.toLocalDate.plusDays(i)),
         List(dt.toLocalTime.plusMillis(i)),
         List(dt.toLocalDateTime.plusMillis(i))
@@ -176,12 +176,12 @@ class StorageIT extends AnyFlatSpec with Matchers {
     val expected = (0 until 10).map { i =>
       FromQuery(
         Some(true),
-        Some(i),
-        Some(i),
+        Some(i.toLong),
+        Some(i.toDouble),
         Some(BigDecimal(i)),
         Some(s"s$i"),
         Some(ByteString.copyFromUtf8(s"s$i")),
-        Some(t.plus(Duration.millis(i))),
+        Some(t.plus(Duration.millis(i.toLong))),
         Some(dt.toLocalDate.plusDays(i)),
         Some(dt.toLocalTime.plusMillis(i)),
         Some(dt.toLocalDateTime.plusMillis(i))
@@ -203,12 +203,12 @@ class StorageIT extends AnyFlatSpec with Matchers {
     val expected = (0 until 10).map { i =>
       FromTable(
         true,
-        i,
-        i,
+        i.toLong,
+        i.toDouble,
         BigDecimal(i),
         s"s$i",
         ByteString.copyFromUtf8(s"s$i"),
-        t.plus(Duration.millis(i)),
+        t.plus(Duration.millis(i.toLong)),
         dt.toLocalDate.plusDays(i),
         dt.toLocalTime.plusMillis(i),
         dt.toLocalDateTime.plusMillis(i)
@@ -240,12 +240,12 @@ class StorageIT extends AnyFlatSpec with Matchers {
     val expected = (0 until 10).map { i =>
       FromQuery(
         Some(true),
-        Some(i),
-        Some(i),
+        Some(i.toLong),
+        Some(i.toDouble),
         Some(BigDecimal(i)),
         Some(s"s$i"),
         Some(ByteString.copyFromUtf8(s"s$i")),
-        Some(t.plus(Duration.millis(i))),
+        Some(t.plus(Duration.millis(i.toLong))),
         Some(dt.toLocalDate.plusDays(i)),
         Some(dt.toLocalTime.plusMillis(i)),
         Some(dt.toLocalDateTime.plusMillis(i))
@@ -316,6 +316,7 @@ object StorageIT {
   @BigQueryType.fromStorage("data-integration-test:partition_a.table_%s", List("$LATEST"))
   class StorageLatest
 
+  // to compile locally, you must first run `gcloud config set project data-integration-test`
   @BigQueryType.fromStorage("partition_a.table_%s", List("$LATEST"))
   class StorageEnvProject
 

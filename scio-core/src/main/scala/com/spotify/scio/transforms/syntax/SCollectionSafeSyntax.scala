@@ -24,6 +24,8 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
+import scala.collection.compat._ // scalafix:ok
+
 trait SCollectionSafeSyntax {
 
   /**
@@ -51,7 +53,7 @@ trait SCollectionSafeSyntax {
         private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
           val i =
             try {
-              g(c.element()).toIterator
+              g(c.element()).iterator
             } catch {
               case e: Throwable =>
                 c.output(errorTag, (c.element(), e))

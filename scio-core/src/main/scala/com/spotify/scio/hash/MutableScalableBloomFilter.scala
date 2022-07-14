@@ -22,6 +22,8 @@ import com.google.common.io.ByteStreams
 import com.google.common.{hash => g}
 import com.spotify.scio.coders.Coder
 
+import scala.collection.compat._ // scalafix:ok
+
 /**
  * A mutable, scalable wrapper around a Guava [[com.google.common.hash.BloomFilter BloomFilter]]
  *
@@ -253,7 +255,7 @@ case class MutableScalableBloomFilter[T](
   }
 
   def ++=(items: TraversableOnce[T]): MutableScalableBloomFilter[T] = {
-    items.foreach(i => this += i) // no bulk insert for guava BFs
+    items.iterator.foreach(i => this += i) // no bulk insert for guava BFs
     this
   }
 }
