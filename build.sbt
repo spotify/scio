@@ -219,7 +219,7 @@ val commonSettings = Def
     excludeDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
-    resolvers += Resolver.sonatypeRepo("public"),
+    resolvers ++= Resolver.sonatypeOssRepos("public"),
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
