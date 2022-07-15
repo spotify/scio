@@ -26,6 +26,7 @@ import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.io.gcp.pubsub.{PubsubJsonClient, PubsubOptions}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.Instant
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubClient
 
 class PubsubIOTest extends PipelineSpec with ScioIOSpec {
   def readFn[T](
@@ -273,8 +274,8 @@ object PubsubWithAttributesJob {
 
 object PubsubWithOptionsJob {
   val timestampAttribute = "tsAttribute"
-  val clientOptions = PipelineOptionsFactory.create().as(classOf[PubsubOptions])
-  val clientFn = (time, id, opt) => PubsubJsonClient.FACTORY.newClient(time, id, opt)
+  val clientOptions: PubsubOptions = PipelineOptionsFactory.create().as(classOf[PubsubOptions])
+  val clientFn: (String, String, PubsubOptions) => PubsubClient = (time, id, opt) => PubsubJsonClient.FACTORY.newClient(time, id, opt)
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
