@@ -275,7 +275,8 @@ object PubsubWithAttributesJob {
 object PubsubWithOptionsJob {
   val timestampAttribute = "tsAttribute"
   val clientOptions: PubsubOptions = PipelineOptionsFactory.create().as(classOf[PubsubOptions])
-  val clientFn: (String, String, PubsubOptions) => PubsubClient = (time, id, opt) => PubsubJsonClient.FACTORY.newClient(time, id, opt)
+  val clientFn: (String, String, PubsubOptions) => PubsubClient = (time, id, opt) =>
+    PubsubJsonClient.FACTORY.newClient(time, id, opt)
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
