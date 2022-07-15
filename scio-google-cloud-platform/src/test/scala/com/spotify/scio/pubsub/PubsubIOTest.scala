@@ -23,6 +23,8 @@ import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
+import org.apache.beam.sdk.io.gcp.pubsub.{PubsubJsonClient, PubsubOptions}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.Instant
 
 class PubsubIOTest extends PipelineSpec with ScioIOSpec {
@@ -39,10 +41,17 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
     (sc, out) => sc.write(fn(out))(param)
 
   val saveAsPubSub: (SCollection[String], String) => ClosedTap[_] = writeFn(PubsubIO.string(_))
+
   val saveAsPubSubWithAttributes
-    : (SCollection[(String, Map[String, String])], String) => ClosedTap[_] = writeFn(
-    PubsubIO.withAttributes[String](_)
-  )
+    : (SCollection[(String, Map[String, String])], String) => ClosedTap[_] =
+    writeFn(PubsubIO.withAttributes[String](_))
+
+  val saveAsPubsubWithOptions
+    : (SCollection[(String, Map[String, String])], String) => ClosedTap[_] = {
+    val io = (s: String) => PubsubIO.withAttributes[String](s)
+    val param = PubsubIO.WriteParam(clientFn = PubsubJsonClient.FACTORY.newClient)
+    writeFn(io, param)
+  }
 
   "PubsubIO" should "work with subscription" in {
     val xs = (1 to 100).map(_.toString)
@@ -164,6 +173,74 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
     }
   }
 
+  // unlike attributes, the options don't affect semantic behavior and thus don't need to be passed
+  def testPubsubWithOptionsJob(timestampAttribute: Map[String, String], xs: String*): Unit = {
+    val m = Map("a" -> "1", "b" -> "2", "c" -> "3") ++ timestampAttribute
+    JobTest[PubsubWithOptionsJob.type]
+      .args("--input=in", "--output=out")
+      .input(
+        PubsubIO.withAttributes[String](
+          "in",
+          null,
+          PubsubWithOptionsJob.timestampAttribute,
+          PubsubWithOptionsJob.clientOptions
+        ),
+        Seq("a", "b", "c").map((_, m))
+      )
+      .output(
+        PubsubIO.withAttributes[String](
+          "out",
+          null,
+          PubsubWithOptionsJob.timestampAttribute,
+          PubsubWithOptionsJob.clientOptions
+        )
+      )(coll => coll should containInAnyOrder(xs.map((_, m))))
+      .run()
+  }
+
+  it should "pass correct PubsubIO with attributes and options" in {
+    testPubsubWithOptionsJob(
+      Map(PubsubWithOptionsJob.timestampAttribute -> new Instant().toString),
+      "aX",
+      "bX",
+      "cX"
+    )
+  }
+
+  it should "fail incorrect PubsubIO with attributes and options" in {
+    an[AssertionError] should be thrownBy {
+      testPubsubWithOptionsJob(
+        Map(PubsubWithOptionsJob.timestampAttribute -> new Instant().toString),
+        "aX",
+        "bX"
+      )
+    }
+    an[AssertionError] should be thrownBy {
+      testPubsubWithOptionsJob(
+        Map(PubsubWithOptionsJob.timestampAttribute -> new Instant().toString),
+        "aX",
+        "bX",
+        "cX",
+        "dX"
+      )
+    }
+  }
+
+  it should "fail PubsubIO with invalid or missing timestamp attribute with options" in {
+    an[PipelineExecutionException] should be thrownBy {
+      testPubsubWithOptionsJob(
+        Map(PubsubWithOptionsJob.timestampAttribute -> "invalidTimestamp"),
+        "aX",
+        "bX",
+        "cX"
+      )
+    }
+
+    an[PipelineExecutionException] should be thrownBy {
+      testPubsubWithOptionsJob(timestampAttribute = Map(), xs = "aX", "bX", "cX")
+    }
+  }
+
 }
 
 object PubsubJob {
@@ -189,6 +266,34 @@ object PubsubWithAttributesJob {
       .write(
         PubsubIO.withAttributes[String](args("output"), timestampAttribute = timestampAttribute)
       )(PubsubIO.WriteParam())
+    sc.run()
+    ()
+  }
+}
+
+object PubsubWithOptionsJob {
+  val timestampAttribute = "tsAttribute"
+  val clientOptions = PipelineOptionsFactory.create().as(classOf[PubsubOptions])
+  val clientFn = (time, id, opt) => PubsubJsonClient.FACTORY.newClient(time, id, opt)
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    clientOptions.setPubsubRootUrl(clientOptions.getPubsubRootUrl) // custom Pubsub endpoint URL
+    sc.read(
+      PubsubIO.withAttributes[String](
+        args("input"),
+        timestampAttribute = timestampAttribute,
+        clientOptions = clientOptions
+      )
+    )(PubsubIO.ReadParam(PubsubIO.Topic))
+      .map(kv => (kv._1 + "X", kv._2))
+      .write(
+        PubsubIO.withAttributes[String](
+          args("output"),
+          timestampAttribute = timestampAttribute,
+          clientOptions = clientOptions
+        )
+      )(PubsubIO.WriteParam(clientFn = clientFn))
     sc.run()
     ()
   }

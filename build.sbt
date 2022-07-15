@@ -667,6 +667,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test,it",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
