@@ -94,6 +94,25 @@ class DynamicFileTest extends PipelineSpec {
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
+  it should "support text files with optional header" in {
+    val tmpDir = Files.createTempDirectory("dynamic-io-")
+    val dynamicHeader = "dynamic-header"
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(1 to 10)
+      .saveAsDynamicTextFile(tmpDir.toString, header = dynamicHeader)(s => (s.toInt % 2).toString)
+    sc1.run()
+    verifyOutput(tmpDir, dynamicHeader, "0", "1")
+
+    val sc2 = ScioContext()
+    val lines0 = sc2.textFile(s"$tmpDir/0/*.txt")
+    val lines1 = sc2.textFile(s"$tmpDir/1/*.txt")
+    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(_.toString))
+    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(_.toString))
+    sc2.run()
+    FileUtils.deleteDirectory(tmpDir.toFile)
+  }
+
   it should "support generic Avro files" in {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()

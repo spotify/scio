@@ -157,7 +157,8 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
     numShards: Int = 0,
     suffix: String = ".txt",
     compression: Compression = Compression.UNCOMPRESSED,
-    tempDirectory: String = null
+    tempDirectory: String = null,
+    header: String = null
   )(destinationFn: String => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       self.asInstanceOf[SCollection[String]]
@@ -169,8 +170,12 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
         "Text file with dynamic destinations cannot be used in a test context"
       )
     } else {
+      val sink = beam.TextIO.sink()
+      if(Option(header).isDefined) {
+        sink.withHeader(header)
+      }
       val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
-        .via(beam.TextIO.sink())
+        .via(sink)
         .withCompression(compression)
       s.applyInternal(write)
     }
