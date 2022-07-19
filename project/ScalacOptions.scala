@@ -24,22 +24,20 @@ import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport.ScalacOptions
 object Scalac {
 
   // Set the strategy used for translating lambdas into JVM code to "inline"
-  val delambdafyInlineOption = new ScalacOption(
-    "-Ydelambdafy:inline" :: Nil
+  val delambdafyInlineOption = ScalacOptions.privateOption("delambdafy:inline")
+
+  val macroAnnotationsOption = ScalacOptions.privateOption(
+    "macro-annotations",
+    _.isBetween(V2_13_0, V3_0_0)
   )
 
-  val macroAnnotationsOption = new ScalacOption(
-    "-Ymacro-annotations" :: Nil,
-    version => version.isBetween(V2_13_0, V3_0_0)
-  )
+  val macroSettingsOption = ScalacOptions.advancedOption("macro-settings:show-coder-fallback=true")
 
-  val macroSettingsOption = new ScalacOption(
-    "-Xmacro-settings:show-coder-fallback=true" :: Nil
-  )
-
-  val maxClassfileName = new ScalacOption(
-    "-Xmax-classfile-name" :: "100" :: Nil,
-    version => version.isBetween(V2_12_0, V2_13_0)
+  // TODO use advancedOption once it supports arguments
+  val maxClassfileName = ScalacOptions.other(
+    "-Xmax-classfile-name",
+    List("100"),
+    _.isBetween(V2_12_0, V2_13_0)
   )
 
   private val parallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
@@ -48,31 +46,30 @@ object Scalac {
   val release8 = ScalacOptions.release("8")
 
   // JVM
-  val targetOption = new ScalacOption("-target:jvm-1.8" :: Nil)
+  val targetOption = ScalacOptions.other("-target:jvm-1.8")
 
   // Warn
-  val privateWarnMacrosOption = new ScalacOption(
-    "-Ywarn-macros:after" :: Nil,
-    version => version.isBetween(V2_12_0, V2_13_0)
+  val privateWarnMacrosOption = ScalacOptions.privateWarnOption(
+    "macros:after",
+    _.isBetween(V2_12_0, V2_13_0)
   )
-  val warnMacrosOption = new ScalacOption(
-    "-Wmacros:after" :: Nil,
-    version => version.isBetween(V2_13_0, V3_0_0)
+  val warnMacrosOption = ScalacOptions.warnOption(
+    "macros:after",
+    _.isBetween(V2_13_0, V3_0_0)
   )
   // silence all scala library deprecation warnings in 2.13
   // since we still support 2.12
   // unused-imports origin will be supported in next 2.13.9
   // https://github.com/scala/scala/pull/9939
-  val warnConfOption = new ScalacOption(
-    "-Wconf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
-      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s"
-      :: Nil,
-    version => version.isBetween(V2_13_2, V3_0_0)
+  val warnConfOption = ScalacOptions.warnOption(
+    "conf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
+      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s",
+    _.isBetween(V2_13_2, V3_0_0)
   )
 
   // Doc
-  val docNoJavaCommentOption = new ScalacOption(
-    "-no-java-comments" :: Nil,
-    version => version.isBetween(V2_12_0, V2_13_0)
+  val docNoJavaCommentOption = ScalacOptions.other(
+    "-no-java-comments",
+    _.isBetween(V2_12_0, V2_13_0)
   )
 }
