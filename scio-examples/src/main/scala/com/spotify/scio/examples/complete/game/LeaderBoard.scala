@@ -20,7 +20,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.complete.game.LeaderBoard
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --teamWindowDuration=60
 // --allowedLateness=120
 // --topic=[PUBSUB_TOPIC_NAME]

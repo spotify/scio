@@ -48,7 +48,7 @@ object AnnoyExamples {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.AnnoyIndexSaveExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 //--output=gs://[BUCKET]/[PATH]/annoy.tree"`
 object AnnoyIndexSaveExample {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -69,7 +69,7 @@ object AnnoyIndexSaveExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.AnnoySideInputExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://[BUCKET]/[PATH]/annoy.tree
 // --output=gs://[BUCKET]/[PATH]/otuput"`
 object AnnoySideInputExample {

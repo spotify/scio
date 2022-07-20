@@ -26,7 +26,7 @@ import com.spotify.scio._
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.TapOutputExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --output=gs://[OUTPUT] --method=[METHOD]"`
 object TapOutputExample {
   def main(cmdlineArgs: Array[String]): Unit = {
