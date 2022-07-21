@@ -23,6 +23,7 @@ import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
@@ -88,28 +89,29 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
     suffix: String = AvroIO.WriteParam.DefaultSuffix,
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
-    tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
+    filenamePolicyCreator: FilenamePolicyCreator = AvroIO.WriteParam.DefaultFilenamePolicyCreator
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory)
+    val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, tempDirectory, filenamePolicyCreator)
     self.write(SpecificRecordIO[T](path))(param)
   }
 
-  def saveAsDynamicAvroFile(
-    filenameFunction: Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String],
-  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-    WindowedFilenamePolicy.writeWindowedFiles()
-      .withOutputDirectory(options.getOutputDirectory())
-      .withOutputFilenamePrefix(options.getOutputFilenamePrefix())
-      .withShardTemplate(options.getOutputShardTemplate())
-      .withSuffix(options.getOutputFilenameSuffix())
-      .withYearPattern(options.getYearPattern())
-      .withMonthPattern(options.getMonthPattern())
-      .withDayPattern(options.getDayPattern())
-      .withHourPattern(options.getHourPattern())
-      .withMinutePattern(options.getMinutePattern())
-
-    ???
-  }
+//  def saveAsDynamicAvroFile(
+//    filenameFunction: Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String],
+//  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
+//    WindowedFilenamePolicy.writeWindowedFiles()
+//      .withOutputDirectory(options.getOutputDirectory())
+//      .withOutputFilenamePrefix(options.getOutputFilenamePrefix())
+//      .withShardTemplate(options.getOutputShardTemplate())
+//      .withSuffix(options.getOutputFilenameSuffix())
+//      .withYearPattern(options.getYearPattern())
+//      .withMonthPattern(options.getMonthPattern())
+//      .withDayPattern(options.getDayPattern())
+//      .withHourPattern(options.getHourPattern())
+//      .withMinutePattern(options.getMinutePattern())
+//
+//    ???
+//  }
 }
 
 final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])

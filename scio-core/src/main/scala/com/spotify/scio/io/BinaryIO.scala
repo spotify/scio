@@ -59,7 +59,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
       transform = transform.to(pathWithShards(path))
 
-    FIXME FIXME YOU LEFT OFF HERE
+//    FIXME FIXME YOU LEFT OFF HERE
     // FileIO has windowed support on by default?
 //    val isWindowed = data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
 //    if(isWindowed) transform = transform.withWindowedWrites()

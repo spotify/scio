@@ -21,6 +21,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
 import com.spotify.scio.{ScioContext, avro}
@@ -28,100 +29,18 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink}
+import org.apache.beam.sdk.io.{AvroIO, DefaultFilenamePolicy, FileBasedSink}
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
-final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
-  override type ReadP = Unit
-  override type WriteP = ObjectFileIO.WriteParam
-  final override val tapT: TapT.Aux[T, T] = TapOf[T]
-
-  /**
-   * Get an SCollection for an object file using default serialization.
-   *
-   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
-   * serialization is not guaranteed to be compatible across Scio releases.
-   */
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val coder = CoderMaterializer.beamWithDefault(Coder[T])
-    sc.read(GenericRecordIO(path, AvroBytesUtil.schema))
-      .parDo(new DoFn[GenericRecord, T] {
-        @ProcessElement
-        private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit =
-          c.output(AvroBytesUtil.decode(coder, c.element()))
-      })
-  }
-
-  /**
-   * Save this SCollection as an object file using default serialization.
-   *
-   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
-   * serialization is not guaranteed to be compatible across Scio releases.
-   */
-  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
-    implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
-    data
-      .parDo(new DoFn[T, GenericRecord] {
-        @ProcessElement
-        private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
-          c.output(AvroBytesUtil.encode(elemCoder, c.element()))
-      })
-      .write(GenericRecordIO(path, AvroBytesUtil.schema))(params)
-    tap(())
-  }
-
-  override def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](ScioUtil.addPartSuffix(path))
-}
-
-object ObjectFileIO {
-  type WriteParam = AvroIO.WriteParam
-  val WriteParam = AvroIO.WriteParam
-}
-
-final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
-  override type ReadP = Unit
-  override type WriteP = ProtobufIO.WriteParam
-  final override val tapT: TapT.Aux[T, T] = TapOf[T]
-  private val protoCoder = Coder.protoMessageCoder[T]
-
-  /**
-   * Get an SCollection for a Protobuf file.
-   *
-   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
-   * block file format.
-   */
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(ObjectFileIO[T](path)(protoCoder))
-
-  /**
-   * Save this SCollection as a Protobuf file.
-   *
-   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
-   * block file format.
-   */
-  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val metadata = params.metadata ++ ProtobufUtil.schemaMetadataOf[T]
-    data.write(ObjectFileIO[T](path)(protoCoder))(params.copy(metadata = metadata)).underlying
-  }
-
-  override def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](ScioUtil.addPartSuffix(path))(protoCoder)
-}
-
-object ProtobufIO {
-  type WriteParam = AvroIO.WriteParam
-  val WriteParam = AvroIO.WriteParam
-}
 
 sealed trait AvroIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
@@ -133,17 +52,28 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     suffix: String,
     codec: CodecFactory,
     metadata: Map[String, AnyRef],
-    tempDirectory: String
-  ) = {
+    tempDirectory: String,
+    filenamePolicyCreator: FilenamePolicyCreator,
+    isWindowed: Boolean
+  ): beam.AvroIO.Write[U] = {
+    val fp = Option(filenamePolicyCreator).getOrElse(ScioUtil.DefaultFilenamePolicyCreator).apply(path, suffix, isWindowed)
     val transform = write
-      .to(ScioUtil.defaultFilenamePolicy(path, suffix))
+      // previously:
+//        .to(ScioUtil.pathWithShards(path))
+//        .withSuffix(suffix)
+      .to(fp)
+      .withTempDirectory(
+        ScioUtil.toResourceId(tempDirectory)
+      )
       .withNumShards(numShards)
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
-    Option(tempDirectory)
-      .map(ScioUtil.toResourceId)
-      .fold(transform)(transform.withTempDirectory)
+      if(!isWindowed) transform else transform.withWindowedWrites()
+//
+//    Option(tempDirectory)
+//      .map(ScioUtil.toResourceId)
+//      .fold(transform)(transform.withTempDirectory)
   }
 }
 
@@ -171,6 +101,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO.write(cls)
+
     data.applyInternal(
       avroOut(
         t,
@@ -179,7 +110,9 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
         params.suffix,
         params.codec,
         params.metadata,
-        params.tempDirectory
+        Option(params.tempDirectory).getOrElse(data.context.options.getTempLocation),
+        params.filenamePolicyCreator,
+        data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
       )
     )
     tap(())
@@ -222,7 +155,9 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
         params.suffix,
         params.codec,
         params.metadata,
-        params.tempDirectory
+        Option(params.tempDirectory).getOrElse(data.context.options.getTempLocation),
+        params.filenamePolicyCreator,
+        data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
       )
     )
     tap(())
@@ -274,6 +209,7 @@ object AvroIO {
     private[avro] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
     private[avro] val DefaultTempDirectory = null
+    private[avro] val DefaultFilenamePolicyCreator = null
   }
 
   final case class WriteParam private (
@@ -281,8 +217,10 @@ object AvroIO {
     private val _suffix: String = WriteParam.DefaultSuffix,
     codec: CodecFactory = WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   ) {
+    // TODO this is kinda weird when compared with the other IOs?
     val suffix: String = _suffix + ".avro"
   }
 

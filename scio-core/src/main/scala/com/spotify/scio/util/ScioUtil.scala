@@ -103,10 +103,15 @@ private[scio] object ScioUtil {
   def toResourceId(directory: String): ResourceId =
     FileSystems.matchNewResource(directory, true)
 
-  def defaultFilenamePolicy(path: String, suffix: String): FileBasedSink.FilenamePolicy = {
+  // TODO this is a terrible name
+  trait FilenamePolicyCreator {
+    def apply(path: String, suffix: String, isWindowed: Boolean): FilenamePolicy
+  }
+
+  val DefaultFilenamePolicyCreator: FilenamePolicyCreator = (path: String, suffix: String, isWindowed: Boolean) => {
     val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
     val prefix = StaticValueProvider.of(resource)
-    DefaultFilenamePolicy.fromStandardParameters(prefix, null, suffix, false)
+    DefaultFilenamePolicy.fromStandardParameters(prefix, null, suffix, isWindowed)
   }
 
   // TODO these should move out of this Util class
@@ -134,8 +139,8 @@ private[scio] object ScioUtil {
     val fileNamePolicy = {
       val hasFunction = (boundedFilenameFunction != null) || (windowedFilenameFunction != null)
       if (hasFunction) {
-        if(isWindowed) Preconditions.checkArgument(windowedFilenameFunction != null, "If SCollection is windowed, windowedFilenameFunction must be provided")
-        if(!isWindowed) Preconditions.checkArgument(boundedFilenameFunction != null, "If SCollection is unwindowed, boundedFilenameFunction must be provided")
+        if(isWindowed) Preconditions.checkArgument(windowedFilenameFunction != null, "If SCollection is windowed, windowedFilenameFunction must be provided", Nil: _*)
+        if(!isWindowed) Preconditions.checkArgument(boundedFilenameFunction != null, "If SCollection is unwindowed, boundedFilenameFunction must be provided", Nil: _*)
         createFilenamePolicy(resource, suffix, boundedFilenameFunction, windowedFilenameFunction)
       } else {
         DefaultFilenamePolicy.fromStandardParameters(prefix, null, suffix, isWindowed)
@@ -152,7 +157,7 @@ private[scio] object ScioUtil {
   ): FilenamePolicy = {
     Preconditions.checkArgument(
       (boundedFilenameFunction != null) || (windowedFilenameFunction != null),
-      "At least one of boundedFilenameFunction or windowedFilenameFunction must be provided"
+      "At least one of boundedFilenameFunction or windowedFilenameFunction must be provided", Nil: _*
     )
     val windowFn = Option(windowedFilenameFunction).getOrElse(DefaultUnboundedFilenameFunction)
     val unwindowFn = Option(boundedFilenameFunction).getOrElse(DefaultBoundedFilenameFunction)

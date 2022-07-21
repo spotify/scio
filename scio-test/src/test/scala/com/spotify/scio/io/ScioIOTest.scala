@@ -19,16 +19,46 @@ package com.spotify.scio.io
 
 import java.nio.ByteBuffer
 import java.nio.file.Files
-
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{CoreSysProps, ScioContext}
 import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
+import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.ScioUtil.{
+  createFilenamePolicy,
+  BoundedFilenameFunction,
+  FilenamePolicyCreator,
+  UnboundedFilenameFunction
+}
+import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.runners.core.construction.renderer.PipelineDotRenderer
+import org.apache.beam.runners.core.construction.{Environments, PipelineTranslation, SdkComponents}
+import org.apache.beam.runners.dataflow.{DataflowPipelineTranslator, DataflowRunner}
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
+import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink}
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.options.{PipelineOptionsFactory, PortablePipelineOptions}
+import org.apache.beam.sdk.testing.TestStream
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow,
+  GlobalWindow,
+  IntervalWindow,
+  PaneInfo
+}
+import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
+import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
+import org.joda.time.{Duration, Instant}
 
+import java.io.File
+import java.util.UUID
 import scala.jdk.CollectionConverters._
 
 object ScioIOTest {
@@ -43,6 +73,79 @@ class ScioIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
     testTap(xs)(_.saveAsAvroFile(_))(".avro")
     testJobTest(xs)(AvroIO[TestRecord](_))(_.avroFile(_))(_.saveAsAvroFile(_))
+  }
+
+  def testWindowingFilenames(
+    create: ScioContext => SCollection[Int],
+    windowInput: Boolean,
+    filenamePolicyCreator: FilenamePolicyCreator = null
+  )(fileFn: Array[String] => Unit = _ => ()): Unit = {
+    val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+
+    val sc = ScioContext()
+    val testRecords: SCollection[TestRecord] = {
+      val input = create(sc)
+      val maybeWindowed: SCollection[Int] =
+        if (!windowInput) input
+        else {
+          input
+            .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
+            .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
+        }
+      maybeWindowed.map(AvroUtils.newSpecificRecord)
+    }
+    testRecords
+      .saveAsAvroFile(
+        tmpDir.getAbsolutePath,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (testRecords.internal.isBounded == IsBounded.BOUNDED) 0 else 10,
+        filenamePolicyCreator = filenamePolicyCreator
+      )
+    sc.run().waitUntilDone()
+
+    val files = tmpDir
+      .listFiles()
+      .filterNot(_.getName.startsWith("_"))
+      .filterNot(_.getName.startsWith("."))
+      .map(_.toString)
+    fileFn(files)
+    FileUtils.deleteDirectory(tmpDir)
+  }
+
+  it should "support SpecificRecord in an unwindowed collection" in {
+    testWindowingFilenames(_.parallelize(1 to 10), false)(
+      all(_) should (include("/part-") and include("-of-"))
+    )
+  }
+
+  it should "support SpecificRecord in an unwindowed collection with a custom filename policy" in {
+    testWindowingFilenames(_.parallelize(1 to 10), false, testFilenamePolicyCreator)(
+      all(_) should (include("/foo-shard-") and include("-of-numShards-"))
+    )
+  }
+
+  it should "support SpecificRecord in a windowed collection" in {
+    testWindowingFilenames(_.parallelize(1 to 10), true)(
+      all(_) should (include("/part") and include("-of-") and include("-pane-"))
+    )
+  }
+
+  it should "support SpecificRecord in a windowed unbounded collection" in {
+    val xxx = testStreamOf[Int]
+      .addElements(1, (2 to 10): _*)
+      .advanceWatermarkToInfinity()
+    testWindowingFilenames(_.testStream(xxx), true)(
+      all(_) should (include("/part") and include("-of-") and include("-pane-"))
+    )
+  }
+
+  it should "support SpecificRecord in a windowed unbounded collection with a custom filename policy" in {
+    val xxx = testStreamOf[Int]
+      .addElements(1, (2 to 10): _*)
+      .advanceWatermarkToInfinity()
+    testWindowingFilenames(_.testStream(xxx), true, testFilenamePolicyCreator)(
+      all(_) should (include("/foo-shard-") and include("-of-numShards-") and include("-window"))
+    )
   }
 
   it should "work with GenericRecord" in {
@@ -91,6 +194,45 @@ class ScioIOTest extends ScioIOSpec {
     testTap(xs)(_.saveAsTextFile(_))(".txt")
     testJobTest(xs)(TextIO(_))(_.textFile(_))(_.saveAsTextFile(_))
   }
+//
+//  val boundedFilenameFunction: BoundedFilenameFunction = (shardNumber, numShards) => s"foo-$shardNumber-of-$numShards"
+//  val windowedFilenameFunction: UnboundedFilenameFunction = (shardNumber, numShards, window, paneInfo) => {
+//    var paneString = String.format("pane-%d", paneInfo.getIndex)
+//    if (paneInfo.getTiming == Timing.LATE) paneString = String.format("%s-late", paneString)
+//    if (paneInfo.isLast) paneString = String.format("%s-last", paneString)
+//
+//    val windowString = window match {
+//      case _: GlobalWindow => "GlobalWindow"
+//      case iw: IntervalWindow => String.format("%s-%s", iw.start.toString, iw.end.toString)
+//      case _ => window.toString
+//    }
+//    s"foo-$shardNumber-of-$numShards-$windowString-$paneString"
+//  }
+//
+//  it should "support windowing" in {
+//    def foo(create: ScioContext => SCollection[Int]) = {
+//      val sc = ScioContext()
+//      create(sc)
+//        .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
+//        .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
+//        .map(_.toString)
+//        .saveAsTextFile(
+//          "out",
+//          boundedFilenameFunction = boundedFilenameFunction,
+//          unboundedFilenameFunction = windowedFilenameFunction
+//        )
+//      sc.run()
+//    }
+//
+//    val xs = (1 to 100)
+//    foo(_.parallelize(xs))
+//
+//    val xxx = testStreamOf[Int]
+//      .addElements(1, (2 to 10):_*)
+//      .advanceWatermarkToInfinity()
+//
+//    foo(_.testStream(xxx))
+//  }
 
   "BinaryIO" should "work" in {
     val xs = (1 to 100).map(i => ByteBuffer.allocate(4).putInt(i).array)
@@ -114,5 +256,4 @@ class ScioIOTest extends ScioIOSpec {
 
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
-
 }
