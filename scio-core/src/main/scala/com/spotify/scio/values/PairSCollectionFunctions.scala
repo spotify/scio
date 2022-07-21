@@ -803,7 +803,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   /**
    * Batches inputs to a desired weight. Batches will contain only elements of a single key.
    *
-   * The weight of each element is computer from the provided function.
+   * The weight of each element is computer from the provided cost function.
    *
    * Elements are buffered until the weight is reached, at which point they are outputed to the
    * output [[SCollection]].
@@ -815,7 +815,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * buffered can be set. Once a batch is flushed to output, the timer is reset. The provided limit
    * must be a positive duration or zero; a zero buffering duration effectively means no limit.
    *
-   * @param batchByteSize
+   * @param weight
+   * @param cost
    * @param maxBufferingDuration
    *
    * @group per_key
