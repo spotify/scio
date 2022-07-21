@@ -25,34 +25,9 @@ import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.{
-  createFilenamePolicy,
-  BoundedFilenameFunction,
-  FilenamePolicyCreator,
-  UnboundedFilenameFunction
-}
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.runners.core.construction.renderer.PipelineDotRenderer
-import org.apache.beam.runners.core.construction.{Environments, PipelineTranslation, SdkComponents}
-import org.apache.beam.runners.dataflow.{DataflowPipelineTranslator, DataflowRunner}
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
-import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink}
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.options.{PipelineOptionsFactory, PortablePipelineOptions}
-import org.apache.beam.sdk.testing.TestStream
-import org.apache.beam.sdk.transforms.windowing.{
-  BoundedWindow,
-  GlobalWindow,
-  IntervalWindow,
-  PaneInfo
-}
-import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
 import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
 import org.joda.time.{Duration, Instant}
