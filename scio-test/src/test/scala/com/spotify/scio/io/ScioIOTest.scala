@@ -50,32 +50,43 @@ class ScioIOTest extends ScioIOSpec {
     testJobTest(xs)(AvroIO[TestRecord](_))(_.avroFile(_))(_.saveAsAvroFile(_))
   }
 
-  def testWindowingFilenames(
-    create: ScioContext => SCollection[Int],
-    windowInput: Boolean,
+  def saveAvro(
     filenamePolicyCreator: FilenamePolicyCreator = null
-  )(fileFn: Array[String] => Unit = _ => ()): Unit = {
+  )(
+    in: SCollection[Int],
+    tmpDir: String,
+    isBounded: Boolean
+  ): ClosedTap[TestRecord] = {
+    in.map(AvroUtils.newSpecificRecord)
+      .saveAsAvroFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else 10,
+        filenamePolicyCreator = filenamePolicyCreator
+      )
+  }
+
+  def testWindowingFilenames[T](
+    inFn: ScioContext => SCollection[Int],
+    windowInput: Boolean,
+    // (windowed input, tmpDir, isBounded)
+    write: (SCollection[Int], String, Boolean) => ClosedTap[T]
+  )(
+    fileFn: Array[String] => Unit = _ => ()
+  ): Unit = {
     val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
 
     val sc = ScioContext()
-    val testRecords: SCollection[TestRecord] = {
-      val input = create(sc)
-      val maybeWindowed: SCollection[Int] =
-        if (!windowInput) input
-        else {
-          input
-            .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
-            .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
-        }
-      maybeWindowed.map(AvroUtils.newSpecificRecord)
+    val in: SCollection[Int] = {
+      val input = inFn(sc)
+      if (!windowInput) input
+      else {
+        input
+          .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
+          .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
+      }
     }
-    testRecords
-      .saveAsAvroFile(
-        tmpDir.getAbsolutePath,
-        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
-        numShards = if (testRecords.internal.isBounded == IsBounded.BOUNDED) 0 else 10,
-        filenamePolicyCreator = filenamePolicyCreator
-      )
+    write(in, tmpDir.getAbsolutePath, in.internal.isBounded == IsBounded.BOUNDED)
     sc.run().waitUntilDone()
 
     val files = tmpDir
@@ -87,38 +98,38 @@ class ScioIOTest extends ScioIOSpec {
     FileUtils.deleteDirectory(tmpDir)
   }
 
-  it should "support SpecificRecord in an unwindowed collection" in {
-    testWindowingFilenames(_.parallelize(1 to 10), false)(
+  it should "work with an unwindowed collection" in {
+    testWindowingFilenames(_.parallelize(1 to 100), false, saveAvro())(
       all(_) should (include("/part-") and include("-of-"))
     )
   }
 
-  it should "support SpecificRecord in an unwindowed collection with a custom filename policy" in {
-    testWindowingFilenames(_.parallelize(1 to 10), false, testFilenamePolicyCreator)(
+  it should "work with an unwindowed collection with a custom filename policy" in {
+    testWindowingFilenames(_.parallelize(1 to 100), false, saveAvro(testFilenamePolicyCreator))(
       all(_) should (include("/foo-shard-") and include("-of-numShards-"))
     )
   }
 
-  it should "support SpecificRecord in a windowed collection" in {
-    testWindowingFilenames(_.parallelize(1 to 10), true)(
+  it should "work with a windowed collection" in {
+    testWindowingFilenames(_.parallelize(1 to 100), true, saveAvro())(
       all(_) should (include("/part") and include("-of-") and include("-pane-"))
     )
   }
 
-  it should "support SpecificRecord in a windowed unbounded collection" in {
+  it should "work with a windowed unbounded collection" in {
     val xxx = testStreamOf[Int]
       .addElements(1, (2 to 10): _*)
       .advanceWatermarkToInfinity()
-    testWindowingFilenames(_.testStream(xxx), true)(
+    testWindowingFilenames(_.testStream(xxx), true, saveAvro())(
       all(_) should (include("/part") and include("-of-") and include("-pane-"))
     )
   }
 
-  it should "support SpecificRecord in a windowed unbounded collection with a custom filename policy" in {
+  it should "work with a windowed unbounded collection with a custom filename policy" in {
     val xxx = testStreamOf[Int]
       .addElements(1, (2 to 10): _*)
       .advanceWatermarkToInfinity()
-    testWindowingFilenames(_.testStream(xxx), true, testFilenamePolicyCreator)(
+    testWindowingFilenames(_.testStream(xxx), true, saveAvro(testFilenamePolicyCreator))(
       all(_) should (include("/foo-shard-") and include("-of-numShards-") and include("-window"))
     )
   }
