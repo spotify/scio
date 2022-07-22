@@ -826,7 +826,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     cost: V => Long,
     maxBufferingDuration: Duration = Duration.ZERO
   ): SCollection[(K, Iterable[V])] = {
-    val weigher: SerializableFunction[V, java.lang.Long] = cost(_).asInstanceOf[java.lang.Long]
+    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
     val groupIntoBatches = GroupIntoBatches
       .ofByteSize[K, V](weight, weigher)
       .withMaxBufferingDuration(maxBufferingDuration)
