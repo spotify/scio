@@ -31,11 +31,13 @@ import scala.reflect.runtime.universe._
 /** Companion object for [[MockBigQuery]]. */
 object MockBigQuery {
 
-  /** Create a new MockBigQuery instance. */
-  def apply(): MockBigQuery = new MockBigQuery(BigQuery.defaultInstance())
-
   /** Create a new MockBigQuery instance with the given BigQueryClient. */
-  def apply(bq: BigQuery): MockBigQuery = new MockBigQuery(bq)
+  def apply(
+    bq: BigQuery = BigQuery.defaultInstance(),
+    stagingProject: Option[String] = None,
+    stagingDataset: Option[String] = None
+  ): MockBigQuery =
+    new MockBigQuery(bq = bq, stagingProject = stagingProject, stagingDataset = stagingDataset)
 }
 
 /**
@@ -44,7 +46,11 @@ object MockBigQuery {
  * Use [[mockTable(original:String)* mockTable]] to feed data into live BigQuery service and
  * [[queryResult]] to query them.
  */
-class MockBigQuery private (private val bq: BigQuery) {
+class MockBigQuery private (
+  private val bq: BigQuery,
+  stagingProject: Option[String] = None,
+  stagingDataset: Option[String] = None
+) {
   private val mapping = mutable.Map.empty[TableReference, TableReference]
 
   /** Mock a BigQuery table. Each table can be mocked only once in a test class. */
@@ -60,6 +66,11 @@ class MockBigQuery private (private val bq: BigQuery) {
 
     val t = bq.tables.table(original)
     val temp = bq.tables.createTemporary(t.getLocation).getTableReference
+
+    // override project and dataset in the mutable temp object
+    stagingProject.foreach(temp.setProjectId(_))
+    stagingDataset.foreach(temp.setDatasetId(_))
+
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
   }
@@ -85,6 +96,11 @@ class MockBigQuery private (private val bq: BigQuery) {
       wildcard, {
         // fake table reference, only used in the mapping for query replacement
         val w = bq.tables.temporaryTableReference(t.getLocation)
+
+        // override project and dataset in the mutable temp object
+        stagingProject.foreach(w.setProjectId(_))
+        stagingDataset.foreach(w.setDatasetId(_))
+
         w.setTableId(w.getTableId + "_*")
         w
       }
