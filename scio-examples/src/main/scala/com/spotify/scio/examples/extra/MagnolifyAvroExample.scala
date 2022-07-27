@@ -40,7 +40,7 @@ object MagnolifyAvroExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyAvroWriteExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount-avro"`
 object MagnolifyAvroWriteExample {
@@ -65,7 +65,7 @@ object MagnolifyAvroWriteExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyAvroReadExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://[BUCKET]/[PATH]/wordcount-avro
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
 object MagnolifyAvroReadExample {

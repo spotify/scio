@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "scio-examples/runMain com.spotify.scio.examples.extra.RefreshingSideInputExample
-// --project=[PROJECT] --runner=[RUNNER] --zone=[ZONE] --input=[PUBSUB_SUBSCRIPTION]"`
+// --project=[PROJECT] --runner=[RUNNER] --region=[REGION NAME] --input=[PUBSUB_SUBSCRIPTION]"`
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._

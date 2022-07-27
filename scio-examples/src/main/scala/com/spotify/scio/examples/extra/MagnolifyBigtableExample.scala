@@ -47,7 +47,7 @@ object MagnolifyBigtableExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyBigtableWriteExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
 // --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
@@ -85,7 +85,7 @@ object MagnolifyBigtableWriteExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyBigtableReadExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --bigtableProjectId=[BIG_TABLE_PROJECT_ID]
 // --bigtableInstanceId=[BIG_TABLE_INSTANCE_ID]
 // --bigtableTableId=[BIG_TABLE_TABLE_ID]
