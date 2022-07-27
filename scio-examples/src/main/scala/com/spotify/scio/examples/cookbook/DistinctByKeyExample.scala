@@ -19,7 +19,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.cookbook.DistinctWithRepresentativeValueFnExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --output=[DATASET].distinct_by_key_example"`
 package com.spotify.scio.examples.cookbook
 
