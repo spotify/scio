@@ -21,11 +21,9 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import com.spotify.scio.parquet.avro.ParquetAvroIO
-import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
@@ -64,27 +62,29 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration,
-    boundedFilenameFunction: BoundedFilenameFunction = WriteParam.DefaultBoundedFilenameFunction,
-    unboundedFilenameFunction: UnboundedFilenameFunction = WriteParam.DefaultUnboundedFilenameFunction
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = WriteParam(schema, numShards, suffix, compression, conf, boundedFilenameFunction, unboundedFilenameFunction)
+    val param = WriteParam(schema, numShards, suffix, compression, conf, shardNameTemplate, tempDirectory, filenamePolicyCreator)
     self.write(ParquetAvroIO[T](path))(param)
   }
 
-  /**
-   * Save this SCollection of Avro records as a Parquet files written to dynamic destinations.
-   */
-  def saveAsDynamicParquetAvroFile(
-    path: String,
-    schema: Schema = WriteParam.DefaultSchema,
-    numShards: Int = WriteParam.DefaultNumShards,
-    suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration,
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    // FIXME rewrite as an actual element-based dynamic write
-    ???
-  }
+  // FIXME rewrite as an actual element-based dynamic write
+//  /**
+//   * Save this SCollection of Avro records as a Parquet files written to dynamic destinations.
+//   */
+//  def saveAsDynamicParquetAvroFile(
+//    path: String,
+//    schema: Schema = WriteParam.DefaultSchema,
+//    numShards: Int = WriteParam.DefaultNumShards,
+//    suffix: String = WriteParam.DefaultSuffix,
+//    compression: CompressionCodecName = WriteParam.DefaultCompression,
+//    conf: Configuration = WriteParam.DefaultConfiguration,
+//  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+//    // FIXME rewrite as an actual element-based dynamic write
+//    ???
+//  }
 }
 
 trait SCollectionSyntax {

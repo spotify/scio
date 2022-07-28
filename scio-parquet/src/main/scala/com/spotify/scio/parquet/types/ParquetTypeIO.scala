@@ -23,22 +23,17 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
+import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.SimpleFunction
+import org.apache.beam.sdk.transforms.{SerializableFunctions, SimpleFunction}
 import org.apache.beam.sdk.values.{TypeDescriptor, WindowingStrategy}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.io.{
-  DefaultFilenamePolicy,
-  DynamicFileDestinations,
-  FileBasedSink,
-  FileSystems,
-  WriteFiles
-}
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
@@ -75,25 +70,55 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     ).setCoder(coder)
   }
 
-  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val isWindowed = data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
-    val (prefix, destinations) = ScioUtil.dynamicDestinations[T](
-      path, params.suffix,
-      isWindowed,
-      params.boundedFilenameFunction,
-      params.unboundedFilenameFunction
-    )
+  private def parquetOut(
+    path: String,
+    suffix: String,
+    numShards: Int,
+    compression: CompressionCodecName,
+    conf: Configuration,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicyCreator: FilenamePolicyCreator,
+    isWindowed: Boolean,
+    isLocalRunner: Boolean
+  ) = {
+    val prefix = ScioUtil.pathWithShards(path)
+    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
-    val job = Job.getInstance(params.conf)
-    if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
-      GcsConnectorUtil.setCredentials(job)
-    }
-    val sink = new ParquetTypeSink[T](prefix, destinations, tpe, job.getConfiguration, params.compression)
-    val transform = {
-      val write = WriteFiles.to(sink).withNumShards(params.numShards)
-      if(isWindowed) write.withWindowedWrites() else write
-    }
-    data.applyInternal(transform)
+    val fp = Option(filenamePolicyCreator)
+      .map { c => c.apply(prefix, suffix, isWindowed) }
+      .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
+
+    val dynamicDestinations = DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
+    val job = Job.getInstance(conf)
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    val sink = new ParquetTypeSink[T](
+      StaticValueProvider.of(tempDirectory),
+      dynamicDestinations,
+      tpe,
+      job.getConfiguration,
+      compression
+    )
+    val transform = WriteFiles.to(sink).withNumShards(numShards)
+    if(!isWindowed) transform else transform.withWindowedWrites()
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    data.applyInternal(
+      parquetOut(
+        path,
+        params.suffix,
+        params.numShards,
+        params.compression,
+        params.conf,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicyCreator,
+        ScioUtil.isWindowed(data),
+        ScioUtil.isLocalRunner(data.context.options.getRunner)
+      )
+    )
     tap(ParquetTypeIO.ReadParam[T]())
   }
 
@@ -103,8 +128,8 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
 object ParquetTypeIO {
   object ReadParam {
-    private[types] val DefaultPredicate = null
-    private[types] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultPredicate = null
+    private[scio] val DefaultConfiguration = new Configuration()
   }
   final case class ReadParam[T] private (
     predicate: FilterPredicate = null,
@@ -112,12 +137,13 @@ object ParquetTypeIO {
   )
 
   object WriteParam {
-    private[types] val DefaultNumShards = 0
-    private[types] val DefaultSuffix = ".parquet"
-    private[types] val DefaultCompression = CompressionCodecName.GZIP
-    private[types] val DefaultConfiguration = new Configuration()
-    private[avro] val DefaultBoundedFilenameFunction = None
-    private[avro] val DefaultUnboundedFilenameFunction = None
+    private[scio] val DefaultNumShards = 0
+    private[scio] val DefaultSuffix = ".parquet"
+    private[scio] val DefaultCompression = CompressionCodecName.GZIP
+    private[scio] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultShardNameTemplate = null
+    private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultFilenamePolicyCreator = null
   }
 
   final case class WriteParam[T] private (
@@ -125,8 +151,9 @@ object ParquetTypeIO {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration,
-    boundedFilenameFunction: Option[BoundedFilenameFunction] = WriteParam.DefaultBoundedFilenameFunction,
-    unboundedFilenameFunction: Option[UnboundedFilenameFunction] = WriteParam.DefaultUnboundedFilenameFunction
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   )
 }
 

@@ -69,6 +69,7 @@ package object json extends AutoDerivation {
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods. */
   implicit final class JsonSCollection[T: Encoder: Decoder: Coder](private val self: SCollection[T])
       extends Serializable {
+    // FIXME TODO
     @experimental
     def saveAsJsonFile(
       path: String,

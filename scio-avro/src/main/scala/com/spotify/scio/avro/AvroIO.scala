@@ -17,23 +17,21 @@
 
 package com.spotify.scio.avro
 
-import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
-import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
+import com.spotify.scio.util.{Functions, ScioUtil}
 import com.spotify.scio.values._
 import com.spotify.scio.{ScioContext, avro}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
-import org.apache.beam.sdk.io.{AvroIO, DefaultFilenamePolicy, FileBasedSink}
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
+import org.apache.beam.sdk.io.DefaultFilenamePolicy
+import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{io => beam}
 
@@ -45,26 +43,35 @@ import scala.reflect.ClassTag
 sealed trait AvroIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
-  protected def avroOut[U](
+  protected[scio] def avroOut[U](
     write: beam.AvroIO.Write[U],
     path: String,
     numShards: Int,
     suffix: String,
     codec: CodecFactory,
     metadata: Map[String, AnyRef],
-    tempDirectory: String,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
     filenamePolicyCreator: FilenamePolicyCreator,
     isWindowed: Boolean
   ): beam.AvroIO.Write[U] = {
-    val fp = Option(filenamePolicyCreator).getOrElse(ScioUtil.DefaultFilenamePolicyCreator).apply(path, suffix, isWindowed)
+    val prefix = ScioUtil.pathWithShards(path)
+    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+
+    val fp = Option(filenamePolicyCreator)
+      .map(c => c.apply(prefix, suffix, isWindowed))
+      .getOrElse {
+        println("Default with " + prefix + ", " + shardNameTemplate + " " + suffix + " " + isWindowed)
+        ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed)
+      }
+
     val transform = write
       // previously:
 //        .to(ScioUtil.pathWithShards(path))
 //        .withSuffix(suffix)
       .to(fp)
-      .withTempDirectory(
-        ScioUtil.toResourceId(tempDirectory)
-      )
+      .withTempDirectory(tempDirectory)
       .withNumShards(numShards)
       .withCodec(codec)
       .withMetadata(metadata.asJava)
@@ -110,9 +117,10 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
         params.suffix,
         params.codec,
         params.metadata,
-        Option(params.tempDirectory).getOrElse(data.context.options.getTempLocation),
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicyCreator,
-        data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+        ScioUtil.isWindowed(data)
       )
     )
     tap(())
@@ -155,7 +163,8 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
         params.suffix,
         params.codec,
         params.metadata,
-        Option(params.tempDirectory).getOrElse(data.context.options.getTempLocation),
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicyCreator,
         data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
       )
@@ -204,12 +213,13 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 
 object AvroIO {
   object WriteParam {
-    private[avro] val DefaultNumShards = 0
-    private[avro] val DefaultSuffix = ""
-    private[avro] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
-    private[avro] val DefaultMetadata: Map[String, AnyRef] = Map.empty
-    private[avro] val DefaultTempDirectory = null
-    private[avro] val DefaultFilenamePolicyCreator = null
+    private[scio] val DefaultNumShards = 0
+    private[scio] val DefaultSuffix = ""
+    private[scio] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
+    private[scio] val DefaultMetadata: Map[String, AnyRef] = Map.empty
+    private[scio] val DefaultShardNameTemplate: String = null
+    private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultFilenamePolicyCreator = null
   }
 
   final case class WriteParam private (
@@ -217,6 +227,7 @@ object AvroIO {
     private val _suffix: String = WriteParam.DefaultSuffix,
     codec: CodecFactory = WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   ) {
@@ -243,18 +254,26 @@ object AvroTyped {
       suffix: String,
       codec: CodecFactory,
       metadata: Map[String, AnyRef],
-      tempDirectory: String
+      shardNameTemplate: String,
+      tempDirectory: ResourceId,
+      filenamePolicyCreator: FilenamePolicyCreator,
+      isWindowed: Boolean
     ) = {
+      val prefix = ScioUtil.pathWithShards(path)
+      if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+      if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+
+      val fp = Option(filenamePolicyCreator)
+        .map(c => c.apply(prefix, suffix, isWindowed))
+        .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
+
       val transform = write
-        .to(ScioUtil.pathWithShards(path))
+        .to(fp)
+        .withTempDirectory(tempDirectory)
         .withNumShards(numShards)
-        .withSuffix(suffix)
         .withCodec(codec)
         .withMetadata(metadata.asJava)
-
-      Option(tempDirectory)
-        .map(ScioUtil.toResourceId)
-        .fold(transform)(transform.withTempDirectory)
+      if(!isWindowed) transform else transform.withWindowedWrites()
     }
 
     /**
@@ -292,7 +311,10 @@ object AvroTyped {
           params.suffix,
           params.codec,
           params.metadata,
-          params.tempDirectory
+          params.shardNameTemplate,
+          ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+          params.filenamePolicyCreator,
+          ScioUtil.isWindowed(data)
         )
       )
       tap(())

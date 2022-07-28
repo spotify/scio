@@ -62,6 +62,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
 ) extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
 
+  // FIXME TODO?
   /** Save this SCollection as Avro files specified by the destination function. */
   def saveAsDynamicAvroFile(
     path: String,

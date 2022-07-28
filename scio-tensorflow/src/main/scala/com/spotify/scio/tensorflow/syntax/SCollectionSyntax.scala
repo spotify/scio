@@ -145,6 +145,7 @@ object PredictSCollectionOps {
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
 
+  // FIXME TODO
   /**
    * Saves this SCollection of `org.tensorflow.proto.example.Example` as a TensorFlow TFRecord file.
    *

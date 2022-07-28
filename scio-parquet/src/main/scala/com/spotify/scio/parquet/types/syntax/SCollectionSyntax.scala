@@ -21,7 +21,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.types.ParquetTypeIO
 import com.spotify.scio.parquet.types.ParquetTypeIO.WriteParam
-import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.hadoop.conf.Configuration
@@ -39,10 +39,11 @@ final class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration,
-    boundedFilenameFunction: Option[BoundedFilenameFunction] = WriteParam.DefaultBoundedFilenameFunction,
-    unboundedFilenameFunction: Option[UnboundedFilenameFunction] = WriteParam.DefaultUnboundedFilenameFunction
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   )(implicit ct: ClassTag[T], coder: Coder[T], pt: ParquetType[T]): ClosedTap[T] =
-    self.write(ParquetTypeIO[T](path))(WriteParam(numShards, suffix, compression, conf, boundedFilenameFunction, unboundedFilenameFunction))
+    self.write(ParquetTypeIO[T](path))(WriteParam(numShards, suffix, compression, conf, shardNameTemplate, tempDirectory, filenamePolicyCreator))
 }
 
 trait SCollectionSyntax {

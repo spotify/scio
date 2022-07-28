@@ -29,6 +29,7 @@ import org.tensorflow.proto.example.Example
 /** Enhanced version of [[SCollection]] with Parquet [[Example]] methods. */
 final class SCollectionOps(private val self: SCollection[Example]) extends AnyVal {
 
+  // FIXME TODO
   /** Save this SCollection of [[Example]] records as a Parquet file. */
   def saveAsParquetExampleFile(
     path: String,

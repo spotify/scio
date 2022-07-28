@@ -26,7 +26,7 @@ import com.spotify.scio.estimators.{ApproxDistinctCounter, ApproximateUniqueCoun
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction}
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -35,7 +35,6 @@ import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
-import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
@@ -1491,8 +1490,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
-    boundedFilenameFunction: BoundedFilenameFunction = TextIO.WriteParam.DefaultBoundedFilenameFunction,
-    unboundedFilenameFunction: UnboundedFilenameFunction = TextIO.WriteParam.DefaultUnboundedFilenameFunction
+    filenamePolicyCreator: FilenamePolicyCreator = TextIO.WriteParam.DefaultFilenamePolicyCreator
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1508,8 +1506,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         footer,
         shardNameTemplate,
         tempDirectory,
-        boundedFilenameFunction,
-        unboundedFilenameFunction
+        filenamePolicyCreator
       )
     )
   }
@@ -1526,12 +1523,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     compression: Compression = BinaryIO.WriteParam.DefaultCompression,
     header: Array[Byte] = BinaryIO.WriteParam.DefaultHeader,
     footer: Array[Byte] = BinaryIO.WriteParam.DefaultFooter,
+    shardNameTemplate: String = BinaryIO.WriteParam.DefaultShardNameTemplate,
     framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
-    fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming,
     tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory,
-    boundedFilenameFunction: BoundedFilenameFunction = BinaryIO.WriteParam.DefaultBoundedFilenameFunction,
-    unboundedFilenameFunction: UnboundedFilenameFunction = BinaryIO.WriteParam.DefaultUnboundedFilenameFunction
+    filenamePolicyCreator: FilenamePolicyCreator = BinaryIO.WriteParam.DefaultFilenamePolicyCreator
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .covary_[Array[Byte]]
@@ -1544,12 +1540,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             compression,
             header,
             footer,
+            shardNameTemplate,
             framePrefix,
             frameSuffix,
-            fileNaming,
             tempDirectory,
-            boundedFilenameFunction,
-            unboundedFilenameFunction
+            filenamePolicyCreator
           )
       )
 

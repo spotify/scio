@@ -20,27 +20,19 @@ package com.spotify.scio.io
 import java.io.{BufferedInputStream, InputStream, SequenceInputStream}
 import java.nio.channels.Channels
 import java.util.Collections
-import com.google.api.client.util.Charsets
-import com.google.common.base.Preconditions
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.{BoundedFilenameFunction, UnboundedFilenameFunction, dynamicDestinations}
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
-import org.apache.beam.sdk.io.{Compression, FileIO, FileSystems, ShardNameTemplate, TextIO => BTextIO}
+import org.apache.beam.sdk.io.{Compression, FileSystems, ShardNameTemplate, TextIO => BTextIO}
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
-import java.io.{BufferedInputStream, InputStream, SequenceInputStream}
-import java.nio.channels.Channels
 import java.nio.charset.StandardCharsets
-import java.util.Collections
 import scala.jdk.CollectionConverters._
 import scala.util.Try
-import org.apache.beam.sdk.io.ShardNameTemplate
-import org.apache.beam.sdk.transforms.Contextful
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import org.apache.beam.sdk.values.WindowingStrategy
+import org.apache.beam.sdk.io.fs.ResourceId
 
 final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
@@ -55,69 +47,63 @@ final case class TextIO(path: String) extends ScioIO[String] {
         .withCompression(params.compression)
     )
 
+  private def textOut(
+    write: BTextIO.Write,
+    path: String,
+    suffix: String,
+    numShards: Int,
+    compression: Compression,
+    header: Option[String],
+    footer: Option[String],
+    // TODO this should be in all the file IOs?
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicyCreator: FilenamePolicyCreator,
+    isWindowed: Boolean
+  ) = {
+    val prefix = path.replaceAll("\\/+$", "")
+    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+
+    val fp = Option(filenamePolicyCreator)
+      .map { c => c.apply(prefix, suffix, isWindowed) }
+      .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
+
+    var transform = write
+      .to(fp)
+      .withTempDirectory(tempDirectory)
+//      .to(path.replaceAll("\\/+$", ""))
+//      .withSuffix(params.suffix)
+//      .withShardNameTemplate(params.shardNameTemplate)
+      .withNumShards(numShards)
+      .withCompression(compression)
+
+    transform = header.fold(transform)(transform.withHeader)
+    transform = footer.fold(transform)(transform.withFooter)
+
+    if(!isWindowed) transform else transform.withWindowedWrites()
+    //    transform = Option(params.tempDirectory)
+//      .map(ScioUtil.toResourceId)
+//      .fold(transform)(transform.withTempDirectory)
+//    transform
+  }
+
   override protected def write(data: SCollection[String], params: WriteP): Tap[String] = {
-    val cleansedPath = path.replaceAll("\\/+$", "")
-    val isWindowed = data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
-    val shardTemplateProvided = params.shardNameTemplate != null
-    val fnProvided = params.unboundedFilenameFunction != null || params.boundedFilenameFunction != null
-
-    val xform = if(fnProvided) {
-      var sink = BTextIO.sink()
-      sink = params.header.fold(sink)(sink.withHeader)
-      sink = params.footer.fold(sink)(sink.withFooter)
-
-      val (_, destinations) = ScioUtil.dynamicDestinations[String](
+    data.applyInternal(
+      textOut(
+        BTextIO.write(),
         path,
         params.suffix,
-        isWindowed,
-        params.boundedFilenameFunction,
-        params.unboundedFilenameFunction
+        params.numShards,
+        params.compression,
+        params.header,
+        params.footer,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicyCreator,
+        ScioUtil.isWindowed(data)
       )
-
-//      val destinationFn: Contextful[Contextful.Fn[String, String]] = Contextful.fn[String, String](
-//
-//      )
-      val transform = FileIO.write()
-//        .by(destinationFn)
-        .withNumShards(params.numShards)
-        .withCompression(params.compression)
-        .withNaming(
-          new FileIO.Write.FileNaming {
-            override def getFilename(window: BoundedWindow, pane: PaneInfo, numShards: Int, shardIndex: Int, compression: Compression): String = ???
-          }
-        )
-        .via(sink)
-        .to(cleansedPath)
-
-      // FileIO supports windowing by default
-      Preconditions.checkArgument(
-        !shardTemplateProvided,
-        "shardNameTemplate may not be used when unboundedFilenameFunction or boundedFilenameFunction are provided", Nil: _*
-      )
-
-      transform
-    } else {
-      var transform = BTextIO.write()
-        .withNumShards(params.numShards)
-        .withCompression(params.compression)
-      transform = params.header.fold(transform)(transform.withHeader)
-      transform = params.footer.fold(transform)(transform.withFooter)
-      transform = Option(params.tempDirectory)
-        .map(ScioUtil.toResourceId)
-        .fold(transform)(transform.withTempDirectory)
-      // TextIO does _not_ support windowing by default
-      if(isWindowed) transform = transform.withWindowedWrites()
-
-      val template = if(shardTemplateProvided) params.shardNameTemplate else TextIO.WriteParam.FallbackShardNameTemplate
-      transform = transform
-        .to(cleansedPath)
-        .withSuffix(params.suffix)
-        .withShardNameTemplate(template)
-
-      transform
-    }
-
-    data.applyInternal(xform)
+    )
     tap(TextIO.ReadParam())
   }
 
@@ -138,8 +124,7 @@ object TextIO {
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val FallbackShardNameTemplate = "/part" + ShardNameTemplate.INDEX_OF_MAX
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultBoundedFilenameFunction = null
-    private[scio] val DefaultUnboundedFilenameFunction = null
+    private[scio] val DefaultFilenamePolicyCreator = null
   }
   final case class WriteParam(
     suffix: String = WriteParam.DefaultSuffix,
@@ -149,8 +134,7 @@ object TextIO {
     footer: Option[String] = WriteParam.DefaultFooter,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    boundedFilenameFunction: BoundedFilenameFunction = WriteParam.DefaultBoundedFilenameFunction,
-    unboundedFilenameFunction: UnboundedFilenameFunction = WriteParam.DefaultUnboundedFilenameFunction
+    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {
