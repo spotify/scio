@@ -93,8 +93,11 @@ private[scio] object ScioUtil {
     }
   }
 
-  def pathWithShards(path: String): String =
-    path.replaceAll("\\/+$", "") + "/part"
+  // FIXME rename
+  def pathWithShards(path: String, prefix: String = null): String = {
+    val replacement = s"/${Option(prefix).getOrElse("part")}"
+    path.replaceAll("\\/*$", replacement)
+  }
 
   def consistentHashCode[K](k: K): Int = k match {
     case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
@@ -110,9 +113,33 @@ private[scio] object ScioUtil {
   }
 
   def defaultFilenamePolicy(path: String, shardTemplate: String, suffix: String, isWindowed: Boolean): FilenamePolicy = {
-    val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
+    val resource = FileBasedSink.convertToFileResourceIfPossible(path)
     val prefix = StaticValueProvider.of(resource)
     DefaultFilenamePolicy.fromStandardParameters(prefix, shardTemplate, suffix, isWindowed)
+  }
+
+  def filenamePolicyCreatorOf(
+    windowed: (Int, Int, BoundedWindow, PaneInfo) => String = null,
+    unwindowed: (Int, Int) => String = null
+  ): FilenamePolicyCreator = {
+    (path: String, suffix: String, isWindowed: Boolean) =>
+      new FilenamePolicy {
+        val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path, ""))
+        private def resolve(filename: String, outputFileHints: FileBasedSink.OutputFileHints) = {
+          resource.getCurrentDirectory.resolve(
+            filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
+            StandardResolveOptions.RESOLVE_FILE
+          )
+        }
+        override def windowedFilename(shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = {
+          if(windowed == null) throw new NotImplementedError()
+          resolve(windowed(shardNumber, numShards, window, paneInfo), outputFileHints)
+        }
+        override def unwindowedFilename(shardNumber: Int, numShards: Int, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = {
+          if(unwindowed == null) throw new NotImplementedError()
+          resolve(unwindowed(shardNumber, numShards), outputFileHints)
+        }
+      }
   }
 
 //  // TODO these should move out of this Util class

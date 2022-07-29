@@ -61,13 +61,12 @@ final case class TextIO(path: String) extends ScioIO[String] {
     filenamePolicyCreator: FilenamePolicyCreator,
     isWindowed: Boolean
   ) = {
-    val prefix = path.replaceAll("\\/+$", "")
     if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map { c => c.apply(prefix, suffix, isWindowed) }
-      .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
 
     var transform = write
       .to(fp)
@@ -107,8 +106,10 @@ final case class TextIO(path: String) extends ScioIO[String] {
     tap(TextIO.ReadParam())
   }
 
-  override def tap(params: ReadP): Tap[String] =
+  override def tap(params: ReadP): Tap[String] = {
+    println(s"TAP path: $path -> ${ScioUtil.addPartSuffix(path)}")
     TextTap(ScioUtil.addPartSuffix(path))
+  }
 
 }
 

@@ -55,16 +55,12 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     filenamePolicyCreator: FilenamePolicyCreator,
     isWindowed: Boolean
   ): beam.AvroIO.Write[U] = {
-    val prefix = ScioUtil.pathWithShards(path)
     if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map(c => c.apply(prefix, suffix, isWindowed))
-      .getOrElse {
-        println("Default with " + prefix + ", " + shardNameTemplate + " " + suffix + " " + isWindowed)
-        ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed)
-      }
+      .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
 
     val transform = write
       // previously:
@@ -259,13 +255,12 @@ object AvroTyped {
       filenamePolicyCreator: FilenamePolicyCreator,
       isWindowed: Boolean
     ) = {
-      val prefix = ScioUtil.pathWithShards(path)
       if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
       if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
       val fp = Option(filenamePolicyCreator)
-        .map(c => c.apply(prefix, suffix, isWindowed))
-        .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
+        .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
+        .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
 
       val transform = write
         .to(fp)

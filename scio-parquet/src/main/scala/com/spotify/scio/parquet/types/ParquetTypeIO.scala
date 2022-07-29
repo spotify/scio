@@ -82,13 +82,12 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
-    val prefix = ScioUtil.pathWithShards(path)
     if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map { c => c.apply(prefix, suffix, isWindowed) }
-      .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
 
     val dynamicDestinations = DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
     val job = Job.getInstance(conf)

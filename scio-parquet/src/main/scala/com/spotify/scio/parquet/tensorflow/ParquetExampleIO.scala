@@ -88,6 +88,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       }
   }
 
+  // FIXME
   override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
     val job = Job.getInstance(params.conf)
     if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {

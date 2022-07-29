@@ -21,7 +21,7 @@ import java.io.File
 import java.util.UUID
 import com.spotify.scio._
 import com.spotify.scio.io._
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, WindowOptions}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.io.FileBasedSink
@@ -29,7 +29,9 @@ import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, IntervalWindow, PaneInfo}
+import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
+import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
 
@@ -41,7 +43,7 @@ trait ScioIOSpec extends PipelineSpec {
     suffix: String,
     isWindowed: Boolean
   ): FilenamePolicy = {
-    val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
+    val resource = FileBasedSink.convertToFileResourceIfPossible(path)
     new FilenamePolicy {
       override def windowedFilename(
         shardNumber: Int,
@@ -80,6 +82,45 @@ trait ScioIOSpec extends PipelineSpec {
     }
   }
 
+  def testWindowingFilenames[T](
+    inFn: ScioContext => SCollection[Int],
+    windowInput: Boolean,
+    // (windowed input, tmpDir, isBounded)
+    write: (SCollection[Int], String, Boolean) => ClosedTap[T]
+  )(
+    fileFn: Array[String] => Unit = _ => ()
+  ): Unit = {
+    val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+
+    val sc = ScioContext()
+    val in: SCollection[Int] = {
+      val input = inFn(sc)
+      if (!windowInput) input
+      else {
+        input
+          .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
+          .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
+      }
+    }
+    write(in, tmpDir.getAbsolutePath, in.internal.isBounded == IsBounded.BOUNDED)
+    sc.run().waitUntilDone()
+
+    fileFn(listFiles(tmpDir))
+    FileUtils.deleteDirectory(tmpDir)
+  }
+
+  def listFiles(tmpDir: File) = {
+    tmpDir
+      .listFiles()
+      .map { x =>
+        println(s"$x")
+        x
+      }
+      .filterNot(_.getName.startsWith("_"))
+      .filterNot(_.getName.startsWith("."))
+      .map(_.toString)
+  }
+
   def testTap[T: Coder](
     xs: Seq[T]
   )(writeFn: (SCollection[T], String) => ClosedTap[T])(suffix: String): Unit = {
@@ -91,12 +132,14 @@ trait ScioIOSpec extends PipelineSpec {
     val scioResult = sc.run().waitUntilDone()
     val tap = scioResult.tap(closedTap)
 
+    println(s"FUCK: ${tmpDir.getAbsolutePath}")
+    val files = listFiles(tmpDir)
+    println(tmpDir)
+    println(files.mkString("\n"))
     tap.value.toSeq should contain theSameElementsAs xs
     tap.open(ScioContext()) should containInAnyOrder(xs)
-    val files =
-      tmpDir.listFiles().filterNot(_.getName.startsWith("_")).map(_.toString)
     all(files) should endWith(suffix)
-    FileUtils.deleteDirectory(tmpDir)
+//    FileUtils.deleteDirectory(tmpDir)
   }
 
   def testJobTestInput[T: ClassTag: Coder](xs: Seq[T], in: String = "in")(

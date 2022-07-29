@@ -66,13 +66,13 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     filenamePolicyCreator: FilenamePolicyCreator,
     isWindowed: Boolean
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
-    val pathPrefix = path.replaceAll("\\/+$", "/" + prefix)
     if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if(prefix != null && filenamePolicyCreator != null) throw new IllegalArgumentException("prefix and filenamePolicyCreator may not be used together")
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map { c => c.apply(pathPrefix, suffix, isWindowed) }
-      .getOrElse(ScioUtil.defaultFilenamePolicy(pathPrefix, shardNameTemplate, suffix, isWindowed))
+      .map { c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed) }
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path, prefix), shardNameTemplate, suffix, isWindowed))
 
     val dynamicDestinations = DynamicFileDestinations.constant[Array[Byte], Array[Byte]](fp, SerializableFunctions.identity)
     val sink = new BytesSink(header, footer, framePrefix, frameSuffix, tempDirectory, dynamicDestinations, compression)
@@ -124,7 +124,7 @@ object BinaryIO {
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
 
   object WriteParam {
-    private[scio] val DefaultPrefix = "part"
+    private[scio] val DefaultPrefix = null
     private[scio] val DefaultSuffix = ".bin"
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED

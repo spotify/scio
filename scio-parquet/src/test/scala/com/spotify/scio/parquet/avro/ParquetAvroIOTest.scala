@@ -23,8 +23,14 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{TapSpec, TextIO}
 import com.spotify.scio.testing._
+import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.FileBasedSink
+import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
+import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
@@ -144,7 +150,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     // This test follows the same pattern as com.spotify.scio.io.dynamic.DynamicFileTest
 
     val dir = tmpDir
-
     val genericRecords = (0 until 10).map(AvroUtils.newGenericRecord)
     val options = PipelineOptionsFactory.fromArgs("--streaming=true").create()
     val sc1 = ScioContext(options)
@@ -156,19 +161,20 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       // take each records int value and multiply it by half hour, so we should have 2 records in each hour window
       .timestampBy(x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000L), Duration.ZERO)
       .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
-      .saveAsDynamicParquetAvroFile(
+      .saveAsParquetAvroFile(
         dir.toString,
-        Left { (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) =>
-          val intervalWindow = window.asInstanceOf[IntervalWindow]
-          val year = intervalWindow.start().get(DateTimeFieldType.year())
-          val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
-          val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
-          val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
-          "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
-            .format(year, month, day, hour, shardNumber, numShards)
-        },
         numShards = 1,
-        schema = AvroUtils.schema
+        schema = AvroUtils.schema,
+        filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+          windowed = (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) => {
+            val intervalWindow = window.asInstanceOf[IntervalWindow]
+            val year = intervalWindow.start().get(DateTimeFieldType.year())
+            val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
+            val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
+            val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
+            "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s".format(year, month, day, hour, shardNumber, numShards)
+          }
+        )
       )
     sc1.run()
 
@@ -213,13 +219,13 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.parallelize(genericRecords)
-      .saveAsDynamicParquetAvroFile(
+      .saveAsParquetAvroFile(
         dir.toString,
-        Right((shardNumber: Int, numShards: Int) =>
-          "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
-        ),
         numShards = 1,
-        schema = AvroUtils.schema
+        schema = AvroUtils.schema,
+        filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+          unwindowed = (shardNumber: Int, numShards: Int) => "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
+        )
       )
     sc.run()
 
@@ -248,11 +254,13 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     an[NotImplementedError] should be thrownBy {
       val sc = ScioContext()
       sc.parallelize(genericRecords)
-        .saveAsDynamicParquetAvroFile(
+        .saveAsParquetAvroFile(
           dir.toString,
-          Left((_, _, _, _) => "test for exception handling"),
           numShards = 1,
-          schema = AvroUtils.schema
+          schema = AvroUtils.schema,
+          filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+            windowed = (_, _, _, _) => "test for exception handling"
+          )
         )
       sc.run()
     }
@@ -265,11 +273,13 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
           Duration.ZERO
         )
         .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
-        .saveAsDynamicParquetAvroFile(
+        .saveAsParquetAvroFile(
           dir.toString,
-          Right((_, _) => "test for exception handling"),
           numShards = 1,
-          schema = AvroUtils.schema
+          schema = AvroUtils.schema,
+          filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+            unwindowed = (_, _) => "test for exception handling"
+          )
         )
       sc.run()
     }
