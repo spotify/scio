@@ -27,7 +27,7 @@
 
 ## Breaking changes since Scio 0.7.0 (@ref:[v0.7.0 Migration Guide](migrations/v0.7.0-Migration-Guide.md))
 
-- New [Magnolia](https://github.com/propensive/magnolia) based @ref:[Coders](internals/Coders.md) derivation
+- New [Magnolia](https://github.com/softwaremill/magnolia) based @ref:[Coders](internals/Coders.md) derivation
 - New @ref:[ScioIO](internals/ScioIO.md) replaces `TestIO[T]` to simplify IO implementation and stubbing in `JobTest`
 
 ## Breaking changes since Scio 0.6.0
