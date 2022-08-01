@@ -413,13 +413,23 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
   libraryDependencies ++= beamRunnersEval.value
 )
 
-lazy val protobufSettings = Def.settings(
-  ProtobufConfig / version := protobufVersion,
-  ProtobufConfig / protobufRunProtoc := (args =>
-    com.github.os72.protocjar.Protoc.runProtoc("-v3.17.3" +: args.toArray)
-  ),
-  libraryDependencies += "com.google.protobuf" % "protobuf-java" % (ProtobufConfig / version).value % ProtobufConfig.name
+lazy val scopedProtobufSettings = Def.settings(
+  PB.targets := Seq(
+    PB.gens.java -> (ThisScope.copy(config = Zero) / sourceManaged).value /
+      "compiled_proto" /
+      configuration.value.name,
+    PB.gens.plugin("grpc-java") -> (ThisScope.copy(config = Zero) / sourceManaged).value /
+      "compiled_grpc" /
+      configuration.value.name
+  )
 )
+
+lazy val protobufSettings = Def.settings(
+  libraryDependencies ++= Seq(
+    "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
+    "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf"
+  )
+) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(scopedProtobufSettings))
 
 def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: ForkOptions) = {
   val (filtered, default) = tests.partition(test => filter.contains(test.name))
@@ -449,7 +459,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-jdbc`,
     `scio-parquet`,
     `scio-tensorflow`,
-    `scio-schemas`,
     `scio-examples`,
     `scio-repl`,
     `scio-jmh`,
@@ -517,13 +526,8 @@ lazy val `scio-core`: Project = project
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio"
   )
-  .dependsOn(
-    `scio-schemas` % "test->test",
-    `scio-macros`
-  )
-  .configs(
-    IntegrationTest
-  )
+  .dependsOn(`scio-macros`)
+  .configs(IntegrationTest)
   .enablePlugins(BuildInfoPlugin)
 
 lazy val `scio-test`: Project = project
@@ -532,6 +536,7 @@ lazy val `scio-test`: Project = project
   .settings(publishSettings)
   .settings(itSettings)
   .settings(macroSettings)
+  .settings(protobufSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
     libraryDependencies ++= Seq(
@@ -576,7 +581,6 @@ lazy val `scio-test`: Project = project
   .configs(IntegrationTest)
   .dependsOn(
     `scio-core` % "test->test;compile->compile;it->it",
-    `scio-schemas` % "test;it",
     `scio-avro` % "compile->test;it->it"
   )
 
@@ -679,7 +683,6 @@ lazy val `scio-google-cloud-platform`: Project = project
   )
   .dependsOn(
     `scio-core` % "compile;it->it",
-    `scio-schemas` % "test",
     `scio-avro` % "test",
     `scio-test` % "test;it"
   )
@@ -907,7 +910,6 @@ lazy val `scio-parquet`: Project = project
   .dependsOn(
     `scio-core`,
     `scio-avro`,
-    `scio-schemas` % "test",
     `scio-test` % "test->test"
   )
 
@@ -944,28 +946,6 @@ lazy val `scio-tensorflow`: Project = project
     `scio-core`,
     `scio-test` % "test->test"
   )
-  .enablePlugins(ProtobufPlugin)
-
-lazy val `scio-schemas`: Project = project
-  .in(file("scio-schemas"))
-  .settings(commonSettings)
-  .settings(protobufSettings)
-  .settings(
-    description := "Avro/Proto schemas for testing",
-    publish / skip := true,
-    mimaPreviousArtifacts := Set.empty,
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.apache.avro" % "avro" % avroVersion
-    ),
-    Compile / sourceDirectories := (Compile / sourceDirectories).value
-      .filterNot(_.getPath.endsWith("/src_managed/main")),
-    Compile / managedSourceDirectories := (Compile / managedSourceDirectories).value
-      .filterNot(_.getPath.endsWith("/src_managed/main")),
-    Compile / doc / sources := List(), // suppress warnings
-    compileOrder := CompileOrder.JavaThenScala
-  )
-  .enablePlugins(ProtobufPlugin)
 
 lazy val `scio-examples`: Project = project
   .in(file("scio-examples"))
@@ -1042,7 +1022,6 @@ lazy val `scio-examples`: Project = project
   .dependsOn(
     `scio-core`,
     `scio-google-cloud-platform`,
-    `scio-schemas`,
     `scio-jdbc`,
     `scio-extra`,
     `scio-elasticsearch8`,
@@ -1223,7 +1202,6 @@ lazy val site: Project = project
     `scio-avro`,
     `scio-google-cloud-platform`,
     `scio-parquet`,
-    `scio-schemas`,
     `scio-smb`,
     `scio-test`,
     `scio-extra`
