@@ -421,7 +421,8 @@ lazy val scopedProtobufSettings = Def.settings(
     PB.gens.plugin("grpc-java") -> (ThisScope.copy(config = Zero) / sourceManaged).value /
       "compiled_grpc" /
       configuration.value.name
-  )
+  ),
+  managedSourceDirectories ++= PB.targets.value.map(_.outputPath)
 )
 
 lazy val protobufSettings = Def.settings(
