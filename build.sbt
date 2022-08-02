@@ -425,6 +425,7 @@ lazy val scopedProtobufSettings = Def.settings(
 )
 
 lazy val protobufSettings = Def.settings(
+  PB.protocVersion := protobufVersion,
   libraryDependencies ++= Seq(
     "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
     "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf"
