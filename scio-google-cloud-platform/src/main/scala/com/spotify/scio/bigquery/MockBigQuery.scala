@@ -37,7 +37,7 @@ object MockBigQuery {
     stagingProject: Option[String] = None,
     stagingDataset: Option[String] = None
   ): MockBigQuery =
-    new MockBigQuery(bq = bq, stagingProject = stagingProject, stagingDataset = stagingDataset)
+    new MockBigQuery(bq, stagingProject, stagingDataset)
 }
 
 /**
@@ -48,8 +48,8 @@ object MockBigQuery {
  */
 class MockBigQuery private (
   private val bq: BigQuery,
-  stagingProject: Option[String] = None,
-  stagingDataset: Option[String] = None
+  stagingProject: Option[String],
+  stagingDataset: Option[String]
 ) {
   private val mapping = mutable.Map.empty[TableReference, TableReference]
 
@@ -68,8 +68,8 @@ class MockBigQuery private (
     val temp = bq.tables.createTemporary(t.getLocation).getTableReference
 
     // override project and dataset in the mutable temp object
-    stagingProject.foreach(temp.setProjectId(_))
-    stagingDataset.foreach(temp.setDatasetId(_))
+    stagingProject.foreach(temp.setProjectId)
+    stagingDataset.foreach(temp.setDatasetId)
 
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
@@ -98,8 +98,8 @@ class MockBigQuery private (
         val w = bq.tables.temporaryTableReference(t.getLocation)
 
         // override project and dataset in the mutable temp object
-        stagingProject.foreach(w.setProjectId(_))
-        stagingDataset.foreach(w.setDatasetId(_))
+        stagingProject.foreach(w.setProjectId)
+        stagingDataset.foreach(w.setDatasetId)
 
         w.setTableId(w.getTableId + "_*")
         w

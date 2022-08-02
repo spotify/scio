@@ -60,14 +60,14 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
     val expected = Seq(wordCount("i", 10), wordCount("thou", 20), wordCount("thy", 30))
   }
 
-  "MockBigQuery" should "support mock data" in {
+  it should "support mock data" in {
     val mbq = MockBigQuery()
     mbq.mockTable(tableRef).withData(MockBQData.inData)
     mbq.queryResult(legacyQuery) should contain theSameElementsAs MockBQData.expected
     mbq.queryResult(sqlQuery) should contain theSameElementsAs MockBQData.expected
   }
 
-  "MockBigQuery" should "support mock data with custom staging dataset" in {
+  it should "support mock data with custom staging dataset" in {
     val mbq = MockBigQuery(stagingDataset = Some("scio_bigquery_staging_custom"))
     mbq.mockTable(tableRef).withData(MockBQData.inData)
     mbq.queryResult(legacyQuery) should contain theSameElementsAs MockBQData.expected
