@@ -1,22 +1,15 @@
 package com.spotify.scio.testing
 
+import java.{lang, util}
+
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.Functions
 import org.apache.beam.runners.core.construction.{PTransformReplacements, ReplacementOutputs}
-import org.apache.beam.sdk.runners.{
-  AppliedPTransform,
-  PTransformMatcher,
-  PTransformOverride,
-  PTransformOverrideFactory
-}
-import org.apache.beam.sdk.runners.PTransformOverrideFactory.{
-  PTransformReplacement,
-  ReplacementOutput
-}
-import org.apache.beam.sdk.transforms.{Create, MapElements, PTransform}
-import org.apache.beam.sdk.values.{KV, PBegin, PCollection, PInput, POutput, TupleTag}
+import org.apache.beam.sdk.runners.PTransformOverrideFactory.{PTransformReplacement, ReplacementOutput}
+import org.apache.beam.sdk.runners.{AppliedPTransform, PTransformMatcher, PTransformOverride, PTransformOverrideFactory}
+import org.apache.beam.sdk.transforms.{Create, FlatMapElements, MapElements, PTransform, SimpleFunction}
+import org.apache.beam.sdk.values._
 
-import java.util
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
@@ -74,8 +67,8 @@ object TransformOverride {
     PTransformOverride.of(
       new EqualNamePTransformMatcher(name),
       factory[PBegin, PCollection[U], PTransform[PBegin, PCollection[U]]](
-        t => t.getPipeline.begin(),
-        Create.of(values.asJava)
+        inFn = t => t.getPipeline.begin(),
+        replacement = Create.of(values.asJava)
       )
     )
 
@@ -85,7 +78,7 @@ object TransformOverride {
    *   with a transform mapping elements via `fn`.
    */
   def of[T: ClassTag, U](name: String, fn: T => U): PTransformOverride = {
-    val wrappedFn = fn.compose { t: T =>
+    val wrappedFn: T => U = fn.compose { t: T =>
       typeValidation(
         s"Input for override transform $name does not match pipeline transform.",
         t.getClass,
@@ -104,6 +97,43 @@ object TransformOverride {
       )
     PTransformOverride.of(new EqualNamePTransformMatcher(name), overrideFactory)
   }
+
+  /**
+   * @return
+   *   A [[PTransformOverride]] which when applied will override a [[PTransform]] with name `name`
+   *   with a transform flat-mapping elements via `fn`.
+   */
+  def off[T: ClassTag, U](name: String, fn: T => Iterable[U]): PTransformOverride = {
+    val wrappedFn: T => lang.Iterable[U] = fn.compose { t: T =>
+      typeValidation(
+        s"Input for override transform $name does not match pipeline transform.",
+        t.getClass,
+        implicitly[ClassTag[T]].runtimeClass
+      )
+      t
+    }.andThen(_.asJava)
+
+    val overrideFactory =
+      factory[PCollection[T], PCollection[U], PTransform[PCollection[T], PCollection[U]]](
+        t => PTransformReplacements.getSingletonMainInput(t),
+        new PTransform[PCollection[T], PCollection[U]]() {
+          override def expand(input: PCollection[T]): PCollection[U] = {
+            val sf: SimpleFunction[T, lang.Iterable[U]] = Functions.simpleFn(wrappedFn)
+            input.apply(FlatMapElements.via(sf))
+          }
+        }
+      )
+    PTransformOverride.of(new EqualNamePTransformMatcher(name), overrideFactory)
+  }
+
+  /**
+   * @return
+   *   A [[PTransformOverride]] which when applied will override a [[PTransform]] with name `name`
+   *   with a transform flat-mapping keys of `mapping` to corresponding repeated values in
+   *   `mapping`.
+   */
+  def off[T: ClassTag, U](name: String, mapping: Map[T, Iterable[U]]): PTransformOverride =
+    off[T, U](name, (t: T) => mapping(t))
 
   /**
    * @return

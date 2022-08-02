@@ -949,6 +949,20 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
+  it should "pass with a 1-to-n override" in {
+    JobTest[TransformOverrideJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("1", "2"))
+      .transformOverride(
+        TransformOverride.off[Int, String](
+          "myTransform",
+          Map(1 -> Seq("10"), 2 -> Seq("20", "21"), 3 -> Seq())
+        )
+      )
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20", "21")))
+      .run()
+  }
+
   it should "pass with a function override" in {
     JobTest[TransformOverrideJob.type]
       .args("--input=in.txt", "--output=out.txt")
@@ -960,6 +974,20 @@ class JobTestTest extends PipelineSpec {
         )
       )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+      .run()
+  }
+
+  it should "pass with a 1-to-n function override" in {
+    JobTest[TransformOverrideJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("1", "2", "3"))
+      .transformOverride(
+        TransformOverride.off[Int, String](
+          "myTransform",
+          (i: Int) => {(1 until i).toList.map(String.valueOf(_))}
+        )
+      )
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(List("1", "1", "2")))
       .run()
   }
 
