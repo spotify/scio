@@ -7,7 +7,7 @@ import com.spotify.scio.util.Functions
 import org.apache.beam.runners.core.construction.{PTransformReplacements, ReplacementOutputs}
 import org.apache.beam.sdk.runners.PTransformOverrideFactory.{PTransformReplacement, ReplacementOutput}
 import org.apache.beam.sdk.runners.{AppliedPTransform, PTransformMatcher, PTransformOverride, PTransformOverrideFactory}
-import org.apache.beam.sdk.transforms.{Create, FlatMapElements, MapElements, PTransform, SimpleFunction}
+import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
 
 import scala.jdk.CollectionConverters._
@@ -104,22 +104,26 @@ object TransformOverride {
    *   with a transform flat-mapping elements via `fn`.
    */
   def off[T: ClassTag, U](name: String, fn: T => Iterable[U]): PTransformOverride = {
-    val wrappedFn: T => lang.Iterable[U] = fn.compose { t: T =>
-      typeValidation(
-        s"Input for override transform $name does not match pipeline transform.",
-        t.getClass,
-        implicitly[ClassTag[T]].runtimeClass
-      )
-      t
-    }.andThen(_.asJava)
+    val wrappedFn: T => lang.Iterable[U] = fn
+      .compose { t: T =>
+        typeValidation(
+          s"Input for override transform $name does not match pipeline transform.",
+          t.getClass,
+          implicitly[ClassTag[T]].runtimeClass
+        )
+        t
+      }
+      .andThen(_.asJava)
 
     val overrideFactory =
       factory[PCollection[T], PCollection[U], PTransform[PCollection[T], PCollection[U]]](
         t => PTransformReplacements.getSingletonMainInput(t),
         new PTransform[PCollection[T], PCollection[U]]() {
           override def expand(input: PCollection[T]): PCollection[U] = {
-            val sf: SimpleFunction[T, lang.Iterable[U]] = Functions.simpleFn(wrappedFn)
-            input.apply(FlatMapElements.via(sf))
+            val inferableFn = new InferableFunction[T, lang.Iterable[U]] {
+              override def apply(input: T): lang.Iterable[U] = wrappedFn.apply(input)
+            }
+            input.apply(FlatMapElements.via(inferableFn))
           }
         }
       )

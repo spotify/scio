@@ -984,7 +984,7 @@ class JobTestTest extends PipelineSpec {
       .transformOverride(
         TransformOverride.off[Int, String](
           "myTransform",
-          (i: Int) => {(1 until i).toList.map(String.valueOf(_))}
+          (i: Int) => {(1 until i).map(String.valueOf(_))}
         )
       )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("1", "1", "2")))
