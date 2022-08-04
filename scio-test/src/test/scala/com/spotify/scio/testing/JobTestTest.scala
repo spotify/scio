@@ -954,7 +954,7 @@ class JobTestTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
       .transformOverride(
-        TransformOverride.off[Int, String](
+        TransformOverride.ofIter[Int, String](
           "myTransform",
           Map(1 -> Seq("10"), 2 -> Seq("20", "21"), 3 -> Seq())
         )
@@ -982,9 +982,10 @@ class JobTestTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
       .transformOverride(
-        TransformOverride.off[Int, String](
+        TransformOverride.ofIter[Int, String](
           "myTransform",
-          (i: Int) => {(1 until i).map(String.valueOf(_))}
+          // map fn equal to: Map(1 -> Seq(), 2 -> List("1"), 3 -> List("1", "2")}
+          (i: Int) => { (1 until i).map(String.valueOf(_)) }
         )
       )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("1", "1", "2")))
@@ -1088,6 +1089,21 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
+  it should "pass with a 1-to-n KV override" in {
+    JobTest[TransformOverrideKVJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("1", "2", "3"))
+      .transformOverride(
+        TransformOverride.ofIterKV[Int, BaseAsyncLookupDoFn.Try[String]](
+          "myTransform",
+          Map(1 -> Seq(), 2 -> Seq("20", "21"), 3 -> Seq("30"), 4 -> Seq("40"))
+            .map { case (k, v) => k -> v.map(new BaseAsyncLookupDoFn.Try(_)) }
+        )
+      )
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(List("20", "21", "30")))
+      .run()
+  }
+
   it should "pass with a KV function override" in {
     JobTest[TransformOverrideKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
@@ -1099,6 +1115,20 @@ class JobTestTest extends PipelineSpec {
         )
       )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+      .run()
+  }
+
+  it should "pass with a 1-to-n  KV function override" in {
+    JobTest[TransformOverrideKVJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("1", "2", "3"))
+      .transformOverride(
+        TransformOverride.ofIterKV[Int, BaseAsyncLookupDoFn.Try[String]](
+          "myTransform",
+          (i: Int) => (1 until i).toList.map(j => new BaseAsyncLookupDoFn.Try(String.valueOf(j)))
+        )
+      )
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(List("1", "1", "2")))
       .run()
   }
 

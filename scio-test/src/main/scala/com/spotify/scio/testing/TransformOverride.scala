@@ -5,8 +5,16 @@ import java.{lang, util}
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.Functions
 import org.apache.beam.runners.core.construction.{PTransformReplacements, ReplacementOutputs}
-import org.apache.beam.sdk.runners.PTransformOverrideFactory.{PTransformReplacement, ReplacementOutput}
-import org.apache.beam.sdk.runners.{AppliedPTransform, PTransformMatcher, PTransformOverride, PTransformOverrideFactory}
+import org.apache.beam.sdk.runners.PTransformOverrideFactory.{
+  PTransformReplacement,
+  ReplacementOutput
+}
+import org.apache.beam.sdk.runners.{
+  AppliedPTransform,
+  PTransformMatcher,
+  PTransformOverride,
+  PTransformOverrideFactory
+}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values._
 
@@ -103,7 +111,7 @@ object TransformOverride {
    *   A [[PTransformOverride]] which when applied will override a [[PTransform]] with name `name`
    *   with a transform flat-mapping elements via `fn`.
    */
-  def off[T: ClassTag, U](name: String, fn: T => Iterable[U]): PTransformOverride = {
+  def ofIter[T: ClassTag, U](name: String, fn: T => Iterable[U]): PTransformOverride = {
     val wrappedFn: T => lang.Iterable[U] = fn
       .compose { t: T =>
         typeValidation(
@@ -136,8 +144,8 @@ object TransformOverride {
    *   with a transform flat-mapping keys of `mapping` to corresponding repeated values in
    *   `mapping`.
    */
-  def off[T: ClassTag, U](name: String, mapping: Map[T, Iterable[U]]): PTransformOverride =
-    off[T, U](name, (t: T) => mapping(t))
+  def ofIter[T: ClassTag, U](name: String, mapping: Map[T, Iterable[U]]): PTransformOverride =
+    ofIter[T, U](name, (t: T) => mapping(t))
 
   /**
    * @return
@@ -158,11 +166,28 @@ object TransformOverride {
   /**
    * @return
    *   A [[PTransformOverride]] which when applied will override a [[PTransform]] with name `name`
+   *   with a transform flat-mapping elements via `fn` and wrapping the result in a [[KV]]
+   */
+  def ofIterKV[T: ClassTag, U](name: String, fn: T => Iterable[U]): PTransformOverride =
+    ofIter[T, KV[T, U]](name, (t: T) => fn(t).map(KV.of(t, _)))
+
+  /**
+   * @return
+   *   A [[PTransformOverride]] which when applied will override a [[PTransform]] with name `name`
    *   with a transform mapping keys of `mapping` to corresponding values in `mapping` and wrapping
    *   the result in a [[KV]]
    */
   def ofKV[T: ClassTag, U](name: String, mapping: Map[T, U]): PTransformOverride =
     of[T, KV[T, U]](name, mapping.map { case (k, v) => k -> KV.of(k, v) })
+
+  /**
+   * @return
+   *   A [[PTransformOverride]] which when applied will override a [[PTransform]] with name `name`
+   *   with a transform flat-mapping keys of `mapping` to corresponding values in `mapping` and
+   *   wrapping the result in a [[KV]]
+   */
+  def ofIterKV[T: ClassTag, U](name: String, mapping: Map[T, Iterable[U]]): PTransformOverride =
+    ofIter[T, KV[T, U]](name, mapping.map { case (k, v) => k -> v.map(KV.of(k, _)) })
 
   /**
    * @return
