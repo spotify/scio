@@ -984,7 +984,7 @@ class JobTestTest extends PipelineSpec {
       .transformOverride(
         TransformOverride.ofIter[Int, String](
           "myTransform",
-          // map fn equal to: Map(1 -> Seq(), 2 -> List("1"), 3 -> List("1", "2")}
+          // map fn equal to: Map(1 -> Seq(), 2 -> Seq("1"), 3 -> Seq("1", "2")}
           (i: Int) => { (1 until i).map(String.valueOf(_)) }
         )
       )
@@ -1118,13 +1118,14 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass with a 1-to-n  KV function override" in {
+  it should "pass with a 1-to-n KV function override" in {
     JobTest[TransformOverrideKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
       .transformOverride(
         TransformOverride.ofIterKV[Int, BaseAsyncLookupDoFn.Try[String]](
           "myTransform",
+          // map fn equal to: Map(1 -> Seq(), 2 -> Seq(Try("1")), 3 -> Seq(Try("1"), Try("2"))}
           (i: Int) => (1 until i).toList.map(j => new BaseAsyncLookupDoFn.Try(String.valueOf(j)))
         )
       )
