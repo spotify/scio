@@ -22,7 +22,7 @@ You can contribute to Scio documentation, and the API documentation.
 Run [scripts/make-site.sh](scripts/make-site.sh) in the project root. The generated site is under `site/target/site/index.html`.
 
 The examples in the markdown documentation are built using [mdoc](https://scalameta.org/mdoc/).
-While you're writing documentation, you can check that everything compiles by running `mdoc` in the sbt shell, after switching to `site `project.
+While you're writing documentation, you can check that everything compiles by running `site/mdoc` in the sbt shell.
 You can also run `~mdoc` to automatically build the documentation on save.
 
 # Building locally
