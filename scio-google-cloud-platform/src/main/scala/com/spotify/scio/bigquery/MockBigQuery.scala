@@ -32,12 +32,7 @@ import scala.reflect.runtime.universe._
 object MockBigQuery {
 
   /** Create a new MockBigQuery instance with the given BigQueryClient. */
-  def apply(
-    bq: BigQuery = BigQuery.defaultInstance(),
-    stagingProject: Option[String] = None,
-    stagingDataset: Option[String] = None
-  ): MockBigQuery =
-    new MockBigQuery(bq, stagingProject, stagingDataset)
+  def apply(bq: BigQuery = BigQuery.defaultInstance()): MockBigQuery = new MockBigQuery(bq)
 }
 
 /**
@@ -46,11 +41,7 @@ object MockBigQuery {
  * Use [[mockTable(original:String)* mockTable]] to feed data into live BigQuery service and
  * [[queryResult]] to query them.
  */
-class MockBigQuery private (
-  private val bq: BigQuery,
-  stagingProject: Option[String],
-  stagingDataset: Option[String]
-) {
+class MockBigQuery private (private val bq: BigQuery) {
   private val mapping = mutable.Map.empty[TableReference, TableReference]
 
   /** Mock a BigQuery table. Each table can be mocked only once in a test class. */
@@ -66,11 +57,6 @@ class MockBigQuery private (
 
     val t = bq.tables.table(original)
     val temp = bq.tables.createTemporary(t.getLocation).getTableReference
-
-    // override project and dataset in the mutable temp object
-    stagingProject.foreach(temp.setProjectId)
-    stagingDataset.foreach(temp.setDatasetId)
-
     mapping += (original -> temp)
     new MockTable(bq, t.getSchema, original, temp)
   }
@@ -96,11 +82,6 @@ class MockBigQuery private (
       wildcard, {
         // fake table reference, only used in the mapping for query replacement
         val w = bq.tables.temporaryTableReference(t.getLocation)
-
-        // override project and dataset in the mutable temp object
-        stagingProject.foreach(w.setProjectId)
-        stagingDataset.foreach(w.setDatasetId)
-
         w.setTableId(w.getTableId + "_*")
         w
       }

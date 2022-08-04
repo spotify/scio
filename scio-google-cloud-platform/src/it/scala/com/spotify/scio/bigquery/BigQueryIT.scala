@@ -18,8 +18,9 @@
 package com.spotify.scio.bigquery
 
 import org.scalatest.Inspectors.forAll
-import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 object BigQueryIT {
   val tableRef = "bigquery-public-data:samples.shakespeare"
@@ -37,12 +38,22 @@ object BigQueryIT {
   class WordCount
 }
 
-class BigQueryIT extends AnyFlatSpec with Matchers {
+class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with BeforeAndAfterAll {
   import BigQueryIT._
 
   // =======================================================================
   // Integration test with mock data
   // =======================================================================
+
+  val StagingDatasetPrefix = "scio_bigquery_staging_custom"
+
+  override def beforeEach() {
+    sys.props.subtractOne(BigQuerySysProps.StagingDatasetPrefix.flag)
+  }
+
+  override def afterAll() {
+    sys.props.subtractOne(BigQuerySysProps.StagingDatasetPrefix.flag)
+  }
 
   object MockBQData {
     def shakespeare(w: String, wc: Long, c: String, cd: Long): TableRow =
@@ -68,10 +79,18 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
   }
 
   it should "support mock data with custom staging dataset" in {
-    val mbq = MockBigQuery(stagingDataset = Some("scio_bigquery_staging_custom"))
-    mbq.mockTable(tableRef).withData(MockBQData.inData)
-    mbq.queryResult(legacyQuery) should contain theSameElementsAs MockBQData.expected
-    mbq.queryResult(sqlQuery) should contain theSameElementsAs MockBQData.expected
+    val defaultMockedBQ = MockBigQuery()
+    defaultMockedBQ.mockTable(tableRef).withData(Seq())
+
+    sys.props.addOne(BigQuerySysProps.StagingDatasetPrefix.flag -> StagingDatasetPrefix)
+    val mockedBQ = MockBigQuery()
+    mockedBQ.mockTable(tableRef).withData(MockBQData.inData)
+    mockedBQ.queryResult(legacyQuery) should contain theSameElementsAs MockBQData.expected
+    mockedBQ.queryResult(sqlQuery) should contain theSameElementsAs MockBQData.expected
+
+    // making sure nothing is written using default staging tables
+    defaultMockedBQ.queryResult(legacyQuery) should contain theSameElementsAs Seq()
+    defaultMockedBQ.queryResult(sqlQuery) should contain theSameElementsAs Seq()
   }
 
   object MockBQWildcardData {
@@ -143,18 +162,26 @@ class BigQueryIT extends AnyFlatSpec with Matchers {
   }
 
   it should "support wildcard tables with custom staging dataset" in {
-    val mbq = MockBigQuery(stagingDataset = Some("scio_bigquery_staging_custom"))
+    val defaultMockedBQ = MockBigQuery()
+    defaultMockedBQ.mockTable(tableRef).withData(Seq())
+
+    sys.props.addOne(BigQuerySysProps.StagingDatasetPrefix.flag -> StagingDatasetPrefix)
+    val mockedBQ = MockBigQuery()
     MockBQWildcardData.suffixData.foreach { case (suffix, inData) =>
-      mbq.mockWildcardTable(MockBQWildcardData.prefix, suffix).withData(inData)
+      mockedBQ.mockWildcardTable(MockBQWildcardData.prefix, suffix).withData(inData)
     }
-    mbq.queryResult(
+    mockedBQ.queryResult(
       MockBQWildcardData.wildcardSqlQuery
     ) should contain theSameElementsInOrderAs MockBQWildcardData.expected
+
+    // making sure nothing is written using default staging tables
+    defaultMockedBQ.queryResult(legacyQuery) should contain theSameElementsAs Seq()
+    defaultMockedBQ.queryResult(sqlQuery) should contain theSameElementsAs Seq()
   }
 
-  // =======================================================================
-  // Integration test with type-safe mock data
-  // =======================================================================
+//  // =======================================================================
+//  // Integration test with type-safe mock data
+//  // =======================================================================
 
   it should "support typed BigQuery" in {
     val inData = Seq(
