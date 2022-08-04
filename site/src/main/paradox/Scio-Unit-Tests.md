@@ -98,11 +98,19 @@ Scio provides convenience methods for constructing `PTransformOverride`s in the 
 Continuing the example above, `TransformOverride.ofAsyncLookup` can be used to map static mock data into the expected output format
 for the transform, here `KV[Int, BaseAsyncLookupDoFn.Try[String]]`.
 
-@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_2 }
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_2_1 }
+
+or use a T to Iterable[U] mapping instead, if it is more convenient:
+
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_2_2 }
 
 It is also possible to provide a function rather than a static map:
 
-@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_3 }
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_3_1 }
+
+or you can provide a T => Iterable[U] function instead:
+
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_3_2 }
 
 `TransformOverride.of` overrides transforms of type `PTransform[PCollection[T], PCollection[U]]` as in the case of `BaseAsyncDoFn` subclasses.
 `TransformOverride.ofKV` overrides transforms of type `PTransform[PCollection[T], PCollection[KV[T, U]]]`.

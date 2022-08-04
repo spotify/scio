@@ -1137,14 +1137,30 @@ class JobTestTest extends PipelineSpec {
     JobTest[TransformOverrideKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
-      // #JobTestTest_example_2
+      // #JobTestTest_example_2_1
       .transformOverride(
         TransformOverride.ofAsyncLookup[Int, String](
           "myTransform",
           Map(1 -> "10", 2 -> "20", 3 -> "30")
         )
       )
-      // #JobTestTest_example_2
+      // #JobTestTest_example_2_1
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+      .run()
+  }
+
+  it should "pass with an AsyncLookup override" in {
+    JobTest[TransformOverrideKVJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("1", "2"))
+      // #JobTestTest_example_2_2
+      .transformOverride(
+        TransformOverride.ofIterAsyncLookup[Int, String](
+          "myTransform",
+          Map(1 -> Seq(), 2 -> Seq("10", "20"), 3 -> Seq("30"))
+        )
+      )
+      // #JobTestTest_example_2_2
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
       .run()
   }
@@ -1154,14 +1170,31 @@ class JobTestTest extends PipelineSpec {
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
       .transformOverride(
-        // #JobTestTest_example_3
+        // #JobTestTest_example_3_1
         TransformOverride.ofAsyncLookup[Int, String](
           "myTransform",
           (i: Int) => s"${i * 10}"
         )
-        // #JobTestTest_example_3
+        // #JobTestTest_example_3_1
       )
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("10", "20")))
+      .run()
+  }
+
+  it should "pass with an AsyncLookup function override" in {
+    JobTest[TransformOverrideKVJob.type]
+      .args("--input=in.txt", "--output=out.txt")
+      .input(TextIO("in.txt"), Seq("1", "2", "3"))
+      .transformOverride(
+        // #JobTestTest_example_3_2
+        TransformOverride.ofIterAsyncLookup[Int, String](
+          "myTransform",
+            // map fn equal to: Map(1 -> Seq(), 2 -> Seq("1"), 3 -> Seq("1", "2")}
+            (i: Int) => { (1 until i).map(String.valueOf(_)) }
+        )
+        // #JobTestTest_example_3_2
+      )
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(List("1", "1", "2")))
       .run()
   }
 }
