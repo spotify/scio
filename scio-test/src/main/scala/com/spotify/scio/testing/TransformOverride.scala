@@ -241,8 +241,10 @@ object TransformOverride {
    *   with a transform flat-mapping keys of `mapping` to corresponding values in `mapping`, and
    *   wrapping the result in a [[BaseAsyncLookupDoFn.Try]] in a [[KV]].
    */
-  def ofIterAsyncLookup[T: ClassTag, U](name: String, mapping: Map[T, Iterable[U]])
-  : PTransformOverride =
+  def ofIterAsyncLookup[T: ClassTag, U](
+    name: String,
+    mapping: Map[T, Iterable[U]]
+  ): PTransformOverride =
     ofIterKV[T, BaseAsyncLookupDoFn.Try[U]](
       name,
       mapping.map { case (k, v) => k -> v.map(i => new BaseAsyncLookupDoFn.Try(i)) }

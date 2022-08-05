@@ -1189,8 +1189,8 @@ class JobTestTest extends PipelineSpec {
         // #JobTestTest_example_3_2
         TransformOverride.ofIterAsyncLookup[Int, String](
           "myTransform",
-            // map fn equal to: Map(1 -> Seq(), 2 -> Seq("1"), 3 -> Seq("1", "2")}
-            (i: Int) => { (1 until i).map(String.valueOf(_)) }
+          // map fn equal to: Map(1 -> Seq(), 2 -> Seq("1"), 3 -> Seq("1", "2")}
+          (i: Int) => { (1 until i).map(String.valueOf(_)) }
         )
         // #JobTestTest_example_3_2
       )
