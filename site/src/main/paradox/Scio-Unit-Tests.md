@@ -112,6 +112,14 @@ or you can provide a T => Iterable[U] function instead:
 
 @@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_3_2 }
 
+In a scenario when the PTransform's output is generating more elements than input, e.g. there is a flatmap inside the transform:
+
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_6 }
+
+The transform can be mocked by one of the flavours of `ofIter` method to map each element to an Iterable[U]:
+
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_7 }
+
 `TransformOverride.of` overrides transforms of type `PTransform[PCollection[T], PCollection[U]]` as in the case of `BaseAsyncDoFn` subclasses.
 `TransformOverride.ofKV` overrides transforms of type `PTransform[PCollection[T], PCollection[KV[T, U]]]`.
 
