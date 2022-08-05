@@ -17,11 +17,12 @@
 
 package com.spotify.scio.avro
 
+import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
-import com.spotify.scio.util.{Functions, ScioUtil}
+import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
 import com.spotify.scio.{ScioContext, avro}
 import org.apache.avro.Schema
@@ -29,7 +30,8 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{io => beam}
 
@@ -37,6 +39,91 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
+
+
+final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
+  override type ReadP = Unit
+  override type WriteP = ObjectFileIO.WriteParam
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
+
+  /**
+   * Get an SCollection for an object file using default serialization.
+   *
+   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
+   * serialization is not guaranteed to be compatible across Scio releases.
+   */
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beamWithDefault(Coder[T])
+    sc.read(GenericRecordIO(path, AvroBytesUtil.schema))
+      .parDo(new DoFn[GenericRecord, T] {
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit =
+          c.output(AvroBytesUtil.decode(coder, c.element()))
+      })
+  }
+
+  /**
+   * Save this SCollection as an object file using default serialization.
+   *
+   * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
+   * serialization is not guaranteed to be compatible across Scio releases.
+   */
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
+    implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
+    data
+      .parDo(new DoFn[T, GenericRecord] {
+        @ProcessElement
+        private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
+          c.output(AvroBytesUtil.encode(elemCoder, c.element()))
+      })
+      .write(GenericRecordIO(path, AvroBytesUtil.schema))(params)
+    tap(())
+  }
+
+  override def tap(read: ReadP): Tap[T] =
+    ObjectFileTap[T](ScioUtil.addPartSuffix(path))
+}
+
+object ObjectFileIO {
+  type WriteParam = AvroIO.WriteParam
+  val WriteParam = AvroIO.WriteParam
+}
+
+final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
+  override type ReadP = Unit
+  override type WriteP = ProtobufIO.WriteParam
+  final override val tapT: TapT.Aux[T, T] = TapOf[T]
+  private val protoCoder = Coder.protoMessageCoder[T]
+
+  /**
+   * Get an SCollection for a Protobuf file.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
+   */
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.read(ObjectFileIO[T](path)(protoCoder))
+
+  /**
+   * Save this SCollection as a Protobuf file.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
+   */
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    val metadata = params.metadata ++ ProtobufUtil.schemaMetadataOf[T]
+    data.write(ObjectFileIO[T](path)(protoCoder))(params.copy(metadata = metadata)).underlying
+  }
+
+  override def tap(read: ReadP): Tap[T] =
+    ObjectFileTap[T](ScioUtil.addPartSuffix(path))(protoCoder)
+}
+
+object ProtobufIO {
+  type WriteParam = AvroIO.WriteParam
+  val WriteParam = AvroIO.WriteParam
+}
 
 sealed trait AvroIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
