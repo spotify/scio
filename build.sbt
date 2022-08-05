@@ -413,6 +413,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
   libraryDependencies ++= beamRunnersEval.value
 )
 
+ThisBuild / PB.protocVersion := protobufVersion
 lazy val scopedProtobufSettings = Def.settings(
   PB.targets := Seq(
     PB.gens.java -> (ThisScope.copy(config = Zero) / sourceManaged).value /
@@ -426,7 +427,6 @@ lazy val scopedProtobufSettings = Def.settings(
 )
 
 lazy val protobufSettings = Def.settings(
-  PB.protocVersion := protobufVersion,
   libraryDependencies ++= Seq(
     "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
     "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf"
