@@ -112,10 +112,6 @@ trait ScioIOSpec extends PipelineSpec {
   def listFiles(tmpDir: File) = {
     tmpDir
       .listFiles()
-      .map { x =>
-        println(s"$x")
-        x
-      }
       .filterNot(_.getName.startsWith("_"))
       .filterNot(_.getName.startsWith("."))
       .map(_.toString)
@@ -132,14 +128,11 @@ trait ScioIOSpec extends PipelineSpec {
     val scioResult = sc.run().waitUntilDone()
     val tap = scioResult.tap(closedTap)
 
-    println(s"FUCK: ${tmpDir.getAbsolutePath}")
     val files = listFiles(tmpDir)
-    println(tmpDir)
-    println(files.mkString("\n"))
     tap.value.toSeq should contain theSameElementsAs xs
     tap.open(ScioContext()) should containInAnyOrder(xs)
     all(files) should endWith(suffix)
-//    FileUtils.deleteDirectory(tmpDir)
+    FileUtils.deleteDirectory(tmpDir)
   }
 
   def testJobTestInput[T: ClassTag: Coder](xs: Seq[T], in: String = "in")(

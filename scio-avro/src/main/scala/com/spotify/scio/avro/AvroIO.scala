@@ -28,10 +28,8 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
-import org.apache.beam.sdk.io.DefaultFilenamePolicy
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.SerializableFunction
-import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{io => beam}
 
@@ -238,12 +236,23 @@ object AvroIO {
 }
 
 object AvroTyped {
+  private[scio] def writeTransform[T <: HasAvroAnnotation: TypeTag: Coder](): beam.AvroIO.TypedWrite[T, Void, GenericRecord] = {
+    val avroT = AvroType[T]
+    beam.AvroIO
+      .writeCustomTypeToGenericRecords()
+      .withFormatFunction(new SerializableFunction[T, GenericRecord] {
+        override def apply(input: T): GenericRecord =
+          avroT.toGenericRecord(input)
+      })
+      .withSchema(avroT.schema)
+  }
+
   final case class AvroIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String) extends ScioIO[T] {
     override type ReadP = Unit
     override type WriteP = avro.AvroIO.WriteParam
     final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
-    private def typedAvroOut[U](
+    private[scio] def typedAvroOut[U](
       write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
       path: String,
       numShards: Int,
@@ -290,17 +299,9 @@ object AvroTyped {
      * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
      */
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-      val avroT = AvroType[T]
-      val t = beam.AvroIO
-        .writeCustomTypeToGenericRecords()
-        .withFormatFunction(new SerializableFunction[T, GenericRecord] {
-          override def apply(input: T): GenericRecord =
-            avroT.toGenericRecord(input)
-        })
-        .withSchema(avroT.schema)
       data.applyInternal(
         typedAvroOut(
-          t,
+          writeTransform[T](),
           path,
           params.numShards,
           params.suffix,
