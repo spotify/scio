@@ -40,7 +40,7 @@ object BigQuerySysProps {
 
   val StagingDatasetPrefix: SysProp = SysProp(
     "bigquery.staging_dataset_prefix",
-    "System property key for setting the prefix for staging table in test"
+    "System property key for setting the prefix for staging table"
   )
 
   val Secret: SysProp = SysProp("bigquery.secret", "")
