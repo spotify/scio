@@ -447,6 +447,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-elasticsearch8`,
     `scio-extra`,
     `scio-jdbc`,
+    `scio-neo4j`,
     `scio-parquet`,
     `scio-tensorflow`,
     `scio-schemas`,
@@ -853,6 +854,22 @@ lazy val `scio-jdbc`: Project = project
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
+  )
+
+lazy val `scio-neo4j`: Project = project
+  .in(file("scio-neo4j"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    description := "Scio add-on for Neo4J",
+    libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion
     )
   )
   .dependsOn(
