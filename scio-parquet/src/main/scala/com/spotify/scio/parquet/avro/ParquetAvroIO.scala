@@ -86,7 +86,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
-    val prefix = ScioUtil.pathWithShards(path)
+    val prefix = ScioUtil.pathWithPrefix(path)
     if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
@@ -99,7 +99,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
     val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else schema
-    val sink = new ParquetAvroSink[T](
+    val sink = new ParquetAvroFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
       dynamicDestinations,
       writerSchema,

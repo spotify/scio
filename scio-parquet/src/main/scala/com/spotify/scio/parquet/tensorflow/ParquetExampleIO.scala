@@ -24,11 +24,14 @@ import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.{ExampleParquetInputFormat, ExampleParquetReader, Schema}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io._
+import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -88,28 +91,56 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       }
   }
 
-  // FIXME
-  override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
-    val job = Job.getInstance(params.conf)
-    if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
-      GcsConnectorUtil.setCredentials(job)
-    }
+  private def parquetExampleOut(
+    path: String,
+    schema: Schema,
+    suffix: String,
+    numShards: Int,
+    compression: CompressionCodecName,
+    conf: Configuration,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicyCreator: FilenamePolicyCreator,
+    isWindowed: Boolean,
+    isLocalRunner: Boolean
+  ) = {
+    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
-    val resource =
-      FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
-    val prefix = StaticValueProvider.of(resource)
-    val usedFilenamePolicy =
-      DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
-    val destinations = DynamicFileDestinations.constant[Example](usedFilenamePolicy)
-    val sink = new ParquetExampleSink(
-      prefix,
-      destinations,
-      params.schema,
+    val fp = Option(filenamePolicyCreator)
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
+
+    val dynamicDestinations = DynamicFileDestinations.constant[Example, Example](fp, SerializableFunctions.identity)
+    val job = Job.getInstance(conf)
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    val sink = new ParquetExampleFileBasedSink(
+      StaticValueProvider.of(tempDirectory),
+      dynamicDestinations,
+      schema,
       job.getConfiguration,
-      params.compression
+      compression
     )
-    val t = WriteFiles.to(sink).withNumShards(params.numShards)
-    data.applyInternal(t)
+    val transform = WriteFiles.to(sink).withNumShards(numShards)
+    if(!isWindowed) transform else transform.withWindowedWrites()
+  }
+
+  override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
+    data.applyInternal(
+      parquetExampleOut(
+        path,
+        params.schema,
+        params.suffix,
+        params.numShards,
+        params.compression,
+        params.conf,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicyCreator,
+        ScioUtil.isWindowed(data),
+        ScioUtil.isLocalRunner(data.context.options.getRunner)
+      )
+    )
     tap(ParquetExampleIO.ReadParam())
   }
 
@@ -134,6 +165,9 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultSuffix = ".parquet"
     private[tensorflow] val DefaultCompression = CompressionCodecName.GZIP
     private[tensorflow] val DefaultConfiguration = new Configuration()
+    private[tensorflow] val DefaultShardNameTemplate = null
+    private[tensorflow] val DefaultTempDirectory = null
+    private[tensorflow] val DefaultFilenamePolicyCreator = null
   }
 
   final case class WriteParam private (
@@ -141,7 +175,10 @@ object ParquetExampleIO {
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   )
 }
 

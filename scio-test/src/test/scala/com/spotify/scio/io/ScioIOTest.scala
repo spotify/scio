@@ -211,7 +211,7 @@ class ScioIOTest extends ScioIOSpec {
     val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val out1TempDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     var previousTransform: BAvroIO.Write[TestRecord] = write1
-      .to(ScioUtil.pathWithShards(out1.getAbsolutePath))
+      .to(ScioUtil.pathWithPrefix(out1.getAbsolutePath))
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withCodec(codec)
@@ -256,7 +256,6 @@ class ScioIOTest extends ScioIOSpec {
     FileUtils.deleteDirectory(out2TempDir)
   }
 
-
   it should "write to the same filenames as previous scio versions when not using a filename policy during a typed write" in {
     import org.apache.beam.sdk.io.{AvroIO => BAvroIO}
 
@@ -273,7 +272,7 @@ class ScioIOTest extends ScioIOSpec {
     val write1 = AvroTyped.writeTransform[AvroRecord]()
 
     var previousTransform = write1
-      .to(ScioUtil.pathWithShards(out1.getAbsolutePath))
+      .to(ScioUtil.pathWithPrefix(out1.getAbsolutePath))
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withCodec(codec)

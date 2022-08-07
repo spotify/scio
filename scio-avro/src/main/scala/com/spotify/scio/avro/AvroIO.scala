@@ -39,8 +39,6 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
-
-
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override type ReadP = Unit
   override type WriteP = ObjectFileIO.WriteParam
@@ -144,8 +142,8 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
 
     val transform = write
       // previously:
@@ -355,8 +353,8 @@ object AvroTyped {
       if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
       val fp = Option(filenamePolicyCreator)
-        .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
-        .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
+        .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+        .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
 
       val transform = write
         .to(fp)

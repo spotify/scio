@@ -98,24 +98,6 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
     val param = AvroIO.WriteParam(numShards, suffix, codec, metadata, shardNameTemplate, tempDirectory, filenamePolicyCreator)
     self.write(SpecificRecordIO[T](path))(param)
   }
-
-  // TODO
-//  def saveAsDynamicAvroFile(
-//    filenameFunction: Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String],
-//  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-//    WindowedFilenamePolicy.writeWindowedFiles()
-//      .withOutputDirectory(options.getOutputDirectory())
-//      .withOutputFilenamePrefix(options.getOutputFilenamePrefix())
-//      .withShardTemplate(options.getOutputShardTemplate())
-//      .withSuffix(options.getOutputFilenameSuffix())
-//      .withYearPattern(options.getYearPattern())
-//      .withMonthPattern(options.getMonthPattern())
-//      .withDayPattern(options.getDayPattern())
-//      .withHourPattern(options.getHourPattern())
-//      .withMinutePattern(options.getMinutePattern())
-//
-//    ???
-//  }
 }
 
 final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])

@@ -65,8 +65,8 @@ final case class TextIO(path: String) extends ScioIO[String] {
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
 
     var transform = write
       .to(fp)

@@ -125,7 +125,7 @@ private object TFRecordMethods {
     data.applyInternal(
       beam.TFRecordIO
         .write()
-        .to(ScioUtil.pathWithShards(path))
+        .to(ScioUtil.pathWithPrefix(path))
         .withSuffix(params.suffix)
         .withCompression(params.compression)
         .withNumShards(params.numShards)

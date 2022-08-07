@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
 import java.util.{HashMap => JHashMap}
 
 object DynamicSCollectionOps {
-  private[syntax] def writeDynamic[A](
+  private[scio] def writeDynamic[A](
     path: String,
     numShards: Int,
     suffix: String,
@@ -62,7 +62,6 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
 ) extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
 
-  // FIXME TODO?
   /** Save this SCollection as Avro files specified by the destination function. */
   def saveAsDynamicAvroFile(
     path: String,

@@ -86,13 +86,13 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map(c => c.apply(ScioUtil.pathWithShards(path, ""), suffix, isWindowed))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithShards(path), shardNameTemplate, suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
 
     val dynamicDestinations = DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
-    val sink = new ParquetTypeSink[T](
+    val sink = new ParquetTypeFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
       dynamicDestinations,
       tpe,
