@@ -30,6 +30,7 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.transforms.BatchDoFn
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -55,6 +56,7 @@ import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
+import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -448,6 +450,38 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val a = aggregator // defeat closure
       in.map(a.prepare).fold(a.monoid).map(a.present)
     }
+
+  def batch(batchSize: Long): SCollection[Iterable[T]] =
+    this
+      .parDo(new BatchDoFn[T](batchSize, Functions.serializableFn[T, java.lang.Long](_ => 1)))
+      .map(_.asScala)
+
+  def batchByteSized(batchByteSize: Long): SCollection[Iterable[T]] = {
+    val bCoder = CoderMaterializer.beam(context, coder)
+    def elementByteSize(e: T): java.lang.Long = {
+      var size: Long = 0L
+      val observer = new ElementByteSizeObserver {
+        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
+      }
+      bCoder.registerByteSizeObserver(e, observer)
+      observer.advance()
+      size
+    }
+    this
+      .parDo(new BatchDoFn[T](batchByteSize, Functions.serializableFn(elementByteSize)))
+      .map(_.asScala)
+  }
+
+  def batchWeighted(batchWeight: Long, cost: T => Long): SCollection[Iterable[T]] = {
+    this
+      .parDo(
+        new BatchDoFn[T](
+          batchWeight,
+          Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
+        )
+      )
+      .map(_.asScala)
+  }
 
   /**
    * Filter the elements for which the given `PartialFunction` is defined, and then map.
