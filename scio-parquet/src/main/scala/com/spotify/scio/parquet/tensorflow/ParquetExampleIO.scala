@@ -108,7 +108,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
 
     val dynamicDestinations = DynamicFileDestinations.constant[Example, Example](fp, SerializableFunctions.identity)

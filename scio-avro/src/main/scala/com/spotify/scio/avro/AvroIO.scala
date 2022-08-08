@@ -142,7 +142,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
     val fp = Option(filenamePolicyCreator)
-      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
 
     val transform = write
@@ -353,7 +353,7 @@ object AvroTyped {
       if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
 
       val fp = Option(filenamePolicyCreator)
-        .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix, isWindowed))
+        .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
         .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
 
       val transform = write

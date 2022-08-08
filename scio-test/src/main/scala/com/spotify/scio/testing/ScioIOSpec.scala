@@ -40,8 +40,7 @@ trait ScioIOSpec extends PipelineSpec {
 
   def testFilenamePolicyCreator(
     path: String,
-    suffix: String,
-    isWindowed: Boolean
+    suffix: String
   ): FilenamePolicy = {
     val resource = FileBasedSink.convertToFileResourceIfPossible(path)
     new FilenamePolicy {

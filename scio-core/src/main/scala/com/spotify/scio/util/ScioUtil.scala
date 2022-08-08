@@ -107,8 +107,7 @@ private[scio] object ScioUtil {
     FileSystems.matchNewResource(directory, true)
 
   trait FilenamePolicyCreator {
-    // TODO remove isWindowed?
-    def apply(path: String, suffix: String, isWindowed: Boolean): FilenamePolicy
+    def apply(path: String, suffix: String): FilenamePolicy
   }
 
   def defaultFilenamePolicy(path: String, shardTemplate: String, suffix: String, isWindowed: Boolean): FilenamePolicy = {
@@ -121,7 +120,7 @@ private[scio] object ScioUtil {
     windowed: (Int, Int, BoundedWindow, PaneInfo) => String = null,
     unwindowed: (Int, Int) => String = null
   ): FilenamePolicyCreator = {
-    (path: String, suffix: String, isWindowed: Boolean) =>
+    (path: String, suffix: String) =>
       new FilenamePolicy {
         val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithPrefix(path, ""))
         private def resolve(filename: String, outputFileHints: FileBasedSink.OutputFileHints) = {
