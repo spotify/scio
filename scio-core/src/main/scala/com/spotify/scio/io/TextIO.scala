@@ -55,7 +55,6 @@ final case class TextIO(path: String) extends ScioIO[String] {
     compression: Compression,
     header: Option[String],
     footer: Option[String],
-    // TODO this should be in all the file IOs?
     shardNameTemplate: String,
     tempDirectory: ResourceId,
     filenamePolicyCreator: FilenamePolicyCreator,
@@ -72,7 +71,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
           ScioUtil.pathWithPrefix(path),
-          shardNameTemplate,
+          Option(shardNameTemplate).getOrElse(TextIO.WriteParam.FallbackShardNameTemplate),
           suffix,
           isWindowed
         )
@@ -81,20 +80,12 @@ final case class TextIO(path: String) extends ScioIO[String] {
     var transform = write
       .to(fp)
       .withTempDirectory(tempDirectory)
-//      .to(path.replaceAll("\\/+$", ""))
-//      .withSuffix(params.suffix)
-//      .withShardNameTemplate(params.shardNameTemplate)
       .withNumShards(numShards)
       .withCompression(compression)
 
     transform = header.fold(transform)(transform.withHeader)
     transform = footer.fold(transform)(transform.withFooter)
-
     if (!isWindowed) transform else transform.withWindowedWrites()
-    //    transform = Option(params.tempDirectory)
-//      .map(ScioUtil.toResourceId)
-//      .fold(transform)(transform.withTempDirectory)
-//    transform
   }
 
   override protected def write(data: SCollection[String], params: WriteP): Tap[String] = {

@@ -38,14 +38,7 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
   /**
    * Save this SCollection of Avro records as a Parquet file.
    * @param path
-   *   output location of the write operation FIXME remove all these
-   * @param filenameFunction
-   *   an Either representing one of two functions which generates a filename. The Either must be a
-   *   Left when writing dynamic files from windowed SCollections, or a Right when writing dynamic
-   *   files from un-windowed SCollections. When the Either is a Left, the function's arguments
-   *   represent (the shard number, the total number of shards, the bounded window, the pane info
-   *   for the window) When the Either is a Right, the function's arguments represent (the shard
-   *   number, the total number of shards)
+   *   output location of the write operation
    * @param schema
    *   must be not null if `T` is of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @param numShards

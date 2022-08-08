@@ -156,20 +156,12 @@ sealed trait AvroIO[T] extends ScioIO[T] {
       )
 
     val transform = write
-      // previously:
-//        .to(ScioUtil.pathWithShards(path))
-//        .withSuffix(suffix)
       .to(fp)
       .withTempDirectory(tempDirectory)
       .withNumShards(numShards)
       .withCodec(codec)
       .withMetadata(metadata.asJava)
-
     if (!isWindowed) transform else transform.withWindowedWrites()
-//
-//    Option(tempDirectory)
-//      .map(ScioUtil.toResourceId)
-//      .fold(transform)(transform.withTempDirectory)
   }
 }
 
