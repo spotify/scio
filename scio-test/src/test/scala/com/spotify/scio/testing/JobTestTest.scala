@@ -1169,7 +1169,7 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass with an AsyncLookup override" in {
+  it should "pass with a 1-to-n AsyncLookup override" in {
     JobTest[TransformOverrideKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
@@ -1201,7 +1201,7 @@ class JobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass with an AsyncLookup function override" in {
+  it should "pass with a 1-to-n AsyncLookup function override" in {
     JobTest[TransformOverrideKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
