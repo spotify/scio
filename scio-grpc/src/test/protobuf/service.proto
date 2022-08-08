@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package spotify.concat.v1;
+
+import "google/protobuf/empty.proto";
+
+option java_package = "com.spotify.concat.v1";
+option java_multiple_files = true;
+option java_outer_classname = "ConcatProto";
+
+message ConcatRequest {
+  string string_one = 1;
+  string string_two = 2;
+  bool   reverse    = 3;
+}
+
+message ConcatResponse {
+  string response = 1;
+}
+
+service ConcatService {
+  rpc Concat(ConcatRequest) returns (ConcatResponse) {}
+  rpc ConcatServerStreaming(ConcatRequest) returns (stream ConcatResponse) {}
+  rpc ConcatClientStreaming(stream ConcatRequest) returns (ConcatResponse) {}
+  rpc ConcatFullStreaming(stream ConcatRequest) returns (stream ConcatResponse) {}
+
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
