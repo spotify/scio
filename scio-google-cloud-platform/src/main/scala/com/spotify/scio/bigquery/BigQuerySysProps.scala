@@ -38,6 +38,11 @@ object BigQuerySysProps {
 
   val Project: SysProp = SysProp("bigquery.project", "System property key for billing project.")
 
+  val StagingDatasetPrefix: SysProp = SysProp(
+    "bigquery.staging_dataset_prefix",
+    "System property key for setting the prefix for staging table"
+  )
+
   val Secret: SysProp = SysProp("bigquery.secret", "")
 
   val Priority: SysProp = SysProp("bigquery.priority", "\"BATCH\" or \"INTERACTIVE\"")
