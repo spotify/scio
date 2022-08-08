@@ -23,12 +23,16 @@ import com.spotify.scio._
 import com.spotify.scio.io._
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.io.FileBasedSink
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, IntervalWindow, PaneInfo}
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow,
+  GlobalWindow,
+  IntervalWindow,
+  PaneInfo
+}
 import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
 import org.joda.time.{Duration, Instant}
@@ -108,7 +112,7 @@ trait ScioIOSpec extends PipelineSpec {
     FileUtils.deleteDirectory(tmpDir)
   }
 
-  def listFiles(tmpDir: File) = {
+  def listFiles(tmpDir: File): Array[String] = {
     tmpDir
       .listFiles()
       .filterNot(_.getName.startsWith("_"))

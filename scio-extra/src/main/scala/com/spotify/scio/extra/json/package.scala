@@ -22,6 +22,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
@@ -69,15 +70,27 @@ package object json extends AutoDerivation {
   /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods. */
   implicit final class JsonSCollection[T: Encoder: Decoder: Coder](private val self: SCollection[T])
       extends Serializable {
-    // FIXME TODO
     @experimental
     def saveAsJsonFile(
       path: String,
-      suffix: String = ".json",
-      numShards: Int = 0,
-      compression: Compression = Compression.UNCOMPRESSED,
-      printer: Printer = Printer.noSpaces
+      suffix: String = JsonIO.WriteParam.DefaultSuffix,
+      numShards: Int = JsonIO.WriteParam.DefaultNumShards,
+      compression: Compression = JsonIO.WriteParam.DefaultCompression,
+      printer: Printer = JsonIO.WriteParam.DefaultPrinter,
+      shardNameTemplate: String = JsonIO.WriteParam.DefaultShardNameTemplate,
+      tempDirectory: String = JsonIO.WriteParam.DefaultTempDirectory,
+      filenamePolicyCreator: FilenamePolicyCreator = JsonIO.WriteParam.DefaultFilenamePolicyCreator
     ): ClosedTap[T] =
-      self.write(JsonIO[T](path))(JsonIO.WriteParam(suffix, numShards, compression, printer))
+      self.write(JsonIO[T](path))(
+        JsonIO.WriteParam(
+          suffix,
+          numShards,
+          compression,
+          printer,
+          shardNameTemplate,
+          tempDirectory,
+          filenamePolicyCreator
+        )
+      )
   }
 }

@@ -61,12 +61,22 @@ final case class TextIO(path: String) extends ScioIO[String] {
     filenamePolicyCreator: FilenamePolicyCreator,
     isWindowed: Boolean
   ) = {
-    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if (shardNameTemplate != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "shardNameTemplate and filenamePolicyCreator may not be used together"
+      )
 
     val fp = Option(filenamePolicyCreator)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
 
     var transform = write
       .to(fp)
@@ -80,7 +90,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
     transform = header.fold(transform)(transform.withHeader)
     transform = footer.fold(transform)(transform.withFooter)
 
-    if(!isWindowed) transform else transform.withWindowedWrites()
+    if (!isWindowed) transform else transform.withWindowedWrites()
     //    transform = Option(params.tempDirectory)
 //      .map(ScioUtil.toResourceId)
 //      .fold(transform)(transform.withTempDirectory)
@@ -127,15 +137,27 @@ object TextIO {
     private[scio] val DefaultTempDirectory = null
     private[scio] val DefaultFilenamePolicyCreator = null
   }
+
+  final val DefaultWriteParam: WriteParam = WriteParam(
+    WriteParam.DefaultSuffix,
+    WriteParam.DefaultNumShards,
+    WriteParam.DefaultCompression,
+    WriteParam.DefaultHeader,
+    WriteParam.DefaultFooter,
+    WriteParam.DefaultShardNameTemplate,
+    WriteParam.DefaultTempDirectory,
+    WriteParam.DefaultFilenamePolicyCreator
+  )
+
   final case class WriteParam(
-    suffix: String = WriteParam.DefaultSuffix,
-    numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression,
-    header: Option[String] = WriteParam.DefaultHeader,
-    footer: Option[String] = WriteParam.DefaultFooter,
-    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
+    suffix: String,
+    numShards: Int,
+    compression: Compression,
+    header: Option[String],
+    footer: Option[String],
+    shardNameTemplate: String,
+    tempDirectory: String,
+    filenamePolicyCreator: FilenamePolicyCreator
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {

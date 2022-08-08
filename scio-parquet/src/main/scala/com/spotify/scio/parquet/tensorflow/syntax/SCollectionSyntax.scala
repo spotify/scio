@@ -42,7 +42,18 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   ): ClosedTap[Example] =
-    self.write(ParquetExampleIO(path))(WriteParam(schema, numShards, suffix, compression, conf, shardNameTemplate, tempDirectory, filenamePolicyCreator))
+    self.write(ParquetExampleIO(path))(
+      WriteParam(
+        schema,
+        numShards,
+        suffix,
+        compression,
+        conf,
+        shardNameTemplate,
+        tempDirectory,
+        filenamePolicyCreator
+      )
+    )
 }
 
 trait SCollectionSyntax {

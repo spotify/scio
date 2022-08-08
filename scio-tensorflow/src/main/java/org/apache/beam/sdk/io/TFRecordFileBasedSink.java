@@ -5,13 +5,11 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
 
-
 public class TFRecordFileBasedSink extends FileBasedSink<byte[], Void, byte[]> {
   public TFRecordFileBasedSink(
       ValueProvider<ResourceId> tempDirectoryProvider,
       FileBasedSink.DynamicDestinations<byte[], Void, byte[]> dynamicDestinations,
-      Compression compression
-  ) {
+      Compression compression) {
     super(tempDirectoryProvider, dynamicDestinations, compression);
   }
 

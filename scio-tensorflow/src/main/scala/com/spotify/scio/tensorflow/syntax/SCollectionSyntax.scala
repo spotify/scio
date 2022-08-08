@@ -22,7 +22,12 @@ import org.tensorflow._
 import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.tensorflow.{SavedBundlePredictDoFn, TFExampleIO, TFRecordIO, TFSequenceExampleIO}
+import com.spotify.scio.tensorflow.{
+  SavedBundlePredictDoFn,
+  TFExampleIO,
+  TFRecordIO,
+  TFSequenceExampleIO
+}
 import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.TensorFlowModel
@@ -152,9 +157,17 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards,
     shardNameTemplate: String = TFExampleIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TFExampleIO.WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = TFExampleIO.WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicyCreator: FilenamePolicyCreator =
+      TFExampleIO.WriteParam.DefaultFilenamePolicyCreator
   ): ClosedTap[Example] = {
-    val param = TFExampleIO.WriteParam(suffix, compression, numShards, shardNameTemplate, tempDirectory, filenamePolicyCreator)
+    val param = TFExampleIO.WriteParam(
+      suffix,
+      compression,
+      numShards,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicyCreator
+    )
     self.covary[Example].write(TFExampleIO(path))(param)
   }
 }
@@ -202,9 +215,17 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
     numShards: Int = TFRecordIO.WriteParam.DefaultNumShards,
     shardNameTemplate: String = TFExampleIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TFExampleIO.WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = TFExampleIO.WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicyCreator: FilenamePolicyCreator =
+      TFExampleIO.WriteParam.DefaultFilenamePolicyCreator
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Array[Byte]] = {
-    val param = TFRecordIO.WriteParam(suffix, compression, numShards, shardNameTemplate, tempDirectory, filenamePolicyCreator)
+    val param = TFRecordIO.WriteParam(
+      suffix,
+      compression,
+      numShards,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicyCreator
+    )
     self.covary[Array[Byte]].write(TFRecordIO(path))(param)
   }
 }
@@ -225,9 +246,17 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
     numShards: Int = TFExampleIO.WriteParam.DefaultNumShards,
     shardNameTemplate: String = TFExampleIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TFExampleIO.WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = TFExampleIO.WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicyCreator: FilenamePolicyCreator =
+      TFExampleIO.WriteParam.DefaultFilenamePolicyCreator
   ): ClosedTap[SequenceExample] = {
-    val param = TFExampleIO.WriteParam(suffix, compression, numShards, shardNameTemplate, tempDirectory, filenamePolicyCreator)
+    val param = TFExampleIO.WriteParam(
+      suffix,
+      compression,
+      numShards,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicyCreator
+    )
     self.covary[SequenceExample].write(TFSequenceExampleIO(path))(param)
   }
 }

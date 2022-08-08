@@ -34,9 +34,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryUtils.ConversionOptions.TruncateTimestamps
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, BigQueryUtils, SchemaAndRecord, TableDestination}
+import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, TableDestination}
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
@@ -44,7 +42,6 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
-import org.apache.beam.sdk.values.ValueInSingleWindow
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -298,19 +295,6 @@ object BigQueryTypedTable {
     })
     val writer = beam.BigQueryIO
       .write[T]()
-      .to(
-        new SerializableFunction[ValueInSingleWindow[T], TableDestination]() {
-          def apply(value: ValueInSingleWindow[T]): TableDestination = {
-//            // The cast below is safe because CalendarWindows.days(1) produces IntervalWindows.
-//            String dayString = DateTimeFormat.forPattern("yyyy_MM_dd")
-//              .withZone(DateTimeZone.UTC)
-//              .print(((IntervalWindow) value.getWindow()).start()
-//            );
-//            return "my-project:output.output_table_" + dayString;
-            ???
-          }
-        }
-      )
       .withFormatFunction(new SerializableFunction[T, TableRow] {
         override def apply(input: T): TableRow = wFn(input)
       })

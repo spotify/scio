@@ -25,7 +25,11 @@ package object parquet {
   class ParquetOutputFile(channel: WritableByteChannel) extends OutputFile {
     override def supportsBlockSize = false
     override def defaultBlockSize = 0
-    override def create(blockSizeHint: Long) = new ParquetOutputStream(Channels.newOutputStream(channel))
-    override def createOrOverwrite(blockSizeHint: Long) = new ParquetOutputStream(Channels.newOutputStream(channel))
+    override def create(blockSizeHint: Long) = new ParquetOutputStream(
+      Channels.newOutputStream(channel)
+    )
+    override def createOrOverwrite(blockSizeHint: Long) = new ParquetOutputStream(
+      Channels.newOutputStream(channel)
+    )
   }
 }

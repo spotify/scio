@@ -27,13 +27,16 @@ import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems}
+import org.apache.beam.sdk.io.{
+  DefaultFilenamePolicy,
+  FileBasedSink,
+  FileSystems
+}
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.options.{PipelineOptions, ValueProvider}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.WindowingStrategy
-import org.apache.beam.sdk.{Pipeline, PipelineResult, PipelineRunner}
+import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.slf4j.LoggerFactory
 
 import scala.collection.compat.immutable.ArraySeq
@@ -110,7 +113,12 @@ private[scio] object ScioUtil {
     def apply(path: String, suffix: String): FilenamePolicy
   }
 
-  def defaultFilenamePolicy(path: String, shardTemplate: String, suffix: String, isWindowed: Boolean): FilenamePolicy = {
+  def defaultFilenamePolicy(
+    path: String,
+    shardTemplate: String,
+    suffix: String,
+    isWindowed: Boolean
+  ): FilenamePolicy = {
     val resource = FileBasedSink.convertToFileResourceIfPossible(path)
     val prefix = StaticValueProvider.of(resource)
     DefaultFilenamePolicy.fromStandardParameters(prefix, shardTemplate, suffix, isWindowed)
@@ -119,25 +127,35 @@ private[scio] object ScioUtil {
   def filenamePolicyCreatorOf(
     windowed: (Int, Int, BoundedWindow, PaneInfo) => String = null,
     unwindowed: (Int, Int) => String = null
-  ): FilenamePolicyCreator = {
-    (path: String, suffix: String) =>
-      new FilenamePolicy {
-        val resource = FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithPrefix(path, ""))
-        private def resolve(filename: String, outputFileHints: FileBasedSink.OutputFileHints) = {
-          resource.getCurrentDirectory.resolve(
-            filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
-            StandardResolveOptions.RESOLVE_FILE
-          )
-        }
-        override def windowedFilename(shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = {
-          if(windowed == null) throw new NotImplementedError()
-          resolve(windowed(shardNumber, numShards, window, paneInfo), outputFileHints)
-        }
-        override def unwindowedFilename(shardNumber: Int, numShards: Int, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = {
-          if(unwindowed == null) throw new NotImplementedError()
-          resolve(unwindowed(shardNumber, numShards), outputFileHints)
-        }
+  ): FilenamePolicyCreator = { (path: String, suffix: String) =>
+    new FilenamePolicy {
+      val resource =
+        FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithPrefix(path, ""))
+      private def resolve(filename: String, outputFileHints: FileBasedSink.OutputFileHints) = {
+        resource.getCurrentDirectory.resolve(
+          filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
+          StandardResolveOptions.RESOLVE_FILE
+        )
       }
+      override def windowedFilename(
+        shardNumber: Int,
+        numShards: Int,
+        window: BoundedWindow,
+        paneInfo: PaneInfo,
+        outputFileHints: FileBasedSink.OutputFileHints
+      ): ResourceId = {
+        if (windowed == null) throw new NotImplementedError()
+        resolve(windowed(shardNumber, numShards, window, paneInfo), outputFileHints)
+      }
+      override def unwindowedFilename(
+        shardNumber: Int,
+        numShards: Int,
+        outputFileHints: FileBasedSink.OutputFileHints
+      ): ResourceId = {
+        if (unwindowed == null) throw new NotImplementedError()
+        resolve(unwindowed(shardNumber, numShards), outputFileHints)
+      }
+    }
   }
 
   def tempDirOrDefault(tempDirectory: String, sc: ScioContext): ResourceId = {
@@ -147,5 +165,6 @@ private[scio] object ScioUtil {
     }
   }
 
-  def isWindowed(coll: SCollection[_]): Boolean = coll.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+  def isWindowed(coll: SCollection[_]): Boolean =
+    coll.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
 }

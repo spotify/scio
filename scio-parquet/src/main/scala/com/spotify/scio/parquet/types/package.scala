@@ -38,7 +38,7 @@ package object types extends Syntax {
     compression: CompressionCodecName,
     conf: SerializableConfiguration
   )(implicit val pt: ParquetType[T])
-    extends FileIO.Sink[T] {
+      extends FileIO.Sink[T] {
     @transient private var writer: ParquetWriter[T] = _
 
     override def open(channel: WritableByteChannel): Unit = {

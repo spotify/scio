@@ -50,7 +50,8 @@ package object avro extends Syntax {
     private var writer: ParquetWriter[T] = _
     override def open(channel: WritableByteChannel): Unit = {
       // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
-      val rowGroupSize = conf.get.getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE)
+      val rowGroupSize =
+        conf.get.getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE)
       writer = AvroParquetWriter
         .builder[T](new ParquetOutputFile(channel))
         .withSchema(schema)

@@ -31,15 +31,10 @@ import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io._
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
-import org.apache.beam.sdk.transforms.{SerializableFunction, SerializableFunctions, SimpleFunction}
-import org.apache.beam.sdk.values.{TypeDescriptor, WindowingStrategy}
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
+import org.apache.beam.sdk.transforms.{SerializableFunction, SerializableFunctions}
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport, GenericDataSupplier}
@@ -87,14 +82,18 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     isLocalRunner: Boolean
   ) = {
     val prefix = ScioUtil.pathWithPrefix(path)
-    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if (shardNameTemplate != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "shardNameTemplate and filenamePolicyCreator may not be used together"
+      )
 
     val fp = Option(filenamePolicyCreator)
-      .map { c => c.apply(prefix, suffix) }
+      .map(c => c.apply(prefix, suffix))
       .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
 
-    val dynamicDestinations = DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
+    val dynamicDestinations =
+      DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
@@ -107,7 +106,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       compression
     )
     val transform = WriteFiles.to(sink).withNumShards(numShards)
-    if(!isWindowed) transform else transform.withWindowedWrites()
+    if (!isWindowed) transform else transform.withWindowedWrites()
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {

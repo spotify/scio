@@ -46,7 +46,9 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
 
   def name(): String
   def extension: String
-  def save(filenamePolicyCreator: FilenamePolicyCreator = null)(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[T]
+  def save(
+    filenamePolicyCreator: FilenamePolicyCreator = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[T]
 
   name() should "work with an unwindowed collection" in {
     testWindowingFilenames(_.parallelize(1 to 100), false, save())(
@@ -62,7 +64,9 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
 
   it should "work with a windowed collection" in {
     testWindowingFilenames(_.parallelize(1 to 100), true, save())(
-      all(_) should (include("/part") and include("-of-") and include("-pane-") and include(extension))
+      all(_) should (include("/part") and include("-of-") and include("-pane-") and include(
+        extension
+      ))
     )
   }
 
@@ -70,10 +74,11 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
     val xxx = testStreamOf[Int]
       .addElements(1, (2 to 10): _*)
       .advanceWatermarkToInfinity()
-    testWindowingFilenames(_.testStream(xxx), true, save()) {
-      files =>
-        assert(files.length == TestNumShards)
-        all(files) should (include("/part") and include("-of-") and include("-pane-") and include(extension))
+    testWindowingFilenames(_.testStream(xxx), true, save()) { files =>
+      assert(files.length == TestNumShards)
+      all(files) should (include("/part") and include("-of-") and include("-pane-") and include(
+        extension
+      ))
     }
   }
 
@@ -81,10 +86,11 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
     val xxx = testStreamOf[Int]
       .addElements(1, (2 to 10): _*)
       .advanceWatermarkToInfinity()
-    testWindowingFilenames(_.testStream(xxx), true, save(testFilenamePolicyCreator)) {
-      files =>
-        assert(files.length == TestNumShards)
-        all(files) should (include("/foo-shard-") and include("-of-numShards-") and include("-window") and include(extension))
+    testWindowingFilenames(_.testStream(xxx), true, save(testFilenamePolicyCreator)) { files =>
+      assert(files.length == TestNumShards)
+      all(files) should (include("/foo-shard-") and include("-of-numShards-") and include(
+        "-window"
+      ) and include(extension))
     }
   }
 }
@@ -92,7 +98,9 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
 class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   def name(): String = "AvroIO"
   val extension: String = ".avro"
-  def save(filenamePolicyCreator: FilenamePolicyCreator = null)(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TestRecord] = {
+  def save(
+    filenamePolicyCreator: FilenamePolicyCreator = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TestRecord] = {
     in.map(AvroUtils.newSpecificRecord)
       .saveAsAvroFile(
         tmpDir,
@@ -106,7 +114,9 @@ class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
 class TextIOFileNamePolicyTest extends FileNamePolicySpec[String] {
   def name(): String = "TextIO"
   val extension: String = ".txt"
-  def save(filenamePolicyCreator: FilenamePolicyCreator = null)(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[String] = {
+  def save(
+    filenamePolicyCreator: FilenamePolicyCreator = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[String] = {
     in.map(_.toString)
       .saveAsTextFile(
         tmpDir,
@@ -122,7 +132,9 @@ class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[ScioIOTest.AvroRecor
 
   def name(): String = "ObjectFileIO"
   val extension: String = ".obj.avro"
-  def save(filenamePolicyCreator: FilenamePolicyCreator = null)(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[AvroRecord] = {
+  def save(
+    filenamePolicyCreator: FilenamePolicyCreator = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[AvroRecord] = {
     in.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
       .saveAsObjectFile(
         tmpDir,
@@ -136,7 +148,9 @@ class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[ScioIOTest.AvroRecor
 class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
   def name(): String = "ProtobufIO"
   val extension: String = ".protobuf.avro"
-  def save(filenamePolicyCreator: FilenamePolicyCreator = null)(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TrackPB] = {
+  def save(
+    filenamePolicyCreator: FilenamePolicyCreator = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TrackPB] = {
     in.map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
       .saveAsProtobufFile(
         tmpDir,
@@ -150,7 +164,9 @@ class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
 class BinaryIOFileNamePolicyTest extends FileNamePolicySpec[Nothing] {
   def name(): String = "BinaryIO"
   val extension: String = ".bin"
-  def save(filenamePolicyCreator: FilenamePolicyCreator = null)(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Nothing] = {
+  def save(
+    filenamePolicyCreator: FilenamePolicyCreator = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Nothing] = {
     in.map(x => ByteBuffer.allocate(4).putInt(x).array)
       .saveAsBinaryFile(
         tmpDir,
@@ -209,7 +225,8 @@ class ScioIOTest extends ScioIOSpec {
      * pre-scio 0.12.0
      */
     val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out1TempDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out1TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     var previousTransform: BAvroIO.Write[TestRecord] = write1
       .to(ScioUtil.pathWithPrefix(out1.getAbsolutePath))
       .withSuffix(suffix)
@@ -224,7 +241,8 @@ class ScioIOTest extends ScioIOSpec {
      * current scio
      */
     val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out2TempDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out2TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val sr2 = SpecificRecordIO[TestRecord](out2.getAbsolutePath)
     val write2 = BAvroIO.write(ScioUtil.classOf[TestRecord])
 
@@ -257,8 +275,6 @@ class ScioIOTest extends ScioIOSpec {
   }
 
   it should "write to the same filenames as previous scio versions when not using a filename policy during a typed write" in {
-    import org.apache.beam.sdk.io.{AvroIO => BAvroIO}
-
     val suffix = ".avro"
     val numShards = 10
     val codec = CodecFactory.deflateCodec(6)
@@ -268,7 +284,8 @@ class ScioIOTest extends ScioIOSpec {
      * pre-scio 0.12.0
      */
     val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out1TempDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out1TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val write1 = AvroTyped.writeTransform[AvroRecord]()
 
     var previousTransform = write1
@@ -285,7 +302,8 @@ class ScioIOTest extends ScioIOSpec {
      * current scio
      */
     val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out2TempDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out2TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val sr2 = AvroTyped.AvroIO[AvroRecord](out2.getAbsolutePath)
     val write2 = AvroTyped.writeTransform[AvroRecord]()
 
@@ -304,7 +322,9 @@ class ScioIOTest extends ScioIOSpec {
 
     // verify
     val sc = ScioContext()
-    val data = sc.parallelize((1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList)))
+    val data = sc.parallelize(
+      (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
+    )
 
     data.applyInternal(previousTransform)
     data.applyInternal(currentTransform)

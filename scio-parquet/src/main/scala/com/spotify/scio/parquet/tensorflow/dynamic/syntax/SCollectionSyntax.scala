@@ -17,29 +17,33 @@ import scala.reflect.ClassTag
 final class DynamicParquetExampleSCollectionOps(
   private val self: SCollection[Example]
 ) extends AnyVal {
-    /**
-     * Save this SCollection of [[Example]] records as a Parquet files written to dynamic destinations.
-     */
-    def saveAsDynamicParquetExampleFile(
-      path: String,
-      schema: Schema,
-      numShards: Int = ParquetExampleIO.WriteParam.DefaultNumShards,
-      suffix: String = ParquetExampleIO.WriteParam.DefaultSuffix,
-      compression: CompressionCodecName = ParquetExampleIO.WriteParam.DefaultCompression,
-      conf: Configuration = ParquetExampleIO.WriteParam.DefaultConfiguration,
-      tempDirectory: String = ParquetExampleIO.WriteParam.DefaultTempDirectory
-    )(
-      destinationFn: Example => String
-    )(implicit ct: ClassTag[Example], coder: Coder[Example]): ClosedTap[Nothing] = {
-      if (self.context.isTest) {
-        throw new NotImplementedError("Parquet example file with dynamic destinations cannot be used in a test context")
-      } else {
-        val sink = new ParquetExampleSink(schema, compression, new SerializableConfiguration(conf))
-        val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
-        self.applyInternal(write)
-      }
-      ClosedTap[Nothing](EmptyTap)
+
+  /**
+   * Save this SCollection of [[Example]] records as a Parquet files written to dynamic
+   * destinations.
+   */
+  def saveAsDynamicParquetExampleFile(
+    path: String,
+    schema: Schema,
+    numShards: Int = ParquetExampleIO.WriteParam.DefaultNumShards,
+    suffix: String = ParquetExampleIO.WriteParam.DefaultSuffix,
+    compression: CompressionCodecName = ParquetExampleIO.WriteParam.DefaultCompression,
+    conf: Configuration = ParquetExampleIO.WriteParam.DefaultConfiguration,
+    tempDirectory: String = ParquetExampleIO.WriteParam.DefaultTempDirectory
+  )(
+    destinationFn: Example => String
+  )(implicit ct: ClassTag[Example], coder: Coder[Example]): ClosedTap[Nothing] = {
+    if (self.context.isTest) {
+      throw new NotImplementedError(
+        "Parquet example file with dynamic destinations cannot be used in a test context"
+      )
+    } else {
+      val sink = new ParquetExampleSink(schema, compression, new SerializableConfiguration(conf))
+      val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
+      self.applyInternal(write)
     }
+    ClosedTap[Nothing](EmptyTap)
+  }
 }
 
 trait SCollectionSyntax {

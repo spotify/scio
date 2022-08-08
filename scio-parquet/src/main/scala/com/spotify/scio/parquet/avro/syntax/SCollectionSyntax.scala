@@ -38,8 +38,7 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
   /**
    * Save this SCollection of Avro records as a Parquet file.
    * @param path
-   *   output location of the write operation
-   FIXME remove all these
+   *   output location of the write operation FIXME remove all these
    * @param filenameFunction
    *   an Either representing one of two functions which generates a filename. The Either must be a
    *   Left when writing dynamic files from windowed SCollections, or a Right when writing dynamic
@@ -67,7 +66,16 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = WriteParam(schema, numShards, suffix, compression, conf, shardNameTemplate, tempDirectory, filenamePolicyCreator)
+    val param = WriteParam(
+      schema,
+      numShards,
+      suffix,
+      compression,
+      conf,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicyCreator
+    )
     self.write(ParquetAvroIO[T](path))(param)
   }
 }

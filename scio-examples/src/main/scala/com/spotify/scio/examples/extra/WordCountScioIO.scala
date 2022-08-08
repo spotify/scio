@@ -73,7 +73,7 @@ object WordCountScioIO {
       // Map `(String, Long)` tuples into final "word: count" strings
       .map { case (word, count) => word + ": " + count }
       // Save result as text files under the output path by passing write params
-      .write(outputTextIO)(TextIO.WriteParam())
+      .write(outputTextIO)(TextIO.DefaultWriteParam)
 
     // Execute the pipeline and block until it finishes
     val result = sc.run().waitUntilFinish()

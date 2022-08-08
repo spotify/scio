@@ -24,13 +24,8 @@ import com.spotify.scio.avro._
 import com.spotify.scio.io.{TapSpec, TextIO}
 import com.spotify.scio.testing._
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.io.FileBasedSink
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
-import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
@@ -166,14 +161,16 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         numShards = 1,
         schema = AvroUtils.schema,
         filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
-          windowed = (shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo) => {
-            val intervalWindow = window.asInstanceOf[IntervalWindow]
-            val year = intervalWindow.start().get(DateTimeFieldType.year())
-            val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
-            val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
-            val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
-            "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s".format(year, month, day, hour, shardNumber, numShards)
-          }
+          windowed =
+            (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) => {
+              val intervalWindow = window.asInstanceOf[IntervalWindow]
+              val year = intervalWindow.start().get(DateTimeFieldType.year())
+              val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
+              val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
+              val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
+              "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
+                .format(year, month, day, hour, shardNumber, numShards)
+            }
         )
       )
     sc1.run()
@@ -224,7 +221,8 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         numShards = 1,
         schema = AvroUtils.schema,
         filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
-          unwindowed = (shardNumber: Int, numShards: Int) => "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
+          unwindowed = (shardNumber: Int, numShards: Int) =>
+            "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
         )
       )
     sc.run()

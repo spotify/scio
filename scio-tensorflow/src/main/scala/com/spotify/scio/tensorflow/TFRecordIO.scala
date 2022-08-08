@@ -21,7 +21,12 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.{Compression, DynamicFileDestinations, TFRecordFileBasedSink, WriteFiles}
+import org.apache.beam.sdk.io.{
+  Compression,
+  DynamicFileDestinations,
+  TFRecordFileBasedSink,
+  WriteFiles
+}
 import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
@@ -143,14 +148,25 @@ private object TFRecordMethods {
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
-    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if (shardNameTemplate != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "shardNameTemplate and filenamePolicyCreator may not be used together"
+      )
 
     val fp = Option(filenamePolicyCreator)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
 
-    val dynamicDestinations = DynamicFileDestinations.constant[Array[Byte], Array[Byte]](fp, SerializableFunctions.identity)
+    val dynamicDestinations =
+      DynamicFileDestinations.constant[Array[Byte], Array[Byte]](fp, SerializableFunctions.identity)
 
     val sink = new TFRecordFileBasedSink(
       StaticValueProvider.of(tempDirectory),
@@ -159,7 +175,7 @@ private object TFRecordMethods {
     )
 
     val transform = WriteFiles.to(sink).withNumShards(numShards)
-    if(!isWindowed) transform else transform.withWindowedWrites()
+    if (!isWindowed) transform else transform.withWindowedWrites()
   }
 
   def write(data: SCollection[Array[Byte]], path: String, params: TFRecordIO.WriteParam): Unit = {

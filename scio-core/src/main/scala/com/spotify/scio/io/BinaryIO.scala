@@ -66,18 +66,40 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     filenamePolicyCreator: FilenamePolicyCreator,
     isWindowed: Boolean
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
-    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if(prefix != null && filenamePolicyCreator != null) throw new IllegalArgumentException("prefix and filenamePolicyCreator may not be used together")
-    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if (prefix != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "prefix and filenamePolicyCreator may not be used together"
+      )
+    if (shardNameTemplate != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "shardNameTemplate and filenamePolicyCreator may not be used together"
+      )
 
     val fp = Option(filenamePolicyCreator)
-      .map { c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix) }
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path, prefix), shardNameTemplate, suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path, prefix),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
 
-    val dynamicDestinations = DynamicFileDestinations.constant[Array[Byte], Array[Byte]](fp, SerializableFunctions.identity)
-    val sink = new BytesSink(header, footer, framePrefix, frameSuffix, tempDirectory, dynamicDestinations, compression)
+    val dynamicDestinations =
+      DynamicFileDestinations.constant[Array[Byte], Array[Byte]](fp, SerializableFunctions.identity)
+    val sink = new BytesSink(
+      header,
+      footer,
+      framePrefix,
+      frameSuffix,
+      tempDirectory,
+      dynamicDestinations,
+      compression
+    )
     val transform = WriteFiles.to(sink).withNumShards(numShards)
-    if(!isWindowed) transform else transform.withWindowedWrites()
+    if (!isWindowed) transform else transform.withWindowedWrites()
   }
 
   override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] = {
@@ -159,19 +181,26 @@ object BinaryIO {
     val tempDirectory: ResourceId,
     val dynamicDestinations: FileBasedSink.DynamicDestinations[Array[Byte], Void, Array[Byte]],
     val compression: Compression
-  ) extends FileBasedSink[Array[Byte], Void, Array[Byte]](StaticValueProvider.of(tempDirectory), dynamicDestinations, compression) {
+  ) extends FileBasedSink[Array[Byte], Void, Array[Byte]](
+        StaticValueProvider.of(tempDirectory),
+        dynamicDestinations,
+        compression
+      ) {
     override def createWriteOperation(): FileBasedSink.WriteOperation[Void, Array[Byte]] = {
       new FileBasedSink.WriteOperation[Void, Array[Byte]](this) {
         override def createWriter(): FileBasedSink.Writer[Void, Array[Byte]] = {
           new FileBasedSink.Writer[Void, Array[Byte]](this, MimeTypes.BINARY) {
             @transient private var channel: OutputStream = _
-            override def prepareWrite(channel: WritableByteChannel): Unit = this.channel = Channels.newOutputStream(channel)
+            override def prepareWrite(channel: WritableByteChannel): Unit = this.channel =
+              Channels.newOutputStream(channel)
             override def writeHeader(): Unit = this.channel.write(header)
             override def writeFooter(): Unit = this.channel.write(footer)
 
             override def write(value: Array[Byte]): Unit = {
               if (this.channel == null) {
-                throw new IllegalStateException("Trying to write to a BytesSink that has not been opened")
+                throw new IllegalStateException(
+                  "Trying to write to a BytesSink that has not been opened"
+                )
               }
               this.channel.write(framePrefix(value))
               this.channel.write(value)
@@ -180,7 +209,9 @@ object BinaryIO {
 
             override def finishWrite(): Unit = {
               if (this.channel == null) {
-                throw new IllegalStateException("Trying to flush a BytesSink that has not been opened")
+                throw new IllegalStateException(
+                  "Trying to flush a BytesSink that has not been opened"
+                )
               }
               this.channel.flush()
             }

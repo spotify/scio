@@ -24,7 +24,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
-import com.spotify.scio.{ScioContext, avro}
+import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -138,12 +138,22 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     filenamePolicyCreator: FilenamePolicyCreator,
     isWindowed: Boolean
   ): beam.AvroIO.Write[U] = {
-    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if (shardNameTemplate != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "shardNameTemplate and filenamePolicyCreator may not be used together"
+      )
 
     val fp = Option(filenamePolicyCreator)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
 
     val transform = write
       // previously:
@@ -155,7 +165,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
       .withCodec(codec)
       .withMetadata(metadata.asJava)
 
-      if(!isWindowed) transform else transform.withWindowedWrites()
+    if (!isWindowed) transform else transform.withWindowedWrites()
 //
 //    Option(tempDirectory)
 //      .map(ScioUtil.toResourceId)
@@ -321,7 +331,8 @@ object AvroIO {
 }
 
 object AvroTyped {
-  private[scio] def writeTransform[T <: HasAvroAnnotation: TypeTag: Coder](): beam.AvroIO.TypedWrite[T, Void, GenericRecord] = {
+  private[scio] def writeTransform[T <: HasAvroAnnotation: TypeTag: Coder]()
+    : beam.AvroIO.TypedWrite[T, Void, GenericRecord] = {
     val avroT = AvroType[T]
     beam.AvroIO
       .writeCustomTypeToGenericRecords()
@@ -349,12 +360,23 @@ object AvroTyped {
       filenamePolicyCreator: FilenamePolicyCreator,
       isWindowed: Boolean
     ) = {
-      if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-      if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+      if (tempDirectory == null)
+        throw new IllegalArgumentException("tempDirectory must not be null")
+      if (shardNameTemplate != null && filenamePolicyCreator != null)
+        throw new IllegalArgumentException(
+          "shardNameTemplate and filenamePolicyCreator may not be used together"
+        )
 
       val fp = Option(filenamePolicyCreator)
         .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-        .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
+        .getOrElse(
+          ScioUtil.defaultFilenamePolicy(
+            ScioUtil.pathWithPrefix(path),
+            shardNameTemplate,
+            suffix,
+            isWindowed
+          )
+        )
 
       val transform = write
         .to(fp)
@@ -362,7 +384,7 @@ object AvroTyped {
         .withNumShards(numShards)
         .withCodec(codec)
         .withMetadata(metadata.asJava)
-      if(!isWindowed) transform else transform.withWindowedWrites()
+      if (!isWindowed) transform else transform.withWindowedWrites()
     }
 
     /**

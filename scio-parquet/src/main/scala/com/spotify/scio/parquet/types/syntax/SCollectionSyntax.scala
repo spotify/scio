@@ -43,7 +43,17 @@ final class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
   )(implicit ct: ClassTag[T], coder: Coder[T], pt: ParquetType[T]): ClosedTap[T] =
-    self.write(ParquetTypeIO[T](path))(WriteParam(numShards, suffix, compression, conf, shardNameTemplate, tempDirectory, filenamePolicyCreator))
+    self.write(ParquetTypeIO[T](path))(
+      WriteParam(
+        numShards,
+        suffix,
+        compression,
+        conf,
+        shardNameTemplate,
+        tempDirectory,
+        filenamePolicyCreator
+      )
+    )
 }
 
 trait SCollectionSyntax {

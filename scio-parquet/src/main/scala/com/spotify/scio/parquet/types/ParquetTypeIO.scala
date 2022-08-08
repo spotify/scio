@@ -27,13 +27,13 @@ import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.{SerializableFunctions, SimpleFunction}
-import org.apache.beam.sdk.values.{TypeDescriptor, WindowingStrategy}
+import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, DynamicFileDestinations, FileBasedSink, FileSystems, WriteFiles}
+import org.apache.beam.sdk.io.{
+  DynamicFileDestinations,
+  FileSystems,
+  WriteFiles
+}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
@@ -82,14 +82,25 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
-    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if (shardNameTemplate != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "shardNameTemplate and filenamePolicyCreator may not be used together"
+      )
 
     val fp = Option(filenamePolicyCreator)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
 
-    val dynamicDestinations = DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
+    val dynamicDestinations =
+      DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetTypeFileBasedSink[T](
@@ -100,7 +111,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
       compression
     )
     val transform = WriteFiles.to(sink).withNumShards(numShards)
-    if(!isWindowed) transform else transform.withWindowedWrites()
+    if (!isWindowed) transform else transform.withWindowedWrites()
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {

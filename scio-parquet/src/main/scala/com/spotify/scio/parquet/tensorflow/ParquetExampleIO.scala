@@ -104,14 +104,25 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
-    if(tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if(shardNameTemplate != null && filenamePolicyCreator != null) throw new IllegalArgumentException("shardNameTemplate and filenamePolicyCreator may not be used together")
+    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
+    if (shardNameTemplate != null && filenamePolicyCreator != null)
+      throw new IllegalArgumentException(
+        "shardNameTemplate and filenamePolicyCreator may not be used together"
+      )
 
     val fp = Option(filenamePolicyCreator)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(ScioUtil.pathWithPrefix(path), shardNameTemplate, suffix, isWindowed))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
 
-    val dynamicDestinations = DynamicFileDestinations.constant[Example, Example](fp, SerializableFunctions.identity)
+    val dynamicDestinations =
+      DynamicFileDestinations.constant[Example, Example](fp, SerializableFunctions.identity)
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetExampleFileBasedSink(
@@ -122,7 +133,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       compression
     )
     val transform = WriteFiles.to(sink).withNumShards(numShards)
-    if(!isWindowed) transform else transform.withWindowedWrites()
+    if (!isWindowed) transform else transform.withWindowedWrites()
   }
 
   override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
