@@ -26,6 +26,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.{BaseAsyncLookupDoFn, GuavaAsyncDoFn, GuavaLookupDoFn}
 import com.spotify.scio.util.MockedPrintStream
+import com.spotify.scio.values.SCollection
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.metrics.DistributionResult
@@ -152,7 +153,7 @@ object TransformOverrideKVJob {
     sc.textFile(args("input"))
       .map(_.toInt)
       .applyTransform("myTransform", ParDo.of(new GuavaLookupDoFn))
-      .map(_.getValue.get())
+      .map((i: KV[Int, BaseAsyncLookupDoFn.Try[String]]) => i.getValue.get())
       .saveAsTextFile(args("output"))
     // #JobTestTest_example_1
     sc.run()
@@ -160,21 +161,38 @@ object TransformOverrideKVJob {
   }
 }
 
-object TransformOverrideKVIterJob {
+object TransformOverrideIterJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.textFile(args("input"))
       .map(_.toInt)
       // #JobTestTest_example_6
       .withName("myTransform")
-      .transform { c =>
+      .transform { c: SCollection[Int] =>
         c.applyTransform(ParDo.of(new GuavaLookupDoFn))
-          .flatMap(_.getValue.get()) // map to characters
+          .flatMap(_.getValue.get())
+          .map(_.toString)
       }
       // #JobTestTest_example_6
       .saveAsTextFile(args("output"))
     sc.run()
     ()
+  }
+}
+
+object TransformOverrideIterKVJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.textFile(args("input"))
+      // #JobTestTest_example_7
+      .map(_.toInt)
+      .transform("myTransform")(
+        _.flatMap(0 until _).applyTransform(ParDo.of(new GuavaLookupDoFn))
+      )
+      // #JobTestTest_example_7
+      .map(_.getValue.get())
+      .saveAsTextFile(args("output"))
+    sc.run()
   }
 }
 
@@ -968,7 +986,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "pass with a 1-to-n override" in {
-    JobTest[TransformOverrideJob.type]
+    JobTest[TransformOverrideIterJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
       .transformOverride(
@@ -996,7 +1014,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "pass with a 1-to-n function override" in {
-    JobTest[TransformOverrideJob.type]
+    JobTest[TransformOverrideIterJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
       .transformOverride(
@@ -1108,7 +1126,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "pass with a 1-to-n KV override" in {
-    JobTest[TransformOverrideKVIterJob.type]
+    JobTest[TransformOverrideIterKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
       .transformOverride(
@@ -1137,18 +1155,18 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "pass with a 1-to-n KV function override" in {
-    JobTest[TransformOverrideKVIterJob.type]
+    JobTest[TransformOverrideIterKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
-      // #JobTestTest_example_7
+      // #JobTestTest_example_8
       .transformOverride(
         TransformOverride.ofIterKV[Int, BaseAsyncLookupDoFn.Try[String]](
           "myTransform",
           // map fn equal to: Map(1 -> Seq(), 2 -> Seq(Try("1")), 3 -> Seq(Try("1"), Try("2"))}
-          (i: Int) => (1 until i).toList.map(j => new BaseAsyncLookupDoFn.Try(String.valueOf(j)))
+          (i: Int) => (1 until i).map(String.valueOf).map(new BaseAsyncLookupDoFn.Try(_))
         )
       )
-      // #JobTestTest_example_7
+      // #JobTestTest_example_8
       .output(TextIO("out.txt"))(_ should containInAnyOrder(List("1", "1", "2")))
       .run()
   }
@@ -1170,7 +1188,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "pass with a 1-to-n AsyncLookup override" in {
-    JobTest[TransformOverrideKVJob.type]
+    JobTest[TransformOverrideIterKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2"))
       // #JobTestTest_example_2_2
@@ -1202,7 +1220,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "pass with a 1-to-n AsyncLookup function override" in {
-    JobTest[TransformOverrideKVJob.type]
+    JobTest[TransformOverrideIterKVJob.type]
       .args("--input=in.txt", "--output=out.txt")
       .input(TextIO("in.txt"), Seq("1", "2", "3"))
       .transformOverride(

@@ -1,6 +1,7 @@
 package com.spotify.scio.testing
 
-import java.{lang, util}
+import java.lang.{Iterable => JIterable}
+import java.util
 
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.Functions
@@ -97,7 +98,7 @@ object TransformOverride {
 
     val overrideFactory =
       factory[PCollection[T], PCollection[U], PTransform[PCollection[T], PCollection[U]]](
-        t => PTransformReplacements.getSingletonMainInput(t),
+        PTransformReplacements.getSingletonMainInput,
         new PTransform[PCollection[T], PCollection[U]]() {
           override def expand(input: PCollection[T]): PCollection[U] =
             input.apply(MapElements.via(Functions.simpleFn(wrappedFn)))
@@ -112,7 +113,7 @@ object TransformOverride {
    *   with a transform flat-mapping elements via `fn`.
    */
   def ofIter[T: ClassTag, U](name: String, fn: T => Iterable[U]): PTransformOverride = {
-    val wrappedFn: T => lang.Iterable[U] = fn
+    val wrappedFn: T => JIterable[U] = fn
       .compose { t: T =>
         typeValidation(
           s"Input for override transform $name does not match pipeline transform.",
@@ -128,8 +129,8 @@ object TransformOverride {
         t => PTransformReplacements.getSingletonMainInput(t),
         new PTransform[PCollection[T], PCollection[U]]() {
           override def expand(input: PCollection[T]): PCollection[U] = {
-            val inferableFn = new InferableFunction[T, lang.Iterable[U]] {
-              override def apply(input: T): lang.Iterable[U] = wrappedFn.apply(input)
+            val inferableFn = new InferableFunction[T, JIterable[U]] {
+              override def apply(input: T): JIterable[U] = wrappedFn.apply(input)
             }
             input.apply(FlatMapElements.via(inferableFn))
           }
@@ -187,7 +188,7 @@ object TransformOverride {
    *   wrapping the result in a [[KV]]
    */
   def ofIterKV[T: ClassTag, U](name: String, mapping: Map[T, Iterable[U]]): PTransformOverride =
-    ofIter[T, KV[T, U]](name, mapping.map { case (k, v) => k -> v.map(KV.of(k, _)) })
+    ofIter[T, KV[T, U]](name, mapping.map { case (k, iterV) => k -> iterV.map(KV.of(k, _)) })
 
   /**
    * @return
