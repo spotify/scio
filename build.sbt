@@ -1010,7 +1010,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.29",
+      "mysql" % "mysql-connector-java" % "8.0.30",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
