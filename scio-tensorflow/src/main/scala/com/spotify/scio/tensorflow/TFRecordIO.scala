@@ -145,8 +145,7 @@ private object TFRecordMethods {
     shardNameTemplate: String,
     tempDirectory: ResourceId,
     filenamePolicyCreator: FilenamePolicyCreator,
-    isWindowed: Boolean,
-    isLocalRunner: Boolean
+    isWindowed: Boolean
   ) = {
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
     if (shardNameTemplate != null && filenamePolicyCreator != null)
@@ -188,8 +187,7 @@ private object TFRecordMethods {
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicyCreator,
-        ScioUtil.isWindowed(data),
-        ScioUtil.isLocalRunner(data.context.options.getRunner)
+        ScioUtil.isWindowed(data)
       )
     )
 
