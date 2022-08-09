@@ -122,7 +122,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       )
 
     val dynamicDestinations =
-      DynamicFileDestinations.constant[Example, Example](fp, SerializableFunctions.identity)
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Example, Example])
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetExampleFileBasedSink(
