@@ -27,7 +27,6 @@ public class TFRecordFileBasedSink extends FileBasedSink<byte[], Void, byte[]> {
           private /* TFRecordIO.TFRecordCodec */ Object codec;
           private Method writeMethod;
 
-          @SuppressWarnings("unchecked")
           @Override
           protected void prepareWrite(final WritableByteChannel channel) throws Exception {
             this.outChannel = channel;
