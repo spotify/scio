@@ -26,6 +26,7 @@ import com.spotify.scio.testing._
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
@@ -259,7 +260,12 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
             windowed = (_, _, _, _) => "test for exception handling"
           )
         )
-      sc.run()
+      try {
+        sc.run()
+      } catch {
+        case e: PipelineExecutionException =>
+          throw e.getCause
+      }
     }
 
     an[NotImplementedError] should be thrownBy {
@@ -278,9 +284,13 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
             unwindowed = (_, _) => "test for exception handling"
           )
         )
-      sc.run()
+      try {
+        sc.run()
+      } catch {
+        case e: PipelineExecutionException =>
+          throw e.getCause
+      }
     }
-
   }
 
   it should "apply map functions to test input" in {

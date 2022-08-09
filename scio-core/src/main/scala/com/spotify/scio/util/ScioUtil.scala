@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
@@ -33,6 +34,7 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import scala.collection.compat.immutable.ArraySeq
@@ -94,7 +96,9 @@ private[scio] object ScioUtil {
 
   def pathWithPrefix(path: String, prefix: String = null): String = {
     val replacement = s"/${Option(prefix).getOrElse("part")}"
-    path.replaceAll("\\/*$", replacement)
+    // replaceAll surprisingly does the wrong thing with regex /*$
+    val stripped = StringUtils.stripEnd(path, "/")
+    s"${stripped}${replacement}"
   }
 
   def consistentHashCode[K](k: K): Int = k match {
@@ -124,6 +128,8 @@ private[scio] object ScioUtil {
     windowed: (Int, Int, BoundedWindow, PaneInfo) => String = null,
     unwindowed: (Int, Int) => String = null
   ): FilenamePolicyCreator = { (path: String, suffix: String) =>
+    val cleanWindowed = ClosureCleaner.clean(windowed)
+    val cleanUnwindowed = ClosureCleaner.clean(unwindowed)
     new FilenamePolicy {
       val resource =
         FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithPrefix(path, ""))
@@ -140,16 +146,16 @@ private[scio] object ScioUtil {
         paneInfo: PaneInfo,
         outputFileHints: FileBasedSink.OutputFileHints
       ): ResourceId = {
-        if (windowed == null) throw new NotImplementedError()
-        resolve(windowed(shardNumber, numShards, window, paneInfo), outputFileHints)
+        if (cleanWindowed == null) throw new NotImplementedError()
+        resolve(cleanWindowed(shardNumber, numShards, window, paneInfo), outputFileHints)
       }
       override def unwindowedFilename(
         shardNumber: Int,
         numShards: Int,
         outputFileHints: FileBasedSink.OutputFileHints
       ): ResourceId = {
-        if (unwindowed == null) throw new NotImplementedError()
-        resolve(unwindowed(shardNumber, numShards), outputFileHints)
+        if (cleanUnwindowed == null) throw new NotImplementedError()
+        resolve(cleanUnwindowed(shardNumber, numShards), outputFileHints)
       }
     }
   }

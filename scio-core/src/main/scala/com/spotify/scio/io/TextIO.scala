@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.commons.lang3.StringUtils
 
 final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
@@ -70,8 +71,12 @@ final case class TextIO(path: String) extends ScioIO[String] {
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
-          ScioUtil.pathWithPrefix(path),
-          Option(shardNameTemplate).getOrElse(TextIO.WriteParam.FallbackShardNameTemplate),
+          // differently than with other IOs, we do not append `part` here because it is included in the FallbackShardNameTemplate
+          ScioUtil.pathWithPrefix(path, ""),
+          Option(shardNameTemplate)
+            // multiple slashes seem to break the parser
+            .map(StringUtils.stripStart(_, "/"))
+            .getOrElse(TextIO.WriteParam.FallbackShardNameTemplate),
           suffix,
           isWindowed
         )
@@ -107,11 +112,8 @@ final case class TextIO(path: String) extends ScioIO[String] {
     tap(TextIO.ReadParam())
   }
 
-  override def tap(params: ReadP): Tap[String] = {
-    println(s"TAP path: $path -> ${ScioUtil.addPartSuffix(path)}")
+  override def tap(params: ReadP): Tap[String] =
     TextTap(ScioUtil.addPartSuffix(path))
-  }
-
 }
 
 object TextIO {
@@ -124,7 +126,7 @@ object TextIO {
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
     private[scio] val DefaultShardNameTemplate = null
-    private[scio] val FallbackShardNameTemplate = "/part" + ShardNameTemplate.INDEX_OF_MAX
+    private[scio] val FallbackShardNameTemplate = "part" + ShardNameTemplate.INDEX_OF_MAX
     private[scio] val DefaultTempDirectory = null
     private[scio] val DefaultFilenamePolicyCreator = null
   }

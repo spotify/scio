@@ -81,7 +81,6 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
-    val prefix = ScioUtil.pathWithPrefix(path)
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
     if (shardNameTemplate != null && filenamePolicyCreator != null)
       throw new IllegalArgumentException(
@@ -89,8 +88,15 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       )
 
     val fp = Option(filenamePolicyCreator)
-      .map(c => c.apply(prefix, suffix))
-      .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
+      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
 
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
