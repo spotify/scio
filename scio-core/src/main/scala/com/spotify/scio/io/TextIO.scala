@@ -71,12 +71,8 @@ final case class TextIO(path: String) extends ScioIO[String] {
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
-          // differently than with other IOs, we do not append `part` here because it is included in the FallbackShardNameTemplate
-          ScioUtil.pathWithPrefix(path, ""),
-          Option(shardNameTemplate)
-            // multiple slashes seem to break the parser
-            .map(StringUtils.stripStart(_, "/"))
-            .getOrElse(TextIO.WriteParam.FallbackShardNameTemplate),
+          ScioUtil.pathWithPrefix(path),
+          shardNameTemplate,
           suffix,
           isWindowed
         )
@@ -126,7 +122,6 @@ object TextIO {
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
     private[scio] val DefaultShardNameTemplate = null
-    private[scio] val FallbackShardNameTemplate = "part" + ShardNameTemplate.INDEX_OF_MAX
     private[scio] val DefaultTempDirectory = null
     private[scio] val DefaultFilenamePolicyCreator = null
   }
