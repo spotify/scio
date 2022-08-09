@@ -93,7 +93,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       .getOrElse(ScioUtil.defaultFilenamePolicy(prefix, shardNameTemplate, suffix, isWindowed))
 
     val dynamicDestinations =
-      DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)

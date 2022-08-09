@@ -96,7 +96,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
       )
 
     val dynamicDestinations =
-      DynamicFileDestinations.constant[T, T](fp, SerializableFunctions.identity)
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetTypeFileBasedSink[T](
