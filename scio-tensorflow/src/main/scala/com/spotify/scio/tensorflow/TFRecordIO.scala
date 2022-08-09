@@ -165,7 +165,7 @@ private object TFRecordMethods {
       )
 
     val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte], Array[Byte]])
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
 
     val sink = new TFRecordFileBasedSink(
       StaticValueProvider.of(tempDirectory),

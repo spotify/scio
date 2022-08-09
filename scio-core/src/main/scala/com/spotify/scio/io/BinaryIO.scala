@@ -88,7 +88,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
       )
 
     val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte], Array[Byte]])
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
     val sink = new BytesSink(
       header,
       footer,
