@@ -51,10 +51,9 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[T]
 
   name() should "work with an unwindowed collection" in {
-    testWindowingFilenames(_.parallelize(1 to 100), false, save()) {
-      files =>
-        assert(files.length >= 1)
-        all(files) should (include("/part-") and include("-of-") and include(extension))
+    testWindowingFilenames(_.parallelize(1 to 100), false, save()) { files =>
+      assert(files.length >= 1)
+      all(files) should (include("/part-") and include("-of-") and include(extension))
     }
 
   }
@@ -63,16 +62,17 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
     testWindowingFilenames(_.parallelize(1 to 100), false, save(testFilenamePolicyCreator)) {
       files =>
         assert(files.length >= 1)
-        all(files) should (include("/foo-shard-") and include("-of-numShards-") and include(extension))
+        all(files) should (include("/foo-shard-") and include("-of-numShards-") and include(
+          extension
+        ))
     }
   }
 
   it should "work with a windowed collection" in {
-    testWindowingFilenames(_.parallelize(1 to 100), true, save()) {
-      files =>
-        assert(files.length >= 1)
-        all(files) should
-          (include("/part") and include("-of-") and include("-pane-") and include(extension))
+    testWindowingFilenames(_.parallelize(1 to 100), true, save()) { files =>
+      assert(files.length >= 1)
+      all(files) should
+        (include("/part") and include("-of-") and include("-pane-") and include(extension))
     }
   }
 
@@ -94,7 +94,9 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
     testWindowingFilenames(_.testStream(xxx), true, save(testFilenamePolicyCreator)) { files =>
       assert(files.length == TestNumShards)
       all(files) should
-        (include("/foo-shard-") and include("-of-numShards-") and include("-window") and include(extension))
+        (include("/foo-shard-") and include("-of-numShards-") and include("-window") and include(
+          extension
+        ))
     }
   }
 }

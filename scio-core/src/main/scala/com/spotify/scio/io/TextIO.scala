@@ -25,7 +25,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
-import org.apache.beam.sdk.io.{Compression, FileSystems, ShardNameTemplate, TextIO => BTextIO}
+import org.apache.beam.sdk.io.{Compression, FileSystems, TextIO => BTextIO}
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
@@ -33,7 +33,6 @@ import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.commons.lang3.StringUtils
 
 final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
