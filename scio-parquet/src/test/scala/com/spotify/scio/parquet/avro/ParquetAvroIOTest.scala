@@ -161,16 +161,15 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         numShards = 1,
         schema = AvroUtils.schema,
         filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
-          windowed =
-            (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) => {
-              val intervalWindow = window.asInstanceOf[IntervalWindow]
-              val year = intervalWindow.start().get(DateTimeFieldType.year())
-              val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
-              val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
-              val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
-              "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
-                .format(year, month, day, hour, shardNumber, numShards)
-            }
+          windowed = (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) => {
+            val intervalWindow = window.asInstanceOf[IntervalWindow]
+            val year = intervalWindow.start().get(DateTimeFieldType.year())
+            val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
+            val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
+            val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
+            "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
+              .format(year, month, day, hour, shardNumber, numShards)
+          }
         )
       )
     sc1.run()

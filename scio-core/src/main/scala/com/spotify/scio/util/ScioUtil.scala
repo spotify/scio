@@ -27,11 +27,7 @@ import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
-import org.apache.beam.sdk.io.{
-  DefaultFilenamePolicy,
-  FileBasedSink,
-  FileSystems
-}
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, FileSystems}
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}

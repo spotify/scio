@@ -29,11 +29,7 @@ import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.io.{
-  DynamicFileDestinations,
-  FileSystems,
-  WriteFiles
-}
+import org.apache.beam.sdk.io.{DynamicFileDestinations, FileSystems, WriteFiles}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job

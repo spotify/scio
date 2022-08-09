@@ -22,7 +22,11 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
-import com.spotify.scio.estimators.{ApproxDistinctCounter, ApproximateUniqueCounter, ApproximateUniqueCounterByError}
+import com.spotify.scio.estimators.{
+  ApproxDistinctCounter,
+  ApproximateUniqueCounter,
+  ApproximateUniqueCounterByError
+}
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
