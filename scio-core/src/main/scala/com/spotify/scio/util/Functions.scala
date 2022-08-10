@@ -24,12 +24,18 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.twitter.chill.ClosureCleaner
 import com.twitter.algebird.{Monoid, Semigroup}
-import org.apache.beam.sdk.coders.{CoderRegistry, Coder => BCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderRegistry}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.Combine.{CombineFn => BCombineFn}
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
-import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableBiFunction, SerializableFunction, SimpleFunction}
+import org.apache.beam.sdk.transforms.{
+  DoFn,
+  ProcessFunction,
+  SerializableBiFunction,
+  SerializableFunction,
+  SimpleFunction
+}
 
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._ // scalafix:ok
