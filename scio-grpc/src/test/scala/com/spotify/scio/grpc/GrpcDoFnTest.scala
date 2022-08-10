@@ -43,7 +43,7 @@ object GrpcDoFnTest {
     port
   }
 
-  val ServiceUri = s"dns:///localhost:$LocalPort"
+  val ServiceUri: String = s"dns:///localhost:$LocalPort"
 
   class ConcatServiceImpl extends ConcatServiceImplBase {
     override def concat(
