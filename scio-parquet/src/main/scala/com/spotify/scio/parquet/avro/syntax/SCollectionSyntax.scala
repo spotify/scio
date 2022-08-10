@@ -21,7 +21,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import com.spotify.scio.parquet.avro.ParquetAvroIO
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.hadoop.conf.Configuration

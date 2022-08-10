@@ -23,7 +23,7 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId

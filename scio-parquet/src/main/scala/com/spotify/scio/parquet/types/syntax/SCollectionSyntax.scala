@@ -21,7 +21,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.types.ParquetTypeIO
 import com.spotify.scio.parquet.types.ParquetTypeIO.WriteParam
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.hadoop.conf.Configuration

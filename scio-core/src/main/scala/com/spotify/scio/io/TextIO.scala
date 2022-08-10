@@ -22,7 +22,7 @@ import java.nio.channels.Channels
 import java.util.Collections
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.beam.sdk.io.{Compression, FileSystems, TextIO => BTextIO}

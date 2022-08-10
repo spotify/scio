@@ -20,7 +20,7 @@ package com.spotify.scio.parquet.tensorflow.syntax
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.WriteParam
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.Schema
 import org.apache.hadoop.conf.Configuration

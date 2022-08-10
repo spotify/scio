@@ -21,7 +21,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.csv.CsvIO
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import kantan.csv.{CsvConfiguration, HeaderDecoder, HeaderEncoder}
 import org.apache.beam.sdk.io.Compression

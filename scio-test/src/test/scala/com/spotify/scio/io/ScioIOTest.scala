@@ -26,7 +26,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord

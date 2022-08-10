@@ -27,7 +27,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io.TapT
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam

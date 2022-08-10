@@ -23,15 +23,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
-import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, FileSystems}
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.apache.commons.lang3.StringUtils
@@ -109,10 +106,6 @@ private[scio] object ScioUtil {
   def toResourceId(directory: String): ResourceId =
     FileSystems.matchNewResource(directory, true)
 
-  trait FilenamePolicyCreator {
-    def apply(path: String, suffix: String): FilenamePolicy
-  }
-
   def defaultFilenamePolicy(
     path: String,
     shardTemplate: String,
@@ -122,42 +115,6 @@ private[scio] object ScioUtil {
     val resource = FileBasedSink.convertToFileResourceIfPossible(path)
     val prefix = StaticValueProvider.of(resource)
     DefaultFilenamePolicy.fromStandardParameters(prefix, shardTemplate, suffix, isWindowed)
-  }
-
-  def filenamePolicyCreatorOf(
-    windowed: (Int, Int, BoundedWindow, PaneInfo) => String = null,
-    unwindowed: (Int, Int) => String = null
-  ): FilenamePolicyCreator = { (path: String, suffix: String) =>
-    val cleanWindowed = ClosureCleaner.clean(windowed)
-    val cleanUnwindowed = ClosureCleaner.clean(unwindowed)
-    new FilenamePolicy {
-      val resource =
-        FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithPrefix(path, ""))
-      private def resolve(filename: String, outputFileHints: FileBasedSink.OutputFileHints) = {
-        resource.getCurrentDirectory.resolve(
-          filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
-          StandardResolveOptions.RESOLVE_FILE
-        )
-      }
-      override def windowedFilename(
-        shardNumber: Int,
-        numShards: Int,
-        window: BoundedWindow,
-        paneInfo: PaneInfo,
-        outputFileHints: FileBasedSink.OutputFileHints
-      ): ResourceId = {
-        if (cleanWindowed == null) throw new NotImplementedError()
-        resolve(cleanWindowed(shardNumber, numShards, window, paneInfo), outputFileHints)
-      }
-      override def unwindowedFilename(
-        shardNumber: Int,
-        numShards: Int,
-        outputFileHints: FileBasedSink.OutputFileHints
-      ): ResourceId = {
-        if (cleanUnwindowed == null) throw new NotImplementedError()
-        resolve(cleanUnwindowed(shardNumber, numShards), outputFileHints)
-      }
-    }
   }
 
   def tempDirOrDefault(tempDirectory: String, sc: ScioContext): ResourceId = {

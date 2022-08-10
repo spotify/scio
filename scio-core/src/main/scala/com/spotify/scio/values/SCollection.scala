@@ -30,7 +30,7 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -203,7 +203,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val t =
       if (
         (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
-        && internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+        && ScioUtil.isWindowed(this)
       ) {
         // In case PCollection is windowed
         transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()

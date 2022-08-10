@@ -28,7 +28,7 @@ import com.spotify.scio.tensorflow.{
   TFRecordIO,
   TFSequenceExampleIO
 }
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import com.spotify.zoltar.tf.TensorFlowModel
 

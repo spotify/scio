@@ -25,7 +25,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import kantan.csv._
 import kantan.codecs.compat._ // scalafix:ok

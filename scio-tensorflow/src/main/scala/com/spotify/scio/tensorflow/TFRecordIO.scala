@@ -30,7 +30,7 @@ import org.apache.beam.sdk.io.{
 import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions

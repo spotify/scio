@@ -23,7 +23,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{TapSpec, TextIO}
 import com.spotify.scio.testing._
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -161,7 +161,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         dir.toString,
         numShards = 1,
         schema = AvroUtils.schema,
-        filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+        filenamePolicyCreator = FilenamePolicyCreator.filenamePolicyCreatorOf(
           windowed = (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) => {
             val intervalWindow = window.asInstanceOf[IntervalWindow]
             val year = intervalWindow.start().get(DateTimeFieldType.year())
@@ -220,7 +220,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         dir.toString,
         numShards = 1,
         schema = AvroUtils.schema,
-        filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+        filenamePolicyCreator = FilenamePolicyCreator.filenamePolicyCreatorOf(
           unwindowed = (shardNumber: Int, numShards: Int) =>
             "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
         )
@@ -256,7 +256,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
           dir.toString,
           numShards = 1,
           schema = AvroUtils.schema,
-          filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+          filenamePolicyCreator = FilenamePolicyCreator.filenamePolicyCreatorOf(
             windowed = (_, _, _, _) => "test for exception handling"
           )
         )
@@ -280,7 +280,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
           dir.toString,
           numShards = 1,
           schema = AvroUtils.schema,
-          filenamePolicyCreator = ScioUtil.filenamePolicyCreatorOf(
+          filenamePolicyCreator = FilenamePolicyCreator.filenamePolicyCreatorOf(
             unwindowed = (_, _) => "test for exception handling"
           )
         )

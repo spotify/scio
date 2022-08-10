@@ -24,7 +24,7 @@ import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema

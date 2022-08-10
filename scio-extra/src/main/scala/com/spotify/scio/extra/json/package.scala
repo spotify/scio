@@ -22,7 +22,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.util.ScioUtil.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicyCreator
 import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
