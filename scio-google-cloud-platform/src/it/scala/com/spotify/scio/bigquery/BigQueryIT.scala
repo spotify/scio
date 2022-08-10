@@ -48,11 +48,11 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
   val StagingDatasetPrefix = "scio_bigquery_staging_custom"
 
   override def beforeEach() {
-    sys.props.subtractOne(BigQuerySysProps.StagingDatasetPrefix.flag)
+    sys.props -= BigQuerySysProps.StagingDatasetPrefix.flag
   }
 
   override def afterAll() {
-    sys.props.subtractOne(BigQuerySysProps.StagingDatasetPrefix.flag)
+    sys.props -= BigQuerySysProps.StagingDatasetPrefix.flag
   }
 
   object MockBQData {
@@ -82,7 +82,7 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
     val defaultMockedBQ = MockBigQuery()
     defaultMockedBQ.mockTable(tableRef).withData(Seq())
 
-    sys.props.addOne(BigQuerySysProps.StagingDatasetPrefix.flag -> StagingDatasetPrefix)
+    sys.props += BigQuerySysProps.StagingDatasetPrefix.flag -> StagingDatasetPrefix
     val mockedBQ = MockBigQuery()
     mockedBQ.mockTable(tableRef).withData(MockBQData.inData)
     mockedBQ.queryResult(legacyQuery) should contain theSameElementsAs MockBQData.expected
@@ -165,7 +165,7 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
     val defaultMockedBQ = MockBigQuery()
     defaultMockedBQ.mockTable(tableRef).withData(Seq())
 
-    sys.props.addOne(BigQuerySysProps.StagingDatasetPrefix.flag -> StagingDatasetPrefix)
+    sys.props += BigQuerySysProps.StagingDatasetPrefix.flag -> StagingDatasetPrefix
     val mockedBQ = MockBigQuery()
     MockBQWildcardData.suffixData.foreach { case (suffix, inData) =>
       mockedBQ.mockWildcardTable(MockBQWildcardData.prefix, suffix).withData(inData)
