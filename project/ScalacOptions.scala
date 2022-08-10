@@ -33,9 +33,8 @@ object Scalac {
 
   val macroSettingsOption = ScalacOptions.advancedOption("macro-settings:show-coder-fallback=true")
 
-  // TODO use advancedOption once it supports arguments
-  val maxClassfileName = ScalacOptions.other(
-    "-Xmax-classfile-name",
+  val maxClassfileName = ScalacOptions.advancedOption(
+    "max-classfile-name",
     List("100"),
     _.isBetween(V2_12_0, V2_13_0)
   )
