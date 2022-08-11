@@ -24,6 +24,8 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.{neo4j => beam}
 import org.neo4j.driver.Record
 
+import scala.jdk.CollectionConverters._
+
 sealed trait Neo4jIO[T] extends ScioIO[T]
 
 object Neo4jIO {
@@ -99,7 +101,7 @@ final case class Neo4jWrite[T](writeOptions: Neo4jWriteOptions[T]) extends Neo4j
         .withDriverConfiguration(Neo4jIO.dataSourceConfiguration(writeOptions.connectionOptions))
         .withCypher(writeOptions.cypher)
         .withTransactionConfig(writeOptions.transactionConfig)
-        .withParametersFunction((input: T) => writeOptions.parametersFunction(input))
+        .withParametersFunction((input: T) => writeOptions.parametersFunction(input).asJava)
     )
     EmptyTap
   }

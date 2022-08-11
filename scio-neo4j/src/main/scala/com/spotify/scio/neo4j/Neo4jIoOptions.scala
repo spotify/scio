@@ -86,7 +86,7 @@ final case class Neo4jWriteOptions[T](
   connectionOptions: Neo4jConnectionOptions,
   cypher: String,
   unwindMapName: String,
-  parametersFunction: T => java.util.Map[String, AnyRef],
+  parametersFunction: T => Map[String, AnyRef],
   batchSize: Long = Neo4jIoOptions.BeamDefaultBatchSize,
   sessionConfig: SessionConfig = Neo4jIoOptions.BeamDefaultSessionConfig,
   transactionConfig: TransactionConfig = Neo4jIoOptions.BeamDefaultTransactionConfig

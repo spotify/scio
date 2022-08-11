@@ -20,7 +20,6 @@ package com.spotify.scio.neo4j
 import com.spotify.scio._
 import com.spotify.scio.testing._
 import org.neo4j.driver.Record
-import scala.jdk.CollectionConverters._
 
 object Neo4jJob {
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -44,7 +43,7 @@ object Neo4jJob {
       connectionOptions = getConnectionOptions(args),
       cypher = "UNWIND $rows AS row MERGE (t:This {that:row.that})",
       unwindMapName = "rows",
-      parametersFunction = s => Map[String, AnyRef]("that" -> s).asJava
+      parametersFunction = s => Map[String, AnyRef]("that" -> s)
     )
 
   def getConnectionOptions(args: Args): Neo4jConnectionOptions =
