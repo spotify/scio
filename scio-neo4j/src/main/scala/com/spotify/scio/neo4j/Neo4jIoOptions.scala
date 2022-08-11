@@ -54,7 +54,7 @@ object Neo4jIoOptions {
  * @param sessionConfig
  *   [[org.neo4j.driver.SessionConfig]] for specifying Neo4J driver session config
  * @param transactionConfig
- *   [[org.neo4j.driver.TransactionConfig]] for specifying Neo4J driver session config
+ *   [[org.neo4j.driver.TransactionConfig]] for specifying Neo4J driver transaction config
  */
 final case class Neo4jReadOptions[T](
   connectionOptions: Neo4jConnectionOptions,

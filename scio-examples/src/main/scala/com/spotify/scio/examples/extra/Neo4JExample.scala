@@ -15,7 +15,7 @@
  * under the License.
  */
 
-// Example: Neo4J Input and Output (requires a running Neo4J running instance with data)
+// Example: Neo4J Input and Output (requires a running Neo4J instance with data)
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.Neo4JExample
