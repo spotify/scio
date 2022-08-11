@@ -40,16 +40,14 @@ class MessageSCollectionOps[Request](private val self: SCollection[Request]) ext
   )(f: (Client, Request) => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
     implicit val requestCoder: Coder[Request] = self.coder
     self
-      .applyTransform(
-        ParDo.of(
-          GrpcDoFn
-            .newBuilder[Request, Response, Client]()
-            .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
-            .withNewClientFn(Functions.serializableFn(clientFactory))
-            .withLookupFn(Functions.serializableBiFn(f))
-            .withMaxPendingRequests(maxPendingRequests)
-            .build()
-        )
+      .parDo(
+        GrpcDoFn
+          .newBuilder[Request, Response, Client]()
+          .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
+          .withNewClientFn(Functions.serializableFn(clientFactory))
+          .withLookupFn(Functions.serializableBiFn(f))
+          .withMaxPendingRequests(maxPendingRequests)
+          .build()
       )
       .map(kvToTuple)
       .mapValues(_.asScala)
@@ -69,16 +67,14 @@ class MessageSCollectionOps[Request](private val self: SCollection[Request]) ext
       observer
     }
     self
-      .applyTransform(
-        ParDo.of(
-          GrpcDoFn
-            .newBuilder[Request, java.lang.Iterable[Response], Client]()
-            .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
-            .withNewClientFn(Functions.serializableFn(clientFactory))
-            .withLookupFn(Functions.serializableBiFn(lookupFn))
-            .withMaxPendingRequests(maxPendingRequests)
-            .build()
-        )
+      .parDo(
+        GrpcDoFn
+          .newBuilder[Request, java.lang.Iterable[Response], Client]()
+          .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
+          .withNewClientFn(Functions.serializableFn(clientFactory))
+          .withLookupFn(Functions.serializableBiFn(lookupFn))
+          .withMaxPendingRequests(maxPendingRequests)
+          .build()
       )
       .map(kvToTuple)
       .mapValues(_.asScala.map(_.asScala))
