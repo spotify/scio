@@ -210,10 +210,10 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
   }
 
   private def writeAsCsvAndReadLines[T: HeaderEncoder: Coder](
-    xform: (ScioContext, String) => ClosedTap[Nothing]
+    transform: (ScioContext, String) => ClosedTap[Nothing]
   ): List[String] = {
     val sc = ScioContext()
-    xform(sc, dir.getPath)
+    transform(sc, dir.getPath)
     sc.run().waitUntilFinish()
     val file: File = getFirstCsvFileFrom(dir)
     FileUtils.readLines(file, StandardCharsets.UTF_8).asScala.toList

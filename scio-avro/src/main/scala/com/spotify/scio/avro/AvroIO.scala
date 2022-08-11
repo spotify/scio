@@ -327,10 +327,7 @@ object AvroTyped {
     val avroT = AvroType[T]
     beam.AvroIO
       .writeCustomTypeToGenericRecords()
-      .withFormatFunction(new SerializableFunction[T, GenericRecord] {
-        override def apply(input: T): GenericRecord =
-          avroT.toGenericRecord(input)
-      })
+      .withFormatFunction(Functions.serializableFn(avroT.toGenericRecord))
       .withSchema(avroT.schema)
   }
 

@@ -89,7 +89,7 @@ import org.apache.beam.sdk.values.PCollection
  */
 object CsvIO {
 
-  final private val _DefaultCsvConfig: CsvConfiguration = CsvConfiguration(
+  final private val DefaultCsvConfig: CsvConfiguration = CsvConfiguration(
     cellSeparator = ',',
     quote = '"',
     quotePolicy = QuotePolicy.WhenNeeded,
@@ -109,12 +109,12 @@ object CsvIO {
 
   final case class ReadParam(
     compression: beam.Compression = beam.Compression.AUTO,
-    csvConfiguration: CsvConfiguration = _DefaultCsvConfig
+    csvConfiguration: CsvConfiguration = CsvIO.DefaultCsvConfig
   )
 
   object WriteParam {
     private[scio] val DefaultSuffix = ".csv"
-    private[scio] val DefaultCsvConfig = _DefaultCsvConfig
+    private[scio] val DefaultCsvConfig = CsvIO.DefaultCsvConfig
     private[scio] val DefaultNumShards = 1 // put everything in a single file
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
     private[scio] val DefaultShardNameTemplate = null

@@ -23,8 +23,7 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.{FilenamePolicyCreator, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
@@ -201,9 +200,7 @@ object ParquetAvroIO {
           ReadSupportFactory.avro,
           new SerializableConfiguration(hadoopConf),
           path,
-          new SerializableFunction[A, T] {
-            override def apply(input: A): T = cleanedProjectionFn(input)
-          }
+          Functions.serializableFn(cleanedProjectionFn)
         )
       ).setCoder(tCoder)
     }

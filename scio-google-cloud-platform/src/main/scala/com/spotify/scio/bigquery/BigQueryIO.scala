@@ -26,7 +26,7 @@ import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io.TapT
 import com.twitter.chill.ClosureCleaner
@@ -290,15 +290,10 @@ object BigQueryTypedTable {
   ): BigQueryTypedTable[T] = {
     val rFn = ClosureCleaner.clean(readerFn)
     val wFn = ClosureCleaner.clean(writerFn)
-    val reader = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
-      override def apply(input: SchemaAndRecord): T = rFn(input)
-    })
+    val reader = beam.BigQueryIO.read(Functions.serializableFn(rFn))
     val writer = beam.BigQueryIO
       .write[T]()
-      .withFormatFunction(new SerializableFunction[T, TableRow] {
-        override def apply(input: T): TableRow = wFn(input)
-      })
-
+      .withFormatFunction(Functions.serializableFn(wFn))
     val fn: (GenericRecord, TableSchema) => T = (gr, ts) =>
       tableRowFn(BigQueryUtils.convertGenericRecordToTableRow(gr, ts))
 
