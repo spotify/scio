@@ -26,12 +26,11 @@ import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import io.grpc.Channel
 import io.grpc.stub.{AbstractFutureStub, AbstractStub, StreamObserver}
-import org.apache.beam.sdk.transforms.ParDo
 
 import scala.util.Try
 import scala.jdk.CollectionConverters._
 
-class MessageSCollectionOps[Request](private val self: SCollection[Request]) extends AnyVal {
+class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extends AnyVal {
 
   def grpcLookup[Response: Coder, Client <: AbstractFutureStub[Client]](
     channelSupplier: () => Channel,
@@ -83,6 +82,6 @@ class MessageSCollectionOps[Request](private val self: SCollection[Request]) ext
 }
 
 trait SCollectionSyntax {
-  implicit def messageSCollectionOps[T](sc: SCollection[T]): MessageSCollectionOps[T] =
-    new MessageSCollectionOps(sc)
+  implicit def grpcSCollectionOps[T](sc: SCollection[T]): GrpcSCollectionOps[T] =
+    new GrpcSCollectionOps(sc)
 }
