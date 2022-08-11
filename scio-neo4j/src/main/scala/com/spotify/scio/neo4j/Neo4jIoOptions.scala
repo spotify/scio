@@ -31,7 +31,10 @@ import org.neo4j.driver.{Record, SessionConfig, TransactionConfig}
  */
 final case class Neo4jConnectionOptions(url: String, username: String, password: String)
 
-sealed trait Neo4jIoOptions
+sealed trait Neo4jIoOptions {
+  val connectionOptions: Neo4jConnectionOptions
+  val cypher: String
+}
 
 object Neo4jIoOptions {
   private[neo4j] val BeamDefaultBatchSize = 5000L

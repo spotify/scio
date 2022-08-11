@@ -35,10 +35,7 @@ object Neo4jIO {
     }
 
   private[neo4j] def neo4jIoId(opts: Neo4jIoOptions): String =
-    opts match {
-      case Neo4jReadOptions(conf, cypher, _, _, _)        => neo4jIoId(conf, cypher)
-      case Neo4jWriteOptions(conf, cypher, _, _, _, _, _) => neo4jIoId(conf, cypher)
-    }
+    neo4jIoId(opts.connectionOptions, opts.cypher)
 
   private[neo4j] def neo4jIoId(opts: Neo4jConnectionOptions, cypher: String): String =
     s"${opts.username}:${opts.password}@${opts.url}:$cypher"
