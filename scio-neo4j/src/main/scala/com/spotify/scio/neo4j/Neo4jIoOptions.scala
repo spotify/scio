@@ -32,8 +32,8 @@ import org.neo4j.driver.{Record, SessionConfig, TransactionConfig}
 final case class Neo4jConnectionOptions(url: String, username: String, password: String)
 
 sealed trait Neo4jIoOptions {
-  val connectionOptions: Neo4jConnectionOptions
-  val cypher: String
+  def connectionOptions: Neo4jConnectionOptions
+  def cypher: String
 }
 
 object Neo4jIoOptions {
