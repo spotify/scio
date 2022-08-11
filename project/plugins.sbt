@@ -4,7 +4,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.2.0")
 addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
 addSbtPlugin("com.github.sbt" % "sbt-protobuf" % "0.7.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.0")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.1")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.0")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.11.0")
@@ -26,3 +26,7 @@ libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.11.4",
   "org.apache.avro" % "avro-compiler" % "1.8.2"
 )
+
+// force usage of scala-xml v2
+// See https://github.com/scoverage/sbt-scoverage/issues/439
+dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
