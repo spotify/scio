@@ -26,3 +26,7 @@ libraryDependencies ++= Seq(
   "com.github.os72" % "protoc-jar" % "3.11.4",
   "org.apache.avro" % "avro-compiler" % "1.8.2"
 )
+
+// force usage of scala-xml v2
+// See https://github.com/scoverage/sbt-scoverage/issues/439
+dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
