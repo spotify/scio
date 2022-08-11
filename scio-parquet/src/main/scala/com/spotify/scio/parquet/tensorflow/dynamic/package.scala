@@ -20,13 +20,15 @@ import java.nio.channels.WritableByteChannel
  */
 package object dynamic extends AllSyntax {
   class ParquetExampleSink(
-    val schema: Schema,
+    schema: Schema,
     val compression: CompressionCodecName,
     val conf: SerializableConfiguration
   ) extends FileIO.Sink[Example] {
+    private val schemaString: String = schema.toJson()
     private var writer: ParquetWriter[Example] = _
     override def open(channel: WritableByteChannel): Unit = {
       val outputFile = BeamOutputFile.of(channel)
+      val schema = Schema.fromJson(schemaString)
       val builder = ExampleParquetWriter.builder(outputFile).withSchema(schema)
       writer = WriterUtils.build(builder, conf.get, compression)
     }

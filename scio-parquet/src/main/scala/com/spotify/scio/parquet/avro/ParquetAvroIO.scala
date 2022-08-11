@@ -30,7 +30,7 @@ import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io._
-import org.apache.beam.sdk.transforms.{SerializableFunction, SerializableFunctions}
+import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
@@ -101,12 +101,11 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
     val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
-    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
-    val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else schema
+
     val sink = new ParquetAvroFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
       dynamicDestinations,
-      writerSchema,
+      schema,
       job.getConfiguration,
       compression
     )
@@ -115,11 +114,8 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val writerSchema = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      ReflectData.get().getSchema(cls)
-    } else {
-      params.schema
-    }
+    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
+    val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
 
     data.applyInternal(
       parquetOut(

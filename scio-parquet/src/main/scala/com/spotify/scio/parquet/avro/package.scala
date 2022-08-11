@@ -43,12 +43,14 @@ package object avro extends Syntax {
   val Predicate = me.lyh.parquet.avro.Predicate
 
   class ParquetAvroSink[T](
-    val schema: Schema,
+    schema: Schema,
     val compression: CompressionCodecName,
     val conf: SerializableConfiguration
   ) extends FileIO.Sink[T] {
+    private val schemaString = schema.toString
     private var writer: ParquetWriter[T] = _
     override def open(channel: WritableByteChannel): Unit = {
+      val schema = new Schema.Parser().parse(schemaString)
       // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
       val rowGroupSize =
         conf.get.getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE)
