@@ -140,14 +140,16 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
 
   @SuppressWarnings("unchecked")
   @ProcessElement
-  public void processElement(ProcessContext c, BoundedWindow window) {
-    flush(r -> c.output(KV.of(r.input, r.output)));
+  public void processElement(@Element A input,
+                             @Timestamp Instant timestamp,
+                             OutputReceiver<KV<A, T>> outputReceiver,
+                             BoundedWindow window) {
+    flush(r -> outputReceiver.output(KV.of(r.input, r.output)));
 
     // found in cache
-    final A input = c.element();
     B cached = cacheSupplier.get(instanceId, input);
     if (cached != null) {
-      c.output(KV.of(input, success(cached)));
+      outputReceiver.output(KV.of(input, success(cached)));
       return;
     }
 
@@ -164,12 +166,12 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
                   addCallback(
                       inFlight,
                       output -> {
-                        results.add(new Result(input, success(output), key, c.timestamp(), window));
+                        results.add(new Result(input, success(output), key, timestamp, window));
                         return null;
                       },
                       throwable -> {
                         results.add(
-                            new Result(input, failure(throwable), key, c.timestamp(), window));
+                            new Result(input, failure(throwable), key, timestamp, window));
                         return null;
                       }));
         } catch (Exception e) {
@@ -200,7 +202,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
                     if (shouldRemove) inFlightRequests.remove(input);
                     try {
                       cacheSupplier.put(instanceId, input, output);
-                      results.add(new Result(input, success(output), key, c.timestamp(), window));
+                      results.add(new Result(input, success(output), key, timestamp, window));
                     } catch (Exception e) {
                       LOG.error("Failed to cache result", e);
                       throw e;
@@ -210,7 +212,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
                   throwable -> {
                     semaphore.release();
                     if (shouldRemove) inFlightRequests.remove(input);
-                    results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
+                    results.add(new Result(input, failure(throwable), key, timestamp, window));
                     return null;
                   });
             });
