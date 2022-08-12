@@ -82,15 +82,14 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
 
         if (buffer.getWeight() >= maxWeight) {
             LOG.debug("*** END OF BATCH *** for window {}", window);
-            flushBatch(window, buffer, receiver);
+            flushBatch(window, receiver);
         } else if (buffers.size() > MAX_LIVE_WINDOWS) {
             // flush the biggest buffer if we get too many parallel windows
-            Map.Entry<BoundedWindow, Buffer<InputT>> discarded =
-                    Collections.max(buffers.entrySet(), Comparator.comparingLong(o -> o.getValue().getWeight()));
-            BoundedWindow discardedWindow = discarded.getKey();
-            Buffer<InputT> discardedBatch = discarded.getValue();
+            BoundedWindow discardedWindow = Collections
+                    .max(buffers.entrySet(), Comparator.comparingLong(o -> o.getValue().getWeight()))
+                    .getKey();
             LOG.debug("*** END OF BATCH *** for window {}", discardedWindow);
-            flushBatch(discardedWindow, discardedBatch, receiver);
+            flushBatch(discardedWindow, receiver);
         }
     }
 
@@ -106,15 +105,14 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
 
     private void flushBatch(
             BoundedWindow window,
-            Buffer<InputT> buffer,
             OutputReceiver<Iterable<InputT>> receiver
     ) {
-        // Set the batch timestamp to the window's maxTimestamp
-        receiver.outputWithTimestamp(buffer.elements, window.maxTimestamp());
         // prefer removing the window than clearing the buffer
         // to avoid reaching MAX_LIVE_WINDOWS if no other element
         // come for this window
-        buffers.remove(window);
+        Buffer<InputT> buffer = buffers.remove(window);
+        // Set the batch timestamp to the window's maxTimestamp
+        receiver.outputWithTimestamp(buffer.elements, window.maxTimestamp());
     }
 
 }
