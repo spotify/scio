@@ -21,7 +21,7 @@ import java.io.File
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
-import com.spotify.scio.io.{TapSpec, TextIO}
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec, TextIO}
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
@@ -32,6 +32,29 @@ import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, 
 import org.apache.commons.io.FileUtils
 import org.joda.time.{DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
+
+class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
+  val extension: String = ".parquet"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TestRecord] = {
+    in.map(AvroUtils.newSpecificRecord)
+      .saveAsParquetAvroFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves = Seq(
+    _.map(AvroUtils.newSpecificRecord).saveAsParquetAvroFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
 
 class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   private val dir = tmpDir

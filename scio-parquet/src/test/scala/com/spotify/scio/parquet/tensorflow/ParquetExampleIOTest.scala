@@ -19,8 +19,10 @@ package com.spotify.scio.parquet.tensorflow
 
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.TapSpec
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec}
 import com.spotify.scio.testing.ScioIOSpec
+import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.Schema
 import org.apache.commons.io.FileUtils
 import org.apache.parquet.filter2.predicate.FilterApi
@@ -29,9 +31,8 @@ import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, Floa
 
 import scala.jdk.CollectionConverters._
 
-class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
-  private val dir = tmpDir
-  private val schema = {
+object ParquetExampleHelper {
+  private[tensorflow] val schema = {
     var builder = Schema.newBuilder()
     (1 to 5).foreach(i => builder = builder.required(s"int64_req_$i", Schema.Type.INT64))
     (1 to 5).foreach(i => builder = builder.required(s"float_req_$i", Schema.Type.FLOAT))
@@ -44,17 +45,6 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     (1 to 5).foreach(i => builder = builder.repeated(s"bytes_rep_$i", Schema.Type.BYTES))
     builder.named("Example")
   }
-  private val examples = (1 to 10).map(newExample)
-
-  override protected def beforeAll(): Unit = {
-    val sc = ScioContext()
-    sc.parallelize(examples)
-      .saveAsParquetExampleFile(dir.toString, schema)
-    sc.run()
-    ()
-  }
-
-  override protected def afterAll(): Unit = FileUtils.deleteDirectory(dir)
 
   private def longs(xs: Long*): Feature =
     Feature
@@ -76,7 +66,7 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
       .setBytesList(BytesList.newBuilder().addAllValue(xs.map(ByteString.copyFromUtf8).asJava))
       .build()
 
-  private def newExample(i: Int): Example = {
+  private[tensorflow] def newExample(i: Int): Example = {
     var builder = Features.newBuilder()
     (1 to 5).foreach(i => builder = builder.putFeature(s"int64_req_$i", longs(i.toLong)))
     (1 to 5).foreach(i => builder = builder.putFeature(s"float_req_$i", floats(i.toFloat)))
@@ -97,6 +87,49 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     )
     Example.newBuilder().setFeatures(builder).build()
   }
+}
+
+class ParquetExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
+  import ParquetExampleHelper._
+
+  val extension: String = ".parquet"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Example] = {
+    in.map(newExample)
+      .saveAsParquetExampleFile(
+        tmpDir,
+        schema,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves = Seq(
+    _.map(newExample).saveAsParquetExampleFile(
+      "nonsense",
+      schema,
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
+
+class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
+  import ParquetExampleHelper._
+  private val dir = tmpDir
+  private val examples = (1 to 10).map(newExample)
+
+  override protected def beforeAll(): Unit = {
+    val sc = ScioContext()
+    sc.parallelize(examples)
+      .saveAsParquetExampleFile(dir.toString, schema)
+    sc.run()
+    ()
+  }
+
+  override protected def afterAll(): Unit = FileUtils.deleteDirectory(dir)
 
   private val projection = Seq(
     "int64_req_1",

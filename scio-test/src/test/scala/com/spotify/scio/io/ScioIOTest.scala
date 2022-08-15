@@ -27,10 +27,12 @@ import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
+import org.joda.time.{Duration, Instant}
 
 import java.io.File
 import java.util.UUID
@@ -44,18 +46,67 @@ object ScioIOTest {
 trait FileNamePolicySpec[T] extends ScioIOSpec {
   val TestNumShards = 10
 
-  def name(): String
+  def mkIn(
+    sc: ScioContext,
+    inFn: ScioContext => SCollection[Int],
+    windowInput: Boolean
+  ): SCollection[Int] = {
+    val input = inFn(sc)
+    if (!windowInput) input
+    else {
+      input
+        .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
+        .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
+    }
+  }
+
+  def testWindowingFilenames(
+    inFn: ScioContext => SCollection[Int],
+    windowInput: Boolean,
+    // (windowed input, tmpDir, isBounded)
+    write: (SCollection[Int], String, Boolean) => ClosedTap[T]
+  )(
+    fileFn: Array[String] => Unit = _ => ()
+  ): Unit = {
+    val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+
+    val sc = ScioContext()
+    val in: SCollection[Int] = mkIn(sc, inFn, windowInput)
+    write(in, tmpDir.getAbsolutePath, in.internal.isBounded == IsBounded.BOUNDED)
+    sc.run().waitUntilDone()
+
+    fileFn(listFiles(tmpDir))
+    FileUtils.deleteDirectory(tmpDir)
+  }
+
+  def testFails(
+    inFn: ScioContext => SCollection[Int],
+    failWrites: Seq[SCollection[Int] => ClosedTap[T]] = Seq.empty
+  ): Unit = {
+    failWrites.foreach { failWrite =>
+      a[IllegalArgumentException] should be thrownBy {
+        val sc2 = ScioContext()
+        failWrite(mkIn(sc2, inFn, true))
+        sc2.run().waitUntilDone()
+      }
+    }
+  }
+
   def extension: String
+  def failSaves: Seq[SCollection[Int] => ClosedTap[T]] = Seq.empty
   def save(
     filenamePolicySupplier: FilenamePolicySupplier = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[T]
 
-  name() should "work with an unwindowed collection" in {
+  it should "throw when incompatible save parameters are used" in {
+    testFails(_.parallelize(1 to 100), failSaves)
+  }
+
+  it should "work with an unwindowed collection" in {
     testWindowingFilenames(_.parallelize(1 to 100), false, save()) { files =>
       assert(files.length >= 1)
       all(files) should (include("/part-") and include("-of-") and include(extension))
     }
-
   }
 
   it should "work with an unwindowed collection with a custom filename policy" in {
@@ -102,7 +153,6 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
 }
 
 class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
-  def name(): String = "AvroIO"
   val extension: String = ".avro"
   def save(
     filenamePolicySupplier: FilenamePolicySupplier = null
@@ -115,10 +165,17 @@ class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
         filenamePolicySupplier = filenamePolicySupplier
       )
   }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[TestRecord]] = Seq(
+    _.map(AvroUtils.newSpecificRecord).saveAsAvroFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
 }
 
 class TextIOFileNamePolicyTest extends FileNamePolicySpec[String] {
-  def name(): String = "TextIO"
   val extension: String = ".txt"
   def save(
     filenamePolicySupplier: FilenamePolicySupplier = null
@@ -131,12 +188,19 @@ class TextIOFileNamePolicyTest extends FileNamePolicySpec[String] {
         filenamePolicySupplier = filenamePolicySupplier
       )
   }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[String]] = Seq(
+    _.map(_.toString).saveAsTextFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
 }
 
 class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[ScioIOTest.AvroRecord] {
   import ScioIOTest._
 
-  def name(): String = "ObjectFileIO"
   val extension: String = ".obj.avro"
   def save(
     filenamePolicySupplier: FilenamePolicySupplier = null
@@ -149,10 +213,17 @@ class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[ScioIOTest.AvroRecor
         filenamePolicySupplier = filenamePolicySupplier
       )
   }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[AvroRecord]] = Seq(
+    _.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList)).saveAsObjectFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
 }
 
 class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
-  def name(): String = "ProtobufIO"
   val extension: String = ".protobuf.avro"
   def save(
     filenamePolicySupplier: FilenamePolicySupplier = null
@@ -165,10 +236,17 @@ class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
         filenamePolicySupplier = filenamePolicySupplier
       )
   }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[TrackPB]] = Seq(
+    _.map(x => TrackPB.newBuilder().setTrackId(x.toString).build()).saveAsProtobufFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
 }
 
 class BinaryIOFileNamePolicyTest extends FileNamePolicySpec[Nothing] {
-  def name(): String = "BinaryIO"
   val extension: String = ".bin"
   def save(
     filenamePolicySupplier: FilenamePolicySupplier = null
@@ -181,6 +259,19 @@ class BinaryIOFileNamePolicyTest extends FileNamePolicySpec[Nothing] {
         filenamePolicySupplier = filenamePolicySupplier
       )
   }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[Nothing]] = Seq(
+    _.map(x => ByteBuffer.allocate(4).putInt(x).array).saveAsBinaryFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    ),
+    _.map(x => ByteBuffer.allocate(4).putInt(x).array).saveAsBinaryFile(
+      "nonsense",
+      prefix = "blah",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
 }
 
 class ScioIOTest extends ScioIOSpec {

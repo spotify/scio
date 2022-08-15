@@ -21,7 +21,7 @@ import java.io.File
 import java.util.UUID
 import com.spotify.scio._
 import com.spotify.scio.io._
-import com.spotify.scio.values.{SCollection, WindowOptions}
+import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.io.FileBasedSink
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
@@ -33,9 +33,7 @@ import org.apache.beam.sdk.transforms.windowing.{
   IntervalWindow,
   PaneInfo
 }
-import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
-import org.joda.time.{Duration, Instant}
 
 import scala.reflect.ClassTag
 
@@ -83,33 +81,6 @@ trait ScioIOSpec extends PipelineSpec {
         )
       }
     }
-  }
-
-  def testWindowingFilenames[T](
-    inFn: ScioContext => SCollection[Int],
-    windowInput: Boolean,
-    // (windowed input, tmpDir, isBounded)
-    write: (SCollection[Int], String, Boolean) => ClosedTap[T]
-  )(
-    fileFn: Array[String] => Unit = _ => ()
-  ): Unit = {
-    val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-
-    val sc = ScioContext()
-    val in: SCollection[Int] = {
-      val input = inFn(sc)
-      if (!windowInput) input
-      else {
-        input
-          .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
-          .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
-      }
-    }
-    write(in, tmpDir.getAbsolutePath, in.internal.isBounded == IsBounded.BOUNDED)
-    sc.run().waitUntilDone()
-
-    fileFn(listFiles(tmpDir))
-    FileUtils.deleteDirectory(tmpDir)
   }
 
   def listFiles(tmpDir: File): Array[String] = {
