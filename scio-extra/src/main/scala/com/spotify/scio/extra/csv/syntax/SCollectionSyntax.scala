@@ -21,7 +21,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.csv.CsvIO
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import kantan.csv.{CsvConfiguration, HeaderDecoder, HeaderEncoder}
 import org.apache.beam.sdk.io.Compression
@@ -39,7 +39,8 @@ trait SCollectionSyntax {
       compression: Compression = CsvIO.WriteParam.DefaultCompression,
       shardNameTemplate: String = CsvIO.WriteParam.DefaultShardNameTemplate,
       tempDirectory: String = CsvIO.WriteParam.DefaultTempDirectory,
-      filenamePolicyCreator: FilenamePolicyCreator = CsvIO.WriteParam.DefaultFilenamePolicyCreator
+      filenamePolicySupplier: FilenamePolicySupplier =
+        CsvIO.WriteParam.DefaultFilenamePolicySupplier
     )(implicit coder: Coder[T], enc: HeaderEncoder[T]): ClosedTap[Nothing] =
       self.write(CsvIO.Write[T](path))(
         CsvIO.WriteParam(
@@ -49,7 +50,7 @@ trait SCollectionSyntax {
           numShards,
           shardNameTemplate,
           tempDirectory,
-          filenamePolicyCreator
+          filenamePolicySupplier
         )
       )
   }

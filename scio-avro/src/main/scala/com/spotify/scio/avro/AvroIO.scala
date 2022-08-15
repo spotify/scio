@@ -21,7 +21,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
 import com.spotify.scio.{avro, ScioContext}
@@ -134,16 +134,16 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     metadata: Map[String, AnyRef],
     shardNameTemplate: String,
     tempDirectory: ResourceId,
-    filenamePolicyCreator: FilenamePolicyCreator,
+    filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean
   ): beam.AvroIO.Write[U] = {
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (shardNameTemplate != null && filenamePolicyCreator != null)
+    if (shardNameTemplate != null && filenamePolicySupplier != null)
       throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicyCreator may not be used together"
+        "shardNameTemplate and filenamePolicySupplier may not be used together"
       )
 
-    val fp = Option(filenamePolicyCreator)
+    val fp = Option(filenamePolicySupplier)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
@@ -199,7 +199,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
         params.metadata,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        params.filenamePolicyCreator,
+        params.filenamePolicySupplier,
         ScioUtil.isWindowed(data)
       )
     )
@@ -245,7 +245,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
         params.metadata,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        params.filenamePolicyCreator,
+        params.filenamePolicySupplier,
         ScioUtil.isWindowed(data)
       )
     )
@@ -299,7 +299,7 @@ object AvroIO {
     private[scio] val DefaultMetadata: Map[String, AnyRef] = Map.empty
     private[scio] val DefaultShardNameTemplate: String = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicyCreator = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
@@ -309,7 +309,7 @@ object AvroIO {
     metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   ) {
     // TODO this is kinda weird when compared with the other IOs?
     val suffix: String = _suffix + ".avro"
@@ -345,17 +345,17 @@ object AvroTyped {
       metadata: Map[String, AnyRef],
       shardNameTemplate: String,
       tempDirectory: ResourceId,
-      filenamePolicyCreator: FilenamePolicyCreator,
+      filenamePolicySupplier: FilenamePolicySupplier,
       isWindowed: Boolean
     ) = {
       if (tempDirectory == null)
         throw new IllegalArgumentException("tempDirectory must not be null")
-      if (shardNameTemplate != null && filenamePolicyCreator != null)
+      if (shardNameTemplate != null && filenamePolicySupplier != null)
         throw new IllegalArgumentException(
-          "shardNameTemplate and filenamePolicyCreator may not be used together"
+          "shardNameTemplate and filenamePolicySupplier may not be used together"
         )
 
-      val fp = Option(filenamePolicyCreator)
+      val fp = Option(filenamePolicySupplier)
         .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
         .getOrElse(
           ScioUtil.defaultFilenamePolicy(
@@ -404,7 +404,7 @@ object AvroTyped {
           params.metadata,
           params.shardNameTemplate,
           ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-          params.filenamePolicyCreator,
+          params.filenamePolicySupplier,
           ScioUtil.isWindowed(data)
         )
       )

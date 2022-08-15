@@ -22,7 +22,7 @@ import java.nio.channels.{Channels, WritableByteChannel}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.BinaryIO.BytesSink
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
@@ -63,20 +63,20 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     framePrefix: Array[Byte] => Array[Byte],
     frameSuffix: Array[Byte] => Array[Byte],
     tempDirectory: ResourceId,
-    filenamePolicyCreator: FilenamePolicyCreator,
+    filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (prefix != null && filenamePolicyCreator != null)
+    if (prefix != null && filenamePolicySupplier != null)
       throw new IllegalArgumentException(
-        "prefix and filenamePolicyCreator may not be used together"
+        "prefix and filenamePolicySupplier may not be used together"
       )
-    if (shardNameTemplate != null && filenamePolicyCreator != null)
+    if (shardNameTemplate != null && filenamePolicySupplier != null)
       throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicyCreator may not be used together"
+        "shardNameTemplate and filenamePolicySupplier may not be used together"
       )
 
-    val fp = Option(filenamePolicyCreator)
+    val fp = Option(filenamePolicySupplier)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
@@ -116,7 +116,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
         params.framePrefix,
         params.frameSuffix,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        params.filenamePolicyCreator,
+        params.filenamePolicySupplier,
         ScioUtil.isWindowed(data)
       )
     )
@@ -156,7 +156,7 @@ object BinaryIO {
     private[scio] val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
     private[scio] val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicyCreator = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam(
@@ -170,7 +170,7 @@ object BinaryIO {
     framePrefix: Array[Byte] => Array[Byte] = WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = WriteParam.DefaultFrameSuffix,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
 
   final private class BytesSink(

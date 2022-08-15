@@ -7,15 +7,15 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 
-trait FilenamePolicyCreator {
+trait FilenamePolicySupplier {
   def apply(path: String, suffix: String): FilenamePolicy
 }
 
-object FilenamePolicyCreator {
-  def filenamePolicyCreatorOf(
+object FilenamePolicySupplier {
+  def filenamePolicySupplierOf(
     windowed: (Int, Int, BoundedWindow, PaneInfo) => String = null,
     unwindowed: (Int, Int) => String = null
-  ): FilenamePolicyCreator = { (path: String, suffix: String) =>
+  ): FilenamePolicySupplier = { (path: String, suffix: String) =>
     val cleanWindowed = ClosureCleaner.clean(windowed)
     val cleanUnwindowed = ClosureCleaner.clean(unwindowed)
     new FilenamePolicy {

@@ -30,7 +30,7 @@ import org.apache.beam.sdk.io.{
 import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
@@ -67,7 +67,7 @@ object TFRecordIO {
     private[tensorflow] val DefaultNumShards = 0
     private[tensorflow] val DefaultShardNameTemplate = null
     private[tensorflow] val DefaultTempDirectory = null
-    private[tensorflow] val DefaultFilenamePolicyCreator = null
+    private[tensorflow] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
@@ -76,7 +76,7 @@ object TFRecordIO {
     numShards: Int,
     shardNameTemplate: String,
     tempDirectory: String,
-    filenamePolicyCreator: FilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier
   )
 }
 
@@ -144,16 +144,16 @@ private object TFRecordMethods {
     compression: Compression,
     shardNameTemplate: String,
     tempDirectory: ResourceId,
-    filenamePolicyCreator: FilenamePolicyCreator,
+    filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean
   ) = {
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (shardNameTemplate != null && filenamePolicyCreator != null)
+    if (shardNameTemplate != null && filenamePolicySupplier != null)
       throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicyCreator may not be used together"
+        "shardNameTemplate and filenamePolicySupplier may not be used together"
       )
 
-    val fp = Option(filenamePolicyCreator)
+    val fp = Option(filenamePolicySupplier)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
@@ -186,7 +186,7 @@ private object TFRecordMethods {
         params.compression,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        params.filenamePolicyCreator,
+        params.filenamePolicySupplier,
         ScioUtil.isWindowed(data)
       )
     )

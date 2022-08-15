@@ -23,7 +23,7 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId
@@ -75,17 +75,17 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     conf: Configuration,
     shardNameTemplate: String,
     tempDirectory: ResourceId,
-    filenamePolicyCreator: FilenamePolicyCreator,
+    filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (shardNameTemplate != null && filenamePolicyCreator != null)
+    if (shardNameTemplate != null && filenamePolicySupplier != null)
       throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicyCreator may not be used together"
+        "shardNameTemplate and filenamePolicySupplier may not be used together"
       )
 
-    val fp = Option(filenamePolicyCreator)
+    val fp = Option(filenamePolicySupplier)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
@@ -121,7 +121,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
         params.conf,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        params.filenamePolicyCreator,
+        params.filenamePolicySupplier,
         ScioUtil.isWindowed(data),
         ScioUtil.isLocalRunner(data.context.options.getRunner)
       )
@@ -150,7 +150,7 @@ object ParquetTypeIO {
     private[scio] val DefaultConfiguration = null
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicyCreator = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam[T] private (
@@ -160,7 +160,7 @@ object ParquetTypeIO {
     conf: Configuration = WriteParam.DefaultConfiguration,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
 }
 

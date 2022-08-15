@@ -20,7 +20,7 @@ package com.spotify.scio.parquet.tensorflow.syntax
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.WriteParam
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.Schema
 import org.apache.hadoop.conf.Configuration
@@ -40,7 +40,7 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
     conf: Configuration = WriteParam.DefaultConfiguration,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   ): ClosedTap[Example] =
     self.write(ParquetExampleIO(path))(
       WriteParam(
@@ -51,7 +51,7 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
         conf,
         shardNameTemplate,
         tempDirectory,
-        filenamePolicyCreator
+        filenamePolicySupplier
       )
     )
 }

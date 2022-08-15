@@ -25,7 +25,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import kantan.csv._
 import kantan.codecs.compat._ // scalafix:ok
@@ -104,7 +104,7 @@ object CsvIO {
     WriteParam.DefaultNumShards,
     WriteParam.DefaultShardNameTemplate,
     WriteParam.DefaultTempDirectory,
-    WriteParam.DefaultFilenamePolicyCreator
+    WriteParam.DefaultFilenamePolicySupplier
   )
 
   final case class ReadParam(
@@ -119,7 +119,7 @@ object CsvIO {
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicyCreator = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam(
@@ -129,7 +129,7 @@ object CsvIO {
     numShards: Int,
     shardNameTemplate: String,
     tempDirectory: String,
-    filenamePolicyCreator: FilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier
   ) {
     def toReadParam: ReadParam =
       ReadParam(compression = compression, csvConfiguration = csvConfiguration)

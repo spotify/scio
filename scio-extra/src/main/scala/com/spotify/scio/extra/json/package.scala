@@ -22,7 +22,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
@@ -79,7 +79,8 @@ package object json extends AutoDerivation {
       printer: Printer = JsonIO.WriteParam.DefaultPrinter,
       shardNameTemplate: String = JsonIO.WriteParam.DefaultShardNameTemplate,
       tempDirectory: String = JsonIO.WriteParam.DefaultTempDirectory,
-      filenamePolicyCreator: FilenamePolicyCreator = JsonIO.WriteParam.DefaultFilenamePolicyCreator
+      filenamePolicySupplier: FilenamePolicySupplier =
+        JsonIO.WriteParam.DefaultFilenamePolicySupplier
     ): ClosedTap[T] =
       self.write(JsonIO[T](path))(
         JsonIO.WriteParam(
@@ -89,7 +90,7 @@ package object json extends AutoDerivation {
           printer,
           shardNameTemplate,
           tempDirectory,
-          filenamePolicyCreator
+          filenamePolicySupplier
         )
       )
   }

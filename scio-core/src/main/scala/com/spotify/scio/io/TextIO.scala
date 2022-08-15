@@ -22,7 +22,7 @@ import java.nio.channels.Channels
 import java.util.Collections
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.beam.sdk.io.{Compression, FileSystems, TextIO => BTextIO}
@@ -57,16 +57,16 @@ final case class TextIO(path: String) extends ScioIO[String] {
     footer: Option[String],
     shardNameTemplate: String,
     tempDirectory: ResourceId,
-    filenamePolicyCreator: FilenamePolicyCreator,
+    filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean
   ) = {
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (shardNameTemplate != null && filenamePolicyCreator != null)
+    if (shardNameTemplate != null && filenamePolicySupplier != null)
       throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicyCreator may not be used together"
+        "shardNameTemplate and filenamePolicySupplier may not be used together"
       )
 
-    val fp = Option(filenamePolicyCreator)
+    val fp = Option(filenamePolicySupplier)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
@@ -100,7 +100,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
         params.footer,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        params.filenamePolicyCreator,
+        params.filenamePolicySupplier,
         ScioUtil.isWindowed(data)
       )
     )
@@ -122,7 +122,7 @@ object TextIO {
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicyCreator = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final val DefaultWriteParam: WriteParam = WriteParam(
@@ -133,7 +133,7 @@ object TextIO {
     WriteParam.DefaultFooter,
     WriteParam.DefaultShardNameTemplate,
     WriteParam.DefaultTempDirectory,
-    WriteParam.DefaultFilenamePolicyCreator
+    WriteParam.DefaultFilenamePolicySupplier
   )
 
   final case class WriteParam(
@@ -144,7 +144,7 @@ object TextIO {
     footer: Option[String],
     shardNameTemplate: String,
     tempDirectory: String,
-    filenamePolicyCreator: FilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {

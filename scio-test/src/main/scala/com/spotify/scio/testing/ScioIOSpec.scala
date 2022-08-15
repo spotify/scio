@@ -42,7 +42,7 @@ import scala.reflect.ClassTag
 /** Trait for unit testing [[ScioIO]]. */
 trait ScioIOSpec extends PipelineSpec {
 
-  def testFilenamePolicyCreator(
+  def testFilenamePolicySupplier(
     path: String,
     suffix: String
   ): FilenamePolicy = {

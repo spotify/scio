@@ -21,7 +21,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import com.spotify.scio.parquet.avro.ParquetAvroIO
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.hadoop.conf.Configuration
@@ -57,7 +57,7 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     conf: Configuration = WriteParam.DefaultConfiguration,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = WriteParam(
       schema,
@@ -67,7 +67,7 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
       conf,
       shardNameTemplate,
       tempDirectory,
-      filenamePolicyCreator
+      filenamePolicySupplier
     )
     self.write(ParquetAvroIO[T](path))(param)
   }

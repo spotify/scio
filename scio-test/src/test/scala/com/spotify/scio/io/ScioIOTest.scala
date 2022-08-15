@@ -26,7 +26,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -47,7 +47,7 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
   def name(): String
   def extension: String
   def save(
-    filenamePolicyCreator: FilenamePolicyCreator = null
+    filenamePolicySupplier: FilenamePolicySupplier = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[T]
 
   name() should "work with an unwindowed collection" in {
@@ -59,7 +59,7 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
   }
 
   it should "work with an unwindowed collection with a custom filename policy" in {
-    testWindowingFilenames(_.parallelize(1 to 100), false, save(testFilenamePolicyCreator)) {
+    testWindowingFilenames(_.parallelize(1 to 100), false, save(testFilenamePolicySupplier)) {
       files =>
         assert(files.length >= 1)
         all(files) should (include("/foo-shard-") and include("-of-numShards-") and include(
@@ -91,7 +91,7 @@ trait FileNamePolicySpec[T] extends ScioIOSpec {
     val xxx = testStreamOf[Int]
       .addElements(1, (2 to 10): _*)
       .advanceWatermarkToInfinity()
-    testWindowingFilenames(_.testStream(xxx), true, save(testFilenamePolicyCreator)) { files =>
+    testWindowingFilenames(_.testStream(xxx), true, save(testFilenamePolicySupplier)) { files =>
       assert(files.length == TestNumShards)
       all(files) should
         (include("/foo-shard-") and include("-of-numShards-") and include("-window") and include(
@@ -105,14 +105,14 @@ class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   def name(): String = "AvroIO"
   val extension: String = ".avro"
   def save(
-    filenamePolicyCreator: FilenamePolicyCreator = null
+    filenamePolicySupplier: FilenamePolicySupplier = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TestRecord] = {
     in.map(AvroUtils.newSpecificRecord)
       .saveAsAvroFile(
         tmpDir,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
         numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicyCreator = filenamePolicyCreator
+        filenamePolicySupplier = filenamePolicySupplier
       )
   }
 }
@@ -121,14 +121,14 @@ class TextIOFileNamePolicyTest extends FileNamePolicySpec[String] {
   def name(): String = "TextIO"
   val extension: String = ".txt"
   def save(
-    filenamePolicyCreator: FilenamePolicyCreator = null
+    filenamePolicySupplier: FilenamePolicySupplier = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[String] = {
     in.map(_.toString)
       .saveAsTextFile(
         tmpDir,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
         numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicyCreator = filenamePolicyCreator
+        filenamePolicySupplier = filenamePolicySupplier
       )
   }
 }
@@ -139,14 +139,14 @@ class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[ScioIOTest.AvroRecor
   def name(): String = "ObjectFileIO"
   val extension: String = ".obj.avro"
   def save(
-    filenamePolicyCreator: FilenamePolicyCreator = null
+    filenamePolicySupplier: FilenamePolicySupplier = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[AvroRecord] = {
     in.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
       .saveAsObjectFile(
         tmpDir,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
         numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicyCreator = filenamePolicyCreator
+        filenamePolicySupplier = filenamePolicySupplier
       )
   }
 }
@@ -155,14 +155,14 @@ class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
   def name(): String = "ProtobufIO"
   val extension: String = ".protobuf.avro"
   def save(
-    filenamePolicyCreator: FilenamePolicyCreator = null
+    filenamePolicySupplier: FilenamePolicySupplier = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TrackPB] = {
     in.map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
       .saveAsProtobufFile(
         tmpDir,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
         numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicyCreator = filenamePolicyCreator
+        filenamePolicySupplier = filenamePolicySupplier
       )
   }
 }
@@ -171,14 +171,14 @@ class BinaryIOFileNamePolicyTest extends FileNamePolicySpec[Nothing] {
   def name(): String = "BinaryIO"
   val extension: String = ".bin"
   def save(
-    filenamePolicyCreator: FilenamePolicyCreator = null
+    filenamePolicySupplier: FilenamePolicySupplier = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Nothing] = {
     in.map(x => ByteBuffer.allocate(4).putInt(x).array)
       .saveAsBinaryFile(
         tmpDir,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
         numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicyCreator = filenamePolicyCreator
+        filenamePolicySupplier = filenamePolicySupplier
       )
   }
 }

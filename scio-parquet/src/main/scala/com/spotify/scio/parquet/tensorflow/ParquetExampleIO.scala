@@ -24,7 +24,7 @@ import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.{ExampleParquetInputFormat, ExampleParquetReader, Schema}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
@@ -101,17 +101,17 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     conf: Configuration,
     shardNameTemplate: String,
     tempDirectory: ResourceId,
-    filenamePolicyCreator: FilenamePolicyCreator,
+    filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean,
     isLocalRunner: Boolean
   ) = {
     if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (shardNameTemplate != null && filenamePolicyCreator != null)
+    if (shardNameTemplate != null && filenamePolicySupplier != null)
       throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicyCreator may not be used together"
+        "shardNameTemplate and filenamePolicySupplier may not be used together"
       )
 
-    val fp = Option(filenamePolicyCreator)
+    val fp = Option(filenamePolicySupplier)
       .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
@@ -148,7 +148,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         params.conf,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        params.filenamePolicyCreator,
+        params.filenamePolicySupplier,
         ScioUtil.isWindowed(data),
         ScioUtil.isLocalRunner(data.context.options.getRunner)
       )
@@ -179,7 +179,7 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultConfiguration = null
     private[tensorflow] val DefaultShardNameTemplate = null
     private[tensorflow] val DefaultTempDirectory = null
-    private[tensorflow] val DefaultFilenamePolicyCreator = null
+    private[tensorflow] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
@@ -190,7 +190,7 @@ object ParquetExampleIO {
     conf: Configuration = WriteParam.DefaultConfiguration,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
 }
 

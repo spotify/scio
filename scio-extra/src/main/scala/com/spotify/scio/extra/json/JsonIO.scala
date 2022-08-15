@@ -27,7 +27,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io.TapT
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
@@ -49,7 +49,7 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
           None,
           params.shardNameTemplate,
           params.tempDirectory,
-          params.filenamePolicyCreator
+          params.filenamePolicySupplier
         )
       )
     tap(JsonIO.ReadParam(params.compression))
@@ -76,7 +76,7 @@ object JsonIO {
     private[scio] val DefaultPrinter = Printer.noSpaces
     private[scio] val DefaultShardNameTemplate: String = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicyCreator = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam(
@@ -86,6 +86,6 @@ object JsonIO {
     printer: Printer,
     shardNameTemplate: String,
     tempDirectory: String,
-    filenamePolicyCreator: FilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier
   )
 }

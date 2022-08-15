@@ -30,7 +30,7 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.FilenamePolicyCreator
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -1494,7 +1494,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = TextIO.WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier = TextIO.WriteParam.DefaultFilenamePolicySupplier
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1510,7 +1510,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         footer,
         shardNameTemplate,
         tempDirectory,
-        filenamePolicyCreator
+        filenamePolicySupplier
       )
     )
   }
@@ -1531,7 +1531,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
     tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory,
-    filenamePolicyCreator: FilenamePolicyCreator = BinaryIO.WriteParam.DefaultFilenamePolicyCreator
+    filenamePolicySupplier: FilenamePolicySupplier =
+      BinaryIO.WriteParam.DefaultFilenamePolicySupplier
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .covary_[Array[Byte]]
@@ -1548,7 +1549,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             framePrefix,
             frameSuffix,
             tempDirectory,
-            filenamePolicyCreator
+            filenamePolicySupplier
           )
       )
 
