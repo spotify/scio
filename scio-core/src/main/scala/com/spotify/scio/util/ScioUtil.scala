@@ -92,10 +92,9 @@ private[scio] object ScioUtil {
   }
 
   def pathWithPrefix(path: String, prefix: String = null): String = {
-    val replacement = s"/${Option(prefix).getOrElse("part")}"
-    // replaceAll surprisingly does the wrong thing with regex /*$
+    val filePrefix = Option(prefix).getOrElse("part")
     val stripped = StringUtils.stripEnd(path, "/")
-    s"${stripped}${replacement}"
+    s"${stripped}/${filePrefix}"
   }
 
   def consistentHashCode[K](k: K): Int = k match {
