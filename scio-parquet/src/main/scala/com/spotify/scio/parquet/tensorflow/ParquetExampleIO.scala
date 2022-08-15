@@ -47,15 +47,16 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override val tapT: TapT.Aux[Example, Example] = TapOf[Example]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
-    val job = Job.getInstance(params.conf)
+    val conf = Option(params.conf).getOrElse(new Configuration())
+    val job = Job.getInstance(conf)
 
     Option(params.projection).foreach { projection =>
       ExampleParquetInputFormat.setFields(job, projection.asJava)
-      params.conf.set(ExampleParquetInputFormat.FIELDS_KEY, String.join(",", projection: _*))
+      conf.set(ExampleParquetInputFormat.FIELDS_KEY, String.join(",", projection: _*))
     }
 
     Option(params.predicate).foreach { predicate =>
-      ParquetInputFormat.setFilterPredicate(params.conf, predicate)
+      ParquetInputFormat.setFilterPredicate(conf, predicate)
     }
 
     val coder = CoderMaterializer.beam(sc, Coder[Example])
@@ -63,7 +64,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     sc.applyTransform(
       ParquetRead.read(
         ReadSupportFactory.example,
-        new SerializableConfiguration(params.conf),
+        new SerializableConfiguration(conf),
         path,
         identity[Example]
       )
@@ -123,7 +124,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Example])
-    val job = Job.getInstance(conf)
+    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetExampleFileBasedSink(
       StaticValueProvider.of(tempDirectory),
@@ -163,7 +164,7 @@ object ParquetExampleIO {
   object ReadParam {
     private[tensorflow] val DefaultProjection = null
     private[tensorflow] val DefaultPredicate = null
-    private[tensorflow] val DefaultConfiguration = new Configuration()
+    private[tensorflow] val DefaultConfiguration = null
   }
   final case class ReadParam private (
     projection: Seq[String] = ReadParam.DefaultProjection,
@@ -175,7 +176,7 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultNumShards = 0
     private[tensorflow] val DefaultSuffix = ".parquet"
     private[tensorflow] val DefaultCompression = CompressionCodecName.GZIP
-    private[tensorflow] val DefaultConfiguration = new Configuration()
+    private[tensorflow] val DefaultConfiguration = null
     private[tensorflow] val DefaultShardNameTemplate = null
     private[tensorflow] val DefaultTempDirectory = null
     private[tensorflow] val DefaultFilenamePolicyCreator = null
@@ -200,7 +201,7 @@ final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadPa
     xs.iterator.flatMap { metadata =>
       val reader = ExampleParquetReader
         .builder(BeamInputFile.of(metadata.resourceId()))
-        .withConf(params.conf)
+        .withConf(Option(params.conf).getOrElse(new Configuration()))
         .build()
       new Iterator[Example] {
         private var current: Example = reader.read()

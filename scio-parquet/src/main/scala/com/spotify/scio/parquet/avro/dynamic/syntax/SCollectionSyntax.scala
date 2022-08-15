@@ -41,7 +41,11 @@ final class DynamicParquetAvroSCollectionOps[T](
       val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else schema
       if (writerSchema == null) throw new IllegalArgumentException("Schema must not be null")
       val sink =
-        new ParquetAvroSink[T](writerSchema, compression, new SerializableConfiguration(conf))
+        new ParquetAvroSink[T](
+          writerSchema,
+          compression,
+          new SerializableConfiguration(Option(conf).getOrElse(new Configuration()))
+        )
       val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
       self.applyInternal(write)
     }

@@ -50,8 +50,9 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val conf = Option(params.conf).getOrElse(new Configuration())
     if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(params.conf, params.predicate)
+      ParquetInputFormat.setFilterPredicate(conf, params.predicate)
     }
 
     val coder = CoderMaterializer.beam(sc, implicitly[Coder[T]])
@@ -59,7 +60,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     sc.applyTransform(
       ParquetRead.read(
         ReadSupportFactory.typed,
-        new SerializableConfiguration(params.conf),
+        new SerializableConfiguration(conf),
         path,
         identity[T]
       )
@@ -97,7 +98,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(conf)
+    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetTypeFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
@@ -135,7 +136,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 object ParquetTypeIO {
   object ReadParam {
     private[scio] val DefaultPredicate = null
-    private[scio] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultConfiguration = null
   }
   final case class ReadParam[T] private (
     predicate: FilterPredicate = null,
@@ -146,7 +147,7 @@ object ParquetTypeIO {
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultSuffix = ".parquet"
     private[scio] val DefaultCompression = CompressionCodecName.GZIP
-    private[scio] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultConfiguration = null
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
     private[scio] val DefaultFilenamePolicyCreator = null

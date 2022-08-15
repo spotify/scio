@@ -99,7 +99,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(conf)
+    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
 
     val sink = new ParquetAvroFileBasedSink[T](
@@ -143,7 +143,7 @@ object ParquetAvroIO {
   object ReadParam {
     private[avro] val DefaultProjection = null
     private[avro] val DefaultPredicate = null
-    private[avro] val DefaultConfiguration = new Configuration()
+    private[avro] val DefaultConfiguration = null
 
     @deprecated(
       "Use ReadParam(projectionFn, projection, predicate, conf) instead",
@@ -169,7 +169,7 @@ object ParquetAvroIO {
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
     def read(sc: ScioContext, path: String): SCollection[T] = {
-      val hadoopConf = new Configuration(conf)
+      val hadoopConf = Option(conf).getOrElse(new Configuration())
       // Needed to make GenericRecord read by parquet-avro work with Beam's
       // org.apache.beam.sdk.coders.AvroCoder.
       if (!isSpecific) {
@@ -207,7 +207,7 @@ object ParquetAvroIO {
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultSuffix = ".parquet"
     private[scio] val DefaultCompression = CompressionCodecName.GZIP
-    private[scio] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultConfiguration = null
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
     private[scio] val DefaultFilenamePolicyCreator = null
@@ -234,7 +234,7 @@ case class ParquetAvroTap[A, T: ClassTag: Coder](
     xs.iterator.flatMap { metadata =>
       val reader = AvroParquetReader
         .builder[A](BeamInputFile.of(metadata.resourceId()))
-        .withConf(params.conf)
+        .withConf(Option(params.conf).getOrElse(new Configuration()))
         .build()
       new Iterator[T] {
         private var current: A = reader.read()

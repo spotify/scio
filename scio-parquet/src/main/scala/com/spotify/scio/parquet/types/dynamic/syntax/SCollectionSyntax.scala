@@ -32,7 +32,10 @@ final class DynamicParquetTypeSCollectionOps[T](
         "Typed parquet file with dynamic destinations cannot be used in a test context"
       )
     } else {
-      val sink = new ParquetTypeSink[T](compression, new SerializableConfiguration(conf))
+      val sink = new ParquetTypeSink[T](
+        compression,
+        new SerializableConfiguration(Option(conf).getOrElse(new Configuration()))
+      )
       val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
       self.applyInternal(write)
     }

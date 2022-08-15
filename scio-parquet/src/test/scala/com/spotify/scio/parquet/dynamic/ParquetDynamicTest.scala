@@ -36,13 +36,12 @@ trait ParquetDynamicTest extends PipelineSpec {
     ()
   }
 
-  def dynamicTest[T : Coder](
+  def dynamicTest[T: Coder](
     input: Seq[T],
     save: (SCollection[T], Path) => ClosedTap[_],
     read: (ScioContext, Path) => (SCollection[String], SCollection[String])
-  ) = {
+  ): Unit = {
     val tmpDir = Files.createTempDirectory("parquet-dynamic-io-")
-    println(tmpDir.toAbsolutePath.toString)
     val sc = ScioContext()
     save(sc.parallelize(input), tmpDir)
     sc.run()
@@ -110,9 +109,10 @@ class ParquetTensorflowDynamicTest extends ParquetDynamicTest {
 
     dynamicTest[Example](
       input,
-      (scoll, tmpDir) => scoll.saveAsDynamicParquetExampleFile(tmpDir.toAbsolutePath.toString, schema) { t =>
-        s"${t.getFeatures.getFeatureOrThrow("ints").getInt64List.getValue(0)}"
-      },
+      (scoll, tmpDir) =>
+        scoll.saveAsDynamicParquetExampleFile(tmpDir.toAbsolutePath.toString, schema) { t =>
+          s"${t.getFeatures.getFeatureOrThrow("ints").getInt64List.getValue(0)}"
+        },
       (sc2, tmpDir) => {
         val lines0 = sc2.parquetExampleFile(s"$tmpDir/0/*.parquet").map(getStr)
         val lines1 = sc2.parquetExampleFile(s"$tmpDir/1/*.parquet").map(getStr)
@@ -134,7 +134,8 @@ class ParquetTypedDynamicTest extends ParquetDynamicTest {
   it should "support typed Parquet files" in {
     dynamicTest[TypedRecord](
       input,
-      (scoll, tmpDir) => scoll.saveAsDynamicTypedParquetFile(tmpDir.toAbsolutePath.toString)(t => s"${t.int}"),
+      (scoll, tmpDir) =>
+        scoll.saveAsDynamicTypedParquetFile(tmpDir.toAbsolutePath.toString)(t => s"${t.int}"),
       (sc2, tmpDir) => {
         val lines0 = sc2.typedParquetFile[TypedRecord](s"$tmpDir/0/*.parquet").map(_.string)
         val lines1 = sc2.typedParquetFile[TypedRecord](s"$tmpDir/1/*.parquet").map(_.string)
@@ -144,7 +145,7 @@ class ParquetTypedDynamicTest extends ParquetDynamicTest {
   }
 }
 
-class ParquetZZZAvroDynamicTest extends ParquetDynamicTest {
+class ParquetAvroDynamicTest extends ParquetDynamicTest {
   import com.spotify.scio.avro._
   import com.spotify.scio.parquet.avro._
   import com.spotify.scio.parquet.avro.dynamic._
@@ -158,10 +159,15 @@ class ParquetZZZAvroDynamicTest extends ParquetDynamicTest {
   it should "support Parquet Avro files" in {
     dynamicTest[TestRecord](
       input,
-      (scoll, tmpDir) => scoll.saveAsDynamicParquetAvroFile(tmpDir.toAbsolutePath.toString) { t => s"${t.int_field}"},
+      (scoll, tmpDir) =>
+        scoll.saveAsDynamicParquetAvroFile(tmpDir.toAbsolutePath.toString) { t =>
+          s"${t.int_field}"
+        },
       (sc2, tmpDir) => {
-        val lines0 = sc2.parquetAvroFile[TestRecord](s"$tmpDir/0/*.parquet").map(_.getStringField.toString)
-        val lines1 = sc2.parquetAvroFile[TestRecord](s"$tmpDir/1/*.parquet").map(_.getStringField.toString)
+        val lines0 =
+          sc2.parquetAvroFile[TestRecord](s"$tmpDir/0/*.parquet").map(_.getStringField.toString)
+        val lines1 =
+          sc2.parquetAvroFile[TestRecord](s"$tmpDir/1/*.parquet").map(_.getStringField.toString)
         (lines0, lines1)
       }
     )

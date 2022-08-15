@@ -38,7 +38,11 @@ final class DynamicParquetExampleSCollectionOps(
         "Parquet example file with dynamic destinations cannot be used in a test context"
       )
     } else {
-      val sink = new ParquetExampleSink(schema, compression, new SerializableConfiguration(conf))
+      val sink = new ParquetExampleSink(
+        schema,
+        compression,
+        new SerializableConfiguration(Option(conf).getOrElse(new Configuration()))
+      )
       val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
       self.applyInternal(write)
     }
