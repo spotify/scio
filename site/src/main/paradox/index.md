@@ -45,7 +45,7 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
   - @ref:[ScioIO](internals/ScioIO.md) - new IO system to simplify implementation and stubbing in `JobTest`
   - @ref:[OverrideTypeProvider](internals/OverrideTypeProvider.md) - custom mappings for type-safe BigQuery
   - @ref:[Kryo](internals/Kryo.md) - [Kryo](https://github.com/EsotericSoftware/kryo) data serialization
-  - @ref:[Coders](internals/Coders.md) - new [Magnolia](https://github.com/propensive/magnolia) based Coders derivation
+  - @ref:[Coders](internals/Coders.md) - new [Magnolia](https://github.com/softwaremill/magnolia) based Coders derivation
 
 ## Further Readings
   - [Spotify Unwrapped: How We Brought You a Decade of Data](https://engineering.atspotify.com/2020/02/18/spotify-unwrapped-how-we-brought-you-a-decade-of-data/)

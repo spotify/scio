@@ -20,7 +20,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.complete.game.UserScore
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --output=bq://[PROJECT]/[DATASET]/mobile_game_user_score"`
 
 package com.spotify.scio.examples.complete.game

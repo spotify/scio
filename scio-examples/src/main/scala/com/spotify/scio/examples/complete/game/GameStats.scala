@@ -20,7 +20,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.complete.game.GameStats
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --fixedWindowDuration=60
 // --sessionGap=5
 // --userActivityWindowDuration=30

@@ -18,7 +18,7 @@
 package com.spotify.scio.coders
 
 private object Derived extends Serializable {
-  import magnolia._
+  import magnolia1._
 
   @inline private def catching[T](msg: => String)(v: => T): T =
     try {
@@ -32,7 +32,7 @@ private object Derived extends Serializable {
         throw CoderStackTrace.append(e, msg)
     }
 
-  def combineCoder[T](
+  def joinCoder[T](
     typeName: TypeName,
     ps: Seq[Param[Coder, T]],
     rawConstruct: Seq[Any] => T
@@ -72,23 +72,23 @@ private object Derived extends Serializable {
 }
 
 trait LowPriorityCoderDerivation {
-  import magnolia._
+  import magnolia1._
 
   type Typeclass[T] = Coder[T]
 
-  def combine[T](ctx: CaseClass[Coder, T]): Coder[T] =
+  def join[T](ctx: CaseClass[Coder, T]): Coder[T] =
     if (ctx.isValueClass) {
-      Coder.xmap(ctx.parameters(0).typeclass.asInstanceOf[Coder[Any]])(
+      Coder.xmap(ctx.parameters.head.typeclass.asInstanceOf[Coder[Any]])(
         a => ctx.rawConstruct(Seq(a)),
-        ctx.parameters(0).dereference
+        ctx.parameters.head.dereference
       )
     } else {
-      Derived.combineCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
+      Derived.joinCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
     }
 
-  def dispatch[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
+  def split[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
-    val idx: Map[magnolia.TypeName, Int] =
+    val idx: Map[TypeName, Int] =
       sealedTrait.subtypes.map(_.typeName).zipWithIndex.toMap
     val coders: Map[Int, Coder[T]] =
       sealedTrait.subtypes
@@ -101,11 +101,11 @@ trait LowPriorityCoderDerivation {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
       Coder.disjunction[T, Boolean](typeName, cs) { t =>
-        sealedTrait.dispatch(t)(subtype => booleanId(idx(subtype.typeName)))
+        sealedTrait.split(t)(subtype => booleanId(idx(subtype.typeName)))
       }
     } else {
       Coder.disjunction[T, Int](typeName, coders) { t =>
-        sealedTrait.dispatch(t)(subtype => idx(subtype.typeName))
+        sealedTrait.split(t)(subtype => idx(subtype.typeName))
       }
     }
   }

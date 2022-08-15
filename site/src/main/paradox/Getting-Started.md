@@ -59,11 +59,11 @@ neville@localhost scio $ sbt
 [info] ...
 > runMain com.spotify.scio.examples.WordCount
 --project=<PROJECT ID>
---zone=<GCE AVAILABILITY ZONE> --runner=DataflowRunner
+--region=<GCE AVAILABILITY ZONE> --runner=DataflowRunner
 --input=<FILE PATTERN> --output=<DIRECTORY>
 ```
 
-The Cloud Platform `project` refers to its name (not number). GCE availability `zone` should be in the same region as the BigQuery datasets and GCS bucket.
+The Cloud Platform `project` refers to its name (not number). GCE availability `region` should be in the same region as the BigQuery datasets and GCS bucket.
 
 By default only `DirectRunner` is in the library dependencies list. Use `set beamRunners := "<runners>"` to specify additional runner dependencies as a comma separated list, i.e. "DataflowRunner,FlinkRunner".
 
@@ -104,7 +104,7 @@ sbt -Dbigquery.project=<PROJECT-ID>
 The following options should be specified when running a job on Google Cloud Dataflow service.
 
 - `--project` - The project ID for your Google Cloud Project. This is required if you want to run your pipeline using the Cloud Dataflow managed service.
-- `--zone` - The Compute Engine [availability zone](https://cloud.google.com/compute/docs/zones) for launching worker instances to run your pipeline.
+- `--region` - The Compute Engine [regional endpoint](https://cloud.google.com/dataflow/docs/resources/locations) for launching worker instances to run your pipeline.
 
 For pipeline execution parameters and optimization, see the following documents.
 

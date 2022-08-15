@@ -5,6 +5,7 @@
 # sbt
 dist/*
 target/
+scio-examples/project/
 lib_managed/
 src_managed/
 project/boot/

@@ -501,11 +501,12 @@ public class SortedBucketSinkTest {
                   "Keys in " + bucketShardId + " are not in sorted order.",
                   currKey == null || prevKey.compareTo(currKey) <= 0);
 
+              if(!prevKey.equals(currKey)) prevSecondaryKey = null;
               if (hasSecondary) {
                 final String currSecondaryKey = (String) metadata.extractKeySecondary(record);
                 Assert.assertTrue(
-                    "Secondary keys in " + bucketShardId + " are not in sorted order.",
-                    currSecondaryKey == null || prevSecondaryKey.compareTo(currSecondaryKey) <= 0);
+                    "Secondary keys in " + bucketShardId + " are not in sorted order. Prev: (" + prevKey + ", " + prevSecondaryKey + ") current: (" + currKey + ", " + currSecondaryKey + ")",
+                    prevSecondaryKey == null || currSecondaryKey == null || prevSecondaryKey.compareTo(currSecondaryKey) <= 0);
               }
 
               final Integer existingKeyBucket = keysToBuckets.get(currKey);
