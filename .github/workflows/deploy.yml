@@ -49,7 +49,7 @@ jobs:
           SOCCO: true
           _JAVA_OPTIONS: "-Xmx1500m"
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4.3.4
+        uses: JamesIves/github-pages-deploy-action@v4.4.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
