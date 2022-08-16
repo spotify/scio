@@ -786,6 +786,19 @@ class SCollectionTest extends PipelineSpec {
     )
   }
 
+  it should "support tap()" in {
+    runWithContext { sc =>
+      // tap should not modify internal coder
+      val original = sc.parallelize(Seq(1, 2, 3))
+      val tapped = original.tap(println)
+
+      val originalCoder = original.internal.getCoder
+      val tappedCoder = tapped.internal.getCoder
+
+      originalCoder shouldBe tappedCoder
+    }
+  }
+
   it should "support Combine.globally() with default value" in {
     runWithContext { sc =>
       val p = sc.parallelize(Seq.empty[Int])
