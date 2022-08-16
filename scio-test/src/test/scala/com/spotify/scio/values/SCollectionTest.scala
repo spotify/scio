@@ -43,7 +43,14 @@ import com.spotify.scio.schemas.Schema
 
 import java.nio.charset.StandardCharsets
 
+object SCollectionTest {
+  // used to check local side effect in tap()
+  val elements: mutable.Buffer[Any] = mutable.Buffer.empty
+}
+
 class SCollectionTest extends PipelineSpec {
+
+  import SCollectionTest._
 
   "SCollection" should "support applyTransform()" in {
     runWithContext { sc =>
@@ -787,16 +794,19 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support tap()" in {
+    val input = Seq(1, 2, 3)
     runWithContext { sc =>
-      // tap should not modify internal coder
-      val original = sc.parallelize(Seq(1, 2, 3))
-      val tapped = original.tap(println)
+      val original = sc.parallelize(input)
+      val tapped = original.tap(elements += _)
 
+      // tap should not modify internal coder
       val originalCoder = original.internal.getCoder
       val tappedCoder = tapped.internal.getCoder
-
       originalCoder shouldBe tappedCoder
     }
+
+    elements should contain theSameElementsAs input
+    elements.clear()
   }
 
   it should "support Combine.globally() with default value" in {
