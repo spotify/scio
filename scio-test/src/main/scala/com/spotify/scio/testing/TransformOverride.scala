@@ -126,7 +126,7 @@ object TransformOverride {
 
     val overrideFactory =
       factory[PCollection[T], PCollection[U], PTransform[PCollection[T], PCollection[U]]](
-        t => PTransformReplacements.getSingletonMainInput(t),
+        PTransformReplacements.getSingletonMainInput,
         new PTransform[PCollection[T], PCollection[U]]() {
           override def expand(input: PCollection[T]): PCollection[U] = {
             val inferableFn = new InferableFunction[T, JIterable[U]] {
