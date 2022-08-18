@@ -25,6 +25,12 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
     def valuesWithTimestamp: List[(Iterable[T], Instant)] = builder.result()
   }
 
+  def intervalWindow(
+    start: Instant = Instant.ofEpochSecond(0),
+    lengthSeconds: Long = 10
+  ): IntervalWindow =
+    new IntervalWindow(start, start.plus(lengthSeconds * 1000))
+
   "BatchDoFn" should "batch items until wight is reached" in {
     val batchFn = new BatchDoFn[Int](10, _.toLong)
     batchFn.setup()
@@ -42,8 +48,8 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
   it should "batch items per window" in {
     val batchFn = new BatchDoFn[Int](10, _.toLong)
     batchFn.setup()
-    val window1 = new IntervalWindow(Instant.ofEpochSecond(0), Instant.ofEpochSecond(10))
-    val window2 = new IntervalWindow(Instant.ofEpochSecond(10), Instant.ofEpochSecond(20))
+    val window1 = intervalWindow()
+    val window2 = intervalWindow(window1.end())
     val receiver = new TestReceiver[Int]
     batchFn.processElement(1, window1, receiver)
     batchFn.processElement(2, window1, receiver)
@@ -61,8 +67,8 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
   it should "flush all pending buffers on finishBundle" in {
     val batchFn = new BatchDoFn[Int](10, _.toLong)
     batchFn.setup()
-    val window1 = new IntervalWindow(Instant.ofEpochSecond(0), Instant.ofEpochSecond(10))
-    val window2 = new IntervalWindow(Instant.ofEpochSecond(10), Instant.ofEpochSecond(20))
+    val window1 = intervalWindow()
+    val window2 = intervalWindow(window1.end())
     val receiver = new TestReceiver[Int]
 
     val builder = Map.newBuilder[BoundedWindow, Iterable[Int]]
@@ -94,11 +100,13 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
   }
 
   it should "flush the biggest buffer when too many concurrent windows are opened" in {
-    val batchFn = new BatchDoFn[Int](10, _.toLong)
+    val maxLiveWindows = 5
+    val batchFn = new BatchDoFn[Int](10, _.toLong, maxLiveWindows)
     batchFn.setup()
-    val windows = (10L to 100L by 10L)
-      .map(i => new IntervalWindow(Instant.ofEpochSecond(i - 10L), Instant.ofEpochSecond(10)))
-    val extraWindow = new IntervalWindow(Instant.ofEpochSecond(100), Instant.ofEpochSecond(110))
+    val windows = (0L until maxLiveWindows)
+      .map(Instant.ofEpochSecond)
+      .map(i => intervalWindow(i, 1))
+    val extraWindow = intervalWindow(Instant.ofEpochSecond(maxLiveWindows), 1)
     val receiver = new TestReceiver[Int]
 
     windows.foreach(w => batchFn.processElement(1, w, receiver))

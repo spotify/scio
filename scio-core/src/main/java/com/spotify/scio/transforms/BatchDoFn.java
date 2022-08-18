@@ -25,7 +25,7 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(BatchDoFn.class);
 
-    private static final int MAX_LIVE_WINDOWS = 10;
+    private static final int DEFAULT_MAX_LIVE_WINDOWS = 10;
 
     private static class Buffer<InputT> {
 
@@ -54,14 +54,23 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
 
     private final long maxWeight;
     private final SerializableFunction<InputT, Long> weigher;
+
+    private final int maxLiveWindows;
     private transient Map<BoundedWindow, Buffer<InputT>> buffers;
 
     public BatchDoFn(
             long maxWeight,
             SerializableFunction<InputT, Long> weigher
+    ) { this(maxWeight, weigher, DEFAULT_MAX_LIVE_WINDOWS); }
+
+    public BatchDoFn(
+            long maxWeight,
+            SerializableFunction<InputT, Long> weigher,
+            int maxLiveWindows
     ) {
         this.maxWeight = maxWeight;
         this.weigher = weigher;
+        this.maxLiveWindows = maxLiveWindows;
     }
 
     @Setup
@@ -83,7 +92,7 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
         if (buffer.getWeight() >= maxWeight) {
             LOG.debug("*** END OF BATCH *** for window {}", window);
             flushBatch(window, receiver);
-        } else if (buffers.size() > MAX_LIVE_WINDOWS) {
+        } else if (buffers.size() > maxLiveWindows) {
             // flush the biggest buffer if we get too many parallel windows
             BoundedWindow discardedWindow = Collections
                     .max(buffers.entrySet(), Comparator.comparingLong(o -> o.getValue().getWeight()))
