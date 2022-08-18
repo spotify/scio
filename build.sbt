@@ -864,18 +864,22 @@ lazy val `scio-jdbc`: Project = project
 lazy val `scio-neo4j`: Project = project
   .in(file("scio-neo4j"))
   .settings(commonSettings)
+  .settings(itSettings)
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for Neo4J",
     libraryDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion
+      "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion,
+      "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
+      "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % "it"
     )
   )
   .dependsOn(
     `scio-core`,
-    `scio-test` % "test"
+    `scio-test` % "test,it"
   )
+  .configs(IntegrationTest)
 
 val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
 
