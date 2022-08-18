@@ -45,18 +45,22 @@ object GrpcDoFnTest {
 
   val ServiceUri: String = s"dns:///localhost:$LocalPort"
 
+  def concatOrdered(request: ConcatRequest): ConcatResponse = ConcatResponse
+    .newBuilder()
+    .setResponse(request.getStringOne + request.getStringTwo)
+    .build()
+
+  def concatReversed(request: ConcatRequest): ConcatResponse = ConcatResponse
+    .newBuilder()
+    .setResponse(request.getStringTwo + request.getStringOne)
+    .build()
+
   class ConcatServiceImpl extends ConcatServiceImplBase {
     override def concat(
       request: ConcatRequest,
       responseObserver: StreamObserver[ConcatResponse]
     ): Unit = {
-      responseObserver.onNext(
-        ConcatResponse
-          .newBuilder()
-          .setResponse(request.getStringOne + request.getStringTwo)
-          .build()
-      )
-
+      responseObserver.onNext(concatOrdered(request))
       responseObserver.onCompleted()
     }
 
@@ -65,20 +69,8 @@ object GrpcDoFnTest {
       request: ConcatRequest,
       responseObserver: StreamObserver[ConcatResponse]
     ): Unit = {
-      responseObserver.onNext(
-        ConcatResponse
-          .newBuilder()
-          .setResponse(request.getStringOne + request.getStringTwo)
-          .build()
-      )
-
-      responseObserver.onNext(
-        ConcatResponse
-          .newBuilder()
-          .setResponse(request.getStringTwo + request.getStringOne)
-          .build()
-      )
-
+      responseObserver.onNext(concatOrdered(request))
+      responseObserver.onNext(concatReversed(request))
       responseObserver.onCompleted()
     }
   }
@@ -100,78 +92,54 @@ class GrpcDoFnTest extends PipelineSpec with BeforeAndAfterAll {
   override def afterAll(): Unit = server.shutdown()
 
   "GrpcDoFn" should "issue request and propagate response" in {
+    val input = (0 to 3).map { i =>
+      ConcatRequest
+        .newBuilder()
+        .setStringOne(i.toString)
+        .setStringTwo(i.toString)
+        .build()
+    }
+    val expected: Seq[(ConcatRequest, Try[ConcatResponse])] = input.map { req =>
+      val resp = concatOrdered(req)
+      req -> Success(resp)
+    }
+
     runWithContext { sc =>
       val result = sc
-        .parallelize(0 to 3)
+        .parallelize(input)
         .grpcLookup[ConcatResponse, ConcatServiceFutureStub](
           () => NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
           ConcatServiceGrpc.newFutureStub,
           2
-        ) { case (client, i) =>
-          val request = ConcatRequest
-            .newBuilder()
-            .setStringOne(i.toString)
-            .setStringTwo(i.toString)
-            .build()
-          client.concat(request)
-        }
+        )(_.concat)
 
-      result should containInAnyOrder(
-        Seq[(Int, Try[ConcatResponse])](
-          0 -> Success(ConcatResponse.newBuilder().setResponse("00").build()),
-          1 -> Success(ConcatResponse.newBuilder().setResponse("11").build()),
-          2 -> Success(ConcatResponse.newBuilder().setResponse("22").build()),
-          3 -> Success(ConcatResponse.newBuilder().setResponse("33").build())
-        )
-      )
+      result should containInAnyOrder(expected)
     }
   }
 
   it should "issue request and propagate streamed responses" in {
+    val input = (0 to 3).map { i =>
+      ConcatRequest
+        .newBuilder()
+        .setStringOne(i.toString)
+        .setStringTwo((Char.char2int('a') + i).toChar.toString)
+        .build()
+    }
+    val expected: Seq[(ConcatRequest, Try[Iterable[ConcatResponse]])] = input.map { req =>
+      val resps = Seq(concatOrdered(req), concatReversed(req))
+      req -> Success(resps)
+    }
+
     runWithContext { sc =>
       val result = sc
-        .parallelize(0 to 3)
+        .parallelize(input)
         .grpcLookupStream[ConcatResponse, ConcatServiceStub](
           () => NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
           ConcatServiceGrpc.newStub,
           2
-        ) { case (client, observer, i) =>
-          val request = ConcatRequest
-            .newBuilder()
-            .setStringOne(i.toString)
-            .setStringTwo((Char.char2int('a') + i).toChar.toString)
-            .build()
-          client.concatServerStreaming(request, observer)
-        }
+        )(_.concatServerStreaming)
 
-      result should containInAnyOrder(
-        Seq[(Int, Try[Iterable[ConcatResponse]])](
-          0 -> Success(
-            List(
-              ConcatResponse.newBuilder().setResponse("0a").build(),
-              ConcatResponse.newBuilder().setResponse("a0").build()
-            )
-          ),
-          1 -> Success(
-            List(
-              ConcatResponse.newBuilder().setResponse("1b").build(),
-              ConcatResponse.newBuilder().setResponse("b1").build()
-            )
-          ),
-          2 -> Success(
-            List(
-              ConcatResponse.newBuilder().setResponse("2c").build(),
-              ConcatResponse.newBuilder().setResponse("c2").build()
-            )
-          ),
-          3 -> Success(
-            List(
-              ConcatResponse.newBuilder().setResponse("3d").build(),
-              ConcatResponse.newBuilder().setResponse("d3").build()
-            )
-          )
-        )
-      )
+      result should containInAnyOrder(expected)
     }
 
   }

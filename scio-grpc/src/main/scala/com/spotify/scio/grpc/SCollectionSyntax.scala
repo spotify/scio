@@ -36,15 +36,16 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     channelSupplier: () => Channel,
     clientFactory: Channel => Client,
     maxPendingRequests: Int
-  )(f: (Client, Request) => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
+  )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
     implicit val requestCoder: Coder[Request] = self.coder
+    val uncurried = (c: Client, r: Request) => f(c)(r)
     self
       .parDo(
         GrpcDoFn
           .newBuilder[Request, Response, Client]()
           .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
           .withNewClientFn(Functions.serializableFn(clientFactory))
-          .withLookupFn(Functions.serializableBiFn(f))
+          .withLookupFn(Functions.serializableBiFn(uncurried))
           .withMaxPendingRequests(maxPendingRequests)
           .build()
       )
@@ -57,12 +58,12 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     clientFactory: Channel => Client,
     maxPendingRequests: Int
   )(
-    f: (Client, StreamObserver[Response], Request) => Unit
+    f: Client => (Request, StreamObserver[Response]) => Unit
   ): SCollection[(Request, Try[Iterable[Response]])] = {
     implicit val requestCoder: Coder[Request] = self.coder
-    val lookupFn = (client: Client, request: Request) => {
+    val uncurried = (client: Client, request: Request) => {
       val observer = new StreamObservableFuture[Response]()
-      f(client, observer, request)
+      f(client)(request, observer)
       observer
     }
     self
@@ -71,7 +72,7 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
           .newBuilder[Request, java.lang.Iterable[Response], Client]()
           .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
           .withNewClientFn(Functions.serializableFn(clientFactory))
-          .withLookupFn(Functions.serializableBiFn(lookupFn))
+          .withLookupFn(Functions.serializableBiFn(uncurried))
           .withMaxPendingRequests(maxPendingRequests)
           .build()
       )
