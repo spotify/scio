@@ -945,8 +945,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *
    * @group debug
    */
-  def tap[U](f: T => U): SCollection[T] =
-    map { elem => f(elem); elem }(Coder.beam(internal.getCoder))
+  def tap(f: T => Any): SCollection[T] =
+    pApply(ParDo.of(Functions.mapFn[T, T] { elem => f(elem); elem })).setCoder(internal.getCoder)
 
   // =======================================================================
   // Side input operations
