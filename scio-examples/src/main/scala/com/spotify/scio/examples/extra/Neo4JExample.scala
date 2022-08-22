@@ -23,46 +23,43 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.neo4j.{
-  Neo4jConnectionOptions,
-  Neo4jCypher,
-  Neo4jReadOptions,
-  Neo4jWrite,
-  Neo4jWriteOptions
-}
-import org.neo4j.driver.Record
+import com.spotify.scio.neo4j._
 
 object Neo4JExample {
 
   private case class Entity(id: String, property: Option[String])
 
-  private val neo4jConf = Neo4jConnectionOptions("neo4j://neo4j.com:7687", "username", "password")
+  private val neo4jConf = Neo4jOptions(
+    Neo4jConnectionOptions("neo4j://neo4j.com:7687", "username", "password")
+  )
 
   private val readCypher = "MATCH (e:Entity) WHERE e.property = \"value\" RETURN e"
 
   // This can be implemented using https://github.com/neotypes/neotypes
   // e.g. using val entityMapper = neotypes.ResultMapper[Entity] = implicitly
-  private def neo4JRecordToEntity(record: Record): Entity = Entity(
-    record.get(0).get("id").asString(),
-    Option(record.get(0).get("column")).map(_.asString())
-  )
+  implicit private val rowMapper: RowMapper[Entity] = record =>
+    Entity(
+      record.get(0).get("id").asString(),
+      Option(record.get(0).get("column")).map(_.asString())
+    )
 
   private val writeCypher = "UNWIND $rows AS row MERGE (e:Entity {id:row.id}) " +
     "ON CREATE SET p.id = row.id, p.property = row.property"
 
-  def setter(entity: Entity): Map[String, AnyRef] = Map[String, AnyRef](
-    "id" -> entity.id,
-    "property" -> entity.property.orNull
-  )
+  implicit private val paramsBuilder: ParametersBuilder[Entity] = { entity =>
+    Map(
+      "id" -> entity.id,
+      "property" -> entity.property.orNull
+    )
+  }
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
 
-    val entities =
-      sc.read(Neo4jCypher(Neo4jReadOptions(neo4jConf, readCypher, neo4JRecordToEntity)))
+    val entities = sc.neo4jCypher(neo4jConf, readCypher)
 
     val modifiedEntities = entities.map(e => e.copy(property = e.property.map(_ + " modified")))
 
-    modifiedEntities.write(Neo4jWrite(Neo4jWriteOptions(neo4jConf, writeCypher, "rows", setter)))
+    modifiedEntities.saveAsNeo4j(neo4jConf, writeCypher)
   }
 }
