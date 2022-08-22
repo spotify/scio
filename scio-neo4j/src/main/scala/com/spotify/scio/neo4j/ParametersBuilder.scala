@@ -1,6 +1,6 @@
 package com.spotify.scio.neo4j
 
-trait ParametersBuilder[T] {
+trait ParametersBuilder[T] extends java.io.Serializable {
   def apply(x: T): Map[String, AnyRef]
 }
 

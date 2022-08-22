@@ -125,6 +125,7 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
         tx.run(s"MATCH (m)-[:ORIGIN]->(c) WHERE c.name='USA' RETURN m.name as movie").list()
       }
       records.asScala.map(_.get("movie").asString()) should contain theSameElementsAs movieOrigins
+        .map(_.movie)
     } finally session.close()
   }
 }
