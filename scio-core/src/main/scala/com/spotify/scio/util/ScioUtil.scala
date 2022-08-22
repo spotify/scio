@@ -91,11 +91,10 @@ private[scio] object ScioUtil {
     }
   }
 
-  def pathWithPrefix(path: String, prefix: String = null): String = {
-    val filePrefix = Option(prefix).getOrElse("part")
-    val stripped = StringUtils.stripEnd(path, "/")
-    s"${stripped}/${filePrefix}"
-  }
+  private def stripPath(path: String): String = StringUtils.stripEnd(path, "/")
+  def strippedPath(path: String): String = s"${stripPath(path)}/"
+  def pathWithPrefix(path: String, filePrefix: String): String = s"${stripPath(path)}/${filePrefix}"
+  def pathWithPartPrefix(path: String): String = s"${stripPath(path)}/part"
 
   def consistentHashCode[K](k: K): Int = k match {
     case key: Array[_] => ArraySeq.unsafeWrapArray(key).##

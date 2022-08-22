@@ -47,11 +47,11 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
 
   val StagingDatasetPrefix = "scio_bigquery_staging_custom"
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     sys.props -= BigQuerySysProps.StagingDatasetPrefix.flag
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     sys.props -= BigQuerySysProps.StagingDatasetPrefix.flag
   }
 
@@ -95,7 +95,7 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
 
   object MockBQWildcardData {
     val prefix = "bigquery-public-data.noaa_gsod.gsod20"
-    val wildcardSqlQuery =
+    val wildcardSqlQuery: String =
       """SELECT
         |  max,
         |  year,

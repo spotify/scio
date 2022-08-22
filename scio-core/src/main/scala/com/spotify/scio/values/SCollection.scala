@@ -1457,7 +1457,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val avroCoder = Coder.avroGenericRecordCoder(schema)
       val write = beam.AvroIO
         .writeGenericRecords(schema)
-        .to(ScioUtil.pathWithPrefix(path))
+        .to(ScioUtil.pathWithPartPrefix(path))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
         .withMetadata(Map.empty[String, AnyRef].asJava)
@@ -1476,7 +1476,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   ) =
     beam.TextIO
       .write()
-      .to(ScioUtil.pathWithPrefix(path))
+      .to(ScioUtil.pathWithPartPrefix(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withCompression(compression)

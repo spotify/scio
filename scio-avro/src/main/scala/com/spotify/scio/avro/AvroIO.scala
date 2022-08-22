@@ -137,23 +137,14 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean
   ): beam.AvroIO.Write[U] = {
-    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (shardNameTemplate != null && filenamePolicySupplier != null)
-      throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicySupplier may not be used together"
-      )
-
-    val fp = Option(filenamePolicySupplier)
-      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(
-        ScioUtil.defaultFilenamePolicy(
-          ScioUtil.pathWithPrefix(path),
-          shardNameTemplate,
-          suffix,
-          isWindowed
-        )
-      )
-
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed
+    )
     val transform = write
       .to(fp)
       .withTempDirectory(tempDirectory)
@@ -348,24 +339,14 @@ object AvroTyped {
       filenamePolicySupplier: FilenamePolicySupplier,
       isWindowed: Boolean
     ) = {
-      if (tempDirectory == null)
-        throw new IllegalArgumentException("tempDirectory must not be null")
-      if (shardNameTemplate != null && filenamePolicySupplier != null)
-        throw new IllegalArgumentException(
-          "shardNameTemplate and filenamePolicySupplier may not be used together"
-        )
-
-      val fp = Option(filenamePolicySupplier)
-        .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-        .getOrElse(
-          ScioUtil.defaultFilenamePolicy(
-            ScioUtil.pathWithPrefix(path),
-            shardNameTemplate,
-            suffix,
-            isWindowed
-          )
-        )
-
+      val fp = FilenamePolicySupplier.resolve(
+        path,
+        suffix,
+        shardNameTemplate,
+        tempDirectory,
+        filenamePolicySupplier,
+        isWindowed
+      )
       val transform = write
         .to(fp)
         .withTempDirectory(tempDirectory)

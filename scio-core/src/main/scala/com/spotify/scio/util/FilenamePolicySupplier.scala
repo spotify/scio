@@ -12,6 +12,37 @@ trait FilenamePolicySupplier {
 }
 
 object FilenamePolicySupplier {
+  def resolve(
+    path: String,
+    suffix: String,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    isWindowed: Boolean,
+    defaultPrefix: String = null
+  ): FilenamePolicy = {
+    require(tempDirectory != null, "tempDirectory must not be null")
+    require(
+      shardNameTemplate == null || filenamePolicySupplier == null,
+      "shardNameTemplate and filenamePolicySupplier may not be used together"
+    )
+    require(
+      defaultPrefix == null || filenamePolicySupplier == null,
+      "prefix and filenamePolicySupplier may not be used together"
+    )
+
+    Option(filenamePolicySupplier)
+      .map(c => c.apply(ScioUtil.strippedPath(path), suffix))
+      .getOrElse(
+        ScioUtil.defaultFilenamePolicy(
+          ScioUtil.pathWithPrefix(path, Option(defaultPrefix).getOrElse("part")),
+          shardNameTemplate,
+          suffix,
+          isWindowed
+        )
+      )
+  }
+
   def filenamePolicySupplierOf(
     windowed: (Int, Int, BoundedWindow, PaneInfo) => String = null,
     unwindowed: (Int, Int) => String = null
@@ -20,7 +51,7 @@ object FilenamePolicySupplier {
     val cleanUnwindowed = ClosureCleaner.clean(unwindowed)
     new FilenamePolicy {
       val resource =
-        FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithPrefix(path, ""))
+        FileBasedSink.convertToFileResourceIfPossible(ScioUtil.strippedPath(path))
       private def resolve(filename: String, outputFileHints: FileBasedSink.OutputFileHints) = {
         resource.getCurrentDirectory.resolve(
           filename + suffix + outputFileHints.getSuggestedFilenameSuffix,

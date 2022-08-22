@@ -66,27 +66,15 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
-    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (prefix != null && filenamePolicySupplier != null)
-      throw new IllegalArgumentException(
-        "prefix and filenamePolicySupplier may not be used together"
-      )
-    if (shardNameTemplate != null && filenamePolicySupplier != null)
-      throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicySupplier may not be used together"
-      )
-
-    val fp = Option(filenamePolicySupplier)
-      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(
-        ScioUtil.defaultFilenamePolicy(
-          ScioUtil.pathWithPrefix(path, prefix),
-          shardNameTemplate,
-          suffix,
-          isWindowed
-        )
-      )
-
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed,
+      prefix
+    )
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
     val sink = new BytesSink(

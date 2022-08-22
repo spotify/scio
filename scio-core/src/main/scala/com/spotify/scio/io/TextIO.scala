@@ -60,23 +60,14 @@ final case class TextIO(path: String) extends ScioIO[String] {
     filenamePolicySupplier: FilenamePolicySupplier,
     isWindowed: Boolean
   ) = {
-    if (tempDirectory == null) throw new IllegalArgumentException("tempDirectory must not be null")
-    if (shardNameTemplate != null && filenamePolicySupplier != null)
-      throw new IllegalArgumentException(
-        "shardNameTemplate and filenamePolicySupplier may not be used together"
-      )
-
-    val fp = Option(filenamePolicySupplier)
-      .map(c => c.apply(ScioUtil.pathWithPrefix(path, ""), suffix))
-      .getOrElse(
-        ScioUtil.defaultFilenamePolicy(
-          ScioUtil.pathWithPrefix(path),
-          shardNameTemplate,
-          suffix,
-          isWindowed
-        )
-      )
-
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed
+    )
     var transform = write
       .to(fp)
       .withTempDirectory(tempDirectory)
