@@ -19,21 +19,23 @@ package com.spotify.scio.neo4j.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.neo4j.{Neo4jCypher, Neo4jReadOptions}
+import com.spotify.scio.neo4j.{Neo4jCypher, Neo4jOptions, RowMapper}
 import com.spotify.scio.values.SCollection
-
-import scala.reflect.ClassTag
 
 /** Enhanced version of [[ScioContext]] with Neo4J methods. */
 final class Neo4jScioContextOps(private val self: ScioContext) extends AnyVal {
 
-  /** Get an SCollection for a Neo4J cypher query. */
-  def neo4jCypher[T: ClassTag: Coder](readOptions: Neo4jReadOptions[T]): SCollection[T] =
-    self.read(Neo4jCypher(readOptions))
+  /**
+   * Get an SCollection for a Neo4J cypher query
+   *
+   * @param neo4jOptions
+   * @param cypher
+   */
+  def neo4jCypher[T: RowMapper: Coder](neo4jOptions: Neo4jOptions, cypher: String): SCollection[T] =
+    self.read(Neo4jCypher(neo4jOptions, cypher))
 
 }
 trait ScioContextSyntax {
-  implicit def neo4jScioContextOps(sc: ScioContext): Neo4jScioContextOps = new Neo4jScioContextOps(
-    sc
-  )
+  implicit def neo4jScioContextOps(sc: ScioContext): Neo4jScioContextOps =
+    new Neo4jScioContextOps(sc)
 }

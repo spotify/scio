@@ -6,22 +6,28 @@ import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.neo4j.driver.{AuthTokens, Driver, GraphDatabase}
 import org.scalatest.concurrent.Eventually
-
-import java.time.Year
+import org.testcontainers.utility.DockerImageName
 
 import scala.jdk.CollectionConverters._
 
 object Neo4jIOIT {
+
+  val ImageName: DockerImageName = {
+    val tag = classOf[Driver].getPackage.getImplementationVersion.take("M.m.p".length)
+    DockerImageName.parse("neo4j").withTag(tag)
+  }
+
   final case class Person(name: String)
-  final case class Movie(title: String, year: Year)
+  final case class Movie(title: String, year: Int)
   final case class Role(person: Person, movie: Movie, role: String)
+  final case class Origin(movie: String, country: String)
 }
 
 class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
 
   import Neo4jIOIT._
 
-  override val container: Neo4jContainer = Neo4jContainer()
+  override val container: Neo4jContainer = Neo4jContainer(neo4jImageVersion = ImageName)
 
   lazy val client: Driver = GraphDatabase.driver(
     container.boltUrl,
@@ -63,23 +69,24 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
 
     val martin = Person("Martin Sheen")
     val expectedRoles = Seq(
-      Role(martin, Movie("Wall Street", Year.of(1987)), "Carl Fox"),
-      Role(martin, Movie("American President", Year.of(1995)), "A.J. MacInerney")
+      Role(martin, Movie("Wall Street", 1987), "Carl Fox"),
+      Role(martin, Movie("American President", 1995), "A.J. MacInerney")
     )
 
-    val neo4jOptions = Neo4jReadOptions(
-      Neo4jConnectionOptions(container.boltUrl, container.username, container.password),
-      s"MATCH (p)-[r: ACTED_IN]->(m) WHERE p.name='${martin.name}' RETURN p, r, m",
-      row => {
-        val p = Person(row.get("p").get("name").asString())
-        val m =
-          Movie(row.get("m").get("name").asString(), Year.of(row.get("m").get("year").asInt()))
-        Role(p, m, row.get("r").get("role").asString())
-      }
+    val neo4jOptions = Neo4jOptions(
+      Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
     )
+
+    val queryRoles = s"MATCH (p)-[r: ACTED_IN]->(m) WHERE p.name='${martin.name}' RETURN p, r, m"
+    implicit val rowMapper: RowMapper[Role] = record => {
+      val p = Person(record.get("p").get("name").asString())
+      val m = Movie(record.get("m").get("name").asString(), record.get("m").get("year").asInt())
+      Role(p, m, record.get("r").get("role").asString())
+    }
 
     runWithRealContext(options) { sc =>
-      sc.neo4jCypher(neo4jOptions) should containInAnyOrder(expectedRoles)
+      val result = sc.neo4jCypher[Role](neo4jOptions, queryRoles)
+      result should containInAnyOrder(expectedRoles)
     }
   }
 
@@ -87,22 +94,29 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
     val options = PipelineOptionsFactory.create()
     options.setRunner(classOf[DirectRunner])
 
-    val movieNames = Seq("Wall Street", "American President", "The Shawshank Redemption")
-
-    val neo4jOptions = Neo4jWriteOptions[(String, String)](
-      Neo4jConnectionOptions(container.boltUrl, container.username, container.password),
-      """UNWIND $origin AS origin
-        |MATCH
-        |  (m:Movie {name: origin.movie}),
-        |  (c:Country {name: origin.country})
-        |CREATE (m)-[:ORIGIN]->(c)
-        |""".stripMargin,
-      "origin",
-      { case (movie, country) => Map("movie" -> movie, "country" -> country) }
+    val movieOrigins = Seq(
+      Origin("Wall Street", "USA"),
+      Origin("American President", "USA"),
+      Origin("The Shawshank Redemption", "USA")
     )
 
+    val neo4jOptions = Neo4jOptions(
+      Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
+    )
+
+    val insertOrigins = """UNWIND $origin AS origin
+                          |MATCH
+                          |  (m:Movie {name: origin.movie}),
+                          |  (c:Country {name: origin.country})
+                          |CREATE (m)-[:ORIGIN]->(c)
+                          |""".stripMargin
+    implicit val paramsBuilder: ParametersBuilder[Origin] = { origin =>
+      Map("movie" -> origin.movie, "country" -> origin.country)
+    }
     runWithRealContext(options) { sc =>
-      sc.parallelize(movieNames.map(_ -> "USA")).saveAsNeo4j(neo4jOptions)
+      sc
+        .parallelize(movieOrigins)
+        .saveAsNeo4j(neo4jOptions, insertOrigins)
     }
 
     val session = client.session()
@@ -110,8 +124,7 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
       val records = session.readTransaction { tx =>
         tx.run(s"MATCH (m)-[:ORIGIN]->(c) WHERE c.name='USA' RETURN m.name as movie").list()
       }
-      records.asScala.foreach(println)
-      records.asScala.map(_.get("movie").asString()) should contain theSameElementsAs movieNames
+      records.asScala.map(_.get("movie").asString()) should contain theSameElementsAs movieOrigins
     } finally session.close()
   }
 }

@@ -18,15 +18,20 @@
 package com.spotify.scio.neo4j.syntax
 
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.neo4j.{Neo4jWrite, Neo4jWriteOptions}
+import com.spotify.scio.neo4j.{Neo4jOptions, Neo4jWriteUnwind, ParametersBuilder}
+import com.spotify.scio.neo4j.Neo4jIO.WriteParam
 import com.spotify.scio.values.SCollection
 
 /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Neo4J methods. */
 final class Neo4jSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
   /** Save this SCollection as a Neo4J database. */
-  def saveAsNeo4j(writeOptions: Neo4jWriteOptions[T]): ClosedTap[Nothing] =
-    self.write(Neo4jWrite(writeOptions))
+  def saveAsNeo4j(
+    neo4jOptions: Neo4jOptions,
+    unwindCypher: String,
+    batchSize: Long = WriteParam.BeamDefaultBatchSize
+  )(implicit params: ParametersBuilder[T]): ClosedTap[Nothing] =
+    self.write(Neo4jWriteUnwind[T](neo4jOptions, unwindCypher))(WriteParam(batchSize))
 }
 
 trait SCollectionSyntax {
