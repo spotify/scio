@@ -451,14 +451,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       in.map(a.prepare).fold(a.monoid).map(a.present)
     }
 
-  def batch(batchSize: Long): SCollection[Iterable[T]] =
+  def batch(
+    batchSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val weigher = Functions.serializableFn[T, java.lang.Long](_ => 1)
     this
-      .parDo(new BatchDoFn[T](batchSize, Functions.serializableFn[T, java.lang.Long](_ => 1)))
+      .parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows))
       .map(_.asScala)
+  }
 
-  def batchByteSized(batchByteSize: Long): SCollection[Iterable[T]] = {
+  def batchByteSized(
+    batchByteSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
     val bCoder = CoderMaterializer.beam(context, coder)
-    def elementByteSize(e: T): java.lang.Long = {
+    val weigher = Functions.serializableFn[T, java.lang.Long] { e =>
       var size: Long = 0L
       val observer = new ElementByteSizeObserver {
         override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
@@ -468,18 +476,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       size
     }
     this
-      .parDo(new BatchDoFn[T](batchByteSize, Functions.serializableFn(elementByteSize)))
+      .parDo(new BatchDoFn[T](batchByteSize, weigher, maxLiveWindows))
       .map(_.asScala)
   }
 
-  def batchWeighted(batchWeight: Long, cost: T => Long): SCollection[Iterable[T]] = {
+  def batchWeighted(
+    batchWeight: Long,
+    cost: T => Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
     this
-      .parDo(
-        new BatchDoFn[T](
-          batchWeight,
-          Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
-        )
-      )
+      .parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows))
       .map(_.asScala)
   }
 

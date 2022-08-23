@@ -25,7 +25,7 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(BatchDoFn.class);
 
-    private static final int DEFAULT_MAX_LIVE_WINDOWS = 10;
+    public static final int DEFAULT_MAX_LIVE_WINDOWS = 10;
 
     private static class Buffer<InputT> {
 
