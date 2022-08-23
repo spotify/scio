@@ -40,6 +40,8 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
+import org.apache.beam.runners.direct.{DirectOptions, DirectRunner}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 
 import java.nio.charset.StandardCharsets
 
@@ -243,36 +245,39 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-// bundles only contain 1 element
-//  it should "support batch() with size" in {
-//    runWithContext { sc =>
-//      val p = sc
-//        .parallelize(1 to 5)
-//        .batch(2)
-//        .map(_.size)
-//      p should containInAnyOrder(Seq(2, 2, 1))
-//    }
-//  }
-//
-//  it should "support batch() with byte size" in {
-//    runWithContext { sc =>
-//      val p = sc
-//        .parallelize(1L to 5L) // Long coder uses 8 bytes
-//        .batchByteSized(16)
-//        .map(_.size)
-//      p should containInAnyOrder(Seq(2, 2, 1))
-//    }
-//  }
-//
-//  it should "support batch() with custom weight" in {
-//    runWithContext { sc =>
-//      val p = sc
-//        .parallelize(1L to 5L)
-//        .batchWeighted(2, identity)
-//        .map(_.size)
-//      p should containInAnyOrder(Seq(2, 1, 1, 1))
-//    }
-//  }
+  it should "support batch() with size" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq(1, 2, 3, 4, 5))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batch(2)
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 2, 1))
+    }
+  }
+
+  it should "support batchByteSized() with byte size" in {
+    val bytes = Array.fill[Byte](4)(0)
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq.fill(5)(bytes))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batchByteSized(8)
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 2, 1))
+    }
+  }
+
+  it should "support batchWeighted() with custom weight" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq(1, 2, 3, 4, 5))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batchWeighted(2, identity[Int])
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 1, 1, 1))
+    }
+  }
 
   it should "support collect" in {
     runWithContext { sc =>
