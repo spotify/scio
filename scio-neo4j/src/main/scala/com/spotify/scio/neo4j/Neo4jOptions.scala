@@ -37,7 +37,7 @@ object Neo4jOptions {
 }
 
 /**
- * Options for reading from a Neo4J source.
+ * Options for configuring a Neo4J driver.
  *
  * @param connectionOptions
  *   connection options

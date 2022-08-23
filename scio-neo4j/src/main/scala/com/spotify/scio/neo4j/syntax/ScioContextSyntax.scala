@@ -29,7 +29,9 @@ final class Neo4jScioContextOps(private val self: ScioContext) extends AnyVal {
    * Get an SCollection for a Neo4J cypher query
    *
    * @param neo4jOptions
+   *   options for configuring a Neo4J driver
    * @param cypher
+   *   Neo4J cypher query
    */
   def neo4jCypher[T: RowMapper: Coder](neo4jOptions: Neo4jOptions, cypher: String): SCollection[T] =
     self.read(Neo4jCypher(neo4jOptions, cypher))

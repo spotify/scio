@@ -25,7 +25,18 @@ import com.spotify.scio.values.SCollection
 /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Neo4J methods. */
 final class Neo4jSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
-  /** Save this SCollection as a Neo4J database. */
+  /**
+   * Save this SCollection as a Neo4J database.
+   *
+   * @param neo4jOptions
+   *   options for configuring a Neo4J driver
+   * @param unwindCypher
+   *   Neo4J cypher query representing an
+   *   [[https://neo4j.com/docs/cypher-manual/current/clauses/unwind/#unwind-creating-nodes-from-a-list-parameter UNWIND parameter]]
+   *   cypher statement
+   * @param batchSize
+   *   batch size when executing the unwind cypher query. Default batch size of 5000
+   */
   def saveAsNeo4j(
     neo4jOptions: Neo4jOptions,
     unwindCypher: String,

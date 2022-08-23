@@ -33,8 +33,9 @@ object Neo4JExample {
     Neo4jConnectionOptions("neo4j://neo4j.com:7687", "username", "password")
   )
 
-  private val readCypher = "MATCH (e:Entity) WHERE e.property = \"value\" RETURN e"
+  private val readCypher = "MATCH (e:Entity) WHERE e.property = 'value' RETURN e"
 
+  // Implicit type-class defining how to convert a Record result into our desired type
   // This can be implemented using https://github.com/neotypes/neotypes
   // e.g. using val entityMapper = neotypes.ResultMapper[Entity] = implicitly
   implicit private val rowMapper: RowMapper[Entity] = record =>
@@ -43,23 +44,30 @@ object Neo4JExample {
       Option(record.get(0).get("column")).map(_.asString())
     )
 
-  private val writeCypher = "UNWIND $rows AS row MERGE (e:Entity {id:row.id}) " +
-    "ON CREATE SET p.id = row.id, p.property = row.property"
+  private val writeCypher =
+    """UNWIND $rows AS row
+      |MERGE (e:Entity {id: row.id})
+      |ON CREATE SET p.id = row.id, p.property = row.property
+      |""".stripMargin
 
-  implicit private val paramsBuilder: ParametersBuilder[Entity] = { entity =>
+  // Implicit type-class defining how to convert our output type to a parameter map
+  // that will be used by the cypher
+  implicit private val paramsBuilder: ParametersBuilder[Entity] = entity =>
     Map(
       "id" -> entity.id,
       "property" -> entity.property.orNull
     )
-  }
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
 
+    // Query the neo4j graph database
     val entities = sc.neo4jCypher(neo4jConf, readCypher)
-
+    // Transform our internal model
     val modifiedEntities = entities.map(e => e.copy(property = e.property.map(_ + " modified")))
-
+    // Save transformation to the database
     modifiedEntities.saveAsNeo4j(neo4jConf, writeCypher)
+    // Run pipeline
+    sc.run().waitUntilFinish()
   }
 }
