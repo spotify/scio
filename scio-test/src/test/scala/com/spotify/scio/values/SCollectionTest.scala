@@ -40,8 +40,6 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
-import org.apache.beam.runners.direct.{DirectOptions, DirectRunner}
-import org.apache.beam.sdk.options.PipelineOptionsFactory
 
 import java.nio.charset.StandardCharsets
 
