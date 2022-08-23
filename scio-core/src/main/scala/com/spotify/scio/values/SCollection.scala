@@ -451,6 +451,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       in.map(a.prepare).fold(a.monoid).map(a.present)
     }
 
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchSize
+   *   desired number of elements in a batch
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   *
+   * @group collection
+   */
   def batch(
     batchSize: Long,
     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
@@ -461,6 +475,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .map(_.asScala)
   }
 
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchByteSize
+   *   desired batch size in bytes, estimated using the [[Coder]]
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   *
+   * @group collection
+   */
   def batchByteSized(
     batchByteSize: Long,
     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
@@ -480,6 +508,21 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .map(_.asScala)
   }
 
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchWeight
+   *   desired batch weight
+   * @param cost
+   *   function that associated a weight to an element
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   * @group collection
+   */
   def batchWeighted(
     batchWeight: Long,
     cost: T => Long,
