@@ -17,10 +17,12 @@
 
 package com.spotify.scio.neo4j.syntax
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.neo4j.{Neo4jOptions, Neo4jWriteUnwind, ParametersBuilder}
 import com.spotify.scio.neo4j.Neo4jIO.WriteParam
+import com.spotify.scio.neo4j.{Neo4jIO, Neo4jOptions}
 import com.spotify.scio.values.SCollection
+import magnolify.neo4j.ValueType
 
 /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Neo4J methods. */
 final class Neo4jSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
@@ -41,8 +43,8 @@ final class Neo4jSCollectionOps[T](private val self: SCollection[T]) extends Any
     neo4jOptions: Neo4jOptions,
     unwindCypher: String,
     batchSize: Long = WriteParam.BeamDefaultBatchSize
-  )(implicit params: ParametersBuilder[T]): ClosedTap[Nothing] =
-    self.write(Neo4jWriteUnwind[T](neo4jOptions, unwindCypher))(WriteParam(batchSize))
+  )(implicit neo4jType: ValueType[T], coder: Coder[T]): ClosedTap[Nothing] =
+    self.write(Neo4jIO[T](neo4jOptions, unwindCypher))(WriteParam(batchSize))
 }
 
 trait SCollectionSyntax {

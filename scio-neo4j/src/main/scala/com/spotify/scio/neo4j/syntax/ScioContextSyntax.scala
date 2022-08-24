@@ -19,8 +19,9 @@ package com.spotify.scio.neo4j.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.neo4j.{Neo4jCypher, Neo4jOptions, RowMapper}
+import com.spotify.scio.neo4j.{Neo4jIO, Neo4jOptions}
 import com.spotify.scio.values.SCollection
+import magnolify.neo4j.ValueType
 
 /** Enhanced version of [[ScioContext]] with Neo4J methods. */
 final class Neo4jScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -33,8 +34,8 @@ final class Neo4jScioContextOps(private val self: ScioContext) extends AnyVal {
    * @param cypher
    *   Neo4J cypher query
    */
-  def neo4jCypher[T: RowMapper: Coder](neo4jOptions: Neo4jOptions, cypher: String): SCollection[T] =
-    self.read(Neo4jCypher(neo4jOptions, cypher))
+  def neo4jCypher[T: ValueType: Coder](neo4jOptions: Neo4jOptions, cypher: String): SCollection[T] =
+    self.read(Neo4jIO(neo4jOptions, cypher))
 
 }
 trait ScioContextSyntax {

@@ -19,7 +19,13 @@ package com.spotify.scio.neo4j
 
 import com.spotify.scio.testing._
 
+object Neo4jIOTest {
+  final case class Data(value: String)
+}
+
 class Neo4jIOTest extends ScioIOSpec {
+
+  import Neo4jIOTest._
 
   val options: Neo4jOptions = {
     val connectionOptions = Neo4jConnectionOptions(
@@ -30,10 +36,9 @@ class Neo4jIOTest extends ScioIOSpec {
     Neo4jOptions(connectionOptions)
   }
 
-  "Neo4jWriteUnwind" should "extract unwindMapName from cypher" in {
-    implicit val builder: ParametersBuilder[String] = _ => Map.empty
-    def write(unwindCypher: String): Neo4jWriteUnwind[String] =
-      Neo4jWriteUnwind[String](options, unwindCypher)
+  "Neo4jIO" should "extract unwindMapName from cypher" in {
+    def write(unwindCypher: String): Neo4jIO[Data] =
+      Neo4jIO[Data](options, unwindCypher)
 
     write("WITH SOME STUFF UNWIND $rows AS row REST OF QUERY").unwindMapName shouldBe "rows"
     write("WITH SOME STUFF\nUNWIND $rows AS row\nREST OF QUERY").unwindMapName shouldBe "rows"
@@ -41,7 +46,7 @@ class Neo4jIOTest extends ScioIOSpec {
     // not unwind
     an[IllegalArgumentException] shouldBe thrownBy {
       val cypher = "CREATE (n:Person {name: 'Andy', title: 'Developer'})"
-      write(cypher)
+      write(cypher).unwindMapName
     }
 
     // unwind value is not a parameter
@@ -52,21 +57,19 @@ class Neo4jIOTest extends ScioIOSpec {
           |WITH DISTINCT x
           |RETURN collect(x) AS setOfVals
           |""".stripMargin
-      write(cypher)
+      write(cypher).unwindMapName
     }
   }
 
-  "Neo4jIO" should "support neo4j cypher input" in {
-    val input = Seq("a", "b", "c")
-    val cypher = "MATCH (t:This) RETURN t.that"
-    implicit val mapper: RowMapper[String] = _.get(0).asString()
+  it should "support neo4j cypher input" in {
+    val input = Seq(Data("a"), Data("b"), Data("c"))
+    val cypher = "MATCH (t:This) RETURN t.that as value"
     testJobTestInput(input, cypher)(Neo4jIO(options, _))(_.neo4jCypher(options, _))
   }
 
   it should "support neo4j unwind cypher output" in {
-    val input = Seq("a", "b", "c")
-    val cypher = "UNWIND $rows AS row MERGE (t:This {that:row.that})"
-    implicit val builder: ParametersBuilder[String] = s => Map("that" -> s)
+    val input = Seq(Data("a"), Data("b"), Data("c"))
+    val cypher = "UNWIND $rows AS row MERGE (t:This {that: row.value})"
     testJobTestOutput(input, cypher)(Neo4jIO(options, _))(_.saveAsNeo4j(options, _))
   }
 }

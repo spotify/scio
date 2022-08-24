@@ -869,6 +869,7 @@ lazy val `scio-neo4j`: Project = project
   .settings(
     description := "Scio add-on for Neo4J",
     libraryDependencies ++= Seq(
+      "com.spotify" %% "magnolify-neo4j" % "0.5.0+15-0c8cff87-SNAPSHOT",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion,
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",

@@ -18,15 +18,14 @@
 package com.spotify.scio.neo4j
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT, TestIO}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
+import magnolify.neo4j.ValueType
 import org.apache.beam.sdk.io.{neo4j => beam}
+import org.neo4j.driver.{Record, Value, Values}
 
-import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
-
-sealed trait Neo4jIO[T] extends ScioIO[T]
 
 object Neo4jIO {
 
@@ -35,14 +34,10 @@ object Neo4jIO {
   }
   final case class WriteParam(batchSize: Long = WriteParam.BeamDefaultBatchSize)
 
+  implicit private def recordConverter(record: Record): Value =
+    Values.value(record.asMap(identity))
+
   private[neo4j] val UnwindParameterRegex: Regex = """UNWIND \$(\w+)""".r.unanchored
-
-  final def apply[T](opts: Neo4jOptions, cypher: String): Neo4jIO[T] =
-    new Neo4jIO[T] with TestIO[T] {
-      final override val tapT = EmptyTapOf[T]
-
-      override def testId: String = s"Neo4jIO(${neo4jIoId(opts, cypher)})"
-    }
 
   private[neo4j] def neo4jIoId(opts: Neo4jOptions, cypher: String): String =
     neo4jIoId(opts.connectionOptions, cypher)
@@ -60,54 +55,42 @@ object Neo4jIO {
     )
 }
 
-case class Neo4jCypher[T: RowMapper: Coder](neo4jOptions: Neo4jOptions, cypher: String)
-    extends Neo4jIO[T] {
-  override type ReadP = Unit
-  override type WriteP = Nothing
+final case class Neo4jIO[T](neo4jOptions: Neo4jOptions, cypher: String)(implicit
+  neo4jType: ValueType[T],
+  coder: Coder[T]
+) extends ScioIO[T] {
 
+  import Neo4jIO._
+
+  override type ReadP = Unit
+  override type WriteP = WriteParam
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
-  override def testId: String = s"Neo4jIO(${Neo4jIO.neo4jIoId(neo4jOptions, cypher)})"
+  override def testId: String = s"Neo4jIO(${neo4jIoId(neo4jOptions, cypher)})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.parallelize(Seq(()))
       .applyTransform(
         beam.Neo4jIO
           .readAll[Unit, T]()
-          .withDriverConfiguration(Neo4jIO.dataSourceConfiguration(neo4jOptions.connectionOptions))
+          .withDriverConfiguration(dataSourceConfiguration(neo4jOptions.connectionOptions))
           .withSessionConfig(neo4jOptions.sessionConfig)
           .withTransactionConfig(neo4jOptions.transactionConfig)
           .withCypher(cypher)
-          .withRowMapper(RowMapper[T].apply)
+          .withRowMapper(neo4jType.from(_))
+          .withCoder(CoderMaterializer.beam(sc, coder))
       )
 
-  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
-    throw new UnsupportedOperationException("Neo4jCypher is read-only")
-
-  override def tap(read: ReadP): Tap[Nothing] = EmptyTap
-}
-
-final case class Neo4jWriteUnwind[T: ParametersBuilder](neo4jOptions: Neo4jOptions, cypher: String)
-    extends Neo4jIO[T] {
-  override type ReadP = Nothing
-  override type WriteP = Neo4jIO.WriteParam
-  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
-
-  private[neo4j] val unwindMapName: String = cypher match {
-    case Neo4jIO.UnwindParameterRegex(name) => name
+  private[neo4j] lazy val unwindMapName: String = cypher match {
+    case UnwindParameterRegex(name) => name
     case _ =>
       throw new IllegalArgumentException(
         s"""Expected unwind cypher with parameter but got:
-         |$cypher
-         |See: https://neo4j.com/docs/cypher-manual/current/clauses/unwind/#unwind-creating-nodes-from-a-list-parameter
-         |""".stripMargin
+           |$cypher
+           |See: https://neo4j.com/docs/cypher-manual/current/clauses/unwind/#unwind-creating-nodes-from-a-list-parameter
+           |""".stripMargin
       )
   }
-
-  override def testId: String = s"Neo4jIO(${Neo4jIO.neo4jIoId(neo4jOptions, cypher)})"
-
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new UnsupportedOperationException("Neo4jWrite is write-only")
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     data.applyInternal(
@@ -119,11 +102,10 @@ final case class Neo4jWriteUnwind[T: ParametersBuilder](neo4jOptions: Neo4jOptio
         .withTransactionConfig(neo4jOptions.transactionConfig)
         .withBatchSize(params.batchSize)
         .withCypher(cypher)
-        .withParametersFunction(ParametersBuilder[T].apply(_).asJava)
+        .withParametersFunction(neo4jType.to(_).asMap())
     )
     EmptyTap
   }
 
-  override def tap(params: ReadP): Tap[Nothing] =
-    EmptyTap
+  override def tap(params: ReadP): Tap[Nothing] = EmptyTap
 }

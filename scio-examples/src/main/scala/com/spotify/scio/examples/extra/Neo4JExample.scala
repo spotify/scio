@@ -26,47 +26,32 @@ import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.neo4j._
 
 object Neo4JExample {
-
   private case class Entity(id: String, property: Option[String])
 
   private val neo4jConf = Neo4jOptions(
     Neo4jConnectionOptions("neo4j://neo4j.com:7687", "username", "password")
   )
 
-  private val readCypher = "MATCH (e:Entity) WHERE e.property = 'value' RETURN e"
-
-  // Implicit type-class defining how to convert a Record result into our desired type
-  // This can be implemented using https://github.com/neotypes/neotypes
-  // e.g. using val entityMapper = neotypes.ResultMapper[Entity] = implicitly
-  implicit private val rowMapper: RowMapper[Entity] = record =>
-    Entity(
-      record.get(0).get("id").asString(),
-      Option(record.get(0).get("column")).map(_.asString())
-    )
-
-  private val writeCypher =
-    """UNWIND $rows AS row
-      |MERGE (e:Entity {id: row.id})
-      |ON CREATE SET p.id = row.id, p.property = row.property
-      |""".stripMargin
-
-  // Implicit type-class defining how to convert our output type to a parameter map
-  // that will be used by the cypher
-  implicit private val paramsBuilder: ParametersBuilder[Entity] = entity =>
-    Map(
-      "id" -> entity.id,
-      "property" -> entity.property.orNull
-    )
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, _) = ContextAndArgs(cmdlineArgs)
 
     // Query the neo4j graph database
-    val entities = sc.neo4jCypher(neo4jConf, readCypher)
+    val entities = sc.neo4jCypher[Entity](
+      neo4jConf,
+      """MATCH (e:Entity)
+        |WHERE e.property = 'value'
+        |RETURN e""".stripMargin
+    )
     // Transform our internal model
     val modifiedEntities = entities.map(e => e.copy(property = e.property.map(_ + " modified")))
     // Save transformation to the database
-    modifiedEntities.saveAsNeo4j(neo4jConf, writeCypher)
+    modifiedEntities.saveAsNeo4j(
+      neo4jConf,
+      """UNWIND $rows AS row
+        |MERGE (e:Entity {id: row.id})
+        |ON CREATE SET p.id = row.id, p.property = row.property
+        |""".stripMargin
+    )
     // Run pipeline
     sc.run().waitUntilFinish()
   }
