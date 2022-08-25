@@ -42,7 +42,8 @@ def scio10(version: String) =
 def scio11(version: String) = // TODO(farzad)
   List(
     "com.spotify" %% "scio-core",
-    "com.spotify" %% "scio-extra"
+    "com.spotify" %% "scio-extra",
+    "com.spotify" %% "scio-avro"
   ).map(_ % version)
 
 lazy val `input-0_7` = project

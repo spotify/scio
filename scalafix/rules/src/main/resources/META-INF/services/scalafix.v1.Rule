@@ -11,3 +11,4 @@ fix.v0_8_0.FixBigQueryDeprecations
 fix.v0_8_0.ConsistenceJoinNames
 fix.v0_10_0.FixCoderPropagation
 fix.v0_12_0.FixBqSaveAsTable
+fix.v0_12_0.LintBqSaveAsTable
