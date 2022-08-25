@@ -27,7 +27,7 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.40.0"
+val beamVersion = "2.41.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
@@ -38,7 +38,7 @@ val bigdataossVersion = "2.2.6"
 val bigtableClientVersion = "1.26.3"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
-val datastoreV1ProtoClientVersion = "2.2.10"
+val datastoreV1ProtoClientVersion = "2.9.0"
 val flinkVersion = "1.15.0"
 val googleClientsVersion = "1.32.1"
 val googleCloudDatastoreVersion = "0.93.10"
@@ -47,7 +47,7 @@ val guavaVersion = "31.1-jre"
 val hadoopVersion = "2.10.1"
 val httpCoreVersion = "4.4.14"
 val javaxAnnotationApiVersion = "1.3.2"
-val nettyTcNativeVersion = "2.0.46.Final"
+val nettyTcNativeVersion = "2.0.47.Final"
 val nettyVersion = "4.1.52.Final"
 val sparkVersion = "3.1.2"
 val threetenbpVersion = "1.4.4" // from google-cloud-platform/build.gradle
