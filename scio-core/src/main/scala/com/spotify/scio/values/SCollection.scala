@@ -30,6 +30,7 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.transforms.BatchDoFn
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -55,6 +56,7 @@ import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
+import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -448,6 +450,89 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val a = aggregator // defeat closure
       in.map(a.prepare).fold(a.monoid).map(a.present)
     }
+
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchSize
+   *   desired number of elements in a batch
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   *
+   * @group collection
+   */
+  def batch(
+    batchSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val weigher = Functions.serializableFn[T, java.lang.Long](_ => 1)
+    this
+      .parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows))
+      .map(_.asScala)
+  }
+
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchByteSize
+   *   desired batch size in bytes, estimated using the [[Coder]]
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   *
+   * @group collection
+   */
+  def batchByteSized(
+    batchByteSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val bCoder = CoderMaterializer.beam(context, coder)
+    val weigher = Functions.serializableFn[T, java.lang.Long] { e =>
+      var size: Long = 0L
+      val observer = new ElementByteSizeObserver {
+        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
+      }
+      bCoder.registerByteSizeObserver(e, observer)
+      observer.advance()
+      size
+    }
+    this
+      .parDo(new BatchDoFn[T](batchByteSize, weigher, maxLiveWindows))
+      .map(_.asScala)
+  }
+
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchWeight
+   *   desired batch weight
+   * @param cost
+   *   function that associated a weight to an element
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   * @group collection
+   */
+  def batchWeighted(
+    batchWeight: Long,
+    cost: T => Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
+    this
+      .parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows))
+      .map(_.asScala)
+  }
 
   /**
    * Filter the elements for which the given `PartialFunction` is defined, and then map.

@@ -250,6 +250,40 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support batch() with size" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq(1, 2, 3, 4, 5))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batch(2)
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 2, 1))
+    }
+  }
+
+  it should "support batchByteSized() with byte size" in {
+    val bytes = Array.fill[Byte](4)(0)
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq.fill(5)(bytes))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batchByteSized(8)
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 2, 1))
+    }
+  }
+
+  it should "support batchWeighted() with custom weight" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq(1, 2, 3, 4, 5))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batchWeighted(2, identity[Int])
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 1, 1, 1))
+    }
+  }
+
   it should "support collect" in {
     runWithContext { sc =>
       val records = Seq(
