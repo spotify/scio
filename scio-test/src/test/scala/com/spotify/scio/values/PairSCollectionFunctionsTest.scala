@@ -383,7 +383,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support groupByKey" in {
+  it should "support groupByKey()" in {
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20)))
@@ -393,7 +393,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support batchByKey" in {
+  it should "support batchByKey()" in {
     runWithContext { sc =>
       val batchSize = 2L
       val nonEmpty = sc
@@ -404,6 +404,26 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
 
       val empty = sc.empty[(String, Int)]().batchByKey(batchSize)
       empty should beEmpty
+    }
+  }
+
+  it should "support batchByteSizedByKey()" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq("a" -> '1', "a" -> '2', "a" -> '3', "b" -> '1', "b" -> '2', "c" -> '1'))
+        .batchByteSizedByKey(2) // element size given by the charCoder is 1
+        .mapValues(_.size)
+      p should containInAnyOrder(Seq("a" -> 2, "a" -> 1, "b" -> 2, "c" -> 1))
+    }
+  }
+
+  it should "support batchWeightedByKey()" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq("a" -> 2, "a" -> 3, "a" -> 4, "b" -> 2, "b" -> 3, "c" -> 1, "c" -> 1))
+        .batchWeightedByKey(2, _.toLong)
+        .mapValues(_.size)
+      p should containInAnyOrder(Seq("a" -> 1, "a" -> 1, "a" -> 1, "b" -> 1, "b" -> 1, "c" -> 2))
     }
   }
 
