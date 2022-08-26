@@ -6,15 +6,16 @@ import scala.meta._
 
 class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case a@Term.Apply(fun, head :: tail) =>
+    doc.tree.collect { case a @ Term.Apply(fun, head :: tail) =>
       fun match {
         case Term.Select(qual, name) =>
           name match {
-            case t@Term.Name("saveAvroAsBigQuery") => //TODO(farzad) better match?
+            case _ @Term.Name("saveAvroAsBigQuery") =>
               // the rest of args should be named because the parameter order has changed
-              if (tail.exists(!_.toString.contains("=")) ||
-                  // `avroSchema` doesn't exist in the list of the new method
-                  tail.exists(_.toString.contains("avroSchema"))
+              if (
+                tail.exists(!_.toString.contains("=")) ||
+                // `avroSchema` doesn't exist in the list of the new method
+                tail.exists(_.toString.contains("avroSchema"))
               ) {
                 Patch.empty // not possible to fix, leave it to `LintBqSaveAsTable`
               } else {
@@ -31,6 +32,9 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
               Patch.empty
           }
       }
+      case _ @ Importer(q"com.spotify.scio.extra.bigquery", imps) =>
+        Patch.removeImportee(imps.head) +
+          Patch.addGlobalImport(importer"com.spotify.scio.bigquery._")
     }.asPatch
   }
 }

@@ -5,8 +5,7 @@ package fix
 package v0_12_0
 
 import com.google.api.services.bigquery.model.TableReference
-import com.spotify.scio.bigquery._
-import com.spotify.scio.extra.bigquery._ //TODO(farzad): needed for test, but breaks compilation
+import com.spotify.scio.extra.bigquery._
 import com.spotify.scio.values.SCollection
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.Schema
