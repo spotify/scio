@@ -20,6 +20,7 @@ package com.spotify.scio.coders
 import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder, NullableCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
+import scala.collection.concurrent.TrieMap
 import scala.util.chaining._
 
 object CoderMaterializer {
@@ -44,7 +45,7 @@ object CoderMaterializer {
   final def beam[T](
     o: PipelineOptions,
     coder: Coder[T]
-  ): BCoder[T] = beamImpl(CoderOptions(o), coder, topLevel = true)
+  ): BCoder[T] = beamImpl(CoderOptions(o), coder, refs = TrieMap.empty, topLevel = true)
 
   private def isNullableCoder(o: CoderOptions, c: Coder[_]): Boolean = c match {
     case _: RawBeam[_]      => false // raw cannot be made nullable
@@ -63,6 +64,7 @@ object CoderMaterializer {
   final private[scio] def beamImpl[T](
     o: CoderOptions,
     coder: Coder[T],
+    refs: TrieMap[Ref[_], RefCoder[_]],
     topLevel: Boolean = false
   ): BCoder[T] = {
     val bCoder: BCoder[T] = coder match {
@@ -73,29 +75,37 @@ object CoderMaterializer {
       case Fallback(_) =>
         new KryoAtomicCoder[T](o.kryo)
       case Transform(c, f) =>
-        val uc = f(beamImpl(o, c))
-        beamImpl(o, uc)
+        val uc = f(beamImpl(o, c, refs))
+        beamImpl(o, uc, refs)
       case Record(typeName, coders, construct, destruct) =>
         RecordCoder(
           typeName,
-          coders.map { case (n, c) => n -> beamImpl(o, c) },
+          coders.map { case (n, c) => n -> beamImpl(o, c, refs) },
           construct,
           destruct
         )
       case Disjunction(typeName, idCoder, id, coders) =>
         DisjunctionCoder(
           typeName,
-          beamImpl(o, idCoder),
+          beamImpl(o, idCoder, refs),
           id,
-          coders.map { case (k, u) => k -> beamImpl(o, u) }
+          coders.map { case (k, u) => k -> beamImpl(o, u, refs) }
         )
       case KVCoder(koder, voder) =>
         // propagate topLevel to k & v coders
-        val kbc = beamImpl(o, koder, topLevel)
-        val vbc = beamImpl(o, voder, topLevel)
+        val kbc = beamImpl(o, koder, refs, topLevel)
+        val vbc = beamImpl(o, voder, refs, topLevel)
         KvCoder.of(kbc, vbc)
-      case Ref(t, c) =>
-        LazyCoder[T](t, o)(c)
+      case r @ Ref(t, c) =>
+        refs.get(r) match {
+          case Some(rc) =>
+            LazyCoder(t, rc.bcoder.asInstanceOf[BCoder[T]])
+          case None =>
+            val rc = RefCoder[T]()
+            refs += r -> rc
+            rc.bcoder = beamImpl(o, c, refs)
+            rc
+        }
     }
 
     bCoder
