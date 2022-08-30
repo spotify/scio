@@ -40,7 +40,7 @@ import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.io.FileIO.Write.FileNaming
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.util.SerializableUtils
@@ -1287,8 +1287,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withPaneInfo: SCollection[(T, PaneInfo)] =
     this.parDo(new DoFn[T, (T, PaneInfo)] {
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
-        c.output((c.element(), c.pane()))
+      private[scio] def processElement(
+        @Element element: T,
+        outputReceiver: OutputReceiver[(T, PaneInfo)],
+        pane: PaneInfo
+      ): Unit =
+        outputReceiver.output((element, pane))
     })
 
   /**
@@ -1298,8 +1302,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withTimestamp: SCollection[(T, Instant)] =
     this.parDo(new DoFn[T, (T, Instant)] {
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
-        c.output((c.element(), c.timestamp()))
+      private[scio] def processElement(
+        @Element element: T,
+        @Timestamp timestamp: Instant,
+        outputReceiver: OutputReceiver[(T, Instant)]
+      ): Unit =
+        outputReceiver.output((element, timestamp))
     })
 
   /**
@@ -1317,10 +1325,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .parDo(new DoFn[T, (T, BoundedWindow)] {
         @ProcessElement
         private[scio] def processElement(
-          c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
+          @Element element: T,
+          outputReceiver: OutputReceiver[(T, BoundedWindow)],
           window: BoundedWindow
         ): Unit =
-          c.output((c.element(), window))
+          outputReceiver.output((element, window))
       })
       .asInstanceOf[SCollection[(T, W)]]
 

@@ -20,8 +20,8 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util.NamedDoFn
 import com.twitter.chill.ClosureCleaner
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.{DoFn, ParDo}
+import org.apache.beam.sdk.transforms.DoFn.{Element, MultiOutputReceiver, ProcessElement}
+import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
 import scala.collection.compat._ // scalafix:ok
@@ -50,16 +50,19 @@ trait SCollectionSafeSyntax {
       val doFn = new NamedDoFn[T, U] {
         val g = ClosureCleaner.clean(f) // defeat closure
         @ProcessElement
-        private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
+        private[scio] def processElement(
+          @Element element: T,
+          multiOutputReceiver: MultiOutputReceiver
+        ): Unit = {
           val i =
             try {
-              g(c.element()).iterator
+              g(element).iterator
             } catch {
               case e: Throwable =>
-                c.output(errorTag, (c.element(), e))
+                multiOutputReceiver.get[(T, Throwable)](errorTag).output((element, e))
                 Iterator.empty
             }
-          while (i.hasNext) c.output(i.next())
+          while (i.hasNext) multiOutputReceiver.get[U](mainTag).output(i.next())
         }
       }
       val tuple =

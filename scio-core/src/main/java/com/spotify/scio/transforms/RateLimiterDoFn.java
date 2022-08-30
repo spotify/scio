@@ -35,9 +35,12 @@ public class RateLimiterDoFn<InputT> extends DoFnWithResource<InputT, InputT, Ra
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c) {
+  public void processElement(
+      @Element InputT element,
+      OutputReceiver<InputT> outputReceiver
+  ) {
     getResource().acquire();
-    c.output(c.element());
+    outputReceiver.output(element);
   }
 
   @Override

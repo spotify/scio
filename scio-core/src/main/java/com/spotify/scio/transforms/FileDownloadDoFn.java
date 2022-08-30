@@ -22,6 +22,7 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.apache.beam.sdk.values.KV;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,10 +81,15 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c, BoundedWindow window) {
-    batch.add(new Element(c.element(), c.timestamp(), window));
+  public void processElement(
+      @DoFn.Element URI element,
+      @Timestamp Instant timestamp,
+      OutputReceiver<OutputT> outputReceiver,
+      BoundedWindow window
+  ) {
+    batch.add(new Element(element, timestamp, window));
     if (batch.size() >= batchSize) {
-      processBatch(c);
+      processBatch(outputReceiver);
     }
   }
 
@@ -100,13 +106,13 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
         .add(DisplayData.item("Keep Downloaded Files", keep));
   }
 
-  private void processBatch(ProcessContext c) {
+  private void processBatch(OutputReceiver<OutputT> outputReceiver) {
     if (batch.isEmpty()) {
       return;
     }
     LOG.info("Processing batch of {}", batch.size());
     List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
-    remoteFileUtil.download(uris).stream().map(fn::apply).forEach(c::output);
+    remoteFileUtil.download(uris).stream().map(fn::apply).forEach(outputReceiver::output);
     if (!keep) {
       LOG.info("Deleting batch of {}", batch.size());
       remoteFileUtil.delete(uris);

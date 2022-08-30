@@ -18,7 +18,6 @@
 package com.spotify.scio.io
 
 import java.util.UUID
-
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
@@ -27,7 +26,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.io.AvroIO
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 
 /**
  * Placeholder to an external data set that can either be load into memory as an iterator or opened
@@ -105,8 +104,11 @@ private[scio] class MaterializeTap[T: Coder] private (val path: String, coder: B
   private def dofn =
     new DoFn[GenericRecord, T] {
       @ProcessElement
-      private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit =
-        c.output(AvroBytesUtil.decode(coder, c.element()))
+      private[scio] def processElement(
+        @Element element: GenericRecord,
+        outputReceiver: OutputReceiver[T]
+      ): Unit =
+        outputReceiver.output(AvroBytesUtil.decode(coder, element))
     }
 
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
