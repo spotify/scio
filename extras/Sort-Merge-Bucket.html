@@ -147,7 +147,6 @@ spotify/scio
     <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
-    <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
@@ -170,7 +169,6 @@ spotify/scio
     <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="../migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="../migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -207,7 +205,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.12.0-RC1+0-d14cd16a+20220707-1433*
+<i class="md-icon" title="Version">label_outline</i> 0.11.10+0-dd828ea3+20220830-1608*
 </label>
 </li>
 </ul>
@@ -272,7 +270,7 @@ spotify/scio
 </table>
 <p>Two sources can be joined by opening file readers on corresponding buckets of eachT source and merging key-groups as we go.</p>
 <h2><a href="#what-are-smb-transforms-" name="what-are-smb-transforms-" class="anchor"><span class="anchor-link"></span></a>What are SMB transforms?</h2>
-<p><code>scio-smb</code> provides three <a href="https://beam.apache.org/releases/javadoc/2.40.0/?org/apache/beam/sdk/transforms/PTransform.html" title="org.apache.beam.sdk.transforms.PTransform"><code>PTransform</code></a>s, as well as corresponding Scala API bindings, for SMB operations:</p>
+<p><code>scio-smb</code> provides three <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/transforms/PTransform.html" title="org.apache.beam.sdk.transforms.PTransform"><code>PTransform</code></a>s, as well as corresponding Scala API bindings, for SMB operations:</p>
 <ul>
   <li>
     <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSink.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSink"><code>SortedBucketSink</code></a> writes data to file system in SMB format. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketSCollection.html" title="com.spotify.scio.smb.syntax.SortedBucketSCollection"><code>SortedBucketSCollection</code></a>):</p>
@@ -306,7 +304,7 @@ spotify/scio
     <p>Also note that the number of buckets specified must be a power of 2. This allows sources of different bucket sizes to still be joinable.</p>
   </li>
   <li>
-    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSource.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSource"><code>SortedBucketSource</code></a> reads data that has been written to file system using <code>SortedBucketSink</code> into a collection of <a href="https://beam.apache.org/releases/javadoc/2.40.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a>s. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
+    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketSource.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketSource"><code>SortedBucketSource</code></a> reads data that has been written to file system using <code>SortedBucketSink</code> into a collection of <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a>s. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
     <ul>
       <li><code>ScioContext#sortMergeGroupByKey</code> (1 source)</li>
       <li><code>ScioContext#sortMergeJoin</code> (2 sources)</li>
@@ -328,7 +326,7 @@ spotify/scio
   .saveAsTextFile(args(&quot;output&quot;))</code></pre>
   </li>
   <li>
-    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketTransform.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketTransform"><code>SortedBucketTransform</code></a> reads data that has been written to file system using <code>SortedBucketSink</code>, transforms each <a href="https://beam.apache.org/releases/javadoc/2.40.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a> using a user-supplied function, and immediately rewrites them using the same bucketing scheme. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
+    <p><a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketTransform.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketTransform"><code>SortedBucketTransform</code></a> reads data that has been written to file system using <code>SortedBucketSink</code>, transforms each <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/transforms/join/CoGbkResult.html" title="org.apache.beam.sdk.transforms.join.CoGbkResult"><code>CoGbkResult</code></a> using a user-supplied function, and immediately rewrites them using the same bucketing scheme. Scala APIs (see: <a href="https://spotify.github.io/scio/api/com/spotify/scio/smb/syntax/SortedBucketScioContext.html" title="com.spotify.scio.smb.syntax.SortedBucketScioContext"><code>SortedBucketScioContext</code></a>):</p>
     <ul>
       <li>
       <p><code>ScioContext#sortMergeTransform</code> (1-3 sources)</p></li>
@@ -409,7 +407,7 @@ mySchema
 </code></pre>
 <h2><a href="#tuning-parameters-for-smb-transforms" name="tuning-parameters-for-smb-transforms" class="anchor"><span class="anchor-link"></span></a>Tuning parameters for SMB transforms</h2>
 <h3><a href="#numbuckets-numshards" name="numbuckets-numshards" class="anchor"><span class="anchor-link"></span></a>numBuckets/numShards</h3>
-<p>SMB reads should be more performant and less resource-intensive than regular joins or groupBys. However, SMB writes are more expensive than their regular counterparts, since they involve an extra group-by (bucketing) and sorting step. Additionally, non-SMB writes (i.e. implementations of <a href="https://beam.apache.org/releases/javadoc/2.40.0/?org/apache/beam/sdk/io/FileBasedSink.html" title="org.apache.beam.sdk.io.FileBasedSink"><code>FileBasedSink</code></a>) use hints from the runner to determine an optimal number of output files. Unfortunately, SMB doesn&rsquo;t have access to those runtime hints; you must specify the number of buckets and shards as static values up front.</p>
+<p>SMB reads should be more performant and less resource-intensive than regular joins or groupBys. However, SMB writes are more expensive than their regular counterparts, since they involve an extra group-by (bucketing) and sorting step. Additionally, non-SMB writes (i.e. implementations of <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/io/FileBasedSink.html" title="org.apache.beam.sdk.io.FileBasedSink"><code>FileBasedSink</code></a>) use hints from the runner to determine an optimal number of output files. Unfortunately, SMB doesn&rsquo;t have access to those runtime hints; you must specify the number of buckets and shards as static values up front.</p>
 <p>In SMB, <em>buckets</em> correspond to the hashed value of the SMB key % a given power of 2. A record with a given key will <em>always</em> be hashed into the same bucket. On the file system, buckets consist of one or more <em>sharded files</em> in which records are randomly assigned per-bundle. Two records with the same key may end up in different shard files within a bucket.</p>
 <ul>
   <li>A good starting point is to look at your output data as it has been written by a non-SMB sink,  and pick the closest power of 2 as your initial <code>numBuckets</code> and set <code>numShards</code> to 1.</li>
@@ -417,7 +415,7 @@ mySchema
   <li><code>numBuckets</code> * <code>numShards</code> = total # of files written to disk.</li>
 </ul>
 <h3><a href="#sortermemorymb" name="sortermemorymb" class="anchor"><span class="anchor-link"></span></a>sorterMemoryMb</h3>
-<p>If your job gets stuck in the sorting phase (since the <code>GroupByKey</code> and <code>SortValues</code> transforms  may get fused&ndash;you can reference the <a href="https://beam.apache.org/releases/javadoc/2.40.0/?org/apache/beam/sdk/metrics/Counter.html" title="org.apache.beam.sdk.metrics.Counter"><code>Counter</code></a>s  <code>SortedBucketSink-bucketsInitiatedSorting</code> and <code>SortedBucketSink-bucketsCompletedSorting</code>  to get an idea of where your job fails), you can increase sorter memory  (default is 1024MB, or 128MB for Scio &lt;= 0.9.0):</p>
+<p>If your job gets stuck in the sorting phase (since the <code>GroupByKey</code> and <code>SortValues</code> transforms  may get fused&ndash;you can reference the <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/metrics/Counter.html" title="org.apache.beam.sdk.metrics.Counter"><code>Counter</code></a>s  <code>SortedBucketSink-bucketsInitiatedSorting</code> and <code>SortedBucketSink-bucketsCompletedSorting</code>  to get an idea of where your job fails), you can increase sorter memory  (default is 1024MB, or 128MB for Scio &lt;= 0.9.0):</p>
 <pre class="prettyprint"><code class="language-scala">data.saveAsSortedBucket(
   AvroSortedBucketIO
     .write[K, V](classOf[K], &quot;keyField&quot;, classOf[V])
@@ -444,7 +442,7 @@ style="margin: 10px auto; width: 75%" /></div>
   </li>
 </ul>
 <h3><a href="#read-buffering" name="read-buffering" class="anchor"><span class="anchor-link"></span></a>Read buffering</h3>
-<p>Performance can suffer when reading an SMB source across many partitions if the total number of files (<code>numBuckets</code> * <code>numShards</code> * <code>numPartitions</code>) is too large (on the order of hundreds of thousands to millions of files). We&rsquo;ve observed errors and timeouts as a result of too many simultaneous filesystem connections. To that end, we&rsquo;ve added two <a href="https://beam.apache.org/releases/javadoc/2.40.0/?org/apache/beam/sdk/options/PipelineOptions.html" title="org.apache.beam.sdk.options.PipelineOptions"><code>PipelineOptions</code></a> to Scio 0.10.3, settable either via command-line args or using <a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketOptions.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketOptions"><code>SortedBucketOptions</code></a> directly.</p>
+<p>Performance can suffer when reading an SMB source across many partitions if the total number of files (<code>numBuckets</code> * <code>numShards</code> * <code>numPartitions</code>) is too large (on the order of hundreds of thousands to millions of files). We&rsquo;ve observed errors and timeouts as a result of too many simultaneous filesystem connections. To that end, we&rsquo;ve added two <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/options/PipelineOptions.html" title="org.apache.beam.sdk.options.PipelineOptions"><code>PipelineOptions</code></a> to Scio 0.10.3, settable either via command-line args or using <a href="https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb/?org/apache/beam/sdk/extensions/smb/SortedBucketOptions.html" title="org.apache.beam.sdk.extensions.smb.SortedBucketOptions"><code>SortedBucketOptions</code></a> directly.</p>
 <ul>
   <li><code>--sortedBucketReadBufferSize</code> (default: 10000): an Integer that determines the number of <em>elements</em> to read and buffer from <em>each file</em> at a time. For example, by default, each file will have 10,000 elements read and buffered into an in-memory array at worker startup. Then, the sort-merge algorithm will request them one at a time as needed. Once 10,000 elements have been requested, the file will buffer the next 10,000.
     <p><em>Note</em>: this can be quite memory-intensive and require bumping the worker memory. If you have a small number of files, or don&rsquo;t need this optimization, you can turn it off by setting <code>--sortedBucketReadBufferSize=0</code>.</p>
@@ -461,7 +459,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.12.0-RC1+0-d14cd16a+20220707-1433*
+0.11.10+0-dd828ea3+20220830-1608*
 </span>
 </div>
 </article>
