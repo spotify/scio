@@ -5,8 +5,25 @@ import com.spotify.scio.pubsub.PubsubIO
 
 object FixPubsubSpecializations {
   type MessageDummy = com.google.protobuf.DynamicMessage
-  type SpecificRecordDummy = org.apache.avro.specific.SpecificRecordBase
   type PubSubMessageDummy = org.apache.beam.sdk.io.gcp.pubsub.PubsubMessage
+
+  class SpecificRecordDummy extends org.apache.avro.specific.SpecificRecordBase {
+    override def getSchema = ???
+    override def get(field: Int) = ???
+    override def put(field: Int, value: Any) = ???
+  }
+
+  def pubsubApplySpecificRecord(): Unit =
+    PubsubIO.avro[SpecificRecordDummy]("theName")
+
+  def pubsubApplyProto(): Unit =
+    PubsubIO.proto[MessageDummy]("theName")
+
+  def pubsubApplyPubsub(): Unit =
+    PubsubIO.pubsub[PubSubMessageDummy]("theName")
+
+  def pubsubApplyString(): Unit =
+    PubsubIO.string[String]("theName")
 
   def readAvro(): Unit =
     PubsubIO.avro[SpecificRecordDummy]("theName")
