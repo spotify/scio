@@ -19,6 +19,12 @@ object FixPubsubSpecializations {
   def pubsubApplySpecificRecord(): Unit =
     PubsubIO[SpecificRecordDummy]("theName")
 
+  def pubsubApplySpecificRecordWithParams(): Unit =
+    PubsubIO[SpecificRecordDummy]("theName", "idAtt", "timestampAtt")
+
+  def pubsubApplySpecificRecordWithNamedParams(): Unit =
+    PubsubIO[SpecificRecordDummy]("theName", timestampAttribute = "idAtt", idAttribute = "timestampAtt")
+
   def pubsubApplyProto(): Unit =
     PubsubIO[MessageDummy]("theName")
 
@@ -27,6 +33,12 @@ object FixPubsubSpecializations {
 
   def pubsubApplyString(): Unit =
     PubsubIO[String]("theName")
+
+  def pubsubApplyStringWithParams(): Unit =
+    PubsubIO[String]("theName", "idAtt", "timestampAtt")
+
+  def pubsubApplyStringWithNamedParams(): Unit =
+    PubsubIO[String]("theName", timestampAttribute = "idAtt", idAttribute = "timestampAtt")
 
   def readAvro(): Unit =
     PubsubIO.readAvro[SpecificRecordDummy]("theName")
