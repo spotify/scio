@@ -93,7 +93,7 @@ final case class Record[T] private (
   typeName: String,
   cs: Array[(String, Coder[Any])],
   construct: Seq[Any] => T,
-  destruct: T => Array[Any]
+  destruct: T => Seq[Any]
 ) extends Coder[T] {
   override def toString: String = {
     val str = cs.map { case (k, v) => s"($k, $v)" }.mkString(", ")
@@ -282,7 +282,7 @@ final private[scio] case class RecordCoder[T](
   typeName: String,
   cs: Array[(String, BCoder[Any])],
   construct: Seq[Any] => T,
-  destruct: T => Array[Any]
+  destruct: T => Seq[Any]
 ) extends StructuredCoder[T] {
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
@@ -293,33 +293,29 @@ final private[scio] case class RecordCoder[T](
     }
 
   override def encode(value: T, os: OutputStream): Unit = {
-    var i = 0
-    val array = destruct(value)
-    while (i < array.length) {
-      val (label, c) = cs(i)
-      val v = array(i)
-      onErrorMsg(
-        s"Exception while trying to `encode` an instance of $typeName:  Can't encode field $label value $v"
-      ) {
-        c.encode(v, os)
+    destruct(value)
+      .zip(cs)
+      .foreach { case (v, (l, c)) =>
+        onErrorMsg(
+          s"Exception while trying to `encode` an instance of $typeName: Can't encode field $l value $v"
+        ) {
+          c.encode(v, os)
+        }
       }
-      i += 1
-    }
+
   }
 
   override def decode(is: InputStream): T = {
-    val vs = new Array[Any](cs.length)
-    var i = 0
-    while (i < cs.length) {
-      val (label, c) = cs(i)
-      onErrorMsg(
-        s"Exception while trying to `decode` an instance of $typeName: Can't decode field $label"
-      ) {
-        vs.update(i, c.decode(is))
+    val vs = cs
+      .foldLeft(Seq.newBuilder[Any]) { case (b, (l, c)) =>
+        onErrorMsg(
+          s"Exception while trying to `decode` an instance of $typeName: Can't decode field $l"
+        ) {
+          b += c.decode(is)
+        }
       }
-      i += 1
-    }
-    construct(vs.toSeq)
+      .result()
+    construct(vs)
   }
 
   // delegate methods for determinism and equality checks
@@ -355,40 +351,31 @@ final private[scio] case class RecordCoder[T](
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
-      val b = Seq.newBuilder[AnyRef]
-      var i = 0
-      val array = destruct(value)
-      while (i < cs.length) {
-        val (label, c) = cs(i)
-        val v = array(i)
-        onErrorMsg(s"Exception while trying to `encode` field $label with value $v") {
-          b += c.structuralValue(v)
+      destruct(value)
+        .zip(cs)
+        .foldLeft(Seq.newBuilder[AnyRef]) { case (b, (v, (l, c))) =>
+          onErrorMsg(s"Exception while trying to `encode` field $l with value $v") {
+            b += c.structuralValue(v)
+          }
         }
-        i += 1
-      }
-      b.result()
+        .result()
     }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean = {
-    var res = true
-    var i = 0
-    val array = destruct(value)
-    while (res && i < cs.length) {
-      res = cs(i)._2.isRegisterByteSizeObserverCheap(array(i))
-      i += 1
-    }
-    res
+    destruct(value)
+      .zip(cs)
+      .foldLeft(true) { case (result, (v, (_, c))) =>
+        result && c.isRegisterByteSizeObserverCheap(v)
+      }
   }
+
   override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit = {
-    var i = 0
-    val array = destruct(value)
-    while (i < cs.length) {
-      val (_, c) = cs(i)
-      val v = array(i)
-      c.registerByteSizeObserver(v, observer)
-      i += 1
-    }
+    destruct(value)
+      .zip(cs)
+      .foreach { case (v, (_, c)) =>
+        c.registerByteSizeObserver(v, observer)
+      }
   }
 
   override def getCoderArguments: JList[_ <: BCoder[_]] = cs.map(_._2).toList.asJava
@@ -438,6 +425,15 @@ sealed trait CoderGrammar {
     Fallback[T](ct)
   def transform[A, B](c: Coder[A])(f: BCoder[A] => Coder[B]): Coder[B] =
     Transform(c, f)
+
+  private[scio] def record[T](
+    typeName: String,
+    cs: Array[(String, Coder[Any])],
+    construct: Seq[Any] => T,
+    destruct: T => Seq[Any]
+  ): Coder[T] =
+    Record[T](typeName, cs, construct, destruct)
+
   def disjunction[T, Id: Coder](typeName: String, coder: Map[Id, Coder[T]])(id: T => Id): Coder[T] =
     Disjunction(typeName, Coder[Id], id, coder)
 
@@ -483,14 +479,6 @@ sealed trait CoderGrammar {
     }
     Transform[A, B](c, bc => Coder.beam(toB(bc)))
   }
-
-  private[scio] def record[T](
-    typeName: String,
-    cs: Array[(String, Coder[Any])],
-    construct: Seq[Any] => T,
-    destruct: T => Array[Any]
-  ): Coder[T] =
-    Record[T](typeName, cs, construct, destruct)
 }
 
 object Coder

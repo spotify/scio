@@ -17,74 +17,38 @@
 
 package com.spotify.scio.coders
 
-private object Derived extends Serializable {
-  import magnolia1._
-
-  @inline private def catching[T](msg: => String)(v: => T): T =
-    try {
-      v
-    } catch {
-      case e: Exception =>
-        /* prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
-        backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
-         here; we therefore must alter the type of exceptions passing through this block.
-         */
-        throw CoderStackTrace.append(e, msg)
-    }
-
-  def joinCoder[T](
-    typeName: TypeName,
-    ps: Seq[Param[Coder, T]],
-    rawConstruct: Seq[Any] => T
-  ): Coder[T] =
-    Ref(
-      typeName.full, {
-        val cs = new Array[(String, Coder[Any])](ps.length)
-        var i = 0
-        while (i < ps.length) {
-          val p = ps(i)
-          cs.update(i, (p.label, p.typeclass.asInstanceOf[Coder[Any]]))
-          i = i + 1
-        }
-
-        @inline def destruct(v: T): Array[Any] = {
-          val arr = new Array[Any](ps.length)
-          var i = 0
-          while (i < ps.length) {
-            val p = ps(i)
-            catching(s"Error while dereferencing parameter ${p.label} in $v") {
-              arr.update(i, p.dereference(v))
-              i = i + 1
-            }
-          }
-          arr
-        }
-
-        val constructor: Seq[Any] => T =
-          ps =>
-            catching(s"Error while constructing object from parameters $ps")(
-              rawConstruct(ps)
-            )
-
-        Coder.record[T](typeName.full, cs, constructor, destruct)
-      }
-    )
-}
+import com.twitter.chill.ClosureCleaner
 
 trait LowPriorityCoderDerivation {
   import magnolia1._
 
   type Typeclass[T] = Coder[T]
 
-  def join[T](ctx: CaseClass[Coder, T]): Coder[T] =
-    if (ctx.isValueClass) {
-      Coder.xmap(ctx.parameters.head.typeclass.asInstanceOf[Coder[Any]])(
-        a => ctx.rawConstruct(Seq(a)),
-        ctx.parameters.head.dereference
-      )
-    } else {
-      Derived.joinCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
+  def join[T](ctx: CaseClass[Coder, T]): Coder[T] = Ref(
+    ctx.typeName.full, {
+      val cs = ctx.parameters
+        .foldLeft(Array.newBuilder[(String, Coder[Any])]) { case (cs, p) =>
+          cs += (p.label -> p.typeclass.asInstanceOf[Coder[Any]])
+          cs
+        }
+        .result()
+
+      // calling patched rawConstruct on empty object should work
+      val emptyCtx = ClosureCleaner.instantiateClass(ctx.getClass).asInstanceOf[CaseClass[Coder, T]]
+      val construct = emptyCtx.rawConstruct _
+
+      val destruct = if (ctx.isValueClass) {
+        // TODO do not access ctx
+        v: T => Seq(ctx.parameters.head.dereference(v))
+      } else if (ctx.isObject) { _: T =>
+        Seq.empty
+      } else { v: T =>
+        v.asInstanceOf[Product].productIterator.toSeq
+      }
+
+      Coder.record[T](ctx.typeName.full, cs, construct, destruct)
     }
+  )
 
   def split[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
