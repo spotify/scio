@@ -6,6 +6,7 @@ import scala.meta._
 
 class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") {
   private val pubSubIOPath = "com/spotify/scio/pubsub/PubsubIO."
+  private val scioContextPath = "com/spotify/scio/ScioContext."
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
@@ -15,23 +16,8 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
           // PubsubIO[T < SpecificRecordBase](params)
           case Term.ApplyType(qual, types @ List(Type.Name(_)))
               if isSubOfType(qual.symbol, pubSubIOPath) =>
-            expectedType(qual, "")
-            val methodCall =
-              if (isSubOfType(types.head.symbol, "org/apache/avro/specific/SpecificRecordBase#")) {
-                Some(s"avro[${types.head}]")
-              } else if (isSubOfType(types.head.symbol, "com/google/protobuf/Message#")) {
-                Some(s"proto[${types.head}]")
-              } else if (
-                isSubOfType(types.head.symbol, "org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage#")
-              ) {
-                Some(s"pubsub[${types.head}]")
-              } else if (isSubOfType(types.head.symbol, "java/lang/String#")) {
-                Some("string")
-              } else {
-                None
-              }
 
-            methodCall
+            methodCallForIOConfig(types.head)
               .map(c => Patch.replaceTree(a, s"$qual.$c(${args.mkString(", ")})"))
               .getOrElse(
                 Patch.empty
@@ -56,27 +42,59 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
           case Term.Select(qual, Term.Name("readString"))
               if isSubOfType(qual.symbol, pubSubIOPath) =>
             Patch.replaceTree(a, s"$qual.string(${args.mkString(", ")})")
+
           case _ =>
             Patch.empty
         }
-
+      case a @ Term.Apply(fun, args)
+          if fun.symbol.normalized.toString.startsWith(
+            "com.spotify.scio.pubsub.syntax.ScioContextSyntax.ScioContextOps."
+          ) => {
+        val readparamsTopic = "(PubsubIO.ReadParam(PubsubIO.Topic))"
+        val readParamsSubs = "(PubsubIO.ReadParam(PubsubIO.Subscription))"
+        fun match {
+          // sc.pubsubTopic[String](params)
+          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubTopic")), methodType) =>
+            methodCallForIOConfig(methodType.head).map(c =>
+              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic")
+            )
+          // sc.pubsubSubscription[String](params)
+          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubSubscription")), methodType) =>
+            methodCallForIOConfig(methodType.head).map(c =>
+              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs")
+            )
+          // sc.pubsubTopicWithAttributes[String](params)
+          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubTopicWithAttributes")), methodType) =>
+            methodCallForIOConfig(methodType.head, true).map(c =>
+              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic")
+            )
+          // sc.pubsubSubscriptionWithAttributes[String](params)
+          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubSubscriptionWithAttributes")), methodType) =>
+            methodCallForIOConfig(methodType.head, true).map(c =>
+              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs")
+            )
+          case _ =>
+            None
+        }
+      }.getOrElse(Patch.empty)
       case _ =>
         Patch.empty
     }.asPatch
   }
 
-  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean = {
-    qual.symbol.info.get.signature match {
-      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(typStr).matches(typ)
-      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
-        SymbolMatcher.exact(typStr).matches(typ)
-      case ValueSignature(TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(typStr).matches(typ)
-      case _ =>
-        false
+  private def methodCallForIOConfig(termType: scala.meta.Type, withAtt: Boolean = false)(implicit
+                                                                                 doc: SemanticDocument): Option[String] =
+    if (isSubOfType(termType.symbol, "org/apache/avro/specific/SpecificRecordBase#")) {
+      if (withAtt) Some(s"withAttributes[${termType}]") else Some(s"avro[${termType}]")
+    } else if (isSubOfType(termType.symbol, "com/google/protobuf/Message#")) {
+      if (withAtt) Some(s"withAttributes[${termType}]") else Some(s"proto[${termType}]")
+    } else if (isSubOfType(termType.symbol, "org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage#")) {
+      if (withAtt) Some(s"withAttributes[${termType}]") else Some(s"pubsub[${termType}]")
+    } else if (isSubOfType(termType.symbol, "java/lang/String#")) {
+      if (withAtt) Some(s"withAttributes[${termType}]") else Some("string")
+    } else {
+      None
     }
-  }
 
   def isSubOfType(symbol: Symbol, typeStr: String)(implicit doc: SemanticDocument): Boolean =
     getParentSymbols(symbol).map(_.toString).contains(typeStr)

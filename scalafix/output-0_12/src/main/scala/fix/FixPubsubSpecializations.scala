@@ -1,7 +1,8 @@
 package fix
 package v0_12_0
 
-import com.spotify.scio.pubsub.PubsubIO
+import com.spotify.scio.ScioContext
+import com.spotify.scio.pubsub._
 
 object FixPubsubSpecializations {
   type MessageDummy = com.google.protobuf.DynamicMessage
@@ -12,6 +13,30 @@ object FixPubsubSpecializations {
     override def get(field: Int) = ???
     override def put(field: Int, value: Any) = ???
   }
+
+  def contextPubsubSubscription(sc: ScioContext): Unit =
+    sc.read(PubsubIO.string("theName"))(PubsubIO.ReadParam(PubsubIO.Subscription))
+
+  def contextPubsubTopic(sc: ScioContext): Unit =
+    sc.read(PubsubIO.string("theName"))(PubsubIO.ReadParam(PubsubIO.Topic))
+
+  def contextPubsubSubscriptionWithAtt(sc: ScioContext): Unit =
+    sc.read(PubsubIO.withAttributes[String]("theName"))(PubsubIO.ReadParam(PubsubIO.Subscription))
+
+  def contextPubsubTopicWithAtt(sc: ScioContext): Unit =
+    sc.read(PubsubIO.withAttributes[String]("theName"))(PubsubIO.ReadParam(PubsubIO.Topic))
+
+  def contextPubsubSubscriptionSpecifiRecord(sc: ScioContext): Unit =
+    sc.read(PubsubIO.avro[SpecificRecordDummy]("theName"))(PubsubIO.ReadParam(PubsubIO.Subscription))
+
+  def contextPubsubTopicSpecifiRecord(sc: ScioContext): Unit =
+    sc.read(PubsubIO.avro[SpecificRecordDummy]("theName"))(PubsubIO.ReadParam(PubsubIO.Topic))
+
+  def contextPubsubSubscriptionWithAttSpecifiRecord(sc: ScioContext): Unit =
+    sc.read(PubsubIO.withAttributes[SpecificRecordDummy]("theName"))(PubsubIO.ReadParam(PubsubIO.Subscription))
+
+  def contextPubsubTopicWithAttSpecifiRecord(sc: ScioContext): Unit =
+    sc.read(PubsubIO.withAttributes[SpecificRecordDummy]("theName"))(PubsubIO.ReadParam(PubsubIO.Topic))
 
   def pubsubApplySpecificRecord(): Unit =
     PubsubIO.avro[SpecificRecordDummy]("theName")
