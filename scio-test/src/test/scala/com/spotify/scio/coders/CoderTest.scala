@@ -251,6 +251,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "Derive serializable coders" in {
+    coderIsSerializable[Nothing]
     coderIsSerializable[Int]
     coderIsSerializable[String]
     coderIsSerializable[List[Int]]
@@ -259,7 +260,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     coderIsSerializable(Coder.gen[DummyCC])
     coderIsSerializable[com.spotify.scio.avro.User]
     coderIsSerializable[NestedA]
-    coderIsSerializable[Nothing]
+    // DisjunctionCoder equality fails due to function field
+    // coderIsSerializable[SampleFieldType]
   }
 
   it should "support Avro's SpecificRecordBase" in {

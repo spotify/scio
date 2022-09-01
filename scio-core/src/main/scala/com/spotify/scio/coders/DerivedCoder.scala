@@ -36,16 +36,15 @@ trait LowPriorityCoderDerivation {
     } else {
       Ref(
         ctx.typeName.full, {
-          val cs = ctx.parameters
-            .foldLeft(Array.newBuilder[(String, Coder[Any])]) { case (cs, p) =>
-              cs += (p.label -> p.typeclass.asInstanceOf[Coder[Any]])
-              cs
-            }
-            .result()
+          val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
+          ctx.parameters.foreach { p =>
+            cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
+          }
 
           // calling patched rawConstruct on empty object should work
-          val emptyCtx =
-            ClosureCleaner.instantiateClass(ctx.getClass).asInstanceOf[CaseClass[Coder, T]]
+          val emptyCtx = ClosureCleaner
+            .instantiateClass(ctx.getClass)
+            .asInstanceOf[CaseClass[Coder, T]]
           val construct = emptyCtx.rawConstruct _
           val destruct = (v: T) => v.asInstanceOf[Product].productIterator
           Coder.record[T](ctx.typeName.full, cs, construct, destruct)
@@ -56,25 +55,35 @@ trait LowPriorityCoderDerivation {
 
   def split[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
-    val idx: Map[TypeName, Int] =
-      sealedTrait.subtypes.map(_.typeName).zipWithIndex.toMap
-    val coders: Map[Int, Coder[T]] =
-      sealedTrait.subtypes
-        .map(_.typeclass.asInstanceOf[Coder[T]])
-        .zipWithIndex
-        .map { case (c, i) => (i, c) }
-        .toMap
+    val coders = sealedTrait.subtypes
+      .map(s => (s.index, s.typeclass.asInstanceOf[Coder[T]]))
+      .toMap
+
+    val id = sealedTrait.subtypes
+      .map[PartialFunction[T, Int]] { s =>
+        val clazz = s.getClass
+        val clean = ClosureCleaner
+          .instantiateClass(clazz)
+          .asInstanceOf[Subtype[Coder, T]]
+        // copy required fields only
+        val isType = clazz.getDeclaredField("isType$1")
+        isType.setAccessible(true)
+        isType.set(clean, isType.get(s))
+
+        val index = clazz.getDeclaredField("idx$1")
+        index.setAccessible(true)
+        index.set(clean, index.get(s))
+
+        { case v: T if clean.cast.isDefinedAt(v) => clean.index }
+      }
+      .reduce(_ orElse _)
 
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
-      Coder.disjunction[T, Boolean](typeName, cs) { t =>
-        sealedTrait.split(t)(subtype => booleanId(idx(subtype.typeName)))
-      }
+      Coder.disjunction[T, Boolean](typeName, id.andThen(booleanId), cs)
     } else {
-      Coder.disjunction[T, Int](typeName, coders) { t =>
-        sealedTrait.split(t)(subtype => idx(subtype.typeName))
-      }
+      Coder.disjunction[T, Int](typeName, id, coders)
     }
   }
 

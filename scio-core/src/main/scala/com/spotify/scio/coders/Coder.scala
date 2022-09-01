@@ -429,7 +429,7 @@ sealed trait CoderGrammar {
   ): Coder[T] =
     Record[T](typeName, cs, construct, destruct)
 
-  def disjunction[T, Id: Coder](typeName: String, coder: Map[Id, Coder[T]])(id: T => Id): Coder[T] =
+  def disjunction[T, Id: Coder](typeName: String, id: T => Id, coder: Map[Id, Coder[T]]): Coder[T] =
     Disjunction(typeName, Coder[Id], id, coder)
 
   /**
