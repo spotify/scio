@@ -19,7 +19,22 @@ package com.spotify.scio.coders
 
 import com.twitter.chill.ClosureCleaner
 
+object LowPriorityCoderDerivation {
+
+  private object ProductIndexedSeqLike {
+    def apply(p: Product): ProductIndexedSeqLike = new ProductIndexedSeqLike(p)
+  }
+
+  // Instead of converting Product.productIterator to a Seq, create a wrapped around it
+  final private class ProductIndexedSeqLike private (val p: Product) extends IndexedSeq[Any] {
+    override def length: Int = p.productArity
+    override def apply(i: Int): Any = p.productElement(i)
+  }
+
+}
+
 trait LowPriorityCoderDerivation {
+  import LowPriorityCoderDerivation._
   import magnolia1._
 
   type Typeclass[T] = Coder[T]
@@ -46,7 +61,7 @@ trait LowPriorityCoderDerivation {
             .instantiateClass(ctx.getClass)
             .asInstanceOf[CaseClass[Coder, T]]
           val construct = emptyCtx.rawConstruct _
-          val destruct = (v: T) => v.asInstanceOf[Product].productIterator
+          val destruct = (v: T) => ProductIndexedSeqLike(v.asInstanceOf[Product])
           Coder.record[T](ctx.typeName.full, cs, construct, destruct)
         }
       )

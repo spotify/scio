@@ -93,7 +93,7 @@ final case class Record[T] private (
   typeName: String,
   cs: Array[(String, Coder[Any])],
   construct: Seq[Any] => T,
-  destruct: T => Iterator[Any]
+  destruct: T => IndexedSeq[Any]
 ) extends Coder[T] {
   override def toString: String = {
     val str = cs.map { case (k, v) => s"($k, $v)" }.mkString(", ")
@@ -282,7 +282,7 @@ final private[scio] case class RecordCoder[T](
   typeName: String,
   cs: Array[(String, BCoder[Any])],
   construct: Seq[Any] => T,
-  destruct: T => Iterator[Any]
+  destruct: T => IndexedSeq[Any]
 ) extends StructuredCoder[T] {
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
@@ -293,26 +293,34 @@ final private[scio] case class RecordCoder[T](
     }
 
   override def encode(value: T, os: OutputStream): Unit = {
-    destruct(value).zip(cs.iterator).foreach { case (v, (l, c)) =>
+    val vs = destruct(value)
+    var idx = 0
+    while (idx < cs.length) {
+      val (l, c) = cs(idx)
+      val v = vs(idx)
       onErrorMsg(
         s"Exception while trying to `encode` an instance of $typeName: Can't encode field $l value $v"
       ) {
         c.encode(v, os)
       }
+      idx += 1
     }
   }
 
   override def decode(is: InputStream): T = {
-    val b = Seq.newBuilder[Any]
-    cs.foreach { case (l, c) =>
+    val vs = Array.ofDim[Any](cs.length)
+    var idx = 0
+    while (idx < cs.length) {
+      val (l, c) = cs(idx)
       val v = onErrorMsg(
         s"Exception while trying to `decode` an instance of $typeName: Can't decode field $l"
       ) {
         c.decode(is)
       }
-      b += v
+      vs.update(idx, v)
+      idx += 1
     }
-    construct(b.result())
+    construct(vs)
   }
 
   // delegate methods for determinism and equality checks
@@ -346,27 +354,43 @@ final private[scio] case class RecordCoder[T](
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
-      val b = Seq.newBuilder[Any]
-      destruct(value).zip(cs.iterator).foreach { case (v, (l, c)) =>
+      val svs = Seq.newBuilder[Any]
+      val vs = destruct(value)
+      var idx = 0
+      while (idx < cs.length) {
+        val (l, c) = cs(idx)
+        val v = vs(idx)
         val sv = onErrorMsg(s"Exception while trying to `encode` field $l with value $v") {
           c.structuralValue(v)
         }
-        b += sv
+        svs += sv
+        idx += 1
       }
-      b.result()
+      svs.result()
     }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean = {
-    destruct(value).zip(cs.iterator).foreach { case (v, (_, c)) =>
-      if (!c.isRegisterByteSizeObserverCheap(v)) return false
+    val vs = destruct(value)
+    var isCheap = true
+    var idx = 0
+    while (isCheap && idx < cs.length) {
+      val (_, c) = cs(idx)
+      val v = vs(idx)
+      isCheap = c.isRegisterByteSizeObserverCheap(v)
+      idx += 1
     }
-    true
+    isCheap
   }
 
   override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit = {
-    destruct(value).zip(cs.iterator).foreach { case (v, (_, c)) =>
+    val vs = destruct(value)
+    var idx = 0
+    while (idx < cs.length) {
+      val (_, c) = cs(idx)
+      val v = vs(idx)
       c.registerByteSizeObserver(v, observer)
+      idx += 1
     }
   }
 
@@ -425,7 +449,7 @@ sealed trait CoderGrammar {
     typeName: String,
     cs: Array[(String, Coder[Any])],
     construct: Seq[Any] => T,
-    destruct: T => Iterator[Any]
+    destruct: T => IndexedSeq[Any]
   ): Coder[T] =
     Record[T](typeName, cs, construct, destruct)
 
