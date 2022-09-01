@@ -293,7 +293,7 @@ final private[scio] case class RecordCoder[T](
     }
 
   override def encode(value: T, os: OutputStream): Unit = {
-    destruct(value).zip(cs).foreach { case (v, (l, c)) =>
+    destruct(value).zip(cs.iterator).foreach { case (v, (l, c)) =>
       onErrorMsg(
         s"Exception while trying to `encode` an instance of $typeName: Can't encode field $l value $v"
       ) {
@@ -347,7 +347,7 @@ final private[scio] case class RecordCoder[T](
       value.asInstanceOf[AnyRef]
     } else {
       val b = Seq.newBuilder[Any]
-      destruct(value).zip(cs).foreach { case (v, (l, c)) =>
+      destruct(value).zip(cs.iterator).foreach { case (v, (l, c)) =>
         val sv = onErrorMsg(s"Exception while trying to `encode` field $l with value $v") {
           c.structuralValue(v)
         }
@@ -358,14 +358,14 @@ final private[scio] case class RecordCoder[T](
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean = {
-    destruct(value).zip(cs).foreach { case (v, (_, c)) =>
+    destruct(value).zip(cs.iterator).foreach { case (v, (_, c)) =>
       if (!c.isRegisterByteSizeObserverCheap(v)) return false
     }
     true
   }
 
   override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit = {
-    destruct(value).zip(cs).foreach { case (v, (_, c)) =>
+    destruct(value).zip(cs.iterator).foreach { case (v, (_, c)) =>
       c.registerByteSizeObserver(v, observer)
     }
   }

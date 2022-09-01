@@ -59,8 +59,8 @@ trait LowPriorityCoderDerivation {
       .map(s => (s.index, s.typeclass.asInstanceOf[Coder[T]]))
       .toMap
 
-    val id = sealedTrait.subtypes
-      .map[PartialFunction[T, Int]] { s =>
+    val subtypes = sealedTrait.subtypes
+      .map { s =>
         val clazz = s.getClass
         val clean = ClosureCleaner
           .instantiateClass(clazz)
@@ -74,9 +74,10 @@ trait LowPriorityCoderDerivation {
         index.setAccessible(true)
         index.set(clean, index.get(s))
 
-        { case v: T if clean.cast.isDefinedAt(v) => clean.index }
+        clean
       }
-      .reduce(_ orElse _)
+
+    val id = (v: T) => subtypes.find(_.cast.isDefinedAt(v)).map(_.index).get
 
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0

@@ -262,6 +262,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     coderIsSerializable[NestedA]
     // DisjunctionCoder equality fails due to function field
     // coderIsSerializable[SampleFieldType]
+
   }
 
   it should "support Avro's SpecificRecordBase" in {
