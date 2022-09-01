@@ -24,31 +24,35 @@ trait LowPriorityCoderDerivation {
 
   type Typeclass[T] = Coder[T]
 
-  def join[T](ctx: CaseClass[Coder, T]): Coder[T] = Ref(
-    ctx.typeName.full, {
-      val cs = ctx.parameters
-        .foldLeft(Array.newBuilder[(String, Coder[Any])]) { case (cs, p) =>
-          cs += (p.label -> p.typeclass.asInstanceOf[Coder[Any]])
-          cs
+  def join[T](ctx: CaseClass[Coder, T]): Coder[T] = {
+    if (ctx.isValueClass) {
+      val p = ctx.parameters.head
+      Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
+        v => ctx.rawConstruct(Seq(v)),
+        p.dereference
+      )
+    } else if (ctx.isObject) {
+      Coder.singleton(ctx.rawConstruct(Seq.empty))
+    } else {
+      Ref(
+        ctx.typeName.full, {
+          val cs = ctx.parameters
+            .foldLeft(Array.newBuilder[(String, Coder[Any])]) { case (cs, p) =>
+              cs += (p.label -> p.typeclass.asInstanceOf[Coder[Any]])
+              cs
+            }
+            .result()
+
+          // calling patched rawConstruct on empty object should work
+          val emptyCtx =
+            ClosureCleaner.instantiateClass(ctx.getClass).asInstanceOf[CaseClass[Coder, T]]
+          val construct = emptyCtx.rawConstruct _
+          val destruct = (v: T) => v.asInstanceOf[Product].productIterator
+          Coder.record[T](ctx.typeName.full, cs, construct, destruct)
         }
-        .result()
-
-      // calling patched rawConstruct on empty object should work
-      val emptyCtx = ClosureCleaner.instantiateClass(ctx.getClass).asInstanceOf[CaseClass[Coder, T]]
-      val construct = emptyCtx.rawConstruct _
-
-      val destruct = if (ctx.isValueClass) {
-        // TODO do not access ctx
-        v: T => Seq(ctx.parameters.head.dereference(v))
-      } else if (ctx.isObject) { _: T =>
-        Seq.empty
-      } else { v: T =>
-        v.asInstanceOf[Product].productIterator.toSeq
-      }
-
-      Coder.record[T](ctx.typeName.full, cs, construct, destruct)
+      )
     }
-  )
+  }
 
   def split[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full

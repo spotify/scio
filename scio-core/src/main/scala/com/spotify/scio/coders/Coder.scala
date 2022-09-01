@@ -93,7 +93,7 @@ final case class Record[T] private (
   typeName: String,
   cs: Array[(String, Coder[Any])],
   construct: Seq[Any] => T,
-  destruct: T => Seq[Any]
+  destruct: T => Iterator[Any]
 ) extends Coder[T] {
   override def toString: String = {
     val str = cs.map { case (k, v) => s"($k, $v)" }.mkString(", ")
@@ -282,7 +282,7 @@ final private[scio] case class RecordCoder[T](
   typeName: String,
   cs: Array[(String, BCoder[Any])],
   construct: Seq[Any] => T,
-  destruct: T => Seq[Any]
+  destruct: T => Iterator[Any]
 ) extends StructuredCoder[T] {
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
@@ -293,55 +293,50 @@ final private[scio] case class RecordCoder[T](
     }
 
   override def encode(value: T, os: OutputStream): Unit = {
-    destruct(value)
-      .zip(cs)
-      .foreach { case (v, (l, c)) =>
-        onErrorMsg(
-          s"Exception while trying to `encode` an instance of $typeName: Can't encode field $l value $v"
-        ) {
-          c.encode(v, os)
-        }
+    destruct(value).zip(cs).foreach { case (v, (l, c)) =>
+      onErrorMsg(
+        s"Exception while trying to `encode` an instance of $typeName: Can't encode field $l value $v"
+      ) {
+        c.encode(v, os)
       }
-
+    }
   }
 
   override def decode(is: InputStream): T = {
-    val vs = cs
-      .foldLeft(Seq.newBuilder[Any]) { case (b, (l, c)) =>
-        onErrorMsg(
-          s"Exception while trying to `decode` an instance of $typeName: Can't decode field $l"
-        ) {
-          b += c.decode(is)
-        }
+    val b = Seq.newBuilder[Any]
+    cs.foreach { case (l, c) =>
+      val v = onErrorMsg(
+        s"Exception while trying to `decode` an instance of $typeName: Can't decode field $l"
+      ) {
+        c.decode(is)
       }
-      .result()
-    construct(vs)
+      b += v
+    }
+    construct(b.result())
   }
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val problems = cs.toList.flatMap { case (label, c) =>
+    var cause = Option.empty[NonDeterministicException]
+    val reasons = List.newBuilder[String]
+    cs.foreach { case (l, c) =>
       try {
         c.verifyDeterministic()
-        Nil
       } catch {
         case e: NonDeterministicException =>
-          val reason = s"field $label is using non-deterministic $c"
-          List(reason -> e)
+          cause = Some(e)
+          reasons += s"field $l is using non-deterministic $c"
       }
     }
 
-    problems match {
-      case (_, e) :: _ =>
-        val reasons = problems.map { case (reason, _) => reason }
-        throw new NonDeterministicException(this, reasons.asJava, e)
-      case Nil =>
+    cause.foreach { e =>
+      throw new NonDeterministicException(this, reasons.result().asJava, e)
     }
   }
 
   override def toString: String = {
-    val body = cs.map { case (label, c) => s"$label -> $c" }.mkString(", ")
+    val body = cs.map { case (l, c) => s"$l -> $c" }.mkString(", ")
     s"RecordCoder[$typeName]($body)"
   }
 
@@ -351,31 +346,28 @@ final private[scio] case class RecordCoder[T](
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
-      destruct(value)
-        .zip(cs)
-        .foldLeft(Seq.newBuilder[AnyRef]) { case (b, (v, (l, c))) =>
-          onErrorMsg(s"Exception while trying to `encode` field $l with value $v") {
-            b += c.structuralValue(v)
-          }
+      val b = Seq.newBuilder[Any]
+      destruct(value).zip(cs).foreach { case (v, (l, c)) =>
+        val sv = onErrorMsg(s"Exception while trying to `encode` field $l with value $v") {
+          c.structuralValue(v)
         }
-        .result()
+        b += sv
+      }
+      b.result()
     }
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: T): Boolean = {
-    destruct(value)
-      .zip(cs)
-      .foldLeft(true) { case (result, (v, (_, c))) =>
-        result && c.isRegisterByteSizeObserverCheap(v)
-      }
+    destruct(value).zip(cs).foreach { case (v, (_, c)) =>
+      if (!c.isRegisterByteSizeObserverCheap(v)) return false
+    }
+    true
   }
 
   override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit = {
-    destruct(value)
-      .zip(cs)
-      .foreach { case (v, (_, c)) =>
-        c.registerByteSizeObserver(v, observer)
-      }
+    destruct(value).zip(cs).foreach { case (v, (_, c)) =>
+      c.registerByteSizeObserver(v, observer)
+    }
   }
 
   override def getCoderArguments: JList[_ <: BCoder[_]] = cs.map(_._2).toList.asJava
@@ -423,6 +415,9 @@ sealed trait CoderGrammar {
    */
   def kryo[T](implicit ct: ClassTag[T]): Coder[T] =
     Fallback[T](ct)
+
+  def singleton[T](value: => T): Coder[T] = Beam(new SingletonCoder(value))
+
   def transform[A, B](c: Coder[A])(f: BCoder[A] => Coder[B]): Coder[B] =
     Transform(c, f)
 
@@ -430,7 +425,7 @@ sealed trait CoderGrammar {
     typeName: String,
     cs: Array[(String, Coder[Any])],
     construct: Seq[Any] => T,
-    destruct: T => Seq[Any]
+    destruct: T => Iterator[Any]
   ): Coder[T] =
     Record[T](typeName, cs, construct, destruct)
 

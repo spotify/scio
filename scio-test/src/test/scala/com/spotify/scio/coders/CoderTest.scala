@@ -603,6 +603,17 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     tableSchema coderShould roundtrip()
   }
 
+  it should "optimize for AnyVal" in {
+    coderIsSerializable[AnyValExample]
+    Coder[AnyValExample] shouldBe a[Transform[_, _]]
+  }
+
+  it should "optimize for objects" in {
+    SerializableUtils.ensureSerializable(CoderMaterializer.beamWithDefault(Coder[TestObject.type]))
+    coderIsSerializable[TestObject.type]
+    Coder[TestObject.type] shouldBe a[Beam[_]]
+  }
+
   it should "support Algebird's Moments" in {
     coderIsSerializable[Moments]
     new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()

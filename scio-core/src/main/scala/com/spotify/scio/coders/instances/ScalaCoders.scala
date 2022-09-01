@@ -38,9 +38,11 @@ import scala.jdk.CollectionConverters._
 
 import java.util.{List => JList}
 
-private object UnitCoder extends AtomicCoder[Unit] {
-  override def encode(value: Unit, os: OutputStream): Unit = ()
-  override def decode(is: InputStream): Unit = ()
+private[coders] class SingletonCoder[T](elem: => T) extends AtomicCoder[T] {
+  private lazy val value = elem
+  override def encode(value: T, os: OutputStream): Unit = ()
+  override def decode(is: InputStream): T = value
+  override def consistentWithEquals(): Boolean = true
 }
 
 private object NothingCoder extends AtomicCoder[Nothing] {
@@ -435,7 +437,7 @@ trait ScalaCoders {
 
   implicit def booleanCoder: Coder[Boolean] =
     Coder.beam(BooleanCoder.of().asInstanceOf[BCoder[Boolean]])
-  implicit def unitCoder: Coder[Unit] = Coder.beam(UnitCoder)
+  implicit def unitCoder: Coder[Unit] = Coder.singleton(())
   implicit def nothingCoder: Coder[Nothing] = Coder.beam[Nothing](NothingCoder)
 
   implicit def bigIntCoder: Coder[BigInt] =
