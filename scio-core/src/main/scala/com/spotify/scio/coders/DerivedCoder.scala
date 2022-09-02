@@ -19,6 +19,8 @@ package com.spotify.scio.coders
 
 import com.twitter.chill.ClosureCleaner
 
+import scala.reflect.ClassTag
+
 object LowPriorityCoderDerivation {
 
   private object ProductIndexedSeqLike {
@@ -39,7 +41,7 @@ trait LowPriorityCoderDerivation {
 
   type Typeclass[T] = Coder[T]
 
-  def join[T](ctx: CaseClass[Coder, T]): Coder[T] = {
+  def join[T: ClassTag](ctx: CaseClass[Coder, T]): Coder[T] = {
     if (ctx.isValueClass) {
       val p = ctx.parameters.head
       Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
@@ -49,22 +51,23 @@ trait LowPriorityCoderDerivation {
     } else if (ctx.isObject) {
       Coder.singleton(ctx.rawConstruct(Seq.empty))
     } else {
-      Ref(
-        ctx.typeName.full, {
-          val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
-          ctx.parameters.foreach { p =>
-            cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
-          }
-
-          // calling patched rawConstruct on empty object should work
-          val emptyCtx = ClosureCleaner
-            .instantiateClass(ctx.getClass)
-            .asInstanceOf[CaseClass[Coder, T]]
-          val construct = emptyCtx.rawConstruct _
-          val destruct = (v: T) => ProductIndexedSeqLike(v.asInstanceOf[Product])
-          Coder.record[T](ctx.typeName.full, cs, construct, destruct)
+      val typeName = ctx.typeName.full
+      Coder.ref(typeName) {
+        val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
+        ctx.parameters.foreach { p =>
+          cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
         }
-      )
+
+        // calling patched rawConstruct on empty object should work
+        val emptyCtx = ClosureCleaner
+          .instantiateClass(ctx.getClass)
+          .asInstanceOf[CaseClass[Coder, T]]
+
+        Coder.record[T](typeName, cs)(
+          emptyCtx.rawConstruct,
+          v => ProductIndexedSeqLike(v.asInstanceOf[Product])
+        )
+      }
     }
   }
 
@@ -93,13 +96,12 @@ trait LowPriorityCoderDerivation {
       }
 
     val id = (v: T) => subtypes.find(_.cast.isDefinedAt(v)).map(_.index).get
-
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
-      Coder.disjunction[T, Boolean](typeName, id.andThen(booleanId), cs)
+      Coder.disjunction[T, Boolean](typeName, cs)(id.andThen(booleanId))
     } else {
-      Coder.disjunction[T, Int](typeName, id, coders)
+      Coder.disjunction[T, Int](typeName, coders)(id)
     }
   }
 

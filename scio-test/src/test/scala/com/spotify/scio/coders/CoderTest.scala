@@ -260,9 +260,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     coderIsSerializable(Coder.gen[DummyCC])
     coderIsSerializable[com.spotify.scio.avro.User]
     coderIsSerializable[NestedA]
-    // DisjunctionCoder equality fails due to function field
-    // coderIsSerializable[SampleFieldType]
-
+    coderIsSerializable[Top]
+    coderIsSerializable[SampleField]
   }
 
   it should "support Avro's SpecificRecordBase" in {
@@ -440,8 +439,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val leftCoder = materialize(Coder[scala.util.Left[Double, Int]]).toString
     val rightCoder = materialize(Coder[scala.util.Right[Double, Int]]).toString
 
-    val expectedMsg = s"DisjunctionCoder[scala.util.Either](" +
-      s"id -> BooleanCoder, false -> $leftCoder, true -> $rightCoder) is not deterministic"
+    val expectedMsg =
+      s"DisjunctionCoder[scala.util.Either](false -> $leftCoder, true -> $rightCoder) is not deterministic"
 
     caught.getMessage should startWith(expectedMsg)
     caught.getMessage should include(s"case false is using non-deterministic $leftCoder")
@@ -612,9 +611,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "optimize for objects" in {
-    SerializableUtils.ensureSerializable(CoderMaterializer.beamWithDefault(Coder[TestObject.type]))
     coderIsSerializable[TestObject.type]
-    Coder[TestObject.type] shouldBe a[Beam[_]]
+    Coder[TestObject.type] shouldBe a[Transform[_, _]]
   }
 
   it should "support Algebird's Moments" in {

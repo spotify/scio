@@ -73,12 +73,7 @@ trait CoderInstances {
     case RedisMutation(_: ZAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)   => 18
   }
 
-  implicit def redisMutationCoder[T <: RedisMutation]: Coder[T] = {
-    Coder.disjunction[T, Int](
-      "RedisMutation",
-      coderId.asInstanceOf[PartialFunction[T, Int]],
-      coders.asInstanceOf[Map[Int, Coder[T]]]
-    )
-  }
+  implicit def redisMutationCoder[T <: RedisMutation]: Coder[T] =
+    Coder.disjunction[T, Int]("RedisMutation", coders.asInstanceOf[Map[Int, Coder[T]]])(coderId)
 
 }

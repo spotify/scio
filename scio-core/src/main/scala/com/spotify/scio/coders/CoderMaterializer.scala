@@ -74,22 +74,24 @@ object CoderMaterializer {
         c
       case Fallback(_) =>
         new KryoAtomicCoder[T](o.kryo)
-      case Transform(c, f) =>
-        val uc = f(beamImpl(o, c, refs))
-        beamImpl(o, uc, refs)
+      case BeamTransform(_, coder, from) =>
+        val underlying = beamImpl(o, coder, refs)
+        beamImpl(o, from(underlying), refs)
+      case Transform(ct, c, t, f) =>
+        new TransformCoder(ct.runtimeClass.getName, beamImpl(o, c, refs), t, f)
       case Record(typeName, coders, construct, destruct) =>
-        RecordCoder(
+        new RecordCoder(
           typeName,
           coders.map { case (n, c) => n -> beamImpl(o, c, refs) },
           construct,
           destruct
         )
-      case Disjunction(typeName, idCoder, id, coders) =>
-        DisjunctionCoder(
+      case Disjunction(typeName, idCoder, coders, id) =>
+        new DisjunctionCoder(
           typeName,
           beamImpl(o, idCoder, refs),
-          id,
-          coders.map { case (k, u) => k -> beamImpl(o, u, refs) }
+          coders.map { case (k, u) => k -> beamImpl(o, u, refs) },
+          id
         )
       case KVCoder(koder, voder) =>
         // propagate topLevel to k & v coders
@@ -99,9 +101,9 @@ object CoderMaterializer {
       case r @ Ref(t, c) =>
         refs.get(r) match {
           case Some(rc) =>
-            LazyCoder(t, rc.bcoder.asInstanceOf[BCoder[T]])
+            new LazyCoder(t, rc.bcoder.asInstanceOf[BCoder[T]])
           case None =>
-            val rc = RefCoder[T]()
+            val rc = new RefCoder[T]()
             refs += r -> rc
             rc.bcoder = beamImpl(o, c, refs)
             rc
@@ -110,6 +112,6 @@ object CoderMaterializer {
 
     bCoder
       .pipe(bc => if (isNullableCoder(o, coder)) NullableCoder.of(bc) else bc)
-      .pipe(bc => if (isWrappableCoder(topLevel, coder)) WrappedBCoder(bc) else bc)
+      .pipe(bc => if (isWrappableCoder(topLevel, coder)) new MaterializedCoder(bc) else bc)
   }
 }
