@@ -77,7 +77,7 @@ val googleCommonsProtoVersion = "2.8.3"
 val googleHttpClientsVersion = "1.41.7"
 val googleIAMVersion = "1.3.1"
 val grpcVersion = "1.45.1"
-val jacksonVersion = "2.13.2"
+val jacksonVersion = "2.13.4"
 val opencensusVersion = "0.31.0"
 val protobufVersion = "3.19.4"
 
