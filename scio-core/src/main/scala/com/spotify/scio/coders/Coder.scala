@@ -65,7 +65,7 @@ Cannot find an implicit Coder instance for type:
 )
 sealed trait Coder[T] extends Serializable
 
-final private[scio] case class Singleton[T] private (typeName: String, constructor: () => T)
+final private[scio] case class Singleton[T] private (typeName: String, supply: () => T)
     extends Coder[T] {
   override def toString: String = s"Singleton[$typeName]"
 }
@@ -134,9 +134,9 @@ final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extend
 ///////////////////////////////////////////////////////////////////////////////
 final private class SingletonCoder[T](
   val typeName: String,
-  constructor: () => T
+  supply: () => T
 ) extends CustomCoder[T] {
-  private lazy val singleton = constructor()
+  private lazy val singleton = supply()
 
   override def toString: String = s"SingletonCoder[$typeName]"
 
@@ -389,9 +389,9 @@ final private[scio] class TransformCoder[T, U](
   override def verifyDeterministic(): Unit =
     bcoder.verifyDeterministic()
 
-// We can't guarantee this
-//  override def consistentWithEquals(): Boolean =
-//    bcoder.consistentWithEquals()
+  // Here we make the assumption that mapping functions are idempotent
+  override def consistentWithEquals(): Boolean =
+    bcoder.consistentWithEquals()
 
   override def structuralValue(value: T): AnyRef =
     bcoder.structuralValue(to(value))

@@ -79,8 +79,8 @@ object CoderMaterializer {
         beamImpl(o, from(underlying), refs)
       case Transform(typeName, c, t, f) =>
         new TransformCoder(typeName, beamImpl(o, c, refs), t, f)
-      case Singleton(typeName, constructor) =>
-        new SingletonCoder(typeName, constructor)
+      case Singleton(typeName, supply) =>
+        new SingletonCoder(typeName, supply)
       case Record(typeName, coders, construct, destruct) =>
         new RecordCoder(
           typeName,
