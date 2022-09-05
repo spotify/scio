@@ -42,26 +42,25 @@ trait LowPriorityCoderDerivation {
   type Typeclass[T] = Coder[T]
 
   def join[T: ClassTag](ctx: CaseClass[Coder, T]): Coder[T] = {
+    val typeName = ctx.typeName.full
+    // calling patched rawConstruct on empty object should work
+    val emptyCtx = ClosureCleaner
+      .instantiateClass(ctx.getClass)
+      .asInstanceOf[CaseClass[Coder, T]]
     if (ctx.isValueClass) {
       val p = ctx.parameters.head
       Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
-        v => ctx.rawConstruct(Seq(v)),
+        v => emptyCtx.rawConstruct(Seq(v)),
         p.dereference
       )
     } else if (ctx.isObject) {
-      Coder.singleton(ctx.rawConstruct(Seq.empty))
+      Coder.singleton(typeName, () => emptyCtx.rawConstruct(Seq.empty))
     } else {
-      val typeName = ctx.typeName.full
       Coder.ref(typeName) {
         val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
         ctx.parameters.foreach { p =>
           cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
         }
-
-        // calling patched rawConstruct on empty object should work
-        val emptyCtx = ClosureCleaner
-          .instantiateClass(ctx.getClass)
-          .asInstanceOf[CaseClass[Coder, T]]
 
         Coder.record[T](typeName, cs)(
           emptyCtx.rawConstruct,

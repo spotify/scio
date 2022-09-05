@@ -22,11 +22,11 @@ import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.instances._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{Coder => BCoder, StructuredCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder, StructuredCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
-import java.util.{Arrays => JArrays, Collections, List => JList}
+import java.util.{Arrays => JArrays, Collections, List => JList, Objects}
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._
@@ -65,6 +65,11 @@ Cannot find an implicit Coder instance for type:
 )
 sealed trait Coder[T] extends Serializable
 
+final private[scio] case class Singleton[T] private (typeName: String, constructor: () => T)
+    extends Coder[T] {
+  override def toString: String = s"Singleton[$typeName]"
+}
+
 // This should not be a case class. equality must be reference equality to detect recursive coders
 final private[scio] class Ref[T] private (val typeName: String, c: => Coder[T]) extends Coder[T] {
   def value: Coder[T] = c
@@ -82,19 +87,19 @@ final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T] {
   override def toString: String = s"Fallback[$ct]"
 }
 final case class BeamTransform[T, U] private (
-  ct: ClassTag[T],
+  typeName: String,
   c: Coder[U],
   f: BCoder[U] => Coder[T]
 ) extends Coder[T] {
-  override def toString: String = s"BeamTransform[$ct]($c)"
+  override def toString: String = s"BeamTransform[$typeName]($c)"
 }
 final case class Transform[T, U] private (
-  ct: ClassTag[T],
+  typeName: String,
   c: Coder[U],
   t: T => U,
   f: U => T
 ) extends Coder[T] {
-  override def toString: String = s"Transform[$ct]($c)"
+  override def toString: String = s"Transform[$typeName]($c)"
 }
 
 final case class Disjunction[T, Id] private (
@@ -127,19 +132,49 @@ final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extend
 ///////////////////////////////////////////////////////////////////////////////
 // Materialized beam coders
 ///////////////////////////////////////////////////////////////////////////////
+final private class SingletonCoder[T](
+  val typeName: String,
+  constructor: () => T
+) extends CustomCoder[T] {
+  private lazy val singleton = constructor()
 
-// id won't be compared for equality
+  override def toString: String = s"SingletonCoder[$typeName]"
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: SingletonCoder[_] => typeName == that.typeName
+    case _                       => false
+  }
+
+  override def hashCode(): Int = typeName.hashCode
+
+  override def encode(value: T, outStream: OutputStream): Unit = {}
+  override def decode(inStream: InputStream): T = singleton
+  override def verifyDeterministic(): Unit = {}
+  override def consistentWithEquals(): Boolean = true
+  override def isRegisterByteSizeObserverCheap(value: T): Boolean = true
+  override def getEncodedElementByteSize(value: T): Long = 0
+}
+
 final private class DisjunctionCoder[T, Id](
   val typeName: String,
   val idCoder: BCoder[Id],
   val coders: Map[Id, BCoder[T]],
   id: T => Id
-) extends StructuredCoder[T] {
+) extends CustomCoder[T] {
 
   override def toString: String = {
     val body = coders.map { case (id, coder) => s"$id -> $coder" }.mkString(", ")
     s"DisjunctionCoder[$typeName]($body)"
   }
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: DisjunctionCoder[_, _] =>
+      typeName == that.typeName && idCoder == that.idCoder && coders == that.coders
+    case _ =>
+      false
+  }
+
+  override def hashCode(): Int = Objects.hash(typeName, coders)
 
   def encode(value: T, os: OutputStream): Unit = {
     val i = id(value)
@@ -179,25 +214,31 @@ final private class DisjunctionCoder[T, Id](
     } else {
       coders(id(value)).structuralValue(value)
     }
-
-  override def getCoderArguments: JList[_ <: BCoder[_]] = coders.values.toList.asJava
 }
 
 // Coder used internally specifically for Magnolia derived coders.
 // It's technically possible to define Product coders only in terms of `Coder.transform`
 // This is just faster
-// construct & destruct won't be compared for equality
 final private[scio] class RecordCoder[T](
   val typeName: String,
-  val cs: Array[(String, BCoder[Any])],
+  val cs: IndexedSeq[(String, BCoder[Any])],
   construct: Seq[Any] => T,
   destruct: T => IndexedSeq[Any]
-) extends StructuredCoder[T] {
+) extends CustomCoder[T] {
 
   override def toString: String = {
     val body = cs.map { case (l, c) => s"$l -> $c" }.mkString(", ")
     s"RecordCoder[$typeName]($body)"
   }
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: RecordCoder[_] =>
+      typeName == that.typeName && cs == that.cs
+    case _ =>
+      false
+  }
+
+  override def hashCode(): Int = Objects.hash(typeName, cs)
 
   @inline def onErrorMsg[A](msg: => String)(f: => A): A =
     try {
@@ -269,7 +310,9 @@ final private[scio] class RecordCoder[T](
       while (idx < cs.length) {
         val (l, c) = cs(idx)
         val v = vs(idx)
-        val sv = onErrorMsg(s"Exception while trying to `encode` field $l with value $v") {
+        val sv = onErrorMsg(
+          s"Exception while trying compute `structuralValue` for field $l with value $v"
+        ) {
           c.structuralValue(v)
         }
         svs.update(idx, sv)
@@ -302,59 +345,88 @@ final private[scio] class RecordCoder[T](
       idx += 1
     }
   }
-
-  override def getCoderArguments: JList[_ <: BCoder[_]] = cs.map(_._2).toList.asJava
-}
-
-// Here we abuse the StructuredCoder instead of using CustomCoder as done in beam's DelegateCoder:
-// Any DelegatingCoder sub-classes of the same type with same underlying bcoder will be considered as equal
-// We also assume that the from and to implementations won't infer with consistentWithEquals which may not be the case
-sealed abstract private[scio] class DelegatingCoder[T, U] extends StructuredCoder[T] {
-
-  def bcoder: BCoder[U]
-
-  def to(v: T): U
-
-  def from(v: U): T
-
-  override def getCoderArguments: JList[_ <: BCoder[_]] =
-    Collections.singletonList(bcoder)
-
-  override def encode(value: T, os: OutputStream): Unit =
-    bcoder.encode(to(value), os)
-  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
-    bcoder.encode(to(value), os, context)
-  override def decode(is: InputStream): T =
-    from(bcoder.decode(is))
-  override def decode(is: InputStream, context: BCoder.Context): T =
-    from(bcoder.decode(is, context))
-  override def verifyDeterministic(): Unit =
-    bcoder.verifyDeterministic()
-  override def consistentWithEquals(): Boolean =
-    bcoder.consistentWithEquals()
-  override def structuralValue(value: T): AnyRef =
-    bcoder.structuralValue(to(value))
-  override def isRegisterByteSizeObserverCheap(value: T): Boolean =
-    bcoder.isRegisterByteSizeObserverCheap(to(value))
-  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit =
-    bcoder.registerByteSizeObserver(to(value), observer)
 }
 
 final private[scio] class TransformCoder[T, U](
   val typeName: String,
   val bcoder: BCoder[U],
-  t: T => U,
-  f: U => T
-) extends DelegatingCoder[T, U] {
+  to: T => U,
+  from: U => T
+) extends CustomCoder[T] {
+
+  // save original functions hashCodes to be sure we uniquely identify TransformCoders after serialization
+  // on deserialization, those won't be recomputed even if the function objects aren't equal
+  private val toHash: Int = to.hashCode()
+  private val fromHash: Int = from.hashCode()
 
   override def toString: String = s"TransformCoder[$typeName]($bcoder)"
-  override def to(v: T): U = t(v)
-  override def from(v: U): T = f(v)
+
+  override def equals(obj: Any): Boolean = obj match {
+    case that: TransformCoder[_, _] =>
+      typeName == that.typeName && bcoder == that.bcoder && toHash == that.toHash && fromHash == that.fromHash
+    case _ =>
+      false
+  }
+
+  override def hashCode(): Int = Objects.hash(
+    typeName,
+    bcoder,
+    toHash: java.lang.Integer,
+    fromHash: java.lang.Integer
+  )
+  override def encode(value: T, os: OutputStream): Unit =
+    bcoder.encode(to(value), os)
+
+  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
+    bcoder.encode(to(value), os, context)
+
+  override def decode(is: InputStream): T =
+    from(bcoder.decode(is))
+
+  override def decode(is: InputStream, context: BCoder.Context): T =
+    from(bcoder.decode(is, context))
+
+  override def verifyDeterministic(): Unit =
+    bcoder.verifyDeterministic()
+
+// We can't guarantee this
+//  override def consistentWithEquals(): Boolean =
+//    bcoder.consistentWithEquals()
+
+  override def structuralValue(value: T): AnyRef =
+    bcoder.structuralValue(to(value))
+
+  override def isRegisterByteSizeObserverCheap(value: T): Boolean =
+    bcoder.isRegisterByteSizeObserverCheap(to(value))
+
+  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit =
+    bcoder.registerByteSizeObserver(to(value), observer)
 }
 
-sealed private[scio] trait WrappedCoder[T] extends DelegatingCoder[T, T] {
-  override def to(value: T): T = value
-  override def from(value: T): T = value
+sealed abstract private[scio] class WrappedCoder[T] extends StructuredCoder[T] {
+  def bcoder: BCoder[T]
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] =
+    Collections.singletonList(bcoder)
+
+  override def encode(value: T, os: OutputStream): Unit =
+    bcoder.encode(value, os)
+  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
+    bcoder.encode(value, os, context)
+  override def decode(is: InputStream): T =
+    bcoder.decode(is)
+  override def decode(is: InputStream, context: BCoder.Context): T =
+    bcoder.decode(is, context)
+  override def verifyDeterministic(): Unit =
+    bcoder.verifyDeterministic()
+  override def consistentWithEquals(): Boolean =
+    bcoder.consistentWithEquals()
+  override def structuralValue(value: T): AnyRef =
+    bcoder.structuralValue(value)
+  override def isRegisterByteSizeObserverCheap(value: T): Boolean =
+    bcoder.isRegisterByteSizeObserverCheap(value)
+  override def registerByteSizeObserver(value: T, observer: ElementByteSizeObserver): Unit =
+    bcoder.registerByteSizeObserver(value, observer)
 }
 
 final private[scio] class RefCoder[T](var bcoder: BCoder[T]) extends WrappedCoder[T] {
@@ -464,11 +536,11 @@ sealed trait CoderGrammar {
   def kryo[T](implicit ct: ClassTag[T]): Coder[T] =
     Fallback[T](ct)
 
-  def singleton[T](value: T)(implicit ct: ClassTag[T]): Coder[T] =
-    Transform[T, Unit](ct, ScalaCoders.unitCoder, _ => (), _ => value)
+  private[scio] def singleton[T](typeName: String, constructor: () => T): Coder[T] =
+    Singleton[T](typeName, constructor)
 
   def transform[U, T](c: Coder[U])(f: BCoder[U] => Coder[T])(implicit ct: ClassTag[T]): Coder[T] =
-    BeamTransform(ct, c, f)
+    BeamTransform(ct.runtimeClass.getName, c, f)
 
   private[scio] def ref[T](typeName: String)(value: => Coder[T]): Coder[T] =
     Ref(typeName, value)
@@ -501,7 +573,7 @@ sealed trait CoderGrammar {
    * of (Long, Long)
    */
   def xmap[U, T](c: Coder[U])(f: U => T, t: T => U)(implicit ct: ClassTag[T]): Coder[T] =
-    Transform(ct, c, t, f)
+    Transform(ct.runtimeClass.getName, c, t, f)
 }
 
 object Coder

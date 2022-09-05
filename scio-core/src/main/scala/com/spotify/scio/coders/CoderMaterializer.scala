@@ -77,8 +77,10 @@ object CoderMaterializer {
       case BeamTransform(_, coder, from) =>
         val underlying = beamImpl(o, coder, refs)
         beamImpl(o, from(underlying), refs)
-      case Transform(ct, c, t, f) =>
-        new TransformCoder(ct.runtimeClass.getName, beamImpl(o, c, refs), t, f)
+      case Transform(typeName, c, t, f) =>
+        new TransformCoder(typeName, beamImpl(o, c, refs), t, f)
+      case Singleton(typeName, constructor) =>
+        new SingletonCoder(typeName, constructor)
       case Record(typeName, coders, construct, destruct) =>
         new RecordCoder(
           typeName,

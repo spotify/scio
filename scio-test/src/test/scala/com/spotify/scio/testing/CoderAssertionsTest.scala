@@ -72,9 +72,15 @@ class CoderAssertionsTest extends AnyFlatSpec with Matchers {
     coderIsSerializable[Foo]
     coderIsSerializable(Coder[Foo])
 
-    // Inner class's Coder is serializable
+    // Inner class's Coder is not serializable
     case class InnerCaseClass(id: String)
-    coderIsSerializable[InnerCaseClass]
-    coderIsSerializable(Coder[InnerCaseClass])
+
+    an[TestFailedException] should be thrownBy {
+      coderIsSerializable[InnerCaseClass]
+    }
+
+    an[TestFailedException] should be thrownBy {
+      coderIsSerializable(Coder[InnerCaseClass])
+    }
   }
 }
