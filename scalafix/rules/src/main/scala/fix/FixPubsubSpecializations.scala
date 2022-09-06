@@ -48,42 +48,117 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
         }
       case a @ Term.Apply(fun, args)
           if fun.symbol.normalized.toString.startsWith(
-            "com.spotify.scio.pubsub.syntax.ScioContextSyntax.ScioContextOps."
+            "com.spotify.scio.pubsub.syntax.SCollectionSyntax.SCollectionPubsubOps."
           ) => {
-        val readparamsTopic = "(PubsubIO.ReadParam(PubsubIO.Topic))"
-        val readParamsSubs = "(PubsubIO.ReadParam(PubsubIO.Subscription))"
         fun match {
-          // sc.pubsubTopic[String](params)
-          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubTopic")), methodType) =>
-            methodCallForIOConfig(methodType.head).map(c =>
-              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic")
-            )
-          // sc.pubsubSubscription[String](params)
-          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubSubscription")), methodType) =>
-            methodCallForIOConfig(methodType.head).map(c =>
-              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs")
-            )
-          // sc.pubsubTopicWithAttributes[String](params)
-          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubTopicWithAttributes")), methodType) =>
-            methodCallForIOConfig(methodType.head, true).map(c =>
-              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic")
-            )
-          // sc.pubsubSubscriptionWithAttributes[String](params)
-          case Term.ApplyType(Term.Select(Term.Name(qual), Term.Name("pubsubSubscriptionWithAttributes")), methodType) =>
-            methodCallForIOConfig(methodType.head, true).map(c =>
-              Patch.replaceTree(a, s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs")
-            )
+          //scoll.saveAsPubsub("topic")
+          case Term.Select(qual, Term.Name(methodName))
+            if (methodName.startsWith("saveAsPubsub"))=>
+            val (methodArgs, writeParams) = splitWriteParams(args)
+            Patch.replaceTree(a, s"$qual.write(PubsubIO.string(${methodArgs.mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))")
+
+          //scoll.saveAsPubsubWithAttributes("topic")
+          case Term.ApplyType(qual, types @ List(Type.Name(_)))
+            if (qual.symbol.toString.contains("saveAsPubsubWithAttributes")) =>
+            val (methodArgs, writeParams) = splitWriteParams(args)
+            val scoll = qual.toString.split("\\.").head
+            methodCallForIOConfig(types.head)
+              .map(c => Patch.replaceTree(a, s"$scoll.write(PubsubIO.$c(${methodArgs.mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))"))
+              .getOrElse(
+                Patch.empty
+              )
+
           case _ =>
-            None
+            Patch.empty
         }
-      }.getOrElse(Patch.empty)
+      }
+
+      case a @ Term.Apply(fun, args)
+          if fun.symbol.normalized.toString.startsWith(
+            "com.spotify.scio.pubsub.syntax.ScioContextSyntax.ScioContextOps."
+          ) =>
+        {
+          val readparamsTopic = "(PubsubIO.ReadParam(PubsubIO.Topic))"
+          val readParamsSubs = "(PubsubIO.ReadParam(PubsubIO.Subscription))"
+          fun match {
+            // sc.pubsubTopic[String](params)
+            case Term.ApplyType(
+                  Term.Select(Term.Name(qual), Term.Name("pubsubTopic")),
+                  methodType
+                ) =>
+              methodCallForIOConfig(methodType.head).map(c =>
+                Patch.replaceTree(
+                  a,
+                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic"
+                )
+              )
+            // sc.pubsubSubscription[String](params)
+            case Term.ApplyType(
+                  Term.Select(Term.Name(qual), Term.Name("pubsubSubscription")),
+                  methodType
+                ) =>
+              methodCallForIOConfig(methodType.head).map(c =>
+                Patch.replaceTree(
+                  a,
+                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs"
+                )
+              )
+            // sc.pubsubTopicWithAttributes[String](params)
+            case Term.ApplyType(
+                  Term.Select(Term.Name(qual), Term.Name("pubsubTopicWithAttributes")),
+                  methodType
+                ) =>
+              methodCallForIOConfig(methodType.head, true).map(c =>
+                Patch.replaceTree(
+                  a,
+                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic"
+                )
+              )
+            // sc.pubsubSubscriptionWithAttributes[String](params)
+            case Term.ApplyType(
+                  Term.Select(Term.Name(qual), Term.Name("pubsubSubscriptionWithAttributes")),
+                  methodType
+                ) =>
+              methodCallForIOConfig(methodType.head, true).map(c =>
+                Patch.replaceTree(
+                  a,
+                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs"
+                )
+              )
+            case _ =>
+              None
+          }
+        }.getOrElse(Patch.empty)
       case _ =>
         Patch.empty
     }.asPatch
   }
 
+  private def splitWriteParams(args: List[Term]): (List[String], List[String]) =
+    args.zipWithIndex.foldLeft((List[String](), List[String]())) {
+      case ((ma, wp), (p, i)) =>
+        if (i == 0) {
+          (List(p.toString), List())
+        } else if (
+          p.toString.contains("=") && (
+            p.toString.startsWith("topic") ||
+              p.toString.startsWith("idAttribute") ||
+              p.toString.startsWith("timestampAttribute")
+            )
+        ) {
+          (ma :+ p.toString, wp)
+        } else if (p.toString.contains("=") && p.toString.startsWith("maxBatch")) {
+          (ma, wp :+ p.toString)
+        } else if (i > 2) {
+          (ma, wp :+ p.toString)
+        } else {
+          (ma :+ p.toString, wp)
+        }
+    }
+
   private def methodCallForIOConfig(termType: scala.meta.Type, withAtt: Boolean = false)(implicit
-                                                                                 doc: SemanticDocument): Option[String] =
+    doc: SemanticDocument
+  ): Option[String] =
     if (isSubOfType(termType.symbol, "org/apache/avro/specific/SpecificRecordBase#")) {
       if (withAtt) Some(s"withAttributes[${termType}]") else Some(s"avro[${termType}]")
     } else if (isSubOfType(termType.symbol, "com/google/protobuf/Message#")) {

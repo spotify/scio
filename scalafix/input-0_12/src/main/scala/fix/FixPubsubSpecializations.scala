@@ -6,6 +6,8 @@ package v0_12_0
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.pubsub._
+import com.spotify.scio.values.SCollection
+import org.apache.avro.generic.GenericRecord
 
 object FixPubsubSpecializations {
   type MessageDummy = com.google.protobuf.DynamicMessage
@@ -109,4 +111,33 @@ object FixPubsubSpecializations {
 
   def readStringNamedParams(): Unit =
     PubsubIO.readString(name = "theName", timestampAttribute = "idAtt", idAttribute = "timestampAtt")
+
+  def writePubSub(scoll: SCollection[GenericRecord]): Unit = {
+    val pubsubProjectId = "pubsubProjectId"
+    scoll.saveAsPubsub("projects/" + pubsubProjectId + "/topics/xxx")
+  }
+
+  def writePubSubAllArgs(scoll: SCollection[GenericRecord]): Unit = {
+    scoll.saveAsPubsub("Topic", "TdAttribute", "TimestampAttribute", Some(1), Some(2))
+  }
+
+  def writePubSubSomeArgsNamed(scoll: SCollection[GenericRecord]): Unit = {
+    scoll.saveAsPubsub("topic", "IdAttribute", maxBatchBytesSize = Some(1), timestampAttribute = "TimestampAttribute")
+  }
+
+  def writePubSubWithAttributes(scoll: SCollection[(String, Map[String, String])]): Unit = {
+    scoll.saveAsPubsubWithAttributes("topic")
+  }
+
+  def writePubSubWithAttributesTyped(scoll: SCollection[(MessageDummy, Map[String, String])]): Unit = {
+    scoll.saveAsPubsubWithAttributes[MessageDummy]("topic")
+  }
+
+  def writePubSubWithAttributesTypedWithAllArgs(scoll: SCollection[(MessageDummy, Map[String, String])]): Unit = {
+    scoll.saveAsPubsubWithAttributes[MessageDummy]("topic", "IdAttribute", "TimestampAttribute", Some(1), Some(2))
+  }
+
+  def writePubSubWithAttributesTypedWithSomeArgsNamed(scoll: SCollection[(PubSubMessageDummy, Map[String, String])]): Unit = {
+    scoll.saveAsPubsubWithAttributes[PubSubMessageDummy]("topic", "IdAttribute", maxBatchBytesSize = Some(1), timestampAttribute = "TimestampAttribute")
+  }
 }

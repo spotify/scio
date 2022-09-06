@@ -3,6 +3,8 @@ package v0_12_0
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.pubsub._
+import com.spotify.scio.values.SCollection
+import org.apache.avro.generic.GenericRecord
 
 object FixPubsubSpecializations {
   type MessageDummy = com.google.protobuf.DynamicMessage
@@ -106,4 +108,33 @@ object FixPubsubSpecializations {
 
   def readStringNamedParams(): Unit =
     PubsubIO.string(name = "theName", timestampAttribute = "idAtt", idAttribute = "timestampAtt")
+
+  def writePubSub(scoll: SCollection[GenericRecord]): Unit = {
+    val pubsubProjectId = "pubsubProjectId"
+    scoll.write(PubsubIO.string("projects/" + pubsubProjectId + "/topics/xxx"))(PubsubIO.WriteParam())
+  }
+
+  def writePubSubAllArgs(scoll: SCollection[GenericRecord]): Unit = {
+    scoll.write(PubsubIO.string("Topic", "TdAttribute", "TimestampAttribute"))(PubsubIO.WriteParam(Some(1), Some(2)))
+  }
+
+  def writePubSubSomeArgsNamed(scoll: SCollection[GenericRecord]): Unit = {
+    scoll.write(PubsubIO.string("topic", "IdAttribute", timestampAttribute = "TimestampAttribute"))(PubsubIO.WriteParam(maxBatchBytesSize = Some(1)))
+  }
+
+  def writePubSubWithAttributes(scoll: SCollection[(String, Map[String, String])]): Unit = {
+    scoll.write(PubsubIO.string("topic"))(PubsubIO.WriteParam())
+  }
+
+  def writePubSubWithAttributesTyped(scoll: SCollection[(MessageDummy, Map[String, String])]): Unit = {
+    scoll.write(PubsubIO.proto[MessageDummy]("topic"))(PubsubIO.WriteParam())
+  }
+
+  def writePubSubWithAttributesTypedWithAllArgs(scoll: SCollection[(MessageDummy, Map[String, String])]): Unit = {
+    scoll.write(PubsubIO.proto[MessageDummy]("topic", "IdAttribute", "TimestampAttribute"))(PubsubIO.WriteParam(Some(1), Some(2)))
+  }
+
+  def writePubSubWithAttributesTypedWithSomeArgsNamed(scoll: SCollection[(PubSubMessageDummy, Map[String, String])]): Unit = {
+    scoll.write(PubsubIO.pubsub[PubSubMessageDummy]("topic", "IdAttribute", timestampAttribute = "TimestampAttribute"))(PubsubIO.WriteParam(maxBatchBytesSize = Some(1)))
+  }
 }
