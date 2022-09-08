@@ -112,21 +112,21 @@ object FixPubsubSpecializations {
   def readStringNamedParams(): Unit =
     PubsubIO.readString(name = "theName", timestampAttribute = "idAtt", idAttribute = "timestampAtt")
 
-  def writePubSub(scoll: SCollection[GenericRecord]): Unit = {
+  def writePubSub(scoll: SCollection[String]): Unit = {
     val pubsubProjectId = "pubsubProjectId"
     scoll.saveAsPubsub("projects/" + pubsubProjectId + "/topics/xxx")
   }
 
-  def writePubSubAllArgs(scoll: SCollection[GenericRecord]): Unit = {
+  def writePubSubAllArgs(scoll: SCollection[SpecificRecordDummy]): Unit = {
     scoll.saveAsPubsub("Topic", "TdAttribute", "TimestampAttribute", Some(1), Some(2))
   }
 
-  def writePubSubSomeArgsNamed(scoll: SCollection[GenericRecord]): Unit = {
+  def writePubSubSomeArgsNamed(scoll: SCollection[SpecificRecordDummy]): Unit = {
     scoll.saveAsPubsub("topic", "IdAttribute", maxBatchBytesSize = Some(1), timestampAttribute = "TimestampAttribute")
   }
 
   def writePubSubWithAttributes(scoll: SCollection[(String, Map[String, String])]): Unit = {
-    scoll.saveAsPubsubWithAttributes("topic")
+    scoll.saveAsPubsubWithAttributes[String]("topic")
   }
 
   def writePubSubWithAttributesTyped(scoll: SCollection[(MessageDummy, Map[String, String])]): Unit = {

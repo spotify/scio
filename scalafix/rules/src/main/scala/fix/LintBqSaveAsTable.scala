@@ -17,7 +17,7 @@ class LintBqSaveAsTable extends SemanticRule("LintBqSaveAsTable") {
   }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case _@Term.Apply(fun, _ :: tail) =>
+    doc.tree.collect { case Term.Apply(fun, _ :: tail) =>
       fun match {
         case Term.Select(qual, name) =>
           name match {

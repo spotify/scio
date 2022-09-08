@@ -16,15 +16,14 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
           // PubsubIO[T < SpecificRecordBase](params)
           case Term.ApplyType(qual, types @ List(Type.Name(_)))
               if isSubOfType(qual.symbol, pubSubIOPath) =>
-
-            methodCallForIOConfig(types.head)
+            methodCallForIOConfig(types.head.symbol, types.head.toString)
               .map(c => Patch.replaceTree(a, s"$qual.$c(${args.mkString(", ")})"))
               .getOrElse(
                 Patch.empty
               )
 
           // PubsubIO.readAvro(params)
-          case Term.ApplyType(Term.Select(qual, Term.Name(methodName)), methodType)
+          case Term.ApplyType(Term.Select(qual, Term.Name(methodName)), methodType :: _)
               if isSubOfType(qual.symbol, pubSubIOPath) =>
             (
               methodName match {
@@ -35,7 +34,7 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
                 case _            => None
               }
             ).map(name =>
-              Patch.replaceTree(a, s"$qual.$name[${methodType.head}](${args.mkString(", ")})")
+              Patch.replaceTree(a, s"$qual.$name[${methodType}](${args.mkString(", ")})")
             ).getOrElse(Patch.empty)
 
           // PubsubIO.readString(params)
@@ -51,19 +50,40 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
             "com.spotify.scio.pubsub.syntax.SCollectionSyntax.SCollectionPubsubOps."
           ) => {
         fun match {
-          //scoll.saveAsPubsub("topic")
-          case Term.Select(qual, Term.Name(methodName))
-            if (methodName.startsWith("saveAsPubsub"))=>
+          // scoll.saveAsPubsub("topic")
+          case Term.Select(qual, Term.Name(methodName)) if methodName.startsWith("saveAsPubsub") =>
+            val t = scollType(qual.symbol.info.get.signature)
             val (methodArgs, writeParams) = splitWriteParams(args)
-            Patch.replaceTree(a, s"$qual.write(PubsubIO.string(${methodArgs.mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))")
-
-          //scoll.saveAsPubsubWithAttributes("topic")
+            scollType(qual.symbol.info.get.signature)
+              .map(s =>
+                methodCallForIOConfig(s, s.displayName)
+                  .map(c =>
+                    Patch.replaceTree(
+                      a,
+                      s"$qual.write(PubsubIO.$c(${methodArgs
+                          .mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))"
+                    )
+                  )
+                  .getOrElse(
+                    Patch.empty
+                  )
+              )
+              .getOrElse(
+                Patch.empty
+              )
+          // scoll.saveAsPubsubWithAttributes("topic")
           case Term.ApplyType(qual, types @ List(Type.Name(_)))
-            if (qual.symbol.toString.contains("saveAsPubsubWithAttributes")) =>
+              if qual.symbol.toString.contains("saveAsPubsubWithAttributes") =>
             val (methodArgs, writeParams) = splitWriteParams(args)
             val scoll = qual.toString.split("\\.").head
-            methodCallForIOConfig(types.head)
-              .map(c => Patch.replaceTree(a, s"$scoll.write(PubsubIO.$c(${methodArgs.mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))"))
+            methodCallForIOConfig(types.head.symbol, types.head.toString)
+              .map(c =>
+                Patch.replaceTree(
+                  a,
+                  s"$scoll.write(PubsubIO.$c(${methodArgs
+                      .mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))"
+                )
+              )
               .getOrElse(
                 Patch.empty
               )
@@ -84,9 +104,9 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
             // sc.pubsubTopic[String](params)
             case Term.ApplyType(
                   Term.Select(Term.Name(qual), Term.Name("pubsubTopic")),
-                  methodType
+                  methodType :: _
                 ) =>
-              methodCallForIOConfig(methodType.head).map(c =>
+              methodCallForIOConfig(methodType.symbol, methodType.toString).map(c =>
                 Patch.replaceTree(
                   a,
                   s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic"
@@ -95,9 +115,9 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
             // sc.pubsubSubscription[String](params)
             case Term.ApplyType(
                   Term.Select(Term.Name(qual), Term.Name("pubsubSubscription")),
-                  methodType
+                  methodType :: _
                 ) =>
-              methodCallForIOConfig(methodType.head).map(c =>
+              methodCallForIOConfig(methodType.symbol, methodType.toString).map(c =>
                 Patch.replaceTree(
                   a,
                   s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs"
@@ -106,9 +126,9 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
             // sc.pubsubTopicWithAttributes[String](params)
             case Term.ApplyType(
                   Term.Select(Term.Name(qual), Term.Name("pubsubTopicWithAttributes")),
-                  methodType
+                  methodType :: _
                 ) =>
-              methodCallForIOConfig(methodType.head, true).map(c =>
+              methodCallForIOConfig(methodType.symbol, methodType.toString, true).map(c =>
                 Patch.replaceTree(
                   a,
                   s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic"
@@ -117,9 +137,9 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
             // sc.pubsubSubscriptionWithAttributes[String](params)
             case Term.ApplyType(
                   Term.Select(Term.Name(qual), Term.Name("pubsubSubscriptionWithAttributes")),
-                  methodType
+                  methodType :: _
                 ) =>
-              methodCallForIOConfig(methodType.head, true).map(c =>
+              methodCallForIOConfig(methodType.symbol, methodType.toString, true).map(c =>
                 Patch.replaceTree(
                   a,
                   s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs"
@@ -135,38 +155,39 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
   }
 
   private def splitWriteParams(args: List[Term]): (List[String], List[String]) =
-    args.zipWithIndex.foldLeft((List[String](), List[String]())) {
-      case ((ma, wp), (p, i)) =>
-        if (i == 0) {
-          (List(p.toString), List())
-        } else if (
-          p.toString.contains("=") && (
-            p.toString.startsWith("topic") ||
-              p.toString.startsWith("idAttribute") ||
-              p.toString.startsWith("timestampAttribute")
-            )
-        ) {
-          (ma :+ p.toString, wp)
-        } else if (p.toString.contains("=") && p.toString.startsWith("maxBatch")) {
-          (ma, wp :+ p.toString)
-        } else if (i > 2) {
-          (ma, wp :+ p.toString)
-        } else {
-          (ma :+ p.toString, wp)
-        }
+    args.zipWithIndex.foldLeft((List[String](), List[String]())) { case ((ma, wp), (p, i)) =>
+      if (i == 0) {
+        (List(p.toString), List())
+      } else if (
+        p.toString.contains("=") && (
+          p.toString.startsWith("topic") ||
+            p.toString.startsWith("idAttribute") ||
+            p.toString.startsWith("timestampAttribute")
+        )
+      ) {
+        (ma :+ p.toString, wp)
+      } else if (p.toString.contains("=") && p.toString.startsWith("maxBatch")) {
+        (ma, wp :+ p.toString)
+      } else if (i > 2) {
+        (ma, wp :+ p.toString)
+      } else {
+        (ma :+ p.toString, wp)
+      }
     }
 
-  private def methodCallForIOConfig(termType: scala.meta.Type, withAtt: Boolean = false)(implicit
-    doc: SemanticDocument
-  ): Option[String] =
-    if (isSubOfType(termType.symbol, "org/apache/avro/specific/SpecificRecordBase#")) {
-      if (withAtt) Some(s"withAttributes[${termType}]") else Some(s"avro[${termType}]")
-    } else if (isSubOfType(termType.symbol, "com/google/protobuf/Message#")) {
-      if (withAtt) Some(s"withAttributes[${termType}]") else Some(s"proto[${termType}]")
-    } else if (isSubOfType(termType.symbol, "org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage#")) {
-      if (withAtt) Some(s"withAttributes[${termType}]") else Some(s"pubsub[${termType}]")
-    } else if (isSubOfType(termType.symbol, "java/lang/String#")) {
-      if (withAtt) Some(s"withAttributes[${termType}]") else Some("string")
+  private def methodCallForIOConfig(
+    termType: Symbol,
+    methodName: String,
+    withAtt: Boolean = false
+  )(implicit doc: SemanticDocument): Option[String] =
+    if (isSubOfType(termType, "org/apache/avro/specific/SpecificRecordBase#")) {
+      if (withAtt) Some(s"withAttributes[$methodName]") else Some(s"avro[$methodName]")
+    } else if (isSubOfType(termType, "com/google/protobuf/Message#")) {
+      if (withAtt) Some(s"withAttributes[$methodName]") else Some(s"proto[$methodName]")
+    } else if (isSubOfType(termType, "org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage#")) {
+      if (withAtt) Some(s"withAttributes[$methodName]") else Some(s"pubsub[$methodName]")
+    } else if (isSubOfType(termType, "java/lang/String#")) {
+      if (withAtt) Some(s"withAttributes[$methodName]") else Some("string")
     } else {
       None
     }
@@ -191,4 +212,27 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
         Set()
     }
   }
+
+  private def scollType(signature: Signature)(implicit doc: SemanticDocument): Option[Symbol] = {
+    signature match {
+      case ValueSignature(AnnotatedType(_, TypeRef(_, _, TypeRef(_, t, _) :: _))) =>
+        Some(t)
+      case ValueSignature(TypeRef(_, _, TypeRef(_, t, _) :: _)) =>
+        Some(t)
+      case _ =>
+        None
+    }
+  }
+
+  private def ttt(qual: Symbol)(implicit doc: SemanticDocument): Option[Symbol] =
+    qual.info.get.signature match {
+      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
+        Some(typ)
+      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
+        Some(typ)
+      case ValueSignature(TypeRef(_, typ, _)) =>
+        Some(typ)
+      case t =>
+        None
+    }
 }

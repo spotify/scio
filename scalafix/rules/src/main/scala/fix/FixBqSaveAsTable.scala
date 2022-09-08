@@ -12,7 +12,7 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
       fun match {
         case Term.Select(qual, name) =>
           name match {
-            case _ @Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll)=>
+            case Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll)=>
               // the rest of args should be named because the parameter order has changed
               if (
                 tail.exists(!_.toString.contains("=")) ||
@@ -34,7 +34,7 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
               Patch.empty
           }
       }
-      case _ @ Importer(q"com.spotify.scio.extra.bigquery", imps) =>
+      case Importer(q"com.spotify.scio.extra.bigquery", imps) =>
         Patch.removeImportee(imps.head) +
           Patch.addGlobalImport(importer"com.spotify.scio.bigquery._")
     }.asPatch
