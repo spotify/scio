@@ -76,7 +76,7 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
               if qual.symbol.toString.contains("saveAsPubsubWithAttributes") =>
             val (methodArgs, writeParams) = splitWriteParams(args)
             val scoll = qual.toString.split("\\.").head
-            methodCallForIOConfig(types.head.symbol, types.head.toString)
+            methodCallForIOConfig(types.head.symbol, types.head.toString, withAtt = true)
               .map(c =>
                 Patch.replaceTree(
                   a,
@@ -177,17 +177,17 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
 
   private def methodCallForIOConfig(
     termType: Symbol,
-    methodName: String,
+    typeName: String,
     withAtt: Boolean = false
   )(implicit doc: SemanticDocument): Option[String] =
     if (isSubOfType(termType, "org/apache/avro/specific/SpecificRecordBase#")) {
-      if (withAtt) Some(s"withAttributes[$methodName]") else Some(s"avro[$methodName]")
+      if (withAtt) Some(s"withAttributes[$typeName]") else Some(s"avro[$typeName]")
     } else if (isSubOfType(termType, "com/google/protobuf/Message#")) {
-      if (withAtt) Some(s"withAttributes[$methodName]") else Some(s"proto[$methodName]")
+      if (withAtt) Some(s"withAttributes[$typeName]") else Some(s"proto[$typeName]")
     } else if (isSubOfType(termType, "org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage#")) {
-      if (withAtt) Some(s"withAttributes[$methodName]") else Some(s"pubsub[$methodName]")
+      if (withAtt) Some(s"withAttributes[$typeName]") else Some(s"pubsub[$typeName]")
     } else if (isSubOfType(termType, "java/lang/String#")) {
-      if (withAtt) Some(s"withAttributes[$methodName]") else Some("string")
+      if (withAtt) Some(s"withAttributes[$typeName]") else Some("string")
     } else {
       None
     }

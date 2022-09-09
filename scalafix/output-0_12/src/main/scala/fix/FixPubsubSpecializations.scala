@@ -123,18 +123,18 @@ object FixPubsubSpecializations {
   }
 
   def writePubSubWithAttributes(scoll: SCollection[(String, Map[String, String])]): Unit = {
-    scoll.write(PubsubIO.string("topic"))(PubsubIO.WriteParam())
+    scoll.write(PubsubIO.withAttributes[String]("topic"))(PubsubIO.WriteParam())
   }
 
   def writePubSubWithAttributesTyped(scoll: SCollection[(MessageDummy, Map[String, String])]): Unit = {
-    scoll.write(PubsubIO.proto[MessageDummy]("topic"))(PubsubIO.WriteParam())
+    scoll.write(PubsubIO.withAttributes[MessageDummy]("topic"))(PubsubIO.WriteParam())
   }
 
   def writePubSubWithAttributesTypedWithAllArgs(scoll: SCollection[(MessageDummy, Map[String, String])]): Unit = {
-    scoll.write(PubsubIO.proto[MessageDummy]("topic", "IdAttribute", "TimestampAttribute"))(PubsubIO.WriteParam(Some(1), Some(2)))
+    scoll.write(PubsubIO.withAttributes[MessageDummy]("topic", "IdAttribute", "TimestampAttribute"))(PubsubIO.WriteParam(Some(1), Some(2)))
   }
 
   def writePubSubWithAttributesTypedWithSomeArgsNamed(scoll: SCollection[(PubSubMessageDummy, Map[String, String])]): Unit = {
-    scoll.write(PubsubIO.pubsub[PubSubMessageDummy]("topic", "IdAttribute", timestampAttribute = "TimestampAttribute"))(PubsubIO.WriteParam(maxBatchBytesSize = Some(1)))
+    scoll.write(PubsubIO.withAttributes[PubSubMessageDummy]("topic", "IdAttribute", timestampAttribute = "TimestampAttribute"))(PubsubIO.WriteParam(maxBatchBytesSize = Some(1)))
   }
 }
