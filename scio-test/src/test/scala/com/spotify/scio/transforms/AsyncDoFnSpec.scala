@@ -18,20 +18,19 @@
 package com.spotify.scio.transforms
 
 import java.util.concurrent.CompletableFuture
-
 import com.google.common.util.concurrent.{ListenableFuture, SettableFuture}
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.options.PipelineOptions
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import org.apache.beam.sdk.values.{PCollectionView, TupleTag}
-import org.joda.time.Instant
+import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow
+import org.apache.beam.sdk.values.TupleTag
+import org.joda.time.{DateTime, Instant}
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck._
 import org.scalacheck.commands.Commands
 
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.{Future, Promise}
-
 import scala.util.Try
 
 object AsyncDoFnSpec extends Properties("AsyncDoFn") {
@@ -186,21 +185,6 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
     f
   }
 
-  private val processContext = new fn.ProcessContext {
-    override def getPipelineOptions: PipelineOptions = ???
-    override def sideInput[T](view: PCollectionView[T]): T = ???
-    override def pane(): PaneInfo = ???
-    override def output[T](tag: TupleTag[T], output: T): Unit = ???
-    override def outputWithTimestamp(output: String, timestamp: Instant): Unit =
-      ???
-    override def outputWithTimestamp[T](tag: TupleTag[T], output: T, timestamp: Instant): Unit = ???
-
-    // test input
-    override def timestamp(): Instant = new Instant(nextElement)
-    override def element(): Int = nextElement
-    override def output(output: String): Unit = outputBuffer.append(output)
-  }
-
   private val finishBundleContext = new fn.FinishBundleContext {
     override def getPipelineOptions: PipelineOptions = ???
     override def output[T](
@@ -215,7 +199,14 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
   // make a new request
   override def request(): Unit = {
-    fn.processElement(processContext, null)
+    val input: Int = nextElement
+    val timestamp = DateTime.parse("2022-08-31").toInstant
+    val outputReceiver = new OutputReceiver[String] {
+      override def output(output: String): Unit = outputBuffer.append(output)
+      override def outputWithTimestamp(output: String, timestamp: Instant): Unit = ???
+    }
+    val window: BoundedWindow = null
+    fn.processElement(input, timestamp, outputReceiver, window)
     nextElement += 1
   }
 

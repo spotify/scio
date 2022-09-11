@@ -37,6 +37,10 @@ private[scio] object FunctionsWithSideOutput {
   def mapFn[T, U](f: (T, SideOutputContext[T]) => U): DoFn[T, U] =
     new SideOutputFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
+
+      /*
+       * ProcessContext is required as an argument because it is passed to SideOutputContext
+       * */
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
         c.output(g(c.element(), sideOutputContext(c)))
@@ -45,6 +49,10 @@ private[scio] object FunctionsWithSideOutput {
   def flatMapFn[T, U](f: (T, SideOutputContext[T]) => TraversableOnce[U]): DoFn[T, U] =
     new SideOutputFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
+
+      /*
+       * ProcessContext is required as an argument because it is passed to SideOutputContext
+       * */
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
         val i = g(c.element(), sideOutputContext(c)).toIterator

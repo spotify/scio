@@ -105,6 +105,9 @@ class SCollectionWithSideInput[T] private[values] (
       new SideInputDoFn[T, T] {
         val g = ClosureCleaner.clean(f) // defeat closure
 
+        /*
+         * ProcessContext is required as an argument because it is passed to SideInputContext
+         * */
         @ProcessElement
         private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit = {
           val elem = c.element()

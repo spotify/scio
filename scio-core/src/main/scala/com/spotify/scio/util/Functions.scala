@@ -19,7 +19,6 @@ package com.spotify.scio.util
 
 import java.lang.{Iterable => JIterable}
 import java.util.{ArrayList => JArrayList, List => JList}
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -28,7 +27,7 @@ import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{Coder => BCoder, CoderRegistry}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.Combine.{CombineFn => BCombineFn}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
 import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFunction, SimpleFunction}
 
@@ -231,9 +230,12 @@ private[scio] object Functions {
     new NamedDoFn[T, U] {
       private[this] val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-        val i = g(c.element()).toIterator
-        while (i.hasNext) c.output(i.next())
+      private[scio] def processElement(
+        @Element element: T,
+        outputReceiver: OutputReceiver[U]
+      ): Unit = {
+        val i = g(element).iterator
+        while (i.hasNext) outputReceiver.output(i.next())
       }
     }
 
@@ -259,8 +261,8 @@ private[scio] object Functions {
   def mapFn[T, U](f: T => U): DoFn[T, U] = new NamedDoFn[T, U] {
     private[this] val g = ClosureCleaner.clean(f) // defeat closure
     @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      c.output(g(c.element()))
+    private[scio] def processElement(@Element element: T, outputReceiver: OutputReceiver[U]): Unit =
+      outputReceiver.output(g(element))
   }
 
   def partitionFn[T](f: T => Int): PartitionFn[T] =

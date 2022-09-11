@@ -205,8 +205,9 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) throws IOException {
-      final Iterator<MergedBucket> mergedBuckets = c.element().iterator();
+    public void processElement(@Element Iterable<MergedBucket> element,
+                               MultiOutputReceiver outputReceiver) throws IOException {
+      final Iterator<MergedBucket> mergedBuckets = element.iterator();
       final Map<BucketShardId, ResourceId> writtenBuckets = new HashMap<>();
 
       BucketMetadata<?, ?> bucketMetadata = null;
@@ -229,8 +230,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           writtenBuckets,
           dstFileAssignment,
           fileOperations,
-          bucketDst -> c.output(BUCKETS_TAG, bucketDst),
-          metadataDst -> c.output(METADATA_TAG, metadataDst),
+          bucketDst -> outputReceiver.get(BUCKETS_TAG).output(bucketDst),
+          metadataDst -> outputReceiver.get(METADATA_TAG).output(metadataDst),
           false); // Don't include null-key bucket in output
     }
   }
@@ -417,6 +418,16 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         OutputCollector<FinalValueT> outputCollector,
         BoundedWindow window);
 
+    protected CoGbkResultSchema coGbkResultSchema() {
+      return CoGbkResultSchema.of(
+          sources.stream()
+              .map(SortedBucketSource.BucketedInput::getTupleTag)
+              .collect(Collectors.toList()));
+    }
+
+    /*
+    * ProcessContext is required as an argument because it is passed to TransformWithSides
+    * .outputTransform where it is passed to externally provided function */
     @ProcessElement
     public void processElement(
         @Element BucketItem e,

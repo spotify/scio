@@ -38,6 +38,9 @@ abstract private[scio] class ParallelLimitedFn[T, U](maxDoFns: Int)
 
   def parallelProcessElement(x: DoFn[T, U]#ProcessContext): Unit
 
+  /*
+   * ProcessContext is required as an argument because it is passed to public via parallelProcessElement
+   * */
   @ProcessElement def processElement(x: DoFn[T, U]#ProcessContext): Unit = {
     val semaphore = getResource
     try {

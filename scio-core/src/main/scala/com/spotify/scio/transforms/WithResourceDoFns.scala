@@ -17,10 +17,8 @@
 package com.spotify.scio.transforms
 
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-
 import com.twitter.chill.ClosureCleaner
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 
 class CollectFnWithResource[T, U, R] private[transforms] (
   resource: => R,
@@ -34,9 +32,9 @@ class CollectFnWithResource[T, U, R] private[transforms] (
   val isDefined: ((R, T)) => Boolean = ClosureCleaner.clean(pfn.isDefinedAt) // defeat closure
   val g: PartialFunction[(R, T), U] = ClosureCleaner.clean(pfn)
   @ProcessElement
-  def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-    if (isDefined((getResource, c.element()))) {
-      c.output(g((getResource, c.element())))
+  def processElement(@Element element: T, outputReceiver: OutputReceiver[U]): Unit =
+    if (isDefined((getResource, element))) {
+      outputReceiver.output(g((getResource, element)))
     }
 }
 
@@ -52,8 +50,11 @@ class MapFnWithResource[T, U, R] private[transforms] (
   val g: (R, T) => U = ClosureCleaner.clean(f)
 
   @ProcessElement
-  def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-    c.output(g(getResource, c.element()))
+  def processElement(
+    @Element element: T,
+    outputReceiver: OutputReceiver[U]
+  ): Unit =
+    outputReceiver.output(g(getResource, element))
 }
 
 class FlatMapFnWithResource[T, U, R] private[transforms] (
@@ -67,9 +68,12 @@ class FlatMapFnWithResource[T, U, R] private[transforms] (
 
   val g: (R, T) => TraversableOnce[U] = ClosureCleaner.clean(f)
   @ProcessElement
-  def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-    val i = g(getResource, c.element()).toIterator
-    while (i.hasNext) c.output(i.next())
+  def processElement(
+    @Element element: T,
+    outputReceiver: OutputReceiver[U]
+  ): Unit = {
+    val i = g(getResource, element).iterator
+    while (i.hasNext) outputReceiver.output(i.next())
   }
 }
 
@@ -84,8 +88,8 @@ class FilterFnWithResource[T, R] private[transforms] (
 
   val g: (R, T) => Boolean = ClosureCleaner.clean(f)
   @ProcessElement
-  def processElement(c: DoFn[T, T]#ProcessContext): Unit =
-    if (g(getResource, c.element())) {
-      c.output(c.element())
+  def processElement(@Element element: T, outputReceiver: OutputReceiver[T]): Unit =
+    if (g(getResource, element)) {
+      outputReceiver.output(element)
     }
 }

@@ -19,9 +19,10 @@ package com.spotify.scio.util
 
 import com.spotify.scio.values.WindowedValue
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import com.twitter.chill.ClosureCleaner
+import org.joda.time.Instant
 
 private[scio] object FunctionsWithWindowedValue {
   def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] =
@@ -29,11 +30,14 @@ private[scio] object FunctionsWithWindowedValue {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(
-        c: DoFn[T, T]#ProcessContext,
+        @Element element: T,
+        @Timestamp timestamp: Instant,
+        outputReceiver: OutputReceiver[T],
+        pane: PaneInfo,
         window: BoundedWindow
       ): Unit = {
-        val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
-        if (g(wv)) c.output(c.element())
+        val wv = WindowedValue(element, timestamp, window, pane)
+        if (g(wv)) outputReceiver.output(element)
       }
     }
 
@@ -42,14 +46,17 @@ private[scio] object FunctionsWithWindowedValue {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(
-        c: DoFn[T, U]#ProcessContext,
+        @Element element: T,
+        @Timestamp timestamp: Instant,
+        outputReceiver: OutputReceiver[U],
+        pane: PaneInfo,
         window: BoundedWindow
       ): Unit = {
-        val wv = WindowedValue(c.element(), c.timestamp(), window, c.pane())
-        val i = g(wv).toIterator
+        val wv = WindowedValue(element, timestamp, window, pane)
+        val i = g(wv).iterator
         while (i.hasNext) {
           val v = i.next()
-          c.outputWithTimestamp(v.value, v.timestamp)
+          outputReceiver.outputWithTimestamp(v.value, v.timestamp)
         }
       }
     }
@@ -59,11 +66,14 @@ private[scio] object FunctionsWithWindowedValue {
       val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
       private[scio] def processElement(
-        c: DoFn[T, U]#ProcessContext,
+        @Element element: T,
+        @Timestamp timestamp: Instant,
+        outputReceiver: OutputReceiver[U],
+        pane: PaneInfo,
         window: BoundedWindow
       ): Unit = {
-        val wv = g(WindowedValue(c.element(), c.timestamp(), window, c.pane()))
-        c.outputWithTimestamp(wv.value, wv.timestamp)
+        val wv = g(WindowedValue(element, timestamp, window, pane))
+        outputReceiver.outputWithTimestamp(wv.value, wv.timestamp)
       }
     }
 }
