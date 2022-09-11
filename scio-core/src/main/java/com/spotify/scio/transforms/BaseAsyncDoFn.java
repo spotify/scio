@@ -67,17 +67,20 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c, BoundedWindow window) {
-    flush(c);
+  public void processElement(@Element InputT element,
+                             @Timestamp Instant timestamp,
+                             OutputReceiver<OutputT> outputReceiver,
+                             BoundedWindow window) {
+    flush(outputReceiver);
 
     final UUID uuid = UUID.randomUUID();
     futures.computeIfAbsent(
         uuid,
         key ->
             addCallback(
-                processElement(c.element()),
+                processElement(element),
                 r -> {
-                  results.add(new Result(r, key, c.timestamp(), window));
+                  results.add(new Result(r, key, timestamp, window));
                   return null;
                 },
                 t -> {
@@ -86,7 +89,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
                 }));
   }
 
-  private void flush(ProcessContext c) {
+  private void flush(OutputReceiver<OutputT> outputReceiver) {
     if (!errors.isEmpty()) {
       RuntimeException e = new RuntimeException("Failed to process futures");
       Throwable t = errors.poll();
@@ -98,7 +101,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     }
     Result r = results.poll();
     while (r != null) {
-      c.output(r.output);
+      outputReceiver.output(r.output);
       futures.remove(r.futureUuid);
       r = results.poll();
     }
