@@ -418,7 +418,7 @@ def bq: BigQuery = ???
 
 def tornadoes = bq.getTypedRows[Row]()
 
-def result = tornadoes.next.month
+def result = tornadoes.next().month
 
 def write = bq.writeTypedRows("project-id:dataset-id.table-id", tornadoes.take(100).toList)
 ```
@@ -437,7 +437,7 @@ def sc: ScioContext = ???
 ```scala mdoc
 def closedTap: ClosedTap[String] = ???
 
-def result = sc.run().waitUntilDone().tap(closedTap).value.next
+def result = sc.run().waitUntilDone().tap(closedTap).value.next()
 // Exception in thread "main"
 // Exception: java.lang.OutOfMemoryError thrown from the UncaughtExceptionHandler in thread "main"
 ```

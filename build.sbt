@@ -1205,7 +1205,7 @@ lazy val site: Project = project
     `scio-google-cloud-platform`,
     `scio-parquet`,
     `scio-smb`,
-    `scio-test`,
+    `scio-test` % "compile->test",
     `scio-extra`
   )
 
