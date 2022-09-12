@@ -37,7 +37,7 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     clientFactory: Channel => Client,
     maxPendingRequests: Int
   )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
-    implicit val requestCoder: Coder[Request] = self.coder
+    import self.coder
     val uncurried = (c: Client, r: Request) => f(c)(r)
     self
       .parDo(
@@ -60,7 +60,7 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
   )(
     f: Client => (Request, StreamObserver[Response]) => Unit
   ): SCollection[(Request, Try[Iterable[Response]])] = {
-    implicit val requestCoder: Coder[Request] = self.coder
+    import self.coder
     val uncurried = (client: Client, request: Request) => {
       val observer = new StreamObservableFuture[Response]()
       f(client)(request, observer)
