@@ -67,7 +67,6 @@ You can also read Avro generic records by specifying a reader schema.
 import com.spotify.scio._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
-import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
 object ParquetJob {
