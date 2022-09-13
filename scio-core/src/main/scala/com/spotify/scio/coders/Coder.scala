@@ -86,12 +86,12 @@ final case class Beam[T] private (beam: BCoder[T]) extends Coder[T]
 final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T] {
   override def toString: String = s"Fallback[$ct]"
 }
-final case class BeamTransform[T, U] private (
+final case class CoderTransform[T, U] private (
   typeName: String,
   c: Coder[U],
   f: BCoder[U] => Coder[T]
 ) extends Coder[T] {
-  override def toString: String = s"BeamTransform[$typeName]($c)"
+  override def toString: String = s"CoderTransform[$typeName]($c)"
 }
 final case class Transform[T, U] private (
   typeName: String,
@@ -540,7 +540,7 @@ sealed trait CoderGrammar {
     Singleton[T](typeName, constructor)
 
   def transform[U, T](c: Coder[U])(f: BCoder[U] => Coder[T])(implicit ct: ClassTag[T]): Coder[T] =
-    BeamTransform(ct.runtimeClass.getName, c, f)
+    CoderTransform(ct.runtimeClass.getName, c, f)
 
   private[scio] def ref[T](typeName: String)(value: => Coder[T]): Coder[T] =
     Ref(typeName, value)

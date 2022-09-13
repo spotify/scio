@@ -74,7 +74,7 @@ object CoderMaterializer {
         c
       case Fallback(_) =>
         new KryoAtomicCoder[T](o.kryo)
-      case BeamTransform(_, coder, from) =>
+      case CoderTransform(_, coder, from) =>
         val underlying = beamImpl(o, coder, refs)
         beamImpl(o, from(underlying), refs)
       case Transform(typeName, c, t, f) =>
