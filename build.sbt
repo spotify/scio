@@ -109,7 +109,7 @@ val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.6.2"
 val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.1.2"
-val magnolifyVersion = "0.5.0"
+val magnolifyVersion = "0.5.1"
 val metricsVersion = "3.2.6"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
@@ -869,7 +869,7 @@ lazy val `scio-neo4j`: Project = project
   .settings(
     description := "Scio add-on for Neo4J",
     libraryDependencies ++= Seq(
-      "com.spotify" %% "magnolify-neo4j" % "0.5.0+15-0c8cff87-SNAPSHOT",
+      "com.spotify" %% "magnolify-neo4j" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion,
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
