@@ -35,7 +35,7 @@ object Neo4jIO {
   final case class WriteParam(batchSize: Long = WriteParam.BeamDefaultBatchSize)
 
   implicit private def recordConverter(record: Record): Value =
-    Values.value(record.asMap(identity))
+    Values.value(record.asMap(identity[Value]))
 
   private[neo4j] val UnwindParameterRegex: Regex = """UNWIND \$(\w+)""".r.unanchored
 
