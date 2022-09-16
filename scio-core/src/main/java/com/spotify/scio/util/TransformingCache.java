@@ -46,6 +46,7 @@ public abstract class TransformingCache<K, U, V> extends ForwardingObject implem
 
   protected abstract U transformKey(K key);
 
+  @SuppressWarnings("unchecked")
   private Iterable<U> transformKeys(Iterable<?> keys) {
     return StreamSupport.stream(keys.spliterator(), false)
         .map(k -> (K) k)
@@ -55,6 +56,7 @@ public abstract class TransformingCache<K, U, V> extends ForwardingObject implem
 
   @CheckForNull
   @Override
+  @SuppressWarnings("unchecked")
   public V getIfPresent(Object key) {
     return delegate().getIfPresent(transformKey((K) key));
   }
@@ -83,6 +85,7 @@ public abstract class TransformingCache<K, U, V> extends ForwardingObject implem
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public void invalidate(Object key) {
     delegate().invalidate(transformKey((K) key));
   }
