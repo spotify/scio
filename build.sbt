@@ -194,6 +194,7 @@ lazy val mimaSettings = Def.settings(
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
 
+lazy val currentYear = java.time.LocalDate.now().getYear
 lazy val keepExistingHeader =
   HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
     override def apply(text: String, existingText: Option[String]): String =
@@ -207,7 +208,7 @@ lazy val keepExistingHeader =
 val commonSettings = Def
   .settings(
     organization := "com.spotify",
-    headerLicense := Some(HeaderLicense.ALv2("2020", "Spotify AB")),
+    headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
     scalaVersion := "2.13.8",
     crossScalaVersions := Seq("2.12.16", scalaVersion.value),

@@ -216,8 +216,9 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @ProcessElement
-    public void processElement(@Element Iterable<MergedBucket> element,
-                               MultiOutputReceiver outputReceiver) throws IOException {
+    public void processElement(
+        @Element Iterable<MergedBucket> element, MultiOutputReceiver outputReceiver)
+        throws IOException {
       final Iterator<MergedBucket> mergedBuckets = element.iterator();
       final Map<BucketShardId, ResourceId> writtenBuckets = new HashMap<>();
 
@@ -440,8 +441,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     /*
-    * ProcessContext is required as an argument because it is passed to TransformWithSides
-    * .outputTransform where it is passed to externally provided function */
+     * ProcessContext is required as an argument because it is passed to TransformWithSides
+     * .outputTransform where it is passed to externally provided function */
     @ProcessElement
     public void processElement(
         @Element BucketItem e,
