@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.apache.beam.sdk.extensions.smb
 
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}

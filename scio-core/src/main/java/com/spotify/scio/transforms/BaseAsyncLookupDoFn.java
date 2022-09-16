@@ -140,10 +140,11 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
 
   @SuppressWarnings("unchecked")
   @ProcessElement
-  public void processElement(@Element A input,
-                             @Timestamp Instant timestamp,
-                             OutputReceiver<KV<A, T>> outputReceiver,
-                             BoundedWindow window) {
+  public void processElement(
+      @Element A input,
+      @Timestamp Instant timestamp,
+      OutputReceiver<KV<A, T>> outputReceiver,
+      BoundedWindow window) {
     flush(r -> outputReceiver.output(KV.of(r.input, r.output)));
 
     // found in cache
@@ -170,8 +171,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
                         return null;
                       },
                       throwable -> {
-                        results.add(
-                            new Result(input, failure(throwable), key, timestamp, window));
+                        results.add(new Result(input, failure(throwable), key, timestamp, window));
                         return null;
                       }));
         } catch (Exception e) {
