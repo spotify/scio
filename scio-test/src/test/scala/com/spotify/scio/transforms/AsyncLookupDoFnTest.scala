@@ -277,8 +277,6 @@ class CallbackFailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, A
     )
 }
 
-class TestCacheSupplier extends CacheSupplier[Int, String, java.lang.Long] {
-  override def createCache(): Cache[java.lang.Long, String] =
-    CacheBuilder.newBuilder().build[java.lang.Long, String]()
-  override def getKey(input: Int): java.lang.Long = input.toLong
+class TestCacheSupplier extends CacheSupplier[Int, String] {
+  override def get(): Cache[Int, String] = CacheBuilder.newBuilder().build[Int, String]()
 }

@@ -55,6 +55,12 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
   }
 
   @Override
+  public ResourceType getResourceType() {
+    // gRPC stubs are thread safe, we can share the client per instance
+    return ResourceType.PER_INSTANCE;
+  }
+
+  @Override
   public ListenableFuture<ResponseT> asyncLookup(ClientT client, RequestT request) {
     return lookupFn.apply(client, request);
   }

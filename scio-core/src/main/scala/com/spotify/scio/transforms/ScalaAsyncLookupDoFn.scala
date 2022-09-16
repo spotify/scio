@@ -34,7 +34,7 @@ import scala.util.{Failure, Success, Try}
  */
 abstract class ScalaAsyncLookupDoFn[A, B, C](
   maxPendingRequests: Int,
-  cacheSupplier: CacheSupplier[A, B, _]
+  cacheSupplier: CacheSupplier[A, B]
 ) extends BaseAsyncLookupDoFn[A, B, C, Future[B], Try[B]](maxPendingRequests, cacheSupplier)
     with ScalaFutureHandlers[B] {
   def this() =

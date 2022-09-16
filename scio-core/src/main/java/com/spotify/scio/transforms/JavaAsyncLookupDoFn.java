@@ -55,8 +55,8 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
    *     and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> JavaAsyncLookupDoFn(
-      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public JavaAsyncLookupDoFn(
+      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
   }
 

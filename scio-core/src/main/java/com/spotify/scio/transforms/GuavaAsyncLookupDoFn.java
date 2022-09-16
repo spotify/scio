@@ -54,8 +54,8 @@ public abstract class GuavaAsyncLookupDoFn<A, B, C>
    *     and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> GuavaAsyncLookupDoFn(
-      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public GuavaAsyncLookupDoFn(
+      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
   }
 
