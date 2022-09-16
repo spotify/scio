@@ -67,10 +67,11 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   }
 
   @ProcessElement
-  public void processElement(@Element InputT element,
-                             @Timestamp Instant timestamp,
-                             OutputReceiver<OutputT> outputReceiver,
-                             BoundedWindow window) {
+  public void processElement(
+      @Element InputT element,
+      @Timestamp Instant timestamp,
+      OutputReceiver<OutputT> outputReceiver,
+      BoundedWindow window) {
     flush(outputReceiver);
 
     final UUID uuid = UUID.randomUUID();
