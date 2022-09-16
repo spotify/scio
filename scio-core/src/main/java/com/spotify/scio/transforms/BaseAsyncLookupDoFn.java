@@ -131,7 +131,6 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     return Pair.of(newClient(), cacheSupplier.get());
   }
 
-
   public C getResourceClient() {
     return getResource().getLeft();
   }
