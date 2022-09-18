@@ -37,7 +37,7 @@ jobs:
             java: 11
             coverage: true
         exclude:
-          - scala: 2.12.16
+          - scala: 2.12.17
             java: 8
   repl-test:
     runs-on: ubuntu-latest
