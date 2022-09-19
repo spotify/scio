@@ -422,10 +422,12 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(ProcessContext c) throws Exception {
+      public void processElement(
+          @Element T element,
+          OutputReceiver<KV<Long, T>> outputReceiver) throws Exception {
         // assign this element to a random shard
         final long shard = ThreadLocalRandom.current().nextLong(numOfShard);
-        c.output(KV.of(shard, c.element()));
+        outputReceiver.output(KV.of(shard, element));
       }
     }
 
@@ -487,9 +489,10 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(ProcessContext c) throws Exception {
-        final T t = c.element();
-        final Iterable<DocWriteRequest<?>> requests = toDocWriteRequests.apply(t);
+      public void processElement(
+          @Element T element
+      ) throws Exception {
+        final Iterable<DocWriteRequest<?>> requests = toDocWriteRequests.apply(element);
         for (DocWriteRequest request : requests) {
           long requestBytes = documentSize(request);
           if (currentSize < maxBulkRequestSize
@@ -561,8 +564,8 @@ public class ElasticsearchIO {
 
       @SuppressWarnings("Duplicates")
       @ProcessElement
-      public void processElement(ProcessContext c) throws Exception {
-        final Iterable<T> values = c.element().getValue();
+      public void processElement(@Element KV<Long, Iterable<T>> element) throws Exception {
+        final Iterable<T> values = element.getValue();
 
         // Elasticsearch throws ActionRequestValidationException if bulk request is empty,
         // so do nothing if number of actions is zero.

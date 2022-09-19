@@ -125,6 +125,10 @@ public class GameStats extends LeaderBoard {
                         private final Counter numSpammerUsers =
                             Metrics.counter("main", "SpammerUsers");
 
+                        /**
+                         * ProcessContext is required as an argument because its sideInput method
+                         * is used
+                         */
                         @ProcessElement
                         public void processElement(ProcessContext c) {
                           Integer score = c.element().getValue();
@@ -151,10 +155,10 @@ public class GameStats extends LeaderBoard {
   /** Calculate and output an element's session duration. */
   private static class UserSessionInfoFn extends DoFn<KV<String, Integer>, Integer> {
     @ProcessElement
-    public void processElement(ProcessContext c, BoundedWindow window) {
+    public void processElement(OutputReceiver<Integer> o, BoundedWindow window) {
       IntervalWindow w = (IntervalWindow) window;
       int duration = new Duration(w.start(), w.end()).toPeriod().toStandardMinutes().getMinutes();
-      c.output(duration);
+      o.output(duration);
     }
   }
 
@@ -291,6 +295,10 @@ public class GameStats extends LeaderBoard {
             "FilterOutSpammers",
             ParDo.of(
                     new DoFn<GameActionInfo, GameActionInfo>() {
+                      /**
+                       * ProcessContext is required as an argument because its sideInput method
+                       * is used
+                       * */
                       @ProcessElement
                       public void processElement(ProcessContext c) {
                         // If the user is not in the spammers Map, output the data element.

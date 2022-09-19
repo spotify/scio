@@ -164,12 +164,14 @@ public class TrafficRoutes {
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
     @ProcessElement
-    public void processElement(DoFn<String, String>.ProcessContext c) throws Exception {
-      String[] items = c.element().split(",");
+    public void processElement(
+        @Element String element,
+        OutputReceiver<String> o) throws Exception {
+      String[] items = element.split(",");
       String timestamp = tryParseTimestamp(items);
       if (timestamp != null) {
         try {
-          c.outputWithTimestamp(c.element(), new Instant(dateTimeFormat.parseMillis(timestamp)));
+          o.outputWithTimestamp(element, new Instant(dateTimeFormat.parseMillis(timestamp)));
         } catch (IllegalArgumentException e) {
           // Skip the invalid input.
         }
@@ -184,8 +186,11 @@ public class TrafficRoutes {
   static class ExtractStationSpeedFn extends DoFn<String, KV<String, StationSpeed>> {
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      String[] items = c.element().split(",");
+    public void processElement(
+        @Element String element,
+        @Timestamp Instant timestamp,
+        OutputReceiver<KV<String, StationSpeed>> o) {
+      String[] items = element.split(",");
       String stationType = tryParseStationType(items);
       // For this analysis, use only 'main line' station types
       if ("ML".equals(stationType)) {
@@ -194,10 +199,10 @@ public class TrafficRoutes {
         // For this simple example, filter out everything but some hardwired routes.
         if (avgSpeed != null && stationId != null && sdStations.containsKey(stationId)) {
           StationSpeed stationSpeed =
-              new StationSpeed(stationId, avgSpeed, c.timestamp().getMillis());
+              new StationSpeed(stationId, avgSpeed, timestamp.getMillis());
           // The tuple key is the 'route' name stored in the 'sdStations' hash.
           KV<String, StationSpeed> outputValue = KV.of(sdStations.get(stationId), stationSpeed);
-          c.output(outputValue);
+          o.output(outputValue);
         }
       }
     }
@@ -211,14 +216,16 @@ public class TrafficRoutes {
    */
   static class GatherStats extends DoFn<KV<String, Iterable<StationSpeed>>, KV<String, RouteInfo>> {
     @ProcessElement
-    public void processElement(ProcessContext c) throws IOException {
-      String route = c.element().getKey();
+    public void processElement(
+        @Element KV<String, Iterable<StationSpeed>> element,
+        OutputReceiver<KV<String, RouteInfo>> o) throws IOException {
+      String route = element.getKey();
       double speedSum = 0.0;
       int speedCount = 0;
       int speedups = 0;
       int slowdowns = 0;
       List<StationSpeed> infoList = new ArrayList<>();
-      c.element().getValue().forEach(infoList::add);
+      element.getValue().forEach(infoList::add);
       // StationSpeeds sort by embedded timestamp.
       Collections.sort(infoList);
       Map<String, Double> prevSpeeds = new HashMap<>();
@@ -246,22 +253,25 @@ public class TrafficRoutes {
       double speedAvg = speedSum / speedCount;
       boolean slowdownEvent = slowdowns >= 2 * speedups;
       RouteInfo routeInfo = new RouteInfo(route, speedAvg, slowdownEvent);
-      c.output(KV.of(route, routeInfo));
+      o.output(KV.of(route, routeInfo));
     }
   }
 
   /** Format the results of the slowdown calculations to a TableRow, to save to BigQuery. */
   static class FormatStatsFn extends DoFn<KV<String, RouteInfo>, TableRow> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      RouteInfo routeInfo = c.element().getValue();
+    public void processElement(
+        @Element KV<String, RouteInfo> element,
+        @Timestamp Instant timestamp,
+        OutputReceiver<TableRow> o) {
+      RouteInfo routeInfo = element.getValue();
       TableRow row =
           new TableRow()
               .set("avg_speed", routeInfo.getAvgSpeed())
               .set("slowdown_event", routeInfo.getSlowdownEvent())
-              .set("route", c.element().getKey())
-              .set("window_timestamp", c.timestamp().toString());
-      c.output(row);
+              .set("route", element.getKey())
+              .set("window_timestamp", timestamp.toString());
+      o.output(row);
     }
 
     /** Defines the BigQuery schema used for the output. */

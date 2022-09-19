@@ -200,9 +200,11 @@ public class StatefulTeamScore extends LeaderBoard {
      */
     @ProcessElement
     public void processElement(
-        ProcessContext c, @StateId(TOTAL_SCORE) ValueState<Integer> totalScore) {
-      String teamName = c.element().getKey();
-      GameActionInfo gInfo = c.element().getValue();
+        @Element KV<String, GameActionInfo> element,
+        OutputReceiver<KV<String, Integer>> o,
+        @StateId(TOTAL_SCORE) ValueState<Integer> totalScore) {
+      String teamName = element.getKey();
+      GameActionInfo gInfo = element.getValue();
 
       // ValueState cells do not contain a default value. If the state is possibly not written, make
       // sure to check for null on read.
@@ -215,7 +217,7 @@ public class StatefulTeamScore extends LeaderBoard {
       // the new total is 2002, and the threshold is 1000, 1999 / 1000 = 1, 2002 / 1000 = 2.
       // Therefore, this team passed the threshold.
       if (oldTotalScore / this.thresholdScore < totalScore.read() / this.thresholdScore) {
-        c.output(KV.of(teamName, totalScore.read()));
+        o.output(KV.of(teamName, totalScore.read()));
       }
     }
   }

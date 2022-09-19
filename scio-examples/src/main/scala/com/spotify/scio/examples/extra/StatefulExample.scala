@@ -23,11 +23,10 @@
 package com.spotify.scio.examples.extra
 
 import java.lang.{Integer => JInt}
-
 import com.spotify.scio._
 import org.apache.beam.sdk.state.{StateSpecs, ValueState}
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StateId}
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, StateId}
 import org.apache.beam.sdk.values.KV
 
 object StatefulExample {
@@ -40,15 +39,15 @@ object StatefulExample {
 
     @ProcessElement
     def processElement(
-      context: DoFnT#ProcessContext,
+      @Element element: KV[String, Int],
+      outputReceiver: OutputReceiver[KV[String, (Int, Int)]],
       // Access state declared earlier
       @StateId("count") count: ValueState[JInt]
     ): Unit = {
       // Read and write state
       val c = count.read()
       count.write(c + 1)
-      val kv = context.element()
-      context.output(KV.of(kv.getKey, (kv.getValue, c)))
+      outputReceiver.output(KV.of(element.getKey, (element.getValue, c)))
     }
   }
 

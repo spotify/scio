@@ -43,6 +43,10 @@ public class WriteWindowedToBigQuery<T> extends WriteToBigQuery<T> {
 
   /** Convert each key/score pair into a BigQuery TableRow. */
   protected class BuildRowFn extends DoFn<T, TableRow> {
+
+    /**
+     * ProcessContext is required as an argument because it is propagated to other components
+     * */
     @ProcessElement
     public void processElement(ProcessContext c, BoundedWindow window) {
 

@@ -92,6 +92,9 @@ public class WriteToBigQuery<InputT> extends PTransform<PCollection<InputT>, PDo
   /** Convert each key/score pair into a BigQuery TableRow as specified by fieldFn. */
   protected class BuildRowFn extends DoFn<InputT, TableRow> {
 
+    /**
+     * ProcessContext is required as an argument because it is propagated to other components
+     * */
     @ProcessElement
     public void processElement(ProcessContext c, BoundedWindow window) {
 
