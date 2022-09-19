@@ -447,14 +447,14 @@ public class Snippets {
             ParDo.of(
                 new DoFn<KV<String, CoGbkResult>, String>() {
                   @ProcessElement
-                  public void processElement(ProcessContext c) {
-                    KV<String, CoGbkResult> e = c.element();
+                  public void processElement(
+                      @Element KV<String, CoGbkResult> e, OutputReceiver<String> o) {
                     String name = e.getKey();
                     Iterable<String> emailsIter = e.getValue().getAll(emailsTag);
                     Iterable<String> phonesIter = e.getValue().getAll(phonesTag);
                     String formattedResult =
                         Snippets.formatCoGbkResults(name, emailsIter, phonesIter);
-                    c.output(formattedResult);
+                    o.output(formattedResult);
                   }
                 }));
     // [END CoGroupByKeyTuple]

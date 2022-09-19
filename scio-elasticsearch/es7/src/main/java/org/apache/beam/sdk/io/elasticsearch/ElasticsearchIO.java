@@ -419,10 +419,8 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(
-          @Element T element,
-          OutputReceiver<KV<Long, T>> outputReceiver
-      ) throws Exception {
+      public void processElement(@Element T element, OutputReceiver<KV<Long, T>> outputReceiver)
+          throws Exception {
         // assign this element to a random shard
         final long shard = ThreadLocalRandom.current().nextLong(numOfShard);
         outputReceiver.output(KV.of(shard, element));

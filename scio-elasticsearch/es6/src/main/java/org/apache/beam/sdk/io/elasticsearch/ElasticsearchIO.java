@@ -422,9 +422,8 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(
-          @Element T element,
-          OutputReceiver<KV<Long, T>> outputReceiver) throws Exception {
+      public void processElement(@Element T element, OutputReceiver<KV<Long, T>> outputReceiver)
+          throws Exception {
         // assign this element to a random shard
         final long shard = ThreadLocalRandom.current().nextLong(numOfShard);
         outputReceiver.output(KV.of(shard, element));
@@ -489,9 +488,7 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(
-          @Element T element
-      ) throws Exception {
+      public void processElement(@Element T element) throws Exception {
         final Iterable<DocWriteRequest<?>> requests = toDocWriteRequests.apply(element);
         for (DocWriteRequest request : requests) {
           long requestBytes = documentSize(request);

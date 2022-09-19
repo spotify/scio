@@ -89,13 +89,12 @@ public class FilterExamples {
    */
   static class ProjectionFn extends DoFn<TableRow, TableRow> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      TableRow row = c.element();
+    public void processElement(@Element TableRow element, OutputReceiver<TableRow> o) {
       // Grab year, month, day, mean_temp from the row
-      Integer year = Integer.parseInt((String) row.get("year"));
-      Integer month = Integer.parseInt((String) row.get("month"));
-      Integer day = Integer.parseInt((String) row.get("day"));
-      Double meanTemp = Double.parseDouble(row.get("mean_temp").toString());
+      Integer year = Integer.parseInt((String) element.get("year"));
+      Integer month = Integer.parseInt((String) element.get("month"));
+      Integer day = Integer.parseInt((String) element.get("day"));
+      Double meanTemp = Double.parseDouble(element.get("mean_temp").toString());
       // Prepares the data for writing to BigQuery by building a TableRow object
       TableRow outRow =
           new TableRow()
@@ -103,7 +102,7 @@ public class FilterExamples {
               .set("month", month)
               .set("day", day)
               .set("mean_temp", meanTemp);
-      c.output(outRow);
+      o.output(outRow);
     }
   }
 
@@ -121,12 +120,11 @@ public class FilterExamples {
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      TableRow row = c.element();
+    public void processElement(@Element TableRow element, OutputReceiver<TableRow> o) {
       Integer month;
-      month = (Integer) row.get("month");
+      month = (Integer) element.get("month");
       if (month.equals(this.monthFilter)) {
-        c.output(row);
+        o.output(element);
       }
     }
   }
@@ -137,10 +135,9 @@ public class FilterExamples {
    */
   static class ExtractTempFn extends DoFn<TableRow, Double> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      TableRow row = c.element();
-      Double meanTemp = Double.parseDouble(row.get("mean_temp").toString());
-      c.output(meanTemp);
+    public void processElement(@Element TableRow element, OutputReceiver<Double> o) {
+      Double meanTemp = Double.parseDouble(element.get("mean_temp").toString());
+      o.output(meanTemp);
     }
   }
 
@@ -179,6 +176,10 @@ public class FilterExamples {
               "ParseAndFilter",
               ParDo.of(
                       new DoFn<TableRow, TableRow>() {
+                        /**
+                         * ProcessContext is required as an argument because its method sideInput is
+                         * used
+                         */
                         @ProcessElement
                         public void processElement(ProcessContext c) {
                           Double meanTemp =

@@ -131,8 +131,7 @@ public class AutoComplete {
                             @Element KV<String, Long> element,
                             OutputReceiver<CompletionCandidate> outputReceiver) {
                           outputReceiver.output(
-                              new CompletionCandidate(
-                                  element.getKey(), element.getValue()));
+                              new CompletionCandidate(element.getKey(), element.getValue()));
                         }
                       }));
 
@@ -334,10 +333,7 @@ public class AutoComplete {
   /** Takes as input a set of strings, and emits each #hashtag found therein. */
   static class ExtractHashtags extends DoFn<String, String> {
     @ProcessElement
-    public void processElement(
-        @Element String element,
-        OutputReceiver<String> outputReceiver
-    ) {
+    public void processElement(@Element String element, OutputReceiver<String> outputReceiver) {
       Matcher m = Pattern.compile("#\\S+").matcher(element);
       while (m.find()) {
         outputReceiver.output(m.group().substring(1));

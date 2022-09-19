@@ -164,9 +164,7 @@ public class TrafficRoutes {
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
     @ProcessElement
-    public void processElement(
-        @Element String element,
-        OutputReceiver<String> o) throws Exception {
+    public void processElement(@Element String element, OutputReceiver<String> o) throws Exception {
       String[] items = element.split(",");
       String timestamp = tryParseTimestamp(items);
       if (timestamp != null) {
@@ -198,8 +196,7 @@ public class TrafficRoutes {
         String stationId = tryParseStationId(items);
         // For this simple example, filter out everything but some hardwired routes.
         if (avgSpeed != null && stationId != null && sdStations.containsKey(stationId)) {
-          StationSpeed stationSpeed =
-              new StationSpeed(stationId, avgSpeed, timestamp.getMillis());
+          StationSpeed stationSpeed = new StationSpeed(stationId, avgSpeed, timestamp.getMillis());
           // The tuple key is the 'route' name stored in the 'sdStations' hash.
           KV<String, StationSpeed> outputValue = KV.of(sdStations.get(stationId), stationSpeed);
           o.output(outputValue);
@@ -218,7 +215,8 @@ public class TrafficRoutes {
     @ProcessElement
     public void processElement(
         @Element KV<String, Iterable<StationSpeed>> element,
-        OutputReceiver<KV<String, RouteInfo>> o) throws IOException {
+        OutputReceiver<KV<String, RouteInfo>> o)
+        throws IOException {
       String route = element.getKey();
       double speedSum = 0.0;
       int speedCount = 0;

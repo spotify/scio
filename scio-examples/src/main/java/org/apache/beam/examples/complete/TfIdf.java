@@ -416,8 +416,7 @@ public class TfIdf {
                   new DoFn<KV<String, KV<URI, Double>>, String>() {
                     @ProcessElement
                     public void processElement(
-                        @Element KV<String, KV<URI, Double>> element,
-                        OutputReceiver<String> o) {
+                        @Element KV<String, KV<URI, Double>> element, OutputReceiver<String> o) {
                       o.output(
                           String.format(
                               "%s,\t%s,\t%f",

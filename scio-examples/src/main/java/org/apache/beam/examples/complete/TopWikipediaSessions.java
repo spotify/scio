@@ -75,9 +75,7 @@ public class TopWikipediaSessions {
   /** Extracts user and timestamp from a TableRow representing a Wikipedia edit. */
   static class ExtractUserAndTimestamp extends DoFn<TableRow, String> {
     @ProcessElement
-    public void processElement(
-        @Element TableRow element,
-        OutputReceiver<String> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<String> o) {
       int timestamp = (Integer) element.get("timestamp");
       String userName = (String) element.get("contributor_username");
       if (userName != null) {
@@ -127,9 +125,7 @@ public class TopWikipediaSessions {
   static class FormatOutputDoFn extends DoFn<List<KV<String, Long>>, String> {
     @ProcessElement
     public void processElement(
-        @Element List<KV<String, Long>> element,
-        OutputReceiver<String> o,
-        BoundedWindow window) {
+        @Element List<KV<String, Long>> element, OutputReceiver<String> o, BoundedWindow window) {
       for (KV<String, Long> item : element) {
         String session = item.getKey();
         long count = item.getValue();
@@ -166,9 +162,7 @@ public class TopWikipediaSessions {
               ParDo.of(
                   new DoFn<String, String>() {
                     @ProcessElement
-                    public void processElement(
-                        @Element String element,
-                        OutputReceiver<String> o) {
+                    public void processElement(@Element String element, OutputReceiver<String> o) {
                       if (Math.abs((long) element.hashCode())
                           <= Integer.MAX_VALUE * samplingThreshold) {
                         o.output(element);

@@ -79,8 +79,8 @@ public class ExampleEchoPipeline {
 
     static final Logger LOG = LoggerFactory.getLogger(EchoInputDoFn.class);
 
-    private SubProcessConfiguration configuration;
-    private String binaryName;
+    private final SubProcessConfiguration configuration;
+    private final String binaryName;
 
     public EchoInputDoFn(SubProcessConfiguration configuration, String binary) {
       // Pass in configuration information the name of the filename of the sub-process and the level
@@ -95,11 +95,13 @@ public class ExampleEchoPipeline {
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) throws Exception {
+    public void processElement(
+        @Element KV<String, String> element, OutputReceiver<KV<String, String>> o)
+        throws Exception {
       try {
         // Our Library takes a single command in position 0 which it will echo back in the result
         SubProcessCommandLineArgs commands = new SubProcessCommandLineArgs();
-        Command command = new Command(0, String.valueOf(c.element().getValue()));
+        Command command = new Command(0, String.valueOf(element.getValue()));
         commands.putCommand(command);
 
         // The ProcessingKernel deals with the execution of the process
@@ -108,7 +110,7 @@ public class ExampleEchoPipeline {
         // Run the command and work through the results
         List<String> results = kernel.exec(commands);
         for (String s : results) {
-          c.output(KV.of(c.element().getKey(), s));
+          o.output(KV.of(element.getKey(), s));
         }
       } catch (Exception ex) {
         LOG.error("Error processing element ", ex);

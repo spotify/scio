@@ -127,9 +127,7 @@ public class UserScore {
     private final Counter numParseErrors = Metrics.counter("main", "ParseErrors");
 
     @ProcessElement
-    public void processElement(
-        @Element String element,
-        OutputReceiver<GameActionInfo> o) {
+    public void processElement(@Element String element, OutputReceiver<GameActionInfo> o) {
       System.out.println("GOT " + element);
       String[] components = element.split(",", -1);
       try {

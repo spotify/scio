@@ -126,8 +126,8 @@ public class GameStats extends LeaderBoard {
                             Metrics.counter("main", "SpammerUsers");
 
                         /**
-                         * ProcessContext is required as an argument because its sideInput method
-                         * is used
+                         * ProcessContext is required as an argument because its sideInput method is
+                         * used
                          */
                         @ProcessElement
                         public void processElement(ProcessContext c) {
@@ -296,9 +296,9 @@ public class GameStats extends LeaderBoard {
             ParDo.of(
                     new DoFn<GameActionInfo, GameActionInfo>() {
                       /**
-                       * ProcessContext is required as an argument because its sideInput method
-                       * is used
-                       * */
+                       * ProcessContext is required as an argument because its sideInput method is
+                       * used
+                       */
                       @ProcessElement
                       public void processElement(ProcessContext c) {
                         // If the user is not in the spammers Map, output the data element.

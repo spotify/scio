@@ -161,9 +161,7 @@ public class TrafficMaxLaneFlow {
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
     @ProcessElement
-    public void processElement(
-        @Element String element,
-        OutputReceiver<String> o) throws Exception {
+    public void processElement(@Element String element, OutputReceiver<String> o) throws Exception {
       String[] items = element.split(",", -1);
 
       if (items.length > 0) {
@@ -187,9 +185,7 @@ public class TrafficMaxLaneFlow {
   static class ExtractFlowInfoFn extends DoFn<String, KV<String, LaneInfo>> {
 
     @ProcessElement
-    public void processElement(
-        @Element String element,
-        OutputReceiver<KV<String, LaneInfo>> o) {
+    public void processElement(@Element String element, OutputReceiver<KV<String, LaneInfo>> o) {
       String[] items = element.split(",", -1);
       if (items.length < 48) {
         // Skip the invalid input.

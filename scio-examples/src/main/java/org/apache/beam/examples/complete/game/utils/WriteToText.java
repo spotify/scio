@@ -78,9 +78,7 @@ public class WriteToText<InputT> extends PTransform<PCollection<InputT>, PDone> 
   /** Convert each key/score pair into a row as specified by fieldFn. */
   protected class BuildRowFn extends DoFn<InputT, String> {
 
-    /**
-     * ProcessContext is required as an argument because it is propagated to other components
-     * */
+    /** ProcessContext is required as an argument because it is propagated to other components */
     @ProcessElement
     public void processElement(ProcessContext c, BoundedWindow window) {
       List<String> fields = new ArrayList<>();
