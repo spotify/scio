@@ -21,7 +21,7 @@ import java.util.UUID
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.TestCloseableResource.{clientsOpen, clientsOpened}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.scalatest.BeforeAndAfter
 
@@ -186,8 +186,8 @@ abstract private class BaseDoFn extends DoFnWithResource[String, String, TestRes
   override def createResource(): TestResource =
     TestResource(UUID.randomUUID().toString)
   @ProcessElement
-  def processElement(c: ProcessContext): Unit =
-    c.output(getResource.processElement(c.element()))
+  def processElement(@Element element: String, o: OutputReceiver[String]): Unit =
+    o.output(getResource.processElement(element))
 }
 
 private class DoFnWithPerClassResource extends BaseDoFn {
@@ -210,8 +210,8 @@ abstract private class BaseDoFnCloseable
   override def createResource(): TestCloseableResource =
     TestCloseableResource()
   @ProcessElement
-  def processElement(c: ProcessContext): Unit =
-    c.output(getResource.processElement(c.element()))
+  def processElement(@Element element: String, o: OutputReceiver[String]): Unit =
+    o.output(getResource.processElement(element))
 }
 
 private class DoFnWithPerClassResourceCloseable extends BaseDoFnCloseable {

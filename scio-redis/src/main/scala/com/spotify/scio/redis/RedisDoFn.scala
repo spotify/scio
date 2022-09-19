@@ -102,16 +102,21 @@ abstract class RedisDoFn[I, O](
   }
 
   @ProcessElement
-  def processElement(c: ProcessContext, window: BoundedWindow): Unit = {
+  def processElement(
+    @Element element: I,
+    @Timestamp timestamp: Instant,
+    o: OutputReceiver[O],
+    window: BoundedWindow
+  ): Unit = {
     implicit val ec = executionContext
-    val result = request(c.element(), client).map { r =>
-      Result(c.element(), r, c.timestamp(), window)
+    val result = request(element, client).map { r =>
+      Result(element, r, timestamp, window)
     }
     results.add(result)
 
     batchCount += 1
     if (batchCount >= batchSize) {
-      flush(r => c.output(r.output))
+      flush(r => o.output(r.output))
       transaction.multi
       batchCount = 0
     }

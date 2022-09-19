@@ -24,7 +24,7 @@ import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
 import org.apache.beam.sdk.transforms.windowing.{
@@ -62,10 +62,8 @@ class SCollectionTest extends PipelineSpec {
 
   private def newKvDoFn = new DoFn[Int, KV[Int, String]] {
     @ProcessElement
-    def processElement(c: DoFn[Int, KV[Int, String]]#ProcessContext): Unit = {
-      val x = c.element()
-      c.output(KV.of(x, x.toString))
-    }
+    def processElement(@Element x: Int, o: OutputReceiver[KV[Int, String]]): Unit =
+      o.output(KV.of(x, x.toString))
   }
 
   it should "set schema" in {

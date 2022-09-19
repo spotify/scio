@@ -76,12 +76,13 @@ public class SourceBenchmark {
             ParDo.of(
                 new DoFn<KV<String, CoGbkResult>, KV<String, KV<AvroGeneratedUser, TableRow>>>() {
                   @ProcessElement
-                  public void processElement(ProcessContext c) {
-                    final KV<String, CoGbkResult> kv = c.element();
+                  public void processElement(
+                      @Element KV<String, CoGbkResult> kv,
+                      OutputReceiver<KV<String, KV<AvroGeneratedUser, TableRow>>> o) {
                     final CoGbkResult result = kv.getValue();
                     for (AvroGeneratedUser l : result.getAll(lhsTag)) {
                       for (TableRow r : result.getAll(rhsTag)) {
-                        c.output(KV.of(kv.getKey(), KV.of(l, r)));
+                        o.output(KV.of(kv.getKey(), KV.of(l, r)));
                       }
                     }
                   }

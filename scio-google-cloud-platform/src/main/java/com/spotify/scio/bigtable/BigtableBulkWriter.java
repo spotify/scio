@@ -94,8 +94,10 @@ public class BigtableBulkWriter
                     KV<Long, Iterable<KV<ByteString, Iterable<Mutation>>>>,
                     Iterable<KV<ByteString, Iterable<Mutation>>>>() {
                   @ProcessElement
-                  public void process(ProcessContext c) {
-                    c.output(c.element().getValue());
+                  public void process(
+                      @Element KV<Long, Iterable<KV<ByteString, Iterable<Mutation>>>> element,
+                      OutputReceiver<Iterable<KV<ByteString, Iterable<Mutation>>>> o) {
+                    o.output(element.getValue());
                   }
                 }));
   }
@@ -120,9 +122,10 @@ public class BigtableBulkWriter
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) throws Exception {
+    public void processElement(@Element Iterable<KV<ByteString, Iterable<Mutation>>> element)
+        throws Exception {
       checkForFailures(failures);
-      for (KV<ByteString, Iterable<Mutation>> r : c.element()) {
+      for (KV<ByteString, Iterable<Mutation>> r : element) {
         bigtableWriter
             .writeRecord(r)
             .whenComplete(
@@ -213,10 +216,12 @@ public class BigtableBulkWriter
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(
+        @Element KV<ByteString, Iterable<Mutation>> element,
+        OutputReceiver<KV<Long, KV<ByteString, Iterable<Mutation>>>> o) {
       // assign this element to a random shard
       final long shard = ThreadLocalRandom.current().nextLong(numOfShards);
-      c.output(KV.of(shard, c.element()));
+      o.output(KV.of(shard, element));
     }
   }
 }

@@ -20,14 +20,13 @@ package com.spotify.scio.extra.csv
 import java.io.{Reader, Writer}
 import java.nio.channels.{Channels, WritableByteChannel}
 import java.nio.charset.StandardCharsets
-
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import kantan.csv._
-import kantan.codecs.compat._ // scalafix:ok
+import kantan.codecs.compat._
 import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine
 import kantan.csv.ops._
@@ -36,7 +35,7 @@ import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.transforms.{DoFn, PTransform, ParDo}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.values.PCollection
 
 /**
@@ -198,12 +197,12 @@ object CsvIO {
   ) extends DoFn[ReadableFile, T] {
 
     @ProcessElement
-    def process(pc: ProcessContext): Unit = {
-      val reader: Reader = Channels.newReader(pc.element().open(), charSet)
+    def process(@Element element: ReadableFile, o: OutputReceiver[T]): Unit = {
+      val reader: Reader = Channels.newReader(element.open(), charSet)
       implicit val engine: ReaderEngine = ReaderEngine.internalCsvReaderEngine
       reader
         .asUnsafeCsvReader[T](config)
-        .foreach(pc.output)
+        .foreach(o.output)
     }
   }
 

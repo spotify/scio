@@ -20,21 +20,27 @@ package com.spotify.scio.tensorflow
 import java.time.Duration
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 import java.util.function.Function
-
 import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
 import com.spotify.zoltar.Model
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, Setup, Teardown}
+import org.apache.beam.sdk.transforms.DoFn.{
+  Element,
+  OutputReceiver,
+  ProcessElement,
+  Setup,
+  Teardown
+}
 import org.slf4j.LoggerFactory
 import org.tensorflow._
 import org.tensorflow.types.TString
 import org.tensorflow.ndarray.NdArrays
 import org.tensorflow.proto.example.Example
-import scala.jdk.CollectionConverters._
 
+import scala.jdk.CollectionConverters._
 import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.zoltar.Model.Id
+
 import java.util.concurrent.atomic.AtomicInteger
 
 sealed trait PredictDoFn[T, V, M <: Model[_]]
@@ -75,9 +81,8 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   /** Process an element asynchronously. */
   @ProcessElement
-  def processElement(c: DoFn[T, V]#ProcessContext): Unit = {
+  def processElement(@Element input: T, o: OutputReceiver[V]): Unit = {
     val result = withRunner { runner =>
-      val input = c.element()
       val i = extractInput(input)
       var result: V = null.asInstanceOf[V]
 
@@ -102,7 +107,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
       result
     }
 
-    c.output(result)
+    o.output(result)
   }
 
   @Teardown
