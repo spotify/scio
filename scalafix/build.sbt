@@ -39,7 +39,7 @@ def scio10(version: String) =
     "com.spotify" %% "scio-tensorflow"
   ).map(_ % version)
 
-def scio11(version: String) = // TODO(farzad)
+def scio11(version: String) =
   List(
     "com.spotify" %% "scio-core",
     "com.spotify" %% "scio-extra",

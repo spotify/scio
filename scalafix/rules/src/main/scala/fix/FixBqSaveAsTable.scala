@@ -27,7 +27,6 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
                   s"Table.Ref($head)"
                 }
                 val allArgs = (headParam :: tail).mkString(", ")
-                // TODO(farzad): remove ""
                 Patch.replaceTree(a, s"$qual.saveAsBigQueryTable($allArgs)")
               }
             case _ =>
