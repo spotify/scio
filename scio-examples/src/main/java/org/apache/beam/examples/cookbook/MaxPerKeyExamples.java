@@ -85,7 +85,7 @@ public class MaxPerKeyExamples {
   /** Format the results to a TableRow, to save to BigQuery. */
   static class FormatMaxesFn extends DoFn<KV<Integer, Double>, TableRow> {
     @ProcessElement
-    public void processElement(KV<Integer, Double> element, OutputReceiver<TableRow> o) {
+    public void processElement(@Element KV<Integer, Double> element, OutputReceiver<TableRow> o) {
       TableRow row =
           new TableRow().set("month", element.getKey()).set("max_mean_temp", element.getValue());
       o.output(row);
