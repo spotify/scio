@@ -22,7 +22,6 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
 import java.util.function.Function
 import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
 import com.spotify.zoltar.Model
-import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{
   Element,
   OutputReceiver,
