@@ -62,8 +62,12 @@ class SCollectionTest extends PipelineSpec {
 
   private def newKvDoFn = new DoFn[Int, KV[Int, String]] {
     @ProcessElement
-    def processElement(@Element x: Int, o: OutputReceiver[KV[Int, String]]): Unit =
-      o.output(KV.of(x, x.toString))
+    def processElement(
+      c: ProcessContext
+    ): Unit = {
+      val x = c.element()
+      c.output(KV.of(x, x.toString))
+    }
   }
 
   it should "set schema" in {
@@ -77,8 +81,9 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support applyKvTransform()" in {
     runWithContext { sc =>
-      val p = sc
+      val p1 = sc
         .parallelize(Seq(1, 2, 3, 4, 5))
+      val p = p1
         .applyKvTransform(ParDo.of(newKvDoFn))
         .applyKvTransform(GroupByKey.create())
         .map(kv => (kv.getKey, kv.getValue.asScala.toList))
