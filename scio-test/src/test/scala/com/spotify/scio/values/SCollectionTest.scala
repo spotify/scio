@@ -61,10 +61,13 @@ class SCollectionTest extends PipelineSpec {
   }
 
   private def newKvDoFn = new DoFn[Int, KV[Int, String]] {
+
+    /**
+     * ProcessContext is required as an argument because input parameter is scala.Int which is not
+     * supported by Beam as a separate @Element
+     */
     @ProcessElement
-    def processElement(
-      c: ProcessContext
-    ): Unit = {
+    def processElement(c: DoFn[Int, KV[Int, String]]#ProcessContext): Unit = {
       val x = c.element()
       c.output(KV.of(x, x.toString))
     }
@@ -81,9 +84,8 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support applyKvTransform()" in {
     runWithContext { sc =>
-      val p1 = sc
+      val p = sc
         .parallelize(Seq(1, 2, 3, 4, 5))
-      val p = p1
         .applyKvTransform(ParDo.of(newKvDoFn))
         .applyKvTransform(GroupByKey.create())
         .map(kv => (kv.getKey, kv.getValue.asScala.toList))
