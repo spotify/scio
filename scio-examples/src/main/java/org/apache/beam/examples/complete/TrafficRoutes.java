@@ -164,7 +164,8 @@ public class TrafficRoutes {
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> out) throws Exception {
+    public void processElement(@Element String element, OutputReceiver<String> out)
+        throws Exception {
       String[] items = element.split(",");
       String timestamp = tryParseTimestamp(items);
       if (timestamp != null) {

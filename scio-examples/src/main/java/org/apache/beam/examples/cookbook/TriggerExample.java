@@ -506,7 +506,8 @@ public class TriggerExample {
     private static final int MAX_DELAY = 100;
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> out) throws Exception {
+    public void processElement(@Element String element, OutputReceiver<String> out)
+        throws Exception {
       Instant timestamp = Instant.now();
       Random random = new Random();
       if (random.nextDouble() < THRESHOLD) {

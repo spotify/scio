@@ -420,7 +420,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
           // secondary key sort
           byte[] curKey = null;
           ArrayList<byte[]> curKeyValues = new ArrayList<>();
-          Iterable<byte[]> out = new ArrayList<>();
+          Iterable<byte[]> output = new ArrayList<>();
 
           // accumulate each chunk of values associated with a primary key into curKeyValues,
           // sort it by secondary key, and accumulate the sorted values into `out`
@@ -432,7 +432,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
               curKeyValues.add(kv.getValue());
             } else {
               // this key is new, sort and prepare this chunk of values for output
-              out = Iterables.concat(out, secondarySort(curKeyValues));
+              output = Iterables.concat(output, secondarySort(curKeyValues));
 
               // then accumulate the new value and make this key the current key
               curKeyValues = new ArrayList<>();
@@ -441,9 +441,9 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
             }
           }
           if (!curKeyValues.isEmpty()) {
-            out = Iterables.concat(out, secondarySort(curKeyValues));
+            output = Iterables.concat(output, secondarySort(curKeyValues));
           }
-          out.output(KV.of(bucketShardId, out));
+          out.output(KV.of(bucketShardId, output));
         }
         bucketsCompletedSorting.inc();
       } catch (IOException e) {

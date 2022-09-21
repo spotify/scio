@@ -221,8 +221,7 @@ public class TfIdf {
                   new DoFn<KV<URI, String>, KV<URI, String>>() {
                     @ProcessElement
                     public void processElement(
-                        @Element KV<URI, String> element,
-                        OutputReceiver<KV<URI, String>> out) {
+                        @Element KV<URI, String> element, OutputReceiver<KV<URI, String>> out) {
                       URI uri = element.getKey();
                       String line = element.getValue();
                       for (String word : line.split("\\W+", -1)) {

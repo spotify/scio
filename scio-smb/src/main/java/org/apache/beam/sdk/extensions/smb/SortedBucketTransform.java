@@ -216,8 +216,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @ProcessElement
-    public void processElement(
-        @Element Iterable<MergedBucket> element, MultiOutputReceiver out)
+    public void processElement(@Element Iterable<MergedBucket> element, MultiOutputReceiver out)
         throws IOException {
       final Iterator<MergedBucket> mergedBuckets = element.iterator();
       final Map<BucketShardId, ResourceId> writtenBuckets = new HashMap<>();

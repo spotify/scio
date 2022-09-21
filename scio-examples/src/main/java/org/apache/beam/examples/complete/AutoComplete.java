@@ -130,8 +130,7 @@ public class AutoComplete {
                         public void processElement(
                             @Element KV<String, Long> element,
                             OutputReceiver<CompletionCandidate> out) {
-                          out.output(
-                              new CompletionCandidate(element.getKey(), element.getValue()));
+                          out.output(new CompletionCandidate(element.getKey(), element.getValue()));
                         }
                       }));
 
@@ -267,8 +266,7 @@ public class AutoComplete {
 
     @ProcessElement
     public void processElement(
-        @Element CompletionCandidate element,
-        OutputReceiver<KV<String, CompletionCandidate>> out) {
+        @Element CompletionCandidate element, OutputReceiver<KV<String, CompletionCandidate>> out) {
       String word = element.value;
       for (int i = minPrefix; i <= Math.min(word.length(), maxPrefix); i++) {
         out.output(KV.of(word.substring(0, i), element));
@@ -344,8 +342,7 @@ public class AutoComplete {
   static class FormatForBigquery extends DoFn<KV<String, List<CompletionCandidate>>, TableRow> {
     @ProcessElement
     public void processElement(
-        @Element KV<String, List<CompletionCandidate>> element,
-        OutputReceiver<TableRow> out) {
+        @Element KV<String, List<CompletionCandidate>> element, OutputReceiver<TableRow> out) {
       List<TableRow> completions = new ArrayList<>();
       for (CompletionCandidate cc : element.getValue()) {
         completions.add(new TableRow().set("count", cc.getCount()).set("tag", cc.getValue()));
@@ -390,8 +387,7 @@ public class AutoComplete {
 
     @ProcessElement
     public void processElement(
-        @Element KV<String, List<CompletionCandidate>> element,
-        OutputReceiver<Entity> out) {
+        @Element KV<String, List<CompletionCandidate>> element, OutputReceiver<Entity> out) {
       Entity.Builder entityBuilder = Entity.newBuilder();
       com.google.datastore.v1.Key key =
           makeKey(makeKey(kind, ancestorKey).build(), kind, element.getKey()).build();

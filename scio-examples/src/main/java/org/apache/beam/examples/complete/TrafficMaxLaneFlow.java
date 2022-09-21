@@ -161,7 +161,8 @@ public class TrafficMaxLaneFlow {
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> out) throws Exception {
+    public void processElement(@Element String element, OutputReceiver<String> out)
+        throws Exception {
       String[] items = element.split(",", -1);
 
       if (items.length > 0) {

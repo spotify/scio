@@ -220,8 +220,7 @@ public class PipeDoFn extends DoFn<String, String> {
         BufferedReader reader =
             new BufferedReader(new InputStreamReader(pipeProcess.getInputStream()));
         stdOut =
-            CompletableFuture.runAsync(
-                () -> reader.lines().forEach(out::output), executorService);
+            CompletableFuture.runAsync(() -> reader.lines().forEach(out::output), executorService);
         LOG.info("Process started: {}", ProcessUtil.join(cmdArray));
       } catch (IOException e) {
         throw new UncheckedIOException(e);

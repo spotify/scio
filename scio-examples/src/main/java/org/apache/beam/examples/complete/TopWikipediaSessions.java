@@ -162,7 +162,8 @@ public class TopWikipediaSessions {
               ParDo.of(
                   new DoFn<String, String>() {
                     @ProcessElement
-                    public void processElement(@Element String element, OutputReceiver<String> out) {
+                    public void processElement(
+                        @Element String element, OutputReceiver<String> out) {
                       if (Math.abs((long) element.hashCode())
                           <= Integer.MAX_VALUE * samplingThreshold) {
                         out.output(element);
