@@ -40,14 +40,14 @@ object StatefulExample {
     @ProcessElement
     def processElement(
       @Element element: KV[String, Int],
-      outputReceiver: OutputReceiver[KV[String, (Int, Int)]],
+      out: OutputReceiver[KV[String, (Int, Int)]],
       // Access state declared earlier
       @StateId("count") count: ValueState[JInt]
     ): Unit = {
       // Read and write state
       val c = count.read()
       count.write(c + 1)
-      outputReceiver.output(KV.of(element.getKey, (element.getValue, c)))
+      out.output(KV.of(element.getKey, (element.getValue, c)))
     }
   }
 

@@ -164,12 +164,12 @@ public class TrafficRoutes {
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> o) throws Exception {
+    public void processElement(@Element String element, OutputReceiver<String> out) throws Exception {
       String[] items = element.split(",");
       String timestamp = tryParseTimestamp(items);
       if (timestamp != null) {
         try {
-          o.outputWithTimestamp(element, new Instant(dateTimeFormat.parseMillis(timestamp)));
+          out.outputWithTimestamp(element, new Instant(dateTimeFormat.parseMillis(timestamp)));
         } catch (IllegalArgumentException e) {
           // Skip the invalid input.
         }
@@ -187,7 +187,7 @@ public class TrafficRoutes {
     public void processElement(
         @Element String element,
         @Timestamp Instant timestamp,
-        OutputReceiver<KV<String, StationSpeed>> o) {
+        OutputReceiver<KV<String, StationSpeed>> out) {
       String[] items = element.split(",");
       String stationType = tryParseStationType(items);
       // For this analysis, use only 'main line' station types
@@ -199,7 +199,7 @@ public class TrafficRoutes {
           StationSpeed stationSpeed = new StationSpeed(stationId, avgSpeed, timestamp.getMillis());
           // The tuple key is the 'route' name stored in the 'sdStations' hash.
           KV<String, StationSpeed> outputValue = KV.of(sdStations.get(stationId), stationSpeed);
-          o.output(outputValue);
+          out.output(outputValue);
         }
       }
     }
@@ -215,7 +215,7 @@ public class TrafficRoutes {
     @ProcessElement
     public void processElement(
         @Element KV<String, Iterable<StationSpeed>> element,
-        OutputReceiver<KV<String, RouteInfo>> o)
+        OutputReceiver<KV<String, RouteInfo>> out)
         throws IOException {
       String route = element.getKey();
       double speedSum = 0.0;
@@ -251,7 +251,7 @@ public class TrafficRoutes {
       double speedAvg = speedSum / speedCount;
       boolean slowdownEvent = slowdowns >= 2 * speedups;
       RouteInfo routeInfo = new RouteInfo(route, speedAvg, slowdownEvent);
-      o.output(KV.of(route, routeInfo));
+      out.output(KV.of(route, routeInfo));
     }
   }
 
@@ -261,7 +261,7 @@ public class TrafficRoutes {
     public void processElement(
         @Element KV<String, RouteInfo> element,
         @Timestamp Instant timestamp,
-        OutputReceiver<TableRow> o) {
+        OutputReceiver<TableRow> out) {
       RouteInfo routeInfo = element.getValue();
       TableRow row =
           new TableRow()
@@ -269,7 +269,7 @@ public class TrafficRoutes {
               .set("slowdown_event", routeInfo.getSlowdownEvent())
               .set("route", element.getKey())
               .set("window_timestamp", timestamp.toString());
-      o.output(row);
+      out.output(row);
     }
 
     /** Defines the BigQuery schema used for the output. */

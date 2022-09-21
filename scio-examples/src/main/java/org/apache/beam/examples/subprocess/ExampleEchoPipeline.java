@@ -96,7 +96,7 @@ public class ExampleEchoPipeline {
 
     @ProcessElement
     public void processElement(
-        @Element KV<String, String> element, OutputReceiver<KV<String, String>> o)
+        @Element KV<String, String> element, OutputReceiver<KV<String, String>> out)
         throws Exception {
       try {
         // Our Library takes a single command in position 0 which it will echo back in the result
@@ -110,7 +110,7 @@ public class ExampleEchoPipeline {
         // Run the command and work through the results
         List<String> results = kernel.exec(commands);
         for (String s : results) {
-          o.output(KV.of(element.getKey(), s));
+          out.output(KV.of(element.getKey(), s));
         }
       } catch (Exception ex) {
         LOG.error("Error processing element ", ex);

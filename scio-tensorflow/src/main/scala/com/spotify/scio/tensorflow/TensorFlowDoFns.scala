@@ -80,7 +80,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   /** Process an element asynchronously. */
   @ProcessElement
-  def processElement(@Element input: T, o: OutputReceiver[V]): Unit = {
+  def processElement(@Element input: T, out: OutputReceiver[V]): Unit = {
     val result = withRunner { runner =>
       val i = extractInput(input)
       var result: V = null.asInstanceOf[V]
@@ -106,7 +106,7 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
       result
     }
 
-    o.output(result)
+    out.output(result)
   }
 
   @Teardown

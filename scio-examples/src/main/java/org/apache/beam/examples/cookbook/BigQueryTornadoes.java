@@ -75,9 +75,9 @@ public class BigQueryTornadoes {
    */
   static class ExtractTornadoesFn extends DoFn<TableRow, Integer> {
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<Integer> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<Integer> out) {
       if ((Boolean) element.get("tornado")) {
-        o.output(Integer.parseInt((String) element.get("month")));
+        out.output(Integer.parseInt((String) element.get("month")));
       }
     }
   }
@@ -88,10 +88,10 @@ public class BigQueryTornadoes {
    */
   static class FormatCountsFn extends DoFn<KV<Integer, Long>, TableRow> {
     @ProcessElement
-    public void processElement(@Element KV<Integer, Long> element, OutputReceiver<TableRow> o) {
+    public void processElement(@Element KV<Integer, Long> element, OutputReceiver<TableRow> out) {
       TableRow row =
           new TableRow().set("month", element.getKey()).set("tornado_count", element.getValue());
-      o.output(row);
+      out.output(row);
     }
   }
 

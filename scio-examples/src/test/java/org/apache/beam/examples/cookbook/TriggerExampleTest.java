@@ -149,7 +149,7 @@ public class TriggerExampleTest {
 
   static class FormatResults extends DoFn<TableRow, String> {
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<String> o)
+    public void processElement(@Element TableRow element, OutputReceiver<String> out)
         throws Exception {
       TableRow row =
           new TableRow()
@@ -161,7 +161,7 @@ public class TriggerExampleTest {
               .set("isLast", element.get("isLast"))
               .set("timing", element.get("timing"))
               .set("window", element.get("window"));
-      o.output(canonicalFormat(row));
+      out.output(canonicalFormat(row));
     }
   }
 }

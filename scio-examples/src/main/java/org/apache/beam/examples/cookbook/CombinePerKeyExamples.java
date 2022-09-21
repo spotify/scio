@@ -79,11 +79,11 @@ public class CombinePerKeyExamples {
     private final Counter smallerWords = Metrics.counter(ExtractLargeWordsFn.class, "smallerWords");
 
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<KV<String, String>> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<KV<String, String>> out) {
       String playName = (String) element.get("corpus");
       String word = (String) element.get("word");
       if (word.length() >= MIN_WORD_LENGTH) {
-        o.output(KV.of(word, playName));
+        out.output(KV.of(word, playName));
       } else {
         // Track how many smaller words we're not including. This information will be
         // visible in the Monitoring UI.
@@ -98,10 +98,10 @@ public class CombinePerKeyExamples {
    */
   static class FormatShakespeareOutputFn extends DoFn<KV<String, String>, TableRow> {
     @ProcessElement
-    public void processElement(@Element KV<String, String> element, OutputReceiver<TableRow> o) {
+    public void processElement(@Element KV<String, String> element, OutputReceiver<TableRow> out) {
       TableRow row =
           new TableRow().set("word", element.getKey()).set("all_plays", element.getValue());
-      o.output(row);
+      out.output(row);
     }
   }
 

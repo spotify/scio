@@ -212,16 +212,16 @@ public class PipeDoFn extends DoFn<String, String> {
   }
 
   @ProcessElement
-  public void processElement(@Element String element, OutputReceiver<String> outputReceiver) {
+  public void processElement(@Element String element, OutputReceiver<String> out) {
     if (isNewBundle) {
       try {
         pipeProcess = Runtime.getRuntime().exec(cmdArray, envp, dir);
         stdIn = new BufferedWriter(new OutputStreamWriter(pipeProcess.getOutputStream()));
-        BufferedReader out =
+        BufferedReader reader =
             new BufferedReader(new InputStreamReader(pipeProcess.getInputStream()));
         stdOut =
             CompletableFuture.runAsync(
-                () -> out.lines().forEach(outputReceiver::output), executorService);
+                () -> reader.lines().forEach(out::output), executorService);
         LOG.info("Process started: {}", ProcessUtil.join(cmdArray));
       } catch (IOException e) {
         throw new UncheckedIOException(e);

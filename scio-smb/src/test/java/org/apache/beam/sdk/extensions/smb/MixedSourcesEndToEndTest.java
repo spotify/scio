@@ -307,14 +307,14 @@ public class MixedSourcesEndToEndTest {
     @ProcessElement
     public void processElement(
         @Element KV<KeyType, CoGbkResult> kv,
-        OutputReceiver<KV<KeyType, KV<List<GenericRecord>, List<TableRow>>>> o) {
+        OutputReceiver<KV<KeyType, KV<List<GenericRecord>, List<TableRow>>>> out) {
       final CoGbkResult result = kv.getValue();
       final List<GenericRecord> genericRecords =
           Lists.newArrayList(result.getAll(lhsTag).iterator());
       genericRecords.sort(grComparator);
       final List<TableRow> jsons = Lists.newArrayList(result.getAll(rhsTag).iterator());
       jsons.sort(trComparator);
-      o.output(KV.of(kv.getKey(), KV.of(genericRecords, jsons)));
+      out.output(KV.of(kv.getKey(), KV.of(genericRecords, jsons)));
     }
   }
 }

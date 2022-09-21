@@ -89,7 +89,7 @@ public class FilterExamples {
    */
   static class ProjectionFn extends DoFn<TableRow, TableRow> {
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<TableRow> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<TableRow> out) {
       // Grab year, month, day, mean_temp from the row
       Integer year = Integer.parseInt((String) element.get("year"));
       Integer month = Integer.parseInt((String) element.get("month"));
@@ -102,7 +102,7 @@ public class FilterExamples {
               .set("month", month)
               .set("day", day)
               .set("mean_temp", meanTemp);
-      o.output(outRow);
+      out.output(outRow);
     }
   }
 
@@ -120,11 +120,11 @@ public class FilterExamples {
     }
 
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<TableRow> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<TableRow> out) {
       Integer month;
       month = (Integer) element.get("month");
       if (month.equals(this.monthFilter)) {
-        o.output(element);
+        out.output(element);
       }
     }
   }
@@ -135,9 +135,9 @@ public class FilterExamples {
    */
   static class ExtractTempFn extends DoFn<TableRow, Double> {
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<Double> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<Double> out) {
       Double meanTemp = Double.parseDouble(element.get("mean_temp").toString());
-      o.output(meanTemp);
+      out.output(meanTemp);
     }
   }
 

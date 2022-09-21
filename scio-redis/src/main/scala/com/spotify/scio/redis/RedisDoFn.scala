@@ -105,7 +105,7 @@ abstract class RedisDoFn[I, O](
   def processElement(
     @Element element: I,
     @Timestamp timestamp: Instant,
-    o: OutputReceiver[O],
+    out: OutputReceiver[O],
     window: BoundedWindow
   ): Unit = {
     implicit val ec = executionContext
@@ -116,7 +116,7 @@ abstract class RedisDoFn[I, O](
 
     batchCount += 1
     if (batchCount >= batchSize) {
-      flush(r => o.output(r.output))
+      flush(r => out.output(r.output))
       transaction.multi
       batchCount = 0
     }

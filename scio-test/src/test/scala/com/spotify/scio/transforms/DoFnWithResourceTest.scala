@@ -186,8 +186,8 @@ abstract private class BaseDoFn extends DoFnWithResource[String, String, TestRes
   override def createResource(): TestResource =
     TestResource(UUID.randomUUID().toString)
   @ProcessElement
-  def processElement(@Element element: String, o: OutputReceiver[String]): Unit =
-    o.output(getResource.processElement(element))
+  def processElement(@Element element: String, out: OutputReceiver[String]): Unit =
+    out.output(getResource.processElement(element))
 }
 
 private class DoFnWithPerClassResource extends BaseDoFn {
@@ -210,8 +210,8 @@ abstract private class BaseDoFnCloseable
   override def createResource(): TestCloseableResource =
     TestCloseableResource()
   @ProcessElement
-  def processElement(@Element element: String, o: OutputReceiver[String]): Unit =
-    o.output(getResource.processElement(element))
+  def processElement(@Element element: String, out: OutputReceiver[String]): Unit =
+    out.output(getResource.processElement(element))
 }
 
 private class DoFnWithPerClassResourceCloseable extends BaseDoFnCloseable {

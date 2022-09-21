@@ -56,12 +56,12 @@ public class StreamingWordExtract {
   /** A {@link DoFn} that tokenizes lines of text into individual words. */
   static class ExtractWords extends DoFn<String, String> {
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> outputReceiver) {
+    public void processElement(@Element String element, OutputReceiver<String> out) {
       String[] words = element.split(ExampleUtils.TOKENIZER_PATTERN, -1);
 
       for (String word : words) {
         if (!word.isEmpty()) {
-          outputReceiver.output(word);
+          out.output(word);
         }
       }
     }
@@ -70,8 +70,8 @@ public class StreamingWordExtract {
   /** A {@link DoFn} that uppercases a word. */
   static class Uppercase extends DoFn<String, String> {
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> outputReceiver) {
-      outputReceiver.output(element.toUpperCase());
+    public void processElement(@Element String element, OutputReceiver<String> out) {
+      out.output(element.toUpperCase());
     }
   }
 
@@ -79,8 +79,8 @@ public class StreamingWordExtract {
   static class StringToRowConverter extends DoFn<String, TableRow> {
     /** In this example, put the whole string into single BigQuery field. */
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<TableRow> outputReceiver) {
-      outputReceiver.output(new TableRow().set("string_field", element));
+    public void processElement(@Element String element, OutputReceiver<TableRow> out) {
+      out.output(new TableRow().set("string_field", element));
     }
 
     static TableSchema getSchema() {

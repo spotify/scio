@@ -127,7 +127,7 @@ public class UserScore {
     private final Counter numParseErrors = Metrics.counter("main", "ParseErrors");
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<GameActionInfo> o) {
+    public void processElement(@Element String element, OutputReceiver<GameActionInfo> out) {
       System.out.println("GOT " + element);
       String[] components = element.split(",", -1);
       try {
@@ -136,7 +136,7 @@ public class UserScore {
         Integer score = Integer.parseInt(components[2].trim());
         Long timestamp = Long.parseLong(components[3].trim());
         GameActionInfo gInfo = new GameActionInfo(user, team, score, timestamp);
-        o.output(gInfo);
+        out.output(gInfo);
       } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
         numParseErrors.inc();
         LOG.info("Parse error on " + element + ", " + e.getMessage());

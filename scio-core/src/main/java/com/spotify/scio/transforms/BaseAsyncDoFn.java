@@ -70,9 +70,9 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   public void processElement(
       @Element InputT element,
       @Timestamp Instant timestamp,
-      OutputReceiver<OutputT> outputReceiver,
+      OutputReceiver<OutputT> out,
       BoundedWindow window) {
-    flush(outputReceiver);
+    flush(out);
 
     final UUID uuid = UUID.randomUUID();
     futures.computeIfAbsent(

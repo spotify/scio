@@ -75,20 +75,20 @@ public class MaxPerKeyExamples {
    */
   static class ExtractTempFn extends DoFn<TableRow, KV<Integer, Double>> {
     @ProcessElement
-    public void processElement(@Element TableRow row, OutputReceiver<KV<Integer, Double>> o) {
+    public void processElement(@Element TableRow row, OutputReceiver<KV<Integer, Double>> out) {
       Integer month = Integer.parseInt((String) row.get("month"));
       Double meanTemp = Double.parseDouble(row.get("mean_temp").toString());
-      o.output(KV.of(month, meanTemp));
+      out.output(KV.of(month, meanTemp));
     }
   }
 
   /** Format the results to a TableRow, to save to BigQuery. */
   static class FormatMaxesFn extends DoFn<KV<Integer, Double>, TableRow> {
     @ProcessElement
-    public void processElement(@Element KV<Integer, Double> element, OutputReceiver<TableRow> o) {
+    public void processElement(@Element KV<Integer, Double> element, OutputReceiver<TableRow> out) {
       TableRow row =
           new TableRow().set("month", element.getKey()).set("max_mean_temp", element.getValue());
-      o.output(row);
+      out.output(row);
     }
   }
 

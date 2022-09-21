@@ -222,7 +222,7 @@ public class TfIdf {
                     @ProcessElement
                     public void processElement(
                         @Element KV<URI, String> element,
-                        OutputReceiver<KV<URI, String>> outputReceiver) {
+                        OutputReceiver<KV<URI, String>> out) {
                       URI uri = element.getKey();
                       String line = element.getValue();
                       for (String word : line.split("\\W+", -1)) {
@@ -232,7 +232,7 @@ public class TfIdf {
                         }
 
                         if (!word.isEmpty()) {
-                          outputReceiver.output(KV.of(uri, word.toLowerCase()));
+                          out.output(KV.of(uri, word.toLowerCase()));
                         }
                       }
                     }
@@ -269,11 +269,11 @@ public class TfIdf {
                     @ProcessElement
                     public void processElement(
                         @Element KV<KV<URI, String>, Long> element,
-                        OutputReceiver<KV<URI, KV<String, Long>>> outputReceiver) {
+                        OutputReceiver<KV<URI, KV<String, Long>>> out) {
                       URI uri = element.getKey().getKey();
                       String word = element.getKey().getValue();
                       Long occurrences = element.getValue();
-                      outputReceiver.output(KV.of(uri, KV.of(word, occurrences)));
+                      out.output(KV.of(uri, KV.of(word, occurrences)));
                     }
                   }));
 
@@ -312,7 +312,7 @@ public class TfIdf {
                     @ProcessElement
                     public void processElement(
                         @Element KV<URI, CoGbkResult> element,
-                        OutputReceiver<KV<String, KV<URI, Double>>> outputReceiver) {
+                        OutputReceiver<KV<String, KV<URI, Double>>> out) {
                       URI uri = element.getKey();
                       Long wordTotal = element.getValue().getOnly(wordTotalsTag);
 
@@ -321,7 +321,7 @@ public class TfIdf {
                         String word = wordAndCount.getKey();
                         Long wordCount = wordAndCount.getValue();
                         Double termFrequency = wordCount.doubleValue() / wordTotal.doubleValue();
-                        outputReceiver.output(KV.of(word, KV.of(uri, termFrequency)));
+                        out.output(KV.of(word, KV.of(uri, termFrequency)));
                       }
                     }
                   }));
@@ -376,7 +376,7 @@ public class TfIdf {
                     @ProcessElement
                     public void processElement(
                         @Element KV<String, CoGbkResult> element,
-                        OutputReceiver<KV<String, KV<URI, Double>>> o) {
+                        OutputReceiver<KV<String, KV<URI, Double>>> out) {
                       String word = element.getKey();
                       Double df = element.getValue().getOnly(dfTag);
 
@@ -384,7 +384,7 @@ public class TfIdf {
                         URI uri = uriAndTf.getKey();
                         Double tf = uriAndTf.getValue();
                         Double tfIdf = tf * Math.log(1 / df);
-                        o.output(KV.of(word, KV.of(uri, tfIdf)));
+                        out.output(KV.of(word, KV.of(uri, tfIdf)));
                       }
                     }
                   }));
@@ -416,8 +416,8 @@ public class TfIdf {
                   new DoFn<KV<String, KV<URI, Double>>, String>() {
                     @ProcessElement
                     public void processElement(
-                        @Element KV<String, KV<URI, Double>> element, OutputReceiver<String> o) {
-                      o.output(
+                        @Element KV<String, KV<URI, Double>> element, OutputReceiver<String> out) {
+                      out.output(
                           String.format(
                               "%s,\t%s,\t%f",
                               element.getKey(),

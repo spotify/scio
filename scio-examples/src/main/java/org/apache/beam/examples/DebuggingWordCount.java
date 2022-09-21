@@ -100,13 +100,13 @@ public class DebuggingWordCount {
 
     @ProcessElement
     public void processElement(
-        @Element KV<String, Long> element, OutputReceiver<KV<String, Long>> outputReceiver) {
+        @Element KV<String, Long> element, OutputReceiver<KV<String, Long>> out) {
       if (filter.matcher(element.getKey()).matches()) {
         // Log at the "DEBUG" level each element that we match. When executing this pipeline
         // these log lines will appear only if the log level is set to "DEBUG" or lower.
         LOG.debug("Matched: " + element.getKey());
         matchedWords.inc();
-        outputReceiver.output(element);
+        out.output(element);
       } else {
         // Log at the "TRACE" level each element that is not matched. Different log levels
         // can be used to control the verbosity of logging providing an effective mechanism

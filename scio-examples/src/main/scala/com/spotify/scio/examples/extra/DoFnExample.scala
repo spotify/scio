@@ -58,9 +58,9 @@ object DoFnExample {
         @ProcessElement
         private[extra] def processElement(
           @Element element: String,
-          outputReceiver: OutputReceiver[Int]
+          out: OutputReceiver[Int]
         ): Unit =
-          outputReceiver.output(element.length)
+          out.output(element.length)
 
         // `@FinishBundle` (optional) is called once per worker thread after processing each batch
         // of elements, e.g. elements in a window.

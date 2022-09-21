@@ -78,11 +78,11 @@ public class SourceBenchmark {
                   @ProcessElement
                   public void processElement(
                       @Element KV<String, CoGbkResult> kv,
-                      OutputReceiver<KV<String, KV<AvroGeneratedUser, TableRow>>> o) {
+                      OutputReceiver<KV<String, KV<AvroGeneratedUser, TableRow>>> out) {
                     final CoGbkResult result = kv.getValue();
                     for (AvroGeneratedUser l : result.getAll(lhsTag)) {
                       for (TableRow r : result.getAll(rhsTag)) {
-                        o.output(KV.of(kv.getKey(), KV.of(l, r)));
+                        out.output(KV.of(kv.getKey(), KV.of(l, r)));
                       }
                     }
                   }

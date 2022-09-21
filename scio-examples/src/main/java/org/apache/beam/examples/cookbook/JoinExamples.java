@@ -93,12 +93,12 @@ public class JoinExamples {
                   @ProcessElement
                   public void processElement(
                       @Element KV<String, CoGbkResult> element,
-                      OutputReceiver<KV<String, String>> o) {
+                      OutputReceiver<KV<String, String>> out) {
                     String countryCode = element.getKey();
                     String countryName = element.getValue().getOnly(countryInfoTag);
                     for (String eventInfo : element.getValue().getAll(eventInfoTag)) {
                       // Generate a string that combines information from both collection values
-                      o.output(
+                      out.output(
                           KV.of(
                               countryCode,
                               "Country name: " + countryName + ", Event info: " + eventInfo));
@@ -114,10 +114,10 @@ public class JoinExamples {
                 new DoFn<KV<String, String>, String>() {
                   @ProcessElement
                   public void processElement(
-                      @Element KV<String, String> element, OutputReceiver<String> o) {
+                      @Element KV<String, String> element, OutputReceiver<String> out) {
                     String outputstring =
                         "Country code: " + element.getKey() + ", " + element.getValue();
-                    o.output(outputstring);
+                    out.output(outputstring);
                   }
                 }));
     return formattedResults;
@@ -129,13 +129,13 @@ public class JoinExamples {
    */
   static class ExtractEventDataFn extends DoFn<TableRow, KV<String, String>> {
     @ProcessElement
-    public void processElement(@Element TableRow row, OutputReceiver<KV<String, String>> o) {
+    public void processElement(@Element TableRow row, OutputReceiver<KV<String, String>> out) {
       String countryCode = (String) row.get("ActionGeo_CountryCode");
       String sqlDate = (String) row.get("SQLDATE");
       String actor1Name = (String) row.get("Actor1Name");
       String sourceUrl = (String) row.get("SOURCEURL");
       String eventInfo = "Date: " + sqlDate + ", Actor1: " + actor1Name + ", url: " + sourceUrl;
-      o.output(KV.of(countryCode, eventInfo));
+      out.output(KV.of(countryCode, eventInfo));
     }
   }
 
@@ -145,10 +145,10 @@ public class JoinExamples {
    */
   static class ExtractCountryInfoFn extends DoFn<TableRow, KV<String, String>> {
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<KV<String, String>> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<KV<String, String>> out) {
       String countryCode = (String) element.get("FIPSCC");
       String countryName = (String) element.get("HumanName");
-      o.output(KV.of(countryCode, countryName));
+      out.output(KV.of(countryCode, countryName));
     }
   }
 

@@ -422,11 +422,11 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(@Element T element, OutputReceiver<KV<Long, T>> outputReceiver)
+      public void processElement(@Element T element, OutputReceiver<KV<Long, T>> out)
           throws Exception {
         // assign this element to a random shard
         final long shard = ThreadLocalRandom.current().nextLong(numOfShard);
-        outputReceiver.output(KV.of(shard, element));
+        out.output(KV.of(shard, element));
       }
     }
 

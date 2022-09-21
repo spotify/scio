@@ -197,12 +197,12 @@ object CsvIO {
   ) extends DoFn[ReadableFile, T] {
 
     @ProcessElement
-    def process(@Element element: ReadableFile, o: OutputReceiver[T]): Unit = {
+    def process(@Element element: ReadableFile, out: OutputReceiver[T]): Unit = {
       val reader: Reader = Channels.newReader(element.open(), charSet)
       implicit val engine: ReaderEngine = ReaderEngine.internalCsvReaderEngine
       reader
         .asUnsafeCsvReader[T](config)
-        .foreach(o.output)
+        .foreach(out.output)
     }
   }
 

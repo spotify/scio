@@ -277,10 +277,10 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     }
 
     @ProcessElement
-    public void processElement(@Element InputT record, OutputReceiver<KV<BucketShardId, V>> o) {
+    public void processElement(@Element InputT record, OutputReceiver<KV<BucketShardId, V>> out) {
       final BucketShardId bucketShardId =
           getBucketShardId(primaryKeyFn.apply(record), bucketMetadata, shardId);
-      o.output(KV.of(bucketShardId, valueFn.apply(record)));
+      out.output(KV.of(bucketShardId, valueFn.apply(record)));
     }
 
     @Override
@@ -331,7 +331,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     }
 
     @ProcessElement
-    public void processElement(@Element InputT record, OutputReceiver<KV<BucketShardId, V>> o) {
+    public void processElement(@Element InputT record, OutputReceiver<KV<BucketShardId, V>> out) {
       final K1 primaryKey = primaryKeyFn.apply(record);
 
       BucketShardId bucketShardId;
@@ -356,7 +356,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
                     });
       }
 
-      o.output(KV.of(bucketShardId, valueFn.apply(record)));
+      out.output(KV.of(bucketShardId, valueFn.apply(record)));
     }
 
     @Override
@@ -393,7 +393,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     @ProcessElement
     public void processElement(
         @Element KV<BucketShardId, Iterable<V>> record,
-        OutputReceiver<KV<BucketShardId, Iterable<byte[]>>> o) {
+        OutputReceiver<KV<BucketShardId, Iterable<byte[]>>> out) {
       final BucketShardId bucketShardId = record.getKey();
       final BufferedExternalSorter primarySorter = BufferedExternalSorter.create(sorterOptions);
 
@@ -415,7 +415,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
 
         if (!bucketMetadata.hasSecondaryKey()) {
           // no secondary sort, so discard key and output
-          o.output(KV.of(bucketShardId, Iterables.transform(primarySorted, kv -> kv.getValue())));
+          out.output(KV.of(bucketShardId, Iterables.transform(primarySorted, kv -> kv.getValue())));
         } else {
           // secondary key sort
           byte[] curKey = null;
@@ -443,7 +443,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
           if (!curKeyValues.isEmpty()) {
             out = Iterables.concat(out, secondarySort(curKeyValues));
           }
-          o.output(KV.of(bucketShardId, out));
+          out.output(KV.of(bucketShardId, out));
         }
         bucketsCompletedSorting.inc();
       } catch (IOException e) {
@@ -587,7 +587,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
     @ProcessElement
     public void processElement(
         @Element KV<BucketShardId, Iterable<byte[]>> element,
-        OutputReceiver<KV<BucketShardId, ResourceId>> o)
+        OutputReceiver<KV<BucketShardId, ResourceId>> out)
         throws IOException {
       final BucketShardId bucketShardId = element.getKey();
       final Iterable<byte[]> records = element.getValue();
@@ -607,7 +607,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
             });
       }
 
-      o.output(KV.of(bucketShardId, tmpFile));
+      out.output(KV.of(bucketShardId, tmpFile));
     }
 
     @Override

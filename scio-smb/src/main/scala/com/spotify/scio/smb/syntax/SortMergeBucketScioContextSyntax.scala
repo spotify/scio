@@ -80,7 +80,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
         @ProcessElement
         private[smb] def processElement(
           @Element element: KV[K, CoGbkResult],
-          o: OutputReceiver[(K, (L, R))]
+          out: OutputReceiver[(K, (L, R))]
         ): Unit = {
           val cgbkResult = element.getValue
           val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
@@ -92,7 +92,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
             val ai = resA.iterator()
             while (ai.hasNext) {
               val a = ai.next()
-              o.output((key, (a, b)))
+              out.output((key, (a, b)))
             }
           }
         }
@@ -123,7 +123,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
         @ProcessElement
         private[smb] def processElement(
           @Element element: KV[KV[K1, K2], CoGbkResult],
-          o: OutputReceiver[((K1, K2), (L, R))]
+          out: OutputReceiver[((K1, K2), (L, R))]
         ): Unit = {
           val cgbkResult = element.getValue
           val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
@@ -136,7 +136,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
             val ai = resA.iterator()
             while (ai.hasNext) {
               val a = ai.next()
-              o.output((outKey, (a, b)))
+              out.output((outKey, (a, b)))
             }
           }
         }

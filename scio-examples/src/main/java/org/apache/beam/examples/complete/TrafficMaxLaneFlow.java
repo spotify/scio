@@ -161,13 +161,13 @@ public class TrafficMaxLaneFlow {
         DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss");
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> o) throws Exception {
+    public void processElement(@Element String element, OutputReceiver<String> out) throws Exception {
       String[] items = element.split(",", -1);
 
       if (items.length > 0) {
         try {
           String timestamp = items[0];
-          o.outputWithTimestamp(element, new Instant(dateTimeFormat.parseMillis(timestamp)));
+          out.outputWithTimestamp(element, new Instant(dateTimeFormat.parseMillis(timestamp)));
         } catch (IllegalArgumentException e) {
           // Skip the invalid input.
         }
@@ -185,7 +185,7 @@ public class TrafficMaxLaneFlow {
   static class ExtractFlowInfoFn extends DoFn<String, KV<String, LaneInfo>> {
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<KV<String, LaneInfo>> o) {
+    public void processElement(@Element String element, OutputReceiver<KV<String, LaneInfo>> out) {
       String[] items = element.split(",", -1);
       if (items.length < 48) {
         // Skip the invalid input.
@@ -215,7 +215,7 @@ public class TrafficMaxLaneFlow {
                 laneAvgOccupancy,
                 laneAvgSpeed,
                 totalFlow);
-        o.output(KV.of(stationId, laneInfo));
+        out.output(KV.of(stationId, laneInfo));
       }
     }
   }
@@ -252,7 +252,7 @@ public class TrafficMaxLaneFlow {
     public void processElement(
         @Element KV<String, LaneInfo> element,
         @Timestamp Instant timestamp,
-        OutputReceiver<TableRow> o) {
+        OutputReceiver<TableRow> out) {
 
       LaneInfo laneInfo = element.getValue();
       TableRow row =
@@ -267,7 +267,7 @@ public class TrafficMaxLaneFlow {
               .set("total_flow", laneInfo.getTotalFlow())
               .set("recorded_timestamp", laneInfo.getRecordedTimestamp())
               .set("window_timestamp", timestamp.toString());
-      o.output(row);
+      out.output(row);
     }
 
     /** Defines the BigQuery schema used for the output. */

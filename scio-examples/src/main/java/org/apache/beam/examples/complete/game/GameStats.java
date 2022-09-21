@@ -155,10 +155,10 @@ public class GameStats extends LeaderBoard {
   /** Calculate and output an element's session duration. */
   private static class UserSessionInfoFn extends DoFn<KV<String, Integer>, Integer> {
     @ProcessElement
-    public void processElement(OutputReceiver<Integer> o, BoundedWindow window) {
+    public void processElement(OutputReceiver<Integer> out, BoundedWindow window) {
       IntervalWindow w = (IntervalWindow) window;
       int duration = new Duration(w.start(), w.end()).toPeriod().toStandardMinutes().getMinutes();
-      o.output(duration);
+      out.output(duration);
     }
   }
 

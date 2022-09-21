@@ -81,13 +81,13 @@ private[scio] object ArtisanJoin {
         @ProcessElement
         private[util] def processElement(
           @Element element: KV[KEY, CoGbkResult],
-          outputReceiver: OutputReceiver[(KEY, (A1, B1))]
+          out: OutputReceiver[(KEY, (A1, B1))]
         ): Unit = {
           val key = element.getKey
           val result = element.getValue
           val as = result.getAll(tagA)
           val bs = result.getAll(tagB)
-          fn(key, as, bs, outputReceiver)
+          fn(key, as, bs, out)
         }
       }))
       .withState(_.copy(postGbkOp = true))

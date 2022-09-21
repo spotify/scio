@@ -75,12 +75,12 @@ public class TopWikipediaSessions {
   /** Extracts user and timestamp from a TableRow representing a Wikipedia edit. */
   static class ExtractUserAndTimestamp extends DoFn<TableRow, String> {
     @ProcessElement
-    public void processElement(@Element TableRow element, OutputReceiver<String> o) {
+    public void processElement(@Element TableRow element, OutputReceiver<String> out) {
       int timestamp = (Integer) element.get("timestamp");
       String userName = (String) element.get("contributor_username");
       if (userName != null) {
         // Sets the implicit timestamp field to be used in windowing.
-        o.outputWithTimestamp(userName, new Instant(timestamp * 1000L));
+        out.outputWithTimestamp(userName, new Instant(timestamp * 1000L));
       }
     }
   }
@@ -116,20 +116,20 @@ public class TopWikipediaSessions {
     @ProcessElement
     public void processElement(
         @Element KV<String, Long> element,
-        OutputReceiver<KV<String, Long>> o,
+        OutputReceiver<KV<String, Long>> out,
         BoundedWindow window) {
-      o.output(KV.of(element.getKey() + " : " + window, element.getValue()));
+      out.output(KV.of(element.getKey() + " : " + window, element.getValue()));
     }
   }
 
   static class FormatOutputDoFn extends DoFn<List<KV<String, Long>>, String> {
     @ProcessElement
     public void processElement(
-        @Element List<KV<String, Long>> element, OutputReceiver<String> o, BoundedWindow window) {
+        @Element List<KV<String, Long>> element, OutputReceiver<String> out, BoundedWindow window) {
       for (KV<String, Long> item : element) {
         String session = item.getKey();
         long count = item.getValue();
-        o.output(session + " : " + count + " : " + ((IntervalWindow) window).start());
+        out.output(session + " : " + count + " : " + ((IntervalWindow) window).start());
       }
     }
   }
@@ -162,10 +162,10 @@ public class TopWikipediaSessions {
               ParDo.of(
                   new DoFn<String, String>() {
                     @ProcessElement
-                    public void processElement(@Element String element, OutputReceiver<String> o) {
+                    public void processElement(@Element String element, OutputReceiver<String> out) {
                       if (Math.abs((long) element.hashCode())
                           <= Integer.MAX_VALUE * samplingThreshold) {
-                        o.output(element);
+                        out.output(element);
                       }
                     }
                   }))

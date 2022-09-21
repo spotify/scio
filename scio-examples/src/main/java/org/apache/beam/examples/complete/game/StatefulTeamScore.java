@@ -201,7 +201,7 @@ public class StatefulTeamScore extends LeaderBoard {
     @ProcessElement
     public void processElement(
         @Element KV<String, GameActionInfo> element,
-        OutputReceiver<KV<String, Integer>> o,
+        OutputReceiver<KV<String, Integer>> out,
         @StateId(TOTAL_SCORE) ValueState<Integer> totalScore) {
       String teamName = element.getKey();
       GameActionInfo gInfo = element.getValue();
@@ -217,7 +217,7 @@ public class StatefulTeamScore extends LeaderBoard {
       // the new total is 2002, and the threshold is 1000, 1999 / 1000 = 1, 2002 / 1000 = 2.
       // Therefore, this team passed the threshold.
       if (oldTotalScore / this.thresholdScore < totalScore.read() / this.thresholdScore) {
-        o.output(KV.of(teamName, totalScore.read()));
+        out.output(KV.of(teamName, totalScore.read()));
       }
     }
   }

@@ -129,8 +129,8 @@ public class AutoComplete {
                         @ProcessElement
                         public void processElement(
                             @Element KV<String, Long> element,
-                            OutputReceiver<CompletionCandidate> outputReceiver) {
-                          outputReceiver.output(
+                            OutputReceiver<CompletionCandidate> out) {
+                          out.output(
                               new CompletionCandidate(element.getKey(), element.getValue()));
                         }
                       }));
@@ -209,9 +209,9 @@ public class AutoComplete {
       @ProcessElement
       public void processElement(
           @Element KV<String, List<CompletionCandidate>> element,
-          OutputReceiver<CompletionCandidate> outputReceiver) {
+          OutputReceiver<CompletionCandidate> out) {
         for (CompletionCandidate cc : element.getValue()) {
-          outputReceiver.output(cc);
+          out.output(cc);
         }
       }
     }
@@ -268,10 +268,10 @@ public class AutoComplete {
     @ProcessElement
     public void processElement(
         @Element CompletionCandidate element,
-        OutputReceiver<KV<String, CompletionCandidate>> outputReceiver) {
+        OutputReceiver<KV<String, CompletionCandidate>> out) {
       String word = element.value;
       for (int i = minPrefix; i <= Math.min(word.length(), maxPrefix); i++) {
-        outputReceiver.output(KV.of(word.substring(0, i), element));
+        out.output(KV.of(word.substring(0, i), element));
       }
     }
   }
@@ -333,10 +333,10 @@ public class AutoComplete {
   /** Takes as input a set of strings, and emits each #hashtag found therein. */
   static class ExtractHashtags extends DoFn<String, String> {
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> outputReceiver) {
+    public void processElement(@Element String element, OutputReceiver<String> out) {
       Matcher m = Pattern.compile("#\\S+").matcher(element);
       while (m.find()) {
-        outputReceiver.output(m.group().substring(1));
+        out.output(m.group().substring(1));
       }
     }
   }
@@ -345,13 +345,13 @@ public class AutoComplete {
     @ProcessElement
     public void processElement(
         @Element KV<String, List<CompletionCandidate>> element,
-        OutputReceiver<TableRow> outputReceiver) {
+        OutputReceiver<TableRow> out) {
       List<TableRow> completions = new ArrayList<>();
       for (CompletionCandidate cc : element.getValue()) {
         completions.add(new TableRow().set("count", cc.getCount()).set("tag", cc.getValue()));
       }
       TableRow row = new TableRow().set("prefix", element.getKey()).set("tags", completions);
-      outputReceiver.output(row);
+      out.output(row);
     }
 
     /** Defines the BigQuery schema used for the output. */
@@ -391,7 +391,7 @@ public class AutoComplete {
     @ProcessElement
     public void processElement(
         @Element KV<String, List<CompletionCandidate>> element,
-        OutputReceiver<Entity> outputReceiver) {
+        OutputReceiver<Entity> out) {
       Entity.Builder entityBuilder = Entity.newBuilder();
       com.google.datastore.v1.Key key =
           makeKey(makeKey(kind, ancestorKey).build(), kind, element.getKey()).build();
@@ -407,7 +407,7 @@ public class AutoComplete {
       }
       properties.put("candidates", makeValue(candidates).build());
       entityBuilder.putAllProperties(properties);
-      outputReceiver.output(entityBuilder.build());
+      out.output(entityBuilder.build());
     }
   }
 
