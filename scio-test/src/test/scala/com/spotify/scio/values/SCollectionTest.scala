@@ -54,6 +54,11 @@ class SCollectionTest extends PipelineSpec {
   }
 
   private def newKvDoFn = new DoFn[Int, KV[Int, String]] {
+
+    /**
+     * ProcessContext is required as an argument because input parameter is scala.Int which is not
+     * supported by Beam as a separate @Element
+     */
     @ProcessElement
     def processElement(c: DoFn[Int, KV[Int, String]]#ProcessContext): Unit = {
       val x = c.element()

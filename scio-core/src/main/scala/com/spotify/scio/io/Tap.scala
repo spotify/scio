@@ -106,9 +106,9 @@ private[scio] class MaterializeTap[T: Coder] private (val path: String, coder: B
       @ProcessElement
       private[scio] def processElement(
         @Element element: GenericRecord,
-        outputReceiver: OutputReceiver[T]
+        out: OutputReceiver[T]
       ): Unit =
-        outputReceiver.output(AvroBytesUtil.decode(coder, element))
+        out.output(AvroBytesUtil.decode(coder, element))
     }
 
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {

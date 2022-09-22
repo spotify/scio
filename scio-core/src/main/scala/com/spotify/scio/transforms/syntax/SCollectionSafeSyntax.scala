@@ -52,17 +52,17 @@ trait SCollectionSafeSyntax {
         @ProcessElement
         private[scio] def processElement(
           @Element element: T,
-          multiOutputReceiver: MultiOutputReceiver
+          out: MultiOutputReceiver
         ): Unit = {
           val i =
             try {
               g(element).iterator
             } catch {
               case e: Throwable =>
-                multiOutputReceiver.get[(T, Throwable)](errorTag).output((element, e))
+                out.get[(T, Throwable)](errorTag).output((element, e))
                 Iterator.empty
             }
-          while (i.hasNext) multiOutputReceiver.get[U](mainTag).output(i.next())
+          while (i.hasNext) out.get[U](mainTag).output(i.next())
         }
       }
       val tuple =

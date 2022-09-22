@@ -83,11 +83,11 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   public void processElement(
       @DoFn.Element URI element,
       @Timestamp Instant timestamp,
-      OutputReceiver<OutputT> outputReceiver,
+      OutputReceiver<OutputT> out,
       BoundedWindow window) {
     batch.add(new Element(element, timestamp, window));
     if (batch.size() >= batchSize) {
-      processBatch(outputReceiver);
+      processBatch(out);
     }
   }
 

@@ -277,12 +277,11 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      final V record = c.element();
+    public void processElement(@Element V record, OutputReceiver<KV<BucketShardId, KV<byte[], byte[]>>> out) {
       final KV<BucketShardId, byte[]> bucketAndSortKey =
           processKey(extractKeyFn.apply(record), bucketMetadata, shardId);
 
-      c.output(
+      out.output(
           KV.of(
               bucketAndSortKey.getKey(),
               KV.of(bucketAndSortKey.getValue(), getValueBytes(valueCoder, record))));
@@ -338,8 +337,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      final V record = c.element();
+    public void processElement(@Element V record, OutputReceiver<KV<BucketShardId, KV<byte[], byte[]>>> out) {
       final K key = extractKeyFn.apply(record);
 
       KV<BucketShardId, byte[]> bucketIdAndSortBytes;
@@ -363,7 +361,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                     });
       }
 
-      c.output(
+      out.output(
           KV.of(
               bucketIdAndSortBytes.getKey(),
               KV.of(
@@ -397,8 +395,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      final KV<K, Iterable<KV<byte[], byte[]>>> record = c.element();
+    public void processElement(@Element KV<K, Iterable<KV<byte[], byte[]>>> record,
+                               OutputReceiver<KV<K, Iterable<KV<byte[], byte[]>>>> out) {
       final BufferedExternalSorter sorter = BufferedExternalSorter.create(sorterOptions);
 
       try {
@@ -407,7 +405,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
         for (KV<byte[], byte[]> kv : record.getValue()) {
           sorter.add(kv);
         }
-        c.output(KV.of(record.getKey(), sorter.sort()));
+        out.output(KV.of(record.getKey(), sorter.sort()));
 
         bucketsCompletedSorting.inc();
       } catch (IOException e) {
@@ -530,9 +528,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) throws IOException {
-      final BucketShardId bucketShardId = c.element().getKey();
-      final Iterable<KV<byte[], byte[]>> records = c.element().getValue();
+    public void processElement(
+            @Element KV<BucketShardId, Iterable<KV<byte[], byte[]>>> element,
+            OutputReceiver<KV<BucketShardId, ResourceId>> out
+    ) throws IOException {
+      final BucketShardId bucketShardId = element.getKey();
+      final Iterable<KV<byte[], byte[]>> records = element.getValue();
       final ResourceId tmpFile = fileAssignment.forBucket(bucketShardId, bucketMetadata);
 
       LOG.info("Writing sorted-bucket {} to temporary file {}", bucketShardId, tmpFile);
@@ -549,7 +550,7 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
             });
       }
 
-      c.output(KV.of(bucketShardId, tmpFile));
+      out.output(KV.of(bucketShardId, tmpFile));
     }
 
     @Override
@@ -595,6 +596,10 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
               "PopulateFinalDst",
               ParDo.of(
                       new DoFn<Integer, KV<BucketShardId, ResourceId>>() {
+                        /**
+                         * ProcessContext is required as an argument because its method sideInput is
+                         * used
+                         */
                         @ProcessElement
                         public void processElement(ProcessContext c) throws IOException {
                           moveFiles(
@@ -809,12 +814,12 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
                 ParDo.of(
                     new DoFn<KV<K, V>, Void>() {
                       @ProcessElement
-                      public void processElement(ProcessContext c) throws Exception {
-                        final K key = bucketMetadata.extractKey(c.element().getValue());
+                      public void processElement(@Element KV<K, V> element) throws Exception {
+                        final K key = bucketMetadata.extractKey(element.getValue());
                         final Coder<K> kCoder = NullableCoder.of(bucketMetadata.getKeyCoder());
                         if (!Arrays.equals(
                             CoderUtils.encodeToByteArray(kCoder, key),
-                            CoderUtils.encodeToByteArray(kCoder, c.element().getKey()))) {
+                            CoderUtils.encodeToByteArray(kCoder, element.getKey()))) {
                           throw new RuntimeException(
                               "BucketMetadata's extractKey fn did not match pre-keyed PCollection");
                         }

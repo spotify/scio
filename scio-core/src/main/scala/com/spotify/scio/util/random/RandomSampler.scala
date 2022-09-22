@@ -49,11 +49,11 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
   def startBundle(c: DoFn[T, T]#StartBundleContext): Unit = rng = init
 
   @ProcessElement
-  def processElement(@Element element: T, outputReceiver: OutputReceiver[T]): Unit = {
+  def processElement(@Element element: T, out: OutputReceiver[T]): Unit = {
     val count = samples
     var i = 0
     while (i < count) {
-      outputReceiver.output(element)
+      out.output(element)
       i += 1
     }
   }
@@ -142,12 +142,12 @@ abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, D
     }.toMap
 
   @ProcessElement
-  def processElement(@Element element: (K, V), outputReceiver: OutputReceiver[(K, V)]): Unit = {
+  def processElement(@Element element: (K, V), out: OutputReceiver[(K, V)]): Unit = {
     val (key, value) = element
     val count = samples(fractions(key), rngs(key))
     var i = 0
     while (i < count) {
-      outputReceiver.output((key, value))
+      out.output((key, value))
       i += 1
     }
   }

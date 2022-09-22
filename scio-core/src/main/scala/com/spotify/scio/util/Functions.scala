@@ -233,10 +233,10 @@ private[scio] object Functions {
       @ProcessElement
       private[scio] def processElement(
         @Element element: T,
-        outputReceiver: OutputReceiver[U]
+        out: OutputReceiver[U]
       ): Unit = {
         val i = g(element).iterator
-        while (i.hasNext) outputReceiver.output(i.next())
+        while (i.hasNext) out.output(i.next())
       }
     }
 
@@ -262,8 +262,8 @@ private[scio] object Functions {
   def mapFn[T, U](f: T => U): DoFn[T, U] = new NamedDoFn[T, U] {
     private[this] val g = ClosureCleaner.clean(f) // defeat closure
     @ProcessElement
-    private[scio] def processElement(@Element element: T, outputReceiver: OutputReceiver[U]): Unit =
-      outputReceiver.output(g(element))
+    private[scio] def processElement(@Element element: T, out: OutputReceiver[U]): Unit =
+      out.output(g(element))
   }
 
   def partitionFn[T](f: T => Int): PartitionFn[T] =
