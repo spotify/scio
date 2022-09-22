@@ -54,9 +54,9 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
         @ProcessElement
         private[scio] def processElement(
           @Element element: GenericRecord,
-          outputReceiver: OutputReceiver[T]
+          out: OutputReceiver[T]
         ): Unit =
-          outputReceiver.output(AvroBytesUtil.decode(coder, element))
+          out.output(AvroBytesUtil.decode(coder, element))
       })
   }
 
@@ -74,9 +74,9 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
         @ProcessElement
         private[scio] def processElement(
           @Element element: T,
-          outputReceiver: OutputReceiver[GenericRecord]
+          out: OutputReceiver[GenericRecord]
         ): Unit =
-          outputReceiver.output(AvroBytesUtil.encode(elemCoder, element))
+          out.output(AvroBytesUtil.encode(elemCoder, element))
       })
       .write(GenericRecordIO(path, AvroBytesUtil.schema))(params)
     tap(())

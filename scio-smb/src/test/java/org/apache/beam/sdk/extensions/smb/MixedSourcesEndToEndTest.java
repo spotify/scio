@@ -305,15 +305,16 @@ public class MixedSourcesEndToEndTest {
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      final KV<KeyType, CoGbkResult> kv = c.element();
+    public void processElement(
+        @Element KV<KeyType, CoGbkResult> kv,
+        OutputReceiver<KV<KeyType, KV<List<GenericRecord>, List<TableRow>>>> out) {
       final CoGbkResult result = kv.getValue();
       final List<GenericRecord> genericRecords =
           Lists.newArrayList(result.getAll(lhsTag).iterator());
       genericRecords.sort(grComparator);
       final List<TableRow> jsons = Lists.newArrayList(result.getAll(rhsTag).iterator());
       jsons.sort(trComparator);
-      c.output(KV.of(kv.getKey(), KV.of(genericRecords, jsons)));
+      out.output(KV.of(kv.getKey(), KV.of(genericRecords, jsons)));
     }
   }
 }

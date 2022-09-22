@@ -127,10 +127,10 @@ public class AutoComplete {
                   ParDo.of(
                       new DoFn<KV<String, Long>, CompletionCandidate>() {
                         @ProcessElement
-                        public void processElement(ProcessContext c) {
-                          c.output(
-                              new CompletionCandidate(
-                                  c.element().getKey(), c.element().getValue()));
+                        public void processElement(
+                            @Element KV<String, Long> element,
+                            OutputReceiver<CompletionCandidate> out) {
+                          out.output(new CompletionCandidate(element.getKey(), element.getValue()));
                         }
                       }));
 
@@ -206,9 +206,11 @@ public class AutoComplete {
     private static class FlattenTops
         extends DoFn<KV<String, List<CompletionCandidate>>, CompletionCandidate> {
       @ProcessElement
-      public void processElement(ProcessContext c) {
-        for (CompletionCandidate cc : c.element().getValue()) {
-          c.output(cc);
+      public void processElement(
+          @Element KV<String, List<CompletionCandidate>> element,
+          OutputReceiver<CompletionCandidate> out) {
+        for (CompletionCandidate cc : element.getValue()) {
+          out.output(cc);
         }
       }
     }
@@ -263,10 +265,11 @@ public class AutoComplete {
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      String word = c.element().value;
+    public void processElement(
+        @Element CompletionCandidate element, OutputReceiver<KV<String, CompletionCandidate>> out) {
+      String word = element.value;
       for (int i = minPrefix; i <= Math.min(word.length(), maxPrefix); i++) {
-        c.output(KV.of(word.substring(0, i), c.element()));
+        out.output(KV.of(word.substring(0, i), element));
       }
     }
   }
@@ -328,23 +331,24 @@ public class AutoComplete {
   /** Takes as input a set of strings, and emits each #hashtag found therein. */
   static class ExtractHashtags extends DoFn<String, String> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      Matcher m = Pattern.compile("#\\S+").matcher(c.element());
+    public void processElement(@Element String element, OutputReceiver<String> out) {
+      Matcher m = Pattern.compile("#\\S+").matcher(element);
       while (m.find()) {
-        c.output(m.group().substring(1));
+        out.output(m.group().substring(1));
       }
     }
   }
 
   static class FormatForBigquery extends DoFn<KV<String, List<CompletionCandidate>>, TableRow> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(
+        @Element KV<String, List<CompletionCandidate>> element, OutputReceiver<TableRow> out) {
       List<TableRow> completions = new ArrayList<>();
-      for (CompletionCandidate cc : c.element().getValue()) {
+      for (CompletionCandidate cc : element.getValue()) {
         completions.add(new TableRow().set("count", cc.getCount()).set("tag", cc.getValue()));
       }
-      TableRow row = new TableRow().set("prefix", c.element().getKey()).set("tags", completions);
-      c.output(row);
+      TableRow row = new TableRow().set("prefix", element.getKey()).set("tags", completions);
+      out.output(row);
     }
 
     /** Defines the BigQuery schema used for the output. */
@@ -382,15 +386,16 @@ public class AutoComplete {
     }
 
     @ProcessElement
-    public void processElement(ProcessContext c) {
+    public void processElement(
+        @Element KV<String, List<CompletionCandidate>> element, OutputReceiver<Entity> out) {
       Entity.Builder entityBuilder = Entity.newBuilder();
       com.google.datastore.v1.Key key =
-          makeKey(makeKey(kind, ancestorKey).build(), kind, c.element().getKey()).build();
+          makeKey(makeKey(kind, ancestorKey).build(), kind, element.getKey()).build();
 
       entityBuilder.setKey(key);
       List<Value> candidates = new ArrayList<>();
       Map<String, Value> properties = new HashMap<>();
-      for (CompletionCandidate tag : c.element().getValue()) {
+      for (CompletionCandidate tag : element.getValue()) {
         Entity.Builder tagEntity = Entity.newBuilder();
         properties.put("tag", makeValue(tag.value).build());
         properties.put("count", makeValue(tag.count).build());
@@ -398,7 +403,7 @@ public class AutoComplete {
       }
       properties.put("candidates", makeValue(candidates).build());
       entityBuilder.putAllProperties(properties);
-      c.output(entityBuilder.build());
+      out.output(entityBuilder.build());
     }
   }
 

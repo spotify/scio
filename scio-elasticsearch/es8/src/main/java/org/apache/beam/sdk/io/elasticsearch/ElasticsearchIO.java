@@ -472,10 +472,11 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(ProcessContext c) throws Exception {
+      public void processElement(@Element T element, OutputReceiver<KV<Long, T>> out)
+          throws Exception {
         // assign this element to a random shard
         final long shard = ThreadLocalRandom.current().nextLong(numOfShard);
-        c.output(KV.of(shard, c.element()));
+        out.output(KV.of(shard, element));
       }
     }
 
@@ -543,9 +544,8 @@ public class ElasticsearchIO {
       }
 
       @ProcessElement
-      public void processElement(ProcessContext c) throws Exception {
-        final T t = c.element();
-        final Iterable<BulkOperation> operations = toBulkOperations.apply(t);
+      public void processElement(@Element T element) throws Exception {
+        final Iterable<BulkOperation> operations = toBulkOperations.apply(element);
         for (BulkOperation operation : operations) {
           long bytes = operationSize(clientSupplier, operation);
           if ((chunk.size() + 1) > maxBulkRequestOperations
@@ -630,8 +630,8 @@ public class ElasticsearchIO {
 
       @SuppressWarnings("Duplicates")
       @ProcessElement
-      public void processElement(ProcessContext c) throws Exception {
-        final Iterable<T> values = c.element().getValue();
+      public void processElement(@Element KV<Long, Iterable<T>> element) throws Exception {
+        final Iterable<T> values = element.getValue();
         final Iterable<BulkOperation> operations =
             () ->
                 StreamSupport.stream(values.spliterator(), false)

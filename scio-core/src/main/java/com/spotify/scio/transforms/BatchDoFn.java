@@ -91,7 +91,7 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
 
   @ProcessElement
   public void processElement(
-      @Element InputT element, BoundedWindow window, OutputReceiver<Iterable<InputT>> receiver) {
+      @Element InputT element, BoundedWindow window, OutputReceiver<Iterable<InputT>> out) {
     LOG.debug("*** BATCH *** Add element for window {} ", window);
     Buffer<InputT> buffer = buffers.computeIfAbsent(window, w -> new Buffer<>());
     long weight = weigher.apply(element);
@@ -99,7 +99,7 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
 
     if (buffer.getWeight() >= maxWeight) {
       LOG.debug("*** END OF BATCH *** for window {}", window);
-      flushBatch(window, receiver);
+      flushBatch(window, out);
     } else if (buffers.size() > maxLiveWindows) {
       // flush the biggest buffer if we get too many parallel windows
       BoundedWindow discardedWindow =
@@ -107,7 +107,7 @@ public class BatchDoFn<InputT> extends DoFn<InputT, Iterable<InputT>> {
                   buffers.entrySet(), Comparator.comparingLong(o -> o.getValue().getWeight()))
               .getKey();
       LOG.debug("*** END OF BATCH *** for window {}", discardedWindow);
-      flushBatch(discardedWindow, receiver);
+      flushBatch(discardedWindow, out);
     }
   }
 

@@ -143,14 +143,14 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   public void processElement(
       @Element A input,
       @Timestamp Instant timestamp,
-      OutputReceiver<KV<A, T>> outputReceiver,
+      OutputReceiver<KV<A, T>> out,
       BoundedWindow window) {
-    flush(r -> outputReceiver.output(KV.of(r.input, r.output)));
+    flush(r -> out.output(KV.of(r.input, r.output)));
 
     // found in cache
     B cached = cacheSupplier.get(instanceId, input);
     if (cached != null) {
-      outputReceiver.output(KV.of(input, success(cached)));
+      out.output(KV.of(input, success(cached)));
       return;
     }
 

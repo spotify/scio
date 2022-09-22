@@ -216,8 +216,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     }
 
     @ProcessElement
-    public void processElement(
-        @Element Iterable<MergedBucket> element, MultiOutputReceiver outputReceiver)
+    public void processElement(@Element Iterable<MergedBucket> element, MultiOutputReceiver out)
         throws IOException {
       final Iterator<MergedBucket> mergedBuckets = element.iterator();
       final Map<BucketShardId, ResourceId> writtenBuckets = new HashMap<>();
@@ -242,8 +241,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           writtenBuckets,
           dstFileAssignment,
           fileOperations,
-          bucketDst -> outputReceiver.get(BUCKETS_TAG).output(bucketDst),
-          metadataDst -> outputReceiver.get(METADATA_TAG).output(metadataDst),
+          bucketDst -> out.get(BUCKETS_TAG).output(bucketDst),
+          metadataDst -> out.get(METADATA_TAG).output(metadataDst),
           false); // Don't include null-key bucket in output
     }
   }

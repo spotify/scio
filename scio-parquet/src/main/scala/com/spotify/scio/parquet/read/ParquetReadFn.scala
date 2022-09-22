@@ -120,7 +120,7 @@ class ParquetReadFn[T, R](
   def processElement(
     @Element file: ReadableFile,
     tracker: RestrictionTracker[OffsetRange, Long],
-    outputReceiver: DoFn.OutputReceiver[R]
+    out: DoFn.OutputReceiver[R]
   ): Unit = {
     logger.debug(
       "reading file from offset {} to {}",
@@ -170,7 +170,7 @@ class ParquetReadFn[T, R](
               pages.getRowCount,
               file,
               recordReader,
-              outputReceiver,
+              out,
               projectionFn
             )
             pages = reader.readNextRowGroup()
@@ -191,7 +191,7 @@ class ParquetReadFn[T, R](
               pages.getRowCount,
               file,
               recordReader,
-              outputReceiver,
+              out,
               projectionFn
             )
 

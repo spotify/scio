@@ -1289,10 +1289,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       @ProcessElement
       private[scio] def processElement(
         @Element element: T,
-        outputReceiver: OutputReceiver[(T, PaneInfo)],
+        out: OutputReceiver[(T, PaneInfo)],
         pane: PaneInfo
       ): Unit =
-        outputReceiver.output((element, pane))
+        out.output((element, pane))
     })
 
   /**
@@ -1305,9 +1305,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       private[scio] def processElement(
         @Element element: T,
         @Timestamp timestamp: Instant,
-        outputReceiver: OutputReceiver[(T, Instant)]
+        out: OutputReceiver[(T, Instant)]
       ): Unit =
-        outputReceiver.output((element, timestamp))
+        out.output((element, timestamp))
     })
 
   /**
@@ -1326,10 +1326,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         @ProcessElement
         private[scio] def processElement(
           @Element element: T,
-          outputReceiver: OutputReceiver[(T, BoundedWindow)],
+          out: OutputReceiver[(T, BoundedWindow)],
           window: BoundedWindow
         ): Unit =
-          outputReceiver.output((element, window))
+          out.output((element, window))
       })
       .asInstanceOf[SCollection[(T, W)]]
 

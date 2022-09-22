@@ -34,12 +34,12 @@ private[scio] object FunctionsWithWindowedValue {
       private[scio] def processElement(
         @Element element: T,
         @Timestamp timestamp: Instant,
-        outputReceiver: OutputReceiver[T],
+        out: OutputReceiver[T],
         pane: PaneInfo,
         window: BoundedWindow
       ): Unit = {
         val wv = WindowedValue(element, timestamp, window, pane)
-        if (g(wv)) outputReceiver.output(element)
+        if (g(wv)) out.output(element)
       }
     }
 
@@ -50,7 +50,7 @@ private[scio] object FunctionsWithWindowedValue {
       private[scio] def processElement(
         @Element element: T,
         @Timestamp timestamp: Instant,
-        outputReceiver: OutputReceiver[U],
+        out: OutputReceiver[U],
         pane: PaneInfo,
         window: BoundedWindow
       ): Unit = {
@@ -58,7 +58,7 @@ private[scio] object FunctionsWithWindowedValue {
         val i = g(wv).iterator
         while (i.hasNext) {
           val v = i.next()
-          outputReceiver.outputWithTimestamp(v.value, v.timestamp)
+          out.outputWithTimestamp(v.value, v.timestamp)
         }
       }
     }
@@ -70,12 +70,12 @@ private[scio] object FunctionsWithWindowedValue {
       private[scio] def processElement(
         @Element element: T,
         @Timestamp timestamp: Instant,
-        outputReceiver: OutputReceiver[U],
+        out: OutputReceiver[U],
         pane: PaneInfo,
         window: BoundedWindow
       ): Unit = {
         val wv = g(WindowedValue(element, timestamp, window, pane))
-        outputReceiver.outputWithTimestamp(wv.value, wv.timestamp)
+        out.outputWithTimestamp(wv.value, wv.timestamp)
       }
     }
 }
