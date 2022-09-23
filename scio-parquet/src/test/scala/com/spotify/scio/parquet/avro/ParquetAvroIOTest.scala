@@ -21,15 +21,40 @@ import java.io.File
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
-import com.spotify.scio.io.{TapSpec, TextIO}
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec, TextIO}
 import com.spotify.scio.testing._
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
 import org.joda.time.{DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
+
+class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
+  val extension: String = ".parquet"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TestRecord] = {
+    in.map(AvroUtils.newSpecificRecord)
+      .saveAsParquetAvroFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves = Seq(
+    _.map(AvroUtils.newSpecificRecord).saveAsParquetAvroFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
 
 class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   private val dir = tmpDir
@@ -144,7 +169,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     // This test follows the same pattern as com.spotify.scio.io.dynamic.DynamicFileTest
 
     val dir = tmpDir
-
     val genericRecords = (0 until 10).map(AvroUtils.newGenericRecord)
     val options = PipelineOptionsFactory.fromArgs("--streaming=true").create()
     val sc1 = ScioContext(options)
@@ -156,19 +180,21 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       // take each records int value and multiply it by half hour, so we should have 2 records in each hour window
       .timestampBy(x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000L), Duration.ZERO)
       .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
-      .saveAsDynamicParquetAvroFile(
+      .saveAsParquetAvroFile(
         dir.toString,
-        Left { (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) =>
-          val intervalWindow = window.asInstanceOf[IntervalWindow]
-          val year = intervalWindow.start().get(DateTimeFieldType.year())
-          val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
-          val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
-          val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
-          "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
-            .format(year, month, day, hour, shardNumber, numShards)
-        },
         numShards = 1,
-        schema = AvroUtils.schema
+        schema = AvroUtils.schema,
+        filenamePolicySupplier = FilenamePolicySupplier.filenamePolicySupplierOf(
+          windowed = (shardNumber: Int, numShards: Int, window: BoundedWindow, _: PaneInfo) => {
+            val intervalWindow = window.asInstanceOf[IntervalWindow]
+            val year = intervalWindow.start().get(DateTimeFieldType.year())
+            val month = intervalWindow.start().get(DateTimeFieldType.monthOfYear())
+            val day = intervalWindow.start().get(DateTimeFieldType.dayOfMonth())
+            val hour = intervalWindow.start().get(DateTimeFieldType.hourOfDay())
+            "y=%02d/m=%02d/d=%02d/h=%02d/part-%s-of-%s"
+              .format(year, month, day, hour, shardNumber, numShards)
+          }
+        )
       )
     sc1.run()
 
@@ -213,13 +239,14 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc = ScioContext()
     implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
     sc.parallelize(genericRecords)
-      .saveAsDynamicParquetAvroFile(
+      .saveAsParquetAvroFile(
         dir.toString,
-        Right((shardNumber: Int, numShards: Int) =>
-          "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
-        ),
         numShards = 1,
-        schema = AvroUtils.schema
+        schema = AvroUtils.schema,
+        filenamePolicySupplier = FilenamePolicySupplier.filenamePolicySupplierOf(
+          unwindowed = (shardNumber: Int, numShards: Int) =>
+            "part-%s-of-%s-with-custom-naming".format(shardNumber, numShards)
+        )
       )
     sc.run()
 
@@ -248,13 +275,20 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     an[NotImplementedError] should be thrownBy {
       val sc = ScioContext()
       sc.parallelize(genericRecords)
-        .saveAsDynamicParquetAvroFile(
+        .saveAsParquetAvroFile(
           dir.toString,
-          Left((_, _, _, _) => "test for exception handling"),
           numShards = 1,
-          schema = AvroUtils.schema
+          schema = AvroUtils.schema,
+          filenamePolicySupplier = FilenamePolicySupplier.filenamePolicySupplierOf(
+            windowed = (_, _, _, _) => "test for exception handling"
+          )
         )
-      sc.run()
+      try {
+        sc.run()
+      } catch {
+        case e: PipelineExecutionException =>
+          throw e.getCause
+      }
     }
 
     an[NotImplementedError] should be thrownBy {
@@ -265,15 +299,21 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
           Duration.ZERO
         )
         .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
-        .saveAsDynamicParquetAvroFile(
+        .saveAsParquetAvroFile(
           dir.toString,
-          Right((_, _) => "test for exception handling"),
           numShards = 1,
-          schema = AvroUtils.schema
+          schema = AvroUtils.schema,
+          filenamePolicySupplier = FilenamePolicySupplier.filenamePolicySupplierOf(
+            unwindowed = (_, _) => "test for exception handling"
+          )
         )
-      sc.run()
+      try {
+        sc.run()
+      } catch {
+        case e: PipelineExecutionException =>
+          throw e.getCause
+      }
     }
-
   }
 
   it should "apply map functions to test input" in {

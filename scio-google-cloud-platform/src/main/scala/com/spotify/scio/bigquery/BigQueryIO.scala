@@ -26,7 +26,7 @@ import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io.TapT
 import com.twitter.chill.ClosureCleaner
@@ -34,6 +34,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
@@ -41,7 +42,6 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 
 private object Reads {
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
@@ -290,15 +290,10 @@ object BigQueryTypedTable {
   ): BigQueryTypedTable[T] = {
     val rFn = ClosureCleaner.clean(readerFn)
     val wFn = ClosureCleaner.clean(writerFn)
-    val reader = beam.BigQueryIO.read(new SerializableFunction[SchemaAndRecord, T] {
-      override def apply(input: SchemaAndRecord): T = rFn(input)
-    })
+    val reader = beam.BigQueryIO.read(Functions.serializableFn(rFn))
     val writer = beam.BigQueryIO
       .write[T]()
-      .withFormatFunction(new SerializableFunction[T, TableRow] {
-        override def apply(input: T): TableRow = wFn(input)
-      })
-
+      .withFormatFunction(Functions.serializableFn(wFn))
     val fn: (GenericRecord, TableSchema) => T = (gr, ts) =>
       tableRowFn(BigQueryUtils.convertGenericRecordToTableRow(gr, ts))
 

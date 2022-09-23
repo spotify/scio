@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Spotify AB.
+ * Copyright 2017 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,69 +15,71 @@
  * under the License.
  */
 
-package com.spotify.scio.parquet.types;
+package com.spotify.scio.parquet.avro;
 
 import com.spotify.scio.parquet.BeamOutputFile;
 import com.spotify.scio.parquet.WriterUtils;
-import magnolify.parquet.ParquetType;
+import org.apache.avro.Schema;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.parquet.hadoop.ParquetOutputFormat;
+import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 import java.nio.channels.WritableByteChannel;
 
-public class ParquetTypeSink<T> extends FileBasedSink<T, Void, T> {
+public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
 
-  private final ParquetType<T> type;
+  private final String schemaString;
   private final SerializableConfiguration conf;
   private final CompressionCodecName compression;
 
-  public ParquetTypeSink(
+  public ParquetAvroFileBasedSink(
       ValueProvider<ResourceId> baseOutputFileName,
       FileBasedSink.DynamicDestinations<T, Void, T> dynamicDestinations,
-      ParquetType<T> type,
+      Schema schema,
       Configuration conf,
       CompressionCodecName compression) {
     super(baseOutputFileName, dynamicDestinations);
-    this.type = type;
+    this.schemaString = schema.toString();
     this.conf = new SerializableConfiguration(conf);
     this.compression = compression;
   }
 
   @Override
   public FileBasedSink.WriteOperation<Void, T> createWriteOperation() {
-    return new ParquetTypeWriteOperation<>(this, type, conf, compression);
+    return new ParquetAvroWriteOperation<T>(this, schemaString, conf, compression);
   }
 
   // =======================================================================
   // WriteOperation
   // =======================================================================
 
-  static class ParquetTypeWriteOperation<T> extends WriteOperation<Void, T> {
-    private final ParquetType<T> type;
+  static class ParquetAvroWriteOperation<T> extends WriteOperation<Void, T> {
+
+    private final String schemaString;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
 
-    public ParquetTypeWriteOperation(
+    public ParquetAvroWriteOperation(
         FileBasedSink<T, Void, T> sink,
-        ParquetType<T> type,
+        String schemaString,
         SerializableConfiguration conf,
         CompressionCodecName compression) {
       super(sink);
-      this.type = type;
+      this.schemaString = schemaString;
       this.conf = conf;
       this.compression = compression;
     }
 
     @Override
     public Writer<Void, T> createWriter() throws Exception {
-      return new ParquetTypeWriter<>(this, type, conf, compression);
+      return new ParquetAvroWriter<>(
+          this, new Schema.Parser().parse(schemaString), conf, compression);
     }
   }
 
@@ -85,29 +87,30 @@ public class ParquetTypeSink<T> extends FileBasedSink<T, Void, T> {
   // Writer
   // =======================================================================
 
-  static class ParquetTypeWriter<T> extends FileBasedSink.Writer<Void, T> {
+  static class ParquetAvroWriter<T> extends FileBasedSink.Writer<Void, T> {
 
-    private final ParquetType<T> type;
+    private final Schema schema;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
     private ParquetWriter<T> writer;
 
-    public ParquetTypeWriter(
+    public ParquetAvroWriter(
         WriteOperation<Void, T> writeOperation,
-        ParquetType<T> type,
+        Schema schema,
         SerializableConfiguration conf,
         CompressionCodecName compression) {
       super(writeOperation, MimeTypes.BINARY);
-      this.type = type;
+      this.schema = schema;
       this.conf = conf;
       this.compression = compression;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      writer = WriterUtils.build(type.writeBuilder(outputFile), conf.get(), compression);
+      AvroParquetWriter.Builder<T> builder =
+          AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
+      writer = WriterUtils.build(builder, conf.get(), compression);
     }
 
     @Override

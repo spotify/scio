@@ -23,21 +23,17 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
 import org.apache.beam.sdk.io._
-import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
+import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.SerializableFunction
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport, GenericDataSupplier}
@@ -47,7 +43,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
-import scala.util.Either
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
@@ -72,99 +67,74 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       .map(params.projectionFn.asInstanceOf[AvroType => T])
   }
 
-  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val job = Job.getInstance(params.conf)
-    if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
-      GcsConnectorUtil.setCredentials(job)
-    }
-
-    val writerSchema = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-      ReflectData.get().getSchema(cls)
-    } else {
-      params.schema
-    }
-    val resource =
-      FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
-    val prefix = StaticValueProvider.of(resource)
-    val fileNamePolicy =
-      params.filenameFunction
-        .map {
-          case Left(f) =>
-            createFilenamePolicy(resource, params.suffix, windowedFilenameFunction = f)
-          case Right(f) => createFilenamePolicy(resource, params.suffix, filenameFunction = f)
-        }
-        .getOrElse(
-          DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
-        )
-    val destinations = DynamicFileDestinations.constant[T](fileNamePolicy)
-    val sink = new ParquetAvroSink[T](
-      prefix,
-      destinations,
-      writerSchema,
-      job.getConfiguration,
-      params.compression
+  private def parquetOut(
+    path: String,
+    schema: Schema,
+    suffix: String,
+    numShards: Int,
+    compression: CompressionCodecName,
+    conf: Configuration,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    isWindowed: Boolean,
+    isLocalRunner: Boolean
+  ) = {
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed
     )
-    val t =
-      if (data.internal.getWindowingStrategy != WindowingStrategy.globalDefault()) {
-        WriteFiles.to(sink).withNumShards(params.numShards).withWindowedWrites()
-      } else {
-        WriteFiles.to(sink).withNumShards(params.numShards)
-      }
-    data.applyInternal(t)
+    val dynamicDestinations =
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
+    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+
+    val sink = new ParquetAvroFileBasedSink[T](
+      StaticValueProvider.of(tempDirectory),
+      dynamicDestinations,
+      schema,
+      job.getConfiguration,
+      compression
+    )
+    val transform = WriteFiles.to(sink).withNumShards(numShards)
+    if (!isWindowed) transform else transform.withWindowedWrites()
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
+    val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
+
+    data.applyInternal(
+      parquetOut(
+        path,
+        writerSchema,
+        params.suffix,
+        params.numShards,
+        params.compression,
+        params.conf,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicySupplier,
+        ScioUtil.isWindowed(data),
+        ScioUtil.isLocalRunner(data.context.options.getRunner)
+      )
+    )
     tap(ParquetAvroIO.ReadParam[T, T](identity[T] _, writerSchema, null))
   }
 
   override def tap(params: ReadP): Tap[T] =
     ParquetAvroTap(ScioUtil.addPartSuffix(path), params)
-
-  def createFilenamePolicy(
-    baseFileName: ResourceId,
-    filenameSuffix: String,
-    windowedFilenameFunction: (Int, Int, BoundedWindow, PaneInfo) => String = (_, _, _, _) =>
-      throw new NotImplementedError(
-        "saveAsDynamicParquetAvroFile for windowed SCollections requires a windowed filename function"
-      ),
-    filenameFunction: (Int, Int) => String = (_, _) =>
-      throw new NotImplementedError("saveAsDynamicParquetAvroFile requires a filename function")
-  ): FilenamePolicy = {
-
-    new FileBasedSink.FilenamePolicy {
-      override def windowedFilename(
-        shardNumber: Int,
-        numShards: Int,
-        window: BoundedWindow,
-        paneInfo: PaneInfo,
-        outputFileHints: FileBasedSink.OutputFileHints
-      ): ResourceId = {
-        val filename = windowedFilenameFunction(shardNumber, numShards, window, paneInfo)
-        baseFileName.getCurrentDirectory.resolve(
-          filename + filenameSuffix,
-          StandardResolveOptions.RESOLVE_FILE
-        )
-      }
-
-      override def unwindowedFilename(
-        shardNumber: Int,
-        numShards: Int,
-        outputFileHints: FileBasedSink.OutputFileHints
-      ): ResourceId = {
-        val filename = filenameFunction(shardNumber, numShards)
-        baseFileName.getCurrentDirectory.resolve(
-          filename + filenameSuffix,
-          StandardResolveOptions.RESOLVE_FILE
-        )
-      }
-    }
-
-  }
-
 }
 
 object ParquetAvroIO {
   object ReadParam {
     private[avro] val DefaultProjection = null
     private[avro] val DefaultPredicate = null
-    private[avro] val DefaultConfiguration = new Configuration()
+    private[avro] val DefaultConfiguration = null
 
     @deprecated(
       "Use ReadParam(projectionFn, projection, predicate, conf) instead",
@@ -190,7 +160,7 @@ object ParquetAvroIO {
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
     def read(sc: ScioContext, path: String): SCollection[T] = {
-      val hadoopConf = new Configuration(conf)
+      val hadoopConf = Option(conf).getOrElse(new Configuration())
       // Needed to make GenericRecord read by parquet-avro work with Beam's
       // org.apache.beam.sdk.coders.AvroCoder.
       if (!isSpecific) {
@@ -217,21 +187,21 @@ object ParquetAvroIO {
           ReadSupportFactory.avro,
           new SerializableConfiguration(hadoopConf),
           path,
-          new SerializableFunction[A, T] {
-            override def apply(input: A): T = cleanedProjectionFn(input)
-          }
+          Functions.serializableFn(cleanedProjectionFn)
         )
       ).setCoder(tCoder)
     }
   }
 
   object WriteParam {
-    private[avro] val DefaultSchema = null
-    private[avro] val DefaultNumShards = 0
-    private[avro] val DefaultSuffix = ".parquet"
-    private[avro] val DefaultCompression = CompressionCodecName.GZIP
-    private[avro] val DefaultFilenameFunction = None
-    private[avro] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultSchema = null
+    private[scio] val DefaultNumShards = 0
+    private[scio] val DefaultSuffix = ".parquet"
+    private[scio] val DefaultCompression = CompressionCodecName.GZIP
+    private[scio] val DefaultConfiguration = null
+    private[scio] val DefaultShardNameTemplate = null
+    private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
@@ -239,10 +209,10 @@ object ParquetAvroIO {
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    filenameFunction: Option[
-      Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String]
-    ] = WriteParam.DefaultFilenameFunction,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
 }
 
@@ -255,7 +225,7 @@ case class ParquetAvroTap[A, T: ClassTag: Coder](
     xs.iterator.flatMap { metadata =>
       val reader = AvroParquetReader
         .builder[A](BeamInputFile.of(metadata.resourceId()))
-        .withConf(params.conf)
+        .withConf(Option(params.conf).getOrElse(new Configuration()))
         .build()
       new Iterator[T] {
         private var current: A = reader.read()

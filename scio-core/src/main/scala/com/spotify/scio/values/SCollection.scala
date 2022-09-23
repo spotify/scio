@@ -31,6 +31,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.transforms.BatchDoFn
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -39,7 +40,6 @@ import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
-import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
@@ -205,7 +205,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val t =
       if (
         (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
-        && internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+        && ScioUtil.isWindowed(this)
       ) {
         // In case PCollection is windowed
         transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
@@ -1551,7 +1551,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val avroCoder = Coder.avroGenericRecordCoder(schema)
       val write = beam.AvroIO
         .writeGenericRecords(schema)
-        .to(ScioUtil.pathWithShards(path))
+        .to(ScioUtil.pathWithPartPrefix(path))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
         .withMetadata(Map.empty[String, AnyRef].asJava)
@@ -1570,7 +1570,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   ) =
     beam.TextIO
       .write()
-      .to(ScioUtil.pathWithShards(path))
+      .to(ScioUtil.pathWithPartPrefix(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withCompression(compression)
@@ -1587,7 +1587,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     header: Option[String] = TextIO.WriteParam.DefaultHeader,
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = TextIO.WriteParam.DefaultFilenamePolicySupplier
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1602,7 +1603,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         header,
         footer,
         shardNameTemplate,
-        tempDirectory
+        tempDirectory,
+        filenamePolicySupplier
       )
     )
   }
@@ -1619,10 +1621,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     compression: Compression = BinaryIO.WriteParam.DefaultCompression,
     header: Array[Byte] = BinaryIO.WriteParam.DefaultHeader,
     footer: Array[Byte] = BinaryIO.WriteParam.DefaultFooter,
+    shardNameTemplate: String = BinaryIO.WriteParam.DefaultShardNameTemplate,
     framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
-    fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming,
-    tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      BinaryIO.WriteParam.DefaultFilenamePolicySupplier
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .covary_[Array[Byte]]
@@ -1635,10 +1639,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             compression,
             header,
             footer,
+            shardNameTemplate,
             framePrefix,
             frameSuffix,
-            fileNaming,
-            tempDirectory
+            tempDirectory,
+            filenamePolicySupplier
           )
       )
 

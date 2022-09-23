@@ -21,10 +21,20 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.{
+  Compression,
+  DynamicFileDestinations,
+  TFRecordFileBasedSink,
+  WriteFiles
+}
 import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
+import com.spotify.scio.util.FilenamePolicySupplier
+import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.transforms.SerializableFunctions
+
 import scala.annotation.unused
 
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
@@ -55,12 +65,18 @@ object TFRecordIO {
     private[tensorflow] val DefaultSuffix = ".tfrecords"
     private[tensorflow] val DefaultCompression = Compression.UNCOMPRESSED
     private[tensorflow] val DefaultNumShards = 0
+    private[tensorflow] val DefaultShardNameTemplate = null
+    private[tensorflow] val DefaultTempDirectory = null
+    private[tensorflow] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
-    suffix: String = WriteParam.DefaultSuffix,
-    compression: Compression = WriteParam.DefaultCompression,
-    numShards: Int = WriteParam.DefaultNumShards
+    suffix: String,
+    compression: Compression,
+    numShards: Int,
+    shardNameTemplate: String,
+    tempDirectory: String,
+    filenamePolicySupplier: FilenamePolicySupplier
   )
 }
 
@@ -121,14 +137,49 @@ private object TFRecordMethods {
         .withCompression(params.compression)
     )
 
+  private def tfWrite(
+    path: String,
+    suffix: String,
+    numShards: Int,
+    compression: Compression,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    isWindowed: Boolean
+  ) = {
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed
+    )
+    val dynamicDestinations =
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
+
+    val sink = new TFRecordFileBasedSink(
+      StaticValueProvider.of(tempDirectory),
+      dynamicDestinations,
+      compression
+    )
+
+    val transform = WriteFiles.to(sink).withNumShards(numShards)
+    if (!isWindowed) transform else transform.withWindowedWrites()
+  }
+
   def write(data: SCollection[Array[Byte]], path: String, params: TFRecordIO.WriteParam): Unit = {
     data.applyInternal(
-      beam.TFRecordIO
-        .write()
-        .to(ScioUtil.pathWithShards(path))
-        .withSuffix(params.suffix)
-        .withCompression(params.compression)
-        .withNumShards(params.numShards)
+      tfWrite(
+        path,
+        params.suffix,
+        params.numShards,
+        params.compression,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicySupplier,
+        ScioUtil.isWindowed(data)
+      )
     )
 
     ()

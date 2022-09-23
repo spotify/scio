@@ -19,17 +19,78 @@ package com.spotify.scio.testing
 
 import java.io.File
 import java.util.UUID
-
 import com.spotify.scio._
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
+import org.apache.beam.sdk.io.FileBasedSink
+import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
+import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow,
+  GlobalWindow,
+  IntervalWindow,
+  PaneInfo
+}
 import org.apache.commons.io.FileUtils
 
 import scala.reflect.ClassTag
 
 /** Trait for unit testing [[ScioIO]]. */
 trait ScioIOSpec extends PipelineSpec {
+
+  def testFilenamePolicySupplier(
+    path: String,
+    suffix: String
+  ): FilenamePolicy = {
+    val resource = FileBasedSink.convertToFileResourceIfPossible(path)
+    new FilenamePolicy {
+      override def windowedFilename(
+        shardNumber: Int,
+        numShards: Int,
+        window: BoundedWindow,
+        paneInfo: PaneInfo,
+        outputFileHints: FileBasedSink.OutputFileHints
+      ): ResourceId = {
+        val w = window match {
+          case iw: IntervalWindow => s"-window${iw.start().getMillis}->${iw.end().getMillis}"
+          case _: GlobalWindow    => "-windowglobal"
+          case _                  => s"-window${window.maxTimestamp().getMillis}"
+        }
+        val p = {
+          val unitary = paneInfo.isFirst && paneInfo.isLast
+          if (unitary) "" else s"-pane${paneInfo.getTiming}-index${paneInfo.getIndex}"
+        }
+        val filename = s"foo-shard-${shardNumber}-of-numShards-${numShards}${w}${p}"
+        resource.getCurrentDirectory.resolve(
+          filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
+          StandardResolveOptions.RESOLVE_FILE
+        )
+      }
+
+      override def unwindowedFilename(
+        shardNumber: Int,
+        numShards: Int,
+        outputFileHints: FileBasedSink.OutputFileHints
+      ): ResourceId = {
+        val filename = s"foo-shard-${shardNumber}-of-numShards-${numShards}"
+        resource.getCurrentDirectory.resolve(
+          filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
+          StandardResolveOptions.RESOLVE_FILE
+        )
+      }
+    }
+  }
+
+  def listFiles(tmpDir: File): Array[String] = {
+    tmpDir
+      .listFiles()
+      .filterNot(_.getName.startsWith("_"))
+      .filterNot(_.getName.startsWith("."))
+      .map(_.toString)
+  }
+
   def testTap[T: Coder](
     xs: Seq[T]
   )(writeFn: (SCollection[T], String) => ClosedTap[T])(suffix: String): Unit = {
@@ -41,10 +102,9 @@ trait ScioIOSpec extends PipelineSpec {
     val scioResult = sc.run().waitUntilDone()
     val tap = scioResult.tap(closedTap)
 
+    val files = listFiles(tmpDir)
     tap.value.toSeq should contain theSameElementsAs xs
     tap.open(ScioContext()) should containInAnyOrder(xs)
-    val files =
-      tmpDir.listFiles().filterNot(_.getName.startsWith("_")).map(_.toString)
     all(files) should endWith(suffix)
     FileUtils.deleteDirectory(tmpDir)
   }

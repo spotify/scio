@@ -21,18 +21,38 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.csv.CsvIO
 import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import kantan.csv.{CsvConfiguration, HeaderDecoder, HeaderEncoder}
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.transforms.ParDo
 
 trait SCollectionSyntax {
   implicit final class WritableCsvSCollection[T](private val self: SCollection[T]) {
     @experimental
-    def saveAsCsvFile(path: String, params: CsvIO.WriteParam = CsvIO.DefaultWriteParams)(implicit
-      coder: Coder[T],
-      enc: HeaderEncoder[T]
-    ): ClosedTap[Nothing] = self.write(CsvIO.Write[T](path))(params)
+    def saveAsCsvFile(
+      path: String,
+      suffix: String = CsvIO.WriteParam.DefaultSuffix,
+      csvConfig: CsvConfiguration = CsvIO.WriteParam.DefaultCsvConfig,
+      numShards: Int = CsvIO.WriteParam.DefaultNumShards,
+      compression: Compression = CsvIO.WriteParam.DefaultCompression,
+      shardNameTemplate: String = CsvIO.WriteParam.DefaultShardNameTemplate,
+      tempDirectory: String = CsvIO.WriteParam.DefaultTempDirectory,
+      filenamePolicySupplier: FilenamePolicySupplier =
+        CsvIO.WriteParam.DefaultFilenamePolicySupplier
+    )(implicit coder: Coder[T], enc: HeaderEncoder[T]): ClosedTap[Nothing] =
+      self.write(CsvIO.Write[T](path))(
+        CsvIO.WriteParam(
+          compression,
+          csvConfig,
+          suffix,
+          numShards,
+          shardNameTemplate,
+          tempDirectory,
+          filenamePolicySupplier
+        )
+      )
   }
 
   implicit final class ReadableCsvFileSCollection(private val self: SCollection[ReadableFile]) {

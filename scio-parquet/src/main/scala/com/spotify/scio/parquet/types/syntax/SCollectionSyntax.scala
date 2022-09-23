@@ -21,6 +21,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.types.ParquetTypeIO
 import com.spotify.scio.parquet.types.ParquetTypeIO.WriteParam
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.hadoop.conf.Configuration
@@ -31,15 +32,28 @@ import scala.reflect.ClassTag
 /** Enhanced version of [[SCollection]] with Parquet type-safe methods. */
 final class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
-  /** Save this SColleciton of case classes `T` as a Parquet file. */
+  /** Save this SCollection of case classes `T` as a Parquet file. */
   def saveAsTypedParquetFile(
     path: String,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )(implicit ct: ClassTag[T], coder: Coder[T], pt: ParquetType[T]): ClosedTap[T] =
-    self.write(ParquetTypeIO[T](path))(WriteParam(numShards, suffix, compression, conf))
+    self.write(ParquetTypeIO[T](path))(
+      WriteParam(
+        numShards,
+        suffix,
+        compression,
+        conf,
+        shardNameTemplate,
+        tempDirectory,
+        filenamePolicySupplier
+      )
+    )
 }
 
 trait SCollectionSyntax {

@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
 import java.util.{HashMap => JHashMap}
 
 object DynamicSCollectionOps {
-  private[syntax] def writeDynamic[A](
+  private[scio] def writeDynamic[A](
     path: String,
     numShards: Int,
     suffix: String,
