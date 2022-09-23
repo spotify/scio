@@ -31,7 +31,7 @@ trait CoderInstances {
   implicit def pfAddCoder[T: Coder: RedisType]: Coder[PFAdd[T]] = Coder.gen[PFAdd[T]]
   implicit def zAddCoder[T: Coder: RedisType]: Coder[ZAdd[T]] = Coder.gen[ZAdd[T]]
 
-  private[this] def coders: Map[Int, Coder[_]] = Map(
+  private val coders: Map[Int, Coder[_]] = Map(
     1 -> appendCoder[String],
     2 -> appendCoder[Array[Byte]],
     3 -> setCoder[String],
@@ -52,26 +52,28 @@ trait CoderInstances {
     18 -> zAddCoder[Array[Byte]]
   )
 
+  private val coderId: PartialFunction[RedisMutation, Int] = {
+    case RedisMutation(_: Append[String @unchecked], RedisType.StringRedisType)         => 1
+    case RedisMutation(_: Append[Array[Byte] @unchecked], RedisType.ByteArrayRedisType) => 2
+    case RedisMutation(_: Set[String @unchecked], RedisType.StringRedisType)            => 3
+    case RedisMutation(_: Set[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)    => 4
+    case RedisMutation(_: IncrBy[String @unchecked], RedisType.StringRedisType)         => 5
+    case RedisMutation(_: IncrBy[Array[Byte] @unchecked], RedisType.ByteArrayRedisType) => 6
+    case RedisMutation(_: DecrBy[String @unchecked], RedisType.StringRedisType)         => 7
+    case RedisMutation(_: DecrBy[Array[Byte] @unchecked], RedisType.ByteArrayRedisType) => 8
+    case RedisMutation(_: SAdd[String @unchecked], RedisType.StringRedisType)           => 9
+    case RedisMutation(_: SAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)   => 10
+    case RedisMutation(_: LPush[String @unchecked], RedisType.StringRedisType)          => 11
+    case RedisMutation(_: LPush[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 12
+    case RedisMutation(_: RPush[String @unchecked], RedisType.StringRedisType)          => 13
+    case RedisMutation(_: RPush[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 14
+    case RedisMutation(_: PFAdd[String @unchecked], RedisType.StringRedisType)          => 15
+    case RedisMutation(_: PFAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 16
+    case RedisMutation(_: ZAdd[String @unchecked], RedisType.StringRedisType)           => 17
+    case RedisMutation(_: ZAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)   => 18
+  }
+
   implicit def redisMutationCoder[T <: RedisMutation]: Coder[T] =
-    Coder.disjunction[T, Int]("RedisMutation", coders.asInstanceOf[Map[Int, Coder[T]]]) {
-      case RedisMutation(_: Append[String @unchecked], RedisType.StringRedisType)         => 1
-      case RedisMutation(_: Append[Array[Byte] @unchecked], RedisType.ByteArrayRedisType) => 2
-      case RedisMutation(_: Set[String @unchecked], RedisType.StringRedisType)            => 3
-      case RedisMutation(_: Set[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)    => 4
-      case RedisMutation(_: IncrBy[String @unchecked], RedisType.StringRedisType)         => 5
-      case RedisMutation(_: IncrBy[Array[Byte] @unchecked], RedisType.ByteArrayRedisType) => 6
-      case RedisMutation(_: DecrBy[String @unchecked], RedisType.StringRedisType)         => 7
-      case RedisMutation(_: DecrBy[Array[Byte] @unchecked], RedisType.ByteArrayRedisType) => 8
-      case RedisMutation(_: SAdd[String @unchecked], RedisType.StringRedisType)           => 9
-      case RedisMutation(_: SAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)   => 10
-      case RedisMutation(_: LPush[String @unchecked], RedisType.StringRedisType)          => 11
-      case RedisMutation(_: LPush[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 12
-      case RedisMutation(_: RPush[String @unchecked], RedisType.StringRedisType)          => 13
-      case RedisMutation(_: RPush[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 14
-      case RedisMutation(_: PFAdd[String @unchecked], RedisType.StringRedisType)          => 15
-      case RedisMutation(_: PFAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)  => 16
-      case RedisMutation(_: ZAdd[String @unchecked], RedisType.StringRedisType)           => 17
-      case RedisMutation(_: ZAdd[Array[Byte] @unchecked], RedisType.ByteArrayRedisType)   => 18
-    }
+    Coder.disjunction[T, Int]("RedisMutation", coders.asInstanceOf[Map[Int, Coder[T]]])(coderId)
 
 }

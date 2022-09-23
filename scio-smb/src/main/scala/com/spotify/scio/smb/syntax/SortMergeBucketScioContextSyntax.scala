@@ -25,7 +25,7 @@ import com.spotify.scio.values._
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.{AbsCoGbkTransform, Transformable}
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.{BucketItem, MergedBucket}
 import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketTransform, TargetParallelism}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.join.CoGbkResult
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
@@ -79,19 +79,20 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       .applyTransform(ParDo.of(new DoFn[KV[K, CoGbkResult], (K, (L, R))] {
         @ProcessElement
         private[smb] def processElement(
-          c: DoFn[KV[K, CoGbkResult], (K, (L, R))]#ProcessContext
+          @Element element: KV[K, CoGbkResult],
+          out: OutputReceiver[(K, (L, R))]
         ): Unit = {
-          val cgbkResult = c.element().getValue
+          val cgbkResult = element.getValue
           val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
           val itB = resB.iterator()
-          val key = c.element().getKey
+          val key = element.getKey
 
           while (itB.hasNext) {
             val b = itB.next()
             val ai = resA.iterator()
             while (ai.hasNext) {
               val a = ai.next()
-              c.output((key, (a, b)))
+              out.output((key, (a, b)))
             }
           }
         }
@@ -121,12 +122,13 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       .applyTransform(ParDo.of(new DoFn[KV[KV[K1, K2], CoGbkResult], ((K1, K2), (L, R))] {
         @ProcessElement
         private[smb] def processElement(
-          c: DoFn[KV[KV[K1, K2], CoGbkResult], ((K1, K2), (L, R))]#ProcessContext
+          @Element element: KV[KV[K1, K2], CoGbkResult],
+          out: OutputReceiver[((K1, K2), (L, R))]
         ): Unit = {
-          val cgbkResult = c.element().getValue
+          val cgbkResult = element.getValue
           val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
           val itB = resB.iterator()
-          val k = c.element().getKey
+          val k = element.getKey
           val outKey = (k.getKey, k.getValue)
 
           while (itB.hasNext) {
@@ -134,7 +136,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
             val ai = resA.iterator()
             while (ai.hasNext) {
               val a = ai.next()
-              c.output((outKey, (a, b)))
+              out.output((outKey, (a, b)))
             }
           }
         }

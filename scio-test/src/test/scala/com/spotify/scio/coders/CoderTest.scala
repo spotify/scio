@@ -38,6 +38,8 @@ import com.twitter.algebird.Moments
 import org.scalatest.Assertion
 
 import java.nio.charset.Charset
+import java.time.{Instant, LocalDate}
+import java.time.format.DateTimeFormatter
 
 // record
 final case class UserId(bytes: Seq[Byte])
@@ -251,6 +253,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "Derive serializable coders" in {
+    coderIsSerializable[Nothing]
     coderIsSerializable[Int]
     coderIsSerializable[String]
     coderIsSerializable[List[Int]]
@@ -259,7 +262,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     coderIsSerializable(Coder.gen[DummyCC])
     coderIsSerializable[com.spotify.scio.avro.User]
     coderIsSerializable[NestedA]
-    coderIsSerializable[Nothing]
+    coderIsSerializable[Top]
+    coderIsSerializable[SampleField]
   }
 
   it should "support Avro's SpecificRecordBase" in {
@@ -301,7 +305,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     import java.nio.file.FileSystems
 
     import org.apache.beam.sdk.transforms.windowing.IntervalWindow
-    import org.joda.time._
 
     // TableRowJsonCoder
     // SpecificRecordBase
@@ -309,11 +312,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     // ByteString
     BigDecimal("1234") coderShould notFallback()
     new java.sql.Timestamp(1) coderShould notFallback()
-    new Instant coderShould notFallback()
-    new LocalDate coderShould notFallback()
-    new LocalTime coderShould notFallback()
-    new LocalDateTime coderShould notFallback()
-    new DateTime coderShould notFallback()
+    new org.joda.time.Instant coderShould notFallback()
+    new org.joda.time.LocalDate coderShould notFallback()
+    new org.joda.time.LocalTime coderShould notFallback()
+    new org.joda.time.LocalDateTime coderShould notFallback()
+    new org.joda.time.DateTime coderShould notFallback()
     FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback()
 
     "Coder[Void]" should compile
@@ -325,18 +328,17 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     new BigInteger("123456789") coderShould notFallback()
     new jBigDecimal("123456789.98765") coderShould notFallback()
-    new IntervalWindow((new Instant).minus(4000), new Instant) coderShould notFallback()
+    val now = org.joda.time.Instant.now()
+    new IntervalWindow(now.minus(4000), now) coderShould notFallback()
   }
 
   it should "Serialize java's Instant" in {
-    import java.time.{Instant => jInstant}
-
     // Support full nano range
-    jInstant.ofEpochSecond(0, 123123123) coderShould notFallback()
-    jInstant.MIN coderShould notFallback()
-    jInstant.MAX coderShould notFallback()
-    jInstant.EPOCH coderShould notFallback()
-    jInstant.now coderShould notFallback()
+    Instant.ofEpochSecond(0, 123123123) coderShould notFallback()
+    Instant.MIN coderShould notFallback()
+    Instant.MAX coderShould notFallback()
+    Instant.EPOCH coderShould notFallback()
+    Instant.now coderShould notFallback()
   }
 
   it should "Serialize Row" in {
@@ -437,8 +439,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val leftCoder = materialize(Coder[scala.util.Left[Double, Int]]).toString
     val rightCoder = materialize(Coder[scala.util.Right[Double, Int]]).toString
 
-    val expectedMsg = s"DisjunctionCoder[scala.util.Either](" +
-      s"id -> BooleanCoder, false -> $leftCoder, true -> $rightCoder) is not deterministic"
+    val expectedMsg =
+      s"DisjunctionCoder[scala.util.Either](false -> $leftCoder, true -> $rightCoder) is not deterministic"
 
     caught.getMessage should startWith(expectedMsg)
     caught.getMessage should include(s"case false is using non-deterministic $leftCoder")
@@ -608,6 +610,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     Coder[AnyValExample] shouldBe a[Transform[_, _]]
   }
 
+  it should "optimize for objects" in {
+    coderIsSerializable[TestObject.type]
+    Coder[TestObject.type] shouldBe a[Singleton[_]]
+  }
+
   it should "support Algebird's Moments" in {
     coderIsSerializable[Moments]
     new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
@@ -629,6 +636,18 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     hashCodesAreDifferent(
       Coder.xmap[String, Int](Coder[String])(_.toInt, _.toString),
       Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt)
+    )
+
+    // For transform, even if parameters are equal, hashCodes must be different
+    hashCodesAreDifferent(
+      Coder.xmap[String, LocalDate](Coder[String])(
+        LocalDate.parse(_, DateTimeFormatter.ISO_LOCAL_DATE),
+        _.toString
+      ),
+      Coder.xmap[String, LocalDate](Coder[String])(
+        LocalDate.parse(_, DateTimeFormatter.ISO_WEEK_DATE),
+        _.toString
+      )
     )
   }
 

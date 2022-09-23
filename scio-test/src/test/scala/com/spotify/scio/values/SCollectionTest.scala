@@ -43,7 +43,14 @@ import com.spotify.scio.schemas.Schema
 
 import java.nio.charset.StandardCharsets
 
+object SCollectionTest {
+  // used to check local side effect in tap()
+  val elements: mutable.Buffer[Any] = mutable.Buffer.empty
+}
+
 class SCollectionTest extends PipelineSpec {
+
+  import SCollectionTest._
 
   "SCollection" should "support applyTransform()" in {
     runWithContext { sc =>
@@ -54,6 +61,11 @@ class SCollectionTest extends PipelineSpec {
   }
 
   private def newKvDoFn = new DoFn[Int, KV[Int, String]] {
+
+    /**
+     * ProcessContext is required as an argument because input parameter is scala.Int which is not
+     * supported by Beam as a separate @Element
+     */
     @ProcessElement
     def processElement(c: DoFn[Int, KV[Int, String]]#ProcessContext): Unit = {
       val x = c.element()
@@ -240,6 +252,40 @@ class SCollectionTest extends PipelineSpec {
         )
         .map(_.sorted)
       p should containSingleValue(mutable.Buffer(1 to 100: _*))
+    }
+  }
+
+  it should "support batch() with size" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq(1, 2, 3, 4, 5))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batch(2)
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 2, 1))
+    }
+  }
+
+  it should "support batchByteSized() with byte size" in {
+    val bytes = Array.fill[Byte](4)(0)
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq.fill(5)(bytes))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batchByteSized(8)
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 2, 1))
+    }
+  }
+
+  it should "support batchWeighted() with custom weight" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(Seq(1, 2, 3, 4, 5))) // SCollection with 1 element to get a single bundle
+        .flatten // flatten the elements in the bundle
+        .batchWeighted(2, identity[Int])
+        .map(_.size)
+      p should containInAnyOrder(Seq(2, 1, 1, 1))
     }
   }
 
@@ -784,6 +830,22 @@ class SCollectionTest extends PipelineSpec {
       "2",
       "3"
     )
+  }
+
+  it should "support tap()" in {
+    val input = Seq(1, 2, 3)
+    runWithContext { sc =>
+      val original = sc.parallelize(input)
+      val tapped = original.tap(elements += _)
+
+      // tap should not modify internal coder
+      val originalCoder = original.internal.getCoder
+      val tappedCoder = tapped.internal.getCoder
+      originalCoder shouldBe tappedCoder
+    }
+
+    elements should contain theSameElementsAs input
+    elements.clear()
   }
 
   it should "support Combine.globally() with default value" in {

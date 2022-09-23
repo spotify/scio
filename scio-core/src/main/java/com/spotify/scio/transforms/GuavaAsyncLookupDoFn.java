@@ -40,8 +40,8 @@ public abstract class GuavaAsyncLookupDoFn<A, B, C>
   /**
    * Create a {@link GuavaAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    */
   public GuavaAsyncLookupDoFn(int maxPendingRequests) {
     super(maxPendingRequests);
@@ -50,12 +50,12 @@ public abstract class GuavaAsyncLookupDoFn<A, B, C>
   /**
    * Create a {@link GuavaAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> GuavaAsyncLookupDoFn(
-      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public GuavaAsyncLookupDoFn(
+      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
   }
 

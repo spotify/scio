@@ -18,7 +18,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
+      - run: sbt "; headerCheckAll; javafmtCheckAll; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
   scalafix-rules:
     runs-on: ubuntu-latest
     steps:
@@ -50,5 +50,5 @@ jobs:
         java:
           - 11
         scala:
-          - 2.12.16
+          - 2.12.17
           - 2.13.8

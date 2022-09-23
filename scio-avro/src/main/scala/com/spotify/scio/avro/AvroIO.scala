@@ -30,8 +30,8 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
-import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
+import org.apache.beam.sdk.transforms.{DoFn, SerializableFunction}
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
@@ -54,8 +54,11 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
     sc.read(GenericRecordIO(path, AvroBytesUtil.schema))
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement
-        private[scio] def processElement(c: DoFn[GenericRecord, T]#ProcessContext): Unit =
-          c.output(AvroBytesUtil.decode(coder, c.element()))
+        private[scio] def processElement(
+          @Element element: GenericRecord,
+          out: OutputReceiver[T]
+        ): Unit =
+          out.output(AvroBytesUtil.decode(coder, element))
       })
   }
 
@@ -71,8 +74,11 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
     data
       .parDo(new DoFn[T, GenericRecord] {
         @ProcessElement
-        private[scio] def processElement(c: DoFn[T, GenericRecord]#ProcessContext): Unit =
-          c.output(AvroBytesUtil.encode(elemCoder, c.element()))
+        private[scio] def processElement(
+          @Element element: T,
+          out: OutputReceiver[GenericRecord]
+        ): Unit =
+          out.output(AvroBytesUtil.encode(elemCoder, element))
       })
       .write(GenericRecordIO(path, AvroBytesUtil.schema))(params)
     tap(())

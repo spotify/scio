@@ -31,6 +31,7 @@ import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
+import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
 import scala.collection.compat._ // scalafix:ok
@@ -749,12 +750,88 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Windows are preserved (batches contain elements from the same window). Batches may contain
    * elements from more than one bundle.
    *
+   * A time limit (in processing time) on how long an incomplete batch of elements is allowed to be
+   * buffered can be set. Once a batch is flushed to output, the timer is reset. The provided limit
+   * must be a positive duration or zero; a zero buffering duration effectively means no limit.
+   *
    * @param batchSize
+   * @param maxBufferingDuration
    *
    * @group per_key
    */
-  def batchByKey(batchSize: Long): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(GroupIntoBatches.ofSize(batchSize))(kvIterableToTuple)
+  def batchByKey(
+    batchSize: Long,
+    maxBufferingDuration: Duration = Duration.ZERO
+  ): SCollection[(K, Iterable[V])] = {
+    val groupIntoBatches = GroupIntoBatches
+      .ofSize[K, V](batchSize)
+      .withMaxBufferingDuration(maxBufferingDuration)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)
+  }
+
+  /**
+   * Batches inputs to a desired batch of byte size. Batches will contain only elements of a single
+   * key.
+   *
+   * The value coder is used to determine the byte size of each element.
+   *
+   * Elements are buffered until there are an estimated batchByteSize bytes buffered, at which point
+   * they are outputed to the output [[SCollection]].
+   *
+   * Windows are preserved (batches contain elements from the same window). Batches may contain
+   * elements from more than one bundle.
+   *
+   * A time limit (in processing time) on how long an incomplete batch of elements is allowed to be
+   * buffered can be set. Once a batch is flushed to output, the timer is reset. The provided limit
+   * must be a positive duration or zero; a zero buffering duration effectively means no limit.
+   *
+   * @param batchByteSize
+   * @param maxBufferingDuration
+   *
+   * @group per_key
+   */
+  def batchByteSizedByKey(
+    batchByteSize: Long,
+    maxBufferingDuration: Duration = Duration.ZERO
+  ): SCollection[(K, Iterable[V])] = {
+    val groupIntoBatches = GroupIntoBatches
+      .ofByteSize[K, V](batchByteSize)
+      .withMaxBufferingDuration(maxBufferingDuration)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)
+  }
+
+  /**
+   * Batches inputs to a desired weight. Batches will contain only elements of a single key.
+   *
+   * The weight of each element is computer from the provided cost function.
+   *
+   * Elements are buffered until the weight is reached, at which point they are outputed to the
+   * output [[SCollection]].
+   *
+   * Windows are preserved (batches contain elements from the same window). Batches may contain
+   * elements from more than one bundle.
+   *
+   * A time limit (in processing time) on how long an incomplete batch of elements is allowed to be
+   * buffered can be set. Once a batch is flushed to output, the timer is reset. The provided limit
+   * must be a positive duration or zero; a zero buffering duration effectively means no limit.
+   *
+   * @param weight
+   * @param cost
+   * @param maxBufferingDuration
+   *
+   * @group per_key
+   */
+  def batchWeightedByKey(
+    weight: Long,
+    cost: V => Long,
+    maxBufferingDuration: Duration = Duration.ZERO
+  ): SCollection[(K, Iterable[V])] = {
+    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
+    val groupIntoBatches = GroupIntoBatches
+      .ofByteSize[K, V](weight, weigher)
+      .withMaxBufferingDuration(maxBufferingDuration)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)
+  }
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in `rhs`.

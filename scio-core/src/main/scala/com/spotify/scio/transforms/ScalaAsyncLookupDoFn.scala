@@ -34,12 +34,17 @@ import scala.util.{Failure, Success, Try}
  */
 abstract class ScalaAsyncLookupDoFn[A, B, C](
   maxPendingRequests: Int,
-  cacheSupplier: CacheSupplier[A, B, _]
+  cacheSupplier: CacheSupplier[A, B]
 ) extends BaseAsyncLookupDoFn[A, B, C, Future[B], Try[B]](maxPendingRequests, cacheSupplier)
     with ScalaFutureHandlers[B] {
   def this() =
     this(1000, new NoOpCacheSupplier[A, B])
 
+  /**
+   * @param maxPendingRequests
+   *   maximum number of pending requests on every cloned DoFn. This prevents runner from timing out
+   *   and retrying bundles.
+   */
   def this(maxPendingRequests: Int) =
     this(maxPendingRequests, new NoOpCacheSupplier[A, B])
 

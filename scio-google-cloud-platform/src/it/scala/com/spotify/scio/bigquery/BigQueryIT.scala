@@ -47,13 +47,11 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
 
   val StagingDatasetPrefix = "scio_bigquery_staging_custom"
 
-  override def beforeEach(): Unit = {
+  override def beforeEach(): Unit =
     sys.props -= BigQuerySysProps.StagingDatasetPrefix.flag
-  }
 
-  override def afterAll(): Unit = {
+  override def afterAll(): Unit =
     sys.props -= BigQuerySysProps.StagingDatasetPrefix.flag
-  }
 
   object MockBQData {
     def shakespeare(w: String, wc: Long, c: String, cd: Long): TableRow =

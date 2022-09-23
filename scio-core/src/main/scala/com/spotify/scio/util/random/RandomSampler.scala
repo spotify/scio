@@ -20,9 +20,8 @@
 package com.spotify.scio.util.random
 
 import java.util.{Random => JRandom}
-
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{ProcessElement, StartBundle}
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, StartBundle}
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
 
 import scala.annotation.nowarn
@@ -50,12 +49,11 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
   def startBundle(c: DoFn[T, T]#StartBundleContext): Unit = rng = init
 
   @ProcessElement
-  def processElement(c: DoFn[T, T]#ProcessContext): Unit = {
-    val element = c.element()
+  def processElement(@Element element: T, out: OutputReceiver[T]): Unit = {
     val count = samples
     var i = 0
     while (i < count) {
-      c.output(element)
+      out.output(element)
       i += 1
     }
   }
@@ -144,12 +142,12 @@ abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, D
     }.toMap
 
   @ProcessElement
-  def processElement(c: DoFn[(K, V), (K, V)]#ProcessContext): Unit = {
-    val (key, value) = c.element()
+  def processElement(@Element element: (K, V), out: OutputReceiver[(K, V)]): Unit = {
+    val (key, value) = element
     val count = samples(fractions(key), rngs(key))
     var i = 0
     while (i < count) {
-      c.output((key, value))
+      out.output((key, value))
       i += 1
     }
   }

@@ -39,7 +39,7 @@ import org.openjdk.jmh.annotations._
 
 final case class UserId(bytes: Array[Byte])
 object UserId {
-  implicit def coderUserId: Coder[UserId] = Coder.gen[UserId]
+  implicit val CoderUserId: Coder[UserId] = Coder.gen[UserId]
 }
 final case class User(id: UserId, username: String, email: String)
 final case class SpecializedUser(id: UserId, username: String, email: String)

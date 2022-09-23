@@ -19,7 +19,6 @@ package com.spotify.scio.util
 
 import java.lang.{Iterable => JIterable}
 import java.util.{ArrayList => JArrayList, List => JList}
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -28,9 +27,15 @@ import com.twitter.algebird.{Monoid, Semigroup}
 import org.apache.beam.sdk.coders.{Coder => BCoder, CoderRegistry}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.Combine.{CombineFn => BCombineFn}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.Partition.PartitionFn
-import org.apache.beam.sdk.transforms.{DoFn, ProcessFunction, SerializableFunction, SimpleFunction}
+import org.apache.beam.sdk.transforms.{
+  DoFn,
+  ProcessFunction,
+  SerializableBiFunction,
+  SerializableFunction,
+  SimpleFunction
+}
 
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._ // scalafix:ok
@@ -232,9 +237,12 @@ private[scio] object Functions {
     new NamedDoFn[T, U] {
       private[this] val g = ClosureCleaner.clean(f) // defeat closure
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit = {
-        val i = g(c.element()).iterator
-        while (i.hasNext) c.output(i.next())
+      private[scio] def processElement(
+        @Element element: T,
+        out: OutputReceiver[U]
+      ): Unit = {
+        val i = g(element).iterator
+        while (i.hasNext) out.output(i.next())
       }
     }
 
@@ -251,6 +259,12 @@ private[scio] object Functions {
       override def apply(input: T): U = g(input)
     }
 
+  def serializableBiFn[T, G, U](f: (T, G) => U): SerializableBiFunction[T, G, U] =
+    new NamedSerializableBiFn[T, G, U] {
+      private[this] val g = ClosureCleaner.clean(f) // defeat closure
+      override def apply(x: T, y: G): U = g(x, y)
+    }
+
   def simpleFn[T, U](f: T => U): SimpleFunction[T, U] =
     new NamedSimpleFn[T, U] {
       private[this] val g = ClosureCleaner.clean(f) // defeat closure
@@ -260,8 +274,8 @@ private[scio] object Functions {
   def mapFn[T, U](f: T => U): DoFn[T, U] = new NamedDoFn[T, U] {
     private[this] val g = ClosureCleaner.clean(f) // defeat closure
     @ProcessElement
-    private[scio] def processElement(c: DoFn[T, U]#ProcessContext): Unit =
-      c.output(g(c.element()))
+    private[scio] def processElement(@Element element: T, out: OutputReceiver[U]): Unit =
+      out.output(g(element))
   }
 
   def partitionFn[T](f: T => Int): PartitionFn[T] =

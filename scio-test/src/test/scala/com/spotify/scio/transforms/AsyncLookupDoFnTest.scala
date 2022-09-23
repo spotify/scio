@@ -17,26 +17,26 @@
 
 package com.spotify.scio.transforms
 
-import java.util.concurrent.{
-  Callable,
-  CompletableFuture,
-  ConcurrentLinkedQueue,
-  Executors,
-  ThreadPoolExecutor
-}
-import java.util.function.Supplier
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.JavaAsyncConverters._
+import com.spotify.scio.util.TransformingCache.SimpleTransformingCache
 import org.apache.beam.sdk.options._
 
 import java.util.concurrent.atomic.AtomicInteger
-import scala.jdk.CollectionConverters._
+import java.util.concurrent.{
+  CompletableFuture,
+  ConcurrentLinkedQueue,
+  Executors,
+  ThreadPoolExecutor
+}
 import scala.concurrent.Future
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 class AsyncLookupDoFnTest extends PipelineSpec {
@@ -157,16 +157,15 @@ class CountingAsyncClient extends AsyncClient with Serializable {
   var count: AtomicInteger = new AtomicInteger(0)
   def lookup: ListenableFuture[Int] = {
     val cnt = count.addAndGet(1)
-    es.submit(new Callable[Int] {
-      override def call(): Int = {
-        Thread.sleep(1000)
-        cnt
-      }
-    })
+    es.submit { () =>
+      Thread.sleep(1000)
+      cnt
+    }
   }
 }
 
 class GuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] =
     Futures.immediateFuture(input.toString)
@@ -174,6 +173,7 @@ class GuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClient]() {
 
 class CachingGuavaLookupDoFn
     extends GuavaAsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] = {
     AsyncLookupDoFnTest.guavaQueue.add(input)
@@ -182,6 +182,7 @@ class CachingGuavaLookupDoFn
 }
 
 class FailingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): ListenableFuture[String] =
     if (input % 2 == 0) {
@@ -192,37 +193,35 @@ class FailingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, String, AsyncClie
 }
 
 class CountingGuavaLookupDoFn extends GuavaAsyncLookupDoFn[Int, Int, CountingAsyncClient](100) {
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): CountingAsyncClient = new CountingAsyncClient()
   override def asyncLookup(session: CountingAsyncClient, input: Int): ListenableFuture[Int] =
     session.lookup
 }
 
 class JavaLookupDoFn extends JavaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): CompletableFuture[String] =
-    CompletableFuture.supplyAsync(new Supplier[String] {
-      override def get(): String = input.toString
-    })
+    CompletableFuture.supplyAsync(() => input.toString)
 }
 
 class CachingJavaLookupDoFn
     extends JavaAsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): CompletableFuture[String] = {
     AsyncLookupDoFnTest.javaQueue.add(input)
-    CompletableFuture.supplyAsync(new Supplier[String] {
-      override def get(): String = input.toString
-    })
+    CompletableFuture.supplyAsync(() => input.toString)
   }
 }
 
 class FailingJavaLookupDoFn extends JavaAsyncLookupDoFn[Int, String, AsyncClient]() {
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): CompletableFuture[String] =
     if (input % 2 == 0) {
-      CompletableFuture.supplyAsync(new Supplier[String] {
-        override def get(): String = "success" + input
-      })
+      CompletableFuture.supplyAsync(() => "success" + input)
     } else {
       val f = new CompletableFuture[String]()
       f.completeExceptionally(new RuntimeException("failure" + input))
@@ -231,38 +230,38 @@ class FailingJavaLookupDoFn extends JavaAsyncLookupDoFn[Int, String, AsyncClient
 }
 
 class ScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient]() {
-  import scala.concurrent.ExecutionContext.Implicits.global
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): Future[String] =
-    Future(input.toString)
+    Future.successful(input.toString)
 }
 
 class CachingScalaLookupDoFn
     extends ScalaAsyncLookupDoFn[Int, String, AsyncClient](100, new TestCacheSupplier) {
-  import scala.concurrent.ExecutionContext.Implicits.global
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): Future[String] = {
     AsyncLookupDoFnTest.scalaQueue.add(input)
-    Future(input.toString)
+    Future.successful(input.toString)
   }
 }
 
 class FailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient]() {
-  import scala.concurrent.ExecutionContext.Implicits.global
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): Future[String] =
     if (input % 2 == 0) {
-      Future("success" + input)
+      Future.successful("success" + input)
     } else {
-      Future(throw new RuntimeException("failure" + input))
+      Future.failed(new RuntimeException("failure" + input))
     }
 }
 
 class CallbackFailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, AsyncClient]() {
-  import scala.concurrent.ExecutionContext.Implicits.global
+  override def getResourceType: ResourceType = ResourceType.PER_INSTANCE
   override protected def newClient(): AsyncClient = null
   override def asyncLookup(session: AsyncClient, input: Int): Future[String] =
-    Future("success" + input)
+    Future.successful("success" + input)
   override def addCallback(
     future: Future[String],
     onSuccess: java.util.function.Function[String, Void],
@@ -277,8 +276,11 @@ class CallbackFailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, A
     )
 }
 
-class TestCacheSupplier extends CacheSupplier[Int, String, java.lang.Long] {
-  override def createCache(): Cache[java.lang.Long, String] =
-    CacheBuilder.newBuilder().build[java.lang.Long, String]()
-  override def getKey(input: Int): java.lang.Long = input.toLong
+// Here we need a custom supplier because guava cache only supports object
+// We can overcome by using a TransformingCache and boxing
+class TestCacheSupplier extends CacheSupplier[Int, String] {
+  override def get(): Cache[Int, String] =
+    new SimpleTransformingCache[Int, java.lang.Integer, String](CacheBuilder.newBuilder().build()) {
+      override protected def transformKey(key: Int): java.lang.Integer = Int.box(key)
+    }
 }

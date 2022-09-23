@@ -18,13 +18,13 @@
 package com.spotify.scio.bigtable
 
 import java.util.concurrent.ConcurrentLinkedQueue
-
 import com.google.cloud.bigtable.grpc.BigtableSession
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import com.spotify.scio.transforms.JavaAsyncConverters._
+import com.spotify.scio.util.TransformingCache.SimpleTransformingCache
 
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success}
@@ -90,8 +90,11 @@ class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](null) {
     }
 }
 
-class TestCacheSupplier extends CacheSupplier[Int, String, java.lang.Long] {
-  override def createCache(): Cache[java.lang.Long, String] =
-    CacheBuilder.newBuilder().build[java.lang.Long, String]()
-  override def getKey(input: Int): java.lang.Long = input.toLong
+// Here we need a custom supplier because guava cache only supports object
+// We can overcome by using a TransformingCache and boxing
+class TestCacheSupplier extends CacheSupplier[Int, String] {
+  override def get(): Cache[Int, String] =
+    new SimpleTransformingCache[Int, java.lang.Integer, String](CacheBuilder.newBuilder().build()) {
+      override protected def transformKey(key: Int): java.lang.Integer = Int.box(key)
+    }
 }

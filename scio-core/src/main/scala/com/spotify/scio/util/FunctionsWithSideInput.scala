@@ -35,6 +35,10 @@ private[scio] object FunctionsWithSideInput {
   def filterFn[T](f: (T, SideInputContext[T]) => Boolean): DoFn[T, T] =
     new SideInputDoFn[T, T] {
       val g = ClosureCleaner.clean(f) // defeat closure
+
+      /*
+       * ProcessContext is required as an argument because it is passed to SideInputContext
+       * */
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, T]#ProcessContext, w: BoundedWindow): Unit =
         if (g(c.element(), sideInputContext(c, w))) {
@@ -45,6 +49,10 @@ private[scio] object FunctionsWithSideInput {
   def flatMapFn[T, U](f: (T, SideInputContext[T]) => TraversableOnce[U]): DoFn[T, U] =
     new SideInputDoFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
+
+      /*
+       * ProcessContext is required as an argument because it is passed to SideInputContext
+       * */
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit = {
         val i = g(c.element(), sideInputContext(c, w)).iterator
@@ -55,6 +63,10 @@ private[scio] object FunctionsWithSideInput {
   def mapFn[T, U](f: (T, SideInputContext[T]) => U): DoFn[T, U] =
     new SideInputDoFn[T, U] {
       val g = ClosureCleaner.clean(f) // defeat closure
+
+      /*
+       * ProcessContext is required as an argument because it is passed to SideInputContext
+       * */
       @ProcessElement
       private[scio] def processElement(c: DoFn[T, U]#ProcessContext, w: BoundedWindow): Unit =
         c.output(g(c.element(), sideInputContext(c, w)))
