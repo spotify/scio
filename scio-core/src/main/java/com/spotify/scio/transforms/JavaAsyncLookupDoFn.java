@@ -41,8 +41,8 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
   /**
    * Create a {@link JavaAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    */
   public JavaAsyncLookupDoFn(int maxPendingRequests) {
     super(maxPendingRequests);
@@ -51,12 +51,12 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
   /**
    * Create a {@link JavaAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> JavaAsyncLookupDoFn(
-      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public JavaAsyncLookupDoFn(
+      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
   }
 

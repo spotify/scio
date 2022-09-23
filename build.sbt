@@ -459,6 +459,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-elasticsearch7`,
     `scio-elasticsearch8`,
     `scio-extra`,
+    `scio-grpc`,
     `scio-jdbc`,
     `scio-neo4j`,
     `scio-parquet`,
@@ -850,6 +851,25 @@ lazy val `scio-extra`: Project = project
     `scio-macros`
   )
   .configs(IntegrationTest)
+
+lazy val `scio-grpc`: Project = project
+  .in(file("scio-grpc"))
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(protobufSettings)
+  .settings(
+    description := "Scio add-on for gRPC",
+    libraryDependencies ++= Seq(
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "io.grpc" % "grpc-core" % grpcVersion,
+      "io.grpc" % "grpc-stub" % grpcVersion,
+      "io.grpc" % "grpc-protobuf" % grpcVersion
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
+  )
 
 lazy val `scio-jdbc`: Project = project
   .in(file("scio-jdbc"))
