@@ -109,7 +109,7 @@ val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.1.2"
-val magnolifyVersion = "0.5.0"
+val magnolifyVersion = "0.5.1"
 val metricsVersion = "3.2.6"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
@@ -460,6 +460,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-elasticsearch8`,
     `scio-extra`,
     `scio-jdbc`,
+    `scio-neo4j`,
     `scio-parquet`,
     `scio-tensorflow`,
     `scio-examples`,
@@ -866,6 +867,27 @@ lazy val `scio-jdbc`: Project = project
     `scio-test` % "test"
   )
 
+lazy val `scio-neo4j`: Project = project
+  .in(file("scio-neo4j"))
+  .settings(commonSettings)
+  .settings(itSettings)
+  .settings(publishSettings)
+  .settings(
+    description := "Scio add-on for Neo4J",
+    libraryDependencies ++= Seq(
+      "com.spotify" %% "magnolify-neo4j" % magnolifyVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion,
+      "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
+      "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % "it"
+    )
+  )
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test,it"
+  )
+  .configs(IntegrationTest)
+
 val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
 
 lazy val `scio-parquet`: Project = project
@@ -1028,6 +1050,7 @@ lazy val `scio-examples`: Project = project
     `scio-jdbc`,
     `scio-extra`,
     `scio-elasticsearch8`,
+    `scio-neo4j`,
     `scio-tensorflow`,
     `scio-test` % "compile->test",
     `scio-smb`,
