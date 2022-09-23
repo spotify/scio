@@ -66,6 +66,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   private long requestCount;
   private long resultCount;
 
+  /** Creates the client. */
   protected abstract C newClient();
 
   /** Perform asynchronous lookup. */
@@ -86,8 +87,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
    * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be
    * de-duplicated.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    */
   public BaseAsyncLookupDoFn(int maxPendingRequests) {
     this(maxPendingRequests, true, new NoOpCacheSupplier<>());
@@ -97,8 +98,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
    * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be
    * de-duplicated.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
   public BaseAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B> cacheSupplier) {
@@ -108,8 +109,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   /**
    * Create a {@link BaseAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the
    *     same input
    * @param cacheSupplier supplier for lookup cache.
@@ -119,11 +120,6 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     this.cacheSupplier = cacheSupplier;
     this.deduplicate = deduplicate;
     this.semaphore = new Semaphore(maxPendingRequests);
-  }
-
-  @Override
-  public ResourceType getResourceType() {
-    return ResourceType.PER_CLONE;
   }
 
   @Override

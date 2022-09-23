@@ -99,18 +99,27 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       return this;
     }
 
+    /** @param newClientFn creates the gRPC async stub from the channel */
     public Builder<RequestT, ResponseT, ClientT> withNewClientFn(
         SerializableFunction<Channel, ClientT> newClientFn) {
       this.newClientFn = newClientFn;
       return this;
     }
 
+    /**
+     * @param lookupFn bi-function taking the gRPC client and request and returning the async
+     *     response
+     */
     public Builder<RequestT, ResponseT, ClientT> withLookupFn(
         SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn) {
       this.lookupFn = lookupFn;
       return this;
     }
 
+    /**
+     * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+     *     prevents runner from timing out and retrying bundles.
+     */
     public Builder<RequestT, ResponseT, ClientT> withMaxPendingRequests(int maxPendingRequests) {
       this.maxPendingRequests = maxPendingRequests;
       return this;

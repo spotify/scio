@@ -52,8 +52,8 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
    * Create a {@link BigtableDoFn} instance.
    *
    * @param options Bigtable options.
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    */
   public BigtableDoFn(BigtableOptions options, int maxPendingRequests) {
     this(options, maxPendingRequests, new BaseAsyncLookupDoFn.NoOpCacheSupplier<>());
@@ -63,8 +63,8 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
    * Create a {@link BigtableDoFn} instance.
    *
    * @param options Bigtable options.
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
   public BigtableDoFn(
@@ -73,6 +73,12 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
       BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
     this.options = options;
+  }
+
+  @Override
+  public ResourceType getResourceType() {
+    // BigtableSession is backed by a gRPC thread safe client
+    return ResourceType.PER_INSTANCE;
   }
 
   protected BigtableSession newClient() {
