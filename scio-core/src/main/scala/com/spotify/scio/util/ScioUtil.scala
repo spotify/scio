@@ -115,12 +115,16 @@ private[scio] object ScioUtil {
     DefaultFilenamePolicy.fromStandardParameters(prefix, shardTemplate, suffix, isWindowed)
   }
 
-  def tempDirOrDefault(tempDirectory: String, sc: ScioContext): ResourceId = {
-    Option(tempDirectory).map(toResourceId).getOrElse {
-      val tempLocationOpt: String = sc.options.getTempLocation
-      FileSystems.matchNewResource(tempLocationOpt, true)
-    }
-  }
+  def tempDirOrDefault(tempDirectory: String, sc: ScioContext): ResourceId =
+    Option(tempDirectory)
+      .map(toResourceId)
+      .orElse(
+        Try(sc.optionsAs[GcpOptions]).toOption
+          .flatMap(gcpOptions => Option(gcpOptions.getGcpTempLocation))
+          .orElse(Option(sc.options.getTempLocation))
+          .map(FileSystems.matchNewResource(_, true))
+      )
+      .getOrElse(throw new IllegalStateException("Unable to find any temp location"))
 
   def isWindowed(coll: SCollection[_]): Boolean =
     coll.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
