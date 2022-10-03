@@ -297,6 +297,12 @@ val commonSettings = Def
         name = "Kellen Dye",
         email = "dye.kellen@gmail.com",
         url = url("http://github.com/kellen")
+      ),
+      Developer(
+        id = "farzad-sedghi",
+        name = "farzad sedghi",
+        email = "farzadsedghi2@gmail.com",
+        url = url("http://github.com/farzad-sedghi")
       )
     ),
     mimaSettings,
