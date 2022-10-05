@@ -157,5 +157,5 @@ object DataflowResult {
     override def expand(input: PInput): POutput = ???
   }
 
-  private class EmptyPipeline extends Pipeline(null)
+  private class EmptyPipeline extends Pipeline(PipelineOptionsFactory.create())
 }
