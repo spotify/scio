@@ -111,6 +111,7 @@ val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.1.2"
 val magnolifyVersion = "0.6.0"
 val metricsVersion = "3.2.6"
+val neo4jDriverVersion = "4.4.9"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
 val pprintVersion = "0.7.3"
@@ -904,6 +905,7 @@ lazy val `scio-neo4j`: Project = project
     description := "Scio add-on for Neo4J",
     libraryDependencies ++= Seq(
       "com.spotify" %% "magnolify-neo4j" % magnolifyVersion,
+      "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion,
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
