@@ -66,12 +66,7 @@ object BigtableWriteExample {
     val btProjectId = args("bigtableProjectId")
     val btInstanceId = args("bigtableInstanceId")
     val btTableId = args("bigtableTableId")
-
-    // Bump up the number of bigtable nodes before writing so that the extra traffic does not
-    // affect production service. A sleep period is inserted to ensure all new nodes are online
-    // before the ingestion starts.
-    sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 15)
-
+  
     // Ensure that destination tables and column families exist
     sc.ensureTables(
       btProjectId,
@@ -80,6 +75,11 @@ object BigtableWriteExample {
         btTableId -> List(BigtableExample.FAMILY_NAME)
       )
     )
+    
+    // Bump up the number of bigtable nodes before writing so that the extra traffic does not
+    // affect production service. A sleep period is inserted to ensure all new nodes are online
+    // before the ingestion starts.
+    sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 15)
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
