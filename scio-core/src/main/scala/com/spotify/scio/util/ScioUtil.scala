@@ -116,10 +116,15 @@ private[scio] object ScioUtil {
   }
 
   def tempDirOrDefault(tempDirectory: String, sc: ScioContext): ResourceId = {
-    Option(tempDirectory).map(toResourceId).getOrElse {
-      val tempLocationOpt: String = sc.options.getTempLocation
-      FileSystems.matchNewResource(tempLocationOpt, true)
-    }
+    Option(tempDirectory)
+      .orElse(Option(sc.options.getTempLocation))
+      .orElse(Try(sc.optionsAs[GcpOptions]).toOption.flatMap(x => Option(x.getGcpTempLocation)))
+      .map(toResourceId)
+      .getOrElse(
+        throw new IllegalArgumentException(
+          "No temporary location was specified. Specify a temporary location via --tempLocation or PipelineOptions.setTempLocation."
+        )
+      )
   }
 
   def isWindowed(coll: SCollection[_]): Boolean =
