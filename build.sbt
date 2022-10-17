@@ -634,6 +634,7 @@ lazy val `scio-avro`: Project = project
       "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "org.typelevel" %% "cats-core" % catsVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
     )
   )
@@ -673,6 +674,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+      "org.typelevel" %% "cats-core" % catsVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
       "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
