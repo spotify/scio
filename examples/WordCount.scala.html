@@ -277,7 +277,7 @@ hr {
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.WordCount
---project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
+--project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>
@@ -329,7 +329,7 @@ etc. and <code>Counter</code> tracks count.</p></p></div>
               <section class="">
                 <div class="comment "><p>Trim input lines, update distribution metric</p></p></div>
                 <div class="code ">          <span class="keyword">val</span> <span class="identifier">trimmed</span> = <span class="identifier">w</span>.<span class="identifier">trim</span>
-          <span class="identifier">lineDist</span>.<span class="identifier">update</span>(<span class="identifier">trimmed</span>.<span class="identifier">length</span>.<span class="identifier">toLong</span>)
+          <span class="identifier">lineDist</span>.<span class="identifier">update</span>(<span class="identifier">trimmed</span>.<span class="identifier">length</span>)
           <span class="identifier">trimmed</span>
         }.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#filter(f:T=>Boolean)::com.spotify.scio.values.SCollection[T]" data-tooltip="<span>com.spotify.scio.values.SCollection.filter(f: T => Boolean): : com.spotify.scio.values.SCollection[T]</span>">filter</a></span> { <span class="identifier">w</span> =>&nbsp;</div>
               </section>

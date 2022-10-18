@@ -147,7 +147,6 @@ spotify/scio
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
-    <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="Scio-REPL.html" class="page">REPL</a></li>
@@ -170,7 +169,6 @@ spotify/scio
     <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -194,7 +192,6 @@ spotify/scio
 <ul>
   <li><a href="Changelog.html#changelog" class="header">Changelog</a>
   <ul>
-    <li><a href="Changelog.html#breaking-changes-since-0-12-0-" class="header">Breaking changes since 0.12.0 (<a href="migrations/v0.12.0-Migration-Guide.html">v0.12.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#important-changes-in-0-11-3" class="header">Important changes in 0.11.3</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-10-0-" class="header">Breaking changes since Scio 0.10.0 (<a href="migrations/v0.10.0-Migration-Guide.html">v0.10.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-9-0-" class="header">Breaking changes since Scio 0.9.0 (<a href="migrations/v0.9.0-Migration-Guide.html">v0.9.0 Migration Guide</a>)</a></li>
@@ -212,7 +209,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-954475ba+20220923-1548*
+<i class="md-icon" title="Version">label_outline</i> 0.11.11+0-f8f4b439+20221018-1655*
 </label>
 </li>
 </ul>
@@ -227,7 +224,6 @@ spotify/scio
 <ul>
   <li><a href="Changelog.html#changelog" class="header">Changelog</a>
   <ul>
-    <li><a href="Changelog.html#breaking-changes-since-0-12-0-" class="header">Breaking changes since 0.12.0 (<a href="migrations/v0.12.0-Migration-Guide.html">v0.12.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#important-changes-in-0-11-3" class="header">Important changes in 0.11.3</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-10-0-" class="header">Breaking changes since Scio 0.10.0 (<a href="migrations/v0.10.0-Migration-Guide.html">v0.10.0 Migration Guide</a>)</a></li>
     <li><a href="Changelog.html#breaking-changes-since-scio-0-9-0-" class="header">Breaking changes since Scio 0.9.0 (<a href="migrations/v0.9.0-Migration-Guide.html">v0.9.0 Migration Guide</a>)</a></li>
@@ -248,13 +244,6 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#changelog" name="changelog" class="anchor"><span class="anchor-link"></span></a>Changelog</h1>
-<h2><a href="#breaking-changes-since-0-12-0-" name="breaking-changes-since-0-12-0-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since 0.12.0 (<a href="migrations/v0.12.0-Migration-Guide.html">v0.12.0 Migration Guide</a>)</h2>
-<ul>
-  <li>Removed <code>com.spotify.scio.extra.bigquery</code></li>
-  <li>Removed <code>com.spotify.scio.pubsub</code> specializations</li>
-  <li>Changed type signatures of SMB methods to accommodate secondary-keyed SMB</li>
-  <li>Removed beam-sql support</li>
-</ul>
 <h2><a href="#important-changes-in-0-11-3" name="important-changes-in-0-11-3" class="anchor"><span class="anchor-link"></span></a>Important changes in 0.11.3</h2>
 <ul>
   <li>Fixed a severe Parquet IO issue introduced in 0.11.2. Incompatible versions of <code>com.google.http-client:google-http-client:1.40.0</code> and <code>com.google.cloud.bigdataoss:gcsio:2.2.2</code> were leading to jobs reading Parquet getting stuck. The mitigation for 0.11.2 is to pin <code>google-http-client</code> to <code>1.39.2</code> in your build.sbt:  <code>scala
@@ -325,7 +314,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-954475ba+20220923-1548*
+0.11.11+0-f8f4b439+20221018-1655*
 </span>
 </div>
 </article>

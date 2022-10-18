@@ -147,7 +147,6 @@ spotify/scio
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
-    <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="Scio-REPL.html" class="page">REPL</a></li>
@@ -170,7 +169,6 @@ spotify/scio
     <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -207,7 +205,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-954475ba+20220923-1548*
+<i class="md-icon" title="Version">label_outline</i> 0.11.11+0-f8f4b439+20221018-1655*
 </label>
 </li>
 </ul>
@@ -274,10 +272,10 @@ sbt publishLocal
 [info] ...
 &gt; runMain com.spotify.scio.examples.WordCount
 --project=&lt;PROJECT ID&gt;
---region=&lt;GCE AVAILABILITY ZONE&gt; --runner=DataflowRunner
+--zone=&lt;GCE AVAILABILITY ZONE&gt; --runner=DataflowRunner
 --input=&lt;FILE PATTERN&gt; --output=&lt;DIRECTORY&gt;
 </code></pre>
-<p>The Cloud Platform <code>project</code> refers to its name (not number). GCE availability <code>region</code> should be in the same region as the BigQuery datasets and GCS bucket.</p>
+<p>The Cloud Platform <code>project</code> refers to its name (not number). GCE availability <code>zone</code> should be in the same region as the BigQuery datasets and GCS bucket.</p>
 <p>By default only <code>DirectRunner</code> is in the library dependencies list. Use <code>set beamRunners := &quot;&lt;runners&gt;&quot;</code> to specify additional runner dependencies as a comma separated list, i.e. &ldquo;DataflowRunner,FlinkRunner&rdquo;.</p>
 <h2><a href="#sbt-project-setup" name="sbt-project-setup" class="anchor"><span class="anchor-link"></span></a>SBT project setup</h2>
 <p>To create a new SBT project using Giter8 <a href="https://github.com/spotify/scio-template.g8">scio-template</a>, simply:</p>
@@ -305,7 +303,7 @@ addCompilerPlugin(&quot;org.scalamacros&quot; % &quot;paradise&quot; % &quot;2.1
 <p>The following options should be specified when running a job on Google Cloud Dataflow service.</p>
 <ul>
   <li><code>--project</code> - The project ID for your Google Cloud Project. This is required if you want to run your pipeline using the Cloud Dataflow managed service.</li>
-  <li><code>--region</code> - The Compute Engine <a href="https://cloud.google.com/dataflow/docs/resources/locations">regional endpoint</a> for launching worker instances to run your pipeline.</li>
+  <li><code>--zone</code> - The Compute Engine <a href="https://cloud.google.com/compute/docs/zones">availability zone</a> for launching worker instances to run your pipeline.</li>
 </ul>
 <p>For pipeline execution parameters and optimization, see the following documents.</p>
 <ul>
@@ -324,7 +322,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-954475ba+20220923-1548*
+0.11.11+0-f8f4b439+20221018-1655*
 </span>
 </div>
 </article>

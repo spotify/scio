@@ -318,7 +318,7 @@ convert between case classes and TensorFlow <code>Example</code>s.</p></p></div>
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.MagnolifyTensorFlowWriteExample
---project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
+--project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/wordcount-tf&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MagnolifyTensorFlowWriteExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MagnolifyTensorFlowWriteExample</span>">MagnolifyTensorFlowWriteExample</a></span> {
@@ -356,7 +356,7 @@ convert between case classes and TensorFlow <code>Example</code>s.</p></p></div>
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.MagnolifyTensorFlowReadExample
---project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
+--project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://[BUCKET]/[PATH]/wordcount-tf
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MagnolifyTensorFlowReadExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MagnolifyTensorFlowReadExample</span>">MagnolifyTensorFlowReadExample</a></span> {

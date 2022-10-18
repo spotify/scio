@@ -277,7 +277,7 @@ hr {
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.BeamExample
---project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
+--project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --inputTopic=[TOPIC] --outputTopic=[TOPIC]&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/index.html" data-tooltip="<span>com.spotify.scio.examples.extra</span>">extra</a></span>
 
@@ -375,7 +375,7 @@ arguments</p>
             
               <section class="">
                 <div class="comment "><p>Underlying Beam <code>PCollection[Account]</code></p></p></div>
-                <div class="code ">    <span class="keyword">val</span> <span class="identifier">p</span>: <span class="identifier">PCollection</span>[<span class="identifier">Account</span>] = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[com.spotify.scio.avro.Account]</span>">accounts</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/PCollectionWrapper.html#internal:org.apache.beam.sdk.values.PCollection[T]" data-tooltip="<span>com.spotify.scio.values.PCollectionWrapper.internal: org.apache.beam.sdk.values.PCollection[T]</span>">internal</a></span>
+                <div class="code ">    <span class="keyword">val</span> <span class="identifier">p</span>: <span class="identifier">PCollection</span>[<span class="identifier">Account</span>] = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[com.spotify.scio.avro.Account]</span>">accounts</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/PCollectionWrapper.html#internal:org.apache.beam.sdk.values.PCollection[T]" data-tooltip="<span>com.spotify.scio.values.PCollectionWrapper.internal: org.apache.beam.sdk.values.PCollection[T]</span>">internal</a></span> // scalafix:ok
 
     <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[com.spotify.scio.avro.Account]</span>">accounts</a></span>&nbsp;</div>
               </section>

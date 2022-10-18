@@ -147,7 +147,6 @@ spotify/scio
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
-    <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="Scio-Unit-Tests.html" class="active page">Testing</a></li>
   <li><a href="Scio-REPL.html" class="page">REPL</a></li>
@@ -170,7 +169,6 @@ spotify/scio
     <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -208,7 +206,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-954475ba+20220923-1548*
+<i class="md-icon" title="Version">label_outline</i> 0.11.11+0-f8f4b439+20221018-1655*
 </label>
 </li>
 </ul>
@@ -365,47 +363,29 @@ spotify/scio
 <h3><a href="#test-with-transform-overrides" name="test-with-transform-overrides" class="anchor"><span class="anchor-link"></span></a>Test with transform overrides</h3>
 <p>Scio provides a method to replace arbitrary <em>named</em> <code>PTransform</code>s in a test context; this is primarily useful for mocking requests to external services.</p>
 <p>In this example, the <code>GuavaLookupDoFn</code> stands in for a transform that contacts an external service. A <code>ParDo</code> <code>PTransform</code> is created from the <code>DoFn</code> (<code>ParDo.of</code>), then applied to the pipeline (<code>applyTransform</code>) with a unique name (<code>myTransform</code>).</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L153-L157" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.textFile(args(&quot;input&quot;))
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L152-L156" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.textFile(args(&quot;input&quot;))
   .map(_.toInt)
   .applyTransform(&quot;myTransform&quot;, ParDo.of(new GuavaLookupDoFn))
-  .map((i: KV[Int, BaseAsyncLookupDoFn.Try[String]]) =&gt; i.getValue.get())
+  .map(_.getValue.get())
   .saveAsTextFile(args(&quot;output&quot;))</code></pre>
 <p>In a <code>JobTest</code>, a <code>PTransformOverride</code> can be passed to the <code>transformOverride</code> method to replace transforms in the original pipeline. Scio provides convenience methods for constructing <code>PTransformOverride</code>s in the <code>com.spotify.scio.testing.TransformOverride</code> object. Continuing the example above, <code>TransformOverride.ofAsyncLookup</code> can be used to map static mock data into the expected output format for the transform, here <code>KV[Int, BaseAsyncLookupDoFn.Try[String]]</code>.</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1181-L1186" target="_blank" title="Go to snippet source">source</a><code class="language-scala">.transformOverride(
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1082-L1087" target="_blank" title="Go to snippet source">source</a><code class="language-scala">.transformOverride(
   TransformOverride.ofAsyncLookup[Int, String](
     &quot;myTransform&quot;,
     Map(1 -&gt; &quot;10&quot;, 2 -&gt; &quot;20&quot;, 3 -&gt; &quot;30&quot;)
   )
 )</code></pre>
 <p>It is also possible to provide a function rather than a static map:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1212-L1215" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofAsyncLookup[Int, String](
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1099-L1102" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofAsyncLookup[Int, String](
   &quot;myTransform&quot;,
   (i: Int) =&gt; s&quot;${i * 10}&quot;
 )</code></pre>
-<p>In a scenario when the PTransform&rsquo;s output is generating more elements than input, e.g. there is a flatmap inside the transform:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L170-L175" target="_blank" title="Go to snippet source">source</a><code class="language-scala">.withName(&quot;myTransform&quot;)
-.transform { c: SCollection[Int] =&gt;
-  c.applyTransform(ParDo.of(new GuavaLookupDoFn))
-    .flatMap(_.getValue.get())
-    .map(_.toString)
-}</code></pre>
-<p>The transform can be mocked by one of the flavours of <code>ofIter</code> method to map each element to an Iterable[U]:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L994-L997" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofIter[Int, String](
-  &quot;myTransform&quot;,
-  Map(1 -&gt; Seq(&quot;10&quot;), 2 -&gt; Seq(&quot;20&quot;, &quot;21&quot;), 3 -&gt; Seq())
-)</code></pre>
-<p>or similarly provide a function rather than a static map:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1024-L1028" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofIter[Int, String](
-  &quot;myTransform&quot;,
-  // map fn equal to: Map(1 -&gt; Seq(), 2 -&gt; Seq(&quot;1&quot;), 3 -&gt; Seq(&quot;1&quot;, &quot;2&quot;)}
-  (i: Int) =&gt; { (1 until i).map(String.valueOf(_)) }
-)</code></pre>
 <p><code>TransformOverride.of</code> overrides transforms of type <code>PTransform[PCollection[T], PCollection[U]]</code> as in the case of <code>BaseAsyncDoFn</code> subclasses. <code>TransformOverride.ofKV</code> overrides transforms of type <code>PTransform[PCollection[T], PCollection[KV[T, U]]]</code>.</p>
 <p>Sources can also be overridden with <code>TransformOverride.ofSource</code>. For example, this source:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L118-L119" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.withName(&quot;ReadInput&quot;)
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L117-L118" target="_blank" title="Go to snippet source">source</a><code class="language-scala">sc.withName(&quot;ReadInput&quot;)
   .textFile(args(&quot;input&quot;))</code></pre>
 <p>Can be overridden with static mock data:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L967" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofSource[String](&quot;ReadInput&quot;, List(&quot;10&quot;, &quot;11&quot;, &quot;12&quot;))</code></pre>
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L931" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofSource[String](&quot;ReadInput&quot;, List(&quot;10&quot;, &quot;11&quot;, &quot;12&quot;))</code></pre>
 <p>Due to type erasure it is possible to provide the incorrect types for the transform and the error will not be caught until runtime.</p>
 <p>If you&rsquo;ve specified the incorrect input type, scio will attempt to detect the error and throw an <code>IllegalArgumentException</code>, which will be wrapped in a <code>PipelineExecutionException</code> at runtime:</p>
 <pre><code>org.apache.beam.sdk.Pipeline$PipelineExecutionException:
@@ -425,7 +405,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-954475ba+20220923-1548*
+0.11.11+0-f8f4b439+20221018-1655*
 </span>
 </div>
 </article>
@@ -435,7 +415,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="io/Pubsub.html" title="PubSub" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="io/Protobuf.html" title="Protobuf" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -444,7 +424,7 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-PubSub
+Protobuf
 </span>
 </div>
 </a>

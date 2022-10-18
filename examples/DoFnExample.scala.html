@@ -277,7 +277,7 @@ hr {
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.DoFnExample
---project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
+--project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/do_fn_example&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/index.html" data-tooltip="<span>com.spotify.scio.examples.extra</span>">extra</a></span>
@@ -324,11 +324,8 @@ of elements, e.g. elements in a window.</p></p></div>
               <section class="">
                 <div class="comment "><p><code>@ProcessElement</code> is called once per element.</p></p></div>
                 <div class="code ">        @<span class="identifier">ProcessElement</span>
-        <span class="keyword">private</span>[<span class="identifier">extra</span>] <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/$anon.html#processElement(element:String,out:org.apache.beam.sdk.transforms.DoFn.OutputReceiver[Int])::Unit" data-tooltip="<span>com.spotify.scio.examples.extra.DoFnExample.$anon.processElement(element: String, out: org.apache.beam.sdk.transforms.DoFn.OutputReceiver[Int]): : Unit</span>">processElement</a></span>(
-          @<span class="identifier">Element</span> <span class="identifier">element</span>: <span class="identifier">String</span>,
-          <span class="identifier">out</span>: <span class="identifier">OutputReceiver</span>[<span class="identifier">Int</span>]
-        ): <span class="identifier">Unit</span> =
-          <span class="identifier">out</span>.<span class="identifier">output</span>(<span class="identifier">element</span>.<span class="identifier">length</span>)
+        <span class="keyword">private</span>[<span class="identifier">extra</span>] <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/$anon.html#processElement(c:org.apache.beam.sdk.transforms.DoFn[String,Int]#ProcessContext)::Unit" data-tooltip="<span>com.spotify.scio.examples.extra.DoFnExample.$anon.processElement(c: org.apache.beam.sdk.transforms.DoFn[String,Int]#ProcessContext): : Unit</span>">processElement</a></span>(<span class="identifier">c</span>: <span class="identifier">DoFn</span>[<span class="identifier">String</span>, <span class="identifier">Int</span>]#<span class="identifier">ProcessContext</span>): <span class="identifier">Unit</span> =
+          <span class="identifier">c</span>.<span class="identifier">output</span>(<span class="identifier">c</span>.<span class="identifier">element</span>().<span class="identifier">length</span>)
 &nbsp;</div>
               </section>
             

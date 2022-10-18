@@ -277,14 +277,15 @@ hr {
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.StatefulExample
---project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]&quot;</code></p></p></div>
+--project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">package</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/index.html" data-tooltip="<span>com.spotify.scio.examples.extra</span>">extra</a></span>
 
 <span class="keyword">import</span> <span class="identifier">java</span>.<span class="identifier">lang</span>.{<span class="identifier">Integer</span> => <span class="identifier">JInt</span>}
+
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>._
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">state</span>.{<span class="identifier">StateSpecs</span>, <span class="identifier">ValueState</span>}
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">transforms</span>.<span class="identifier">DoFn</span>
-<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">transforms</span>.<span class="identifier">DoFn</span>.{<span class="identifier">Element</span>, <span class="identifier">OutputReceiver</span>, <span class="identifier">ProcessElement</span>, <span class="identifier">StateId</span>}
+<span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">transforms</span>.<span class="identifier">DoFn</span>.{<span class="identifier">ProcessElement</span>, <span class="identifier">StateId</span>}
 <span class="keyword">import</span> <span class="identifier">org</span>.<span class="identifier">apache</span>.<span class="identifier">beam</span>.<span class="identifier">sdk</span>.<span class="identifier">values</span>.<span class="identifier">KV</span>
 
 <span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/StatefulExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.StatefulExample</span>">StatefulExample</a></span> {&nbsp;</div>
@@ -299,12 +300,11 @@ hr {
             
               <section class="">
                 <div class="comment "><p>Declare mutable state</p></p></div>
-                <div class="code ">    @<span class="identifier">StateId</span>(<span class="string">"count"</span>) <span class="keyword">private</span> <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/StatefulExample$$StatefulDoFn.html#count:org.apache.beam.sdk.state.StateSpec[org.apache.beam.sdk.state.ValueState[Integer]]" data-tooltip="<span>com.spotify.scio.examples.extra.StatefulExample.StatefulDoFn.count: org.apache.beam.sdk.state.StateSpec[org.apache.beam.sdk.state.ValueState[Integer]]</span>">count</a></span> = <span class="identifier">StateSpecs</span>.<span class="identifier">value</span>[<span class="identifier">JInt</span>]()
+                <div class="code ">    @<span class="identifier">StateId</span>(<span class="string">"count"</span>) <span class="keyword">private</span> <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/StatefulExample$$StatefulDoFn.html#count:org.apache.beam.sdk.state.StateSpec[org.apache.beam.sdk.state.ValueState[Integer]]" data-tooltip="<span>com.spotify.scio.examples.extra.StatefulExample.StatefulDoFn.count: org.apache.beam.sdk.state.StateSpec[org.apache.beam.sdk.state.ValueState[Integer]]</span>">count</a></span> = <span class="identifier">StateSpecs</span>.<span class="identifier">value</span>[<span class="identifier">JInt</span>]() // scalafix:ok
 
     @<span class="identifier">ProcessElement</span>
-    <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/StatefulExample$$StatefulDoFn.html#processElement(element:org.apache.beam.sdk.values.KV[String,Int],out:org.apache.beam.sdk.transforms.DoFn.OutputReceiver[org.apache.beam.sdk.values.KV[String,(Int,Int)]],count:org.apache.beam.sdk.state.ValueState[Integer])::Unit" data-tooltip="<span>com.spotify.scio.examples.extra.StatefulExample.StatefulDoFn.processElement(element: org.apache.beam.sdk.values.KV[String,Int], out: org.apache.beam.sdk.transforms.DoFn.OutputReceiver[org.apache.beam.sdk.values.KV[String,(Int, Int)]], count: org.apache.beam.sdk.state.ValueState[Integer]): : Unit</span>">processElement</a></span>(
-      @<span class="identifier">Element</span> <span class="identifier">element</span>: <span class="identifier">KV</span>[<span class="identifier">String</span>, <span class="identifier">Int</span>],
-      <span class="identifier">out</span>: <span class="identifier">OutputReceiver</span>[<span class="identifier">KV</span>[<span class="identifier">String</span>, (<span class="identifier">Int</span>, <span class="identifier">Int</span>)]],&nbsp;</div>
+    <span class="keyword">def</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/StatefulExample$$StatefulDoFn.html#processElement(context:org.apache.beam.sdk.transforms.DoFn[org.apache.beam.sdk.values.KV[String,Int],org.apache.beam.sdk.values.KV[String,(Int,Int)]]#ProcessContext,count:org.apache.beam.sdk.state.ValueState[Integer])::Unit" data-tooltip="<span>com.spotify.scio.examples.extra.StatefulExample.StatefulDoFn.processElement(context: org.apache.beam.sdk.transforms.DoFn[org.apache.beam.sdk.values.KV[String,Int],org.apache.beam.sdk.values.KV[String,(Int, Int)]]#ProcessContext, count: org.apache.beam.sdk.state.ValueState[Integer]): : Unit</span>">processElement</a></span>(
+      <span class="identifier">context</span>: <span class="identifier">DoFnT</span>#<span class="identifier">ProcessContext</span>,&nbsp;</div>
               </section>
             
               <section class="">
@@ -317,7 +317,8 @@ hr {
                 <div class="comment "><p>Read and write state</p></p></div>
                 <div class="code ">      <span class="keyword">val</span> <span class="identifier">c</span> = <span class="identifier">count</span>.<span class="identifier">read</span>()
       <span class="identifier">count</span>.<span class="identifier">write</span>(<span class="identifier">c</span> <span class="identifier">+</span> <span class="number">1</span>)
-      <span class="identifier">out</span>.<span class="identifier">output</span>(<span class="identifier">KV</span>.<span class="identifier">of</span>(<span class="identifier">element</span>.<span class="identifier">getKey</span>, (<span class="identifier">element</span>.<span class="identifier">getValue</span>, <span class="identifier">c</span>)))
+      <span class="keyword">val</span> <span class="identifier">kv</span> = <span class="identifier">context</span>.<span class="identifier">element</span>()
+      <span class="identifier">context</span>.<span class="identifier">output</span>(<span class="identifier">KV</span>.<span class="identifier">of</span>(<span class="identifier">kv</span>.<span class="identifier">getKey</span>, (<span class="identifier">kv</span>.<span class="identifier">getValue</span>, <span class="identifier">c</span>)))
     }
   }
 

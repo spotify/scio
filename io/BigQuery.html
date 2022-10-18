@@ -147,7 +147,6 @@ spotify/scio
     <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
-    <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
@@ -170,7 +169,6 @@ spotify/scio
     <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="../migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="../migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -196,6 +194,7 @@ spotify/scio
   <ul>
     <li><a href="../io/BigQuery.html#background" class="header">Background</a></li>
     <li><a href="../io/BigQuery.html#type-annotations" class="header">Type annotations</a></li>
+    <li><a href="../io/BigQuery.html#bigquery-reads-using-schema" class="header">BigQuery reads using <code>Schema</code></a></li>
     <li><a href="../io/BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
     <li><a href="../io/BigQuery.html#bigquery-authentication" class="header">BigQuery authentication</a></li>
     <li><a href="../io/BigQuery.html#bigquery-configurations-in-sbt" class="header">BigQuery configurations in SBT</a></li>
@@ -207,7 +206,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-954475ba+20220923-1548*
+<i class="md-icon" title="Version">label_outline</i> 0.11.11+0-f8f4b439+20221018-1655*
 </label>
 </li>
 </ul>
@@ -224,6 +223,7 @@ spotify/scio
   <ul>
     <li><a href="../io/BigQuery.html#background" class="header">Background</a></li>
     <li><a href="../io/BigQuery.html#type-annotations" class="header">Type annotations</a></li>
+    <li><a href="../io/BigQuery.html#bigquery-reads-using-schema" class="header">BigQuery reads using <code>Schema</code></a></li>
     <li><a href="../io/BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
     <li><a href="../io/BigQuery.html#bigquery-authentication" class="header">BigQuery authentication</a></li>
     <li><a href="../io/BigQuery.html#bigquery-configurations-in-sbt" class="header">BigQuery configurations in SBT</a></li>
@@ -385,6 +385,23 @@ Row.toPrettyString(2)
 </code></pre>
 <p>In addition, <code>BigQueryType.fromTable</code> and <code>BigQueryTable.fromQuery</code> generate <code>table: String</code> and <code>query: String</code> respectively that refers to parameters in the original annotation.</p>
 <p>import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with <code>@BigQueryType.toTable</code>, i.e. <code>object Row</code>.</p>
+<h2><a href="#bigquery-reads-using-schema" name="bigquery-reads-using-schema" class="anchor"><span class="anchor-link"></span></a>BigQuery reads using <code>Schema</code></h2>
+<p>Classes generated from <code>@BigQueryType</code> annotations extend the <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$$HasAnnotation.html" title="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation"><code>HasAnnotation</code></a> trait, and most of Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/syntax/ScioContextOps.html" title="com.spotify.scio.bigquery.syntax.ScioContextOps"><code>user-facing BigQuery APIs</code></a> expect a parameterized type <code>T &lt;: HasAnnotation</code>. However, Scio also offers a typed BigQuery read API that accepts any type <code>T</code> with an implicit <a href="https://github.com/spotify/scio/tree/master/scio-core/src/main/scala/com/spotify/scio/schemas/Schema.scala">Schema</a> instance in scope:</p>
+<pre class="prettyprint"><code class="language-scala">def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T]
+</code></pre>
+<p>A <code>Schema</code> will be implicitly derived at compile time (similar to <a href="../internals/Coders.html">Coder</a>s) for case classes and certain traits like Lists, Maps, and Options.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.bigquery._
+import com.spotify.scio.ContextAndArgs
+
+case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)
+
+def main(cmdlineArgs: Array[String]): Unit = {
+  val (sc, args) = ContextAndArgs(cmdlineArgs)
+  sc
+    .typedBigQueryTable[Shakespeare](Table.Spec(&quot;bigquery-public-data:samples.shakespeare&quot;))
+}
+</code></pre>
+<p>For more information on Schema materialization, see the <a href="../migrations/v0.8.0-Migration-Guide.html">V0.8.0 Migration Guide</a>.</p>
 <h2><a href="#using-type-safe-bigquery" name="using-type-safe-bigquery" class="anchor"><span class="anchor-link"></span></a>Using type safe BigQuery</h2>
 <h3><a href="#type-safe-bigquery-with-scio" name="type-safe-bigquery-with-scio" class="anchor"><span class="anchor-link"></span></a>Type safe BigQuery with Scio</h3>
 <p>To enable type safe BigQuery for <code>ScioContext</code>:</p>
@@ -521,7 +538,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-954475ba+20220923-1548*
+0.11.11+0-f8f4b439+20221018-1655*
 </span>
 </div>
 </article>
