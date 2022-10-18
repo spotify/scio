@@ -55,7 +55,7 @@ private[scio] object FunctionsWithWindowedValue {
         window: BoundedWindow
       ): Unit = {
         val wv = WindowedValue(element, timestamp, window, pane)
-        val i = g(wv).iterator
+        val i = g(wv).toIterator
         while (i.hasNext) {
           val v = i.next()
           out.outputWithTimestamp(v.value, v.timestamp)
