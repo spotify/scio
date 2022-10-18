@@ -234,7 +234,7 @@ private[scio] object Functions {
         @Element element: T,
         outputReceiver: OutputReceiver[U]
       ): Unit = {
-        val i = g(element).iterator
+        val i = g(element).toIterator
         while (i.hasNext) outputReceiver.output(i.next())
       }
     }

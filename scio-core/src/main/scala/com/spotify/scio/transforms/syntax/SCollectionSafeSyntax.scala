@@ -54,7 +54,7 @@ trait SCollectionSafeSyntax {
         ): Unit = {
           val i =
             try {
-              g(element).iterator
+              g(element).toIterator
             } catch {
               case e: Throwable =>
                 multiOutputReceiver.get[(T, Throwable)](errorTag).output((element, e))

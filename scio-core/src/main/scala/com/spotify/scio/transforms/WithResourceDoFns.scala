@@ -72,7 +72,7 @@ class FlatMapFnWithResource[T, U, R] private[transforms] (
     @Element element: T,
     outputReceiver: OutputReceiver[U]
   ): Unit = {
-    val i = g(getResource, element).iterator
+    val i = g(getResource, element).toIterator
     while (i.hasNext) outputReceiver.output(i.next())
   }
 }
