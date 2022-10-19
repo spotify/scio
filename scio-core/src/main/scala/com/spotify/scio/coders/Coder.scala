@@ -33,6 +33,7 @@ import scala.collection.compat._
 import scala.collection.{mutable => m, BitSet, SortedSet}
 import scala.reflect.ClassTag
 import scala.util.Try
+import java.util.UUID
 
 @implicitNotFound(
   """
@@ -628,6 +629,7 @@ object Coder
   implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] = ScalaCoders.sortedSetCoder
 
   implicit val voidCoder: Coder[Void] = JavaCoders.voidCoder
+  implicit val uuidCoder: Coder[UUID] = JavaCoders.uuidCoder
   implicit val uriCoder: Coder[java.net.URI] = JavaCoders.uriCoder
   implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
   implicit def jIterableCoder[T: Coder]: Coder[java.lang.Iterable[T]] = JavaCoders.jIterableCoder

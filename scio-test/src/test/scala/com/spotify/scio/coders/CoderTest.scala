@@ -39,6 +39,7 @@ import org.scalatest.Assertion
 
 import java.nio.charset.Charset
 import java.time.{Instant, LocalDate}
+import java.util.UUID
 import java.time.format.DateTimeFormatter
 
 // record
@@ -311,16 +312,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     // Message
     // ByteString
     BigDecimal("1234") coderShould notFallback()
-    new java.sql.Timestamp(1) coderShould notFallback()
-    new org.joda.time.Instant coderShould notFallback()
-    new org.joda.time.LocalDate coderShould notFallback()
-    new org.joda.time.LocalTime coderShould notFallback()
-    new org.joda.time.LocalDateTime coderShould notFallback()
-    new org.joda.time.DateTime coderShould notFallback()
-    FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback()
 
     "Coder[Void]" should compile
     "Coder[Unit]" should compile
+
+    UUID.randomUUID() coderShould notFallback()
+    FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback()
 
     val bs = new java.util.BitSet()
     (1 to 100000).foreach(x => bs.set(x))
@@ -328,7 +325,15 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     new BigInteger("123456789") coderShould notFallback()
     new jBigDecimal("123456789.98765") coderShould notFallback()
+
     val now = org.joda.time.Instant.now()
+    now coderShould notFallback()
+    new org.joda.time.LocalDate coderShould notFallback()
+    new org.joda.time.LocalTime coderShould notFallback()
+    new org.joda.time.LocalDateTime coderShould notFallback()
+    new org.joda.time.DateTime coderShould notFallback()
+    new java.sql.Timestamp(1) coderShould notFallback()
+
     new IntervalWindow(now.minus(4000), now) coderShould notFallback()
   }
 
