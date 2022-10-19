@@ -26,7 +26,7 @@ import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder, StructuredCoder
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.KV
 
-import java.util.{Arrays => JArrays, Collections, List => JList, Objects}
+import java.util.{Collections, List => JList, Objects}
 import scala.annotation.implicitNotFound
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._
@@ -318,7 +318,8 @@ final private[scio] class RecordCoder[T](
         svs.update(idx, sv)
         idx += 1
       }
-      JArrays.asList(svs)
+      // return a scala Seq which defines proper equality for structuralValue comparison
+      svs.toSeq
     }
 
   // delegate methods for byte size estimation
