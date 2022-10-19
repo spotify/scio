@@ -20,6 +20,7 @@ package com.spotify.scio.coders.instances
 import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
 import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, Period}
+import java.util.UUID
 
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.Coder
@@ -47,6 +48,12 @@ private object VoidCoder extends AtomicCoder[Void] {
 //
 trait JavaCoders extends JavaBeanCoders {
   implicit def voidCoder: Coder[Void] = Coder.beam[Void](VoidCoder)
+
+  implicit def uuidCoder: Coder[UUID] =
+    Coder.xmap(Coder[(Long, Long)])(
+      { case (msb, lsb) => new UUID(msb, lsb) },
+      uuid => (uuid.getMostSignificantBits, uuid.getLeastSignificantBits)
+    )
 
   implicit def uriCoder: Coder[java.net.URI] =
     Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => new java.net.URI(s), _.toString)
