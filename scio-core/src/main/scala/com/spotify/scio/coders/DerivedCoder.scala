@@ -41,20 +41,60 @@ trait LowPriorityCoderDerivation {
 
   type Typeclass[T] = Coder[T]
 
+  private class CaseClassConstructor[T] private (private val clazz: Class[_]) extends Serializable {
+    // We can call rawConstruct on an empty CaseClass instance
+    @transient lazy val ctx: CaseClass[Coder, T] = ClosureCleaner
+      .instantiateClass(clazz)
+      .asInstanceOf[CaseClass[Coder, T]]
+    def rawConstruct(fieldValues: Seq[Any]): T = ctx.rawConstruct(fieldValues)
+  }
+
+  private object CaseClassConstructor {
+    def apply[T](caseClass: CaseClass[Coder, T]): CaseClassConstructor[T] =
+      new CaseClassConstructor(caseClass.getClass)
+  }
+
+  private class SealedTraitIdentifier[T] private (private val subTypes: Seq[Subtype[Coder, T]])
+      extends Serializable {
+    def id(v: T): Int = subTypes.find(_.cast.isDefinedAt(v)).map(_.index).get
+  }
+  private object SealedTraitIdentifier {
+    def apply[T](sealedTrait: SealedTrait[Coder, T]): SealedTraitIdentifier[T] = {
+      val subtypes = sealedTrait.subtypes
+        .map { s =>
+          val clazz = s.getClass
+          val clean = ClosureCleaner
+            .instantiateClass(clazz)
+            .asInstanceOf[Subtype[Coder, T]]
+          // name required for toString
+          val name = clazz.getDeclaredField("name$1")
+          name.setAccessible(true)
+          name.set(clean, name.get(s))
+          // isType require for cast.isDefinedAt
+          val isType = clazz.getDeclaredField("isType$1")
+          isType.setAccessible(true)
+          isType.set(clean, isType.get(s))
+          // idx required for index
+          val idx = clazz.getDeclaredField("idx$1")
+          idx.setAccessible(true)
+          idx.set(clean, idx.get(s))
+          clean
+        }
+      new SealedTraitIdentifier(subtypes)
+    }
+  }
+
   def join[T: ClassTag](ctx: CaseClass[Coder, T]): Coder[T] = {
     val typeName = ctx.typeName.full
-    // calling patched rawConstruct on empty object should work
-    val emptyCtx = ClosureCleaner
-      .instantiateClass(ctx.getClass)
-      .asInstanceOf[CaseClass[Coder, T]]
+    val constructor = CaseClassConstructor(ctx)
     if (ctx.isValueClass) {
       val p = ctx.parameters.head
       Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
-        v => emptyCtx.rawConstruct(Seq(v)),
+        v => constructor.rawConstruct(Seq(v)),
         p.dereference
       )
     } else if (ctx.isObject) {
-      Coder.singleton(typeName, () => emptyCtx.rawConstruct(Seq.empty))
+      Coder.singleton(typeName, () => constructor.rawConstruct(Seq.empty))
     } else {
       Coder.ref(typeName) {
         val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
@@ -63,7 +103,7 @@ trait LowPriorityCoderDerivation {
         }
 
         Coder.record[T](typeName, cs)(
-          emptyCtx.rawConstruct,
+          constructor.rawConstruct,
           v => ProductIndexedSeqLike(v.asInstanceOf[Product])
         )
       }
@@ -72,35 +112,16 @@ trait LowPriorityCoderDerivation {
 
   def split[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
+    val identifier = SealedTraitIdentifier(sealedTrait)
     val coders = sealedTrait.subtypes
       .map(s => (s.index, s.typeclass.asInstanceOf[Coder[T]]))
       .toMap
-
-    val subtypes = sealedTrait.subtypes
-      .map { s =>
-        val clazz = s.getClass
-        val clean = ClosureCleaner
-          .instantiateClass(clazz)
-          .asInstanceOf[Subtype[Coder, T]]
-        // copy required fields only
-        val isType = clazz.getDeclaredField("isType$1")
-        isType.setAccessible(true)
-        isType.set(clean, isType.get(s))
-
-        val index = clazz.getDeclaredField("idx$1")
-        index.setAccessible(true)
-        index.set(clean, index.get(s))
-
-        clean
-      }
-
-    val id = (v: T) => subtypes.find(_.cast.isDefinedAt(v)).map(_.index).get
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
-      Coder.disjunction[T, Boolean](typeName, cs)(id.andThen(booleanId))
+      Coder.disjunction[T, Boolean](typeName, cs)(v => booleanId(identifier.id(v)))
     } else {
-      Coder.disjunction[T, Int](typeName, coders)(id)
+      Coder.disjunction[T, Int](typeName, coders)(identifier.id)
     }
   }
 
