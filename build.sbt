@@ -27,7 +27,7 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.41.0"
+val beamVersion = "2.42.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
@@ -40,46 +40,46 @@ val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
 val datastoreV1ProtoClientVersion = "2.9.0"
 val flinkVersion = "1.15.0"
-val googleClientsVersion = "1.32.1"
-val googleCloudDatastoreVersion = "0.93.10"
-val googleOauthClientVersion = "1.33.3"
+val googleClientsVersion = "2.0.0"
+val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "31.1-jre"
-val hadoopVersion = "2.10.1"
+val hadoopVersion = "2.10.2"
 val httpCoreVersion = "4.4.14"
-val jacksonVersion = "2.13.0"
+val jacksonVersion = "2.13.3"
 val javaxAnnotationApiVersion = "1.3.2"
-val nettyTcNativeVersion = "2.0.47.Final"
-val nettyVersion = "4.1.52.Final"
+val nettyTcNativeVersion = "2.0.52.Final"
+val nettyVersion = "4.1.77.Final"
 val sparkVersion = "3.1.2"
-val threetenbpVersion = "1.4.4" // from google-cloud-platform/build.gradle
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20211129-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20210818-$googleClientsVersion"
-val googleApiServicesPubsubVersion = s"v1-rev20211130-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20211201-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20220827-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20220812-$googleClientsVersion"
+val googleApiServicesPubsubVersion = s"v1-rev20220829-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/index.html
 val animalSnifferAnnotationsVersion = "1.21"
-val bigQueryStorageBetaVersion = "0.136.2"
-val bigQueryStorageVersion = "2.12.2"
-val checkerFrameworkVersion = "3.21.4"
-val errorProneAnnotationsVersion = "2.13.1"
+val bigQueryStorageBetaVersion = "0.144.1"
+val bigQueryStorageVersion = "2.20.1"
+val checkerFrameworkVersion = "3.23.0"
+val errorProneAnnotationsVersion = "2.14.0"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.101.0"
-val gaxVersion = "2.16.0"
-val googleApiCommonVersion = "2.1.5"
-val googleAuthVersion = "1.6.0"
-val googleCloudBigTableVersion = "2.6.2"
-val googleCloudMonitoringVersion = "3.2.9"
-val googleCloudSpannerVersion = "6.23.3"
-val googleCloudVersion = "2.6.0"
-val googleCommonsProtoVersion = "2.8.3"
-val googleHttpClientsVersion = "1.41.7"
-val googleIAMVersion = "1.3.1"
-val grpcVersion = "1.45.1"
-val opencensusVersion = "0.31.0"
-val protobufVersion = "3.19.4"
+val gaxHttpJsonVersion = "0.103.7"
+val gaxVersion = "2.18.7"
+val googleApiCommonVersion = "2.2.1"
+val googleAuthVersion = "1.8.1"
+val googleCloudBigTableVersion = "2.11.0"
+val googleCloudDatastoreVersion = "0.102.0"
+val googleCloudMonitoringVersion = "3.4.1"
+val googleCloudSpannerVersion = "6.29.0"
+val googleCloudStorageVersion = "2.11.3"
+val googleCloudCoreVersion = "2.8.6"
+val googleCommonsProtoVersion = "2.9.2"
+val googleHttpClientsVersion = "1.42.2"
+val googleIAMVersion = "1.5.2"
+val grpcVersion = "1.48.0"
+val opencensusVersion = "0.31.1"
+val protobufVersion = "3.21.4"
 
 val algebirdVersion = "0.13.9"
 val algebraVersion = "2.8.0"
@@ -668,8 +668,8 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-core" % googleCloudVersion,
-      "com.google.cloud" % "google-cloud-storage" % googleCloudVersion % "test,it",
+      "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
+      "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % "test,it",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -1392,7 +1392,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
   "com.google.auto.value" % "auto-value" % autoValueVersion,
   "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-  "com.google.cloud" % "google-cloud-core" % googleCloudVersion,
+  "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
   "com.google.cloud" % "google-cloud-monitoring" % googleCloudMonitoringVersion,
   "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
   "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
@@ -1438,6 +1438,5 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
-  "org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion,
-  "org.threeten" % "threetenbp" % threetenbpVersion
+  "org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion
 )
