@@ -98,7 +98,7 @@ object CoderMaterializer {
       case KVCoder(koder, voder) =>
         // propagate topLevel to k & v coders
         val kbc = beamImpl(o, koder, refs, topLevel)
-        val vbc = beamImpl(o, voder, refs, topLevel)
+        val vbc = beamImpl(o, voder, refs) // TODO, topLevel)
         KvCoder.of(kbc, vbc)
       case r @ Ref(t, c) =>
         refs.get(r) match {
