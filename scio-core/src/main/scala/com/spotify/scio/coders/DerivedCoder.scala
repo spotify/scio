@@ -18,6 +18,7 @@
 package com.spotify.scio.coders
 
 import com.twitter.chill.ClosureCleaner
+import magnolia1._
 
 import scala.reflect.ClassTag
 
@@ -28,61 +29,61 @@ object LowPriorityCoderDerivation {
   }
 
   // Instead of converting Product.productIterator to a Seq, create a wrapped around it
-  final private class ProductIndexedSeqLike private (val p: Product) extends IndexedSeq[Any] {
+  private class ProductIndexedSeqLike private (private val p: Product) extends IndexedSeq[Any] {
     override def length: Int = p.productArity
     override def apply(i: Int): Any = p.productElement(i)
   }
 
-}
+  private object CaseClassConstructor {
 
-trait LowPriorityCoderDerivation {
-  import LowPriorityCoderDerivation._
-  import magnolia1._
+    // to create a case class, we only need to serialize the CaseClass's instance class
+    def apply[T](caseClass: CaseClass[Coder, T]): CaseClassConstructor[T] =
+      new CaseClassConstructor(caseClass.getClass.getName)
+  }
 
-  type Typeclass[T] = Coder[T]
-
-  private class CaseClassConstructor[T] private (private val clazz: Class[_]) extends Serializable {
+  private class CaseClassConstructor[T] private (private val className: String)
+      extends Serializable {
     // We can call rawConstruct on an empty CaseClass instance
     @transient lazy val ctx: CaseClass[Coder, T] = ClosureCleaner
-      .instantiateClass(clazz)
+      .instantiateClass(Class.forName(className))
       .asInstanceOf[CaseClass[Coder, T]]
+
     def rawConstruct(fieldValues: Seq[Any]): T = ctx.rawConstruct(fieldValues)
   }
 
-  private object CaseClassConstructor {
-    def apply[T](caseClass: CaseClass[Coder, T]): CaseClassConstructor[T] =
-      new CaseClassConstructor(caseClass.getClass)
-  }
-
-  private class SealedTraitIdentifier[T] private (private val subTypes: Seq[Subtype[Coder, T]])
-      extends Serializable {
-    def id(v: T): Int = subTypes.find(_.cast.isDefinedAt(v)).map(_.index).get
-  }
   private object SealedTraitIdentifier {
+
+    // to find the sub-type id, we only we only need to serialize the isInstanceOf and index
     def apply[T](sealedTrait: SealedTrait[Coder, T]): SealedTraitIdentifier[T] = {
       val subtypes = sealedTrait.subtypes
         .map { s =>
-          val clazz = s.getClass
-          val clean = ClosureCleaner
-            .instantiateClass(clazz)
-            .asInstanceOf[Subtype[Coder, T]]
-          // name required for toString
-          val name = clazz.getDeclaredField("name$1")
-          name.setAccessible(true)
-          name.set(clean, name.get(s))
-          // isType require for cast.isDefinedAt
-          val isType = clazz.getDeclaredField("isType$1")
-          isType.setAccessible(true)
-          isType.set(clean, isType.get(s))
-          // idx required for index
-          val idx = clazz.getDeclaredField("idx$1")
-          idx.setAccessible(true)
-          idx.set(clean, idx.get(s))
-          clean
+          // defeat closure by accessing underlying definition
+          val field = s.getClass.getDeclaredField("isType$1")
+          field.setAccessible(true)
+          val isType = field.get(s).asInstanceOf[T => Boolean]
+          val index = s.index
+          isType -> index
         }
       new SealedTraitIdentifier(subtypes)
     }
   }
+
+  private class SealedTraitIdentifier[T] private (private val subTypes: Seq[(T => Boolean, Int)])
+      extends Serializable {
+    def id(v: T): Int = subTypes.collectFirst { case (isType, index) if isType(v) => index }.get
+  }
+
+  def colsureFunction[E, D, R](enclosed: E)(gen: E => D => R): D => R = gen(enclosed)
+
+  def colsureSupplier[E, R](enclosed: E)(gen: E => R): () => R = () => gen(enclosed)
+
+}
+
+trait LowPriorityCoderDerivation {
+
+  import LowPriorityCoderDerivation._
+
+  type Typeclass[T] = Coder[T]
 
   def join[T: ClassTag](ctx: CaseClass[Coder, T]): Coder[T] = {
     val typeName = ctx.typeName.full
@@ -90,11 +91,11 @@ trait LowPriorityCoderDerivation {
     if (ctx.isValueClass) {
       val p = ctx.parameters.head
       Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
-        v => constructor.rawConstruct(Seq(v)),
+        colsureFunction(constructor)(c => v => c.rawConstruct(Seq(v))),
         p.dereference
       )
     } else if (ctx.isObject) {
-      Coder.singleton(typeName, () => constructor.rawConstruct(Seq.empty))
+      Coder.singleton(typeName, colsureSupplier(constructor)(_.rawConstruct(Seq.empty)))
     } else {
       Coder.ref(typeName) {
         val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
@@ -103,7 +104,7 @@ trait LowPriorityCoderDerivation {
         }
 
         Coder.record[T](typeName, cs)(
-          constructor.rawConstruct,
+          colsureFunction(constructor)(_.rawConstruct),
           v => ProductIndexedSeqLike(v.asInstanceOf[Product])
         )
       }
@@ -119,9 +120,11 @@ trait LowPriorityCoderDerivation {
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
-      Coder.disjunction[T, Boolean](typeName, cs)(v => booleanId(identifier.id(v)))
+      Coder.disjunction[T, Boolean](typeName, cs)(
+        colsureFunction(identifier)(_.id).andThen(booleanId)
+      )
     } else {
-      Coder.disjunction[T, Int](typeName, coders)(identifier.id)
+      Coder.disjunction[T, Int](typeName, coders)(colsureFunction(identifier)(_.id))
     }
   }
 
