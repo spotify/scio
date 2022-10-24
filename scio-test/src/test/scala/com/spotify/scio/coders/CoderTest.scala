@@ -30,11 +30,12 @@ import org.apache.beam.sdk.util.SerializableUtils
 
 import scala.jdk.CollectionConverters._
 import scala.collection.{mutable => mut}
-import java.io.ByteArrayInputStream
+import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Moments
+import org.apache.commons.io.output.NullOutputStream
 import org.scalatest.Assertion
 
 import java.nio.charset.Charset
@@ -49,7 +50,7 @@ final case class User(id: UserId, username: String, email: String)
 // disjunction
 sealed trait Top
 final case class TA(anInt: Int, aString: String) extends Top
-final case class TB(anDouble: Double) extends Top
+final case class TB(aDouble: Double) extends Top
 
 // case classes
 final case class DummyCC(s: String)
@@ -243,6 +244,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   object Avro {
+
     import com.spotify.scio.avro.{Account, Address, User => AvUser}
 
     val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
@@ -664,5 +666,36 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     bloomFilter coderShould roundtrip()
     bloomFilter coderShould beDeterministic()
+  }
+
+  it should "not serialize any magnolia internals after materialization" in {
+    class ObjectOutputStreamInspector
+        extends ObjectOutputStream(NullOutputStream.NULL_OUTPUT_STREAM) {
+      private val classes = Set.newBuilder[String]
+
+      override def writeClassDescriptor(desc: ObjectStreamClass): Unit = {
+        classes += desc.getName
+        super.writeClassDescriptor(desc)
+      }
+
+      def serializedClasses: Set[String] = {
+        super.flush()
+        super.close()
+        classes.result()
+      }
+    }
+
+    val inspector = new ObjectOutputStreamInspector()
+    // case class
+    inspector.writeObject(CoderMaterializer.beamWithDefault(Coder[DummyCC]))
+    // sealed trait
+    inspector.writeObject(CoderMaterializer.beamWithDefault(Coder[Top]))
+
+    inspector.serializedClasses should not contain oneOf(
+      classOf[magnolia1.CaseClass[Coder, _]].getName,
+      classOf[magnolia1.Param[Coder, _]].getName,
+      classOf[magnolia1.SealedTrait[Coder, _]].getName,
+      classOf[magnolia1.Subtype[Coder, _]].getName
+    )
   }
 }
