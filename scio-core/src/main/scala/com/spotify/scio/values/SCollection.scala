@@ -471,7 +471,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   ): SCollection[Iterable[T]] = {
     val weigher = Functions.serializableFn[T, java.lang.Long](_ => 1)
     this
-      .parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows))
+      .parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows))(Coder.aggregate)
       .map(_.asScala)
   }
 
@@ -504,7 +504,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       size
     }
     this
-      .parDo(new BatchDoFn[T](batchByteSize, weigher, maxLiveWindows))
+      .parDo(new BatchDoFn[T](batchByteSize, weigher, maxLiveWindows))(Coder.aggregate)
       .map(_.asScala)
   }
 
@@ -530,7 +530,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   ): SCollection[Iterable[T]] = {
     val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
     this
-      .parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows))
+      .parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows))(Coder.aggregate)
       .map(_.asScala)
   }
 
