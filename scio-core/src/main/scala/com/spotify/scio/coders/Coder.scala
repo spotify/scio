@@ -130,6 +130,9 @@ final case class Record[T] private (
 // KV are special in beam and need to be serialized using an instance of KvCoder.
 final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extends Coder[KV[K, V]]
 
+// GroupByKey aggregate are special because they can't be wrapped
+final case class AggregateCoder[T] private (coder: Coder[T]) extends Coder[java.lang.Iterable[T]]
+
 ///////////////////////////////////////////////////////////////////////////////
 // Materialized beam coders
 ///////////////////////////////////////////////////////////////////////////////
@@ -526,6 +529,8 @@ sealed trait CoderGrammar {
     Beam(beam)
   def kv[K, V](koder: Coder[K], voder: Coder[V]): Coder[KV[K, V]] =
     KVCoder(koder, voder)
+  def aggregate[T: Coder]: Coder[java.lang.Iterable[T]] =
+    AggregateCoder(Coder[T])
 
   /**
    * Create an instance of Kryo Coder for a given Type.
@@ -634,7 +639,7 @@ object Coder
   implicit val uriCoder: Coder[java.net.URI] = JavaCoders.uriCoder
   implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
   implicit def jIterableCoder[T: Coder]: Coder[java.lang.Iterable[T]] = JavaCoders.jIterableCoder
-  implicit def jlistCoder[T: Coder]: Coder[JList[T]] = JavaCoders.jlistCoder
+  implicit def jListCoder[T: Coder]: Coder[JList[T]] = JavaCoders.jListCoder
   implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
   implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
   implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
