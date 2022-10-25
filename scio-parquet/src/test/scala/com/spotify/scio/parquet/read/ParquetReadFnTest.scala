@@ -62,6 +62,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       ParquetReadConfiguration.SplitGranularity,
       ParquetReadConfiguration.SplitGranularityFile
     )
+    granularityConf.set(ParquetReadConfiguration.UseSplittableDoFn, "true")
 
     val sc = ScioContext()
     val tap = sc
@@ -79,6 +80,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       ParquetReadConfiguration.SplitGranularity,
       ParquetReadConfiguration.SplitGranularityFile
     )
+    granularityConf.set(ParquetReadConfiguration.UseSplittableDoFn, "true")
 
     val sc = ScioContext()
     val tap = sc
@@ -96,6 +98,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       ParquetReadConfiguration.SplitGranularity,
       ParquetReadConfiguration.SplitGranularityRowGroup
     )
+    granularityConf.set(ParquetReadConfiguration.UseSplittableDoFn, "true")
 
     val sc = ScioContext()
     val tap = sc
@@ -113,6 +116,7 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
       ParquetReadConfiguration.SplitGranularity,
       ParquetReadConfiguration.SplitGranularityRowGroup
     )
+    granularityConf.set(ParquetReadConfiguration.UseSplittableDoFn, "true")
 
     val sc = ScioContext()
     val tap = sc
