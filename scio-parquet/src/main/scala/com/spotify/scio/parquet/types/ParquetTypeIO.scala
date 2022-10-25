@@ -17,10 +17,11 @@
 
 package com.spotify.scio.parquet.types
 
+import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
-import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
+import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
@@ -28,9 +29,12 @@ import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.SerializableFunctions
+import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.io.{DynamicFileDestinations, FileSystems, WriteFiles}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -50,6 +54,14 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    if (params.conf.getBoolean(ParquetReadConfiguration.UseSplittableDoFn, false)) {
+      readSplittableDoFn(sc, params)
+    } else {
+      readLegacy(sc, params)
+    }
+  }
+
+  private def readSplittableDoFn(sc: ScioContext, params: ReadP): SCollection[T] = {
     val conf = Option(params.conf).getOrElse(new Configuration())
     if (params.predicate != null) {
       ParquetInputFormat.setFilterPredicate(conf, params.predicate)
@@ -65,6 +77,38 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
         identity[T]
       )
     ).setCoder(coder)
+  }
+
+  @deprecated("Reading Parquet using HadoopFormatIO is deprecated and will be removed in future Scio versions. " +
+    "Please set scio.parquet.read.useSplittableDoFn to True in your Parquet config.")
+  private def readLegacy(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val cls = ScioUtil.classOf[T]
+    val job = Job.getInstance(params.conf)
+    GcsConnectorUtil.setInputPaths(sc, job, path)
+    tpe.setupInput(job)
+    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
+    job.getConfiguration.setClass("value.class", cls, cls)
+
+    if (params.predicate != null) {
+      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
+    }
+
+    val source = HadoopFormatIO
+      .read[JBoolean, T]
+      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
+      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+        override def apply(input: Void): JBoolean = true
+      })
+      .withValueTranslation(
+        new SimpleFunction[T, T]() {
+          override def apply(input: T): T = input
+          override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
+        },
+        CoderMaterializer.beam(sc, Coder[T])
+      )
+      .withConfiguration(job.getConfiguration)
+      .withSkipValueClone(job.getConfiguration.getBoolean(ParquetReadConfiguration.SkipClone, true))
+    sc.applyTransform(source).map(_.getValue)
   }
 
   private def parquetOut(
