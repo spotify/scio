@@ -31,7 +31,6 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
-import org.apache.beam.sdk.coders
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.transforms.SimpleFunction
@@ -218,10 +217,6 @@ object ParquetAvroIO {
       ).setCoder(tCoder)
     }
 
-    @deprecated(
-      "Reading Parquet using HadoopFormatIO is deprecated and will be removed in future Scio versions. " +
-        "Please set scio.parquet.read.useSplittableDoFn to True in your Parquet config."
-    )
     private def readLegacy(sc: ScioContext, conf: Configuration, path: String)(implicit
       coder: Coder[T]
     ): SCollection[T] = {

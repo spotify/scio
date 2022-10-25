@@ -89,10 +89,6 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     ).setCoder(coder)
   }
 
-  @deprecated(
-    "Reading Parquet using HadoopFormatIO is deprecated and will be removed in future Scio versions. " +
-      "Please set scio.parquet.read.useSplittableDoFn to True in your Parquet config."
-  )
   private def readLegacy(sc: ScioContext, conf: Configuration, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
     val job = Job.getInstance(conf)

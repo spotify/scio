@@ -96,10 +96,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       )
     ).setCoder(coder)
   }
-  @deprecated(
-    "Reading Parquet using HadoopFormatIO is deprecated and will be removed in future Scio versions. " +
-      "Please set scio.parquet.read.useSplittableDoFn to True in your Parquet config."
-  )
+
   private def readLegacy(
     sc: ScioContext,
     conf: Configuration,
