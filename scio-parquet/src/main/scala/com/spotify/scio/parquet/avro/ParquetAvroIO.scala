@@ -172,7 +172,12 @@ object ParquetAvroIO {
 
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
       val jobConf = Option(conf).getOrElse(new Configuration())
-      if (jobConf.getBoolean(ParquetReadConfiguration.UseSplittableDoFn, false)) {
+      if (
+        jobConf.getBoolean(
+          ParquetReadConfiguration.UseSplittableDoFn,
+          ParquetReadConfiguration.UseSplittableDoFnDefault
+        )
+      ) {
         readSplittableDoFn(sc, jobConf, path)(coder)
       } else {
         readLegacy(sc, jobConf, path)(coder)
