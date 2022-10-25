@@ -18,6 +18,12 @@
 
 package org.apache.beam.examples.complete.game;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.beam.examples.complete.game.LeaderBoard.CalculateTeamScores;
 import org.apache.beam.examples.complete.game.LeaderBoard.CalculateUserScores;
 import org.apache.beam.examples.complete.game.UserScore.GameActionInfo;
@@ -39,13 +45,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
 
 /** Tests for {@link LeaderBoard}. */
 @RunWith(JUnit4.class)

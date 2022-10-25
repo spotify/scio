@@ -17,7 +17,6 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import java.util.Optional;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.AvroGeneratedUser;

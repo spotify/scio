@@ -16,17 +16,16 @@
 
 package com.spotify.scio.grpc;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
 import io.grpc.Channel;
 import io.grpc.stub.AbstractStub;
-import org.apache.beam.sdk.transforms.SerializableBiFunction;
-import org.apache.beam.sdk.transforms.SerializableFunction;
-
 import java.io.Serializable;
 import java.util.function.Supplier;
-
-import static java.util.Objects.requireNonNull;
+import org.apache.beam.sdk.transforms.SerializableBiFunction;
+import org.apache.beam.sdk.transforms.SerializableFunction;
 
 /**
  * DoFn that makes API calls over a managed GRPC channel.

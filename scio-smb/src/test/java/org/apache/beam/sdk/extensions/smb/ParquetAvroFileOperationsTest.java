@@ -17,8 +17,15 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
+import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.avro.Schema;
-import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.io.AvroGeneratedUser;
@@ -36,15 +43,6 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
-import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
 /** Unit tests for {@link ParquetAvroFileOperations}. */
 public class ParquetAvroFileOperationsTest {
