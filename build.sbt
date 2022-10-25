@@ -211,7 +211,7 @@ val commonSettings = Def
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.10",
     crossScalaVersions := Seq("2.12.17", scalaVersion.value),
     // this setting is not derived in sbt-tpolecat
     // https://github.com/typelevel/sbt-tpolecat/issues/36
