@@ -54,15 +54,16 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    if (params.conf.getBoolean(ParquetReadConfiguration.UseSplittableDoFn, false)) {
-      readSplittableDoFn(sc, params)
+    val conf = Option(params.conf).getOrElse(new Configuration())
+
+    if (conf.getBoolean(ParquetReadConfiguration.UseSplittableDoFn, false)) {
+      readSplittableDoFn(sc, conf, params)
     } else {
-      readLegacy(sc, params)
+      readLegacy(sc, conf, params)
     }
   }
 
-  private def readSplittableDoFn(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val conf = Option(params.conf).getOrElse(new Configuration())
+  private def readSplittableDoFn(sc: ScioContext, conf: Configuration, params: ReadP): SCollection[T] = {
     if (params.predicate != null) {
       ParquetInputFormat.setFilterPredicate(conf, params.predicate)
     }
@@ -81,9 +82,9 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
   @deprecated("Reading Parquet using HadoopFormatIO is deprecated and will be removed in future Scio versions. " +
     "Please set scio.parquet.read.useSplittableDoFn to True in your Parquet config.")
-  private def readLegacy(sc: ScioContext, params: ReadP): SCollection[T] = {
+  private def readLegacy(sc: ScioContext, conf: Configuration, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
-    val job = Job.getInstance(params.conf)
+    val job = Job.getInstance(conf)
     GcsConnectorUtil.setInputPaths(sc, job, path)
     tpe.setupInput(job)
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
