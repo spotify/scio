@@ -17,19 +17,28 @@
 
 package com.spotify.scio.parquet.tensorflow
 
+import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
-import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
+import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
-import me.lyh.parquet.tensorflow.{ExampleParquetInputFormat, ExampleParquetReader, Schema}
+import me.lyh.parquet.tensorflow.{
+  ExampleParquetInputFormat,
+  ExampleParquetReader,
+  ExampleReadSupport,
+  Schema
+}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
+import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.hadoop.conf.Configuration
@@ -48,6 +57,18 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
     val conf = Option(params.conf).getOrElse(new Configuration())
+    if (conf.getBoolean(ParquetReadConfiguration.UseSplittableDoFn, false)) {
+      readSplittableDoFn(sc, conf, params)
+    } else {
+      readLegacy(sc, conf, params)
+    }
+  }
+
+  private def readSplittableDoFn(
+    sc: ScioContext,
+    conf: Configuration,
+    params: ReadP
+  ): SCollection[Example] = {
     val job = Job.getInstance(conf)
 
     Option(params.projection).foreach { projection =>
@@ -69,6 +90,38 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         identity[Example]
       )
     ).setCoder(coder)
+  }
+  @deprecated(
+    "Reading Parquet using HadoopFormatIO is deprecated and will be removed in future Scio versions. " +
+      "Please set scio.parquet.read.useSplittableDoFn to True in your Parquet config."
+  )
+  private def readLegacy(
+    sc: ScioContext,
+    conf: Configuration,
+    params: ReadP
+  ): SCollection[Example] = {
+    val job = Job.getInstance(conf)
+    GcsConnectorUtil.setInputPaths(sc, job, path)
+    job.setInputFormatClass(classOf[ExampleParquetInputFormat])
+    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
+    job.getConfiguration.setClass("value.class", classOf[Example], classOf[Example])
+
+    ParquetInputFormat.setReadSupportClass(job, classOf[ExampleReadSupport])
+    if (params.projection != null) {
+      ExampleParquetInputFormat.setFields(job, params.projection.asJava)
+    }
+    if (params.predicate != null) {
+      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
+    }
+
+    val source = HadoopFormatIO
+      .read[JBoolean, Example]()
+      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
+      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+        override def apply(input: Void): JBoolean = true
+      })
+      .withConfiguration(job.getConfiguration)
+    sc.applyTransform(source).map(_.getValue)
   }
 
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[Example] = {

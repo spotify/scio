@@ -26,8 +26,11 @@ object ParquetReadConfiguration {
   val SplitGranularityRowGroup = "rowgroup"
 
   // HadoopFormatIO
-  @deprecated("scio.parquet.read.skipClone is deprecated and will be removed once HadoopFormatIO support is dropped " +
-    "in Parquet reads.", since = "0.12.0")
+  @deprecated(
+    "scio.parquet.read.skipClone is deprecated and will be removed once HadoopFormatIO support is dropped " +
+      "in Parquet reads.",
+    since = "0.12.0"
+  )
   val SkipClone = "scio.parquet.read.skipClone"
 
   // SplittableDoFn
