@@ -35,5 +35,5 @@ object ParquetReadConfiguration {
 
   // SplittableDoFn
   val UseSplittableDoFn = "scio.parquet.read.useSplittableDoFn"
-  private[scio] val UseSplittableDoFnDefault = false
+  private[scio] val UseSplittableDoFnDefault = true
 }
