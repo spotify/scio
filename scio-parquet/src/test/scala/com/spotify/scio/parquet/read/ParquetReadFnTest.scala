@@ -18,9 +18,7 @@ package com.spotify.scio.parquet.read
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.parquet.ParquetConfiguration
-import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.parquet.types._
-import org.apache.hadoop.conf.Configuration
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
