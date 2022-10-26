@@ -38,7 +38,6 @@ import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.hadoop.conf.Configuration
