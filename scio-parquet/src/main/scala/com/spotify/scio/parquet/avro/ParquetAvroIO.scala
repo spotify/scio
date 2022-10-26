@@ -171,15 +171,15 @@ object ParquetAvroIO {
 
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
       val jobConf = Option(conf).getOrElse(new Configuration())
-      if (
-        jobConf.getBoolean(
-          ParquetReadConfiguration.UseSplittableDoFn,
-          ParquetReadConfiguration.UseSplittableDoFnDefault
-        )
-      ) {
-        readSplittableDoFn(sc, jobConf, path)(coder)
+      val useSplittableDoFn = jobConf.getBoolean(
+        ParquetReadConfiguration.UseSplittableDoFn,
+        ParquetReadConfiguration.UseSplittableDoFnDefault
+      )
+
+      if (useSplittableDoFn) {
+        readSplittableDoFn(sc, jobConf, path)
       } else {
-        readLegacy(sc, jobConf, path)(coder)
+        readLegacy(sc, jobConf, path)
       }
     }
 
@@ -204,7 +204,7 @@ object ParquetAvroIO {
         ParquetInputFormat.setFilterPredicate(conf, predicate)
       }
 
-      val tCoder = CoderMaterializer.beam(sc, coder)
+      val bCoder = CoderMaterializer.beam(sc, coder)
       val cleanedProjectionFn = ClosureCleaner.clean(projectionFn)
 
       sc.applyTransform(
@@ -214,7 +214,7 @@ object ParquetAvroIO {
           path,
           Functions.serializableFn(cleanedProjectionFn)
         )
-      ).setCoder(tCoder)
+      ).setCoder(bCoder)
     }
 
     private def readLegacy(sc: ScioContext, conf: Configuration, path: String)(implicit

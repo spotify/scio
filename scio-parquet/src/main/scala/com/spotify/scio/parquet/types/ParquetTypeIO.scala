@@ -55,13 +55,12 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val conf = Option(params.conf).getOrElse(new Configuration())
+    val useSplittableDoFn = conf.getBoolean(
+      ParquetReadConfiguration.UseSplittableDoFn,
+      ParquetReadConfiguration.UseSplittableDoFnDefault
+    )
 
-    if (
-      conf.getBoolean(
-        ParquetReadConfiguration.UseSplittableDoFn,
-        ParquetReadConfiguration.UseSplittableDoFnDefault
-      )
-    ) {
+    if (useSplittableDoFn) {
       readSplittableDoFn(sc, conf, params)
     } else {
       readLegacy(sc, conf, params)
