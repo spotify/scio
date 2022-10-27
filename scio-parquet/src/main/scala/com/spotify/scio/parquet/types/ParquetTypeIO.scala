@@ -23,8 +23,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.fs.ResourceId
@@ -103,9 +102,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     val source = HadoopFormatIO
       .read[JBoolean, T]
       // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-        override def apply(input: Void): JBoolean = true
-      })
+      .withKeyTranslation(Functions.simpleFn[Void, JBoolean](_ => true))
       .withValueTranslation(
         new SimpleFunction[T, T]() {
           override def apply(input: T): T = input
