@@ -30,8 +30,8 @@ import com.spotify.scio.parquet.tensorflow._
 import com.spotify.scio.avro.{Account, AccountStatus}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.parquet.ParquetConfiguration
 import me.lyh.parquet.tensorflow.{Schema => ExampleSchema}
-import org.apache.hadoop.conf.Configuration
 import org.apache.avro.generic.GenericRecord
 import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList}
 
@@ -50,12 +50,10 @@ object ParquetExample {
    *
    * See more here: https://spotify.github.io/scio/io/Parquet.html#performance-tuning
    */
-  private val fineTunedParquetWriterConfig: Configuration = {
-    val conf: Configuration = new Configuration()
-    conf.setInt("parquet.block.size", 1073741824) // 1 * 1024 * 1024 * 1024 = 1 GiB
-    conf.set("fs.gs.inputstream.fadvise", "RANDOM")
-    conf
-  }
+  private val fineTunedParquetWriterConfig = ParquetConfiguration.of(
+    "parquet.block.size" -> 1073741824, // 1 * 1024 * 1024 * 1024 = 1 GiB
+    "fs.gs.inputstream.fadvise" -> "RANDOM"
+  )
 
   private[extra] val fakeData: Iterable[Account] =
     (1 to 100)

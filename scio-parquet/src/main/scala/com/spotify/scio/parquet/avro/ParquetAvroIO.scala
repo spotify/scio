@@ -17,26 +17,36 @@
 
 package com.spotify.scio.parquet.avro
 
+import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
-import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
+import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.transforms.SerializableFunctions
+import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
-import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport, GenericDataSupplier}
+import org.apache.parquet.avro.{
+  AvroParquetInputFormat,
+  AvroParquetReader,
+  AvroReadSupport,
+  GenericDataSupplier
+}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
@@ -52,9 +62,9 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   private val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val coder = CoderMaterializer.beam(sc, Coder[T])
-    sc.pipeline.getCoderRegistry.registerCoderForClass(ScioUtil.classOf[T], coder)
-    params.read(sc, path)
+    val bCoder = CoderMaterializer.beam(sc, Coder[T])
+    sc.pipeline.getCoderRegistry.registerCoderForClass(ScioUtil.classOf[T], bCoder)
+    params.read(sc, path)(Coder[T])
   }
 
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[T] = {
@@ -159,37 +169,99 @@ object ParquetAvroIO {
     val readSchema: Schema =
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
-    def read(sc: ScioContext, path: String): SCollection[T] = {
-      val hadoopConf = Option(conf).getOrElse(new Configuration())
+    def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
+      val jobConf = Option(conf).getOrElse(new Configuration())
+      val useSplittableDoFn = jobConf.getBoolean(
+        ParquetReadConfiguration.UseSplittableDoFn,
+        ParquetReadConfiguration.UseSplittableDoFnDefault
+      )
+
+      if (useSplittableDoFn) {
+        readSplittableDoFn(sc, jobConf, path)
+      } else {
+        readLegacy(sc, jobConf, path)
+      }
+    }
+
+    private def readSplittableDoFn(sc: ScioContext, conf: Configuration, path: String)(implicit
+      coder: Coder[T]
+    ): SCollection[T] = {
       // Needed to make GenericRecord read by parquet-avro work with Beam's
       // org.apache.beam.sdk.coders.AvroCoder.
       if (!isSpecific) {
-        hadoopConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        hadoopConf.set(
+        conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
+        conf.set(
           AvroReadSupport.AVRO_DATA_SUPPLIER,
           classOf[GenericDataSupplier].getCanonicalName
         )
       }
 
-      AvroReadSupport.setAvroReadSchema(hadoopConf, readSchema)
+      AvroReadSupport.setAvroReadSchema(conf, readSchema)
       if (projection != null) {
-        AvroReadSupport.setRequestedProjection(hadoopConf, projection)
+        AvroReadSupport.setRequestedProjection(conf, projection)
       }
       if (predicate != null) {
-        ParquetInputFormat.setFilterPredicate(hadoopConf, predicate)
+        ParquetInputFormat.setFilterPredicate(conf, predicate)
       }
 
-      val tCoder = sc.pipeline.getCoderRegistry.getCoder(ScioUtil.classOf[T])
+      val bCoder = CoderMaterializer.beam(sc, coder)
       val cleanedProjectionFn = ClosureCleaner.clean(projectionFn)
 
       sc.applyTransform(
         ParquetRead.read[A, T](
           ReadSupportFactory.avro,
-          new SerializableConfiguration(hadoopConf),
+          new SerializableConfiguration(conf),
           path,
           Functions.serializableFn(cleanedProjectionFn)
         )
-      ).setCoder(tCoder)
+      ).setCoder(bCoder)
+    }
+
+    private def readLegacy(sc: ScioContext, conf: Configuration, path: String)(implicit
+      coder: Coder[T]
+    ): SCollection[T] = {
+      val job = Job.getInstance(conf)
+      GcsConnectorUtil.setInputPaths(sc, job, path)
+      job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
+      job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
+      job.getConfiguration.setClass("value.class", avroClass, avroClass)
+
+      // Needed to make GenericRecord read by parquet-avro work with Beam's
+      // org.apache.beam.sdk.coders.AvroCoder.
+      if (ScioUtil.classOf[A] == classOf[GenericRecord]) {
+        job.getConfiguration.setBoolean("parquet.avro.compatible", false)
+        job.getConfiguration.set(
+          "parquet.avro.data.supplier",
+          "org.apache.parquet.avro.GenericDataSupplier"
+        )
+      }
+
+      AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
+      if (projection != null) {
+        AvroParquetInputFormat.setRequestedProjection(job, projection)
+      }
+      if (predicate != null) {
+        ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
+      }
+
+      val g = ClosureCleaner.clean(projectionFn) // defeat closure
+      val aCls = avroClass
+      val oCls = ScioUtil.classOf[T]
+      val transform = HadoopFormatIO
+        .read[JBoolean, T]()
+        // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
+        .withKeyTranslation(Functions.simpleFn[Void, JBoolean](_ => true))
+        .withValueTranslation(new SimpleFunction[A, T]() {
+          // Workaround for incomplete Avro objects
+          // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
+          // to serialized them. Lifting the mapping function here fixes the problem.
+          override def apply(input: A): T = g(input)
+          override def getInputTypeDescriptor = TypeDescriptor.of(aCls)
+          override def getOutputTypeDescriptor = TypeDescriptor.of(oCls)
+        })
+        .withConfiguration(job.getConfiguration)
+
+      sc.applyTransform(transform).map(_.getValue)
     }
   }
 
