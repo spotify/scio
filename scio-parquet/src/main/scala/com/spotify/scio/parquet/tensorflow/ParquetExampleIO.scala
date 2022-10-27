@@ -34,7 +34,6 @@ import me.lyh.parquet.tensorflow.{
 }
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
-import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
