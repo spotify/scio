@@ -250,9 +250,7 @@ object ParquetAvroIO {
       val transform = HadoopFormatIO
         .read[JBoolean, T]()
         // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-        .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
-          override def apply(input: Void): JBoolean = true
-        })
+        .withKeyTranslation(Functions.simpleFn[Void, JBoolean](_ => true))
         .withValueTranslation(new SimpleFunction[A, T]() {
           // Workaround for incomplete Avro objects
           // `SCollection#map` might throw NPE on incomplete Avro objects when the runner tries
