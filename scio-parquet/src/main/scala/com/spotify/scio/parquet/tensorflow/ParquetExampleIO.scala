@@ -24,7 +24,8 @@ import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
+import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.{
   ExampleParquetInputFormat,
@@ -38,6 +39,7 @@ import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
+import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -116,7 +118,9 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     val source = HadoopFormatIO
       .read[JBoolean, Example]()
       // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
-      .withKeyTranslation(Functions.simpleFn[Void, JBoolean](_ => true))
+      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+        override def apply(input: Void): JBoolean = true
+      })
       .withConfiguration(job.getConfiguration)
     sc.applyTransform(source).map(_.getValue)
   }
