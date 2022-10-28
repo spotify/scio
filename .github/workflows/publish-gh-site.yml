@@ -1,0 +1,34 @@
+name: publish-gh-site
+
+on:
+  workflow_dispatch # Manually triggered
+jobs:
+  publish-docs:
+    name: Publish documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v3
+      - uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      - name: Cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java 11 setup
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: set JVM opts
+        run: scripts/gha_setup.sh
+      - name: Build documentation
+        run: sbt scio-examples/compile site/makeSite
+        env:
+          SOCCO: true
+          _JAVA_OPTIONS: "-Xmx1500m"
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: site/target/site
