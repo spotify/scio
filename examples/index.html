@@ -1,7 +1,14 @@
 <!DOCTYPE html>
 <html>
-  <title>Scio Examples</title>
-  <xmp theme="spacelab" style="display:none;">
+  <head>
+    <title>Scio Examples</title>
+    <link rel="shortcut icon" href="../images/favicon.ico">
+    <style>
+      body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+    </style>
+  </head>
+  <body>
+    <textarea hidden id="sourceTA">
     
 
 ### /
@@ -57,6 +64,7 @@
 - [MagnolifyDatastoreExample.scala](MagnolifyDatastoreExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExample.scala), [test](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala)) - Handling Datastore Entity Types with Magnolify
 - [MagnolifyTensorFlowExample.scala](MagnolifyTensorFlowExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/MagnolifyTensorFlowExample.scala), [test](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyTensorFlowExampleTest.scala)) - Handling TensorFlow Example Types with Magnolify
 - [MetricsExample.scala](MetricsExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/MetricsExample.scala), [test](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MetricsExampleTest.scala)) - Metrics Example
+- [Neo4JExample.scala](Neo4JExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/Neo4JExample.scala)) - Neo4J Input and Output (requires a running Neo4J instance with data)
 - [ParquetExample.scala](ParquetExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/ParquetExample.scala), [test](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ParquetExampleTest.scala)) - Read and write Parquet in Avro and Typed formats
 - [ProtobufExample.scala](ProtobufExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/ProtobufExample.scala), [test](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/ProtobufExampleTest.scala)) - Protocol Buffer Input and Output
 - [RefreshingSideInputExample.scala](RefreshingSideInputExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/RefreshingSideInputExample.scala)) - Demonstrates a streaming job with periodically refreshing side input
@@ -75,7 +83,16 @@
 - [WordCountOrchestration.scala](WordCountOrchestration.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/WordCountOrchestration.scala)) - Use Futures and Taps to orchestrate multiple jobs with dependencies
 - [WordCountScioIO.scala](WordCountScioIO.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/WordCountScioIO.scala), [test](https://github.com/spotify/scio/blob/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/WordCountScioIOTest.scala)) - Word Count Example with Metrics and ScioIO read/write
 - [WriteDynamicExample.scala](WriteDynamicExample.scala.html) ([source](https://github.com/spotify/scio/blob/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/WriteDynamicExample.scala)) - Demonstrates saveAsDynamic* methods
-  </xmp>
-  <script src="https://strapdownjs.com/v/0.2/strapdown.js"></script>
+    </textarea>
+    <div id="targetDiv" />
+    <script src="https://unpkg.com/showdown/dist/showdown.min.js"></script>
+    <script>
+      const text = document.getElementById('sourceTA').value;
+      const target = document.getElementById('targetDiv');
+      const converter = new showdown.Converter();
+      const html = converter.makeHtml(text);
+      target.innerHTML = html;
+    </script>
+  <body>
 </html>
     

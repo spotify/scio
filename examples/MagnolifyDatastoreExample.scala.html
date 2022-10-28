@@ -313,7 +313,7 @@ convert between case classes and Datastore <code>Entity</code> types.</p></p></d
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.MagnolifyDatastoreWriteExample
---project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+--project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=[PROJECT]&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MagnolifyDatastoreWriteExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MagnolifyDatastoreWriteExample</span>">MagnolifyDatastoreWriteExample</a></span> {
@@ -360,7 +360,7 @@ convert between case classes and Datastore <code>Entity</code> types.</p></p></d
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.MagnolifyDatastoreReadExample
---project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+--project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 --input=[PROJECT]
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MagnolifyDatastoreReadExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MagnolifyDatastoreReadExample</span>">MagnolifyDatastoreReadExample</a></span> {

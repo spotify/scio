@@ -147,6 +147,7 @@ spotify/scio
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="Scio-REPL.html" class="page">REPL</a></li>
@@ -169,6 +170,7 @@ spotify/scio
     <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
+    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -203,7 +205,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.12+0-a6993104+20221024-1705*
+<i class="md-icon" title="Version">label_outline</i> 0.12.0+0-ee45260c+20221028-1542*
 </label>
 </li>
 </ul>
@@ -251,6 +253,11 @@ spotify/scio
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td align="center">0.12.x </td>
+      <td align="center">Apache Beam 2.x.x </td>
+      <td align="left">com.spotify.scio.extra.bigquery, com.spotify.scio.pubsub removed. scio-elasticsearch6 deprecated. </td>
+    </tr>
     <tr>
       <td align="center">0.11.x </td>
       <td align="center">Apache Beam 2.x.x </td>
@@ -318,7 +325,17 @@ spotify/scio
   </thead>
   <tbody>
     <tr>
-      <td align="center">0.11.6+ </td>
+      <td align="center">0.12.0 </td>
+      <td align="center">2.40.0 </td>
+      <td align="left">This version will be deprecated on June 27, 2023. </td>
+    </tr>
+    <tr>
+      <td align="center">0.11.9 </td>
+      <td align="center">2.39.0 </td>
+      <td align="left">This version will be deprecated on May 25, 2023. </td>
+    </tr>
+    <tr>
+      <td align="center">0.11.6 </td>
       <td align="center">2.38.0 </td>
       <td align="left">This version will be deprecated on April 20, 2023. </td>
     </tr>
@@ -489,7 +506,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.12+0-a6993104+20221024-1705*
+0.12.0+0-ee45260c+20221028-1542*
 </span>
 </div>
 </article>

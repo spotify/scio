@@ -307,7 +307,7 @@ classes and Avro <code>GenericRecord</code>s.</p></p></div>
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.MagnolifyAvroWriteExample
---project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+--project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 --output=gs://[BUCKET]/[PATH]/wordcount-avro&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MagnolifyAvroWriteExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MagnolifyAvroWriteExample</span>">MagnolifyAvroWriteExample</a></span> {
@@ -342,7 +342,7 @@ classes and Avro <code>GenericRecord</code>s.</p></p></div>
             
               <section class="">
                 <div class="comment "><p><code>sbt &quot;runMain com.spotify.scio.examples.extra.MagnolifyAvroReadExample
---project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+--project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 --input=gs://[BUCKET]/[PATH]/wordcount-avro
 --output=gs://[BUCKET]/[PATH]/wordcount&quot;</code></p></p></div>
                 <div class="code "><span class="keyword">object</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/extra/MagnolifyAvroReadExample$.html" data-tooltip="<span>com.spotify.scio.examples.extra.MagnolifyAvroReadExample</span>">MagnolifyAvroReadExample</a></span> {
