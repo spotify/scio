@@ -1,5 +1,8 @@
 name: publish-gh-site
 
+env:
+  GOOGLE_PROJECT_ID: data-integration-test
+
 on:
   workflow_dispatch # Manually triggered
 jobs:
