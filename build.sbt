@@ -1149,6 +1149,7 @@ lazy val `scio-jmh`: Project = project
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
       "org.slf4j" % "slf4j-nop" % slf4jVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-bigquery" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
     ),
@@ -1157,7 +1158,8 @@ lazy val `scio-jmh`: Project = project
   )
   .dependsOn(
     `scio-core`,
-    `scio-avro`
+    `scio-avro`,
+    `scio-google-cloud-platform`
   )
   .enablePlugins(JmhPlugin)
 
