@@ -6,9 +6,10 @@ import scala.meta._
 
 class LintBqSaveAsTable extends SemanticRule("LintBqSaveAsTable") {
   private val scoll = "com/spotify/scio/values/SCollection#"
+  private val methodName =
+    "com.spotify.scio.extra.bigquery.syntax.AvroToBigQuerySCollectionOps.saveAvroAsBigQuery"
 
-  case class BigQuerySaveBreakingSignature(fun: scala.meta.Term.Name) extends
-    Diagnostic {
+  case class BigQuerySaveBreakingSignature(fun: scala.meta.Term.Name) extends Diagnostic {
     override def position: Position = fun.pos
     override def message: String =
       s"`com.spotify.scio.bigquery.syntax.SCollectionBeamSchemaOps#saveAsBigQueryTable` should " +
@@ -18,22 +19,29 @@ class LintBqSaveAsTable extends SemanticRule("LintBqSaveAsTable") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect { case Term.Apply(fun, _ :: tail) =>
-      fun match {
-        case Term.Select(qual, name) =>
-          name match {
-            case t@Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
-              // order of the parameters have changed in tail, so only named parameters can be
-              // reused in the new method
-              if (tail.exists(!_.toString.contains("=")) ||
-                // avroSchema param is dropped in the new method
-                tail.exists(_.toString.contains("avroSchema"))) {
-                Patch.lint(BigQuerySaveBreakingSignature(t))
-              } else {
-                Patch.empty // `FixBqSaveAsTable` captures this
-              }
-            case _ =>
-              Patch.empty
-          }
+      if (fun.symbol.normalized.toString.contains(methodName)) {
+        fun match {
+          case Term.Select(qual, name) =>
+            name match {
+              case t @ Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
+                // order of the parameters have changed in tail, so only named parameters can be
+                // reused in the new method11
+                if (
+                  tail.exists(!_.toString.contains("=")) ||
+                  // avroSchema param is dropped in the new method
+                  tail.exists(_.toString.contains("avroSchema"))
+                ) {
+                  Patch.lint(BigQuerySaveBreakingSignature(t))
+                } else {
+                  Patch.empty // `FixBqSaveAsTable` captures this
+                }
+              case _ =>
+                Patch.empty
+            }
+          case _ => Patch.empty
+        }
+      } else {
+        Patch.empty
       }
     }.asPatch
   }
