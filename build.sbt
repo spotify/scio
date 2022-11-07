@@ -1147,7 +1147,10 @@ lazy val `scio-jmh`: Project = project
       "junit" % "junit" % junitVersion % "test",
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion % "test",
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion % "test",
-      "org.slf4j" % "slf4j-nop" % slf4jVersion
+      "org.slf4j" % "slf4j-nop" % slf4jVersion,
+      "com.spotify" %% "magnolify-avro" % magnolifyVersion % "test",
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test"
     ),
     publish / skip := true,
     mimaPreviousArtifacts := Set.empty

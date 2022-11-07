@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Spotify AB.
+ * Copyright 2022 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,11 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
 
-object MacroBenchmark {
+@BenchmarkMode(Array(Mode.AverageTime))
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@State(Scope.Thread)
+class MagnolifyMacroBench {
+  import magnolify.avro._
 
   case class Simple(b: Boolean, i: Int, s: String)
   case class Repeated(b: List[Boolean], i: List[Int], s: List[String])
@@ -41,34 +45,47 @@ object MacroBenchmark {
   val seed: rng.Seed = rng.Seed(0)
   val prms: Gen.Parameters = Gen.Parameters.default
   val nested: Nested = implicitly[Arbitrary[Nested]].arbitrary(prms, seed).get
-}
-
-@BenchmarkMode(Array(Mode.AverageTime))
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
-@State(Scope.Thread)
-class MagnolifyMacroBench {
-  import MacroBenchmark._
-  import magnolify.avro._
 
   val avroType = AvroType[Nested]
   val genericRecord = avroType.to(nested)
 
   @Benchmark def avroTo: GenericRecord = avroType.to(nested)
   @Benchmark def avroFrom: Nested = avroType.from(genericRecord)
-  @Benchmark def avroSchema: Schema = AvroType[Nested].schema
+  @Benchmark def avroSchema: Schema = avroType.schema
+}
+
+
+object ScioMacroBench {
+  import com.spotify.scio.avro.types._
+
+  case class Simple(b: Boolean, i: Int, s: String)
+  case class Repeated(b: List[Boolean], i: List[Int], s: List[String])
+  @AvroType.toSchema
+  case class Nested(
+                     b: Boolean,
+                     i: Int,
+                     s: String,
+                     r: Simple,
+                     o: Option[Simple],
+                     l: List[Simple]
+                   )
 }
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Thread)
 class ScioMacroBench {
-  import MacroBenchmark._
-  import com.spotify.scio.avro.types._
+  import ScioMacroBench._
+  import com.spotify.scio.avro.types.AvroType
+
+  val seed: rng.Seed = rng.Seed(0)
+  val prms: Gen.Parameters = Gen.Parameters.default
+  val nested: Nested = implicitly[Arbitrary[Nested]].arbitrary(prms, seed).get
 
   val avroType = AvroType[Nested]
   val genericRecord = avroType.toGenericRecord(nested)
 
   @Benchmark def avroTo: GenericRecord = avroType.toGenericRecord(nested)
   @Benchmark def avroFrom: Nested = avroType.fromGenericRecord(genericRecord)
-  @Benchmark def avroSchema: Schema = AvroType[Nested].schema
+  @Benchmark def avroSchema: Schema = avroType.schema
 }
