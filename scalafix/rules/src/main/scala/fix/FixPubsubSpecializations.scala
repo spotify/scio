@@ -223,16 +223,4 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
         None
     }
   }
-
-  private def ttt(qual: Symbol)(implicit doc: SemanticDocument): Option[Symbol] =
-    qual.info.get.signature match {
-      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
-        Some(typ)
-      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
-        Some(typ)
-      case ValueSignature(TypeRef(_, typ, _)) =>
-        Some(typ)
-      case t =>
-        None
-    }
 }
