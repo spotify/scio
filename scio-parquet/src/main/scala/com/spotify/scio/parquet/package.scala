@@ -16,6 +16,7 @@
 
 package com.spotify.scio
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.io.{OutputFile, PositionOutputStream}
 
 import java.io.OutputStream
@@ -47,5 +48,23 @@ package object parquet {
     override def createOrOverwrite(blockSizeHint: Long) = new ParquetOutputStream(
       Channels.newOutputStream(channel)
     )
+  }
+
+  object ParquetConfiguration {
+    def of(entries: (String, Any)*): Configuration = {
+      val conf = new Configuration()
+      entries.foreach { case (k, v) =>
+        v match {
+          case b: Boolean => conf.setBoolean(k, b)
+          case f: Float   => conf.setFloat(k, f)
+          case d: Double  => conf.setDouble(k, d)
+          case i: Int     => conf.setInt(k, i)
+          case l: Long    => conf.setLong(k, l)
+          case s: String  => conf.set(k, s)
+          case _          => conf.set(k, v.toString)
+        }
+      }
+      conf
+    }
   }
 }
