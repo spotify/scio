@@ -18,6 +18,10 @@
 
 package org.apache.beam.examples;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.util.Arrays;
+import java.util.List;
 import org.apache.beam.examples.WordCount.CountWords;
 import org.apache.beam.examples.WordCount.ExtractWordsFn;
 import org.apache.beam.examples.WordCount.FormatAsTextFn;
@@ -36,11 +40,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests of WordCount. */
 @SuppressWarnings("unchecked")

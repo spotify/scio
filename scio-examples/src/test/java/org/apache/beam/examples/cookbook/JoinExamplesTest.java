@@ -18,7 +18,11 @@
 
 package org.apache.beam.examples.cookbook;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.google.api.services.bigquery.model.TableRow;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.beam.examples.cookbook.JoinExamples.ExtractCountryInfoFn;
 import org.apache.beam.examples.cookbook.JoinExamples.ExtractEventDataFn;
 import org.apache.beam.sdk.testing.PAssert;
@@ -34,11 +38,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link JoinExamples}. */
 @RunWith(JUnit4.class)

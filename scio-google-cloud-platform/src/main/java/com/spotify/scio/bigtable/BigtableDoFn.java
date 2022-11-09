@@ -22,9 +22,8 @@ import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
 import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
-import org.apache.beam.sdk.transforms.DoFn;
-
 import java.io.IOException;
+import org.apache.beam.sdk.transforms.DoFn;
 
 /**
  * A {@link DoFn} that performs asynchronous lookup using Google Cloud Bigtable.

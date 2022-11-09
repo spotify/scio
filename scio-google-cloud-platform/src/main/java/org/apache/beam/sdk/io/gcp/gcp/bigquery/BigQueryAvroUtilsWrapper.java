@@ -20,17 +20,14 @@ package org.apache.beam.sdk.io.gcp.bigquery;
 import com.google.api.services.bigquery.model.TableFieldSchema;
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.api.services.bigquery.model.TableSchema;
-
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableCollection;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A set of utilities for working with Avro files.

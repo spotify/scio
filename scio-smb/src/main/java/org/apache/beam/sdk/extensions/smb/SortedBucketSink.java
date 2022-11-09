@@ -277,7 +277,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @ProcessElement
-    public void processElement(@Element V record, OutputReceiver<KV<BucketShardId, KV<byte[], byte[]>>> out) {
+    public void processElement(
+        @Element V record, OutputReceiver<KV<BucketShardId, KV<byte[], byte[]>>> out) {
       final KV<BucketShardId, byte[]> bucketAndSortKey =
           processKey(extractKeyFn.apply(record), bucketMetadata, shardId);
 
@@ -337,7 +338,8 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @ProcessElement
-    public void processElement(@Element V record, OutputReceiver<KV<BucketShardId, KV<byte[], byte[]>>> out) {
+    public void processElement(
+        @Element V record, OutputReceiver<KV<BucketShardId, KV<byte[], byte[]>>> out) {
       final K key = extractKeyFn.apply(record);
 
       KV<BucketShardId, byte[]> bucketIdAndSortBytes;
@@ -395,8 +397,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
     }
 
     @ProcessElement
-    public void processElement(@Element KV<K, Iterable<KV<byte[], byte[]>>> record,
-                               OutputReceiver<KV<K, Iterable<KV<byte[], byte[]>>>> out) {
+    public void processElement(
+        @Element KV<K, Iterable<KV<byte[], byte[]>>> record,
+        OutputReceiver<KV<K, Iterable<KV<byte[], byte[]>>>> out) {
       final BufferedExternalSorter sorter = BufferedExternalSorter.create(sorterOptions);
 
       try {
@@ -529,9 +532,9 @@ public class SortedBucketSink<K, V> extends PTransform<PCollection<V>, WriteResu
 
     @ProcessElement
     public void processElement(
-            @Element KV<BucketShardId, Iterable<KV<byte[], byte[]>>> element,
-            OutputReceiver<KV<BucketShardId, ResourceId>> out
-    ) throws IOException {
+        @Element KV<BucketShardId, Iterable<KV<byte[], byte[]>>> element,
+        OutputReceiver<KV<BucketShardId, ResourceId>> out)
+        throws IOException {
       final BucketShardId bucketShardId = element.getKey();
       final Iterable<KV<byte[], byte[]>> records = element.getValue();
       final ResourceId tmpFile = fileAssignment.forBucket(bucketShardId, bucketMetadata);

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;

@@ -22,7 +22,6 @@ import com.google.protobuf.ByteString;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
@@ -231,8 +230,9 @@ public class MixedSourcesEndToEndTest {
     }
 
     @ProcessElement
-    public void processElement(@Element KV<String, CoGbkResult> kv,
-                               OutputReceiver<KV<String, KV<Iterable<GenericRecord>, Iterable<TableRow>>>> out) {
+    public void processElement(
+        @Element KV<String, CoGbkResult> kv,
+        OutputReceiver<KV<String, KV<Iterable<GenericRecord>, Iterable<TableRow>>>> out) {
       final CoGbkResult result = kv.getValue();
       out.output(KV.of(kv.getKey(), KV.of(result.getAll(lhsTag), result.getAll(rhsTag))));
     }

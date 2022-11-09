@@ -17,9 +17,8 @@
 
 package com.spotify.scio.transforms;
 
-import org.apache.beam.sdk.transforms.DoFn;
-
 import java.util.concurrent.CompletableFuture;
+import org.apache.beam.sdk.transforms.DoFn;
 
 /**
  * A {@link DoFn} that handles asynchronous requests to an external service that returns Java 8
