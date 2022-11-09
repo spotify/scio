@@ -18,12 +18,11 @@
 package com.spotify.scio.transforms;
 
 import com.google.common.util.concurrent.*;
-
-import javax.annotation.Nullable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 /** Utility to abstract away Guava, Java 8 and Scala future handling. */
 public class FutureHandlers {

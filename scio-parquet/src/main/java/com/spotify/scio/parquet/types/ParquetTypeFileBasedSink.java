@@ -19,6 +19,7 @@ package com.spotify.scio.parquet.types;
 
 import com.spotify.scio.parquet.BeamOutputFile;
 import com.spotify.scio.parquet.WriterUtils;
+import java.nio.channels.WritableByteChannel;
 import magnolify.parquet.ParquetType;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -28,8 +29,6 @@ import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-
-import java.nio.channels.WritableByteChannel;
 
 public class ParquetTypeFileBasedSink<T> extends FileBasedSink<T, Void, T> {
 

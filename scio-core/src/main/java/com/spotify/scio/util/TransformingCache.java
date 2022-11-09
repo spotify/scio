@@ -17,18 +17,17 @@
 package com.spotify.scio.util;
 
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheStats;
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheStats;
 import com.google.common.collect.ForwardingObject;
 import com.google.common.collect.ImmutableMap;
-
-import javax.annotation.CheckForNull;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.annotation.CheckForNull;
 
 /**
  * Similar to {@link com.google.common.cache.ForwardingCache} but with key transformation using the
