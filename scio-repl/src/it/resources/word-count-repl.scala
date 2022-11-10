@@ -16,12 +16,7 @@
  */
 
 val readme = sc.textFile("README.md")
-val wc = readme
-  .flatMap(_.split("[^a-zA-Z]+"))
-  .filter(_.nonEmpty)
-  .map(_.toLowerCase)
-  .countByValue
-  .materialize
+val wc = readme.flatMap(_.split("[^a-zA-Z]+")).filter(_.nonEmpty).map(_.toLowerCase).countByValue.materialize
 val scioResult = sc.run().waitUntilDone()
 val w = scioResult.tap(wc).value.maxBy(_._2)._1
 println(s"SUCCESS: [$w]")

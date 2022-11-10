@@ -7,7 +7,8 @@ import scala.meta._
 class LintBqSaveAsTable extends SemanticRule("LintBqSaveAsTable") {
   private val scoll = "com/spotify/scio/values/SCollection#"
 
-  case class BigQuerySaveBreakingSignature(fun: scala.meta.Term.Name) extends Diagnostic {
+  case class BigQuerySaveBreakingSignature(fun: scala.meta.Term.Name) extends
+    Diagnostic {
     override def position: Position = fun.pos
     override def message: String =
       s"`com.spotify.scio.bigquery.syntax.SCollectionBeamSchemaOps#saveAsBigQueryTable` should " +
@@ -20,14 +21,12 @@ class LintBqSaveAsTable extends SemanticRule("LintBqSaveAsTable") {
       fun match {
         case Term.Select(qual, name) =>
           name match {
-            case t @ Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
+            case t@Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
               // order of the parameters have changed in tail, so only named parameters can be
               // reused in the new method
-              if (
-                tail.exists(!_.toString.contains("=")) ||
+              if (tail.exists(!_.toString.contains("=")) ||
                 // avroSchema param is dropped in the new method
-                tail.exists(_.toString.contains("avroSchema"))
-              ) {
+                tail.exists(_.toString.contains("avroSchema"))) {
                 Patch.lint(BigQuerySaveBreakingSignature(t))
               } else {
                 Patch.empty // `FixBqSaveAsTable` captures this
