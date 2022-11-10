@@ -19,6 +19,7 @@
 package org.apache.beam.examples.complete.game.injector;
 
 import static java.util.Objects.requireNonNull;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
@@ -27,7 +28,6 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.client.util.Sleeper;
-
 import java.util.logging.Logger;
 
 /**

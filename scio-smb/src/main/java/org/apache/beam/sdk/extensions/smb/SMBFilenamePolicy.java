@@ -18,7 +18,6 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.UUID;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;

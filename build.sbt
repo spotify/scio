@@ -87,7 +87,7 @@ val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.0"
 val caffeineVersion = "2.9.3"
-val cassandraDriverVersion = "3.11.2"
+val cassandraDriverVersion = "3.11.3"
 val cassandraVersion = "3.11.13"
 val catsVersion = "2.7.0"
 val chillVersion = "0.10.0"
@@ -95,14 +95,14 @@ val circeVersion = "0.14.2"
 val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
-val commonsTextVersion = "1.9"
+val commonsTextVersion = "1.10.0"
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.6"
-val elasticsearch8Version = "8.4.3"
+val elasticsearch8Version = "8.5.0"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
-val jodaTimeVersion = "2.11.1"
+val jodaTimeVersion = "2.11.2"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
@@ -114,11 +114,11 @@ val metricsVersion = "3.2.6"
 val neo4jDriverVersion = "4.4.9"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
-val pprintVersion = "0.7.3"
+val pprintVersion = "0.8.0"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
 val scalaCollectionCompatVersion = "2.8.1"
-val scalacticVersion = "3.2.13"
+val scalacticVersion = "3.2.14"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.13"
 val scalaXmlVersion = "1.3.0"
@@ -126,7 +126,7 @@ val shapelessVersion = "2.3.10"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.4"
 val tensorFlowVersion = "0.4.1"
-val testContainersVersion = "0.40.10"
+val testContainersVersion = "0.40.11"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -1029,13 +1029,13 @@ lazy val `scio-examples`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.7.0",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.7.2",
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
-      "mysql" % "mysql-connector-java" % "8.0.30",
+      "mysql" % "mysql-connector-java" % "8.0.31",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.slf4j" % "slf4j-simple" % slf4jVersion,

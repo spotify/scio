@@ -17,12 +17,11 @@
 
 package com.spotify.scio.parquet;
 
+import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.hadoop.ParquetOutputFormat;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-
-import java.io.IOException;
 
 public class WriterUtils {
   public static <T, SELF extends ParquetWriter.Builder<T, SELF>> ParquetWriter<T> build(
