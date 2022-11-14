@@ -223,6 +223,16 @@ val commonSettings = Def
     resolvers ++= Resolver.sonatypeOssRepos("public"),
     Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
     Test / testOptions += Tests.Argument("-oD"),
+    Test / javaOptions ++= sys.props("java.version") match {
+      case v if v.startsWith("17.") =>
+        Seq(
+          "--add-opens",
+          "java.base/java.util=ALL-UNNAMED",
+          "--add-opens",
+          "java.base/java.lang.invoke=ALL-UNNAMED"
+        )
+      case _ => Seq.empty
+    },
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
