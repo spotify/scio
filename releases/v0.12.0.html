@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="../images/favicon.ico">
+<title>v0.12.0 Release Blog · Scio</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+v0.12.0 Release Blog
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+<a href="../index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
+    <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
+  </ul></li>
+  <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
+  <li><a href="../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
+  </ul></li>
+  <li><a href="../migrations/index.html" class="page">Migration Guides</a>
+  <ul>
+    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
+    <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
+    <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
+    <li><a href="../migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
+    <li><a href="../migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
+  </ul></li>
+  <li><a href="../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../dev/build.html" class="page">Build</a></li>
+    <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
+  <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../Runners.html" class="page">Runners</a></li>
+  <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+  <li><a href="../releases/index.html" class="page">Releases</a>
+  <ul>
+    <li><a href="../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
+    <li><a href="../releases/v0.12.0.html" class="active page">v0.12.0 Release Blog</a></li>
+  </ul></li>
+  <li><a href="../FAQ.html" class="page">FAQ</a></li>
+  <li><a href="../Powered-By.html" class="page">Powered By</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../releases/v0.12.0.html#v0-12-0-release-blog" class="header">v0.12.0 Release Blog</a>
+  <ul>
+    <li><a href="../releases/v0.12.0.html#new-features" class="header">New Features</a></li>
+    <li><a href="../releases/v0.12.0.html#bug-fixes-performance-improvements" class="header">Bug fixes/Performance improvements</a></li>
+    <li><a href="../releases/v0.12.0.html#breaking-changes" class="header">Breaking changes</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f3d81ed8+20221114-1828*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../releases/v0.12.0.html#v0-12-0-release-blog" class="header">v0.12.0 Release Blog</a>
+  <ul>
+    <li><a href="../releases/v0.12.0.html#new-features" class="header">New Features</a></li>
+    <li><a href="../releases/v0.12.0.html#bug-fixes-performance-improvements" class="header">Bug fixes/Performance improvements</a></li>
+    <li><a href="../releases/v0.12.0.html#breaking-changes" class="header">Breaking changes</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#v0-12-0-release-blog" name="v0-12-0-release-blog" class="anchor"><span class="anchor-link"></span></a>v0.12.0 Release Blog</h1>
+<p>Scio 0.12.0 contains many new features, performance improvements, and a few breaking changes. You can find the technical Migration Guide <a href="../migrations/v0.12.0-Migration-Guide.html">here</a> with code samples and Scalafix instructions, and the full release notes are <a href="https://github.com/spotify/scio/releases/tag/v0.12.0">here</a>.</p>
+<h2><a href="#new-features" name="new-features" class="anchor"><span class="anchor-link"></span></a>New Features</h2>
+<h3><a href="#windowing-api-for-file-writes" name="windowing-api-for-file-writes" class="anchor"><span class="anchor-link"></span></a>Windowing API for file writes</h3>
+<p>We&rsquo;ve improved Scio API support for windowed file writes. Most file IOs now have three new, optional parameters: <code>shardNameTemplate</code>, <code>filenamePolicySupplier</code>, and <code>tempDirectory</code>. Windowed writes can be applied with either a <code>shardNameTemplate</code> or a <code>filenamePolicySupplier</code>. <code>shardNameTemplate</code> allows users to specify a shorthand for their desired output file format, for example:</p>
+<pre class="prettyprint"><code class="language-scala">// SSS and NNN refer to current shard ID and total number of shards, respectively 
+data.saveAsAvroFile(&quot;/some-path&quot;, numShards = 2, shardNameTemplate = &quot;-SSS-of-NNN&quot;)
+</code></pre>
+<p>Files with this shard template would be written to disk like:</p>
+<pre class="prettyprint"><code class="language-shell">% ls /some-path
+part-000-of-002.avro
+part-001-of-002.avro
+</code></pre>
+<p>In contrast, <code>filenamePolicySupplier</code> gives you more fine-grained control by allowing you to specify a full <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/io/FileBasedSink.FilenamePolicy.html" title="org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy"><code>FilenamePolicy</code></a> based on the supplied <code>path</code> and <code>suffix</code>:</p>
+<pre class="prettyprint"><code class="language-scala">data.saveAsAvroFile(path, schema, filenamePolicySupplier =
+  (path: String, suffix: String) =&gt; new FilenamePolicy {
+    override def windowedFilename(shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = ???
+    override def unwindowedFilename(shardNumber: Int, numShards: Int, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = ???
+  }))
+</code></pre>
+<h3><a href="#kv-batch-api" name="kv-batch-api" class="anchor"><span class="anchor-link"></span></a>KV Batch API</h3>
+<p>Keyed SCollections have new built-in batching APIs: <a href="https://github.com/spotify/scio/blob/v0.12.0/scio-core/src/main/scala/com/spotify/scio/values/PairSCollectionFunctions.scala#L762">batchByKey</a>, <a href="https://github.com/spotify/scio/blob/v0.12.0/scio-core/src/main/scala/com/spotify/scio/values/PairSCollectionFunctions.scala#L793">batchByteSizedByKey</a>, and <a href="https://github.com/spotify/scio/blob/v0.12.0/scio-core/src/main/scala/com/spotify/scio/values/PairSCollectionFunctions.scala#L824">batchWeightedByKey</a>, which allow you to create <code>Iterable</code>-backed batches within your SCollection, determined by a target batch size, byte size, or weighting scheme, respectively.</p>
+<pre class="prettyprint"><code class="language-scala">data
+  .keyBy(_.1)
+  .batchByKey(batchSize = 100L)
+</code></pre>
+<h3><a href="#splittabledofn-based-parquet-reads" name="splittabledofn-based-parquet-reads" class="anchor"><span class="anchor-link"></span></a>SplittableDoFn-based Parquet reads</h3>
+<p>We&rsquo;ve introduced an opt-in new Parquet reads implementation, which implements Beam&rsquo;s <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, as an alternative to the default <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/io/BoundedSource.html" title="org.apache.beam.sdk.io.BoundedSource"><code>BoundedSource</code></a>-backed implementation. We&rsquo;ve observed greatly improved Dataflow metrics with this new implementation (total VCPU time, total memory time), when run with <strong>Dataflow Runner V1</strong> (the default), workers may not scale up as much, resulting in an overall slower wall time. Therefore, we recommend trying out the new Parquet read in conjunction with <a href="https://cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#dataflow-runner-v2"><strong>Dataflow Runner V2</strong></a>.</p>
+<p>You can opt in by adding an entry to your Parquet read&rsquo;s Configuration:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.parquet._
+
+sc.typedParquetFile[T](path, conf = ParquetConfiguration.of(&quot;scio.parquet.read.useSplittableDoFn&quot; -&gt; true))
+</code></pre>
+<p>You can find more information, and other migration options, <a href="../migrations/v0.12.0-Migration-Guide.html#parquet-reads">here</a>.</p>
+<h3><a href="#grpc-lookup-api" name="grpc-lookup-api" class="anchor"><span class="anchor-link"></span></a>GRPC Lookup API</h3>
+<p>Scio 0.12.0 includes a new artifact, <code>scio-grpc</code>, that provides a custom <code>AsyncLookupDoFn</code> implementation specifically for GRPC service lookups. Both unary and server-streaming lookups are supported.</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.grpc._
+
+data
+  .map { case (str1, str2) =&gt; ConcatRequest.newBuilder.setStr1(str1).setStr2(str2).build)
+  .grpcLookup[ConcatResponse, ConcatServiceFutureStub](
+      () =&gt; NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
+      ConcatServiceGrpc.newFutureStub,
+      10 // Max pending requests
+    )(_.concat)
+</code></pre>
+<h3><a href="#scio-neo4j-module" name="scio-neo4j-module" class="anchor"><span class="anchor-link"></span></a>scio-neo4j module</h3>
+<p>We have a second new artifact in 0.12.0, <code>scio-neo4j</code>, that supports Neo4J reads and writes.</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.neo4j._
+
+case class Entity(id: String, property: Option[String])
+
+val entities = sc
+  .neo4jCypher[Entity](
+    Neo4jOptions(Neo4jConnectionOptions(&quot;neo4j://neo4j.com:7687&quot;, &quot;username&quot;, &quot;password&quot;)),
+    &quot;&quot;&quot;MATCH (e:Entity)
+      |WHERE e.property = &#39;value&#39;
+      |RETURN e&quot;&quot;&quot;.stripMargin
+)
+
+entities
+  .map(someFn)
+  .saveAsNeo4j(
+    Neo4jOptions(Neo4jConnectionOptions(&quot;neo4j://neo4j.com:7687&quot;, &quot;username&quot;, &quot;password&quot;)),
+    &quot;&quot;&quot;UNWIND $rows AS row
+      |MERGE (e:Entity {id: row.id})
+      |ON CREATE SET p.id = row.id, p.property = row.property
+      |&quot;&quot;&quot;.stripMargin
+  )
+</code></pre>
+<h3><a href="#secondary-sort-key-for-smb-writes-and-reads" name="secondary-sort-key-for-smb-writes-and-reads" class="anchor"><span class="anchor-link"></span></a>Secondary sort key for SMB writes and reads</h3>
+<p>SMB now supports <strong>secondary sort keys</strong>. We&rsquo;ve extended most SMB APIs in the style of <code>(k: K)</code> to also support <code>(k1: K1, k2: K2)</code>. For example, reads and transforms can now specify a secondary key:</p>
+<pre class="prettyprint"><code class="language-scala">sc
+  .sortMergeJoin(
+    classOf[String],
+    classOf[Int], // Secondary sort key
+    AvroSortedBucketIO.read(new TupleTag[A](&quot;a&quot;), aSchema).from(aPath),
+    AvroSortedBucketIO.read(new TupleTag[B](&quot;b&quot;), bClass).from(bPath)
+  ).map { case ((k1, k2), (aData, bData)) =&gt;
+    // ...
+  }
+</code></pre>
+<p>Writes, too, have an expanded API:</p>
+<pre class="prettyprint"><code class="language-scala">data
+  .saveAsSortedBucket(
+    AvroSortedBucketIO.write[String, Integer, Account](
+      classOf[String], // Key class primary
+      &quot;name&quot;, // Key field primary
+      classOf[Integer], // Key class secondary
+      &quot;age&quot;, // Key field secondary
+      classOf[Account])
+</code></pre>
+<h3><a href="#magnolify-upgrade" name="magnolify-upgrade" class="anchor"><span class="anchor-link"></span></a>Magnolify upgrade</h3>
+<p>Scio 0.12.0 uses Magnolify 0.6.2, which contains a few new features: neo4j support, <code>AvroType</code> performance improvements, and the the capability to annotate Parquet case classes when used in <code>AvroCompat</code> mode:</p>
+<pre class="prettyprint"><code class="language-scala">import magnolify.parquet.ParquetArray.AvroCompat._
+import magnolify.shared.doc
+
+@doc(&quot;Record-level doc&quot;)
+case class SomeCaseClass(@doc(&quot;field-level doc 1&quot;) s: String, @doc(&quot;field-level doc 2&quot;) i: Int)
+
+data
+  .map { case (s, i) =&gt; SomeCaseClass(s, i) }
+  .saveAsTypedParquetFile(&quot;some-path&quot;)
+</code></pre>
+<p>The annotations will appear in the converted Avro schema in the file&rsquo;s metadata:</p>
+<pre class="prettyprint"><code class="language-shell">% parquet-tools meta some-path/part-00001-of-00005.parquet 
+file:        file:/some-path/part-00001-of-00005.parquet 
+creator:     parquet-mr version 1.12.3 (build f8dced182c4c1fbdec6ccb3185537b5a01e6ed6b) 
+extra:       writer.model.name = magnolify 
+extra:       parquet.avro.schema = {&quot;type&quot;:&quot;record&quot;,&quot;name&quot;:&quot;SomeCaseClass&quot;,&quot;namespace&quot;:&quot;com.spotify.data.parquet&quot;,&quot;doc&quot;:&quot;Record-level doc&quot;,&quot;fields&quot;:[{&quot;name&quot;:&quot;s&quot;,&quot;type&quot;:&quot;string&quot;,&quot;doc&quot;:&quot;field-level doc 1&quot;},{&quot;name&quot;:&quot;i&quot;,&quot;type&quot;:&quot;int&quot;,&quot;doc&quot;:&quot;field-level doc 2&quot;}]} 
+</code></pre>
+<h2><a href="#bug-fixes-performance-improvements" name="bug-fixes-performance-improvements" class="anchor"><span class="anchor-link"></span></a>Bug fixes/Performance improvements</h2>
+<ul>
+  <li>Pipelines are unblocked from running on Dataflow RunnerV2 by fixing incorrect and deprecated API usages</li>
+  <li>Coders now have a smaller memory footprint; you can expect savings in your total job graph size</li>
+</ul>
+<p>You can see a full list on the <a href="https://github.com/spotify/scio/releases/tag/v0.12.0">release notes</a> page.</p>
+<h2><a href="#breaking-changes" name="breaking-changes" class="anchor"><span class="anchor-link"></span></a>Breaking changes</h2>
+<p>Scio 0.12.0 has a few breaking changes. The most impactful changes include:</p>
+<ul>
+  <li><a href="https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide.html#removal-of-com-spotify-scio-pubsub-specializations">Pubsub read API changes</a></li>
+  <li><a href="https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide.html#com-spotify-scio-extra-bigquery-removal">scio-extra bigquery removal</a></li>
+  <li><a href="https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide.html#parquetio-saveasdynamicparquetavrofile-saveasparquetavrofile">Parquet&rsquo;s saveAsDynamicParquetAvroFile removed in favor of saveAsParquetAvroFile</a></li>
+</ul>
+<p>A full list of breaking changes can be found on our <a href="../migrations/v0.12.0-Migration-Guide.html">Migration Guide</a>.</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/v0.12.0.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.0.0+1-f3d81ed8+20221114-1828*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../releases/breaking-changes.html" title="Breaking Changelog" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Breaking Changelog
+</span>
+</div>
+</a>
+<a href="../FAQ.html" title="FAQ" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+FAQ
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2020 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

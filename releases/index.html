@@ -20,7 +20,7 @@
 
 <meta name="description" content="Scio - Documentation">
 <link rel="shortcut icon" href="../images/favicon.ico">
-<title>Protobuf · Scio</title>
+<title>Releases · Scio</title>
 <link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
 <link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
@@ -59,7 +59,7 @@ data-md-color-accent="indigo"
 Scio
 </span>
 <span class="md-header-nav__topic">
-Protobuf
+Releases
 </span>
 </div>
 </div>
@@ -146,7 +146,7 @@ spotify/scio
     <li><a href="../io/BigQuery.html" class="page">BigQuery</a></li>
     <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
-    <li><a href="../io/Protobuf.html" class="active page">Protobuf</a></li>
+    <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
     <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
@@ -185,7 +185,7 @@ spotify/scio
   <li><a href="../Runners.html" class="page">Runners</a></li>
   <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
   <li><a href="../Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
-  <li><a href="../releases/index.html" class="page">Releases</a>
+  <li><a href="../releases/index.html" class="active page">Releases</a>
   <ul>
     <li><a href="../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
     <li><a href="../releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
@@ -194,16 +194,6 @@ spotify/scio
   <li><a href="../Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="../io/Protobuf.html#protobuf" class="header">Protobuf</a>
-  <ul>
-    <li><a href="../io/Protobuf.html#read-protobuf-files" class="header">Read Protobuf files</a></li>
-    <li><a href="../io/Protobuf.html#write-protobuf-files" class="header">Write Protobuf files</a></li>
-    <li><a href="../io/Protobuf.html#file-format" class="header">File format</a></li>
-    <li><a href="../io/Protobuf.html#common-issues" class="header">Common issues</a></li>
-  </ul></li>
-</ul>
 </nav>
 
 </nav>
@@ -217,73 +207,19 @@ spotify/scio
 </div>
 </div>
 </div>
-<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
-<div class="md-sidebar__scrollwrap">
-<div class="md-sidebar__inner">
-<nav class="md-nav md-nav--secondary">
-<label class="md-nav__title" for="__toc">Table of contents</label>
-<ul>
-  <li><a href="../io/Protobuf.html#protobuf" class="header">Protobuf</a>
-  <ul>
-    <li><a href="../io/Protobuf.html#read-protobuf-files" class="header">Read Protobuf files</a></li>
-    <li><a href="../io/Protobuf.html#write-protobuf-files" class="header">Write Protobuf files</a></li>
-    <li><a href="../io/Protobuf.html#file-format" class="header">File format</a></li>
-    <li><a href="../io/Protobuf.html#common-issues" class="header">Common issues</a></li>
-  </ul></li>
-</ul>
-</nav>
-
-</div>
-</div>
-</div>
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#protobuf" name="protobuf" class="anchor"><span class="anchor-link"></span></a>Protobuf</h1>
-<h2><a href="#read-protobuf-files" name="read-protobuf-files" class="anchor"><span class="anchor-link"></span></a>Read Protobuf files</h2>
-<p>Scio comes with custom and efficient support for reading Protobuf files via <code>protobufFile</code> method, for example:</p>
-<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.avro._
-
-// FooBarProto is a Protobuf generated class (must be a subclass of Protobuf&#39;s `Message`)
-sc.protobufFile[FooBarProto](&quot;gs://path-to-data/lake/part-*.protobuf.avro&quot;)
-  .map( message =&gt; ??? )
-// `message` is of type FooBarProto
-</code></pre>
-<p>Important: in most cases the input files should have been previously written by Scio. The reason is that Scio assumes that serialized Protobuf message is stored inside <code>bytes</code> Avro record.</p>
-<p>If you want to read serialized protobuf messages directly from a file, one solution is to use <code>textFile</code> followed by a <code>map</code> to parse your messages.</p>
-<h2><a href="#write-protobuf-files" name="write-protobuf-files" class="anchor"><span class="anchor-link"></span></a>Write Protobuf files</h2>
-<p>Scio comes with custom and efficient support for writing Protobuf files via <code>saveAsProtobufFile</code> method, for example:</p>
-<pre class="prettyprint"><code class="language-scala">// FooBarProto is a Protobuf generated class (must be a subclass of Protobuf&#39;s `Message`)
-val data: SCollection[FooBarProto] = ???
-data.saveAsProtobufFile(&quot;gs://path-to-data/lake/protos-out&quot;)
-</code></pre>
-<h2><a href="#file-format" name="file-format" class="anchor"><span class="anchor-link"></span></a>File format</h2>
-<p>Scio&rsquo;s Protobuf file is backed by Avro with the following schema:</p>
-<pre class="prettyprint"><code class="language-json">{
-  &quot;type&quot; : &quot;record&quot;,
-  &quot;name&quot; : &quot;AvroBytesRecord&quot;,
-  &quot;fields&quot; : [ {
-    &quot;name&quot; : &quot;bytes&quot;,
-    &quot;type&quot; : &quot;bytes&quot;
-  } ]
-}
-</code></pre>
-<p>Avro gives us a block based file format with compression, split and combine support. Protobuf binary is stored in the <code>bytes</code> field of <code>AvroBytesRecord</code>.</p>
-<p>Starting with Scio 0.2.6, the Protobuf schema also is stored as a JSON string in the Avro file metadata under the key <code>protobuf.generic.schema</code>. You can get the schema or JSON records using the <code>proto-tools</code> command line tool from <a href="https://github.com/spotify/gcs-tools">gcs-tools</a> (available in our homebrew tap). Conversion between Protobuf schema, binary and JSON is done via the <a href="https://github.com/nevillelyh/protobuf-generic">protobuf-generic</a> library.</p>
-<pre class="prettyprint"><code class="language-bash">brew tap spotify/public
-brew install gcs-proto-tools
-proto-tools getschema data.protobuf.avro
-proto-tools tojson data.protobuf.avro
-</code></pre>
-<h2><a href="#common-issues" name="common-issues" class="anchor"><span class="anchor-link"></span></a>Common issues</h2>
-<h3><a href="#scalapb" name="scalapb" class="anchor"><span class="anchor-link"></span></a>ScalaPB</h3>
-<p>If you end up using <a href="https://github.com/trueaccord/ScalaPB">ScalaPB</a>, make sure to use java based message class as input/output type, Scala based message class does not inherit from Protobuf&rsquo;s Message class. To generate both Scala and Java classes add (to your <code>build.sbt</code>):</p>
-<pre class="prettyprint"><code class="language-scala">import com.trueaccord.scalapb.{ScalaPbPlugin =&gt; PB}
-PB.javaConversions in PB.protobufConfig := true
-</code></pre>
+<h1><a href="#releases" name="releases" class="anchor"><span class="anchor-link"></span></a>Releases</h1>
+<div class="toc ">
+<ul>
+  <li><a href="../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
+  <li><a href="../releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
+</ul>
+</div>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/io/Protobuf.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/index.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -299,7 +235,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../io/Parquet.html" title="Parquet" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../Apache-Beam.html" title="Apache Beam Compatibility" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -308,17 +244,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Parquet
+Apache Beam Compatibility
 </span>
 </div>
 </a>
-<a href="../io/Pubsub.html" title="PubSub" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../releases/breaking-changes.html" title="Breaking Changelog" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-PubSub
+Breaking Changelog
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
