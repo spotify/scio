@@ -1,4 +1,4 @@
-# Breaking Changes
+# Breaking Changelog
 
 ## Breaking changes since 0.12.0 (@ref:[v0.12.0 Migration Guide](../migrations/v0.12.0-Migration-Guide.md))
 - Removed `com.spotify.scio.extra.bigquery`
