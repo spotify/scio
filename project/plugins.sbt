@@ -19,7 +19,7 @@ addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.4.1")
 addSbtPlugin("io.github.jonas" % "sbt-paradox-material-theme" % "0.6.0")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.3.6")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.2")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.6")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 
 libraryDependencies += "org.apache.avro" % "avro-compiler" % "1.8.2"
