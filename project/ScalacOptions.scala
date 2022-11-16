@@ -44,9 +44,6 @@ object Scalac {
 
   val release8 = ScalacOptions.release("8")
 
-  // JVM
-  val targetOption = ScalacOptions.other("-target:jvm-1.8")
-
   // Warn
   val privateWarnMacrosOption = ScalacOptions.privateWarnOption(
     "macros:after",
