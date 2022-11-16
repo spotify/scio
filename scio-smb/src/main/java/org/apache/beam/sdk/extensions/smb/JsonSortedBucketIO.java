@@ -21,7 +21,6 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 
 import com.google.api.services.bigquery.model.TableRow;
 import com.google.auto.value.AutoValue;
-
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;

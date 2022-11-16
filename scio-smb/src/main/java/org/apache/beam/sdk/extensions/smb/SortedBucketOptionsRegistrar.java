@@ -18,10 +18,9 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.google.auto.service.AutoService;
+import java.util.Collections;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsRegistrar;
-
-import java.util.Collections;
 
 @AutoService(PipelineOptionsRegistrar.class)
 public class SortedBucketOptionsRegistrar implements PipelineOptionsRegistrar {

@@ -18,6 +18,12 @@
 package com.spotify.scio.transforms;
 
 import com.spotify.scio.util.RemoteFileUtil;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -25,13 +31,6 @@ import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /** A {@link DoFn} that downloads {@link URI} elements and processes them as local {@link Path}s. */
 public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {

@@ -18,12 +18,11 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.spotify.scio.smb.annotations.PatchedFromBeam;
-import org.apache.beam.sdk.transforms.join.CoGbkResult;
-import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import org.apache.beam.sdk.transforms.join.CoGbkResult;
+import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 
 @PatchedFromBeam(origin = "org.apache.beam.sdk.transforms.join.CoGbkResult")
 public class CoGbkResultUtil {
