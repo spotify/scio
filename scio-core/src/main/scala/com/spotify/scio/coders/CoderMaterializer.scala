@@ -48,11 +48,12 @@ object CoderMaterializer {
   ): BCoder[T] = beamImpl(CoderOptions(o), coder, refs = TrieMap.empty, topLevel = true)
 
   private def isNullableCoder(o: CoderOptions, c: Coder[_]): Boolean = c match {
-    case _: RawBeam[_]      => false // raw cannot be made nullable
-    case _: KVCoder[_, _]   => false // KV cannot be made nullable
-    case _: Transform[_, _] => false // nullability should be deferred to transformed coders
-    case _: Ref[_]          => false // nullability should be deferred to underlying coder
-    case _                  => o.nullableCoders
+    case Beam(_: NullableCoder[_]) => false // already nullable
+    case _: RawBeam[_]             => false // raw cannot be made nullable
+    case _: KVCoder[_, _]          => false // KV cannot be made nullable
+    case _: Transform[_, _]        => false // nullability should be deferred to transformed coders
+    case _: Ref[_]                 => false // nullability should be deferred to underlying coder
+    case _                         => o.nullableCoders
   }
 
   private def isWrappableCoder(topLevel: Boolean, c: Coder[_]): Boolean = c match {
