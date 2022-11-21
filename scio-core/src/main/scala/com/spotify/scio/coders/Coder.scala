@@ -640,6 +640,8 @@ object Coder
   implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
   implicit def jIterableCoder[T: Coder]: Coder[java.lang.Iterable[T]] = JavaCoders.jIterableCoder
   implicit def jListCoder[T: Coder]: Coder[JList[T]] = JavaCoders.jListCoder
+  @deprecated("Use jListCoder", since = "0.12.1")
+  def jlistCoder[T: Coder]: Coder[JList[T]] = jListCoder
   implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
   implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
   implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
