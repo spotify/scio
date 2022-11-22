@@ -28,7 +28,8 @@ private[scio] object BeamCoders {
   @tailrec
   private def unwrap[T](coder: beam.Coder[T]): beam.Coder[T] =
     coder match {
-      case c: WrappedCoder[T]       => unwrap(c.bcoder)
+      case c: WrappedBCoder[T]      => unwrap(c.u)
+      case c: LazyCoder[T]          => unwrap(c.bcoder)
       case c: beam.NullableCoder[T] => c.getValueCoder
       case _                        => coder
     }

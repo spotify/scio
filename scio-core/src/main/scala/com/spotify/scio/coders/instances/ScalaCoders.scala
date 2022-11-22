@@ -41,10 +41,6 @@ import java.util.{List => JList}
 private object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
   override def decode(is: InputStream): Unit = ()
-
-  override def consistentWithEquals(): Boolean = true
-  override def isRegisterByteSizeObserverCheap(value: Unit): Boolean = true
-  override def getEncodedElementByteSize(value: Unit): Long = 0
 }
 
 private object NothingCoder extends AtomicCoder[Nothing] {
@@ -53,8 +49,6 @@ private object NothingCoder extends AtomicCoder[Nothing] {
     // can't possibly happen
     throw new IllegalStateException("Trying to decode a value of type Nothing is impossible")
   override def consistentWithEquals(): Boolean = true
-  override def isRegisterByteSizeObserverCheap(value: Nothing): Boolean = true
-  override def getEncodedElementByteSize(value: Nothing): Long = 0
 }
 
 abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T])
@@ -441,7 +435,7 @@ trait ScalaCoders {
 
   implicit def booleanCoder: Coder[Boolean] =
     Coder.beam(BooleanCoder.of().asInstanceOf[BCoder[Boolean]])
-  implicit def unitCoder: Coder[Unit] = Coder.beam[Unit](UnitCoder)
+  implicit def unitCoder: Coder[Unit] = Coder.beam(UnitCoder)
   implicit def nothingCoder: Coder[Nothing] = Coder.beam[Nothing](NothingCoder)
 
   implicit def bigIntCoder: Coder[BigInt] =

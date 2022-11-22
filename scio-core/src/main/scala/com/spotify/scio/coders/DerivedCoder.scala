@@ -17,90 +17,96 @@
 
 package com.spotify.scio.coders
 
-import com.twitter.chill.ClosureCleaner
+private object Derived extends Serializable {
+  import magnolia1._
 
-import scala.reflect.ClassTag
+  @inline private def catching[T](msg: => String)(v: => T): T =
+    try {
+      v
+    } catch {
+      case e: Exception =>
+        /* prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
+        backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
+         here; we therefore must alter the type of exceptions passing through this block.
+         */
+        throw CoderStackTrace.append(e, msg)
+    }
 
-object LowPriorityCoderDerivation {
+  def joinCoder[T](
+    typeName: TypeName,
+    ps: Seq[Param[Coder, T]],
+    rawConstruct: Seq[Any] => T
+  ): Coder[T] =
+    Ref(
+      typeName.full, {
+        val cs = new Array[(String, Coder[Any])](ps.length)
+        var i = 0
+        while (i < ps.length) {
+          val p = ps(i)
+          cs.update(i, (p.label, p.typeclass.asInstanceOf[Coder[Any]]))
+          i = i + 1
+        }
 
-  private object ProductIndexedSeqLike {
-    def apply(p: Product): ProductIndexedSeqLike = new ProductIndexedSeqLike(p)
-  }
+        @inline def destruct(v: T): Array[Any] = {
+          val arr = new Array[Any](ps.length)
+          var i = 0
+          while (i < ps.length) {
+            val p = ps(i)
+            catching(s"Error while dereferencing parameter ${p.label} in $v") {
+              arr.update(i, p.dereference(v))
+              i = i + 1
+            }
+          }
+          arr
+        }
 
-  // Instead of converting Product.productIterator to a Seq, create a wrapped around it
-  final private class ProductIndexedSeqLike private (val p: Product) extends IndexedSeq[Any] {
-    override def length: Int = p.productArity
-    override def apply(i: Int): Any = p.productElement(i)
-  }
+        val constructor: Seq[Any] => T =
+          ps =>
+            catching(s"Error while constructing object from parameters $ps")(
+              rawConstruct(ps)
+            )
 
+        Coder.record[T](typeName.full, cs, constructor, destruct)
+      }
+    )
 }
 
 trait LowPriorityCoderDerivation {
-  import LowPriorityCoderDerivation._
   import magnolia1._
 
   type Typeclass[T] = Coder[T]
 
-  def join[T: ClassTag](ctx: CaseClass[Coder, T]): Coder[T] = {
-    val typeName = ctx.typeName.full
-    // calling patched rawConstruct on empty object should work
-    val emptyCtx = ClosureCleaner
-      .instantiateClass(ctx.getClass)
-      .asInstanceOf[CaseClass[Coder, T]]
+  def join[T](ctx: CaseClass[Coder, T]): Coder[T] =
     if (ctx.isValueClass) {
-      val p = ctx.parameters.head
-      Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
-        v => emptyCtx.rawConstruct(Seq(v)),
-        p.dereference
+      Coder.xmap(ctx.parameters.head.typeclass.asInstanceOf[Coder[Any]])(
+        a => ctx.rawConstruct(Seq(a)),
+        ctx.parameters.head.dereference
       )
-    } else if (ctx.isObject) {
-      Coder.singleton(typeName, () => emptyCtx.rawConstruct(Seq.empty))
     } else {
-      Coder.ref(typeName) {
-        val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
-        ctx.parameters.foreach { p =>
-          cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
-        }
-
-        Coder.record[T](typeName, cs)(
-          emptyCtx.rawConstruct,
-          v => ProductIndexedSeqLike(v.asInstanceOf[Product])
-        )
-      }
+      Derived.joinCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
     }
-  }
 
   def split[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
-    val coders = sealedTrait.subtypes
-      .map(s => (s.index, s.typeclass.asInstanceOf[Coder[T]]))
-      .toMap
+    val idx: Map[TypeName, Int] =
+      sealedTrait.subtypes.map(_.typeName).zipWithIndex.toMap
+    val coders: Map[Int, Coder[T]] =
+      sealedTrait.subtypes
+        .map(_.typeclass.asInstanceOf[Coder[T]])
+        .zipWithIndex
+        .map { case (c, i) => (i, c) }
+        .toMap
 
-    val subtypes = sealedTrait.subtypes
-      .map { s =>
-        val clazz = s.getClass
-        val clean = ClosureCleaner
-          .instantiateClass(clazz)
-          .asInstanceOf[Subtype[Coder, T]]
-        // copy required fields only
-        val isType = clazz.getDeclaredField("isType$1")
-        isType.setAccessible(true)
-        isType.set(clean, isType.get(s))
-
-        val index = clazz.getDeclaredField("idx$1")
-        index.setAccessible(true)
-        index.set(clean, index.get(s))
-
-        clean
-      }
-
-    val id = (v: T) => subtypes.find(_.cast.isDefinedAt(v)).map(_.index).get
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
-      Coder.disjunction[T, Boolean](typeName, cs)(id.andThen(booleanId))
+      Coder.disjunction[T, Boolean](typeName, cs) { t =>
+        sealedTrait.split(t)(subtype => booleanId(idx(subtype.typeName)))
+      }
     } else {
-      Coder.disjunction[T, Int](typeName, coders)(id)
+      Coder.disjunction[T, Int](typeName, coders) { t =>
+        sealedTrait.split(t)(subtype => idx(subtype.typeName))
+      }
     }
   }
 

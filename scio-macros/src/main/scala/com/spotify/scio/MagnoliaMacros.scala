@@ -40,33 +40,32 @@ private[scio] object MagnoliaMacros {
     // format: off
     // Remove annotations from magnolia since they are
     // not serializable and we don't use them anyway
-    val removeAnnotations: PartialFunction[Tree, Tree] = {
-      case q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, $_, $_, $_)" if caseClass.symbol.name == TypeName("CaseClass") =>
-        q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
-      case q"Param.apply[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, $_, $_, $_)" =>
-        q"_root_.magnolia1.Param[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
-      case q"new SealedTrait($typeName, $subtypesArray, $_, $_, $_)" =>
-        q"new _root_.magnolia1.SealedTrait($typeName, $subtypesArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
-      case q"Subtype[$tpTC, $tpT, $tpS]($name, $idx, $_, $_, $_, $tc, $isType, $asType)" =>
-        q"_root_.magnolia1.Subtype[$tpTC, $tpT, $tpS]($name, $idx, Array.empty[Any], Array.empty[Any], Array.empty[Any], $tc, $isType, $asType)"
-    }
-
-    // remove all outer references used in rawConstruct
-    // so method serialization do not take any closure
-    val inlineRawConstruct: PartialFunction[Tree, Tree] = {
-      case q"def rawConstruct(..$params): $tpT = {..$statements}" =>
-        val closureCleansed = if (statements.size > 1) statements.tail else statements
-        q"def rawConstruct(..$params): $tpT = {..$closureCleansed}"
+    val removeAnnotations = new Transformer {
+      override def transform(tree: Tree): c.universe.Tree = {
+        tree match {
+          case q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, $_, $_, $_)" if caseClass.symbol.name == TypeName("CaseClass") =>
+            super.transform(
+              q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+            )
+          case q"Param.apply[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, $_, $_, $_)" =>
+            super.transform(
+              q"_root_.magnolia1.Param[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+            )
+          case q"new SealedTrait($typeName, $subtypesArray, $_, $_, $_)" =>
+            super.transform(
+              q"new _root_.magnolia1.SealedTrait($typeName, $subtypesArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+            )
+          case q"Subtype[$tpTC, $tpT, $tpS]($name, $idx, $_, $_, $_, $tc, $isType, $asType)" =>
+            super.transform(
+              q"_root_.magnolia1.Subtype[$tpTC, $tpT, $tpS]($name, $idx, Array.empty[Any], Array.empty[Any], Array.empty[Any], $tc, $isType, $asType)"
+            )
+          case t =>
+            super.transform(t)
+        }
+      }
     }
     // format: on
 
-    val scioTransformer = new Transformer {
-      override def transform(tree: Tree): Tree =
-        super.transform(
-          removeAnnotations.orElse(inlineRawConstruct).applyOrElse[Tree, Tree](tree, t => t)
-        )
-    }
-
-    scioTransformer.transform(magnoliaTree)
+    removeAnnotations.transform(magnoliaTree)
   }
 }
