@@ -531,7 +531,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     materializationStackTrace.map(_.getFileName) should contain("CoderTest.scala")
   }
 
-  it should "#1651: remove all annotations from derived coders" in {
+  it should "#1651: remove all anotations from derived coders" in {
     coderIsSerializable[TraitWithAnnotation]
   }
 

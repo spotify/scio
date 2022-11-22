@@ -20,8 +20,6 @@ package com.spotify.scio
 import scala.reflect.macros._
 
 private[scio] object MagnoliaMacros {
-  import magnolia1._
-
   // Add a level of indirection to prevent the macro from capturing
   // $outer which would make the Coder serialization fail
   def genWithoutAnnotations[T: c.WeakTypeTag](c: whitebox.Context): c.Tree = {
@@ -35,36 +33,35 @@ private[scio] object MagnoliaMacros {
       )
     }
 
-    val magnoliaTree = Magnolia.gen[T](c)
+    val magnoliaTree = magnolia.Magnolia.gen[T](c)
 
-    // format: off
     // Remove annotations from magnolia since they are
     // not serializable and we don't use them anyway
+
     val removeAnnotations = new Transformer {
-      override def transform(tree: Tree): c.universe.Tree = {
+      override def transform(tree: Tree): c.universe.Tree =
         tree match {
-          case q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, $_, $_, $_)" if caseClass.symbol.name == TypeName("CaseClass") =>
+          case Apply(tt: TypeTree, List(typeName, isObject, isValueClass, params, _, _))
+              if tt.symbol.name == TypeName("CaseClass") =>
             super.transform(
-              q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+              Apply(tt, List(typeName, isObject, isValueClass, params, q"Array()", q"Array()"))
             )
-          case q"Param.apply[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, $_, $_, $_)" =>
+          case q"Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, $_, $_)" =>
             super.transform(
-              q"_root_.magnolia1.Param[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+              q"_root_.magnolia.Param.apply[$tc, $t, $p]($name, $tpn, $idx, $repeated, $tcParam, $defaultVal, Array(), Array())"
             )
-          case q"new SealedTrait($typeName, $subtypesArray, $_, $_, $_)" =>
+          case q"new SealedTrait($typeName, $subtypes, $_, $_)" =>
             super.transform(
-              q"new _root_.magnolia1.SealedTrait($typeName, $subtypesArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+              q"new _root_.magnolia.SealedTrait($typeName, $subtypes, Array(), Array())"
             )
-          case q"Subtype[$tpTC, $tpT, $tpS]($name, $idx, $_, $_, $_, $tc, $isType, $asType)" =>
+          case q"Subtype[$tc, $t, $p]($typeName, $id, $_, $_, $coder, $cast0, $cast1)" =>
             super.transform(
-              q"_root_.magnolia1.Subtype[$tpTC, $tpT, $tpS]($name, $idx, Array.empty[Any], Array.empty[Any], Array.empty[Any], $tc, $isType, $asType)"
+              q"_root_.magnolia.Subtype[$tc, $t, $p]($typeName, $id, Array(), Array(), $coder, $cast0, $cast1)"
             )
           case t =>
             super.transform(t)
         }
-      }
     }
-    // format: on
 
     removeAnnotations.transform(magnoliaTree)
   }
