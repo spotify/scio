@@ -42,7 +42,7 @@ def coder_class(out, n, scala_version):
     print(
         f"""
 final private[coders] class Tuple{n}Coder[{', '.join(types)}]({', '.join(f'val {t.lower()}c: BCoder[{t}]' for t in types)}) extends StructuredCoder[({', '.join(types)})] {{
-
+  private[this] val materializationStackTrace: Array[StackTraceElement] = CoderStackTrace.prepare
   override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
 
   @inline def onErrorMsg[{t_type}](msg: => (String, String))(f: => {t_type}): {t_type} =
@@ -53,18 +53,19 @@ final private[coders] class Tuple{n}Coder[{', '.join(types)}]({', '.join(f'val {
         // allow Flink memory management, see WrappedBCoder#catching comment.
         throw CoderStackTrace.append(
           e,
-          s"Exception while trying to `${{msg._1}}` an instance" +
-            s" of Tuple{n}: Can't decode field ${{msg._2}}"
+          Some(
+            s"Exception while trying to `${{msg._1}}` an instance" +
+              s" of Tuple{n}: Can't decode field ${{msg._2}}"
+          ),
+          materializationStackTrace
         )
     }}
 
   override def encode(value: ({', '.join(types)}), os: OutputStream): Unit = {{
-    {(os.linesep + '    ').join(f'onErrorMsg("encode" -> "_{idx}")({t.lower()}c.encode(value._{idx}, os))' for idx, t in enumerate(types, 1))}
+    {os.linesep.join(f'onErrorMsg("encode" -> "_{idx}")({t.lower()}c.encode(value._{idx}, os))' for idx, t in enumerate(types, 1))}
   }}
   override def decode(is: InputStream): ({', '.join(types)}) = {{
-    (
-      {(',' + os.linesep + '      ').join(f'onErrorMsg("decode" -> "_{idx}")({t.lower()}c.decode(is))' for idx, t in enumerate(types, 1))}
-    )
+    ({', '.join(f'onErrorMsg("decode" -> "_{idx}")({t.lower()}c.decode(is))' for idx, t in enumerate(types, 1))})
   }}
 
   override def toString: String =
@@ -94,23 +95,21 @@ final private[coders] class Tuple{n}Coder[{', '.join(types)}]({', '.join(f'val {
   }}
 
   override def consistentWithEquals(): Boolean =
-    {(' &&' + os.linesep + '      ').join(f'{t.lower()}c.consistentWithEquals()' for t in types)}
+    {' && '.join(f'{t.lower()}c.consistentWithEquals()' for t in types)}
 
   override def structuralValue(value: ({', '.join(types)})): AnyRef =
     if (consistentWithEquals()) {{
       value.asInstanceOf[AnyRef]
     }} else {{
-        (
-          {(',' + os.linesep + '          ').join(f'{t.lower()}c.structuralValue(value._{idx})' for idx, t in enumerate(types, 1))}
-        )
+        ({', '.join(f'{t.lower()}c.structuralValue(value._{idx})' for idx, t in enumerate(types, 1))})
     }}
 
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: ({', '.join(types)})): Boolean =
-    {(' &&'  + os.linesep + '      ').join(f'{t.lower()}c.isRegisterByteSizeObserverCheap(value._{idx})' for idx, t in enumerate(types, 1))}
+    {' && '.join(f'{t.lower()}c.isRegisterByteSizeObserverCheap(value._{idx})' for idx, t in enumerate(types, 1))}
 
   override def registerByteSizeObserver(value: ({', '.join(types)}), observer: ElementByteSizeObserver): Unit = {{
-    {(os.linesep + '    ').join(f'{t.lower()}c.registerByteSizeObserver(value._{idx}, observer)' for idx, t in enumerate(types, 1))}
+    {os.linesep.join(f'{t.lower()}c.registerByteSizeObserver(value._{idx}, observer)' for idx, t in enumerate(types, 1))}
   }}
 }}
     """,

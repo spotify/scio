@@ -33,34 +33,26 @@ import scala.collection.{mutable => mut}
 import java.io.ByteArrayInputStream
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
-import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Moments
 import org.scalatest.Assertion
 
 import java.nio.charset.Charset
 
-// record
 final case class UserId(bytes: Seq[Byte])
 final case class User(id: UserId, username: String, email: String)
 
-// disjunction
 sealed trait Top
 final case class TA(anInt: Int, aString: String) extends Top
 final case class TB(anDouble: Double) extends Top
 
-// case classes
-final case class DummyCC(s: String)
-final case class ParameterizedDummy[A](value: A)
-final case class MultiParameterizedDummy[A, B](valuea: A, valueb: B)
-
-// objects
+case class DummyCC(s: String)
+case class ParameterizedDummy[A](value: A)
+case class MultiParameterizedDummy[A, B](valuea: A, valueb: B)
 object TestObject
 object TestObject1 {
   val somestring = "something"
   val somelong = 42L
 }
-
-// explicit coder
 case class CaseClassWithExplicitCoder(i: Int, s: String)
 object CaseClassWithExplicitCoder {
   import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder, VarIntCoder}
@@ -81,29 +73,18 @@ object CaseClassWithExplicitCoder {
     })
 }
 
-// nested
 case class NestedB(x: Int)
 case class NestedA(nb: NestedB)
 
-// recursive
-case class SampleField(name: String, fieldType: SampleFieldType)
-sealed trait SampleFieldType
-case object IntegerType extends SampleFieldType
-case object StringType extends SampleFieldType
-case class RecordType(fields: List[SampleField]) extends SampleFieldType
-case class Recursive(a: Int, rec: Option[Recursive] = None)
-
-// private
 class PrivateClass private (val value: Long) extends AnyVal
 object PrivateClass {
   def apply(l: Long): PrivateClass = new PrivateClass(l)
 }
+
 case class UsesPrivateClass(privateClass: PrivateClass)
 
-// proto
 case class ClassWithProtoEnum(s: String, enum: OuterClassForProto.EnumExample)
 
-// serial UID
 @SerialVersionUID(1)
 sealed trait TraitWithAnnotation
 @SerialVersionUID(2)
@@ -111,10 +92,8 @@ final case class FirstImplementationWithAnnotation(s: String) extends TraitWithA
 @SerialVersionUID(3)
 final case class SecondImplementationWithAnnotation(i: Int) extends TraitWithAnnotation
 
-// AnyVal
 final case class AnyValExample(value: String) extends AnyVal
 
-// Non deterministic
 final case class NonDeterministic(a: Double, b: Double)
 
 final class CoderTest extends AnyFlatSpec with Matchers {
@@ -136,7 +115,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     val nil: Seq[String] = Nil
     val s: Seq[String] = (1 to 10).map(_.toString)
-    val m: Map[String, String] = s.map(v => v -> v).toMap
+    val m = s.map(v => v.toString -> v).toMap
 
     nil coderShould notFallback()
     s coderShould notFallback()
@@ -247,7 +226,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       new Address("street1", "street2", "city", "state", "01234", "Sweden")
     val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
 
-    val eq: Equality[GenericRecord] = (a: GenericRecord, b: Any) => a.toString === b.toString
+    val eq: Equality[GenericRecord] = new Equality[GenericRecord] {
+      def areEqual(a: GenericRecord, b: Any): Boolean =
+        a.toString === b.toString // YOLO
+    }
   }
 
   it should "Derive serializable coders" in {
@@ -314,12 +296,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new LocalTime coderShould notFallback()
     new LocalDateTime coderShould notFallback()
     new DateTime coderShould notFallback()
-    FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback()
+    FileSystems.getDefault().getPath("logs", "access.log") coderShould notFallback()
 
     "Coder[Void]" should compile
     "Coder[Unit]" should compile
 
-    val bs = new java.util.BitSet()
+    import java.util.BitSet
+    val bs = new BitSet()
     (1 to 100000).foreach(x => bs.set(x))
     bs coderShould notFallback()
 
@@ -339,7 +322,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     jInstant.now coderShould notFallback()
   }
 
-  it should "Serialize Row" in {
+  // Broken because of a bug in Beam
+  // See: https://issues.apache.org/jira/browse/BEAM-5645
+  ignore should "Serialize Row (see: BEAM-5645)" in {
     import java.lang.{Double => jDouble, Integer => jInt, String => jString}
 
     import org.apache.beam.sdk.schemas.{Schema => bSchema}
@@ -353,7 +338,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
         .addDoubleField("c3")
         .build()
 
-    implicit val coderRow: Coder[Row] = Coder.row(beamSchema)
+    implicit val coderRow = Coder.row(beamSchema)
     List[(jInt, jString, jDouble)]((1, "row", 1.0), (2, "row", 2.0), (3, "row", 3.0))
       .map { case (a, b, c) =>
         Row.withSchema(beamSchema).addValues(a, b, c).build()
@@ -388,6 +373,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "not derive Coders for org.apache.beam.sdk.values.Row" in {
+    import org.apache.beam.sdk.values.Row
     "Coder[Row]" shouldNot compile
     "Coder.gen[Row]" shouldNot compile
   }
@@ -477,8 +463,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       Short => jShort
     }
 
-    val opts: PipelineOptions = PipelineOptionsFactory.create()
-    opts.as(classOf[ScioOptions]).setNullableCoders(true)
+    def opts: PipelineOptions =
+      PipelineOptionsFactory
+        .fromArgs("--nullableCoders=true")
+        .create()
 
     null.asInstanceOf[String] coderShould roundtrip(opts)
     null.asInstanceOf[jInt] coderShould roundtrip(opts)
@@ -486,9 +474,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     null.asInstanceOf[jDouble] coderShould roundtrip(opts)
     null.asInstanceOf[jLong] coderShould roundtrip(opts)
     null.asInstanceOf[jShort] coderShould roundtrip(opts)
-    null.asInstanceOf[(String, Top)] coderShould roundtrip(opts)
     (null, null).asInstanceOf[(String, Top)] coderShould roundtrip(opts)
-    null.asInstanceOf[DummyCC] coderShould roundtrip(opts)
     DummyCC(null) coderShould roundtrip(opts)
     null.asInstanceOf[Top] coderShould roundtrip(opts)
     null.asInstanceOf[Either[String, Int]] coderShould roundtrip(opts)
@@ -497,38 +483,42 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val example: T = ("Hello", 42, TA(1, "World"))
     val nullExample1: T = ("Hello", 42, TA(1, null))
     val nullExample2: T = ("Hello", 42, null)
-    val nullExample3: T = null
     example coderShould roundtrip(opts)
     nullExample1 coderShould roundtrip(opts)
     nullExample2 coderShould roundtrip(opts)
-    nullExample3 coderShould roundtrip(opts)
 
     val nullBCoder = CoderMaterializer.beamWithDefault(Coder[T], o = opts)
     nullBCoder.isRegisterByteSizeObserverCheap(nullExample1)
     nullBCoder.isRegisterByteSizeObserverCheap(nullExample2)
-    nullBCoder.isRegisterByteSizeObserverCheap(nullExample3)
 
-    val noopObserver: org.apache.beam.sdk.util.common.ElementByteSizeObserver = (_: Long) => ()
+    val noopObserver =
+      new org.apache.beam.sdk.util.common.ElementByteSizeObserver {
+        def reportElementSize(s: Long): Unit = ()
+      }
+
     nullBCoder.registerByteSizeObserver(nullExample1, noopObserver)
     nullBCoder.registerByteSizeObserver(nullExample2, noopObserver)
-    nullBCoder.registerByteSizeObserver(nullExample3, noopObserver)
+
+    import com.spotify.scio.avro.TestRecord
+    val record: GenericRecord = TestRecord
+      .newBuilder()
+      .setStringField(null)
+      .build()
+
+    val nullExample3 = (record, record.get("string_field"))
+    nullExample3 coderShould roundtrip(opts)
   }
 
   it should "have a useful stacktrace when a Coder throws" in {
-    val ok = SampleField("foo", RecordType(List(SampleField("bar", IntegerType))))
-    val nok = SampleField("foo", RecordType(List(SampleField(null, IntegerType))))
-
-    implicit lazy val c: Coder[SampleField] = Coder.gen[SampleField]
+    val ok: (String, String) = ("foo", "bar")
+    val nok: (String, String) = (null, "bar")
     ok coderShould roundtrip()
     val caught = intercept[CoderException] {
       nok coderShould roundtrip()
     }
 
-    val stackTrace = caught.getStackTrace
-    stackTrace should contain(CoderStackTrace.CoderStackElemMarker)
-    stackTrace.count(_ == CoderStackTrace.CoderStackElemMarker) shouldBe 1
-    val materializationStackTrace = stackTrace.dropWhile(_ != CoderStackTrace.CoderStackElemMarker)
-    materializationStackTrace.map(_.getFileName) should contain("CoderTest.scala")
+    assert(caught.getStackTrace.contains(CoderStackTrace.CoderStackElemMarker))
+    assert(caught.getStackTrace.exists(_.getClassName.contains(classOf[CoderTest].getName)))
   }
 
   it should "#1651: remove all anotations from derived coders" in {
@@ -547,6 +537,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support derivation of recursive types" in {
+    import RecursiveCase._
+
     noException should be thrownBy
       SerializableUtils.serializeToByteArray(CoderMaterializer.beamWithDefault(Coder[Top]))
 
@@ -556,7 +548,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       )
 
     "Coder[SampleField]" should compile
-    "Coder[SampleFieldType]" should compile
+    // deriving this coder under 2.11 will fail
+    // https://github.com/scala/bug/issues/5466
+    // https://github.com/propensive/magnolia/issues/78
+    // "Coder[SampleFieldType]" should compile
 
     SampleField("hello", StringType) coderShould roundtrip()
 
@@ -580,6 +575,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "#2467 support derivation of directly recursive types" in {
+    import RecursiveCase._
     Recursive(1, Option(Recursive(2, None))) coderShould roundtrip()
   }
 
@@ -641,4 +637,16 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     bloomFilter coderShould roundtrip()
     bloomFilter coderShould beDeterministic()
   }
+}
+
+object RecursiveCase {
+  case class SampleField(name: String, fieldType: SampleFieldType)
+  sealed trait SampleFieldType
+  case object IntegerType extends SampleFieldType
+  case object StringType extends SampleFieldType
+  case class RecordType(fields: List[SampleField]) extends SampleFieldType
+
+  implicit val coderSampleFieldType = Coder.gen[SampleField] // scalafix:ok
+
+  case class Recursive(a: Int, rec: Option[Recursive] = None)
 }

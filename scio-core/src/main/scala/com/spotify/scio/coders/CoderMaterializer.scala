@@ -20,8 +20,6 @@ package com.spotify.scio.coders
 import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder, NullableCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
-import scala.util.chaining._
-
 object CoderMaterializer {
   import com.spotify.scio.ScioContext
 
@@ -41,65 +39,62 @@ object CoderMaterializer {
     o: PipelineOptions = PipelineOptionsFactory.create()
   ): BCoder[T] = beam(o, coder)
 
+  @inline private def nullCoder[T](o: CoderOptions, c: BCoder[T]) =
+    if (o.nullableCoders) NullableCoder.of(c)
+    else c
+
   final def beam[T](
     o: PipelineOptions,
     coder: Coder[T]
-  ): BCoder[T] = beamImpl(CoderOptions(o), coder, topLevel = true)
-
-  private def isNullableCoder(o: CoderOptions, c: Coder[_]): Boolean = c match {
-    case _: RawBeam[_]      => false // raw cannot be made nullable
-    case _: KVCoder[_, _]   => false // KV cannot be made nullable
-    case _: Transform[_, _] => false // nullability should be deferred to transformed coders
-    case _: Ref[_]          => false // nullability should be deferred to underlying coder
-    case _                  => o.nullableCoders
-  }
-
-  private def isWrappableCoder(topLevel: Boolean, c: Coder[_]): Boolean = c match {
-    case _: RawBeam[_]    => false // raw should not be wrapped
-    case _: KVCoder[_, _] => false // KV should not be wrapped, but independent k,v can
-    case _                => topLevel
-  }
+  ): BCoder[T] = beamImpl(CoderOptions(o), coder)
 
   final private[scio] def beamImpl[T](
     o: CoderOptions,
-    coder: Coder[T],
-    topLevel: Boolean = false
-  ): BCoder[T] = {
-    val bCoder: BCoder[T] = coder match {
-      case RawBeam(c) =>
-        c
+    coder: Coder[T]
+  ): BCoder[T] =
+    coder match {
+      case RawBeam(c) => c
+      // #1734: do not wrap native beam coders
+      case Beam(c) if c.getClass.getPackage.getName.startsWith("org.apache.beam") =>
+        nullCoder(o, c)
       case Beam(c) =>
-        c
+        WrappedBCoder.create(nullCoder(o, c))
       case Fallback(_) =>
-        new KryoAtomicCoder[T](o.kryo)
+        val kryoCoder = new KryoAtomicCoder[T](o.kryo)
+        WrappedBCoder.create(nullCoder(o, kryoCoder))
       case Transform(c, f) =>
-        val uc = f(beamImpl(o, c))
-        beamImpl(o, uc)
+        val u = f(beamImpl(o, c))
+        WrappedBCoder.create(beamImpl(o, u))
       case Record(typeName, coders, construct, destruct) =>
-        RecordCoder(
-          typeName,
-          coders.map { case (n, c) => n -> beamImpl(o, c) },
-          construct,
-          destruct
+        WrappedBCoder.create(
+          nullCoder(
+            o,
+            RecordCoder(
+              typeName,
+              coders.map(c => c._1 -> nullCoder(o, beamImpl(o, c._2))),
+              construct,
+              destruct
+            )
+          )
         )
       case Disjunction(typeName, idCoder, id, coders) =>
-        DisjunctionCoder(
-          typeName,
-          beamImpl(o, idCoder),
-          id,
-          coders.map { case (k, u) => k -> beamImpl(o, u) }
+        WrappedBCoder.create(
+          nullCoder(
+            o,
+            DisjunctionCoder(
+              typeName,
+              beamImpl(o, idCoder),
+              id,
+              coders.iterator.map { case (k, u) => (k, beamImpl(o, u)) }.toMap
+            )
+          )
         )
       case KVCoder(koder, voder) =>
-        // propagate topLevel to k & v coders
-        val kbc = beamImpl(o, koder, topLevel)
-        val vbc = beamImpl(o, voder, topLevel)
-        KvCoder.of(kbc, vbc)
+        WrappedBCoder.create(KvCoder.of(beamImpl(o, koder), beamImpl(o, voder)))
       case Ref(t, c) =>
         LazyCoder[T](t, o)(c)
     }
 
-    bCoder
-      .pipe(bc => if (isNullableCoder(o, coder)) NullableCoder.of(bc) else bc)
-      .pipe(bc => if (isWrappableCoder(topLevel, coder)) WrappedBCoder(bc) else bc)
-  }
+  def kvCoder[K, V](ctx: ScioContext)(implicit k: Coder[K], v: Coder[V]): KvCoder[K, V] =
+    KvCoder.of(beam(ctx, k), beam(ctx, v))
 }

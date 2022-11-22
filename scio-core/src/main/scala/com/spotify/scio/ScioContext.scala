@@ -21,7 +21,8 @@ import java.beans.Introspector
 import java.io.File
 import java.net.URI
 import java.nio.file.Files
-import com.spotify.scio.coders.{Coder, CoderMaterializer, KVCoder}
+
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
@@ -782,9 +783,9 @@ class ScioContext private[scio] (
     elems: Map[K, V]
   )(implicit koder: Coder[K], voder: Coder[V]): SCollection[(K, V)] =
     requireNotClosed {
-      val coder = CoderMaterializer.beam(this, KVCoder(koder, voder))
+      val kvc = CoderMaterializer.kvCoder[K, V](this)
       this
-        .applyTransform(Create.of(elems.asJava).withCoder(coder))
+        .applyTransform(Create.of(elems.asJava).withCoder(kvc))
         .map(kv => (kv.getKey, kv.getValue))
     }
 

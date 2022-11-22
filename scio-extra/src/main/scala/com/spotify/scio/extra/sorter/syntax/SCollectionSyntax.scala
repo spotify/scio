@@ -17,11 +17,13 @@
 
 package com.spotify.scio.extra.sorter.syntax
 
+import java.lang.{Iterable => JIterable}
+
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.extra.sorter.SortingKey
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.coders.IterableCoder
+import org.apache.beam.sdk.coders.{IterableCoder, KvCoder}
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType
 import org.apache.beam.sdk.extensions.sorter.{BufferedExternalSorter, SortValues}
 import org.apache.beam.sdk.values.KV
@@ -52,19 +54,24 @@ final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2
   def sortValues(memoryMB: Int)(implicit
     k1Coder: Coder[K1],
     k2Coder: Coder[K2],
-    vCoder: Coder[V]
+    vCoder: Coder[V],
+    kvCoder: Coder[KV[K1, JIterable[KV[K2, V]]]]
   ): SCollection[(K1, Iterable[(K2, V)])] = self.transform { c =>
     val options = BufferedExternalSorter
       .options()
       .withExternalSorterType(SorterType.NATIVE)
       .withMemoryMB(memoryMB)
-    // SortValues expects an IterableCoder. Use a raw coder to avoid wrapping
-    val valueCoder = CoderMaterializer.beam(self.context, Coder.kv(k2Coder, vCoder))
-    val coder = Coder.kv(k1Coder, Coder.raw(IterableCoder.of(valueCoder)))
+
     c.withName("TupleToKv")
-      .map { case (k1, vs) => KV.of(k1, vs.map { case (k2, v) => KV.of(k2, v) }.asJava) }(coder)
+      .map(kv => KV.of(kv._1, kv._2.map(t => KV.of(t._1, t._2)).asJava))
+      .setCoder(
+        KvCoder.of(
+          CoderMaterializer.beam(self.context, k1Coder),
+          IterableCoder.of(CoderMaterializer.kvCoder[K2, V](self.context))
+        )
+      )
       .withName("SortValues")
-      .applyTransform(SortValues.create[K1, K2, V](options))(coder)
+      .applyTransform(SortValues.create[K1, K2, V](options))
       .withName("KvToTuple")
       .map { kv =>
         val iter = new Iterable[(K2, V)] {
