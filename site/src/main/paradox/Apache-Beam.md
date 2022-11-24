@@ -16,6 +16,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio** | **SDK Dependency** | **Description**                                                                                                                     |
 |:--------:|:------------------:|:------------------------------------------------------------------------------------------------------------------------------------|
+|  0.12.x  | Apache Beam 2.x.x  | com.spotify.scio.extra.bigquery, com.spotify.scio.pubsub removed. scio-elasticsearch6 deprecated.                                   |
 |  0.11.x  | Apache Beam 2.x.x  | scio-sql and case-app removed, com.spotify.scio.extra.bigquery deprecated, shaded Beam Avro coder, `tensorflow-core-platform` 0.3.3 |
 |  0.10.x  | Apache Beam 2.x.x  | Coder implicits, `scio-google-cloud-platform`                                                                                       |
 |  0.9.x   | Apache Beam 2.x.x  | Drop Scala 2.11, add Scala 2.13, Guava based Bloom Filter                                                                           |
@@ -30,9 +31,11 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details**                                           |
 |:----------------:|:----------------:|:------------------------------------------------------|
-|      0.11.12     |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
-|      0.11.11     |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
-|      0.11.10     |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
+|      0.12.0      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
+|     0.11.13      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
+|     0.11.12      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
+|     0.11.11      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
+|     0.11.10      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
 |      0.11.9      |      2.39.0      | This version will be deprecated on May 25, 2023.      |
 |      0.11.6      |      2.38.0      | This version will be deprecated on April 20, 2023.    |
 |      0.11.5      |      2.36.0      | This version will be deprecated on February 7, 2023.  |

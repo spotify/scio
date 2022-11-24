@@ -59,9 +59,18 @@ git push origin vX.Y.Z
 <sup>*</sup>Starting with `0.4.0` all release names are scientific names of animals with genus and species starting with the same letter, in ascending alphabetical order; Harry Potter spells starting with `0.8.0`; Latin names of cities in ascending alphabetical order starting `0.10.0`; Latin names of countries in ascending alphabetical order starting `0.11.0`.
 
 ## Past release names
+### 0.12.x
+
+- [v0.12.0](https://github.com/spotify/scio/releases/tag/v0.12.0) - _"Dalmatia"_
 
 ### 0.11.x
 
+- [v0.11.13](https://github.com/spotify/scio/releases/tag/v0.11.13) - _"Galatia"_
+- [v0.11.12](https://github.com/spotify/scio/releases/tag/v0.11.12) - _"Formosa"_
+- [v0.11.11](https://github.com/spotify/scio/releases/tag/v0.11.11) - _"Finnia"_
+- [v0.11.10](https://github.com/spotify/scio/releases/tag/v0.11.10) - _"Dania"_
+- [v0.11.9](https://github.com/spotify/scio/releases/tag/v0.11.9) - _"Dacia"_
+- [v0.11.8](https://github.com/spotify/scio/releases/tag/v0.11.8) - _"Cyrenaica"_
 - [v0.11.7](https://github.com/spotify/scio/releases/tag/v0.11.7) - _"Creta"_
 - [v0.11.6](https://github.com/spotify/scio/releases/tag/v0.11.6) - _"Colchis"_
 - [v0.11.5](https://github.com/spotify/scio/releases/tag/v0.11.5) - _"Cambria"_
