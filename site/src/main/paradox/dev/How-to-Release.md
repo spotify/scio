@@ -61,10 +61,15 @@ git push origin vX.Y.Z
 ## Past release names
 ### 0.12.x
 
+- [v0.12.1](https://github.com/spotify/scio/releases/tag/v0.12.1) - _"Gallia"_
 - [v0.12.0](https://github.com/spotify/scio/releases/tag/v0.12.0) - _"Dalmatia"_
 
 ### 0.11.x
 
+- [v0.11.13](https://github.com/spotify/scio/releases/tag/v0.11.13) - _"Galatia"_
+- [v0.11.12](https://github.com/spotify/scio/releases/tag/v0.11.12) - _"Formosa"_
+- [v0.11.11](https://github.com/spotify/scio/releases/tag/v0.11.11) - _"Finnia"_
+- [v0.11.10](https://github.com/spotify/scio/releases/tag/v0.11.10) - _"Dania"_
 - [v0.11.9](https://github.com/spotify/scio/releases/tag/v0.11.9) - _"Dacia"_
 - [v0.11.8](https://github.com/spotify/scio/releases/tag/v0.11.8) - _"Cyrenaica"_
 - [v0.11.7](https://github.com/spotify/scio/releases/tag/v0.11.7) - _"Creta"_
