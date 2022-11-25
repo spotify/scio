@@ -121,7 +121,6 @@ val scalaCollectionCompatVersion = "2.8.1"
 val scalacticVersion = "3.2.14"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.13"
-val scalaXmlVersion = "1.3.0"
 val shapelessVersion = "2.3.10"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.4"
@@ -1438,6 +1437,5 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
-  "org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion,
   "org.threeten" % "threetenbp" % threetenbpVersion
 )
