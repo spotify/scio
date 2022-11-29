@@ -28,6 +28,8 @@ import scala.util.Try
 
 object BigQueryConfig {
 
+  case class ImpersonationInfo(targetPrincipal: String, lifetime: Int)
+
   /** Default cache directory. */
   private[this] val CacheDirectoryDefault: Path = Paths
     .get(CoreSysProps.TmpDir.value)
@@ -69,6 +71,14 @@ object BigQueryConfig {
 
   def readTimeoutMs: Option[Int] =
     BigQuerySysProps.ReadTimeoutMs.valueOption.map(_.toInt)
+
+  def impersonationInfo: Option[ImpersonationInfo] = {
+    BigQuerySysProps.ActAs.valueOption.map { actAs =>
+      val lifetime =
+        BigQuerySysProps.ImpersonationLifetimeSec.valueOption.flatMap(x => Try(x.toInt).toOption)
+      ImpersonationInfo(actAs, lifetime.getOrElse(3600))
+    }
+  }
 
   def priority: QueryPriority = {
     lazy val isCompilingOrTesting = Thread
