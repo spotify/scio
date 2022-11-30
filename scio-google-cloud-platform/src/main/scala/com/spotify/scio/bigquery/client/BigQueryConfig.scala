@@ -74,8 +74,7 @@ object BigQueryConfig {
 
   def impersonationInfo: Option[ImpersonationInfo] = {
     BigQuerySysProps.ActAs.valueOption.map { actAs =>
-      val lifetime =
-        BigQuerySysProps.ImpersonationLifetimeSec.valueOption.flatMap(x => Try(x.toInt).toOption)
+      val lifetime = BigQuerySysProps.ImpersonationLifetimeSec.valueOption.map(_.toInt)
       ImpersonationInfo(actAs, lifetime.getOrElse(3600))
     }
   }
