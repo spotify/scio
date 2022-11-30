@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -86,7 +87,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonProperty private final Class<K1> keyClass;
 
-  @JsonProperty private final Class<K2> keyClassSecondary;
+  @JsonProperty @JsonInclude(JsonInclude.Include.NON_NULL) private final Class<K2> keyClassSecondary;
 
   @JsonProperty private final HashType hashType;
 
@@ -345,7 +346,6 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   public static <K1, K2, V> void to(
       BucketMetadata<K1, K2, V> bucketMetadata, OutputStream outputStream) throws IOException {
-
     objectMapper.writeValue(outputStream, bucketMetadata);
   }
 

@@ -19,6 +19,8 @@ package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -450,6 +452,27 @@ public class AvroBucketMetadataTest {
                 HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX,
                 illegalUnionSchema2));
+  }
+
+  @Test
+  public void skipsNullSecondaryKeys() throws CannotProvideCoderException, NonDeterministicException, IOException {
+    final AvroBucketMetadata<String, Void, GenericRecord> metadata =
+            new AvroBucketMetadata<>(
+                    4,
+                    1,
+                    String.class,
+                    "favorite_color",
+                    null,
+                    null,
+                    HashType.MURMUR3_32,
+                    SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+                    AvroGeneratedUser.SCHEMA$);
+
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    BucketMetadata.to(metadata, os);
+
+    Assert.assertFalse(os.toString().contains("keyFieldSecondary"));
+    Assert.assertNull(((AvroBucketMetadata) BucketMetadata.from(os.toString())).getKeyClassSecondary());
   }
 
   private static Schema createUnionRecordOfTypes(Schema.Type... types) {

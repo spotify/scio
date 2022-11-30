@@ -21,6 +21,7 @@ import static org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.bigquery.model.TableRow;
 import java.util.Arrays;
@@ -36,7 +37,7 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow> {
 
   @JsonProperty private final String keyField;
-  @JsonProperty private final String keyFieldSecondary;
+  @JsonProperty @JsonInclude(JsonInclude.Include.NON_NULL) private final String keyFieldSecondary;
   @JsonIgnore private final String[] keyPath;
   @JsonIgnore private final String[] keyPathSecondary;
 

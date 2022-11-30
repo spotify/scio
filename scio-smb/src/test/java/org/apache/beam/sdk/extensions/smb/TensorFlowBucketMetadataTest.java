@@ -21,8 +21,13 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
 import com.google.protobuf.ByteString;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
+import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -227,5 +232,17 @@ public class TensorFlowBucketMetadataTest {
 
     Assert.assertTrue(metadata4.isPartitionCompatibleForPrimaryKey(metadata5));
     Assert.assertFalse(metadata4.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata5));
+  }
+
+  @Test
+  public void skipsNullSecondaryKeys() throws CannotProvideCoderException, Coder.NonDeterministicException, IOException {
+    final TensorFlowBucketMetadata<String, Void> metadata =
+            new TensorFlowBucketMetadata<>(4, 1, String.class, "bar", HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    BucketMetadata.to(metadata, os);
+
+    Assert.assertFalse(os.toString().contains("keyFieldSecondary"));
+    Assert.assertNull(((TensorFlowBucketMetadata) BucketMetadata.from(os.toString())).getKeyClassSecondary());
   }
 }
