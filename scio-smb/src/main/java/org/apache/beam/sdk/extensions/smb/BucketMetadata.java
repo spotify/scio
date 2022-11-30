@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -325,7 +326,13 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   // Serialization
   ////////////////////////////////////////
 
-  @JsonIgnore private static ObjectMapper objectMapper = new ObjectMapper();
+  @JsonIgnore private static ObjectMapper objectMapper = getObjectMapper();
+
+  private static ObjectMapper getObjectMapper() {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    return objectMapper;
+  }
 
   public static <K1, K2, V> BucketMetadata<K1, K2, V> from(String src) throws IOException {
     return objectMapper.readerFor(BucketMetadata.class).readValue(src);
