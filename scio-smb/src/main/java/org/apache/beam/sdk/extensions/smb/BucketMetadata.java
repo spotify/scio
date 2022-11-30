@@ -87,7 +87,9 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonProperty private final Class<K1> keyClass;
 
-  @JsonProperty @JsonInclude(JsonInclude.Include.NON_NULL) private final Class<K2> keyClassSecondary;
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final Class<K2> keyClassSecondary;
 
   @JsonProperty private final HashType hashType;
 

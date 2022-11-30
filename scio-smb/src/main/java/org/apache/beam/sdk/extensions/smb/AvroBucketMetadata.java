@@ -40,7 +40,10 @@ import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketMetadata<K1, K2, V> {
 
   @JsonProperty private final String keyField;
-  @JsonProperty @JsonInclude(JsonInclude.Include.NON_NULL) private final String keyFieldSecondary;
+
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String keyFieldSecondary;
 
   @JsonIgnore private final String[] keyPath;
   @JsonIgnore private final String[] keyPathSecondary;

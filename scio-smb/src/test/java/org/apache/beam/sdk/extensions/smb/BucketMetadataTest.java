@@ -181,16 +181,26 @@ public class BucketMetadataTest {
   public void testOldBucketMetadataIgnoresExtraFields() throws Exception {
     final int futureVersion = BucketMetadata.CURRENT_VERSION + 1;
     final String serializedAvro =
-            "{\"type\":\"org.apache.beam.sdk.extensions.smb.AvroBucketMetadata\",\"version\":" + futureVersion + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.AvroBucketMetadata\",\"version\":"
+            + futureVersion
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
     final String serializedJson =
-            "{\"type\":\"org.apache.beam.sdk.extensions.smb.JsonBucketMetadata\",\"version\":" + futureVersion + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.JsonBucketMetadata\",\"version\":"
+            + futureVersion
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
     final String serializedTensorflow =
-            "{\"type\":\"org.apache.beam.sdk.extensions.smb.TensorFlowBucketMetadata\",\"version\":" + futureVersion + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.TensorFlowBucketMetadata\",\"version\":"
+            + futureVersion
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"MURMUR3_32\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
 
     // Assert that no exception is thrown decoding.
-    Assert.assertEquals(((JsonBucketMetadata) BucketMetadata.from(serializedJson)).getVersion(), futureVersion);
-    Assert.assertEquals(((AvroBucketMetadata) BucketMetadata.from(serializedAvro)).getVersion(), futureVersion);
-    Assert.assertEquals(((TensorFlowBucketMetadata) BucketMetadata.from(serializedTensorflow)).getVersion(), futureVersion);
+    Assert.assertEquals(
+        ((JsonBucketMetadata) BucketMetadata.from(serializedJson)).getVersion(), futureVersion);
+    Assert.assertEquals(
+        ((AvroBucketMetadata) BucketMetadata.from(serializedAvro)).getVersion(), futureVersion);
+    Assert.assertEquals(
+        ((TensorFlowBucketMetadata) BucketMetadata.from(serializedTensorflow)).getVersion(),
+        futureVersion);
   }
 
   @Test

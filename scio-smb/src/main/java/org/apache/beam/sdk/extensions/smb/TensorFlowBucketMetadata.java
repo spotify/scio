@@ -37,7 +37,10 @@ import org.tensorflow.proto.example.Int64List;
 public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Example> {
 
   @JsonProperty private final String keyField;
-  @JsonProperty @JsonInclude(JsonInclude.Include.NON_NULL) private final String keyFieldSecondary;
+
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String keyFieldSecondary;
 
   public TensorFlowBucketMetadata(
       int numBuckets,

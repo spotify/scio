@@ -21,7 +21,6 @@ import static org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
 import com.google.protobuf.ByteString;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -235,14 +234,17 @@ public class TensorFlowBucketMetadataTest {
   }
 
   @Test
-  public void skipsNullSecondaryKeys() throws CannotProvideCoderException, Coder.NonDeterministicException, IOException {
+  public void skipsNullSecondaryKeys()
+      throws CannotProvideCoderException, Coder.NonDeterministicException, IOException {
     final TensorFlowBucketMetadata<String, Void> metadata =
-            new TensorFlowBucketMetadata<>(4, 1, String.class, "bar", HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+        new TensorFlowBucketMetadata<>(
+            4, 1, String.class, "bar", HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final ByteArrayOutputStream os = new ByteArrayOutputStream();
     BucketMetadata.to(metadata, os);
 
     Assert.assertFalse(os.toString().contains("keyFieldSecondary"));
-    Assert.assertNull(((TensorFlowBucketMetadata) BucketMetadata.from(os.toString())).getKeyClassSecondary());
+    Assert.assertNull(
+        ((TensorFlowBucketMetadata) BucketMetadata.from(os.toString())).getKeyClassSecondary());
   }
 }
