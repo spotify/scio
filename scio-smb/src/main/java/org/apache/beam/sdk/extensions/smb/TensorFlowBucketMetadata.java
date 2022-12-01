@@ -18,6 +18,7 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.protobuf.ByteString;
 import javax.annotation.Nullable;
@@ -36,7 +37,10 @@ import org.tensorflow.proto.example.Int64List;
 public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Example> {
 
   @JsonProperty private final String keyField;
-  @JsonProperty private final String keyFieldSecondary;
+
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String keyFieldSecondary;
 
   public TensorFlowBucketMetadata(
       int numBuckets,
