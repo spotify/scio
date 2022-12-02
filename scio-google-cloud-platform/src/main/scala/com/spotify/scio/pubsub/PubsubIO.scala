@@ -112,39 +112,44 @@ object PubsubIO {
     PubsubIOWithAttributes[T](name, idAttribute, timestampAttribute)
 
   private[pubsub] def configureRead[T](
-    read: beam.PubsubIO.Read[T]
+    r: beam.PubsubIO.Read[T]
   )(
     name: String,
     params: ReadParam,
     idAttribute: String,
     timestampAttribute: String
   ): beam.PubsubIO.Read[T] = {
-    val r0 =
+    var read =
       params.readType match {
-        case Subscription => read.fromSubscription(name)
-        case Topic        => read.fromTopic(name)
+        case Subscription => r.fromSubscription(name)
+        case Topic        => r.fromTopic(name)
       }
 
-    val r1 = params.clientFactory.fold(r0)(r0.withClientFactory)
-    val r2 = params.deadLetterTopic.fold(r1)(r1.withDeadLetterTopic)
-    val r3 = Option(idAttribute).fold(r2)(r2.withIdAttribute)
-    Option(timestampAttribute).fold(r3)(r3.withTimestampAttribute)
+    read = params.clientFactory.fold(read)(read.withClientFactory)
+    read = params.deadLetterTopic.fold(read)(read.withDeadLetterTopic)
+    read = Option(idAttribute).fold(read)(read.withIdAttribute)
+    read = Option(timestampAttribute).fold(read)(read.withTimestampAttribute)
+
+    read
   }
 
   private[pubsub] def configureWrite[T](
-    write: beam.PubsubIO.Write[T]
+    w: beam.PubsubIO.Write[T]
   )(
     name: String,
     params: WriteParam,
     idAttribute: String,
     timestampAttribute: String
   ): beam.PubsubIO.Write[T] = {
-    val w0 = write.to(name)
-    val w1 = params.maxBatchBytesSize.fold(w0)(w0.withMaxBatchBytesSize)
-    val w2 = params.maxBatchSize.fold(w1)(w1.withMaxBatchSize)
-    val w3 = params.clientFactory.fold(w2)(w2.withClientFactory)
-    val w4 = Option(idAttribute).fold(w3)(w3.withIdAttribute)
-    Option(timestampAttribute).fold(w4)(w4.withTimestampAttribute)
+    var write = w.to(name)
+
+    write = params.maxBatchBytesSize.fold(write)(write.withMaxBatchBytesSize)
+    write = params.maxBatchSize.fold(write)(write.withMaxBatchSize)
+    write = params.clientFactory.fold(write)(write.withClientFactory)
+    write = Option(idAttribute).fold(write)(write.withIdAttribute)
+    write = Option(timestampAttribute).fold(write)(write.withTimestampAttribute)
+
+    write
   }
 }
 
