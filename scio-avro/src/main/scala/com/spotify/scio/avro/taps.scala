@@ -25,7 +25,7 @@ import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.spotify.scio.values._
 import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.avro.specific.SpecificRecord
 
 import scala.concurrent.Future
@@ -47,7 +47,7 @@ final case class GenericRecordTap(
 }
 
 /** Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files. */
-final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: String)
+final case class SpecificRecordTap[T <: IndexedRecord: ClassTag: Coder](path: String)
     extends Tap[T] {
   override def value: Iterator[T] = FileStorage(path).avroFile[T]()
 

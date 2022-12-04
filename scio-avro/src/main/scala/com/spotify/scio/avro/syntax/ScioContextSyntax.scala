@@ -25,8 +25,7 @@ import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -77,7 +76,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
    * Avro file.
    */
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
+  def avroFile[T <: IndexedRecord: ClassTag: Coder](path: String): SCollection[T] =
     self.read(SpecificRecordIO[T](path))
 
   /**

@@ -27,8 +27,7 @@ import com.spotify.scio.values._
 import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.DoFn
@@ -161,7 +160,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
   }
 }
 
-final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
+final case class SpecificRecordIO[T <: IndexedRecord: ClassTag: Coder](path: String)
     extends AvroIO[T] {
   override type ReadP = Unit
   override type WriteP = AvroIO.WriteParam
