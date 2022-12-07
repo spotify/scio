@@ -32,4 +32,13 @@ object FixBqSaveAsTable {
 
   def saveAsBigQueryTableMultiParamsAllNamed(in: SCollection[GenericRecord]): Unit =
     in.saveAvroAsBigQuery(table = tableRef, writeDisposition = writeDisposition, createDisposition = createDisposition, tableDescription = tableDescription)
+
+  def saveAsBigQueryTableMultiParamsWithSchemaUnnamed(in: SCollection[GenericRecord]): Unit =
+    in.saveAvroAsBigQuery(tableRef, schema, writeDisposition, createDisposition, tableDescription)
+
+  def saveAsBigQueryTableMultiParamsWithSchemaNamed(in: SCollection[GenericRecord]): Unit =
+    in.saveAvroAsBigQuery(tableRef, avroSchema = schema, writeDisposition = writeDisposition, createDisposition = createDisposition, tableDescription = tableDescription)
+
+  def saveAsBigQueryTableMultiParamsNamedOrderChanged(in: SCollection[GenericRecord]): Unit =
+    in.saveAvroAsBigQuery(tableRef, writeDisposition = writeDisposition, avroSchema = schema)
 }

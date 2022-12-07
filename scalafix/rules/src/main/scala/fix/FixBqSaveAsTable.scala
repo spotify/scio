@@ -11,28 +11,43 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case a @ Term.Apply(fun, head :: tail) =>
+      case a @ Term.Apply(fun, params) =>
         if (fun.symbol.normalized.toString.contains(methodName)) {
           fun match {
             case Term.Select(qual, name) =>
               name match {
                 case Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
-                  // the rest of args should be named because the parameter order has changed
-                  if (
-                    tail.exists(!_.toString.contains("=")) ||
-                    // `avroSchema` doesn't exist in the list of the new method
-                    tail.exists(_.toString.contains("avroSchema"))
-                  ) {
-                    Patch.empty // not possible to fix, leave it to `LintBqSaveAsTable`
-                  } else {
-                    val headParam = if (head.toString.contains("=")) {
-                      s"table = Table.Ref(${head.toString.split("=").last.trim})"
-                    } else {
-                      s"Table.Ref($head)"
-                    }
-                    val allArgs = (headParam :: tail).mkString(", ")
-                    Patch.replaceTree(a, s"$qual.saveAsBigQueryTable($allArgs)")
-                  }
+                  val paramsUpdated =
+                    params
+                      .map(_.toString)
+                      .zipWithIndex
+                      .foldLeft(List[String]()) { case (accumulator, (param, index)) =>
+                        accumulator :+ (
+                          index match {
+                            // table is always the first param and without default value
+                            case 0 =>
+                              if (param.contains("=")) {
+                                s"table = Table.Ref(${param.split("=").last.trim})"
+                              } else {
+                                s"Table.Ref($param)"
+                              }
+
+                            // if not named, `avroSchema` param should come second
+                            case 1 if !param.contains("=") => s"toTableSchema($param)"
+
+                            // parameter name has changes from `avroSchema` to `schema`
+                            case _ if param.startsWith("avroSchema") && param.contains("=") =>
+                              s"schema = toTableSchema(${param.split("=").last.trim})"
+
+                            // everything else can be kept as is
+                            case _ => param
+                          }
+                        )
+                      }
+                      .mkString(", ")
+
+                  Patch.replaceTree(a, s"$qual.saveAsBigQueryTable($paramsUpdated)")
+
                 case _ =>
                   Patch.empty
               }
@@ -44,7 +59,10 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
         }
       case Importer(q"com.spotify.scio.extra.bigquery", imps) =>
         Patch.removeImportee(imps.head) +
-          Patch.addGlobalImport(importer"com.spotify.scio.bigquery._")
+          Patch.addGlobalImport(importer"com.spotify.scio.bigquery._") +
+          Patch.addGlobalImport(
+            importer"com.spotify.scio.extra.bigquery.AvroConverters.toTableSchema"
+          )
       case _ => Patch.empty
     }.asPatch
   }

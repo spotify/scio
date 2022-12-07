@@ -7,6 +7,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write._
 import com.spotify.scio.bigquery._
+import com.spotify.scio.extra.bigquery.AvroConverters.toTableSchema
 
 object FixBqSaveAsTable {
   val tableRef = new TableReference()
@@ -29,5 +30,14 @@ object FixBqSaveAsTable {
 
   def saveAsBigQueryTableMultiParamsAllNamed(in: SCollection[GenericRecord]): Unit =
     in.saveAsBigQueryTable(table = Table.Ref(tableRef), writeDisposition = writeDisposition, createDisposition = createDisposition, tableDescription = tableDescription)
+
+  def saveAsBigQueryTableMultiParamsWithSchemaUnnamed(in: SCollection[GenericRecord]): Unit =
+    in.saveAsBigQueryTable(Table.Ref(tableRef), toTableSchema(schema), writeDisposition, createDisposition, tableDescription)
+
+  def saveAsBigQueryTableMultiParamsWithSchemaNamed(in: SCollection[GenericRecord]): Unit =
+    in.saveAsBigQueryTable(Table.Ref(tableRef), schema = toTableSchema(schema), writeDisposition = writeDisposition, createDisposition = createDisposition, tableDescription = tableDescription)
+
+  def saveAsBigQueryTableMultiParamsNamedOrderChanged(in: SCollection[GenericRecord]): Unit =
+    in.saveAsBigQueryTable(Table.Ref(tableRef), writeDisposition = writeDisposition, schema = toTableSchema(schema))
 }
 
