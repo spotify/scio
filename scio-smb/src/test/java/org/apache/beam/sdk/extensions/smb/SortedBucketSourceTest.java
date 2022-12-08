@@ -18,9 +18,9 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
-import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSecondaryKeyedBucktedInput;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR;
+import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSecondaryKeyedBucktedInput;
+import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
 import java.io.File;

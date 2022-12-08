@@ -63,4 +63,14 @@ object BigQuerySysProps {
     "bigquery.debug_auth",
     "System property key to enable logging active BigQuery user information on auth errors"
   )
+
+  val ActAs: SysProp = SysProp(
+    "bigquery.act_as",
+    "System property key for a target SA principal to impersonate current auth"
+  )
+
+  val ImpersonationLifetimeSec: SysProp = SysProp(
+    "bigquery.act_as_lifetime",
+    "System property key for a duration in seconds of a target SA temporary credentials lifetime"
+  )
 }

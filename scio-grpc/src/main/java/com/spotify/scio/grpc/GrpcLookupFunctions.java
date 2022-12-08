@@ -17,9 +17,7 @@
 package com.spotify.scio.grpc;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.StreamObserver;
-import java.io.Serializable;
 import java.util.LinkedList;
 
 /** Defines lookup functions specific to the GRPC Java library. */

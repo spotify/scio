@@ -17,13 +17,12 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import org.apache.parquet.io.OutputFile;
-import org.apache.parquet.io.PositionOutputStream;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import org.apache.parquet.io.OutputFile;
+import org.apache.parquet.io.PositionOutputStream;
 
 public class ParquetOutputFile implements OutputFile {
   private final WritableByteChannel channel;

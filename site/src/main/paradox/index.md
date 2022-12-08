@@ -26,7 +26,7 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 - @ref:[Runners](Runners.md) - how Scio handles Beam runners and runner specific logic
 - @ref:[Scio data guideline](Scio-data-guideline.md) - guideline for common problems
 - @ref:[Apache Beam](Apache-Beam.md) - notes on Apache Beam compatibility
-- @ref:[Changelog](Changelog.md) - breaking changes in each release
+- @ref:[Releases](releases/index.md) - Detailed release notes on new Scio releases
 - @ref:[FAQ](FAQ.md) - frequently asked questions
 - @ref:[Powered By](Powered-By.md) - see who is using Scio in production
 
@@ -97,7 +97,7 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 * @ref:[Runners](Runners.md)
 * @ref:[Data guideline](Scio-data-guideline.md)
 * @ref:[Beam Compatibility Guide](Apache-Beam.md)
-* @ref:[Changelog](Changelog.md)
+* @ref:[Releases](releases/index.md)
 * @ref:[FAQ](FAQ.md)
 * @ref:[Powered By](Powered-By.md)
 
