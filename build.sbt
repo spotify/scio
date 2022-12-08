@@ -30,7 +30,7 @@ val beamVendorVersion = "0.1"
 val beamVersion = "2.43.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/master/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.43.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -57,7 +57,7 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.1.3/index.html
 val animalSnifferAnnotationsVersion = "1.22"
 val bigQueryStorageBetaVersion = "0.147.1"
 val bigQueryStorageVersion = "2.23.1"
