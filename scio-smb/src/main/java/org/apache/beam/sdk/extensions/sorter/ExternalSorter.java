@@ -93,7 +93,8 @@ public abstract class ExternalSorter implements Sorter {
   /** Returns a {@link Sorter} configured with the given {@link Options}. */
   public static ExternalSorter create(Options options) {
     checkArgument(
-        options.getSorterType() == Options.SorterType.NATIVE, "NativeExternalSorter is the only supported external sorter");
+        options.getSorterType() == Options.SorterType.NATIVE,
+        "NativeExternalSorter is the only supported external sorter");
     return NativeExternalSorter.create(options);
   }
 
