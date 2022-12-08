@@ -18,7 +18,6 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.protobuf.ByteString;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
