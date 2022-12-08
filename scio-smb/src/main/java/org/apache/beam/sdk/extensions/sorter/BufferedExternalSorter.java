@@ -39,7 +39,7 @@ public class BufferedExternalSorter implements Sorter {
   private static Logger LOG = LoggerFactory.getLogger(BufferedExternalSorter.class);
 
   public static Options options() {
-    return new Options("/tmp", 100, SorterType.HADOOP);
+    return new Options(SorterSysProps.getTempLocation(), 100, SorterType.HADOOP);
   }
 
   /** Contains configuration for the sorter. */

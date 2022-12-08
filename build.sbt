@@ -18,7 +18,7 @@
 import sbt._
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
-import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
+import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import de.heikoseeberger.sbtheader.CommentCreator
@@ -98,11 +98,11 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.6"
-val elasticsearch8Version = "8.5.0"
+val elasticsearch8Version = "8.5.2"
 val featranVersion = "0.8.0-RC2"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
-val jodaTimeVersion = "2.11.2"
+val jodaTimeVersion = "2.12.2"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
@@ -111,22 +111,21 @@ val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.1.2"
 val magnolifyVersion = "0.6.2"
 val metricsVersion = "3.2.6"
-val neo4jDriverVersion = "4.4.9"
+val neo4jDriverVersion = "4.4.10"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
-val pprintVersion = "0.8.0"
+val pprintVersion = "0.8.1"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
-val scalaCollectionCompatVersion = "2.8.1"
+val scalaCollectionCompatVersion = "2.9.0"
 val scalacticVersion = "3.2.14"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.13"
-val scalaXmlVersion = "1.3.0"
 val shapelessVersion = "2.3.10"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.4"
 val tensorFlowVersion = "0.4.1"
-val testContainersVersion = "0.40.11"
+val testContainersVersion = "0.40.12"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -1438,6 +1437,5 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
-  "org.scala-lang.modules" %% "scala-xml" % scalaXmlVersion,
   "org.threeten" % "threetenbp" % threetenbpVersion
 )

@@ -20,7 +20,7 @@ package com.spotify.scio.coders
 import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException, NullableCoder, StringUtf8Coder}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalactic.Equality
@@ -521,6 +521,17 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     nullBCoder.registerByteSizeObserver(nullExample1, noopObserver)
     nullBCoder.registerByteSizeObserver(nullExample2, noopObserver)
     nullBCoder.registerByteSizeObserver(nullExample3, noopObserver)
+  }
+
+  it should "not re-wrap nullable coder" in {
+    val opts: PipelineOptions = PipelineOptionsFactory.create()
+    opts.as(classOf[ScioOptions]).setNullableCoders(true)
+
+    val bCoder = NullableCoder.of(StringUtf8Coder.of())
+    // this could be a PairSCollectionFunctions.valueCoder extracted after materialization
+    val coder = Coder.beam(bCoder)
+    val materializedCoder = CoderMaterializer.beamWithDefault(coder, opts)
+    materializedCoder shouldBe new MaterializedCoder[String](bCoder)
   }
 
   it should "have a useful stacktrace when a Coder throws" in {
