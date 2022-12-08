@@ -18,7 +18,7 @@
 import sbt._
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
-import com.typesafe.sbt.SbtGit.GitKeys.gitRemoteRepo
+import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import de.heikoseeberger.sbtheader.CommentCreator
