@@ -19,12 +19,10 @@ package com.spotify.scio.schemas.instances
 
 import java.util
 import java.time.LocalDate
-
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.schemas.{ArrayType, MapType, RawRecord, Schema, Type}
 import org.apache.beam.sdk.schemas.JavaBeanSchema
 import org.apache.beam.sdk.schemas.Schema.{FieldType, LogicalType}
-import org.apache.beam.sdk.extensions.sql.impl.utils.CalciteUtils
 
 import scala.reflect.ClassTag
 
@@ -86,7 +84,16 @@ trait JavaInstances {
       override def getArgumentType: FieldType = FieldType.STRING
     }))
 
-  implicit def jLocalDate: Type[LocalDate] = Type(CalciteUtils.DATE)
+  implicit def jLocalDate: Type[LocalDate] =
+    Type[LocalDate](FieldType.logicalType(new LogicalType[LocalDate, java.lang.Long] {
+      override def getIdentifier: String = classOf[LocalDate].getCanonicalName
+      override def getArgumentType: FieldType = FieldType.STRING
+      override def getBaseType: FieldType = FieldType.INT64
+      override def toBaseType(input: LocalDate): java.lang.Long =
+        Option(input).map(_.toEpochDay).map(Long.box).orNull
+      override def toInputType(base: java.lang.Long): LocalDate =
+        Option(base).map(Long.unbox).map(LocalDate.ofEpochDay).orNull
+    }))
 }
 
 private[schemas] object JavaInstances extends JavaInstances

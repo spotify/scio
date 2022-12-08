@@ -738,7 +738,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def groupByKey: SCollection[(K, Iterable[V])] =
     this
-      .applyPerKey(GroupByKey.create[K, V]())(kvIterableToTuple)
+      .applyPerKey(GroupByKey.create[K, V]())(kvIterableToTuple)(
+        Coder.aggregate,
+        Coder.iterableCoder
+      )
       .withState(_.copy(postGbkOp = true))
 
   /**
@@ -766,7 +769,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val groupIntoBatches = GroupIntoBatches
       .ofSize[K, V](batchSize)
       .withMaxBufferingDuration(maxBufferingDuration)
-    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)(Coder.aggregate, Coder.iterableCoder)
   }
 
   /**
@@ -797,7 +800,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val groupIntoBatches = GroupIntoBatches
       .ofByteSize[K, V](batchByteSize)
       .withMaxBufferingDuration(maxBufferingDuration)
-    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)(Coder.aggregate, Coder.iterableCoder)
   }
 
   /**
@@ -830,7 +833,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     val groupIntoBatches = GroupIntoBatches
       .ofByteSize[K, V](weight, weigher)
       .withMaxBufferingDuration(maxBufferingDuration)
-    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)(Coder.aggregate, Coder.iterableCoder)
   }
 
   /**
@@ -992,7 +995,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def sampleByKey(sampleSize: Int): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize))(kvIterableToTuple)
+    this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize))(kvIterableToTuple)(
+      Coder.aggregate,
+      Coder.iterableCoder
+    )
 
   /**
    * Return a subset of this SCollection sampled by key (via stratified sampling).

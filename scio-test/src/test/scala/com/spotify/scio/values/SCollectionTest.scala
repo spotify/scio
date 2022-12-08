@@ -87,7 +87,8 @@ class SCollectionTest extends PipelineSpec {
       val p = sc
         .parallelize(Seq(1, 2, 3, 4, 5))
         .applyKvTransform(ParDo.of(newKvDoFn))
-        .applyKvTransform(GroupByKey.create())
+        // GroupByKey requires explicit aggregate coder
+        .applyKvTransform(GroupByKey.create())(Coder[Int], Coder.aggregate)
         .map(kv => (kv.getKey, kv.getValue.asScala.toList))
       p should containInAnyOrder(Seq(1, 2, 3, 4, 5).map(x => (x, List(x.toString))))
     }
