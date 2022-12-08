@@ -21,7 +21,6 @@ import static org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.bigquery.model.TableRow;
 import java.util.Arrays;
