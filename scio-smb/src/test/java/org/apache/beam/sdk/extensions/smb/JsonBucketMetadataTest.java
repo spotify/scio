@@ -20,7 +20,11 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
 import com.google.api.services.bigquery.model.TableRow;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
+import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.coders.VarIntCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
@@ -215,5 +219,27 @@ public class JsonBucketMetadataTest {
 
     Assert.assertTrue(metadata4.isPartitionCompatibleForPrimaryKey(metadata5));
     Assert.assertFalse(metadata4.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata5));
+  }
+
+  @Test
+  public void skipsNullSecondaryKeys()
+      throws CannotProvideCoderException, Coder.NonDeterministicException, IOException {
+    final JsonBucketMetadata<String, Void> metadata =
+        new JsonBucketMetadata<>(
+            4,
+            1,
+            String.class,
+            "favorite_color",
+            null,
+            null,
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+
+    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+    BucketMetadata.to(metadata, os);
+
+    Assert.assertFalse(os.toString().contains("keyFieldSecondary"));
+    Assert.assertNull(
+        ((JsonBucketMetadata) BucketMetadata.from(os.toString())).getKeyClassSecondary());
   }
 }

@@ -61,11 +61,13 @@ trait JavaCoders extends JavaBeanCoders {
   implicit def pathCoder: Coder[java.nio.file.Path] =
     Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => java.nio.file.Paths.get(s), _.toString)
 
-  import java.lang.{Iterable => JIterable}
-  implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[JIterable[T]] =
+  implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[java.lang.Iterable[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.IterableCoder.of(bc)))
 
-  implicit def jlistCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
+  @deprecated("Use jListCoder", since = "0.12.1")
+  def jlistCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] = jListCoder
+
+  implicit def jListCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.ListCoder.of(bc)))
 
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
