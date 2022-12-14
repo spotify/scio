@@ -147,6 +147,7 @@ spotify/scio
     <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
@@ -169,6 +170,7 @@ spotify/scio
     <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="../migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
+    <li><a href="../migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -183,7 +185,11 @@ spotify/scio
   <li><a href="../Runners.html" class="page">Runners</a></li>
   <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
   <li><a href="../Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
-  <li><a href="../Changelog.html" class="page">Changelog</a></li>
+  <li><a href="../releases/index.html" class="page">Releases</a>
+  <ul>
+    <li><a href="../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
+    <li><a href="../releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
+  </ul></li>
   <li><a href="../FAQ.html" class="page">FAQ</a></li>
   <li><a href="../Powered-By.html" class="page">Powered By</a></li>
 </ul>
@@ -194,7 +200,6 @@ spotify/scio
   <ul>
     <li><a href="../io/BigQuery.html#background" class="header">Background</a></li>
     <li><a href="../io/BigQuery.html#type-annotations" class="header">Type annotations</a></li>
-    <li><a href="../io/BigQuery.html#bigquery-reads-using-schema" class="header">BigQuery reads using <code>Schema</code></a></li>
     <li><a href="../io/BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
     <li><a href="../io/BigQuery.html#bigquery-authentication" class="header">BigQuery authentication</a></li>
     <li><a href="../io/BigQuery.html#bigquery-configurations-in-sbt" class="header">BigQuery configurations in SBT</a></li>
@@ -206,7 +211,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.14+0-c4c51d90+20221209-1858*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-d15477d2+20221214-1827*
 </label>
 </li>
 </ul>
@@ -223,7 +228,6 @@ spotify/scio
   <ul>
     <li><a href="../io/BigQuery.html#background" class="header">Background</a></li>
     <li><a href="../io/BigQuery.html#type-annotations" class="header">Type annotations</a></li>
-    <li><a href="../io/BigQuery.html#bigquery-reads-using-schema" class="header">BigQuery reads using <code>Schema</code></a></li>
     <li><a href="../io/BigQuery.html#using-type-safe-bigquery" class="header">Using type safe BigQuery</a></li>
     <li><a href="../io/BigQuery.html#bigquery-authentication" class="header">BigQuery authentication</a></li>
     <li><a href="../io/BigQuery.html#bigquery-configurations-in-sbt" class="header">BigQuery configurations in SBT</a></li>
@@ -385,23 +389,6 @@ Row.toPrettyString(2)
 </code></pre>
 <p>In addition, <code>BigQueryType.fromTable</code> and <code>BigQueryTable.fromQuery</code> generate <code>table: String</code> and <code>query: String</code> respectively that refers to parameters in the original annotation.</p>
 <p>import com.spotify.scio.bigquery.types.BigQueryTypeUser defined companion objects may interfere with macro code generation so for now do not provide one to a case class annotated with <code>@BigQueryType.toTable</code>, i.e. <code>object Row</code>.</p>
-<h2><a href="#bigquery-reads-using-schema" name="bigquery-reads-using-schema" class="anchor"><span class="anchor-link"></span></a>BigQuery reads using <code>Schema</code></h2>
-<p>Classes generated from <code>@BigQueryType</code> annotations extend the <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$$HasAnnotation.html" title="com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation"><code>HasAnnotation</code></a> trait, and most of Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/syntax/ScioContextOps.html" title="com.spotify.scio.bigquery.syntax.ScioContextOps"><code>user-facing BigQuery APIs</code></a> expect a parameterized type <code>T &lt;: HasAnnotation</code>. However, Scio also offers a typed BigQuery read API that accepts any type <code>T</code> with an implicit <a href="https://github.com/spotify/scio/tree/master/scio-core/src/main/scala/com/spotify/scio/schemas/Schema.scala">Schema</a> instance in scope:</p>
-<pre class="prettyprint"><code class="language-scala">def typedBigQueryTable[T: Schema: Coder: ClassTag](table: Table): SCollection[T]
-</code></pre>
-<p>A <code>Schema</code> will be implicitly derived at compile time (similar to <a href="../internals/Coders.html">Coder</a>s) for case classes and certain traits like Lists, Maps, and Options.</p>
-<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.bigquery._
-import com.spotify.scio.ContextAndArgs
-
-case class Shakespeare(word: String, word_count: Long, corpus: String, corpus_date: Long)
-
-def main(cmdlineArgs: Array[String]): Unit = {
-  val (sc, args) = ContextAndArgs(cmdlineArgs)
-  sc
-    .typedBigQueryTable[Shakespeare](Table.Spec(&quot;bigquery-public-data:samples.shakespeare&quot;))
-}
-</code></pre>
-<p>For more information on Schema materialization, see the <a href="../migrations/v0.8.0-Migration-Guide.html">V0.8.0 Migration Guide</a>.</p>
 <h2><a href="#using-type-safe-bigquery" name="using-type-safe-bigquery" class="anchor"><span class="anchor-link"></span></a>Using type safe BigQuery</h2>
 <h3><a href="#type-safe-bigquery-with-scio" name="type-safe-bigquery-with-scio" class="anchor"><span class="anchor-link"></span></a>Type safe BigQuery with Scio</h3>
 <p>To enable type safe BigQuery for <code>ScioContext</code>:</p>
@@ -470,7 +457,7 @@ def result =
 <p>See <a href="../internals/OverrideTypeProvider.html">OverrideTypeProvider</a> for details about the custom types and validation mechanism.</p>
 <h2><a href="#bigquery-authentication" name="bigquery-authentication" class="anchor"><span class="anchor-link"></span></a>BigQuery authentication</h2>
 <p>BigQuery authentication works a bit differently than other IO types and can be hard to reason about. File-based IOs, for example, are read from directly on each remote worker node. In contrast, for BigQuery reads, Scio will actually launch a <a href="https://cloud.google.com/bigquery/docs/exporting-data">Bigquery export job</a> from the main class process before submitting a Dataflow job request. This export job extracts the requested BQ data to a temporary GCS location, from which the job workers can read directly from. Thus, your launcher code must be credentialed with the <a href="https://cloud.google.com/bigquery/docs/exporting-data#required_permissions">required permissions</a> to export data.</p>
-<p>This credential will be picked up from the values of <code>bigquery.project</code> and <code>bigquery.secret</code>, if set. If they are not, Scio will attempt to find an active <a href="https://cloud.google.com/docs/authentication/production#automatically">Application Default Credential</a> and set the billing project to the value from <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>. As of Scio 0.11.6, you can set the SBT option <code>bigquery.debug_auth=true</code>, which enables Scio to log the active credential used in BigQuery queries that return a 403 FORBIDDEN status.</p>
+<p>This credential will be picked up from the values of <code>bigquery.project</code> and <code>bigquery.secret</code>, if set. If they are not, Scio will attempt to find an active <a href="https://cloud.google.com/docs/authentication/production#automatically">Application Default Credential</a> and set the billing project to the value from <a href="https://beam.apache.org/releases/javadoc/2.43.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>. As of Scio 0.11.6, you can set the SBT option <code>bigquery.debug_auth=true</code>, which enables Scio to log the active credential used in BigQuery queries that return a 403 FORBIDDEN status.</p>
 <p>A <a href="https://cloud.google.com/iam/docs/impersonating-service-accounts">service account impersonation</a> is available using SBT option <code>bigquery.act_as=service-account@my-project.iam.gserviceaccount.com</code>. It requires <code>roles/iam.serviceAccountTokenCreator</code> to be granted to a source account.</p>
 <p>Note that BigQuery Storage APIs don&rsquo;t require an export job as they can read from BigQuery directly.</p>
 <h2><a href="#bigquery-configurations-in-sbt" name="bigquery-configurations-in-sbt" class="anchor"><span class="anchor-link"></span></a>BigQuery configurations in SBT</h2>
@@ -485,7 +472,7 @@ def result =
   <tbody>
     <tr>
       <td><code>bigquery.project</code> </td>
-      <td>Specifies the billing project to use for queries. Defaults to the default project associated with the active GCP configuration (see <a href="https://beam.apache.org/releases/javadoc/2.41.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>). </td>
+      <td>Specifies the billing project to use for queries. Defaults to the default project associated with the active GCP configuration (see <a href="https://beam.apache.org/releases/javadoc/2.43.0/?org/apache/beam/sdk/extensions/gcp/options/GcpOptions.DefaultProjectFactory.html" title="org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory"><code>DefaultProjectFactory</code></a>). </td>
     </tr>
     <tr>
       <td><code>bigquery.secret</code> </td>
@@ -545,7 +532,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.14+0-c4c51d90+20221209-1858*
+0.0.0+1-d15477d2+20221214-1827*
 </span>
 </div>
 </article>
