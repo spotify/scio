@@ -19,28 +19,35 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
                 case Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
                   val paramsUpdated =
                     params
-                      .map(_.toString)
                       .zipWithIndex
-                      .foldLeft(List[String]()) { case (accumulator, (param, index)) =>
+                      .foldLeft(List[Object]()) { case (accumulator, (param, index)) =>
                         accumulator :+ (
                           index match {
                             // table is always the first param and without default value
                             case 0 =>
-                              if (param.contains("=")) {
-                                s"table = Table.Ref(${param.split("=").last.trim})"
-                              } else {
-                                s"Table.Ref($param)"
+                              param match {
+                                case Term.Assign((_, value)) =>
+                                  s"table = Table.Ref(${value})"
+                                case _ =>
+                                  s"Table.Ref($param)"
                               }
-
-                            // if not named, `avroSchema` param should come second
-                            case 1 if !param.contains("=") => s"toTableSchema($param)"
-
-                            // parameter name has changes from `avroSchema` to `schema`
-                            case _ if param.startsWith("avroSchema") && param.contains("=") =>
-                              s"schema = toTableSchema(${param.split("=").last.trim})"
-
-                            // everything else can be kept as is
-                            case _ => param
+                            case _ =>
+                              param match {
+                                case Term.Assign((name, value)) =>
+                                  // parameter name has changes from `avroSchema` to `schema`
+                                  if (name.toString == "avroSchema") {
+                                    s"schema = toTableSchema($value)"
+                                  } else {
+                                    param
+                                  }
+                                case _ =>
+                                  // if not a named param, `avroSchema` param should come second
+                                  if (index == 1) {
+                                    s"toTableSchema($param)"
+                                  } else {
+                                    param
+                                  }
+                              }
                           }
                         )
                       }
