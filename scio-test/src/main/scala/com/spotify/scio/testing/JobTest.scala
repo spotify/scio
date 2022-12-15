@@ -71,7 +71,7 @@ import scala.util.control.NonFatal
 object JobTest {
   case class BeamOptions(opts: List[String])
 
-  private case class BuilderState(
+  private[JobTest] case class BuilderState(
     className: String,
     cmdlineArgs: Array[String] = Array(),
     input: Map[String, JobInputSource[_]] = Map.empty,

@@ -140,7 +140,7 @@ class NestedClosuresNotSerializable {
     @nowarn("msg=local method x in method getMapFn is never used")
     def x = irrelevantInt
     def y = 2
-    val fn = { a: Int => a + y }
+    val fn = { (a: Int) => a + y }
     fn
   }
 }

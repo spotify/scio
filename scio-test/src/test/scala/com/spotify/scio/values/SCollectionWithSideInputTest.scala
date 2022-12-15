@@ -318,6 +318,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
   }
 
   it should "allow to wrap a view of a Map" in {
+    import com.spotify.scio.values.SCollection._
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val i2 = sc.parallelize(sideData).toKV.internal.apply(View.asMap())
@@ -328,6 +329,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
   }
 
   it should "allow to wrap a view of a MultiMap" in {
+    import com.spotify.scio.values.SCollection._
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(1))
       val i2 =
@@ -360,7 +362,7 @@ class SCollectionWithSideInputTest extends PipelineSpec {
       val p2 = sc.parallelize(sideData).asListSideInput
       val p3 = p2.map(seq => seq.map { case (k, v) => (k, v * 2) }.toSet)
       val s = p1.withSideInputs(p3).map((i, s) => (i, s(p3))).toSCollection
-      s should containSingleValue((1, sideData.map { case (k, v) => (k, v * 2) }.toSet))
+      s should containSingleValue[(Int, Set[(String, Int)])]((1, sideData.map { case (k, v) => (k, v * 2) }.toSet))
     }
   }
 

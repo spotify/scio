@@ -168,7 +168,7 @@ object TransformOverrideIterJob {
       .map(_.toInt)
       // #JobTestTest_example_iter
       .withName("myTransform")
-      .transform { c: SCollection[Int] =>
+      .transform { (c: SCollection[Int]) =>
         c.applyTransform(ParDo.of(new GuavaLookupDoFn))
           .flatMap(_.getValue.get())
           .map(_.toString)

@@ -88,7 +88,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = p1.hashLeftOuterJoin(p2)
-      p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+      p should containInAnyOrder[(String, (Int, Option[Int]))](Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
 
@@ -107,7 +107,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
       val p = p1.hashLeftOuterJoin(p2)
-      p should containInAnyOrder(
+      p should containInAnyOrder[(String, (Int, Option[Int]))](
         Seq(
           ("a", (1, Some(11))),
           ("a", (2, Some(11))),
@@ -124,7 +124,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14))).asMultiMapSideInput
       val p = p1.hashLeftOuterJoin(p2)
-      p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+      p should containInAnyOrder[(String, (Int, Option[Int]))](Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
 
@@ -133,7 +133,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2)))
       val p2 = sc.parallelize(Seq(("a", 11), ("c", 13)))
       val p = p1.hashFullOuterJoin(p2)
-      p should containInAnyOrder(
+      p should containInAnyOrder[(String, (Option[Int], Option[Int]))](
         Seq(("a", (Some(1), Some(11))), ("b", (Some(2), None)), ("c", (None, Some(13))))
       )
     }
@@ -155,7 +155,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
       val p = p1.hashFullOuterJoin(p2)
-      p should containInAnyOrder(
+      p should containInAnyOrder[(String, (Option[Int], Option[Int]))](
         Seq(
           ("a", (Some(1), Some(11))),
           ("a", (Some(2), Some(11))),
@@ -173,7 +173,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1)))
       val p2 = sc.parallelize(Seq(("b", 2)))
       val p = p1.hashFullOuterJoin(p2)
-      p should containInAnyOrder(Seq(("a", (Some(1), None)), ("b", (None, Some(2)))))
+      p should containInAnyOrder[(String, (Option[Int], Option[Int]))](Seq(("a", (Some(1), None)), ("b", (None, Some(2)))))
     }
   }
 
@@ -182,7 +182,7 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2)))
       val p2 = sc.parallelize(Seq(("a", 11), ("c", 13))).asMultiMapSideInput
       val p = p1.hashFullOuterJoin(p2)
-      p should containInAnyOrder(
+      p should containInAnyOrder[(String, (Option[Int], Option[Int]))](
         Seq(("a", (Some(1), Some(11))), ("b", (Some(2), None)), ("c", (None, Some(13))))
       )
     }

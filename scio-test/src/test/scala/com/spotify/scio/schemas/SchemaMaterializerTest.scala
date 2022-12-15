@@ -73,13 +73,13 @@ final class SchemaMaterializerTest extends AnyFlatSpec with Matchers {
       FieldType.DECIMAL
     )
     fieldTypes(Schema[java.lang.Boolean]).headOption.map(_.getType) shouldBe Some(FieldType.BOOLEAN)
-    fieldTypes(Schema[java.util.List[String]]).headOption.map(_.getType) shouldBe Some(
+    fieldTypes(Schema[java.util.List[String]](Schema.jListSchema)).headOption.map(_.getType) shouldBe Some(
       FieldType.array(FieldType.STRING)
     )
-    fieldTypes(Schema[java.util.ArrayList[String]]).headOption.map(_.getType) shouldBe Some(
+    fieldTypes(Schema[java.util.ArrayList[String]](Schema.jArrayListSchema(Schema.stringSchema))).headOption.map(_.getType) shouldBe Some(
       FieldType.array(FieldType.STRING)
     )
-    fieldTypes(Schema[java.util.Map[String, String]]).headOption.map(_.getType) shouldBe Some(
+    fieldTypes(Schema[java.util.Map[String, String]](Schema.jMapSchema)).headOption.map(_.getType) shouldBe Some(
       FieldType.map(FieldType.STRING, FieldType.STRING)
     )
 

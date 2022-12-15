@@ -59,7 +59,7 @@ class MultiJoinTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = MultiJoin.outer(p1, p2)
-      p should containInAnyOrder(
+      p should containInAnyOrder[(String, (Option[Int], Option[Int]))](
         Seq(
           ("a", (Some(1), Some(11))),
           ("b", (Some(2), Some(12))),
@@ -75,7 +75,7 @@ class MultiJoinTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
       val p = MultiJoin.outer(p1, p2)
-      p should containInAnyOrder(
+      p should containInAnyOrder[(String, (Option[Int], Option[Int]))](
         Seq(
           ("a", (Some(1), Some(11))),
           ("a", (Some(2), Some(11))),
@@ -93,7 +93,7 @@ class MultiJoinTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = MultiJoin(p1, p2)
-      p should containInAnyOrder(Seq(("a", (1, 11)), ("b", (2, 12))))
+      p should containInAnyOrder[(String, (Int, Int))](Seq(("a", (1, 11)), ("b", (2, 12))))
     }
   }
 
@@ -102,7 +102,7 @@ class MultiJoinTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("d", 14)))
       val p = MultiJoin.left(p1, p2)
-      p should containInAnyOrder(Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
+      p should containInAnyOrder[(String, (Int, Option[Int]))](Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("c", (3, None))))
     }
   }
 
@@ -111,7 +111,7 @@ class MultiJoinTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
       val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
       val p = MultiJoin.left(p1, p2)
-      p should containInAnyOrder(
+      p should containInAnyOrder[(String, (Int, Option[Int]))](
         Seq(
           ("a", (1, Some(11))),
           ("a", (2, Some(11))),

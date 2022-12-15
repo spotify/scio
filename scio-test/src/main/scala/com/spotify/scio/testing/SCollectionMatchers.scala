@@ -188,8 +188,7 @@ trait SCollectionMatchers extends EqInstances {
 
   import ScioMatchers.makeFn
 
-  sealed trait MatcherBuilder[T] {
-    _: Matcher[T] =>
+  sealed trait MatcherBuilder[T] { self: Matcher[T] =>
 
     type From
     type To >: From
@@ -197,7 +196,7 @@ trait SCollectionMatchers extends EqInstances {
 
     def matcher(builder: AssertBuilder): Matcher[T]
 
-    def matcher: Matcher[T] = matcher(identity)
+    def matcher: Matcher[T] = (t: T) => matcher(t)
   }
 
   sealed trait IterableMatcher[T, B] extends MatcherBuilder[T] with Matcher[T] {
@@ -278,7 +277,7 @@ trait SCollectionMatchers extends EqInstances {
    * SCollection assertion only applied to the specified window, running the checker only on the
    * final pane for each key.
    */
-  def inFinalPane[T: ClassTag, B: ClassTag](
+  def inFinalPane[T](
     window: BoundedWindow
   )(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
@@ -292,7 +291,7 @@ trait SCollectionMatchers extends EqInstances {
    * SCollection assertion only applied to the specified window, running the checker only on the
    * late pane for each key.
    */
-  def inLatePane[T: ClassTag, B: ClassTag](
+  def inLatePane[T](
     window: BoundedWindow
   )(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
@@ -439,6 +438,7 @@ trait SCollectionMatchers extends EqInstances {
       override def matcher(builder: AssertBuilder): Matcher[SCollection[(K, V)]] =
         new Matcher[SCollection[(K, V)]] {
           override def apply(left: SCollection[(K, V)]): MatchResult = {
+            import com.spotify.scio.values.SCollection.makePairSCollectionFunctions
             val assertion = builder(PAssert.thatMap(serDeCycle(left).toKV.internal))
             m(
               () => assertion.isEqualTo(value.asJava),

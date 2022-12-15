@@ -268,6 +268,7 @@ class SCollectionTest extends PipelineSpec {
 
   it should "support batchByteSized() with byte size" in {
     val bytes = Array.fill[Byte](4)(0)
+    implicit val arrayByteCoder = Coder.arrayByteCoder // Scala 3 ambigous given workaround
     runWithContext { sc =>
       val p = sc
         .parallelize(Seq(Seq.fill(5)(bytes))) // SCollection with 1 element to get a single bundle
@@ -390,6 +391,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support flatten()" in {
+    implicit val iterableOnce = Coder.stringCoder // Scala 3 ambigous given workaround
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(Seq("a b", "c d"), Seq("e f", "g h"))).flatten
       p1 should containInAnyOrder(Seq("a b", "c d", "e f", "g h"))
@@ -627,6 +629,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support withFixedWindows()" in {
+    implicit val stringCoder = Coder.stringCoder // Scala 3 ambigous given workaround
     runWithContext { sc =>
       val p =
         sc.parallelizeTimestamped(
@@ -639,6 +642,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support withSlidingWindows()" in {
+    implicit val stringCoder = Coder.stringCoder // Scala 3 ambigous given workaround
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(
         Seq("a", "b", "c", "d", "e", "f"),
@@ -653,6 +657,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "#2745: not throw an exception for valid values" in runWithContext { sc =>
+    implicit val stringCoder = Coder.stringCoder // Scala 3 ambigous given workaround
     val p = sc.parallelizeTimestamped(
       Seq("a", "b", "c", "d", "e", "f"),
       (0L to 5L).map(new Instant(_))
@@ -669,6 +674,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support withSessionWindows()" in {
+    implicit val stringCoder = Coder.stringCoder // Scala 3 ambigous given workaround
     runWithContext { sc =>
       val p =
         sc.parallelizeTimestamped(
@@ -684,6 +690,7 @@ class SCollectionTest extends PipelineSpec {
   }
 
   it should "support withGlobalWindow()" in {
+    implicit val stringCoder = Coder.stringCoder // Scala 3 ambigous given workaround
     runWithContext { sc =>
       val p = sc.parallelizeTimestamped(
         Seq("a", "b", "c", "d", "e", "f"),
