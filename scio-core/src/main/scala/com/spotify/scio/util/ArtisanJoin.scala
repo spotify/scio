@@ -23,6 +23,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.options.ScioOptions.CheckEnabled
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.SCollection._
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.join.{CoGbkResult, CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}

@@ -170,7 +170,7 @@ object ContextAndArgs {
     def parse(args: Array[String]): F[Result]
   }
 
-  final case class DefaultParser[T <: PipelineOptions: ClassTag] private ()
+  final case class DefaultParser[T <: PipelineOptions: ClassTag] private[scio] ()
       extends ArgsParser[Try] {
     override type ArgsType = Args
 
@@ -179,7 +179,7 @@ object ContextAndArgs {
     }
   }
 
-  final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private ()
+  final case class PipelineOptionsParser[T <: PipelineOptions: ClassTag] private[scio] ()
       extends ArgsParser[Try] {
     override type ArgsType = T
 
@@ -613,7 +613,7 @@ class ScioContext private[scio] (
           throw new PipelineExecutionException(cause)
         }
 
-        new ScioResult(pipelineResult) {
+        new ScioResult(pipelineResult) { self =>
           private val metricsLocation = sc.optionsAs[ScioOptions].getMetricsLocation
           if (metricsLocation != null) {
             saveMetrics(metricsLocation)
@@ -624,7 +624,7 @@ class ScioContext private[scio] (
               BuildInfo.version,
               BuildInfo.scalaVersion,
               sc.optionsAs[ApplicationNameOptions].getAppName,
-              state.toString,
+              self.state.toString,
               getBeamMetrics
             )
 
@@ -818,16 +818,16 @@ class ScioContext private[scio] (
   // =======================================================================
 
   /**
-   * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
-   * Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
-   */
-  def initCounter[T: ClassTag](name: String): Counter =
+    * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
+    * Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
+    */
+  def initCounter[T](name: String)(implicit ct: ClassTag[T] = ClassTag.Nothing): Counter =
     initCounter(ScioMetrics.counter[T](name)).head
 
   /**
-   * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric from namespace and
-   * name.
-   */
+    * Initialize a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric from namespace and
+    * name.
+    */
   def initCounter(namespace: String, name: String): Counter =
     initCounter(ScioMetrics.counter(namespace, name)).head
 

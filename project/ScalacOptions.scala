@@ -71,4 +71,10 @@ object Scalac {
     "-no-java-comments",
     _.isBetween(V2_12_0, V2_13_0)
   )
+
+  // Macro
+  val checkMacro = ScalacOptions.advancedOption(
+    "check-macros",
+    _.major == 3
+  )
 }

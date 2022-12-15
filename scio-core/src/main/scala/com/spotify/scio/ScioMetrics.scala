@@ -26,7 +26,8 @@ import scala.reflect.ClassTag
  * [[org.apache.beam.sdk.metrics.Gauge]].
  */
 object ScioMetrics {
-  private def namespace[T: ClassTag]: String = {
+
+  def namespace[T: ClassTag]: String = {
     val cls = implicitly[ClassTag[T]].runtimeClass
     val ns: Class[_] =
       if (classOf[Nothing] isAssignableFrom cls) this.getClass else cls
@@ -41,7 +42,7 @@ object ScioMetrics {
    * Create a new [[org.apache.beam.sdk.metrics.Counter Counter]] metric using `T` as namespace.
    * Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
    */
-  def counter[T: ClassTag](name: String): Counter = counter(namespace[T], name)
+  def counter[T](name: String)(implicit ct: ClassTag[T] = ClassTag.Nothing): Counter = counter(namespace[T], name)
 
   /** Create a new [[org.apache.beam.sdk.metrics.Distribution Distribution]] metric. */
   def distribution(namespace: String, name: String): Distribution =
@@ -51,7 +52,7 @@ object ScioMetrics {
    * Create a new [[org.apache.beam.sdk.metrics.Distribution Distribution]] metric using `T` as
    * namespace. Default is "com.spotify.scio.ScioMetrics" if `T` is not specified.
    */
-  def distribution[T: ClassTag](name: String): Distribution =
+  def distribution[T](name: String)(implicit ct: ClassTag[T] = ClassTag.Nothing): Distribution =
     distribution(namespace[T], name)
 
   /** Create a new [[org.apache.beam.sdk.metrics.Gauge Gauge]] metric. */
@@ -62,5 +63,5 @@ object ScioMetrics {
    * Create a new [[org.apache.beam.sdk.metrics.Gauge Gauge]] metric using `T` as namespace. Default
    * is "com.spotify.scio.ScioMetrics" if `T` is not specified.
    */
-  def gauge[T: ClassTag](name: String): Gauge = gauge(namespace[T], name)
+  def gauge[T](name: String)(implicit ct: ClassTag[T] = ClassTag.Nothing): Gauge = gauge(namespace[T], name)
 }

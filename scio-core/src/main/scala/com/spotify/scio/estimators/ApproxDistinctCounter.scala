@@ -20,6 +20,7 @@ package com.spotify.scio.estimators
 import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.SCollection._
 import org.apache.beam.sdk.{transforms => beam}
 
 /**

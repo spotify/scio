@@ -28,6 +28,7 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
+import com.spotify.scio.values.SCollection._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
@@ -57,7 +58,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   private[this] val context: ScioContext = self.context
 
-  implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
+  implicit val (keyCoder: Coder[K], valueCoder: Coder[V]) = BeamCoders.getTupleCoders(self)
 
   private[scio] def toKV: SCollection[KV[K, V]] =
     self.map(kv => KV.of(kv._1, kv._2))
@@ -246,7 +247,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhsNumKeys: Long,
     fpProb: Double = 0.01
   )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
-    implicit val wCoder = rhs.valueCoder
+    implicit val wCoder: Coder[W] = rhs.valueCoder
     SCollection.unionAll(
       split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
         val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
@@ -280,7 +281,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     fpProb: Double = 0.01
   )(implicit funnel: Funnel[K]): SCollection[(K, (V, W))] =
     self.transform { me =>
-      implicit val wCoder = rhs.valueCoder
+      implicit val wCoder: Coder[W] = rhs.valueCoder
       SCollection.unionAll(
         split(me, rhs, rhsNumKeys, fpProb).map { case (_, lhsOverlap, rhs) =>
           lhsOverlap.join(rhs)
@@ -314,7 +315,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     fpProb: Double = 0.01
   )(implicit funnel: Funnel[K]): SCollection[(K, (V, Option[W]))] =
     self.transform { me =>
-      implicit val wCoder = rhs.valueCoder
+      implicit val wCoder: Coder[W] = rhs.valueCoder
       SCollection.unionAll(
         split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
           val unique = lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))
@@ -349,7 +350,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     fpProb: Double = 0.01
   )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], W))] =
     self.transform { me =>
-      implicit val wCoder = rhs.valueCoder
+      implicit val wCoder: Coder[W] = rhs.valueCoder
       SCollection.unionAll(
         split(me, rhs, rhsNumKeys, fpProb).map { case (_, lhsOverlap, rhs) =>
           lhsOverlap.rightOuterJoin(rhs)
@@ -414,7 +415,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def sparseLookup[A](rhs: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(implicit
     funnel: Funnel[K]
   ): SCollection[(K, (V, Iterable[A]))] = self.transform { sColl =>
-    implicit val aCoder = rhs.valueCoder
+    implicit val aCoder: Coder[A] = rhs.valueCoder
     val selfBfSideInputs = BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
     val n = selfBfSideInputs.size
 
@@ -476,8 +477,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     fpProb: Double
   )(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform {
     sColl =>
-      implicit val aCoder = rhs1.valueCoder
-      implicit val bCoder = rhs2.valueCoder
+      implicit val aCoder: Coder[A] = rhs1.valueCoder
+      implicit val bCoder: Coder[B] = rhs2.valueCoder
       val selfBfSideInputs =
         BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
       val n = selfBfSideInputs.size
@@ -1119,7 +1120,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
             (kv._1, head)
           }
           .groupBy(_ => ())
-          .map(_._2.toMap)
+          .map(_._2.toMap)(Coder.mapCoder)
       )
       .asSingletonSideInput(Map.empty[K, V])
 
@@ -1137,7 +1138,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       .transform(
         _.groupByKey
           .groupBy(_ => ())
-          .map(_._2.toMap)
+          .map(_._2.toMap)(Coder.mapCoder(implicitly[Coder[K]], Coder.iterableCoder))
       )
       .asSingletonSideInput(Map.empty[K, Iterable[V]])
 

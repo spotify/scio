@@ -108,7 +108,8 @@ val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
 val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.2"
-val magnoliaVersion = "1.1.2"
+val magnoliaScala2Version = "1.1.2"
+val magnoliaScala3Version = "1.2.0"
 val magnolifyVersion = "0.6.2"
 val metricsVersion = "3.2.6"
 val neo4jDriverVersion = "4.4.9"
@@ -150,7 +151,8 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     Scalac.release8,
     Scalac.targetOption,
     Scalac.warnConfOption,
-    Scalac.warnMacrosOption
+    Scalac.warnMacrosOption,
+    Scalac.checkMacro
   )
 
   opts.filterNot(excludes).union(extras)
@@ -210,8 +212,8 @@ val commonSettings = Def
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
-    scalaVersion := "2.13.8",
-    crossScalaVersions := Seq("2.12.17", scalaVersion.value),
+    scalaVersion := "3.2.1",//"2.13.8",
+    crossScalaVersions := Seq("2.12.17", scalaVersion.value, "3.2.1"),
     // this setting is not derived in sbt-tpolecat
     // https://github.com/typelevel/sbt-tpolecat/issues/36
     inTask(doc)(TpolecatPlugin.projectSettings),
@@ -359,7 +361,10 @@ lazy val assemblySettings = Seq(
 )
 
 lazy val macroSettings = Def.settings(
-  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+  libraryDependencies ++= {
+    if (scalaVersion.value.startsWith("2.")) Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+    else Seq()
+  },
   libraryDependencies ++= {
     VersionNumber(scalaVersion.value) match {
       case v if v.matchesSemVer(SemanticSelector("2.12.x")) =>
@@ -490,11 +495,17 @@ lazy val `scio-core`: Project = project
       (ThisBuild / baseDirectory).value / "build.sbt",
       (ThisBuild / baseDirectory).value / "version.sbt"
     ),
+    libraryDependencies ++= {
+      if (scalaVersion.value.startsWith("2.")) Seq(
+        "com.chuusai" %% "shapeless" % shapelessVersion,
+        "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaScala2Version
+        )
+      else Seq("com.softwaremill.magnolia1_3" %% "magnolia" % magnoliaScala3Version)
+    },
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+      ("com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion).cross(CrossVersion.for3Use2_13),
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "provided",
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion,
@@ -505,9 +516,9 @@ lazy val `scio-core`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
-      "com.twitter" %% "algebird-core" % algebirdVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.twitter" %% "chill-algebird" % chillVersion,
+      ("com.twitter" %% "algebird-core" % algebirdVersion).cross(CrossVersion.for3Use2_13),
+      ("com.twitter" %% "chill" % chillVersion).cross(CrossVersion.for3Use2_13),
+      ("com.twitter" %% "chill-algebird" % chillVersion).cross(CrossVersion.for3Use2_13),
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
       "io.grpc" % "grpc-core" % grpcVersion,
@@ -516,7 +527,7 @@ lazy val `scio-core`: Project = project
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
+      ("me.lyh" %% "protobuf-generic" % protobufGenericVersion).cross(CrossVersion.for3Use2_13),
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
@@ -530,9 +541,8 @@ lazy val `scio-core`: Project = project
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.typelevel" %% "algebra" % algebraVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
+      ("org.typelevel" %% "algebra" % algebraVersion).cross(CrossVersion.for3Use2_13),
+      ("org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion).cross(CrossVersion.for3Use2_13),
     ),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio"
@@ -550,8 +560,19 @@ lazy val `scio-test`: Project = project
   .settings(protobufSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
+    libraryDependencies ++= {
+      if (scalaVersion.value.startsWith("2.")) 
+        Seq(
+          "com.chuusai" %% "shapeless" % shapelessVersion,
+          "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaScala2Version,
+          "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
+          "com.spotify" %% "magnolify-guava" % magnolifyVersion,
+          "com.twitter" %% "algebird-test" % algebirdVersion % "test"
+        )
+      else Seq("com.softwaremill.magnolia1_3" %% "magnolia" % magnoliaScala3Version)
+    },
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      ("org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion).cross(CrossVersion.for3Use2_13),
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
@@ -560,27 +581,22 @@ lazy val `scio-test`: Project = project
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
-      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       // DataFlow testing requires junit and hamcrest
       "org.hamcrest" % "hamcrest-core" % hamcrestVersion,
       "org.hamcrest" % "hamcrest-library" % hamcrestVersion,
       // Our BloomFilters are Algebird Monoids and hence uses tests from Algebird Test
-      "com.twitter" %% "algebird-test" % algebirdVersion % "test",
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.github.sbt" % "junit-interface" % junitInterfaceVersion,
       "junit" % "junit" % junitVersion % "test",
       "com.lihaoyi" %% "pprint" % pprintVersion,
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.twitter" %% "chill" % chillVersion,
+      ("com.twitter" %% "chill" % chillVersion).cross(CrossVersion.for3Use2_13),
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scalactic" %% "scalactic" % scalacticVersion,
-      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
+      "org.scalactic" %% "scalactic" % scalacticVersion
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
@@ -591,8 +607,8 @@ lazy val `scio-test`: Project = project
   )
   .configs(IntegrationTest)
   .dependsOn(
-    `scio-core` % "test->test;compile->compile;it->it",
-    `scio-avro` % "compile->test;it->it"
+    `scio-avro` % "compile->test;it->it",
+    `scio-core` % "test->test;compile->compile;it->it"
   )
 
 lazy val `scio-macros`: Project = project
@@ -602,15 +618,19 @@ lazy val `scio-macros`: Project = project
   .settings(macroSettings)
   .settings(
     description := "Scio macros",
+    libraryDependencies ++= {
+      if (scalaVersion.value.startsWith("2.")) Seq("com.chuusai" %% "shapeless" % shapelessVersion, "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaScala2Version)
+      else Seq("com.softwaremill.magnolia1_3" %% "magnolia" % magnoliaScala3Version)
+    },
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.avro" % "avro" % avroVersion,
-      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
+      "org.apache.avro" % "avro" % avroVersion
     )
   )
 
+// For now not crosscompiled to Scala 3, but still defined for it
+// to accomodate the dependsOn call in scio-test module.
 lazy val `scio-avro`: Project = project
   .in(file("scio-avro"))
   .settings(commonSettings)
@@ -619,24 +639,26 @@ lazy val `scio-avro`: Project = project
   .settings(itSettings)
   .settings(
     description := "Scio add-on for working with Avro",
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "com.twitter" %% "chill" % chillVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "org.apache.avro" % "avro" % avroVersion exclude ("com.thoughtworks.paranamer", "paranamer"),
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
-      "org.typelevel" %% "cats-core" % catsVersion % "test",
-      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
-    )
+    libraryDependencies ++= {
+      if (scalaVersion.value.startsWith("2")) Seq(
+        "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+        ("me.lyh" %% "protobuf-generic" % protobufGenericVersion).cross(CrossVersion.for3Use2_13),
+        "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+        "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+        "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+        ("com.twitter" %% "chill" % chillVersion).cross(CrossVersion.for3Use2_13),
+        "com.google.protobuf" % "protobuf-java" % protobufVersion,
+        "org.apache.avro" % "avro" % avroVersion exclude ("com.thoughtworks.paranamer", "paranamer"),
+        "org.slf4j" % "slf4j-api" % slf4jVersion,
+        "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
+        "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
+        "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
+        "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
+        "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
+        "org.typelevel" %% "cats-core" % catsVersion % "test",
+        "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test"
+      ) else Seq.empty
+    }
   )
   .dependsOn(
     `scio-core` % "compile;it->it"
@@ -1053,7 +1075,7 @@ lazy val `scio-examples`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaScala2Version
     ),
     // exclude problematic sources if we don't have GCP credentials
     unmanagedSources / excludeFilter := {

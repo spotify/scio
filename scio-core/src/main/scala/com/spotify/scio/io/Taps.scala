@@ -102,7 +102,7 @@ final private class PollingTaps(private[this] val backOff: BackOff) extends Taps
         import scala.concurrent.ExecutionContext.Implicits.global
         Future {
           val sleeper = Sleeper.DEFAULT
-          do {
+          while({
             if (polls.nonEmpty) {
               val tap = if (polls.size > 1) "taps" else "tap"
               logger.info(s"Polling for ${polls.size} $tap")
@@ -115,7 +115,8 @@ final private class PollingTaps(private[this] val backOff: BackOff) extends Taps
               }
               polls = pending
             }
-          } while (BackOffUtils.next(sleeper, backOff))
+            (BackOffUtils.next(sleeper, backOff))
+          }) 
           polls.foreach(p => p.promise.failure(new TapNotAvailableException(p.name)))
         }
       }
@@ -125,7 +126,7 @@ final private class PollingTaps(private[this] val backOff: BackOff) extends Taps
 }
 
 /** Companion object for [[Taps]]. */
-object Taps extends {
+object Taps {
   import TapsSysProps._
 
   /** Default taps algorithm. */

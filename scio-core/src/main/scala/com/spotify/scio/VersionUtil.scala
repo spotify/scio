@@ -32,8 +32,9 @@ import scala.util.Try
 
 private[scio] object VersionUtil {
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
+    private def tupled = (major, minor, rev, suffix)
     def compare(that: SemVer): Int =
-      Ordering[(Int, Int, Int, String)].compare(SemVer.unapply(this).get, SemVer.unapply(that).get)
+      Ordering[(Int, Int, Int, String)].compare(this.tupled, that.tupled)
   }
 
   private[this] val Timeout = 3000

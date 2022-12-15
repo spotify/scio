@@ -25,31 +25,7 @@ private[scio] object FeatureFlag {
   case object Disable extends FeatureFlag
 }
 
-private[scio] object MacroSettings {
-  private def getFlag(settings: List[String])(name: String, default: FeatureFlag): FeatureFlag = {
-    val ss: Map[String, String] =
-      settings
-        .map(_.split("="))
-        .flatMap {
-          case Array(k, v) => Some(k.trim -> v.trim)
-          case _           => None
-        }
-        .toMap
-
-    ss.get(name)
-      .map {
-        case "true" =>
-          FeatureFlag.Enable
-        case "false" =>
-          FeatureFlag.Disable
-        case v =>
-          throw new IllegalArgumentException(
-            s"""Invalid value for setting -Xmacro-settings:$name,""" +
-              s"""expected "true" or "false", got $v"""
-          )
-      }
-      .getOrElse(default)
-  }
+private[scio] object MacroSettings extends MacroSettingsFlagGetter{
 
   /**
    * Makes it possible to configure fallback warnings by passing

@@ -66,7 +66,7 @@ Cannot find an implicit Coder instance for type:
 )
 sealed trait Coder[T] extends Serializable
 
-final private[scio] case class Singleton[T] private (typeName: String, supply: () => T)
+final private[scio] case class Singleton[T] private[coders] (typeName: String, supply: () => T)
     extends Coder[T] {
   override def toString: String = s"Singleton[$typeName]"
 }
@@ -82,19 +82,19 @@ private[scio] object Ref {
   def unapply[T](c: Ref[T]): Some[(String, Coder[T])] = Some((c.typeName, c.value))
 }
 
-final case class RawBeam[T] private (beam: BCoder[T]) extends Coder[T]
-final case class Beam[T] private (beam: BCoder[T]) extends Coder[T]
-final case class Fallback[T] private (ct: ClassTag[T]) extends Coder[T] {
+final case class RawBeam[T] private[coders] (beam: BCoder[T]) extends Coder[T]
+final case class Beam[T] private[coders] (beam: BCoder[T]) extends Coder[T]
+final case class Fallback[T] private[coders] (ct: ClassTag[T]) extends Coder[T] {
   override def toString: String = s"Fallback[$ct]"
 }
-final case class CoderTransform[T, U] private (
+final case class CoderTransform[T, U] private[coders] (
   typeName: String,
   c: Coder[U],
   f: BCoder[U] => Coder[T]
 ) extends Coder[T] {
   override def toString: String = s"CoderTransform[$typeName]($c)"
 }
-final case class Transform[T, U] private (
+final case class Transform[T, U] private[coders] (
   typeName: String,
   c: Coder[U],
   t: T => U,
@@ -103,7 +103,7 @@ final case class Transform[T, U] private (
   override def toString: String = s"Transform[$typeName]($c)"
 }
 
-final case class Disjunction[T, Id] private (
+final case class Disjunction[T, Id] private[coders] (
   typeName: String,
   idCoder: Coder[Id],
   coder: Map[Id, Coder[T]],
@@ -115,7 +115,7 @@ final case class Disjunction[T, Id] private (
   }
 }
 
-final case class Record[T] private (
+final case class Record[T] private[coders] (
   typeName: String,
   cs: Array[(String, Coder[Any])],
   construct: Seq[Any] => T,
@@ -128,7 +128,7 @@ final case class Record[T] private (
 }
 
 // KV are special in beam and need to be serialized using an instance of KvCoder.
-final case class KVCoder[K, V] private (koder: Coder[K], voder: Coder[V]) extends Coder[KV[K, V]]
+final case class KVCoder[K, V] private[scio] (koder: Coder[K], voder: Coder[V]) extends Coder[KV[K, V]]
 
 ///////////////////////////////////////////////////////////////////////////////
 // Materialized beam coders
@@ -576,10 +576,15 @@ sealed trait CoderGrammar {
    */
   def xmap[U, T](c: Coder[U])(f: U => T, t: T => U)(implicit ct: ClassTag[T]): Coder[T] =
     Transform(ct.runtimeClass.getName, c, t, f)
+
+  // Internal use only
+  protected[coders] def explicitXmap[U, T](c: Coder[U])(f: U => T, t: T => U)(typeName: String): Coder[T] = 
+    Transform(typeName, c, t, f)
 }
 
 object Coder
     extends CoderGrammar
+    with CoderFallback
     with TupleCoders
     with AvroCoders
     with ProtobufCoders
@@ -587,7 +592,9 @@ object Coder
     with GuavaCoders
     with JodaCoders
     with BeamTypeCoders
-    with LowPriorityCoders {
+    with LowPriorityCoders
+    with LowPriorityCoderDerivation
+    {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 
   implicit val charCoder: Coder[Char] = ScalaCoders.charCoder
@@ -658,9 +665,6 @@ object Coder
   implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
-
-  def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =
-    macro CoderMacros.issueFallbackWarning[T]
 }
 
 trait LowPriorityCoders extends LowPriorityCoderDerivation {

@@ -21,6 +21,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import me.lyh.protobuf.generic.JsonSchema
 
 import scala.reflect.{classTag, ClassTag}
 
