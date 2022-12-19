@@ -19,7 +19,6 @@ package com.spotify.scio.avro.syntax
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
@@ -30,7 +29,6 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 final class GenericRecordSCollectionOps(private val self: SCollection[GenericRecord])
     extends AnyVal {
