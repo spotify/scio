@@ -84,4 +84,32 @@ class AvroExampleTest extends PipelineSpec {
       }
       .run()
   }
+
+  "AvroExample" should "work for typed input with magnolify" in {
+    val input = Seq(
+      AccountToSchema(1, "checking", "Alice", 1000.0),
+      AccountToSchema(2, "checking", "Bob", 1500.0)
+    )
+
+    val expected = input.map(_.toString)
+
+    JobTest[com.spotify.scio.examples.extra.AvroExample.type]
+      .args("--input=in.avro", "--output=out.txt", "--method=typedInMagnolify")
+      .input(AvroIO[AccountToSchema]("in.avro"), input)
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
+      .run()
+  }
+
+  it should "work for typed output with magnolify" in {
+    val expected = (1 to 100).map { i =>
+      AccountToSchema(id = i, amount = i.toDouble, name = "account" + i, `type` = "checking")
+    }
+
+    JobTest[com.spotify.scio.examples.extra.AvroExample.type]
+      .args("--output=out.avro", "--method=typedOutMagnolify")
+      .output(AvroIO[AccountToSchema]("out.avro")) { coll =>
+        coll should containInAnyOrder(expected)
+      }
+      .run()
+  }
 }

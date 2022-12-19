@@ -74,6 +74,12 @@ object AvroExample {
       // read typed generic records
       case "typedIn" => typedIn(sc, args)
 
+      // write typed generic records
+      case "typedOutMagnolify" => typedOutMagnolify(sc, args)
+
+      // read typed generic records
+      case "typedInMagnolify" => typedInMagnolify(sc, args)
+
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
@@ -129,6 +135,16 @@ object AvroExample {
         AccountToSchema(id = i, amount = i.toDouble, name = "account" + i, `type` = "checking")
       }
       .saveAsTypedAvroFile(args("output"))
+
+  private def typedInMagnolify(sc: ScioContext, args: Args): ClosedTap[String] = sc.typedAvroFileMagnolify[AccountToSchema](args("input"))
+      .saveAsTextFile(args("output"))
+
+  private def typedOutMagnolify(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] =
+    sc.parallelize(1 to 100)
+      .map { i =>
+        AccountToSchema(id = i, amount = i.toDouble, name = "account" + i, `type` = "checking")
+      }
+      .saveAsTypedAvroFileMagnolify(args("output"))
 
   private def genericIn(sc: ScioContext, args: Args): ClosedTap[String] =
     sc.avroFile(args("input"), schema)
