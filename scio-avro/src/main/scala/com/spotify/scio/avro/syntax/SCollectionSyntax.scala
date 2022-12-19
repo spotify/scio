@@ -26,8 +26,8 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -154,6 +154,33 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
   }
 }
 
+final class TypedAvroMagnolifySCollectionOps[T](
+  private val self: SCollection[T]
+) extends AnyVal {
+
+  def saveAsTypedAvroFileMagnolify(
+    path: String,
+    numShards: Int = AvroIO.WriteParam.DefaultNumShards,
+    suffix: String = AvroIO.WriteParam.DefaultSuffix,
+    codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
+  )(implicit avroType: magnolify.avro.AvroType[T], coder: Coder[T]): ClosedTap[T] = {
+    val param = AvroIO.WriteParam(
+      numShards,
+      suffix,
+      codec,
+      metadata,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier
+    )
+    self.write(MagnolifyAvroType.AvroIO[T](path))(param)
+  }
+}
+
 final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T]) extends AnyVal {
 
   /**
@@ -202,6 +229,10 @@ trait SCollectionSyntax {
   implicit def avroTypedAvroSCollectionOps[T <: HasAvroAnnotation](
     c: SCollection[T]
   ): TypedAvroSCollectionOps[T] = new TypedAvroSCollectionOps[T](c)
+
+  implicit def avroTypedAvroMagnolifySCollectionOps[T](
+    c: SCollection[T]
+  ): TypedAvroMagnolifySCollectionOps[T] = new TypedAvroMagnolifySCollectionOps[T](c)
 
   implicit def avroProtobufSCollectionOps[T <: Message](
     c: SCollection[T]
