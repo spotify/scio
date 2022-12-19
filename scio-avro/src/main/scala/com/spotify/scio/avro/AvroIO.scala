@@ -21,8 +21,7 @@ import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io._
-import com.spotify.scio.util.FilenamePolicySupplier
-import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
+import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values._
 import com.spotify.scio.{avro, ScioContext}
 import org.apache.avro.Schema
@@ -30,13 +29,13 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override type ReadP = Unit
@@ -403,5 +402,80 @@ object AvroTyped {
       GenericRecordTap(ScioUtil.addPartSuffix(path), avroT.schema)
         .map(avroT.fromGenericRecord)
     }
+  }
+}
+
+object MagnolifyAvroType {
+  import magnolify.avro._
+
+  private[scio] def writeTransform[T: Coder]()(implicit
+    avroType: AvroType[T]
+  ): beam.AvroIO.TypedWrite[T, Void, GenericRecord] = {
+    beam.AvroIO
+      .writeCustomTypeToGenericRecords()
+      .withFormatFunction(Functions.serializableFn(avroType.to))
+      .withSchema(avroType.schema)
+  }
+
+  final case class AvroIO[T: Coder](path: String)(implicit avroType: AvroType[T])
+      extends ScioIO[T] {
+    override type ReadP = Unit
+    override type WriteP = avro.AvroIO.WriteParam
+    override val tapT: TapT.Aux[T, T] = TapOf[T]
+
+    private[scio] def avroTypeOut[U](
+      write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
+      path: String,
+      numShards: Int,
+      suffix: String,
+      codec: CodecFactory,
+      metadata: Map[String, AnyRef],
+      shardNameTemplate: String,
+      tempDirectory: ResourceId,
+      filenamePolicySupplier: FilenamePolicySupplier,
+      isWindowed: Boolean
+    ) = {
+      val fp = FilenamePolicySupplier.resolve(
+        path,
+        suffix,
+        shardNameTemplate,
+        tempDirectory,
+        filenamePolicySupplier,
+        isWindowed
+      )
+      val transform = write
+        .to(fp)
+        .withTempDirectory(tempDirectory)
+        .withNumShards(numShards)
+        .withCodec(codec)
+        .withMetadata(metadata.asJava)
+      if (!isWindowed) transform else transform.withWindowedWrites()
+    }
+
+    override protected def read(sc: ScioContext, params: Unit): SCollection[T] = {
+      val t = beam.AvroIO.readGenericRecords(avroType.schema).from(path)
+      sc.applyTransform(t).map(avroType.from)
+    }
+
+    override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+      data.applyInternal(
+        avroTypeOut(
+          writeTransform[T](),
+          path,
+          params.numShards,
+          params.suffix,
+          params.codec,
+          params.metadata,
+          params.shardNameTemplate,
+          ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+          params.filenamePolicySupplier,
+          ScioUtil.isWindowed(data)
+        )
+      )
+      tap(())
+    }
+
+    override def tap(read: Unit): Tap[T] =
+      GenericRecordTap(ScioUtil.addPartSuffix(path), avroType.schema).map(avroType.from)
   }
 }
