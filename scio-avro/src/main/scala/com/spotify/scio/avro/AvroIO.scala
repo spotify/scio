@@ -408,7 +408,7 @@ object AvroTyped {
 object AvroTypedMagnolify {
   import magnolify.avro._
 
-  private[scio] def writeTransform[T: Coder]()(implicit
+  private[scio] def writeTransform[T]()(implicit
     avroType: AvroType[T]
   ): beam.AvroIO.TypedWrite[T, Void, GenericRecord] = {
     beam.AvroIO
