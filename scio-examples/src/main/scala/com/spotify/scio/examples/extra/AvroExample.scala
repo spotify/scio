@@ -136,8 +136,9 @@ object AvroExample {
       }
       .saveAsTypedAvroFile(args("output"))
 
-  private def typedInMagnolify(sc: ScioContext, args: Args): ClosedTap[String] = sc.typedAvroFileMagnolify[AccountToSchema](args("input"))
-      .saveAsTextFile(args("output"))
+  private def typedInMagnolify(sc: ScioContext, args: Args): ClosedTap[String] = sc
+    .typedAvroFileMagnolify[AccountToSchema](args("input"))
+    .saveAsTextFile(args("output"))
 
   private def typedOutMagnolify(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] =
     sc.parallelize(1 to 100)
