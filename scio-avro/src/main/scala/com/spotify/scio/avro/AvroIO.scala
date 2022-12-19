@@ -405,7 +405,7 @@ object AvroTyped {
   }
 }
 
-object MagnolifyAvroType {
+object AvroTypedMagnolify {
   import magnolify.avro._
 
   private[scio] def writeTransform[T: Coder]()(implicit
@@ -423,7 +423,7 @@ object MagnolifyAvroType {
     override type WriteP = avro.AvroIO.WriteParam
     override val tapT: TapT.Aux[T, T] = TapOf[T]
 
-    private[scio] def avroTypeOut[U](
+    private[scio] def typedAvroOutMagnolify[U](
       write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
       path: String,
       numShards: Int,
@@ -459,7 +459,7 @@ object MagnolifyAvroType {
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
       data.applyInternal(
-        avroTypeOut(
+        typedAvroOutMagnolify(
           writeTransform[T](),
           path,
           params.numShards,

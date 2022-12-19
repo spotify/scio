@@ -92,7 +92,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(AvroTyped.AvroIO[T](path))
 
   def typedAvroFileMagnolify[T: Coder: magnolify.avro.AvroType](path: String): SCollection[T] =
-    self.read(MagnolifyAvroType.AvroIO[T](path))
+    self.read(AvroTypedMagnolify.AvroIO[T](path))
 
   /**
    * Get an SCollection for a Protobuf file.

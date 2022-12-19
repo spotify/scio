@@ -177,7 +177,7 @@ final class TypedAvroMagnolifySCollectionOps[T](
       tempDirectory,
       filenamePolicySupplier
     )
-    self.write(MagnolifyAvroType.AvroIO[T](path))(param)
+    self.write(AvroTypedMagnolify.AvroIO[T](path))(param)
   }
 }
 

@@ -74,10 +74,10 @@ object AvroExample {
       // read typed generic records
       case "typedIn" => typedIn(sc, args)
 
-      // write typed generic records
+      // write typed generic records using Magnolify
       case "typedOutMagnolify" => typedOutMagnolify(sc, args)
 
-      // read typed generic records
+      // read typed generic records using Magnolify
       case "typedInMagnolify" => typedInMagnolify(sc, args)
 
       case _ => throw new RuntimeException(s"Invalid method $m")
