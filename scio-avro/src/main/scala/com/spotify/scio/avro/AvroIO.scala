@@ -452,11 +452,23 @@ object AvroTypedMagnolify {
       if (!isWindowed) transform else transform.withWindowedWrites()
     }
 
+    /**
+     * Get an SCollection of case classes from an Avro file.
+     *
+     * Note that this function uses magnolify's [[magnolify.avro.AvroType]] internally to convert
+     * Avro to case classes.
+     */
     override protected def read(sc: ScioContext, params: Unit): SCollection[T] = {
       val t = beam.AvroIO.readGenericRecords(avroType.schema).from(path)
       sc.applyTransform(t).map(avroType.from)
     }
 
+    /**
+     * Saves this SCollection as an Avro file.
+     *
+     * Note that this function uses magnolify's [[magnolify.avro.AvroType]] internally to convert
+     * case classes to Avro.
+     */
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
       data.applyInternal(
         typedAvroOutMagnolify(
