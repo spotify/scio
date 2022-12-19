@@ -124,41 +124,17 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
   }
 }
 
-final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])
-    extends AnyVal {
-
-  /**
-   * Save this SCollection as an Avro file. Note that element type `T` must be a case class
-   * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
-   */
-  def saveAsTypedAvroFile(
-    path: String,
-    numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-    suffix: String = AvroIO.WriteParam.DefaultSuffix,
-    codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
-    metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
-    shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
-  )(implicit ct: ClassTag[T], tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = AvroIO.WriteParam(
-      numShards,
-      suffix,
-      codec,
-      metadata,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
-    )
-    self.write(AvroTyped.AvroIO[T](path))(param)
-  }
-}
-
-final class TypedAvroMagnolifySCollectionOps[T](
+final class TypedAvroSCollectionOps[T](
   private val self: SCollection[T]
 ) extends AnyVal {
 
-  def saveAsTypedAvroFileMagnolify(
+  /**
+   * Saves this SCollection as an Avro file.
+   *
+   * Note that this function uses magnolify's [[magnolify.avro.AvroType]] internally to convert case
+   * classes to Avro.
+   */
+  def saveAsTypedAvroFile(
     path: String,
     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
     suffix: String = AvroIO.WriteParam.DefaultSuffix,
@@ -226,13 +202,9 @@ trait SCollectionSyntax {
     c: SCollection[T]
   ): SpecificRecordSCollectionOps[T] = new SpecificRecordSCollectionOps[T](c)
 
-  implicit def avroTypedAvroSCollectionOps[T <: HasAvroAnnotation](
+  implicit def avroTypedAvroSCollectionOps[T](
     c: SCollection[T]
   ): TypedAvroSCollectionOps[T] = new TypedAvroSCollectionOps[T](c)
-
-  implicit def avroTypedAvroMagnolifySCollectionOps[T](
-    c: SCollection[T]
-  ): TypedAvroMagnolifySCollectionOps[T] = new TypedAvroMagnolifySCollectionOps[T](c)
 
   implicit def avroProtobufSCollectionOps[T <: Message](
     c: SCollection[T]

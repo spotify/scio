@@ -42,6 +42,5 @@ object TypedAvroJob {
     ()
   }
 
-  @AvroType.toSchema
   case class Record(s: String)
 }

@@ -38,7 +38,6 @@ import java.util.UUID
 import scala.jdk.CollectionConverters._
 
 object ScioIOTest {
-  @AvroType.toSchema
   case class AvroRecord(i: Int, s: String, r: List[String])
 }
 
@@ -294,8 +293,8 @@ class ScioIOTest extends ScioIOSpec {
   it should "work with typed Avro" in {
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     val io = (s: String) => AvroIO[AvroRecord](s)
-    testTap(xs)(_.saveAsTypedAvroFileMagnolify(_))(".avro")
-    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFileMagnolify(_))
+    testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
+    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
   }
 
   it should "work with GenericRecord and a parseFn" in {
@@ -382,7 +381,7 @@ class ScioIOTest extends ScioIOSpec {
     val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val out1TempDir =
       new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val write1 = AvroTyped.writeTransform[AvroRecord]()
+    val write1 = AvroTypedMagnolify.writeTransform[AvroRecord]()
 
     var previousTransform = write1
       .to(ScioUtil.pathWithPartPrefix(out1.getAbsolutePath))
@@ -400,8 +399,8 @@ class ScioIOTest extends ScioIOSpec {
     val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val out2TempDir =
       new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val sr2 = AvroTyped.AvroIO[AvroRecord](out2.getAbsolutePath)
-    val write2 = AvroTyped.writeTransform[AvroRecord]()
+    val sr2 = AvroTypedMagnolify.AvroIO[AvroRecord](out2.getAbsolutePath)
+    val write2 = AvroTypedMagnolify.writeTransform[AvroRecord]()
 
     val currentTransform = sr2.typedAvroOut(
       write2,
