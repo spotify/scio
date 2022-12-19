@@ -94,7 +94,7 @@ class AvroExampleTest extends PipelineSpec {
     val expected = input.map(_.toString)
 
     JobTest[com.spotify.scio.examples.extra.AvroExample.type]
-      .args("--input=in.avro", "--output=out.txt", "--method=typedInMagnolify")
+      .args("--input=in.avro", "--output=out.txt", "--method=typedIn")
       .input(AvroIO[AccountToSchema]("in.avro"), input)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expected))
       .run()

@@ -294,15 +294,8 @@ class ScioIOTest extends ScioIOSpec {
   it should "work with typed Avro" in {
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     val io = (s: String) => AvroIO[AvroRecord](s)
-    testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
-    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
-  }
-
-  it should "work with typed Avro using Magnolify" in {
-    val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    val io = (s: String) => AvroIO[AvroRecord](s)
     testTap(xs)(_.saveAsTypedAvroFileMagnolify(_))(".avro")
-    testJobTest(xs)(io)(_.typedAvroFileMagnolify[AvroRecord](_))(_.saveAsTypedAvroFileMagnolify(_))
+    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFileMagnolify(_))
   }
 
   it should "work with GenericRecord and a parseFn" in {

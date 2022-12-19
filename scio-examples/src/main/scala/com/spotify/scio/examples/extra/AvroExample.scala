@@ -77,9 +77,6 @@ object AvroExample {
       // write typed generic records using Magnolify
       case "typedOutMagnolify" => typedOutMagnolify(sc, args)
 
-      // read typed generic records using Magnolify
-      case "typedInMagnolify" => typedInMagnolify(sc, args)
-
       case _ => throw new RuntimeException(s"Invalid method $m")
     }
 
@@ -125,10 +122,6 @@ object AvroExample {
       .saveAsAvroFile(args("output"), schema = schema)
   }
 
-  private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    sc.typedAvroFile[AccountFromSchema](args("input"))
-      .saveAsTextFile(args("output"))
-
   private def typedOut(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] =
     sc.parallelize(1 to 100)
       .map { i =>
@@ -136,8 +129,8 @@ object AvroExample {
       }
       .saveAsTypedAvroFile(args("output"))
 
-  private def typedInMagnolify(sc: ScioContext, args: Args): ClosedTap[String] = sc
-    .typedAvroFileMagnolify[AccountToSchema](args("input"))
+  private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] = sc
+    .typedAvroFile[AccountToSchema](args("input"))
     .saveAsTextFile(args("output"))
 
   private def typedOutMagnolify(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] =
