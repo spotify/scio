@@ -23,6 +23,7 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
+import magnolify.avro.AvroType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
@@ -84,8 +85,8 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Note that this function uses magnolify's [[magnolify.avro.AvroType]] internally to convert Avro
    * to case classes.
    */
-  def typedAvroFile[T: Coder: magnolify.avro.AvroType](path: String): SCollection[T] =
-    self.read(AvroTypedMagnolify.AvroIO[T](path))
+  def typedAvroFile[T: Coder: AvroType](path: String): SCollection[T] =
+    self.read(AvroTyped.AvroIO[T](path))
 
   /**
    * Get an SCollection for a Protobuf file.

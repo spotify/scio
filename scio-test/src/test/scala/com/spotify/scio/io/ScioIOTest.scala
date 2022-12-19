@@ -381,7 +381,7 @@ class ScioIOTest extends ScioIOSpec {
     val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val out1TempDir =
       new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val write1 = AvroTypedMagnolify.writeTransform[AvroRecord]()
+    val write1 = AvroTyped.writeTransform[AvroRecord]()
 
     var previousTransform = write1
       .to(ScioUtil.pathWithPartPrefix(out1.getAbsolutePath))
@@ -399,8 +399,8 @@ class ScioIOTest extends ScioIOSpec {
     val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
     val out2TempDir =
       new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val sr2 = AvroTypedMagnolify.AvroIO[AvroRecord](out2.getAbsolutePath)
-    val write2 = AvroTypedMagnolify.writeTransform[AvroRecord]()
+    val sr2 = AvroTyped.AvroIO[AvroRecord](out2.getAbsolutePath)
+    val write2 = AvroTyped.writeTransform[AvroRecord]()
 
     val currentTransform = sr2.typedAvroOut(
       write2,

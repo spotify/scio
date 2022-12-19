@@ -23,6 +23,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
+import magnolify.avro.AvroType
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -141,7 +142,7 @@ final class TypedAvroSCollectionOps[T](
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
-  )(implicit avroType: magnolify.avro.AvroType[T], coder: Coder[T]): ClosedTap[T] = {
+  )(implicit avroType: AvroType[T], coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(
       numShards,
       suffix,
@@ -151,7 +152,7 @@ final class TypedAvroSCollectionOps[T](
       tempDirectory,
       filenamePolicySupplier
     )
-    self.write(AvroTypedMagnolify.AvroIO[T](path))(param)
+    self.write(AvroTyped.AvroIO[T](path))(param)
   }
 }
 
