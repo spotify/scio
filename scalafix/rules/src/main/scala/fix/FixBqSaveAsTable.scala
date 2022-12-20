@@ -18,38 +18,35 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
               name match {
                 case Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
                   val paramsUpdated =
-                    params
-                      .zipWithIndex
-                      .foldLeft(List[Object]()) { case (accumulator, (param, index)) =>
-                        accumulator :+ (
-                          index match {
-                            // table is always the first param and without default value
-                            case 0 =>
-                              param match {
-                                case Term.Assign((_, value)) =>
-                                  s"table = Table.Ref(${value})"
-                                case _ =>
-                                  s"Table.Ref($param)"
-                              }
-                            case _ =>
-                              param match {
-                                case Term.Assign((name, value)) =>
-                                  // parameter name has changes from `avroSchema` to `schema`
-                                  if (name.toString == "avroSchema") {
-                                    s"schema = toTableSchema($value)"
-                                  } else {
-                                    param
-                                  }
-                                case _ =>
-                                  // if not a named param, `avroSchema` param should come second
-                                  if (index == 1) {
-                                    s"toTableSchema($param)"
-                                  } else {
-                                    param
-                                  }
-                              }
-                          }
-                        )
+                    params.zipWithIndex
+                      .map { case (param, index) =>
+                        index match {
+                          // table is always the first param and without default value
+                          case 0 =>
+                            param match {
+                              case Term.Assign((_, value)) =>
+                                q"table = Table.Ref(${value})"
+                              case _ =>
+                                q"Table.Ref($param)"
+                            }
+                          case _ =>
+                            param match {
+                              case Term.Assign((name, value)) =>
+                                // parameter name has changes from `avroSchema` to `schema`
+                                if (name.toString == "avroSchema") {
+                                  q"schema = toTableSchema($value)"
+                                } else {
+                                  param
+                                }
+                              case _ =>
+                                // if not a named param, `avroSchema` param should come second
+                                if (index == 1) {
+                                  q"toTableSchema($param)"
+                                } else {
+                                  param
+                                }
+                            }
+                        }
                       }
                       .mkString(", ")
 
