@@ -29,6 +29,17 @@ import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
 class TypeProviderTest extends AnyFlatSpec with Matchers {
+  @AvroType.toSchema
+  case class ToSchema(
+    boolF: Boolean,
+    intF: Int,
+    longF: Long,
+    floatF: Float,
+    doubleF: Double,
+    stringF: String,
+    bytesF: ByteString
+  )
+
   "AvroType.toSchema" should "support .tupled in companion object" in {
     val r1 = ToSchema(true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes"))
     val r2 = ToSchema.tupled((true, 1, 2L, 1.5f, 2.5, "string", ByteString.copyFromUtf8("bytes")))
