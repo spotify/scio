@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.{compileTimeOnly, nowarn, StaticAnnotation}
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.reflect.runtime.universe._
 
 /**
@@ -52,50 +52,6 @@ import scala.reflect.runtime.universe._
  * Other Members
  */
 object AvroType {
-
-  /**
-   * Macro annotation for a path containing Avro files.
-   *
-   * Generates case classes from a path which contains Avro files. Path needs to represent a folder,
-   * hence it always needs to end with `/`. Inside of the folder needs to exist at least one file
-   * matching `*.avro` glob.
-   *
-   * Note that path must be a single string literal with optional `.stripMargin` at the end. For
-   * example:
-   *
-   * {{{
-   * @AvroType.fromPath("gs://myBucket/myFolder/")
-   * class MyRecord
-   * }}}
-   *
-   * or
-   *
-   * {{{
-   * @AvroType.fromPath(
-   *     """
-   *     | gs://myBucket/myFolder/
-   *     | myLooooooooooooooooongPath/
-   *     """.stripMargin)
-   * class MyRecord
-   * }}}
-   *
-   * Globs are supported as a part of the path. For example:
-   *
-   * {{{
-   * @AvroType.fromPath("gs://myBucket{@literal /}*{@literal /}*{@literal /}*{@literal /}")
-   * class MyRecord
-   * }}}
-   *
-   * Also generate a companion object with convenience methods.
-   * @group annotation
-   */
-  @nowarn
-  @compileTimeOnly(
-    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
-  )
-  class fromPath(folderGlob: String) extends StaticAnnotation {
-    def macroTransform(annottees: Any*): Any = macro TypeProvider.pathImpl
-  }
 
   /**
    * Macro annotation for case classes to be saved to Avro files.
