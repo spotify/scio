@@ -18,7 +18,8 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
               name match {
                 case Term.Name("saveAvroAsBigQuery") if expectedType(qual, scoll) =>
                   val paramsUpdated =
-                    params.zipWithIndex
+                    params
+                      .zipWithIndex
                       .map { case (param, index) =>
                         index match {
                           // table is always the first param and without default value
