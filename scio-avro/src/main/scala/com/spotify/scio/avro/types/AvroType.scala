@@ -54,44 +54,6 @@ import scala.reflect.runtime.universe._
 object AvroType {
 
   /**
-   * Macro annotation for an Avro schema.
-   *
-   * Generate case classes for an Avro schema. Note that `schema` must be a single string literal of
-   * the JSON schema with optional `.stripMargin` at the end. For example:
-   *
-   * {{{
-   *   @AvroType.fromSchema(
-   *       """
-   *         |{
-   *         |  "type": "record",
-   *         |  "namespace": "com.spotify.namespace",
-   *         |  "name": "RecordName",
-   *         |  "fields": [
-   *         |    { "name": "boolF", "type": "boolean"},
-   *         |    { "name": "intF", "type": "int"},
-   *         |    { "name": "longF", "type": "long"},
-   *         |    { "name": "floatF", "type": "float"},
-   *         |    { "name": "doubleF", "type": "double"},
-   *         |    { "name": "stringF", "type": "string"},
-   *         |    { "name": "byteStringF", "type": "bytes"}
-   *         |  ]
-   *         |}
-   *       """.stripMargin)
-   *   class MyRecord
-   * }}}
-   *
-   * Also generate a companion object with convenience methods.
-   * @group annotation
-   */
-  @nowarn
-  @compileTimeOnly(
-    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
-  )
-  class fromSchema(schema: String) extends StaticAnnotation {
-    def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
-  }
-
-  /**
    * Macro annotation for a path containing Avro files.
    *
    * Generates case classes from a path which contains Avro files. Path needs to represent a folder,
