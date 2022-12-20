@@ -54,13 +54,6 @@ object AvroTypeIT {
     """.stripMargin)
   class FromPathMultiLine
 
-  @AvroType.fromSchemaFile("""
-      |gs://data-integration-test-eu/
-      |avro-integration-test/folder-a/folder-b/
-      |shakespeare-schema.avsc
-    """.stripMargin)
-  class FromFile
-
   class Annotation1 extends StaticAnnotation
   class Annotation2 extends StaticAnnotation
 
