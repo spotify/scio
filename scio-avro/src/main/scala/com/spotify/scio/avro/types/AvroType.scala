@@ -20,7 +20,7 @@ package com.spotify.scio.avro.types
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.annotation.{compileTimeOnly, nowarn, StaticAnnotation}
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.reflect.runtime.universe._
 
 /**
@@ -52,118 +52,6 @@ import scala.reflect.runtime.universe._
  * Other Members
  */
 object AvroType {
-
-  /**
-   * Macro annotation for an Avro schema.
-   *
-   * Generate case classes for an Avro schema. Note that `schema` must be a single string literal of
-   * the JSON schema with optional `.stripMargin` at the end. For example:
-   *
-   * {{{
-   *   @AvroType.fromSchema(
-   *       """
-   *         |{
-   *         |  "type": "record",
-   *         |  "namespace": "com.spotify.namespace",
-   *         |  "name": "RecordName",
-   *         |  "fields": [
-   *         |    { "name": "boolF", "type": "boolean"},
-   *         |    { "name": "intF", "type": "int"},
-   *         |    { "name": "longF", "type": "long"},
-   *         |    { "name": "floatF", "type": "float"},
-   *         |    { "name": "doubleF", "type": "double"},
-   *         |    { "name": "stringF", "type": "string"},
-   *         |    { "name": "byteStringF", "type": "bytes"}
-   *         |  ]
-   *         |}
-   *       """.stripMargin)
-   *   class MyRecord
-   * }}}
-   *
-   * Also generate a companion object with convenience methods.
-   * @group annotation
-   */
-  @nowarn
-  @compileTimeOnly(
-    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
-  )
-  class fromSchema(schema: String) extends StaticAnnotation {
-    def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
-  }
-
-  /**
-   * Macro annotation for a path containing Avro files.
-   *
-   * Generates case classes from a path which contains Avro files. Path needs to represent a folder,
-   * hence it always needs to end with `/`. Inside of the folder needs to exist at least one file
-   * matching `*.avro` glob.
-   *
-   * Note that path must be a single string literal with optional `.stripMargin` at the end. For
-   * example:
-   *
-   * {{{
-   * @AvroType.fromPath("gs://myBucket/myFolder/")
-   * class MyRecord
-   * }}}
-   *
-   * or
-   *
-   * {{{
-   * @AvroType.fromPath(
-   *     """
-   *     | gs://myBucket/myFolder/
-   *     | myLooooooooooooooooongPath/
-   *     """.stripMargin)
-   * class MyRecord
-   * }}}
-   *
-   * Globs are supported as a part of the path. For example:
-   *
-   * {{{
-   * @AvroType.fromPath("gs://myBucket{@literal /}*{@literal /}*{@literal /}*{@literal /}")
-   * class MyRecord
-   * }}}
-   *
-   * Also generate a companion object with convenience methods.
-   * @group annotation
-   */
-  @nowarn
-  @compileTimeOnly(
-    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
-  )
-  class fromPath(folderGlob: String) extends StaticAnnotation {
-    def macroTransform(annottees: Any*): Any = macro TypeProvider.pathImpl
-  }
-
-  /**
-   * Macro annotation for a file which contains Avro schema.
-   *
-   * Generate case classes for an Avro schema. File can be either local or remote files. For example
-   * file can be located on Google Cloud Storage (GCS):
-   *
-   * {{{
-   *   @AvroType.fromSchemaFile("gs://myBucket/myFolder/schema-file.avsc")
-   *   class MyRecord
-   * }}}
-   *
-   * For local files, you need to either provide absolute path, or path relative to project root
-   * directory. For example:
-   *
-   * {{{
-   *   @AvroType.fromSchemaFile("sub-project/src/main/avro/schema-file.avsc")
-   *   class MyRecord
-   * }}}
-   *
-   * Also generate a companion object with convenience methods.
-   * @group annotation
-   */
-  @nowarn
-  @compileTimeOnly(
-    "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
-  )
-  class fromSchemaFile(schemaFile: String) extends StaticAnnotation {
-    def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaFileImpl
-  }
 
   /**
    * Macro annotation for case classes to be saved to Avro files.
