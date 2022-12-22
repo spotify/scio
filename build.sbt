@@ -627,6 +627,7 @@ lazy val `scio-avro`: Project = project
   .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
+  .settings(macroSettings)
   .settings(itSettings)
   .settings(
     description := "Scio add-on for working with Avro",
