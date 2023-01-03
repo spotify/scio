@@ -706,9 +706,10 @@ class ScioContext private[scio] (
    */
   def textFile(
     path: String,
-    compression: beam.Compression = beam.Compression.AUTO
+    compression: beam.Compression = beam.Compression.AUTO,
+    emptyMatchTreatment: beam.fs.EmptyMatchTreatment = beam.fs.EmptyMatchTreatment.DISALLOW
   ): SCollection[String] =
-    this.read(TextIO(path))(TextIO.ReadParam(compression))
+    this.read(TextIO(path))(TextIO.ReadParam(compression, emptyMatchTreatment))
 
   /**
    * Get an SCollection with a custom input transform. The transform should have a unique name.
