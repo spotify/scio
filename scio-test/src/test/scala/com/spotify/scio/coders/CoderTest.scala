@@ -122,8 +122,21 @@ final case class AnyValExample(value: String) extends AnyVal
 final case class NonDeterministic(a: Double, b: Double)
 
 final class CoderTest extends AnyFlatSpec with Matchers {
+
   val userId: UserId = UserId(Seq[Byte](1, 2, 3, 4))
   val user: User = User(userId, "johndoe", "johndoe@spotify.com")
+
+  /*
+   * Case class nested inside another class. Do not move outside
+   * */
+  case class InnerCaseClass(str: String)
+
+  /*
+   * Object nested inside another class. Do not move outside
+   * */
+  object InnerObject {
+    case class InnerCaseClass(str: String)
+  }
 
   def materialize[T](coder: Coder[T]): BCoder[T] =
     CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
@@ -133,6 +146,27 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     'a' coderShould roundtrip()
     "yolo" coderShould roundtrip()
     4.5 coderShould roundtrip()
+  }
+
+  "Coders" should "not support inner objects" in {
+    val thrown = the[Throwable] thrownBy {
+      InnerObject coderShould roundtrip()
+    }
+
+    thrown.getMessage should include(
+      "Can't find suitable constructor to instantiate class com.spotify.scio.coders.CoderTest$$"
+    )
+  }
+
+  "Coders" should "support inner classes" in {
+    InnerCaseClass("42") coderShould roundtripWithCustomAssert() { case (original, result) =>
+      original.str should ===(result.str)
+    }
+
+    InnerObject.InnerCaseClass("42") coderShould roundtripWithCustomAssert() {
+      case (original, result) =>
+        original.str should ===(result.str)
+    }
   }
 
   it should "support Scala collections" in {

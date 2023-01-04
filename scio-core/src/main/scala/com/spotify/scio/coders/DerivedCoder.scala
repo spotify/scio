@@ -17,6 +17,7 @@
 
 package com.spotify.scio.coders
 
+import com.twitter.algebird.monad.Trampoline
 import com.twitter.chill.ClosureCleaner
 import magnolia1._
 
@@ -41,12 +42,58 @@ object LowPriorityCoderDerivation {
       new CaseClassConstructor(caseClass.getClass.getName)
   }
 
-  private class CaseClassConstructor[T] private (private val className: String)
-      extends Serializable {
-    // We can call rawConstruct on an empty CaseClass instance
-    @transient lazy val ctx: CaseClass[Coder, T] = ClosureCleaner
-      .instantiateClass(Class.forName(className))
-      .asInstanceOf[CaseClass[Coder, T]]
+  private class CaseClassConstructor[T] private (
+    private val className: String
+  ) extends Serializable {
+
+    @transient lazy val ctxClass = Class.forName(className)
+
+    @transient lazy val ctx: CaseClass[Coder, T] =
+      instantiateWithOuterFields(ctxClass).get.asInstanceOf[CaseClass[Coder, T]]
+
+    private def invokeConstructorWithOuter(
+      cls: Class[_],
+      outerClass: Class[_],
+      outerValue: => Any
+    ): Any = {
+      try {
+        if (cls == ctxClass) {
+          // class that implements CaseClass[] is anonymous and has a single constructor
+          ctxClass.getConstructors.head.newInstance(outerValue, null, null)
+        } else {
+          // class that wraps CaseClass[] implementation has a single constructor with 1 param
+          cls
+            .getConstructor(outerClass)
+            .newInstance(outerValue)
+        }
+      } catch {
+        case e @ (_: NoSuchMethodException | _: IllegalArgumentException) =>
+          throw new Throwable(
+            s"Can't find suitable constructor to instantiate $cls with outer field $outerClass",
+            e
+          )
+      }
+    }
+
+    def instantiateWithOuterFields(
+      cls: Class[_]
+    ): Trampoline[Any] = {
+      ClosureCleaner.outerFieldOf(cls) match {
+        /* The field "$outer" is added by scala compiler to a case class if it is declared inside
+         * another class or object, and the constructor of that compiled class requires outer
+         * field to be not null.
+         * If "$outer" is present in T then concrete CaseClass[] instance should be instantiated
+         * using constructor, otherwise rawConstruct will fail */
+        case Some(outerField) =>
+          val outerClass = outerField.getType
+          Trampoline
+            .call(instantiateWithOuterFields(outerClass))
+            .map(invokeConstructorWithOuter(cls, outerClass, _))
+        /* If $outer field is absent T is not an inner class */
+        case None =>
+          Trampoline(ClosureCleaner.instantiateClass(cls))
+      }
+    }
 
     def rawConstruct(fieldValues: Seq[Any]): T = ctx.rawConstruct(fieldValues)
   }
@@ -99,6 +146,7 @@ trait LowPriorityCoderDerivation {
     } else {
       Coder.ref(typeName) {
         val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
+
         ctx.parameters.foreach { p =>
           cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
         }
