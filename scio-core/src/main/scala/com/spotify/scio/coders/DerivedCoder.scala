@@ -59,12 +59,12 @@ object LowPriorityCoderDerivation {
       try {
         if (cls == ctxClass) {
           // class that implements CaseClass[] is anonymous and has a single constructor
-          ctxClass.getConstructors.head.newInstance(outerValue, null, null)
+          ctxClass.getConstructors.head.newInstance(outerValue.asInstanceOf[Object], null, null)
         } else {
           // class that wraps CaseClass[] implementation has a single constructor with 1 param
           cls
             .getConstructor(outerClass)
-            .newInstance(outerValue)
+            .newInstance(outerValue.asInstanceOf[Object])
         }
       } catch {
         case e @ (_: NoSuchMethodException | _: IllegalArgumentException) =>
