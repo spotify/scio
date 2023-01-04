@@ -46,7 +46,7 @@ object LowPriorityCoderDerivation {
     private val className: String
   ) extends Serializable {
 
-    @transient lazy val ctxClass = Class.forName(className)
+    @transient lazy val ctxClass: Class[_] = Class.forName(className)
 
     @transient lazy val ctx: CaseClass[Coder, T] =
       instantiateWithOuterFields(ctxClass).get.asInstanceOf[CaseClass[Coder, T]]

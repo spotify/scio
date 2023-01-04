@@ -148,28 +148,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     4.5 coderShould roundtrip()
   }
 
-  "Coders" should "not support inner objects" in {
-    val thrown = the[Throwable] thrownBy {
-      InnerObject coderShould roundtrip()
-    }
-
-    thrown.getMessage should include(
-      "Can't find suitable constructor to instantiate class com.spotify.scio.coders.CoderTest$$"
-    )
-  }
-
-  "Coders" should "support inner classes" in {
-    InnerCaseClass("42") coderShould roundtripWithCustomAssert() { case (original, result) =>
-      original.str should ===(result.str)
-    }
-
-    InnerObject.InnerCaseClass("42") coderShould roundtripWithCustomAssert() {
-      case (original, result) =>
-        original.str should ===(result.str)
-    }
-  }
-
-  it should "support Scala collections" in {
+  "Coders" should "support Scala collections" in {
     import scala.collection.BitSet
 
     val nil: Seq[String] = Nil
@@ -200,6 +179,27 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val bmc = CoderMaterializer.beamWithDefault(Coder[Map[String, String]])
     CoderProperties.testByteCount(bmc, BCoder.Context.OUTER, Array(m))
     CoderProperties.structuralValueConsistentWithEquals(bmc, m, m)
+  }
+
+  "Coders" should "not support inner objects" in {
+    val thrown = the[Throwable] thrownBy {
+      InnerObject coderShould roundtrip()
+    }
+
+    thrown.getMessage should include(
+      "Can't find suitable constructor to instantiate class com.spotify.scio.coders.CoderTest$$"
+    )
+  }
+
+  "Coders" should "support inner classes" in {
+    InnerCaseClass("42") coderShould roundtripWithCustomAssert() { case (original, result) =>
+      original.str should ===(result.str)
+    }
+
+    InnerObject.InnerCaseClass("42") coderShould roundtripWithCustomAssert() {
+      case (original, result) =>
+        original.str should ===(result.str)
+    }
   }
 
   it should "support tuples" in {
