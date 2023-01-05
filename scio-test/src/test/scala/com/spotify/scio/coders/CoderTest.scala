@@ -121,6 +121,18 @@ final case class AnyValExample(value: String) extends AnyVal
 // Non deterministic
 final case class NonDeterministic(a: Double, b: Double)
 
+class ClassWrapper() {
+  case class InnerCaseClass(str: String)
+
+  def runWithImplicit(customAssertEquality: (InnerCaseClass, InnerCaseClass) => Assertion)(implicit
+    c: Coder[InnerCaseClass]
+  ): Unit =
+    InnerCaseClass("51") coderShould roundtripWithCustomAssert()(customAssertEquality)
+
+  def run(customAssertEquality: (InnerCaseClass, InnerCaseClass) => Assertion): Unit =
+    InnerCaseClass("51") coderShould roundtripWithCustomAssert()(customAssertEquality)
+}
+
 final class CoderTest extends AnyFlatSpec with Matchers {
 
   val userId: UserId = UserId(Seq[Byte](1, 2, 3, 4))
@@ -181,13 +193,32 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     CoderProperties.structuralValueConsistentWithEquals(bmc, m, m)
   }
 
-  "Coders" should "not support inner objects" in {
-    val thrown = the[Throwable] thrownBy {
+  "Coders" should "not support some inner class cases" in {
+    val thrown1 = the[Throwable] thrownBy {
       InnerObject coderShould roundtrip()
     }
 
-    thrown.getMessage should include(
+    thrown1.getMessage should include(
       "Can't find suitable constructor to instantiate class com.spotify.scio.coders.CoderTest$$"
+    )
+
+    val cw = new ClassWrapper()
+    try {
+      cw.runWithImplicit { case (x, y) => x should be(y) }
+      throw new Throwable("Is expected to throw when passing implicit from outer class")
+    } catch {
+      case e: NullPointerException =>
+        e.getMessage should be(null)
+    }
+
+    val thrown3 = the[Throwable] thrownBy {
+      cw.InnerCaseClass("49") coderShould roundtripWithCustomAssert() { case (original, result) =>
+        original.str should ===(result.str)
+      }
+    }
+
+    thrown3.getMessage should startWith(
+      "Can't find suitable constructor to instantiate class com.spotify.scio.coders.CoderTest"
     )
   }
 
@@ -199,6 +230,17 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     InnerObject.InnerCaseClass("42") coderShould roundtripWithCustomAssert() {
       case (original, result) =>
         original.str should ===(result.str)
+    }
+
+    case class ClassInsideMethod(str: String)
+
+    ClassInsideMethod("50") coderShould roundtripWithCustomAssert() { case (original, result) =>
+      original.str should ===(result.str)
+    }
+
+    val cw = new ClassWrapper()
+    cw.run { case (original, result) =>
+      original.str should ===(result.str)
     }
   }
 

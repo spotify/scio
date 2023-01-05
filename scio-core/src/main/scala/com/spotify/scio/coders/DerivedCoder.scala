@@ -89,7 +89,7 @@ object LowPriorityCoderDerivation {
           Trampoline
             .call(instantiateWithOuterFields(outerClass))
             .map(invokeConstructorWithOuter(cls, outerClass, _))
-        /* If $outer field is absent T is not an inner class */
+        /* If $outer field is absent T is not an inner class, the last step of recursion */
         case None =>
           Trampoline(ClosureCleaner.instantiateClass(cls))
       }
