@@ -124,13 +124,17 @@ final case class NonDeterministic(a: Double, b: Double)
 class ClassWrapper() {
   case class InnerCaseClass(str: String)
 
-  def runWithImplicit(customAssertEquality: (InnerCaseClass, InnerCaseClass) => Assertion)(implicit
+  def runWithImplicit(implicit
     c: Coder[InnerCaseClass]
   ): Unit =
-    InnerCaseClass("51") coderShould roundtripWithCustomAssert()(customAssertEquality)
+    InnerCaseClass("51") coderShould roundtrip()
 
-  def run(customAssertEquality: (InnerCaseClass, InnerCaseClass) => Assertion): Unit =
-    InnerCaseClass("51") coderShould roundtripWithCustomAssert()(customAssertEquality)
+  def run(): Unit =
+    InnerCaseClass("51") coderShould roundtrip()
+}
+
+object TopLevelObject {
+  case class InnerCaseClass(str: String)
 }
 
 final class CoderTest extends AnyFlatSpec with Matchers {
@@ -193,55 +197,71 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     CoderProperties.structuralValueConsistentWithEquals(bmc, m, m)
   }
 
-  "Coders" should "not support some inner class cases" in {
-    val thrown1 = the[Throwable] thrownBy {
-      InnerObject coderShould roundtrip()
-    }
-
-    thrown1.getMessage should include(
-      "Can't find suitable constructor to instantiate class com.spotify.scio.coders.CoderTest$$"
+  "Coders" should "not support inner class cases in classes" in {
+    {
+      the[Throwable] thrownBy {
+        InnerObject coderShould roundtrip()
+      }
+    }.getMessage should include(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
     )
 
     val cw = new ClassWrapper()
     try {
-      cw.runWithImplicit { case (x, y) => x should be(y) }
+      cw.runWithImplicit
       throw new Throwable("Is expected to throw when passing implicit from outer class")
     } catch {
       case e: NullPointerException =>
+        // In this case outer field is called "$cw" and it is hard to wrap it with proper exception
+        // so we allow it to fail with NullPointerException
         e.getMessage should be(null)
     }
 
-    val thrown3 = the[Throwable] thrownBy {
-      cw.InnerCaseClass("49") coderShould roundtripWithCustomAssert() { case (original, result) =>
-        original.str should ===(result.str)
+    {
+      the[Throwable] thrownBy {
+        cw.InnerCaseClass("49") coderShould roundtrip()
       }
-    }
-
-    thrown3.getMessage should startWith(
-      "Can't find suitable constructor to instantiate class com.spotify.scio.coders.CoderTest"
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
     )
-  }
 
-  "Coders" should "support inner classes" in {
-    InnerCaseClass("42") coderShould roundtripWithCustomAssert() { case (original, result) =>
-      original.str should ===(result.str)
-    }
+    {
+      the[Throwable] thrownBy {
+        cw.run()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.ClassWrapper$$"
+    )
 
-    InnerObject.InnerCaseClass("42") coderShould roundtripWithCustomAssert() {
-      case (original, result) =>
-        original.str should ===(result.str)
-    }
+    {
+      the[Throwable] thrownBy {
+        InnerCaseClass("42") coderShould roundtrip()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
 
     case class ClassInsideMethod(str: String)
 
-    ClassInsideMethod("50") coderShould roundtripWithCustomAssert() { case (original, result) =>
-      original.str should ===(result.str)
-    }
+    {
+      the[Throwable] thrownBy {
+        ClassInsideMethod("50") coderShould roundtrip()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
 
-    val cw = new ClassWrapper()
-    cw.run { case (original, result) =>
-      original.str should ===(result.str)
-    }
+    {
+      the[Throwable] thrownBy {
+        InnerObject.InnerCaseClass("42") coderShould roundtrip()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
+  }
+
+  "Coders" should "support inner classes in objects" in {
+    TopLevelObject.InnerCaseClass("42") coderShould roundtrip()
   }
 
   it should "support tuples" in {
