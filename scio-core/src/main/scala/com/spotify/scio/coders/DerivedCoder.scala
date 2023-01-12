@@ -57,9 +57,9 @@ object LowPriorityCoderDerivation {
         case Some(_) =>
           throw new Throwable(
             s"Found an $$outer field in $ctxClass. Possibly it is an attempt to use inner case " +
-              s"class in a Scio transformation. Inner case classes are not supported in Scio " +
-              s"auto-derived macros. Move the case class to the package level or define a custom " +
-              s"coder."
+              "class in a Scio transformation. Inner case classes are not supported in Scio " +
+              "auto-derived macros. Move the case class to the package level or define a custom " +
+              "coder."
           )
         /* If "$outer" field is absent then T is not an inner class, we create an empty instance
         of ctx */
