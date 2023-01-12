@@ -1,4 +1,4 @@
-name: Update Dependency Graph
+name: dependency-graph
 
 on:
   push:
