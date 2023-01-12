@@ -197,7 +197,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     CoderProperties.structuralValueConsistentWithEquals(bmc, m, m)
   }
 
-  "Coders" should "not support inner class cases in classes" in {
+  "Coders" should "not support inner case classes" in {
     {
       the[Throwable] thrownBy {
         InnerObject coderShould roundtrip()
