@@ -41,12 +41,32 @@ object LowPriorityCoderDerivation {
       new CaseClassConstructor(caseClass.getClass.getName)
   }
 
-  private class CaseClassConstructor[T] private (private val className: String)
-      extends Serializable {
-    // We can call rawConstruct on an empty CaseClass instance
-    @transient lazy val ctx: CaseClass[Coder, T] = ClosureCleaner
-      .instantiateClass(Class.forName(className))
-      .asInstanceOf[CaseClass[Coder, T]]
+  private class CaseClassConstructor[T] private (
+    private val className: String
+  ) extends Serializable {
+
+    @transient lazy val ctxClass: Class[_] = Class.forName(className)
+
+    @transient lazy val ctx: CaseClass[Coder, T] = {
+      ClosureCleaner.outerFieldOf(ctxClass) match {
+        /* The field "$outer" is added by scala compiler to a case class if it is declared inside
+         another class. And the constructor of that compiled class requires outer field to be not
+          null.
+         If "$outer" is present it's an inner class and this scenario is officially not supported
+          by Scio */
+        case Some(_) =>
+          throw new Throwable(
+            s"Found an $$outer field in $ctxClass. Possibly it is an attempt to use inner case " +
+              "class in a Scio transformation. Inner case classes are not supported in Scio " +
+              "auto-derived macros. Move the case class to the package level or define a custom " +
+              "coder."
+          )
+        /* If "$outer" field is absent then T is not an inner class, we create an empty instance
+        of ctx */
+        case None =>
+          ClosureCleaner.instantiateClass(ctxClass).asInstanceOf[CaseClass[Coder, T]]
+      }
+    }
 
     def rawConstruct(fieldValues: Seq[Any]): T = ctx.rawConstruct(fieldValues)
   }
@@ -88,6 +108,7 @@ trait LowPriorityCoderDerivation {
   def join[T: ClassTag](ctx: CaseClass[Coder, T]): Coder[T] = {
     val typeName = ctx.typeName.full
     val constructor = CaseClassConstructor(ctx)
+
     if (ctx.isValueClass) {
       val p = ctx.parameters.head
       Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
@@ -99,6 +120,7 @@ trait LowPriorityCoderDerivation {
     } else {
       Coder.ref(typeName) {
         val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
+
         ctx.parameters.foreach { p =>
           cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
         }

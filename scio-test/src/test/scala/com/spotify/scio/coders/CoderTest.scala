@@ -121,9 +121,38 @@ final case class AnyValExample(value: String) extends AnyVal
 // Non deterministic
 final case class NonDeterministic(a: Double, b: Double)
 
+class ClassWrapper() {
+  case class InnerCaseClass(str: String)
+
+  def runWithImplicit(implicit
+    c: Coder[InnerCaseClass]
+  ): Unit =
+    InnerCaseClass("51") coderShould roundtrip()
+
+  def run(): Unit =
+    InnerCaseClass("51") coderShould roundtrip()
+}
+
+object TopLevelObject {
+  case class InnerCaseClass(str: String)
+}
+
 final class CoderTest extends AnyFlatSpec with Matchers {
+
   val userId: UserId = UserId(Seq[Byte](1, 2, 3, 4))
   val user: User = User(userId, "johndoe", "johndoe@spotify.com")
+
+  /*
+   * Case class nested inside another class. Do not move outside
+   * */
+  case class InnerCaseClass(str: String)
+
+  /*
+   * Object nested inside another class. Do not move outside
+   * */
+  object InnerObject {
+    case class InnerCaseClass(str: String)
+  }
 
   def materialize[T](coder: Coder[T]): BCoder[T] =
     CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
@@ -135,7 +164,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     4.5 coderShould roundtrip()
   }
 
-  it should "support Scala collections" in {
+  "Coders" should "support Scala collections" in {
     import scala.collection.BitSet
 
     val nil: Seq[String] = Nil
@@ -166,6 +195,73 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val bmc = CoderMaterializer.beamWithDefault(Coder[Map[String, String]])
     CoderProperties.testByteCount(bmc, BCoder.Context.OUTER, Array(m))
     CoderProperties.structuralValueConsistentWithEquals(bmc, m, m)
+  }
+
+  "Coders" should "not support inner case classes" in {
+    {
+      the[Throwable] thrownBy {
+        InnerObject coderShould roundtrip()
+      }
+    }.getMessage should include(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
+
+    val cw = new ClassWrapper()
+    try {
+      cw.runWithImplicit
+      throw new Throwable("Is expected to throw when passing implicit from outer class")
+    } catch {
+      case e: NullPointerException =>
+        // In this case outer field is called "$cw" and it is hard to wrap it with proper exception
+        // so we allow it to fail with NullPointerException
+        e.getMessage should be(null)
+    }
+
+    {
+      the[Throwable] thrownBy {
+        cw.InnerCaseClass("49") coderShould roundtrip()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
+
+    {
+      the[Throwable] thrownBy {
+        cw.run()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.ClassWrapper$$"
+    )
+
+    {
+      the[Throwable] thrownBy {
+        InnerCaseClass("42") coderShould roundtrip()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
+
+    case class ClassInsideMethod(str: String)
+
+    {
+      the[Throwable] thrownBy {
+        ClassInsideMethod("50") coderShould roundtrip()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
+
+    {
+      the[Throwable] thrownBy {
+        InnerObject.InnerCaseClass("42") coderShould roundtrip()
+      }
+    }.getMessage should startWith(
+      "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
+    )
+  }
+
+  "Coders" should "support inner classes in objects" in {
+    TopLevelObject.InnerCaseClass("42") coderShould roundtrip()
   }
 
   it should "support tuples" in {
