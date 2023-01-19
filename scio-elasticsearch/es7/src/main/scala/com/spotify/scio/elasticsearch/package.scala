@@ -38,8 +38,8 @@ package object elasticsearch extends CoderInstances {
     usernameAndPassword: Option[(String, String)] = None
   )
 
-  implicit
-  class ElasticsearchSCollection[T](@transient private val self: SCollection[T]) extends AnyVal {
+  implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
+      extends AnyVal {
 
     /**
      * Save this SCollection into Elasticsearch.
