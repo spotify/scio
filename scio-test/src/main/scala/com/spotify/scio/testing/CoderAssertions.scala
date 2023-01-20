@@ -44,7 +44,7 @@ object CoderAssertions {
 
     def kryoCoderShould(
       coderAssertion: CoderAssertionT[T]
-    )(implicit eq: Equality[T], ct: ClassTag[T]): AssertionContext[T] = {
+    )(implicit ct: ClassTag[T]): AssertionContext[T] = {
       val ctx = AssertionContext(Some(value), Coder.kryo[T])
       ctx.copy(lastAssertion = Some(coderAssertion(ctx)))
     }
