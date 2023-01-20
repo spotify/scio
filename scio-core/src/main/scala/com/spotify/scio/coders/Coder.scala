@@ -315,13 +315,12 @@ private[coders] object CoderStackTrace {
     0
   )
 
-  def prepare: Array[StackTraceElement] = {
+  def prepare: Array[StackTraceElement] =
     CoderStackElemMarker +: Thread
       .currentThread()
       .getStackTrace
       .dropWhile(!_.getClassName.contains(CoderMaterializer.getClass.getName))
       .take(15)
-  }
 
   def append[T <: Throwable](
     cause: T,
