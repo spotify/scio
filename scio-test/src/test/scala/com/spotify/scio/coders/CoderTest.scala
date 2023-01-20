@@ -565,7 +565,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "optimize for objects" in {
-//    Coder[TopLevelObject.type] shouldBe a[]
     Coder[TopLevelObject.type] coderShould beSerializable() and beOfType[Singleton[_]]()
   }
 
