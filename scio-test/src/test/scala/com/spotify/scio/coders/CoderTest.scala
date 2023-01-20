@@ -79,8 +79,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     Left(1) coderShould notFallback()
     mut.Set(s: _*) coderShould notFallback()
 
-    s coderShould bytesCountTested and structuralValueConsistentWithEquals
-    m coderShould bytesCountTested and structuralValueConsistentWithEquals
+    s coderShould bytesCountTested() and structuralValueConsistentWithEquals()
+    m coderShould bytesCountTested() and structuralValueConsistentWithEquals()
   }
 
   it should "not support inner case classes" in {
@@ -336,7 +336,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support classes with private constructors" in {
-    PrivateClass(42L) coderShould fallback
+    PrivateClass(42L) coderShould fallback()
   }
 
   it should "support classes that contain classes with private constructors" in {
@@ -522,7 +522,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     SampleField(
       "hello",
       StringType
-    ) coderShould roundtrip() and beConsistentWithEquals and beDeterministic
+    ) coderShould roundtrip() and beConsistentWithEquals() and beDeterministic()
 
     SampleField(
       "hello",
@@ -534,8 +534,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "#2595: work with parameterized types" in {
     case class Example(stringT: Either[Array[Byte], String], longT: Either[Array[Byte], Long])
-    val sc = com.spotify.scio.ScioContext.forTest()
-    val c = CoderMaterializer.beam(sc.options, implicitly[Coder[Example]])
+    val c = CoderMaterializer.beamWithDefault(implicitly[Coder[Example]])
     c.encode(Example(Right("str"), Right(0L)), System.out)
   }
 
@@ -558,21 +557,21 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       ).asJava
     )
 
-    tableSchema coderShould roundtrip() and beSerializable
+    tableSchema coderShould roundtrip() and beSerializable()
   }
 
   it should "optimize for AnyVal" in {
-    Coder[AnyValExample] coderShould beSerializable and beOfType[Transform[_, _]]()
+    Coder[AnyValExample] coderShould beSerializable() and beOfType[Transform[_, _]]()
   }
 
   it should "optimize for objects" in {
 //    Coder[TopLevelObject.type] shouldBe a[]
-    Coder[TopLevelObject.type] coderShould beSerializable and beOfType[Singleton[_]]()
+    Coder[TopLevelObject.type] coderShould beSerializable() and beOfType[Singleton[_]]()
   }
 
   it should "support Algebird's Moments" in {
     new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
-    Moments(12) coderShould roundtrip() and beSerializable
+    Moments(12) coderShould roundtrip() and beSerializable()
   }
 
   it should "return different hashCodes for different instances of parameterized Coders" in {
@@ -611,7 +610,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     implicit val funnel = Funnels.stringFunnel(Charset.forName("UTF-8"))
     val bloomFilter = BloomFilter.create(funnel, 5L)
 
-    bloomFilter coderShould roundtrip() and beDeterministic
+    bloomFilter coderShould roundtrip() and beDeterministic()
   }
 
   it should "not serialize any magnolia internals after materialization" in {
@@ -748,7 +747,3 @@ class ClassWrapper() {
   def run(): Unit =
     InnerCaseClass("51") coderShould roundtrip()
 }
-//
-//object TopLevelObject {
-//  case class InnerCaseClass(str: String)
-//}
