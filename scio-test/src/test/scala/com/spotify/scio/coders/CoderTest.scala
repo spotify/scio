@@ -63,21 +63,21 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val s: Seq[String] = (1 to 10).map(_.toString)
     val m: Map[String, String] = s.map(v => v -> v).toMap
 
-    nil coderShould notFallback
-    s coderShould notFallback
-    s.toList coderShould notFallback
-    s.toVector coderShould notFallback
-    m coderShould notFallback
-    s.toSet coderShould notFallback
-    mut.ListBuffer(1 to 10: _*) coderShould notFallback
-    None coderShould notFallback
-    Option(1) coderShould notFallback
-    Some(1) coderShould notFallback
-    BitSet(1 to 100000: _*) coderShould notFallback
+    nil coderShould notFallback()
+    s coderShould notFallback()
+    s.toList coderShould notFallback()
+    s.toVector coderShould notFallback()
+    m coderShould notFallback()
+    s.toSet coderShould notFallback()
+    mut.ListBuffer(1 to 10: _*) coderShould notFallback()
+    None coderShould notFallback()
+    Option(1) coderShould notFallback()
+    Some(1) coderShould notFallback()
+    BitSet(1 to 100000: _*) coderShould notFallback()
 
-    Right(1) coderShould notFallback
-    Left(1) coderShould notFallback
-    mut.Set(s: _*) coderShould notFallback
+    Right(1) coderShould notFallback()
+    Left(1) coderShould notFallback()
+    mut.Set(s: _*) coderShould notFallback()
 
     s coderShould bytesCountTested and structuralValueConsistentWithEquals
     m coderShould bytesCountTested and structuralValueConsistentWithEquals
@@ -86,7 +86,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "not support inner case classes" in {
     {
       the[Throwable] thrownBy {
-        InnerObject coderShould roundtrip
+        InnerObject coderShould roundtrip()
       }
     }.getMessage should include(
       "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
@@ -105,7 +105,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     {
       the[Throwable] thrownBy {
-        cw.InnerCaseClass("49") coderShould roundtrip
+        cw.InnerCaseClass("49") coderShould roundtrip()
       }
     }.getMessage should startWith(
       "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
@@ -121,7 +121,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     {
       the[Throwable] thrownBy {
-        InnerCaseClass("42") coderShould roundtrip
+        InnerCaseClass("42") coderShould roundtrip()
       }
     }.getMessage should startWith(
       "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
@@ -131,7 +131,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     {
       the[Throwable] thrownBy {
-        ClassInsideMethod("50") coderShould roundtrip
+        ClassInsideMethod("50") coderShould roundtrip()
       }
     }.getMessage should startWith(
       "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
@@ -139,7 +139,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     {
       the[Throwable] thrownBy {
-        InnerObject.InnerCaseClass("42") coderShould roundtrip
+        InnerObject.InnerCaseClass("42") coderShould roundtrip()
       }
     }.getMessage should startWith(
       "Found an $outer field in class com.spotify.scio.coders.CoderTest$$"
@@ -147,7 +147,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support inner classes in objects" in {
-    TopLevelObject1.InnerCaseClass("42") coderShould roundtrip
+    TopLevelObject1.InnerCaseClass("42") coderShould roundtrip()
   }
 
   it should "support tuples" in {
@@ -177,27 +177,27 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       4.2f
     )
 
-    t22.take(2) coderShould roundtrip
-    t22.take(3) coderShould roundtrip
-    t22.take(4) coderShould roundtrip
-    t22.take(5) coderShould roundtrip
-    t22.take(6) coderShould roundtrip
-    t22.take(7) coderShould roundtrip
-    t22.take(8) coderShould roundtrip
-    t22.take(9) coderShould roundtrip
-    t22.take(10) coderShould roundtrip
-    t22.take(11) coderShould roundtrip
-    t22.take(12) coderShould roundtrip
-    t22.take(13) coderShould roundtrip
-    t22.take(14) coderShould roundtrip
-    t22.take(15) coderShould roundtrip
-    t22.take(16) coderShould roundtrip
-    t22.take(17) coderShould roundtrip
-    t22.take(18) coderShould roundtrip
-    t22.take(19) coderShould roundtrip
-    t22.take(20) coderShould roundtrip
-    t22.take(21) coderShould roundtrip
-    t22.take(22) coderShould roundtrip
+    t22.take(2) coderShould roundtrip()
+    t22.take(3) coderShould roundtrip()
+    t22.take(4) coderShould roundtrip()
+    t22.take(5) coderShould roundtrip()
+    t22.take(6) coderShould roundtrip()
+    t22.take(7) coderShould roundtrip()
+    t22.take(8) coderShould roundtrip()
+    t22.take(9) coderShould roundtrip()
+    t22.take(10) coderShould roundtrip()
+    t22.take(11) coderShould roundtrip()
+    t22.take(12) coderShould roundtrip()
+    t22.take(13) coderShould roundtrip()
+    t22.take(14) coderShould roundtrip()
+    t22.take(15) coderShould roundtrip()
+    t22.take(16) coderShould roundtrip()
+    t22.take(17) coderShould roundtrip()
+    t22.take(18) coderShould roundtrip()
+    t22.take(19) coderShould roundtrip()
+    t22.take(20) coderShould roundtrip()
+    t22.take(21) coderShould roundtrip()
+    t22.take(22) coderShould roundtrip()
   }
 
   it should "have a Coder for Nothing, Unit, Void" in {
@@ -224,9 +224,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       .asJava
     val arrayList = new jArrayList(s)
 
-    s coderShould notFallback
-    m coderShould notFallback
-    arrayList coderShould notFallback
+    s coderShould notFallback()
+    m coderShould notFallback()
+    arrayList coderShould notFallback()
   }
 
   it should "Derive serializable coders" in {
@@ -244,22 +244,22 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "derive coders for product types" in {
-    DummyCC("dummy") coderShould notFallback
-    DummyCC("") coderShould notFallback
-    ParameterizedDummy("dummy") coderShould notFallback
-    MultiParameterizedDummy("dummy", 2) coderShould notFallback
-    user coderShould notFallback
-    (1, "String", List[Int]()) coderShould notFallback
+    DummyCC("dummy") coderShould notFallback()
+    DummyCC("") coderShould notFallback()
+    ParameterizedDummy("dummy") coderShould notFallback()
+    MultiParameterizedDummy("dummy", 2) coderShould notFallback()
+    user coderShould notFallback()
+    (1, "String", List[Int]()) coderShould notFallback()
     val ds = (1 to 10).map(_ => DummyCC("dummy")).toList
-    ds coderShould notFallback
+    ds coderShould notFallback()
   }
 
   it should "derive coders for sealed class hierarchies" in {
     val ta: Top = TA(1, "test")
     val tb: Top = TB(4.2)
-    ta coderShould notFallback
-    tb coderShould notFallback
-    (123, "hello", ta, tb, List(("bar", 1, "foo"))) coderShould notFallback
+    ta coderShould notFallback()
+    tb coderShould notFallback()
+    (123, "hello", ta, tb, List(("bar", 1, "foo"))) coderShould notFallback()
   }
 
   // FIXME: TableRowJsonCoder cannot be tested in scio-test because of circular dependency on scio-google-cloud-platform
@@ -269,37 +269,37 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 
-    ByteString.copyFromUtf8("SampleString") coderShould notFallback
-    BigDecimal("1234") coderShould notFallback
+    ByteString.copyFromUtf8("SampleString") coderShould notFallback()
+    BigDecimal("1234") coderShould notFallback()
 
-    UUID.randomUUID() coderShould notFallback
-    FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback
+    UUID.randomUUID() coderShould notFallback()
+    FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback()
 
     val bs = new java.util.BitSet()
     (1 to 100000).foreach(x => bs.set(x))
-    bs coderShould notFallback
+    bs coderShould notFallback()
 
-    new BigInteger("123456789") coderShould notFallback
-    new jBigDecimal("123456789.98765") coderShould notFallback
+    new BigInteger("123456789") coderShould notFallback()
+    new jBigDecimal("123456789.98765") coderShould notFallback()
 
     val now = org.joda.time.Instant.now()
-    now coderShould notFallback
-    new IntervalWindow(now.minus(4000), now) coderShould notFallback
+    now coderShould notFallback()
+    new IntervalWindow(now.minus(4000), now) coderShould notFallback()
 
-    new org.joda.time.LocalDate coderShould notFallback
-    new org.joda.time.LocalTime coderShould notFallback
-    new org.joda.time.LocalDateTime coderShould notFallback
-    new org.joda.time.DateTime coderShould notFallback
-    new java.sql.Timestamp(1) coderShould notFallback
+    new org.joda.time.LocalDate coderShould notFallback()
+    new org.joda.time.LocalTime coderShould notFallback()
+    new org.joda.time.LocalDateTime coderShould notFallback()
+    new org.joda.time.DateTime coderShould notFallback()
+    new java.sql.Timestamp(1) coderShould notFallback()
   }
 
   it should "support java's Instant" in {
     // Support full nano range
-    Instant.ofEpochSecond(0, 123123123) coderShould notFallback
-    Instant.MIN coderShould notFallback
-    Instant.MAX coderShould notFallback
-    Instant.EPOCH coderShould notFallback
-    Instant.now coderShould notFallback
+    Instant.ofEpochSecond(0, 123123123) coderShould notFallback()
+    Instant.MIN coderShould notFallback()
+    Instant.MAX coderShould notFallback()
+    Instant.EPOCH coderShould notFallback()
+    Instant.now coderShould notFallback()
   }
 
   it should "support Beam Row" in {
@@ -321,16 +321,16 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       .map { case (a, b, c) =>
         Row.withSchema(beamSchema).addValues(a, b, c).build()
       }
-      .foreach(r => r coderShould notFallback)
+      .foreach(r => r coderShould notFallback())
   }
 
   it should "support Scala objects" in {
-    TopLevelObject coderShould notFallback
-    TopLevelObject1 coderShould notFallback
+    TopLevelObject coderShould notFallback()
+    TopLevelObject1 coderShould notFallback()
   }
 
   it should "only derive Coder if no coder exists" in {
-    CaseClassWithExplicitCoder(1, "hello") coderShould notFallback and haveCoderInstance(
+    CaseClassWithExplicitCoder(1, "hello") coderShould notFallback() and haveCoderInstance(
       CaseClassWithExplicitCoder.caseClassWithExplicitCoderCoder
     )
   }
@@ -340,7 +340,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support classes that contain classes with private constructors" in {
-    UsesPrivateClass(PrivateClass(1L)) coderShould notFallback
+    UsesPrivateClass(PrivateClass(1L)) coderShould notFallback()
   }
 
   it should "not derive Coders for org.apache.beam.sdk.values.Row" in {
@@ -405,13 +405,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val b = OuterClassForProto.ProtoComplexMessage.newBuilder
     val ex = b.setArtistGid("1").setTimeFilter(OuterClassForProto.EnumExample.OPT1).build()
 
-    ex coderShould notFallback
-    ClassWithProtoEnum("somestring", OuterClassForProto.EnumExample.OPT1) coderShould notFallback
+    ex coderShould notFallback()
+    ClassWithProtoEnum("somestring", OuterClassForProto.EnumExample.OPT1) coderShould notFallback()
   }
 
   it should "support java enums" in {
-    JavaEnumExample.GOOD_THING coderShould roundtrip
-    JavaEnumExample.BAD_THING coderShould roundtrip
+    JavaEnumExample.GOOD_THING coderShould roundtrip()
+    JavaEnumExample.BAD_THING coderShould roundtrip()
   }
 
   it should "be deterministic for java enums" in {
@@ -430,28 +430,28 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val opts: PipelineOptions = PipelineOptionsFactory.create()
     opts.as(classOf[ScioOptions]).setNullableCoders(true)
 
-    null.asInstanceOf[String] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[jInt] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[jFloat] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[jDouble] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[jLong] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[jShort] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[(String, Top)] coderShouldWithOpts opts and roundtrip
-    (null, null).asInstanceOf[(String, Top)] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[DummyCC] coderShouldWithOpts opts and roundtrip
-    DummyCC(null) coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[Top] coderShouldWithOpts opts and roundtrip
-    null.asInstanceOf[Either[String, Int]] coderShouldWithOpts opts and roundtrip
+    null.asInstanceOf[String] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[jInt] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[jFloat] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[jDouble] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[jLong] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[jShort] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[(String, Top)] coderShouldWithOpts opts and roundtrip()
+    (null, null).asInstanceOf[(String, Top)] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[DummyCC] coderShouldWithOpts opts and roundtrip()
+    DummyCC(null) coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[Top] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[Either[String, Int]] coderShouldWithOpts opts and roundtrip()
 
     type T = (String, Int, Top)
     val example: T = ("Hello", 42, TA(1, "World"))
     val nullExample1: T = ("Hello", 42, TA(1, null))
     val nullExample2: T = ("Hello", 42, null)
     val nullExample3: T = null
-    example coderShouldWithOpts opts and roundtrip
-    nullExample1 coderShouldWithOpts opts and roundtrip
-    nullExample2 coderShouldWithOpts opts and roundtrip
-    nullExample3 coderShouldWithOpts opts and roundtrip
+    example coderShouldWithOpts opts and roundtrip()
+    nullExample1 coderShouldWithOpts opts and roundtrip()
+    nullExample2 coderShouldWithOpts opts and roundtrip()
+    nullExample3 coderShouldWithOpts opts and roundtrip()
 
     val nullBCoder = CoderMaterializer.beamWithDefault(Coder[T], o = opts)
     nullBCoder.isRegisterByteSizeObserverCheap(nullExample1)
@@ -480,9 +480,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val nok = SampleField("foo", RecordType(List(SampleField(null, IntegerType))))
 
     implicit lazy val c: Coder[SampleField] = Coder.gen[SampleField]
-    ok coderShould roundtrip
+    ok coderShould roundtrip()
     val caught = intercept[CoderException] {
-      nok coderShould roundtrip
+      nok coderShould roundtrip()
     }
 
     val stackTrace = caught.getStackTrace
@@ -498,12 +498,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "Serialize Java beans using a Schema Coder" in {
     val javaUser = new com.spotify.scio.bean.UserBean("Julien", 33)
-    javaUser coderShould notFallback
+    javaUser coderShould notFallback()
   }
 
   it should "Serialize WrappedArray using wrappedArrayCoder" in {
     val wrappedArray: mut.ArraySeq[String] = Array("foo", "bar")
-    wrappedArray coderShould notFallback
+    wrappedArray coderShould notFallback()
   }
 
   it should "support derivation of recursive types" in {
@@ -522,14 +522,14 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     SampleField(
       "hello",
       StringType
-    ) coderShould roundtrip and beConsistentWithEquals and beDeterministic
+    ) coderShould roundtrip() and beConsistentWithEquals and beDeterministic
 
     SampleField(
       "hello",
       RecordType(
         List(SampleField("record", RecordType(List.empty)), SampleField("int", IntegerType))
       )
-    ) coderShould roundtrip
+    ) coderShould roundtrip()
   }
 
   it should "#2595: work with parameterized types" in {
@@ -540,7 +540,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "#2467 support derivation of directly recursive types" in {
-    Recursive(1, Option(Recursive(2, None))) coderShould roundtrip
+    Recursive(1, Option(Recursive(2, None))) coderShould roundtrip()
   }
 
   it should "#2644 verifyDeterministic throw a NonDeterministicException exception for Set" in {
@@ -558,7 +558,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       ).asJava
     )
 
-    tableSchema coderShould roundtrip and beSerializable
+    tableSchema coderShould roundtrip() and beSerializable
   }
 
   it should "optimize for AnyVal" in {
@@ -571,8 +571,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Algebird's Moments" in {
-    new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip
-    Moments(12) coderShould roundtrip and beSerializable
+    new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
+    Moments(12) coderShould roundtrip() and beSerializable
   }
 
   it should "return different hashCodes for different instances of parameterized Coders" in {
@@ -611,7 +611,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     implicit val funnel = Funnels.stringFunnel(Charset.forName("UTF-8"))
     val bloomFilter = BloomFilter.create(funnel, 5L)
 
-    bloomFilter coderShould roundtrip and beDeterministic
+    bloomFilter coderShould roundtrip() and beDeterministic
   }
 
   it should "not serialize any magnolia internals after materialization" in {
@@ -743,10 +743,10 @@ class ClassWrapper() {
   def runWithImplicit(implicit
     c: Coder[InnerCaseClass]
   ): Unit =
-    InnerCaseClass("51") coderShould roundtrip
+    InnerCaseClass("51") coderShould roundtrip()
 
   def run(): Unit =
-    InnerCaseClass("51") coderShould roundtrip
+    InnerCaseClass("51") coderShould roundtrip()
 }
 //
 //object TopLevelObject {
