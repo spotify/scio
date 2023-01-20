@@ -31,69 +31,75 @@ import scala.reflect.ClassTag
 object CoderAssertions {
   private lazy val DefaultPipelineOptions = PipelineOptionsFactory.create()
 
-  type CoderAssertionT[T] = AssertionContextT[T] => Assertion
-  type CoderAssertion = AssertionContext => Assertion
+  type CoderAssertionT[T] = AssertionContext[T] => Assertion
+  type CoderAssertion = AssertionContextBase => Assertion
 
   implicit class ValueShouldSyntax[T](value: T) {
     def coderShould(
       coderAssertion: CoderAssertionT[T]
-    )(implicit c: Coder[T]): AssertionContextT[T] = {
-      val ctx = AssertionContext.Concrete(Some(value), c)
+    )(implicit c: Coder[T]): AssertionContext[T] = {
+      val ctx = AssertionContext(Some(value), c)
       ctx.copy(lastAssertion = Some(coderAssertion(ctx)))
     }
 
     def kryoCoderShould(
       coderAssertion: CoderAssertionT[T]
-    )(implicit eq: Equality[T], ct: ClassTag[T]): AssertionContextT[T] = {
-      val ctx = AssertionContext.Concrete(Some(value), Coder.kryo[T])
+    )(implicit eq: Equality[T], ct: ClassTag[T]): AssertionContext[T] = {
+      val ctx = AssertionContext(Some(value), Coder.kryo[T])
       ctx.copy(lastAssertion = Some(coderAssertion(ctx)))
     }
 
-    def coderShouldWithOpts(opts: PipelineOptions)(implicit c: Coder[T]): AssertionContextT[T] =
-      AssertionContext.Concrete(Some(value), c, opts = opts)
+    def coderShouldWithOpts(opts: PipelineOptions)(implicit c: Coder[T]): AssertionContext[T] =
+      AssertionContext(Some(value), c, opts = opts)
   }
 
   implicit class CoderShouldSyntax[T](c: Coder[T]) {
     def coderShould(
       coderAssertion: CoderAssertionT[T]
-    )(implicit c: Coder[T]): AssertionContextT[T] = {
-      val ctx = AssertionContext.Concrete(None, c)
+    )(implicit c: Coder[T]): AssertionContext[T] = {
+      val ctx = AssertionContext(None, c)
       ctx.copy(lastAssertion = Some(coderAssertion(ctx)))
     }
   }
 
-  object AssertionContext {
-    case class Concrete[T](
-      actualValue: Option[T],
-      coder: Coder[T],
-      lastAssertion: Option[Assertion] = None,
-      opts: PipelineOptions = DefaultPipelineOptions
-    ) extends AssertionContextT[T]
-  }
-
-  trait AssertionContextT[T] extends AssertionContext {
+  case class AssertionContext[T](
+    actualValue: Option[T],
+    coder: Coder[T],
+    lastAssertion: Option[Assertion] = None,
+    opts: PipelineOptions = DefaultPipelineOptions
+  ) extends AssertionContextBase {
     override type ValType = T
     def and(
       coderAssertion: CoderAssertionT[T]
-    ): AssertionContextT[T] =
-      AssertionContext.Concrete(
-        actualValue,
-        coder,
-        Some(coderAssertion(this)),
-        opts
-      )
+    ): AssertionContext[T] = copy(lastAssertion = Some(coderAssertion(this)))
+//      AssertionContext(
+//        actualValue,
+//        coder,
+//        Some(coderAssertion(this)),
+//        opts
+//      )
   }
 
-  trait AssertionContext {
+//  trait AssertionContextT[T] extends AssertionBaseContext {
+//    override type ValType = T
+//    def and(
+//      coderAssertion: CoderAssertionT[T]
+//    ): AssertionContextT[T] =
+//      AssertionBaseContext.Concrete(
+//        actualValue,
+//        coder,
+//        Some(coderAssertion(this)),
+//        opts
+//      )
+//  }
+
+  trait AssertionContextBase {
     type ValType
     val actualValue: Option[ValType]
     val coder: Coder[ValType]
     val lastAssertion: Option[Assertion]
     val opts: PipelineOptions
     lazy val beamCoder: BCoder[ValType] = CoderMaterializer.beamWithDefault(coder, opts)
-
-//    def withPipelineOpts(customOpts: PipelineOptions): AssertionContext =
-//      AssertionContext.Concrete(actualValue, coder, lastAssertion, customOpts)
   }
 
   def roundtrip[T]()(implicit eq: Equality[T]): CoderAssertionT[T] = ctx =>
@@ -106,11 +112,6 @@ object CoderAssertions {
 
   def haveCoderInstance(expectedCoder: Coder[_]): CoderAssertion = ctx =>
     ctx.coder should ===(expectedCoder)
-
-//  def roundtripKryo[T: ClassTag](): CoderAssertionT[T] = ctx => {
-//    ctx.coder should ===(Coder.kryo[T])
-//    checkRoundtripWithCoder(ctx.beamCoder, ctx.actualValue.get)
-//  }
 
   def notFallback[T: ClassTag](): CoderAssertionT[T] = ctx => {
     ctx.coder should !==(Coder.kryo[T])
