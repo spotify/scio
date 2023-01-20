@@ -207,14 +207,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     )
 
     val cw = new ClassWrapper()
-
     try {
       cw.runWithImplicit
       throw new Throwable("Is expected to throw when passing implicit from outer class")
     } catch {
       case _: NullPointerException =>
-        // In this case outer field is called "$cw" and it is hard to wrap it with proper exception
-        // so we allow it to fail with NullPointerException
+      // In this case outer field is called "$cw" and it is hard to wrap it with proper exception
+      // so we allow it to fail with NullPointerException
     }
 
     {
