@@ -69,29 +69,11 @@ object CoderAssertions {
     opts: PipelineOptions = DefaultPipelineOptions
   ) extends AssertionContextBase {
     override type ValType = T
+
     def and(
       coderAssertion: CoderAssertionT[T]
     ): AssertionContext[T] = copy(lastAssertion = Some(coderAssertion(this)))
-//      AssertionContext(
-//        actualValue,
-//        coder,
-//        Some(coderAssertion(this)),
-//        opts
-//      )
   }
-
-//  trait AssertionContextT[T] extends AssertionBaseContext {
-//    override type ValType = T
-//    def and(
-//      coderAssertion: CoderAssertionT[T]
-//    ): AssertionContextT[T] =
-//      AssertionBaseContext.Concrete(
-//        actualValue,
-//        coder,
-//        Some(coderAssertion(this)),
-//        opts
-//      )
-//  }
 
   trait AssertionContextBase {
     type ValType
