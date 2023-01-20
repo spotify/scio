@@ -415,7 +415,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "be deterministic for java enums" in {
-    Coder[JavaEnumExample] coderShould beDeterministic
+    Coder[JavaEnumExample] coderShould beDeterministic()
   }
 
   it should "#1604: not throw on null" in {
@@ -493,7 +493,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "#1651: remove all annotations from derived coders" in {
-    Coder[TraitWithAnnotation] coderShould beSerializable
+    Coder[TraitWithAnnotation] coderShould beSerializable()
   }
 
   it should "Serialize Java beans using a Schema Coder" in {
@@ -502,7 +502,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "Serialize WrappedArray using wrappedArrayCoder" in {
-    val wrappedArray: mut.ArraySeq[String] = Array("foo", "bar")
+    val wrappedArray: mut.WrappedArray[String] = Array("foo", "bar")
     wrappedArray coderShould notFallback()
   }
 
