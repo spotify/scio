@@ -17,7 +17,7 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.{Coder, CoderMaterializer, MaterializedCoder, TransformCoder}
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.CoderProperties
@@ -40,6 +40,15 @@ object CoderAssertions {
     )(implicit c: Coder[T]): AssertionContext[T] = {
       val ctx = AssertionContext(Some(value), c)
       ctx.copy(lastAssertion = Some(coderAssertion(ctx)))
+    }
+
+    def coderShouldThrowOn[ErrorType <: Throwable: ClassTag](
+      coderAssertion: CoderAssertionT[T],
+      assertMessage: String => Assertion
+    )(implicit c: Coder[T], eq: Equality[T]): Assertion = {
+      val ctx = AssertionContext(Some(value), c)
+      val error = the[ErrorType] thrownBy { coderAssertion(ctx) }
+      assertMessage(error.getMessage)
     }
 
     def kryoCoderShould(
@@ -84,12 +93,23 @@ object CoderAssertions {
     lazy val beamCoder: BCoder[ValType] = CoderMaterializer.beamWithDefault(coder, opts)
   }
 
-  def roundtrip[T]()(implicit eq: Equality[T]): CoderAssertionT[T] = ctx =>
+  def roundtrip[T: Equality](): CoderAssertionT[T] = ctx =>
     checkRoundtripWithCoder[T](ctx.beamCoder, ctx.actualValue.get)
 
-  def roundtripToBytes[T](
-    expectedBytes: Array[Byte]
-  )(implicit eq: Equality[T]): CoderAssertionT[T] = ctx =>
+//  def roundtripThrows[T: Equality, ErrorType: ClassTag](
+//    expectedMessagePart: String
+//  ): CoderAssertionT[T] =
+//    ctx => {
+//      {
+//        the[ErrorType] thrownBy {
+//          roundtrip().apply(ctx)
+//        }
+//      }.getMessage should include(
+//        expectedMessagePart
+//      )
+//    }
+
+  def roundtripToBytes[T: Equality](expectedBytes: Array[Byte]): CoderAssertionT[T] = ctx =>
     checkRoundtripWithCoder[T](ctx.beamCoder, ctx.actualValue.get, expectedBytes)
 
   def haveCoderInstance(expectedCoder: Coder[_]): CoderAssertion = ctx =>
@@ -117,13 +137,37 @@ object CoderAssertions {
   def coderIsSerializable[A](implicit c: Coder[A]): Assertion =
     c.coderShould(beSerializable()).lastAssertion.get
 
-  def beOfType[ExpectedCoder: ClassTag](): CoderAssertion = ctx =>
-    ctx.coder shouldBe a[ExpectedCoder]
+  def beOfType[ExpectedCoder: ClassTag]: CoderAssertion = ctx => ctx.coder shouldBe a[ExpectedCoder]
+
+  def materializeTo[ExpectedBeamCoder: ClassTag]: CoderAssertion =
+    ctx => {
+      ctx.beamCoder shouldBe a[MaterializedCoder[_]]
+      ctx.beamCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldBe a[ExpectedBeamCoder]
+    }
+
+  def materializeTo(className: String): CoderAssertion =
+    ctx => {
+      ctx.beamCoder shouldBe a[MaterializedCoder[_]]
+      ctx.beamCoder
+        .asInstanceOf[MaterializedCoder[_]]
+        .bcoder
+        .getClass
+        .getSimpleName shouldBe className
+    }
+
+  def materializeToTransformOf[ExpectedBeamCoder: ClassTag]: CoderAssertion =
+    ctx => {
+      ctx.beamCoder shouldBe a[MaterializedCoder[_]]
+      ctx.beamCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldBe a[TransformCoder[_, _]]
+      val innerCoder =
+        ctx.beamCoder.asInstanceOf[MaterializedCoder[_]].bcoder.asInstanceOf[TransformCoder[_, _]]
+      innerCoder.bcoder shouldBe a[ExpectedBeamCoder]
+    }
 
   /*
    * Checks that Beam's registerByteSizeObserver() and encode() are consistent
    * */
-  def bytesCountTested[T <: Object]()(implicit ct: ClassTag[T]): CoderAssertionT[T] =
+  def bytesCountTested[T <: Object: ClassTag](): CoderAssertionT[T] =
     ctx => {
       val arr = Array(ctx.actualValue.get)
       noException should be thrownBy CoderProperties.testByteCount(
@@ -141,12 +185,10 @@ object CoderAssertions {
     )
   }
 
-  private def checkRoundtripWithCoder[T](
+  private def checkRoundtripWithCoder[T: Equality](
     beamCoder: BCoder[T],
     actualValue: T,
     expectedBytes: Array[Byte] = null
-  )(implicit
-    eq: Equality[T]
   ): Assertion = {
     val bytes = CoderUtils.encodeToByteArray(beamCoder, actualValue)
     if (expectedBytes != null) {

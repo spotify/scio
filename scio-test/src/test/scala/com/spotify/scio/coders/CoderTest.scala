@@ -19,7 +19,16 @@ package com.spotify.scio.coders
 
 import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
-import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException, NullableCoder, StringUtf8Coder}
+import org.apache.beam.sdk.coders.{
+  BooleanCoder,
+  ByteCoder,
+  Coder => BCoder,
+  CoderException,
+  DoubleCoder,
+  NullableCoder,
+  StringUtf8Coder,
+  VarIntCoder
+}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -50,10 +59,20 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
 
   it should "support primitives" in {
-    1 coderShould roundtripToBytes(Array(1))
-    'a' coderShould roundtripToBytes(Array(97))
-    "yolo" coderShould roundtripToBytes(Array(121, 111, 108, 111))
-    4.5 coderShould roundtripToBytes(Array(64, 18, 0, 0, 0, 0, 0, 0))
+    false coderShould roundtripToBytes(Array(0)) and beOfType[Beam[_]] and
+      materializeTo[BooleanCoder]
+
+    1 coderShould roundtripToBytes(Array(1)) and beOfType[Beam[_]] and
+      materializeTo[VarIntCoder]
+
+    'a' coderShould roundtripToBytes(Array(97)) and beOfType[Transform[_, _]] and
+      materializeToTransformOf[ByteCoder]
+
+    "yolo" coderShould roundtripToBytes(Array(121, 111, 108, 111)) and beOfType[Beam[_]] and
+      materializeTo[StringUtf8Coder]
+
+    4.5 coderShould roundtripToBytes(Array(64, 18, 0, 0, 0, 0, 0, 0)) and beOfType[Beam[_]] and
+      materializeTo("SDoubleCoder$")
   }
 
   it should "support Scala collections" in {
@@ -63,21 +82,25 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val s: Seq[String] = (1 to 10).map(_.toString)
     val m: Map[String, String] = s.map(v => v -> v).toMap
 
-    nil coderShould notFallback()
-    s coderShould notFallback()
-    s.toList coderShould notFallback()
-    s.toVector coderShould notFallback()
-    m coderShould notFallback()
-    s.toSet coderShould notFallback()
-    mut.ListBuffer(1 to 10: _*) coderShould notFallback()
-    None coderShould notFallback()
-    Option(1) coderShould notFallback()
-    Some(1) coderShould notFallback()
-    BitSet(1 to 100000: _*) coderShould notFallback()
+    nil coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
+      materializeTo("SeqCoder")
+    s coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
+      materializeTo("SeqCoder")
+    s.toList coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
+      materializeTo("ListCoder")
+    s.toVector coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
+      materializeTo("VectorCoder")
+    m coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    s.toSet coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    mut.ListBuffer(1 to 10: _*) coderShould roundtrip() and beOfType[Transform[_, _]]
+    None coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    Option(1) coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    Some(1) coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    BitSet(1 to 100000: _*) coderShould roundtrip() and beOfType[Beam[_]]
 
-    Right(1) coderShould notFallback()
-    Left(1) coderShould notFallback()
-    mut.Set(s: _*) coderShould notFallback()
+    Right(1) coderShould roundtrip() and beOfType[Ref[_]]
+    Left(1) coderShould roundtrip() and beOfType[Ref[_]]
+    mut.Set(s: _*) coderShould roundtrip() and beOfType[CoderTransform[_, _]]
 
     s coderShould bytesCountTested() and structuralValueConsistentWithEquals()
     m coderShould bytesCountTested() and structuralValueConsistentWithEquals()
@@ -147,7 +170,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support inner classes in objects" in {
-    TopLevelObject1.InnerCaseClass("42") coderShould roundtrip()
+    TopLevelObject1.InnerCaseClass("42") coderShould roundtrip() and beOfType[Ref[_]]
   }
 
   it should "support tuples" in {
@@ -561,11 +584,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "optimize for AnyVal" in {
-    Coder[AnyValExample] coderShould beSerializable() and beOfType[Transform[_, _]]()
+    Coder[AnyValExample] coderShould beSerializable() and beOfType[Transform[_, _]]
   }
 
   it should "optimize for objects" in {
-    Coder[TopLevelObject.type] coderShould beSerializable() and beOfType[Singleton[_]]()
+    Coder[TopLevelObject.type] coderShould beSerializable() and beOfType[Singleton[_]]
   }
 
   it should "support Algebird's Moments" in {
