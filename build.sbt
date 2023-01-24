@@ -1096,7 +1096,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "mysql" % "mysql-connector-java" % "8.0.31",
+      "mysql" % "mysql-connector-java" % "8.0.32",
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
