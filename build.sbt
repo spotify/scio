@@ -1167,7 +1167,7 @@ lazy val `scio-repl`: Project = project
         "com.google.cloud.bigdataoss" % "gcsio",
         // remove transitive test dependencies at compile time
         "junit" % "junit",
-        "org.hamcrest" % "hamcrest-core",
+        "org.hamcrest" % "hamcrest-core"
       ),
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime
     ),
