@@ -24,7 +24,6 @@ import org.apache.beam.sdk.coders.{
   ByteCoder,
   Coder => BCoder,
   CoderException,
-  DoubleCoder,
   NullableCoder,
   StringUtf8Coder,
   VarIntCoder

@@ -93,9 +93,9 @@ object LowPriorityCoderDerivation {
     def id(v: T): Int = subTypes.collectFirst { case (isType, index) if isType(v) => index }.get
   }
 
-  def closureFunction[E, D, R](enclosed: E)(gen: E => D => R): D => R = gen(enclosed)
+  def colsureFunction[E, D, R](enclosed: E)(gen: E => D => R): D => R = gen(enclosed)
 
-  def closureSupplier[E, R](enclosed: E)(gen: E => R): () => R = () => gen(enclosed)
+  def colsureSupplier[E, R](enclosed: E)(gen: E => R): () => R = () => gen(enclosed)
 
 }
 
@@ -112,11 +112,11 @@ trait LowPriorityCoderDerivation {
     if (ctx.isValueClass) {
       val p = ctx.parameters.head
       Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
-        closureFunction(constructor)(c => v => c.rawConstruct(Seq(v))),
+        colsureFunction(constructor)(c => v => c.rawConstruct(Seq(v))),
         p.dereference
       )
     } else if (ctx.isObject) {
-      Coder.singleton(typeName, closureSupplier(constructor)(_.rawConstruct(Seq.empty)))
+      Coder.singleton(typeName, colsureSupplier(constructor)(_.rawConstruct(Seq.empty)))
     } else {
       Coder.ref(typeName) {
         val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
@@ -126,7 +126,7 @@ trait LowPriorityCoderDerivation {
         }
 
         Coder.record[T](typeName, cs)(
-          closureFunction(constructor)(_.rawConstruct),
+          colsureFunction(constructor)(_.rawConstruct),
           v => ProductIndexedSeqLike(v.asInstanceOf[Product])
         )
       }
@@ -143,10 +143,10 @@ trait LowPriorityCoderDerivation {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
       Coder.disjunction[T, Boolean](typeName, cs)(
-        closureFunction(identifier)(_.id).andThen(booleanId)
+        colsureFunction(identifier)(_.id).andThen(booleanId)
       )
     } else {
-      Coder.disjunction[T, Int](typeName, coders)(closureFunction(identifier)(_.id))
+      Coder.disjunction[T, Int](typeName, coders)(colsureFunction(identifier)(_.id))
     }
   }
 
