@@ -36,6 +36,7 @@ def scio10(version: String) =
     "com.spotify" %% "scio-google-cloud-platform",
     "com.spotify" %% "scio-test",
     "com.spotify" %% "scio-jdbc",
+    "com.spotify" %% "scio-extra",
     "com.spotify" %% "scio-tensorflow"
   ).map(_ % version)
 
