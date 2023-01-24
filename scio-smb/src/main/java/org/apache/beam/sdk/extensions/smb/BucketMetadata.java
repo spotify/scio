@@ -75,7 +75,12 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
 public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisplayData {
 
-  @JsonIgnore public static final int CURRENT_VERSION = 1;
+  /**
+   * The VERSION parameter is included in the metadata.json file for every SMB. Take extreme care in
+   * bumping version: Scio versions prior to 0.12.1 perform a version compatibility check on SMB
+   * partitions which may fail if the SMB producer bumps to an incompatible version.
+   */
+  @JsonIgnore public static final int CURRENT_VERSION = 0;
 
   // Represents the current major version of the Beam SMB module. Storage format may differ
   // across versions and require internal code branching to ensure backwards compatibility.
@@ -206,8 +211,6 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   boolean isCompatibleWith(BucketMetadata other) {
     return other != null
-        // version 1 is backwards compatible with version 0
-        && (this.version <= 1 && other.version <= 1)
         && this.hashType == other.hashType
         // This check should be redundant since power of two is checked in BucketMetadata
         // constructor, but it's cheap to double-check.
