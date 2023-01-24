@@ -42,15 +42,6 @@ object CoderAssertions {
       ctx.copy(lastAssertion = Some(coderAssertion(ctx)))
     }
 
-    def coderShouldThrowOn[ErrorType <: Throwable: ClassTag](
-      coderAssertion: CoderAssertionT[T],
-      assertMessage: String => Assertion
-    )(implicit c: Coder[T], eq: Equality[T]): Assertion = {
-      val ctx = AssertionContext(Some(value), c)
-      val error = the[ErrorType] thrownBy { coderAssertion(ctx) }
-      assertMessage(error.getMessage)
-    }
-
     def kryoCoderShould(
       coderAssertion: CoderAssertionT[T]
     )(implicit ct: ClassTag[T]): AssertionContext[T] = {

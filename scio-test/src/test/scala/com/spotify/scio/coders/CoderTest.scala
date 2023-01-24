@@ -39,6 +39,7 @@ import scala.collection.{mutable => mut}
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.protobuf.ByteString
+import com.spotify.scio.coders.instances.GuavaBloomFilterCoder
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Moments
 import org.apache.commons.io.output.NullOutputStream
@@ -583,11 +584,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "optimize for AnyVal" in {
-    Coder[AnyValExample] coderShould beSerializable() and beOfType[Transform[_, _]]
+    Coder[AnyValExample] coderShould beSerializable() and beOfType[Transform[_, _]] and
+      materializeTo[TransformCoder[_, _]]
   }
 
   it should "optimize for objects" in {
-    Coder[TopLevelObject.type] coderShould beSerializable() and beOfType[Singleton[_]]
+    Coder[TopLevelObject.type] coderShould beSerializable() and beOfType[Singleton[_]] and
+      materializeTo("SingletonCoder")
   }
 
   it should "support Algebird's Moments" in {
@@ -631,7 +634,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     implicit val funnel = Funnels.stringFunnel(Charset.forName("UTF-8"))
     val bloomFilter = BloomFilter.create(funnel, 5L)
 
-    bloomFilter coderShould roundtrip() and beDeterministic()
+    bloomFilter coderShould roundtrip() and beDeterministic() and beOfType[Beam[_]] and
+      materializeTo[GuavaBloomFilterCoder[_]]
   }
 
   it should "not serialize any magnolia internals after materialization" in {
