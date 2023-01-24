@@ -25,7 +25,6 @@ import org.apache.beam.sdk.values.KV
 
 import java.util.{List => JList}
 import scala.annotation.implicitNotFound
-import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 import scala.collection.{mutable => m, BitSet, SortedSet}
 import scala.reflect.ClassTag

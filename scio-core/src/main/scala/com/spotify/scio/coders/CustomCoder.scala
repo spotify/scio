@@ -24,7 +24,6 @@ import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import java.util.Objects
 import scala.jdk.CollectionConverters._
-import scala.collection.compat._
 
 ///////////////////////////////////////////////////////////////////////////////
 // Materialized beam coders
