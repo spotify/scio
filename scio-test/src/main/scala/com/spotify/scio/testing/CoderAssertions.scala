@@ -96,31 +96,18 @@ object CoderAssertions {
   def roundtrip[T: Equality](): CoderAssertionT[T] = ctx =>
     checkRoundtripWithCoder[T](ctx.beamCoder, ctx.actualValue.get)
 
-//  def roundtripThrows[T: Equality, ErrorType: ClassTag](
-//    expectedMessagePart: String
-//  ): CoderAssertionT[T] =
-//    ctx => {
-//      {
-//        the[ErrorType] thrownBy {
-//          roundtrip().apply(ctx)
-//        }
-//      }.getMessage should include(
-//        expectedMessagePart
-//      )
-//    }
-
   def roundtripToBytes[T: Equality](expectedBytes: Array[Byte]): CoderAssertionT[T] = ctx =>
     checkRoundtripWithCoder[T](ctx.beamCoder, ctx.actualValue.get, expectedBytes)
 
   def haveCoderInstance(expectedCoder: Coder[_]): CoderAssertion = ctx =>
     ctx.coder should ===(expectedCoder)
 
-  def notFallback[T: ClassTag](): CoderAssertionT[T] = ctx => {
+  def notFallback[T: ClassTag: Equality](): CoderAssertionT[T] = ctx => {
     ctx.coder should !==(Coder.kryo[T])
     checkRoundtripWithCoder(ctx.beamCoder, ctx.actualValue.get)
   }
 
-  def fallback[T: ClassTag](): CoderAssertionT[T] = ctx => {
+  def fallback[T: ClassTag: Equality](): CoderAssertionT[T] = ctx => {
     ctx.coder should ===(Coder.kryo[T])
     checkRoundtripWithCoder(ctx.beamCoder, ctx.actualValue.get)
   }
