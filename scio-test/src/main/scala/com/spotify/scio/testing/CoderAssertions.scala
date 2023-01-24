@@ -41,7 +41,20 @@ object CoderAssertions {
     def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion
   }
 
-  def roundtrip[T](opts: PipelineOptions = DefaultPipelineOptions): CoderAssertion[T] =
+  def roundtripWithCustomAssert[T](
+    opts: PipelineOptions = DefaultPipelineOptions
+  )(customAssertEquality: (T, T) => Assertion): CoderAssertion[T] =
+    new CoderAssertion[T] {
+      override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
+        val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
+        val result = roundtripWithCoder(beamCoder, value)
+        customAssertEquality(value, result)
+      }
+    }
+
+  def roundtrip[T](
+    opts: PipelineOptions = DefaultPipelineOptions
+  ): CoderAssertion[T] =
     new CoderAssertion[T] {
       override def assert(value: T)(implicit c: Coder[T], eq: Equality[T]): Assertion = {
         val beamCoder = CoderMaterializer.beamWithDefault(c, o = opts)
@@ -109,5 +122,10 @@ object CoderAssertions {
     val result = CoderUtils.decodeFromByteArray(beamCoder, bytes)
 
     result should ===(value)
+  }
+
+  private def roundtripWithCoder[T](beamCoder: BCoder[T], value: T): T = {
+    val bytes = CoderUtils.encodeToByteArray(beamCoder, value)
+    CoderUtils.decodeFromByteArray(beamCoder, bytes)
   }
 }

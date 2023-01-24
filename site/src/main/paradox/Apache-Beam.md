@@ -33,6 +33,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 |:----------------:|:----------------:|:------------------------------------------------------|
 |      0.12.1      |      2.43.0      | This version will be deprecated on November 17, 2023. |
 |      0.12.0      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
+|     0.11.14      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
 |     0.11.13      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
 |     0.11.12      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
 |     0.11.11      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |

@@ -41,8 +41,8 @@ package object elasticsearch extends CoderInstances {
     mapperFactory: () => JsonpMapper = () => new SimpleJsonpMapper()
   )
 
-  implicit
-  class ElasticsearchSCollection[T](@transient private val self: SCollection[T]) extends AnyVal {
+  implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
+      extends AnyVal {
 
     /**
      * Save this SCollection into Elasticsearch.

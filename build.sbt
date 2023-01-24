@@ -97,9 +97,9 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
 val elasticsearch6Version = "6.8.23"
-val elasticsearch7Version = "7.17.6"
-val elasticsearch8Version = "8.5.2"
-val featranVersion = "0.8.0-RC2"
+val elasticsearch7Version = "7.17.8"
+val elasticsearch8Version = "8.6.0"
+val featranVersion = "0.8.0"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
 val jodaTimeVersion = "2.12.2"
@@ -111,14 +111,14 @@ val kryoVersion = "4.0.2"
 val magnoliaVersion = "1.1.2"
 val magnolifyVersion = "0.6.2"
 val metricsVersion = "3.2.6"
-val neo4jDriverVersion = "4.4.10"
+val neo4jDriverVersion = "4.4.11"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
 val pprintVersion = "0.8.1"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
 val scalaCollectionCompatVersion = "2.9.0"
-val scalacticVersion = "3.2.14"
+val scalacticVersion = "3.2.15"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.13"
 val shapelessVersion = "2.3.10"
@@ -1083,7 +1083,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.7.2",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.8.3",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
@@ -1096,7 +1096,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "mysql" % "mysql-connector-java" % "8.0.31",
+      "mysql" % "mysql-connector-java" % "8.0.32",
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -1167,7 +1167,7 @@ lazy val `scio-repl`: Project = project
         "com.google.cloud.bigdataoss" % "gcsio",
         // remove transitive test dependencies at compile time
         "junit" % "junit",
-        "org.hamcrest" % "hamcrest-core",
+        "org.hamcrest" % "hamcrest-core"
       ),
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime
     ),
