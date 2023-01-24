@@ -56,7 +56,7 @@ object CoderAssertions {
   implicit class CoderShouldSyntax[T](c: Coder[T]) {
     def coderShould(
       coderAssertion: CoderAssertionT[T]
-    )(implicit c: Coder[T]): AssertionContext[T] = {
+    ): AssertionContext[T] = {
       val ctx = AssertionContext(None, c)
       ctx.copy(lastAssertion = Some(coderAssertion(ctx)))
     }
