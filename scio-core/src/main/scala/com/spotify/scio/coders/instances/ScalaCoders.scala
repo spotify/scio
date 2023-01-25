@@ -404,6 +404,7 @@ private object SFloatCoder extends BCoder[Float] {
     } else {
       java.lang.Float.valueOf(value)
     }
+  override def consistentWithEquals() = bc.consistentWithEquals()
   override def toString: String = "FloatCoder"
 }
 
@@ -420,6 +421,7 @@ private object SDoubleCoder extends BCoder[Double] {
     } else {
       java.lang.Double.valueOf(value)
     }
+  override def consistentWithEquals() = bc.consistentWithEquals()
   override def toString: String = "DoubleCoder"
 }
 

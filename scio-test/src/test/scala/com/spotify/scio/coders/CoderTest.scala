@@ -20,11 +20,17 @@ package com.spotify.scio.coders
 import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.beam.sdk.coders.{
+  BigDecimalCoder,
+  BigEndianLongCoder,
+  BigIntegerCoder,
   BooleanCoder,
   ByteCoder,
   Coder => BCoder,
   CoderException,
+  InstantCoder,
+  ListCoder,
   NullableCoder,
+  RowCoder,
   StringUtf8Coder,
   VarIntCoder
 }
@@ -39,9 +45,11 @@ import scala.collection.{mutable => mut}
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.protobuf.ByteString
-import com.spotify.scio.coders.instances.GuavaBloomFilterCoder
+import com.spotify.scio.coders.instances.{GuavaBloomFilterCoder, MapCoder, Tuple2Coder, Tuple5Coder}
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Moments
+import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
+import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.commons.io.output.NullOutputStream
 import org.scalatest.Assertion
 
@@ -59,20 +67,39 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
 
   it should "support primitives" in {
-    false coderShould roundtripToBytes(Array(0)) and beOfType[Beam[_]] and
+    false coderShould roundtripToBytes(Array(0)) and
+      beOfType[Beam[_]] and
       materializeTo[BooleanCoder]
 
-    1 coderShould roundtripToBytes(Array(1)) and beOfType[Beam[_]] and
+    1 coderShould roundtripToBytes(Array(1)) and
+      beOfType[Beam[_]] and
       materializeTo[VarIntCoder]
 
-    'a' coderShould roundtripToBytes(Array(97)) and beOfType[Transform[_, _]] and
+    1L coderShould roundtripToBytes(Array(0, 0, 0, 0, 0, 0, 0, 1)) and
+      beOfType[Beam[_]] and
+      materializeTo[BigEndianLongCoder]
+
+    'a' coderShould roundtripToBytes(Array(97)) and
+      beOfType[Transform[_, _]] and
       materializeToTransformOf[ByteCoder]
 
-    "yolo" coderShould roundtripToBytes(Array(121, 111, 108, 111)) and beOfType[Beam[_]] and
+    "yolo" coderShould roundtripToBytes(Array(121, 111, 108, 111)) and
+      beOfType[Beam[_]] and
       materializeTo[StringUtf8Coder]
 
-    4.5 coderShould roundtripToBytes(Array(64, 18, 0, 0, 0, 0, 0, 0)) and beOfType[Beam[_]] and
-      materializeTo("SDoubleCoder$")
+    4.5 coderShould roundtripToBytes(Array(64, 18, 0, 0, 0, 0, 0, 0)) and
+      beOfType[Beam[_]] and
+      materializeTo("SDoubleCoder$") and
+      structuralValueConsistentWithEquals() and
+      beSerializable() and
+      beConsistentWithEquals()
+
+    4.5.asInstanceOf[Float] coderShould roundtripToBytes(Array(64, -112, 0, 0)) and
+      beOfType[Beam[_]] and
+      materializeTo("SFloatCoder$") and
+      structuralValueConsistentWithEquals() and
+      beSerializable() and
+      beConsistentWithEquals()
   }
 
   it should "support Scala collections" in {
@@ -82,28 +109,46 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val s: Seq[String] = (1 to 10).map(_.toString)
     val m: Map[String, String] = s.map(v => v -> v).toMap
 
-    nil coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
+    nil coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
       materializeTo("SeqCoder")
-    s coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
-      materializeTo("SeqCoder")
-    s.toList coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
-      materializeTo("ListCoder")
-    s.toVector coderShould roundtrip() and beOfType[CoderTransform[_, _]] and
-      materializeTo("VectorCoder")
-    m coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+
+    s coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo("SeqCoder") and
+      beFullyCompliant()
+
+    s.toList coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    s.toVector coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    m coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[MapCoder[_, _]] and
+      beFullyCompliantNonDeterministic()
+
     s.toSet coderShould roundtrip() and beOfType[CoderTransform[_, _]]
     mut.ListBuffer(1 to 10: _*) coderShould roundtrip() and beOfType[Transform[_, _]]
-    None coderShould roundtrip() and beOfType[CoderTransform[_, _]]
-    Option(1) coderShould roundtrip() and beOfType[CoderTransform[_, _]]
-    Some(1) coderShould roundtrip() and beOfType[CoderTransform[_, _]]
-    BitSet(1 to 100000: _*) coderShould roundtrip() and beOfType[Beam[_]]
+
+    BitSet(1 to 100000: _*) coderShould roundtrip() and
+      beOfType[Beam[_]] and materializeTo("BitSetCoder")
 
     Right(1) coderShould roundtrip() and beOfType[Ref[_]]
     Left(1) coderShould roundtrip() and beOfType[Ref[_]]
     mut.Set(s: _*) coderShould roundtrip() and beOfType[CoderTransform[_, _]]
 
-    s coderShould bytesCountTested() and structuralValueConsistentWithEquals()
-    m coderShould bytesCountTested() and structuralValueConsistentWithEquals()
+    Array("1", "2", "3") coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo("ArrayCoder") and
+      beFullyCompliantNotConsistentWithEquals()
+  }
+
+  it should "support Scala option" in {
+    None coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo("OptionCoder") and
+      beFullyCompliant()
+
+    Option(1) coderShould roundtrip() and materializeTo("OptionCoder")
+    Some(1) coderShould roundtrip() and materializeTo("OptionCoder")
   }
 
   it should "not support inner case classes" in {
@@ -169,8 +214,14 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     )
   }
 
-  it should "support inner classes in objects" in {
-    TopLevelObject1.InnerCaseClass("42") coderShould roundtrip() and beOfType[Ref[_]]
+  it should "support inner classes in objects with RefCoder" in {
+    TopLevelObject1.InnerCaseClass("42") coderShould roundtrip() and
+      beOfType[Ref[_]] and
+      materializeTo[RefCoder[_]] and
+      beFullyCompliant()
+//      bytesCountTested() and
+//      structuralValueConsistentWithEquals() and
+//      beSerializable()
   }
 
   it should "support tuples" in {
@@ -200,7 +251,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       4.2f
     )
 
-    t22.take(2) coderShould roundtrip()
+    t22.take(2) coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[Tuple2Coder[_, _]] and
+      beFullyCompliant()
     t22.take(3) coderShould roundtrip()
     t22.take(4) coderShould roundtrip()
     t22.take(5) coderShould roundtrip()
@@ -224,9 +278,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "have a Coder for Nothing, Unit, Void" in {
-    "Coder[Void]" should compile
-    "Coder[Unit]" should compile
-    "Coder[Nothing]" should compile
+    Coder[Void] coderShould beOfType[Beam[_]] and
+      materializeTo("VoidCoder$") and
+      beSerializable() and beDeterministic()
+
+    Coder[Unit] coderShould beOfType[Beam[_]] and
+      materializeTo("UnitCoder$") and
+      beSerializable() and beDeterministic()
 
     val bnc = CoderMaterializer.beamWithDefault[Nothing](Coder[Nothing])
     noException shouldBe thrownBy {
@@ -247,9 +305,20 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       .asJava
     val arrayList = new jArrayList(s)
 
-    s coderShould notFallback()
-    m coderShould notFallback()
-    arrayList coderShould notFallback()
+    s coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[ListCoder[_]] and
+      beFullyCompliant()
+
+    m coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[org.apache.beam.sdk.coders.MapCoder[_, _]] and
+      beFullyCompliantNonDeterministic()
+
+    arrayList coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[ListCoder[_]] and
+      beFullyCompliant()
   }
 
   it should "Derive serializable coders" in {
@@ -280,7 +349,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "derive coders for sealed class hierarchies" in {
     val ta: Top = TA(1, "test")
     val tb: Top = TB(4.2)
-    ta coderShould notFallback()
+    ta coderShould roundtrip() and
+      beOfType[Disjunction[_, _]] and
+      materializeTo[DisjunctionCoder[_, _]] and
+      beFullyCompliantNonDeterministic()
     tb coderShould notFallback()
     (123, "hello", ta, tb, List(("bar", 1, "foo"))) coderShould notFallback()
   }
@@ -292,33 +364,72 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 
-    ByteString.copyFromUtf8("SampleString") coderShould notFallback()
-    BigDecimal("1234") coderShould notFallback()
+    ByteString.copyFromUtf8("SampleString") coderShould roundtrip() and
+      beOfType[Beam[_]] and
+      materializeTo[ByteStringCoder] and
+      beFullyCompliant()
 
-    UUID.randomUUID() coderShould notFallback()
-    FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback()
+    BigInt("1234") coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[BigIntegerCoder] and
+      beFullyCompliant()
+
+    BigDecimal("1234") coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[BigDecimalCoder] and
+      beFullyCompliant()
+
+    UUID.randomUUID() coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[Tuple2Coder[_, _]] and
+      beFullyCompliant()
+
+    FileSystems.getDefault.getPath("logs", "access.log") coderShould notFallback() and
+      beFullyCompliant()
 
     val bs = new java.util.BitSet()
     (1 to 100000).foreach(x => bs.set(x))
-    bs coderShould notFallback()
+    bs coderShould notFallback() and
+      beFullyCompliant()
 
-    new BigInteger("123456789") coderShould notFallback()
-    new jBigDecimal("123456789.98765") coderShould notFallback()
+    new BigInteger("123456789") coderShould roundtrip() and
+      beOfType[Beam[_]] and
+      materializeTo[BigIntegerCoder] and
+      beFullyCompliant()
+
+    new jBigDecimal("123456789.98765") coderShould roundtrip() and
+      beOfType[Beam[_]] and
+      materializeTo[BigDecimalCoder] and
+      beFullyCompliant()
 
     val now = org.joda.time.Instant.now()
-    now coderShould notFallback()
-    new IntervalWindow(now.minus(4000), now) coderShould notFallback()
+    now coderShould roundtrip() and beOfType[Beam[_]] and
+      materializeTo[InstantCoder] and
+      beFullyCompliant()
 
-    new org.joda.time.LocalDate coderShould notFallback()
-    new org.joda.time.LocalTime coderShould notFallback()
-    new org.joda.time.LocalDateTime coderShould notFallback()
-    new org.joda.time.DateTime coderShould notFallback()
-    new java.sql.Timestamp(1) coderShould notFallback()
+    new IntervalWindow(now.minus(4000), now) coderShould notFallback() and
+      beFullyCompliant()
+
+    new org.joda.time.LocalDate coderShould roundtrip() and beOfType[Beam[_]] and
+      materializeTo("JodaLocalDateCoder") and
+      beFullyCompliant()
+    new org.joda.time.LocalTime coderShould roundtrip() and beOfType[Beam[_]] and
+      materializeTo("JodaLocalTimeCoder") and
+      beFullyCompliant()
+    new org.joda.time.LocalDateTime coderShould roundtrip() and beOfType[Beam[_]] and
+      materializeTo("JodaLocalDateTimeCoder") and
+      beFullyCompliant()
+    new org.joda.time.DateTime coderShould roundtrip() and beOfType[Beam[_]] and
+      materializeTo("JodaDateTimeCoder") and
+      beFullyCompliant()
+    new java.sql.Timestamp(
+      1
+    ) coderShould notFallback() and beFullyCompliant()
   }
 
   it should "support java's Instant" in {
     // Support full nano range
-    Instant.ofEpochSecond(0, 123123123) coderShould notFallback()
+    Instant.ofEpochSecond(0, 123123123) coderShould notFallback() and beFullyCompliant()
     Instant.MIN coderShould notFallback()
     Instant.MAX coderShould notFallback()
     Instant.EPOCH coderShould notFallback()
@@ -344,12 +455,24 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       .map { case (a, b, c) =>
         Row.withSchema(beamSchema).addValues(a, b, c).build()
       }
-      .foreach(r => r coderShould notFallback())
+      .foreach { r =>
+        r coderShould roundtrip() and
+          beOfType[Beam[_]] and
+          materializeTo[RowCoder] and
+          beFullyCompliantNonDeterministic()
+      }
   }
 
   it should "support Scala objects" in {
-    TopLevelObject coderShould notFallback()
-    TopLevelObject1 coderShould notFallback()
+    TopLevelObject coderShould roundtrip() and
+      beOfType[Singleton[_]] and
+      materializeTo("SingletonCoder") and
+      beSerializable() and
+      beConsistentWithEquals() and
+      beDeterministic()
+
+    TopLevelObject1 coderShould roundtrip() and
+      beOfType[Singleton[_]]
   }
 
   it should "only derive Coder if no coder exists" in {
@@ -429,16 +552,18 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val ex = b.setArtistGid("1").setTimeFilter(OuterClassForProto.EnumExample.OPT1).build()
 
     ex coderShould notFallback()
-    ClassWithProtoEnum("somestring", OuterClassForProto.EnumExample.OPT1) coderShould notFallback()
+    ClassWithProtoEnum(
+      "somestring",
+      OuterClassForProto.EnumExample.OPT1
+    ) coderShould roundtrip() and beOfType[Ref[_]]
   }
 
   it should "support java enums" in {
-    JavaEnumExample.GOOD_THING coderShould roundtrip()
+    JavaEnumExample.GOOD_THING coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[StringUtf8Coder] and
+      beFullyCompliant()
     JavaEnumExample.BAD_THING coderShould roundtrip()
-  }
-
-  it should "be deterministic for java enums" in {
-    Coder[JavaEnumExample] coderShould beDeterministic()
   }
 
   it should "#1604: not throw on null" in {
@@ -453,28 +578,28 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val opts: PipelineOptions = PipelineOptionsFactory.create()
     opts.as(classOf[ScioOptions]).setNullableCoders(true)
 
-    null.asInstanceOf[String] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[jInt] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[jFloat] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[jDouble] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[jLong] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[jShort] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[(String, Top)] coderShouldWithOpts opts and roundtrip()
-    (null, null).asInstanceOf[(String, Top)] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[DummyCC] coderShouldWithOpts opts and roundtrip()
-    DummyCC(null) coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[Top] coderShouldWithOpts opts and roundtrip()
-    null.asInstanceOf[Either[String, Int]] coderShouldWithOpts opts and roundtrip()
+    null.asInstanceOf[String] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[jInt] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[jFloat] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[jDouble] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[jLong] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[jShort] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[(String, Top)] coderShouldWithOpts opts and notFallback()
+    (null, null).asInstanceOf[(String, Top)] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[DummyCC] coderShouldWithOpts opts and notFallback()
+    DummyCC(null) coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[Top] coderShouldWithOpts opts and notFallback()
+    null.asInstanceOf[Either[String, Int]] coderShouldWithOpts opts and notFallback()
 
     type T = (String, Int, Top)
     val example: T = ("Hello", 42, TA(1, "World"))
     val nullExample1: T = ("Hello", 42, TA(1, null))
     val nullExample2: T = ("Hello", 42, null)
     val nullExample3: T = null
-    example coderShouldWithOpts opts and roundtrip()
-    nullExample1 coderShouldWithOpts opts and roundtrip()
-    nullExample2 coderShouldWithOpts opts and roundtrip()
-    nullExample3 coderShouldWithOpts opts and roundtrip()
+    example coderShouldWithOpts opts and notFallback()
+    nullExample1 coderShouldWithOpts opts and notFallback()
+    nullExample2 coderShouldWithOpts opts and notFallback()
+    nullExample3 coderShouldWithOpts opts and notFallback()
 
     val nullBCoder = CoderMaterializer.beamWithDefault(Coder[T], o = opts)
     nullBCoder.isRegisterByteSizeObserverCheap(nullExample1)
@@ -521,12 +646,15 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "Serialize Java beans using a Schema Coder" in {
     val javaUser = new com.spotify.scio.bean.UserBean("Julien", 33)
-    javaUser coderShould notFallback()
+    javaUser coderShould notFallback() and
+      beOfType[Beam[_]] and
+      materializeTo[SchemaCoder[_]] and
+      beFullyCompliant()
   }
 
   it should "Serialize WrappedArray using wrappedArrayCoder" in {
-    val wrappedArray: mut.WrappedArray[String] = Array("foo", "bar")
-    wrappedArray coderShould notFallback()
+    val wrappedArray: mut.ArraySeq[String] = Array("foo", "bar")
+    wrappedArray coderShould notFallback() and beFullyCompliantNotConsistentWithEquals()
   }
 
   it should "support derivation of recursive types" in {
@@ -545,14 +673,14 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     SampleField(
       "hello",
       StringType
-    ) coderShould roundtrip() and beConsistentWithEquals() and beDeterministic()
+    ) coderShould roundtrip() and beFullyCompliant()
 
     SampleField(
       "hello",
       RecordType(
         List(SampleField("record", RecordType(List.empty)), SampleField("int", IntegerType))
       )
-    ) coderShould roundtrip()
+    ) coderShould roundtrip() and beFullyCompliant()
   }
 
   it should "#2595: work with parameterized types" in {
@@ -562,7 +690,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "#2467 support derivation of directly recursive types" in {
-    Recursive(1, Option(Recursive(2, None))) coderShould roundtrip()
+    Recursive(1, Option(Recursive(2, None))) coderShould notFallback()
   }
 
   it should "#2644 verifyDeterministic throw a NonDeterministicException exception for Set" in {
@@ -580,22 +708,27 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       ).asJava
     )
 
-    tableSchema coderShould roundtrip() and beSerializable()
+    tableSchema coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[StringUtf8Coder] and
+      beFullyCompliant()
   }
 
   it should "optimize for AnyVal" in {
-    Coder[AnyValExample] coderShould beSerializable() and beOfType[Transform[_, _]] and
-      materializeTo[TransformCoder[_, _]]
-  }
-
-  it should "optimize for objects" in {
-    Coder[TopLevelObject.type] coderShould beSerializable() and beOfType[Singleton[_]] and
-      materializeTo("SingletonCoder")
+    AnyValExample("dummy") coderShould beOfType[Transform[_, _]] and
+      materializeToTransformOf[StringUtf8Coder] and
+      structuralValueConsistentWithEquals() and
+      beSerializable() and
+      beConsistentWithEquals() and
+      beDeterministic()
   }
 
   it should "support Algebird's Moments" in {
     new Moments(0.0, 0.0, 0.0, 0.0, 0.0) coderShould roundtrip()
-    Moments(12) coderShould roundtrip() and beSerializable()
+    Moments(12) coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[Tuple5Coder[_, _, _, _, _]] and
+      beFullyCompliantNonDeterministic()
   }
 
   it should "return different hashCodes for different instances of parameterized Coders" in {
@@ -634,8 +767,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     implicit val funnel = Funnels.stringFunnel(Charset.forName("UTF-8"))
     val bloomFilter = BloomFilter.create(funnel, 5L)
 
-    bloomFilter coderShould roundtrip() and beDeterministic() and beOfType[Beam[_]] and
-      materializeTo[GuavaBloomFilterCoder[_]]
+    bloomFilter coderShould roundtrip() and
+      beOfType[Beam[_]] and
+      materializeTo[GuavaBloomFilterCoder[_]] and
+      structuralValueConsistentWithEquals() and
+      beNotConsistentWithEquals() and
+      bytesCountTested() and
+      beDeterministic()
   }
 
   it should "not serialize any magnolia internals after materialization" in {

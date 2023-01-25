@@ -18,6 +18,7 @@
 package com.spotify.scio.testing
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer, MaterializedCoder, TransformCoder}
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.CoderProperties
@@ -106,8 +107,14 @@ object CoderAssertions {
   def beConsistentWithEquals(): CoderAssertion = ctx =>
     ctx.beamCoder.consistentWithEquals() shouldBe true
 
+  def beNotConsistentWithEquals(): CoderAssertion = ctx =>
+    ctx.beamCoder.consistentWithEquals() shouldBe false
+
   def beDeterministic(): CoderAssertion = ctx =>
     noException should be thrownBy ctx.beamCoder.verifyDeterministic()
+
+  def beNonDeterministic(): CoderAssertion = ctx =>
+    a[NonDeterministicException] should be thrownBy ctx.beamCoder.verifyDeterministic()
 
   def beSerializable(): CoderAssertion = ctx =>
     noException should be thrownBy SerializableUtils.ensureSerializable(ctx.beamCoder)
@@ -155,6 +162,10 @@ object CoderAssertions {
       )
     }
 
+  /**
+   * Verifies that for the given coder and values, the structural values are equal if and only if
+   * the encoded bytes are equal. Verifies for Outer and Nested contexts
+   */
   def structuralValueConsistentWithEquals(): CoderAssertion = ctx => {
     noException should be thrownBy CoderProperties.structuralValueConsistentWithEquals(
       ctx.beamCoder,
@@ -162,6 +173,33 @@ object CoderAssertions {
       ctx.actualValue.get
     )
   }
+
+  /** Passes all checks on Beam coder */
+  def beFullyCompliant[T <: Object: ClassTag](): CoderAssertionT[T] = ctx => {
+    structuralValueConsistentWithEquals()(ctx)
+    beSerializable()(ctx)
+    beConsistentWithEquals()(ctx)
+    bytesCountTested[T]().apply(ctx)
+    beDeterministic()(ctx)
+  }
+
+  def beFullyCompliantNonDeterministic[T <: Object: ClassTag](): CoderAssertionT[T] =
+    ctx => {
+      structuralValueConsistentWithEquals()(ctx)
+      beSerializable()(ctx)
+      beConsistentWithEquals()(ctx)
+      bytesCountTested[T]().apply(ctx)
+      beNonDeterministic()(ctx)
+    }
+
+  def beFullyCompliantNotConsistentWithEquals[T <: Object: ClassTag](): CoderAssertionT[T] =
+    ctx => {
+      structuralValueConsistentWithEquals()(ctx)
+      beSerializable()(ctx)
+      beNotConsistentWithEquals()(ctx)
+      bytesCountTested[T]().apply(ctx)
+      beDeterministic()(ctx)
+    }
 
   private def checkRoundtripWithCoder[T: Equality](
     beamCoder: BCoder[T],

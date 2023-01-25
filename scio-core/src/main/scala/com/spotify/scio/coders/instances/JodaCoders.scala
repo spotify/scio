@@ -65,6 +65,8 @@ final private class JodaDateTimeCoder extends AtomicCoder[DateTime] {
 
     new DateTime(ms, zone)
   }
+
+  override def consistentWithEquals() = true
 }
 
 final private class JodaLocalDateTimeCoder extends AtomicCoder[LocalDateTime] {
@@ -96,6 +98,8 @@ final private class JodaLocalDateTimeCoder extends AtomicCoder[LocalDateTime] {
 
     new LocalDateTime(year, month, day, hour, minute, second, ms)
   }
+
+  override def consistentWithEquals() = true
 }
 
 final private class JodaLocalDateCoder extends AtomicCoder[LocalDate] {
@@ -119,6 +123,8 @@ final private class JodaLocalDateCoder extends AtomicCoder[LocalDate] {
 
     new LocalDate(year, month, day)
   }
+
+  override def consistentWithEquals() = true
 }
 
 final private class JodaLocalTimeCoder extends AtomicCoder[LocalTime] {
@@ -144,4 +150,6 @@ final private class JodaLocalTimeCoder extends AtomicCoder[LocalTime] {
 
     new LocalTime(hour, minute, second, ms)
   }
+
+  override def consistentWithEquals() = true
 }
