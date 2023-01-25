@@ -587,7 +587,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it"
+      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it"
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
@@ -650,7 +650,7 @@ lazy val `scio-avro`: Project = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % "it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.typelevel" %% "cats-core" % catsVersion % "test"
     )
@@ -714,7 +714,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalacheck-1-16" % scalatestplusVersion % "test,it",
+      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
   )
