@@ -211,6 +211,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   boolean isCompatibleWith(BucketMetadata other) {
     return other != null
+        && this.version == other.version
         && this.hashType == other.hashType
         // This check should be redundant since power of two is checked in BucketMetadata
         // constructor, but it's cheap to double-check.

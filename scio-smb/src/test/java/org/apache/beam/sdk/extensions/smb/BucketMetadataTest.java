@@ -134,17 +134,11 @@ public class BucketMetadataTest {
         new TestBucketMetadata(0, 1, 1, HashType.MURMUR3_128, DEFAULT_FILENAME_PREFIX);
     final TestBucketMetadata m5 =
         new TestBucketMetadata(1, 1, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
-    final TestBucketMetadata m6 =
-        new TestBucketMetadata(2, 1, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
 
     Assert.assertTrue(m1.isCompatibleWith(m2));
     Assert.assertTrue(m1.isCompatibleWith(m3));
     Assert.assertFalse(m1.isCompatibleWith(m4));
-    Assert.assertTrue("version 0 and version 1 should be compatible", m1.isCompatibleWith(m5));
-    Assert.assertFalse(
-        "version 0 and version 2 are presumed incompatible", m1.isCompatibleWith(m6));
-    Assert.assertFalse(
-        "version 1 and version 2 are presumed incompatible", m5.isCompatibleWith(m6));
+    Assert.assertFalse(m1.isCompatibleWith(m5));
   }
 
   @Test
