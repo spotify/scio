@@ -114,15 +114,18 @@ def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output", schema
 
 ## Case classes
 
-Scio uses [magnolify-parquet](https://github.com/spotify/magnolify/blob/master/docs/parquet.md) to derive Parquet reader and writer for case classes at compile time, similar to how @ref:[coders](../internals/Coders.md) work. See this [mapping table](https://github.com/spotify/magnolify/blob/master/docs/mapping.md) for how Scala and Parquet types map.
+Scio uses [magnolify-parquet](https://github.com/spotify/magnolify/blob/master/docs/parquet.md) to derive Parquet reader and writer for case classes at compile time, similar to how @ref:[coders](../internals/Coders.md) work. See this [mapping table](https://github.com/spotify/magnolify/blob/master/docs/mapping.md) for how Scala and Parquet types map; enum type mapping is also specifically [documented](https://github.com/spotify/magnolify/blob/main/docs/enums.md).
 
 ### Read Parquet files as case classes
 
 When reading Parquet files as case classes, all fields in the case class definition are read. Therefore, it's desirable to construct a case class type with only fields needed for processing.
 
+Starting in Magnolify 0.4.8 (corresponding to Scio 0.11.6 and above), predicates for case classes have Magnolify support at the _field level only_. You can use Parquet's `FilterApi.or` and `FilterApi.and` to chain them:
+
 ```scala mdoc:reset:silent
 import com.spotify.scio._
 import com.spotify.scio.parquet.types._
+import magnolify.parquet._
 
 object ParquetJob {
   case class MyRecord(int_field: Int, string_field: String)
@@ -131,7 +134,10 @@ object ParquetJob {
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    sc.typedParquetFile[MyRecord]("input.parquet")
+    sc.typedParquetFile[MyRecord]("input.parquet", predicate = FilterApi.and(
+      Predicate.onField[String]("string_field")(_.startsWith("a")),
+      Predicate.onField[Int]("int_field")(_ % 2 == 0))
+    ))
 
     sc.run()
     ()
