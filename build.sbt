@@ -82,7 +82,7 @@ val opencensusVersion = "0.31.1"
 val protobufVersion = "3.21.7"
 
 val algebirdVersion = "0.13.9"
-val algebraVersion = "2.8.0"
+val algebraVersion = "2.9.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.0"
