@@ -79,6 +79,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
    * The VERSION parameter is included in the metadata.json file for every SMB. Take extreme care in
    * bumping version: Scio versions prior to 0.12.1 perform a version compatibility check on SMB
    * partitions which may fail if the SMB producer bumps to an incompatible version.
+   * 
+   * The next version bump should be to: 2
    */
   @JsonIgnore public static final int CURRENT_VERSION = 0;
 
@@ -211,7 +213,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   boolean isCompatibleWith(BucketMetadata other) {
     return other != null
-        && this.version == other.version
+        // version 1 is backwards compatible with version 0
+        && (this.version <= 1 && other.version <= 1)
         && this.hashType == other.hashType
         // This check should be redundant since power of two is checked in BucketMetadata
         // constructor, but it's cheap to double-check.
