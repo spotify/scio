@@ -47,6 +47,14 @@ def scio11(version: String) =
     "com.spotify" %% "scio-avro"
   ).map(_ % version)
 
+def scio12(version: String) =
+  List(
+    "com.spotify" %% "scio-core",
+    "com.spotify" %% "scio-avro",
+    "com.spotify" %% "scio-google-cloud-platform",
+    "com.spotify" %% "scio-extra"
+  ).map(_ % version)
+
 lazy val `input-0_7` = project
   .settings(
     libraryDependencies ++= scio(Scio.`0.6`)
@@ -84,7 +92,7 @@ lazy val `input-0_12` = project
 
 lazy val `output-0_12` = project
   .settings(
-    libraryDependencies ++= scio10(Scio.`0.12`)
+    libraryDependencies ++= scio12(Scio.`0.12`)
   )
 
 lazy val tests = project
