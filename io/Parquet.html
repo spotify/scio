@@ -210,7 +210,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-d15477d2+20221214-1827*
+<i class="md-icon" title="Version">label_outline</i> 0.12.2+0-a68b3702+20230125-1614*
 </label>
 </li>
 </ul>
@@ -332,11 +332,14 @@ def yourAvroSchema: org.apache.avro.Schema = ???
 def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
 </code></pre>
 <h2><a href="#case-classes" name="case-classes" class="anchor"><span class="anchor-link"></span></a>Case classes</h2>
-<p>Scio uses <a href="https://github.com/spotify/magnolify/blob/master/docs/parquet.md">magnolify-parquet</a> to derive Parquet reader and writer for case classes at compile time, similar to how <a href="../internals/Coders.html">coders</a> work. See this <a href="https://github.com/spotify/magnolify/blob/master/docs/mapping.md">mapping table</a> for how Scala and Parquet types map.</p>
+<p>Scio uses <a href="https://github.com/spotify/magnolify/blob/master/docs/parquet.md">magnolify-parquet</a> to derive Parquet reader and writer for case classes at compile time, similar to how <a href="../internals/Coders.html">coders</a> work. See this <a href="https://github.com/spotify/magnolify/blob/master/docs/mapping.md">mapping table</a> for how Scala and Parquet types map; enum type mapping is also specifically <a href="https://github.com/spotify/magnolify/blob/main/docs/enums.md">documented</a>.</p>
 <h3><a href="#read-parquet-files-as-case-classes" name="read-parquet-files-as-case-classes" class="anchor"><span class="anchor-link"></span></a>Read Parquet files as case classes</h3>
 <p>When reading Parquet files as case classes, all fields in the case class definition are read. Therefore, it&rsquo;s desirable to construct a case class type with only fields needed for processing.</p>
+<p>Starting in Magnolify 0.4.8 (corresponding to Scio 0.11.6 and above), predicates for case classes have Magnolify support at the <em>field level only</em>. You can use Parquet&rsquo;s <code>FilterApi.or</code> and <code>FilterApi.and</code> to chain them:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import com.spotify.scio.parquet.types._
+import magnolify.parquet._
+import org.apache.parquet.filter2.predicate.FilterApi
 
 object ParquetJob {
   case class MyRecord(int_field: Int, string_field: String)
@@ -345,7 +348,10 @@ object ParquetJob {
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    sc.typedParquetFile[MyRecord](&quot;input.parquet&quot;)
+    sc.typedParquetFile[MyRecord](&quot;input.parquet&quot;, predicate = FilterApi.and(
+      Predicate.onField[String](&quot;string_field&quot;)(_.startsWith(&quot;a&quot;)),
+      Predicate.onField[Int](&quot;int_field&quot;)(_ % 2 == 0))
+    )
 
     sc.run()
     ()
@@ -396,7 +402,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-d15477d2+20221214-1827*
+0.12.2+0-a68b3702+20230125-1614*
 </span>
 </div>
 </article>
