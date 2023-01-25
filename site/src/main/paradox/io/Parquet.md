@@ -126,6 +126,7 @@ Starting in Magnolify 0.4.8 (corresponding to Scio 0.11.6 and above), predicates
 import com.spotify.scio._
 import com.spotify.scio.parquet.types._
 import magnolify.parquet._
+import org.apache.parquet.filter2.predicate.FilterApi
 
 object ParquetJob {
   case class MyRecord(int_field: Int, string_field: String)
@@ -137,7 +138,7 @@ object ParquetJob {
     sc.typedParquetFile[MyRecord]("input.parquet", predicate = FilterApi.and(
       Predicate.onField[String]("string_field")(_.startsWith("a")),
       Predicate.onField[Int]("int_field")(_ % 2 == 0))
-    ))
+    )
 
     sc.run()
     ()
