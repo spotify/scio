@@ -94,7 +94,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       beSerializable() and
       beConsistentWithEquals()
 
-    4.5.asInstanceOf[Float] coderShould roundtripToBytes(Array(64, -112, 0, 0)) and
+    4.5f coderShould roundtripToBytes(Array(64, -112, 0, 0)) and
       beOfType[Beam[_]] and
       materializeTo("SFloatCoder$") and
       structuralValueConsistentWithEquals() and
