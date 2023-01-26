@@ -17,42 +17,27 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.proto.OuterClassForProto
-import com.spotify.scio.testing.CoderAssertions._
-import org.apache.beam.sdk.coders.{
-  BigDecimalCoder,
-  BigEndianLongCoder,
-  BigIntegerCoder,
-  BooleanCoder,
-  ByteCoder,
-  Coder => BCoder,
-  CoderException,
-  InstantCoder,
-  ListCoder,
-  NullableCoder,
-  RowCoder,
-  StringUtf8Coder,
-  VarIntCoder
-}
-import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.apache.beam.sdk.util.SerializableUtils
-
-import scala.jdk.CollectionConverters._
-import scala.collection.{mutable => mut}
-import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.protobuf.ByteString
-import com.spotify.scio.coders.instances.{GuavaBloomFilterCoder, MapCoder, Tuple2Coder, Tuple5Coder}
+import com.spotify.scio.proto.OuterClassForProto
+import com.spotify.scio.testing.CoderAssertions._
+import com.spotify.scio.coders.instances._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Moments
+import org.apache.beam.sdk.{coders => beam}
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.commons.io.output.NullOutputStream
 import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
+import scala.jdk.CollectionConverters._
+import scala.collection.{mutable => mut}
+import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
 import java.time.{Instant, LocalDate}
 import java.util.UUID
@@ -63,40 +48,40 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   val userId: UserId = UserId(Seq[Byte](1, 2, 3, 4))
   val user: User = User(userId, "johndoe", "johndoe@spotify.com")
 
-  def materialize[T](coder: Coder[T]): BCoder[T] =
+  def materialize[T](coder: Coder[T]): beam.Coder[T] =
     CoderMaterializer.beam(PipelineOptionsFactory.create(), coder)
 
   it should "support primitives" in {
     false coderShould roundtripToBytes(Array(0)) and
       beOfType[Beam[_]] and
-      materializeTo[BooleanCoder]
+      materializeTo[beam.BooleanCoder]
 
     1 coderShould roundtripToBytes(Array(1)) and
       beOfType[Beam[_]] and
-      materializeTo[VarIntCoder]
+      materializeTo[beam.VarIntCoder]
 
     1L coderShould roundtripToBytes(Array(0, 0, 0, 0, 0, 0, 0, 1)) and
       beOfType[Beam[_]] and
-      materializeTo[BigEndianLongCoder]
+      materializeTo[beam.BigEndianLongCoder]
 
     'a' coderShould roundtripToBytes(Array(97)) and
       beOfType[Transform[_, _]] and
-      materializeToTransformOf[ByteCoder]
+      materializeToTransformOf[beam.ByteCoder]
 
     "yolo" coderShould roundtripToBytes(Array(121, 111, 108, 111)) and
       beOfType[Beam[_]] and
-      materializeTo[StringUtf8Coder]
+      materializeTo[beam.StringUtf8Coder]
 
     4.5 coderShould roundtripToBytes(Array(64, 18, 0, 0, 0, 0, 0, 0)) and
       beOfType[Beam[_]] and
-      materializeTo("SDoubleCoder$") and
+      materializeTo[SDoubleCoder.type] and
       structuralValueConsistentWithEquals() and
       beSerializable() and
       beConsistentWithEquals()
 
     4.5f coderShould roundtripToBytes(Array(64, -112, 0, 0)) and
       beOfType[Beam[_]] and
-      materializeTo("SFloatCoder$") and
+      materializeTo[SFloatCoder.type] and
       structuralValueConsistentWithEquals() and
       beSerializable() and
       beConsistentWithEquals()
@@ -111,44 +96,72 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     nil coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
-      materializeTo("SeqCoder")
+      materializeTo[SeqCoder[_]]
 
     s coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
-      materializeTo("SeqCoder") and
+      materializeTo[SeqCoder[_]] and
       beFullyCompliant()
 
-    s.toList coderShould roundtrip() and beOfType[CoderTransform[_, _]]
-    s.toVector coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    s.toList coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[ListCoder[_]] and
+      beFullyCompliant()
+
+    s.toVector coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[VectorCoder[_]] and
+      beFullyCompliant()
+
     m coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[MapCoder[_, _]] and
       beFullyCompliantNonDeterministic()
 
-    s.toSet coderShould roundtrip() and beOfType[CoderTransform[_, _]]
-    mut.ListBuffer(1 to 10: _*) coderShould roundtrip() and beOfType[Transform[_, _]]
+    s.toSet coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[SetCoder[_]] and
+      beFullyCompliantNonDeterministic()
+
+    mut.ListBuffer(1 to 10: _*) coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[BufferCoder[_]] and
+      beFullyCompliant()
 
     BitSet(1 to 100000: _*) coderShould roundtrip() and
-      beOfType[Beam[_]] and materializeTo("BitSetCoder")
+      beOfType[Beam[_]] and
+      materializeTo[BitSetCoder] and
+      beFullyCompliant()
 
-    Right(1) coderShould roundtrip() and beOfType[Ref[_]]
-    Left(1) coderShould roundtrip() and beOfType[Ref[_]]
-    mut.Set(s: _*) coderShould roundtrip() and beOfType[CoderTransform[_, _]]
+    Right(1) coderShould roundtrip() and
+      beOfType[Ref[_]] and
+      materializeTo[RefCoder[_]] and
+      beFullyCompliant()
+
+    Left(1) coderShould roundtrip() and
+      beOfType[Ref[_]] and
+      materializeTo[RefCoder[_]] and
+      beFullyCompliant()
+
+    mut.Set(s: _*) coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[MutableSetCoder[_]] and
+      beFullyCompliant()
 
     Array("1", "2", "3") coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
-      materializeTo("ArrayCoder") and
+      materializeTo[ArrayCoder[_]] and
       beFullyCompliantNotConsistentWithEquals()
   }
 
   it should "support Scala option" in {
     None coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
-      materializeTo("OptionCoder") and
+      materializeTo[OptionCoder[_]] and
       beFullyCompliant()
 
-    Option(1) coderShould roundtrip() and materializeTo("OptionCoder")
-    Some(1) coderShould roundtrip() and materializeTo("OptionCoder")
+    Option(1) coderShould roundtrip() and materializeTo[OptionCoder[_]]
+    Some(1) coderShould roundtrip() and materializeTo[OptionCoder[_]]
   }
 
   it should "not support inner case classes" in {
@@ -219,9 +232,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       beOfType[Ref[_]] and
       materializeTo[RefCoder[_]] and
       beFullyCompliant()
-//      bytesCountTested() and
-//      structuralValueConsistentWithEquals() and
-//      beSerializable()
   }
 
   it should "support tuples" in {
@@ -279,16 +289,16 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "have a Coder for Nothing, Unit, Void" in {
     Coder[Void] coderShould beOfType[Beam[_]] and
-      materializeTo("VoidCoder$") and
+      materializeTo[VoidCoder.type] and
       beSerializable() and beDeterministic()
 
     Coder[Unit] coderShould beOfType[Beam[_]] and
-      materializeTo("UnitCoder$") and
+      materializeTo[UnitCoder.type] and
       beSerializable() and beDeterministic()
 
     val bnc = CoderMaterializer.beamWithDefault[Nothing](Coder[Nothing])
     noException shouldBe thrownBy {
-      bnc.asInstanceOf[BCoder[Any]].encode(null, null)
+      bnc.asInstanceOf[beam.Coder[Any]].encode(null, null)
     }
     an[IllegalStateException] should be thrownBy {
       bnc.decode(new ByteArrayInputStream(Array()))
@@ -307,7 +317,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     s coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
-      materializeTo[ListCoder[_]] and
+      materializeTo[beam.ListCoder[_]] and
       beFullyCompliant()
 
     m coderShould roundtrip() and
@@ -317,7 +327,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     arrayList coderShould roundtrip() and
       beOfType[Transform[_, _]] and
-      materializeToTransformOf[ListCoder[_]] and
+      materializeToTransformOf[beam.ListCoder[_]] and
       beFullyCompliant()
   }
 
@@ -371,12 +381,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     BigInt("1234") coderShould roundtrip() and
       beOfType[Transform[_, _]] and
-      materializeToTransformOf[BigIntegerCoder] and
+      materializeToTransformOf[beam.BigIntegerCoder] and
       beFullyCompliant()
 
     BigDecimal("1234") coderShould roundtrip() and
       beOfType[Transform[_, _]] and
-      materializeToTransformOf[BigDecimalCoder] and
+      materializeToTransformOf[beam.BigDecimalCoder] and
       beFullyCompliant()
 
     UUID.randomUUID() coderShould roundtrip() and
@@ -394,33 +404,33 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     new BigInteger("123456789") coderShould roundtrip() and
       beOfType[Beam[_]] and
-      materializeTo[BigIntegerCoder] and
+      materializeTo[beam.BigIntegerCoder] and
       beFullyCompliant()
 
     new jBigDecimal("123456789.98765") coderShould roundtrip() and
       beOfType[Beam[_]] and
-      materializeTo[BigDecimalCoder] and
+      materializeTo[beam.BigDecimalCoder] and
       beFullyCompliant()
 
     val now = org.joda.time.Instant.now()
     now coderShould roundtrip() and beOfType[Beam[_]] and
-      materializeTo[InstantCoder] and
+      materializeTo[beam.InstantCoder] and
       beFullyCompliant()
 
     new IntervalWindow(now.minus(4000), now) coderShould notFallback() and
       beFullyCompliant()
 
     new org.joda.time.LocalDate coderShould roundtrip() and beOfType[Beam[_]] and
-      materializeTo("JodaLocalDateCoder") and
+      materializeTo[JodaLocalDateCoder] and
       beFullyCompliant()
     new org.joda.time.LocalTime coderShould roundtrip() and beOfType[Beam[_]] and
-      materializeTo("JodaLocalTimeCoder") and
+      materializeTo[JodaLocalTimeCoder] and
       beFullyCompliant()
     new org.joda.time.LocalDateTime coderShould roundtrip() and beOfType[Beam[_]] and
-      materializeTo("JodaLocalDateTimeCoder") and
+      materializeTo[JodaLocalDateTimeCoder] and
       beFullyCompliant()
     new org.joda.time.DateTime coderShould roundtrip() and beOfType[Beam[_]] and
-      materializeTo("JodaDateTimeCoder") and
+      materializeTo[JodaDateTimeCoder] and
       beFullyCompliant()
     new java.sql.Timestamp(
       1
@@ -458,7 +468,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       .foreach { r =>
         r coderShould roundtrip() and
           beOfType[Beam[_]] and
-          materializeTo[RowCoder] and
+          materializeTo[beam.RowCoder] and
           beFullyCompliantNonDeterministic()
       }
   }
@@ -466,7 +476,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "support Scala objects" in {
     TopLevelObject coderShould roundtrip() and
       beOfType[Singleton[_]] and
-      materializeTo("SingletonCoder") and
+      materializeTo[SingletonCoder[_]] and
       beSerializable() and
       beConsistentWithEquals() and
       beDeterministic()
@@ -482,7 +492,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support classes with private constructors" in {
-    PrivateClass(42L) coderShould fallback()
+    PrivateClass(42L) coderShould fallback() and materializeTo[KryoAtomicCoder[_]]
   }
 
   it should "support classes that contain classes with private constructors" in {
@@ -561,7 +571,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   it should "support java enums" in {
     JavaEnumExample.GOOD_THING coderShould roundtrip() and
       beOfType[Transform[_, _]] and
-      materializeToTransformOf[StringUtf8Coder] and
+      materializeToTransformOf[beam.StringUtf8Coder] and
       beFullyCompliant()
     JavaEnumExample.BAD_THING coderShould roundtrip()
   }
@@ -616,7 +626,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val opts: PipelineOptions = PipelineOptionsFactory.create()
     opts.as(classOf[ScioOptions]).setNullableCoders(true)
 
-    val bCoder = NullableCoder.of(StringUtf8Coder.of())
+    val bCoder = beam.NullableCoder.of(beam.StringUtf8Coder.of())
     // this could be a PairSCollectionFunctions.valueCoder extracted after materialization
     val coder = Coder.beam(bCoder)
     val materializedCoder = CoderMaterializer.beamWithDefault(coder, opts)
@@ -629,7 +639,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     implicit lazy val c: Coder[SampleField] = Coder.gen[SampleField]
     ok coderShould roundtrip()
-    val caught = intercept[CoderException] {
+    val caught = intercept[beam.CoderException] {
       nok coderShould roundtrip()
     }
 
@@ -666,8 +676,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
         CoderMaterializer.beamWithDefault(Coder[SampleFieldType])
       )
 
-    "Coder[SampleField]" should compile
-    "Coder[SampleFieldType]" should compile
+    Coder[SampleFieldType] coderShould beSerializable() and
+      beConsistentWithEquals() and
+      beDeterministic()
 
     // https://github.com/spotify/scio/issues/3707
     SampleField(
@@ -710,13 +721,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     tableSchema coderShould roundtrip() and
       beOfType[Transform[_, _]] and
-      materializeToTransformOf[StringUtf8Coder] and
+      materializeToTransformOf[beam.StringUtf8Coder] and
       beFullyCompliant()
   }
 
   it should "optimize for AnyVal" in {
     AnyValExample("dummy") coderShould beOfType[Transform[_, _]] and
-      materializeToTransformOf[StringUtf8Coder] and
+      materializeToTransformOf[beam.StringUtf8Coder] and
       structuralValueConsistentWithEquals() and
       beSerializable() and
       beConsistentWithEquals() and

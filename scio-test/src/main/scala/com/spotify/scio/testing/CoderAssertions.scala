@@ -17,7 +17,13 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio.coders.{Coder, CoderMaterializer, MaterializedCoder, TransformCoder}
+import com.spotify.scio.coders.{
+  Coder,
+  CoderMaterializer,
+  MaterializedCoder,
+  RecordCoder,
+  TransformCoder
+}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
@@ -128,16 +134,6 @@ object CoderAssertions {
     ctx => {
       ctx.beamCoder shouldBe a[MaterializedCoder[_]]
       ctx.beamCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldBe a[ExpectedBeamCoder]
-    }
-
-  def materializeTo(className: String): CoderAssertion =
-    ctx => {
-      ctx.beamCoder shouldBe a[MaterializedCoder[_]]
-      ctx.beamCoder
-        .asInstanceOf[MaterializedCoder[_]]
-        .bcoder
-        .getClass
-        .getSimpleName shouldBe className
     }
 
   def materializeToTransformOf[ExpectedBeamCoder: ClassTag]: CoderAssertion =

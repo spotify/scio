@@ -28,7 +28,7 @@ import scala.jdk.CollectionConverters._
 ///////////////////////////////////////////////////////////////////////////////
 // Materialized beam coders
 ///////////////////////////////////////////////////////////////////////////////
-final private class SingletonCoder[T](
+final private[coders] class SingletonCoder[T](
   val typeName: String,
   supply: () => T
 ) extends CustomCoder[T] {

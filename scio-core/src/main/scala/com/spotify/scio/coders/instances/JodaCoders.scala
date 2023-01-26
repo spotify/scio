@@ -49,7 +49,7 @@ object JodaCoders {
     }
 }
 
-final private class JodaDateTimeCoder extends AtomicCoder[DateTime] {
+final private[coders] class JodaDateTimeCoder extends AtomicCoder[DateTime] {
   override def encode(value: DateTime, os: OutputStream): Unit = {
     val dos = new DataOutputStream(os)
 
@@ -69,7 +69,7 @@ final private class JodaDateTimeCoder extends AtomicCoder[DateTime] {
   override def consistentWithEquals() = true
 }
 
-final private class JodaLocalDateTimeCoder extends AtomicCoder[LocalDateTime] {
+final private[coders] class JodaLocalDateTimeCoder extends AtomicCoder[LocalDateTime] {
   import JodaCoders.checkChronology
 
   override def encode(value: LocalDateTime, os: OutputStream): Unit = {
@@ -102,7 +102,7 @@ final private class JodaLocalDateTimeCoder extends AtomicCoder[LocalDateTime] {
   override def consistentWithEquals() = true
 }
 
-final private class JodaLocalDateCoder extends AtomicCoder[LocalDate] {
+final private[coders] class JodaLocalDateCoder extends AtomicCoder[LocalDate] {
   import JodaCoders.checkChronology
 
   override def encode(value: LocalDate, os: OutputStream): Unit = {
@@ -127,7 +127,7 @@ final private class JodaLocalDateCoder extends AtomicCoder[LocalDate] {
   override def consistentWithEquals() = true
 }
 
-final private class JodaLocalTimeCoder extends AtomicCoder[LocalTime] {
+final private[coders] class JodaLocalTimeCoder extends AtomicCoder[LocalTime] {
   import JodaCoders.checkChronology
 
   override def encode(value: LocalTime, os: OutputStream): Unit = {
