@@ -663,7 +663,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "Serialize WrappedArray using wrappedArrayCoder" in {
-    val wrappedArray: mut.ArraySeq[String] = Array("foo", "bar")
+    val wrappedArray: mut.WrappedArray[String] = Array("foo", "bar")
     wrappedArray coderShould notFallback() and beFullyCompliantNotConsistentWithEquals()
   }
 
