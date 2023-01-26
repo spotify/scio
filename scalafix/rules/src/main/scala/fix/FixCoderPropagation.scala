@@ -4,39 +4,49 @@ package v0_10_0
 import scalafix.v1._
 import scala.meta._
 
+object FixCoderPropagation {
+  val Scoll: SymbolMatcher =
+    SymbolMatcher.normalized("com/spotify/scio/values/SCollection")
+  val PairedScol: SymbolMatcher =
+    SymbolMatcher.normalized("com/spotify/scio/values/PairSCollectionFunctions")
+
+  val CurriedSCollFns = Set(
+    "top",
+    "quantilesApprox"
+  )
+
+  val CurriedPairedScolFns = Set(
+    "topByKey",
+    "approxQuantilesByKey"
+  )
+}
+
 class FixCoderPropagation extends SemanticRule("FixCoderPropagation") {
-  private val scoll = "com/spotify/scio/values/SCollection#"
-  private val pairedScol = "com/spotify/scio/values/PairSCollectionFunctions#"
 
-  override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case a @ Term.Apply(fun, List(arg1, arg2)) =>
-      fun match {
-        case Term.Select(qual, name) =>
-          name match {
-            case t @ Term.Name("top") if expectedType(qual, scoll) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t @ Term.Name("topByKey") if expectedType(qual, pairedScol) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t @ Term.Name("quantilesApprox") if expectedType(qual, scoll) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t @ Term.Name("approxQuantilesByKey") if expectedType(qual, pairedScol) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t =>
-              Patch.empty
-          }
-      }
-    }.asPatch
-  }
+  import FixCoderPropagation._
 
-  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean =
+  private def expectedType(
+    expected: SymbolMatcher
+  )(qual: Term)(implicit doc: SemanticDocument): Boolean =
     qual.symbol.info.get.signature match {
       case MethodSignature(_, _, TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(typStr).matches(typ)
+        expected.matches(typ)
       case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
-        SymbolMatcher.exact(typStr).matches(typ)
+        expected.matches(typ)
       case ValueSignature(TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(scoll).matches(typ)
-      case t =>
+        Scoll.matches(typ)
+      case _ =>
         false
     }
+
+  override def fix(implicit doc: SemanticDocument): Patch = {
+    doc.tree.collect {
+      case t @ q"$qual.$fn($arg1, $arg2)"
+          if expectedType(Scoll)(qual) && CurriedSCollFns.contains(fn.value) =>
+        Patch.replaceTree(t, q"$qual.$fn($arg1)($arg2)".syntax)
+      case t @ q"$qual.$fn($arg1, $arg2)"
+          if expectedType(PairedScol)(qual) && CurriedPairedScolFns.contains(fn.value) =>
+        Patch.replaceTree(t, q"$qual.$fn($arg1)($arg2)".syntax)
+    }.asPatch
+  }
 }

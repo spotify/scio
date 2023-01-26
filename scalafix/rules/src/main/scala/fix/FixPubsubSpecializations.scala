@@ -2,215 +2,206 @@ package fix
 package v0_12_0
 
 import scalafix.v1._
+
+import scala.annotation.tailrec
 import scala.meta._
+import scala.meta.contrib._
+
+object FixPubsubSpecializations {
+  val PubSubIO: SymbolMatcher =
+    SymbolMatcher.normalized("com/spotify/scio/pubsub/PubsubIO")
+  val SCtx: SymbolMatcher =
+    SymbolMatcher.normalized("com/spotify/scio/ScioContext")
+  val SCtxOubSubOps: SymbolMatcher = SCtx +
+    SymbolMatcher.normalized("com/spotify/scio/pubsub/syntax/ScioContextSyntax#ScioContextOps")
+  val Scoll: SymbolMatcher =
+    SymbolMatcher.normalized("com/spotify/scio/values/SCollection")
+  val SCollPubsubOps: SymbolMatcher = Scoll +
+    SymbolMatcher.normalized(
+      "com/spotify/scio/pubsub/syntax/SCollectionSyntax#SCollectionPubsubOps"
+    )
+
+  val AvroSpecificRecord: SymbolMatcher =
+    SymbolMatcher.normalized("org/apache/avro/specific/SpecificRecordBase")
+  val ProtoMessage: SymbolMatcher =
+    SymbolMatcher.normalized("com/google/protobuf/Message")
+  val PubSubMessage: SymbolMatcher =
+    SymbolMatcher.normalized("org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage")
+  val JavaString: SymbolMatcher =
+    SymbolMatcher.normalized("java/lang/String")
+
+  val PubSubIOFns: Map[String, String] = Map(
+    "readAvro" -> "avro",
+    "readProto" -> "proto",
+    "readPubsub" -> "pubsub",
+    "readCoder" -> "coder"
+  )
+
+  val ParamSub = Term.Name("sub")
+  val ParamTopic = Term.Name("topic")
+  val ParamIdAttribute = Term.Name("idAttribute")
+  val ParamTimestampAttribute = Term.Name("timestampAttribute")
+  val ParamMaxBatchSize = Term.Name("maxBatchSize")
+  val ParamMaxBatchBytesSize = Term.Name("maxBatchBytesSize")
+
+  val ReadParamTopic = q"PubsubIO.ReadParam(PubsubIO.Topic)"
+  val ReadParamSub = q"PubsubIO.ReadParam(PubsubIO.Subscription)"
+
+  object SCollectionType {
+
+    // extracts the type parameter symbol of an SCollection SemanticType
+    def unapply(semanticType: SemanticType): Option[Symbol] = semanticType match {
+      case TypeRef(_, _, TypeRef(_, t, _) :: _) => Some(t)
+      case _                                    => None
+    }
+  }
+
+}
 
 class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") {
-  private val pubSubIOPath = "com/spotify/scio/pubsub/PubsubIO."
-  private val scioContextPath = "com/spotify/scio/ScioContext."
+
+  import FixPubsubSpecializations._
+
+  def isSubtypeOf(
+    expected: SymbolMatcher
+  )(symbol: Symbol)(implicit doc: SemanticDocument): Boolean = {
+    @tailrec def go(isSub: Boolean, sym: List[Symbol]): Boolean = {
+      (isSub, sym) match {
+        case (true, _)    => true
+        case (false, Nil) => false
+        case (false, s :: ss) =>
+          val parents = s.info.map(_.signature) match {
+            case Some(ClassSignature(_, parents, _, _)) =>
+              parents.collect { case TypeRef(_, p, _) => p }
+            case Some(TypeSignature(_, TypeRef(_, lowerBound, _), TypeRef(_, upperBound, _))) =>
+              lowerBound :: upperBound :: Nil
+            case _ =>
+              Nil
+          }
+          go(expected.matches(s), parents ++ ss)
+      }
+    }
+
+    go(false, List(symbol))
+  }
+
+  private def scollType(term: Term)(implicit doc: SemanticDocument): Option[Symbol] = {
+    term.symbol.info.map(_.signature) match {
+      case Some(MethodSignature(_, _, SCollectionType(t)))            => Some(t)
+      case Some(ValueSignature(AnnotatedType(_, SCollectionType(t)))) => Some(t)
+      case Some(ValueSignature(SCollectionType(t)))                   => Some(t)
+      case _                                                          => None
+    }
+  }
+
+  private def expectedType(
+    expected: SymbolMatcher
+  )(qual: Term)(implicit doc: SemanticDocument): Boolean =
+    qual.symbol.info.get.signature match {
+      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
+        expected.matches(typ)
+      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
+        expected.matches(typ)
+      case ValueSignature(TypeRef(_, typ, _)) =>
+        expected.matches(typ)
+      case _ =>
+        false
+    }
+
+  private def findParam(param: Term.Name, pos: Int)(args: Seq[Term]): Option[Term] = {
+    args
+      .collectFirst {
+        case p @ q"$name = $_" if name.isEqual(param) => p
+      }
+      .orElse {
+        args.takeWhile(!_.isInstanceOf[Term.Assign]).lift(pos)
+      }
+  }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case a @ Term.Apply(fun, args)
-          if fun.symbol.normalized.toString.startsWith("com.spotify.scio.pubsub.PubsubIO.") =>
-        fun match {
-          // PubsubIO[T < SpecificRecordBase](params)
-          case Term.ApplyType(qual, types @ List(Type.Name(_)))
-              if isSubOfType(qual.symbol, pubSubIOPath) =>
-            methodCallForIOConfig(types.head.symbol, types.head.toString)
-              .map(c => Patch.replaceTree(a, s"$qual.$c(${args.mkString(", ")})"))
-              .getOrElse(
-                Patch.empty
-              )
+      case t @ q"$fn[$tp](..$args)" if PubSubIO.matches(fn.symbol) =>
+        // PubsubIO[T](args)
+        val tpSym = tp.symbol
+        val io =
+          if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"$fn.avro[$tp](..$args)"
+          else if (isSubtypeOf(ProtoMessage)(tpSym)) q"$fn.proto[$tp](..$args)"
+          else if (isSubtypeOf(PubSubMessage)(tpSym)) q"$fn.pubsub[$tp](..$args)"
+          else if (isSubtypeOf(JavaString)(tpSym)) q"$fn.string(..$args)"
+          else throw new Exception(s"Unsupported type in pubsub '$tp'")
+        Patch.replaceTree(t, io.syntax)
+      case t @ q"$qual.$fn[$tp](..$args)"
+          // PubsubIO.$fn[T](args)
+          if PubSubIO.matches(qual.symbol) && PubSubIOFns.contains(fn.value) =>
+        val renamedFn = Term.Name(PubSubIOFns(fn.value))
+        Patch.replaceTree(t, q"$qual.$renamedFn[$tp](..$args)".syntax)
+      case t @ q"$qual.readString(..$args)" if PubSubIO.matches(qual.symbol) =>
+        // PubsubIO.readString(args)
+        Patch.replaceTree(t, q"$qual.string(..$args)".syntax)
+      case t @ q"$qual.saveAsPubsub(..$args)" if expectedType(SCollPubsubOps)(qual) =>
+        scollType(qual) match {
+          case Some(tpSym) =>
+            val topic = findParam(ParamTopic, 0)(args)
+            val idAttribute = findParam(ParamIdAttribute, 1)(args)
+            val timestampAttribute = findParam(ParamTimestampAttribute, 2)(args)
+            val maxBatchSize = findParam(ParamMaxBatchSize, 3)(args)
+            val maxBatchBytesSize = findParam(ParamMaxBatchBytesSize, 4)(args)
+            val ioArgs = (topic ++ idAttribute ++ timestampAttribute).toList
+            val paramsArgs = (maxBatchSize ++ maxBatchBytesSize).toList
 
-          // PubsubIO.readAvro(params)
-          case Term.ApplyType(Term.Select(qual, Term.Name(methodName)), methodType :: _)
-              if isSubOfType(qual.symbol, pubSubIOPath) =>
-            (
-              methodName match {
-                case "readAvro"   => Some("avro")
-                case "readProto"  => Some("proto")
-                case "readPubsub" => Some("pubsub")
-                case "readCoder"  => Some("coder")
-                case _            => None
-              }
-            ).map(name =>
-              Patch.replaceTree(a, s"$qual.$name[${methodType}](${args.mkString(", ")})")
-            ).getOrElse(Patch.empty)
-
-          // PubsubIO.readString(params)
-          case Term.Select(qual, Term.Name("readString"))
-              if isSubOfType(qual.symbol, pubSubIOPath) =>
-            Patch.replaceTree(a, s"$qual.string(${args.mkString(", ")})")
-
-          case _ =>
+            val tp = Type.Name(tpSym.displayName) // may require import, but best effort
+            val io =
+              if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"PubsubIO.avro[$tp](..$ioArgs)"
+              else if (isSubtypeOf(ProtoMessage)(tpSym)) q"PubsubIO.avro[$tp](..$ioArgs)"
+              else if (isSubtypeOf(PubSubMessage)(tpSym)) q"PubsubIO.avro[$tp](..$ioArgs)"
+              else if (isSubtypeOf(JavaString)(tpSym)) q"PubsubIO.string(..$ioArgs)"
+              else throw new Exception(s"Unsupported type in pubsub '$tp'")
+            val params = q"PubsubIO.WriteParam(..$paramsArgs)"
+            Patch.replaceTree(t, q"$qual.write($io)($params)".syntax)
+          case None =>
+            // We did not managed to extrat the type from the SCollection
             Patch.empty
         }
-      case a @ Term.Apply(fun, args)
-          if fun.symbol.normalized.toString.startsWith(
-            "com.spotify.scio.pubsub.syntax.SCollectionSyntax.SCollectionPubsubOps."
-          ) => {
-        fun match {
-          // scoll.saveAsPubsub("topic")
-          case Term.Select(qual, Term.Name(methodName)) if methodName.startsWith("saveAsPubsub") =>
-            val t = scollType(qual.symbol.info.get.signature)
-            val (methodArgs, writeParams) = splitWriteParams(args)
-            scollType(qual.symbol.info.get.signature)
-              .map(s =>
-                methodCallForIOConfig(s, s.displayName)
-                  .map(c =>
-                    Patch.replaceTree(
-                      a,
-                      s"$qual.write(PubsubIO.$c(${methodArgs
-                          .mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))"
-                    )
-                  )
-                  .getOrElse(
-                    Patch.empty
-                  )
-              )
-              .getOrElse(
-                Patch.empty
-              )
-          // scoll.saveAsPubsubWithAttributes("topic")
-          case Term.ApplyType(qual, types @ List(Type.Name(_)))
-              if qual.symbol.toString.contains("saveAsPubsubWithAttributes") =>
-            val (methodArgs, writeParams) = splitWriteParams(args)
-            val scoll = qual.toString.split("\\.").head
-            methodCallForIOConfig(types.head.symbol, types.head.toString, withAtt = true)
-              .map(c =>
-                Patch.replaceTree(
-                  a,
-                  s"$scoll.write(PubsubIO.$c(${methodArgs
-                      .mkString(", ")}))(PubsubIO.WriteParam(${writeParams.mkString(", ")}))"
-                )
-              )
-              .getOrElse(
-                Patch.empty
-              )
+      case t @ q"$qual.saveAsPubsubWithAttributes[$tp](..$args)"
+          if expectedType(SCollPubsubOps)(qual) =>
+        val topic = findParam(ParamTopic, 0)(args)
+        val idAttribute = findParam(ParamIdAttribute, 1)(args)
+        val timestampAttribute = findParam(ParamTimestampAttribute, 2)(args)
+        val maxBatchSize = findParam(ParamMaxBatchSize, 3)(args)
+        val maxBatchBytesSize = findParam(ParamMaxBatchBytesSize, 4)(args)
+        val ioArgs = (topic ++ idAttribute ++ timestampAttribute).toList
+        val paramsArgs = (maxBatchSize ++ maxBatchBytesSize).toList
 
-          case _ =>
-            Patch.empty
-        }
-      }
-
-      case a @ Term.Apply(fun, args)
-          if fun.symbol.normalized.toString.startsWith(
-            "com.spotify.scio.pubsub.syntax.ScioContextSyntax.ScioContextOps."
-          ) =>
-        {
-          val readparamsTopic = "(PubsubIO.ReadParam(PubsubIO.Topic))"
-          val readParamsSubs = "(PubsubIO.ReadParam(PubsubIO.Subscription))"
-          fun match {
-            // sc.pubsubTopic[String](params)
-            case Term.ApplyType(
-                  Term.Select(Term.Name(qual), Term.Name("pubsubTopic")),
-                  methodType :: _
-                ) =>
-              methodCallForIOConfig(methodType.symbol, methodType.toString).map(c =>
-                Patch.replaceTree(
-                  a,
-                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic"
-                )
-              )
-            // sc.pubsubSubscription[String](params)
-            case Term.ApplyType(
-                  Term.Select(Term.Name(qual), Term.Name("pubsubSubscription")),
-                  methodType :: _
-                ) =>
-              methodCallForIOConfig(methodType.symbol, methodType.toString).map(c =>
-                Patch.replaceTree(
-                  a,
-                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs"
-                )
-              )
-            // sc.pubsubTopicWithAttributes[String](params)
-            case Term.ApplyType(
-                  Term.Select(Term.Name(qual), Term.Name("pubsubTopicWithAttributes")),
-                  methodType :: _
-                ) =>
-              methodCallForIOConfig(methodType.symbol, methodType.toString, true).map(c =>
-                Patch.replaceTree(
-                  a,
-                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readparamsTopic"
-                )
-              )
-            // sc.pubsubSubscriptionWithAttributes[String](params)
-            case Term.ApplyType(
-                  Term.Select(Term.Name(qual), Term.Name("pubsubSubscriptionWithAttributes")),
-                  methodType :: _
-                ) =>
-              methodCallForIOConfig(methodType.symbol, methodType.toString, true).map(c =>
-                Patch.replaceTree(
-                  a,
-                  s"$qual.read(PubsubIO.$c(${args.mkString(", ")}))$readParamsSubs"
-                )
-              )
-            case _ =>
-              None
-          }
-        }.getOrElse(Patch.empty)
-      case _ =>
-        Patch.empty
+        val io = q"PubsubIO.withAttributes[$tp](..$ioArgs)"
+        val params = q"PubsubIO.WriteParam(..$paramsArgs)"
+        Patch.replaceTree(t, q"$qual.write($io)($params)".syntax)
+      case t @ q"$qual.pubsubSubscription[$tp](..$args)" if expectedType(SCtxOubSubOps)(qual) =>
+        val tpSym = tp.symbol
+        val io =
+          if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
+          else if (isSubtypeOf(ProtoMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
+          else if (isSubtypeOf(PubSubMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
+          else if (isSubtypeOf(JavaString)(tpSym)) q"PubsubIO.string(..$args)"
+          else throw new Exception(s"Unsupported type in pubsub '$tp'")
+        Patch.replaceTree(t, q"$qual.read($io)($ReadParamSub)".syntax)
+      case t @ q"$qual.pubsubSubscriptionWithAttributes[$tp](..$args)"
+          if expectedType(SCtxOubSubOps)(qual) =>
+        val io = q"PubsubIO.withAttributes[$tp](..$args)"
+        Patch.replaceTree(t, q"$qual.read($io)($ReadParamSub)".syntax)
+      case t @ q"$qual.pubsubTopic[$tp](..$args)" if expectedType(SCtxOubSubOps)(qual) =>
+        val tpSym = tp.symbol
+        val io =
+          if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
+          else if (isSubtypeOf(ProtoMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
+          else if (isSubtypeOf(PubSubMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
+          else if (isSubtypeOf(JavaString)(tpSym)) q"PubsubIO.string(..$args)"
+          else throw new Exception(s"Unsupported type in pubsub '$tp'")
+        Patch.replaceTree(t, q"$qual.read($io)($ReadParamTopic)".syntax)
+      case t @ q"$qual.pubsubTopicWithAttributes[$tp](..$args)"
+          if expectedType(SCtxOubSubOps)(qual) =>
+        val io = q"PubsubIO.withAttributes[$tp](..$args)"
+        Patch.replaceTree(t, q"$qual.read($io)($ReadParamTopic)".syntax)
     }.asPatch
-  }
-
-  private def splitWriteParams(args: List[Term]): (List[String], List[String]) =
-    args.zipWithIndex.foldLeft((List[String](), List[String]())) { case ((ma, wp), (p, i)) =>
-      if (i == 0) {
-        (List(p.toString), List())
-      } else if (
-        p.toString.contains("=") && (
-          p.toString.startsWith("topic") ||
-            p.toString.startsWith("idAttribute") ||
-            p.toString.startsWith("timestampAttribute")
-        )
-      ) {
-        (ma :+ p.toString, wp)
-      } else if (p.toString.contains("=") && p.toString.startsWith("maxBatch")) {
-        (ma, wp :+ p.toString)
-      } else if (i > 2) {
-        (ma, wp :+ p.toString)
-      } else {
-        (ma :+ p.toString, wp)
-      }
-    }
-
-  private def methodCallForIOConfig(
-    termType: Symbol,
-    typeName: String,
-    withAtt: Boolean = false
-  )(implicit doc: SemanticDocument): Option[String] =
-    if (isSubOfType(termType, "org/apache/avro/specific/SpecificRecordBase#")) {
-      if (withAtt) Some(s"withAttributes[$typeName]") else Some(s"avro[$typeName]")
-    } else if (isSubOfType(termType, "com/google/protobuf/Message#")) {
-      if (withAtt) Some(s"withAttributes[$typeName]") else Some(s"proto[$typeName]")
-    } else if (isSubOfType(termType, "org/apache/beam/sdk/io/gcp/pubsub/PubsubMessage#")) {
-      if (withAtt) Some(s"withAttributes[$typeName]") else Some(s"pubsub[$typeName]")
-    } else if (isSubOfType(termType, "java/lang/String#")) {
-      if (withAtt) Some(s"withAttributes[$typeName]") else Some("string")
-    } else {
-      None
-    }
-
-  def isSubOfType(symbol: Symbol, typeStr: String)(implicit doc: SemanticDocument): Boolean =
-    getParentSymbols(symbol).map(_.toString).contains(typeStr)
-
-  def getParentSymbols(symbol: Symbol)(implicit doc: SemanticDocument): Set[Symbol] = {
-    symbol.info match {
-      case Some(info) =>
-        info.signature match {
-          case ClassSignature(_, parents, _, _) =>
-            Set(symbol) ++ parents.collect { case TypeRef(_, symbol, _) =>
-              getParentSymbols(symbol)
-            }.flatten
-          case TypeSignature(_, TypeRef(_, lowerBound, _), TypeRef(_, upperBound, _)) =>
-            Set(symbol) ++ getParentSymbols(lowerBound) ++ getParentSymbols(upperBound)
-          case _ =>
-            Set()
-        }
-      case _ =>
-        Set()
-    }
   }
 
   private def scollType(signature: Signature)(implicit doc: SemanticDocument): Option[Symbol] = {

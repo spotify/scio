@@ -29,7 +29,7 @@ object FixJoinNames {
     lhs.fullOuterJoin(rhs = rightHS)
     lhs.leftOuterJoin(rhs = rightHS)
     lhs.rightOuterJoin(rhs = rightHS)
-    lhs.sparseFullOuterJoin(rhs = rightHS, rhsNumKeys = 4L, fpProb = 0.01)
+    lhs.sparseFullOuterJoin(rhs = rightHS, rhsNumKeys = 4L, fpProb = 0.01d)
     lhs.sparseLeftOuterJoin(rhs = rightHS, rhsNumKeys = 4)
     lhs.sparseRightOuterJoin(rhs = rightHS, rhsNumKeys = 2)
     lhs.cogroup(rhs = rightHS)
