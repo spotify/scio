@@ -17,13 +17,7 @@
 
 package com.spotify.scio.testing
 
-import com.spotify.scio.coders.{
-  Coder,
-  CoderMaterializer,
-  MaterializedCoder,
-  RecordCoder,
-  TransformCoder
-}
+import com.spotify.scio.coders._
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
