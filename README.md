@@ -78,6 +78,7 @@ Scio includes the following artifacts:
 - `scio-avro`: add-on for Avro, can also be used standalone
 - `scio-google-cloud-platform`: add-on for Google Cloud IO's: BigQuery, Bigtable, Pub/Sub, Datastore, Spanner
 - `scio-cassandra*`: add-ons for Cassandra
+- `scio-cosmosdb`: add-ons for Azure CosmosDB Core (SQL) API
 - `scio-elasticsearch*`: add-ons for Elasticsearch
 - `scio-extra`: extra utilities for working with collections, Breeze, etc., best effort support
 - `scio-jdbc`: add-on for JDBC IO
