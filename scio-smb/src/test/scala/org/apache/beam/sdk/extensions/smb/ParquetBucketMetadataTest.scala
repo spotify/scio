@@ -25,6 +25,7 @@ import org.apache.beam.sdk.transforms.display.DisplayData
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import scala.jdk.CollectionConverters._
@@ -286,5 +287,26 @@ class ParquetBucketMetadataTest extends AnyFlatSpec with Matchers {
         classOf[User]
       )
     }
+  }
+
+  it should "not write null secondary keys" in {
+    val metadata = new ParquetBucketMetadata[String, Void, AvroGeneratedUser](
+      2,
+      1,
+      classOf[String],
+      "name",
+      HashType.MURMUR3_32,
+      SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+      classOf[AvroGeneratedUser]
+    )
+
+    val os = new ByteArrayOutputStream
+    BucketMetadata.to(metadata, os)
+
+    os.toString should not include "keyFieldSecondary"
+    BucketMetadata
+      .from(os.toString)
+      .asInstanceOf[ParquetBucketMetadata[String, Void, GenericRecord]]
+      .getKeyClassSecondary should be(null)
   }
 }
