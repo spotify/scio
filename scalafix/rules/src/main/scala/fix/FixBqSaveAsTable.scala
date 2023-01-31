@@ -27,16 +27,12 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
     }.toList
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    val patch = doc.tree.collect {
+    doc.tree.collect {
       case t @ q"$qual.$fn(..$args)" if SaveAvroAsBigQuery.matches(fn.symbol) =>
         val updatedArgs = updateParams(args)
-        Patch.replaceTree(t, q"$qual.saveAsBigQueryTable(..$updatedArgs)".syntax)
+        Patch.replaceTree(t, q"$qual.saveAsBigQueryTable(..$updatedArgs)".syntax) +
+          Patch.addGlobalImport(PackageImport) +
+          Patch.addGlobalImport(ConverterImport)
     }.asPatch
-
-    if (patch.nonEmpty) {
-      patch + Patch.addGlobalImport(PackageImport) + Patch.addGlobalImport(ConverterImport)
-    } else {
-      Patch.empty
-    }
   }
 }
