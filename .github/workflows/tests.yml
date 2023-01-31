@@ -33,7 +33,8 @@ jobs:
         scala:
           - 2.12.17
           - 2.13.8
-        java_opts: []
+        java_opts:
+          - ''
         include:
           - scala: 2.13.8
             java: 11
