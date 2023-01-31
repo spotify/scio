@@ -17,28 +17,19 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
 
   import FixBqSaveAsTable._
 
-  private def renameNamedParams(args: List[Term]): List[Term] =
-    args.map {
-      case q"avroSchema = $schema" => q"schema = toTableSchema($schema)"
-      case q"table = $table"       => q"table = Table.Ref($table)"
-      case p                       => p
-    }
+  private def updateParams(args: Seq[Term]): List[Term] =
+    args.zipWithIndex.map {
+      case (p, 0) if !p.isInstanceOf[Term.Assign] => q"Table.Ref($p)"
+      case (p, 1) if !p.isInstanceOf[Term.Assign] => q"toTableSchema($p)"
+      case (q"avroSchema = $schema", _)           => q"schema = toTableSchema($schema)"
+      case (q"table = $table", _)                 => q"table = Table.Ref($table)"
+      case (p, _)                                 => p
+    }.toList
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     val patch = doc.tree.collect {
       case t @ q"$qual.$fn(..$args)" if SaveAvroAsBigQuery.matches(fn.symbol) =>
-        val updatedArgs = args.toList match {
-          case (head: Term.Assign) :: tail =>
-            renameNamedParams(head :: tail)
-          case table :: Nil =>
-            q"Table.Ref($table)" :: Nil
-          case table :: (second: Term.Assign) :: tail =>
-            q"Table.Ref($table)" :: renameNamedParams(second :: tail)
-          case table :: schema :: tail =>
-            q"Table.Ref($table)" :: q"toTableSchema($schema)" :: tail
-          case Nil =>
-            throw new Exception("Missing required table argument in saveAvroAsBigQuery")
-        }
+        val updatedArgs = updateParams(args)
         Patch.replaceTree(t, q"$qual.saveAsBigQueryTable(..$updatedArgs)".syntax)
     }.asPatch
 
