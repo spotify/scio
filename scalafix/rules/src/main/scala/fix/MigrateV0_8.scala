@@ -95,15 +95,17 @@ final class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
   }
 }
 
+object FixContextClose {
+  val ScioContextClose = SymbolMatcher.normalized("com/spotify/scio/ScioContext#close")
+}
+
 final class FixContextClose extends SemanticRule("FixContextClose") {
+  import FixContextClose._
+
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect { case t @ q"$x.close()" =>
-      x.symbol.info.get.signature match {
-        case ValueSignature(TypeRef(_, tpe, _)) if tpe == Symbol("com/spotify/scio/ScioContext#") =>
-          Patch.replaceTree(t, q"$x.run()".syntax)
-        case _ =>
-          Patch.empty
-      }
+    doc.tree.collect {
+      case t @ q"$qual.$fn()" if ScioContextClose.matches(fn.symbol) =>
+        Patch.replaceTree(t, q"$qual.run()".syntax)
     }.asPatch
 }
 
@@ -115,7 +117,7 @@ final class FixTensorflow extends SemanticRule("FixTensorflow") {
 }
 
 object FixBigQueryDeprecations {
-  val StringMatcher: SymbolMatcher = SymbolMatcher.normalized("java/lang/String")
+  val JavaString: SymbolMatcher = SymbolMatcher.normalized("java/lang/String")
 }
 
 final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecations") {
@@ -123,71 +125,56 @@ final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecation
   import FixBigQueryDeprecations._
 
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect {
-      case q"$_.bigQueryTable($head, ..$_)" => // Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), x :: xs) =>
-        head.symbol.info.map(_.signature) match {
-          case None =>
-            // this can only be a string literal
-            Patch.replaceTree(head, q"Table.Spec($head)".syntax)
-          case Some(MethodSignature(_, _, TypeRef(_, sym, _))) if StringMatcher.matches(sym) =>
-            Patch.replaceTree(head, q"Table.Spec($head)".syntax)
-          case _ =>
-            Patch.replaceTree(head, q"Table.Ref($head)".syntax)
-        }
+    doc.tree.collect { case q"$_.bigQueryTable($head, ..$_)" =>
+      head.symbol.info.map(_.signature) match {
+        case None =>
+          // this can only be a string literal
+          Patch.replaceTree(head, q"Table.Spec($head)".syntax)
+        case Some(MethodSignature(_, _, TypeRef(_, sym, _))) if JavaString.matches(sym) =>
+          Patch.replaceTree(head, q"Table.Spec($head)".syntax)
+        case _ =>
+          Patch.replaceTree(head, q"Table.Ref($head)".syntax)
+      }
     }.asPatch
 }
 
 object ConsistenceJoinNames {
-  val Scoll =
-    SymbolMatcher.normalized("com/spotify/scio/values/SCollection")
-  val PairedHashScol = Scoll +
-    SymbolMatcher.normalized("com/spotify/scio/values/PairHashSCollectionFunctions")
-  val PairedSkewedScol = Scoll +
-    SymbolMatcher.normalized("com/spotify/scio/values/PairSkewedSCollectionFunctions")
-  val PairedScol = Scoll +
-    SymbolMatcher.normalized("com/spotify/scio/values/PairSCollectionFunctions")
 
-  val PairedScolFns = Set(
+  val PairedScolFns = Seq(
     "join",
     "fullOuterJoin",
     "leftOuterJoin",
     "rightOuterJoin",
     "sparseLeftOuterJoin",
     "sparseRightOuterJoin",
+    "sparseOuterJoin",
     "cogroup",
     "groupWith",
     "sparseLookup"
-  )
+  ).map(fn => SymbolMatcher.normalized(s"com/spotify/scio/values/PairSCollectionFunctions#$fn"))
 
-  val PairedHashScolFns = Set(
+  val PairedHashScolFns = Seq(
     "hashJoin",
+    "hashLeftJoin",
     "hashFullOuterJoin",
     "hashIntersectByKey"
-  )
+  ).map(fn => SymbolMatcher.normalized(s"com/spotify/scio/values/PairHashSCollectionFunctions#$fn"))
 
   val PairedSkewedScolFns = Set(
     "skewedJoin",
+    "skewedLeftJoin",
     "skewedFullOuterJoin"
+  ).map(fn =>
+    SymbolMatcher.normalized(s"com/spotify/scio/values/PairSkewedSCollectionFunctions#$fn")
   )
+
+  val JoinsFns: SymbolMatcher =
+    (PairedScolFns ++ PairedHashScolFns ++ PairedSkewedScolFns).reduce(_ + _)
 }
 
 final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
 
   import ConsistenceJoinNames._
-
-  private def expectedType(
-    expected: SymbolMatcher
-  )(qual: Term)(implicit doc: SemanticDocument): Boolean =
-    qual.symbol.info.map(_.signature) match {
-      case Some(MethodSignature(_, _, TypeRef(_, typ, _))) =>
-        expected.matches(typ)
-      case Some(ValueSignature(AnnotatedType(_, TypeRef(_, typ, _)))) =>
-        expected.matches(typ)
-      case Some(ValueSignature(TypeRef(_, typ, _))) =>
-        expected.matches(typ)
-      case _ =>
-        false
-    }
 
   private def renameNamedArgs(args: List[Term]): List[Term] =
     args.map {
@@ -201,21 +188,18 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case t @ q"$qual.hashLeftJoin(..$args)" if expectedType(PairedHashScol)(qual) =>
-        Patch.replaceTree(t, q"$qual.hashLeftOuterJoin(..${renameNamedArgs(args)})".syntax)
-      case t @ q"$qual.skewedLeftJoin(..$args)" if expectedType(PairedSkewedScol)(qual) =>
-        Patch.replaceTree(t, q"$qual.skewedLeftOuterJoin(..${renameNamedArgs(args)})".syntax)
-      case t @ q"$qual.sparseOuterJoin(..$args)" if expectedType(PairedScol)(qual) =>
-        Patch.replaceTree(t, q"$qual.sparseFullOuterJoin(..${renameNamedArgs(args)})".syntax)
-      case t @ q"$qual.$fn(..$args)"
-          if expectedType(PairedScol)(qual) && PairedScolFns.contains(fn.value) =>
-        Patch.replaceTree(t, q"$qual.$fn(..${renameNamedArgs(args)})".syntax)
-      case t @ q"$qual.$fn(..$args)"
-          if expectedType(PairedSkewedScol)(qual) && PairedSkewedScolFns.contains(fn.value) =>
-        Patch.replaceTree(t, q"$qual.$fn(..${renameNamedArgs(args)})".syntax)
-      case t @ q"$qual.$fn(..$args)"
-          if expectedType(PairedHashScol)(qual) && PairedHashScolFns.contains(fn.value) =>
-        Patch.replaceTree(t, q"$qual.$fn(..${renameNamedArgs(args)})".syntax)
+      case t @ q"$qual.$fn(..$args)" if JoinsFns.matches(fn.symbol) =>
+        val updatedFn = fn match {
+          case Term.Name("hashLeftJoin")    => Term.Name("hashLeftOuterJoin")
+          case Term.Name("skewedLeftJoin")  => Term.Name("skewedLeftOuterJoin")
+          case Term.Name("sparseOuterJoin") => Term.Name("sparseFullOuterJoin")
+          case _                            => fn
+        }
+        val updatedArgs = renameNamedArgs(args)
+        Patch.replaceTree(t, q"$qual.$updatedFn(..$updatedArgs)".syntax)
+      case t @ q"$qual.$fn(..$args)" =>
+        println(fn.symbol)
+        Patch.empty
     }
   }.asPatch
 }
