@@ -118,17 +118,21 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
       }
   }
 
+  private def buildPubsubIO(tp: Type, sym: Symbol, args: List[Term])(implicit
+    doc: SemanticDocument
+  ): Term = {
+    if (isSubtypeOf(AvroSpecificRecord)(sym)) q"PubsubIO.avro[$tp](..$args)"
+    else if (isSubtypeOf(ProtoMessage)(sym)) q"PubsubIO.proto[$tp](..$args)"
+    else if (isSubtypeOf(PubSubMessage)(sym)) q"PubsubIO.pubsub[$tp](..$args)"
+    else if (isSubtypeOf(JavaString)(sym)) q"PubsubIO.string(..$args)"
+    else throw new Exception(s"Unsupported type in pubsub '$tp'")
+  }
+
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
       case t @ q"$fn[$tp](..$args)" if PubSubIO.matches(fn.symbol) =>
         // PubsubIO[T](args)
-        val tpSym = tp.symbol
-        val io =
-          if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"$fn.avro[$tp](..$args)"
-          else if (isSubtypeOf(ProtoMessage)(tpSym)) q"$fn.proto[$tp](..$args)"
-          else if (isSubtypeOf(PubSubMessage)(tpSym)) q"$fn.pubsub[$tp](..$args)"
-          else if (isSubtypeOf(JavaString)(tpSym)) q"$fn.string(..$args)"
-          else throw new Exception(s"Unsupported type in pubsub '$tp'")
+        val io = buildPubsubIO(tp, tp.symbol, args)
         Patch.replaceTree(t, io.syntax)
       case t @ q"$qual.$fn[$tp](..$args)"
           // PubsubIO.$fn[T](args)
@@ -150,16 +154,11 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
             val paramsArgs = (maxBatchSize ++ maxBatchBytesSize).toList
 
             val tp = Type.Name(tpSym.displayName) // may require import, but best effort
-            val io =
-              if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"PubsubIO.avro[$tp](..$ioArgs)"
-              else if (isSubtypeOf(ProtoMessage)(tpSym)) q"PubsubIO.avro[$tp](..$ioArgs)"
-              else if (isSubtypeOf(PubSubMessage)(tpSym)) q"PubsubIO.avro[$tp](..$ioArgs)"
-              else if (isSubtypeOf(JavaString)(tpSym)) q"PubsubIO.string(..$ioArgs)"
-              else throw new Exception(s"Unsupported type in pubsub '$tp'")
+            val io = buildPubsubIO(tp, tpSym, ioArgs)
             val params = q"PubsubIO.WriteParam(..$paramsArgs)"
             Patch.replaceTree(t, q"$qual.write($io)($params)".syntax)
           case None =>
-            // We did not managed to extrat the type from the SCollection
+            // We did not managed to extract the type from the SCollection
             Patch.empty
         }
       case t @ q"$qual.saveAsPubsubWithAttributes[$tp](..$args)"
@@ -176,42 +175,19 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
         val params = q"PubsubIO.WriteParam(..$paramsArgs)"
         Patch.replaceTree(t, q"$qual.write($io)($params)".syntax)
       case t @ q"$qual.pubsubSubscription[$tp](..$args)" if expectedType(SCtxOubSubOps)(qual) =>
-        val tpSym = tp.symbol
-        val io =
-          if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
-          else if (isSubtypeOf(ProtoMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
-          else if (isSubtypeOf(PubSubMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
-          else if (isSubtypeOf(JavaString)(tpSym)) q"PubsubIO.string(..$args)"
-          else throw new Exception(s"Unsupported type in pubsub '$tp'")
+        val io = buildPubsubIO(tp, tp.symbol, args)
         Patch.replaceTree(t, q"$qual.read($io)($ReadParamSub)".syntax)
       case t @ q"$qual.pubsubSubscriptionWithAttributes[$tp](..$args)"
           if expectedType(SCtxOubSubOps)(qual) =>
         val io = q"PubsubIO.withAttributes[$tp](..$args)"
         Patch.replaceTree(t, q"$qual.read($io)($ReadParamSub)".syntax)
       case t @ q"$qual.pubsubTopic[$tp](..$args)" if expectedType(SCtxOubSubOps)(qual) =>
-        val tpSym = tp.symbol
-        val io =
-          if (isSubtypeOf(AvroSpecificRecord)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
-          else if (isSubtypeOf(ProtoMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
-          else if (isSubtypeOf(PubSubMessage)(tpSym)) q"PubsubIO.avro[$tp](..$args)"
-          else if (isSubtypeOf(JavaString)(tpSym)) q"PubsubIO.string(..$args)"
-          else throw new Exception(s"Unsupported type in pubsub '$tp'")
+        val io = buildPubsubIO(tp, tp.symbol, args)
         Patch.replaceTree(t, q"$qual.read($io)($ReadParamTopic)".syntax)
       case t @ q"$qual.pubsubTopicWithAttributes[$tp](..$args)"
           if expectedType(SCtxOubSubOps)(qual) =>
         val io = q"PubsubIO.withAttributes[$tp](..$args)"
         Patch.replaceTree(t, q"$qual.read($io)($ReadParamTopic)".syntax)
     }.asPatch
-  }
-
-  private def scollType(signature: Signature)(implicit doc: SemanticDocument): Option[Symbol] = {
-    signature match {
-      case ValueSignature(AnnotatedType(_, TypeRef(_, _, TypeRef(_, t, _) :: _))) =>
-        Some(t)
-      case ValueSignature(TypeRef(_, _, TypeRef(_, t, _) :: _)) =>
-        Some(t)
-      case _ =>
-        None
-    }
   }
 }
