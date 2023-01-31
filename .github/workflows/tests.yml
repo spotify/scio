@@ -33,16 +33,13 @@ jobs:
         scala:
           - 2.12.17
           - 2.13.8
+        java_opts: []
         include:
           - scala: 2.13.8
             java: 11
             coverage: true
           - java: 17
             java_opts: '-J--add-opens=java.base/java.util=ALL-UNNAMED -J--add-opens=java.base/java.lang.invoke=ALL-UNNAMED'
-          - java: 11
-            java_opts: ''
-          - java: 8
-            java_opts: ''
         exclude:
           - scala: 2.12.17
             java: 8
