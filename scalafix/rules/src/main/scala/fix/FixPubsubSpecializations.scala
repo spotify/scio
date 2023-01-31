@@ -108,18 +108,27 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
         false
     }
 
-  private def findParam(param: Term.Name, pos: Int)(args: Seq[Term]): Option[Term] = {
-    args
-      .collectFirst {
+  private def findParam(param: Term.Name, pos: Int)(args: List[Term]): Option[Term] = {
+    args.collectFirst {
         case p @ q"$name = $_" if name.isEqual(param) => p
-      }
-      .orElse {
+      }.orElse {
         args.takeWhile(!_.isInstanceOf[Term.Assign]).lift(pos)
       }
   }
 
-  private def buildPubsubIO(tp: Type, sym: Symbol, args: List[Term])(implicit
-    doc: SemanticDocument
+  private def splitArgs(args: List[Term]): (List[Term], List[Term]) = {
+    val topic = findParam(ParamTopic, 0)(args)
+    val idAttribute = findParam(ParamIdAttribute, 1)(args)
+    val timestampAttribute = findParam(ParamTimestampAttribute, 2)(args)
+    val maxBatchSize = findParam(ParamMaxBatchSize, 3)(args)
+    val maxBatchBytesSize = findParam(ParamMaxBatchBytesSize, 4)(args)
+    val ioArgs = (topic ++ idAttribute ++ timestampAttribute).toList
+    val paramsArgs = (maxBatchSize ++ maxBatchBytesSize).toList
+    (ioArgs, paramsArgs)
+  }
+
+  private def buildPubsubIO(tp: Type, sym: Symbol, args: List[Term])(
+    implicit doc: SemanticDocument
   ): Term = {
     if (isSubtypeOf(AvroSpecificRecord)(sym)) q"PubsubIO.avro[$tp](..$args)"
     else if (isSubtypeOf(ProtoMessage)(sym)) q"PubsubIO.proto[$tp](..$args)"
@@ -145,34 +154,19 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
       case t @ q"$qual.saveAsPubsub(..$args)" if expectedType(SCollPubsubOps)(qual) =>
         scollType(qual) match {
           case Some(tpSym) =>
-            val topic = findParam(ParamTopic, 0)(args)
-            val idAttribute = findParam(ParamIdAttribute, 1)(args)
-            val timestampAttribute = findParam(ParamTimestampAttribute, 2)(args)
-            val maxBatchSize = findParam(ParamMaxBatchSize, 3)(args)
-            val maxBatchBytesSize = findParam(ParamMaxBatchBytesSize, 4)(args)
-            val ioArgs = (topic ++ idAttribute ++ timestampAttribute).toList
-            val paramsArgs = (maxBatchSize ++ maxBatchBytesSize).toList
-
+            val (ioArgs, paramArgs) = splitArgs(args)
             val tp = Type.Name(tpSym.displayName) // may require import, but best effort
             val io = buildPubsubIO(tp, tpSym, ioArgs)
-            val params = q"PubsubIO.WriteParam(..$paramsArgs)"
+            val params = q"PubsubIO.WriteParam(..$paramArgs)"
             Patch.replaceTree(t, q"$qual.write($io)($params)".syntax)
           case None =>
             // We did not managed to extract the type from the SCollection
             Patch.empty
         }
-      case t @ q"$qual.saveAsPubsubWithAttributes[$tp](..$args)"
-          if expectedType(SCollPubsubOps)(qual) =>
-        val topic = findParam(ParamTopic, 0)(args)
-        val idAttribute = findParam(ParamIdAttribute, 1)(args)
-        val timestampAttribute = findParam(ParamTimestampAttribute, 2)(args)
-        val maxBatchSize = findParam(ParamMaxBatchSize, 3)(args)
-        val maxBatchBytesSize = findParam(ParamMaxBatchBytesSize, 4)(args)
-        val ioArgs = (topic ++ idAttribute ++ timestampAttribute).toList
-        val paramsArgs = (maxBatchSize ++ maxBatchBytesSize).toList
-
+      case t @ q"$qual.saveAsPubsubWithAttributes[$tp](..$args)" if expectedType(SCollPubsubOps)(qual) =>
+        val (ioArgs, paramArgs) = splitArgs(args)
         val io = q"PubsubIO.withAttributes[$tp](..$ioArgs)"
-        val params = q"PubsubIO.WriteParam(..$paramsArgs)"
+        val params = q"PubsubIO.WriteParam(..$paramArgs)"
         Patch.replaceTree(t, q"$qual.write($io)($params)".syntax)
       case t @ q"$qual.pubsubSubscription[$tp](..$args)" if expectedType(SCtxOubSubOps)(qual) =>
         val io = buildPubsubIO(tp, tp.symbol, args)
