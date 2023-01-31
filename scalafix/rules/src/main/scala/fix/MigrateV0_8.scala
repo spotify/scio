@@ -189,19 +189,15 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
         false
     }
 
-  private def renameNamedArgs(args: Seq[Term]): List[Term] =
+  private def renameNamedArgs(args: List[Term]): List[Term] =
     args.map {
-      case p @ q"$namedArg = $value" =>
-        namedArg match {
-          case Term.Name("that")        => q"rhs = $value"
-          case Term.Name("that1")       => q"rhs1 = $value"
-          case Term.Name("that2")       => q"rhs2 = $value"
-          case Term.Name("that3")       => q"rhs3 = $value"
-          case Term.Name("thatNumKeys") => q"rhsNumKeys = $value"
-          case _                        => p
-        }
-      case p => p
-    }.toList
+      case q"that = $value"        => q"rhs = $value"
+      case q"that1 = $value"       => q"rhs1 = $value"
+      case q"that2 = $value"       => q"rhs2 = $value"
+      case q"that3 = $value"       => q"rhs3 = $value"
+      case q"thatNumKeys = $value" => q"rhsNumKeys = $value"
+      case p                       => p
+    }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {

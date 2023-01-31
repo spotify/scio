@@ -17,14 +17,14 @@ class FixBqSaveAsTable extends SemanticRule("FixBqSaveAsTable") {
 
   import FixBqSaveAsTable._
 
-  private def updateParams(args: Seq[Term]): List[Term] =
+  private def updateParams(args: List[Term]): List[Term] =
     args.zipWithIndex.map {
       case (p, 0) if !p.isInstanceOf[Term.Assign] => q"Table.Ref($p)"
       case (p, 1) if !p.isInstanceOf[Term.Assign] => q"toTableSchema($p)"
       case (q"avroSchema = $schema", _)           => q"schema = toTableSchema($schema)"
       case (q"table = $table", _)                 => q"table = Table.Ref($table)"
       case (p, _)                                 => p
-    }.toList
+    }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
