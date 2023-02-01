@@ -89,7 +89,6 @@ val breezeVersion = "2.1.0"
 val bsonVersion = "4.8.1"
 val cosmosVersion = "4.37.1"
 val cosmosContainerVersion = "1.17.5"
-val scribeVersion = "3.10.7"
 val caffeineVersion = "2.9.3"
 val cassandraDriverVersion = "3.11.3"
 val cassandraVersion = "3.11.13"
@@ -125,6 +124,7 @@ val scalaCollectionCompatVersion = "2.9.0"
 val scalacticVersion = "3.2.15"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.15"
+val scribeVersion = "3.10.7"
 val shapelessVersion = "2.3.10"
 val slf4jVersion = "1.7.36"
 val sparkeyVersion = "3.2.5"
@@ -547,8 +547,10 @@ lazy val `scio-cosmosdb`: Project = project
     //scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xsource:3"), // , "-Ymacro-annotations"
     scalacOptions ++= Seq("-Xsource:3"),
     libraryDependencies ++= Seq(
-      "org.mongodb" % "bson" % bsonVersion,
       "com.azure" % "azure-cosmos" % cosmosVersion,
+      "org.mongodb" % "bson" % bsonVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // TEST
       "org.testcontainers" % "azure" % cosmosContainerVersion % IntegrationTest,
       "com.outr" %% "scribe" % scribeVersion % IntegrationTest,
       "com.outr" %% "scribe-slf4j" % scribeVersion % IntegrationTest
