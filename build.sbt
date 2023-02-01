@@ -98,7 +98,7 @@ val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.8"
-val elasticsearch8Version = "8.6.0"
+val elasticsearch8Version = "8.6.1"
 val featranVersion = "0.8.0"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
@@ -1083,7 +1083,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.8.3",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.9.0",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
