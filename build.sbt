@@ -551,6 +551,7 @@ lazy val `scio-cosmosdb`: Project = project
       "org.mongodb" % "bson" % bsonVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // TEST
+      "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
       "org.testcontainers" % "azure" % cosmosContainerVersion % IntegrationTest,
       "com.outr" %% "scribe" % scribeVersion % IntegrationTest,
       "com.outr" %% "scribe-slf4j" % scribeVersion % IntegrationTest

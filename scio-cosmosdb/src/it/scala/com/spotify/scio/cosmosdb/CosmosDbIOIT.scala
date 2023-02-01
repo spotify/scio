@@ -1,51 +1,45 @@
 package com.spotify.scio.cosmosdb
 
 import com.azure.cosmos.CosmosClientBuilder
-import com.spotify.scio.ContextAndArgs
+import com.dimafeng.testcontainers.ForAllTestContainer
 import com.spotify.scio.cosmosdb.Utils.initLog
+import com.spotify.scio.{ ContextAndArgs, ScioMetrics }
 import org.bson.Document
 import org.junit.rules.TemporaryFolder
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.testcontainers.containers.CosmosDBEmulatorContainer
-import org.testcontainers.utility.DockerImageName
 
 import java.nio.file.Files
 import scala.util.Using
 
 /** sbt scio-cosmosdb/IntegrationTest/test */
-class CosmosDbIOIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
-  private val DOCKER_NAME = "mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest"
+class CosmosDbIOIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll with ForAllTestContainer {
   private val DATABASE = "test"
   private val CONTAINER = "test"
-  private val cosmosDBEmulatorContainer = new CosmosDBEmulatorContainer(
-    DockerImageName.parse(DOCKER_NAME)
-  )
   private val tempFolder = new TemporaryFolder
   tempFolder.create()
   initLog()
 
-  override def beforeAll(): Unit = {
-    scribe.info("Star CosmosDB emulator")
-    cosmosDBEmulatorContainer.start()
+  override val container: ScalaCosmosDBEmulatorContainer = ScalaCosmosDBEmulatorContainer()
 
+  override def beforeAll(): Unit = {
     val keyStoreFile = tempFolder.newFile("azure-cosmos-emulator.keystore").toPath
-    val keyStore = cosmosDBEmulatorContainer.buildNewKeyStore
+    val keyStore = container.buildNewKeyStore
     keyStore.store(
       Files.newOutputStream(keyStoreFile.toFile.toPath),
-      cosmosDBEmulatorContainer.getEmulatorKey.toCharArray
+      container.emulatorKey.toCharArray
     )
     System.setProperty("javax.net.ssl.trustStore", keyStoreFile.toString)
-    System.setProperty("javax.net.ssl.trustStorePassword", cosmosDBEmulatorContainer.getEmulatorKey)
+    System.setProperty("javax.net.ssl.trustStorePassword", container.emulatorKey)
     System.setProperty("javax.net.ssl.trustStoreType", "PKCS12")
 
-    scribe.info("Creando la data -------------------------------------------------------->")
+    scribe.info("Create data -------------------------------------------------------->")
     val triedCreateData = Using(
       new CosmosClientBuilder().gatewayMode
         .endpointDiscoveryEnabled(false)
-        .endpoint(cosmosDBEmulatorContainer.getEmulatorEndpoint)
-        .key(cosmosDBEmulatorContainer.getEmulatorKey)
+        .endpoint(container.emulatorEndpoint)
+        .key(container.emulatorKey)
         .buildClient
     ) { client =>
       client.createDatabase(DATABASE)
@@ -61,12 +55,7 @@ class CosmosDbIOIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
       scribe.error("Error creando la data", throwable)
       throw throwable
     }
-    scribe.info("Data creada ------------------------------------------------------------<")
-  }
-
-  override protected def afterAll(): Unit = {
-    scribe.info("Stop CosmosDB emulator")
-    cosmosDBEmulatorContainer.stop()
+    scribe.info("Data created ------------------------------------------------------------<")
   }
 
   behavior of "CosmosDb with Core (SQL) API"
@@ -75,19 +64,28 @@ class CosmosDbIOIT extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
     val output = tempFolder.newFolder("output.txt")
     scribe.info(s"output path: ${output.getPath}")
 
-    val (sc, args) = ContextAndArgs(Array())
-    val a = sc
+    val (sc, _) = ContextAndArgs(Array())
+
+    val counter = ScioMetrics.counter("counter")
+    sc
       .readCosmosDbCoreApi(
-        cosmosDBEmulatorContainer.getEmulatorEndpoint,
-        cosmosDBEmulatorContainer.getEmulatorKey,
+        container.emulatorEndpoint,
+        container.emulatorKey,
         DATABASE,
         CONTAINER,
         s"SELECT * FROM c"
       )
+      .tap(_ => counter.inc())
       .map(_.toJson)
       .saveAsTextFile(output.getPath)
 
-    sc.run()
+    val result = sc.run().waitUntilFinish()
+
+    result.counter(counter).committed.get should equal(10)
   }
 
 }
+
+
+
+
