@@ -16,8 +16,7 @@
 
 package com.spotify.scio.cosmosdb.read
 
-import org.apache.beam.sdk.annotations.Experimental
-import org.apache.beam.sdk.annotations.Experimental.Kind
+import com.spotify.scio.annotations.experimental
 import org.apache.beam.sdk.coders.{Coder, SerializableCoder}
 import org.apache.beam.sdk.io.BoundedSource
 import org.apache.beam.sdk.options.PipelineOptions
@@ -26,12 +25,21 @@ import org.bson.Document
 import java.util
 import java.util.Collections
 
-/**
- * A CosmosDB Core (SQL) API [[BoundedSource]] reading [[Document]] from a given instance.
- */
-@Experimental(Kind.SOURCE_SINK)
-private[read] class CosmosDbBoundedSource(private[read] val readCosmos: CosmosDbRead)
-    extends BoundedSource[Document] {
+/** A CosmosDB Core (SQL) API [[BoundedSource]] reading [[Document]] from a given instance. */
+@experimental
+private[read] class CosmosDbBoundedSource(
+  val endpoint: String,
+  val key: String,
+  val database: String,
+  val container: String,
+  val query: String
+) extends BoundedSource[Document] {
+
+  require(endpoint != null, "CosmosDB endpoint is required")
+  require(key != null, "CosmosDB key is required")
+  require(database != null, "CosmosDB database is required")
+  require(container != null, "CosmosDB container is required")
+  require(query != null, "CosmosDB query is required")
 
   /**
    * @inheritDoc

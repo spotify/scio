@@ -17,6 +17,7 @@
 package com.spotify.scio.cosmosdb.syntax
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.annotations.experimental
 import com.spotify.scio.cosmosdb.ReadCosmosDdIO
 import com.spotify.scio.values.SCollection
 import org.bson.Document
@@ -28,6 +29,7 @@ trait ScioContextSyntax {
 
 final class CosmosDbScioContextOps(private val sc: ScioContext) extends AnyVal {
 
+  @experimental
   /**
    * Read data from CosmosDB CORE (SQL) API
    *
@@ -54,6 +56,5 @@ final class CosmosDbScioContextOps(private val sc: ScioContext) extends AnyVal {
     database: String = null,
     container: String = null,
     query: String = null
-  ): SCollection[Document] =
-    sc.read(ReadCosmosDdIO(endpoint, key, database, container, query))
+  ): SCollection[Document] = sc.read(ReadCosmosDdIO(endpoint, key, database, container, query))
 }

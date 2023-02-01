@@ -25,11 +25,11 @@ import org.bson.Document
 trait CosmosDbIO[T] extends ScioIO[T] {}
 
 case class ReadCosmosDdIO(
-  endpoint: String = null,
-  key: String = null,
-  database: String = null,
-  container: String = null,
-  query: String = null
+  endpoint: String,
+  key: String,
+  database: String,
+  container: String,
+  query: String
 ) extends CosmosDbIO[Document] {
   override type ReadP = Unit
   override type WriteP = Nothing

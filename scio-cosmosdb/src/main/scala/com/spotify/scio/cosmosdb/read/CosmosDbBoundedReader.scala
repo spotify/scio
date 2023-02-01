@@ -17,57 +17,65 @@
 package com.spotify.scio.cosmosdb.read
 
 import com.azure.cosmos.models.CosmosQueryRequestOptions
-import com.azure.cosmos.{CosmosClient, CosmosClientBuilder}
-import org.apache.beam.sdk.annotations.Experimental
-import org.apache.beam.sdk.annotations.Experimental.Kind
+import com.azure.cosmos.{ CosmosClient, CosmosClientBuilder }
+import com.spotify.scio.annotations.experimental
 import org.apache.beam.sdk.io.BoundedSource
 import org.bson.Document
 import org.slf4j.LoggerFactory
 
-@Experimental(Kind.SOURCE_SINK)
+@experimental
 private[read] class CosmosDbBoundedReader(cosmosSource: CosmosDbBoundedSource)
     extends BoundedSource.BoundedReader[Document] {
   private val log = LoggerFactory.getLogger(getClass)
   private var maybeClient: Option[CosmosClient] = None
   private var maybeIterator: Option[java.util.Iterator[Document]] = None
+  @volatile private var current: Option[Document] = None
+  @volatile private var recordsReturned = 0L
 
   override def start(): Boolean = {
     maybeClient = Some(
       new CosmosClientBuilder().gatewayMode
         .endpointDiscoveryEnabled(false)
-        .endpoint(cosmosSource.readCosmos.endpoint)
-        .key(cosmosSource.readCosmos.key)
+        .endpoint(cosmosSource.endpoint)
+        .key(cosmosSource.key)
         .buildClient
     )
 
     maybeIterator = maybeClient.map { client =>
       log.info("Get the container name")
 
-      log.info(s"Get the iterator of the query in container ${cosmosSource.readCosmos.container}")
+      log.info(s"Get the iterator of the query in container ${cosmosSource.container}")
       client
-        .getDatabase(cosmosSource.readCosmos.database)
-        .getContainer(cosmosSource.readCosmos.container)
+        .getDatabase(cosmosSource.database)
+        .getContainer(cosmosSource.container)
         .queryItems(
-          cosmosSource.readCosmos.query,
+          cosmosSource.query,
           new CosmosQueryRequestOptions(),
           classOf[Document]
         )
         .iterator()
     }
 
-    true
+    advance()
   }
 
-  override def advance(): Boolean = maybeIterator.exists(_.hasNext)
+  override def advance(): Boolean = maybeIterator match {
+    case Some(iterator) if iterator.hasNext =>
+      current = Some(iterator.next())
+      recordsReturned += 1
+      true
+    case _ =>
+      false
+  }
 
-  override def getCurrent: Document =
-    maybeIterator
-      .filter(_.hasNext)
-      // .map(iterator => new Document(iterator.next()))
-      .map(_.next())
-      .orNull
+  override def getCurrent: Document = current.orNull
 
   override def getCurrentSource: CosmosDbBoundedSource = cosmosSource
 
-  override def close(): Unit = maybeClient.foreach(_.close())
+  override def close(): Unit = {
+    log.info("Closing reader after reading {} records.", recordsReturned)
+    maybeClient.foreach(_.close())
+    maybeClient = None
+    maybeIterator = None
+  }
 }
