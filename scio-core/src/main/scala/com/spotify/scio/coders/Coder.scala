@@ -140,7 +140,7 @@ final private class SingletonCoder[T](
   val typeName: String,
   supply: () => T
 ) extends CustomCoder[T] {
-  private lazy val singleton = supply()
+  @transient private lazy val singleton = supply()
 
   override def toString: String = s"SingletonCoder[$typeName]"
 
@@ -442,7 +442,7 @@ final private[scio] class RefCoder[T](var bcoder: BCoder[T]) extends WrappedCode
 final private[scio] class LazyCoder[T](val typeName: String, bc: => BCoder[T])
     extends WrappedCoder[T] {
 
-  override lazy val bcoder: BCoder[T] = bc
+  @transient override lazy val bcoder: BCoder[T] = bc
 
   override def toString: String = s"LazyCoder[$typeName]"
 
