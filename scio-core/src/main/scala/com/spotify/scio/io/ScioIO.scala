@@ -75,12 +75,12 @@ trait ScioIO[T] {
 
   /**
    * Read data according to the read configuration provided in `params` as an SCollection, or return
-   * test data if this is in a test
+   * test data if this is in a JobTest
    */
   private[scio] def readWithContext(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.requireNotClosed(if (sc.isTest) readTest(sc, params) else read(sc, params))
 
-  /** Return test data for this `testId` as an SCollection */
+  /** Called only in a JobTest. Return test data for this `testId` as an SCollection */
   protected def readTest(sc: ScioContext, @unused params: ReadP): SCollection[T] =
     TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
@@ -99,7 +99,7 @@ trait ScioIO[T] {
    */
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
-  /** Write `data` to TestDataManager output and return the Tap type */
+  /** Called only in a JobTest. Write `data` to TestDataManager output and return the Tap type */
   protected def writeTest(data: SCollection[T], @unused params: WriteP): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)
