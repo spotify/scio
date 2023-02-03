@@ -55,30 +55,51 @@ object TapOf { def apply[A]: TapT.Aux[A, A] = new TapOf[A] }
  * choose to override #readTest and #writeTest if custom test logic is necessary.
  */
 trait ScioIO[T] {
-  // abstract types for read/write params.
+
+  /** Read parameter type */
   type ReadP
+
+  /** Write parameter type */
   type WriteP
 
-  // !!! This needs to be a stable value (ie: a val, not a def) in every implementations,
-  // !!! otherwise the return type of write cannot be inferred.
+  /**
+   * Output tap type.
+   *
+   * This _must_ be a stable value (a `val`, not a `def`) in every implementation, otherwise the
+   * return type of write cannot be inferred.
+   */
   val tapT: TapT[T]
 
-  // identifier for JobTest IO matching
+  /** Identifier for JobTest IO matching */
   def testId: String = this.toString
 
+  /**
+   * Read data according to the read configuration provided in `params` as an SCollection, or return
+   * test data if this is in a JobTest
+   */
   private[scio] def readWithContext(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.requireNotClosed(if (sc.isTest) readTest(sc, params) else read(sc, params))
 
+  /** Called only in a JobTest. Return test data for this `testId` as an SCollection */
   protected def readTest(sc: ScioContext, @unused params: ReadP): SCollection[T] =
     TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
+  /** Read data according to the read configuration provided in `params` as an SCollection. */
   protected def read(sc: ScioContext, params: ReadP): SCollection[T]
 
+  /**
+   * Write `data` out according to write configuration provided in `params`, or if this is a test
+   * write to TestDataManager, returning the Tap type
+   */
   private[scio] def writeWithContext(data: SCollection[T], params: WriteP): ClosedTap[tapT.T] =
     ClosedTap(if (data.context.isTest) writeTest(data, params) else write(data, params))
 
+  /**
+   * Write `data` out according to write configuration provided in `params`, returning the Tap type.
+   */
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
+  /** Called only in a JobTest. Write `data` to TestDataManager output and return the Tap type */
   protected def writeTest(data: SCollection[T], @unused params: WriteP): Tap[tapT.T] = {
     TestDataManager.getOutput(data.context.testId.get)(this)(data)
     tapT.saveForTest(data)
