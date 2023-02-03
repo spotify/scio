@@ -50,6 +50,7 @@ private[client] object TableOps {
   private val StagingDatasetPrefix =
     BigQuerySysProps.StagingDatasetPrefix.valueOption.getOrElse("scio_bigquery_staging_")
   private val StagingDatasetTableExpirationMs = 86400000L
+  private val StagingDatasetTableMaxTimeTravelHours = 48L
   private val StagingDatasetDescription = "Staging dataset for temporary tables"
 }
 
@@ -301,6 +302,7 @@ final private[client] class TableOps(client: Client) {
         val ds = new Dataset()
           .setDatasetReference(dsRef)
           .setDefaultTableExpirationMs(StagingDatasetTableExpirationMs)
+          .setMaxTimeTravelHours(StagingDatasetTableMaxTimeTravelHours)
           .setDescription(StagingDatasetDescription)
           .setLocation(location)
         client.execute(
