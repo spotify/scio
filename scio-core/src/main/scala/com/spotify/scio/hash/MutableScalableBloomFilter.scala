@@ -34,33 +34,32 @@ import scala.collection.compat._ // scalafix:ok
  *
  * `fpProb`, the initial false positive probability, and `tighteningRatio` must be carefully chosen
  * to maintain the desired overall false positive probability. Similarly, the `initialCapacity`
- * determines how often the SBF must scale to support a given capacity and influences the
- * effective false positive probability. See below for more details.
+ * determines how often the SBF must scale to support a given capacity and influences the effective
+ * false positive probability. See below for more details.
  *
  * Import `magnolify.guava.auto._` to get common instances of Guava
  * [[com.google.common.hash.Funnel Funnel]] s.
  *
- * When a SBF scales a new filter is appended. The false positive probability for a
- * series of `numFilters` appended filters is:
+ * When a SBF scales a new filter is appended. The false positive probability for a series of
+ * `numFilters` appended filters is:
  * {{{
  * 1 - Range(0, numFilters).map { i => (1 - fpProb * scala.math.pow(tighteningRatio, i)) }.product
  * }}}
  *
- * For the defaults, the false positive probability after each append is 3%, 5.6%, 7.9%, 9.9%,
- * 11.7% and so on. It is therefore in the interest of the user to appropriately size the initial
- * filter so that the number of appends is small.
+ * For the defaults, the false positive probability after each append is 3%, 5.6%, 7.9%, 9.9%, 11.7%
+ * and so on. It is therefore in the interest of the user to appropriately size the initial filter
+ * so that the number of appends is small.
  *
- * An approximation of the long-term upper bound of the false positive probability is
- * `fpProb / (1 - tighteningRatio)`. For the defaults of `fpProb = 0.03` and
- * `tighteningRatio = 0.9` this gives `0.03 / (1 - 0.9)`, or around 30% false positives as an
- * upper bound.
+ * An approximation of the long-term upper bound of the false positive probability is `fpProb / (1 -
+ * tighteningRatio)`. For the defaults of `fpProb = 0.03` and `tighteningRatio = 0.9` this gives
+ * `0.03 / (1 - 0.9)`, or around 30% false positives as an upper bound.
  *
  * Bloom filters inherently trade precision for space. For a single filter, the number of bits is:
  * {{{
  * -1 * capacity * scala.math.log(fpProb) / scala.math.pow(scala.math.log(2), 2)
  * }}}
- * For example, for an `initialCapacity` of 1 million and the default `fpProb` of 3%, a filter
- * will be 912 kilobytes; if `fpProb` is instead 0.1%, then the size grows to 1797 kilobytes.
+ * For example, for an `initialCapacity` of 1 million and the default `fpProb` of 3%, a filter will
+ * be 912 kilobytes; if `fpProb` is instead 0.1%, then the size grows to 1797 kilobytes.
  *
  * When using scalable bloom filters, if possible, always size the first filter to be larger than
  * the known number of items to be inserted rather than choosing a small default and letting the
