@@ -38,8 +38,10 @@ import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Beam, Coder}
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.schemas.Schema
+import org.apache.beam.sdk.coders.StringUtf8Coder
 
 import java.nio.charset.StandardCharsets
 
@@ -52,7 +54,18 @@ class SCollectionTest extends PipelineSpec {
 
   import SCollectionTest._
 
-  "SCollection" should "support applyTransform()" in {
+  "SCollection" should "propagate unwrapped coders" in {
+    runWithContext { sc =>
+      sc.optionsAs[ScioOptions].setNullableCoders(true)
+
+      val coll = sc.empty[String]()
+      coll.coder shouldBe a[Beam[String]]
+      // No WrappedCoder nor NullableCoder
+      coll.coder.asInstanceOf[Beam[String]].beam shouldBe StringUtf8Coder.of()
+    }
+  }
+
+  it should "support applyTransform()" in {
     runWithContext { sc =>
       val p =
         sc.parallelize(Seq(1, 2, 3, 4, 5)).applyTransform(Count.globally())

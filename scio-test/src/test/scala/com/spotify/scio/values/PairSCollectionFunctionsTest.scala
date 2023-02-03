@@ -17,16 +17,33 @@
 
 package com.spotify.scio.values
 
+import com.spotify.scio.coders.Beam
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.spotify.scio.hash._
+import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Aggregator
 import magnolify.guava.auto._
+import org.apache.beam.sdk.coders.{StringUtf8Coder, VarIntCoder}
 
 import scala.collection.mutable
 
 class PairSCollectionFunctionsTest extends PipelineSpec {
-  "PairSCollection" should "support cogroup()" in {
+  "PairSCollection" should "propagate unwrapped coders" in {
+    runWithContext { sc =>
+      sc.optionsAs[ScioOptions].setNullableCoders(true)
+
+      val coll = sc.empty[(String, Int)]()
+      coll.keyCoder shouldBe a[Beam[String]]
+      // No WrappedCoder nor NullableCoder
+      coll.keyCoder.asInstanceOf[Beam[String]].beam shouldBe StringUtf8Coder.of()
+
+      coll.valueCoder shouldBe a[Beam[Int]]
+      coll.valueCoder.asInstanceOf[Beam[Int]].beam shouldBe VarIntCoder.of()
+    }
+  }
+
+  it should "support cogroup()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
       val p2 = sc.parallelize(Seq(("a", 11L), ("b", 12L), ("d", 14L)))
