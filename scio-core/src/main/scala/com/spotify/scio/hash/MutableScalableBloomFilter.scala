@@ -25,17 +25,49 @@ import com.spotify.scio.coders.Coder
 import scala.collection.compat._ // scalafix:ok
 
 /**
- * A mutable, scalable wrapper around a Guava [[com.google.common.hash.BloomFilter BloomFilter]]
+ * A mutable, scalable wrapper around a Guava [[com.google.common.hash.BloomFilter BloomFilter]].
+ * Not thread-safe.
  *
  * Scalable bloom filters use a series of bloom filters, adding a new one and scaling its size by
- * `growthRate` once the previous filter is saturated in order to maintain the desired false
- * positive probability `fpProb`. A scalable bloom filter `contains` ("might contain") an item if
- * any of its filters contains the item.
+ * `growthRate` once the previous filter is saturated. A scalable bloom filter `contains` ("might
+ * contain") an item if any of its filters contains the item.
+ *
+ * `fpProb`, the initial false positive probability, and `tighteningRatio` must be carefully chosen
+ * to maintain the desired overall false positive probability. Similarly, the `initialCapacity`
+ * determines how often the SBF must scale to support a given capacity and influences the effective
+ * false positive probability. See below for more details.
  *
  * Import `magnolify.guava.auto._` to get common instances of Guava
  * [[com.google.common.hash.Funnel Funnel]] s.
  *
- * Not thread-safe.
+ * When a SBF scales a new filter is appended. The false positive probability for a series of
+ * `numFilters` appended filters is:
+ * {{{
+ * 1 - Range(0, numFilters).map { i => (1 - fpProb * scala.math.pow(tighteningRatio, i)) }.product
+ * }}}
+ *
+ * For the defaults, the false positive probability after each append is 3%, 5.6%, 7.9%, 9.9%, 11.7%
+ * and so on. It is therefore in the interest of the user to appropriately size the initial filter
+ * so that the number of appends is small.
+ *
+ * An approximation of the long-term upper bound of the false positive probability is `fpProb / (1 -
+ * tighteningRatio)`. For the defaults of `fpProb = 0.03` and `tighteningRatio = 0.9` this gives
+ * `0.03 / (1 - 0.9)`, or around 30% false positives as an upper bound.
+ *
+ * Bloom filters inherently trade precision for space. For a single filter, the number of bits is:
+ * {{{
+ * -1 * capacity * scala.math.log(fpProb) / scala.math.pow(scala.math.log(2), 2)
+ * }}}
+ * For example, for an `initialCapacity` of 1 million and the default `fpProb` of 3%, a filter will
+ * be 912 kilobytes; if `fpProb` is instead 0.1%, then the size grows to 1797 kilobytes.
+ *
+ * When using scalable bloom filters, if possible, always size the first filter to be larger than
+ * the known number of items to be inserted rather than choosing a small default and letting the
+ * filters scale to fit. For example, if a SBF must contain ~65.5 million items, then with the
+ * defaults and an `initialCapacity` of 1000, the SBF will have scaled 16 times, will consume ~84
+ * megabytes and have a false positive probability of ~22%. If, on the other hand, a SBF is
+ * constructed with an initial capacity of 65.5 million items, it will not have scaled at all and
+ * therefore have its initial false positive probability of 3%, and consume only ~60 megabytes.
  */
 object MutableScalableBloomFilter {
 
@@ -46,12 +78,11 @@ object MutableScalableBloomFilter {
    * @param initialCapacity
    *   The capacity of the first filter. Must be positive
    * @param fpProb
-   *   The desired overall false positive probability
+   *   The initial false positive probability
    * @param growthRate
    *   The growth rate of each subsequent filter added to `filters`
    * @param tighteningRatio
-   *   The tightening ratio applied to the current `fpProb` to maintain the false positive
-   *   probability over the sequence of filters
+   *   The tightening ratio to be applied to the current `fpProb`
    * @tparam T
    *   The type of objects inserted into the filter
    * @return
@@ -147,14 +178,13 @@ case class SerializedBloomFilters(numFilters: Int, filterBytes: Array[Byte]) {
 
 /**
  * @param fpProb
- *   The desired false positive probability
+ *   The initial false positive probability
  * @param headCapacity
  *   The capacity of the filter at the head of `filters`
  * @param growthRate
  *   The growth rate of each subsequent filter added to `filters`
  * @param tighteningRatio
- *   The tightening ratio applied to the current `fpProb` to maintain the false positive probability
- *   over the sequence of filters
+ *   The tightening ratio applied to `headFPProb` when scaling
  * @param head
  *   The underlying bloom filter currently being inserted into, or `None` if this scalable filter
  *   has just been initialized
