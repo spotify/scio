@@ -455,7 +455,6 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
 
 lazy val java17Settings = sys.props("java.version") match {
   case v if v.startsWith("17.") =>
-    println("Setting java 17 opts")
     Seq(
       Test / fork := true,
       Test / javaOptions ++= Seq(
