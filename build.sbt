@@ -215,7 +215,6 @@ val commonSettings = Def
     // this setting is not derived in sbt-tpolecat
     // https://github.com/typelevel/sbt-tpolecat/issues/36
     inTask(doc)(TpolecatPlugin.projectSettings),
-    scalacOptions ++= Seq("-release", "8"),
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     excludeDependencies ++= Seq(
