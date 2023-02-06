@@ -18,8 +18,6 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{matrix.java}}
-      - if: ${{ matrix.java == 17 }}
-        run: scripts/set_java_17_opts.sh
       - if: ${{ !matrix.coverage }}
         run: sbt "++${{matrix.scala}} test"
       - if: ${{ matrix.coverage }}

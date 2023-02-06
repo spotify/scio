@@ -215,6 +215,7 @@ val commonSettings = Def
     // this setting is not derived in sbt-tpolecat
     // https://github.com/typelevel/sbt-tpolecat/issues/36
     inTask(doc)(TpolecatPlugin.projectSettings),
+    scalacOptions ++= Seq("-release", "8"),
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     excludeDependencies ++= Seq(
@@ -453,16 +454,20 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
   }
 }
 
-lazy val java17Settings = Seq(Test / javaOptions ++= (sys.props("java.version") match {
+lazy val java17Settings = sys.props("java.version") match {
   case v if v.startsWith("17.") =>
+    println("Setting java 17 opts")
     Seq(
-      "--add-opens",
-      "java.base/java.util=ALL-UNNAMED",
-      "--add-opens",
-      "java.base/java.lang.invoke=ALL-UNNAMED"
+      Test / fork := true,
+      Test / javaOptions ++= Seq(
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang.invoke=ALL-UNNAMED"
+      )
     )
-  case _ => Seq.empty
-}))
+  case _ => Seq()
+}
 
 lazy val root: Project = Project("scio", file("."))
   .settings(commonSettings)

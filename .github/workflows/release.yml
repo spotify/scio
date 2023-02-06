@@ -12,11 +12,11 @@ jobs:
           fetch-depth: 0
       - name: cache SBT
         uses: coursier/cache-action@v6
-      - name: Java 11 setup
+      - name: Java 17 setup
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
       - uses: olafurpg/setup-gpg@v3
       - name: Publish ${{ github.ref }}
         run: sbt ci-release
