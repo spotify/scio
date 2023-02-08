@@ -206,6 +206,7 @@ spotify/scio
     <li><a href="../migrations/v0.12.0-Migration-Guide.html#binaryio-saveasbinaryfile" class="header">BinaryIO saveAsBinaryFile</a></li>
     <li><a href="../migrations/v0.12.0-Migration-Guide.html#parquetio-saveasdynamicparquetavrofile-saveasparquetavrofile" class="header">ParquetIO saveAsDynamicParquetAvroFile → saveAsParquetAvroFile</a></li>
     <li><a href="../migrations/v0.12.0-Migration-Guide.html#parquet-reads" class="header">Parquet Reads</a></li>
+    <li><a href="../migrations/v0.12.0-Migration-Guide.html#async-lookup-dofn" class="header">Async lookup DoFn</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -214,7 +215,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.12.3+0-0b1102d7+20230130-1503*
+<i class="md-icon" title="Version">label_outline</i> 0.12.4+0-96c9379c+20230208-1435*
 </label>
 </li>
 </ul>
@@ -237,6 +238,7 @@ spotify/scio
     <li><a href="../migrations/v0.12.0-Migration-Guide.html#binaryio-saveasbinaryfile" class="header">BinaryIO saveAsBinaryFile</a></li>
     <li><a href="../migrations/v0.12.0-Migration-Guide.html#parquetio-saveasdynamicparquetavrofile-saveasparquetavrofile" class="header">ParquetIO saveAsDynamicParquetAvroFile → saveAsParquetAvroFile</a></li>
     <li><a href="../migrations/v0.12.0-Migration-Guide.html#parquet-reads" class="header">Parquet Reads</a></li>
+    <li><a href="../migrations/v0.12.0-Migration-Guide.html#async-lookup-dofn" class="header">Async lookup DoFn</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -321,6 +323,11 @@ sc.parquetExampleFile(path, conf = ParquetConfiguration.of(&quot;scio.parquet.re
 </code></pre>
 <p>Note that if you&rsquo;re using DataflowRunner, you&rsquo;ll get the best performance (in terms of worker scaling and overall resource usage) out of a SplittableDoFn-based read by enabling <a href="https://cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#dataflow-runner-v2">Dataflow Runner V2</a>. You can enable this in your Dataflow pipeline by supplying the pipeline argument <code>--experiments=use_runner_v2</code> to your job.</p>
 <p>Our plan is to support Legacy Parquet for all Scio 0.12.x versions, but fully deprecate and remove support by 0.13.x.</p>
+<h2><a href="#async-lookup-dofn" name="async-lookup-dofn" class="anchor"><span class="anchor-link"></span></a>Async lookup DoFn</h2>
+<p>All Async lookup DoFn have been reworked and now extends <code>DoFnWithResource</code>. After upgrade you&rsquo;ll get the wollowing error:</p>
+<pre><code>class MyLookupDoFn needs to be abstract, since method getResourceType in class DoFnWithResource of type ()com.spotify.scio.transforms.DoFnWithResource.ResourceType is not defined
+</code></pre>
+<p>You must now implement the methor and return the appropriate resource type for your client: - <code>ResourceType.PER_INSTANCE</code> if your client is thread safe (this was the previous behavior) - <code>ResourceType.PER_CLONE</code> if your client is not thread safe - <code>ResourceType.PER_CLASS</code> if your client is mean to be shared among all instanciations</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/migrations/v0.12.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
@@ -329,7 +336,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.12.3+0-0b1102d7+20230130-1503*
+0.12.4+0-96c9379c+20230208-1435*
 </span>
 </div>
 </article>
