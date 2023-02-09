@@ -18,5 +18,15 @@
 package com.spotify.scio
 
 import com.spotify.scio.smb.syntax.AllSyntax
+import org.apache.beam.sdk.values.TupleTag
 
-package object smb extends AllSyntax {}
+package object smb extends AllSyntax {
+  private[smb] def validateTupleTags(tupleTags: TupleTag[_]*): Unit = {
+    if (tupleTags.distinctBy(_.getId).length != tupleTags.length) {
+      throw new IllegalArgumentException(
+        "Tuple tag name for each smb input source needs to be unique"
+      )
+    }
+  }
+}
+

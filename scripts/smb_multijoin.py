@@ -63,6 +63,12 @@ def mkTupleTag(vals):
     return 'val (%s) = (%s)' % (
         ', '.join('tupleTag' + x for x in vals),
         ', '.join('%s.getTupleTag' % x.lower() for x in vals))
+
+def mkTupleTagsLhs(vals):
+    return ', '.join('tupleTag' + x for x in vals)
+
+def mkTupleTagsRhs(vals):
+    return ', '.join('%s.getTupleTag' % x.lower() for x in vals)
 # Functions
 
 def sortMergeCoGroup(out, n):
@@ -80,7 +86,12 @@ def sortMergeCoGroup(out, n):
 
     print('\t\t.withTargetParallelism(targetParallelism)', file=out)
 
-    print('\t\t' + mkTupleTag(vals), file=out)
+    lhs=mkTupleTagsLhs(vals)
+    rhs=mkTupleTagsRhs(vals)
+    print('\t\t' + 'val (%s) = (%s)' % (lhs, rhs), file=out)
+
+    print('\t\t' + 'validateTupleTags(%s)' % lhs, file=out)
+
     print('''
     val tfName = self.tfName
         
@@ -118,8 +129,13 @@ def sortMergeTransform(out, n):
         mkTransformClassTags(n), args + ', ' + 'targetParallelism: TargetParallelism',  mkTransformFnRetVal(n, 'Iterable', 'Iterable')),
           file=out)
 
-    print('\t\t' + mkTupleTag(vals),
-          file=out)
+    # print('\t\t' + mkTupleTag(vals), file=out)
+
+    lhs=mkTupleTagsLhs(vals)
+    rhs=mkTupleTagsRhs(vals)
+    print('\t\t' + 'val (%s) = (%s)' % (lhs, rhs), file=out)
+
+    print('\t\t' + 'validateTupleTags(%s)' % lhs, file=out)
 
     print(('''
         new sortedBucketScioContext.SortMergeTransformReadBuilder(
@@ -168,12 +184,13 @@ def main(out):
          * under the License.
          */
 
-        // generated with smb-multijoin.py
+        // PLEASE DO NOT EDIT MANUALLY! this is generated using smb-multijoin.py
 
         package com.spotify.scio.smb.util
 
         import com.spotify.scio.ScioContext
         import com.spotify.scio.coders.Coder
+        import com.spotify.scio.smb.validateTupleTags
         import com.spotify.scio.values._
         import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, TargetParallelism}
         import com.spotify.scio.smb.syntax.SortedBucketScioContext

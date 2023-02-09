@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.smb.validateTupleTags
 import com.spotify.scio.values._
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.{AbsCoGbkTransform, Transformable}
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.{BucketItem, MergedBucket}
@@ -71,6 +72,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   ): SCollection[(K, (L, R))] = {
     val t = SortedBucketIO.read(keyClass).of(lhs).and(rhs).withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
+
+    validateTupleTags(tupleTagA, tupleTagB)
+
     val tfName = self.tfName
 
     self
@@ -114,6 +118,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       .and(rhs)
       .withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
+
+    validateTupleTags(tupleTagA, tupleTagB)
+
     val tfName = self.tfName
 
     self
@@ -254,6 +261,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       a.getTupleTag,
       b.getTupleTag
     )
+
+    validateTupleTags(tupleTagA, tupleTagB)
+
     val tfName = self.tfName
 
     self
@@ -290,6 +300,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       a.getTupleTag,
       b.getTupleTag
     )
+
+    validateTupleTags(tupleTagA, tupleTagB)
+
     val tfName = self.tfName
 
     self
@@ -354,6 +367,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       b.getTupleTag,
       c.getTupleTag
     )
+
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC)
+
     val tfName = self.tfName
 
     self
@@ -404,6 +420,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       b.getTupleTag,
       c.getTupleTag
     )
+
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC)
+
     val tfName = self.tfName
 
     self
@@ -473,6 +492,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       c.getTupleTag,
       d.getTupleTag
     )
+
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD)
+
     val tfName = self.tfName
 
     self
@@ -528,6 +550,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
       c.getTupleTag,
       d.getTupleTag
     )
+
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD)
+
     val tfName = self.tfName
 
     self
@@ -627,6 +652,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     val tupleTagA = readA.getTupleTag
     val tupleTagB = readB.getTupleTag
 
+    validateTupleTags(tupleTagA, tupleTagB)
+
     new SortMergeTransformReadBuilder(
       SortedBucketIO.read(keyClass).of(readA).and(readB).withTargetParallelism(targetParallelism),
       cgbk => (cgbk.getAll(tupleTagA).asScala, cgbk.getAll(tupleTagB).asScala)
@@ -653,6 +680,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   ): SortMergeTransformReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B])] = {
     val tupleTagA = readA.getTupleTag
     val tupleTagB = readB.getTupleTag
+
+    validateTupleTags(tupleTagA, tupleTagB)
 
     new SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -694,6 +723,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     val tupleTagB = readB.getTupleTag
     val tupleTagC = readC.getTupleTag
 
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC)
+
     new SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass)
@@ -733,6 +764,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     val tupleTagA = readA.getTupleTag
     val tupleTagB = readB.getTupleTag
     val tupleTagC = readC.getTupleTag
+
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC)
 
     new SortMergeTransformReadBuilder(
       SortedBucketIO
