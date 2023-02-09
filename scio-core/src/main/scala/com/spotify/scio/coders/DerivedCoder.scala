@@ -48,7 +48,9 @@ object LowPriorityCoderDerivation {
     @transient lazy val ctxClass: Class[_] = Class.forName(className)
 
     @transient lazy val ctx: CaseClass[Coder, T] = {
-      ClosureCleaner.outerFieldOf(ctxClass) match {
+      ctxClass.getDeclaredFields.find {
+        _.getName == ClosureCleaner.OUTER
+      } match {
         /* The field "$outer" is added by scala compiler to a case class if it is declared inside
          another class. And the constructor of that compiled class requires outer field to be not
           null.
