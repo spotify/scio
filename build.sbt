@@ -639,6 +639,7 @@ lazy val `scio-avro`: Project = project
       "org.apache.avro" % "avro" % avroVersion excludeAll (
         "com.thoughtworks.paranamer" % "paranamer"
       ),
+      "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,

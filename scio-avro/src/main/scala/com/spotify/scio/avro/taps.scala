@@ -19,18 +19,17 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
 import com.spotify.scio.values._
 import com.twitter.chill.Externalizer
+import magnolify.avro.AvroType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 /** Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files. */
 final case class GenericRecordTap(
@@ -113,12 +112,8 @@ final case class AvroTaps(self: Taps) {
     self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordTap[T](path))
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */
-  def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
-    path: String
-  ): Future[Tap[T]] = {
-    val avroT = AvroType[T]
-
+  def typedAvroFile[T: Coder](path: String)(implicit avroType: AvroType[T]): Future[Tap[T]] = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    avroFile(path, avroT.schema).map(_.map(avroT.fromGenericRecord))
+    avroFile(path, avroType.schema).map(_.map(avroType.from))
   }
 }
