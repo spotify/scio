@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Spotify AB.
+ * Copyright 2019 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,65 +17,48 @@
 
 package com.spotify.scio.coders
 
-import com.google.common.collect.{ImmutableList, ImmutableMap}
-import com.spotify.scio.ScioContext
-import com.spotify.scio.avro._
-import com.spotify.scio.avro.StringFieldTest
-import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.values.SCollection
-import org.scalatest.BeforeAndAfterAll
-
-import java.nio.file.Files
+import org.scalatest.flatspec.AnyFlatSpec
+import com.spotify.scio.testing.CoderAssertions._
+import org.apache.avro.generic.GenericRecord
+import org.scalactic.Equality
+import org.scalatest.matchers.should.Matchers
 import scala.jdk.CollectionConverters._
 
-class AvroCoderTest extends PipelineSpec with BeforeAndAfterAll {
+final class AvroCoderTest extends AnyFlatSpec with Matchers {
+  object Avro {
 
-  private lazy val tempFolder = {
-    val dir = Files.createTempDirectory(getClass.getSimpleName)
-    dir.toFile.deleteOnExit()
-    dir
+    import com.spotify.scio.avro.{Account, Address, User => AvUser}
+
+    val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
+    val address =
+      new Address("street1", "street2", "city", "state", "01234", "Sweden")
+    val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
+
+    val eq: Equality[GenericRecord] = (a: GenericRecord, b: Any) => a.toString === b.toString
   }
 
-  // Write Avro source to local file system
-  override protected def beforeAll(): Unit = {
-    val sc = ScioContext()
-    sc
-      .parallelize(1 to 10)
-      .map(_ =>
-        StringFieldTest
-          .newBuilder()
-          .setStrField("someStr")
-          .setMapField(ImmutableMap.of("someKey", "someVal"))
-          .setArrayField(ImmutableList.of("someListVal"))
-          .build()
-      )
-      .saveAsAvroFile(tempFolder.toString)
-    sc.run()
+  it should "support Avro's SpecificRecordBase" in {
+    Avro.user coderShould notFallback()
   }
 
-  // Verifies fix for BEAM-12628 Avro string encoding issue
-  "Avro SpecificRecords" should "be read and serialized using java String field representations" in {
-    def isJavaStr(t: Any): Boolean = {
-      t match {
-        case (k, v) =>
-          k.getClass == classOf[java.lang.String] && v.getClass == classOf[java.lang.String]
-        case v: Iterable[Any] => v.forall(isJavaStr)
-        case _                => t.getClass == classOf[java.lang.String]
-      }
-    }
+  it should "support Avro's GenericRecord" in {
+    val schema = Avro.user.getSchema
+    val record: GenericRecord = Avro.user
 
-    val sc = ScioContext()
-    val data: SCollection[StringFieldTest] = sc
-      .avroFile[StringFieldTest](tempFolder.resolve("*.avro").toString)
-      .map(identity)
+    implicit val c: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
+    implicit val eq: Equality[GenericRecord] = Avro.eq
 
-    data should satisfy[StringFieldTest] { mappedData =>
-      mappedData.forall { record =>
-        isJavaStr(record.getStrField) &&
-        isJavaStr(record.getArrayField.asScala) && isJavaStr(record.getMapField.asScala)
-      }
-    }
+    record coderShould notFallback()
+  }
 
-    sc.run()
+  it should "provide a fallback for GenericRecord if no safe coder is available" in {
+    val record: GenericRecord = Avro.user
+    record coderShould fallback()
+  }
+
+  it should "support specific fixed data" in {
+    val bytes = (0 to 15).map(_.toByte).toArray
+    val specificFixed = new FixedSpecificDataExample(bytes)
+    specificFixed coderShould beDeterministic() and roundtrip()
   }
 }
