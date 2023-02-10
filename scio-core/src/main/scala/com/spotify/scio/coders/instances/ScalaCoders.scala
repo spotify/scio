@@ -38,7 +38,7 @@ import scala.jdk.CollectionConverters._
 
 import java.util.{List => JList}
 
-private object UnitCoder extends AtomicCoder[Unit] {
+private[coders] object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
   override def decode(is: InputStream): Unit = ()
 
@@ -77,7 +77,7 @@ abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T
     }
 }
 
-abstract private class SeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
+abstract private[coders] class SeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
   ev: M[T] => IterableOnce[T]
 ) extends BaseSeqLikeCoder[M, T](bc) {
   override def encode(value: M[T], outStream: OutputStream): Unit = {
@@ -145,7 +145,7 @@ abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
   override def toString: String = s"BufferedSeqLikeCoder($bc)"
 }
 
-private class OptionCoder[T](bc: BCoder[T]) extends StructuredCoder[Option[T]] {
+private[coders] class OptionCoder[T](bc: BCoder[T]) extends StructuredCoder[Option[T]] {
   private[this] val bcoder = BooleanCoder.of()
 
   override def encode(value: Option[T], os: OutputStream): Unit = {
@@ -168,11 +168,11 @@ private class OptionCoder[T](bc: BCoder[T]) extends StructuredCoder[Option[T]] {
   override def toString: String = s"OptionCoder($bc)"
 }
 
-private class SeqCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Seq, T](bc) {
+private[coders] class SeqCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Seq, T](bc) {
   override def decode(inStream: InputStream): Seq[T] = decode(inStream, Seq.newBuilder[T])
 }
 
-private class ListCoder[T](bc: BCoder[T]) extends SeqLikeCoder[List, T](bc) {
+private[coders] class ListCoder[T](bc: BCoder[T]) extends SeqLikeCoder[List, T](bc) {
   override def decode(inStream: InputStream): List[T] = decode(inStream, List.newBuilder[T])
 }
 
@@ -193,11 +193,13 @@ private object IterableCoder {
   }
 }
 
-private class VectorCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Vector, T](bc) {
+private[coders] class VectorCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Vector, T](bc) {
   override def decode(inStream: InputStream): Vector[T] = decode(inStream, Vector.newBuilder[T])
 }
 
-private class ArrayCoder[@specialized(Short, Int, Long, Float, Double, Boolean, Char) T: ClassTag](
+private[coders] class ArrayCoder[
+  @specialized(Short, Int, Long, Float, Double, Boolean, Char) T: ClassTag
+](
   bc: BCoder[T]
 ) extends SeqLikeCoder[Array, T](bc) {
   override def decode(inStream: InputStream): Array[T] = {
@@ -218,11 +220,11 @@ private class ArrayBufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.ArrayBuf
     decode(inStream, m.ArrayBuffer.newBuilder[T])
 }
 
-private class BufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Buffer, T](bc) {
+private[coders] class BufferCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Buffer, T](bc) {
   override def decode(inStream: InputStream): m.Buffer[T] = decode(inStream, m.Buffer.newBuilder[T])
 }
 
-private class SetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Set, T](bc) {
+private[coders] class SetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Set, T](bc) {
   override def decode(inStream: InputStream): Set[T] = decode(inStream, Set.newBuilder[T])
 
   override def verifyDeterministic(): Unit =
@@ -232,7 +234,7 @@ private class SetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[Set, T](bc) {
     )
 }
 
-private class MutableSetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Set, T](bc) {
+private[coders] class MutableSetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.Set, T](bc) {
   override def decode(inStream: InputStream): m.Set[T] = decode(inStream, m.Set.newBuilder[T])
 }
 
@@ -241,7 +243,7 @@ private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[So
     decode(inStream, SortedSet.newBuilder[T])
 }
 
-private class BitSetCoder extends AtomicCoder[BitSet] {
+private[coders] class BitSetCoder extends AtomicCoder[BitSet] {
   private[this] val lc = VarIntCoder.of()
 
   def decode(in: InputStream): BitSet = {
@@ -257,6 +259,8 @@ private class BitSetCoder extends AtomicCoder[BitSet] {
     lc.encode(ts.size, out)
     ts.foreach(v => lc.encode(v, out))
   }
+
+  override def consistentWithEquals(): Boolean = lc.consistentWithEquals()
 }
 
 private[coders] class MapCoder[K, V](val kc: BCoder[K], val vc: BCoder[V])
@@ -391,7 +395,7 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
   override def getCoderArguments: JList[_ <: BCoder[_]] = List(kc, vc).asJava
 }
 
-private object SFloatCoder extends BCoder[Float] {
+private[coders] object SFloatCoder extends BCoder[Float] {
   private val bc = FloatCoder.of()
 
   override def encode(value: Float, outStream: OutputStream): Unit = bc.encode(value, outStream)
@@ -404,10 +408,11 @@ private object SFloatCoder extends BCoder[Float] {
     } else {
       java.lang.Float.valueOf(value)
     }
+  override def consistentWithEquals(): Boolean = bc.consistentWithEquals()
   override def toString: String = "FloatCoder"
 }
 
-private object SDoubleCoder extends BCoder[Double] {
+private[coders] object SDoubleCoder extends BCoder[Double] {
   private val bc = DoubleCoder.of()
 
   override def encode(value: Double, outStream: OutputStream): Unit = bc.encode(value, outStream)
@@ -420,6 +425,7 @@ private object SDoubleCoder extends BCoder[Double] {
     } else {
       java.lang.Double.valueOf(value)
     }
+  override def consistentWithEquals(): Boolean = bc.consistentWithEquals()
   override def toString: String = "DoubleCoder"
 }
 
