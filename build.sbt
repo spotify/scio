@@ -306,7 +306,8 @@ val commonSettings = Def
       )
     ),
     mimaSettings,
-    formatSettings
+    formatSettings,
+    java17Settings
   )
 
 lazy val publishSettings = Def.settings(
@@ -450,6 +451,20 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
   new Tests.Group(name = "<default>", tests = default, runPolicy = policy) +: filtered.map { test =>
     new Tests.Group(name = test.name, tests = Seq(test), runPolicy = policy)
   }
+}
+
+lazy val java17Settings = sys.props("java.version") match {
+  case v if v.startsWith("17.") =>
+    Seq(
+      Test / fork := true,
+      Test / javaOptions ++= Seq(
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang.invoke=ALL-UNNAMED"
+      )
+    )
+  case _ => Seq()
 }
 
 lazy val root: Project = Project("scio", file("."))
