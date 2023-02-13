@@ -19,7 +19,10 @@ package com.spotify.scio.runners.dataflow
 
 import com.spotify.scio.RunnerContext
 import org.apache.beam.runners.dataflow.DataflowRunner
-import org.apache.beam.runners.dataflow.options.{DataflowPipelineOptions, DataflowPipelineWorkerPoolOptions}
+import org.apache.beam.runners.dataflow.options.{
+  DataflowPipelineOptions,
+  DataflowPipelineWorkerPoolOptions
+}
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.jdk.CollectionConverters._
@@ -39,9 +42,15 @@ case object DataflowContext extends RunnerContext {
       .asJavaCollection
 
     // Required for Kryo w/ Java 17
-    if (sys.props("java.version").startsWith("17")) {
-      options.as(classOf[DataflowPipelineOptions]).setJdkAddOpenModules(
-        List("java.base/java.util=ALL-UNNAMED", "java.base/java.lang.invoke=ALL-UNNAMED").asJava)
+    lazy val dataflowPipelineOpts = options.as(classOf[DataflowPipelineOptions])
+    if (
+      sys
+        .props("java.version")
+        .startsWith("17.") && dataflowPipelineOpts.getJdkAddOpenModules == null
+    ) {
+      dataflowPipelineOpts.setJdkAddOpenModules(
+        List("java.base/java.util=ALL-UNNAMED", "java.base/java.lang.invoke=ALL-UNNAMED").asJava
+      )
     }
 
     dataflowOptions.setFilesToStage(new java.util.ArrayList(filesToStage))
