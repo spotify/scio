@@ -33,20 +33,21 @@ final class SMBMultiJoin(private val self: ScioContext) {
   private[this] val sortedBucketScioContext = new SortedBucketScioContext(self)
 
   def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    targetParallelism: TargetParallelism
-  ): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E]))] = {
+                                                                                      keyClass: Class[KEY],
+                                                                                      a: SortedBucketIO.Read[A],
+                                                                                      b: SortedBucketIO.Read[B],
+                                                                                      c: SortedBucketIO.Read[C],
+                                                                                      d: SortedBucketIO.Read[D],
+                                                                                      e: SortedBucketIO.Read[E],
+                                                                                      targetParallelism: TargetParallelism
+                                                                                    ): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E]))] = {
     val input = SortedBucketIO
       .read(keyClass)
       .of(a, b, c, d, e)
       .withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE) =
       (a.getTupleTag, b.getTupleTag, c.getTupleTag, d.getTupleTag, e.getTupleTag)
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE)
 
     val tfName = self.tfName
 
@@ -69,25 +70,25 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E]
-  ): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E]))] =
+                                                                                      keyClass: Class[KEY],
+                                                                                      a: SortedBucketIO.Read[A],
+                                                                                      b: SortedBucketIO.Read[B],
+                                                                                      c: SortedBucketIO.Read[C],
+                                                                                      d: SortedBucketIO.Read[D],
+                                                                                      e: SortedBucketIO.Read[E]
+                                                                                    ): SCollection[(KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E]))] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, TargetParallelism.auto())
 
   def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder, F: Coder](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+                                                                                                keyClass: Class[KEY],
+                                                                                                a: SortedBucketIO.Read[A],
+                                                                                                b: SortedBucketIO.Read[B],
+                                                                                                c: SortedBucketIO.Read[C],
+                                                                                                d: SortedBucketIO.Read[D],
+                                                                                                e: SortedBucketIO.Read[E],
+                                                                                                f: SortedBucketIO.Read[F],
+                                                                                                targetParallelism: TargetParallelism
+                                                                                              ): SCollection[
     (KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F]))
   ] = {
     val input = SortedBucketIO
@@ -96,6 +97,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       .withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF) =
       (a.getTupleTag, b.getTupleTag, c.getTupleTag, d.getTupleTag, e.getTupleTag, f.getTupleTag)
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF)
 
     val tfName = self.tfName
 
@@ -119,14 +121,14 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeCoGroup[KEY: Coder, A: Coder, B: Coder, C: Coder, D: Coder, E: Coder, F: Coder](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F]
-  ): SCollection[
+                                                                                                keyClass: Class[KEY],
+                                                                                                a: SortedBucketIO.Read[A],
+                                                                                                b: SortedBucketIO.Read[B],
+                                                                                                c: SortedBucketIO.Read[C],
+                                                                                                d: SortedBucketIO.Read[D],
+                                                                                                e: SortedBucketIO.Read[E],
+                                                                                                f: SortedBucketIO.Read[F]
+                                                                                              ): SCollection[
     (KEY, (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F]))
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, TargetParallelism.auto())
@@ -141,20 +143,20 @@ final class SMBMultiJoin(private val self: ScioContext) {
     F: Coder,
     G: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G])
-    )
+        (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G])
+      )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -169,6 +171,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       f.getTupleTag,
       g.getTupleTag
     )
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF, tupleTagG)
 
     val tfName = self.tfName
 
@@ -202,19 +205,19 @@ final class SMBMultiJoin(private val self: ScioContext) {
     F: Coder,
     G: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G]
+   ): SCollection[
     (
       KEY,
-      (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G])
-    )
+        (Iterable[A], Iterable[B], Iterable[C], Iterable[D], Iterable[E], Iterable[F], Iterable[G])
+      )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, TargetParallelism.auto())
 
@@ -229,30 +232,30 @@ final class SMBMultiJoin(private val self: ScioContext) {
     G: Coder,
     H: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -267,6 +270,16 @@ final class SMBMultiJoin(private val self: ScioContext) {
       f.getTupleTag,
       g.getTupleTag,
       h.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH
     )
 
     val tfName = self.tfName
@@ -303,29 +316,29 @@ final class SMBMultiJoin(private val self: ScioContext) {
     G: Coder,
     H: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, h, TargetParallelism.auto())
 
@@ -341,32 +354,32 @@ final class SMBMultiJoin(private val self: ScioContext) {
     H: Coder,
     I: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -382,7 +395,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagG,
       tupleTagH,
       tupleTagI
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -392,6 +405,17 @@ final class SMBMultiJoin(private val self: ScioContext) {
       g.getTupleTag,
       h.getTupleTag,
       i.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI
     )
 
     val tfName = self.tfName
@@ -430,31 +454,31 @@ final class SMBMultiJoin(private val self: ScioContext) {
     H: Coder,
     I: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, h, i, TargetParallelism.auto())
 
@@ -471,34 +495,34 @@ final class SMBMultiJoin(private val self: ScioContext) {
     I: Coder,
     J: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -515,7 +539,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagH,
       tupleTagI,
       tupleTagJ
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -526,6 +550,18 @@ final class SMBMultiJoin(private val self: ScioContext) {
       h.getTupleTag,
       i.getTupleTag,
       j.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ
     )
 
     val tfName = self.tfName
@@ -566,33 +602,33 @@ final class SMBMultiJoin(private val self: ScioContext) {
     I: Coder,
     J: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, h, i, j, TargetParallelism.auto())
 
@@ -610,36 +646,36 @@ final class SMBMultiJoin(private val self: ScioContext) {
     J: Coder,
     K: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -657,7 +693,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagI,
       tupleTagJ,
       tupleTagK
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -669,6 +705,19 @@ final class SMBMultiJoin(private val self: ScioContext) {
       i.getTupleTag,
       j.getTupleTag,
       k.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK
     )
 
     val tfName = self.tfName
@@ -711,35 +760,35 @@ final class SMBMultiJoin(private val self: ScioContext) {
     J: Coder,
     K: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, h, i, j, k, TargetParallelism.auto())
 
@@ -758,38 +807,38 @@ final class SMBMultiJoin(private val self: ScioContext) {
     K: Coder,
     L: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -808,7 +857,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagJ,
       tupleTagK,
       tupleTagL
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -821,6 +870,20 @@ final class SMBMultiJoin(private val self: ScioContext) {
       j.getTupleTag,
       k.getTupleTag,
       l.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL
     )
 
     val tfName = self.tfName
@@ -865,37 +928,37 @@ final class SMBMultiJoin(private val self: ScioContext) {
     K: Coder,
     L: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, h, i, j, k, l, TargetParallelism.auto())
 
@@ -915,40 +978,40 @@ final class SMBMultiJoin(private val self: ScioContext) {
     L: Coder,
     M: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -968,7 +1031,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagK,
       tupleTagL,
       tupleTagM
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -982,6 +1045,21 @@ final class SMBMultiJoin(private val self: ScioContext) {
       k.getTupleTag,
       l.getTupleTag,
       m.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM
     )
 
     val tfName = self.tfName
@@ -1028,39 +1106,39 @@ final class SMBMultiJoin(private val self: ScioContext) {
     L: Coder,
     M: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, h, i, j, k, l, m, TargetParallelism.auto())
 
@@ -1081,42 +1159,42 @@ final class SMBMultiJoin(private val self: ScioContext) {
     M: Coder,
     N: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -1137,7 +1215,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagL,
       tupleTagM,
       tupleTagN
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -1152,6 +1230,22 @@ final class SMBMultiJoin(private val self: ScioContext) {
       l.getTupleTag,
       m.getTupleTag,
       n.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN
     )
 
     val tfName = self.tfName
@@ -1200,41 +1294,41 @@ final class SMBMultiJoin(private val self: ScioContext) {
     M: Coder,
     N: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(keyClass, a, b, c, d, e, f, g, h, i, j, k, l, m, n, TargetParallelism.auto())
 
@@ -1256,44 +1350,44 @@ final class SMBMultiJoin(private val self: ScioContext) {
     N: Coder,
     O: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -1315,7 +1409,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagM,
       tupleTagN,
       tupleTagO
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -1331,6 +1425,23 @@ final class SMBMultiJoin(private val self: ScioContext) {
       m.getTupleTag,
       n.getTupleTag,
       o.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO
     )
 
     val tfName = self.tfName
@@ -1381,43 +1492,43 @@ final class SMBMultiJoin(private val self: ScioContext) {
     N: Coder,
     O: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -1458,46 +1569,46 @@ final class SMBMultiJoin(private val self: ScioContext) {
     O: Coder,
     P: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -1520,7 +1631,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagN,
       tupleTagO,
       tupleTagP
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -1537,6 +1648,24 @@ final class SMBMultiJoin(private val self: ScioContext) {
       n.getTupleTag,
       o.getTupleTag,
       p.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP
     )
 
     val tfName = self.tfName
@@ -1589,45 +1718,45 @@ final class SMBMultiJoin(private val self: ScioContext) {
     O: Coder,
     P: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -1670,48 +1799,48 @@ final class SMBMultiJoin(private val self: ScioContext) {
     P: Coder,
     Q: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -1735,7 +1864,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagO,
       tupleTagP,
       tupleTagQ
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -1753,6 +1882,25 @@ final class SMBMultiJoin(private val self: ScioContext) {
       o.getTupleTag,
       p.getTupleTag,
       q.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ
     )
 
     val tfName = self.tfName
@@ -1807,47 +1955,47 @@ final class SMBMultiJoin(private val self: ScioContext) {
     P: Coder,
     Q: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -1892,50 +2040,50 @@ final class SMBMultiJoin(private val self: ScioContext) {
     Q: Coder,
     R: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -1960,7 +2108,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagP,
       tupleTagQ,
       tupleTagR
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -1979,6 +2127,26 @@ final class SMBMultiJoin(private val self: ScioContext) {
       p.getTupleTag,
       q.getTupleTag,
       r.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR
     )
 
     val tfName = self.tfName
@@ -2035,49 +2203,49 @@ final class SMBMultiJoin(private val self: ScioContext) {
     Q: Coder,
     R: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -2124,52 +2292,52 @@ final class SMBMultiJoin(private val self: ScioContext) {
     R: Coder,
     S: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -2195,7 +2363,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagQ,
       tupleTagR,
       tupleTagS
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -2215,6 +2383,27 @@ final class SMBMultiJoin(private val self: ScioContext) {
       q.getTupleTag,
       r.getTupleTag,
       s.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS
     )
 
     val tfName = self.tfName
@@ -2273,51 +2462,51 @@ final class SMBMultiJoin(private val self: ScioContext) {
     R: Coder,
     S: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -2366,54 +2555,54 @@ final class SMBMultiJoin(private val self: ScioContext) {
     S: Coder,
     T: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S],
+     t: SortedBucketIO.Read[T],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S],
-        Iterable[T]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S],
+            Iterable[T]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -2440,7 +2629,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagR,
       tupleTagS,
       tupleTagT
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -2461,6 +2650,28 @@ final class SMBMultiJoin(private val self: ScioContext) {
       r.getTupleTag,
       s.getTupleTag,
       t.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS,
+      tupleTagT
     )
 
     val tfName = self.tfName
@@ -2521,53 +2732,53 @@ final class SMBMultiJoin(private val self: ScioContext) {
     S: Coder,
     T: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S],
+     t: SortedBucketIO.Read[T]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S],
-        Iterable[T]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S],
+            Iterable[T]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -2618,56 +2829,56 @@ final class SMBMultiJoin(private val self: ScioContext) {
     T: Coder,
     U: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S],
+     t: SortedBucketIO.Read[T],
+     u: SortedBucketIO.Read[U],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S],
-        Iterable[T],
-        Iterable[U]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S],
+            Iterable[T],
+            Iterable[U]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -2695,7 +2906,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagS,
       tupleTagT,
       tupleTagU
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -2717,6 +2928,29 @@ final class SMBMultiJoin(private val self: ScioContext) {
       s.getTupleTag,
       t.getTupleTag,
       u.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS,
+      tupleTagT,
+      tupleTagU
     )
 
     val tfName = self.tfName
@@ -2779,55 +3013,55 @@ final class SMBMultiJoin(private val self: ScioContext) {
     T: Coder,
     U: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S],
+     t: SortedBucketIO.Read[T],
+     u: SortedBucketIO.Read[U]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S],
-        Iterable[T],
-        Iterable[U]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S],
+            Iterable[T],
+            Iterable[U]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -2880,58 +3114,58 @@ final class SMBMultiJoin(private val self: ScioContext) {
     U: Coder,
     V: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U],
-    v: SortedBucketIO.Read[V],
-    targetParallelism: TargetParallelism
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S],
+     t: SortedBucketIO.Read[T],
+     u: SortedBucketIO.Read[U],
+     v: SortedBucketIO.Read[V],
+     targetParallelism: TargetParallelism
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S],
-        Iterable[T],
-        Iterable[U],
-        Iterable[V]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S],
+            Iterable[T],
+            Iterable[U],
+            Iterable[V]
+          )
       )
-    )
   ] = {
     val input = SortedBucketIO
       .read(keyClass)
@@ -2960,7 +3194,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagT,
       tupleTagU,
       tupleTagV
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -2983,6 +3217,30 @@ final class SMBMultiJoin(private val self: ScioContext) {
       t.getTupleTag,
       u.getTupleTag,
       v.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS,
+      tupleTagT,
+      tupleTagU,
+      tupleTagV
     )
 
     val tfName = self.tfName
@@ -3047,57 +3305,57 @@ final class SMBMultiJoin(private val self: ScioContext) {
     U: Coder,
     V: Coder
   ](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U],
-    v: SortedBucketIO.Read[V]
-  ): SCollection[
+     keyClass: Class[KEY],
+     a: SortedBucketIO.Read[A],
+     b: SortedBucketIO.Read[B],
+     c: SortedBucketIO.Read[C],
+     d: SortedBucketIO.Read[D],
+     e: SortedBucketIO.Read[E],
+     f: SortedBucketIO.Read[F],
+     g: SortedBucketIO.Read[G],
+     h: SortedBucketIO.Read[H],
+     i: SortedBucketIO.Read[I],
+     j: SortedBucketIO.Read[J],
+     k: SortedBucketIO.Read[K],
+     l: SortedBucketIO.Read[L],
+     m: SortedBucketIO.Read[M],
+     n: SortedBucketIO.Read[N],
+     o: SortedBucketIO.Read[O],
+     p: SortedBucketIO.Read[P],
+     q: SortedBucketIO.Read[Q],
+     r: SortedBucketIO.Read[R],
+     s: SortedBucketIO.Read[S],
+     t: SortedBucketIO.Read[T],
+     u: SortedBucketIO.Read[U],
+     v: SortedBucketIO.Read[V]
+   ): SCollection[
     (
       KEY,
-      (
-        Iterable[A],
-        Iterable[B],
-        Iterable[C],
-        Iterable[D],
-        Iterable[E],
-        Iterable[F],
-        Iterable[G],
-        Iterable[H],
-        Iterable[I],
-        Iterable[J],
-        Iterable[K],
-        Iterable[L],
-        Iterable[M],
-        Iterable[N],
-        Iterable[O],
-        Iterable[P],
-        Iterable[Q],
-        Iterable[R],
-        Iterable[S],
-        Iterable[T],
-        Iterable[U],
-        Iterable[V]
+        (
+          Iterable[A],
+            Iterable[B],
+            Iterable[C],
+            Iterable[D],
+            Iterable[E],
+            Iterable[F],
+            Iterable[G],
+            Iterable[H],
+            Iterable[I],
+            Iterable[J],
+            Iterable[K],
+            Iterable[L],
+            Iterable[M],
+            Iterable[N],
+            Iterable[O],
+            Iterable[P],
+            Iterable[Q],
+            Iterable[R],
+            Iterable[S],
+            Iterable[T],
+            Iterable[U],
+            Iterable[V]
+          )
       )
-    )
   ] =
     sortMergeCoGroup(
       keyClass,
@@ -3127,13 +3385,13 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                           keyClass: Class[KEY],
+                                           a: SortedBucketIO.Read[A],
+                                           b: SortedBucketIO.Read[B],
+                                           c: SortedBucketIO.Read[C],
+                                           d: SortedBucketIO.Read[D],
+                                           targetParallelism: TargetParallelism
+                                         ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3141,6 +3399,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
   ] = {
     val (tupleTagA, tupleTagB, tupleTagC, tupleTagD) =
       (a.getTupleTag, b.getTupleTag, c.getTupleTag, d.getTupleTag)
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD)
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass)
@@ -3157,12 +3416,12 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                           keyClass: Class[KEY],
+                                           a: SortedBucketIO.Read[A],
+                                           b: SortedBucketIO.Read[B],
+                                           c: SortedBucketIO.Read[C],
+                                           d: SortedBucketIO.Read[D]
+                                         ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3171,14 +3430,14 @@ final class SMBMultiJoin(private val self: ScioContext) {
     sortMergeTransform(keyClass, a, b, c, d, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                              keyClass: Class[KEY],
+                                              a: SortedBucketIO.Read[A],
+                                              b: SortedBucketIO.Read[B],
+                                              c: SortedBucketIO.Read[C],
+                                              d: SortedBucketIO.Read[D],
+                                              e: SortedBucketIO.Read[E],
+                                              targetParallelism: TargetParallelism
+                                            ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3186,6 +3445,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
   ] = {
     val (tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE) =
       (a.getTupleTag, b.getTupleTag, c.getTupleTag, d.getTupleTag, e.getTupleTag)
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE)
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass)
@@ -3203,13 +3463,13 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                              keyClass: Class[KEY],
+                                              a: SortedBucketIO.Read[A],
+                                              b: SortedBucketIO.Read[B],
+                                              c: SortedBucketIO.Read[C],
+                                              d: SortedBucketIO.Read[D],
+                                              e: SortedBucketIO.Read[E]
+                                            ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3218,15 +3478,15 @@ final class SMBMultiJoin(private val self: ScioContext) {
     sortMergeTransform(keyClass, a, b, c, d, e, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                 keyClass: Class[KEY],
+                                                 a: SortedBucketIO.Read[A],
+                                                 b: SortedBucketIO.Read[B],
+                                                 c: SortedBucketIO.Read[C],
+                                                 d: SortedBucketIO.Read[D],
+                                                 e: SortedBucketIO.Read[E],
+                                                 f: SortedBucketIO.Read[F],
+                                                 targetParallelism: TargetParallelism
+                                               ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3234,6 +3494,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
   ] = {
     val (tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF) =
       (a.getTupleTag, b.getTupleTag, c.getTupleTag, d.getTupleTag, e.getTupleTag, f.getTupleTag)
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF)
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass)
@@ -3252,14 +3513,14 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                 keyClass: Class[KEY],
+                                                 a: SortedBucketIO.Read[A],
+                                                 b: SortedBucketIO.Read[B],
+                                                 c: SortedBucketIO.Read[C],
+                                                 d: SortedBucketIO.Read[D],
+                                                 e: SortedBucketIO.Read[E],
+                                                 f: SortedBucketIO.Read[F]
+                                               ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3268,16 +3529,16 @@ final class SMBMultiJoin(private val self: ScioContext) {
     sortMergeTransform(keyClass, a, b, c, d, e, f, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                    keyClass: Class[KEY],
+                                                    a: SortedBucketIO.Read[A],
+                                                    b: SortedBucketIO.Read[B],
+                                                    c: SortedBucketIO.Read[C],
+                                                    d: SortedBucketIO.Read[D],
+                                                    e: SortedBucketIO.Read[E],
+                                                    f: SortedBucketIO.Read[F],
+                                                    g: SortedBucketIO.Read[G],
+                                                    targetParallelism: TargetParallelism
+                                                  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3292,6 +3553,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       f.getTupleTag,
       g.getTupleTag
     )
+    validateTupleTags(tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF, tupleTagG)
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass)
@@ -3311,15 +3573,15 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                    keyClass: Class[KEY],
+                                                    a: SortedBucketIO.Read[A],
+                                                    b: SortedBucketIO.Read[B],
+                                                    c: SortedBucketIO.Read[C],
+                                                    d: SortedBucketIO.Read[D],
+                                                    e: SortedBucketIO.Read[E],
+                                                    f: SortedBucketIO.Read[F],
+                                                    g: SortedBucketIO.Read[G]
+                                                  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
@@ -3328,30 +3590,30 @@ final class SMBMultiJoin(private val self: ScioContext) {
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                       keyClass: Class[KEY],
+                                                       a: SortedBucketIO.Read[A],
+                                                       b: SortedBucketIO.Read[B],
+                                                       c: SortedBucketIO.Read[C],
+                                                       d: SortedBucketIO.Read[D],
+                                                       e: SortedBucketIO.Read[E],
+                                                       f: SortedBucketIO.Read[F],
+                                                       g: SortedBucketIO.Read[G],
+                                                       h: SortedBucketIO.Read[H],
+                                                       targetParallelism: TargetParallelism
+                                                     ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H]
+      )
   ] = {
     val (tupleTagA, tupleTagB, tupleTagC, tupleTagD, tupleTagE, tupleTagF, tupleTagG, tupleTagH) = (
       a.getTupleTag,
@@ -3362,6 +3624,16 @@ final class SMBMultiJoin(private val self: ScioContext) {
       f.getTupleTag,
       g.getTupleTag,
       h.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -3383,59 +3655,59 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                       keyClass: Class[KEY],
+                                                       a: SortedBucketIO.Read[A],
+                                                       b: SortedBucketIO.Read[B],
+                                                       c: SortedBucketIO.Read[C],
+                                                       d: SortedBucketIO.Read[D],
+                                                       e: SortedBucketIO.Read[E],
+                                                       f: SortedBucketIO.Read[F],
+                                                       g: SortedBucketIO.Read[G],
+                                                       h: SortedBucketIO.Read[H]
+                                                     ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H]
+      )
   ] =
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, h, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                          keyClass: Class[KEY],
+                                                          a: SortedBucketIO.Read[A],
+                                                          b: SortedBucketIO.Read[B],
+                                                          c: SortedBucketIO.Read[C],
+                                                          d: SortedBucketIO.Read[D],
+                                                          e: SortedBucketIO.Read[E],
+                                                          f: SortedBucketIO.Read[F],
+                                                          g: SortedBucketIO.Read[G],
+                                                          h: SortedBucketIO.Read[H],
+                                                          i: SortedBucketIO.Read[I],
+                                                          targetParallelism: TargetParallelism
+                                                        ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I]
+      )
   ] = {
     val (
       tupleTagA,
@@ -3447,7 +3719,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagG,
       tupleTagH,
       tupleTagI
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -3457,6 +3729,17 @@ final class SMBMultiJoin(private val self: ScioContext) {
       g.getTupleTag,
       h.getTupleTag,
       i.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -3479,63 +3762,63 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                          keyClass: Class[KEY],
+                                                          a: SortedBucketIO.Read[A],
+                                                          b: SortedBucketIO.Read[B],
+                                                          c: SortedBucketIO.Read[C],
+                                                          d: SortedBucketIO.Read[D],
+                                                          e: SortedBucketIO.Read[E],
+                                                          f: SortedBucketIO.Read[F],
+                                                          g: SortedBucketIO.Read[G],
+                                                          h: SortedBucketIO.Read[H],
+                                                          i: SortedBucketIO.Read[I]
+                                                        ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I]
+      )
   ] =
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, h, i, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                             keyClass: Class[KEY],
+                                                             a: SortedBucketIO.Read[A],
+                                                             b: SortedBucketIO.Read[B],
+                                                             c: SortedBucketIO.Read[C],
+                                                             d: SortedBucketIO.Read[D],
+                                                             e: SortedBucketIO.Read[E],
+                                                             f: SortedBucketIO.Read[F],
+                                                             g: SortedBucketIO.Read[G],
+                                                             h: SortedBucketIO.Read[H],
+                                                             i: SortedBucketIO.Read[I],
+                                                             j: SortedBucketIO.Read[J],
+                                                             targetParallelism: TargetParallelism
+                                                           ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J]
+      )
   ] = {
     val (
       tupleTagA,
@@ -3548,7 +3831,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagH,
       tupleTagI,
       tupleTagJ
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -3559,6 +3842,18 @@ final class SMBMultiJoin(private val self: ScioContext) {
       h.getTupleTag,
       i.getTupleTag,
       j.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -3582,67 +3877,67 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                             keyClass: Class[KEY],
+                                                             a: SortedBucketIO.Read[A],
+                                                             b: SortedBucketIO.Read[B],
+                                                             c: SortedBucketIO.Read[C],
+                                                             d: SortedBucketIO.Read[D],
+                                                             e: SortedBucketIO.Read[E],
+                                                             f: SortedBucketIO.Read[F],
+                                                             g: SortedBucketIO.Read[G],
+                                                             h: SortedBucketIO.Read[H],
+                                                             i: SortedBucketIO.Read[I],
+                                                             j: SortedBucketIO.Read[J]
+                                                           ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J]
+      )
   ] =
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, h, i, j, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                keyClass: Class[KEY],
+                                                                a: SortedBucketIO.Read[A],
+                                                                b: SortedBucketIO.Read[B],
+                                                                c: SortedBucketIO.Read[C],
+                                                                d: SortedBucketIO.Read[D],
+                                                                e: SortedBucketIO.Read[E],
+                                                                f: SortedBucketIO.Read[F],
+                                                                g: SortedBucketIO.Read[G],
+                                                                h: SortedBucketIO.Read[H],
+                                                                i: SortedBucketIO.Read[I],
+                                                                j: SortedBucketIO.Read[J],
+                                                                k: SortedBucketIO.Read[K],
+                                                                targetParallelism: TargetParallelism
+                                                              ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K]
+      )
   ] = {
     val (
       tupleTagA,
@@ -3656,7 +3951,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagI,
       tupleTagJ,
       tupleTagK
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -3668,6 +3963,19 @@ final class SMBMultiJoin(private val self: ScioContext) {
       i.getTupleTag,
       j.getTupleTag,
       k.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -3692,71 +4000,71 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                keyClass: Class[KEY],
+                                                                a: SortedBucketIO.Read[A],
+                                                                b: SortedBucketIO.Read[B],
+                                                                c: SortedBucketIO.Read[C],
+                                                                d: SortedBucketIO.Read[D],
+                                                                e: SortedBucketIO.Read[E],
+                                                                f: SortedBucketIO.Read[F],
+                                                                g: SortedBucketIO.Read[G],
+                                                                h: SortedBucketIO.Read[H],
+                                                                i: SortedBucketIO.Read[I],
+                                                                j: SortedBucketIO.Read[J],
+                                                                k: SortedBucketIO.Read[K]
+                                                              ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K]
+      )
   ] =
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, h, i, j, k, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                   keyClass: Class[KEY],
+                                                                   a: SortedBucketIO.Read[A],
+                                                                   b: SortedBucketIO.Read[B],
+                                                                   c: SortedBucketIO.Read[C],
+                                                                   d: SortedBucketIO.Read[D],
+                                                                   e: SortedBucketIO.Read[E],
+                                                                   f: SortedBucketIO.Read[F],
+                                                                   g: SortedBucketIO.Read[G],
+                                                                   h: SortedBucketIO.Read[H],
+                                                                   i: SortedBucketIO.Read[I],
+                                                                   j: SortedBucketIO.Read[J],
+                                                                   k: SortedBucketIO.Read[K],
+                                                                   l: SortedBucketIO.Read[L],
+                                                                   targetParallelism: TargetParallelism
+                                                                 ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L]
+      )
   ] = {
     val (
       tupleTagA,
@@ -3771,7 +4079,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagJ,
       tupleTagK,
       tupleTagL
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -3784,6 +4092,20 @@ final class SMBMultiJoin(private val self: ScioContext) {
       j.getTupleTag,
       k.getTupleTag,
       l.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -3809,75 +4131,75 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                   keyClass: Class[KEY],
+                                                                   a: SortedBucketIO.Read[A],
+                                                                   b: SortedBucketIO.Read[B],
+                                                                   c: SortedBucketIO.Read[C],
+                                                                   d: SortedBucketIO.Read[D],
+                                                                   e: SortedBucketIO.Read[E],
+                                                                   f: SortedBucketIO.Read[F],
+                                                                   g: SortedBucketIO.Read[G],
+                                                                   h: SortedBucketIO.Read[H],
+                                                                   i: SortedBucketIO.Read[I],
+                                                                   j: SortedBucketIO.Read[J],
+                                                                   k: SortedBucketIO.Read[K],
+                                                                   l: SortedBucketIO.Read[L]
+                                                                 ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L]
+      )
   ] =
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, h, i, j, k, l, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                      keyClass: Class[KEY],
+                                                                      a: SortedBucketIO.Read[A],
+                                                                      b: SortedBucketIO.Read[B],
+                                                                      c: SortedBucketIO.Read[C],
+                                                                      d: SortedBucketIO.Read[D],
+                                                                      e: SortedBucketIO.Read[E],
+                                                                      f: SortedBucketIO.Read[F],
+                                                                      g: SortedBucketIO.Read[G],
+                                                                      h: SortedBucketIO.Read[H],
+                                                                      i: SortedBucketIO.Read[I],
+                                                                      j: SortedBucketIO.Read[J],
+                                                                      k: SortedBucketIO.Read[K],
+                                                                      l: SortedBucketIO.Read[L],
+                                                                      m: SortedBucketIO.Read[M],
+                                                                      targetParallelism: TargetParallelism
+                                                                    ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M]
+      )
   ] = {
     val (
       tupleTagA,
@@ -3893,7 +4215,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagK,
       tupleTagL,
       tupleTagM
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -3907,6 +4229,21 @@ final class SMBMultiJoin(private val self: ScioContext) {
       k.getTupleTag,
       l.getTupleTag,
       m.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -3933,79 +4270,79 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                      keyClass: Class[KEY],
+                                                                      a: SortedBucketIO.Read[A],
+                                                                      b: SortedBucketIO.Read[B],
+                                                                      c: SortedBucketIO.Read[C],
+                                                                      d: SortedBucketIO.Read[D],
+                                                                      e: SortedBucketIO.Read[E],
+                                                                      f: SortedBucketIO.Read[F],
+                                                                      g: SortedBucketIO.Read[G],
+                                                                      h: SortedBucketIO.Read[H],
+                                                                      i: SortedBucketIO.Read[I],
+                                                                      j: SortedBucketIO.Read[J],
+                                                                      k: SortedBucketIO.Read[K],
+                                                                      l: SortedBucketIO.Read[L],
+                                                                      m: SortedBucketIO.Read[M]
+                                                                    ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M]
+      )
   ] =
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, h, i, j, k, l, m, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                         keyClass: Class[KEY],
+                                                                         a: SortedBucketIO.Read[A],
+                                                                         b: SortedBucketIO.Read[B],
+                                                                         c: SortedBucketIO.Read[C],
+                                                                         d: SortedBucketIO.Read[D],
+                                                                         e: SortedBucketIO.Read[E],
+                                                                         f: SortedBucketIO.Read[F],
+                                                                         g: SortedBucketIO.Read[G],
+                                                                         h: SortedBucketIO.Read[H],
+                                                                         i: SortedBucketIO.Read[I],
+                                                                         j: SortedBucketIO.Read[J],
+                                                                         k: SortedBucketIO.Read[K],
+                                                                         l: SortedBucketIO.Read[L],
+                                                                         m: SortedBucketIO.Read[M],
+                                                                         n: SortedBucketIO.Read[N],
+                                                                         targetParallelism: TargetParallelism
+                                                                       ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N]
+      )
   ] = {
     val (
       tupleTagA,
@@ -4022,7 +4359,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagL,
       tupleTagM,
       tupleTagN
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -4037,6 +4374,22 @@ final class SMBMultiJoin(private val self: ScioContext) {
       l.getTupleTag,
       m.getTupleTag,
       n.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -4064,83 +4417,83 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                         keyClass: Class[KEY],
+                                                                         a: SortedBucketIO.Read[A],
+                                                                         b: SortedBucketIO.Read[B],
+                                                                         c: SortedBucketIO.Read[C],
+                                                                         d: SortedBucketIO.Read[D],
+                                                                         e: SortedBucketIO.Read[E],
+                                                                         f: SortedBucketIO.Read[F],
+                                                                         g: SortedBucketIO.Read[G],
+                                                                         h: SortedBucketIO.Read[H],
+                                                                         i: SortedBucketIO.Read[I],
+                                                                         j: SortedBucketIO.Read[J],
+                                                                         k: SortedBucketIO.Read[K],
+                                                                         l: SortedBucketIO.Read[L],
+                                                                         m: SortedBucketIO.Read[M],
+                                                                         n: SortedBucketIO.Read[N]
+                                                                       ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N]
+      )
   ] =
     sortMergeTransform(keyClass, a, b, c, d, e, f, g, h, i, j, k, l, m, n, TargetParallelism.auto())
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                            keyClass: Class[KEY],
+                                                                            a: SortedBucketIO.Read[A],
+                                                                            b: SortedBucketIO.Read[B],
+                                                                            c: SortedBucketIO.Read[C],
+                                                                            d: SortedBucketIO.Read[D],
+                                                                            e: SortedBucketIO.Read[E],
+                                                                            f: SortedBucketIO.Read[F],
+                                                                            g: SortedBucketIO.Read[G],
+                                                                            h: SortedBucketIO.Read[H],
+                                                                            i: SortedBucketIO.Read[I],
+                                                                            j: SortedBucketIO.Read[J],
+                                                                            k: SortedBucketIO.Read[K],
+                                                                            l: SortedBucketIO.Read[L],
+                                                                            m: SortedBucketIO.Read[M],
+                                                                            n: SortedBucketIO.Read[N],
+                                                                            o: SortedBucketIO.Read[O],
+                                                                            targetParallelism: TargetParallelism
+                                                                          ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O]
+      )
   ] = {
     val (
       tupleTagA,
@@ -4158,7 +4511,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagM,
       tupleTagN,
       tupleTagO
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -4174,6 +4527,23 @@ final class SMBMultiJoin(private val self: ScioContext) {
       m.getTupleTag,
       n.getTupleTag,
       o.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -4202,43 +4572,43 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                            keyClass: Class[KEY],
+                                                                            a: SortedBucketIO.Read[A],
+                                                                            b: SortedBucketIO.Read[B],
+                                                                            c: SortedBucketIO.Read[C],
+                                                                            d: SortedBucketIO.Read[D],
+                                                                            e: SortedBucketIO.Read[E],
+                                                                            f: SortedBucketIO.Read[F],
+                                                                            g: SortedBucketIO.Read[G],
+                                                                            h: SortedBucketIO.Read[H],
+                                                                            i: SortedBucketIO.Read[I],
+                                                                            j: SortedBucketIO.Read[J],
+                                                                            k: SortedBucketIO.Read[K],
+                                                                            l: SortedBucketIO.Read[L],
+                                                                            m: SortedBucketIO.Read[M],
+                                                                            n: SortedBucketIO.Read[N],
+                                                                            o: SortedBucketIO.Read[O]
+                                                                          ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O]
+      )
   ] =
     sortMergeTransform(
       keyClass,
@@ -4261,46 +4631,46 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                               keyClass: Class[KEY],
+                                                                               a: SortedBucketIO.Read[A],
+                                                                               b: SortedBucketIO.Read[B],
+                                                                               c: SortedBucketIO.Read[C],
+                                                                               d: SortedBucketIO.Read[D],
+                                                                               e: SortedBucketIO.Read[E],
+                                                                               f: SortedBucketIO.Read[F],
+                                                                               g: SortedBucketIO.Read[G],
+                                                                               h: SortedBucketIO.Read[H],
+                                                                               i: SortedBucketIO.Read[I],
+                                                                               j: SortedBucketIO.Read[J],
+                                                                               k: SortedBucketIO.Read[K],
+                                                                               l: SortedBucketIO.Read[L],
+                                                                               m: SortedBucketIO.Read[M],
+                                                                               n: SortedBucketIO.Read[N],
+                                                                               o: SortedBucketIO.Read[O],
+                                                                               p: SortedBucketIO.Read[P],
+                                                                               targetParallelism: TargetParallelism
+                                                                             ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P]
+      )
   ] = {
     val (
       tupleTagA,
@@ -4319,7 +4689,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagN,
       tupleTagO,
       tupleTagP
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -4336,6 +4706,24 @@ final class SMBMultiJoin(private val self: ScioContext) {
       n.getTupleTag,
       o.getTupleTag,
       p.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -4365,45 +4753,45 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                               keyClass: Class[KEY],
+                                                                               a: SortedBucketIO.Read[A],
+                                                                               b: SortedBucketIO.Read[B],
+                                                                               c: SortedBucketIO.Read[C],
+                                                                               d: SortedBucketIO.Read[D],
+                                                                               e: SortedBucketIO.Read[E],
+                                                                               f: SortedBucketIO.Read[F],
+                                                                               g: SortedBucketIO.Read[G],
+                                                                               h: SortedBucketIO.Read[H],
+                                                                               i: SortedBucketIO.Read[I],
+                                                                               j: SortedBucketIO.Read[J],
+                                                                               k: SortedBucketIO.Read[K],
+                                                                               l: SortedBucketIO.Read[L],
+                                                                               m: SortedBucketIO.Read[M],
+                                                                               n: SortedBucketIO.Read[N],
+                                                                               o: SortedBucketIO.Read[O],
+                                                                               p: SortedBucketIO.Read[P]
+                                                                             ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P]
+      )
   ] =
     sortMergeTransform(
       keyClass,
@@ -4427,48 +4815,48 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                  keyClass: Class[KEY],
+                                                                                  a: SortedBucketIO.Read[A],
+                                                                                  b: SortedBucketIO.Read[B],
+                                                                                  c: SortedBucketIO.Read[C],
+                                                                                  d: SortedBucketIO.Read[D],
+                                                                                  e: SortedBucketIO.Read[E],
+                                                                                  f: SortedBucketIO.Read[F],
+                                                                                  g: SortedBucketIO.Read[G],
+                                                                                  h: SortedBucketIO.Read[H],
+                                                                                  i: SortedBucketIO.Read[I],
+                                                                                  j: SortedBucketIO.Read[J],
+                                                                                  k: SortedBucketIO.Read[K],
+                                                                                  l: SortedBucketIO.Read[L],
+                                                                                  m: SortedBucketIO.Read[M],
+                                                                                  n: SortedBucketIO.Read[N],
+                                                                                  o: SortedBucketIO.Read[O],
+                                                                                  p: SortedBucketIO.Read[P],
+                                                                                  q: SortedBucketIO.Read[Q],
+                                                                                  targetParallelism: TargetParallelism
+                                                                                ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q]
+      )
   ] = {
     val (
       tupleTagA,
@@ -4488,7 +4876,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagO,
       tupleTagP,
       tupleTagQ
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -4506,6 +4894,25 @@ final class SMBMultiJoin(private val self: ScioContext) {
       o.getTupleTag,
       p.getTupleTag,
       q.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -4536,47 +4943,47 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                  keyClass: Class[KEY],
+                                                                                  a: SortedBucketIO.Read[A],
+                                                                                  b: SortedBucketIO.Read[B],
+                                                                                  c: SortedBucketIO.Read[C],
+                                                                                  d: SortedBucketIO.Read[D],
+                                                                                  e: SortedBucketIO.Read[E],
+                                                                                  f: SortedBucketIO.Read[F],
+                                                                                  g: SortedBucketIO.Read[G],
+                                                                                  h: SortedBucketIO.Read[H],
+                                                                                  i: SortedBucketIO.Read[I],
+                                                                                  j: SortedBucketIO.Read[J],
+                                                                                  k: SortedBucketIO.Read[K],
+                                                                                  l: SortedBucketIO.Read[L],
+                                                                                  m: SortedBucketIO.Read[M],
+                                                                                  n: SortedBucketIO.Read[N],
+                                                                                  o: SortedBucketIO.Read[O],
+                                                                                  p: SortedBucketIO.Read[P],
+                                                                                  q: SortedBucketIO.Read[Q]
+                                                                                ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q]
+      )
   ] =
     sortMergeTransform(
       keyClass,
@@ -4601,50 +5008,50 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                     keyClass: Class[KEY],
+                                                                                     a: SortedBucketIO.Read[A],
+                                                                                     b: SortedBucketIO.Read[B],
+                                                                                     c: SortedBucketIO.Read[C],
+                                                                                     d: SortedBucketIO.Read[D],
+                                                                                     e: SortedBucketIO.Read[E],
+                                                                                     f: SortedBucketIO.Read[F],
+                                                                                     g: SortedBucketIO.Read[G],
+                                                                                     h: SortedBucketIO.Read[H],
+                                                                                     i: SortedBucketIO.Read[I],
+                                                                                     j: SortedBucketIO.Read[J],
+                                                                                     k: SortedBucketIO.Read[K],
+                                                                                     l: SortedBucketIO.Read[L],
+                                                                                     m: SortedBucketIO.Read[M],
+                                                                                     n: SortedBucketIO.Read[N],
+                                                                                     o: SortedBucketIO.Read[O],
+                                                                                     p: SortedBucketIO.Read[P],
+                                                                                     q: SortedBucketIO.Read[Q],
+                                                                                     r: SortedBucketIO.Read[R],
+                                                                                     targetParallelism: TargetParallelism
+                                                                                   ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R]
+      )
   ] = {
     val (
       tupleTagA,
@@ -4665,7 +5072,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagP,
       tupleTagQ,
       tupleTagR
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -4684,6 +5091,26 @@ final class SMBMultiJoin(private val self: ScioContext) {
       p.getTupleTag,
       q.getTupleTag,
       r.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -4715,49 +5142,49 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                     keyClass: Class[KEY],
+                                                                                     a: SortedBucketIO.Read[A],
+                                                                                     b: SortedBucketIO.Read[B],
+                                                                                     c: SortedBucketIO.Read[C],
+                                                                                     d: SortedBucketIO.Read[D],
+                                                                                     e: SortedBucketIO.Read[E],
+                                                                                     f: SortedBucketIO.Read[F],
+                                                                                     g: SortedBucketIO.Read[G],
+                                                                                     h: SortedBucketIO.Read[H],
+                                                                                     i: SortedBucketIO.Read[I],
+                                                                                     j: SortedBucketIO.Read[J],
+                                                                                     k: SortedBucketIO.Read[K],
+                                                                                     l: SortedBucketIO.Read[L],
+                                                                                     m: SortedBucketIO.Read[M],
+                                                                                     n: SortedBucketIO.Read[N],
+                                                                                     o: SortedBucketIO.Read[O],
+                                                                                     p: SortedBucketIO.Read[P],
+                                                                                     q: SortedBucketIO.Read[Q],
+                                                                                     r: SortedBucketIO.Read[R]
+                                                                                   ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R]
+      )
   ] =
     sortMergeTransform(
       keyClass,
@@ -4783,52 +5210,52 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                        keyClass: Class[KEY],
+                                                                                        a: SortedBucketIO.Read[A],
+                                                                                        b: SortedBucketIO.Read[B],
+                                                                                        c: SortedBucketIO.Read[C],
+                                                                                        d: SortedBucketIO.Read[D],
+                                                                                        e: SortedBucketIO.Read[E],
+                                                                                        f: SortedBucketIO.Read[F],
+                                                                                        g: SortedBucketIO.Read[G],
+                                                                                        h: SortedBucketIO.Read[H],
+                                                                                        i: SortedBucketIO.Read[I],
+                                                                                        j: SortedBucketIO.Read[J],
+                                                                                        k: SortedBucketIO.Read[K],
+                                                                                        l: SortedBucketIO.Read[L],
+                                                                                        m: SortedBucketIO.Read[M],
+                                                                                        n: SortedBucketIO.Read[N],
+                                                                                        o: SortedBucketIO.Read[O],
+                                                                                        p: SortedBucketIO.Read[P],
+                                                                                        q: SortedBucketIO.Read[Q],
+                                                                                        r: SortedBucketIO.Read[R],
+                                                                                        s: SortedBucketIO.Read[S],
+                                                                                        targetParallelism: TargetParallelism
+                                                                                      ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S]
+      )
   ] = {
     val (
       tupleTagA,
@@ -4850,7 +5277,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagQ,
       tupleTagR,
       tupleTagS
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -4870,6 +5297,27 @@ final class SMBMultiJoin(private val self: ScioContext) {
       q.getTupleTag,
       r.getTupleTag,
       s.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -4902,51 +5350,51 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                        keyClass: Class[KEY],
+                                                                                        a: SortedBucketIO.Read[A],
+                                                                                        b: SortedBucketIO.Read[B],
+                                                                                        c: SortedBucketIO.Read[C],
+                                                                                        d: SortedBucketIO.Read[D],
+                                                                                        e: SortedBucketIO.Read[E],
+                                                                                        f: SortedBucketIO.Read[F],
+                                                                                        g: SortedBucketIO.Read[G],
+                                                                                        h: SortedBucketIO.Read[H],
+                                                                                        i: SortedBucketIO.Read[I],
+                                                                                        j: SortedBucketIO.Read[J],
+                                                                                        k: SortedBucketIO.Read[K],
+                                                                                        l: SortedBucketIO.Read[L],
+                                                                                        m: SortedBucketIO.Read[M],
+                                                                                        n: SortedBucketIO.Read[N],
+                                                                                        o: SortedBucketIO.Read[O],
+                                                                                        p: SortedBucketIO.Read[P],
+                                                                                        q: SortedBucketIO.Read[Q],
+                                                                                        r: SortedBucketIO.Read[R],
+                                                                                        s: SortedBucketIO.Read[S]
+                                                                                      ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S]
+      )
   ] =
     sortMergeTransform(
       keyClass,
@@ -4973,54 +5421,54 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                           keyClass: Class[KEY],
+                                                                                           a: SortedBucketIO.Read[A],
+                                                                                           b: SortedBucketIO.Read[B],
+                                                                                           c: SortedBucketIO.Read[C],
+                                                                                           d: SortedBucketIO.Read[D],
+                                                                                           e: SortedBucketIO.Read[E],
+                                                                                           f: SortedBucketIO.Read[F],
+                                                                                           g: SortedBucketIO.Read[G],
+                                                                                           h: SortedBucketIO.Read[H],
+                                                                                           i: SortedBucketIO.Read[I],
+                                                                                           j: SortedBucketIO.Read[J],
+                                                                                           k: SortedBucketIO.Read[K],
+                                                                                           l: SortedBucketIO.Read[L],
+                                                                                           m: SortedBucketIO.Read[M],
+                                                                                           n: SortedBucketIO.Read[N],
+                                                                                           o: SortedBucketIO.Read[O],
+                                                                                           p: SortedBucketIO.Read[P],
+                                                                                           q: SortedBucketIO.Read[Q],
+                                                                                           r: SortedBucketIO.Read[R],
+                                                                                           s: SortedBucketIO.Read[S],
+                                                                                           t: SortedBucketIO.Read[T],
+                                                                                           targetParallelism: TargetParallelism
+                                                                                         ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S],
-      Iterable[T]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S],
+        Iterable[T]
+      )
   ] = {
     val (
       tupleTagA,
@@ -5043,7 +5491,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagR,
       tupleTagS,
       tupleTagT
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -5064,6 +5512,28 @@ final class SMBMultiJoin(private val self: ScioContext) {
       r.getTupleTag,
       s.getTupleTag,
       t.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS,
+      tupleTagT
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -5097,53 +5567,53 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                           keyClass: Class[KEY],
+                                                                                           a: SortedBucketIO.Read[A],
+                                                                                           b: SortedBucketIO.Read[B],
+                                                                                           c: SortedBucketIO.Read[C],
+                                                                                           d: SortedBucketIO.Read[D],
+                                                                                           e: SortedBucketIO.Read[E],
+                                                                                           f: SortedBucketIO.Read[F],
+                                                                                           g: SortedBucketIO.Read[G],
+                                                                                           h: SortedBucketIO.Read[H],
+                                                                                           i: SortedBucketIO.Read[I],
+                                                                                           j: SortedBucketIO.Read[J],
+                                                                                           k: SortedBucketIO.Read[K],
+                                                                                           l: SortedBucketIO.Read[L],
+                                                                                           m: SortedBucketIO.Read[M],
+                                                                                           n: SortedBucketIO.Read[N],
+                                                                                           o: SortedBucketIO.Read[O],
+                                                                                           p: SortedBucketIO.Read[P],
+                                                                                           q: SortedBucketIO.Read[Q],
+                                                                                           r: SortedBucketIO.Read[R],
+                                                                                           s: SortedBucketIO.Read[S],
+                                                                                           t: SortedBucketIO.Read[T]
+                                                                                         ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S],
-      Iterable[T]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S],
+        Iterable[T]
+      )
   ] =
     sortMergeTransform(
       keyClass,
@@ -5171,56 +5641,56 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                              keyClass: Class[KEY],
+                                                                                              a: SortedBucketIO.Read[A],
+                                                                                              b: SortedBucketIO.Read[B],
+                                                                                              c: SortedBucketIO.Read[C],
+                                                                                              d: SortedBucketIO.Read[D],
+                                                                                              e: SortedBucketIO.Read[E],
+                                                                                              f: SortedBucketIO.Read[F],
+                                                                                              g: SortedBucketIO.Read[G],
+                                                                                              h: SortedBucketIO.Read[H],
+                                                                                              i: SortedBucketIO.Read[I],
+                                                                                              j: SortedBucketIO.Read[J],
+                                                                                              k: SortedBucketIO.Read[K],
+                                                                                              l: SortedBucketIO.Read[L],
+                                                                                              m: SortedBucketIO.Read[M],
+                                                                                              n: SortedBucketIO.Read[N],
+                                                                                              o: SortedBucketIO.Read[O],
+                                                                                              p: SortedBucketIO.Read[P],
+                                                                                              q: SortedBucketIO.Read[Q],
+                                                                                              r: SortedBucketIO.Read[R],
+                                                                                              s: SortedBucketIO.Read[S],
+                                                                                              t: SortedBucketIO.Read[T],
+                                                                                              u: SortedBucketIO.Read[U],
+                                                                                              targetParallelism: TargetParallelism
+                                                                                            ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S],
-      Iterable[T],
-      Iterable[U]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S],
+        Iterable[T],
+        Iterable[U]
+      )
   ] = {
     val (
       tupleTagA,
@@ -5244,7 +5714,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagS,
       tupleTagT,
       tupleTagU
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -5266,6 +5736,29 @@ final class SMBMultiJoin(private val self: ScioContext) {
       s.getTupleTag,
       t.getTupleTag,
       u.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS,
+      tupleTagT,
+      tupleTagU
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -5300,55 +5793,55 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                              keyClass: Class[KEY],
+                                                                                              a: SortedBucketIO.Read[A],
+                                                                                              b: SortedBucketIO.Read[B],
+                                                                                              c: SortedBucketIO.Read[C],
+                                                                                              d: SortedBucketIO.Read[D],
+                                                                                              e: SortedBucketIO.Read[E],
+                                                                                              f: SortedBucketIO.Read[F],
+                                                                                              g: SortedBucketIO.Read[G],
+                                                                                              h: SortedBucketIO.Read[H],
+                                                                                              i: SortedBucketIO.Read[I],
+                                                                                              j: SortedBucketIO.Read[J],
+                                                                                              k: SortedBucketIO.Read[K],
+                                                                                              l: SortedBucketIO.Read[L],
+                                                                                              m: SortedBucketIO.Read[M],
+                                                                                              n: SortedBucketIO.Read[N],
+                                                                                              o: SortedBucketIO.Read[O],
+                                                                                              p: SortedBucketIO.Read[P],
+                                                                                              q: SortedBucketIO.Read[Q],
+                                                                                              r: SortedBucketIO.Read[R],
+                                                                                              s: SortedBucketIO.Read[S],
+                                                                                              t: SortedBucketIO.Read[T],
+                                                                                              u: SortedBucketIO.Read[U]
+                                                                                            ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S],
-      Iterable[T],
-      Iterable[U]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S],
+        Iterable[T],
+        Iterable[U]
+      )
   ] =
     sortMergeTransform(
       keyClass,
@@ -5377,58 +5870,58 @@ final class SMBMultiJoin(private val self: ScioContext) {
     )
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U],
-    v: SortedBucketIO.Read[V],
-    targetParallelism: TargetParallelism
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                                 keyClass: Class[KEY],
+                                                                                                 a: SortedBucketIO.Read[A],
+                                                                                                 b: SortedBucketIO.Read[B],
+                                                                                                 c: SortedBucketIO.Read[C],
+                                                                                                 d: SortedBucketIO.Read[D],
+                                                                                                 e: SortedBucketIO.Read[E],
+                                                                                                 f: SortedBucketIO.Read[F],
+                                                                                                 g: SortedBucketIO.Read[G],
+                                                                                                 h: SortedBucketIO.Read[H],
+                                                                                                 i: SortedBucketIO.Read[I],
+                                                                                                 j: SortedBucketIO.Read[J],
+                                                                                                 k: SortedBucketIO.Read[K],
+                                                                                                 l: SortedBucketIO.Read[L],
+                                                                                                 m: SortedBucketIO.Read[M],
+                                                                                                 n: SortedBucketIO.Read[N],
+                                                                                                 o: SortedBucketIO.Read[O],
+                                                                                                 p: SortedBucketIO.Read[P],
+                                                                                                 q: SortedBucketIO.Read[Q],
+                                                                                                 r: SortedBucketIO.Read[R],
+                                                                                                 s: SortedBucketIO.Read[S],
+                                                                                                 t: SortedBucketIO.Read[T],
+                                                                                                 u: SortedBucketIO.Read[U],
+                                                                                                 v: SortedBucketIO.Read[V],
+                                                                                                 targetParallelism: TargetParallelism
+                                                                                               ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S],
-      Iterable[T],
-      Iterable[U],
-      Iterable[V]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S],
+        Iterable[T],
+        Iterable[U],
+        Iterable[V]
+      )
   ] = {
     val (
       tupleTagA,
@@ -5453,7 +5946,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
       tupleTagT,
       tupleTagU,
       tupleTagV
-    ) = (
+      ) = (
       a.getTupleTag,
       b.getTupleTag,
       c.getTupleTag,
@@ -5476,6 +5969,30 @@ final class SMBMultiJoin(private val self: ScioContext) {
       t.getTupleTag,
       u.getTupleTag,
       v.getTupleTag
+    )
+    validateTupleTags(
+      tupleTagA,
+      tupleTagB,
+      tupleTagC,
+      tupleTagD,
+      tupleTagE,
+      tupleTagF,
+      tupleTagG,
+      tupleTagH,
+      tupleTagI,
+      tupleTagJ,
+      tupleTagK,
+      tupleTagL,
+      tupleTagM,
+      tupleTagN,
+      tupleTagO,
+      tupleTagP,
+      tupleTagQ,
+      tupleTagR,
+      tupleTagS,
+      tupleTagT,
+      tupleTagU,
+      tupleTagV
     )
     new sortedBucketScioContext.SortMergeTransformReadBuilder(
       SortedBucketIO
@@ -5511,57 +6028,57 @@ final class SMBMultiJoin(private val self: ScioContext) {
   }
 
   def sortMergeTransform[KEY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](
-    keyClass: Class[KEY],
-    a: SortedBucketIO.Read[A],
-    b: SortedBucketIO.Read[B],
-    c: SortedBucketIO.Read[C],
-    d: SortedBucketIO.Read[D],
-    e: SortedBucketIO.Read[E],
-    f: SortedBucketIO.Read[F],
-    g: SortedBucketIO.Read[G],
-    h: SortedBucketIO.Read[H],
-    i: SortedBucketIO.Read[I],
-    j: SortedBucketIO.Read[J],
-    k: SortedBucketIO.Read[K],
-    l: SortedBucketIO.Read[L],
-    m: SortedBucketIO.Read[M],
-    n: SortedBucketIO.Read[N],
-    o: SortedBucketIO.Read[O],
-    p: SortedBucketIO.Read[P],
-    q: SortedBucketIO.Read[Q],
-    r: SortedBucketIO.Read[R],
-    s: SortedBucketIO.Read[S],
-    t: SortedBucketIO.Read[T],
-    u: SortedBucketIO.Read[U],
-    v: SortedBucketIO.Read[V]
-  ): SortedBucketScioContext#SortMergeTransformReadBuilder[
+                                                                                                 keyClass: Class[KEY],
+                                                                                                 a: SortedBucketIO.Read[A],
+                                                                                                 b: SortedBucketIO.Read[B],
+                                                                                                 c: SortedBucketIO.Read[C],
+                                                                                                 d: SortedBucketIO.Read[D],
+                                                                                                 e: SortedBucketIO.Read[E],
+                                                                                                 f: SortedBucketIO.Read[F],
+                                                                                                 g: SortedBucketIO.Read[G],
+                                                                                                 h: SortedBucketIO.Read[H],
+                                                                                                 i: SortedBucketIO.Read[I],
+                                                                                                 j: SortedBucketIO.Read[J],
+                                                                                                 k: SortedBucketIO.Read[K],
+                                                                                                 l: SortedBucketIO.Read[L],
+                                                                                                 m: SortedBucketIO.Read[M],
+                                                                                                 n: SortedBucketIO.Read[N],
+                                                                                                 o: SortedBucketIO.Read[O],
+                                                                                                 p: SortedBucketIO.Read[P],
+                                                                                                 q: SortedBucketIO.Read[Q],
+                                                                                                 r: SortedBucketIO.Read[R],
+                                                                                                 s: SortedBucketIO.Read[S],
+                                                                                                 t: SortedBucketIO.Read[T],
+                                                                                                 u: SortedBucketIO.Read[U],
+                                                                                                 v: SortedBucketIO.Read[V]
+                                                                                               ): SortedBucketScioContext#SortMergeTransformReadBuilder[
     KEY,
     KEY,
     Void,
     (
       Iterable[A],
-      Iterable[B],
-      Iterable[C],
-      Iterable[D],
-      Iterable[E],
-      Iterable[F],
-      Iterable[G],
-      Iterable[H],
-      Iterable[I],
-      Iterable[J],
-      Iterable[K],
-      Iterable[L],
-      Iterable[M],
-      Iterable[N],
-      Iterable[O],
-      Iterable[P],
-      Iterable[Q],
-      Iterable[R],
-      Iterable[S],
-      Iterable[T],
-      Iterable[U],
-      Iterable[V]
-    )
+        Iterable[B],
+        Iterable[C],
+        Iterable[D],
+        Iterable[E],
+        Iterable[F],
+        Iterable[G],
+        Iterable[H],
+        Iterable[I],
+        Iterable[J],
+        Iterable[K],
+        Iterable[L],
+        Iterable[M],
+        Iterable[N],
+        Iterable[O],
+        Iterable[P],
+        Iterable[Q],
+        Iterable[R],
+        Iterable[S],
+        Iterable[T],
+        Iterable[U],
+        Iterable[V]
+      )
   ] =
     sortMergeTransform(
       keyClass,
