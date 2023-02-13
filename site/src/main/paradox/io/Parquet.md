@@ -184,11 +184,44 @@ import magnolify.parquet.ParquetArray.AvroCompat._
 
 The same Avro schema evolution principles apply to Parquet, i.e. only append `OPTIONAL` or `REPEATED` fields with default `null` or `[]`. See this [test](https://github.com/spotify/magnolify/blob/master/parquet/src/test/scala/magnolify/parquet/test/SchemaEvolutionSuite.scala) for some common scenarios w.r.t. Parquet schema evolution.
 
-## Performance Tuning
+## Configuring Parquet
 
-Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop [core-site.xml](https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml) or `Configuration` argument.
+The Parquet Java [library](https://github.com/apache/parquet-mr) heavily relies on Hadoop's `Job` API. Therefore, in both the Parquet library and in scio-parquet, we use Hadoop's [Configuration](https://hadoop.apache.org/docs/r2.10.2/api/org/apache/hadoop/conf/Configuration.html) class to manage most Parquet read and write options.
 
-- `parquet.block.size` - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB.
+The `Configuration` class, when initialized, will load default values from the first available `core-site.xml` found on the classpath. Scio-parquet provides a default [`core-site.xml` implementation](https://github.com/spotify/scio/blob/main/scio-parquet/src/main/resources/core-site.xml): if your Scio pipeline has a dependency on `scio-parquet`, these default options will be picked up in your pipeline.
+
+### Overriding the Default Configuration
+
+You can override the default configuration in two ways:
+
+1. Declare a `core-site.xml` file of your own in your project's `src/main/resources` folder. Note that Hadoop can only pick one `core-site.xml` to read: if you override the file in your project, Hadoop will not read Scio's default `core-site.xml` at all, and none of its default options will be loaded.
+
+2. Create an in-memory `Configuration` object for use with scio-parquet's `ReadParam` and `WriteParam`. Any options provided this way will be _appended_ to Scio's default configuration.
+
+You can create and pass in a custom Configuration using our `ParquetConfiguration` helper, available in Scio 0.12.x and above:
+
+```scala
+import com.spotify.scio.parquet.ParquetConfiguration
+
+data
+  .saveAsParquetAvroFile(args("output"), conf = ParquetConfiguration.of("parquet.block.size" -> 536870912))
+```
+
+If you're on Scio 0.11.x or below, you'll have to create a `Configuration` object directly:
+
+```scala
+import org.apache.hadoop.conf.Configuration
+
+val parquetConf: Configuration = {
+  val conf: Configuration = new Configuration()
+  conf.setInt("parquet.block.size", 536870912)
+  conf
+}
+```
+
+### Common Configuration Options
+
+- `parquet.block.size` - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB, although you'll have to weigh the tradeoffs: a larger block size means fewer seek operations on blob storage, at the cost of having to load a larger row group into memory.
 - `fs.gs.inputstream.fadvise` - Parquet relies heavily on random seeks so this GCS connector setting should be set to `RANDOM`. See this [blog post](https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more) for more.
 
 Here are some other recommended settings.
