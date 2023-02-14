@@ -80,18 +80,17 @@ public class SortedBucketIO {
   private static void validateInputNameUniqueness(List<BucketedInput<?>> inputs) {
     HashSet<String> inputNames = new HashSet<>();
     inputs.stream()
-        .forEach(i -> {
+        .forEach(
+            i -> {
               boolean isNewKey = inputNames.add(i.getTupleTag().getId());
               if (!isNewKey) {
                 throw new IllegalArgumentException(
                     String.format(
                         "Tuple tag name for each smb input source needs to be unique. Input "
-                        + "source name \"%s\" is used at least twice.", i.getTupleTag().getId()
-                    )
-                );
+                            + "source name \"%s\" is used at least twice.",
+                        i.getTupleTag().getId()));
               }
-            }
-        );
+            });
   }
 
   /** Builder for sorted-bucket {@link CoGbk}. */
@@ -104,15 +103,12 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K1> of(Read<?>... read) {
-      List<BucketedInput<?>> inputs = Arrays.stream(read)
-          .map(r -> r.toBucketedInput(SortedBucketSource.Keying.PRIMARY))
-          .collect(Collectors.toList());
+      List<BucketedInput<?>> inputs =
+          Arrays.stream(read)
+              .map(r -> r.toBucketedInput(SortedBucketSource.Keying.PRIMARY))
+              .collect(Collectors.toList());
       validateInputNameUniqueness(inputs);
-      return new CoGbk<>(
-          primaryKeyClass,
-          inputs,
-          DEFAULT_PARALLELISM,
-          null);
+      return new CoGbk<>(primaryKeyClass, inputs, DEFAULT_PARALLELISM, null);
     }
   }
 

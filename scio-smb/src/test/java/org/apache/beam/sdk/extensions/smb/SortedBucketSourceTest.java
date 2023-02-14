@@ -637,29 +637,27 @@ public class SortedBucketSourceTest {
 
   @Test
   public void testUniqueTupleTagIdOf() {
-    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 = ParquetAvroSortedBucketIO.read(
-        new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
-        .from("dir1");
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
 
-    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 = ParquetAvroSortedBucketIO.read(
-        new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
-        .from("dir2");
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
 
     Assert.assertThrows(
-        IllegalArgumentException.class,
-        () -> SortedBucketIO.read(String.class).of(read1, read2)
-    );
+        IllegalArgumentException.class, () -> SortedBucketIO.read(String.class).of(read1, read2));
   }
 
   @Test
   public void testUniqueTupleTagIdAnd() {
-    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 = ParquetAvroSortedBucketIO.read(
-        new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
-        .from("dir1");
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
 
-    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 = ParquetAvroSortedBucketIO.read(
-        new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
-        .from("dir2");
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
 
     SortedBucketIO.CoGbk<String> sb = SortedBucketIO.read(String.class).of(read1, read2);
 
@@ -667,21 +665,18 @@ public class SortedBucketSourceTest {
     sb.withMetricsKey("Metric Key");
     sb.withTargetParallelism(TargetParallelism.auto());
 
-    ParquetAvroSortedBucketIO.Read<GenericRecord> read3 = ParquetAvroSortedBucketIO.read(
-        new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
-        .from("dir3");
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read3 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
+            .from("dir3");
 
-    Assert.assertThrows(
-        IllegalArgumentException.class,
-        () -> sb.and(read3)
-    );
+    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read3));
   }
 
   @Test
   public void testUniqueTupleTagIdSecondaryKey() {
-    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 = ParquetAvroSortedBucketIO.read(
-        new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
-        .from("dir1");
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
 
     SortedBucketIO.CoGbkWithSecondary<String, String> sb =
         SortedBucketIO.read(String.class, String.class).of(read1);
@@ -690,14 +685,11 @@ public class SortedBucketSourceTest {
     sb.withMetricsKey("Metric Key");
     sb.withTargetParallelism(TargetParallelism.auto());
 
-    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 = ParquetAvroSortedBucketIO.read(
-        new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
-        .from("dir2");
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
 
-    Assert.assertThrows(
-        IllegalArgumentException.class,
-        () -> sb.and(read2)
-    );
+    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read2));
   }
 
   @SuppressWarnings("unchecked")
