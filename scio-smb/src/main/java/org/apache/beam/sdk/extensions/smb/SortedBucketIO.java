@@ -81,7 +81,8 @@ public class SortedBucketIO {
     HashSet<String> inputNames = new HashSet<>();
     inputs.stream()
         .forEach(i -> {
-              if (!inputNames.add(i.getTupleTag().getId())) {
+              boolean isNewKey = inputNames.add(i.getTupleTag().getId());
+              if (!isNewKey) {
                 throw new IllegalArgumentException(
                     String.format(
                         "Tuple tag name for each smb input source needs to be unique. Input "
@@ -93,11 +94,8 @@ public class SortedBucketIO {
         );
   }
 
-  /**
-   * Builder for sorted-bucket {@link CoGbk}.
-   */
+  /** Builder for sorted-bucket {@link CoGbk}. */
   public static class CoGbkBuilder<K1> {
-
     private final Class<K1> primaryKeyClass;
 
     private CoGbkBuilder(Class<K1> primaryKeyClass) {
@@ -106,13 +104,13 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K1> of(Read<?>... read) {
-      List<BucketedInput<?>> readInputs =
-          Arrays.stream(read).map(r -> r.toBucketedInput(SortedBucketSource.Keying.PRIMARY))
-              .collect(Collectors.toList());
-      validateInputNameUniqueness(readInputs);
+      List<BucketedInput<?>> inputs = Arrays.stream(read)
+          .map(r -> r.toBucketedInput(SortedBucketSource.Keying.PRIMARY))
+          .collect(Collectors.toList());
+      validateInputNameUniqueness(inputs);
       return new CoGbk<>(
           primaryKeyClass,
-          readInputs,
+          inputs,
           DEFAULT_PARALLELISM,
           null);
     }
@@ -574,9 +572,7 @@ public class SortedBucketIO {
     }
   }
 
-  /**
-   * Comparator comparing both primary and secondary keys
-   */
+  /** Comparator comparing both primary and secondary keys */
   public static class PrimaryAndSecondaryKeyComparator
       implements Comparator<ComparableKeyBytes>, Serializable {
     @Override

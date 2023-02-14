@@ -730,7 +730,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     new SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass, keyClassSecondary)
-        .of(readA, readB, readC)
+        .of(readA)
+        .and(readB)
+        .and(readC)
         .withTargetParallelism(targetParallelism),
       cgbk =>
         (
