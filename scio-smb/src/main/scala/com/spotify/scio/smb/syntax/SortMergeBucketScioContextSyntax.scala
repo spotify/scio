@@ -69,7 +69,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     rhs: SortedBucketIO.Read[R],
     targetParallelism: TargetParallelism = TargetParallelism.auto()
   ): SCollection[(K, (L, R))] = {
-    val t = SortedBucketIO.read(keyClass).of(lhs).and(rhs).withTargetParallelism(targetParallelism)
+    val t = SortedBucketIO.read(keyClass).of(lhs, rhs).withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
     val tfName = self.tfName
 
@@ -249,7 +249,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     b: SortedBucketIO.Read[B],
     targetParallelism: TargetParallelism = TargetParallelism.auto()
   ): SCollection[(K, (Iterable[A], Iterable[B]))] = {
-    val t = SortedBucketIO.read(keyClass).of(a).and(b).withTargetParallelism(targetParallelism)
+    val t = SortedBucketIO.read(keyClass).of(a, b).withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB) = (
       a.getTupleTag,
       b.getTupleTag
@@ -345,9 +345,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] = {
     val t = SortedBucketIO
       .read(keyClass)
-      .of(a)
-      .and(b)
-      .and(c)
+      .of(a, b, c)
       .withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB, tupleTagC) = (
       a.getTupleTag,
@@ -462,10 +460,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] = {
     val t = SortedBucketIO
       .read(keyClass)
-      .of(a)
-      .and(b)
-      .and(c)
-      .and(d)
+      .of(a, b, c, d)
       .withTargetParallelism(targetParallelism)
     val (tupleTagA, tupleTagB, tupleTagC, tupleTagD) = (
       a.getTupleTag,
@@ -628,7 +623,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     val tupleTagB = readB.getTupleTag
 
     new SortMergeTransformReadBuilder(
-      SortedBucketIO.read(keyClass).of(readA).and(readB).withTargetParallelism(targetParallelism),
+      SortedBucketIO.read(keyClass).of(readA, readB).withTargetParallelism(targetParallelism),
       cgbk => (cgbk.getAll(tupleTagA).asScala, cgbk.getAll(tupleTagB).asScala)
     )
   }
@@ -697,9 +692,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     new SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass)
-        .of(readA)
-        .and(readB)
-        .and(readC)
+        .of(readA, readB, readC)
         .withTargetParallelism(targetParallelism),
       cgbk =>
         (
@@ -737,9 +730,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     new SortMergeTransformReadBuilder(
       SortedBucketIO
         .read(keyClass, keyClassSecondary)
-        .of(readA)
-        .and(readB)
-        .and(readC)
+        .of(readA, readB, readC)
         .withTargetParallelism(targetParallelism),
       cgbk =>
         (
