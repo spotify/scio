@@ -646,7 +646,7 @@ public class SortedBucketSourceTest {
             .from("dir2");
 
     Assert.assertThrows(
-        IllegalArgumentException.class, () -> SortedBucketIO.read(String.class).of(read1, read2));
+        AssertionError.class, () -> SortedBucketIO.read(String.class).of(read1, read2));
   }
 
   @Test
@@ -669,7 +669,7 @@ public class SortedBucketSourceTest {
         ParquetAvroSortedBucketIO.read(new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
             .from("dir3");
 
-    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read3));
+    Assert.assertThrows(AssertionError.class, () -> sb.and(read3));
   }
 
   @Test
@@ -689,7 +689,7 @@ public class SortedBucketSourceTest {
         ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
             .from("dir2");
 
-    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read2));
+    Assert.assertThrows(AssertionError.class, () -> sb.and(read2));
   }
 
   @SuppressWarnings("unchecked")
