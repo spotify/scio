@@ -17,6 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verify;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
@@ -50,7 +52,7 @@ public class BucketMetadataUtil {
     public final Map<ResourceId, SourceMetadataValue<V>> mapping;
 
     SourceMetadata(Map<ResourceId, SourceMetadataValue<V>> mapping) {
-      assert (!mapping.isEmpty());
+      verify(!mapping.isEmpty());
       this.mapping = mapping;
     }
 

@@ -17,6 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verifyNotNull;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -115,7 +117,8 @@ public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Exa
 
   @Override
   public K2 extractKeySecondary(Example value) {
-    assert (keyFieldSecondary != null && getKeyClassSecondary() != null);
+    verifyNotNull(keyFieldSecondary);
+    verifyNotNull(getKeyClassSecondary());
     return extractKey(keyFieldSecondary, getKeyClassSecondary(), value);
   }
 

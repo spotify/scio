@@ -17,6 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verifyNotNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -272,7 +274,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   byte[] getKeyBytesSecondary(V value) {
-    assert (keyCoderSecondary != null);
+    verifyNotNull(keyCoderSecondary);
     return encodeKeyBytes(extractKeySecondary(value), keyCoderSecondary);
   }
 
@@ -301,7 +303,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   public SortedBucketIO.ComparableKeyBytes primaryAndSecondaryComparableKeyBytes(V value) {
-    assert (keyCoderSecondary != null);
+    verifyNotNull(keyCoderSecondary);
     return new SortedBucketIO.ComparableKeyBytes(
         getKeyBytesPrimary(value), getKeyBytesSecondary(value));
   }
