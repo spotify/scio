@@ -173,9 +173,12 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
    * file.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, Coder[T])
     val cls = ScioUtil.classOf[T]
     val t = beam.AvroIO.read(cls).from(path)
-    sc.applyTransform(t)
+    sc
+      .applyTransform(t)
+      .setCoder(coder)
   }
 
   /**
@@ -218,10 +221,13 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
    * file.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] = {
+    val coder = CoderMaterializer.beam(sc, Coder.avroGenericRecordCoder(schema))
     val t = beam.AvroIO
       .readGenericRecords(schema)
       .from(path)
-    sc.applyTransform(t)
+    sc
+      .applyTransform(t)
+      .setCoder(coder)
   }
 
   /**

@@ -157,7 +157,8 @@ final case class BigQueryTypedSelect[T: Coder](
   override def testId: String = s"BigQueryIO(${sqlQuery.underlying})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val rc = reader.withCoder(CoderMaterializer.beam(sc, Coder[T]))
+    val coder = CoderMaterializer.beam(sc, Coder[T])
+    val rc = reader.withCoder(coder)
     Reads.bqReadQuery(sc)(rc, sqlQuery.underlying, params.flattenResults)
   }
 
@@ -333,7 +334,8 @@ final case class BigQueryTypedTable[T: Coder](
   override def testId: String = s"BigQueryIO(${table.spec})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val io = reader.from(table.ref).withCoder(CoderMaterializer.beam(sc, Coder[T]))
+    val coder = CoderMaterializer.beam(sc, Coder[T])
+    val io = reader.from(table.ref).withCoder(coder)
     sc.applyTransform(s"Read BQ table ${table.spec}", io)
   }
 
@@ -380,13 +382,16 @@ final case class BigQueryStorage(
   override def testId: String =
     s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
+    val coder = CoderMaterializer.beam(sc, coders.tableRowCoder)
+    val read = beam.BigQueryIO.readTableRows().withCoder(coder)
     Reads.bqReadStorage(sc)(
-      beam.BigQueryIO.readTableRows(),
+      read,
       table,
       selectedFields,
       rowRestriction
     )
+  }
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] =
     throw new UnsupportedOperationException("BigQueryStorage is read-only")
@@ -647,12 +652,13 @@ object BigQueryTyped {
       s"BigQueryIO(${table.spec}, List(${selectedFields.mkString(",")}), $rowRestriction)"
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+      val coder = CoderMaterializer.beam(sc, Coder[T])
       val fromAvro = BigQueryType[T].fromAvro
       val reader = beam.BigQueryIO
         .read(new SerializableFunction[SchemaAndRecord, T] {
           override def apply(input: SchemaAndRecord): T = fromAvro(input.getRecord)
         })
-        .withCoder(CoderMaterializer.beam(sc, Coder[T]))
+        .withCoder(coder)
       Reads.bqReadStorage(sc)(reader, table, selectedFields, rowRestriction)
     }
 
