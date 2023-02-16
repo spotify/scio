@@ -63,9 +63,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
 
     self
       .covary[TableRow]
-      .write(
-        BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder)
-      )(param)
+      .write(BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder))(param)
   }
 
   /**

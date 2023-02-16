@@ -21,6 +21,7 @@ import java.io.{BufferedInputStream, InputStream, SequenceInputStream}
 import java.nio.channels.Channels
 import java.util.Collections
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
@@ -39,13 +40,15 @@ final case class TextIO(path: String) extends ScioIO[String] {
   override type WriteP = TextIO.WriteParam
   final override val tapT: TapT.Aux[String, String] = TapOf[String]
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[String] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[String] = {
+    val coder = CoderMaterializer.beam(sc, Coder.stringCoder)
     sc.applyTransform(
       BTextIO
         .read()
         .from(path)
         .withCompression(params.compression)
-    )
+    ).setCoder(coder)
+  }
 
   private def textOut(
     write: BTextIO.Write,
