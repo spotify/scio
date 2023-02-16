@@ -18,10 +18,8 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{matrix.java}}
-      - name: set JVM opts
-        run: scripts/gha_setup.sh
       - if: ${{ !matrix.coverage }}
-        run: sbt -v "++${{matrix.scala}} test"
+        run: sbt "++${{matrix.scala}} test"
       - if: ${{ matrix.coverage }}
         run: |
           sbt coverage "++${{matrix.scala}} test" coverageReport

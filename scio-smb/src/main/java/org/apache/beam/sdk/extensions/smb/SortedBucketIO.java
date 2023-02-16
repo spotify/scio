@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -77,9 +78,15 @@ public class SortedBucketIO {
   }
 
   private static void validateInputNameUniqueness(List<BucketedInput<?>> inputs) {
-    assert inputs.stream().map(i -> i.getTupleTag().getId()).collect(Collectors.toSet()).size()
-            == inputs.size()
-        : "Tuple tag name for each smb input source needs to be unique.";
+    HashSet<String> inputNames = new HashSet<>();
+    inputs.stream()
+        .forEach(
+            i ->
+                Preconditions.checkArgument(
+                    inputNames.add(i.getTupleTag().getId()),
+                    "Tuple tag name for each smb input source needs to be unique. Input source"
+                        + " name \"%s\" is reused at least once.",
+                    i.getTupleTag().getId()));
   }
 
   /** Builder for sorted-bucket {@link CoGbk}. */
