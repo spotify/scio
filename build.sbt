@@ -27,10 +27,10 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.44.0"
+val beamVersion = "2.45.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.44.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.45.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -58,29 +58,30 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.1.5/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.5.0/index.html
 val animalSnifferAnnotationsVersion = "1.22"
-val bigQueryStorageBetaVersion = "0.149.0"
-val bigQueryStorageVersion = "2.25.0"
-val checkerFrameworkVersion = "3.27.0"
-val errorProneAnnotationsVersion = "2.16"
+val bigQueryStorageBetaVersion = "0.152.4"
+val bigQueryStorageVersion = "2.28.4"
+val checkerFrameworkVersion = "3.29.0"
+val errorProneAnnotationsVersion = "2.18.0"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.104.5"
-val gaxVersion = "2.19.5"
-val googleApiCommonVersion = "2.2.2"
-val googleAuthVersion = "1.12.1"
-val googleCloudBigTableVersion = "2.16.0"
-val googleCloudDatastoreVersion = "0.103.5"
-val googleCloudMonitoringVersion = "3.7.0"
-val googleCloudSpannerVersion = "6.33.0"
-val googleCloudStorageVersion = "2.15.1"
-val googleCloudCoreVersion = "2.8.27"
-val googleCommonsProtoVersion = "2.10.0"
+val gaxHttpJsonVersion = "0.107.0"
+val gaxVersion = "2.22.0"
+val googleApiCommonVersion = "2.5.0"
+val googleAuthVersion = "1.14.0"
+val googleCloudBigTableVersion = "2.18.3"
+val googleCloudCoreVersion = "2.9.4"
+val googleCloudDatastoreVersion = "0.104.3"
+val googleCloudMonitoringVersion = "3.10.0"
+val googleCloudSpannerVersion = "6.35.2"
+val googleCloudStorageVersion = "2.17.2"
+val googleCommonsProtoVersion = "2.13.0"
 val googleHttpClientsVersion = "1.42.3"
-val googleIAMVersion = "1.6.7"
-val grpcVersion = "1.50.2"
+val googleIAMVersion = "1.8.0"
+val grpcVersion = "1.52.1"
 val opencensusVersion = "0.31.1"
-val protobufVersion = "3.21.9"
+val perfmarkVersion = "0.26.0"
+val protobufVersion = "3.21.12"
 
 val algebirdVersion = "0.13.9"
 val algebraVersion = "2.9.0"
@@ -1450,13 +1451,13 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax" % gaxVersion,
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax-httpjson" % gaxHttpJsonVersion,
+  "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,
-  "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
@@ -1503,9 +1504,10 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion,
   "io.netty" % "netty-transport" % nettyVersion,
   "io.opencensus" % "opencensus-api" % opencensusVersion,
+  "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
-  "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
+  "io.perfmark" % "perfmark-api" % perfmarkVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion
 )
