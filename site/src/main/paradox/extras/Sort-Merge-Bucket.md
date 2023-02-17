@@ -44,8 +44,10 @@ data that has been written to file system using `SortedBucketSink` into a collec
       
       * `ScioContext#sortMergeGroupByKey` (1 source)
       * `ScioContext#sortMergeJoin` (2 sources)
-      * `ScioContext#sortMergeCoGroup` (1-4 sources)
+      * `ScioContext#sortMergeCoGroup` (1-22 sources)
  
+    Note that each @javadoc[TupleTag](org.apache.beam.sdk.values.TupleTag) used to create the @javadoc[SortedBucketIO.Read](org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read)s needs to have a unique Id.
+
     @@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_join }
 
 - @javadoc[SortedBucketTransform](org.apache.beam.sdk.extensions.smb.SortedBucketTransform) reads
@@ -54,7 +56,9 @@ data that has been written to file system using `SortedBucketSink`, transforms e
 function, and immediately rewrites them using the same bucketing scheme.
     Scala APIs (see: @scaladoc[SortedBucketScioContext](com.spotify.scio.smb.syntax.SortedBucketScioContext)):
 
-      * `ScioContext#sortMergeTransform` (1-3 sources)
+      * `ScioContext#sortMergeTransform` (1-22 sources)
+    
+    Note that each @javadoc[TupleTag](org.apache.beam.sdk.values.TupleTag) used to create the @javadoc[SortedBucketIO.Read](org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read)s needs to have a unique Id.
             
     @@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_transform }
 
