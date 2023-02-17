@@ -17,6 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verifyNotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Serializable;
@@ -513,8 +515,8 @@ public class SortedBucketIO {
     public int comparePrimaryAndSecondary(final ComparableKeyBytes o) {
       int pComp = comparePrimary(o);
       if (pComp != 0) return pComp;
-      assert (secondary != null);
-      assert (o.secondary != null);
+      verifyNotNull(secondary);
+      verifyNotNull(o.secondary);
       return bytesComparator.compare(this.secondary, o.secondary);
     }
 
@@ -531,7 +533,7 @@ public class SortedBucketIO {
     public static <K1, K2> KeyFn<KV<K1, K2>> keyFnPrimaryAndSecondary(
         final Coder<K1> keyCoderPrimary, final Coder<K2> keyCoderSecondary) {
       return k -> {
-        assert (k.secondary != null);
+        verifyNotNull(k.secondary);
         K1 primary = keyFnPrimary(keyCoderPrimary).apply(k);
         try {
           return KV.of(primary, keyCoderSecondary.decode(new ByteArrayInputStream(k.secondary)));
