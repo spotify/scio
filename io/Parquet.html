@@ -200,7 +200,7 @@ spotify/scio
   <ul>
     <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
-    <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
+    <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
     <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
   </ul></li>
 </ul>
@@ -210,7 +210,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.12.4+0-96c9379c+20230208-1435*
+<i class="md-icon" title="Version">label_outline</i> 0.12.5+0-00533d3f+20230220-1509*
 </label>
 </li>
 </ul>
@@ -227,7 +227,7 @@ spotify/scio
   <ul>
     <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
-    <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
+    <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
     <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
   </ul></li>
 </ul>
@@ -381,10 +381,35 @@ def result = input.saveAsTypedParquetFile(&quot;gs://path-to-data/lake/output&qu
 <pre class="prettyprint"><code class="language-scala">import magnolify.parquet.ParquetArray.AvroCompat._
 </code></pre>
 <p>The same Avro schema evolution principles apply to Parquet, i.e. only append <code>OPTIONAL</code> or <code>REPEATED</code> fields with default <code>null</code> or <code>[]</code>. See this <a href="https://github.com/spotify/magnolify/blob/master/parquet/src/test/scala/magnolify/parquet/test/SchemaEvolutionSuite.scala">test</a> for some common scenarios w.r.t. Parquet schema evolution.</p>
-<h2><a href="#performance-tuning" name="performance-tuning" class="anchor"><span class="anchor-link"></span></a>Performance Tuning</h2>
-<p>Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop <a href="https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml">core-site.xml</a> or <code>Configuration</code> argument.</p>
+<h2><a href="#configuring-parquet" name="configuring-parquet" class="anchor"><span class="anchor-link"></span></a>Configuring Parquet</h2>
+<p>The Parquet Java <a href="https://github.com/apache/parquet-mr">library</a> heavily relies on Hadoop&rsquo;s <code>Job</code> API. Therefore, in both the Parquet library and in scio-parquet, we use Hadoop&rsquo;s <a href="https://hadoop.apache.org/docs/r2.10.2/api/org/apache/hadoop/conf/Configuration.html">Configuration</a> class to manage most Parquet read and write options.</p>
+<p>The <code>Configuration</code> class, when initialized, will load default values from the first available <code>core-site.xml</code> found on the classpath. Scio-parquet provides a default <a href="https://github.com/spotify/scio/blob/main/scio-parquet/src/main/resources/core-site.xml"><code>core-site.xml</code> implementation</a>: if your Scio pipeline has a dependency on <code>scio-parquet</code>, these default options will be picked up in your pipeline.</p>
+<h3><a href="#overriding-the-default-configuration" name="overriding-the-default-configuration" class="anchor"><span class="anchor-link"></span></a>Overriding the Default Configuration</h3>
+<p>You can override the default configuration in two ways:</p>
+<ol>
+  <li>
+  <p>Declare a <code>core-site.xml</code> file of your own in your project&rsquo;s <code>src/main/resources</code> folder. Note that Hadoop can only pick one <code>core-site.xml</code> to read: if you override the file in your project, Hadoop will not read Scio&rsquo;s default <code>core-site.xml</code> at all, and none of its default options will be loaded.</p></li>
+  <li>
+  <p>Create an in-memory <code>Configuration</code> object for use with scio-parquet&rsquo;s <code>ReadParam</code> and <code>WriteParam</code>. Any options provided this way will be <em>appended</em> to Scio&rsquo;s default configuration.</p></li>
+</ol>
+<p>You can create and pass in a custom Configuration using our <code>ParquetConfiguration</code> helper, available in Scio 0.12.x and above:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.parquet.ParquetConfiguration
+
+data
+  .saveAsParquetAvroFile(args(&quot;output&quot;), conf = ParquetConfiguration.of(&quot;parquet.block.size&quot; -&gt; 536870912))
+</code></pre>
+<p>If you&rsquo;re on Scio 0.11.x or below, you&rsquo;ll have to create a <code>Configuration</code> object directly:</p>
+<pre class="prettyprint"><code class="language-scala">import org.apache.hadoop.conf.Configuration
+
+val parquetConf: Configuration = {
+  val conf: Configuration = new Configuration()
+  conf.setInt(&quot;parquet.block.size&quot;, 536870912)
+  conf
+}
+</code></pre>
+<h3><a href="#common-configuration-options" name="common-configuration-options" class="anchor"><span class="anchor-link"></span></a>Common Configuration Options</h3>
 <ul>
-  <li><code>parquet.block.size</code> - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB.</li>
+  <li><code>parquet.block.size</code> - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB, although you&rsquo;ll have to weigh the tradeoffs: a larger block size means fewer seek operations on blob storage, at the cost of having to load a larger row group into memory.</li>
   <li><code>fs.gs.inputstream.fadvise</code> - Parquet relies heavily on random seeks so this GCS connector setting should be set to <code>RANDOM</code>. See this <a href="https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more">blog post</a> for more.</li>
 </ul>
 <p>Here are some other recommended settings.</p>
@@ -402,7 +427,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.12.4+0-96c9379c+20230208-1435*
+0.12.5+0-00533d3f+20230220-1509*
 </span>
 </div>
 </article>
