@@ -18,252 +18,224 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
+import com.twitter.algebird.{CMS, TopNCMS, TopPctCMS}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class PairSkewedSCollectionFunctionsTest extends PipelineSpec {
-  val (skewSeed, skewEps) = (42, 0.001d)
+class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPropertyChecks {
+  import com.twitter.algebird.CMSHasherImplicits._
 
-  it should "support skewedJoin() without hotkeys and no duplicate keys" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-      val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should containInAnyOrder(Seq(("a", (1, 11)), ("b", (2, 12)), ("b", (2, 13))))
-    }
-  }
+  val skewSeed = 42
+  val skewEps = 0.001d
+  val skewDelta = 1e-10
 
-  it should "support skewedJoin() without hotkeys" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-      val p = p1.skewedJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13)))
+  val joinSetup = Table(
+    ("lhs", "rhs", "out"),
+    // no duplicate keys
+    (
+      Seq("a" -> 1, "b" -> 2, "c" -> 3),
+      Seq("a" -> 11, "b" -> 12, "b" -> 13),
+      Seq("a" -> ((1, 11)), "b" -> ((2, 12)), "b" -> ((2, 13)))
+    ),
+    // duplicate keys
+    (
+      Seq("a" -> 1, "a" -> 2, "b" -> 3),
+      Seq("a" -> 11, "b" -> 12, "b" -> 13, "c" -> 14),
+      Seq("a" -> ((1, 11)), "a" -> ((2, 11)), "b" -> ((3, 12)), "b" -> ((3, 13)))
+    )
+  )
+
+  val leftJoinSetup = Table(
+    ("lhs", "rhs", "out"),
+    // no duplicate keys
+    (
+      Seq("a" -> 1, "b" -> 2, "c" -> 3),
+      Seq("a" -> 11, "b" -> 12, "b" -> 13),
+      Seq(
+        "a" -> ((1, Some(11))),
+        "b" -> ((2, Some(12))),
+        "b" -> ((2, Some(13))),
+        "c" -> ((3, None))
       )
-    }
-  }
-
-  it should "support skewedJoin() with hotkey" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-      // set threshold to 2, to hash join on "a"
-      val p = p1.skewedJoin(p2, 2, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13)))
+    ),
+    // duplicate keys
+    (
+      Seq("a" -> 1, "a" -> 2, "b" -> 3),
+      Seq("a" -> 11, "b" -> 12, "b" -> 13, "c" -> 14),
+      Seq(
+        "a" -> ((1, Some(11))),
+        "a" -> ((2, Some(11))),
+        "b" -> ((3, Some(12))),
+        "b" -> ((3, Some(13)))
       )
-    }
-  }
+    )
+  )
 
-  it should "support skewedJoin() with 0.5 sample" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("a", 3), ("b", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-
-      // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
-      val p = p1.skewedJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.5)
-      p should containInAnyOrder(
-        Seq(("a", (1, 11)), ("a", (2, 11)), ("a", (3, 11)), ("b", (3, 12)), ("b", (3, 13)))
+  val fullJoinSetup = Table(
+    ("lhs", "rhs", "out"),
+    // no duplicate keys
+    (
+      Seq("a" -> 1, "b" -> 2, "c" -> 3),
+      Seq("a" -> 11, "b" -> 12, "b" -> 13),
+      Seq(
+        "a" -> ((Some(1), Some(11))),
+        "b" -> ((Some(2), Some(12))),
+        "b" -> ((Some(2), Some(13))),
+        "c" -> ((Some(3), None))
       )
-    }
-  }
-
-  it should "support skewedJoin() with empty key count (no hash join)" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2)))
-      val p2 = sc.parallelize(Seq(("a", 11)))
-
-      // Small sample size to force empty key count
-      val p = p1.skewedJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.01)
-      p should containInAnyOrder(Seq(("a", (2, 11)), ("a", (1, 11))))
-    }
-  }
-
-  it should "support skewedLeftOuterJoin() without hotkeys and no duplicate keys" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-      val p = p1.skewedLeftOuterJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(("a", (1, Some(11))), ("b", (2, Some(12))), ("b", (2, Some(13))), ("c", (3, None)))
+    ),
+    // duplicate keys
+    (
+      Seq("a" -> 1, "a" -> 2, "b" -> 3),
+      Seq("a" -> 11, "b" -> 12, "b" -> 13, "c" -> 14),
+      Seq(
+        "a" -> ((Some(1), Some(11))),
+        "a" -> ((Some(2), Some(11))),
+        "b" -> ((Some(3), Some(12))),
+        "b" -> ((Some(3), Some(13))),
+        "c" -> ((None, Some(14)))
       )
+    )
+  )
+
+  val methodSetup = Table(
+    "method",
+    // no hot keys
+    HotKeyMethod.Threshold(Long.MaxValue),
+    HotKeyMethod.TopPercentage(0.99),
+    // hot keys
+    HotKeyMethod.Threshold(2),
+    HotKeyMethod.TopPercentage(0.25),
+    HotKeyMethod.TopN(2)
+  )
+
+  val sampleSetup = Table(
+    "sample",
+    1.0,
+    0.5
+  )
+
+  it should "support skewedJoin()" in {
+    forAll(joinSetup) { case (lhs, rhs, out) =>
+      forAll(sampleSetup) { sampleFraction =>
+        forAll(methodSetup) { method =>
+          runWithContext { sc =>
+            val pLhs = sc.parallelize(lhs)
+            val pRhs = sc.parallelize(rhs)
+            val p =
+              pLhs.skewedJoin(pRhs, method, skewEps, skewSeed, sampleFraction = sampleFraction)
+            p should containInAnyOrder(out)
+          }
+        }
+      }
     }
   }
 
-  it should "support skewedLeftOuterJoin() without hotkeys" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-      val p = p1.skewedLeftOuterJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (1, Some(11))),
-          ("a", (2, Some(11))),
-          ("b", (3, Some(12))),
-          ("b", (3, Some(13))),
-          ("c", (4, None))
-        )
-      )
+  it should "support skewedLeftOuterJoin()" in {
+    forAll(leftJoinSetup) { case (lhs, rhs, out) =>
+      forAll(sampleSetup) { sampleFraction =>
+        forAll(methodSetup) { method =>
+          runWithContext { sc =>
+            val pLhs = sc.parallelize(lhs)
+            val pRhs = sc.parallelize(rhs)
+            val p =
+              pLhs.skewedLeftOuterJoin(
+                pRhs,
+                method,
+                skewEps,
+                skewSeed,
+                sampleFraction = sampleFraction
+              )
+            p should containInAnyOrder(out)
+          }
+        }
+      }
     }
   }
 
-  it should "support skewedLeftOuterJoin() with hotkey" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
-      // set threshold to 2, to hash join on "a"
-      val p = p1.skewedLeftOuterJoin(p2, 2, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (1, Some(11))),
-          ("a", (2, Some(11))),
-          ("b", (3, Some(12))),
-          ("b", (3, Some(13))),
-          ("c", (4, None))
-        )
-      )
+  it should "support skewedFullOuterJoin()" in {
+    forAll(fullJoinSetup) { case (lhs, rhs, out) =>
+      forAll(sampleSetup) { sampleFraction =>
+        forAll(methodSetup) { method =>
+          runWithContext { sc =>
+            val pLhs = sc.parallelize(lhs)
+            val pRhs = sc.parallelize(rhs)
+            val p = pLhs.skewedFullOuterJoin(
+              pRhs,
+              method,
+              skewEps,
+              skewSeed,
+              sampleFraction = sampleFraction
+            )
+            p should containInAnyOrder(out)
+          }
+        }
+      }
     }
   }
 
-  it should "support skewedLeftOuterJoin() with 0.5 sample" in {
-    import com.twitter.algebird.CMSHasherImplicits._
+  it should "partition hot keys with threshold method" in {
+    val lhs = Seq("a" -> 1, "a" -> 2, "a" -> 3, "b" -> 4)
+    val rhs = Seq("a" -> 11, "b" -> 12, "c" -> 13)
+    val threshold = 2L
     runWithContext { sc =>
-      val p1 =
-        sc.parallelize(Seq(("a", 1), ("a", 2), ("a", 3), ("b", 3), ("c", 4)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13)))
+      val pLhs = sc.parallelize(lhs)
+      val pRhs = sc.parallelize(rhs)
+      val aggregator = CMS.aggregator[String](skewEps, skewDelta, skewSeed)
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator)
+      val (l, r) = CMSOperations.partition(pLhs, pRhs, cms, threshold)
 
-      // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
-      val p = p1.skewedLeftOuterJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.5)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (1, Some(11))),
-          ("a", (2, Some(11))),
-          ("a", (3, Some(11))),
-          ("b", (3, Some(12))),
-          ("b", (3, Some(13))),
-          ("c", (4, None))
-        )
-      )
+      // hot key is a
+      val (lhot, lchill) = lhs.partition { case (k, _) => k == "a" }
+      l.hot should containInAnyOrder(lhot)
+      l.chill should containInAnyOrder(lchill)
+
+      val (rhot, rchill) = rhs.partition { case (k, _) => k == "a" }
+      r.hot should containInAnyOrder(rhot)
+      r.chill should containInAnyOrder(rchill)
     }
   }
 
-  it should "support skewedLeftOuterJoin() with empty key count (no hash join)" in {
-    import com.twitter.algebird.CMSHasherImplicits._
+  it should "partition hot keys with percentage method" in {
+    val lhs = Seq("a" -> 1, "a" -> 2, "a" -> 3, "b" -> 4)
+    val rhs = Seq("a" -> 11, "b" -> 12, "c" -> 13)
+    val pct = 0.5
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11)))
+      val pLhs = sc.parallelize(lhs)
+      val pRhs = sc.parallelize(rhs)
+      val aggregator = TopPctCMS.aggregator[String](skewEps, skewDelta, skewSeed, pct)
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator)
+      val (l, r) = CMSOperations.partition(pLhs, pRhs, cms)
 
-      // Small sample size to force empty key count
-      val p = p1.skewedLeftOuterJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.01)
-      p should containInAnyOrder(Seq(("a", (2, Some(11))), ("a", (1, Some(11))), ("b", (3, None))))
+      // hot key is a
+      val (lhot, lchill) = lhs.partition { case (k, _) => k == "a" }
+      l.hot should containInAnyOrder(lhot)
+      l.chill should containInAnyOrder(lchill)
+
+      val (rhot, rchill) = rhs.partition { case (k, _) => k == "a" }
+      r.hot should containInAnyOrder(rhot)
+      r.chill should containInAnyOrder(rchill)
     }
   }
 
-  it should "support skewedFullOuterJoin() without hotkeys and no duplicate keys" in {
-    import com.twitter.algebird.CMSHasherImplicits._
+  it should "partition hot keys with topN method" in {
+    val lhs = Seq("a" -> 1, "a" -> 2, "a" -> 3, "b" -> 4)
+    val rhs = Seq("a" -> 11, "b" -> 12, "c" -> 13)
+    val count = 1
     runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("b", 2), ("c", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
-      val p = p1.skewedFullOuterJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (Some(1), Some(11))),
-          ("b", (Some(2), Some(12))),
-          ("b", (Some(2), Some(13))),
-          ("c", (Some(3), None)),
-          ("d", (None, Some(14)))
-        )
-      )
-    }
-  }
+      val pLhs = sc.parallelize(lhs)
+      val pRhs = sc.parallelize(rhs)
+      val aggregator = TopNCMS.aggregator[String](skewEps, skewDelta, skewSeed, count)
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator)
+      val (l, r) = CMSOperations.partition(pLhs, pRhs, cms)
 
-  it should "support skewedFullOuterJoin() without hotkeys" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
-      val p = p1.skewedFullOuterJoin(p2, Long.MaxValue, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (Some(1), Some(11))),
-          ("a", (Some(2), Some(11))),
-          ("b", (Some(3), Some(12))),
-          ("b", (Some(3), Some(13))),
-          ("c", (Some(4), None)),
-          ("d", (None, Some(14)))
-        )
-      )
-    }
-  }
+      // hot key is a
+      val (lhot, lchill) = lhs.partition { case (k, _) => k == "a" }
+      l.hot should containInAnyOrder(lhot)
+      l.chill should containInAnyOrder(lchill)
 
-  it should "support skewedFullOuterJoin() with hotkey" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3), ("c", 4)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
-      // set threshold to 2, to hash join on "a"
-      val p = p1.skewedFullOuterJoin(p2, 2, skewEps, skewSeed)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (Some(1), Some(11))),
-          ("a", (Some(2), Some(11))),
-          ("b", (Some(3), Some(12))),
-          ("b", (Some(3), Some(13))),
-          ("c", (Some(4), None)),
-          ("d", (None, Some(14)))
-        )
-      )
-    }
-  }
-
-  it should "support skewedFullOuterJoin() with 0.5 sample" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 =
-        sc.parallelize(Seq(("a", 1), ("a", 2), ("a", 3), ("b", 3), ("c", 4)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("b", 12), ("b", 13), ("d", 14)))
-
-      // set threshold to 3, given 0.5 fraction for sample - "a" should not be hash joined
-      val p =
-        p1.skewedFullOuterJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.5)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (Some(1), Some(11))),
-          ("a", (Some(2), Some(11))),
-          ("a", (Some(3), Some(11))),
-          ("b", (Some(3), Some(12))),
-          ("b", (Some(3), Some(13))),
-          ("c", (Some(4), None)),
-          ("d", (None, Some(14)))
-        )
-      )
-    }
-  }
-
-  it should "support skewedFullOuterJoin() with empty key count (no hash join)" in {
-    import com.twitter.algebird.CMSHasherImplicits._
-    runWithContext { sc =>
-      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
-      val p2 = sc.parallelize(Seq(("a", 11), ("c", 12)))
-
-      // Small sample size to force empty key count
-      val p =
-        p1.skewedFullOuterJoin(p2, 3, skewEps, skewSeed, sampleFraction = 0.01)
-      p should containInAnyOrder(
-        Seq(
-          ("a", (Some(2), Some(11))),
-          ("a", (Some(1), Some(11))),
-          ("b", (Some(3), None)),
-          ("c", (None, Some(12)))
-        )
-      )
+      val (rhot, rchill) = rhs.partition { case (k, _) => k == "a" }
+      r.hot should containInAnyOrder(rhot)
+      r.chill should containInAnyOrder(rchill)
     }
   }
 }
