@@ -68,19 +68,37 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
     options.setRunner(classOf[DirectRunner])
 
     val martin = Person("Martin Sheen")
-    val expectedRoles = Seq(
+    val morgan = Person("Morgan Freeman")
+    val michael = Person("Michael Douglas")
+
+    val americanPresident = Movie("American President", 1995)
+
+    val queryMovieYears = Seq(1994, 0, 1995)
+    val expectedRolesMartin = Seq(
       Role(martin, Movie("Wall Street", 1987), "Carl Fox"),
       Role(martin, Movie("American President", 1995), "A.J. MacInerney")
     )
+    val expectedRolesMovieYears = Seq(
+      Role(martin, americanPresident, "A.J. MacInerney"),
+      Role(michael, americanPresident, "President Andrew Shepherd"),
+      Role(morgan, Movie("The Shawshank Redemption", 1994), "Ellis Boyd 'Red' Redding")
+    )
+
+    val queryRoles =
+      s"""MATCH (p)-[r: ACTED_IN]->(m)
+         |WHERE p.name='${martin.name}'
+         |RETURN p as person, m as movie, r.role as role
+         |""".stripMargin
+
+    val queryMovieYear =
+      s"""MATCH (p)-[r: ACTED_IN]->(m)
+         |WHERE m.year = $$movieYear
+         |RETURN p as person, m as movie, r.role as role
+         |""".stripMargin
 
     val neo4jOptions = Neo4jOptions(
       Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
     )
-
-    val queryRoles = s"""MATCH (p)-[r: ACTED_IN]->(m)
-                        |WHERE p.name='${martin.name}'
-                        |RETURN p as person, m as movie, r.role as role
-                        |""".stripMargin
 
     implicit val rowMapper = (record: Record) => {
       val p = Person(record.get("p").get("name").asString())
@@ -89,8 +107,17 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
     }
 
     runWithRealContext(options) { sc =>
-      val result = sc.neo4jCypher[Role](neo4jOptions, queryRoles)
-      result should containInAnyOrder(expectedRoles)
+      val resultQueryRoles = sc.neo4jCypher[Role](neo4jOptions, queryRoles)
+      resultQueryRoles should containInAnyOrder(expectedRolesMartin)
+
+      val resultQueryMovieYear = sc
+        .parallelize(queryMovieYears)
+        .neo4jCypherWithParams[Role](
+          neo4jOptions,
+          queryMovieYear,
+          (my: Int) => Map("movieYear" -> java.lang.Integer.valueOf(my))
+        )
+      resultQueryMovieYear should containInAnyOrder(expectedRolesMovieYears)
     }
   }
 

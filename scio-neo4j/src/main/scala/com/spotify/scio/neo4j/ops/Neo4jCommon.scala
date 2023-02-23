@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Spotify AB.
+ * Copyright 2023 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,22 @@
  * under the License.
  */
 
-package com.spotify.scio.neo4j.syntax
+package com.spotify.scio.neo4j.ops
 
-import com.spotify.scio.neo4j.ops.{Neo4jSCollectionReadOps, Neo4jSCollectionWriteOps}
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.neo4j.Neo4jConnectionOptions
+import org.apache.beam.sdk.io.{neo4j => beam}
 
-trait SCollectionSyntax {
+/** Shared tooling for Scio-Neo4j components */
+object Neo4jCommon {
 
-  implicit def neo4jSCollectionWriteOps[T](sc: SCollection[T]): Neo4jSCollectionWriteOps[T] =
-    new Neo4jSCollectionWriteOps[T](sc)
-
-  implicit def neo4jSCollectionReadOps[T](sColl: SCollection[T]): Neo4jSCollectionReadOps[T] =
-    new Neo4jSCollectionReadOps[T](sColl)
+  def dataSourceConfiguration(
+    connectionOptions: Neo4jConnectionOptions
+  ): beam.Neo4jIO.DriverConfiguration = {
+    beam.Neo4jIO.DriverConfiguration.create(
+      connectionOptions.url,
+      connectionOptions.username,
+      connectionOptions.password
+    )
+  }
 
 }
