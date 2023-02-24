@@ -76,8 +76,6 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
   val americanPresident = Movie("American President", 1995)
 
   val options = PipelineOptionsFactory.create()
-  options.setRunner(classOf[DirectRunner])
-
   lazy val neo4jOptions = Neo4jOptions(
     Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
   )
@@ -101,9 +99,6 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
   }
 
   it should "read cypher query from the graph database with parameter" in {
-    val options = PipelineOptionsFactory.create()
-    options.setRunner(classOf[DirectRunner])
-
     val queryParams = Seq(
       MovieParam(1994),
       MovieParam(0),
