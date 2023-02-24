@@ -106,10 +106,10 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
     )
 
     val queryRoles =
-      s"""MATCH (p)-[r: ACTED_IN]->(m)
-         |WHERE m.year = $$year
-         |RETURN p as person, m as movie, r.role as role
-         |""".stripMargin
+      """MATCH (p)-[r: ACTED_IN]->(m)
+        |WHERE m.year = $year
+        |RETURN p as person, m as movie, r.role as role
+        |""".stripMargin
 
     val expectedRoles = Seq(
       Role(martin, americanPresident, "A.J. MacInerney"),
