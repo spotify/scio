@@ -20,11 +20,10 @@ package com.spotify.scio.neo4j
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
-import com.spotify.scio.neo4j.ops.Neo4jCommon.dataSourceConfiguration
-import com.spotify.scio.neo4j.ops.Neo4jCommonImplicits
 import com.spotify.scio.values.SCollection
 import magnolify.neo4j.ValueType
 import org.apache.beam.sdk.io.{neo4j => beam}
+import org.neo4j.driver.{Record, Value, Values}
 
 import scala.util.matching.Regex
 
@@ -35,6 +34,9 @@ object Neo4jIO {
   }
   final case class WriteParam(batchSize: Long = WriteParam.BeamDefaultBatchSize)
 
+  implicit private[neo4j] def recordConverter(record: Record): Value =
+    Values.value(record.asMap(identity[Value]))
+
   private[neo4j] val UnwindParameterRegex: Regex = """UNWIND \$(\w+)""".r.unanchored
 
   private[neo4j] def neo4jIoId(opts: Neo4jOptions, cypher: String): String =
@@ -43,6 +45,14 @@ object Neo4jIO {
   private[neo4j] def neo4jIoId(opts: Neo4jConnectionOptions, cypher: String): String =
     s"${opts.username}:${opts.password}@${opts.url}:$cypher"
 
+  private[neo4j] def dataSourceConfiguration(
+    connectionOptions: Neo4jConnectionOptions
+  ): beam.Neo4jIO.DriverConfiguration =
+    beam.Neo4jIO.DriverConfiguration.create(
+      connectionOptions.url,
+      connectionOptions.username,
+      connectionOptions.password
+    )
 }
 
 final case class Neo4jIO[T](neo4jOptions: Neo4jOptions, cypher: String)(implicit
@@ -50,7 +60,6 @@ final case class Neo4jIO[T](neo4jOptions: Neo4jOptions, cypher: String)(implicit
   coder: Coder[T]
 ) extends ScioIO[T] {
 
-  import Neo4jCommonImplicits._
   import Neo4jIO._
 
   override type ReadP = Unit

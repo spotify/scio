@@ -4,7 +4,7 @@ import com.dimafeng.testcontainers.{ForAllTestContainer, Neo4jContainer}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.neo4j.driver.{AuthTokens, Driver, GraphDatabase, Record}
+import org.neo4j.driver.{AuthTokens, Driver, GraphDatabase}
 import org.scalatest.concurrent.Eventually
 import org.testcontainers.utility.DockerImageName
 
@@ -21,6 +21,9 @@ object Neo4jIOIT {
   final case class Movie(title: String, year: Int)
   final case class Role(person: Person, movie: Movie, role: String)
   final case class Origin(movie: String, country: String)
+
+  final case class MovieParam(year: Int)
+
 }
 
 class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
@@ -37,7 +40,8 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
   // creating data from
   // https://neo4j.com/docs/getting-started/current/cypher-intro/load-csv/#_the_graph_model
   // (m)-[:ORIGIN]->(c) relation is added in the write test
-  "Neo4jIO" should "read cypher query from the graph database" in {
+  override def afterStart(): Unit = {
+    super.afterStart()
     val session = client.session()
     try {
       session.writeTransaction { tx =>
@@ -63,76 +67,75 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
         ()
       }
     } finally session.close()
+  }
 
-    val options = PipelineOptionsFactory.create()
-    options.setRunner(classOf[DirectRunner])
+  val martin = Person("Martin Sheen")
+  val morgan = Person("Morgan Freeman")
+  val michael = Person("Michael Douglas")
 
-    val martin = Person("Martin Sheen")
-    val morgan = Person("Morgan Freeman")
-    val michael = Person("Michael Douglas")
+  val americanPresident = Movie("American President", 1995)
 
-    val americanPresident = Movie("American President", 1995)
+  val options = PipelineOptionsFactory.create()
+  options.setRunner(classOf[DirectRunner])
 
-    val queryMovieYears = Seq(1994, 0, 1995)
-    val expectedRolesMartin = Seq(
-      Role(martin, Movie("Wall Street", 1987), "Carl Fox"),
-      Role(martin, Movie("American President", 1995), "A.J. MacInerney")
-    )
-    val expectedRolesMovieYears = Seq(
-      Role(martin, americanPresident, "A.J. MacInerney"),
-      Role(michael, americanPresident, "President Andrew Shepherd"),
-      Role(morgan, Movie("The Shawshank Redemption", 1994), "Ellis Boyd 'Red' Redding")
-    )
+  lazy val neo4jOptions = Neo4jOptions(
+    Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
+  )
 
+  "Neo4jIO" should "read cypher query from the graph database" in {
     val queryRoles =
       s"""MATCH (p)-[r: ACTED_IN]->(m)
          |WHERE p.name='${martin.name}'
          |RETURN p as person, m as movie, r.role as role
          |""".stripMargin
 
-    val queryMovieYear =
-      s"""MATCH (p)-[r: ACTED_IN]->(m)
-         |WHERE m.year = $$movieYear
-         |RETURN p as person, m as movie, r.role as role
-         |""".stripMargin
-
-    val neo4jOptions = Neo4jOptions(
-      Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
+    val expectedRoles = Seq(
+      Role(martin, Movie("Wall Street", 1987), "Carl Fox"),
+      Role(martin, Movie("American President", 1995), "A.J. MacInerney")
     )
-
-    implicit val rowMapper = (record: Record) => {
-      val p = Person(record.get("p").get("name").asString())
-      val m = Movie(record.get("m").get("name").asString(), record.get("m").get("year").asInt())
-      Role(p, m, record.get("r").get("role").asString())
-    }
 
     runWithRealContext(options) { sc =>
       val resultQueryRoles = sc.neo4jCypher[Role](neo4jOptions, queryRoles)
-      resultQueryRoles should containInAnyOrder(expectedRolesMartin)
+      resultQueryRoles should containInAnyOrder(expectedRoles)
+    }
+  }
 
+  it should "read cypher query from the graph database with parameter" in {
+    val options = PipelineOptionsFactory.create()
+    options.setRunner(classOf[DirectRunner])
+
+    val queryParams = Seq(
+      MovieParam(1994),
+      MovieParam(0),
+      MovieParam(1995)
+    )
+
+    val queryRoles =
+      s"""MATCH (p)-[r: ACTED_IN]->(m)
+         |WHERE m.year = $$year
+         |RETURN p as person, m as movie, r.role as role
+         |""".stripMargin
+
+    val expectedRoles = Seq(
+      Role(martin, americanPresident, "A.J. MacInerney"),
+      Role(michael, americanPresident, "President Andrew Shepherd"),
+      Role(morgan, Movie("The Shawshank Redemption", 1994), "Ellis Boyd 'Red' Redding")
+    )
+
+    runWithRealContext(options) { sc =>
       val resultQueryMovieYear = sc
-        .parallelize(queryMovieYears)
-        .neo4jCypherWithParams[Role](
-          neo4jOptions,
-          queryMovieYear,
-          (my: Int) => Map("movieYear" -> java.lang.Integer.valueOf(my))
-        )
-      resultQueryMovieYear should containInAnyOrder(expectedRolesMovieYears)
+        .parallelize(queryParams)
+        .neo4jCypher[Role](neo4jOptions, queryRoles)
+
+      resultQueryMovieYear should containInAnyOrder(expectedRoles)
     }
   }
 
   it should "write to the graph database" in {
-    val options = PipelineOptionsFactory.create()
-    options.setRunner(classOf[DirectRunner])
-
     val movieOrigins = Seq(
       Origin("Wall Street", "USA"),
       Origin("American President", "USA"),
       Origin("The Shawshank Redemption", "USA")
-    )
-
-    val neo4jOptions = Neo4jOptions(
-      Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
     )
 
     val insertOrigins = """UNWIND $origin AS origin
