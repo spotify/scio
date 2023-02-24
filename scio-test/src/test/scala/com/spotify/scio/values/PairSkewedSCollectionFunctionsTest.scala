@@ -24,12 +24,12 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPropertyChecks {
   import com.twitter.algebird.CMSHasherImplicits._
 
-  val skewSeed = 42
-  val skewEps = 0.001d
-  val skewDelta = 1e-10
-  val skewWithReplacement = true
+  private val skewSeed = 42
+  private val skewEps = 0.001d
+  private val skewDelta = 1e-10
+  private val skewWithReplacement = true
 
-  val joinSetup = Table(
+  private val joinSetup = Table(
     ("lhs", "rhs", "out"),
     // no duplicate keys
     (
@@ -45,7 +45,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
     )
   )
 
-  val leftJoinSetup = Table(
+  private val leftJoinSetup = Table(
     ("lhs", "rhs", "out"),
     // no duplicate keys
     (
@@ -71,7 +71,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
     )
   )
 
-  val fullJoinSetup = Table(
+  private val fullJoinSetup = Table(
     ("lhs", "rhs", "out"),
     // no duplicate keys
     (
@@ -98,7 +98,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
     )
   )
 
-  val methodSetup = Table(
+  private val methodSetup = Table(
     "method",
     // no hot keys
     HotKeyMethod.Threshold(Long.MaxValue),
@@ -109,7 +109,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
     HotKeyMethod.TopN(2)
   )
 
-  val sampleSetup = Table(
+  private val sampleSetup = Table(
     "sample",
     1.0,
     0.5
