@@ -71,7 +71,6 @@ object HotKeyMethod {
  */
 class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
    *
@@ -84,7 +83,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val p = logs.skewedJoin(logMetadata)
    *   }}}
    *
-   * Read more about CMS: [[com.twitter.algebird.CMS!]].
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
    * @group join
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
@@ -101,10 +100,10 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param sampleFraction
    *   left side sample fraction. Default is `1.0` - no sampling.
    * @param withReplacement
-   *   whether to use sampling with replacement, see [[SCollection.sample(Boolean,Double)]]. Default
+   *   whether to use sampling with replacement, see
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
    *   is true.
    */
-  // format:on
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod = HotKeyMethod.Threshold(9000),
@@ -129,10 +128,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  /**
-   * @deprecated
-   *   see [[skewedJoin(SCollection, HotKeyMethod, Double, Int, Double, Double, Boolean)]]
-   */
   @deprecated("Use skewedJoin with HotKeyMethod.Threshold instead ", "0.13.0")
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
@@ -153,14 +148,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       withReplacement
     )
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
    *
    * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
    * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
-   * estimate is within `eps * N` of the true frequency. `true frequency <= estimate <= true
-   * frequency + eps * N`, where N is the total size of the left hand side stream so far.
+   * estimate is within `eps * N` of the true frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -173,16 +170,15 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val p = logs.skewedJoin(logMetadata, hotKeyThreshold=8500, cms=hotKeyCMS)
    *   }}}
    *
-   * Read more about CMS: [[com.twitter.algebird.CMS!]].
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
    * @group join
    * @param hotKeyThreshold
    *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
    *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
    *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind.
    * @param cms
-   *   left hand side key [[com.twitter.algebird.CMS!]]
+   *   left hand side key [[com.twitter.algebird.CMS]]
    */
-  // format:on
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
@@ -192,14 +188,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     SkewedJoins.join(lhsPartitions, rhsPartitions)
   }
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
    *
    * Perform a skewed join where some keys on the left hand may be hot. Frequency of a key is
    * estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
-   * frequency. `true frequency <= estimate <= true frequency + eps * N`, where N is the total size
-   * of the left hand side stream so far.
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -212,12 +210,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val p = logs.skewedJoin(logMetadata, hotKeyCMS)
    *   }}}
    *
-   * Read more about TopCMS: [[com.twitter.algebird.TopCMS!]].
+   * Read more about TopCMS: [[com.twitter.algebird.TopCMS]].
    * @group join
    * @param cms
-   *   left hand side key [[com.twitter.algebird.TopCMS!]]
+   *   left hand side key [[com.twitter.algebird.TopCMS]]
    */
-  // format:on
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
     cms: SCollection[TopCMS[K]]
@@ -227,14 +224,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     SkewedJoins.join(lhsPartitions, rhsPartitions)
   }
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.leftOuterJoin]].
    *
    * Perform a skewed left join where some keys on the left hand may be hot. Frequency of a key is
    * estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
-   * frequency. `true frequency <= estimate <= true frequency + eps * N`, where N is the total size
-   * of the left hand side stream so far.
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -245,7 +244,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val p = logs.skewedLeftJoin(logMetadata)
    *   }}}
    *
-   * Read more about CMS: [[com.twitter.algebird.CMS!]].
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
    * @group join
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
@@ -262,10 +261,10 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param sampleFraction
    *   left side sample fraction. Default is `1.0` - no sampling.
    * @param withReplacement
-   *   whether to use sampling with replacement, see [[SCollection.sample(Boolean,Double)]]. Default
+   *   whether to use sampling with replacement, see
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
    *   is true.
    */
-  // format:on
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod = HotKeyMethod.Threshold(9000),
@@ -290,10 +289,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  /**
-   * @deprecated
-   *   see [[skewedLeftOuterJoin(SCollection, HotKeyMethod, Double, Int, Double, Double, Boolean)]]
-   */
   @deprecated("Use skewedLeftOuterJoin with HotKeyMethod.Threshold instead ", "0.13.0")
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
@@ -314,14 +309,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       withReplacement
     )
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.leftOuterJoin]].
    *
    * Perform a skewed left join where some keys on the left hand may be hot, i.e. appear more than
    * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
-   * estimate is within `eps * N` of the true frequency. `true frequency <= estimate <= true
-   * frequency + eps * N`, where N is the total size of the left hand side stream so far.
+   * estimate is within `eps * N` of the true frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -334,16 +331,15 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val p = logs.skewedLeftOuterJoin(logMetadata, hotKeyThreshold=8500, cms=hotKeyCMS)
    *   }}}
    *
-   * Read more about CMS: [[com.twitter.algebird.CMS!]].
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
    * @group join
    * @param hotKeyThreshold
    *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
    *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
    *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind.
    * @param cms
-   *   left hand side key [[com.twitter.algebird.CMS!]]
+   *   left hand side key [[com.twitter.algebird.CMS]]
    */
-  // format:on
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
@@ -353,14 +349,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     SkewedJoins.leftOuterJoin(lhsPartitions, rhsPartitions)
   }
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.leftOuterJoin]].
    *
    * Perform a skewed left join where some keys on the left hand may be hot. Frequency of a key is
    * estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
-   * frequency. `true frequency <= estimate <= true frequency + eps * N`, where N is the total size
-   * of the left hand side stream so far.
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -373,12 +371,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val p = logs.skewedLeftOuterJoin(logMetadata, hotKeyCMS)
    *   }}}
    *
-   * Read more about TopCMS: [[com.twitter.algebird.TopCMS!]].
+   * Read more about TopCMS: [[com.twitter.algebird.TopCMS]].
    * @group join
    * @param cms
-   *   left hand side key [[com.twitter.algebird.TopCMS!]]
+   *   left hand side key [[com.twitter.algebird.TopCMS]]
    */
-  // format:on
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     cms: SCollection[TopCMS[K]]
@@ -387,14 +384,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     SkewedJoins.leftOuterJoin(lhsPartitions, rhsPartitions)
   }
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.fullOuterJoin]].
    *
    * Perform a skewed full join where some keys on the left hand may be hot. Frequency of a key is
    * estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
-   * frequency. `true frequency <= estimate <= true frequency + eps * N`, where N is the total size
-   * of the left hand side stream so far.
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -404,7 +403,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   import com.twitter.algebird.CMSHasherImplicits._
    *   val p = logs.skewedFullOuterJoin(logMetadata)
    *   }}}
-   *   Read more about CMS: [[com.twitter.algebird.CMS!]].
+   *   Read more about CMS: [[com.twitter.algebird.CMS]].
    * @group join
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
@@ -421,10 +420,10 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param sampleFraction
    *   left side sample fraction. Default is `1.0` - no sampling.
    * @param withReplacement
-   *   whether to use sampling with replacement, see [[SCollection.sample(Boolean,Double)]]. Default
+   *   whether to use sampling with replacement, see
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
    *   is true.
    */
-  // format:on
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod = HotKeyMethod.Threshold(9000),
@@ -450,10 +449,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       }
   }
 
-  /**
-   * @deprecated
-   *   see [[skewedFullOuterJoin(SCollection, HotKeyMethod, Double, Int, Double, Double, Boolean)]]
-   */
   @deprecated("Use skewedFullOuterJoin with HotKeyMethod.Threshold instead ", "0.13.0")
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
@@ -474,14 +469,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       withReplacement
     )
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.fullOuterJoin]].
    *
    * Perform a skewed full outer join where some keys on the left hand may be hot, i.e.appear more
    * than`hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and
-   * the estimate is within `eps * N` of the true frequency. `true frequency <= estimate <= true
-   * frequency + eps * N`, where N is the total size of the left hand side stream so far.
+   * the estimate is within `eps * N` of the true frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -503,7 +500,6 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param cms
    *   left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  // format:on
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
@@ -513,14 +509,16 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     SkewedJoins.fullOuterJoin(lhsPartitions, rhsPartitions)
   }
 
-  // format:off
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.fullOuterJoin]].
    *
    * Perform a skewed full outer join where some keys on the left hand may be hot. Frequency of a
    * key is estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
-   * frequency. `true frequency <= estimate <= true frequency + eps * N`, where N is the total size
-   * of the left hand side stream so far.
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
    *
    * @note
    *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
@@ -533,12 +531,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   val p = logs.skewedFullOuterJoin(logMetadata, hotKeyCMS)
    *   }}}
    *
-   * Read more about TopCMS: [[com.twitter.algebird.TopCMS!]].
+   * Read more about TopCMS: [[com.twitter.algebird.TopCMS]].
    * @group join
    * @param cms
-   *   left hand side key [[com.twitter.algebird.TopCMS!]]
+   *   left hand side key [[com.twitter.algebird.TopCMS]]
    */
-  // format:on
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     cms: SCollection[TopCMS[K]]
