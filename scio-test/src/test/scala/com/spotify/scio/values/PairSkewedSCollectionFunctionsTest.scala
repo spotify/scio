@@ -27,6 +27,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
   val skewSeed = 42
   val skewEps = 0.001d
   val skewDelta = 1e-10
+  val skewWithReplacement = true
 
   val joinSetup = Table(
     ("lhs", "rhs", "out"),
@@ -122,7 +123,15 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
             val pLhs = sc.parallelize(lhs)
             val pRhs = sc.parallelize(rhs)
             val p =
-              pLhs.skewedJoin(pRhs, method, skewEps, skewSeed, sampleFraction = sampleFraction)
+              pLhs.skewedJoin(
+                pRhs,
+                method,
+                skewEps,
+                skewSeed,
+                skewDelta,
+                sampleFraction,
+                skewWithReplacement
+              )
             p should containInAnyOrder(out)
           }
         }
@@ -143,7 +152,9 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
                 method,
                 skewEps,
                 skewSeed,
-                sampleFraction = sampleFraction
+                skewDelta,
+                sampleFraction,
+                skewWithReplacement
               )
             p should containInAnyOrder(out)
           }
@@ -164,7 +175,9 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
               method,
               skewEps,
               skewSeed,
-              sampleFraction = sampleFraction
+              skewDelta,
+              sampleFraction,
+              skewWithReplacement
             )
             p should containInAnyOrder(out)
           }

@@ -90,28 +90,27 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   threshold.
    * @param eps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
-   *   `(0, 1)`. Default is 0.001.
+   *   `(0, 1)`.
    * @param seed
    *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions. Default is 42.
+   *   functions.
    * @param delta
    *   A bound on the probability that a query estimate does not lie within some small interval (an
-   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`. Default is 1e-10.
+   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
    * @param sampleFraction
-   *   left side sample fraction. Default is `1.0` - no sampling.
+   *   left side sample fraction.
    * @param withReplacement
    *   whether to use sampling with replacement, see
-   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
-   *   is true.
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyMethod: HotKeyMethod = HotKeyMethod.Threshold(9000),
-    eps: Double = 0.001,
-    seed: Int = 42,
-    delta: Double = 1e-10,
-    sampleFraction: Double = 1.0,
-    withReplacement: Boolean = true
+    hotKeyMethod: HotKeyMethod,
+    eps: Double,
+    seed: Int,
+    delta: Double,
+    sampleFraction: Double,
+    withReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] = self.transform { lhs =>
     val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
     import com.twitter.algebird._
@@ -128,15 +127,15 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedJoin with HotKeyMethod.Threshold instead ", "0.13.0")
+  @deprecated("Use skewedJoin with HotKeyMethod.Threshold instead ", "0.12.6")
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long,
-    eps: Double,
-    seed: Int,
-    delta: Double,
-    sampleFraction: Double,
-    withReplacement: Boolean
+    hotKeyThreshold: Long = 9000,
+    eps: Double = 0.001,
+    seed: Int = 42,
+    delta: Double = 1e-10,
+    sampleFraction: Double = 1.0,
+    withReplacement: Boolean = true
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] =
     skewedJoin(
       rhs,
@@ -251,28 +250,27 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   threshold.
    * @param eps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
-   *   `(0, 1)`. Default is 0.001.
+   *   `(0, 1)`.
    * @param seed
    *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions. Default is 42.
+   *   functions.
    * @param delta
    *   A bound on the probability that a query estimate does not lie within some small interval (an
-   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`. Default is 1e-10.
+   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
    * @param sampleFraction
-   *   left side sample fraction. Default is `1.0` - no sampling.
+   *   left side sample fraction.
    * @param withReplacement
    *   whether to use sampling with replacement, see
-   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
-   *   is true.
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyMethod: HotKeyMethod = HotKeyMethod.Threshold(9000),
-    eps: Double = 0.001,
-    seed: Int = 42,
-    delta: Double = 1e-10,
-    sampleFraction: Double = 1.0,
-    withReplacement: Boolean = true
+    hotKeyMethod: HotKeyMethod,
+    eps: Double,
+    seed: Int,
+    delta: Double,
+    sampleFraction: Double,
+    withReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] = self.transform { lhs =>
     import com.twitter.algebird._
     val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
@@ -289,15 +287,15 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedLeftOuterJoin with HotKeyMethod.Threshold instead ", "0.13.0")
+  @deprecated("Use skewedLeftOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long,
-    eps: Double,
-    seed: Int,
-    delta: Double,
-    sampleFraction: Double,
-    withReplacement: Boolean
+    hotKeyThreshold: Long = 9000,
+    eps: Double = 0.001,
+    seed: Int = 42,
+    delta: Double = 1e-10,
+    sampleFraction: Double = 1.0,
+    withReplacement: Boolean = true
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] =
     skewedLeftOuterJoin(
       rhs,
@@ -406,32 +404,30 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   Read more about CMS: [[com.twitter.algebird.CMS]].
    * @group join
    * @param hotKeyMethod
-   *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
-   *   threshold.
+   *   Method used to compute hot-keys from the left side collection.
    * @param eps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
-   *   `(0, 1)`. Default is 0.001.
+   *   `(0, 1)`.
    * @param seed
    *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions. Default is 42.
+   *   functions.
    * @param delta
    *   A bound on the probability that a query estimate does not lie within some small interval (an
-   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`. Default is 1e-10.
+   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
    * @param sampleFraction
-   *   left side sample fraction. Default is `1.0` - no sampling.
+   *   left side sample fraction.
    * @param withReplacement
    *   whether to use sampling with replacement, see
-   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
-   *   is true.
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyMethod: HotKeyMethod = HotKeyMethod.Threshold(9000),
-    eps: Double = 0.001,
-    seed: Int = 42,
-    delta: Double = 1e-10,
-    sampleFraction: Double = 1.0,
-    withReplacement: Boolean = true
+    hotKeyMethod: HotKeyMethod,
+    eps: Double,
+    seed: Int,
+    delta: Double,
+    sampleFraction: Double,
+    withReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform {
     lhs =>
       import com.twitter.algebird._
@@ -449,15 +445,15 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       }
   }
 
-  @deprecated("Use skewedFullOuterJoin with HotKeyMethod.Threshold instead ", "0.13.0")
+  @deprecated("Use skewedFullOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long,
-    eps: Double,
-    seed: Int,
-    delta: Double,
-    sampleFraction: Double,
-    withReplacement: Boolean
+    hotKeyThreshold: Long = 9000,
+    eps: Double = 0.001,
+    seed: Int = 42,
+    delta: Double = 1e-10,
+    sampleFraction: Double = 1.0,
+    withReplacement: Boolean = true
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] =
     skewedFullOuterJoin(
       rhs,
