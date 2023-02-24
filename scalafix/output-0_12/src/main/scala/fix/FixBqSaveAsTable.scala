@@ -11,34 +11,21 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.extra.bigquery.AvroConverters.toTableSchema
 
 object FixBqSaveAsTable {
-  val tableRef = new TableReference()
-  val s: Schema = null
-  val wd: WriteDisposition = null
-  val cd: CreateDisposition = null
-  val td: String = null
+  val tableRef = ???
+  val s: Schema = ???
+  val wd: WriteDisposition = ???
+  val cd: CreateDisposition = ???
+  val td: String = ???
+  val in: SCollection[GenericRecord] = ???
 
-  def saveAsBigQueryTable(in: SCollection[GenericRecord]): Unit =
+
     in.saveAsBigQueryTable(Table.Ref(tableRef))
-
-  def saveAsBigQueryTableNamedTableParam(in: SCollection[GenericRecord]): Unit =
     in.saveAsBigQueryTable(table = Table.Ref(tableRef))
-
-  def saveAsBigQueryTableMultiParamsWithoutSchema(in: SCollection[GenericRecord]): Unit =
     in.saveAsBigQueryTable(Table.Ref(tableRef), writeDisposition = wd, createDisposition = cd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsWithoutSchemaDiffOrder(in: SCollection[GenericRecord]): Unit =
     in.saveAsBigQueryTable(Table.Ref(tableRef), createDisposition = cd, writeDisposition = wd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsAllNamed(in: SCollection[GenericRecord]): Unit =
-    in.saveAsBigQueryTable(table = Table.Ref(tableRef), writeDisposition = wd, createDisposition = cd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsWithSchemaUnnamed(in: SCollection[GenericRecord]): Unit =
+    in.saveAsBigQueryTable(writeDisposition = wd, table = Table.Ref(tableRef), createDisposition = cd, tableDescription = td)
     in.saveAsBigQueryTable(Table.Ref(tableRef), toTableSchema(s), wd, cd, td)
-
-  def saveAsBigQueryTableMultiParamsWithSchemaNamed(in: SCollection[GenericRecord]): Unit =
     in.saveAsBigQueryTable(Table.Ref(tableRef), schema = toTableSchema(s), writeDisposition = wd, createDisposition = cd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsNamedOrderChanged(in: SCollection[GenericRecord]): Unit =
     in.saveAsBigQueryTable(Table.Ref(tableRef), writeDisposition = wd, schema = toTableSchema(s))
 }
 
