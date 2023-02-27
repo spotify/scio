@@ -51,7 +51,7 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
  * Avro records.
  */
 public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
-  static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.GZIP;
+  static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.ZSTD;
   private final SerializableSchemaSupplier schemaSupplier;
   private final CompressionCodecName compression;
   private final SerializableConfiguration conf;
