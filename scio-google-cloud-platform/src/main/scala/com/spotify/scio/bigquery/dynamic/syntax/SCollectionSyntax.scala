@@ -87,12 +87,14 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
       if (writeDisposition != null) {
         transform = transform.withWriteDisposition(writeDisposition)
       }
-      val wr = self.applyInternal(transform)
 
       transform = extendedErrorInfo match {
         case Disabled => transform
         case Enabled  => transform.withExtendedErrorInfo()
       }
+
+      val wr = self.applyInternal(transform)
+
       insertErrorTransform(extendedErrorInfo.coll(self.context, wr))
     }
 
