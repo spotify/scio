@@ -107,8 +107,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
     eps: Double,
-    seed: Int,
     delta: Double,
+    seed: Int,
     sampleFraction: Double,
     withReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] = self.transform { lhs =>
@@ -127,7 +127,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedJoin with HotKeyMethod.Threshold instead ", "0.12.6")
+  @deprecated("Use skewedJoin with HotKeyMethod.Threshold instead", "0.12.6")
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = 9000,
@@ -141,8 +141,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       rhs,
       HotKeyMethod.Threshold(hotKeyThreshold),
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -267,8 +267,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
     eps: Double,
-    seed: Int,
     delta: Double,
+    seed: Int,
     sampleFraction: Double,
     withReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] = self.transform { lhs =>
@@ -287,7 +287,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedLeftOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
+  @deprecated("Use skewedLeftOuterJoin with HotKeyMethod.Threshold instead", "0.12.6")
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = 9000,
@@ -301,8 +301,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       rhs,
       HotKeyMethod.Threshold(hotKeyThreshold),
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -424,8 +424,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
     eps: Double,
-    seed: Int,
     delta: Double,
+    seed: Int,
     sampleFraction: Double,
     withReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform {
@@ -445,7 +445,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       }
   }
 
-  @deprecated("Use skewedFullOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
+  @deprecated("Use skewedFullOuterJoin with HotKeyMethod.Threshold instead", "0.12.6")
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = 9000,
@@ -459,8 +459,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       rhs,
       HotKeyMethod.Threshold(hotKeyThreshold),
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )

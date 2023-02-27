@@ -127,8 +127,8 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
                 pRhs,
                 method,
                 skewEps,
-                skewSeed,
                 skewDelta,
+                skewSeed,
                 sampleFraction,
                 skewWithReplacement
               )
@@ -151,8 +151,8 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
                 pRhs,
                 method,
                 skewEps,
-                skewSeed,
                 skewDelta,
+                skewSeed,
                 sampleFraction,
                 skewWithReplacement
               )
@@ -174,8 +174,8 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
               pRhs,
               method,
               skewEps,
-              skewSeed,
               skewDelta,
+              skewSeed,
               sampleFraction,
               skewWithReplacement
             )
