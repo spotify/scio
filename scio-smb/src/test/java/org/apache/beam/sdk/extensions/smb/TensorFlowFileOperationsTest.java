@@ -53,7 +53,7 @@ public class TensorFlowFileOperationsTest {
 
   @Test
   public void testCompressed() throws Exception {
-    test(Compression.GZIP);
+    test(Compression.ZSTD);
   }
 
   private void test(Compression compression) throws Exception {
