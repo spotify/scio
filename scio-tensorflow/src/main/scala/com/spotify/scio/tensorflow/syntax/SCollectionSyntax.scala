@@ -198,7 +198,15 @@ final class SeqExampleSCollectionOps[T <: Example](private val self: SCollection
       TFExampleIO.WriteParam.DefaultFilenamePolicySupplier
   ): ClosedTap[Example] =
     new ExampleSCollectionOps(self.map(SeqExampleSCollectionOps.mergeExamples))
-      .saveAsTfRecordFile(path, suffix, compression, numShards, shardNameTemplate, tempDirectory, filenamePolicySupplier)
+      .saveAsTfRecordFile(
+        path,
+        suffix,
+        compression,
+        numShards,
+        shardNameTemplate,
+        tempDirectory,
+        filenamePolicySupplier
+      )
 }
 
 final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollection[T])
