@@ -23,7 +23,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.google.cloud.storage.Storage.BlobListOption
 import com.google.cloud.storage.{Blob, StorageOptions}
-import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.client.{BigQuery, ParquetCompression}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
@@ -240,6 +240,18 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
       s"gs://$bucket/$prefix"
     )
     bq.extract.asAvro(sourceTable, destination)
+    GcsUtils.exists(bucket, prefix) shouldBe true
+    GcsUtils.remove(bucket, prefix)
+  }
+
+  "extract.asParquet" should "work" in {
+    val sourceTable = "bigquery-public-data:samples.shakespeare"
+    val (bucket, prefix) = ("data-integration-test-eu", s"extract/parquet/${UUID.randomUUID}")
+    GcsUtils.exists(bucket, prefix) shouldBe false
+    val destination = List(
+      s"gs://$bucket/$prefix"
+    )
+    bq.extract.asParquet(sourceTable, destination, compression = ParquetCompression.Zstd())
     GcsUtils.exists(bucket, prefix) shouldBe true
     GcsUtils.remove(bucket, prefix)
   }
