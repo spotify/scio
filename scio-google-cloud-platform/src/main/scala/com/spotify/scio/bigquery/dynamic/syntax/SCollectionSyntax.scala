@@ -31,6 +31,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.{DynamicDestinations, TableDestinatio
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.values.ValueInSingleWindow
 import com.spotify.scio.bigquery.ExtendedErrorInfo
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 
 import scala.reflect.runtime.universe._
 
@@ -67,9 +68,10 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
     formatFn: T => TableRow,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
-    extendedErrorInfo: ExtendedErrorInfo
+    extendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled,
+    configOverride: Write[T] => Write[T] = identity
   )(
-    insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+    insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = _ => ()
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
@@ -93,7 +95,7 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
         case Enabled  => transform.withExtendedErrorInfo()
       }
 
-      val wr = self.applyInternal(transform)
+      val wr = self.applyInternal(configOverride(transform))
 
       insertErrorTransform(extendedErrorInfo.coll(self.context, wr))
     }
@@ -116,14 +118,16 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
   def saveAsBigQuery(
     schema: TableSchema,
     writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null
+    createDisposition: CreateDisposition = null,
+    configOverride: Write[T] => Write[T] = identity
   )(tableFn: ValueInSingleWindow[T] => TableDestination): ClosedTap[Nothing] =
     new DynamicBigQueryOps(self).saveAsBigQuery(
-      DynamicDestinationsUtil.tableFn(tableFn, schema),
-      identity,
-      writeDisposition,
-      createDisposition
-    )
+      destinations = DynamicDestinationsUtil.tableFn(tableFn, schema),
+      formatFn = identity,
+      writeDisposition = writeDisposition,
+      createDisposition = createDisposition,
+      configOverride = configOverride
+    )()
 }
 
 /**
@@ -140,7 +144,8 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
    */
   def saveAsTypedBigQuery(
     writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null
+    createDisposition: CreateDisposition = null,
+    configOverride: Write[T] => Write[T] = identity
   )(
     tableFn: ValueInSingleWindow[T] => TableDestination
   )(implicit tt: TypeTag[T]): ClosedTap[Nothing] = {
@@ -148,11 +153,12 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
     val destinations = DynamicDestinationsUtil.tableFn(tableFn, bqt.schema)
 
     new DynamicBigQueryOps(self).saveAsBigQuery(
-      destinations,
-      bqt.toTableRow,
-      writeDisposition,
-      createDisposition
-    )
+      destinations = destinations,
+      formatFn = bqt.toTableRow,
+      writeDisposition = writeDisposition,
+      createDisposition = createDisposition,
+      configOverride = configOverride
+    )()
   }
 }
 
