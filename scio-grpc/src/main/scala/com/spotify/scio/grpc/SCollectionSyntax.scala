@@ -19,6 +19,7 @@ package com.spotify.scio.grpc
 import com.google.common.util.concurrent.ListenableFuture
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.grpc.GrpcLookupFunctions.StreamObservableFuture
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn.{CacheSupplier, NoOpCacheSupplier}
 import com.spotify.scio.transforms.JavaAsyncConverters._
 import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions.kvToTuple
@@ -27,15 +28,31 @@ import com.twitter.chill.ClosureCleaner
 import io.grpc.Channel
 import io.grpc.stub.{AbstractFutureStub, AbstractStub, StreamObserver}
 
+import java.lang.{Iterable => JIterable}
+
 import scala.util.Try
 import scala.jdk.CollectionConverters._
 
 class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extends AnyVal {
 
+  // TODO move to default parameter when ready to break binary compat
   def grpcLookup[Response: Coder, Client <: AbstractFutureStub[Client]](
     channelSupplier: () => Channel,
     clientFactory: Channel => Client,
     maxPendingRequests: Int
+  )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] =
+    grpcLookup(
+      channelSupplier,
+      clientFactory,
+      maxPendingRequests,
+      new NoOpCacheSupplier[Request, Response]()
+    )(f)
+
+  def grpcLookup[Response: Coder, Client <: AbstractFutureStub[Client]](
+    channelSupplier: () => Channel,
+    clientFactory: Channel => Client,
+    maxPendingRequests: Int,
+    cacheSupplier: CacheSupplier[Request, Response]
   )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
     import self.coder
     val uncurried = (c: Client, r: Request) => f(c)(r)
@@ -47,16 +64,33 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
           .withNewClientFn(Functions.serializableFn(clientFactory))
           .withLookupFn(Functions.serializableBiFn(uncurried))
           .withMaxPendingRequests(maxPendingRequests)
+          .withCacheSupplier(cacheSupplier)
           .build()
       )
       .map(kvToTuple)
       .mapValues(_.asScala)
   }
 
+  // TODO move to default parameter when ready to break binary compat
   def grpcLookupStream[Response: Coder, Client <: AbstractStub[Client]](
     channelSupplier: () => Channel,
     clientFactory: Channel => Client,
     maxPendingRequests: Int
+  )(
+    f: Client => (Request, StreamObserver[Response]) => Unit
+  ): SCollection[(Request, Try[Iterable[Response]])] =
+    grpcLookupStream(
+      channelSupplier,
+      clientFactory,
+      maxPendingRequests,
+      new NoOpCacheSupplier[Request, JIterable[Response]]()
+    )(f)
+
+  def grpcLookupStream[Response: Coder, Client <: AbstractStub[Client]](
+    channelSupplier: () => Channel,
+    clientFactory: Channel => Client,
+    maxPendingRequests: Int,
+    cacheSupplier: CacheSupplier[Request, JIterable[Response]]
   )(
     f: Client => (Request, StreamObserver[Response]) => Unit
   ): SCollection[(Request, Try[Iterable[Response]])] = {
@@ -69,11 +103,12 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     self
       .parDo(
         GrpcDoFn
-          .newBuilder[Request, java.lang.Iterable[Response], Client]()
+          .newBuilder[Request, JIterable[Response], Client]()
           .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
           .withNewClientFn(Functions.serializableFn(clientFactory))
           .withLookupFn(Functions.serializableBiFn(uncurried))
           .withMaxPendingRequests(maxPendingRequests)
+          .withCacheSupplier(cacheSupplier)
           .build()
       )
       .map(kvToTuple)
