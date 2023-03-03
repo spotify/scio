@@ -61,5 +61,11 @@ trait SCollectionSyntax {
       self
         .withName("Read CSV")
         .applyTransform(ParDo.of(CsvIO.ReadDoFn[T](csvConfiguration)))
+
+    def readCsvWithFilename[T: HeaderDecoder: Coder](csvConfiguration: CsvConfiguration)
+    : SCollection[(String, T)] =
+      self
+        .withName("Read CSV")
+        .applyTransform(ParDo.of(CsvIO.ReadWithFilenameDoFn[T](csvConfiguration)))
   }
 }
