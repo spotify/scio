@@ -19,6 +19,7 @@ import sbt._
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import com.typesafe.tools.mima.core._
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import de.heikoseeberger.sbtheader.CommentCreator
@@ -186,6 +187,18 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
+  mimaBinaryIssueFilters := Seq(
+    // minor scio-tensorflow breaking changes for 0.12.6
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
+    )
+  ),
   mimaPreviousArtifacts :=
     previousVersion(version.value)
       .filter(_ => publishArtifact.value)

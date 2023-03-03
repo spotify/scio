@@ -51,6 +51,7 @@ git push origin vX.Y.Z
 
 ## After successfully published artifacts
 
+- Clean the `mimaBinaryIssueFilters` in `build.sbt`
 - Run @github[scripts/bump_scio.sh](/scripts/bump_scio.sh) to update [homebrew formula](https://github.com/spotify/homebrew-public/blob/master/scio.rb) and `scioVersion` in downstream repos including [scio.g8](https://github.com/spotify/scio.g8), [featran](https://github.com/spotify/featran), etc.
 - Send external announcement to scio-users@googlegroups.com and user@beam.apache.org
 - Announce on public [Slack](https://slackin.spotify.com/)
