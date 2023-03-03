@@ -35,24 +35,11 @@ import scala.jdk.CollectionConverters._
 
 class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extends AnyVal {
 
-  // TODO move to default parameter when ready to break binary compat
-  def grpcLookup[Response: Coder, Client <: AbstractFutureStub[Client]](
-    channelSupplier: () => Channel,
-    clientFactory: Channel => Client,
-    maxPendingRequests: Int
-  )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] =
-    grpcLookup(
-      channelSupplier,
-      clientFactory,
-      maxPendingRequests,
-      new NoOpCacheSupplier[Request, Response]()
-    )(f)
-
   def grpcLookup[Response: Coder, Client <: AbstractFutureStub[Client]](
     channelSupplier: () => Channel,
     clientFactory: Channel => Client,
     maxPendingRequests: Int,
-    cacheSupplier: CacheSupplier[Request, Response]
+    cacheSupplier: CacheSupplier[Request, Response] = new NoOpCacheSupplier[Request, Response]()
   )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
     import self.coder
     val uncurried = (c: Client, r: Request) => f(c)(r)
@@ -71,26 +58,12 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
       .mapValues(_.asScala)
   }
 
-  // TODO move to default parameter when ready to break binary compat
-  def grpcLookupStream[Response: Coder, Client <: AbstractStub[Client]](
-    channelSupplier: () => Channel,
-    clientFactory: Channel => Client,
-    maxPendingRequests: Int
-  )(
-    f: Client => (Request, StreamObserver[Response]) => Unit
-  ): SCollection[(Request, Try[Iterable[Response]])] =
-    grpcLookupStream(
-      channelSupplier,
-      clientFactory,
-      maxPendingRequests,
-      new NoOpCacheSupplier[Request, JIterable[Response]]()
-    )(f)
-
   def grpcLookupStream[Response: Coder, Client <: AbstractStub[Client]](
     channelSupplier: () => Channel,
     clientFactory: Channel => Client,
     maxPendingRequests: Int,
-    cacheSupplier: CacheSupplier[Request, JIterable[Response]]
+    cacheSupplier: CacheSupplier[Request, JIterable[Response]] =
+      new NoOpCacheSupplier[Request, JIterable[Response]]()
   )(
     f: Client => (Request, StreamObserver[Response]) => Unit
   ): SCollection[(Request, Try[Iterable[Response]])] = {
