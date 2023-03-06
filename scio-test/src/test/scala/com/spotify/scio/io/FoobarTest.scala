@@ -5,7 +5,7 @@ import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.util.Utf8
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.io.{AccessibleBeam, ReadAllViaFileBasedSourceWithFilename}
+import org.apache.beam.sdk.io.{AccessibleBeam, AvroSource, ReadAllViaFileBasedSourceWithFilename}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.commons.io.FileUtils
 
@@ -60,7 +60,7 @@ class FoobarTest extends PipelineSpec {
         sc.parallelize(List(s"${temp.toString}/*.avro"))
           .readFiles(
             new ReadAllViaFileBasedSourceWithFilename[StringFieldTest](
-              AccessibleBeam.avroSource[StringFieldTest]
+              AvroSource.from(_).withSchema(classOf[StringFieldTest])
             )
           )
           .mapValues(_.getStrField)
@@ -72,7 +72,7 @@ class FoobarTest extends PipelineSpec {
         sc.parallelize(List(s"${temp.toString}/*.avro"))
           .readFiles(
             new ReadAllViaFileBasedSourceWithFilename[GenericRecord](
-              AccessibleBeam.avroGenericSource(_, StringFieldTest.SCHEMA$)
+              AvroSource.from(_).withSchema(StringFieldTest.SCHEMA$)
             )
           )
           .mapValues(_.get("strField").asInstanceOf[CharSequence].toString)

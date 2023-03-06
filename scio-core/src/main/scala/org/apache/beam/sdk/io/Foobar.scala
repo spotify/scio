@@ -38,12 +38,6 @@ object AccessibleBeam {
     ).asInstanceOf[FileBasedSource[String]]
   }
 
-  def avroSource[T <: SpecificRecord : ClassTag](input: String): FileBasedSource[T] =
-    AvroSource.from(input).withSchema(implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]])
-
-  def avroGenericSource(input: String, schema: Schema): FileBasedSource[GenericRecord] =
-    AvroSource.from(input).withSchema(schema)
-
   type SplitIntoRangesT = DoFn[beam.FileIO.ReadableFile, KV[beam.FileIO.ReadableFile, OffsetRange]]
   def splitIntoRangesFn(desiredBundleSizeBytes: Long): SplitIntoRangesT = {
     yolo(
