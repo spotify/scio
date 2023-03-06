@@ -1,6 +1,10 @@
 package org.apache.beam.sdk.io
 
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.util.ScioUtil
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.io.range.OffsetRange
@@ -11,6 +15,7 @@ import org.apache.beam.sdk.values.{KV, PCollection}
 import org.apache.beam.sdk.{io => beam}
 
 import java.lang.reflect.Constructor
+import scala.reflect.ClassTag
 import scala.util.Using.Manager
 
 
@@ -33,6 +38,12 @@ object AccessibleBeam {
     ).asInstanceOf[FileBasedSource[String]]
   }
 
+  def avroSource[T <: SpecificRecord : ClassTag](input: String): FileBasedSource[T] =
+    AvroSource.from(input).withSchema(implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]])
+
+  def avroGenericSource(input: String, schema: Schema): FileBasedSource[GenericRecord] =
+    AvroSource.from(input).withSchema(schema)
+
   type SplitIntoRangesT = DoFn[beam.FileIO.ReadableFile, KV[beam.FileIO.ReadableFile, OffsetRange]]
   def splitIntoRangesFn(desiredBundleSizeBytes: Long): SplitIntoRangesT = {
     yolo(
@@ -49,8 +60,8 @@ object ReadAllViaFileBasedSourceWithFilename {
 }
 
 class ReadAllViaFileBasedSourceWithFilename[T](
-  desiredBundleSizeBytes: Long,
   createSource: SerializableFunction[String, _ <: FileBasedSource[T]],
+  desiredBundleSizeBytes: Long = (64 * 1024 * 1024L), // 64 mb
   usesReshuffle: Boolean = true,
   exceptionHandler: ReadAllViaFileBasedSource.ReadFileRangesFnExceptionHandler = ReadAllViaFileBasedSourceWithFilename.DefaultReadFileRangesFnExceptionHandler
 )(implicit

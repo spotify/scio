@@ -1,13 +1,12 @@
 package com.spotify.scio.io
 
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.google.common.collect.{ImmutableList, ImmutableMap}
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.coders.StringUtf8Coder
-import org.apache.beam.sdk.io.{AccessibleBeam, ReadAllViaFileBasedSourceWithFilename, TextSource}
-import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
-import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
-import org.apache.beam.sdk.transforms.ParDo
-import org.apache.beam.sdk.{io => beam}
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.util.Utf8
+import org.apache.beam.runners.direct.DirectRunner
+import org.apache.beam.sdk.io.{AccessibleBeam, ReadAllViaFileBasedSourceWithFilename}
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.commons.io.FileUtils
 
 import java.io.File
@@ -16,31 +15,30 @@ import java.nio.file.{Files, Path}
 
 class FoobarTest extends PipelineSpec {
 
+  def localOptions: PipelineOptions = {
+    val options = PipelineOptionsFactory.create()
+    options.setRunner(classOf[DirectRunner])
+    options
+  }
+
   def withTempDir(prefix: String)(fn: Path => Unit): Unit = {
     val temp = Files.createTempDirectory(prefix)
     temp.toFile.deleteOnExit()
     fn(temp)
   }
 
-  def textFile(path: Path, name: String, contents: String): File = {
-    val file = new File(path.toFile, name)
-    FileUtils.write(file, contents, StandardCharsets.UTF_8)
-    file
-  }
-
   it should "work with text" in {
     withTempDir("filename-retaining-text") { temp =>
-      val file1 = textFile(temp, "input1.txt", "line1\nline2\nline3\n")
-      val file2 = textFile(temp, "input2.txt", "line4\nline5\nline6\n")
+      runWithRealContext(localOptions) { sc =>
+        sc
+          .parallelize(1 to 10)
+          .map { i => s"line$i" }
+          .saveAsTextFile(temp.toString)
+      }
 
-      runWithContext { sc =>
-        sc.parallelize(List(file1.toString, file2.toString))
-          .readFiles(
-            new ReadAllViaFileBasedSourceWithFilename[String](
-              64 * 1024 * 1024L,
-              AccessibleBeam.textSource,
-            )
-          )
+      runWithRealContext(localOptions) { sc =>
+        sc.parallelize(List(s"${temp.toString}/*.txt"))
+          .readFiles(new ReadAllViaFileBasedSourceWithFilename[String](AccessibleBeam.textSource))
           .debug()
       }
     }
@@ -48,6 +46,38 @@ class FoobarTest extends PipelineSpec {
 
   it should "work with avro" in {
     withTempDir("filename-retaining-avro") { temp =>
+      import com.spotify.scio.avro._
+
+      runWithRealContext(localOptions) { sc =>
+        sc
+          .parallelize(1 to 10)
+          .map { i => StringFieldTest.newBuilder().setStrField(s"someStr$i").build() }
+          .saveAsAvroFile(temp.toString)
+      }
+
+      // specific records
+      runWithRealContext(localOptions) { sc =>
+        sc.parallelize(List(s"${temp.toString}/*.avro"))
+          .readFiles(
+            new ReadAllViaFileBasedSourceWithFilename[StringFieldTest](
+              AccessibleBeam.avroSource[StringFieldTest]
+            )
+          )
+          .mapValues(_.getStrField)
+          .debug()
+      }
+
+      // generic records
+      runWithRealContext(localOptions) { sc =>
+        sc.parallelize(List(s"${temp.toString}/*.avro"))
+          .readFiles(
+            new ReadAllViaFileBasedSourceWithFilename[GenericRecord](
+              AccessibleBeam.avroGenericSource(_, StringFieldTest.SCHEMA$)
+            )
+          )
+          .mapValues(_.get("strField").asInstanceOf[CharSequence].toString)
+          .debug()
+      }
 
     }
   }
