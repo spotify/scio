@@ -28,22 +28,26 @@ object AccessibleBeam {
     method
   }
 
+  @transient private lazy val TextSourceCtor = yolo(
+    // TODO harass beam to allow access to this
+    "org.apache.beam.sdk.io.TextSource",
+    classOf[ValueProvider[String]],
+    classOf[EmptyMatchTreatment],
+    classOf[Array[Byte]]
+  )
+
   def textSource(input: String): beam.FileBasedSource[String] = {
-    yolo(
-      // TODO harass beam to allow access to this
-      "org.apache.beam.sdk.io.TextSource",
-      classOf[ValueProvider[String]],
-      classOf[EmptyMatchTreatment],
-      classOf[Array[Byte]]
-    ).newInstance(
-      ValueProvider.StaticValueProvider.of(input),
-      EmptyMatchTreatment.DISALLOW,
-      Array[Byte]('\n')
-    ).asInstanceOf[beam.FileBasedSource[String]]
+    TextSourceCtor
+      .newInstance(
+        ValueProvider.StaticValueProvider.of(input),
+        EmptyMatchTreatment.DISALLOW,
+        Array[Byte]('\n')
+      )
+      .asInstanceOf[beam.FileBasedSource[String]]
   }
 
-  def sourceSubrangeMethod(): Method = {
-    // TODO harass beam to allow access to this
+  // TODO harass beam to allow access to this
+  @transient private lazy val SourceSubrangeMethod: Method =
     AccessibleBeam.yoloMethod(
       "org.apache.beam.sdk.io.FileBasedSource",
       "createForSubrangeOfFile",
@@ -51,18 +55,28 @@ object AccessibleBeam {
       classOf[Long],
       classOf[Long]
     )
+
+  def sourceSubrange[T](
+    source: beam.FileBasedSource[T],
+    metadata: beam.fs.MatchResult.Metadata,
+    from: Long,
+    to: Long
+  ): beam.FileBasedSource[T] = {
+    // source.createForSubrangeOfFile(file.getMetadata, range.getFrom, range.getTo)
+    SourceSubrangeMethod
+      .invoke(source, metadata, from, to)
+      .asInstanceOf[beam.FileBasedSource[T]]
   }
 
+  @transient private lazy val SplitIntoRnagesFnCtor = yolo(
+    // TODO harass beam to allow access to this
+    "org.apache.beam.sdk.io.ReadAllViaFileBasedSource$SplitIntoRangesFn",
+    classOf[Long]
+  )
+
   type SplitIntoRangesT = DoFn[beam.FileIO.ReadableFile, KV[beam.FileIO.ReadableFile, OffsetRange]]
-  def splitIntoRangesFn(desiredBundleSizeBytes: Long): SplitIntoRangesT = {
-    yolo(
-      // TODO harass beam to allow access to this
-      "org.apache.beam.sdk.io.ReadAllViaFileBasedSource$SplitIntoRangesFn",
-      classOf[Long]
-    ).newInstance(
-      desiredBundleSizeBytes
-    ).asInstanceOf[SplitIntoRangesT]
-  }
+  def splitIntoRangesFn(desiredBundleSizeBytes: Long): SplitIntoRangesT =
+    SplitIntoRnagesFnCtor.newInstance(desiredBundleSizeBytes).asInstanceOf[SplitIntoRangesT]
 }
 
 object ReadAllViaFileBasedSourceWithFilename {
@@ -115,8 +129,6 @@ class FilenameRetainingReadFileRangesFn[T](
 ) extends DoFn[KV[beam.FileIO.ReadableFile, OffsetRange], (String, T)] {
   type DoFnT = DoFn[KV[beam.FileIO.ReadableFile, OffsetRange], (String, T)]
 
-  @transient private lazy val subrangeMethod = AccessibleBeam.sourceSubrangeMethod()
-
   @ProcessElement
   def process(c: DoFnT#ProcessContext): Unit = {
     val file: beam.FileIO.ReadableFile = c.element.getKey
@@ -128,13 +140,11 @@ class FilenameRetainingReadFileRangesFn[T](
       .withCompression(file.getCompression)
 
     Manager { use =>
-      // source.createForSubrangeOfFile(file.getMetadata, range.getFrom, range.getTo)
-      val rangeSrc = subrangeMethod
-        .invoke(source, file.getMetadata, range.getFrom, range.getTo)
-        .asInstanceOf[beam.FileBasedSource[T]]
-
       val reader: beam.BoundedSource.BoundedReader[T] = use(
-        rangeSrc.createReader(c.getPipelineOptions)
+        // source.createForSubrangeOfFile(file.getMetadata, range.getFrom, range.getTo)
+        AccessibleBeam
+          .sourceSubrange(source, file.getMetadata, range.getFrom, range.getTo)
+          .createReader(c.getPipelineOptions)
       )
 
       try {
