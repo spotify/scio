@@ -228,10 +228,9 @@ object CsvIO {
   }
 
   final private[scio] case class ReadWithFilenameDoFn[T: HeaderDecoder](
-                                                                         config: CsvConfiguration,
-                                                                         charSet: String = StandardCharsets.UTF_8.name()
-                                                                       ) extends
-    DoFn[ReadableFile, (String, T)] {
+    config: CsvConfiguration,
+    charSet: String = StandardCharsets.UTF_8.name()
+  ) extends DoFn[ReadableFile, (String, T)] {
 
     @ProcessElement
     def process(@Element element: ReadableFile, out: OutputReceiver[(String, T)]): Unit = {

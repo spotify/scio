@@ -1,19 +1,13 @@
-package com.spotify.scio.io
+package com.spotify.scio.transforms
 
-import com.google.common.collect.{ImmutableList, ImmutableMap}
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.util.Utf8
 import org.apache.beam.runners.direct.DirectRunner
-import org.apache.beam.sdk.io.{AccessibleBeam, AvroSource, ReadAllViaFileBasedSourceWithFilename}
+import org.apache.beam.sdk.io.AvroSource
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.apache.commons.io.FileUtils
 
-import java.io.File
-import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
-class FoobarTest extends PipelineSpec {
+class FilenameRetainingDoFnsTest extends PipelineSpec {
 
   def localOptions: PipelineOptions = {
     val options = PipelineOptionsFactory.create()
@@ -32,13 +26,13 @@ class FoobarTest extends PipelineSpec {
       runWithRealContext(localOptions) { sc =>
         sc
           .parallelize(1 to 10)
-          .map { i => s"line$i" }
+          .map(i => s"line$i")
           .saveAsTextFile(temp.toString)
       }
 
       runWithRealContext(localOptions) { sc =>
         sc.parallelize(List(s"${temp.toString}/*.txt"))
-          .readFiles(new ReadAllViaFileBasedSourceWithFilename[String](AccessibleBeam.textSource))
+          .readFilesWithFilename[String](AccessibleBeam.textSource)
           .debug()
       }
     }
@@ -51,18 +45,14 @@ class FoobarTest extends PipelineSpec {
       runWithRealContext(localOptions) { sc =>
         sc
           .parallelize(1 to 10)
-          .map { i => StringFieldTest.newBuilder().setStrField(s"someStr$i").build() }
+          .map(i => StringFieldTest.newBuilder().setStrField(s"someStr$i").build())
           .saveAsAvroFile(temp.toString)
       }
 
       // specific records
       runWithRealContext(localOptions) { sc =>
         sc.parallelize(List(s"${temp.toString}/*.avro"))
-          .readFiles(
-            new ReadAllViaFileBasedSourceWithFilename[StringFieldTest](
-              AvroSource.from(_).withSchema(classOf[StringFieldTest])
-            )
-          )
+          .readFilesWithFilename(AvroSource.from(_).withSchema(classOf[StringFieldTest]))
           .mapValues(_.getStrField)
           .debug()
       }
@@ -70,15 +60,10 @@ class FoobarTest extends PipelineSpec {
       // generic records
       runWithRealContext(localOptions) { sc =>
         sc.parallelize(List(s"${temp.toString}/*.avro"))
-          .readFiles(
-            new ReadAllViaFileBasedSourceWithFilename[GenericRecord](
-              AvroSource.from(_).withSchema(StringFieldTest.SCHEMA$)
-            )
-          )
+          .readFilesWithFilename(AvroSource.from(_).withSchema(StringFieldTest.SCHEMA$))
           .mapValues(_.get("strField").asInstanceOf[CharSequence].toString)
           .debug()
       }
-
     }
   }
 }

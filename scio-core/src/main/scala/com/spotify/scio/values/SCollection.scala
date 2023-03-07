@@ -30,7 +30,7 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.transforms.BatchDoFn
+import com.spotify.scio.transforms.{BatchDoFn, ReadAllViaFileBasedSourceWithFilename}
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
@@ -51,7 +51,7 @@ import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -1448,6 +1448,18 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
               .apply(filesTransform)
         })
     }
+
+  def readFilesWithFilename[A: Coder](
+    srcFn: String => beam.FileBasedSource[A],
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO
+  )(implicit ev: T <:< String): SCollection[(String, A)] = {
+    readFiles(
+      new ReadAllViaFileBasedSourceWithFilename[A](Functions.serializableFn(srcFn)),
+      directoryTreatment,
+      compression
+    )
+  }
 
   /**
    * Pairs each element with the value of the provided [[SideInput]] in the element's window.
