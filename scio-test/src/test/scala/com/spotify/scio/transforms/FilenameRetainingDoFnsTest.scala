@@ -7,8 +7,7 @@ import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 import java.nio.file.{Files, Path}
 
-class FilenameRetainingDoFnsTest extends PipelineSpec {
-
+trait FilenameRetainingDoFnsSpec extends PipelineSpec {
   def localOptions: PipelineOptions = {
     val options = PipelineOptionsFactory.create()
     options.setRunner(classOf[DirectRunner])
@@ -20,7 +19,9 @@ class FilenameRetainingDoFnsTest extends PipelineSpec {
     temp.toFile.deleteOnExit()
     fn(temp)
   }
+}
 
+class FilenameRetainingDoFnsTest extends FilenameRetainingDoFnsSpec {
   it should "work with text" in {
     withTempDir("filename-retaining-text") { temp =>
       runWithRealContext(localOptions) { sc =>

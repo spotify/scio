@@ -19,12 +19,21 @@ package com.spotify.scio.parquet.avro.syntax
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
+import com.spotify.scio.parquet.avro.ParquetAvroIO.{ReadParam, WriteParam}
 import com.spotify.scio.parquet.avro.ParquetAvroIO
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
+import com.spotify.scio.util.{FilenamePolicySupplier, Functions}
 import com.spotify.scio.values.SCollection
+import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
+import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.{Compression, FileIO}
+import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
+import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
+import org.apache.beam.sdk.transforms.{PTransform, ParDo}
+import org.apache.beam.sdk.values.PCollection
 import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.reflect.ClassTag
@@ -34,6 +43,30 @@ import scala.reflect.ClassTag
  * methods.
  */
 class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+
+  def readFilesWithFilename[A <: GenericRecord: Coder : ClassTag](
+    projection: Schema = ReadParam.DefaultProjection,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO
+  )(implicit ev: T <:< String): SCollection[(String, A)] = {
+    val jobConf = Option(conf).getOrElse(new Configuration())
+    // TODO ehhh crufty
+    val param = ParquetAvroIO.ReadParam[A, A](identity, projection, predicate, conf)
+    // TODO support legacy?
+    ParquetAvroIO.splittableConfiguration(param, jobConf)
+
+    val xxx: ParDo.SingleOutput[FileIO.ReadableFile, (String, A)] =
+      ParquetRead
+        .readFilesWithFilename[A, A](
+          ReadSupportFactory.avro,
+          new SerializableConfiguration(param.conf),
+          Functions.serializableFn(identity)
+        )
+
+    self.covary_[String].readFiles[A](xxx, directoryTreatment, compression)
+  }
 
   /**
    * Save this SCollection of Avro records as a Parquet file.

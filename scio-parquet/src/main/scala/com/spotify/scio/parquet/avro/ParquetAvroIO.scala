@@ -158,6 +158,26 @@ object ParquetAvroIO {
       ReadParam(projectionFn, projection, predicate)
   }
 
+  private[scio] def splittableConfiguration[A, T](param: ReadParam[A, T], conf: Configuration) = {
+    // Needed to make GenericRecord read by parquet-avro work with Beam's
+    // org.apache.beam.sdk.coders.AvroCoder.
+    if (!param.isSpecific) {
+      conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
+      conf.set(
+        AvroReadSupport.AVRO_DATA_SUPPLIER,
+        classOf[GenericDataSupplier].getCanonicalName
+      )
+    }
+
+    AvroReadSupport.setAvroReadSchema(conf, param.readSchema)
+    if (param.projection != null) {
+      AvroReadSupport.setRequestedProjection(conf, param.projection)
+    }
+    if (param.predicate != null) {
+      ParquetInputFormat.setFilterPredicate(conf, param.predicate)
+    }
+  }
+
   final case class ReadParam[A: ClassTag, T: ClassTag] private (
     projectionFn: A => T,
     projection: Schema = ReadParam.DefaultProjection,
@@ -186,24 +206,7 @@ object ParquetAvroIO {
     private def readSplittableDoFn(sc: ScioContext, conf: Configuration, path: String)(implicit
       coder: Coder[T]
     ): SCollection[T] = {
-      // Needed to make GenericRecord read by parquet-avro work with Beam's
-      // org.apache.beam.sdk.coders.AvroCoder.
-      if (!isSpecific) {
-        conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        conf.set(
-          AvroReadSupport.AVRO_DATA_SUPPLIER,
-          classOf[GenericDataSupplier].getCanonicalName
-        )
-      }
-
-      AvroReadSupport.setAvroReadSchema(conf, readSchema)
-      if (projection != null) {
-        AvroReadSupport.setRequestedProjection(conf, projection)
-      }
-      if (predicate != null) {
-        ParquetInputFormat.setFilterPredicate(conf, predicate)
-      }
-
+      splittableConfiguration(this, conf)
       val bCoder = CoderMaterializer.beam(sc, coder)
       val cleanedProjectionFn = ClosureCleaner.clean(projectionFn)
 

@@ -47,4 +47,14 @@ object ParquetRead {
     val sdf = new ParquetReadFn[T, R](readSupportFactory, conf, projectionFn)
     ParDo.of(sdf)
   }
+
+  def readFilesWithFilename[T, R](
+    readSupportFactory: ReadSupportFactory[T],
+    conf: SerializableConfiguration,
+    projectionFn: SerializableFunction[T, R]
+  ): ParDo.SingleOutput[ReadableFile, (String, R)] = {
+    val sdf = new FilenameRetainingParquetReadFn[T, R](readSupportFactory, conf, projectionFn)
+    ParDo.of(sdf)
+  }
+
 }

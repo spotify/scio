@@ -17,7 +17,7 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.BeamInputFile
-import com.spotify.scio.parquet.read.ParquetReadFn._
+import com.spotify.scio.parquet.read.AbstractParquetReadFn._
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.range.OffsetRange
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory
 import java.util.{Set => JSet}
 import scala.jdk.CollectionConverters._
 
-object ParquetReadFn {
+object AbstractParquetReadFn {
   sealed private trait Granularity
   private case object File extends Granularity
   private case object RowGroup extends Granularity
@@ -50,7 +50,25 @@ class ParquetReadFn[T, R](
   readSupportFactory: ReadSupportFactory[T],
   conf: SerializableConfiguration,
   projectionFn: SerializableFunction[T, R]
-) extends DoFn[ReadableFile, R] {
+) extends AbstractParquetReadFn[T, R, R](readSupportFactory, conf, projectionFn, (_, r) => r)
+
+class FilenameRetainingParquetReadFn[T, R](
+  readSupportFactory: ReadSupportFactory[T],
+  conf: SerializableConfiguration,
+  projectionFn: SerializableFunction[T, R]
+) extends AbstractParquetReadFn[T, R, (String, R)](
+      readSupportFactory,
+      conf,
+      projectionFn,
+      (file, r) => (file.getMetadata.resourceId().toString, r)
+    )
+
+abstract class AbstractParquetReadFn[T, R, O](
+  readSupportFactory: ReadSupportFactory[T],
+  conf: SerializableConfiguration,
+  projectionFn: SerializableFunction[T, R],
+  outputFn: (ReadableFile, R) => O
+) extends DoFn[ReadableFile, O] {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   private lazy val granularity =
@@ -120,7 +138,7 @@ class ParquetReadFn[T, R](
   def processElement(
     @Element file: ReadableFile,
     tracker: RestrictionTracker[OffsetRange, Long],
-    out: DoFn.OutputReceiver[R]
+    out: DoFn.OutputReceiver[O]
   ): Unit = {
     logger.debug(
       "reading file from offset {} to {}",
@@ -208,7 +226,7 @@ class ParquetReadFn[T, R](
     rowCount: Long,
     file: ReadableFile,
     recordReader: RecordReader[T],
-    outputReceiver: DoFn.OutputReceiver[R],
+    outputReceiver: DoFn.OutputReceiver[O],
     projectionFn: SerializableFunction[T, R]
   ): Unit = {
     logger.debug(
@@ -237,7 +255,7 @@ class ParquetReadFn[T, R](
           )
 
         } else {
-          outputReceiver.output(projectionFn(record))
+          outputReceiver.output(outputFn(file, projectionFn(record)))
         }
 
         currentRow += 1

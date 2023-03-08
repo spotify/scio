@@ -181,7 +181,7 @@ object ParquetTypeIO {
     private[scio] val DefaultConfiguration = null
   }
   final case class ReadParam[T] private (
-    predicate: FilterPredicate = null,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration
   )
 
