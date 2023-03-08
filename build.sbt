@@ -19,6 +19,7 @@ import sbt._
 import Keys._
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import com.typesafe.tools.mima.core._
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
 import bloop.integrations.sbt.BloopDefaults
 import de.heikoseeberger.sbtheader.CommentCreator
@@ -27,10 +28,10 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.44.0"
+val beamVersion = "2.45.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.44.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.45.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -58,29 +59,30 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.1.5/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.5.0/index.html
 val animalSnifferAnnotationsVersion = "1.22"
-val bigQueryStorageBetaVersion = "0.149.0"
-val bigQueryStorageVersion = "2.25.0"
-val checkerFrameworkVersion = "3.27.0"
-val errorProneAnnotationsVersion = "2.16"
+val bigQueryStorageBetaVersion = "0.152.4"
+val bigQueryStorageVersion = "2.28.4"
+val checkerFrameworkVersion = "3.29.0"
+val errorProneAnnotationsVersion = "2.18.0"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.104.5"
-val gaxVersion = "2.19.5"
-val googleApiCommonVersion = "2.2.2"
-val googleAuthVersion = "1.12.1"
-val googleCloudBigTableVersion = "2.16.0"
-val googleCloudDatastoreVersion = "0.103.5"
-val googleCloudMonitoringVersion = "3.7.0"
-val googleCloudSpannerVersion = "6.33.0"
-val googleCloudStorageVersion = "2.15.1"
-val googleCloudCoreVersion = "2.8.27"
-val googleCommonsProtoVersion = "2.10.0"
+val gaxHttpJsonVersion = "0.107.0"
+val gaxVersion = "2.22.0"
+val googleApiCommonVersion = "2.5.0"
+val googleAuthVersion = "1.14.0"
+val googleCloudBigTableVersion = "2.18.3"
+val googleCloudCoreVersion = "2.9.4"
+val googleCloudDatastoreVersion = "0.104.3"
+val googleCloudMonitoringVersion = "3.10.0"
+val googleCloudSpannerVersion = "6.35.2"
+val googleCloudStorageVersion = "2.17.2"
+val googleCommonsProtoVersion = "2.13.0"
 val googleHttpClientsVersion = "1.42.3"
-val googleIAMVersion = "1.6.7"
-val grpcVersion = "1.50.2"
+val googleIAMVersion = "1.8.0"
+val grpcVersion = "1.52.1"
 val opencensusVersion = "0.31.1"
-val protobufVersion = "3.21.9"
+val perfmarkVersion = "0.26.0"
+val protobufVersion = "3.21.12"
 
 val algebirdVersion = "0.13.9"
 val algebraVersion = "2.9.0"
@@ -92,14 +94,14 @@ val cassandraDriverVersion = "3.11.3"
 val cassandraVersion = "3.11.13"
 val catsVersion = "2.9.0"
 val chillVersion = "0.10.0"
-val circeVersion = "0.14.3"
+val circeVersion = "0.14.4"
 val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
 val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.8"
-val elasticsearch8Version = "8.6.1"
+val elasticsearch8Version = "8.6.2"
 val featranVersion = "0.8.0"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
@@ -185,6 +187,18 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
+  mimaBinaryIssueFilters := Seq(
+    // minor scio-tensorflow breaking changes for 0.12.6
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
+    )
+  ),
   mimaPreviousArtifacts :=
     previousVersion(version.value)
       .filter(_ => publishArtifact.value)
@@ -306,7 +320,8 @@ val commonSettings = Def
       )
     ),
     mimaSettings,
-    formatSettings
+    formatSettings,
+    java17Settings
   )
 
 lazy val publishSettings = Def.settings(
@@ -450,6 +465,20 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
   new Tests.Group(name = "<default>", tests = default, runPolicy = policy) +: filtered.map { test =>
     new Tests.Group(name = test.name, tests = Seq(test), runPolicy = policy)
   }
+}
+
+lazy val java17Settings = sys.props("java.version") match {
+  case v if v.startsWith("17.") =>
+    Seq(
+      Test / fork := true,
+      Test / javaOptions ++= Seq(
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang.invoke=ALL-UNNAMED"
+      )
+    )
+  case _ => Seq()
 }
 
 lazy val root: Project = Project("scio", file("."))
@@ -1083,7 +1112,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.9.0",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.10.0",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
@@ -1435,13 +1464,13 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax" % gaxVersion,
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax-httpjson" % gaxHttpJsonVersion,
+  "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,
-  "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
@@ -1488,9 +1517,10 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion,
   "io.netty" % "netty-transport" % nettyVersion,
   "io.opencensus" % "opencensus-api" % opencensusVersion,
+  "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
-  "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
+  "io.perfmark" % "perfmark-api" % perfmarkVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion
 )

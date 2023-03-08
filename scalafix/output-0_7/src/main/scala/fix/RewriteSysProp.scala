@@ -9,6 +9,8 @@ object RewriteSysProp {
   BigQuerySysProps.CacheEnabled.value = false.toString
   BigQuerySysProps.Priority.value = "INTERACTIVE"
 
+  BigQuerySysProps.Project.value = "project-key"
+
   val tmp = CoreSysProps.TmpDir.value
   val username = CoreSysProps.User.value
 }

@@ -17,6 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verify;
+import static com.google.common.base.Verify.verifyNotNull;
 import static org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -107,8 +109,9 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
         keyClassSecondary,
         hashType,
         filenamePrefix);
-    assert ((keyClassSecondary != null && keyFieldSecondary != null)
-        || (keyClassSecondary == null && keyFieldSecondary == null));
+    verify(
+        (keyClassSecondary != null && keyFieldSecondary != null)
+            || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
     this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = keyField.split("\\.");
@@ -132,7 +135,7 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
 
   @Override
   public K2 extractKeySecondary(TableRow value) {
-    assert (keyPathSecondary != null);
+    verifyNotNull(keyPathSecondary);
     return extractKey(keyPathSecondary, value);
   }
 

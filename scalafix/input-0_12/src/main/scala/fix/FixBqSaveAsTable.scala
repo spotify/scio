@@ -12,33 +12,21 @@ import org.apache.avro.Schema
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write._
 
 object FixBqSaveAsTable {
-  val tableRef = new TableReference()
-  val s: Schema = null
-  val wd: WriteDisposition = null
-  val cd: CreateDisposition = null
-  val td: String = null
+  val tableRef = ???
+  val s: Schema = ???
+  val wd: WriteDisposition = ???
+  val cd: CreateDisposition = ???
+  val td: String = ???
+  val in: SCollection[GenericRecord] = ???
 
-  def saveAsBigQueryTable(in: SCollection[GenericRecord]): Unit =
+
     in.saveAvroAsBigQuery(tableRef)
-
-  def saveAsBigQueryTableNamedTableParam(in: SCollection[GenericRecord]): Unit =
     in.saveAvroAsBigQuery(table = tableRef)
-
-  def saveAsBigQueryTableMultiParamsWithoutSchema(in: SCollection[GenericRecord]): Unit =
     in.saveAvroAsBigQuery(tableRef, writeDisposition = wd, createDisposition = cd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsWithoutSchemaDiffOrder(in: SCollection[GenericRecord]): Unit =
     in.saveAvroAsBigQuery(tableRef, createDisposition = cd, writeDisposition = wd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsAllNamed(in: SCollection[GenericRecord]): Unit =
-    in.saveAvroAsBigQuery(table = tableRef, writeDisposition = wd, createDisposition = cd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsWithSchemaUnnamed(in: SCollection[GenericRecord]): Unit =
+    in.saveAvroAsBigQuery(writeDisposition = wd, table = tableRef, createDisposition = cd, tableDescription = td)
     in.saveAvroAsBigQuery(tableRef, s, wd, cd, td)
-
-  def saveAsBigQueryTableMultiParamsWithSchemaNamed(in: SCollection[GenericRecord]): Unit =
     in.saveAvroAsBigQuery(tableRef, avroSchema = s, writeDisposition = wd, createDisposition = cd, tableDescription = td)
-
-  def saveAsBigQueryTableMultiParamsNamedOrderChanged(in: SCollection[GenericRecord]): Unit =
     in.saveAvroAsBigQuery(tableRef, writeDisposition = wd, avroSchema = s)
 }
+

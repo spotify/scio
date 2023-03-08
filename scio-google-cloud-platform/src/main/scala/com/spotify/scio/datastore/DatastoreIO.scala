@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
 import com.google.datastore.v1.{Entity, Query}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.io.gcp.{datastore => beam}
 
 final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
@@ -29,7 +30,8 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 
   override val tapT: TapT.Aux[Entity, Nothing] = EmptyTapOf[Entity]
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] = {
+    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Entity])
     sc.applyTransform(
       beam.DatastoreIO
         .v1()
@@ -37,7 +39,8 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
         .withProjectId(projectId)
         .withNamespace(params.namespace)
         .withQuery(params.query)
-    )
+    ).setCoder(coder)
+  }
 
   override protected def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
     data.applyInternal(beam.DatastoreIO.v1.write.withProjectId(projectId))

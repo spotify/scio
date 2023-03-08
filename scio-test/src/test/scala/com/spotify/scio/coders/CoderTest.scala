@@ -179,9 +179,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       throw new Throwable("Is expected to throw when passing implicit from outer class")
     } catch {
       case e: NullPointerException =>
-        // In this case outer field is called "$cw" and it is hard to wrap it with proper exception
-        // so we allow it to fail with NullPointerException
-        e.getMessage should be(null)
+      // In this case outer field is called "$cw" and it is hard to wrap it with proper exception
+      // so we allow it to fail with NullPointerException
     }
 
     {

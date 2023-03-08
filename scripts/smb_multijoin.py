@@ -57,7 +57,7 @@ def mkCogroupFnRetVal(n, aWrapper=None, otherWrapper=None):
 
 def mkTransformFnRetVal(n, aWrapper=None, otherWrapper=None):
     vals = fnRetValHelper(n, aWrapper, otherWrapper)
-    return 'SortedBucketScioContext#SortMergeTransformReadBuilder[KEY, (%s)]' % ', '.join(vals)
+    return 'SortedBucketScioContext#SortMergeTransformReadBuilder[KEY, KEY, Void, (%s)]' % ', '.join(vals)
 
 def mkTupleTag(vals):
     return 'val (%s) = (%s)' % (
@@ -75,9 +75,9 @@ def sortMergeCoGroup(out, n):
 
     print('\t\tval input = SortedBucketIO', file=out)
     print('\t\t.read(keyClass)', file=out)
-    print('\t\t.of(%s)' %vals[0].lower(), file=out)
-    for x in vals[1:]:
-        print('\t\t.and(%s)' % x.lower(), file=out)
+
+    print('\t\t.of(%s)' %(', '.join(map(lambda x: x.lower(), vals))), file=out)
+
     print('\t\t.withTargetParallelism(targetParallelism)', file=out)
 
     print('\t\t' + mkTupleTag(vals), file=out)
@@ -125,10 +125,7 @@ def sortMergeTransform(out, n):
         new sortedBucketScioContext.SortMergeTransformReadBuilder(
         SortedBucketIO
         .read(keyClass)
-        .of(%s)''').lstrip('\n') %vals[0].lower(), file=out)
-
-    for x in vals[1:]:
-        print('\t\t\t\t.and(%s)' % x.lower(), file=out)
+        .of(%s)''').lstrip('\n') %(', '.join(map(lambda x: x.lower(), vals))), file=out)
 
     print(('''
         .withTargetParallelism(targetParallelism),
