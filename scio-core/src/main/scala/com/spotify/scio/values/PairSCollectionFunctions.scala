@@ -227,8 +227,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the left collection, i.e. when the intersection of keys is sparse in the left collection. A
    * Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
-   * concatenated. This is useful for joining historical aggregates with incremental updates. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -260,8 +265,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * (`rhs`) which cannot fit in memory, but contains a mostly overlapping set of keys as the left
    * collection, i.e. when the intersection of keys is sparse in the left collection. A Bloom Filter
    * of keys from the right collection (`rhs`) is used to split `this` into 2 partitions. Only those
-   * with keys in the filter go through the join and the rest are filtered out before the join. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * with keys in the filter go through the join and the rest are filtered out before the join.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -294,8 +304,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the left collection, i.e. when the intersection of keys is sparse in the left collection. A
    * Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
-   * concatenated. This is useful for joining historical aggregates with incremental updates. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -329,8 +344,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the left collection, i.e. when the intersection of keys is sparse in the left collection. A
    * Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
-   * concatenated. This is useful for joining historical aggregates with incremental updates. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -458,7 +478,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * large tables.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param thisNumKeys
    *   An estimate of the number of keys in `this`. This estimate is used to find the size and
@@ -509,7 +535,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * large tables.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param thisNumKeys
    *   An estimate of the number of keys in `this`. This estimate is used to find the size and
@@ -881,18 +913,19 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
    * @param rhsNumKeys
    *   An estimate of the number of keys in `rhs`. This estimate is used to find the size and number
    *   of BloomFilters that Scio would use to pre-filter `this` in a "map" step before any join.
    *   Having a value close to the actual number improves the false positives in output. When
    *   `computeExact` is set to true, a more accurate estimate of the number of keys in `rhs` would
    *   mean less shuffle when finding the exact value.
-   *
    * @param computeExact
    *   Whether or not to directly pass through bloom filter results (with a small false positive
    *   rate) or perform an additional inner join to confirm exact result set. By default this is set
    *   to false.
-   *
    * @param fpProb
    *   A fraction in range (0, 1) which would be the accepted false positive probability for this
    *   transform. By default when `computeExact` is set to `false`, this reflects the probability
@@ -901,7 +934,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   positive in the intermediate step before computing exact. Note: having fpProb = 0 doesn't
    *   mean an exact computation. This value along with `rhsNumKeys` is used for creating a
    *   BloomFilter.
-   *
    * @group per_key
    */
   def sparseIntersectByKey(
