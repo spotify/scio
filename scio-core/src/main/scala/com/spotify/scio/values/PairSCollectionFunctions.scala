@@ -34,6 +34,7 @@ import org.apache.beam.sdk.values.{KV, PCollection}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
+import scala.annotation.implicitNotFound
 import scala.collection.compat._ // scalafix:ok
 
 private object PairSCollectionFunctions {
@@ -245,7 +246,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
+  )(implicit
+    @implicitNotFound(
+      "No implicits found for parameter funnel: Funnel[${K}], you may need to `import magnolify.guava.auto._`"
+    ) funnel: Funnel[K]
+  ): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
     implicit val wCoder = rhs.valueCoder
     SCollection.unionAll(
       split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
@@ -278,7 +283,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(implicit funnel: Funnel[K]): SCollection[(K, (V, W))] =
+  )(implicit
+    @implicitNotFound(
+      "No implicits found for parameter funnel: Funnel[${K}], you may need to `import magnolify.guava.auto._`"
+    ) funnel: Funnel[K]
+  ): SCollection[(K, (V, W))] =
     self.transform { me =>
       implicit val wCoder = rhs.valueCoder
       SCollection.unionAll(
@@ -312,7 +321,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Option[W]))] =
+  )(implicit
+    @implicitNotFound(
+      "No implicits found for parameter funnel: Funnel[${K}], you may need to `import magnolify.guava.auto._`"
+    ) funnel: Funnel[K]
+  ): SCollection[(K, (V, Option[W]))] =
     self.transform { me =>
       implicit val wCoder = rhs.valueCoder
       SCollection.unionAll(
@@ -347,7 +360,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], W))] =
+  )(implicit
+    @implicitNotFound(
+      "No implicits found for parameter funnel: Funnel[${K}], you may need to `import magnolify.guava.auto._`"
+    ) funnel: Funnel[K]
+  ): SCollection[(K, (Option[V], W))] =
     self.transform { me =>
       implicit val wCoder = rhs.valueCoder
       SCollection.unionAll(
@@ -474,35 +491,38 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs2: SCollection[(K, B)],
     thisNumKeys: Long,
     fpProb: Double
-  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform {
-    sColl =>
-      implicit val aCoder = rhs1.valueCoder
-      implicit val bCoder = rhs2.valueCoder
-      val selfBfSideInputs =
-        BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
-      val n = selfBfSideInputs.size
+  )(implicit
+    @implicitNotFound(
+      "No implicits found for parameter funnel: Funnel[${K}], you may need to `import magnolify.guava.auto._`"
+    ) funnel: Funnel[K]
+  ): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform { sColl =>
+    implicit val aCoder = rhs1.valueCoder
+    implicit val bCoder = rhs2.valueCoder
+    val selfBfSideInputs =
+      BloomFilter.createPartitionedSideInputs(sColl.keys, thisNumKeys, fpProb)
+    val n = selfBfSideInputs.size
 
-      val thisParts = sColl.hashPartitionByKey(n)
-      val rhs1Parts = rhs1.hashPartitionByKey(n)
-      val rhs2Parts = rhs2.hashPartitionByKey(n)
+    val thisParts = sColl.hashPartitionByKey(n)
+    val rhs1Parts = rhs1.hashPartitionByKey(n)
+    val rhs2Parts = rhs2.hashPartitionByKey(n)
 
-      SCollection.unionAll(
-        thisParts.zip(selfBfSideInputs).zip(rhs1Parts).zip(rhs2Parts).map {
-          case (((lhs, lhsBfSi), rhs1), rhs2) =>
-            lhs
-              .cogroup(
-                rhs1
-                  .withSideInputs(lhsBfSi)
-                  .filter((e, c) => c(lhsBfSi).mightContain(e._1))
-                  .toSCollection,
-                rhs2
-                  .withSideInputs(lhsBfSi)
-                  .filter((e, c) => c(lhsBfSi).mightContain(e._1))
-                  .toSCollection
-              )
-              .flatMap { case (k, (iV, iA, iB)) => iV.map(v => (k, (v, iA, iB))) }
-        }
-      )
+    SCollection.unionAll(
+      thisParts.zip(selfBfSideInputs).zip(rhs1Parts).zip(rhs2Parts).map {
+        case (((lhs, lhsBfSi), rhs1), rhs2) =>
+          lhs
+            .cogroup(
+              rhs1
+                .withSideInputs(lhsBfSi)
+                .filter((e, c) => c(lhsBfSi).mightContain(e._1))
+                .toSCollection,
+              rhs2
+                .withSideInputs(lhsBfSi)
+                .filter((e, c) => c(lhsBfSi).mightContain(e._1))
+                .toSCollection
+            )
+            .flatMap { case (k, (iV, iA, iB)) => iV.map(v => (k, (v, iA, iB))) }
+      }
+    )
   }
 
   /**
@@ -521,7 +541,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs1: SCollection[(K, A)],
     rhs2: SCollection[(K, B)],
     thisNumKeys: Long
-  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
+  )(implicit
+    @implicitNotFound(
+      "No implicits found for parameter funnel: Funnel[${K}], you may need to `import magnolify.guava.auto._`"
+    ) funnel: Funnel[K]
+  ): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
     sparseLookup(rhs1, rhs2, thisNumKeys, 0.01)
 
   // =======================================================================
@@ -909,7 +933,11 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhsNumKeys: Long,
     computeExact: Boolean = false,
     fpProb: Double = 0.01
-  )(implicit funnel: Funnel[K]): SCollection[(K, V)] =
+  )(implicit
+    @implicitNotFound(
+      "No implicits found for parameter funnel: Funnel[${K}], you may need to `import magnolify.guava.auto._`"
+    ) funnel: Funnel[K]
+  ): SCollection[(K, V)] =
     self.transform { me =>
       val rhsBfs = BloomFilter.createPartitionedSideInputs(rhs, rhsNumKeys, fpProb)
       val n = rhsBfs.size
