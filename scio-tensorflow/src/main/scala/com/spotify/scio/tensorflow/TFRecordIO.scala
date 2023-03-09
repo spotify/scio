@@ -18,6 +18,7 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
@@ -42,8 +43,10 @@ final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type WriteP = TFRecordIO.WriteParam
   override val tapT: TapT.Aux[Array[Byte], Array[Byte]] = TapOf[Array[Byte]]
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] =
-    TFRecordMethods.read(sc, path, params)
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] = {
+    val coder = CoderMaterializer.beam(sc, Coder.arrayByteCoder)
+    TFRecordMethods.read(sc, path, params).setCoder(coder)
+  }
 
   override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Array[Byte]] = {
     TFRecordMethods.write(data, path, params)

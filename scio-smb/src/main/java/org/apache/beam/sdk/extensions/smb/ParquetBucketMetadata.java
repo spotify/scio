@@ -17,6 +17,9 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verify;
+import static com.google.common.base.Verify.verifyNotNull;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -171,8 +174,9 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
         keyClassSecondary,
         hashType,
         filenamePrefix);
-    assert ((keyClassSecondary != null && keyFieldSecondary != null)
-        || (keyClassSecondary == null && keyFieldSecondary == null));
+    verify(
+        (keyClassSecondary != null && keyFieldSecondary != null)
+            || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
     this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = toKeyPath(keyField);
@@ -230,7 +234,9 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
 
   @Override
   public K2 extractKeySecondary(V value) {
-    assert (keyPathSecondary != null && getKeyClassSecondary() != null);
+    verifyNotNull(keyPathSecondary);
+    verifyNotNull(getKeyClassSecondary());
+
     return extractKey(getKeyClassSecondary(), keyPathSecondary, value);
   }
 

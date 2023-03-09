@@ -4,72 +4,52 @@ package v0_7_0
 import scalafix.v1._
 import scala.meta._
 
+object BQClientRefactoring {
+  val importClient = importer"com.spotify.scio.bigquery.client.BigQuery"
+}
+
 class BQClientRefactoring extends SyntacticRule("BQClientRefactoring") {
-  private val imports =
-    scala.collection.mutable.ArrayBuffer.empty[(String, String)]
 
-  // Check that the package is not imported multiple times in the same file
-  def addImport(p: Position, i: Importer) = {
-    val Importer(s) = i
-    val Input.VirtualFile(path, _) = p.input
+  import BQClientRefactoring._
 
-    val t = (s.toString, path)
-    if (!imports.contains(t)) {
-      imports += t
-      Patch.addGlobalImport(i)
-    } else Patch.empty
-  }
-
-  object BQDef {
-    def unapply(t: Tree) =
-      t match {
-        case Term.Apply(Term.Select(_, t @ Term.Name(c)), _) =>
-          Option((t, c))
-        case _ => None
-      }
-  }
-
-  def addBQImport(i: Tree) =
-    addImport(i.pos, importer"com.spotify.scio.bigquery.client.BigQuery")
-
-  override def fix(implicit doc: SyntacticDocument): Patch =
-    doc.tree.collect {
-      case i @ Importee.Name(Name.Indeterminate("BigQueryClient")) =>
-        Patch.removeImportee(i) + addBQImport(i)
-      case BQDef(t, "extractLocation" | "extractTables") =>
-        Patch.addLeft(t, "query.") + addBQImport(t)
-      case Term.Apply(
-            Term.Select(n @ Term.Name("BigQueryClient"), Term.Name("defaultInstance")),
-            _
-          ) =>
-        Patch.replaceTree(n, "BigQuery") + addBQImport(n)
-      case BQDef(t, "getQuerySchema") =>
-        Patch.replaceTree(t, "query.schema") + addBQImport(t)
-      case BQDef(t, "getQueryRows") =>
-        Patch.replaceTree(t, "query.rows") + addBQImport(t)
-      case BQDef(t, "getTableSchema") =>
-        Patch.replaceTree(t, "tables.schema") + addBQImport(t)
-      case BQDef(t, "createTable") =>
-        Patch.replaceTree(t, "tables.create") + addBQImport(t)
-      case BQDef(t, "getTable") =>
-        Patch.replaceTree(t, "tables.table") + addBQImport(t)
-      case BQDef(t, "getTables") =>
-        Patch.replaceTree(t, "tables.tableReferences") + addBQImport(t)
-      case BQDef(t, "getTableRows") =>
-        Patch.replaceTree(t, "tables.rows") + addBQImport(t)
-      case ap @ BQDef(t, "loadTableFromCsv") =>
-        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.csv") + addBQImport(t)
-      case ap @ BQDef(t, "loadTableFromJson") =>
-        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.json") + addBQImport(t)
-      case ap @ BQDef(t, "loadTableFromAvro") =>
-        Patch.addRight(ap, ".get") + Patch.replaceTree(t, "load.avro") + addBQImport(t)
-      case BQDef(t, "exportTableAsCsv") =>
-        Patch.replaceTree(t, "extract.asCsv") + addBQImport(t)
-      case BQDef(t, "exportTableAsJson") =>
-        Patch.replaceTree(t, "extract.asJson") + addBQImport(t)
-      case BQDef(t, "exportTableAsAvro") =>
-        Patch.replaceTree(t, "extract.asAvro") + addBQImport(t)
-      case c if c.toString.contains("BigQueryClient") =>
-        Patch.empty
+  override def fix(implicit doc: SyntacticDocument): Patch = {
+    val patch = doc.tree.collect {
+      case i @ importee"BigQueryClient" =>
+        Patch.removeImportee(i.asInstanceOf[Importee])
+      case q"$expr.extractLocation(..$_)" =>
+        Patch.addRight(expr, ".query")
+      case q"$expr.extractTables(..$_)" =>
+        Patch.addRight(expr, ".query")
+      case t @ q"BigQueryClient.defaultInstance(..$params)" =>
+        Patch.replaceTree(t, q"BigQuery.defaultInstance(..$params)".syntax)
+      case t @ q"$expr.getQuerySchema(..$params)" =>
+        Patch.replaceTree(t, q"$expr.query.schema(..$params)".syntax)
+      case t @ q"$expr.getQueryRows(..$params)" =>
+        Patch.replaceTree(t, q"$expr.query.rows(..$params)".syntax)
+      case t @ q"$expr.getTableSchema(..$params)" =>
+        Patch.replaceTree(t, q"$expr.tables.schema(..$params)".syntax)
+      case t @ q"$expr.createTable(..$params)" =>
+        Patch.replaceTree(t, q"$expr.tables.create(..$params)".syntax)
+      case t @ q"$expr.getTable(..$params)" =>
+        Patch.replaceTree(t, q"$expr.tables.table(..$params)".syntax)
+      case t @ q"$expr.getTables(..$params)" =>
+        Patch.replaceTree(t, q"$expr.tables.tableReferences(..$params)".syntax)
+      case t @ q"$expr.getTableRows(..$params)" =>
+        Patch.replaceTree(t, q"$expr.tables.rows(..$params)".syntax)
+      case t @ q"$expr.loadTableFromCsv(..$params)" =>
+        Patch.replaceTree(t, q"$expr.load.csv(..$params).get".syntax)
+      case t @ q"$expr.loadTableFromJson(..$params)" =>
+        Patch.replaceTree(t, q"$expr.load.json(..$params).get".syntax)
+      case t @ q"$expr.loadTableFromAvro(..$params)" =>
+        Patch.replaceTree(t, q"$expr.load.avro(..$params).get".syntax)
+      case t @ q"$expr.exportTableAsCsv(..$params)" =>
+        Patch.replaceTree(t, q"$expr.extract.asCsv(..$params)".syntax)
+      case t @ q"$expr.exportTableAsJson(..$params)" =>
+        Patch.replaceTree(t, q"$expr.extract.asJson(..$params)".syntax)
+      case t @ q"$expr.exportTableAsAvro(..$params)" =>
+        Patch.replaceTree(t, q"$expr.extract.asAvro(..$params)".syntax)
     }.asPatch
+
+    if (patch.nonEmpty) patch + Patch.addGlobalImport(importClient) else Patch.empty
+  }
 }

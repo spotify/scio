@@ -17,6 +17,8 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verify;
+import static com.google.common.base.Verify.verifyNotNull;
 import static org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -124,8 +126,9 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
         keyClassSecondary,
         hashType,
         filenamePrefix);
-    assert ((keyClassSecondary != null && keyFieldSecondary != null)
-        || (keyClassSecondary == null && keyFieldSecondary == null));
+    verify(
+        (keyClassSecondary != null && keyFieldSecondary != null)
+            || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
     this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = AvroUtils.toKeyPath(keyField);
@@ -145,7 +148,7 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
 
   @Override
   public K2 extractKeySecondary(V value) {
-    assert (keyPathSecondary != null);
+    verifyNotNull(keyPathSecondary);
     return extractKey(keyPathSecondary, value);
   }
 

@@ -53,6 +53,18 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
     this.lookupFn = lookupFn;
   }
 
+  GrpcDoFn(
+      ChannelSupplier channelSupplier,
+      SerializableFunction<Channel, ClientT> newClientFn,
+      SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn,
+      Integer maxPendingRequests,
+      CacheSupplier<RequestT, ResponseT> cacheSupplier) {
+    super(maxPendingRequests, cacheSupplier);
+    this.channelSupplier = channelSupplier;
+    this.newClientFn = newClientFn;
+    this.lookupFn = lookupFn;
+  }
+
   @Override
   public ResourceType getResourceType() {
     // gRPC stubs are thread safe, we can share the client per instance
@@ -84,11 +96,12 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
 
   public static class Builder<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>>
       implements Serializable {
-
-    private int maxPendingRequests = DEFAULT_MAX_PENDING_REQUESTS;
     private ChannelSupplier channelSupplier;
     private SerializableFunction<Channel, ClientT> newClientFn;
     private SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn;
+
+    private int maxPendingRequests = DEFAULT_MAX_PENDING_REQUESTS;
+    private CacheSupplier<RequestT, ResponseT> cacheSupplier = new NoOpCacheSupplier<>();
 
     protected Builder() {}
 
@@ -124,12 +137,21 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       return this;
     }
 
+    /** @param cacheSupplier supplier for lookup cache. */
+    public Builder<RequestT, ResponseT, ClientT> withCacheSupplier(
+        CacheSupplier<RequestT, ResponseT> cacheSupplier) {
+      this.cacheSupplier = cacheSupplier;
+      return this;
+    }
+
     public GrpcDoFn<RequestT, ResponseT, ClientT> build() {
       requireNonNull(channelSupplier, "channelSupplier cannot be null");
       requireNonNull(lookupFn, "lookupFn cannot be null");
       requireNonNull(newClientFn, "newClientFn cannot be null");
+      requireNonNull(cacheSupplier, "cacheSupplier cannot be null");
 
-      return new GrpcDoFn<>(channelSupplier, newClientFn, lookupFn, maxPendingRequests);
+      return new GrpcDoFn<>(
+          channelSupplier, newClientFn, lookupFn, maxPendingRequests, cacheSupplier);
     }
   }
 }

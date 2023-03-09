@@ -17,12 +17,15 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verifyNotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -76,6 +79,18 @@ public class SortedBucketIO {
     return new CoGbkWithSecondaryBuilder<>(primaryKeyClass, secondaryKeyClass);
   }
 
+  private static void validateInputNameUniqueness(List<BucketedInput<?>> inputs) {
+    HashSet<String> inputNames = new HashSet<>();
+    inputs.stream()
+        .forEach(
+            i ->
+                Preconditions.checkArgument(
+                    inputNames.add(i.getTupleTag().getId()),
+                    "Tuple tag name for each smb input source needs to be unique. Input source"
+                        + " name \"%s\" is reused at least once.",
+                    i.getTupleTag().getId()));
+  }
+
   /** Builder for sorted-bucket {@link CoGbk}. */
   public static class CoGbkBuilder<K1> {
     private final Class<K1> primaryKeyClass;
@@ -86,13 +101,12 @@ public class SortedBucketIO {
 
     /** Returns a new {@link CoGbk} with the given first sorted-bucket source in {@link Read}. */
     public CoGbk<K1> of(Read<?>... read) {
-      return new CoGbk<>(
-          primaryKeyClass,
+      List<BucketedInput<?>> inputs =
           Arrays.stream(read)
               .map(r -> r.toBucketedInput(SortedBucketSource.Keying.PRIMARY))
-              .collect(Collectors.toList()),
-          DEFAULT_PARALLELISM,
-          null);
+              .collect(Collectors.toList());
+      validateInputNameUniqueness(inputs);
+      return new CoGbk<>(primaryKeyClass, inputs, DEFAULT_PARALLELISM, null);
     }
   }
 
@@ -156,6 +170,7 @@ public class SortedBucketIO {
               .addAll(inputs)
               .add(read.toBucketedInput(SortedBucketSource.Keying.PRIMARY))
               .build();
+      validateInputNameUniqueness(newReads);
       return new CoGbk<>(keyClass, newReads, targetParallelism, metricsKey);
     }
 
@@ -216,6 +231,7 @@ public class SortedBucketIO {
               .addAll(inputs)
               .add(read.toBucketedInput(SortedBucketSource.Keying.PRIMARY_AND_SECONDARY))
               .build();
+      validateInputNameUniqueness(newReads);
       return new CoGbkWithSecondary<>(
           keyClassPrimary, keyClassSecondary, newReads, targetParallelism, metricsKey);
     }
@@ -513,8 +529,8 @@ public class SortedBucketIO {
     public int comparePrimaryAndSecondary(final ComparableKeyBytes o) {
       int pComp = comparePrimary(o);
       if (pComp != 0) return pComp;
-      assert (secondary != null);
-      assert (o.secondary != null);
+      verifyNotNull(secondary);
+      verifyNotNull(o.secondary);
       return bytesComparator.compare(this.secondary, o.secondary);
     }
 
@@ -531,7 +547,7 @@ public class SortedBucketIO {
     public static <K1, K2> KeyFn<KV<K1, K2>> keyFnPrimaryAndSecondary(
         final Coder<K1> keyCoderPrimary, final Coder<K2> keyCoderSecondary) {
       return k -> {
-        assert (k.secondary != null);
+        verifyNotNull(k.secondary);
         K1 primary = keyFnPrimary(keyCoderPrimary).apply(k);
         try {
           return KV.of(primary, keyCoderSecondary.decode(new ByteArrayInputStream(k.secondary)));

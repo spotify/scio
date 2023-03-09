@@ -4,90 +4,103 @@ package v0_7_0
 import scalafix.v1._
 import scala.meta._
 
-class RewriteSysProp extends SyntacticRule("RewriteSysProp") {
-  private val imports =
-    scala.collection.mutable.ArrayBuffer.empty[(String, String)]
+object RewriteSysProp {
+  val KeySuffix = "_KEY"
 
-  // Check that the package is not imported multiple times in the same file
-  def addImport(p: Position, i: Importer) = {
-    val Importer(s) = i
-    val Input.VirtualFile(path, _) = p.input
-
-    val t = (s.toString, path)
-    if (!imports.contains(t)) {
-      imports += t
-      Patch.addGlobalImport(i)
-    } else Patch.empty
+  object BQ {
+    val BigQueryClient: SymbolMatcher =
+      SymbolMatcher.normalized("com/spotify/scio/bigquery/BigQueryClient")
+    val `import` = importer"com.spotify.scio.bigquery.BigQuerySysProps"
   }
 
-  private def toCamelCase(s: String) =
+  object Core {
+    val `import` = importer"com.spotify.scio.CoreSysProps"
+  }
+
+  object Avro {
+    val `import` = importer"com.spotify.scio.avro.AvroSysProps"
+  }
+
+  object Taps {
+    val Taps: SymbolMatcher = SymbolMatcher.normalized("com/spotify/scio/io/Taps")
+    val `import` = importer"com.spotify.scio.io.TapsSysProps"
+  }
+
+  def toCamelCase(s: String): String =
     s.split("_").map(_.toLowerCase.capitalize).mkString
 
-  object NamedSysProp {
-    def unapply(s: Term) =
-      s match {
-        case Term.Apply(
-              Term.Select(Term.Name("sys"), Term.Name("props")),
-              List(Term.Select(Term.Name(clazz), Term.Name(key)))
-            ) =>
-          Option((clazz, key))
-        case _ => None
-      }
+}
+
+class RewriteSysProp extends SemanticRule("RewriteSysProp") {
+
+  import RewriteSysProp._
+
+  def isKeyTerm(term: Term): Boolean = term match {
+    case name: Term.Name => isKey(name)
+    case q"$_.$name"     => isKey(name)
+    case _               => false
   }
 
-  object StringSysProp {
-    def unapply(s: Term) =
-      s match {
-        case Term.Apply(Term.Select(Term.Name("sys"), Term.Name("props")), List(Lit.String(key))) =>
-          Option(key)
-        case _ => None
-      }
+  def isKey(name: Name): Boolean = name.value.endsWith(KeySuffix)
+
+  def fieldName(keyTerm: Term): Term.Name = keyTerm match {
+    case name: Term.Name => Term.Name(toCamelCase(name.value.dropRight(KeySuffix.length)))
+    case q"$_.$name"     => Term.Name(toCamelCase(name.value.dropRight(KeySuffix.length)))
+    case _               => throw new Exception(s"Unsupported property key '$keyTerm'")
   }
 
-  override def fix(implicit doc: SyntacticDocument): Patch =
+  override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
-      // BigQuery
-      case t @ NamedSysProp("BigQueryClient", key) =>
-        val pname = Term.Name(toCamelCase(key.replaceAll("_KEY", "")))
-        addImport(t.pos, importer"com.spotify.scio.bigquery.BigQuerySysProps") +
-          Patch.replaceTree(t, q"BigQuerySysProps.$pname.value".toString)
-      // Sys props
-      case t @ StringSysProp("project") =>
-        addImport(t.pos, importer"com.spotify.scio.CoreSysProps") +
-          Patch.replaceTree(t, q"CoreSysProps.Project.value".toString)
-      case t @ StringSysProp("java.home") =>
-        addImport(t.pos, importer"com.spotify.scio.CoreSysProps") +
-          Patch.replaceTree(t, q"CoreSysProps.Home.value".toString)
-      case t @ StringSysProp("java.io.tmpdir") =>
-        addImport(t.pos, importer"com.spotify.scio.CoreSysProps") +
-          Patch.replaceTree(t, q"CoreSysProps.TmpDir.value".toString)
-      case t @ StringSysProp("user.name") =>
-        addImport(t.pos, importer"com.spotify.scio.CoreSysProps") +
-          Patch.replaceTree(t, q"CoreSysProps.User.value".toString)
-      case t @ StringSysProp("user.dir") =>
-        addImport(t.pos, importer"com.spotify.scio.CoreSysProps") +
-          Patch.replaceTree(t, q"CoreSysProps.UserDir.value".toString)
+      // CoreSysProps
+      case t @ q"""sys.props("project")""" =>
+        Patch.addGlobalImport(Core.`import`) +
+          Patch.replaceTree(t, q"CoreSysProps.Project.value".syntax)
+      case t @ q"""sys.props("java.home")""" =>
+        Patch.addGlobalImport(Core.`import`) +
+          Patch.replaceTree(t, q"CoreSysProps.Home.value".syntax)
+      case t @ q"""sys.props("java.io.tmpdir")""" =>
+        Patch.addGlobalImport(Core.`import`) +
+          Patch.replaceTree(t, q"CoreSysProps.TmpDir.value".syntax)
+      case t @ q"""sys.props("user.name")""" =>
+        Patch.addGlobalImport(Core.`import`) +
+          Patch.replaceTree(t, q"CoreSysProps.User.value".syntax)
+      case t @ q"""sys.props("user.dir")""" =>
+        Patch.addGlobalImport(Core.`import`) +
+          Patch.replaceTree(t, q"CoreSysProps.UserDir.value".syntax)
       // AvroSysProps
-      case t @ StringSysProp("avro.types.debug") =>
-        addImport(t.pos, importer"com.spotify.scio.avro.AvroSysProps") +
-          Patch.replaceTree(t, q"AvroSysProps.Debug.value".toString)
-      case t @ StringSysProp("avro.plugin.disable.dump") =>
-        addImport(t.pos, importer"com.spotify.scio.avro.AvroSysProps") +
-          Patch.replaceTree(t, q"AvroSysProps.DisableDump.value".toString)
-      case t @ StringSysProp("avro.class.cache.directory") =>
-        addImport(t.pos, importer"com.spotify.scio.avro.AvroSysProps") +
-          Patch.replaceTree(t, q"AvroSysProps.CacheDirectory.value".toString)
-      // Taps
-      case t @ NamedSysProp("Taps", "ALGORITHM_KEY") =>
-        addImport(t.pos, importer"com.spotify.scio.io.TapsSysProps") +
-          Patch.replaceTree(t, q"TapsSysProps.Algorithm .value".toString)
-      case t @ NamedSysProp("Taps", key) =>
-        val pname = Term.Name(toCamelCase(key.replaceAll("_KEY", "")))
-        addImport(t.pos, importer"com.spotify.scio.io.TapsSysProps") +
-          Patch.replaceTree(t, q"TapsSysProps.$pname.value".toString)
-      case i @ Importee.Name(Name.Indeterminate("BigQueryClient")) =>
-        Patch.removeImportee(i)
-      case c =>
-        Patch.empty
+      case t @ q"""sys.props("avro.types.debug")""" =>
+        Patch.addGlobalImport(Avro.`import`) +
+          Patch.replaceTree(t, q"AvroSysProps.Debug.value".syntax)
+      case t @ q"""sys.props("avro.plugin.disable.dump")""" =>
+        Patch.addGlobalImport(Avro.`import`) +
+          Patch.replaceTree(t, q"AvroSysProps.DisableDump.value".syntax)
+      case t @ q"""sys.props("avro.class.cache.directory")""" =>
+        Patch.addGlobalImport(Avro.`import`) +
+          Patch.replaceTree(t, q"AvroSysProps.CacheDirectory.value".syntax)
+      // BigQuerySysProps
+      case t @ q"sys.props($key)"
+          if BQ.BigQueryClient.matches(key.symbol.owner) && isKeyTerm(key) =>
+        val field = fieldName(key)
+        Patch.addGlobalImport(BQ.`import`) +
+          Patch.replaceTree(t, q"BigQuerySysProps.$field.value".syntax)
+      case i @ importee"BigQueryClient" if BQ.BigQueryClient.matches(i.symbol) =>
+        Patch.removeImportee(i.asInstanceOf[Importee])
+      case importer"com.spotify.scio.bigquery.BigQueryClient.{..$is}" =>
+        is.collect {
+          case i @ importee"$name" if isKey(name) => Patch.removeImportee(i)
+        }.asPatch
+      // TapsSysProps
+      case t @ q"sys.props($key)" if Taps.Taps.matches(key.symbol.owner) && isKeyTerm(key) =>
+        val field = fieldName(key)
+        Patch.addGlobalImport(Taps.`import`) +
+          Patch.replaceTree(t, q"TapsSysProps.$field.value".syntax)
+      case i @ importee"BigQueryClient" =>
+        Patch.removeImportee(i.asInstanceOf[Importee])
+      case i @ importee"Taps" if Taps.Taps.matches(i.symbol) =>
+        Patch.removeImportee(i.asInstanceOf[Importee])
+      case importer"$_.Taps.{..$is}" =>
+        is.collect {
+          case i @ importee"$name" if isKey(name) => Patch.removeImportee(i)
+        }.asPatch
     }.asPatch
 }
