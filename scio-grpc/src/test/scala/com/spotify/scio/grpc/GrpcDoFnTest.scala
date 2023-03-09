@@ -16,6 +16,7 @@
 
 package com.spotify.scio.grpc
 
+import com.google.common.cache.{Cache, CacheBuilder}
 import com.spotify.concat.v1.ConcatServiceGrpc.{
   ConcatServiceFutureStub,
   ConcatServiceImplBase,
@@ -23,6 +24,7 @@ import com.spotify.concat.v1.ConcatServiceGrpc.{
 }
 import com.spotify.concat.v1._
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import io.grpc.{Server, ServerBuilder}
@@ -141,7 +143,47 @@ class GrpcDoFnTest extends PipelineSpec with BeforeAndAfterAll {
 
       result should containInAnyOrder(expected)
     }
+  }
 
+  it should "return cached responses" in {
+    val request = ConcatRequest
+      .newBuilder()
+      .setStringOne("one")
+      .setStringTwo("two")
+      .build()
+
+    // not a real concat
+    val response = ConcatResponse
+      .newBuilder()
+      .setResponse("twelve")
+      .build()
+
+    // create initialized cache
+    val cacheSupplier = new CacheSupplier[ConcatRequest, ConcatResponse] {
+      override def get(): Cache[ConcatRequest, ConcatResponse] = {
+        val cache = CacheBuilder.newBuilder().build[ConcatRequest, ConcatResponse]()
+        cache.put(request, response)
+        cache
+      }
+    }
+
+    val input = Seq(request)
+    val expected: Seq[(ConcatRequest, Try[ConcatResponse])] = Seq(
+      request -> Success(response)
+    )
+
+    runWithContext { sc =>
+      val result = sc
+        .parallelize(input)
+        .grpcLookup[ConcatResponse, ConcatServiceFutureStub](
+          () => NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
+          ConcatServiceGrpc.newFutureStub,
+          2,
+          cacheSupplier
+        )(_.concat)
+
+      result should containInAnyOrder(expected)
+    }
   }
 
 }
