@@ -107,10 +107,19 @@ final case class TextIO(path: String) extends ScioIO[String] {
 }
 
 object TextIO {
+
+  // TODO break bin compat in 0.13 and use default params
   final case class ReadParam(
-    compression: Compression = Compression.AUTO,
-    emptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
-  )
+    compression: Compression,
+    emptyMatchTreatment: EmptyMatchTreatment
+  ) {
+    def this(compression: Compression = Compression.AUTO) =
+      this(compression, EmptyMatchTreatment.DISALLOW)
+  }
+
+  object ReadParam {
+    def apply(compression: Compression = Compression.AUTO): ReadParam = new ReadParam(compression)
+  }
 
   object WriteParam {
     private[scio] val DefaultHeader = Option.empty[String]

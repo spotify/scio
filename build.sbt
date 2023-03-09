@@ -207,6 +207,16 @@ lazy val mimaSettings = Def.settings(
     ),
     ProblemFilters.exclude[DirectMissingMethodProblem](
       "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookupStream$extension"
+    ),
+    // minor text io breaking changes for 0.12.6
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.ScioContext.textFile"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.io.TextIO#ReadParam.copy"
+    ),
+    ProblemFilters.exclude[MissingTypesProblem](
+      "com.spotify.scio.io.TextIO$ReadParam$"
     )
   ),
   mimaPreviousArtifacts :=
