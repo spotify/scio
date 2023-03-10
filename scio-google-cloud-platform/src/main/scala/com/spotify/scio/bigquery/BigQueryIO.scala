@@ -449,12 +449,14 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
+    // extracting this out makes unit testing and mocking way simpler
+    val write = params.configOverride(
+      data.textOut(path, ".json", params.numShards, params.compression)
+    )
     data.transform_("BigQuery write") {
       _.map(ScioUtil.jsonFactory.toString)
         .applyInternal(
-          params.configOverride(
-            data.textOut(path, ".json", params.numShards, params.compression)
-          )
+          write
         )
     }
     tap(())

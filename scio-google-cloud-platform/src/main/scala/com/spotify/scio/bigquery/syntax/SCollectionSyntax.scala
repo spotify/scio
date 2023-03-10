@@ -19,26 +19,34 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQueryTyped, TableRow, TableRowJsonIO, TimePartitioning}
-import com.spotify.scio.bigquery.coders
+import com.spotify.scio.bigquery.{
+  coders,
+  BigQueryTyped,
+  BigQueryTypedTable,
+  Table,
+  TableRow,
+  TableRowJsonIO,
+  TimePartitioning
+}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.{Compression, TextIO}
+import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.{Compression, TextIO}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-import com.spotify.scio.bigquery.Table
-import com.spotify.scio.bigquery.BigQueryTypedTable
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
-import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
-final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
+final class SCollectionTableRowOps[T <: TableRow](
+  private[bigquery] val self: SCollection[T],
+  private[bigquery] val mockIO: Option[BigQueryTypedTable[TableRow]] = None
+) {
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
