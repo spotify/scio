@@ -202,16 +202,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     name: Option[String],
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
-    val t =
-      if (
-        (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
-        && ScioUtil.isWindowed(this)
-      ) {
-        // In case PCollection is windowed
-        transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
-      } else {
-        transform
-      }
+    val isCombineGlobally = classOf[Combine.Globally[T, U]].isAssignableFrom(transform.getClass)
+    val t = if (isCombineGlobally && ScioUtil.isWindowed(this)) {
+      // In case PCollection is windowed
+      transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
+    } else {
+      transform
+    }
     context.wrap(this.applyInternal(name, t))
   }
 

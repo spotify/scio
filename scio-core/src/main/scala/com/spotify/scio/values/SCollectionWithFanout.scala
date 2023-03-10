@@ -50,13 +50,21 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).sum(a.semigroup).map(a.present))
+    coll.transform { in =>
+      new SCollectionWithFanout(coll.map(a.prepare), fanout)
+        .sum(a.semigroup)
+        .map(a.present)
+    }
   }
 
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).fold(a.monoid).map(a.present))
+    coll.transform { in =>
+      new SCollectionWithFanout(coll.map(a.prepare), fanout)
+        .fold(a.monoid)
+        .map(a.present)
+    }
   }
 
   /** [[SCollection.combine]] with fan out. */
@@ -85,7 +93,9 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
 
   /** [[SCollection.fold(implicit* SCollection.fold]] with fan out. */
   def fold(implicit mon: Monoid[T]): SCollection[T] =
-    coll.pApply(Combine.globally(Functions.reduceFn(context, mon)).withFanout(fanout))
+    coll.pApply(
+      Combine.globally(Functions.reduceFn(context, mon)).withFanout(fanout)
+    )
 
   /** [[SCollection.reduce]] with fan out. */
   def reduce(op: (T, T) => T): SCollection[T] =
@@ -100,7 +110,10 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
         "Consider aggregate/fold instead."
     )
     coll.pApply(
-      Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults().withFanout(fanout)
+      Combine
+        .globally(Functions.reduceFn(context, sg))
+        .withoutDefaults()
+        .withFanout(fanout)
     )
   }
 }
