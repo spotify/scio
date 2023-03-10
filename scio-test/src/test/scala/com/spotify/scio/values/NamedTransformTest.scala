@@ -22,6 +22,9 @@ import com.spotify.scio.util.MultiJoin
 import org.apache.beam.sdk.Pipeline
 import org.apache.beam.sdk.runners.TransformHierarchy
 import org.apache.beam.sdk.values.PCollection
+import org.scalatest.Assertion
+
+import scala.collection.mutable
 
 object SimpleJob {
   import com.spotify.scio._
@@ -34,7 +37,38 @@ object SimpleJob {
   }
 }
 
-class NamedTransformTest extends PipelineSpec {
+trait NamedTransformSpec extends PipelineSpec {
+  def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String): Assertion = {
+    val visitor = new AssertTransformNameVisitor(p.internal, tfName)
+    p.context.pipeline.traverseTopologically(visitor)
+    visitor.nodeFullName should startWith regex tfName
+  }
+
+  def assertGraphContainsStep(p: PCollectionWrapper[_], tfName: String): Assertion = {
+    val visitor = new NameAccumulatingVisitor()
+    p.context.pipeline.traverseTopologically(visitor)
+    withClue(s"All nodes: ${visitor.nodes.sorted.mkString("", "\n", "\n")}") {
+      visitor.nodes.flatMap(_.split('/')).toSet should contain(tfName)
+    }
+  }
+
+  class AssertTransformNameVisitor(pcoll: PCollection[_], tfName: String)
+      extends Pipeline.PipelineVisitor.Defaults {
+    val prefix: List[String] = tfName.split("[(/]").toList
+    var nodeFullName = "<unknown>"
+
+    override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
+      if (node.getOutputs.containsValue(pcoll)) nodeFullName = node.getFullName
+  }
+
+  class NameAccumulatingVisitor extends Pipeline.PipelineVisitor.Defaults {
+    var nodes: mutable.ListBuffer[String] = mutable.ListBuffer.empty[String]
+    override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
+      nodes.append(node.getFullName)
+  }
+}
+
+class NamedTransformTest extends NamedTransformSpec {
   "ScioContext" should "support custom transform name" in {
     runWithContext { sc =>
       val p = sc.withName("ReadInput").parallelize(Seq("a", "b", "c"))
@@ -215,28 +249,5 @@ class NamedTransformTest extends PipelineSpec {
       val userNamed = sc.withName("UserNamed").tfName(default = Some("default"))
       userNamed should be("UserNamed")
     }
-  }
-
-  private def assertTransformNameStartsWith(p: PCollectionWrapper[_], tfName: String) = {
-    val visitor = new AssertTransformNameVisitor(p.internal, tfName)
-    p.context.pipeline.traverseTopologically(visitor)
-    visitor.nodeFullName should startWith regex tfName
-  }
-
-  private class AssertTransformNameVisitor(pcoll: PCollection[_], tfName: String)
-      extends Pipeline.PipelineVisitor.Defaults {
-    val prefix: List[String] = tfName.split("[(/]").toList
-    var success = false
-    var nodeFullName = "<unknown>"
-
-    override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
-      if (node.getOutputs.containsValue(pcoll)) {
-        nodeFullName = node.getFullName
-        success = node.getFullName
-          .split("[(/]")
-          .toList
-          .take(prefix.length)
-          .equals(prefix)
-      }
   }
 }

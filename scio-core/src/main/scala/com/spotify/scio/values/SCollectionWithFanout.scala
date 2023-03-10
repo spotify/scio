@@ -51,7 +51,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
     coll.transform { in =>
-      new SCollectionWithFanout(coll.map(a.prepare), fanout)
+      new SCollectionWithFanout(in.map(a.prepare), fanout)
         .sum(a.semigroup)
         .map(a.present)
     }
@@ -61,7 +61,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
     coll.transform { in =>
-      new SCollectionWithFanout(coll.map(a.prepare), fanout)
+      new SCollectionWithFanout(in.map(a.prepare), fanout)
         .fold(a.monoid)
         .map(a.present)
     }

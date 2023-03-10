@@ -17,10 +17,9 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineSpec
 import com.twitter.algebird.Aggregator
 
-class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
+class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
   "SCollectionWithHotKeyFanout" should "support aggregateByKey()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100).map(("a", _)) ++ sc
@@ -93,4 +92,48 @@ class SCollectionWithHotKeyFanoutTest extends PipelineSpec {
       r2 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
     }
   }
+
+  private def shouldFanOut[T](
+    fn: SCollectionWithHotKeyFanout[String, Int] => SCollection[T]
+  ) = {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(1 to 100).map(("a", _))
+      val p2 = sc.parallelize(1 to 10).map(("b", _))
+      val p = (p1 ++ p2).withHotKeyFanout(10)
+      assertGraphContainsStep(fn(p), "Combine.perKeyWithFanout(Anonymous)")
+    }
+  }
+
+  it should "fan out with aggregateByKey(zeroValue)(seqOp)" in {
+    shouldFanOut(_.aggregateByKey(0.0)(_ + _, _ + _))
+  }
+
+  it should "fan out with aggregateByKey(Aggregator)" in {
+    shouldFanOut(_.aggregateByKey(Aggregator.max[Int]))
+  }
+
+  it should "fan out with aggregateByKey(MonoidAggregator)" in {
+    shouldFanOut(_.aggregateByKey(Aggregator.immutableSortedReverseTake[Int](5)))
+  }
+
+  it should "fan out with combineByKey()" in {
+    shouldFanOut(_.combineByKey(_.toDouble)(_ + _)(_ + _))
+  }
+
+  it should "fan out with foldByKey(zeroValue)(op)" in {
+    shouldFanOut(_.foldByKey(0)(_ + _))
+  }
+
+  it should "fan out with foldByKey(Monoid)" in {
+    shouldFanOut(_.foldByKey)
+  }
+
+  it should "fan out with reduceByKey()" in {
+    shouldFanOut(_.reduceByKey(_ + _))
+  }
+
+  it should "fan out with sumByKey()" in {
+    shouldFanOut(_.sumByKey)
+  }
+
 }

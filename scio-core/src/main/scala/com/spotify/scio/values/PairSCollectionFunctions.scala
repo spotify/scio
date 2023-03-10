@@ -67,6 +67,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(f: KV[K, UI] => (K, UO)): SCollection[(K, UO)] = {
     self.transform(
       _.withName("TupleToKv").toKV
+        .withName(t.getName) // propagate transform name
         .applyTransform(t)
         .withName("KvToTuple")
         .map(f)
@@ -89,7 +90,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   intermediate node.
    */
   def withHotKeyFanout(hotKeyFanout: K => Int): SCollectionWithHotKeyFanout[K, V] =
-    new SCollectionWithHotKeyFanout(context, this, Left(hotKeyFanout))
+    new SCollectionWithHotKeyFanout(this, Left(hotKeyFanout))
 
   /**
    * Convert this SCollection to an [[SCollectionWithHotKeyFanout]] that uses an intermediate node
@@ -98,7 +99,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   constant value for every key
    */
   def withHotKeyFanout(hotKeyFanout: Int): SCollectionWithHotKeyFanout[K, V] =
-    new SCollectionWithHotKeyFanout(context, this, Right(hotKeyFanout))
+    new SCollectionWithHotKeyFanout(this, Right(hotKeyFanout))
 
   // =======================================================================
   // CoGroups
