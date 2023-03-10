@@ -35,6 +35,7 @@ import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
@@ -215,7 +216,7 @@ object BigQueryTypedTable {
     case object TableRow extends Format[TableRow]
   }
 
-  trait WriteParam {
+  trait WriteParam[T] {
     val schema: TableSchema
     val writeDisposition: WriteDisposition
     val createDisposition: CreateDisposition
@@ -223,17 +224,19 @@ object BigQueryTypedTable {
     val timePartitioning: TimePartitioning
     val extendedErrorInfo: ExtendedErrorInfo
     val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+    val configOverride: Write[T] => Write[T]
   }
 
   object WriteParam extends Writes.WriteParamDefauls {
-    @inline final def apply(
+    @inline final def apply[T](
       s: TableSchema,
       wd: WriteDisposition,
       cd: CreateDisposition,
       td: String,
       tp: TimePartitioning,
-      ei: ExtendedErrorInfo
-    )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
+      ei: ExtendedErrorInfo,
+      co: Write[T] => Write[T]
+    )(it: SCollection[ei.Info] => Unit): WriteParam[T] = new WriteParam[T] {
       val schema: TableSchema = s
       val writeDisposition: WriteDisposition = wd
       val createDisposition: CreateDisposition = cd
@@ -241,15 +244,18 @@ object BigQueryTypedTable {
       val timePartitioning: TimePartitioning = tp
       val extendedErrorInfo: ei.type = ei
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+      val configOverride: Write[T] => Write[T] = co
     }
 
-    @inline final def apply(
+    @inline final def apply[T](
       s: TableSchema = DefaultSchema,
       wd: WriteDisposition = DefaultWriteDisposition,
       cd: CreateDisposition = DefaultCreateDisposition,
       td: String = DefaultTableDescription,
-      tp: TimePartitioning = DefaultTimePartitioning
-    ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
+      tp: TimePartitioning = DefaultTimePartitioning,
+      co: Write[T] => Write[T] = identity[Write[T]] _
+    ): WriteParam[T] =
+      apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo, co)(defaultInsertErrorTransform)
   }
 
   private[this] def tableRow(table: Table): BigQueryTypedTable[TableRow] =
@@ -324,12 +330,12 @@ object BigQueryTypedTable {
 
 final case class BigQueryTypedTable[T: Coder](
   reader: beam.BigQueryIO.TypedRead[T],
-  writer: beam.BigQueryIO.Write[T],
+  writer: Write[T],
   table: Table,
   fn: (GenericRecord, TableSchema) => T
 ) extends BigQueryIO[T] {
   override type ReadP = Unit
-  override type WriteP = BigQueryTypedTable.WriteParam
+  override type WriteP = BigQueryTypedTable.WriteParam[T]
 
   override def testId: String = s"BigQueryIO(${table.spec})"
 
@@ -361,7 +367,7 @@ final case class BigQueryTypedTable[T: Coder](
       case Enabled  => transform.withExtendedErrorInfo()
     }
 
-    val wr = data.applyInternal(transform)
+    val wr = data.applyInternal(params.configOverride(transform))
     params.insertErrorTransform(params.extendedErrorInfo.coll(data.context, wr))
 
     tap(())
@@ -442,9 +448,15 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
+    // extracting this out makes unit testing and mocking way simpler
+    val write = params.configOverride(
+      data.textOut(path, ".json", params.numShards, params.compression)
+    )
     data.transform_("BigQuery write") {
       _.map(ScioUtil.jsonFactory.toString)
-        .applyInternal(data.textOut(path, ".json", params.numShards, params.compression))
+        .applyInternal(
+          write
+        )
     }
     tap(())
   }
@@ -461,7 +473,8 @@ object TableRowJsonIO {
 
   final case class WriteParam private (
     numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression
+    compression: Compression = WriteParam.DefaultCompression,
+    configOverride: TextIO.Write => TextIO.Write
   )
 }
 
@@ -578,7 +591,7 @@ object BigQueryTyped {
     }
 
     override type ReadP = Unit
-    override type WriteP = Table.WriteParam
+    override type WriteP = Table.WriteParam[T]
 
     override def testId: String = s"BigQueryIO(${table.spec})"
 
@@ -593,7 +606,8 @@ object BigQueryTyped {
           params.createDisposition,
           BigQueryType[T].tableDescription.orNull,
           params.timePartitioning,
-          params.extendedErrorInfo
+          params.extendedErrorInfo,
+          params.configOverride
         )(params.insertErrorTransform)
 
       data
@@ -608,33 +622,38 @@ object BigQueryTyped {
   }
 
   object Table {
-    sealed trait WriteParam {
+    sealed trait WriteParam[T] {
       val writeDisposition: WriteDisposition
       val createDisposition: CreateDisposition
       val timePartitioning: TimePartitioning
       val extendedErrorInfo: ExtendedErrorInfo
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+      val configOverride: Write[T] => Write[T]
     }
 
     object WriteParam extends Writes.WriteParamDefauls {
-      @inline final def apply(
+      @inline final def apply[T](
         wd: WriteDisposition,
         cd: CreateDisposition,
         tp: TimePartitioning,
-        ei: ExtendedErrorInfo
-      )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
+        ei: ExtendedErrorInfo,
+        co: Write[T] => Write[T]
+      )(it: SCollection[ei.Info] => Unit): WriteParam[T] = new WriteParam[T] {
         val writeDisposition: WriteDisposition = wd
         val createDisposition: CreateDisposition = cd
         val timePartitioning: TimePartitioning = tp
         val extendedErrorInfo: ei.type = ei
         val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
+        val configOverride: Write[T] => Write[T] = co
       }
 
-      @inline final def apply(
+      @inline final def apply[T](
         wd: WriteDisposition = DefaultWriteDisposition,
         cd: CreateDisposition = DefaultCreateDisposition,
-        tp: TimePartitioning = DefaultTimePartitioning
-      ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
+        tp: TimePartitioning = DefaultTimePartitioning,
+        co: Write[T] => Write[T] = identity[Write[T]] _
+      ): WriteParam[T] =
+        apply(wd, cd, tp, DefaultExtendedErrorInfo, co)(defaultInsertErrorTransform)
     }
 
   }

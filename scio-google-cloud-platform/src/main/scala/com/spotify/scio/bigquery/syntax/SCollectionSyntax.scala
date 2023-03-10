@@ -19,26 +19,34 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
+import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQueryTyped, TableRow, TableRowJsonIO, TimePartitioning}
-import com.spotify.scio.bigquery.coders
+import com.spotify.scio.bigquery.{
+  coders,
+  BigQueryTyped,
+  BigQueryTypedTable,
+  Table,
+  TableRow,
+  TableRowJsonIO,
+  TimePartitioning
+}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.Compression
+import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.{Compression, TextIO}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-import com.spotify.scio.bigquery.Table
-import com.spotify.scio.bigquery.BigQueryTypedTable
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
-import org.apache.avro.generic.GenericRecord
-
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
-final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
+final class SCollectionTableRowOps[T <: TableRow](
+  private[bigquery] val self: SCollection[T],
+  private[bigquery] val mockIO: Option[BigQueryTypedTable[TableRow]] = None
+) {
 
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
@@ -50,20 +58,26 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     writeDisposition: WriteDisposition = BigQueryTypedTable.WriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning
+    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
+    configOverride: Write[TableRow] => Write[TableRow] = identity
   ): ClosedTap[TableRow] = {
     val param =
-      BigQueryTypedTable.WriteParam(
+      BigQueryTypedTable.WriteParam[TableRow](
         schema,
         writeDisposition,
         createDisposition,
         tableDescription,
-        timePartitioning
+        timePartitioning,
+        configOverride
       )
 
     self
       .covary[TableRow]
-      .write(BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder))(param)
+      .write(
+        mockIO.getOrElse(
+          BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder)
+        )
+      )(param)
   }
 
   /**
@@ -73,9 +87,10 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
   def saveAsTableRowJsonFile(
     path: String,
     numShards: Int = TableRowJsonWriteParam.DefaultNumShards,
-    compression: Compression = TableRowJsonWriteParam.DefaultCompression
+    compression: Compression = TableRowJsonWriteParam.DefaultCompression,
+    configOverride: TextIO.Write => TextIO.Write = identity
   ): ClosedTap[TableRow] = {
-    val param = TableRowJsonWriteParam(numShards, compression)
+    val param = TableRowJsonWriteParam(numShards, compression, configOverride)
     self.covary[TableRow].write(TableRowJsonIO(path))(param)
   }
 }
@@ -94,15 +109,17 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     writeDisposition: WriteDisposition = BigQueryTypedTable.WriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning
+    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
+    configOverride: Write[GenericRecord] => Write[GenericRecord] = identity
   ): ClosedTap[GenericRecord] = {
     val param =
-      BigQueryTypedTable.WriteParam(
+      BigQueryTypedTable.WriteParam[GenericRecord](
         schema,
         writeDisposition,
         createDisposition,
         tableDescription,
-        timePartitioning
+        timePartitioning,
+        configOverride
       )
     self
       .covary[GenericRecord]
@@ -152,9 +169,11 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     table: Table,
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning,
     writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition
+    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
+    configOverride: Write[T] => Write[T] = identity
   )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
+    val param =
+      TableWriteParam(writeDisposition, createDisposition, timePartitioning, configOverride)
     self.write(BigQueryTyped.Table[T](table))(param)
   }
 }

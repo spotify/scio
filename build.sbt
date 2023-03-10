@@ -124,6 +124,7 @@ val scalaCollectionCompatVersion = "2.9.0"
 val scalacticVersion = "3.2.15"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.15"
+val mockitoScalaVersion = "1.13.10"
 val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
@@ -744,6 +745,8 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
+      "org.mockito" %% "mockito-scala" % mockitoScalaVersion % Test,
+      "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
   )
