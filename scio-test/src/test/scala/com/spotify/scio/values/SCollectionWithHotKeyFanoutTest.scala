@@ -100,7 +100,7 @@ class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
       val p1 = sc.parallelize(1 to 100).map(("a", _))
       val p2 = sc.parallelize(1 to 10).map(("b", _))
       val p = (p1 ++ p2).withHotKeyFanout(10)
-      assertGraphContainsStep(fn(p), "Combine.perKeyWithFanout(Anonymous)")
+      assertGraphContainsStepRegex(fn(p), "Combine\\.perKeyWithFanout\\([^)]*\\)")
     }
   }
 

@@ -67,8 +67,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(f: KV[K, UI] => (K, UO)): SCollection[(K, UO)] = {
     self.transform(
       _.withName("TupleToKv").toKV
-        .withName(t.getName) // propagate transform name
-        .applyTransform(t)
+        .applyTransform(t.getName, t)
         .withName("KvToTuple")
         .map(f)
     )

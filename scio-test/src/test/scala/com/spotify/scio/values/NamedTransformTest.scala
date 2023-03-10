@@ -52,6 +52,15 @@ trait NamedTransformSpec extends PipelineSpec {
     }
   }
 
+  def assertGraphContainsStepRegex(p: PCollectionWrapper[_], tfNameRegex: String): Assertion = {
+    val visitor = new NameAccumulatingVisitor()
+    p.context.pipeline.traverseTopologically(visitor)
+    val allNodes = visitor.nodes.sorted.mkString("", "\n", "\n")
+    withClue(s"$tfNameRegex did not match a step in any of the following nodes: $allNodes") {
+      visitor.nodes.flatMap(_.split('/')).toSet.filter(_.matches(tfNameRegex)) should not be empty
+    }
+  }
+
   class AssertTransformNameVisitor(pcoll: PCollection[_], tfName: String)
       extends Pipeline.PipelineVisitor.Defaults {
     val prefix: List[String] = tfName.split("[(/]").toList

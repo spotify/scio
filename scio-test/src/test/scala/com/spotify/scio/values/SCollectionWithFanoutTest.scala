@@ -75,7 +75,7 @@ class SCollectionWithFanoutTest extends NamedTransformSpec {
   private def shouldFanOut[T](fn: SCollectionWithFanout[Int] => SCollection[T]) = {
     runWithContext { sc =>
       val p = fn(sc.parallelize(1 to 100).withFanout(10))
-      assertGraphContainsStep(p, "Combine.perKeyWithFanout(Anonymous)")
+      assertGraphContainsStepRegex(p, "Combine\\.perKeyWithFanout\\([^)]*\\)")
     }
   }
 
