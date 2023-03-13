@@ -18,26 +18,14 @@ jobs:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - name: cache SBT
         uses: coursier/cache-action@v6
-      - name: Java 11 setup
+      - name: Java 17 setup
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
       - name: set JVM opts
         run: scripts/gha_setup.sh
-      - run: sbt "++${{matrix.scala}} IntegrationTest/test"
-    strategy:
-      matrix:
-        java:
-          - 8
-          - 11
-          - 17
-        scala:
-          - 2.12.17
-          - 2.13.8
-        exclude:
-          - scala: 2.12.17
-            java: graalvm-ce-java8@21.0.0
+      - run: sbt "IntegrationTest/test"
 
   build-docs:
     name: Build documentation
