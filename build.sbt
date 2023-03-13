@@ -260,6 +260,7 @@ val commonSettings = formatSettings ++
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
     resolvers ++= Resolver.sonatypeOssRepos("public"),
+    fork := true,
     javaOptions ++= Seq("-Dscio.ignoreVersionWarning=true") ++
       sys.props.get("bigquery.project").map(project => s"-Dbigquery.project=$project") ++
       sys.props.get("bigquery.secret").map(secret => s"-Dbigquery.secret=$secret"),
@@ -367,8 +368,7 @@ lazy val itSettings = Defaults.itSettings ++
         } else {
           HiddenFileFilter || "*.scala"
         }
-      },
-      fork := true
+      }
     )
   )
 
