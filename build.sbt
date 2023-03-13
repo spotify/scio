@@ -229,8 +229,24 @@ lazy val keepExistingHeader =
         .trim()
   })
 
-val commonSettings = Def
-  .settings(
+lazy val java17ConfigSettings = sys.props("java.version") match {
+  case v if v.startsWith("17.") =>
+    Def.settings(
+      fork := true,
+      javaOptions ++= Seq(
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang.invoke=ALL-UNNAMED"
+      )
+    )
+  case _ => Def.settings()
+}
+
+val commonSettings = formatSettings ++
+  mimaSettings ++
+  inConfig(Test)(java17ConfigSettings) ++
+  Def.settings(
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
@@ -328,10 +344,7 @@ val commonSettings = Def
         email = "farzadsedghi2@gmail.com",
         url = url("http://github.com/farzad-sedghi")
       )
-    ),
-    mimaSettings,
-    formatSettings,
-    java17Settings
+    )
   )
 
 lazy val publishSettings = Def.settings(
@@ -339,23 +352,26 @@ lazy val publishSettings = Def.settings(
   sonatypeProfileName := "com.spotify"
 )
 
-lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
-  Def.settings(
-    classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-    // exclude all sources if we don't have GCP credentials
-    unmanagedSources / excludeFilter := {
-      if (BuildCredentials.exists) {
-        HiddenFileFilter
-      } else {
-        HiddenFileFilter || "*.scala"
-      }
-    },
-    run / fork := true,
-    BloopDefaults.configSettings,
-    scalafmtConfigSettings,
-    scalafixConfigSettings(IntegrationTest)
+lazy val itSettings = Defaults.itSettings ++
+  inConfig(IntegrationTest)(java17ConfigSettings) ++
+  inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
+  inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  scalafixConfigSettings(IntegrationTest) ++
+  inConfig(IntegrationTest)(
+    Def.settings(
+      classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+      // exclude all sources if we don't have GCP credentials
+      unmanagedSources / excludeFilter := {
+        if (BuildCredentials.exists) {
+          HiddenFileFilter
+        } else {
+          HiddenFileFilter || "*.scala"
+        }
+      },
+      javaOptions += "-Dscio.ignoreVersionWarning=true",
+      run / fork := true
+    )
   )
-)
 
 lazy val assemblySettings = Seq(
   assembly / test := {},
@@ -450,7 +466,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 )
 
 ThisBuild / PB.protocVersion := protobufVersion
-lazy val scopedProtobufSettings = Def.settings(
+lazy val protobufConfigSettings = Def.settings(
   PB.targets := Seq(
     PB.gens.java -> (ThisScope.copy(config = Zero) / sourceManaged).value /
       "compiled_proto" /
@@ -467,7 +483,7 @@ lazy val protobufSettings = Def.settings(
     "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
     "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf"
   )
-) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(scopedProtobufSettings))
+) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(protobufConfigSettings))
 
 def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: ForkOptions) = {
   val (filtered, default) = tests.partition(test => filter.contains(test.name))
@@ -475,20 +491,6 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
   new Tests.Group(name = "<default>", tests = default, runPolicy = policy) +: filtered.map { test =>
     new Tests.Group(name = test.name, tests = Seq(test), runPolicy = policy)
   }
-}
-
-lazy val java17Settings = sys.props("java.version") match {
-  case v if v.startsWith("17.") =>
-    Seq(
-      Test / fork := true,
-      Test / javaOptions ++= Seq(
-        "--add-opens",
-        "java.base/java.util=ALL-UNNAMED",
-        "--add-opens",
-        "java.base/java.lang.invoke=ALL-UNNAMED"
-      )
-    )
-  case _ => Seq()
 }
 
 lazy val root: Project = Project("scio", file("."))
