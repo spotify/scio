@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function
+
 import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.ExtendedErrorInfo._
@@ -34,9 +35,12 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
+import org.apache.beam.sdk.io.gcp.bigquery.{
+  BigQueryAvroUtilsWrapper,
+  BigQueryUtils,
+  SchemaAndRecord
+}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
@@ -448,7 +452,7 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
-    // extracting this out makes unit testing and mocking way simpler
+    // extracting this out makes unit testing and mocking simpler
     val write = params.configOverride(
       data.textOut(path, ".json", params.numShards, params.compression)
     )
@@ -577,8 +581,11 @@ object BigQueryTyped {
   }
 
   /** Get a typed SCollection for a BigQuery table. */
-  final case class Table[T <: HasAnnotation: TypeTag: Coder](table: STable) extends BigQueryIO[T] {
-    private[this] val underlying = {
+  final case class Table[T <: HasAnnotation: TypeTag: Coder](
+    table: STable,
+    mockBqTypedTable: Option[BigQueryTypedTable[T]] = None
+  ) extends BigQueryIO[T] {
+    private[this] val underlying = mockBqTypedTable.getOrElse {
       val readerFn = BigQueryType[T].fromAvro
       val toTableRow = BigQueryType[T].toTableRow
       val fromTableRow = BigQueryType[T].fromTableRow

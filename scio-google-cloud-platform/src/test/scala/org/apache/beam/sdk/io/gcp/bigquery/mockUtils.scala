@@ -26,7 +26,7 @@ object mockUtils {
     pipeline: Pipeline = mock[Pipeline],
     failedInsertsTag: TupleTag[TableRow] = mock[TupleTag[TableRow]],
     failedInserts: PCollection[TableRow] = mock[PCollection[TableRow]]
-  ) = {
+  ): WriteResult = {
     WriteResult.in(
       pipeline,
       failedInsertsTag,
