@@ -23,6 +23,7 @@ import com.spotify.scio.bigquery.{BigQueryTypedTable, Table, TableRow, TableRowJ
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.{SCollection, SCollectionImpl}
+import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write
 import org.apache.beam.sdk.io.gcp.bigquery.mockUtils.mockedWriteResult
 import org.apache.beam.sdk.io.{Compression, TextIO}
@@ -95,6 +96,51 @@ class SCollectionSyntaxTest extends PipelineSpec with MockitoSugar {
     // spy related
     verify(sCollSpy, atLeast(1)).context
     verify(sCollSpy).write(any[TableRowJsonIO])(any[TableRowJsonIO.WriteParam])
+  }
+
+  "SCollectionGenericRecordOps" should "provide PTransform override on saveAsBigQueryTable" in {
+    // mock main data SCollection
+    val (context, sCollSpy, _) = mockSCollection[GenericRecord]()
+    doReturn(sCollSpy).when(sCollSpy).covary[GenericRecord]
+
+    // mock error data SCollection
+    val (_, failuresSColl, failurePColl) = mockSCollection[TableRow](context)
+    when(context.wrap(failurePColl)).thenReturn(failuresSColl)
+
+    // mock BQ write transform
+    doReturn(mockedWriteResult(failedInserts = failurePColl))
+      .when(sCollSpy)
+      .applyInternal(any[Write[GenericRecord]])
+
+    // mocking away: com.spotify.scio.bigquery.Writes.WriteParamDefauls.defaultInsertErrorTransform
+    doReturn(failuresSColl).when(failuresSColl).withName("DropFailedInserts")
+    doReturn(null).when(failuresSColl).map(any[TableRow => Unit])(any[Coder[Unit]])
+
+    // create bqIO injecting a mocked beam PTransform
+    val beamWrite = mock[Write[GenericRecord]]
+    when(beamWrite.to(any[TableReference])).thenReturn(beamWrite)
+    val table = Table.Spec("project:dataset.dummy")
+    val bqIO = BigQueryTypedTable(null, beamWrite, table, null)
+
+    /** test * */
+    implicit def bigQuerySCollectionGenericRecordOps[T <: GenericRecord](
+      sc: SCollection[T]
+    ): SCollectionGenericRecordOps[T] =
+      new SCollectionGenericRecordOps[T](sc, Some(bqIO))
+
+    sCollSpy.saveAsBigQueryTable(
+      table = table,
+      configOverride = _.withTableDescription("table-description")
+    )
+
+    /** verify * */
+    verify(beamWrite).withTableDescription("table-description")
+
+    // spy related
+    verify(sCollSpy, atLeast(1)).context
+    verify(sCollSpy).write(any[BigQueryTypedTable[GenericRecord]])(
+      any[BigQueryTypedTable.WriteParam[GenericRecord]]
+    )
   }
 
   private def mockSCollection[T](

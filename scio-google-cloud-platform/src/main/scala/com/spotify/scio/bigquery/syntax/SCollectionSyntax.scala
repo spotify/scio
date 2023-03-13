@@ -96,8 +96,10 @@ final class SCollectionTableRowOps[T <: TableRow](
 }
 
 /** Enhanced version of [[SCollection]] with BigQuery methods */
-final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SCollection[T])
-    extends AnyVal {
+final class SCollectionGenericRecordOps[T <: GenericRecord](
+  private val self: SCollection[T],
+  private[bigquery] val mockIO: Option[BigQueryTypedTable[GenericRecord]] = None
+) {
 
   /**
    * Save this SCollection as a BigQuery table using Avro writing function. Note that elements must
@@ -124,8 +126,10 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     self
       .covary[GenericRecord]
       .write(
-        BigQueryTypedTable(table, Format.GenericRecord)(
-          self.coder.asInstanceOf[Coder[GenericRecord]]
+        mockIO.getOrElse(
+          BigQueryTypedTable(table, Format.GenericRecord)(
+            self.coder.asInstanceOf[Coder[GenericRecord]]
+          )
         )
       )(param)
   }
