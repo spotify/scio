@@ -357,36 +357,6 @@ lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
   )
 )
 
-lazy val assemblySettings = Seq(
-  assembly / test := {},
-  assembly / assemblyMergeStrategy ~= { old =>
-    {
-      case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
-        // arbitrary pick last conflicting InstanceBuilder
-        MergeStrategy.last
-      case s if s.endsWith(".proto") =>
-        // arbitrary pick last conflicting proto file
-        MergeStrategy.last
-      case PathList("git.properties") =>
-        // drop conflicting git properties
-        MergeStrategy.discard
-      case PathList("META-INF", "versions", "9", "module-info.class") =>
-        // drop conflicting module-info.class
-        MergeStrategy.discard
-      case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
-        // drop conflicting kotlin compiler info
-        MergeStrategy.discard
-      case PathList("META-INF", "io.netty.versions.properties") =>
-        // merge conflicting netty property files
-        MergeStrategy.filterDistinctLines
-      case PathList("META-INF", "native-image", "native-image.properties") =>
-        // merge conflicting native-image property files
-        MergeStrategy.filterDistinctLines
-      case s => old(s)
-    }
-  }
-)
-
 lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   libraryDependencies ++= {
@@ -1177,7 +1147,6 @@ lazy val `scio-repl`: Project = project
   )
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
     // drop repl compatibility with java 8
@@ -1218,7 +1187,46 @@ lazy val `scio-repl`: Project = project
           Nil
       }
     },
-    assembly / assemblyJarName := "scio-repl.jar"
+    assembly / assemblyJarName := "scio-repl.jar",
+    assembly / test := {},
+    assembly / assemblyMergeStrategy ~= { old =>
+      {
+        case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
+          // prefer beam-runners-direct-java until we explicitly move to beam-sdks-java-extensions-avro
+          CustomMergeStrategy("BeamAvro") { conflicts =>
+            import sbtassembly.Assembly._
+            conflicts.collectFirst {
+              case Library(ModuleCoordinate(_, "beam-runners-direct-java", _), _, t, s) =>
+                JarEntry(t, s)
+            } match {
+              case Some(e) => Right(Vector(e))
+              case None    => Left("Error merging beam avro classes")
+            }
+          }
+        case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
+          // arbitrary pick last conflicting InstanceBuilder
+          MergeStrategy.last
+        case s if s.endsWith(".proto") =>
+          // arbitrary pick last conflicting proto file
+          MergeStrategy.last
+        case PathList("git.properties") =>
+          // drop conflicting git properties
+          MergeStrategy.discard
+        case PathList("META-INF", "versions", "9", "module-info.class") =>
+          // drop conflicting module-info.class
+          MergeStrategy.discard
+        case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("META-INF", "io.netty.versions.properties") =>
+          // merge conflicting netty property files
+          MergeStrategy.filterDistinctLines
+        case PathList("META-INF", "native-image", "native-image.properties") =>
+          // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case s => old(s)
+      }
+    }
   )
 
 lazy val `scio-jmh`: Project = project
