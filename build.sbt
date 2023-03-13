@@ -229,10 +229,9 @@ lazy val keepExistingHeader =
         .trim()
   })
 
-lazy val java17ConfigSettings = sys.props("java.version") match {
+lazy val java17Settings = sys.props("java.version") match {
   case v if v.startsWith("17.") =>
     Def.settings(
-      fork := true,
       javaOptions ++= Seq(
         "--add-opens",
         "java.base/java.util=ALL-UNNAMED",
@@ -245,7 +244,7 @@ lazy val java17ConfigSettings = sys.props("java.version") match {
 
 val commonSettings = formatSettings ++
   mimaSettings ++
-  inConfig(Test)(java17ConfigSettings) ++
+  java17Settings ++
   Def.settings(
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
@@ -261,8 +260,10 @@ val commonSettings = formatSettings ++
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
     resolvers ++= Resolver.sonatypeOssRepos("public"),
-    Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
-    Test / testOptions += Tests.Argument("-oD"),
+    javaOptions ++= Seq("-Dscio.ignoreVersionWarning=true") ++
+      sys.props.get("bigquery.project").map(project => s"-Dbigquery.project=$project") ++
+      sys.props.get("bigquery.secret").map(secret => s"-Dbigquery.secret=$secret"),
+    testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
@@ -353,7 +354,6 @@ lazy val publishSettings = Def.settings(
 )
 
 lazy val itSettings = Defaults.itSettings ++
-  inConfig(IntegrationTest)(java17ConfigSettings) ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
   scalafixConfigSettings(IntegrationTest) ++
@@ -368,8 +368,7 @@ lazy val itSettings = Defaults.itSettings ++
           HiddenFileFilter || "*.scala"
         }
       },
-      javaOptions += "-Dscio.ignoreVersionWarning=true",
-      run / fork := true
+      fork := true
     )
   )
 
