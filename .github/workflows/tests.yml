@@ -27,7 +27,6 @@ jobs:
     strategy:
       matrix:
         java:
-          - 8
           - 11
           - 17
         scala:
@@ -38,8 +37,6 @@ jobs:
             java: 11
             coverage: true
         exclude:
-          - scala: 2.12.18
-            java: 8
           - scala: 2.12.18
             java: 17
   repl-test:
