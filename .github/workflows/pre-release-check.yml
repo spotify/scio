@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
       - name: Run Dataflow jobs

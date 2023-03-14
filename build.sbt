@@ -94,7 +94,7 @@ val cassandraDriverVersion = "3.11.3"
 val cassandraVersion = "3.11.13"
 val catsVersion = "2.9.0"
 val chillVersion = "0.10.0"
-val circeVersion = "0.14.4"
+val circeVersion = "0.14.5"
 val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
@@ -229,8 +229,23 @@ lazy val keepExistingHeader =
         .trim()
   })
 
-val commonSettings = Def
-  .settings(
+lazy val java17Settings = sys.props("java.version") match {
+  case v if v.startsWith("17.") =>
+    Def.settings(
+      javaOptions ++= Seq(
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang.invoke=ALL-UNNAMED"
+      )
+    )
+  case _ => Def.settings()
+}
+
+val commonSettings = formatSettings ++
+  mimaSettings ++
+  java17Settings ++
+  Def.settings(
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
@@ -245,8 +260,11 @@ val commonSettings = Def
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
     resolvers ++= Resolver.sonatypeOssRepos("public"),
-    Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
-    Test / testOptions += Tests.Argument("-oD"),
+    fork := true,
+    javaOptions ++= Seq("-Dscio.ignoreVersionWarning=true") ++
+      sys.props.get("bigquery.project").map(project => s"-Dbigquery.project=$project") ++
+      sys.props.get("bigquery.secret").map(secret => s"-Dbigquery.secret=$secret"),
+    testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
@@ -328,10 +346,7 @@ val commonSettings = Def
         email = "farzadsedghi2@gmail.com",
         url = url("http://github.com/farzad-sedghi")
       )
-    ),
-    mimaSettings,
-    formatSettings,
-    java17Settings
+    )
   )
 
 lazy val publishSettings = Def.settings(
@@ -339,23 +354,23 @@ lazy val publishSettings = Def.settings(
   sonatypeProfileName := "com.spotify"
 )
 
-lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
-  Def.settings(
-    classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-    // exclude all sources if we don't have GCP credentials
-    unmanagedSources / excludeFilter := {
-      if (BuildCredentials.exists) {
-        HiddenFileFilter
-      } else {
-        HiddenFileFilter || "*.scala"
+lazy val itSettings = Defaults.itSettings ++
+  inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
+  inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  scalafixConfigSettings(IntegrationTest) ++
+  inConfig(IntegrationTest)(
+    Def.settings(
+      classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+      // exclude all sources if we don't have GCP credentials
+      unmanagedSources / excludeFilter := {
+        if (BuildCredentials.exists) {
+          HiddenFileFilter
+        } else {
+          HiddenFileFilter || "*.scala"
+        }
       }
-    },
-    run / fork := true,
-    BloopDefaults.configSettings,
-    scalafmtConfigSettings,
-    scalafixConfigSettings(IntegrationTest)
+    )
   )
-)
 
 lazy val assemblySettings = Seq(
   assembly / test := {},
@@ -450,7 +465,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 )
 
 ThisBuild / PB.protocVersion := protobufVersion
-lazy val scopedProtobufSettings = Def.settings(
+lazy val protobufConfigSettings = Def.settings(
   PB.targets := Seq(
     PB.gens.java -> (ThisScope.copy(config = Zero) / sourceManaged).value /
       "compiled_proto" /
@@ -467,7 +482,7 @@ lazy val protobufSettings = Def.settings(
     "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
     "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf"
   )
-) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(scopedProtobufSettings))
+) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(protobufConfigSettings))
 
 def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: ForkOptions) = {
   val (filtered, default) = tests.partition(test => filter.contains(test.name))
@@ -475,20 +490,6 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
   new Tests.Group(name = "<default>", tests = default, runPolicy = policy) +: filtered.map { test =>
     new Tests.Group(name = test.name, tests = Seq(test), runPolicy = policy)
   }
-}
-
-lazy val java17Settings = sys.props("java.version") match {
-  case v if v.startsWith("17.") =>
-    Seq(
-      Test / fork := true,
-      Test / javaOptions ++= Seq(
-        "--add-opens",
-        "java.base/java.util=ALL-UNNAMED",
-        "--add-opens",
-        "java.base/java.lang.invoke=ALL-UNNAMED"
-      )
-    )
-  case _ => Seq()
 }
 
 lazy val root: Project = Project("scio", file("."))
@@ -1122,7 +1123,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.10.0",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.11.0",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
