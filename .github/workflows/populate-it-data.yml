@@ -18,7 +18,7 @@ jobs:
           project_id: data-integration-test
       - name: cache SBT
         uses: coursier/cache-action@v6
-      - name: Java setup
+      - name: Java 11 setup
         uses: actions/setup-java@v3
         with:
           distribution: temurin

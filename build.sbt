@@ -28,10 +28,10 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.45.0"
+val beamVersion = "2.46.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.45.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.46.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -59,26 +59,26 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.5.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.8.0/index.html
 val animalSnifferAnnotationsVersion = "1.22"
-val bigQueryStorageBetaVersion = "0.152.4"
-val bigQueryStorageVersion = "2.28.4"
-val checkerFrameworkVersion = "3.29.0"
+val bigQueryStorageBetaVersion = "0.155.0"
+val bigQueryStorageVersion = "2.31.0"
+val checkerFrameworkVersion = "3.30.0"
 val errorProneAnnotationsVersion = "2.18.0"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.107.0"
-val gaxVersion = "2.22.0"
-val googleApiCommonVersion = "2.5.0"
-val googleAuthVersion = "1.14.0"
-val googleCloudBigTableVersion = "2.18.3"
-val googleCloudCoreVersion = "2.9.4"
-val googleCloudDatastoreVersion = "0.104.3"
-val googleCloudMonitoringVersion = "3.10.0"
-val googleCloudSpannerVersion = "6.35.2"
-val googleCloudStorageVersion = "2.17.2"
-val googleCommonsProtoVersion = "2.13.0"
+val gaxHttpJsonVersion = "0.108.0"
+val gaxVersion = "2.23.0"
+val googleApiCommonVersion = "2.6.0"
+val googleAuthVersion = "1.15.0"
+val googleCloudBigTableVersion = "2.19.0"
+val googleCloudCoreVersion = "2.10.0"
+val googleCloudDatastoreVersion = "0.104.4"
+val googleCloudMonitoringVersion = "3.11.0"
+val googleCloudSpannerVersion = "6.36.0"
+val googleCloudStorageVersion = "2.18.0"
+val googleCommonsProtoVersion = "2.14.0"
 val googleHttpClientsVersion = "1.42.3"
-val googleIAMVersion = "1.8.0"
+val googleIAMVersion = "1.9.0"
 val grpcVersion = "1.52.1"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
@@ -94,7 +94,7 @@ val cassandraDriverVersion = "3.11.3"
 val cassandraVersion = "3.11.13"
 val catsVersion = "2.9.0"
 val chillVersion = "0.10.0"
-val circeVersion = "0.14.4"
+val circeVersion = "0.14.5"
 val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
@@ -190,13 +190,23 @@ lazy val mimaSettings = Def.settings(
   mimaBinaryIssueFilters := Seq(
     // minor scio-tensorflow breaking changes for 0.12.6
     ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
       "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile"
     ),
     ProblemFilters.exclude[DirectMissingMethodProblem](
       "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
+    ),
+    // minor scio-grpc breaking changes for 0.12.6
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookup"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookup$extension"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookupStream"
+    ),
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookupStream$extension"
     )
   ),
   mimaPreviousArtifacts :=
@@ -219,8 +229,23 @@ lazy val keepExistingHeader =
         .trim()
   })
 
-val commonSettings = Def
-  .settings(
+lazy val java17Settings = sys.props("java.version") match {
+  case v if v.startsWith("17.") =>
+    Def.settings(
+      javaOptions ++= Seq(
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang.invoke=ALL-UNNAMED"
+      )
+    )
+  case _ => Def.settings()
+}
+
+val commonSettings = formatSettings ++
+  mimaSettings ++
+  java17Settings ++
+  Def.settings(
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
@@ -235,8 +260,11 @@ val commonSettings = Def
       "org.apache.beam" % "beam-sdks-java-io-kafka"
     ),
     resolvers ++= Resolver.sonatypeOssRepos("public"),
-    Test / javaOptions += "-Dscio.ignoreVersionWarning=true",
-    Test / testOptions += Tests.Argument("-oD"),
+    fork := true,
+    javaOptions ++= Seq("-Dscio.ignoreVersionWarning=true") ++
+      sys.props.get("bigquery.project").map(project => s"-Dbigquery.project=$project") ++
+      sys.props.get("bigquery.secret").map(secret => s"-Dbigquery.secret=$secret"),
+    testOptions += Tests.Argument("-oD"),
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
@@ -318,10 +346,7 @@ val commonSettings = Def
         email = "farzadsedghi2@gmail.com",
         url = url("http://github.com/farzad-sedghi")
       )
-    ),
-    mimaSettings,
-    formatSettings,
-    java17Settings
+    )
   )
 
 lazy val publishSettings = Def.settings(
@@ -329,53 +354,23 @@ lazy val publishSettings = Def.settings(
   sonatypeProfileName := "com.spotify"
 )
 
-lazy val itSettings = Defaults.itSettings ++ inConfig(IntegrationTest)(
-  Def.settings(
-    classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-    // exclude all sources if we don't have GCP credentials
-    unmanagedSources / excludeFilter := {
-      if (BuildCredentials.exists) {
-        HiddenFileFilter
-      } else {
-        HiddenFileFilter || "*.scala"
+lazy val itSettings = Defaults.itSettings ++
+  inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
+  inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  scalafixConfigSettings(IntegrationTest) ++
+  inConfig(IntegrationTest)(
+    Def.settings(
+      classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+      // exclude all sources if we don't have GCP credentials
+      unmanagedSources / excludeFilter := {
+        if (BuildCredentials.exists) {
+          HiddenFileFilter
+        } else {
+          HiddenFileFilter || "*.scala"
+        }
       }
-    },
-    run / fork := true,
-    BloopDefaults.configSettings,
-    scalafmtConfigSettings,
-    scalafixConfigSettings(IntegrationTest)
+    )
   )
-)
-
-lazy val assemblySettings = Seq(
-  assembly / test := {},
-  assembly / assemblyMergeStrategy ~= { old =>
-    {
-      case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
-        // arbitrary pick last conflicting InstanceBuilder
-        MergeStrategy.last
-      case s if s.endsWith(".proto") =>
-        // arbitrary pick last conflicting proto file
-        MergeStrategy.last
-      case PathList("git.properties") =>
-        // drop conflicting git properties
-        MergeStrategy.discard
-      case PathList("META-INF", "versions", "9", "module-info.class") =>
-        // drop conflicting module-info.class
-        MergeStrategy.discard
-      case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
-        // drop conflicting kotlin compiler info
-        MergeStrategy.discard
-      case PathList("META-INF", "io.netty.versions.properties") =>
-        // merge conflicting netty property files
-        MergeStrategy.filterDistinctLines
-      case PathList("META-INF", "native-image", "native-image.properties") =>
-        // merge conflicting native-image property files
-        MergeStrategy.filterDistinctLines
-      case s => old(s)
-    }
-  }
-)
 
 lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
@@ -404,7 +399,7 @@ lazy val dataflowRunnerDependencies = Seq(
 // only available for scala 2.12
 // scala 2.13 is supported from spark 3.2.0
 lazy val sparkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-spark" % beamVersion % Runtime,
+  "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Runtime,
   "org.apache.spark" %% "spark-core" % sparkVersion % Runtime,
   "org.apache.spark" %% "spark-streaming" % sparkVersion % Runtime
 )
@@ -440,7 +435,7 @@ def beamRunnerSettings: Seq[Setting[_]] = Seq(
 )
 
 ThisBuild / PB.protocVersion := protobufVersion
-lazy val scopedProtobufSettings = Def.settings(
+lazy val protobufConfigSettings = Def.settings(
   PB.targets := Seq(
     PB.gens.java -> (ThisScope.copy(config = Zero) / sourceManaged).value /
       "compiled_proto" /
@@ -457,7 +452,7 @@ lazy val protobufSettings = Def.settings(
     "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
     "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf"
   )
-) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(scopedProtobufSettings))
+) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(protobufConfigSettings))
 
 def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: ForkOptions) = {
   val (filtered, default) = tests.partition(test => filter.contains(test.name))
@@ -465,20 +460,6 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
   new Tests.Group(name = "<default>", tests = default, runPolicy = policy) +: filtered.map { test =>
     new Tests.Group(name = test.name, tests = Seq(test), runPolicy = policy)
   }
-}
-
-lazy val java17Settings = sys.props("java.version") match {
-  case v if v.startsWith("17.") =>
-    Seq(
-      Test / fork := true,
-      Test / javaOptions ++= Seq(
-        "--add-opens",
-        "java.base/java.util=ALL-UNNAMED",
-        "--add-opens",
-        "java.base/java.lang.invoke=ALL-UNNAMED"
-      )
-    )
-  case _ => Seq()
 }
 
 lazy val root: Project = Project("scio", file("."))
@@ -569,7 +550,7 @@ lazy val `scio-core`: Project = project
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
-      "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided,
+      "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Provided,
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
@@ -1112,7 +1093,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.10.0",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.11.0",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
@@ -1167,7 +1148,6 @@ lazy val `scio-repl`: Project = project
   )
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
     // drop repl compatibility with java 8
@@ -1208,7 +1188,46 @@ lazy val `scio-repl`: Project = project
           Nil
       }
     },
-    assembly / assemblyJarName := "scio-repl.jar"
+    assembly / assemblyJarName := "scio-repl.jar",
+    assembly / test := {},
+    assembly / assemblyMergeStrategy ~= { old =>
+      {
+        case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
+          // prefer beam-runners-direct-java until we explicitly move to beam-sdks-java-extensions-avro
+          CustomMergeStrategy("BeamAvro") { conflicts =>
+            import sbtassembly.Assembly._
+            conflicts.collectFirst {
+              case Library(ModuleCoordinate(_, "beam-runners-direct-java", _), _, t, s) =>
+                JarEntry(t, s)
+            } match {
+              case Some(e) => Right(Vector(e))
+              case None    => Left("Error merging beam avro classes")
+            }
+          }
+        case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
+          // arbitrary pick last conflicting InstanceBuilder
+          MergeStrategy.last
+        case s if s.endsWith(".proto") =>
+          // arbitrary pick last conflicting proto file
+          MergeStrategy.last
+        case PathList("git.properties") =>
+          // drop conflicting git properties
+          MergeStrategy.discard
+        case PathList("META-INF", "versions", "9", "module-info.class") =>
+          // drop conflicting module-info.class
+          MergeStrategy.discard
+        case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("META-INF", "io.netty.versions.properties") =>
+          // merge conflicting netty property files
+          MergeStrategy.filterDistinctLines
+        case PathList("META-INF", "native-image", "native-image.properties") =>
+          // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case s => old(s)
+      }
+    }
   )
 
 lazy val `scio-jmh`: Project = project

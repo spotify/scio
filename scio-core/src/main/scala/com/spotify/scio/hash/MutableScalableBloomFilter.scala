@@ -75,6 +75,9 @@ object MutableScalableBloomFilter {
    * The default parameter values for this implementation are based on the findings in "Scalable
    * Bloom Filters", Almeida, Baquero, et al.: http://gsd.di.uminho.pt/members/cbm/ps/dbloom.pdf
    *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
    * @param initialCapacity
    *   The capacity of the first filter. Must be positive
    * @param fpProb
@@ -127,6 +130,10 @@ object MutableScalableBloomFilter {
     baos.toByteArray
   }
 
+  /**
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   */
   def fromBytes[T](
     bytes: Array[Byte]
   )(implicit funnel: g.Funnel[T]): MutableScalableBloomFilter[T] = {
@@ -177,6 +184,9 @@ case class SerializedBloomFilters(numFilters: Int, filterBytes: Array[Byte]) {
 }
 
 /**
+ * Import `magnolify.guava.auto._` to get common instances of Guava
+ * [[com.google.common.hash.Funnel Funnel]] s.
+ *
  * @param fpProb
  *   The initial false positive probability
  * @param headCapacity
