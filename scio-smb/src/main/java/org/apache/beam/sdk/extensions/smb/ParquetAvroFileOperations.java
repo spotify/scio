@@ -48,8 +48,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
  */
 public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.GZIP;
-  static final Configuration DEFAULT_CONFIGURATION = new Configuration();
-
   private final SerializableSchemaSupplier schemaSupplier;
   private final CompressionCodecName compression;
   private final SerializableConfiguration conf;
@@ -73,7 +71,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
       Schema schema, CompressionCodecName compression) {
-    return of(schema, compression, DEFAULT_CONFIGURATION);
+    return of(schema, compression, new Configuration());
   }
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
@@ -83,7 +81,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
       Schema schema, FilterPredicate predicate) {
-    return of(schema, predicate, DEFAULT_CONFIGURATION);
+    return of(schema, predicate, new Configuration());
   }
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
