@@ -28,10 +28,10 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.45.0"
+val beamVersion = "2.46.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.45.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.46.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -59,26 +59,26 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.5.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.8.0/index.html
 val animalSnifferAnnotationsVersion = "1.22"
-val bigQueryStorageBetaVersion = "0.152.4"
-val bigQueryStorageVersion = "2.28.4"
-val checkerFrameworkVersion = "3.29.0"
+val bigQueryStorageBetaVersion = "0.155.0"
+val bigQueryStorageVersion = "2.31.0"
+val checkerFrameworkVersion = "3.30.0"
 val errorProneAnnotationsVersion = "2.18.0"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.107.0"
-val gaxVersion = "2.22.0"
-val googleApiCommonVersion = "2.5.0"
-val googleAuthVersion = "1.14.0"
-val googleCloudBigTableVersion = "2.18.3"
-val googleCloudCoreVersion = "2.9.4"
-val googleCloudDatastoreVersion = "0.104.3"
-val googleCloudMonitoringVersion = "3.10.0"
-val googleCloudSpannerVersion = "6.35.2"
-val googleCloudStorageVersion = "2.17.2"
-val googleCommonsProtoVersion = "2.13.0"
+val gaxHttpJsonVersion = "0.108.0"
+val gaxVersion = "2.23.0"
+val googleApiCommonVersion = "2.6.0"
+val googleAuthVersion = "1.15.0"
+val googleCloudBigTableVersion = "2.19.0"
+val googleCloudCoreVersion = "2.10.0"
+val googleCloudDatastoreVersion = "0.104.4"
+val googleCloudMonitoringVersion = "3.11.0"
+val googleCloudSpannerVersion = "6.36.0"
+val googleCloudStorageVersion = "2.18.0"
+val googleCommonsProtoVersion = "2.14.0"
 val googleHttpClientsVersion = "1.42.3"
-val googleIAMVersion = "1.8.0"
+val googleIAMVersion = "1.9.0"
 val grpcVersion = "1.52.1"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
@@ -372,36 +372,6 @@ lazy val itSettings = Defaults.itSettings ++
     )
   )
 
-lazy val assemblySettings = Seq(
-  assembly / test := {},
-  assembly / assemblyMergeStrategy ~= { old =>
-    {
-      case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
-        // arbitrary pick last conflicting InstanceBuilder
-        MergeStrategy.last
-      case s if s.endsWith(".proto") =>
-        // arbitrary pick last conflicting proto file
-        MergeStrategy.last
-      case PathList("git.properties") =>
-        // drop conflicting git properties
-        MergeStrategy.discard
-      case PathList("META-INF", "versions", "9", "module-info.class") =>
-        // drop conflicting module-info.class
-        MergeStrategy.discard
-      case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
-        // drop conflicting kotlin compiler info
-        MergeStrategy.discard
-      case PathList("META-INF", "io.netty.versions.properties") =>
-        // merge conflicting netty property files
-        MergeStrategy.filterDistinctLines
-      case PathList("META-INF", "native-image", "native-image.properties") =>
-        // merge conflicting native-image property files
-        MergeStrategy.filterDistinctLines
-      case s => old(s)
-    }
-  }
-)
-
 lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   libraryDependencies ++= {
@@ -429,7 +399,7 @@ lazy val dataflowRunnerDependencies = Seq(
 // only available for scala 2.12
 // scala 2.13 is supported from spark 3.2.0
 lazy val sparkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-spark" % beamVersion % Runtime,
+  "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Runtime,
   "org.apache.spark" %% "spark-core" % sparkVersion % Runtime,
   "org.apache.spark" %% "spark-streaming" % sparkVersion % Runtime
 )
@@ -580,7 +550,7 @@ lazy val `scio-core`: Project = project
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
-      "org.apache.beam" % "beam-runners-spark" % beamVersion % Provided,
+      "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Provided,
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test
     ),
@@ -1178,7 +1148,6 @@ lazy val `scio-repl`: Project = project
   )
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(assemblySettings)
   .settings(macroSettings)
   .settings(
     // drop repl compatibility with java 8
@@ -1219,7 +1188,46 @@ lazy val `scio-repl`: Project = project
           Nil
       }
     },
-    assembly / assemblyJarName := "scio-repl.jar"
+    assembly / assemblyJarName := "scio-repl.jar",
+    assembly / test := {},
+    assembly / assemblyMergeStrategy ~= { old =>
+      {
+        case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
+          // prefer beam-runners-direct-java until we explicitly move to beam-sdks-java-extensions-avro
+          CustomMergeStrategy("BeamAvro") { conflicts =>
+            import sbtassembly.Assembly._
+            conflicts.collectFirst {
+              case Library(ModuleCoordinate(_, "beam-runners-direct-java", _), _, t, s) =>
+                JarEntry(t, s)
+            } match {
+              case Some(e) => Right(Vector(e))
+              case None    => Left("Error merging beam avro classes")
+            }
+          }
+        case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
+          // arbitrary pick last conflicting InstanceBuilder
+          MergeStrategy.last
+        case s if s.endsWith(".proto") =>
+          // arbitrary pick last conflicting proto file
+          MergeStrategy.last
+        case PathList("git.properties") =>
+          // drop conflicting git properties
+          MergeStrategy.discard
+        case PathList("META-INF", "versions", "9", "module-info.class") =>
+          // drop conflicting module-info.class
+          MergeStrategy.discard
+        case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("META-INF", "io.netty.versions.properties") =>
+          // merge conflicting netty property files
+          MergeStrategy.filterDistinctLines
+        case PathList("META-INF", "native-image", "native-image.properties") =>
+          // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case s => old(s)
+      }
+    }
   )
 
 lazy val `scio-jmh`: Project = project
