@@ -155,18 +155,20 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
    *   threshold.
-   * @param eps
+   * @param hotKeyFanout
+   *   The number of intermediate keys that will be used during the CMS computation.
+   * @param cmsEps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
    *   `(0, 1)`.
-   * @param seed
+   * @param cmsDelta
    *   A seed to initialize the random number generator used to create the pairwise independent hash
    *   functions.
-   * @param delta
+   * @param cmsSeed
    *   A bound on the probability that a query estimate does not lie within some small interval (an
    *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
    * @param sampleFraction
    *   left side sample fraction.
-   * @param withReplacement
+   * @param sampleWithReplacement
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
@@ -174,26 +176,26 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
     hotKeyFanout: Int,
-    eps: Double,
-    seed: Int,
-    delta: Double,
+    cmsEps: Double,
+    cmsDelta: Double,
+    cmsSeed: Int,
     sampleFraction: Double,
-    withReplacement: Boolean
+    sampleWithReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] = self.transform { lhs =>
-    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
+    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, sampleWithReplacement)
     import com.twitter.algebird._
     hotKeyMethod match {
       case HotKeyMethod.Threshold(value) =>
-        val aggregator = CMS.aggregator(eps, delta, seed)
-        val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+        val aggregator = CMS.aggregator(cmsEps, cmsDelta, cmsSeed)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedJoin(rhs, value, cms)
       case HotKeyMethod.TopPercentage(value) =>
-        val aggregator = TopPctCMS.aggregator(eps, delta, seed, value)
-        val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+        val aggregator = TopPctCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedJoin(rhs, cms)
       case HotKeyMethod.TopN(value) =>
-        val aggregator = TopNCMS.aggregator(eps, delta, seed, value)
-        val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+        val aggregator = TopNCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedJoin(rhs, cms)
     }
   }
@@ -213,8 +215,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       HotKeyMethod.Threshold(hotKeyThreshold),
       SkewedJoins.DefaultHotKeyFanout,
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -320,18 +322,20 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
    *   threshold.
-   * @param eps
+   * @param hotKeyFanout
+   *   The number of intermediate keys that will be used during the CMS computation.
+   * @param cmsEps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
    *   `(0, 1)`.
-   * @param seed
-   *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions.
-   * @param delta
+   * @param cmsDelta
    *   A bound on the probability that a query estimate does not lie within some small interval (an
    *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
+   * @param cmsSeed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions.
    * @param sampleFraction
    *   left side sample fraction.
-   * @param withReplacement
+   * @param sampleWithReplacement
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
@@ -339,26 +343,26 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
     hotKeyFanout: Int,
-    eps: Double,
-    seed: Int,
-    delta: Double,
+    cmsEps: Double,
+    cmsDelta: Double,
+    cmsSeed: Int,
     sampleFraction: Double,
-    withReplacement: Boolean
+    sampleWithReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] = self.transform { lhs =>
     import com.twitter.algebird._
-    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
+    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, sampleWithReplacement)
     hotKeyMethod match {
       case HotKeyMethod.Threshold(value) =>
-        val aggregator = CMS.aggregator(eps, delta, seed)
-        val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+        val aggregator = CMS.aggregator(cmsEps, cmsDelta, cmsSeed)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedLeftOuterJoin(rhs, value, cms)
       case HotKeyMethod.TopPercentage(value) =>
-        val aggregator = TopPctCMS.aggregator(eps, delta, seed, value)
-        val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+        val aggregator = TopPctCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedLeftOuterJoin(rhs, cms)
       case HotKeyMethod.TopN(value) =>
-        val aggregator = TopNCMS.aggregator(eps, delta, seed, value)
-        val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+        val aggregator = TopNCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedLeftOuterJoin(rhs, cms)
     }
   }
@@ -378,8 +382,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       HotKeyMethod.Threshold(hotKeyThreshold),
       SkewedJoins.DefaultHotKeyFanout,
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -482,18 +486,20 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group join
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection.
-   * @param eps
+   * @param hotKeyFanout
+   *   The number of intermediate keys that will be used during the CMS computation.
+   * @param cmsEps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
    *   `(0, 1)`.
-   * @param seed
-   *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions.
-   * @param delta
+   * @param cmsDelta
    *   A bound on the probability that a query estimate does not lie within some small interval (an
    *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
+   * @param cmsSeed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions.
    * @param sampleFraction
    *   left side sample fraction.
-   * @param withReplacement
+   * @param sampleWithReplacement
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
@@ -501,27 +507,27 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
     hotKeyFanout: Int,
-    eps: Double,
-    seed: Int,
-    delta: Double,
+    cmsEps: Double,
+    cmsDelta: Double,
+    cmsSeed: Int,
     sampleFraction: Double,
-    withReplacement: Boolean
+    sampleWithReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform {
     lhs =>
       import com.twitter.algebird._
-      val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
+      val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, sampleWithReplacement)
       hotKeyMethod match {
         case HotKeyMethod.Threshold(value) =>
-          val aggregator = CMS.aggregator[K](eps, delta, seed)
-          val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+          val aggregator = CMS.aggregator[K](cmsEps, cmsDelta, cmsSeed)
+          val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
           lhs.skewedFullOuterJoin(rhs, value, cms)
         case HotKeyMethod.TopPercentage(value) =>
-          val aggregator = TopPctCMS.aggregator(eps, delta, seed, value)
-          val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+          val aggregator = TopPctCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+          val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
           lhs.skewedFullOuterJoin(rhs, cms)
         case HotKeyMethod.TopN(value) =>
-          val aggregator = TopNCMS.aggregator(eps, delta, seed, value)
-          val cms = CMSOperations.aggregate(lhsKeys, aggregator, hotKeyFanout)
+          val aggregator = TopNCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+          val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
           lhs.skewedFullOuterJoin(rhs, cms)
       }
   }
@@ -541,8 +547,8 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       HotKeyMethod.Threshold(hotKeyThreshold),
       SkewedJoins.DefaultHotKeyFanout,
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -646,15 +652,15 @@ private object CMSOperations {
 
   def aggregate[K](
     keys: SCollection[K],
-    aggregator: CMSAggregator[K],
-    fanout: Int
+    fanout: Int,
+    aggregator: CMSAggregator[K]
   ): SCollection[CMS[K]] =
     keys.withName("Compute CMS of LHS keys").withFanout(fanout).aggregate(aggregator)
 
   def aggregate[K](
     keys: SCollection[K],
-    aggregator: TopCMSAggregator[K],
-    fanout: Int
+    fanout: Int,
+    aggregator: TopCMSAggregator[K]
   ): SCollection[TopCMS[K]] =
     keys.withName("Compute CMS of LHS keys").withFanout(fanout).aggregate(aggregator)
 

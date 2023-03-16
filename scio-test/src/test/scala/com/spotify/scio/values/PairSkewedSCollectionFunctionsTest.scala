@@ -123,8 +123,8 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
                 method,
                 SkewedJoins.DefaultHotKeyFanout,
                 SkewedJoins.DefaultCmsEpsilon,
-                SkewedJoins.DefaultCmsSeed,
                 SkewedJoins.DefaultCmsDelta,
+                SkewedJoins.DefaultCmsSeed,
                 sampleFraction,
                 SkewedJoins.DefaultSampleWithReplacement
               )
@@ -148,8 +148,8 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
                 method,
                 SkewedJoins.DefaultHotKeyFanout,
                 SkewedJoins.DefaultCmsEpsilon,
-                SkewedJoins.DefaultCmsSeed,
                 SkewedJoins.DefaultCmsDelta,
+                SkewedJoins.DefaultCmsSeed,
                 sampleFraction,
                 SkewedJoins.DefaultSampleWithReplacement
               )
@@ -172,8 +172,8 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
               method,
               SkewedJoins.DefaultHotKeyFanout,
               SkewedJoins.DefaultCmsEpsilon,
-              SkewedJoins.DefaultCmsSeed,
               SkewedJoins.DefaultCmsDelta,
+              SkewedJoins.DefaultCmsSeed,
               sampleFraction,
               SkewedJoins.DefaultSampleWithReplacement
             )
@@ -196,7 +196,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
         SkewedJoins.DefaultCmsDelta,
         SkewedJoins.DefaultCmsSeed
       )
-      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator, 2)
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), 2, aggregator)
       val (l, r) = CMSOperations.partition(pLhs, pRhs, cms, threshold)
 
       // hot key is a
@@ -223,7 +223,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
         SkewedJoins.DefaultCmsSeed,
         pct
       )
-      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator, 2)
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), 2, aggregator)
       val (l, r) = CMSOperations.partition(pLhs, pRhs, cms)
 
       // hot key is a
@@ -250,7 +250,7 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
         SkewedJoins.DefaultCmsSeed,
         count
       )
-      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator, 2)
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), 2, aggregator)
       val (l, r) = CMSOperations.partition(pLhs, pRhs, cms)
 
       // hot key is a
