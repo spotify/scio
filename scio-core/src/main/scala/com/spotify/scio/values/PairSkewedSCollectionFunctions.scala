@@ -61,7 +61,7 @@ object SkewedJoins {
   // some sensible defaults for skewed joins
   val DefaultHotKeyThreshold: Int = 9000
   val DefaultHotKeyMethod: HotKeyMethod.Threshold = HotKeyMethod.Threshold(DefaultHotKeyThreshold)
-  val DefaultHotKeyFanout: Int = 5
+  val DefaultHotKeyFanout: Int = 1
   val DefaultCmsEpsilon: Double = 0.001
   val DefaultCmsDelta: Double = 1e-10
   val DefaultCmsSeed: Int = 42
