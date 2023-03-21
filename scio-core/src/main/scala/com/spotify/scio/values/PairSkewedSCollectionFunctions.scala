@@ -56,6 +56,73 @@ object HotKeyMethod {
 
 }
 
+object SkewedJoins {
+
+  // some sensible defaults for skewed joins
+  val DefaultHotKeyThreshold: Int = 9000
+  val DefaultHotKeyMethod: HotKeyMethod.Threshold = HotKeyMethod.Threshold(DefaultHotKeyThreshold)
+  val DefaultHotKeyFanout: Int = 1
+  val DefaultCmsEpsilon: Double = 0.001
+  val DefaultCmsDelta: Double = 1e-10
+  val DefaultCmsSeed: Int = 42
+  val DefaultSampleFraction: Double = 1.0
+  val DefaultSampleWithReplacement: Boolean = true
+
+  private[scio] def union[T](hot: SCollection[T], chill: SCollection[T]): SCollection[T] =
+    hot.withName("Union hot and chill join results").union(chill)
+
+  private[scio] def join[K, V, W](
+    lhs: Partitions[K, V],
+    rhs: Partitions[K, W]
+  ): SCollection[(K, (V, W))] = {
+    // Use hash join for hot keys
+    val hotJoined = lhs.hot
+      .withName("Hash join hot partitions")
+      .hashJoin(rhs.hot)
+
+    // Use regular join for the rest of the keys
+    val chillJoined = lhs.chill
+      .withName("Join chill partitions")
+      .hashJoin(rhs.chill)
+
+    union(hotJoined, chillJoined)
+  }
+
+  private[scio] def leftOuterJoin[K, V, W](
+    lhs: Partitions[K, V],
+    rhs: Partitions[K, W]
+  ): SCollection[(K, (V, Option[W]))] = {
+    // Use hash join for hot keys
+    val hotJoined = lhs.hot
+      .withName("Hash left outer join hot partitions")
+      .hashLeftOuterJoin(rhs.hot)
+
+    // Use regular join for the rest of the keys
+    val chillJoined = lhs.chill
+      .withName("Left outer join chill partitions")
+      .leftOuterJoin(rhs.chill)
+
+    union(hotJoined, chillJoined)
+  }
+
+  private[scio] def fullOuterJoin[K, V, W](
+    lhs: Partitions[K, V],
+    rhs: Partitions[K, W]
+  ): SCollection[(K, (Option[V], Option[W]))] = {
+    // Use hash join for hot keys
+    val hotJoined = lhs.hot
+      .withName("Hash full outer join hot partitions")
+      .hashFullOuterJoin(rhs.hot)
+
+    // Use regular join for the rest of the keys
+    val chillJoined = lhs.chill
+      .withName("Full outer join chill partitions")
+      .fullOuterJoin(rhs.chill)
+
+    union(hotJoined, chillJoined)
+  }
+}
+
 /**
  * Extra functions available on SCollections of (key, value) pairs for skwed joins through an
  * implicit conversion.
@@ -88,41 +155,47 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
    *   threshold.
-   * @param eps
+   * @param hotKeyFanout
+   *   The number of intermediate keys that will be used during the CMS computation.
+   * @param cmsEps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
    *   `(0, 1)`.
-   * @param seed
+   * @param cmsDelta
    *   A seed to initialize the random number generator used to create the pairwise independent hash
    *   functions.
-   * @param delta
+   * @param cmsSeed
    *   A bound on the probability that a query estimate does not lie within some small interval (an
    *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
    * @param sampleFraction
    *   left side sample fraction.
-   * @param withReplacement
+   * @param sampleWithReplacement
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
-    eps: Double,
-    seed: Int,
-    delta: Double,
+    hotKeyFanout: Int,
+    cmsEps: Double,
+    cmsDelta: Double,
+    cmsSeed: Int,
     sampleFraction: Double,
-    withReplacement: Boolean
+    sampleWithReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] = self.transform { lhs =>
-    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
+    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, sampleWithReplacement)
     import com.twitter.algebird._
     hotKeyMethod match {
       case HotKeyMethod.Threshold(value) =>
-        val cms = CMSOperations.aggregate(lhsKeys, CMS.aggregator(eps, delta, seed))
+        val aggregator = CMS.aggregator(cmsEps, cmsDelta, cmsSeed)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedJoin(rhs, value, cms)
       case HotKeyMethod.TopPercentage(value) =>
-        val cms = CMSOperations.aggregate(lhsKeys, TopPctCMS.aggregator(eps, delta, seed, value))
+        val aggregator = TopPctCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedJoin(rhs, cms)
       case HotKeyMethod.TopN(value) =>
-        val cms = CMSOperations.aggregate(lhsKeys, TopNCMS.aggregator(eps, delta, seed, value))
+        val aggregator = TopNCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedJoin(rhs, cms)
     }
   }
@@ -130,19 +203,20 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   @deprecated("Use skewedJoin with HotKeyMethod.Threshold instead ", "0.12.6")
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long = 9000,
-    eps: Double = 0.001,
-    seed: Int = 42,
-    delta: Double = 1e-10,
-    sampleFraction: Double = 1.0,
-    withReplacement: Boolean = true
+    hotKeyThreshold: Long = SkewedJoins.DefaultHotKeyThreshold,
+    eps: Double = SkewedJoins.DefaultCmsEpsilon,
+    seed: Int = SkewedJoins.DefaultCmsSeed,
+    delta: Double = SkewedJoins.DefaultCmsDelta,
+    sampleFraction: Double = SkewedJoins.DefaultSampleFraction,
+    withReplacement: Boolean = SkewedJoins.DefaultSampleWithReplacement
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] =
     skewedJoin(
       rhs,
       HotKeyMethod.Threshold(hotKeyThreshold),
+      SkewedJoins.DefaultHotKeyFanout,
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -248,41 +322,47 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection. Default is 9000 occurrence
    *   threshold.
-   * @param eps
+   * @param hotKeyFanout
+   *   The number of intermediate keys that will be used during the CMS computation.
+   * @param cmsEps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
    *   `(0, 1)`.
-   * @param seed
-   *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions.
-   * @param delta
+   * @param cmsDelta
    *   A bound on the probability that a query estimate does not lie within some small interval (an
    *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
+   * @param cmsSeed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions.
    * @param sampleFraction
    *   left side sample fraction.
-   * @param withReplacement
+   * @param sampleWithReplacement
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
-    eps: Double,
-    seed: Int,
-    delta: Double,
+    hotKeyFanout: Int,
+    cmsEps: Double,
+    cmsDelta: Double,
+    cmsSeed: Int,
     sampleFraction: Double,
-    withReplacement: Boolean
+    sampleWithReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] = self.transform { lhs =>
     import com.twitter.algebird._
-    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
+    val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, sampleWithReplacement)
     hotKeyMethod match {
       case HotKeyMethod.Threshold(value) =>
-        val cms = CMSOperations.aggregate(lhsKeys, CMS.aggregator(eps, delta, seed))
+        val aggregator = CMS.aggregator(cmsEps, cmsDelta, cmsSeed)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedLeftOuterJoin(rhs, value, cms)
       case HotKeyMethod.TopPercentage(value) =>
-        val cms = CMSOperations.aggregate(lhsKeys, TopPctCMS.aggregator(eps, delta, seed, value))
+        val aggregator = TopPctCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedLeftOuterJoin(rhs, cms)
       case HotKeyMethod.TopN(value) =>
-        val cms = CMSOperations.aggregate(lhsKeys, TopNCMS.aggregator(eps, delta, seed, value))
+        val aggregator = TopNCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+        val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
         lhs.skewedLeftOuterJoin(rhs, cms)
     }
   }
@@ -290,19 +370,20 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   @deprecated("Use skewedLeftOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long = 9000,
-    eps: Double = 0.001,
-    seed: Int = 42,
-    delta: Double = 1e-10,
-    sampleFraction: Double = 1.0,
-    withReplacement: Boolean = true
+    hotKeyThreshold: Long = SkewedJoins.DefaultHotKeyThreshold,
+    eps: Double = SkewedJoins.DefaultCmsEpsilon,
+    seed: Int = SkewedJoins.DefaultCmsSeed,
+    delta: Double = SkewedJoins.DefaultCmsDelta,
+    sampleFraction: Double = SkewedJoins.DefaultSampleFraction,
+    withReplacement: Boolean = SkewedJoins.DefaultSampleWithReplacement
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] =
     skewedLeftOuterJoin(
       rhs,
       HotKeyMethod.Threshold(hotKeyThreshold),
+      SkewedJoins.DefaultHotKeyFanout,
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -405,42 +486,48 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group join
    * @param hotKeyMethod
    *   Method used to compute hot-keys from the left side collection.
-   * @param eps
+   * @param hotKeyFanout
+   *   The number of intermediate keys that will be used during the CMS computation.
+   * @param cmsEps
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
    *   `(0, 1)`.
-   * @param seed
-   *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions.
-   * @param delta
+   * @param cmsDelta
    *   A bound on the probability that a query estimate does not lie within some small interval (an
    *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
+   * @param cmsSeed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions.
    * @param sampleFraction
    *   left side sample fraction.
-   * @param withReplacement
+   * @param sampleWithReplacement
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod,
-    eps: Double,
-    seed: Int,
-    delta: Double,
+    hotKeyFanout: Int,
+    cmsEps: Double,
+    cmsDelta: Double,
+    cmsSeed: Int,
     sampleFraction: Double,
-    withReplacement: Boolean
+    sampleWithReplacement: Boolean
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform {
     lhs =>
       import com.twitter.algebird._
-      val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, withReplacement)
+      val lhsKeys = LargeLeftSide.sampleKeys(lhs, sampleFraction, sampleWithReplacement)
       hotKeyMethod match {
         case HotKeyMethod.Threshold(value) =>
-          val cms = CMSOperations.aggregate(lhsKeys, CMS.aggregator[K](eps, delta, seed))
+          val aggregator = CMS.aggregator[K](cmsEps, cmsDelta, cmsSeed)
+          val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
           lhs.skewedFullOuterJoin(rhs, value, cms)
         case HotKeyMethod.TopPercentage(value) =>
-          val cms = CMSOperations.aggregate(lhsKeys, TopPctCMS.aggregator(eps, delta, seed, value))
+          val aggregator = TopPctCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+          val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
           lhs.skewedFullOuterJoin(rhs, cms)
         case HotKeyMethod.TopN(value) =>
-          val cms = CMSOperations.aggregate(lhsKeys, TopNCMS.aggregator(eps, delta, seed, value))
+          val aggregator = TopNCMS.aggregator(cmsEps, cmsDelta, cmsSeed, value)
+          val cms = CMSOperations.aggregate(lhsKeys, hotKeyFanout, aggregator)
           lhs.skewedFullOuterJoin(rhs, cms)
       }
   }
@@ -448,19 +535,20 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   @deprecated("Use skewedFullOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long = 9000,
-    eps: Double = 0.001,
-    seed: Int = 42,
-    delta: Double = 1e-10,
-    sampleFraction: Double = 1.0,
-    withReplacement: Boolean = true
+    hotKeyThreshold: Long = SkewedJoins.DefaultHotKeyThreshold,
+    eps: Double = SkewedJoins.DefaultCmsEpsilon,
+    seed: Int = SkewedJoins.DefaultCmsSeed,
+    delta: Double = SkewedJoins.DefaultCmsDelta,
+    sampleFraction: Double = SkewedJoins.DefaultSampleFraction,
+    withReplacement: Boolean = SkewedJoins.DefaultSampleWithReplacement
   )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] =
     skewedFullOuterJoin(
       rhs,
       HotKeyMethod.Threshold(hotKeyThreshold),
+      SkewedJoins.DefaultHotKeyFanout,
       eps,
-      seed,
       delta,
+      seed,
       sampleFraction,
       withReplacement
     )
@@ -564,15 +652,17 @@ private object CMSOperations {
 
   def aggregate[K](
     keys: SCollection[K],
+    fanout: Int,
     aggregator: CMSAggregator[K]
   ): SCollection[CMS[K]] =
-    keys.withName("Compute CMS of LHS keys").aggregate(aggregator)
+    keys.withName("Compute CMS of LHS keys").withFanout(fanout).aggregate(aggregator)
 
   def aggregate[K](
     keys: SCollection[K],
+    fanout: Int,
     aggregator: TopCMSAggregator[K]
   ): SCollection[TopCMS[K]] =
-    keys.withName("Compute CMS of LHS keys").aggregate(aggregator)
+    keys.withName("Compute CMS of LHS keys").withFanout(fanout).aggregate(aggregator)
 
   def partition[K, V, W](
     lhs: SCollection[(K, V)],
@@ -645,62 +735,5 @@ private object CMSOperations {
     val lhsPartitions = Partitions(partitionedLhs(hotLhs), partitionedLhs(chillLhs))
     val rhsPartitions = Partitions(partitionedRhs(hotRhs), partitionedRhs(chillRhs))
     (lhsPartitions, rhsPartitions)
-  }
-}
-
-private object SkewedJoins {
-
-  private def union[T](hot: SCollection[T], chill: SCollection[T]): SCollection[T] =
-    hot.withName("Union hot and chill join results").union(chill)
-
-  def join[K, V, W](
-    lhs: Partitions[K, V],
-    rhs: Partitions[K, W]
-  ): SCollection[(K, (V, W))] = {
-    // Use hash join for hot keys
-    val hotJoined = lhs.hot
-      .withName("Hash join hot partitions")
-      .hashJoin(rhs.hot)
-
-    // Use regular join for the rest of the keys
-    val chillJoined = lhs.chill
-      .withName("Join chill partitions")
-      .hashJoin(rhs.chill)
-
-    union(hotJoined, chillJoined)
-  }
-
-  def leftOuterJoin[K, V, W](
-    lhs: Partitions[K, V],
-    rhs: Partitions[K, W]
-  ): SCollection[(K, (V, Option[W]))] = {
-    // Use hash join for hot keys
-    val hotJoined = lhs.hot
-      .withName("Hash left outer join hot partitions")
-      .hashLeftOuterJoin(rhs.hot)
-
-    // Use regular join for the rest of the keys
-    val chillJoined = lhs.chill
-      .withName("Left outer join chill partitions")
-      .leftOuterJoin(rhs.chill)
-
-    union(hotJoined, chillJoined)
-  }
-
-  def fullOuterJoin[K, V, W](
-    lhs: Partitions[K, V],
-    rhs: Partitions[K, W]
-  ): SCollection[(K, (Option[V], Option[W]))] = {
-    // Use hash join for hot keys
-    val hotJoined = lhs.hot
-      .withName("Hash full outer join hot partitions")
-      .hashFullOuterJoin(rhs.hot)
-
-    // Use regular join for the rest of the keys
-    val chillJoined = lhs.chill
-      .withName("Full outer join chill partitions")
-      .fullOuterJoin(rhs.chill)
-
-    union(hotJoined, chillJoined)
   }
 }
