@@ -494,7 +494,6 @@ lazy val `scio-core`: Project = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
@@ -515,7 +514,6 @@ lazy val `scio-core`: Project = project
       "io.netty" % "netty-handler" % nettyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-      "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
@@ -651,7 +649,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   .dependsOn(
     `scio-core` % "compile;it->it",
     `scio-avro` % "test",
-    `scio-test` % "test;it"
+    `scio-test` % "test->test;it"
   )
   .configs(IntegrationTest)
   .settings(commonSettings)
