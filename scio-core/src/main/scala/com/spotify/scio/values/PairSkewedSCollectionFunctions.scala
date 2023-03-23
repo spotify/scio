@@ -200,7 +200,49 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedJoin with HotKeyMethod.Threshold instead ", "0.12.6")
+  /**
+   * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
+   *
+   * Perform a skewed full join where some keys on the left hand may be hot. Frequency of a key is
+   * estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
+   *
+   * @note
+   *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
+   * @example
+   *   {{{
+   *   // Implicits that enabling CMS-hashing
+   *   import com.twitter.algebird.CMSHasherImplicits._
+   *   val p = logs.skewedJoin(logMetadata)
+   *   }}}
+   *
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
+   * @group join
+   * @param hotKeyThreshold
+   *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
+   *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
+   *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind. If you sample input
+   *   via `sampleFraction` make sure to adjust `hotKeyThreshold` accordingly. Default is 9000.
+   * @param eps
+   *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
+   *   `(0, 1)`. Default is 0.001.
+   * @param seed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions. Default is 42.
+   * @param delta
+   *   A bound on the probability that a query estimate does not lie within some small interval (an
+   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`. Default is 1e-10.
+   * @param sampleFraction
+   *   left side sample fraction. Default is `1.0` - no sampling.
+   * @param withReplacement
+   *   whether to use sampling with replacement, see
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
+   *   is true.
+   */
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = SkewedJoins.DefaultHotKeyThreshold,
@@ -367,7 +409,49 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedLeftOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
+  /**
+   * N to 1 skew-proof flavor of [[PairSCollectionFunctions.leftOuterJoin]].
+   *
+   * Perform a skewed full join where some keys on the left hand may be hot. Frequency of a key is
+   * estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
+   *
+   * @note
+   *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
+   * @example
+   *   {{{
+   *   // Implicits that enabling CMS-hashing
+   *   import com.twitter.algebird.CMSHasherImplicits._
+   *   val p = logs.skewedLeftOuterJoin(logMetadata)
+   *   }}}
+   *
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
+   * @group join
+   * @param hotKeyThreshold
+   *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
+   *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
+   *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind. If you sample input
+   *   via `sampleFraction` make sure to adjust `hotKeyThreshold` accordingly. Default is 9000.
+   * @param eps
+   *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
+   *   `(0, 1)`. Default is 0.001.
+   * @param seed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions. Default is 42.
+   * @param delta
+   *   A bound on the probability that a query estimate does not lie within some small interval (an
+   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`. Default is 1e-10.
+   * @param sampleFraction
+   *   left side sample fraction. Default is `1.0` - no sampling.
+   * @param withReplacement
+   *   whether to use sampling with replacement, see
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
+   *   is true.
+   */
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = SkewedJoins.DefaultHotKeyThreshold,
@@ -532,7 +616,49 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       }
   }
 
-  @deprecated("Use skewedFullOuterJoin with HotKeyMethod.Threshold instead ", "0.12.6")
+  /**
+   * N to 1 skew-proof flavor of [[PairSCollectionFunctions.fullOuterJoin]].
+   *
+   * Perform a skewed full join where some keys on the left hand may be hot. Frequency of a key is
+   * estimated with `1 - delta` probability, and the estimate is within `eps * N` of the true
+   * frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
+   *
+   * @note
+   *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
+   * @example
+   *   {{{
+   *   // Implicits that enabling CMS-hashing
+   *   import com.twitter.algebird.CMSHasherImplicits._
+   *   val p = logs.skewedFullOuterJoin(logMetadata)
+   *   }}}
+   *
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
+   * @group join
+   * @param hotKeyThreshold
+   *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
+   *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
+   *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind. If you sample input
+   *   via `sampleFraction` make sure to adjust `hotKeyThreshold` accordingly. Default is 9000.
+   * @param eps
+   *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
+   *   `(0, 1)`. Default is 0.001.
+   * @param seed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions. Default is 42.
+   * @param delta
+   *   A bound on the probability that a query estimate does not lie within some small interval (an
+   *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`. Default is 1e-10.
+   * @param sampleFraction
+   *   left side sample fraction. Default is `1.0` - no sampling.
+   * @param withReplacement
+   *   whether to use sampling with replacement, see
+   *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]]. Default
+   *   is true.
+   */
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long = SkewedJoins.DefaultHotKeyThreshold,
