@@ -41,7 +41,7 @@ def scio(version: String): List[ModuleID] = {
     case _ =>
       List(
         "scio-google-cloud-platform", // replaced scio-bigquery
-        "scio-extra", // new in 0.10
+        "scio-extra" // new in 0.10
       )
   })
 
@@ -93,12 +93,14 @@ lazy val tests = project
   .dependsOn(rules)
   .settings(
     libraryDependencies += "ch.epfl.scala" % "scalafix-testkit" % V.scalafixVersion % Test cross CrossVersion.full,
-    Compile / compile := (Compile / compile).dependsOn(
-      `input-0_7` / Compile / compile,
-      `input-0_8` / Compile / compile,
-      `input-0_10` / Compile / compile,
-      `input-0_12` / Compile / compile
-    ).value,
+    Compile / compile := (Compile / compile)
+      .dependsOn(
+        `input-0_7` / Compile / compile,
+        `input-0_8` / Compile / compile,
+        `input-0_10` / Compile / compile,
+        `input-0_12` / Compile / compile
+      )
+      .value,
     scalafixTestkitOutputSourceDirectories :=
       (`output-0_7` / Compile / sourceDirectories).value ++
         (`output-0_8` / Compile / sourceDirectories).value ++
@@ -113,5 +115,5 @@ lazy val tests = project
       (`input-0_7` / Compile / fullClasspath).value ++
         (`input-0_8` / Compile / fullClasspath).value ++
         (`input-0_10` / Compile / fullClasspath).value ++
-        (`input-0_12` / Compile / fullClasspath).value,
+        (`input-0_12` / Compile / fullClasspath).value
   )
