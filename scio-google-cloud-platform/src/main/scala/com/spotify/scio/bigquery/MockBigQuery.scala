@@ -123,6 +123,15 @@ class MockBigQuery private (private val bq: BigQuery) {
     queryResult(sqlQuery, flattenResults).map(bqt.fromTableRow)
   }
 
+  /** Run live DML statement against BigQuery service, substituting mocked tables with test data. */
+  def runDML(dmlStatement: String): TableReference = {
+    val isLegacy = bq.query.isLegacySql(dmlStatement)
+    val mockDml = mapping.foldLeft(dmlStatement) { case (q, (src, dst)) =>
+      q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
+    }
+    bq.query.run(mockDml, writeDisposition = null, createDisposition = null)
+  }
+
   private def toTableSpec(table: TableReference, isLegacy: Boolean) =
     if (isLegacy) {
       s"[${table.getProjectId}:${table.getDatasetId}.${table.getTableId}]"
