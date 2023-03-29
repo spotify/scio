@@ -4,39 +4,24 @@ package v0_10_0
 import scalafix.v1._
 import scala.meta._
 
+object FixCoderPropagation {
+  val CurriedSCollFns = Seq("top", "quantilesApprox")
+    .map(fn => SymbolMatcher.normalized(s"com/spotify/scio/values/SCollection#$fn"))
+
+  val CurriedPairedSCollFns = Set("topByKey", "approxQuantilesByKey")
+    .map(fn => SymbolMatcher.normalized(s"com/spotify/scio/values/PairSCollectionFunctions#$fn"))
+
+  val CurriedFns = (CurriedSCollFns ++ CurriedPairedSCollFns).reduce(_ + _)
+}
+
 class FixCoderPropagation extends SemanticRule("FixCoderPropagation") {
-  private val scoll = "com/spotify/scio/values/SCollection#"
-  private val pairedScol = "com/spotify/scio/values/PairSCollectionFunctions#"
+
+  import FixCoderPropagation._
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case a @ Term.Apply(fun, List(arg1, arg2)) =>
-      fun match {
-        case Term.Select(qual, name) =>
-          name match {
-            case t @ Term.Name("top") if expectedType(qual, scoll) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t @ Term.Name("topByKey") if expectedType(qual, pairedScol) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t @ Term.Name("quantilesApprox") if expectedType(qual, scoll) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t @ Term.Name("approxQuantilesByKey") if expectedType(qual, pairedScol) =>
-              Patch.replaceTree(a, q"$fun($arg1)($arg2)".syntax)
-            case t =>
-              Patch.empty
-          }
-      }
+    doc.tree.collect {
+      case t @ q"$qual.$fn($arg1, $arg2)" if CurriedFns.matches(fn.symbol) =>
+        Patch.replaceTree(t, q"$qual.$fn($arg1)($arg2)".syntax)
     }.asPatch
   }
-
-  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean =
-    qual.symbol.info.get.signature match {
-      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(typStr).matches(typ)
-      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
-        SymbolMatcher.exact(typStr).matches(typ)
-      case ValueSignature(TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(scoll).matches(typ)
-      case t =>
-        false
-    }
 }

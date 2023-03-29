@@ -71,9 +71,10 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, Coder[T])
     var transform = beam.JdbcIO
       .read[T]()
-      .withCoder(CoderMaterializer.beam(sc, Coder[T]))
+      .withCoder(coder)
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(readOptions.connectionOptions))
       .withQuery(readOptions.query)
       .withRowMapper(new beam.JdbcIO.RowMapper[T] {

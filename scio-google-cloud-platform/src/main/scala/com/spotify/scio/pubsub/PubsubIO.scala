@@ -180,8 +180,9 @@ final private case class StringPubsubIOWithoutAttributes(
   timestampAttribute: String
 ) extends PubsubIOWithoutAttributes[String] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[String] = {
+    val coder = CoderMaterializer.beam(sc, Coder.stringCoder)
     val t = setup(beam.PubsubIO.readStrings(), params)
-    sc.applyTransform(t)
+    sc.applyTransform(t).setCoder(coder)
   }
 
   override protected def write(data: SCollection[String], params: WriteP): Tap[Nothing] = {
@@ -199,8 +200,9 @@ final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: 
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, Coder.avroSpecificRecordCoder[T])
     val t = setup(beam.PubsubIO.readAvros(cls), params)
-    sc.applyTransform(t)
+    sc.applyTransform(t).setCoder(coder)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -218,8 +220,9 @@ final private case class MessagePubsubIOWithoutAttributes[T <: Message: ClassTag
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[T])
     val t = setup(beam.PubsubIO.readProtos(cls), params)
-    sc.applyTransform(t)
+    sc.applyTransform(t).setCoder(coder)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -235,8 +238,9 @@ final private case class PubSubMessagePubsubIOWithoutAttributes[T <: beam.Pubsub
   timestampAttribute: String
 ) extends PubsubIOWithoutAttributes[T] {
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, coders.messageCoder)
     val t = setup(beam.PubsubIO.readMessages(), params)
-    sc.applyTransform(t).contravary[T]
+    sc.applyTransform(t).setCoder(coder).contravary[T]
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
@@ -288,15 +292,14 @@ final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
     s"PubsubIO($name, $idAttribute, $timestampAttribute)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
-    val r =
-      PubsubIO.configureRead(beam.PubsubIO.readMessagesWithAttributes())(
-        name,
-        params,
-        idAttribute,
-        timestampAttribute
-      )
-
     val coder = CoderMaterializer.beam(sc, Coder[T])
+    val r = PubsubIO.configureRead(beam.PubsubIO.readMessagesWithAttributes())(
+      name,
+      params,
+      idAttribute,
+      timestampAttribute
+    )
+
     sc.applyTransform(r)
       .map { m =>
         val payload = CoderUtils.decodeFromByteArray(coder, m.getPayload)

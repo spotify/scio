@@ -30,7 +30,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - run: "cd scalafix; sbt test"
+      - working-directory: ./scalafix
+        run: sbt test
   mimaReport:
     runs-on: ubuntu-latest
     steps:
