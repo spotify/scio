@@ -16,6 +16,7 @@
 
 package com.spotify.scio.avro
 
+// scalafix:off
 /** MACHINE-GENERATED FROM AVRO SCHEMA. DO NOT EDIT DIRECTLY */
 
 import scala.annotation.switch

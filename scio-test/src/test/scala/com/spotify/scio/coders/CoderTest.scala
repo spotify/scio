@@ -112,7 +112,7 @@ object Avro {
   val address = new Address("street1", "street2", "city", "state", "01234", "Sweden")
   val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
 
-  val scalaSpecificAvro = AvroHugger(42)
+  val scalaSpecificAvro: AvroHugger = AvroHugger(42)
 }
 
 // proto
