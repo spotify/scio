@@ -128,11 +128,11 @@ trait AvroCoders {
 
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val clazz = ScioUtil.classOf[T]
-    // 1st try to get the schema from getSchema on a default instance.
-    // SpecificData.get().getSchema(clazz) uses private SCHEMA$ field
-    // that may not be implemented by custom SpecificRecord instance.
-    val schema = Try(clazz.getDeclaredConstructor().newInstance().getSchema)
-      .getOrElse(SpecificData.get().getSchema(clazz))
+    // Try to get the schema with SpecificData.getSchema
+    // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
+    // Otherwise create a default instance and call getSchema
+    val schema = Try(SpecificData.get().getSchema(clazz))
+      .getOrElse(clazz.getDeclaredConstructor().newInstance().getSchema)
     val useReflectApi = true // keep this for backward compatibility
     Coder.beam(AvroCoder.of(clazz, schema, useReflectApi))
   }
