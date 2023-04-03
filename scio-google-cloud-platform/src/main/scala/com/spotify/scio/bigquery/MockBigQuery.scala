@@ -21,6 +21,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.client.BigQuery.isDML
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
@@ -125,6 +126,8 @@ class MockBigQuery private (private val bq: BigQuery) {
 
   /** Run live DML statement against BigQuery service, substituting mocked tables with test data. */
   def runDML(dmlStatement: String): TableReference = {
+    require(isDML(dmlStatement), s"Expecting DML statement but got '$dmlStatement'")
+
     val isLegacy = bq.query.isLegacySql(dmlStatement)
     val mockDml = mapping.foldLeft(dmlStatement) { case (q, (src, dst)) =>
       q.replace(toTableSpec(src, isLegacy), toTableSpec(dst, isLegacy))
