@@ -39,7 +39,7 @@ private[client] object QueryOps {
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 
-  final private[scio] case class QueryJobConfig(
+  final private case class QueryJobConfig(
     sql: String,
     useLegacySql: Boolean,
     dryRun: Boolean = false,

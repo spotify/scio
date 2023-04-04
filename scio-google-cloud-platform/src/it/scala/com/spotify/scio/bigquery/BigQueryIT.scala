@@ -96,19 +96,23 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
     val allRowsQuery = s"SELECT word, word_count FROM `$writableTableRef` LIMIT 10"
     val mbq = MockBigQuery()
     mbq.mockTable(writableTableRef).withData(MockBQData.inData)
-    val insertQuery = s"INSERT INTO `${writableTableRef}` (word, word_count) VALUES ('cat', 2)"
+    val insertQuery = s"INSERT INTO `$writableTableRef` (word, word_count) VALUES ('cat', 2)"
     mbq.runDML(insertQuery)
     mbq.queryResult(allRowsQuery) should contain theSameElementsAs MockBQData.expected ++ Seq(
       MockBQData.wordCount("cat", 2)
     )
-    val updateQuery = s"UPDATE `${writableTableRef}` SET word_count = 4 WHERE word = 'cat'"
+    val updateQuery = s"UPDATE `$writableTableRef` SET word_count = 4 WHERE word = 'cat'"
     mbq.runDML(updateQuery)
     mbq.queryResult(allRowsQuery) should contain theSameElementsAs MockBQData.expected ++ Seq(
       MockBQData.wordCount("cat", 4)
     )
-    val deleteQuery = s"DELETE FROM `${writableTableRef}` WHERE word = 'cat'"
+    val deleteQuery = s"DELETE FROM `$writableTableRef` WHERE word = 'cat'"
     mbq.runDML(deleteQuery)
     mbq.queryResult(allRowsQuery) should contain theSameElementsAs MockBQData.expected
+
+    an[IllegalArgumentException] shouldBe thrownBy {
+      mbq.runDML(allRowsQuery)
+    }
   }
 
   object MockBQWildcardData {
