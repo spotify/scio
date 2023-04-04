@@ -27,6 +27,7 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, CustomCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
+import scala.util.Try
 import scala.reflect.{classTag, ClassTag}
 
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
@@ -127,7 +128,11 @@ trait AvroCoders {
 
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val clazz = ScioUtil.classOf[T]
-    val schema = SpecificData.get().getSchema(clazz)
+    // Try to get the schema with SpecificData.getSchema
+    // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
+    // Otherwise create a default instance and call getSchema
+    val schema = Try(SpecificData.get().getSchema(clazz))
+      .getOrElse(clazz.getDeclaredConstructor().newInstance().getSchema)
     val useReflectApi = true // keep this for backward compatibility
     Coder.beam(AvroCoder.of(clazz, schema, useReflectApi))
   }
