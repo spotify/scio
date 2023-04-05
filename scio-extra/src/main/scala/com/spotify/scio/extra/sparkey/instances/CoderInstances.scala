@@ -1,5 +1,3 @@
-package com.spotify.scio.extra.sparkey.instances
-
 /*
  * Copyright 2023 Spotify AB.
  *
@@ -16,6 +14,8 @@ package com.spotify.scio.extra.sparkey.instances
  * specific language governing permissions and limitations
  * under the License.
  */
+
+package com.spotify.scio.extra.sparkey.instances
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.SparkeyUri
