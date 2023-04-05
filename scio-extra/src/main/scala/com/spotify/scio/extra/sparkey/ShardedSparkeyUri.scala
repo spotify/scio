@@ -20,7 +20,6 @@ package com.spotify.scio.extra.sparkey
 import java.io.File
 import java.net.URI
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.instances.ShardedSparkeyReader
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.SparkeyReader
@@ -39,14 +38,12 @@ trait ShardedSparkeyUri extends SparkeyUri {
   private[sparkey] def exists: Boolean
   override def toString: String = basePath
 
-  implicit def coderSparkeyURI: Coder[ShardedSparkeyUri] = Coder.kryo[ShardedSparkeyUri]
-
   def basePathForShard(shardIndex: Short, numShards: Short): String =
     f"$basePath/part-$shardIndex%05d-of-$numShards%05d"
 
   def sparkeyUriForShard(shardIndex: Short, numShards: Short): SparkeyUri
 
-  val globExpression: String = s"$basePath/part-*"
+  lazy val globExpression: String = s"$basePath/part-*"
 
   private[sparkey] def basePathsAndCount(
     emptyMatchTreatment: EmptyMatchTreatment

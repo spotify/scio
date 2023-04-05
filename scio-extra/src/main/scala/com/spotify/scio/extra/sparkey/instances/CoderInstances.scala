@@ -22,6 +22,6 @@ import com.spotify.scio.extra.sparkey.SparkeyUri
 import org.apache.beam.sdk.{coders => bcoders}
 
 trait CoderInstances {
-  implicit def coderSparkeyURI: Coder[SparkeyUri] =
-    Coder.beam(bcoders.SerializableCoder.of(classOf[SparkeyUri]))
+  implicit def sparkeyUriCoder[T <: SparkeyUri]: Coder[T] =
+    Coder.beam(bcoders.SerializableCoder.of(classOf[SparkeyUri])).asInstanceOf[Coder[T]]
 }
