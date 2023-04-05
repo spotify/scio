@@ -117,7 +117,7 @@ final private[coders] class Tuple2Coder[A, B](val ac: BCoder[A], val bc: BCoder[
 
 final private[coders] class Tuple3Coder[A, B, C](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C]) extends StructuredCoder[(A, B, C)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc).asJava
 
   @inline def onErrorMsg[TC](msg: => (String, String))(f: => TC): TC =
     try {
@@ -203,7 +203,7 @@ final private[coders] class Tuple3Coder[A, B, C](val ac: BCoder[A], val bc: BCod
 
 final private[coders] class Tuple4Coder[A, B, C, D](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D]) extends StructuredCoder[(A, B, C, D)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc).asJava
 
   @inline def onErrorMsg[TD](msg: => (String, String))(f: => TD): TD =
     try {
@@ -295,7 +295,7 @@ final private[coders] class Tuple4Coder[A, B, C, D](val ac: BCoder[A], val bc: B
 
 final private[coders] class Tuple5Coder[A, B, C, D, E](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E]) extends StructuredCoder[(A, B, C, D, E)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec).asJava
 
   @inline def onErrorMsg[TE](msg: => (String, String))(f: => TE): TE =
     try {
@@ -393,7 +393,7 @@ final private[coders] class Tuple5Coder[A, B, C, D, E](val ac: BCoder[A], val bc
 
 final private[coders] class Tuple6Coder[A, B, C, D, E, G](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G]) extends StructuredCoder[(A, B, C, D, E, G)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc).asJava
 
   @inline def onErrorMsg[TF](msg: => (String, String))(f: => TF): TF =
     try {
@@ -497,7 +497,7 @@ final private[coders] class Tuple6Coder[A, B, C, D, E, G](val ac: BCoder[A], val
 
 final private[coders] class Tuple7Coder[A, B, C, D, E, G, H](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H]) extends StructuredCoder[(A, B, C, D, E, G, H)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc).asJava
 
   @inline def onErrorMsg[TG](msg: => (String, String))(f: => TG): TG =
     try {
@@ -607,7 +607,7 @@ final private[coders] class Tuple7Coder[A, B, C, D, E, G, H](val ac: BCoder[A], 
 
 final private[coders] class Tuple8Coder[A, B, C, D, E, G, H, I](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I]) extends StructuredCoder[(A, B, C, D, E, G, H, I)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic).asJava
 
   @inline def onErrorMsg[TH](msg: => (String, String))(f: => TH): TH =
     try {
@@ -723,7 +723,7 @@ final private[coders] class Tuple8Coder[A, B, C, D, E, G, H, I](val ac: BCoder[A
 
 final private[coders] class Tuple9Coder[A, B, C, D, E, G, H, I, J](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc).asJava
 
   @inline def onErrorMsg[TI](msg: => (String, String))(f: => TI): TI =
     try {
@@ -845,7 +845,7 @@ final private[coders] class Tuple9Coder[A, B, C, D, E, G, H, I, J](val ac: BCode
 
 final private[coders] class Tuple10Coder[A, B, C, D, E, G, H, I, J, K](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc).asJava
 
   @inline def onErrorMsg[TJ](msg: => (String, String))(f: => TJ): TJ =
     try {
@@ -973,7 +973,7 @@ final private[coders] class Tuple10Coder[A, B, C, D, E, G, H, I, J, K](val ac: B
 
 final private[coders] class Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc).asJava
 
   @inline def onErrorMsg[TK](msg: => (String, String))(f: => TK): TK =
     try {
@@ -1107,7 +1107,7 @@ final private[coders] class Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](val ac
 
 final private[coders] class Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc).asJava
 
   @inline def onErrorMsg[TL](msg: => (String, String))(f: => TL): TL =
     try {
@@ -1247,7 +1247,7 @@ final private[coders] class Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](val
 
 final private[coders] class Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc).asJava
 
   @inline def onErrorMsg[TM](msg: => (String, String))(f: => TM): TM =
     try {
@@ -1393,7 +1393,7 @@ final private[coders] class Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](
 
 final private[coders] class Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc).asJava
 
   @inline def onErrorMsg[TN](msg: => (String, String))(f: => TN): TN =
     try {
@@ -1545,7 +1545,7 @@ final private[coders] class Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc).asJava
 
   @inline def onErrorMsg[TO](msg: => (String, String))(f: => TO): TO =
     try {
@@ -1703,7 +1703,7 @@ final private[coders] class Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc).asJava
 
   @inline def onErrorMsg[TP](msg: => (String, String))(f: => TP): TP =
     try {
@@ -1867,7 +1867,7 @@ final private[coders] class Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc).asJava
 
   @inline def onErrorMsg[TQ](msg: => (String, String))(f: => TQ): TQ =
     try {
@@ -2037,7 +2037,7 @@ final private[coders] class Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc).asJava
 
   @inline def onErrorMsg[TR](msg: => (String, String))(f: => TR): TR =
     try {
@@ -2213,7 +2213,7 @@ final private[coders] class Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc).asJava
 
   @inline def onErrorMsg[TS](msg: => (String, String))(f: => TS): TS =
     try {
@@ -2395,7 +2395,7 @@ final private[coders] class Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc).asJava
 
   @inline def onErrorMsg[TT](msg: => (String, String))(f: => TT): TT =
     try {
@@ -2583,7 +2583,7 @@ final private[coders] class Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U], val vc: BCoder[V]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc, vc).asJava
 
   @inline def onErrorMsg[TU](msg: => (String, String))(f: => TU): TU =
     try {
@@ -2777,7 +2777,7 @@ final private[coders] class Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
 
 final private[coders] class Tuple22Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U], val vc: BCoder[V], val wc: BCoder[W]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc, vc, wc).asJava
 
   @inline def onErrorMsg[TV](msg: => (String, String))(f: => TV): TV =
     try {
