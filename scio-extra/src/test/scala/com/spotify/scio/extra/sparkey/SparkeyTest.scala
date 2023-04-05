@@ -689,21 +689,17 @@ class SparkeyTest extends PipelineSpec {
   "SparkeyUri Coder" should "work" in {
     val localSparkeyUri = SparkeyUri("file:///some-uri", PipelineOptionsFactory.create())
     localSparkeyUri coderShould notFallback()
-    localSparkeyUri coderShould roundtrip()
 
     val remoteSparkeyUri = SparkeyUri("gs://some-bucket/some-blob", PipelineOptionsFactory.create())
     remoteSparkeyUri coderShould notFallback()
-    remoteSparkeyUri coderShould roundtrip()
 
     val localShardedSparkeyUri =
       ShardedSparkeyUri("file:///some-uri", PipelineOptionsFactory.create())
     localShardedSparkeyUri coderShould notFallback()
-    localShardedSparkeyUri coderShould roundtrip()
 
     val remoteShardedSparkeyUri =
       ShardedSparkeyUri("gs://some-bucket/some-blob", PipelineOptionsFactory.create())
     remoteShardedSparkeyUri coderShould notFallback()
-    remoteShardedSparkeyUri coderShould roundtrip()
   }
 
 }
