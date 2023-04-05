@@ -144,3 +144,74 @@ object HashJoinExamples {
     ()
   }
 }
+
+// ## Skewed join
+object SkewedJoinExamples {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    import JoinUtil._
+
+    // Extract both sides as `SCollection[(String, String)]`s
+    val eventsInfo =
+      sc.bigQueryTable(Table.Spec(ExampleData.EVENT_TABLE)).flatMap(extractEventInfo)
+    val countryInfo =
+      sc.bigQueryTable(Table.Spec(ExampleData.COUNTRY_TABLE)).map(extractCountryInfo)
+
+    eventsInfo
+      // Skewed join is useful when LHS contains a subset of keys with high frequency, but RHS is
+      // too large to fit into memory. It uses Count Min Sketch to estimate those frequencies.
+      // Internally it identifies two groups of keys: "Hot" and the rest. Hot keys are joined using
+      // Hash Join and the rest with the regular join. There are 3 ways to identify
+      // the set of hot keys:
+      // 1) "threshold" as a cutoff frequency
+      // 2) "top percentage" to specify the maximum relative part of all keys can be considered hot
+      // 3) "top N" to specify the absolute number of hot keys
+      .skewedLeftOuterJoin(countryInfo, hotKeyThreshold = 100)
+      .map { t =>
+        val (countryCode, (eventInfo, countryNameOpt)) = t
+        val countryName = countryNameOpt.getOrElse("none")
+        formatOutput(countryCode, countryName, eventInfo)
+      }
+      .saveAsTextFile(args("output"))
+
+    sc.run()
+    ()
+  }
+}
+
+// ## Sparse join
+object SparseJoinExamples {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    import JoinUtil._
+
+    // Import macro-generated encoders that implement Funnel to back guava Bloom filters
+    import magnolify.guava.auto._
+
+    // Extract both sides as `SCollection[(String, String)]`s
+    val eventsInfo =
+      sc.bigQueryTable(Table.Spec(ExampleData.EVENT_TABLE)).flatMap(extractEventInfo)
+    val countryInfo =
+      sc.bigQueryTable(Table.Spec(ExampleData.COUNTRY_TABLE)).map(extractCountryInfo)
+
+    eventsInfo
+      // Sparse Join is useful when LHS is much larger than the RHS which cannot fit in memory, but
+      // contains a mostly overlapping set of keys as LHS, i.e. when the intersection of keys is
+      // sparse in the LHS. Requires specifying the estimation of RHS keys number to find the size
+      // and number of BloomFilters that Scio would use to split the LHS into overlap and
+      // intersection in a "map" step before an exact join. Having a value close to the actual
+      // number improves the false positives in intermediate steps which means less shuffle.
+      .sparseLeftOuterJoin(countryInfo, rhsNumKeys = 275)
+      .map { t =>
+        val (countryCode, (eventInfo, countryNameOpt)) = t
+        val countryName = countryNameOpt.getOrElse("none")
+        formatOutput(countryCode, countryName, eventInfo)
+      }
+      .saveAsTextFile(args("output"))
+
+    sc.run()
+    ()
+  }
+}

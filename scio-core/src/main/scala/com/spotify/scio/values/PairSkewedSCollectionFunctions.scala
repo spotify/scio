@@ -800,29 +800,26 @@ private object CMSOperations {
     implicit val vCoder: Coder[V] = lhs.valueCoder
     implicit val wCoder: Coder[W] = rhs.valueCoder
 
-    val cmsSideInput = hotKeyCms.asSingletonSideInput
-    val thresholdSideInput = hotKeyCms
+    val cmsThresholdSideInput = hotKeyCms
       .withName("Compute CMS threshold with error bound")
-      .map(c => hotKeyThreshold + c.totalCount * c.eps)
+      .map(c => (c, hotKeyThreshold + c.totalCount * c.eps))
       .asSingletonSideInput
 
     val (hotLhs, chillLhs) = (SideOutput[(K, V)](), SideOutput[(K, V)]())
     val (hotRhs, chillRhs) = (SideOutput[(K, W)](), SideOutput[(K, W)]())
 
     val partitionedLhs = lhs
-      .withSideInputs(cmsSideInput, thresholdSideInput)
+      .withSideInputs(cmsThresholdSideInput)
       .transformWithSideOutputs(Seq(hotLhs, chillLhs), "Partition LHS") { case ((k, _), ctx) =>
-        val cms = ctx(cmsSideInput)
-        val threshold = ctx(thresholdSideInput)
-        if (cms.frequency(k).estimate >= threshold) hotLhs else chillLhs
+        val (cms, thresholdWithErr) = ctx(cmsThresholdSideInput)
+        if (cms.frequency(k).estimate >= thresholdWithErr) hotLhs else chillLhs
       }
 
     val partitionedRhs = rhs
-      .withSideInputs(cmsSideInput, thresholdSideInput)
+      .withSideInputs(cmsThresholdSideInput)
       .transformWithSideOutputs(Seq(hotRhs, chillRhs), "Partition RHS") { case ((k, _), ctx) =>
-        val cms = ctx(cmsSideInput)
-        val threshold = ctx(thresholdSideInput)
-        if (cms.frequency(k).estimate >= threshold) hotRhs else chillRhs
+        val (cms, thresholdWithErr) = ctx(cmsThresholdSideInput)
+        if (cms.frequency(k).estimate >= thresholdWithErr) hotRhs else chillRhs
       }
 
     val lhsPartitions = Partitions(partitionedLhs(hotLhs), partitionedLhs(chillLhs))
