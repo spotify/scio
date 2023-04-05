@@ -25,7 +25,7 @@ import os
 
 
 def mkVals(n):
-    return list(string.ascii_uppercase.replace("F", "")[:n])
+    return list(string.ascii_uppercase[:n])
 
 
 def mkBounds(n):
