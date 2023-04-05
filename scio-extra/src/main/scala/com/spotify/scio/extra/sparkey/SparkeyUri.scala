@@ -20,8 +20,6 @@ package com.spotify.scio.extra.sparkey
 import java.io.File
 import java.net.URI
 import java.nio.file.{Files, Paths}
-
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.{CompressionType, Sparkey, SparkeyReader}
@@ -42,6 +40,12 @@ trait SparkeyUri extends Serializable {
 
   private[sparkey] def exists: Boolean
   override def toString: String = basePath
+
+  override def hashCode(): Int = basePath.hashCode()
+  override def equals(obj: Any): Boolean = obj match {
+    case that: SparkeyUri => this.basePath == that.basePath
+    case _                => false
+  }
 }
 
 private[sparkey] object SparkeyUri {
@@ -52,8 +56,6 @@ private[sparkey] object SparkeyUri {
       RemoteSparkeyUri(basePath, opts)
     }
   def extensions: Seq[String] = Seq(".spi", ".spl")
-
-  implicit def coderSparkeyURI: Coder[SparkeyUri] = Coder.kryo[SparkeyUri]
 }
 
 private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {

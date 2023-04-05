@@ -120,7 +120,7 @@ import scala.util.hashing.MurmurHash3
  *   .toSCollection
  * }}}
  */
-package object sparkey extends SparkeyReaderInstances {
+package object sparkey extends SparkeyReaderInstances with CoderInstances {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {

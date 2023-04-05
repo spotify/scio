@@ -20,9 +20,11 @@ package com.spotify.scio.extra.sparkey
 import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.spotify.scio._
 import com.spotify.scio.testing._
+import com.spotify.scio.testing.CoderAssertions._
 import com.spotify.scio.util._
 import com.spotify.sparkey._
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.commons.io.FileUtils
 
 import java.io.File
@@ -682,5 +684,15 @@ class SparkeyTest extends PipelineSpec {
     val expectedOutput = List((1, ("a", "b")), (2, ("c", "d")), (3, ("e", "f")))
 
     scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
+  }
+
+  "SparkeyUri Coder" should "work" in {
+    val localSparkeyUri = SparkeyUri("file:///some-uri", PipelineOptionsFactory.create())
+    localSparkeyUri coderShould notFallback()
+    localSparkeyUri coderShould roundtrip()
+
+    val remoteSparkeyUri = SparkeyUri("gs://some-bucket/some-blob", PipelineOptionsFactory.create())
+    remoteSparkeyUri coderShould notFallback()
+    remoteSparkeyUri coderShould roundtrip()
   }
 }
