@@ -26,7 +26,7 @@ import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import org.apache.beam.sdk.coders.{Coder => _, _}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.values.TypeDescriptor
@@ -98,6 +98,8 @@ trait JavaCoders extends JavaBeanCoders {
   implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(Coder.doubleCoder)
 
   implicit val jBooleanCoder: Coder[java.lang.Boolean] = Coder.beam(BooleanCoder.of())
+  implicit val jRemoteFileUtil: Coder[RemoteFileUtil] =
+    Coder.beam(SerializableCoder.of(classOf[RemoteFileUtil]))
 
   implicit def jBigIntegerCoder: Coder[BigInteger] = Coder.beam(BigIntegerCoder.of())
 

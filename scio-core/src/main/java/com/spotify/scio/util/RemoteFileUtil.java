@@ -252,4 +252,14 @@ public class RemoteFileUtil implements Serializable {
   private static Metadata getMetadata(URI src) throws IOException {
     return FileSystems.matchSingleFileSpec(src.toString());
   }
+
+  @Override
+  public int hashCode() {
+    return RemoteFileUtil.class.getName().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof RemoteFileUtil;
+  }
 }

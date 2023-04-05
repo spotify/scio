@@ -34,6 +34,7 @@ import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.util.RemoteFileUtil
 import com.twitter.algebird.Moments
 import org.apache.commons.io.output.NullOutputStream
 import org.scalatest.Assertion
@@ -434,6 +435,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new org.joda.time.LocalDateTime coderShould notFallback()
     new org.joda.time.DateTime coderShould notFallback()
     new java.sql.Timestamp(1) coderShould notFallback()
+
+    RemoteFileUtil.create(PipelineOptionsFactory.create()) coderShould notFallback()
 
     new IntervalWindow(now.minus(4000), now) coderShould notFallback()
   }
