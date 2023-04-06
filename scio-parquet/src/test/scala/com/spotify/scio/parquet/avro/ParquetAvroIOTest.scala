@@ -121,7 +121,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     ()
   }
 
-  // result: Fails
   it should "write and read SpecificRecords with logical types" in {
     val records =
       (1 to 10).map(_ =>
@@ -149,7 +148,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     ()
   }
 
-  // result: passes
   it should "write and read GenericRecords with logical types" in {
     val records: Seq[GenericRecord] = (1 to 10).map { _ =>
       val gr = new GenericData.Record(TestLogicalTypes.SCHEMA$)
