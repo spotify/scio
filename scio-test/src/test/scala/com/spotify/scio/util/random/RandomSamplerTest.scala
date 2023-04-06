@@ -28,7 +28,7 @@ class RandomSamplerTest extends PipelineSpec {
   import RandomSamplerUtils._
 
   private def test[T](sampler: RandomSampler[T, _], xs: Seq[T]): Seq[T] = {
-    sampler.startBundle(null)
+    sampler.startBundle()
     val buffer = MBuffer.empty[T]
     xs.foreach(x => sampler.processElement(x, newOutputReceiver(buffer)))
     buffer.toSeq

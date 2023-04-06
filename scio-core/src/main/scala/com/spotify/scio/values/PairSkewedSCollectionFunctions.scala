@@ -60,13 +60,12 @@ object SkewedJoins {
 
   // some sensible defaults for skewed joins
   val DefaultHotKeyThreshold: Int = 9000
-  val DefaultHotKeyMethod: HotKeyMethod.Threshold = HotKeyMethod.Threshold(DefaultHotKeyThreshold)
   val DefaultHotKeyFanout: Int = 1
   val DefaultCmsEpsilon: Double = 0.001
   val DefaultCmsDelta: Double = 1e-10
   val DefaultCmsSeed: Int = 42
   val DefaultSampleFraction: Double = 1.0
-  val DefaultSampleWithReplacement: Boolean = true
+  val DefaultSampleWithReplacement: Boolean = false
 
   private[scio] def union[T](hot: SCollection[T], chill: SCollection[T]): SCollection[T] =
     hot.withName("Union hot and chill join results").union(chill)

@@ -160,13 +160,26 @@ object SkewedJoinExamples {
 
     eventsInfo
       // Skewed join is useful when LHS contains a subset of keys with high frequency, but RHS is
-      // too large to fit into memory. It uses Count Min Sketch to estimate those frequencies.
+      // too large to fit into memory. It uses Count Min Sketch (CMS) to estimate those frequencies.
       // Internally it identifies two groups of keys: "Hot" and the rest. Hot keys are joined using
-      // Hash Join and the rest with the regular join. There are 3 ways to identify
-      // the set of hot keys:
+      // Hash Join and the rest with the regular join. There are 3 ways to identify the set of
+      // hot keys:
       // 1) "threshold" as a cutoff frequency
       // 2) "top percentage" to specify the maximum relative part of all keys can be considered hot
       // 3) "top N" to specify the absolute number of hot keys
+      // Also, there are several optional parameters in different overloads that could tune the
+      // default behavior:
+      // - "sampleFraction" - the fraction to sample keys in LHS, can improve performance if less
+      // than 1.0, it may be also required to fit keys sample in memory for CMS. If you sample only
+      // 0.1 of the dataset then you need to decrease "threshold" 10 times respectively, because the
+      // latter relies on absolute frequencies detected in the sample.
+      // - "withReplacement" - if "true" it will use Poisson distribution, otherwise Bernoulli. The
+      // former will allow repeats of the same item in your sample.
+      // - "hotKeyFanout" - tune Apache Beam fanout feature when aggregating sample keys to CMS
+      // vectors. It should be a positive number and specifies intermediate nodes to redistribute
+      // aggregation over heavy-hitter keys. Tune it when "Compute CMS of LHS keys" transform has
+      // a problem of idle workers.
+      // - "cmsEps", "cmsDelta", "cmsSeed" - are inputs to CMS probabilistic computation.
       .skewedLeftOuterJoin(countryInfo, hotKeyThreshold = 100)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
