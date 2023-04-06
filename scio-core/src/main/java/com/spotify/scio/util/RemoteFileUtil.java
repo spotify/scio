@@ -69,13 +69,14 @@ public class RemoteFileUtil implements Serializable {
               });
 
   /** Create a new {@link RemoteFileUtil} instance. */
-  public static RemoteFileUtil create(PipelineOptions options) {
+  private RemoteFileUtil() {}
+
+  public static void configure(PipelineOptions options) {
     FileSystems.setDefaultPipelineOptions(options);
-    return new RemoteFileUtil();
   }
 
   /** Check if a remote {@link URI} exists. */
-  public boolean remoteExists(URI uri) throws IOException {
+  public static boolean remoteExists(URI uri) throws IOException {
     try {
       FileSystems.matchSingleFileSpec(uri.toString());
       return true;
@@ -89,7 +90,7 @@ public class RemoteFileUtil implements Serializable {
    *
    * @return {@link Path} to the downloaded local file.
    */
-  public Path download(URI src) {
+  public static Path download(URI src) {
     try {
       return paths.get(src);
     } catch (ExecutionException e) {
@@ -102,7 +103,7 @@ public class RemoteFileUtil implements Serializable {
    *
    * @return {@link Path}s to the downloaded local files.
    */
-  public List<Path> download(List<URI> srcs) {
+  public static List<Path> download(List<URI> srcs) {
     try {
       return paths.getAll(srcs).values().asList();
     } catch (ExecutionException e) {
@@ -111,7 +112,7 @@ public class RemoteFileUtil implements Serializable {
   }
 
   /** Delete a single downloaded local file. */
-  public void delete(URI src) {
+  public static void delete(URI src) {
     Path dst = null;
     try {
       dst = paths.get(src);
@@ -128,7 +129,7 @@ public class RemoteFileUtil implements Serializable {
   }
 
   /** Delete a batch of downloaded local files. */
-  public void delete(List<URI> srcs) {
+  public static void delete(List<URI> srcs) {
     for (URI src : srcs) {
       delete(src);
     }
@@ -136,12 +137,12 @@ public class RemoteFileUtil implements Serializable {
   }
 
   /** Upload a single local {@link Path} to a remote {@link URI}. */
-  public void upload(Path src, URI dst) throws IOException {
+  public static void upload(Path src, URI dst) throws IOException {
     upload(src, dst, MimeTypes.BINARY);
   }
 
   /** Upload a single local {@link Path} to a remote {@link URI} with mimeType {@link MimeTypes}. */
-  public void upload(Path src, URI dst, String mimeType) throws IOException {
+  public static void upload(Path src, URI dst, String mimeType) throws IOException {
     if (remoteExists(dst)) {
       String msg = String.format("Destination URI %s already exists", dst);
       throw new IllegalArgumentException(msg);
@@ -251,15 +252,5 @@ public class RemoteFileUtil implements Serializable {
 
   private static Metadata getMetadata(URI src) throws IOException {
     return FileSystems.matchSingleFileSpec(src.toString());
-  }
-
-  @Override
-  public int hashCode() {
-    return RemoteFileUtil.class.getName().hashCode();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj instanceof RemoteFileUtil;
   }
 }

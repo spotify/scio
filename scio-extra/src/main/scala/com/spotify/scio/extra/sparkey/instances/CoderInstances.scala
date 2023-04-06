@@ -18,10 +18,12 @@
 package com.spotify.scio.extra.sparkey.instances
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.extra.sparkey.SparkeyUri
-import org.apache.beam.sdk.{coders => bcoders}
+import com.spotify.scio.extra.sparkey.{ShardedSparkeyUri, SparkeyUri}
 
 trait CoderInstances {
-  implicit def sparkeyUriCoder[T <: SparkeyUri]: Coder[T] =
-    Coder.beam(bcoders.SerializableCoder.of(classOf[SparkeyUri])).asInstanceOf[Coder[T]]
+  implicit def sparkeyUriCoder: Coder[SparkeyUri] =
+    Coder.xmap[String, SparkeyUri](Coder[String])(SparkeyUri(_), _.basePath)
+
+  implicit def shardedSparkeyUriCoder: Coder[ShardedSparkeyUri] =
+    Coder.xmap[String, ShardedSparkeyUri](Coder[String])(ShardedSparkeyUri(_), _.basePath)
 }

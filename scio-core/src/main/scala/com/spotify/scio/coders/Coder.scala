@@ -21,7 +21,6 @@ import java.io.{InputStream, OutputStream}
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.instances._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
-import com.spotify.scio.util.RemoteFileUtil
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder, StructuredCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
@@ -665,7 +664,6 @@ object Coder
   implicit val jDurationCoder: Coder[java.time.Duration] = JavaCoders.jDurationCoder
   implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
-  implicit val jRemoteFileUtil: Coder[RemoteFileUtil] = JavaCoders.jRemoteFileUtil
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 
   def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =

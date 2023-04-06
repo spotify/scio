@@ -60,10 +60,12 @@ private class LocalAnnoyUri(val path: String) extends AnnoyUri {
 }
 
 private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends AnnoyUri {
-  private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
+  {
+    RemoteFileUtil.configure(options)
+  }
 
   override private[annoy] def getReader(metric: AnnoyMetric, dim: Int): AnnoyReader = {
-    val localPath = rfu.download(new URI(path))
+    val localPath = RemoteFileUtil.download(new URI(path))
     new AnnoyReader(localPath.toString, metric, dim)
   }
   override private[annoy] def saveAndClose(w: AnnoyWriter): Unit = {
@@ -74,10 +76,10 @@ private class RemoteAnnoyUri(val path: String, options: PipelineOptions) extends
     } finally {
       w.free()
     }
-    rfu.upload(Paths.get(tempFile.toString), new URI(path))
+    RemoteFileUtil.upload(Paths.get(tempFile.toString), new URI(path))
     Files.delete(tempFile)
   }
-  override private[annoy] def exists: Boolean = rfu.remoteExists(new URI(path))
+  override private[annoy] def exists: Boolean = RemoteFileUtil.remoteExists(new URI(path))
 }
 
 private[annoy] class AnnoyWriter(metric: AnnoyMetric, dim: Int, nTrees: Int) {

@@ -686,20 +686,19 @@ class SparkeyTest extends PipelineSpec {
     scioResult.tap(result).value.toList should contain theSameElementsAs expectedOutput
   }
 
-  "SparkeyUri Coder" should "work" in {
-    val localSparkeyUri = SparkeyUri("file:///some-uri", PipelineOptionsFactory.create())
+  "SparkeyUri" should "have non-Kryo coders" in {
+    val localSparkeyUri = SparkeyUri("file:///some-path", PipelineOptionsFactory.create())
     localSparkeyUri coderShould notFallback()
 
     val remoteSparkeyUri = SparkeyUri("gs://some-bucket/some-blob", PipelineOptionsFactory.create())
     remoteSparkeyUri coderShould notFallback()
 
     val localShardedSparkeyUri =
-      ShardedSparkeyUri("file:///some-uri", PipelineOptionsFactory.create())
+      ShardedSparkeyUri("file:///some-path", PipelineOptionsFactory.create())
     localShardedSparkeyUri coderShould notFallback()
 
     val remoteShardedSparkeyUri =
       ShardedSparkeyUri("gs://some-bucket/some-blob", PipelineOptionsFactory.create())
     remoteShardedSparkeyUri coderShould notFallback()
   }
-
 }

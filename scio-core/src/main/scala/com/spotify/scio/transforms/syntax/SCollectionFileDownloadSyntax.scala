@@ -48,7 +48,7 @@ trait SCollectionFileDownloadSyntax {
       self.applyTransform(
         ParDo.of(
           new FileDownloadDoFn[T](
-            RemoteFileUtil.create(self.context.options),
+            self.context.options,
             Functions.serializableFn(f),
             batchSize,
             keep
@@ -72,7 +72,7 @@ trait SCollectionFileDownloadSyntax {
         .applyTransform(
           ParDo.of(
             new FileDownloadDoFn[TraversableOnce[T]](
-              RemoteFileUtil.create(self.context.options),
+              self.context.options,
               Functions.serializableFn(f),
               batchSize,
               keep

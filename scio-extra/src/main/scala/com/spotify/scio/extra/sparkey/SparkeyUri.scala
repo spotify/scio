@@ -40,45 +40,37 @@ trait SparkeyUri extends Serializable {
 
   private[sparkey] def exists: Boolean
   override def toString: String = basePath
-
-  override def hashCode(): Int = basePath.hashCode()
-  override def equals(obj: Any): Boolean = obj match {
-    case that: SparkeyUri => this.basePath == that.basePath
-    case _                => false
-  }
 }
 
 private[sparkey] object SparkeyUri {
-  def apply(basePath: String, opts: PipelineOptions): SparkeyUri =
+  def apply(basePath: String, opts: PipelineOptions = null): SparkeyUri =
     if (ScioUtil.isLocalUri(new URI(basePath))) {
       LocalSparkeyUri(basePath)
     } else {
-      RemoteSparkeyUri(basePath, opts)
+      if (opts != null) {
+        RemoteFileUtil.configure(opts)
+      }
+      RemoteSparkeyUri(basePath)
     }
   def extensions: Seq[String] = Seq(".spi", ".spl")
 }
 
-private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
+private[sparkey] case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
   override def getReader: SparkeyReader =
     new ThreadLocalSparkeyReader(new File(basePath))
   override private[sparkey] def exists: Boolean =
     SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
 }
 
-private object RemoteSparkeyUri {
-  def apply(basePath: String, options: PipelineOptions): RemoteSparkeyUri =
-    RemoteSparkeyUri(basePath, RemoteFileUtil.create(options))
-}
-
-private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) extends SparkeyUri {
+private[sparkey] case class RemoteSparkeyUri(basePath: String) extends SparkeyUri {
   override def getReader: SparkeyReader = {
     val uris = SparkeyUri.extensions.map(e => new URI(basePath + e))
-    val paths = rfu.download(uris.asJava).asScala
+    val paths = RemoteFileUtil.download(uris.asJava).asScala
     new ThreadLocalSparkeyReader(paths.head.toFile)
   }
   override private[sparkey] def exists: Boolean =
     SparkeyUri.extensions
-      .exists(e => rfu.remoteExists(new URI(basePath + e)))
+      .exists(e => RemoteFileUtil.remoteExists(new URI(basePath + e)))
 }
 
 private[sparkey] class SparkeyWriter(
@@ -116,7 +108,7 @@ private[sparkey] class SparkeyWriter(
         SparkeyUri.extensions.foreach { e =>
           val src = Paths.get(localFile + e)
           val dst = new URI(u.basePath + e)
-          u.rfu.upload(src, dst)
+          RemoteFileUtil.upload(src, dst)
         }
       case _ => ()
     }

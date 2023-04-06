@@ -82,11 +82,14 @@ trait ShardedSparkeyUri extends SparkeyUri {
 }
 
 private[sparkey] object ShardedSparkeyUri {
-  def apply(basePath: String, options: PipelineOptions): ShardedSparkeyUri =
+  def apply(basePath: String, options: PipelineOptions = null): ShardedSparkeyUri =
     if (ScioUtil.isLocalUri(new URI(basePath))) {
       LocalShardedSparkeyUri(basePath)
     } else {
-      RemoteShardedSparkeyUri(basePath, RemoteFileUtil.create(options))
+      if (options != null) {
+        RemoteFileUtil.configure(options)
+      }
+      RemoteShardedSparkeyUri(basePath)
     }
 
   private[sparkey] def numShardsFromPath(path: String): Short =
@@ -105,7 +108,7 @@ private[sparkey] object ShardedSparkeyUri {
     }.toMap
 }
 
-private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
+private[sparkey] case class LocalShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
   override def getReader: ShardedSparkeyReader = {
     val (basePaths, numShards) = basePathsAndCount(EmptyMatchTreatment.DISALLOW)
     new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(basePaths), numShards)
@@ -117,15 +120,27 @@ private case class LocalShardedSparkeyUri(basePath: String) extends ShardedSpark
 
   override def sparkeyUriForShard(shardIndex: Short, numShards: Short): LocalSparkeyUri =
     LocalSparkeyUri(basePathForShard(shardIndex, numShards))
+
+  override def hashCode(): Int = basePath.hashCode()
+  override def equals(obj: Any): Boolean = obj match {
+    case that: SparkeyUri => this.basePath == that.basePath
+    case _                => false
+  }
 }
 
-private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil)
-    extends ShardedSparkeyUri {
+private[sparkey] object RemoteShardedSparkeyUri {
+  def apply(basePath: String, options: PipelineOptions): ShardedSparkeyUri = {
+    RemoteFileUtil.configure(options)
+    RemoteShardedSparkeyUri(basePath)
+  }
+}
+
+private[sparkey] case class RemoteShardedSparkeyUri(basePath: String) extends ShardedSparkeyUri {
   override def getReader: ShardedSparkeyReader = {
     val (basePaths, numShards) = basePathsAndCount(EmptyMatchTreatment.DISALLOW)
 
     // This logic is copied here so we can download all of the relevant shards in parallel.
-    val paths = rfu
+    val paths = RemoteFileUtil
       .download(
         basePaths
           .flatMap(shardBasePath =>
@@ -144,9 +159,17 @@ private case class RemoteShardedSparkeyUri(basePath: String, rfu: RemoteFileUtil
   }
 
   override def sparkeyUriForShard(shardIndex: Short, numShards: Short): RemoteSparkeyUri =
-    RemoteSparkeyUri(basePathForShard(shardIndex, numShards), rfu)
+    RemoteSparkeyUri(basePathForShard(shardIndex, numShards))
 
   override private[sparkey] def exists: Boolean =
     basePathsAndCount(EmptyMatchTreatment.ALLOW)._1
-      .exists(path => SparkeyUri.extensions.exists(e => rfu.remoteExists(new URI(path + e))))
+      .exists(path =>
+        SparkeyUri.extensions.exists(e => RemoteFileUtil.remoteExists(new URI(path + e)))
+      )
+
+  override def hashCode(): Int = basePath.hashCode()
+  override def equals(obj: Any): Boolean = obj match {
+    case that: SparkeyUri => this.basePath == that.basePath
+    case _                => false
+  }
 }

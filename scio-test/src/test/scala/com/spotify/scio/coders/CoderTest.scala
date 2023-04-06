@@ -436,8 +436,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new org.joda.time.DateTime coderShould notFallback()
     new java.sql.Timestamp(1) coderShould notFallback()
 
-    RemoteFileUtil.create(PipelineOptionsFactory.create()) coderShould notFallback()
-
     new IntervalWindow(now.minus(4000), now) coderShould notFallback()
   }
 

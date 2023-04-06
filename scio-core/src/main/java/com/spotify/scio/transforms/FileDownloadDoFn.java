@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -38,7 +40,6 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   private static final Logger LOG = LoggerFactory.getLogger(FileDownloadDoFn.class);
 
   private final List<Element> batch;
-  private final RemoteFileUtil remoteFileUtil;
   private final SerializableFunction<Path, OutputT> fn;
   private final int batchSize;
   private final boolean keep;
@@ -46,11 +47,10 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   /**
    * Create a new {@link FileDownloadDoFn} instance.
    *
-   * @param remoteFileUtil {@link RemoteFileUtil} for downloading files.
    * @param fn function to process downloaded files.
    */
-  public FileDownloadDoFn(RemoteFileUtil remoteFileUtil, SerializableFunction<Path, OutputT> fn) {
-    this(remoteFileUtil, fn, 1, false);
+  public FileDownloadDoFn(SerializableFunction<Path, OutputT> fn) {
+    this(PipelineOptionsFactory.create(), fn, 1, false);
   }
 
   /**
@@ -62,15 +62,16 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
    * @param keep keep downloaded files after processing.
    */
   public FileDownloadDoFn(
-      RemoteFileUtil remoteFileUtil,
+      PipelineOptions options,
       SerializableFunction<Path, OutputT> fn,
       int batchSize,
       boolean keep) {
-    this.remoteFileUtil = remoteFileUtil;
     this.fn = fn;
     this.batch = new ArrayList<>();
     this.batchSize = batchSize;
     this.keep = keep;
+
+    RemoteFileUtil.configure(options);
   }
 
   @StartBundle
@@ -109,10 +110,10 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
     }
     LOG.info("Processing batch of {}", batch.size());
     List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
-    remoteFileUtil.download(uris).stream().map(fn::apply).forEach(outputReceiver::output);
+    RemoteFileUtil.download(uris).stream().map(fn::apply).forEach(outputReceiver::output);
     if (!keep) {
       LOG.info("Deleting batch of {}", batch.size());
-      remoteFileUtil.delete(uris);
+      RemoteFileUtil.delete(uris);
     }
     batch.clear();
   }
@@ -124,7 +125,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
     LOG.info("Processing batch of {}", batch.size());
     List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
     List<OutputT> outputs =
-        remoteFileUtil.download(uris).stream().map(fn::apply).collect(Collectors.toList());
+        RemoteFileUtil.download(uris).stream().map(fn::apply).collect(Collectors.toList());
     // .forEach(c::output);
     Iterator<OutputT> i1 = outputs.iterator();
     Iterator<Element> i2 = batch.iterator();
@@ -134,7 +135,7 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
     }
     if (!keep) {
       LOG.info("Deleting batch of {}", batch.size());
-      remoteFileUtil.delete(uris);
+      RemoteFileUtil.delete(uris);
     }
     batch.clear();
   }
