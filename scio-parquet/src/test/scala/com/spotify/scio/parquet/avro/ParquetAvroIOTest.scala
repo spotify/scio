@@ -25,12 +25,12 @@ import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec, TextIO}
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
-import org.joda.time.{DateTimeFieldType, Duration, Instant}
+import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
@@ -116,6 +116,57 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         .size() == 0
     }
     sc.run()
+    ()
+  }
+
+  // result: Fails
+  it should "write and read SpecificRecords with logical types" in {
+    val records =
+      (1 to 10).map(_ => TestLogicalTypes.newBuilder().setTimestamp(DateTime.now()).build())
+    val path = dir.toPath.resolve("logicalTypesSr").toString
+
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(records)
+      .saveAsParquetAvroFile(path)
+    sc1.run()
+    ()
+
+    val sc2 = ScioContext()
+    sc2
+      .parquetAvroFile[TestLogicalTypes](s"$path/*.parquet")
+      .map(identity) should containInAnyOrder(records)
+
+    sc2.run()
+    ()
+  }
+
+  // result: passes
+  it should "write and read GenericRecords with logical types" in {
+    val records = (1 to 10).map { _ =>
+      val gr = new GenericData.Record(TestLogicalTypes.SCHEMA$)
+      gr.put("timestamp", DateTime.now().getMillis)
+      gr
+    }
+    val path = dir.toPath.resolve("logicalTypesGr").toString
+
+    implicit val coder = Coder.avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
+
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(records)
+      .saveAsParquetAvroFile(path, schema = TestLogicalTypes.SCHEMA$)
+    sc1.run()
+    ()
+
+    val sc2 = ScioContext()
+    sc2
+      .parquetAvroFile[GenericRecord](s"$path/*.parquet", projection = TestLogicalTypes.SCHEMA$)
+      .map(_.get("timestamp").toString) should containInAnyOrder(
+      records.map(_.get("timestamp").toString)
+    )
+
+    sc2.run()
     ()
   }
 
