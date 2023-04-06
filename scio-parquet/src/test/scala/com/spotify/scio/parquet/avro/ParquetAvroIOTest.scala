@@ -33,6 +33,8 @@ import org.apache.commons.io.FileUtils
 import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 
+import java.nio.ByteBuffer
+
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   val extension: String = ".parquet"
   def save(
@@ -122,7 +124,13 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   // result: Fails
   it should "write and read SpecificRecords with logical types" in {
     val records =
-      (1 to 10).map(_ => TestLogicalTypes.newBuilder().setTimestamp(DateTime.now()).build())
+      (1 to 10).map(_ =>
+        TestLogicalTypes
+          .newBuilder()
+          .setTimestamp(DateTime.now())
+          .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+          .build()
+      )
     val path = dir.toPath.resolve("logicalTypesSr").toString
 
     val sc1 = ScioContext()
@@ -143,9 +151,13 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
   // result: passes
   it should "write and read GenericRecords with logical types" in {
-    val records = (1 to 10).map { _ =>
+    val records: Seq[GenericRecord] = (1 to 10).map { _ =>
       val gr = new GenericData.Record(TestLogicalTypes.SCHEMA$)
       gr.put("timestamp", DateTime.now().getMillis)
+      gr.put(
+        "decimal",
+        ByteBuffer.wrap(BigDecimal.decimal(1.0).setScale(2).bigDecimal.unscaledValue.toByteArray)
+      )
       gr
     }
     val path = dir.toPath.resolve("logicalTypesGr").toString
@@ -162,9 +174,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc2 = ScioContext()
     sc2
       .parquetAvroFile[GenericRecord](s"$path/*.parquet", projection = TestLogicalTypes.SCHEMA$)
-      .map(_.get("timestamp").toString) should containInAnyOrder(
-      records.map(_.get("timestamp").toString)
-    )
+      .map(identity) should containInAnyOrder(records)
 
     sc2.run()
     ()

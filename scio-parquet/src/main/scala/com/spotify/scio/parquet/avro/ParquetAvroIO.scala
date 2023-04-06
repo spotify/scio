@@ -27,10 +27,12 @@ import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
+import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.Schema
+import org.apache.avro.data.TimeConversions.{DateConversion, TimeConversion, TimestampConversion}
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.{SpecificData, SpecificRecordBase}
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.transforms.SimpleFunction
@@ -115,8 +117,13 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
-    val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
+    val isSpecific = classOf[SpecificRecordBase].isAssignableFrom(cls)
+
+    if (isSpecific) {
+      ParquetAvroIO.addLogicalTypeConversions()
+    }
+
+    val writerSchema = if (isSpecific) ReflectData.get().getSchema(cls) else params.schema
 
     data.applyInternal(
       parquetOut(
@@ -169,6 +176,10 @@ object ParquetAvroIO {
     val readSchema: Schema =
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
+    if (isSpecific) {
+      addLogicalTypeConversions()
+    }
+
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
       val jobConf = Option(conf).getOrElse(new Configuration())
       val useSplittableDoFn = jobConf.getBoolean(
@@ -194,6 +205,8 @@ object ParquetAvroIO {
           AvroReadSupport.AVRO_DATA_SUPPLIER,
           classOf[GenericDataSupplier].getCanonicalName
         )
+      } else {
+        addLogicalTypeConversions()
       }
 
       AvroReadSupport.setAvroReadSchema(conf, readSchema)
@@ -234,6 +247,8 @@ object ParquetAvroIO {
           "parquet.avro.data.supplier",
           "org.apache.parquet.avro.GenericDataSupplier"
         )
+      } else {
+        addLogicalTypeConversions()
       }
 
       AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
@@ -288,6 +303,14 @@ object ParquetAvroIO {
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
+
+  /** See similar Beam workaround in [[org.apache.beam.sdk.schemas.utils.AvroUtils]] */
+  private[avro] def addLogicalTypeConversions(): Unit = {
+    SpecificData.get().addLogicalTypeConversion(new DateConversion())
+    SpecificData.get().addLogicalTypeConversion(new TimeConversion())
+    SpecificData.get().addLogicalTypeConversion(new TimestampConversion())
+    SpecificData.get().addLogicalTypeConversion(new DecimalConversion())
+  }
 }
 
 case class ParquetAvroTap[A, T: ClassTag: Coder](

@@ -93,6 +93,15 @@
           "type": {
             "type": "long", "logicalType": "timestamp-millis"
           }
+        },
+        {
+          "name": "decimal",
+          "type": {
+            "type": "bytes",
+            "logicalType": "decimal",
+            "precision": 4,
+            "scale": 2
+          }
         }
     ]
 }
