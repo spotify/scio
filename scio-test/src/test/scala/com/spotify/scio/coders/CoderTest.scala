@@ -34,7 +34,6 @@ import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.options.ScioOptions
-import com.spotify.scio.util.RemoteFileUtil
 import com.twitter.algebird.Moments
 import org.apache.commons.io.output.NullOutputStream
 import org.scalatest.Assertion
