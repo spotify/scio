@@ -41,12 +41,7 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
-import org.apache.parquet.avro.{
-  AvroParquetInputFormat,
-  AvroParquetReader,
-  AvroReadSupport,
-  GenericDataSupplier
-}
+import org.apache.parquet.avro.{AvroParquetInputFormat, AvroParquetReader, AvroReadSupport, AvroWriteSupport, GenericDataSupplier}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
@@ -102,6 +97,8 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
     val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+
+    AvroWriteSupport.setAvroDataSupplier(job.getConfiguration, classOf[LogicalTypeSupplier])
 
     val sink = new ParquetAvroFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
@@ -190,10 +187,9 @@ object ParquetAvroIO {
       // org.apache.beam.sdk.coders.AvroCoder.
       if (!isSpecific) {
         conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        conf.set(
-          AvroReadSupport.AVRO_DATA_SUPPLIER,
-          classOf[GenericDataSupplier].getCanonicalName
-        )
+        AvroReadSupport.setAvroDataSupplier(conf, classOf[GenericDataSupplier])
+      } else {
+        AvroReadSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
       }
 
       AvroReadSupport.setAvroReadSchema(conf, readSchema)
@@ -230,10 +226,9 @@ object ParquetAvroIO {
       // org.apache.beam.sdk.coders.AvroCoder.
       if (ScioUtil.classOf[A] == classOf[GenericRecord]) {
         job.getConfiguration.setBoolean("parquet.avro.compatible", false)
-        job.getConfiguration.set(
-          "parquet.avro.data.supplier",
-          "org.apache.parquet.avro.GenericDataSupplier"
-        )
+        AvroReadSupport.setAvroDataSupplier(job.getConfiguration, classOf[GenericDataSupplier])
+      } else {
+        AvroReadSupport.setAvroDataSupplier(job.getConfiguration, classOf[LogicalTypeSupplier])
       }
 
       AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
