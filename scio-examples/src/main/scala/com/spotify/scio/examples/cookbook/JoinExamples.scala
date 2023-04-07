@@ -179,7 +179,8 @@ object SkewedJoinExamples {
       // vectors. It should be a positive number and specifies intermediate nodes to redistribute
       // aggregation over heavy-hitter keys. Tune it when "Compute CMS of LHS keys" transform has
       // a problem of idle workers.
-      // - "cmsEps", "cmsDelta", "cmsSeed" - are inputs to CMS probabilistic computation.
+      // - "cmsEps", "cmsDelta" - are inputs to CMS probabilistic computation.
+      // - "cmsSeed" - random value generator seed for CMS
       .skewedLeftOuterJoin(countryInfo, hotKeyThreshold = 100)
       .map { t =>
         val (countryCode, (eventInfo, countryNameOpt)) = t
