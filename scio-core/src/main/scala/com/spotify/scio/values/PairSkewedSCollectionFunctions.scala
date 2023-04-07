@@ -160,11 +160,11 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
    *   `(0, 1)`.
    * @param cmsDelta
-   *   A seed to initialize the random number generator used to create the pairwise independent hash
-   *   functions.
-   * @param cmsSeed
    *   A bound on the probability that a query estimate does not lie within some small interval (an
    *   interval that depends on `eps`) around the truth. Must lie in `(0, 1)`.
+   * @param cmsSeed
+   *   A seed to initialize the random number generator used to create the pairwise independent hash
+   *   functions.
    * @param sampleFraction
    *   left side sample fraction.
    * @param sampleWithReplacement
