@@ -20,10 +20,7 @@ package com.spotify.scio.parquet.avro;
 import com.spotify.scio.parquet.BeamOutputFile;
 import com.spotify.scio.parquet.WriterUtils;
 import java.nio.channels.WritableByteChannel;
-import org.apache.avro.Conversions;
 import org.apache.avro.Schema;
-import org.apache.avro.data.TimeConversions;
-import org.apache.avro.specific.SpecificData;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
@@ -31,8 +28,6 @@ import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.avro.AvroParquetWriter;
-import org.apache.parquet.avro.AvroWriteSupport;
-import org.apache.parquet.avro.GenericDataSupplier;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
@@ -107,15 +102,6 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
       this.schema = schema;
       this.conf = conf;
       this.compression = compression;
-
-      /** See similar workaround in Beam's {@link org.apache.beam.sdk.schemas.utils.AvroUtils}. */
-      final String dataSupplier = conf.get().get(AvroWriteSupport.AVRO_DATA_SUPPLIER);
-      if (dataSupplier == null || !dataSupplier.equals(GenericDataSupplier.class.getName())) {
-        SpecificData.get().addLogicalTypeConversion(new TimeConversions.DateConversion());
-        SpecificData.get().addLogicalTypeConversion(new TimeConversions.TimeConversion());
-        SpecificData.get().addLogicalTypeConversion(new TimeConversions.TimestampConversion());
-        SpecificData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
-      }
     }
 
     @Override

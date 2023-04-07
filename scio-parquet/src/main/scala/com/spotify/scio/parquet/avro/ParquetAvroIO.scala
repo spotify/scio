@@ -41,7 +41,13 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
-import org.apache.parquet.avro.{AvroParquetInputFormat, AvroParquetReader, AvroReadSupport, AvroWriteSupport, GenericDataSupplier}
+import org.apache.parquet.avro.{
+  AvroParquetInputFormat,
+  AvroParquetReader,
+  AvroReadSupport,
+  AvroWriteSupport,
+  GenericDataSupplier
+}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
@@ -95,10 +101,8 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     )
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
+    val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
-
-    AvroWriteSupport.setAvroDataSupplier(job.getConfiguration, classOf[LogicalTypeSupplier])
 
     val sink = new ParquetAvroFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
@@ -112,9 +116,12 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
-    val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
-
+    val isSpecific = classOf[SpecificRecordBase].isAssignableFrom(cls)
+    val writerSchema = if (isSpecific) ReflectData.get().getSchema(cls) else params.schema
+    val conf = Option(params.conf).getOrElse(new Configuration())
+    if (isSpecific) {
+      AvroWriteSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
+    }
     data.applyInternal(
       parquetOut(
         path,
@@ -122,7 +129,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         params.suffix,
         params.numShards,
         params.compression,
-        params.conf,
+        conf,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
