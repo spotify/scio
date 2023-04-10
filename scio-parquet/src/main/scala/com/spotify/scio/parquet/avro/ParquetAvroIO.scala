@@ -21,6 +21,7 @@ import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
+import com.spotify.scio.parquet.avro.ParquetAvroIO.getDataSupplier
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
@@ -42,6 +43,7 @@ import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{
+  AvroDataSupplier,
   AvroParquetInputFormat,
   AvroParquetReader,
   AvroReadSupport,
@@ -120,7 +122,10 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     val writerSchema = if (isSpecific) ReflectData.get().getSchema(cls) else params.schema
     val conf = Option(params.conf).getOrElse(new Configuration())
     if (isSpecific) {
-      AvroWriteSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
+      getDataSupplier(AvroWriteSupport.AVRO_DATA_SUPPLIER, conf) match {
+        case Some(supplier) => AvroWriteSupport.setAvroDataSupplier(conf, supplier)
+        case None => AvroWriteSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
+      }
     }
     data.applyInternal(
       parquetOut(
@@ -196,7 +201,10 @@ object ParquetAvroIO {
         conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
         AvroReadSupport.setAvroDataSupplier(conf, classOf[GenericDataSupplier])
       } else {
-        AvroReadSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
+        getDataSupplier(AvroReadSupport.AVRO_DATA_SUPPLIER, conf) match {
+          case Some(supplier) => AvroReadSupport.setAvroDataSupplier(conf, supplier)
+          case None => AvroReadSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
+        }
       }
 
       AvroReadSupport.setAvroReadSchema(conf, readSchema)
@@ -235,7 +243,11 @@ object ParquetAvroIO {
         job.getConfiguration.setBoolean("parquet.avro.compatible", false)
         AvroReadSupport.setAvroDataSupplier(job.getConfiguration, classOf[GenericDataSupplier])
       } else {
-        AvroReadSupport.setAvroDataSupplier(job.getConfiguration, classOf[LogicalTypeSupplier])
+        getDataSupplier(AvroReadSupport.AVRO_DATA_SUPPLIER, job.getConfiguration) match {
+          case Some(supplier) => AvroReadSupport.setAvroDataSupplier(job.getConfiguration, supplier)
+          case None =>
+            AvroReadSupport.setAvroDataSupplier(job.getConfiguration, classOf[LogicalTypeSupplier])
+        }
       }
 
       AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
@@ -290,6 +302,17 @@ object ParquetAvroIO {
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
+
+  private[avro] def getDataSupplier(
+    key: String,
+    conf: Configuration
+  ): Option[Class[_ <: AvroDataSupplier]] = {
+    Option(conf.getClass(key, null)).map {
+      case cls if classOf[AvroDataSupplier].isAssignableFrom(cls) =>
+        cls.asInstanceOf[Class[_ <: AvroDataSupplier]]
+      case cls => throw new RuntimeException(s"$key class $cls does not implement AvroDataSupplier")
+    }
+  }
 }
 
 case class ParquetAvroTap[A, T: ClassTag: Coder](
