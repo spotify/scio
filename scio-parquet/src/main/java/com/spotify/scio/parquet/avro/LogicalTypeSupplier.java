@@ -32,7 +32,10 @@ public class LogicalTypeSupplier extends SpecificDataSupplier {
         addLogicalTypeConversion(new TimeConversions.DateConversion());
         addLogicalTypeConversion(new TimeConversions.TimeConversion());
         addLogicalTypeConversion(new TimeConversions.TimestampConversion());
+        addLogicalTypeConversion(new TimeConversions.TimeMicrosConversion());
+        addLogicalTypeConversion(new TimeConversions.TimestampMicrosConversion());
         addLogicalTypeConversion(new Conversions.DecimalConversion());
+        addLogicalTypeConversion(new Conversions.UUIDConversion());
       }
     };
   }
