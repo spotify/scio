@@ -25,15 +25,15 @@ import org.apache.parquet.avro.SpecificDataSupplier;
 
 /** A SpecificDataSupplier that supplies built-in conversions for Avro LogicalTypes. */
 public class LogicalTypeSupplier extends SpecificDataSupplier {
-  public LogicalTypeSupplier() {
-    SpecificData.get().addLogicalTypeConversion(new TimeConversions.DateConversion());
-    SpecificData.get().addLogicalTypeConversion(new TimeConversions.TimeConversion());
-    SpecificData.get().addLogicalTypeConversion(new TimeConversions.TimestampConversion());
-    SpecificData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
-  }
-
   @Override
   public GenericData get() {
-    return super.get();
+    return new SpecificData() {
+      {
+        addLogicalTypeConversion(new TimeConversions.DateConversion());
+        addLogicalTypeConversion(new TimeConversions.TimeConversion());
+        addLogicalTypeConversion(new TimeConversions.TimestampConversion());
+        addLogicalTypeConversion(new Conversions.DecimalConversion());
+      }
+    };
   }
 }

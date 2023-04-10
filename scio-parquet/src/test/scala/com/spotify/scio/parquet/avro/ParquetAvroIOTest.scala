@@ -445,7 +445,7 @@ object ParquetTestJob {
 
 case class CustomLogicalTypeSupplier() extends AvroDataSupplier {
   override def get(): GenericData = {
-    val specificData = SpecificData.get()
+    val specificData = new SpecificData()
     specificData.addLogicalTypeConversion(new Conversion[DateTime] {
       lazy val formatter = DateTimeFormat.forStyle("yyyymmdd")
       override def getConvertedType: Class[DateTime] = classOf[DateTime]
