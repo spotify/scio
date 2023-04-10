@@ -21,13 +21,8 @@ import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.NoSuchElementException;
-
-import org.apache.avro.Conversions;
 import org.apache.avro.Schema;
-import org.apache.avro.data.TimeConversions;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificData;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
@@ -235,20 +230,6 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     @Override
     public void flush() throws IOException {
       writer.close();
-    }
-  }
-
-  public static class LogicalTypeSupplier extends SpecificDataSupplier {
-    @Override
-    public GenericData get() {
-      return new SpecificData() {
-        {
-          addLogicalTypeConversion(new TimeConversions.DateConversion());
-          addLogicalTypeConversion(new TimeConversions.TimeConversion());
-          addLogicalTypeConversion(new TimeConversions.TimestampConversion());
-          addLogicalTypeConversion(new Conversions.DecimalConversion());
-        }
-      };
     }
   }
 }
