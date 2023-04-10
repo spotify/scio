@@ -1,0 +1,25 @@
+[
+{
+    "type": "record",
+    "name": "TestLogicalTypes",
+    "namespace": "com.spotify.scio.smb",
+    "doc": "Record for testing logical types",
+    "fields": [
+        {
+          "name": "timestamp",
+          "type": {
+            "type": "long", "logicalType": "timestamp-millis"
+          }
+        },
+        {
+          "name": "decimal",
+          "type": {
+            "type": "bytes",
+            "logicalType": "decimal",
+            "precision": 4,
+            "scale": 2
+          }
+        }
+    ]
+}
+]
