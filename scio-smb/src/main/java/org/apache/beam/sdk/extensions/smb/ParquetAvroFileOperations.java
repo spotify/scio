@@ -21,8 +21,13 @@ import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.NoSuchElementException;
+
+import org.apache.avro.Conversions;
 import org.apache.avro.Schema;
+import org.apache.avro.data.TimeConversions;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificData;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
@@ -32,9 +37,8 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.parquet.avro.AvroParquetReader;
-import org.apache.parquet.avro.AvroParquetWriter;
-import org.apache.parquet.avro.AvroReadSupport;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.parquet.avro.*;
 import org.apache.parquet.filter2.compat.FilterCompat;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.ParquetOutputFormat;
@@ -192,15 +196,30 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     @Override
     public void open(WritableByteChannel channel) throws IOException {
       // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
+      final Configuration configuration = conf.get();
+
       int rowGroupSize =
-          conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE);
-      writer =
+          configuration.getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE);
+      AvroParquetWriter.Builder<ValueT> builder =
           AvroParquetWriter.<ValueT>builder(new ParquetOutputFile(channel))
               .withSchema(schemaSupplier.get())
               .withCompressionCodec(compression)
-              .withConf(conf.get())
-              .withRowGroupSize(rowGroupSize)
-              .build();
+              .withConf(configuration)
+              .withRowGroupSize(rowGroupSize);
+
+      // Workaround for PARQUET-2265
+      if (configuration.getClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, null) != null) {
+        Class<? extends AvroDataSupplier> dataModelSupplier =
+            configuration.getClass(
+                AvroWriteSupport.AVRO_DATA_SUPPLIER,
+                SpecificDataSupplier.class,
+                AvroDataSupplier.class);
+        builder =
+            builder.withDataModel(
+                ReflectionUtils.newInstance(dataModelSupplier, configuration).get());
+      }
+
+      writer = builder.build();
     }
 
     @Override
@@ -211,6 +230,20 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     @Override
     public void flush() throws IOException {
       writer.close();
+    }
+  }
+
+  public static class LogicalTypeSupplier extends SpecificDataSupplier {
+    @Override
+    public GenericData get() {
+      return new SpecificData() {
+        {
+          addLogicalTypeConversion(new TimeConversions.DateConversion());
+          addLogicalTypeConversion(new TimeConversions.TimeConversion());
+          addLogicalTypeConversion(new TimeConversions.TimestampConversion());
+          addLogicalTypeConversion(new Conversions.DecimalConversion());
+        }
+      };
     }
   }
 }
