@@ -21,7 +21,6 @@ import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
-import com.spotify.scio.parquet.avro.ParquetAvroIO.getDataSupplier
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
@@ -48,7 +47,8 @@ import org.apache.parquet.avro.{
   AvroParquetReader,
   AvroReadSupport,
   AvroWriteSupport,
-  GenericDataSupplier
+  GenericDataSupplier,
+  SpecificDataSupplier
 }
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
@@ -122,7 +122,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     val writerSchema = if (isSpecific) ReflectData.get().getSchema(cls) else params.schema
     val conf = Option(params.conf).getOrElse(new Configuration())
     if (isSpecific) {
-      getDataSupplier(AvroWriteSupport.AVRO_DATA_SUPPLIER, conf) match {
+      ParquetAvroIO.getDataSupplier(AvroWriteSupport.AVRO_DATA_SUPPLIER, conf) match {
         case Some(supplier) => AvroWriteSupport.setAvroDataSupplier(conf, supplier)
         case None => AvroWriteSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
       }
@@ -306,13 +306,10 @@ object ParquetAvroIO {
   private[avro] def getDataSupplier(
     key: String,
     conf: Configuration
-  ): Option[Class[_ <: AvroDataSupplier]] = {
-    Option(conf.getClass(key, null)).map {
-      case cls if classOf[AvroDataSupplier].isAssignableFrom(cls) =>
-        cls.asInstanceOf[Class[_ <: AvroDataSupplier]]
-      case cls => throw new RuntimeException(s"$key class $cls does not implement AvroDataSupplier")
+  ): Option[Class[_ <: AvroDataSupplier]] =
+    Option(conf.getClass(key, null)).map { case _ =>
+      conf.getClass(key, classOf[SpecificDataSupplier], classOf[AvroDataSupplier])
     }
-  }
 }
 
 case class ParquetAvroTap[A, T: ClassTag: Coder](
