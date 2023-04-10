@@ -42,13 +42,10 @@ import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{
-  AvroDataSupplier,
   AvroParquetInputFormat,
   AvroParquetReader,
   AvroReadSupport,
-  AvroWriteSupport,
-  GenericDataSupplier,
-  SpecificDataSupplier
+  GenericDataSupplier
 }
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
@@ -103,7 +100,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     )
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(conf)
+    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
 
     val sink = new ParquetAvroFileBasedSink[T](
@@ -118,15 +115,9 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val isSpecific = classOf[SpecificRecordBase].isAssignableFrom(cls)
-    val writerSchema = if (isSpecific) ReflectData.get().getSchema(cls) else params.schema
-    val conf = Option(params.conf).getOrElse(new Configuration())
-    if (isSpecific) {
-      ParquetAvroIO.getDataSupplier(AvroWriteSupport.AVRO_DATA_SUPPLIER, conf) match {
-        case Some(supplier) => AvroWriteSupport.setAvroDataSupplier(conf, supplier)
-        case None => AvroWriteSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
-      }
-    }
+    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
+    val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
+
     data.applyInternal(
       parquetOut(
         path,
@@ -134,7 +125,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         params.suffix,
         params.numShards,
         params.compression,
-        conf,
+        params.conf,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
@@ -199,12 +190,10 @@ object ParquetAvroIO {
       // org.apache.beam.sdk.coders.AvroCoder.
       if (!isSpecific) {
         conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        AvroReadSupport.setAvroDataSupplier(conf, classOf[GenericDataSupplier])
-      } else {
-        getDataSupplier(AvroReadSupport.AVRO_DATA_SUPPLIER, conf) match {
-          case Some(supplier) => AvroReadSupport.setAvroDataSupplier(conf, supplier)
-          case None => AvroReadSupport.setAvroDataSupplier(conf, classOf[LogicalTypeSupplier])
-        }
+        conf.set(
+          AvroReadSupport.AVRO_DATA_SUPPLIER,
+          classOf[GenericDataSupplier].getCanonicalName
+        )
       }
 
       AvroReadSupport.setAvroReadSchema(conf, readSchema)
@@ -241,13 +230,10 @@ object ParquetAvroIO {
       // org.apache.beam.sdk.coders.AvroCoder.
       if (ScioUtil.classOf[A] == classOf[GenericRecord]) {
         job.getConfiguration.setBoolean("parquet.avro.compatible", false)
-        AvroReadSupport.setAvroDataSupplier(job.getConfiguration, classOf[GenericDataSupplier])
-      } else {
-        getDataSupplier(AvroReadSupport.AVRO_DATA_SUPPLIER, job.getConfiguration) match {
-          case Some(supplier) => AvroReadSupport.setAvroDataSupplier(job.getConfiguration, supplier)
-          case None =>
-            AvroReadSupport.setAvroDataSupplier(job.getConfiguration, classOf[LogicalTypeSupplier])
-        }
+        job.getConfiguration.set(
+          "parquet.avro.data.supplier",
+          "org.apache.parquet.avro.GenericDataSupplier"
+        )
       }
 
       AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
@@ -302,14 +288,6 @@ object ParquetAvroIO {
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
-
-  private[avro] def getDataSupplier(
-    key: String,
-    conf: Configuration
-  ): Option[Class[_ <: AvroDataSupplier]] =
-    Option(conf.getClass(key, null)).map { case _ =>
-      conf.getClass(key, classOf[SpecificDataSupplier], classOf[AvroDataSupplier])
-    }
 }
 
 case class ParquetAvroTap[A, T: ClassTag: Coder](

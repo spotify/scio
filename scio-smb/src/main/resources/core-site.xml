@@ -22,4 +22,14 @@
     <name>fs.gs.inputstream.fadvise</name>
     <value>RANDOM</value>
   </property>
+  <property>
+    <!-- Supplies logical type support for writes -->
+    <name>parquet.avro.write.data.supplier</name>
+    <value>org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperations.LogicalTypeSupplier</value>
+  </property>
+  <property>
+    <!-- Supplies logical type support for reads -->
+    <name>parquet.avro.data.supplier</name>
+    <value>org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperations.LogicalTypeSupplier</value>
+  </property>
 </configuration>
