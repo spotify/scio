@@ -22,14 +22,19 @@ import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec, TextIO}
+import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
+import org.apache.avro.{Conversion, Conversions, LogicalType, Schema}
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.specific.SpecificData
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
+import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 
@@ -121,7 +126,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     ()
   }
 
-  it should "write and read SpecificRecords with logical types" in {
+  it should "write and read SpecificRecords with default logical types" in {
     val records =
       (1 to 10).map(_ =>
         TestLogicalTypes
@@ -148,7 +153,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     ()
   }
 
-  it should "write and read GenericRecords with logical types" in {
+  it should "write and read GenericRecords with default logical types" in {
     val records: Seq[GenericRecord] = (1 to 10).map { _ =>
       val gr = new GenericData.Record(TestLogicalTypes.SCHEMA$)
       gr.put("timestamp", DateTime.now().getMillis)
@@ -172,6 +177,43 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc2 = ScioContext()
     sc2
       .parquetAvroFile[GenericRecord](s"$path/*.parquet", projection = TestLogicalTypes.SCHEMA$)
+      .map(identity) should containInAnyOrder(records)
+
+    sc2.run()
+    ()
+  }
+
+  it should "write and read SpecificRecords with custom logical types" in {
+    val records =
+      (1 to 10).map(_ =>
+        TestLogicalTypes
+          .newBuilder()
+          .setTimestamp(DateTime.now())
+          .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+          .build()
+      )
+    val path = dir.toPath.resolve("logicalTypesCustom").toString
+
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(records)
+      .saveAsParquetAvroFile(
+        path,
+        conf = ParquetConfiguration.of(
+          AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[CustomLogicalTypeSupplier]
+        )
+      )
+    sc1.run()
+    ()
+
+    val sc2 = ScioContext()
+    sc2
+      .parquetAvroFile[TestLogicalTypes](
+        s"$path/*.parquet",
+        conf = ParquetConfiguration.of(
+          AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[CustomLogicalTypeSupplier]
+        )
+      )
       .map(identity) should containInAnyOrder(records)
 
     sc2.run()
@@ -398,5 +440,32 @@ object ParquetTestJob {
       .map(a => (a.getName.toString, a.getAmount))
       .saveAsTextFile(args("output"))
     sc.run().waitUntilDone()
+  }
+}
+
+case class CustomLogicalTypeSupplier() extends AvroDataSupplier {
+  override def get(): GenericData = {
+    val specificData = SpecificData.get()
+    specificData.addLogicalTypeConversion(new Conversion[DateTime] {
+      lazy val formatter = DateTimeFormat.forStyle("yyyymmdd")
+      override def getConvertedType: Class[DateTime] = classOf[DateTime]
+      override def getLogicalTypeName: String = "timestamp-millis"
+
+      override def toCharSequence(
+        value: DateTime,
+        schema: Schema,
+        `type`: LogicalType
+      ): CharSequence =
+        formatter.print(value)
+
+      override def fromCharSequence(
+        value: CharSequence,
+        schema: Schema,
+        `type`: LogicalType
+      ): DateTime =
+        formatter.parseDateTime(value.toString)
+    })
+    specificData.addLogicalTypeConversion(new Conversions.DecimalConversion)
+    specificData
   }
 }
