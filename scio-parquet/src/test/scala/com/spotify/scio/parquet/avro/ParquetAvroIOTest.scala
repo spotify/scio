@@ -34,10 +34,10 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
 import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 
+import java.lang
 import java.nio.ByteBuffer
 
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
@@ -447,23 +447,18 @@ case class CustomLogicalTypeSupplier() extends AvroDataSupplier {
   override def get(): GenericData = {
     val specificData = new SpecificData()
     specificData.addLogicalTypeConversion(new Conversion[DateTime] {
-      lazy val formatter = DateTimeFormat.forStyle("yyyymmdd")
       override def getConvertedType: Class[DateTime] = classOf[DateTime]
       override def getLogicalTypeName: String = "timestamp-millis"
 
-      override def toCharSequence(
+      override def toLong(
         value: DateTime,
         schema: Schema,
         `type`: LogicalType
-      ): CharSequence =
-        formatter.print(value)
+      ): lang.Long =
+        value.toInstant.getMillis
 
-      override def fromCharSequence(
-        value: CharSequence,
-        schema: Schema,
-        `type`: LogicalType
-      ): DateTime =
-        formatter.parseDateTime(value.toString)
+      override def fromLong(value: lang.Long, schema: Schema, `type`: LogicalType): DateTime =
+        Instant.ofEpochMilli(value).toDateTime
     })
     specificData.addLogicalTypeConversion(new Conversions.DecimalConversion)
     specificData
