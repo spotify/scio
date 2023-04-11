@@ -26,8 +26,9 @@ import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
+import org.apache.avro.data.TimeConversions
 import org.apache.avro.{Conversion, Conversions, LogicalType, Schema}
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.{GenericData, GenericRecord, GenericRecordBuilder}
 import org.apache.avro.specific.SpecificData
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
@@ -154,18 +155,23 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "write and read GenericRecords with default logical types" in {
+
     val records: Seq[GenericRecord] = (1 to 10).map { _ =>
-      val gr = new GenericData.Record(TestLogicalTypes.SCHEMA$)
-      gr.put("timestamp", DateTime.now().getMillis)
-      gr.put(
+      val gr = new GenericRecordBuilder(TestLogicalTypes.SCHEMA$)
+      gr.set("timestamp", DateTime.now())
+      gr.set(
         "decimal",
-        ByteBuffer.wrap(BigDecimal.decimal(1.0).setScale(2).bigDecimal.unscaledValue.toByteArray)
+        BigDecimal.decimal(1.0).setScale(2).bigDecimal
       )
-      gr
+      gr.build()
     }
     val path = dir.toPath.resolve("logicalTypesGr").toString
 
-    implicit val coder = Coder.avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
+    implicit val coder = {
+      GenericData.get().addLogicalTypeConversion(new TimeConversions.TimestampConversion)
+      GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion)
+      Coder.avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
+    }
 
     val sc1 = ScioContext()
     sc1
