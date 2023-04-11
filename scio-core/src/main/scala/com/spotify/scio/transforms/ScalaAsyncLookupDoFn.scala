@@ -34,11 +34,16 @@ import scala.util.{Failure, Success, Try}
  */
 abstract class ScalaAsyncLookupDoFn[A, B, C](
   maxPendingRequests: Int,
+  deduplicate: Boolean,
   cacheSupplier: CacheSupplier[A, B]
-) extends BaseAsyncLookupDoFn[A, B, C, Future[B], Try[B]](maxPendingRequests, cacheSupplier)
+) extends BaseAsyncLookupDoFn[A, B, C, Future[B], Try[B]](
+      maxPendingRequests,
+      deduplicate,
+      cacheSupplier
+    )
     with ScalaFutureHandlers[B] {
   def this() =
-    this(1000, new NoOpCacheSupplier[A, B])
+    this(1000, true, new NoOpCacheSupplier[A, B])
 
   /**
    * @param maxPendingRequests
@@ -46,7 +51,17 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
    *   and retrying bundles.
    */
   def this(maxPendingRequests: Int) =
-    this(maxPendingRequests, new NoOpCacheSupplier[A, B])
+    this(maxPendingRequests, true, new NoOpCacheSupplier[A, B])
+
+  /**
+   * @param maxPendingRequests
+   *   maximum number of pending requests on every cloned DoFn. This prevents runner from timing out
+   *   and retrying bundles.
+   * @param cacheSupplier
+   *   supplier for lookup cache.
+   */
+  def this(maxPendingRequests: Int, cacheSupplier: CacheSupplier[A, B]) =
+    this(maxPendingRequests, true, cacheSupplier)
 
   override def success(output: B): Try[B] = Success(output)
   override def failure(throwable: Throwable): Try[B] = Failure(throwable)
