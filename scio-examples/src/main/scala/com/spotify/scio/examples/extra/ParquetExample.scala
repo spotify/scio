@@ -33,7 +33,6 @@ import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.ParquetConfiguration
 import me.lyh.parquet.tensorflow.{Schema => ExampleSchema}
 import org.apache.avro.generic.GenericRecord
-import org.apache.parquet.filter2.predicate.FilterApi
 import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList}
 
 object ParquetExample {
@@ -137,15 +136,9 @@ object ParquetExample {
       .saveAsTextFile(args("output"))
   }
 
-  private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] = {
-    // typed API does not support macro generated expressions, so it requires using FilterApi
-    val predicateExp = FilterApi.and(
-      FilterApi.notEq(FilterApi.intColumn("id"), java.lang.Integer.valueOf(0)),
-      FilterApi.lt(FilterApi.intColumn("id"), java.lang.Integer.valueOf(10000))
-    )
-    sc.typedParquetFile[AccountProjection](args("input"), predicate = predicateExp)
+  private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] =
+    sc.typedParquetFile[AccountProjection](args("input"))
       .saveAsTextFile(args("output"))
-  }
 
   private def avroOut(sc: ScioContext, args: Args): ClosedTap[Account] =
     sc.parallelize(fakeData)
