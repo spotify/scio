@@ -39,7 +39,6 @@ import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 
 import java.lang
-import java.nio.ByteBuffer
 
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   val extension: String = ".parquet"
