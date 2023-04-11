@@ -27,16 +27,14 @@ import org.apache.parquet.avro.SpecificDataSupplier;
 public class LogicalTypeSupplier extends SpecificDataSupplier {
   @Override
   public GenericData get() {
-    return new SpecificData() {
-      {
-        addLogicalTypeConversion(new TimeConversions.DateConversion());
-        addLogicalTypeConversion(new TimeConversions.TimeConversion());
-        addLogicalTypeConversion(new TimeConversions.TimestampConversion());
-        addLogicalTypeConversion(new TimeConversions.TimeMicrosConversion());
-        addLogicalTypeConversion(new TimeConversions.TimestampMicrosConversion());
-        addLogicalTypeConversion(new Conversions.DecimalConversion());
-        addLogicalTypeConversion(new Conversions.UUIDConversion());
-      }
-    };
+    SpecificData specificData = new SpecificData();
+    specificData.addLogicalTypeConversion(new TimeConversions.DateConversion());
+    specificData.addLogicalTypeConversion(new TimeConversions.TimeConversion());
+    specificData.addLogicalTypeConversion(new TimeConversions.TimestampConversion());
+    specificData.addLogicalTypeConversion(new TimeConversions.TimeMicrosConversion());
+    specificData.addLogicalTypeConversion(new TimeConversions.TimestampMicrosConversion());
+    specificData.addLogicalTypeConversion(new Conversions.DecimalConversion());
+    specificData.addLogicalTypeConversion(new Conversions.UUIDConversion());
+    return specificData;
   }
 }
