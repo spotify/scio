@@ -29,6 +29,7 @@ import com.spotify.scio.util.TransformingCache.SimpleTransformingCache
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{
   CompletableFuture,
+  CompletionException,
   ConcurrentLinkedQueue,
   Executors,
   ThreadPoolExecutor
@@ -63,8 +64,9 @@ class AsyncLookupDoFnTest extends PipelineSpec {
   )(tryFn: T => Try[String]): Unit = {
     val output = runWithData(1 to 10)(_.parDo(doFn)).map { kv =>
       val r = tryFn(kv.getValue) match {
-        case Success(v) => v
-        case Failure(e) => e.getMessage
+        case Success(v)                      => v
+        case Failure(e: CompletionException) => e.getCause.getMessage
+        case Failure(e)                      => e.getMessage
       }
       (kv.getKey, r)
     }
