@@ -22,14 +22,21 @@ import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{TapSpec, TextIO}
+import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.testing._
 import com.spotify.scio.values.{SCollection, WindowOptions}
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.data.TimeConversions
+import org.apache.avro.{Conversion, Conversions, LogicalType, Schema}
+import org.apache.avro.generic.{GenericData, GenericRecord, GenericRecordBuilder}
+import org.apache.avro.specific.SpecificData
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
-import org.joda.time.{DateTimeFieldType, Duration, Instant}
+import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
+import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
+
+import java.lang
 
 class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   private val dir = tmpDir
@@ -91,6 +98,105 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         .size() == 0
     }
     sc.run()
+    ()
+  }
+
+  it should "write and read SpecificRecords with default logical types" in {
+    val records =
+      (1 to 10).map(_ =>
+        TestLogicalTypes
+          .newBuilder()
+          .setTimestamp(DateTime.now())
+          .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+          .build()
+      )
+    val path = dir.toPath.resolve("logicalTypesSr").toString
+
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(records)
+      .saveAsParquetAvroFile(path)
+    sc1.run()
+    ()
+
+    val sc2 = ScioContext()
+    sc2
+      .parquetAvroFile[TestLogicalTypes](s"$path/*.parquet")
+      .map(identity) should containInAnyOrder(records)
+
+    sc2.run()
+    ()
+  }
+
+  it should "write and read GenericRecords with default logical types" in {
+
+    val records: Seq[GenericRecord] = (1 to 10).map { _ =>
+      val gr = new GenericRecordBuilder(TestLogicalTypes.SCHEMA$)
+      gr.set("timestamp", DateTime.now())
+      gr.set(
+        "decimal",
+        BigDecimal.decimal(1.0).setScale(2).bigDecimal
+      )
+      gr.build()
+    }
+    val path = dir.toPath.resolve("logicalTypesGr").toString
+
+    implicit val coder = {
+      GenericData.get().addLogicalTypeConversion(new TimeConversions.TimestampConversion)
+      GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion)
+      Coder.avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
+    }
+
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(records)
+      .saveAsParquetAvroFile(path, schema = TestLogicalTypes.SCHEMA$)
+    sc1.run()
+    ()
+
+    val sc2 = ScioContext()
+    sc2
+      .parquetAvroFile[GenericRecord](s"$path/*.parquet", projection = TestLogicalTypes.SCHEMA$)
+      .map(identity) should containInAnyOrder(records)
+
+    sc2.run()
+    ()
+  }
+
+  it should "write and read SpecificRecords with custom logical types" in {
+    val records =
+      (1 to 10).map(_ =>
+        TestLogicalTypes
+          .newBuilder()
+          .setTimestamp(DateTime.now())
+          .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+          .build()
+      )
+    val path = dir.toPath.resolve("logicalTypesCustom").toString
+
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(records)
+      .saveAsParquetAvroFile(
+        path,
+        conf = ParquetConfiguration.of(
+          AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[CustomLogicalTypeSupplier]
+        )
+      )
+    sc1.run()
+    ()
+
+    val sc2 = ScioContext()
+    sc2
+      .parquetAvroFile[TestLogicalTypes](
+        s"$path/*.parquet",
+        conf = ParquetConfiguration.of(
+          AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[CustomLogicalTypeSupplier]
+        )
+      )
+      .map(identity) should containInAnyOrder(records)
+
+    sc2.run()
     ()
   }
 
@@ -299,5 +405,27 @@ object ParquetTestJob {
       .map(a => (a.getName.toString, a.getAmount))
       .saveAsTextFile(args("output"))
     sc.run().waitUntilDone()
+  }
+}
+
+case class CustomLogicalTypeSupplier() extends AvroDataSupplier {
+  override def get(): GenericData = {
+    val specificData = new SpecificData()
+    specificData.addLogicalTypeConversion(new Conversion[DateTime] {
+      override def getConvertedType: Class[DateTime] = classOf[DateTime]
+      override def getLogicalTypeName: String = "timestamp-millis"
+
+      override def toLong(
+        value: DateTime,
+        schema: Schema,
+        `type`: LogicalType
+      ): lang.Long =
+        value.toInstant.getMillis
+
+      override def fromLong(value: lang.Long, schema: Schema, `type`: LogicalType): DateTime =
+        Instant.ofEpochMilli(value).toDateTime
+    })
+    specificData.addLogicalTypeConversion(new Conversions.DecimalConversion)
+    specificData
   }
 }

@@ -20,6 +20,7 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
+import com.spotify.scio.smb.TestLogicalTypes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +40,12 @@ import org.apache.parquet.filter2.predicate.FilterApi;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.hamcrest.MatcherAssert;
+import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import scala.math.BigDecimal;
 
 /** Unit tests for {@link ParquetAvroFileOperations}. */
 public class ParquetAvroFileOperationsTest {
@@ -109,6 +112,35 @@ public class ParquetAvroFileOperationsTest {
     writer.close();
 
     final List<AvroGeneratedUser> actual = new ArrayList<>();
+    fileOperations.iterator(file).forEachRemaining(actual::add);
+
+    Assert.assertEquals(records, actual);
+  }
+
+  @Test
+  public void testLogicalTypes() throws Exception {
+    final ParquetAvroFileOperations<TestLogicalTypes> fileOperations =
+        ParquetAvroFileOperations.of(TestLogicalTypes.getClassSchema());
+    final ResourceId file =
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+
+    final List<TestLogicalTypes> records =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    TestLogicalTypes.newBuilder()
+                        .setTimestamp(DateTime.now())
+                        .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal())
+                        .build())
+            .collect(Collectors.toList());
+    final FileOperations.Writer<TestLogicalTypes> writer = fileOperations.createWriter(file);
+    for (TestLogicalTypes record : records) {
+      writer.write(record);
+    }
+    writer.close();
+
+    final List<TestLogicalTypes> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
 
     Assert.assertEquals(records, actual);
