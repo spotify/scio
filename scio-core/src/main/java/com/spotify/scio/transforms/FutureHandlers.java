@@ -64,24 +64,24 @@ public class FutureHandlers {
               try {
                 onSuccess.apply(result);
                 f.set(result);
-              } catch (Exception e) {
-                // in case onSuccess callback fails,
-                // catch the exception ang propagate it
-                // to the returned future, Let error through
+              } catch (Throwable e) {
                 f.setException(e);
-              } finally {
-                if (!f.isDone()) {
-                  // if we exit without completing future, force an exception
-                  f.setException(new Exception("Failed completing future"));
-                }
               }
             }
 
             @Override
             public void onFailure(Throwable t) {
+              Throwable callbackException = null;
               try {
                 onFailure.apply(t);
+              } catch (Throwable e) {
+                // do not fail executing thread if callback fails
+                // record exception and propagate as suppressed
+                callbackException = e;
               } finally {
+                if (callbackException != null) {
+                  t.addSuppressed(callbackException);
+                }
                 f.setException(t);
               }
             }
