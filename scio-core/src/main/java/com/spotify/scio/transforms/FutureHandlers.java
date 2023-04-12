@@ -63,11 +63,18 @@ public class FutureHandlers {
             public void onSuccess(@Nullable V result) {
               try {
                 onSuccess.apply(result);
-              } catch (RuntimeException | Error e) {
+                f.set(result);
+              } catch (Exception e) {
+                // in case onSuccess callback fails,
+                // catch the exception ang propagate it
+                // to the returned future, Let error through
                 f.setException(e);
-                return;
+              } finally {
+                if (!f.isDone()) {
+                  // if we exit without completing future, force an exception
+                  f.setException(new Exception("Failed completing future"));
+                }
               }
-              f.set(result);
             }
 
             @Override

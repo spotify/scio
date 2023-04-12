@@ -58,6 +58,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   private final boolean deduplicate;
 
   // Data structures for handling async requests
+  private final int maxPendingRequests;
   private final Semaphore semaphore;
   private final ConcurrentMap<UUID, F> futures = new ConcurrentHashMap<>();
   private final ConcurrentMap<A, F> inFlightRequests = new ConcurrentHashMap<>();
@@ -118,6 +119,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
       int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B> cacheSupplier) {
     this.cacheSupplier = cacheSupplier;
     this.deduplicate = deduplicate;
+    this.maxPendingRequests = maxPendingRequests;
     this.semaphore = new Semaphore(maxPendingRequests);
   }
 
@@ -138,8 +140,11 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   public void startBundle(StartBundleContext context) {
     futures.clear();
     results.clear();
+    inFlightRequests.clear();
     requestCount = 0;
     resultCount = 0;
+    semaphore.drainPermits();
+    semaphore.release(maxPendingRequests);
   }
 
   @SuppressWarnings("unchecked")
@@ -153,85 +158,36 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     final C client = getResourceClient();
     final Cache<A, B> cache = getResourceCache();
 
-    // found in cache
-    final B cached = cache.getIfPresent(input);
-    if (cached != null) {
-      out.output(KV.of(input, success(cached)));
-      return;
-    }
-
-    final UUID uuid = UUID.randomUUID();
-
-    if (deduplicate) {
-      // element already has an in-flight request
-      F inFlight = inFlightRequests.get(input);
-      if (inFlight != null) {
-        try {
-          futures.computeIfAbsent(
-              uuid,
-              key ->
-                  addCallback(
-                      inFlight,
-                      output -> {
-                        results.add(new Result(input, success(output), key, timestamp, window));
-                        return null;
-                      },
-                      throwable -> {
-                        results.add(new Result(input, failure(throwable), key, timestamp, window));
-                        return null;
-                      }));
-        } catch (Exception e) {
-          LOG.error("Failed to process element", e);
-          throw e;
-        }
-        requestCount++;
-        return;
-      }
-    }
-
     try {
-      semaphore.acquire();
-      try {
-        futures.computeIfAbsent(
-            uuid,
-            key -> {
-              final F future = asyncLookup((C) client, input);
-              boolean sameFuture = false;
-              if (deduplicate) {
-                sameFuture = future.equals(inFlightRequests.computeIfAbsent(input, k -> future));
-              }
-              final boolean shouldRemove = deduplicate && sameFuture;
-              return addCallback(
-                  future,
-                  output -> {
-                    semaphore.release();
-                    if (shouldRemove) inFlightRequests.remove(input);
-                    try {
-                      cache.put(input, output);
-                      results.add(new Result(input, success(output), key, timestamp, window));
-                    } catch (Exception e) {
-                      LOG.error("Failed to cache result", e);
-                      throw e;
-                    }
-                    return null;
-                  },
-                  throwable -> {
-                    semaphore.release();
-                    if (shouldRemove) inFlightRequests.remove(input);
-                    results.add(new Result(input, failure(throwable), key, timestamp, window));
-                    return null;
-                  });
-            });
-      } catch (Exception e) {
-        semaphore.release();
-        LOG.error("Failed to process element", e);
-        throw e;
+      final UUID uuid = UUID.randomUUID();
+      final B cached = cache.getIfPresent(input);
+      final F inFlight = inFlightRequests.get(input);
+      if (cached != null) {
+        // found in cache
+        out.output(KV.of(input, success(cached)));
+      } else if (inFlight != null) {
+        // pending request for the same element
+        futures.put(uuid, handleOutput(inFlight, input, uuid, timestamp, window));
+      } else {
+        // semaphore release is not performed on exception.
+        // let beam retry the bundle. startBundle will reset the semaphore to the
+        // maxPendingRequests permits.
+        semaphore.acquire();
+        final F future = asyncLookup(client, input);
+        // handle cache in fire & forget way
+        handleCache(future, input, cache);
+        // make sure semaphore are released when waiting for futures in finishBundle
+        final F unlockedFuture = handleSemaphore(future);
+        futures.put(uuid, handleOutput(unlockedFuture, input, uuid, timestamp, window));
       }
+      requestCount++;
     } catch (InterruptedException e) {
       LOG.error("Failed to acquire semaphore", e);
       throw new RuntimeException("Failed to acquire semaphore", e);
+    } catch (Exception e) {
+      LOG.error("Failed to process element", e);
+      throw e;
     }
-    requestCount++;
   }
 
   @FinishBundle
@@ -246,6 +202,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
         throw new RuntimeException("Failed to process futures", e);
       } catch (ExecutionException e) {
         LOG.error("Failed to process futures", e);
+        throw new RuntimeException("Failed to process futures", e);
       }
     }
     flush(r -> context.output(KV.of(r.input, r.output), r.timestamp, r.window));
@@ -256,6 +213,48 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
         "Expected requestCount == resultCount, but %s != %s",
         requestCount,
         resultCount);
+  }
+
+  private F handleOutput(F future, A input, UUID key, Instant timestamp, BoundedWindow window) {
+    return addCallback(
+        future,
+        output -> {
+          results.add(new Result(input, success(output), key, timestamp, window));
+          return null;
+        },
+        throwable -> {
+          results.add(new Result(input, failure(throwable), key, timestamp, window));
+          return null;
+        });
+  }
+
+  private F handleSemaphore(F future) {
+    return addCallback(
+        future,
+        ouput -> {
+          semaphore.release();
+          return null;
+        },
+        throwable -> {
+          semaphore.release();
+          return null;
+        });
+  }
+
+  private F handleCache(F future, A input, Cache<A, B> cache) {
+    final boolean shouldRemove =
+        deduplicate && (inFlightRequests.putIfAbsent(input, future) == null);
+    return addCallback(
+        future,
+        output -> {
+          cache.put(input, output);
+          if (shouldRemove) inFlightRequests.remove(input);
+          return null;
+        },
+        throwable -> {
+          if (shouldRemove) inFlightRequests.remove(input);
+          return null;
+        });
   }
 
   // Flush pending errors and results

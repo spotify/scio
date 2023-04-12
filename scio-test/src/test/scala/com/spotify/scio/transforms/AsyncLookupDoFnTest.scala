@@ -79,18 +79,10 @@ class AsyncLookupDoFnTest extends PipelineSpec {
 
   "BaseAsyncDoFn" should "deduplicate simultaneous lookups on the same item" in {
     val n = 100
-    val sc = ScioContext(PipelineOptionsFactory.fromArgs("--targetParallelism=1").create())
-    val f = sc
-      .parallelize(List.fill(n)(10))
-      .parDo(new CountingGuavaLookupDoFn)
-      .materialize
-    val result: ScioResult = sc.run().waitUntilFinish()
-    val maxOutput = result
-      .tap(f)
-      .value
-      .map(kv => kv.getValue.get())
-      .max
-    maxOutput should be < n
+    val output = runWithData(List.fill(n)(10)) {
+      _.parDo(new CountingGuavaLookupDoFn).map(_.getValue.get())
+    }
+    output.max should be < n
   }
 
   "GuavaAsyncLookupDoFn" should "work" in {
