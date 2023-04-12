@@ -168,6 +168,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
       } else if (inFlight != null) {
         // pending request for the same element
         futures.put(uuid, handleOutput(inFlight, input, uuid, timestamp, window));
+        requestCount++;
       } else {
         // semaphore release is not performed on exception.
         // let beam retry the bundle. startBundle will reset the semaphore to the
@@ -179,8 +180,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
         // make sure semaphore are released when waiting for futures in finishBundle
         final F unlockedFuture = handleSemaphore(future);
         futures.put(uuid, handleOutput(unlockedFuture, input, uuid, timestamp, window));
+        requestCount++;
       }
-      requestCount++;
     } catch (InterruptedException e) {
       LOG.error("Failed to acquire semaphore", e);
       throw new RuntimeException("Failed to acquire semaphore", e);

@@ -19,14 +19,12 @@ package com.spotify.scio.transforms
 
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
-import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.JavaAsyncConverters._
 import com.spotify.scio.util.TransformingCache.SimpleTransformingCache
-import org.apache.beam.sdk.options._
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{
