@@ -1148,7 +1148,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
-    new SCollectionWithSideOutput[T](internal, context, sides)
+    new SCollectionWithSideOutput[T](this, sides)
 
   // =======================================================================
   // Windowing operations
