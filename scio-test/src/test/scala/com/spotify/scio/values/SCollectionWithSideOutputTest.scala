@@ -18,7 +18,6 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.PipelineSpec
 
 class SCollectionWithSideOutputTest extends NamedTransformSpec {
   "SCollectionWithSideOutput" should "support custom transform name set before application" in {
