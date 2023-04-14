@@ -17,31 +17,30 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.proto.OuterClassForProto
-import com.spotify.scio.testing.CoderAssertions._
-import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException, NullableCoder, StringUtf8Coder}
-import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.scalactic.Equality
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.apache.beam.sdk.util.SerializableUtils
-
-import scala.jdk.CollectionConverters._
-import scala.collection.{mutable => mut}
-import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
-import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.proto.OuterClassForProto
+import com.spotify.scio.testing.CoderAssertions._
 import com.twitter.algebird.Moments
+import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException, NullableCoder, StringUtf8Coder}
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.testing.CoderProperties
+import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.io.output.NullOutputStream
+import org.scalactic.Equality
 import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
+import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
-import java.time.{Instant, LocalDate}
-import java.util.UUID
 import java.time.format.DateTimeFormatter
+import java.time._
+import java.util.UUID
+import scala.collection.{mutable => mut}
+import scala.jdk.CollectionConverters._
 
 // record
 final case class UserId(bytes: Seq[Byte])
@@ -68,6 +67,7 @@ object TestObject1 {
 case class CaseClassWithExplicitCoder(i: Int, s: String)
 object CaseClassWithExplicitCoder {
   import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder, VarIntCoder}
+
   import java.io.{InputStream, OutputStream}
   implicit val caseClassWithExplicitCoderCoder: Coder[CaseClassWithExplicitCoder] =
     Coder.beam(new AtomicCoder[CaseClassWithExplicitCoder] {
@@ -335,7 +335,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
-    import java.util.{List => jList, Map => jMap, ArrayList => jArrayList}
+    import java.util.{ArrayList => jArrayList, List => jList, Map => jMap}
     val is = 1 to 10
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
@@ -403,10 +403,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   // FIXME: implement the missing coders
   it should "support all the already supported types" in {
+    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+
     import java.math.{BigInteger, BigDecimal => jBigDecimal}
     import java.nio.file.FileSystems
-
-    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 
     // TableRowJsonCoder
     // SpecificRecordBase
@@ -427,14 +427,28 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new BigInteger("123456789") coderShould notFallback()
     new jBigDecimal("123456789.98765") coderShould notFallback()
 
-    val now = org.joda.time.Instant.now()
-    now coderShould notFallback()
-    new org.joda.time.LocalDate coderShould notFallback()
-    new org.joda.time.LocalTime coderShould notFallback()
-    new org.joda.time.LocalDateTime coderShould notFallback()
-    new org.joda.time.DateTime coderShould notFallback()
-    new java.sql.Timestamp(1) coderShould notFallback()
+    // java time
+    Instant.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDate.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDateTime.now() coderShould notFallback()
+    Duration.ofSeconds(123) coderShould notFallback()
+    Period.ofDays(123) coderShould notFallback()
 
+    // java sql
+    java.sql.Timestamp.valueOf("1971-02-03 04:05:06.789") coderShould notFallback()
+    java.sql.Date.valueOf("1971-02-03") coderShould notFallback()
+    java.sql.Time.valueOf("01:02:03") coderShould notFallback()
+
+    // joda time
+    new org.joda.time.Instant() coderShould notFallback()
+    new org.joda.time.DateTime() coderShould notFallback()
+    new org.joda.time.LocalDate() coderShould notFallback()
+    new org.joda.time.LocalTime() coderShould notFallback()
+    new org.joda.time.LocalDateTime() coderShould notFallback()
+    new org.joda.time.Duration(123) coderShould notFallback()
+    val now = org.joda.time.Instant.now()
     new IntervalWindow(now.minus(4000), now) coderShould notFallback()
   }
 
@@ -448,10 +462,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "Serialize Row" in {
-    import java.lang.{Double => jDouble, Integer => jInt, String => jString}
-
     import org.apache.beam.sdk.schemas.{Schema => bSchema}
     import org.apache.beam.sdk.values.Row
+
+    import java.lang.{Double => jDouble, Integer => jInt, String => jString}
 
     val beamSchema =
       bSchema
