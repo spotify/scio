@@ -188,9 +188,10 @@ object ParquetAvroIO {
       val jobConf = Option(conf).getOrElse(new Configuration())
 
       if (
-        jobConf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
-          readSchema
-        )
+        jobConf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO
+          .containsLogicalType(
+            readSchema
+          )
       ) {
         log.warn(
           s"Detected a logical type in schema `$readSchema`, but Configuration key `${AvroReadSupport.AVRO_DATA_SUPPLIER}`" +
