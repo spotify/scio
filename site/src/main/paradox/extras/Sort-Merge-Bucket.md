@@ -128,6 +128,51 @@ mySchema
   )
 ```
 
+## Parquet
+
+SMB supports Parquet reads and writes in both Avro and case class formats.
+
+If you're using Parquet-Avro and your schema contains a _logical type_, you'll have to opt in to a logical type _supplier_
+in your Parquet `Configuration` parameter:
+
+```scala mdoc:reset
+import org.apache.avro.specific.SpecificRecordBase
+
+import org.apache.beam.sdk.extensions.smb.{AvroLogicalTypeSupplier, ParquetAvroSortedBucketIO}
+import org.apache.beam.sdk.values.TupleTag
+import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
+import com.spotify.scio.avro.TestRecord
+
+// Reads
+val readConf = new Configuration()
+readConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .read[TestRecord](new TupleTag[TestRecord], classOf[TestRecord])
+  .withConfiguration(readConf)
+
+// Writes
+val writeConf = new Configuration()
+writeConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .write(classOf[String], "myKeyField", classOf[TestRecord])
+  .withConfiguration(writeConf)
+
+// Transforms
+val transformConf = new Configuration()
+transformConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+transformConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .transformOutput(classOf[String], "myKeyField", classOf[TestRecord])
+  .withConfiguration(transformConf)
+```
+
+Note that if you're using a non-default Avro version (i.e. Avro 1.11), you'll have to supply a custom logical type supplier
+using Avro 1.11 classes. See @ref:[Logical Types in Parquet](../io/Parquet.md#logical-types) for more information.
+
 ## Tuning parameters for SMB transforms
 
 ### numBuckets/numShards
