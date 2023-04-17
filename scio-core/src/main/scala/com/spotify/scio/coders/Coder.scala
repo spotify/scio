@@ -664,6 +664,8 @@ object Coder
   implicit val jDurationCoder: Coder[java.time.Duration] = JavaCoders.jDurationCoder
   implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
+  implicit val jSqDate: Coder[java.sql.Date] = JavaCoders.jSqlDate
+  implicit val jSqlTime: Coder[java.sql.Time] = JavaCoders.jSqlTime
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 
   def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =
