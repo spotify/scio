@@ -188,7 +188,7 @@ object ParquetAvroIO {
       val jobConf = Option(conf).getOrElse(new Configuration())
 
       if (
-        conf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
+        jobConf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
           readSchema
         )
       ) {
