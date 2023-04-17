@@ -188,25 +188,9 @@ def previousVersion(currentVersion: String): Option[String] = {
 
 lazy val mimaSettings = Def.settings(
   mimaBinaryIssueFilters := Seq(
-    // minor scio-tensorflow breaking changes for 0.12.6
+    // minor scio-core breaking changes for 0.12.8
     ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
-    ),
-    // minor scio-grpc breaking changes for 0.12.6
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookup"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookup$extension"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookupStream"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookupStream$extension"
+      "com.spotify.scio.values.SCollectionWithSideOutput.this"
     )
   ),
   mimaPreviousArtifacts :=
