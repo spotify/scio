@@ -140,13 +140,23 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc1 = ScioContext()
     sc1
       .parallelize(records)
-      .saveAsParquetAvroFile(path)
+      .saveAsParquetAvroFile(
+        path,
+        conf = ParquetConfiguration.of(
+          AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
     sc1.run()
     ()
 
     val sc2 = ScioContext()
     sc2
-      .parquetAvroFile[TestLogicalTypes](s"$path/*.parquet")
+      .parquetAvroFile[TestLogicalTypes](
+        s"$path/*.parquet",
+        conf = ParquetConfiguration.of(
+          AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
       .map(identity) should containInAnyOrder(records)
 
     sc2.run()
@@ -175,13 +185,25 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc1 = ScioContext()
     sc1
       .parallelize(records)
-      .saveAsParquetAvroFile(path, schema = TestLogicalTypes.SCHEMA$)
+      .saveAsParquetAvroFile(
+        path,
+        schema = TestLogicalTypes.SCHEMA$,
+        conf = ParquetConfiguration.of(
+          AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
     sc1.run()
     ()
 
     val sc2 = ScioContext()
     sc2
-      .parquetAvroFile[GenericRecord](s"$path/*.parquet", projection = TestLogicalTypes.SCHEMA$)
+      .parquetAvroFile[GenericRecord](
+        s"$path/*.parquet",
+        projection = TestLogicalTypes.SCHEMA$,
+        conf = ParquetConfiguration.of(
+          AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
       .map(identity) should containInAnyOrder(records)
 
     sc2.run()
@@ -431,6 +453,48 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       )
       .output(TextIO("output"))(_ should containSingleValue(("foo", 2.0).toString))
       .run()
+  }
+
+  it should "detect logical types in schemas" in {
+    val schemaParser = new Schema.Parser()
+
+    ParquetAvroIO.containsLogicalType(
+      schemaParser.parse(
+        """{"type":"record", "name":"SomeRecord1", "fields":[{"name":"someField","type":"string"}]}"""
+      )
+    ) shouldBe false
+
+    ParquetAvroIO.containsLogicalType(
+      schemaParser.parse(
+        """{"type":"record", "name":"SomeRecord2", "fields":[
+        |{"name":"someField","type":{"type": "long", "logicalType": "timestamp-millis"}}
+      |]}""".stripMargin
+      )
+    ) shouldBe true
+
+    ParquetAvroIO.containsLogicalType(
+      schemaParser.parse(
+        """{"type":"record", "name":"SomeRecord3", "fields":[
+        |{"name":"someField","type": {"type": "array", "items": "SomeRecord2"}}
+        |]}""".stripMargin
+      )
+    ) shouldBe true
+
+    ParquetAvroIO.containsLogicalType(
+      schemaParser.parse(
+        """{"type":"record", "name":"SomeRecord4", "fields":[
+        |{"name":"someField","type": {"type": "map", "values": "SomeRecord2"}}
+        |]}""".stripMargin
+      )
+    ) shouldBe true
+
+    ParquetAvroIO.containsLogicalType(
+      schemaParser.parse(
+        """{"type":"record", "name":"SomeRecord5", "fields":[
+        |{"name":"someField","type":["null", {"type": "long", "logicalType": "timestamp-millis"}]}
+        |]}""".stripMargin
+      )
+    ) shouldBe true
   }
 }
 

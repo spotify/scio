@@ -28,7 +28,6 @@ import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io._
@@ -42,14 +41,17 @@ import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{
+  AvroDataSupplier,
   AvroParquetInputFormat,
   AvroParquetReader,
   AvroReadSupport,
+  AvroWriteSupport,
   GenericDataSupplier
 }
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
+import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
@@ -117,6 +119,17 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
     val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
+    val conf = Option(params.conf).getOrElse(new Configuration())
+    if (
+      conf.get(AvroWriteSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
+        writerSchema
+      )
+    ) {
+      ParquetAvroIO.log.warn(
+        s"Detected a logical type in schema `$writerSchema`, but Configuration key `${AvroWriteSupport.AVRO_DATA_SUPPLIER}`" +
+          s"was not set to a logical type supplier. See https://spotify.github.io/scio/io/Parquet.html#logical-types for more information."
+      )
+    }
 
     data.applyInternal(
       parquetOut(
@@ -125,7 +138,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         params.suffix,
         params.numShards,
         params.compression,
-        params.conf,
+        conf,
         params.shardNameTemplate,
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
@@ -141,6 +154,8 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 }
 
 object ParquetAvroIO {
+  private lazy val log = LoggerFactory.getLogger(getClass)
+
   object ReadParam {
     private[avro] val DefaultProjection = null
     private[avro] val DefaultPredicate = null
@@ -171,6 +186,32 @@ object ParquetAvroIO {
 
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
       val jobConf = Option(conf).getOrElse(new Configuration())
+
+      if (
+        conf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
+          readSchema
+        )
+      ) {
+        log.warn(
+          s"Detected a logical type in schema `$readSchema`, but Configuration key `${AvroReadSupport.AVRO_DATA_SUPPLIER}`" +
+            s"was not set to a logical type supplier. See https://spotify.github.io/scio/io/Parquet.html#logical-types for more information."
+        )
+      }
+
+      // Needed to make GenericRecord read by parquet-avro work with Beam's
+      // org.apache.beam.sdk.coders.AvroCoder.
+      if (!isSpecific) {
+        jobConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
+
+        if (jobConf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
+          jobConf.setClass(
+            AvroReadSupport.AVRO_DATA_SUPPLIER,
+            classOf[GenericDataSupplier],
+            classOf[AvroDataSupplier]
+          )
+        }
+      }
+
       val useSplittableDoFn = jobConf.getBoolean(
         ParquetReadConfiguration.UseSplittableDoFn,
         ParquetReadConfiguration.UseSplittableDoFnDefault
@@ -186,16 +227,6 @@ object ParquetAvroIO {
     private def readSplittableDoFn(sc: ScioContext, conf: Configuration, path: String)(implicit
       coder: Coder[T]
     ): SCollection[T] = {
-      // Needed to make GenericRecord read by parquet-avro work with Beam's
-      // org.apache.beam.sdk.coders.AvroCoder.
-      if (!isSpecific) {
-        conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        conf.set(
-          AvroReadSupport.AVRO_DATA_SUPPLIER,
-          classOf[GenericDataSupplier].getCanonicalName
-        )
-      }
-
       AvroReadSupport.setAvroReadSchema(conf, readSchema)
       if (projection != null) {
         AvroReadSupport.setRequestedProjection(conf, projection)
@@ -225,18 +256,8 @@ object ParquetAvroIO {
       job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
       job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
       job.getConfiguration.setClass("value.class", avroClass, avroClass)
-
-      // Needed to make GenericRecord read by parquet-avro work with Beam's
-      // org.apache.beam.sdk.coders.AvroCoder.
-      if (ScioUtil.classOf[A] == classOf[GenericRecord]) {
-        job.getConfiguration.setBoolean("parquet.avro.compatible", false)
-        job.getConfiguration.set(
-          "parquet.avro.data.supplier",
-          "org.apache.parquet.avro.GenericDataSupplier"
-        )
-      }
-
       AvroParquetInputFormat.setAvroReadSchema(job, readSchema)
+
       if (projection != null) {
         AvroParquetInputFormat.setRequestedProjection(job, projection)
       }
@@ -264,6 +285,16 @@ object ParquetAvroIO {
         .withConfiguration(job.getConfiguration)
 
       sc.applyTransform(transform).map(_.getValue)
+    }
+  }
+
+  private[avro] def containsLogicalType(s: Schema): Boolean = {
+    s.getType match {
+      case Schema.Type.RECORD => s.getFields.asScala.exists(f => containsLogicalType(f.schema()))
+      case Schema.Type.ARRAY  => containsLogicalType(s.getElementType)
+      case Schema.Type.UNION  => s.getTypes.asScala.exists(t => containsLogicalType(t))
+      case Schema.Type.MAP    => containsLogicalType(s.getValueType)
+      case _                  => s.getLogicalType != null
     }
   }
 
