@@ -36,7 +36,8 @@ import org.scalatest.matchers.should.Matchers
 
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
-import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time._
 import java.util.UUID
 import scala.collection.{mutable => mut}
 import scala.jdk.CollectionConverters._
@@ -426,14 +427,28 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new BigInteger("123456789") coderShould notFallback()
     new jBigDecimal("123456789.98765") coderShould notFallback()
 
-    val now = org.joda.time.Instant.now()
-    now coderShould notFallback()
-    new org.joda.time.LocalDate coderShould notFallback()
-    new org.joda.time.LocalTime coderShould notFallback()
-    new org.joda.time.LocalDateTime coderShould notFallback()
-    new org.joda.time.DateTime coderShould notFallback()
-    new java.sql.Timestamp(1) coderShould notFallback()
+    // java time
+    Instant.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDate.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDateTime.now() coderShould notFallback()
+    Duration.ofSeconds(123) coderShould notFallback()
+    Period.ofDays(123) coderShould notFallback()
 
+    // java sql
+    java.sql.Timestamp.valueOf("1971-02-03 04:05:06.789") coderShould notFallback()
+    java.sql.Date.valueOf("1971-02-03") coderShould notFallback()
+    java.sql.Time.valueOf("01:02:03") coderShould notFallback()
+
+    // joda time
+    new org.joda.time.Instant() coderShould notFallback()
+    new org.joda.time.DateTime() coderShould notFallback()
+    new org.joda.time.LocalDate() coderShould notFallback()
+    new org.joda.time.LocalTime() coderShould notFallback()
+    new org.joda.time.LocalDateTime() coderShould notFallback()
+    new org.joda.time.Duration(123) coderShould notFallback()
+    val now = org.joda.time.Instant.now()
     new IntervalWindow(now.minus(4000), now) coderShould notFallback()
   }
 

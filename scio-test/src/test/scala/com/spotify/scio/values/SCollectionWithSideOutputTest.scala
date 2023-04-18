@@ -17,10 +17,34 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.ScioContext
 
-class SCollectionWithSideOutputTest extends PipelineSpec {
-  "SCollectionWithSideOutput" should "support map()" in {
+class SCollectionWithSideOutputTest extends NamedTransformSpec {
+  "SCollectionWithSideOutput" should "support custom transform name set before application" in {
+    val sc = ScioContext()
+    val p1 = sc.parallelize(Seq("a", "b", "c"))
+    val p2 = SideOutput[String]()
+    val (main, _) = p1
+      .withName("MapWithSideOutputs")
+      .withSideOutputs(p2)
+      .map { (x, s) => s.output(p2, x + "2"); x + "1" }
+
+    assertTransformNameStartsWith(main, "MapWithSideOutputs")
+  }
+
+  it should "support custom transform name set after application" in {
+    val sc = ScioContext()
+    val p1 = sc.parallelize(Seq("a", "b", "c"))
+    val p2 = SideOutput[String]()
+    val (main, _) = p1
+      .withSideOutputs(p2)
+      .withName("MapWithSideOutputs")
+      .map { (x, s) => s.output(p2, x + "2"); x + "1" }
+
+    assertTransformNameStartsWith(main, "MapWithSideOutputs")
+  }
+
+  it should "support map()" in {
     runWithContext { sc =>
       val p1 = sc.parallelize(Seq("a", "b", "c"))
       val p2 = SideOutput[String]()
