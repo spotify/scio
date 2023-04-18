@@ -902,9 +902,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(Combine.globally(Functions.reduceFn(context, op)).withoutDefaults())
 
   /**
-   * Return a sampled subset of this SCollection containing exactly `sampleSize` items. Involves combine
-   * operation resulting in shuffling. All the elements of the output should fit into main memory of
-   * a single worker machine.
+   * Return a sampled subset of this SCollection containing exactly `sampleSize` items. Involves
+   * combine operation resulting in shuffling. All the elements of the output should fit into main
+   * memory of a single worker machine.
    *
    * @return
    *   a new SCollection whose single value is an `Iterable` of the samples
