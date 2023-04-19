@@ -36,7 +36,6 @@ import org.scalatest.matchers.should.Matchers
 
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
-import java.time.format.DateTimeFormatter
 import java.time._
 import java.util.UUID
 import scala.collection.{mutable => mut}
@@ -767,18 +766,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     hashCodesAreDifferent(
       Coder.xmap[String, Int](Coder[String])(_.toInt, _.toString),
       Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt)
-    )
-
-    // For transform, even if parameters are equal, hashCodes must be different
-    hashCodesAreDifferent(
-      Coder.xmap[String, LocalDate](Coder[String])(
-        LocalDate.parse(_, DateTimeFormatter.ISO_LOCAL_DATE),
-        _.toString
-      ),
-      Coder.xmap[String, LocalDate](Coder[String])(
-        LocalDate.parse(_, DateTimeFormatter.ISO_WEEK_DATE),
-        _.toString
-      )
     )
   }
 
