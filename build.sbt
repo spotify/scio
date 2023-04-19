@@ -127,7 +127,7 @@ val scalatestVersion = "3.2.15"
 val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
-val testContainersVersion = "0.40.14"
+val testContainersVersion = "0.40.15"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
