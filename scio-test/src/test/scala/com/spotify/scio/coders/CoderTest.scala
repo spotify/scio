@@ -36,7 +36,6 @@ import org.scalatest.matchers.should.Matchers
 
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
-import java.time.format.DateTimeFormatter
 import java.time._
 import java.util.UUID
 import scala.collection.{mutable => mut}
