@@ -145,7 +145,14 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
       val ee = the[ExecutionException] thrownBy (access(chainedFuture))
       val cause = ee.getCause
       cause.getMessage shouldBe "failure"
-      cause.getSuppressed.headOption.map(_.getMessage) shouldBe Some("callback failure")
+      val expectedSuppressed = (handler, sys.props("java.version")) match {
+        case (_: JavaFutureHandler, v) if v.startsWith("1.8") =>
+          // java 1.8 is not setting the exception as suppressed
+          None
+        case _ =>
+          Some("callback failure")
+      }
+      cause.getSuppressed.headOption.map(_.getMessage) shouldBe expectedSuppressed
     }
   }
 
