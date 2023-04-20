@@ -83,7 +83,7 @@ object SkewedJoins {
     // Use regular join for the rest of the keys
     val chillJoined = lhs.chill
       .withName("Join chill partitions")
-      .hashJoin(rhs.chill)
+      .join(rhs.chill)
 
     union(hotJoined, chillJoined)
   }
