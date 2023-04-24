@@ -290,12 +290,12 @@ object ParquetAvroIO {
   }
 
   private[avro] def containsLogicalType(s: Schema): Boolean = {
-    s.getType match {
+    s.getLogicalType != null || s.getType match {
       case Schema.Type.RECORD => s.getFields.asScala.exists(f => containsLogicalType(f.schema()))
       case Schema.Type.ARRAY  => containsLogicalType(s.getElementType)
       case Schema.Type.UNION  => s.getTypes.asScala.exists(t => containsLogicalType(t))
       case Schema.Type.MAP    => containsLogicalType(s.getValueType)
-      case _                  => s.getLogicalType != null
+      case _                  => false
     }
   }
 
