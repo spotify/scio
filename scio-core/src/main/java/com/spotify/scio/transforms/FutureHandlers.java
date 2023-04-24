@@ -45,7 +45,7 @@ public class FutureHandlers {
     default void waitForFutures(Iterable<ListenableFuture<V>> futures)
         throws InterruptedException, ExecutionException {
       // Futures#allAsList only works if all futures succeed
-      Futures.whenAllComplete(futures).run(() -> {}, MoreExecutors.directExecutor()).get();
+      Futures.successfulAsList(futures).get();
     }
 
     @Override
@@ -63,18 +63,25 @@ public class FutureHandlers {
             public void onSuccess(@Nullable V result) {
               try {
                 onSuccess.apply(result);
-              } catch (RuntimeException | Error e) {
+                f.set(result);
+              } catch (Throwable e) {
                 f.setException(e);
-                return;
               }
-              f.set(result);
             }
 
             @Override
             public void onFailure(Throwable t) {
+              Throwable callbackException = null;
               try {
                 onFailure.apply(t);
+              } catch (Throwable e) {
+                // do not fail executing thread if callback fails
+                // record exception and propagate as suppressed
+                callbackException = e;
               } finally {
+                if (callbackException != null) {
+                  t.addSuppressed(callbackException);
+                }
                 f.setException(t);
               }
             }
@@ -92,7 +99,7 @@ public class FutureHandlers {
         throws InterruptedException, ExecutionException {
       CompletableFuture[] array =
           StreamSupport.stream(futures.spliterator(), false).toArray(CompletableFuture[]::new);
-      CompletableFuture.allOf(array).get();
+      CompletableFuture.allOf(array).exceptionally(t -> null).get();
     }
 
     @Override
