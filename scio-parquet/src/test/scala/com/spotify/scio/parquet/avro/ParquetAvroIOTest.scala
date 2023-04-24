@@ -115,13 +115,23 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc1 = ScioContext()
     sc1
       .parallelize(records)
-      .saveAsParquetAvroFile(path)
+      .saveAsParquetAvroFile(
+        path,
+        conf = ParquetConfiguration.of(
+          AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
     sc1.run()
     ()
 
     val sc2 = ScioContext()
     sc2
-      .parquetAvroFile[TestLogicalTypes](s"$path/*.parquet")
+      .parquetAvroFile[TestLogicalTypes](
+        s"$path/*.parquet",
+        conf = ParquetConfiguration.of(
+          AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
       .map(identity) should containInAnyOrder(records)
 
     sc2.run()
@@ -150,13 +160,25 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val sc1 = ScioContext()
     sc1
       .parallelize(records)
-      .saveAsParquetAvroFile(path, schema = TestLogicalTypes.SCHEMA$)
+      .saveAsParquetAvroFile(
+        path,
+        schema = TestLogicalTypes.SCHEMA$,
+        conf = ParquetConfiguration.of(
+          AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
     sc1.run()
     ()
 
     val sc2 = ScioContext()
     sc2
-      .parquetAvroFile[GenericRecord](s"$path/*.parquet", projection = TestLogicalTypes.SCHEMA$)
+      .parquetAvroFile[GenericRecord](
+        s"$path/*.parquet",
+        projection = TestLogicalTypes.SCHEMA$,
+        conf = ParquetConfiguration.of(
+          AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier]
+        )
+      )
       .map(identity) should containInAnyOrder(records)
 
     sc2.run()
