@@ -201,6 +201,7 @@ spotify/scio
     <li><a href="../extras/Sort-Merge-Bucket.html#what-are-smb-transforms-" class="header">What are SMB transforms?</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#what-kind-of-data-can-i-write-using-smb-" class="header">What kind of data can I write using SMB?</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#avro-string-keys" class="header">Avro String keys</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#parquet" class="header">Parquet</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#tuning-parameters-for-smb-transforms" class="header">Tuning parameters for SMB transforms</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#testing" class="header">Testing</a></li>
   </ul></li>
@@ -211,7 +212,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.12.7+0-ff4cfbb8+20230405-1433*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-1620aec0+20230424-1522*
 </label>
 </li>
 </ul>
@@ -229,6 +230,7 @@ spotify/scio
     <li><a href="../extras/Sort-Merge-Bucket.html#what-are-smb-transforms-" class="header">What are SMB transforms?</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#what-kind-of-data-can-i-write-using-smb-" class="header">What kind of data can I write using SMB?</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#avro-string-keys" class="header">Avro String keys</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html#parquet" class="header">Parquet</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#tuning-parameters-for-smb-transforms" class="header">Tuning parameters for SMB transforms</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html#testing" class="header">Testing</a></li>
   </ul></li>
@@ -413,6 +415,43 @@ mySchema
     &quot;String&quot;.asInstanceOf[Object]
   )
 </code></pre>
+<h2><a href="#parquet" name="parquet" class="anchor"><span class="anchor-link"></span></a>Parquet</h2>
+<p>SMB supports Parquet reads and writes in both Avro and case class formats.</p>
+<p>If you&rsquo;re using Parquet-Avro and your schema contains a <em>logical type</em>, you&rsquo;ll have to opt in to a logical type <em>supplier</em> in your Parquet <code>Configuration</code> parameter:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import org.apache.avro.specific.SpecificRecordBase
+
+import org.apache.beam.sdk.extensions.smb.{AvroLogicalTypeSupplier, ParquetAvroSortedBucketIO}
+import org.apache.beam.sdk.values.TupleTag
+import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
+import com.spotify.scio.avro.TestRecord
+
+// Reads
+val readConf = new Configuration()
+readConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .read[TestRecord](new TupleTag[TestRecord], classOf[TestRecord])
+  .withConfiguration(readConf)
+
+// Writes
+val writeConf = new Configuration()
+writeConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .write(classOf[String], &quot;myKeyField&quot;, classOf[TestRecord])
+  .withConfiguration(writeConf)
+
+// Transforms
+val transformConf = new Configuration()
+transformConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+transformConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .transformOutput(classOf[String], &quot;myKeyField&quot;, classOf[TestRecord])
+  .withConfiguration(transformConf)
+</code></pre>
+<p>Note that if you&rsquo;re using a non-default Avro version (i.e. Avro 1.11), you&rsquo;ll have to supply a custom logical type supplier using Avro 1.11 classes. See <a href="../io/Parquet.html#logical-types">Logical Types in Parquet</a> for more information.</p>
 <h2><a href="#tuning-parameters-for-smb-transforms" name="tuning-parameters-for-smb-transforms" class="anchor"><span class="anchor-link"></span></a>Tuning parameters for SMB transforms</h2>
 <h3><a href="#numbuckets-numshards" name="numbuckets-numshards" class="anchor"><span class="anchor-link"></span></a>numBuckets/numShards</h3>
 <p>SMB reads should be more performant and less resource-intensive than regular joins or groupBys. However, SMB writes are more expensive than their regular counterparts, since they involve an extra group-by (bucketing) and sorting step. Additionally, non-SMB writes (i.e. implementations of <a href="https://beam.apache.org/releases/javadoc/2.46.0/?org/apache/beam/sdk/io/FileBasedSink.html" title="org.apache.beam.sdk.io.FileBasedSink"><code>FileBasedSink</code></a>) use hints from the runner to determine an optimal number of output files. Unfortunately, SMB doesn&rsquo;t have access to those runtime hints; you must specify the number of buckets and shards as static values up front.</p>
@@ -467,7 +506,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.12.7+0-ff4cfbb8+20230405-1433*
+0.0.0+1-1620aec0+20230424-1522*
 </span>
 </div>
 </article>

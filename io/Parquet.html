@@ -210,7 +210,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.12.7+0-ff4cfbb8+20230405-1433*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-1620aec0+20230424-1522*
 </label>
 </li>
 </ul>
@@ -331,6 +331,55 @@ def yourAvroSchema: org.apache.avro.Schema = ???
 
 def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
 </code></pre>
+<h3><a href="#logical-types" name="logical-types" class="anchor"><span class="anchor-link"></span></a>Logical Types</h3>
+<p>If your Avro schema contains a logical type, you&rsquo;ll need to supply an additional Configuration parameter for your reads and writes.</p>
+<p>If you&rsquo;re using the default version of Avro (1.8), you can use Scio&rsquo;s pre-built logical type conversions:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio._
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.parquet.avro._
+import com.spotify.scio.avro.TestRecord
+
+val sc: ScioContext = ScioContext()
+val data: SCollection[TestRecord] = sc.parallelize(List[TestRecord]())
+
+// Reads
+import com.spotify.scio.parquet.ParquetConfiguration
+
+import org.apache.parquet.avro.AvroReadSupport
+
+sc.parquetAvroFile(
+  &quot;somePath&quot;,
+  conf = ParquetConfiguration.of(AvroReadSupport.AVRO_DATA_SUPPLIER -&gt; classOf[LogicalTypeSupplier])
+)
+
+// Writes
+import org.apache.parquet.avro.AvroWriteSupport
+
+data.saveAsParquetAvroFile(
+  &quot;somePath&quot;,
+  conf = ParquetConfiguration.of(AvroWriteSupport.AVRO_DATA_SUPPLIER -&gt; classOf[LogicalTypeSupplier])
+)
+</code></pre>
+<p>(If you&rsquo;re using <code>scio-smb</code>, you can use the provided class <code>org.apache.beam.sdk.extensions.smb.AvroLogicalTypeSupplier</code> instead.)</p>
+<p>If you&rsquo;re using Avro 1.11, you&rsquo;ll have to create your own logical type supplier class, as Scio&rsquo;s <code>LogicalTypeSupplier</code> uses classes present in Avro 1.8 but not 1.11. A sample Avro 1.11 logical-type supplier might look like:</p>
+<pre class="prettyprint"><code class="language-scala">import org.apache.avro.Conversions;
+import org.apache.avro.data.TimeConversions;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.specific.SpecificData;
+import org.apache.parquet.avro.AvroDataSupplier;
+
+case class AvroLogicalTypeSupplier() extends AvroDataSupplier {
+  override def get(): GenericData = {
+    val specificData = SpecificData.get()
+
+    // Add conversions as needed
+    specificData.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion())
+
+    specificData
+  }
+}
+</code></pre>
+<p>Then, you&rsquo;ll have to specify your logical type supplier class in your <code>Configuration</code> as outlined above.</p>
 <h2><a href="#case-classes" name="case-classes" class="anchor"><span class="anchor-link"></span></a>Case classes</h2>
 <p>Scio uses <a href="https://github.com/spotify/magnolify/blob/master/docs/parquet.md">magnolify-parquet</a> to derive Parquet reader and writer for case classes at compile time, similar to how <a href="../internals/Coders.html">coders</a> work. See this <a href="https://github.com/spotify/magnolify/blob/master/docs/mapping.md">mapping table</a> for how Scala and Parquet types map; enum type mapping is also specifically <a href="https://github.com/spotify/magnolify/blob/main/docs/enums.md">documented</a>.</p>
 <h3><a href="#read-parquet-files-as-case-classes" name="read-parquet-files-as-case-classes" class="anchor"><span class="anchor-link"></span></a>Read Parquet files as case classes</h3>
@@ -427,7 +476,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.12.7+0-ff4cfbb8+20230405-1433*
+0.0.0+1-1620aec0+20230424-1522*
 </span>
 </div>
 </article>

@@ -107,10 +107,10 @@ frequency.</p><p><code>true frequency &lt;= estimate &lt;= true frequency + eps 
   The number of intermediate keys that will be used during the CMS computation.</p></dd><dt class="param">cmsEps</dt><dd class="cmt"><p>
   One-sided error bound on the error of each point query, i.e. frequency estimate. Must lie in
   <code>(0, 1)</code>.</p></dd><dt class="param">cmsDelta</dt><dd class="cmt"><p>
-  A seed to initialize the random number generator used to create the pairwise independent hash
-  functions.</p></dd><dt class="param">cmsSeed</dt><dd class="cmt"><p>
   A bound on the probability that a query estimate does not lie within some small interval (an
-  interval that depends on <code>eps</code>) around the truth. Must lie in <code>(0, 1)</code>.</p></dd><dt class="param">sampleFraction</dt><dd class="cmt"><p>
+  interval that depends on <code>eps</code>) around the truth. Must lie in <code>(0, 1)</code>.</p></dd><dt class="param">cmsSeed</dt><dd class="cmt"><p>
+  A seed to initialize the random number generator used to create the pairwise independent hash
+  functions.</p></dd><dt class="param">sampleFraction</dt><dd class="cmt"><p>
   left side sample fraction.</p></dd><dt class="param">sampleWithReplacement</dt><dd class="cmt"><p>
   whether to use sampling with replacement, see
   <a href="SCollection.html#sample(withReplacement:Boolean,fraction:Double):com.spotify.scio.values.SCollection[T]" name="com.spotify.scio.values.SCollection#sample" id="com.spotify.scio.values.SCollection#sample" class="extmbr">SCollection.sample</a>.</p></dd></dl><dl class="attributes block"><div class="block">Example:<ol><li class="cmt"><p></p><pre><span class="cmt">// Implicits that enabling CMS-hashing</span>
