@@ -21,8 +21,16 @@ import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQueryTyped, TableRow, TableRowJsonIO, TimePartitioning}
-import com.spotify.scio.bigquery.coders
+import com.spotify.scio.bigquery.{
+  coders,
+  BigQueryTyped,
+  BigQueryTypedTable,
+  Clustering,
+  Table,
+  TableRow,
+  TableRowJsonIO,
+  TimePartitioning
+}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
@@ -31,9 +39,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
-
-import com.spotify.scio.bigquery.Table
-import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import org.apache.avro.generic.GenericRecord
 
@@ -50,7 +55,8 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     writeDisposition: WriteDisposition = BigQueryTypedTable.WriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning
+    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
+    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering
   ): ClosedTap[TableRow] = {
     val param =
       BigQueryTypedTable.WriteParam(
@@ -58,7 +64,8 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
         writeDisposition,
         createDisposition,
         tableDescription,
-        timePartitioning
+        timePartitioning,
+        clustering
       )
 
     self
@@ -94,7 +101,8 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     writeDisposition: WriteDisposition = BigQueryTypedTable.WriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning
+    timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
+    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering
   ): ClosedTap[GenericRecord] = {
     val param =
       BigQueryTypedTable.WriteParam(
@@ -102,7 +110,8 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
         writeDisposition,
         createDisposition,
         tableDescription,
-        timePartitioning
+        timePartitioning,
+        clustering
       )
     self
       .covary[GenericRecord]
@@ -152,9 +161,10 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     table: Table,
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning,
     writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition
+    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
+    clustering: Clustering = TableWriteParam.DefaultClustering
   )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning)
+    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning, clustering)
     self.write(BigQueryTyped.Table[T](table))(param)
   }
 }

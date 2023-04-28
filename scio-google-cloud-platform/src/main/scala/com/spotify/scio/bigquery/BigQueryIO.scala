@@ -100,6 +100,7 @@ private[bigquery] object Writes {
     val DefaultTableDescription: String = null
     val DefaultTimePartitioning: TimePartitioning = null
     val DefaultExtendedErrorInfo: ExtendedErrorInfo = ExtendedErrorInfo.Disabled
+    val DefaultClustering: Clustering = null
     def defaultInsertErrorTransform[T <: ExtendedErrorInfo#Info]: SCollection[T] => Unit = sc => {
       // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
       // in the pipeline graph.
@@ -223,6 +224,7 @@ object BigQueryTypedTable {
     val timePartitioning: TimePartitioning
     val extendedErrorInfo: ExtendedErrorInfo
     val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+    val clustering: Clustering
   }
 
   object WriteParam extends Writes.WriteParamDefauls {
@@ -232,6 +234,7 @@ object BigQueryTypedTable {
       cd: CreateDisposition,
       td: String,
       tp: TimePartitioning,
+      c: Clustering,
       ei: ExtendedErrorInfo
     )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
       val schema: TableSchema = s
@@ -240,6 +243,7 @@ object BigQueryTypedTable {
       val tableDescription: String = td
       val timePartitioning: TimePartitioning = tp
       val extendedErrorInfo: ei.type = ei
+      val clustering: Clustering = c
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
     }
 
@@ -248,8 +252,10 @@ object BigQueryTypedTable {
       wd: WriteDisposition = DefaultWriteDisposition,
       cd: CreateDisposition = DefaultCreateDisposition,
       td: String = DefaultTableDescription,
-      tp: TimePartitioning = DefaultTimePartitioning
-    ): WriteParam = apply(s, wd, cd, td, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
+      tp: TimePartitioning = DefaultTimePartitioning,
+      c: Clustering = DefaultClustering
+    ): WriteParam =
+      apply(s, wd, cd, td, tp, c, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
   }
 
   private[this] def tableRow(table: Table): BigQueryTypedTable[TableRow] =
@@ -355,6 +361,9 @@ final case class BigQueryTypedTable[T: Coder](
     }
     if (params.timePartitioning != null) {
       transform = transform.withTimePartitioning(params.timePartitioning.asJava)
+    }
+    if (params.clustering != null) {
+      transform = transform.withClustering(params.clustering.asJava)
     }
     transform = params.extendedErrorInfo match {
       case Disabled => transform
@@ -593,6 +602,7 @@ object BigQueryTyped {
           params.createDisposition,
           BigQueryType[T].tableDescription.orNull,
           params.timePartitioning,
+          params.clustering,
           params.extendedErrorInfo
         )(params.insertErrorTransform)
 
@@ -612,6 +622,7 @@ object BigQueryTyped {
       val writeDisposition: WriteDisposition
       val createDisposition: CreateDisposition
       val timePartitioning: TimePartitioning
+      val clustering: Clustering
       val extendedErrorInfo: ExtendedErrorInfo
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
     }
@@ -621,11 +632,13 @@ object BigQueryTyped {
         wd: WriteDisposition,
         cd: CreateDisposition,
         tp: TimePartitioning,
+        c: Clustering,
         ei: ExtendedErrorInfo
       )(it: SCollection[ei.Info] => Unit): WriteParam = new WriteParam {
         val writeDisposition: WriteDisposition = wd
         val createDisposition: CreateDisposition = cd
         val timePartitioning: TimePartitioning = tp
+        val clustering: Clustering = c
         val extendedErrorInfo: ei.type = ei
         val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit = it
       }
@@ -633,8 +646,9 @@ object BigQueryTyped {
       @inline final def apply(
         wd: WriteDisposition = DefaultWriteDisposition,
         cd: CreateDisposition = DefaultCreateDisposition,
-        tp: TimePartitioning = DefaultTimePartitioning
-      ): WriteParam = apply(wd, cd, tp, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
+        tp: TimePartitioning = DefaultTimePartitioning,
+        c: Clustering
+      ): WriteParam = apply(wd, cd, tp, c, DefaultExtendedErrorInfo)(defaultInsertErrorTransform)
     }
 
   }
