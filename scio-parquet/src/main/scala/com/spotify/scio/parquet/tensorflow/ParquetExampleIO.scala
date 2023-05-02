@@ -21,6 +21,7 @@ import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
+import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
@@ -55,7 +56,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override val tapT: TapT.Aux[Example, Example] = TapOf[Example]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
-    val conf = Option(params.conf).getOrElse(new Configuration())
+    val conf = ParquetConfiguration.ofNullable(params.conf)
     val useSplittableDoFn = conf.getBoolean(
       ParquetReadConfiguration.UseSplittableDoFn,
       ParquetReadConfiguration.UseSplittableDoFnDefault
@@ -169,7 +170,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     )
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Example])
-    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
+    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetExampleFileBasedSink(
       StaticValueProvider.of(tempDirectory),

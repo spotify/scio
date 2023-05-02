@@ -22,7 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
+import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
@@ -102,7 +102,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     )
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
+    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
 
     val sink = new ParquetAvroFileBasedSink[T](
@@ -119,7 +119,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
     val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
-    val conf = Option(params.conf).getOrElse(new Configuration())
+    val conf = ParquetConfiguration.ofNullable(params.conf)
     if (
       conf.get(AvroWriteSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
         writerSchema
@@ -185,7 +185,7 @@ object ParquetAvroIO {
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
-      val jobConf = Option(conf).getOrElse(new Configuration())
+      val jobConf = ParquetConfiguration.ofNullable(conf)
 
       if (
         jobConf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO
@@ -331,7 +331,7 @@ case class ParquetAvroTap[A, T: ClassTag: Coder](
     xs.iterator.flatMap { metadata =>
       val reader = AvroParquetReader
         .builder[A](BeamInputFile.of(metadata.resourceId()))
-        .withConf(Option(params.conf).getOrElse(new Configuration()))
+        .withConf(ParquetConfiguration.ofNullable(params.conf))
         .build()
       new Iterator[T] {
         private var current: A = reader.read()

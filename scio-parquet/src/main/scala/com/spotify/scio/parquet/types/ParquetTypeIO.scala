@@ -22,7 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
+import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
@@ -54,7 +54,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val conf = Option(params.conf).getOrElse(new Configuration())
+    val conf = ParquetConfiguration.ofNullable(params.conf)
     val useSplittableDoFn = conf.getBoolean(
       ParquetReadConfiguration.UseSplittableDoFn,
       ParquetReadConfiguration.UseSplittableDoFnDefault
@@ -140,7 +140,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     )
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(Option(conf).getOrElse(new Configuration()))
+    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetTypeFileBasedSink[T](
       StaticValueProvider.of(tempDirectory),
