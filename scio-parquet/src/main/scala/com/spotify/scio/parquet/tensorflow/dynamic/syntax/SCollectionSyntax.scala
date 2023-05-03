@@ -19,6 +19,7 @@ package com.spotify.scio.parquet.tensorflow.dynamic.syntax
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps.writeDynamic
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.dynamic.ParquetExampleSink
 import com.spotify.scio.values.SCollection
@@ -57,7 +58,7 @@ final class DynamicParquetExampleSCollectionOps(
       val sink = new ParquetExampleSink(
         schema,
         compression,
-        new SerializableConfiguration(Option(conf).getOrElse(new Configuration()))
+        new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
       )
       val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
       self.applyInternal(write)

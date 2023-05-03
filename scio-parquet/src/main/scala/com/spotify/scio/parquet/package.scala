@@ -51,8 +51,11 @@ package object parquet {
   }
 
   object ParquetConfiguration {
+    def empty(): Configuration =
+      new Configuration()
+
     def of(entries: (String, Any)*): Configuration = {
-      val conf = new Configuration()
+      val conf = empty()
       entries.foreach { case (k, v) =>
         v match {
           case b: Boolean  => conf.setBoolean(k, b)
@@ -67,5 +70,8 @@ package object parquet {
       }
       conf
     }
+
+    private[parquet] def ofNullable(conf: Configuration): Configuration =
+      Option(conf).getOrElse(empty())
   }
 }
