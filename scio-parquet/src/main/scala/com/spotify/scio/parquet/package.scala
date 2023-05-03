@@ -72,6 +72,6 @@ package object parquet {
     }
 
     private[parquet] def ofNullable(conf: Configuration): Configuration =
-      Option(conf).getOrElse(ParquetConfiguration.empty())
+      Option(conf).getOrElse(empty())
   }
 }
