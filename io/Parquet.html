@@ -147,6 +147,7 @@ spotify/scio
     <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
     <li><a href="../io/Parquet.html" class="active page">Parquet</a></li>
     <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
   </ul></li>
   <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
   <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
@@ -169,6 +170,7 @@ spotify/scio
     <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
     <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
     <li><a href="../migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
+    <li><a href="../migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -183,7 +185,11 @@ spotify/scio
   <li><a href="../Runners.html" class="page">Runners</a></li>
   <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
   <li><a href="../Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
-  <li><a href="../Changelog.html" class="page">Changelog</a></li>
+  <li><a href="../releases/index.html" class="page">Releases</a>
+  <ul>
+    <li><a href="../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
+    <li><a href="../releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
+  </ul></li>
   <li><a href="../FAQ.html" class="page">FAQ</a></li>
   <li><a href="../Powered-By.html" class="page">Powered By</a></li>
 </ul>
@@ -194,7 +200,8 @@ spotify/scio
   <ul>
     <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
-    <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
+    <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
+    <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -203,7 +210,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.11.15+0-5de2e2a5+20230503-1745*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-94c05b67+20230505-1317*
 </label>
 </li>
 </ul>
@@ -220,7 +227,8 @@ spotify/scio
   <ul>
     <li><a href="../io/Parquet.html#avro" class="header">Avro</a></li>
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
-    <li><a href="../io/Parquet.html#performance-tuning" class="header">Performance Tuning</a></li>
+    <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
+    <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -323,12 +331,64 @@ def yourAvroSchema: org.apache.avro.Schema = ???
 
 def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
 </code></pre>
+<h3><a href="#logical-types" name="logical-types" class="anchor"><span class="anchor-link"></span></a>Logical Types</h3>
+<p>If your Avro schema contains a logical type, you&rsquo;ll need to supply an additional Configuration parameter for your reads and writes.</p>
+<p>If you&rsquo;re using the default version of Avro (1.8), you can use Scio&rsquo;s pre-built logical type conversions:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio._
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.parquet.avro._
+import com.spotify.scio.avro.TestRecord
+
+val sc: ScioContext = ScioContext()
+val data: SCollection[TestRecord] = sc.parallelize(List[TestRecord]())
+
+// Reads
+import com.spotify.scio.parquet.ParquetConfiguration
+
+import org.apache.parquet.avro.AvroReadSupport
+
+sc.parquetAvroFile(
+  &quot;somePath&quot;,
+  conf = ParquetConfiguration.of(AvroReadSupport.AVRO_DATA_SUPPLIER -&gt; classOf[LogicalTypeSupplier])
+)
+
+// Writes
+import org.apache.parquet.avro.AvroWriteSupport
+
+data.saveAsParquetAvroFile(
+  &quot;somePath&quot;,
+  conf = ParquetConfiguration.of(AvroWriteSupport.AVRO_DATA_SUPPLIER -&gt; classOf[LogicalTypeSupplier])
+)
+</code></pre>
+<p>(If you&rsquo;re using <code>scio-smb</code>, you can use the provided class <code>org.apache.beam.sdk.extensions.smb.AvroLogicalTypeSupplier</code> instead.)</p>
+<p>If you&rsquo;re using Avro 1.11, you&rsquo;ll have to create your own logical type supplier class, as Scio&rsquo;s <code>LogicalTypeSupplier</code> uses classes present in Avro 1.8 but not 1.11. A sample Avro 1.11 logical-type supplier might look like:</p>
+<pre class="prettyprint"><code class="language-scala">import org.apache.avro.Conversions;
+import org.apache.avro.data.TimeConversions;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.specific.SpecificData;
+import org.apache.parquet.avro.AvroDataSupplier;
+
+case class AvroLogicalTypeSupplier() extends AvroDataSupplier {
+  override def get(): GenericData = {
+    val specificData = SpecificData.get()
+
+    // Add conversions as needed
+    specificData.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion())
+
+    specificData
+  }
+}
+</code></pre>
+<p>Then, you&rsquo;ll have to specify your logical type supplier class in your <code>Configuration</code> as outlined above.</p>
 <h2><a href="#case-classes" name="case-classes" class="anchor"><span class="anchor-link"></span></a>Case classes</h2>
-<p>Scio uses <a href="https://github.com/spotify/magnolify/blob/master/docs/parquet.md">magnolify-parquet</a> to derive Parquet reader and writer for case classes at compile time, similar to how <a href="../internals/Coders.html">coders</a> work. See this <a href="https://github.com/spotify/magnolify/blob/master/docs/mapping.md">mapping table</a> for how Scala and Parquet types map.</p>
+<p>Scio uses <a href="https://github.com/spotify/magnolify/blob/master/docs/parquet.md">magnolify-parquet</a> to derive Parquet reader and writer for case classes at compile time, similar to how <a href="../internals/Coders.html">coders</a> work. See this <a href="https://github.com/spotify/magnolify/blob/master/docs/mapping.md">mapping table</a> for how Scala and Parquet types map; enum type mapping is also specifically <a href="https://github.com/spotify/magnolify/blob/main/docs/enums.md">documented</a>.</p>
 <h3><a href="#read-parquet-files-as-case-classes" name="read-parquet-files-as-case-classes" class="anchor"><span class="anchor-link"></span></a>Read Parquet files as case classes</h3>
 <p>When reading Parquet files as case classes, all fields in the case class definition are read. Therefore, it&rsquo;s desirable to construct a case class type with only fields needed for processing.</p>
+<p>Starting in Magnolify 0.4.8 (corresponding to Scio 0.11.6 and above), predicates for case classes have Magnolify support at the <em>field level only</em>. You can use Parquet&rsquo;s <code>FilterApi.or</code> and <code>FilterApi.and</code> to chain them:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import com.spotify.scio.parquet.types._
+import magnolify.parquet._
+import org.apache.parquet.filter2.predicate.FilterApi
 
 object ParquetJob {
   case class MyRecord(int_field: Int, string_field: String)
@@ -337,7 +397,10 @@ object ParquetJob {
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    sc.typedParquetFile[MyRecord](&quot;input.parquet&quot;)
+    sc.typedParquetFile[MyRecord](&quot;input.parquet&quot;, predicate = FilterApi.and(
+      Predicate.onField[String](&quot;string_field&quot;)(_.startsWith(&quot;a&quot;)),
+      Predicate.onField[Int](&quot;int_field&quot;)(_ % 2 == 0))
+    )
 
     sc.run()
     ()
@@ -367,10 +430,35 @@ def result = input.saveAsTypedParquetFile(&quot;gs://path-to-data/lake/output&qu
 <pre class="prettyprint"><code class="language-scala">import magnolify.parquet.ParquetArray.AvroCompat._
 </code></pre>
 <p>The same Avro schema evolution principles apply to Parquet, i.e. only append <code>OPTIONAL</code> or <code>REPEATED</code> fields with default <code>null</code> or <code>[]</code>. See this <a href="https://github.com/spotify/magnolify/blob/master/parquet/src/test/scala/magnolify/parquet/test/SchemaEvolutionSuite.scala">test</a> for some common scenarios w.r.t. Parquet schema evolution.</p>
-<h2><a href="#performance-tuning" name="performance-tuning" class="anchor"><span class="anchor-link"></span></a>Performance Tuning</h2>
-<p>Some tunings might be required when writing Parquet files to maximize the read performance. Some of the Parquet settings can be configured via Hadoop <a href="https://github.com/spotify/scio/blob/master/scio-parquet/src/main/resources/core-site.xml">core-site.xml</a> or <code>Configuration</code> argument.</p>
+<h2><a href="#configuring-parquet" name="configuring-parquet" class="anchor"><span class="anchor-link"></span></a>Configuring Parquet</h2>
+<p>The Parquet Java <a href="https://github.com/apache/parquet-mr">library</a> heavily relies on Hadoop&rsquo;s <code>Job</code> API. Therefore, in both the Parquet library and in scio-parquet, we use Hadoop&rsquo;s <a href="https://hadoop.apache.org/docs/r2.10.2/api/org/apache/hadoop/conf/Configuration.html">Configuration</a> class to manage most Parquet read and write options.</p>
+<p>The <code>Configuration</code> class, when initialized, will load default values from the first available <code>core-site.xml</code> found on the classpath. Scio-parquet provides a default <a href="https://github.com/spotify/scio/blob/main/scio-parquet/src/main/resources/core-site.xml"><code>core-site.xml</code> implementation</a>: if your Scio pipeline has a dependency on <code>scio-parquet</code>, these default options will be picked up in your pipeline.</p>
+<h3><a href="#overriding-the-default-configuration" name="overriding-the-default-configuration" class="anchor"><span class="anchor-link"></span></a>Overriding the Default Configuration</h3>
+<p>You can override the default configuration in two ways:</p>
+<ol>
+  <li>
+  <p>Declare a <code>core-site.xml</code> file of your own in your project&rsquo;s <code>src/main/resources</code> folder. Note that Hadoop can only pick one <code>core-site.xml</code> to read: if you override the file in your project, Hadoop will not read Scio&rsquo;s default <code>core-site.xml</code> at all, and none of its default options will be loaded.</p></li>
+  <li>
+  <p>Create an in-memory <code>Configuration</code> object for use with scio-parquet&rsquo;s <code>ReadParam</code> and <code>WriteParam</code>. Any options provided this way will be <em>appended</em> to Scio&rsquo;s default configuration.</p></li>
+</ol>
+<p>You can create and pass in a custom Configuration using our <code>ParquetConfiguration</code> helper, available in Scio 0.12.x and above:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.parquet.ParquetConfiguration
+
+data
+  .saveAsParquetAvroFile(args(&quot;output&quot;), conf = ParquetConfiguration.of(&quot;parquet.block.size&quot; -&gt; 536870912))
+</code></pre>
+<p>If you&rsquo;re on Scio 0.11.x or below, you&rsquo;ll have to create a <code>Configuration</code> object directly:</p>
+<pre class="prettyprint"><code class="language-scala">import org.apache.hadoop.conf.Configuration
+
+val parquetConf: Configuration = {
+  val conf: Configuration = new Configuration()
+  conf.setInt(&quot;parquet.block.size&quot;, 536870912)
+  conf
+}
+</code></pre>
+<h3><a href="#common-configuration-options" name="common-configuration-options" class="anchor"><span class="anchor-link"></span></a>Common Configuration Options</h3>
 <ul>
-  <li><code>parquet.block.size</code> - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB.</li>
+  <li><code>parquet.block.size</code> - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB, although you&rsquo;ll have to weigh the tradeoffs: a larger block size means fewer seek operations on blob storage, at the cost of having to load a larger row group into memory.</li>
   <li><code>fs.gs.inputstream.fadvise</code> - Parquet relies heavily on random seeks so this GCS connector setting should be set to <code>RANDOM</code>. See this <a href="https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more">blog post</a> for more.</li>
 </ul>
 <p>Here are some other recommended settings.</p>
@@ -378,6 +466,8 @@ def result = input.saveAsTypedParquetFile(&quot;gs://path-to-data/lake/output&qu
   <li><code>numShards</code> - This should be explicitly set so that the size of each output file is smaller than but close to <code>parquet.block.size</code>, i.e. 1 GiB. This guarantees that each file contains 1 row group only and reduces seeks.</li>
   <li><code>compression</code> - <code>SNAPPY</code> and <code>GZIP</code> work out of the box. Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better on GCS.</li>
 </ul>
+<h2><a href="#parquet-reads-in-scio-0-12-0-" name="parquet-reads-in-scio-0-12-0-" class="anchor"><span class="anchor-link"></span></a>Parquet Reads in Scio 0.12.0+</h2>
+<p>Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation, backed by the new Beam <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, by following the instructions <a href="../migrations/v0.12.0-Migration-Guide.html#parquet-reads">here</a>.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/io/Parquet.md" title="Edit this page" class="md-source-file md-edit">
@@ -386,7 +476,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.11.15+0-5de2e2a5+20230503-1745*
+0.0.0+1-94c05b67+20230505-1317*
 </span>
 </div>
 </article>
