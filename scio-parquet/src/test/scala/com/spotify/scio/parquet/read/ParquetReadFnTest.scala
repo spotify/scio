@@ -318,8 +318,8 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   private def listFiles(dir: String): Seq[String] =
     Files
       .list(Paths.get(dir))
-      .map(_.toFile.toPath.toString)
       .iterator()
       .asScala
+      .map(_.toFile.toPath.toString)
       .toSeq
 }
