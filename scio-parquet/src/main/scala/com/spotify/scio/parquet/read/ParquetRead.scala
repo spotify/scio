@@ -28,7 +28,6 @@ import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.transforms.{PTransform, ParDo, SerializableFunction}
 import org.apache.beam.sdk.values.{PBegin, PCollection}
 import org.apache.hadoop.conf.Configuration
@@ -51,12 +50,7 @@ object ParquetRead {
         input
           .apply(FileIO.`match`().filepattern(filePattern))
           .apply(FileIO.readMatches)
-          .apply(new PTransform[PCollection[ReadableFile], PCollection[R]]() {
-            override def expand(input: PCollection[ReadableFile]): PCollection[R] =
-              input.apply(readFiles(readSupportFactory, conf, projectionFn))
-            override def populateDisplayData(builder: DisplayData.Builder): Unit =
-              super.populateDisplayData(builder)
-          })
+          .apply(readFiles(readSupportFactory, conf, projectionFn))
       }
     }
 

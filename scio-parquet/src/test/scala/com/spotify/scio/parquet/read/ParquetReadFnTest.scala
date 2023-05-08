@@ -62,27 +62,11 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     val typedData = sc.parallelize(typedRecords)
     val genericData = sc.parallelize(avroRecords)
 
-    typedData.saveAsTypedParquetFile(
-      s"$directory/typed/multi",
-      conf = multiRowGroupConf,
-      numShards = 2
-    )
-    typedData.saveAsTypedParquetFile(
-      s"$directory/typed/single",
-      conf = singleRowGroupConf,
-      numShards = 2
-    )
+    typedData.saveAsTypedParquetFile(s"$directory/typed/multi", conf = multiRowGroupConf)
+    typedData.saveAsTypedParquetFile(s"$directory/typed/single", conf = singleRowGroupConf)
 
-    genericData.saveAsParquetAvroFile(
-      s"$directory/avro/multi",
-      conf = multiRowGroupConf,
-      numShards = 2
-    )
-    genericData.saveAsParquetAvroFile(
-      s"$directory/avro/single",
-      conf = singleRowGroupConf,
-      numShards = 2
-    )
+    genericData.saveAsParquetAvroFile(s"$directory/avro/multi", conf = multiRowGroupConf)
+    genericData.saveAsParquetAvroFile(s"$directory/avro/single", conf = singleRowGroupConf)
 
     sc.run()
   }
