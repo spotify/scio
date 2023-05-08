@@ -117,14 +117,14 @@ object ParquetRead {
     )
   }
 
-  def readAvroSpecificRecordFiles[T <: SpecificRecordBase: ClassTag](
+  def readAvro[T <: SpecificRecordBase: ClassTag](
     projection: Schema = null,
     predicate: FilterPredicate = null,
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[T]] =
-    readAvroSpecificRecordFiles[T, T](projection, identity, predicate, conf)
+    readAvro[T, T](projection, identity, predicate, conf)
 
-  def readAvroSpecificRecordFiles[T <: SpecificRecordBase: ClassTag, R](
+  def readAvro[T <: SpecificRecordBase: ClassTag, R](
     projection: Schema,
     projectionFn: T => R,
     predicate: FilterPredicate,

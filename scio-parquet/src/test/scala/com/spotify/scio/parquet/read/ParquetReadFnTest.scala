@@ -238,12 +238,12 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     )
   }
 
-  "readAvroSpecificRecordFiles" should "work without a projection or a projectionFn" in {
+  "readAvro" should "work without a projection or a projectionFn" in {
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"$directory/avro/single"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles[TestRecord](
+        ParquetRead.readAvro[TestRecord](
           predicate = Predicate[TestRecord](_.getIntField == 300)
         )
       ) should containSingleValue(
@@ -260,7 +260,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc
       .parallelize(listFiles(s"$directory/avro/single"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles[TestRecord](
+        ParquetRead.readAvro[TestRecord](
           projection,
           Predicate[TestRecord](_.getIntField == 300)
         )
@@ -276,7 +276,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc
       .parallelize(listFiles(s"$directory/avro/single"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles(
+        ParquetRead.readAvro(
           projection,
           (tr: TestRecord) => tr.getIntField.toInt,
           Predicate[TestRecord](_.getIntField == 300),
@@ -294,7 +294,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc
       .parallelize(listFiles(s"$directory/avro/multi"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles(
+        ParquetRead.readAvro(
           projection,
           (tr: TestRecord) => tr.getIntField.toInt,
           Predicate[TestRecord](_.getIntField == 300),
@@ -306,7 +306,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
   it should "be serializable" in {
     SerializableUtils.ensureSerializable(
-      ParquetRead.readAvroSpecificRecordFiles(
+      ParquetRead.readAvro(
         Projection[TestRecord](_.getIntField),
         (tr: TestRecord) => tr.getIntField.toInt,
         Predicate[TestRecord](_.getIntField == 300),
