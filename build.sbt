@@ -100,7 +100,6 @@ val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
-val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.9"
 val elasticsearch8Version = "8.7.1"
 val featranVersion = "0.8.0"
@@ -453,7 +452,6 @@ lazy val root: Project = Project("scio", file("."))
     `scio-avro`,
     `scio-cassandra3`,
     `scio-core`,
-    `scio-elasticsearch6`,
     `scio-elasticsearch7`,
     `scio-elasticsearch8`,
     `scio-examples`,
@@ -740,31 +738,6 @@ lazy val `scio-cassandra3`: Project = project
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test
-    )
-  )
-
-lazy val `scio-elasticsearch6`: Project = project
-  .in(file("scio-elasticsearch/es6"))
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    description := "Scio add-on for writing to Elasticsearch",
-    libraryDependencies ++= Seq(
-      // compile
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
-      "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
-      "org.elasticsearch.client" % "transport" % elasticsearch6Version,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // test
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
     )
   )
 
