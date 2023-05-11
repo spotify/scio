@@ -278,7 +278,6 @@ val commonSettings = formatSettings ++
       sys.props.get("bigquery.project").map(project => s"-Dbigquery.project=$project") ++
       sys.props.get("bigquery.secret").map(secret => s"-Dbigquery.secret=$secret"),
     Test / testOptions += Tests.Argument("-oD"),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
         Nil
@@ -1201,6 +1200,7 @@ lazy val `scio-examples`: Project = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
+      "junit" % "junit" % junitVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
     // exclude problematic sources if we don't have GCP credentials
@@ -1217,7 +1217,8 @@ lazy val `scio-examples`: Project = project
       (Test / definedTests).value,
       List("com.spotify.scio.examples.WordCountTest"),
       ForkOptions().withRunJVMOptions((Test / javaOptions).value.toVector)
-    )
+    ),
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a")
   )
 
 lazy val `scio-repl`: Project = project
@@ -1390,7 +1391,8 @@ lazy val `scio-smb`: Project = project
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
     },
-    compileOrder := CompileOrder.JavaThenScala
+    compileOrder := CompileOrder.JavaThenScala,
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a")
   )
 
 lazy val `scio-redis`: Project = project
