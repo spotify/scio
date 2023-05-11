@@ -17,12 +17,13 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.TestRecord
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.avro.Account
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.values.SCollection
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.util.SerializableUtils
@@ -38,10 +39,12 @@ case class Record(strField: String)
 class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   private val typedRecords = (1 to 250).map(i => Record(i.toString)).toList
   private val avroRecords = (251 to 500).map(i =>
-    TestRecord
+    Account
       .newBuilder()
-      .setIntField(i)
-      .setStringField(i.toString)
+      .setId(i)
+      .setType(i.toString)
+      .setName(i.toString)
+      .setAmount(i.toDouble)
       .build
   )
 
@@ -60,13 +63,13 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
     val sc = ScioContext()
     val typedData = sc.parallelize(typedRecords)
-    val genericData = sc.parallelize(avroRecords)
+    val avroData = sc.parallelize(avroRecords)
 
     typedData.saveAsTypedParquetFile(s"$directory/typed/multi", conf = multiRowGroupConf)
     typedData.saveAsTypedParquetFile(s"$directory/typed/single", conf = singleRowGroupConf)
 
-    genericData.saveAsParquetAvroFile(s"$directory/avro/multi", conf = multiRowGroupConf)
-    genericData.saveAsParquetAvroFile(s"$directory/avro/single", conf = singleRowGroupConf)
+    avroData.saveAsParquetAvroFile(s"$directory/avro/multi", conf = multiRowGroupConf)
+    avroData.saveAsParquetAvroFile(s"$directory/avro/single", conf = singleRowGroupConf)
 
     sc.run()
   }
@@ -170,9 +173,9 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   "readAvroGenericRecordFiles" should "work with a projection but no projectionFn" in {
-    val projection = Projection[TestRecord](_.getIntField)
+    val projection = Projection[Account](_.getId)
     val expectedOut: Seq[GenericRecord] = (251 to 300).map { i =>
-      new GenericRecordBuilder(projection).set("int_field", i).build()
+      new GenericRecordBuilder(projection).set("id", i).build()
     }
 
     implicit val coder = Coder.avroGenericRecordCoder(projection)
@@ -182,7 +185,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       .readFiles(
         ParquetRead.readAvroGenericRecordFiles(
           projection,
-          predicate = Predicate[TestRecord](_.getIntField <= 300)
+          predicate = Predicate[Account](_.getId <= 300)
         )
       ) should containInAnyOrder(expectedOut)
 
@@ -190,7 +193,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "work with a projection and projectionFn" in {
-    val projection = Projection[TestRecord](_.getIntField)
+    val projection = Projection[Account](_.getId)
 
     implicit val coder = Coder.avroGenericRecordCoder(projection)
     val sc = ScioContext()
@@ -199,8 +202,8 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       .readFiles(
         ParquetRead.readAvroGenericRecordFiles(
           projection,
-          _.get("int_field").toString.toInt,
-          predicate = Predicate[TestRecord](_.getIntField <= 300),
+          _.get("id").toString.toInt,
+          predicate = Predicate[Account](_.getId <= 300),
           conf = null
         )
       ) should containInAnyOrder(251 to 300)
@@ -209,7 +212,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "work with a projection and projectionFn on files with multiple row groups" in {
-    val projection = Projection[TestRecord](_.getIntField)
+    val projection = Projection[Account](_.getId)
 
     implicit val coder = Coder.avroGenericRecordCoder(projection)
     val sc = ScioContext()
@@ -218,8 +221,8 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       .readFiles(
         ParquetRead.readAvroGenericRecordFiles(
           projection,
-          _.get("int_field").toString.toInt,
-          predicate = Predicate[TestRecord](_.getIntField <= 300),
+          _.get("id").toString.toInt,
+          predicate = Predicate[Account](_.getId <= 300),
           conf = null
         )
       ) should containInAnyOrder(251 to 300)
@@ -230,9 +233,9 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   it should "be serializable" in {
     SerializableUtils.ensureSerializable(
       ParquetRead.readAvroGenericRecordFiles(
-        Projection[TestRecord](_.getIntField),
+        Projection[Account](_.getId),
         _.get("int_field").toString.toInt,
-        predicate = Predicate[TestRecord](_.getIntField <= 300),
+        predicate = Predicate[Account](_.getId <= 300),
         conf = null
       )
     )
@@ -243,34 +246,36 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc
       .parallelize(listFiles(s"$directory/avro/single"))
       .readFiles(
-        ParquetRead.readAvro[TestRecord](
-          predicate = Predicate[TestRecord](_.getIntField == 300)
+        ParquetRead.readAvro[Account](
+          predicate = Predicate[Account](_.getId == 300)
         )
-      ) should containSingleValue(
-      TestRecord.newBuilder().setIntField(300).setStringField("300").build()
-    )
+      ) should containSingleValue(avroRecords.find(_.getId == 300).get)
     sc.run()
   }
 
   it should "work with a projection but not a projectionFn" in {
-    val projection = Projection[TestRecord](_.getIntField)
-    implicit val coder = Coder.beam(AvroCoder.of(classOf[TestRecord], projection))
+    val projection = Projection[Account](_.getId)
 
     val sc = ScioContext()
-    sc
+    val output = sc
       .parallelize(listFiles(s"$directory/avro/single"))
       .readFiles(
-        ParquetRead.readAvro[TestRecord](
+        ParquetRead.readAvro[Account](
           projection,
-          Predicate[TestRecord](_.getIntField == 300)
+          Predicate[Account](_.getId == 300)
         )
-      ) should containSingleValue(TestRecord.newBuilder().setIntField(300).build())
+      )
+
+    output should haveSize(1)
+    output should satisfy[Account](
+      _.forall(a => a.getId == 300 && a.getName == null && a.getType == null && a.getAmount == null)
+    )
     sc.run()
   }
 
   it should "work with a projection and a projectionFn" in {
-    val projection = Projection[TestRecord](_.getIntField)
-    implicit val coder = Coder.beam(AvroCoder.of(classOf[TestRecord], projection))
+    val projection = Projection[Account](_.getId)
+    implicit val coder = Coder.beam(AvroCoder.of(classOf[Account], projection))
 
     val sc = ScioContext()
     sc
@@ -278,8 +283,8 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       .readFiles(
         ParquetRead.readAvro(
           projection,
-          (tr: TestRecord) => tr.getIntField.toInt,
-          Predicate[TestRecord](_.getIntField == 300),
+          (a: Account) => a.getId.toInt,
+          Predicate[Account](_.getId == 300),
           null
         )
       ) should containSingleValue(300)
@@ -287,8 +292,8 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "work with a projection and a projectionFn on files with multiple row groups" in {
-    val projection = Projection[TestRecord](_.getIntField)
-    implicit val coder = Coder.beam(AvroCoder.of(classOf[TestRecord], projection))
+    val projection = Projection[Account](_.getId)
+    implicit val coder = Coder.beam(AvroCoder.of(classOf[Account], projection))
 
     val sc = ScioContext()
     sc
@@ -296,8 +301,8 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       .readFiles(
         ParquetRead.readAvro(
           projection,
-          (tr: TestRecord) => tr.getIntField.toInt,
-          Predicate[TestRecord](_.getIntField == 300),
+          (tr: Account) => tr.getId.toInt,
+          Predicate[Account](_.getId == 300),
           null
         )
       ) should containSingleValue(300)
@@ -307,9 +312,9 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   it should "be serializable" in {
     SerializableUtils.ensureSerializable(
       ParquetRead.readAvro(
-        Projection[TestRecord](_.getIntField),
-        (tr: TestRecord) => tr.getIntField.toInt,
-        Predicate[TestRecord](_.getIntField == 300),
+        Projection[Account](_.getId),
+        (tr: Account) => tr.getId.toInt,
+        Predicate[Account](_.getId == 300),
         null
       )
     )
