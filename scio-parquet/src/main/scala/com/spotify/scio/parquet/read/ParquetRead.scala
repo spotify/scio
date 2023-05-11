@@ -24,7 +24,7 @@ import magnolify.parquet.ParquetType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.reflect.ReflectData
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
@@ -65,7 +65,7 @@ object ParquetRead {
     tfx.asInstanceOf[PTransform[PCollection[ReadableFile], PCollection[R]]]
   }
 
-  def readTyped[T: ClassTag: Coder: ParquetType](
+  def readTyped[T: ClassTag: ParquetType: Coder](
     predicate: FilterPredicate = null,
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[T]] = readTyped[T, T](
@@ -74,7 +74,7 @@ object ParquetRead {
     conf
   )
 
-  def readTyped[T: ClassTag: Coder: ParquetType, R](
+  def readTyped[T: ClassTag: ParquetType: Coder, R](
     projectionFn: T => R,
     predicate: FilterPredicate,
     conf: Configuration
@@ -117,14 +117,14 @@ object ParquetRead {
     )
   }
 
-  def readAvro[T <: SpecificRecordBase: ClassTag](
+  def readAvro[T <: SpecificRecord: ClassTag](
     projection: Schema = null,
     predicate: FilterPredicate = null,
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[T]] =
     readAvro[T, T](projection, identity, predicate, conf)
 
-  def readAvro[T <: SpecificRecordBase: ClassTag, R](
+  def readAvro[T <: SpecificRecord: ClassTag, R](
     projection: Schema,
     projectionFn: T => R,
     predicate: FilterPredicate,
