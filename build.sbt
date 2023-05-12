@@ -786,7 +786,7 @@ lazy val `scio-elasticsearch7`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
-      "co.elastic.clients" % "elasticsearch-java" % elasticsearch7Version % Runtime
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch7Version
     )
   )
 
@@ -803,7 +803,7 @@ lazy val `scio-elasticsearch8`: Project = project
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
-      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version % Runtime
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version
     )
   )
 
