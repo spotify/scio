@@ -373,8 +373,7 @@ lazy val publishSettings = Def.settings(
 // for modules containing java jUnit 4 tests
 lazy val jUnitSettings = Def.settings(
   libraryDependencies ++= Seq(
-    "com.github.sbt" % "junit-interface" % junitInterfaceVersion % Test,
-    "junit" % "junit" % junitVersion % Test
+    "com.github.sbt" % "junit-interface" % junitInterfaceVersion % Test
   ),
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a")
 )
@@ -577,9 +576,7 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Provided,
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
-      // test
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided
     ),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio"
@@ -587,6 +584,11 @@ lazy val `scio-core`: Project = project
 
 lazy val `scio-test`: Project = project
   .in(file("scio-test"))
+  .dependsOn(
+    `scio-core` % "compile->compile;it->it",
+    `scio-avro` % "compile->test;it->it"
+  )
+  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(itSettings)
@@ -602,7 +604,9 @@ lazy val `scio-test`: Project = project
       // umbrella module
       moduleFilter("org.scalatest", "scalatest"),
       // implicit usage not caught
-      moduleFilter("com.spotify", "magnolify-guava")
+      moduleFilter("com.spotify", "magnolify-guava"),
+      // junit is required by beam but marked as provided
+      moduleFilter("junit", "junit")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
@@ -614,6 +618,7 @@ lazy val `scio-test`: Project = project
       "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
+      "junit" % "junit" % junitVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -642,11 +647,6 @@ lazy val `scio-test`: Project = project
       List("com.spotify.scio.ArgsTest"),
       (Test / forkOptions).value
     )
-  )
-  .configs(IntegrationTest)
-  .dependsOn(
-    `scio-core` % "test->test;compile->compile;it->it",
-    `scio-avro` % "compile->test;it->it"
   )
 
 lazy val `scio-macros`: Project = project
@@ -837,6 +837,10 @@ lazy val `scio-elasticsearch6`: Project = project
 
 lazy val `scio-elasticsearch7`: Project = project
   .in(file("scio-elasticsearch/es7"))
+  .dependsOn(
+    `scio-core`,
+    `scio-test` % "test"
+  )
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
@@ -861,10 +865,6 @@ lazy val `scio-elasticsearch7`: Project = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
-  )
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
   )
 
 lazy val `scio-elasticsearch8`: Project = project
