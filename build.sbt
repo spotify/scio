@@ -187,17 +187,13 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
-  mimaBinaryIssueFilters := Seq(
-    // minor scio-core breaking changes for 0.12.8
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.values.SCollectionWithSideOutput.this"
-    )
-  ),
-  mimaPreviousArtifacts :=
-    previousVersion(version.value)
-      .filter(_ => publishArtifact.value)
-      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
-      .toSet
+  mimaBinaryIssueFilters := Seq.empty,
+  // enable back after 0.13
+  mimaPreviousArtifacts := Set.empty
+//    previousVersion(version.value)
+//      .filter(_ => publishArtifact.value)
+//      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+//      .toSet
 )
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
