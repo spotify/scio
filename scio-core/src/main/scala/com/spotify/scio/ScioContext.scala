@@ -706,8 +706,8 @@ class ScioContext private[scio] (
    */
   def textFile(
     path: String,
-    compression: beam.Compression = beam.Compression.AUTO,
-    emptyMatchTreatment: beam.fs.EmptyMatchTreatment = beam.fs.EmptyMatchTreatment.DISALLOW
+    compression: beam.Compression = TextIO.ReadParam.DefaultCompression,
+    emptyMatchTreatment: beam.fs.EmptyMatchTreatment = TextIO.ReadParam.DefaultEmptyMatchTreatment
   ): SCollection[String] =
     this.read(TextIO(path))(TextIO.ReadParam(compression, emptyMatchTreatment))
 
