@@ -271,6 +271,10 @@ val commonSettings = formatSettings ++
     fork := true,
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / javaOptions ++= Seq(
+      "-Xms512m",
+      "-Xmx2G",
+      "-XX:+UseParallelGC",
+      "-Dfile.encoding=UTF8",
       "-Dscio.ignoreVersionWarning=true",
       "-Dorg.slf4j.simpleLogger.defaultLogLevel=info",
       "-Dorg.slf4j.simpleLogger.logFile=scio.log"
@@ -533,6 +537,8 @@ lazy val `scio-core`: Project = project
       (ThisBuild / baseDirectory).value / "build.sbt",
       (ThisBuild / baseDirectory).value / "version.sbt"
     ),
+    // required by service-loader
+    unusedCompileDependenciesFilter -= moduleFilter("com.google.auto.service", "auto-service"),
     libraryDependencies ++= Seq(
       // compile
       "com.chuusai" %% "shapeless" % shapelessVersion,
@@ -543,6 +549,7 @@ lazy val `scio-core`: Project = project
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion, // TODO remove from core
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
+      "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
