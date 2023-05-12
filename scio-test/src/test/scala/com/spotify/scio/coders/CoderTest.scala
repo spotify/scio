@@ -408,7 +408,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     import java.nio.file.FileSystems
 
     // TableRowJsonCoder
-    // SpecificRecordBase
     // Message
     // ByteString
     BigDecimal("1234") coderShould notFallback()

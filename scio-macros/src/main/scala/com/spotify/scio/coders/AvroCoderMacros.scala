@@ -17,14 +17,14 @@
 
 package com.spotify.scio.coders
 
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 
 import scala.reflect.macros.blackbox
 
 private[coders] object AvroCoderMacros {
 
   /** Generate a coder which does not serialize the schema and relies exclusively on types. */
-  def staticInvokeCoder[T <: SpecificRecordBase: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
+  def staticInvokeCoder[T <: SpecificRecord: c.WeakTypeTag](c: blackbox.Context): c.Tree = {
     import c.universe._
     val wtt = weakTypeOf[T]
     val companioned = wtt.typeSymbol
