@@ -17,12 +17,10 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.testing.PipelineSpec
 import com.twitter.algebird.{Aggregator, Semigroup}
-
 import com.spotify.scio.coders.Coder
 
-class SCollectionWithFanoutTest extends PipelineSpec {
+class SCollectionWithFanoutTest extends NamedTransformSpec {
   "SCollectionWithFanout" should "support aggregate()" in {
     runWithContext { sc =>
       val p = sc.parallelize(1 to 100).withFanout(10)
@@ -72,5 +70,44 @@ class SCollectionWithFanoutTest extends PipelineSpec {
       sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
       sum(1 to 100: _*) should containSingleValue(5050)
     }
+  }
+
+  private def shouldFanOut[T](fn: SCollectionWithFanout[Int] => SCollection[T]) = {
+    runWithContext { sc =>
+      val p = fn(sc.parallelize(1 to 100).withFanout(10))
+      assertGraphContainsStepRegex(p, "Combine\\.perKeyWithFanout\\([^)]*\\)")
+    }
+  }
+
+  it should "fan out with aggregate(zeroValue)(seqOp)" in {
+    shouldFanOut(_.aggregate(0.0)(_ + _, _ + _))
+  }
+
+  it should "fan out with aggregate(Aggregator)" in {
+    shouldFanOut(_.aggregate(Aggregator.max[Int]))
+  }
+
+  it should "fan out with aggregate(MonoidAggregator)" in {
+    shouldFanOut(_.aggregate(Aggregator.immutableSortedReverseTake[Int](5)))
+  }
+
+  it should "fan out with combine()" in {
+    shouldFanOut(_.combine(_.toDouble)(_ + _)(_ + _))
+  }
+
+  it should "fan out with fold(zeroValue)(op)" in {
+    shouldFanOut(_.fold(0)(_ + _))
+  }
+
+  it should "fan out with fold(Monoid)" in {
+    shouldFanOut(_.fold)
+  }
+
+  it should "fan out with reduce()" in {
+    shouldFanOut(_.reduce(_ + _))
+  }
+
+  it should "fan out with sum()" in {
+    shouldFanOut(_.sum)
   }
 }

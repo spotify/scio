@@ -25,7 +25,7 @@ import os
 
 
 def mkVals(n):
-    return list(string.ascii_uppercase.replace("F", "")[:n])
+    return list(string.ascii_uppercase[:n])
 
 
 def mkBounds(n):
@@ -43,7 +43,7 @@ def coder_class(out, n, scala_version):
         f"""
 final private[coders] class Tuple{n}Coder[{', '.join(types)}]({', '.join(f'val {t.lower()}c: BCoder[{t}]' for t in types)}) extends StructuredCoder[({', '.join(types)})] {{
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List({', '.join(f'{t.lower()}c' for t in types)}).asJava
 
   @inline def onErrorMsg[{t_type}](msg: => (String, String))(f: => {t_type}): {t_type} =
     try {{

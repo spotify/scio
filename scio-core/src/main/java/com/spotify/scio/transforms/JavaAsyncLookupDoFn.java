@@ -59,6 +59,22 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
     super(maxPendingRequests, cacheSupplier);
   }
 
+  /**
+   * Create a {@link JavaAsyncLookupDoFn} instance.
+   *
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
+   * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the
+   *     same input
+   * @param cacheSupplier supplier for lookup cache.
+   */
+  public JavaAsyncLookupDoFn(
+      int maxPendingRequests,
+      boolean deduplicate,
+      BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
+    super(maxPendingRequests, deduplicate, cacheSupplier);
+  }
+
   @Override
   public BaseAsyncLookupDoFn.Try<B> success(B output) {
     return new Try<>(output);

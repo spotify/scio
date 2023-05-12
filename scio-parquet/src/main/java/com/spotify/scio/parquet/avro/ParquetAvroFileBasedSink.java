@@ -27,7 +27,11 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.parquet.avro.AvroDataSupplier;
 import org.apache.parquet.avro.AvroParquetWriter;
+import org.apache.parquet.avro.AvroWriteSupport;
+import org.apache.parquet.avro.SpecificDataSupplier;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
@@ -107,9 +111,24 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
+      Configuration configuration = conf.get();
+
       AvroParquetWriter.Builder<T> builder =
           AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
-      writer = WriterUtils.build(builder, conf.get(), compression);
+
+      // Workaround for PARQUET-2265
+      if (configuration.getClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, null) != null) {
+        Class<? extends AvroDataSupplier> dataModelSupplier =
+            configuration.getClass(
+                AvroWriteSupport.AVRO_DATA_SUPPLIER,
+                SpecificDataSupplier.class,
+                AvroDataSupplier.class);
+        builder =
+            builder.withDataModel(
+                ReflectionUtils.newInstance(dataModelSupplier, configuration).get());
+      }
+
+      writer = WriterUtils.build(builder, configuration, compression);
     }
 
     @Override

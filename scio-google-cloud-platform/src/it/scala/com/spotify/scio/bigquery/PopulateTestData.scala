@@ -102,7 +102,7 @@ object PopulateTestData {
     // BeamSchemaIT
     ensureDatasetExists(bq, projectId, "schema_it", "EU")
 
-    // BigQueryPartitionUtilIT
+    // BigQueryPartitionUtilIT & BigQueryIT
     ensureDatasetExists(bq, projectId, "samples_eu", "EU")
     ensureDatasetExists(bq, projectId, "samples_us", "US")
     ensureDatasetExists(bq, projectId, "partition_a", "EU")

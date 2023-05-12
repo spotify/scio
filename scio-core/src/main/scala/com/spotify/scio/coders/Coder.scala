@@ -359,26 +359,17 @@ final private[scio] class TransformCoder[T, U](
   from: U => T
 ) extends CustomCoder[T] {
 
-  // save original functions hashCodes to be sure we uniquely identify TransformCoders after serialization
-  // on deserialization, those won't be recomputed even if the function objects aren't equal
-  private val toHash: Int = to.hashCode()
-  private val fromHash: Int = from.hashCode()
-
   override def toString: String = s"TransformCoder[$typeName]($bcoder)"
 
   override def equals(obj: Any): Boolean = obj match {
     case that: TransformCoder[_, _] =>
-      typeName == that.typeName && bcoder == that.bcoder && toHash == that.toHash && fromHash == that.fromHash
+      // Assume that all TransformCoder from typeName using bcoder are equal
+      typeName == that.typeName && bcoder == that.bcoder
     case _ =>
       false
   }
 
-  override def hashCode(): Int = Objects.hash(
-    typeName,
-    bcoder,
-    toHash: java.lang.Integer,
-    fromHash: java.lang.Integer
-  )
+  override def hashCode(): Int = Objects.hash(typeName, bcoder)
   override def encode(value: T, os: OutputStream): Unit =
     bcoder.encode(to(value), os)
 
@@ -664,6 +655,8 @@ object Coder
   implicit val jDurationCoder: Coder[java.time.Duration] = JavaCoders.jDurationCoder
   implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
   implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
+  implicit val jSqDate: Coder[java.sql.Date] = JavaCoders.jSqlDate
+  implicit val jSqlTime: Coder[java.sql.Time] = JavaCoders.jSqlTime
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
 
   def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =

@@ -65,6 +65,19 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
     this.lookupFn = lookupFn;
   }
 
+  GrpcDoFn(
+      ChannelSupplier channelSupplier,
+      SerializableFunction<Channel, ClientT> newClientFn,
+      SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn,
+      Integer maxPendingRequests,
+      boolean deduplicate,
+      CacheSupplier<RequestT, ResponseT> cacheSupplier) {
+    super(maxPendingRequests, deduplicate, cacheSupplier);
+    this.channelSupplier = channelSupplier;
+    this.newClientFn = newClientFn;
+    this.lookupFn = lookupFn;
+  }
+
   @Override
   public ResourceType getResourceType() {
     // gRPC stubs are thread safe, we can share the client per instance

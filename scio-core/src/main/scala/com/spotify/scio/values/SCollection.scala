@@ -202,16 +202,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     name: Option[String],
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
-    val t =
-      if (
-        (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
-        && ScioUtil.isWindowed(this)
-      ) {
-        // In case PCollection is windowed
-        transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
-      } else {
-        transform
-      }
+    val isCombineGlobally = classOf[Combine.Globally[T, U]].isAssignableFrom(transform.getClass)
+    val t = if (isCombineGlobally && ScioUtil.isWindowed(this)) {
+      // In case PCollection is windowed
+      transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
+    } else {
+      transform
+    }
     context.wrap(this.applyInternal(name, t))
   }
 
@@ -905,7 +902,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(Combine.globally(Functions.reduceFn(context, op)).withoutDefaults())
 
   /**
-   * Return a sampled subset of this SCollection.
+   * Return a sampled subset of this SCollection containing exactly `sampleSize` items. Involves
+   * combine operation resulting in shuffling. All the elements of the output should fit into main
+   * memory of a single worker machine.
+   *
    * @return
    *   a new SCollection whose single value is an `Iterable` of the samples
    * @group transform
@@ -915,7 +915,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Return a sampled subset of this SCollection.
+   * Return a sampled subset of this SCollection. Does not trigger shuffling.
+   *
+   * @param withReplacement
+   *   if `true` the same element can be produced more than once, otherwise the same element will be
+   *   sampled only once
+   * @param fraction
+   *   the sampling fraction
    * @group transform
    */
   def sample(withReplacement: Boolean, fraction: Double): SCollection[T] =
@@ -1151,7 +1157,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
-    new SCollectionWithSideOutput[T](internal, context, sides)
+    new SCollectionWithSideOutput[T](this, sides)
 
   // =======================================================================
   // Windowing operations

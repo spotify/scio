@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery.client
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
 import com.spotify.scio.bigquery.{Table => STable}
-import com.spotify.scio.bigquery.client.BigQuery.Client
+import com.spotify.scio.bigquery.client.BigQuery.{isDML, Client}
 import com.spotify.scio.bigquery.{BigQueryUtil, TableRow}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.QueryPriority
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -39,10 +39,7 @@ private[client] object QueryOps {
 
   private val Priority = if (isInteractive) "INTERACTIVE" else "BATCH"
 
-  private[scio] def isDML(sqlQuery: String): Boolean =
-    sqlQuery.toUpperCase().matches("(UPDATE|MERGE|INSERT|DELETE).*")
-
-  final private[scio] case class QueryJobConfig(
+  final private case class QueryJobConfig(
     sql: String,
     useLegacySql: Boolean,
     dryRun: Boolean = false,

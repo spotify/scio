@@ -73,20 +73,27 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
       BoundedWindow window) {
     flush(out);
 
-    final UUID uuid = UUID.randomUUID();
-    futures.computeIfAbsent(
-        uuid,
-        key ->
-            addCallback(
-                processElement(element),
-                r -> {
-                  results.add(new Result(r, key, timestamp, window));
-                  return null;
-                },
-                t -> {
-                  errors.add(t);
-                  return null;
-                }));
+    try {
+      final UUID uuid = UUID.randomUUID();
+      final FutureT future = processElement(element);
+      futures.put(uuid, handleOutput(future, uuid, timestamp, window));
+    } catch (Exception e) {
+      LOG.error("Failed to process element", e);
+      throw e;
+    }
+  }
+
+  private FutureT handleOutput(FutureT future, UUID key, Instant timestamp, BoundedWindow window) {
+    return addCallback(
+        future,
+        output -> {
+          results.add(new Result(output, key, timestamp, window));
+          return null;
+        },
+        throwable -> {
+          errors.add(throwable);
+          return null;
+        });
   }
 
   private void flush(OutputReceiver<OutputT> outputReceiver) {

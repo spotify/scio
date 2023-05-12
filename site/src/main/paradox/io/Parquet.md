@@ -112,6 +112,66 @@ def yourAvroSchema: org.apache.avro.Schema = ???
 def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output", schema = yourAvroSchema)
 ```
 
+### Logical Types
+
+If your Avro schema contains a logical type, you'll need to supply an additional Configuration parameter for your reads and writes.
+
+If you're using the default version of Avro (1.8), you can use Scio's pre-built logical type conversions:
+
+```scala mdoc:reset
+import com.spotify.scio._
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.parquet.avro._
+import com.spotify.scio.avro.TestRecord
+
+val sc: ScioContext = ScioContext()
+val data: SCollection[TestRecord] = sc.parallelize(List[TestRecord]())
+
+// Reads
+import com.spotify.scio.parquet.ParquetConfiguration
+
+import org.apache.parquet.avro.AvroReadSupport
+
+sc.parquetAvroFile(
+  "somePath",
+  conf = ParquetConfiguration.of(AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier])
+)
+
+// Writes
+import org.apache.parquet.avro.AvroWriteSupport
+
+data.saveAsParquetAvroFile(
+  "somePath",
+  conf = ParquetConfiguration.of(AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier])
+)
+```
+
+(If you're using `scio-smb`, you can use the provided class `org.apache.beam.sdk.extensions.smb.AvroLogicalTypeSupplier` instead.)
+
+If you're using Avro 1.11, you'll have to create your own logical type supplier class, as Scio's `LogicalTypeSupplier` uses
+classes present in Avro 1.8 but not 1.11. A sample Avro 1.11 logical-type supplier might look like:
+
+```scala
+import org.apache.avro.Conversions;
+import org.apache.avro.data.TimeConversions;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.specific.SpecificData;
+import org.apache.parquet.avro.AvroDataSupplier;
+
+case class AvroLogicalTypeSupplier() extends AvroDataSupplier {
+  override def get(): GenericData = {
+    val specificData = SpecificData.get()
+
+    // Add conversions as needed
+    specificData.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion())
+
+    specificData
+  }
+}
+```
+
+Then, you'll have to specify your logical type supplier class in your `Configuration` as outlined above.
+
 ## Case classes
 
 Scio uses [magnolify-parquet](https://github.com/spotify/magnolify/blob/master/docs/parquet.md) to derive Parquet reader and writer for case classes at compile time, similar to how @ref:[coders](../internals/Coders.md) work. See this [mapping table](https://github.com/spotify/magnolify/blob/master/docs/mapping.md) for how Scala and Parquet types map; enum type mapping is also specifically [documented](https://github.com/spotify/magnolify/blob/main/docs/enums.md).

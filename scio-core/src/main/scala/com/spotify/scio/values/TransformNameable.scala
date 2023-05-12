@@ -40,7 +40,7 @@ trait TransformNameable {
       nameProvider.getClass != classOf[ConstNameProvider],
       s"withName() has already been used to set '$tfName' as the name for the next transform."
     )
-    nameProvider = new ConstNameProvider(name)
+    nameProvider = ConstNameProvider(name)
     this
   }
 }

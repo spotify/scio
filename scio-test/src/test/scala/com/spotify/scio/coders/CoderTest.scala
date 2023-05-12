@@ -17,31 +17,29 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.proto.OuterClassForProto
-import com.spotify.scio.testing.CoderAssertions._
-import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException, NullableCoder, StringUtf8Coder}
-import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
-import org.scalactic.Equality
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.apache.beam.sdk.util.SerializableUtils
-
-import scala.jdk.CollectionConverters._
-import scala.collection.{mutable => mut}
-import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
-import org.apache.beam.sdk.testing.CoderProperties
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
 import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.proto.OuterClassForProto
+import com.spotify.scio.testing.CoderAssertions._
 import com.twitter.algebird.Moments
+import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.{Coder => BCoder, CoderException, NullableCoder, StringUtf8Coder}
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.testing.CoderProperties
+import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.io.output.NullOutputStream
+import org.scalactic.Equality
 import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
+import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
-import java.time.{Instant, LocalDate}
+import java.time._
 import java.util.UUID
-import java.time.format.DateTimeFormatter
+import scala.collection.{mutable => mut}
+import scala.jdk.CollectionConverters._
 
 // record
 final case class UserId(bytes: Seq[Byte])
@@ -68,6 +66,7 @@ object TestObject1 {
 case class CaseClassWithExplicitCoder(i: Int, s: String)
 object CaseClassWithExplicitCoder {
   import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder, VarIntCoder}
+
   import java.io.{InputStream, OutputStream}
   implicit val caseClassWithExplicitCoderCoder: Coder[CaseClassWithExplicitCoder] =
     Coder.beam(new AtomicCoder[CaseClassWithExplicitCoder] {
@@ -103,6 +102,17 @@ object PrivateClass {
   def apply(l: Long): PrivateClass = new PrivateClass(l)
 }
 case class UsesPrivateClass(privateClass: PrivateClass)
+
+// avro
+object Avro {
+  import com.spotify.scio.avro.{Account, Address, AvroHugger, User => AvUser}
+
+  val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
+  val address = new Address("street1", "street2", "city", "state", "01234", "Sweden")
+  val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
+
+  val scalaSpecificAvro: AvroHugger = AvroHugger(42)
+}
 
 // proto
 case class ClassWithProtoEnum(s: String, `enum`: OuterClassForProto.EnumExample)
@@ -324,7 +334,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
-    import java.util.{List => jList, Map => jMap, ArrayList => jArrayList}
+    import java.util.{ArrayList => jArrayList, List => jList, Map => jMap}
     val is = 1 to 10
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
@@ -336,18 +346,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     s coderShould notFallback()
     m coderShould notFallback()
     arrayList coderShould notFallback()
-  }
-
-  object Avro {
-
-    import com.spotify.scio.avro.{Account, Address, User => AvUser}
-
-    val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
-    val address =
-      new Address("street1", "street2", "city", "state", "01234", "Sweden")
-    val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
-
-    val eq: Equality[GenericRecord] = (a: GenericRecord, b: Any) => a.toString === b.toString
   }
 
   it should "Derive serializable coders" in {
@@ -364,8 +362,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     coderIsSerializable[SampleField]
   }
 
-  it should "support Avro's SpecificRecordBase" in {
+  it should "support Avro's SpecificRecord" in {
     Avro.user coderShould notFallback()
+  }
+
+  it should "support avrohugger generated SpecificRecord" in {
+    Avro.scalaSpecificAvro coderShould notFallback()
   }
 
   it should "support Avro's GenericRecord" in {
@@ -373,7 +375,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val record: GenericRecord = Avro.user
 
     implicit val c: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
-    implicit val eq: Equality[GenericRecord] = Avro.eq
+    implicit val eq: Equality[GenericRecord] =
+      (a: GenericRecord, b: Any) => a.toString === b.toString
 
     record coderShould notFallback()
   }
@@ -399,10 +402,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   // FIXME: implement the missing coders
   it should "support all the already supported types" in {
+    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+
     import java.math.{BigInteger, BigDecimal => jBigDecimal}
     import java.nio.file.FileSystems
-
-    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 
     // TableRowJsonCoder
     // SpecificRecordBase
@@ -423,14 +426,28 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new BigInteger("123456789") coderShould notFallback()
     new jBigDecimal("123456789.98765") coderShould notFallback()
 
-    val now = org.joda.time.Instant.now()
-    now coderShould notFallback()
-    new org.joda.time.LocalDate coderShould notFallback()
-    new org.joda.time.LocalTime coderShould notFallback()
-    new org.joda.time.LocalDateTime coderShould notFallback()
-    new org.joda.time.DateTime coderShould notFallback()
-    new java.sql.Timestamp(1) coderShould notFallback()
+    // java time
+    Instant.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDate.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDateTime.now() coderShould notFallback()
+    Duration.ofSeconds(123) coderShould notFallback()
+    Period.ofDays(123) coderShould notFallback()
 
+    // java sql
+    java.sql.Timestamp.valueOf("1971-02-03 04:05:06.789") coderShould notFallback()
+    java.sql.Date.valueOf("1971-02-03") coderShould notFallback()
+    java.sql.Time.valueOf("01:02:03") coderShould notFallback()
+
+    // joda time
+    new org.joda.time.Instant() coderShould notFallback()
+    new org.joda.time.DateTime() coderShould notFallback()
+    new org.joda.time.LocalDate() coderShould notFallback()
+    new org.joda.time.LocalTime() coderShould notFallback()
+    new org.joda.time.LocalDateTime() coderShould notFallback()
+    new org.joda.time.Duration(123) coderShould notFallback()
+    val now = org.joda.time.Instant.now()
     new IntervalWindow(now.minus(4000), now) coderShould notFallback()
   }
 
@@ -444,10 +461,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "Serialize Row" in {
-    import java.lang.{Double => jDouble, Integer => jInt, String => jString}
-
     import org.apache.beam.sdk.schemas.{Schema => bSchema}
     import org.apache.beam.sdk.values.Row
+
+    import java.lang.{Double => jDouble, Integer => jInt, String => jString}
 
     val beamSchema =
       bSchema
@@ -749,18 +766,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     hashCodesAreDifferent(
       Coder.xmap[String, Int](Coder[String])(_.toInt, _.toString),
       Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt)
-    )
-
-    // For transform, even if parameters are equal, hashCodes must be different
-    hashCodesAreDifferent(
-      Coder.xmap[String, LocalDate](Coder[String])(
-        LocalDate.parse(_, DateTimeFormatter.ISO_LOCAL_DATE),
-        _.toString
-      ),
-      Coder.xmap[String, LocalDate](Coder[String])(
-        LocalDate.parse(_, DateTimeFormatter.ISO_WEEK_DATE),
-        _.toString
-      )
     )
   }
 
