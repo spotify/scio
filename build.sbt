@@ -370,6 +370,15 @@ lazy val publishSettings = Def.settings(
   sonatypeProfileName := "com.spotify"
 )
 
+// for modules containing java jUnit 4 tests
+lazy val jUnitSettings = Def.settings(
+  libraryDependencies ++= Seq(
+    "com.github.sbt" % "junit-interface" % junitInterfaceVersion % Test,
+    "junit" % "junit" % junitVersion % Test
+  ),
+  testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a")
+)
+
 lazy val itSettings = Defaults.itSettings ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
@@ -581,6 +590,7 @@ lazy val `scio-test`: Project = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(itSettings)
+  .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(protobufSettings)
   .settings(
@@ -703,6 +713,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   .settings(publishSettings)
   .settings(macroSettings)
   .settings(itSettings)
+  .settings(jUnitSettings)
   .settings(beamRunnerSettings)
   .settings(
     description := "Scio add-on for Google Cloud Platform",
@@ -750,7 +761,6 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % "test,it",
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
-      "junit" % "junit" % junitVersion % "test",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
@@ -908,6 +918,7 @@ lazy val `scio-extra`: Project = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(itSettings)
+  .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio extra utilities",
@@ -1150,6 +1161,7 @@ lazy val `scio-examples`: Project = project
   .settings(commonSettings)
   .settings(soccoSettings)
   .settings(itSettings)
+  .settings(jUnitSettings)
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
@@ -1200,7 +1212,6 @@ lazy val `scio-examples`: Project = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
-      "junit" % "junit" % junitVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
     // exclude problematic sources if we don't have GCP credentials
@@ -1217,8 +1228,7 @@ lazy val `scio-examples`: Project = project
       (Test / definedTests).value,
       List("com.spotify.scio.examples.WordCountTest"),
       ForkOptions().withRunJVMOptions((Test / javaOptions).value.toVector)
-    ),
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a")
+    )
   )
 
 lazy val `scio-repl`: Project = project
@@ -1320,7 +1330,6 @@ lazy val `scio-jmh`: Project = project
     unusedCompileDependenciesFilter := NothingFilter,
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       // test
-      "junit" % "junit" % junitVersion % Test,
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion % Test,
       "org.slf4j" % "slf4j-nop" % slf4jVersion % Test
@@ -1379,8 +1388,6 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion % Runtime,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime,
       // test
-      "com.github.sbt" % "junit-interface" % junitInterfaceVersion % "it,test",
-      "junit" % "junit" % junitVersion % "it,test",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "it,test",
@@ -1391,8 +1398,7 @@ lazy val `scio-smb`: Project = project
       (Compile / sourceManaged).value.mkdirs()
       Seq("-s", (Compile / sourceManaged).value.getAbsolutePath)
     },
-    compileOrder := CompileOrder.JavaThenScala,
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a")
+    compileOrder := CompileOrder.JavaThenScala
   )
 
 lazy val `scio-redis`: Project = project
