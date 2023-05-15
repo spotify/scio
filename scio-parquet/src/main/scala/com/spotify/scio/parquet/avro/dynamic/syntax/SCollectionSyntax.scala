@@ -19,6 +19,7 @@ package com.spotify.scio.parquet.avro.dynamic.syntax
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps.writeDynamic
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.avro.{ParquetAvroIO, ParquetAvroSink}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
@@ -60,7 +61,7 @@ final class DynamicParquetAvroSCollectionOps[T](
         new ParquetAvroSink[T](
           writerSchema,
           compression,
-          new SerializableConfiguration(Option(conf).getOrElse(new Configuration()))
+          new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
         )
       val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
       self.applyInternal(write)

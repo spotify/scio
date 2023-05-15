@@ -51,20 +51,27 @@ package object parquet {
   }
 
   object ParquetConfiguration {
+    def empty(): Configuration =
+      new Configuration()
+
     def of(entries: (String, Any)*): Configuration = {
-      val conf = new Configuration()
+      val conf = empty()
       entries.foreach { case (k, v) =>
         v match {
-          case b: Boolean => conf.setBoolean(k, b)
-          case f: Float   => conf.setFloat(k, f)
-          case d: Double  => conf.setDouble(k, d)
-          case i: Int     => conf.setInt(k, i)
-          case l: Long    => conf.setLong(k, l)
-          case s: String  => conf.set(k, s)
-          case _          => conf.set(k, v.toString)
+          case b: Boolean  => conf.setBoolean(k, b)
+          case f: Float    => conf.setFloat(k, f)
+          case d: Double   => conf.setDouble(k, d)
+          case i: Int      => conf.setInt(k, i)
+          case l: Long     => conf.setLong(k, l)
+          case s: String   => conf.set(k, s)
+          case c: Class[_] => conf.setClass(k, c, c)
+          case _           => conf.set(k, v.toString)
         }
       }
       conf
     }
+
+    private[parquet] def ofNullable(conf: Configuration): Configuration =
+      Option(conf).getOrElse(empty())
   }
 }

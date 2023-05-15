@@ -161,6 +161,9 @@ final class BigQuery private (val client: Client) {
 
 /** Companion object for [[BigQuery]]. */
 object BigQuery {
+  private[scio] def isDML(sqlQuery: String): Boolean =
+    sqlQuery.toUpperCase().matches("(UPDATE|MERGE|INSERT|DELETE).*")
+
   private lazy val instance: BigQuery =
     BigQuerySysProps.Project.valueOption.map(BigQuery(_)).getOrElse {
       Option(new DefaultProjectFactory().create(null))

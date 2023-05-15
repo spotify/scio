@@ -48,6 +48,7 @@ val hadoopVersion = "2.10.2"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.14.1"
 val javaxAnnotationApiVersion = "1.3.2"
+val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.77.Final"
 val slf4jVersion = "1.7.30"
@@ -91,7 +92,7 @@ val annoyVersion = "0.2.6"
 val breezeVersion = "2.1.0"
 val caffeineVersion = "2.9.3"
 val cassandraDriverVersion = "3.11.3"
-val cassandraVersion = "3.11.13"
+val cassandraVersion = "3.11.15"
 val catsVersion = "2.9.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.5"
@@ -100,12 +101,11 @@ val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
 val elasticsearch6Version = "6.8.23"
-val elasticsearch7Version = "7.17.8"
-val elasticsearch8Version = "8.6.2"
+val elasticsearch7Version = "7.17.9"
+val elasticsearch8Version = "8.7.1"
 val featranVersion = "0.8.0"
 val hamcrestVersion = "2.2"
 val javaLshVersion = "0.12"
-val jodaTimeVersion = "2.12.2"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.1"
@@ -120,14 +120,14 @@ val parquetVersion = "1.12.3"
 val pprintVersion = "0.8.1"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
-val scalaCollectionCompatVersion = "2.9.0"
+val scalaCollectionCompatVersion = "2.10.0"
 val scalacticVersion = "3.2.15"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.15"
 val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
-val testContainersVersion = "0.40.12"
+val testContainersVersion = "0.40.15"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -187,33 +187,13 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
-  mimaBinaryIssueFilters := Seq(
-    // minor scio-tensorflow breaking changes for 0.12.6
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.tensorflow.syntax.SeqExampleSCollectionOps.saveAsTfRecordFile$extension"
-    ),
-    // minor scio-grpc breaking changes for 0.12.6
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookup"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookup$extension"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookupStream"
-    ),
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.grpc.GrpcSCollectionOps.grpcLookupStream$extension"
-    )
-  ),
-  mimaPreviousArtifacts :=
-    previousVersion(version.value)
-      .filter(_ => publishArtifact.value)
-      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
-      .toSet
+  mimaBinaryIssueFilters := Seq.empty,
+  // enable back after 0.13
+  mimaPreviousArtifacts := Set.empty
+//    previousVersion(version.value)
+//      .filter(_ => publishArtifact.value)
+//      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+//      .toSet
 )
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
@@ -1093,7 +1073,7 @@ lazy val `scio-examples`: Project = project
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.11.0",
+      "com.google.cloud.sql" % "mysql-socket-factory" % "1.11.1",
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
@@ -1106,7 +1086,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "mysql" % "mysql-connector-java" % "8.0.32",
+      "mysql" % "mysql-connector-java" % "8.0.33",
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,

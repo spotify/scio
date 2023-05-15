@@ -148,6 +148,12 @@ trait JavaCoders extends JavaBeanCoders {
   implicit def jSqlTimestamp: Coder[java.sql.Timestamp] =
     Coder.xmap(jInstantCoder)(java.sql.Timestamp.from, _.toInstant())
 
+  implicit def jSqlDate: Coder[java.sql.Date] =
+    Coder.xmap(jLocalDateCoder)(java.sql.Date.valueOf, _.toLocalDate())
+
+  implicit def jSqlTime: Coder[java.sql.Time] =
+    Coder.xmap(jLocalTimeCoder)(java.sql.Time.valueOf, _.toLocalTime())
+
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
     Coder.xmap(Coder[String])(
       value => java.lang.Enum.valueOf(ScioUtil.classOf[E], value),

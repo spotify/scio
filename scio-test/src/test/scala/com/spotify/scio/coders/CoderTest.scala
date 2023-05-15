@@ -26,6 +26,7 @@ import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Moments
 import org.apache.beam.sdk.{coders => beam}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.{BigEndianLongCoder, InstantCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
@@ -39,9 +40,9 @@ import scala.jdk.CollectionConverters._
 import scala.collection.{mutable => mut}
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
-import java.time.{Instant, LocalDate}
+import java.time._
 import java.util.UUID
-import java.time.format.DateTimeFormatter
+import scala.jdk.CollectionConverters._
 
 final class CoderTest extends AnyFlatSpec with Matchers {
 
@@ -178,7 +179,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       cw.runWithImplicit
       throw new Throwable("Is expected to throw when passing implicit from outer class")
     } catch {
-      case e: NullPointerException =>
+      case _: NullPointerException =>
       // In this case outer field is called "$cw" and it is hard to wrap it with proper exception
       // so we allow it to fail with NullPointerException
     }
@@ -305,7 +306,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
-    import java.util.{List => jList, Map => jMap, ArrayList => jArrayList}
+    import java.util.{ArrayList => jArrayList, List => jList, Map => jMap}
     val is = 1 to 10
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
@@ -368,10 +369,10 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   // FIXME: TableRowJsonCoder cannot be tested in scio-test because of circular dependency on scio-google-cloud-platform
   it should "support all the already supported types" in {
+    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+
     import java.math.{BigInteger, BigDecimal => jBigDecimal}
     import java.nio.file.FileSystems
-
-    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 
     ByteString.copyFromUtf8("SampleString") coderShould roundtrip() and
       beOfType[Beam[_]] and
@@ -411,15 +412,33 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[beam.BigDecimalCoder] and
       beFullyCompliant()
 
+    // java time
+    Instant.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDate.now() coderShould notFallback()
+    LocalTime.now() coderShould notFallback()
+    LocalDateTime.now() coderShould notFallback()
+    Duration.ofSeconds(123) coderShould notFallback()
+    Period.ofDays(123) coderShould notFallback()
+
+    // java sql
+    java.sql.Timestamp
+      .valueOf("1971-02-03 04:05:06.789") coderShould roundtrip() and beOfType[Transform[_, _]] and
+      beFullyCompliant()
+    java.sql.Date.valueOf("1971-02-03") coderShould roundtrip() and beOfType[Transform[_, _]] and
+      beFullyCompliant()
+    java.sql.Time.valueOf("01:02:03") coderShould roundtrip() and beOfType[Transform[_, _]] and
+      beFullyCompliant()
+
+    // joda time
     val now = org.joda.time.Instant.now()
     now coderShould roundtrip() and beOfType[Beam[_]] and
       materializeTo[beam.InstantCoder] and
       beFullyCompliant()
-
-    new IntervalWindow(now.minus(4000), now) coderShould notFallback() and
+    new org.joda.time.DateTime() coderShould roundtrip() and beOfType[Beam[_]] and
+      materializeTo[JodaDateTimeCoder] and
       beFullyCompliant()
-
-    new org.joda.time.LocalDate coderShould roundtrip() and beOfType[Beam[_]] and
+    new org.joda.time.LocalDate() coderShould roundtrip() and beOfType[Beam[_]] and
       materializeTo[JodaLocalDateCoder] and
       beFullyCompliant()
     new org.joda.time.LocalTime coderShould roundtrip() and beOfType[Beam[_]] and
@@ -431,14 +450,20 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     new org.joda.time.DateTime coderShould roundtrip() and beOfType[Beam[_]] and
       materializeTo[JodaDateTimeCoder] and
       beFullyCompliant()
-    new java.sql.Timestamp(
-      1
-    ) coderShould notFallback() and beFullyCompliant()
+    new org.joda.time.Duration(123) coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[BigEndianLongCoder] and
+      beFullyCompliant()
+    new IntervalWindow(now.minus(4000), now) coderShould roundtrip() and
+      beOfType[Beam[_]] and
+      materializeTo[IntervalWindow.IntervalWindowCoder] and
+      beFullyCompliant()
   }
 
   it should "support java's Instant" in {
     // Support full nano range
-    Instant.ofEpochSecond(0, 123123123) coderShould notFallback() and beFullyCompliant()
+    Instant.ofEpochSecond(0, 123123123) coderShould notFallback() and
+      beFullyCompliant()
     Instant.MIN coderShould notFallback()
     Instant.MAX coderShould notFallback()
     Instant.EPOCH coderShould notFallback()
@@ -758,18 +783,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       Coder.xmap[String, Int](Coder[String])(_.toInt, _.toString),
       Coder.xmap[Int, String](Coder[Int])(_.toString, _.toInt)
     )
-
-    // For transform, even if parameters are equal, hashCodes must be different
-    hashCodesAreDifferent(
-      Coder.xmap[String, LocalDate](Coder[String])(
-        LocalDate.parse(_, DateTimeFormatter.ISO_LOCAL_DATE),
-        _.toString
-      ),
-      Coder.xmap[String, LocalDate](Coder[String])(
-        LocalDate.parse(_, DateTimeFormatter.ISO_WEEK_DATE),
-        _.toString
-      )
-    )
   }
 
   it should "support Guava Bloom Filters" in {
@@ -857,6 +870,7 @@ object TopLevelObject1 {
 case class CaseClassWithExplicitCoder(i: Int, s: String)
 object CaseClassWithExplicitCoder {
   import org.apache.beam.sdk.coders.{AtomicCoder, StringUtf8Coder, VarIntCoder}
+
   import java.io.{InputStream, OutputStream}
   implicit val caseClassWithExplicitCoderCoder: Coder[CaseClassWithExplicitCoder] =
     Coder.beam(new AtomicCoder[CaseClassWithExplicitCoder] {
@@ -892,6 +906,17 @@ object PrivateClass {
   def apply(l: Long): PrivateClass = new PrivateClass(l)
 }
 case class UsesPrivateClass(privateClass: PrivateClass)
+
+// avro
+object Avro {
+  import com.spotify.scio.avro.{Account, Address, AvroHugger, User => AvUser}
+
+  val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
+  val address = new Address("street1", "street2", "city", "state", "01234", "Sweden")
+  val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
+
+  val scalaSpecificAvro: AvroHugger = AvroHugger(42)
+}
 
 // proto
 case class ClassWithProtoEnum(s: String, `enum`: OuterClassForProto.EnumExample)

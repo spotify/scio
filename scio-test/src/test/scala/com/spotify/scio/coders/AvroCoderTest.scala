@@ -25,20 +25,13 @@ import org.scalatest.matchers.should.Matchers
 import scala.jdk.CollectionConverters._
 
 final class AvroCoderTest extends AnyFlatSpec with Matchers {
-  object Avro {
 
-    import com.spotify.scio.avro.{Account, Address, User => AvUser}
-
-    val accounts: List[Account] = List(new Account(1, "type", "name", 12.5, null))
-    val address =
-      new Address("street1", "street2", "city", "state", "01234", "Sweden")
-    val user = new AvUser(1, "lastname", "firstname", "email@foobar.com", accounts.asJava, address)
-
-    val eq: Equality[GenericRecord] = (a: GenericRecord, b: Any) => a.toString === b.toString
+  it should "support Avro's SpecificRecord" in {
+    Avro.user coderShould notFallback()
   }
 
-  it should "support Avro's SpecificRecordBase" in {
-    Avro.user coderShould notFallback()
+  it should "support avrohugger generated SpecificRecord" in {
+    Avro.scalaSpecificAvro coderShould notFallback()
   }
 
   it should "support Avro's GenericRecord" in {
@@ -46,7 +39,8 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
     val record: GenericRecord = Avro.user
 
     implicit val c: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
-    implicit val eq: Equality[GenericRecord] = Avro.eq
+    implicit val eq: Equality[GenericRecord] =
+      (a: GenericRecord, b: Any) => a.toString === b.toString
 
     record coderShould notFallback()
   }

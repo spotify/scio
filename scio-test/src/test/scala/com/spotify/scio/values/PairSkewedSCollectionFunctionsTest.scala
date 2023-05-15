@@ -24,11 +24,6 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPropertyChecks {
   import com.twitter.algebird.CMSHasherImplicits._
 
-  private val skewSeed = 42
-  private val skewEps = 0.001d
-  private val skewDelta = 1e-10
-  private val skewWithReplacement = true
-
   private val joinSetup = Table(
     ("lhs", "rhs", "out"),
     // no duplicate keys
@@ -126,11 +121,12 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
               pLhs.skewedJoin(
                 pRhs,
                 method,
-                skewEps,
-                skewSeed,
-                skewDelta,
+                SkewedJoins.DefaultHotKeyFanout,
+                SkewedJoins.DefaultCmsEpsilon,
+                SkewedJoins.DefaultCmsDelta,
+                SkewedJoins.DefaultCmsSeed,
                 sampleFraction,
-                skewWithReplacement
+                SkewedJoins.DefaultSampleWithReplacement
               )
             p should containInAnyOrder(out)
           }
@@ -150,11 +146,12 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
               pLhs.skewedLeftOuterJoin(
                 pRhs,
                 method,
-                skewEps,
-                skewSeed,
-                skewDelta,
+                SkewedJoins.DefaultHotKeyFanout,
+                SkewedJoins.DefaultCmsEpsilon,
+                SkewedJoins.DefaultCmsDelta,
+                SkewedJoins.DefaultCmsSeed,
                 sampleFraction,
-                skewWithReplacement
+                SkewedJoins.DefaultSampleWithReplacement
               )
             p should containInAnyOrder(out)
           }
@@ -173,11 +170,12 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
             val p = pLhs.skewedFullOuterJoin(
               pRhs,
               method,
-              skewEps,
-              skewSeed,
-              skewDelta,
+              SkewedJoins.DefaultHotKeyFanout,
+              SkewedJoins.DefaultCmsEpsilon,
+              SkewedJoins.DefaultCmsDelta,
+              SkewedJoins.DefaultCmsSeed,
               sampleFraction,
-              skewWithReplacement
+              SkewedJoins.DefaultSampleWithReplacement
             )
             p should containInAnyOrder(out)
           }
@@ -193,8 +191,12 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
     runWithContext { sc =>
       val pLhs = sc.parallelize(lhs)
       val pRhs = sc.parallelize(rhs)
-      val aggregator = CMS.aggregator[String](skewEps, skewDelta, skewSeed)
-      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator)
+      val aggregator = CMS.aggregator[String](
+        SkewedJoins.DefaultCmsEpsilon,
+        SkewedJoins.DefaultCmsDelta,
+        SkewedJoins.DefaultCmsSeed
+      )
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), 2, aggregator)
       val (l, r) = CMSOperations.partition(pLhs, pRhs, cms, threshold)
 
       // hot key is a
@@ -215,8 +217,13 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
     runWithContext { sc =>
       val pLhs = sc.parallelize(lhs)
       val pRhs = sc.parallelize(rhs)
-      val aggregator = TopPctCMS.aggregator[String](skewEps, skewDelta, skewSeed, pct)
-      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator)
+      val aggregator = TopPctCMS.aggregator[String](
+        SkewedJoins.DefaultCmsEpsilon,
+        SkewedJoins.DefaultCmsDelta,
+        SkewedJoins.DefaultCmsSeed,
+        pct
+      )
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), 2, aggregator)
       val (l, r) = CMSOperations.partition(pLhs, pRhs, cms)
 
       // hot key is a
@@ -237,8 +244,13 @@ class PairSkewedSCollectionFunctionsTest extends PipelineSpec with ScalaCheckPro
     runWithContext { sc =>
       val pLhs = sc.parallelize(lhs)
       val pRhs = sc.parallelize(rhs)
-      val aggregator = TopNCMS.aggregator[String](skewEps, skewDelta, skewSeed, count)
-      val cms = CMSOperations.aggregate(pLhs.map(_._1), aggregator)
+      val aggregator = TopNCMS.aggregator[String](
+        SkewedJoins.DefaultCmsEpsilon,
+        SkewedJoins.DefaultCmsDelta,
+        SkewedJoins.DefaultCmsSeed,
+        count
+      )
+      val cms = CMSOperations.aggregate(pLhs.map(_._1), 2, aggregator)
       val (l, r) = CMSOperations.partition(pLhs, pRhs, cms)
 
       // hot key is a

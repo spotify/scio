@@ -109,9 +109,11 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
     }
 
   private def findParam(param: Term.Name, pos: Int)(args: List[Term]): Option[Term] = {
-    args.collectFirst {
+    args
+      .collectFirst {
         case p @ q"$name = $_" if name.isEqual(param) => p
-      }.orElse {
+      }
+      .orElse {
         args.takeWhile(!_.isInstanceOf[Term.Assign]).lift(pos)
       }
   }
@@ -127,8 +129,8 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
     (ioArgs, paramsArgs)
   }
 
-  private def buildPubsubIO(tp: Type, sym: Symbol, args: List[Term])(
-    implicit doc: SemanticDocument
+  private def buildPubsubIO(tp: Type, sym: Symbol, args: List[Term])(implicit
+    doc: SemanticDocument
   ): Term = {
     if (isSubtypeOf(AvroSpecificRecord)(sym)) q"PubsubIO.avro[$tp](..$args)"
     else if (isSubtypeOf(ProtoMessage)(sym)) q"PubsubIO.proto[$tp](..$args)"
@@ -163,7 +165,8 @@ class FixPubsubSpecializations extends SemanticRule("FixPubsubSpecializations") 
             // We did not managed to extract the type from the SCollection
             Patch.empty
         }
-      case t @ q"$qual.saveAsPubsubWithAttributes[$tp](..$args)" if expectedType(SCollPubsubOps)(qual) =>
+      case t @ q"$qual.saveAsPubsubWithAttributes[$tp](..$args)"
+          if expectedType(SCollPubsubOps)(qual) =>
         val (ioArgs, paramArgs) = splitArgs(args)
         val io = q"PubsubIO.withAttributes[$tp](..$ioArgs)"
         val params = q"PubsubIO.WriteParam(..$paramArgs)"

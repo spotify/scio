@@ -44,9 +44,8 @@ abstract private[scio] class RandomSampler[T, R] extends DoFn[T, T] {
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  @nowarn("msg=parameter value c in method startBundle is never used")
   @StartBundle
-  def startBundle(c: DoFn[T, T]#StartBundleContext): Unit = rng = init
+  def startBundle(): Unit = rng = init
 
   @ProcessElement
   def processElement(@Element element: T, out: OutputReceiver[T]): Unit = {

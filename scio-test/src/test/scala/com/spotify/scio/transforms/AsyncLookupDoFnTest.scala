@@ -19,18 +19,17 @@ package com.spotify.scio.transforms
 
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture, MoreExecutors}
-import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.JavaAsyncConverters._
 import com.spotify.scio.util.TransformingCache.SimpleTransformingCache
-import org.apache.beam.sdk.options._
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{
   CompletableFuture,
+  CompletionException,
   ConcurrentLinkedQueue,
   Executors,
   ThreadPoolExecutor
@@ -65,8 +64,9 @@ class AsyncLookupDoFnTest extends PipelineSpec {
   )(tryFn: T => Try[String]): Unit = {
     val output = runWithData(1 to 10)(_.parDo(doFn)).map { kv =>
       val r = tryFn(kv.getValue) match {
-        case Success(v) => v
-        case Failure(e) => e.getMessage
+        case Success(v)                      => v
+        case Failure(e: CompletionException) => e.getCause.getMessage
+        case Failure(e)                      => e.getMessage
       }
       (kv.getKey, r)
     }
@@ -79,18 +79,10 @@ class AsyncLookupDoFnTest extends PipelineSpec {
 
   "BaseAsyncDoFn" should "deduplicate simultaneous lookups on the same item" in {
     val n = 100
-    val sc = ScioContext(PipelineOptionsFactory.fromArgs("--targetParallelism=1").create())
-    val f = sc
-      .parallelize(List.fill(n)(10))
-      .parDo(new CountingGuavaLookupDoFn)
-      .materialize
-    val result: ScioResult = sc.run().waitUntilFinish()
-    val maxOutput = result
-      .tap(f)
-      .value
-      .map(kv => kv.getValue.get())
-      .max
-    maxOutput should be < n
+    val output = runWithData(List.fill(n)(10)) {
+      _.parDo(new CountingGuavaLookupDoFn).map(_.getValue.get())
+    }
+    output.max should be < n
   }
 
   "GuavaAsyncLookupDoFn" should "work" in {

@@ -32,19 +32,27 @@ import scala.jdk.CollectionConverters._
  * s of the [[SideOutput]] s are accessed via the additional [[SideOutputCollections]] return value.
  */
 class SCollectionWithSideOutput[T] private[values] (
-  val internal: PCollection[T],
-  val context: ScioContext,
+  coll: SCollection[T],
   sides: Iterable[SideOutput[_]]
 ) extends PCollectionWrapper[T] {
+
+  override val internal: PCollection[T] = coll.internal
+  override val context: ScioContext = coll.context
+
   private val sideTags = TupleTagList.of(sides.map(_.tupleTag).toList.asJava)
+
+  override def withName(name: String): this.type = {
+    coll.withName(name)
+    this
+  }
 
   private def apply[U: Coder](f: DoFn[T, U]): (SCollection[U], SideOutputCollections) = {
     val mainTag = new TupleTag[U]
-    val dofn = ParDo.of(f).withOutputTags(mainTag, sideTags)
-    val tuple = this.applyInternal(dofn)
 
-    val main =
-      tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
+    val dofn = ParDo.of(f).withOutputTags(mainTag, sideTags)
+    val tuple = this.applyInternal(coll.tfName, dofn)
+
+    val main = tuple.get(mainTag).setCoder(CoderMaterializer.beam(context, Coder[U]))
 
     sides.foreach { s =>
       tuple

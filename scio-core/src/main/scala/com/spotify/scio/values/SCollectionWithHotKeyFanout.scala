@@ -61,21 +61,19 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
    */
   def aggregateByKey[U: Coder](
     zeroValue: U
-  )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
-    self.applyPerKey(
-      withFanout(Combine.perKey(Functions.aggregateFn(context, zeroValue)(seqOp, combOp)))
-    )(
-      kvToTuple
-    )
+  )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] = {
+    val cmb = Combine.perKey[K, V, U](Functions.aggregateFn(context, zeroValue)(seqOp, combOp))
+    self.applyPerKey(withFanout(cmb))(kvToTuple)
+  }
 
   /**
    * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]] with
    * hot key fanout.
    */
   def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
-    self.self.context.wrap(self.self.internal).transform { in =>
+    self.self.transform { in =>
       val a = aggregator // defeat closure
-      in.mapValues(a.prepare)
+      new SCollectionWithHotKeyFanout(context, in.mapValues(a.prepare), hotKeyFanout)
         .sumByKey(a.semigroup)
         .mapValues(a.present)
     }
@@ -86,13 +84,14 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
    */
   def aggregateByKey[A: Coder, U: Coder](
     aggregator: MonoidAggregator[V, A, U]
-  ): SCollection[(K, U)] =
-    self.self.context.wrap(self.self.internal).transform { in =>
+  ): SCollection[(K, U)] = {
+    self.self.transform { in =>
       val a = aggregator // defeat closure
-      in.mapValues(a.prepare)
+      new SCollectionWithHotKeyFanout(context, in.mapValues(a.prepare), hotKeyFanout)
         .foldByKey(a.monoid)
         .mapValues(a.present)
     }
+  }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
   def combineByKey[C: Coder](
