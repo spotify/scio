@@ -95,7 +95,7 @@ public class WordCount {
         Metrics.distribution(ExtractWordsFn.class, "lineLenDistro");
 
     @ProcessElement
-    public void processElement(@Element String element, OutputReceiver<String> receiver) {
+    public void processElement(@Element String element, OutputReceiver<String> out) {
       lineLenDist.update(element.length());
       if (element.trim().isEmpty()) {
         emptyLines.inc();
@@ -107,7 +107,7 @@ public class WordCount {
       // Output each word encountered into the output PCollection.
       for (String word : words) {
         if (!word.isEmpty()) {
-          receiver.output(word);
+          out.output(word);
         }
       }
     }

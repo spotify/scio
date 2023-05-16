@@ -18,6 +18,9 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.google.auto.value.AutoValue;
+import java.util.Arrays;
+import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
@@ -36,10 +39,6 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-
-import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.List;
 
 /** API for reading and writing Parquet sorted-bucket files as Avro. */
 public class ParquetAvroSortedBucketIO {

@@ -20,6 +20,7 @@ package com.spotify.scio.coders.instances
 import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
 import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, Period}
+import java.util.UUID
 
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.Coder
@@ -48,17 +49,25 @@ private object VoidCoder extends AtomicCoder[Void] {
 trait JavaCoders extends JavaBeanCoders {
   implicit def voidCoder: Coder[Void] = Coder.beam[Void](VoidCoder)
 
+  implicit def uuidCoder: Coder[UUID] =
+    Coder.xmap(Coder[(Long, Long)])(
+      { case (msb, lsb) => new UUID(msb, lsb) },
+      uuid => (uuid.getMostSignificantBits, uuid.getLeastSignificantBits)
+    )
+
   implicit def uriCoder: Coder[java.net.URI] =
     Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => new java.net.URI(s), _.toString)
 
   implicit def pathCoder: Coder[java.nio.file.Path] =
     Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => java.nio.file.Paths.get(s), _.toString)
 
-  import java.lang.{Iterable => JIterable}
-  implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[JIterable[T]] =
+  implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[java.lang.Iterable[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.IterableCoder.of(bc)))
 
-  implicit def jlistCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
+  @deprecated("Use jListCoder", since = "0.12.1")
+  def jlistCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] = jListCoder
+
+  implicit def jListCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.ListCoder.of(bc)))
 
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
@@ -138,6 +147,12 @@ trait JavaCoders extends JavaBeanCoders {
 
   implicit def jSqlTimestamp: Coder[java.sql.Timestamp] =
     Coder.xmap(jInstantCoder)(java.sql.Timestamp.from, _.toInstant())
+
+  implicit def jSqlDate: Coder[java.sql.Date] =
+    Coder.xmap(jLocalDateCoder)(java.sql.Date.valueOf, _.toLocalDate())
+
+  implicit def jSqlTime: Coder[java.sql.Time] =
+    Coder.xmap(jLocalTimeCoder)(java.sql.Time.valueOf, _.toLocalTime())
 
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
     Coder.xmap(Coder[String])(

@@ -14,11 +14,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.apache.beam.sdk.extensions.smb;
+
+import static com.google.common.base.Verify.verify;
+import static com.google.common.base.Verify.verifyNotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -28,15 +37,13 @@ import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Map;
-
 public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> {
 
   @JsonProperty private final String keyField;
-  @JsonProperty private final String keyFieldSecondary;
+
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String keyFieldSecondary;
 
   @JsonIgnore private final String[] keyPath;
   @JsonIgnore private final String[] keyPathSecondary;
@@ -167,8 +174,9 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
         keyClassSecondary,
         hashType,
         filenamePrefix);
-    assert ((keyClassSecondary != null && keyFieldSecondary != null)
-        || (keyClassSecondary == null && keyFieldSecondary == null));
+    verify(
+        (keyClassSecondary != null && keyFieldSecondary != null)
+            || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
     this.keyFieldSecondary = keyFieldSecondary;
     this.keyPath = toKeyPath(keyField);
@@ -226,7 +234,9 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
 
   @Override
   public K2 extractKeySecondary(V value) {
-    assert (keyPathSecondary != null && getKeyClassSecondary() != null);
+    verifyNotNull(keyPathSecondary);
+    verifyNotNull(getKeyClassSecondary());
+
     return extractKey(getKeyClassSecondary(), keyPathSecondary, value);
   }
 

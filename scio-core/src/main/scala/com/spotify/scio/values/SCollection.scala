@@ -30,6 +30,8 @@ import com.spotify.scio.estimators.{
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.transforms.BatchDoFn
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
@@ -38,8 +40,7 @@ import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
-import org.apache.beam.sdk.io.FileIO.Write.FileNaming
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
 import org.apache.beam.sdk.util.SerializableUtils
@@ -55,6 +56,7 @@ import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
+import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -200,16 +202,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     name: Option[String],
     transform: PTransform[_ >: PCollection[T], PCollection[U]]
   ): SCollection[U] = {
-    val t =
-      if (
-        (classOf[Combine.Globally[T, U]] isAssignableFrom transform.getClass)
-        && internal.getWindowingStrategy != WindowingStrategy.globalDefault()
-      ) {
-        // In case PCollection is windowed
-        transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
-      } else {
-        transform
-      }
+    val isCombineGlobally = classOf[Combine.Globally[T, U]].isAssignableFrom(transform.getClass)
+    val t = if (isCombineGlobally && ScioUtil.isWindowed(this)) {
+      // In case PCollection is windowed
+      transform.asInstanceOf[Combine.Globally[T, U]].withoutDefaults()
+    } else {
+      transform
+    }
     context.wrap(this.applyInternal(name, t))
   }
 
@@ -448,6 +447,89 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val a = aggregator // defeat closure
       in.map(a.prepare).fold(a.monoid).map(a.present)
     }
+
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchSize
+   *   desired number of elements in a batch
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   *
+   * @group collection
+   */
+  def batch(
+    batchSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val weigher = Functions.serializableFn[T, java.lang.Long](_ => 1)
+    this
+      .parDo(new BatchDoFn[T](batchSize, weigher, maxLiveWindows))(Coder.aggregate)
+      .map(_.asScala)
+  }
+
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchByteSize
+   *   desired batch size in bytes, estimated using the [[Coder]]
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   *
+   * @group collection
+   */
+  def batchByteSized(
+    batchByteSize: Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val bCoder = CoderMaterializer.beam(context, coder)
+    val weigher = Functions.serializableFn[T, java.lang.Long] { e =>
+      var size: Long = 0L
+      val observer = new ElementByteSizeObserver {
+        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
+      }
+      bCoder.registerByteSizeObserver(e, observer)
+      observer.advance()
+      size
+    }
+    this
+      .parDo(new BatchDoFn[T](batchByteSize, weigher, maxLiveWindows))(Coder.aggregate)
+      .map(_.asScala)
+  }
+
+  /**
+   * Batches elements for amortized processing. Elements are batched per-window and batches emitted
+   * in the window corresponding to its contents.
+   *
+   * Batches are emitted even if the maximum size is not reached when bundle finishes or when there
+   * are too many live windows.
+   *
+   * @param batchWeight
+   *   desired batch weight
+   * @param cost
+   *   function that associated a weight to an element
+   * @param maxLiveWindows
+   *   maximum number of window buffering
+   * @group collection
+   */
+  def batchWeighted(
+    batchWeight: Long,
+    cost: T => Long,
+    maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
+  ): SCollection[Iterable[T]] = {
+    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
+    this
+      .parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows))(Coder.aggregate)
+      .map(_.asScala)
+  }
 
   /**
    * Filter the elements for which the given `PartialFunction` is defined, and then map.
@@ -820,7 +902,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.pApply(Combine.globally(Functions.reduceFn(context, op)).withoutDefaults())
 
   /**
-   * Return a sampled subset of this SCollection.
+   * Return a sampled subset of this SCollection containing exactly `sampleSize` items. Involves
+   * combine operation resulting in shuffling. All the elements of the output should fit into main
+   * memory of a single worker machine.
+   *
    * @return
    *   a new SCollection whose single value is an `Iterable` of the samples
    * @group transform
@@ -830,7 +915,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
-   * Return a sampled subset of this SCollection.
+   * Return a sampled subset of this SCollection. Does not trigger shuffling.
+   *
+   * @param withReplacement
+   *   if `true` the same element can be produced more than once, otherwise the same element will be
+   *   sampled only once
+   * @param fraction
+   *   the sampling fraction
    * @group transform
    */
   def sample(withReplacement: Boolean, fraction: Double): SCollection[T] =
@@ -945,8 +1036,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *
    * @group debug
    */
-  def tap[U](f: T => U): SCollection[T] =
-    map { elem => f(elem); elem }(Coder.beam(internal.getCoder))
+  def tap(f: T => Any): SCollection[T] =
+    pApply(ParDo.of(Functions.mapFn[T, T] { elem => f(elem); elem })).setCoder(internal.getCoder)
 
   // =======================================================================
   // Side input operations
@@ -1066,7 +1157,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group side
    */
   def withSideOutputs(sides: SideOutput[_]*): SCollectionWithSideOutput[T] =
-    new SCollectionWithSideOutput[T](internal, context, sides)
+    new SCollectionWithSideOutput[T](this, sides)
 
   // =======================================================================
   // Windowing operations
@@ -1202,8 +1293,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withPaneInfo: SCollection[(T, PaneInfo)] =
     this.parDo(new DoFn[T, (T, PaneInfo)] {
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, (T, PaneInfo)]#ProcessContext): Unit =
-        c.output((c.element(), c.pane()))
+      private[scio] def processElement(
+        @Element element: T,
+        out: OutputReceiver[(T, PaneInfo)],
+        pane: PaneInfo
+      ): Unit =
+        out.output((element, pane))
     })
 
   /**
@@ -1213,8 +1308,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def withTimestamp: SCollection[(T, Instant)] =
     this.parDo(new DoFn[T, (T, Instant)] {
       @ProcessElement
-      private[scio] def processElement(c: DoFn[T, (T, Instant)]#ProcessContext): Unit =
-        c.output((c.element(), c.timestamp()))
+      private[scio] def processElement(
+        @Element element: T,
+        @Timestamp timestamp: Instant,
+        out: OutputReceiver[(T, Instant)]
+      ): Unit =
+        out.output((element, timestamp))
     })
 
   /**
@@ -1232,10 +1331,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       .parDo(new DoFn[T, (T, BoundedWindow)] {
         @ProcessElement
         private[scio] def processElement(
-          c: DoFn[T, (T, BoundedWindow)]#ProcessContext,
+          @Element element: T,
+          out: OutputReceiver[(T, BoundedWindow)],
           window: BoundedWindow
         ): Unit =
-          c.output((c.element(), window))
+          out.output((element, window))
       })
       .asInstanceOf[SCollection[(T, W)]]
 
@@ -1457,7 +1557,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val avroCoder = Coder.avroGenericRecordCoder(schema)
       val write = beam.AvroIO
         .writeGenericRecords(schema)
-        .to(ScioUtil.pathWithShards(path))
+        .to(ScioUtil.pathWithPartPrefix(path))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
         .withMetadata(Map.empty[String, AnyRef].asJava)
@@ -1476,7 +1576,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   ) =
     beam.TextIO
       .write()
-      .to(ScioUtil.pathWithShards(path))
+      .to(ScioUtil.pathWithPartPrefix(path))
       .withSuffix(suffix)
       .withNumShards(numShards)
       .withCompression(compression)
@@ -1493,7 +1593,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     header: Option[String] = TextIO.WriteParam.DefaultHeader,
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = TextIO.WriteParam.DefaultFilenamePolicySupplier
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1508,7 +1609,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         header,
         footer,
         shardNameTemplate,
-        tempDirectory
+        tempDirectory,
+        filenamePolicySupplier
       )
     )
   }
@@ -1525,10 +1627,12 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     compression: Compression = BinaryIO.WriteParam.DefaultCompression,
     header: Array[Byte] = BinaryIO.WriteParam.DefaultHeader,
     footer: Array[Byte] = BinaryIO.WriteParam.DefaultFooter,
+    shardNameTemplate: String = BinaryIO.WriteParam.DefaultShardNameTemplate,
     framePrefix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFramePrefix,
     frameSuffix: Array[Byte] => Array[Byte] = BinaryIO.WriteParam.DefaultFrameSuffix,
-    fileNaming: Option[FileNaming] = BinaryIO.WriteParam.DefaultFileNaming,
-    tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = BinaryIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      BinaryIO.WriteParam.DefaultFilenamePolicySupplier
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Nothing] =
     this
       .covary_[Array[Byte]]
@@ -1541,10 +1645,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             compression,
             header,
             footer,
+            shardNameTemplate,
             framePrefix,
             frameSuffix,
-            fileNaming,
-            tempDirectory
+            tempDirectory,
+            filenamePolicySupplier
           )
       )
 

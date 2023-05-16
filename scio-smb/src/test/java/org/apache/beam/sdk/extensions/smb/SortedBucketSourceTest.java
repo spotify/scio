@@ -18,9 +18,9 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
-import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSecondaryKeyedBucktedInput;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR;
+import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSecondaryKeyedBucktedInput;
+import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
 import java.io.File;
@@ -42,10 +42,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
+import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.Read;
@@ -631,6 +633,63 @@ public class SortedBucketSourceTest {
     Assert.assertEquals(1, secondSplit.get(0).getBucketOffset());
     Assert.assertEquals(3, secondSplit.get(1).getBucketOffset());
     secondSplit.forEach(s -> Assert.assertEquals(4, s.getEffectiveParallelism()));
+  }
+
+  @Test
+  public void testUniqueTupleTagIdOf() {
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
+
+    Assert.assertThrows(
+        IllegalArgumentException.class, () -> SortedBucketIO.read(String.class).of(read1, read2));
+  }
+
+  @Test
+  public void testUniqueTupleTagIdAnd() {
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
+
+    SortedBucketIO.CoGbk<String> sb = SortedBucketIO.read(String.class).of(read1, read2);
+
+    // None of these changes the set of inputs
+    sb.withMetricsKey("Metric Key");
+    sb.withTargetParallelism(TargetParallelism.auto());
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read3 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input2"), AvroGeneratedUser.getClassSchema())
+            .from("dir3");
+
+    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read3));
+  }
+
+  @Test
+  public void testUniqueTupleTagIdSecondaryKey() {
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read1 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir1");
+
+    SortedBucketIO.CoGbkWithSecondary<String, String> sb =
+        SortedBucketIO.read(String.class, String.class).of(read1);
+
+    // None of these changes the set of inputs
+    sb.withMetricsKey("Metric Key");
+    sb.withTargetParallelism(TargetParallelism.auto());
+
+    ParquetAvroSortedBucketIO.Read<GenericRecord> read2 =
+        ParquetAvroSortedBucketIO.read(new TupleTag<>("input1"), AvroGeneratedUser.getClassSchema())
+            .from("dir2");
+
+    Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read2));
   }
 
   @SuppressWarnings("unchecked")

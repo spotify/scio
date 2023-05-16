@@ -31,6 +31,7 @@ import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
+import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
 import scala.collection.compat._ // scalafix:ok
@@ -66,7 +67,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   )(f: KV[K, UI] => (K, UO)): SCollection[(K, UO)] = {
     self.transform(
       _.withName("TupleToKv").toKV
-        .applyTransform(t)
+        .applyTransform(t.getName, t)
         .withName("KvToTuple")
         .map(f)
     )
@@ -226,8 +227,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the left collection, i.e. when the intersection of keys is sparse in the left collection. A
    * Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
-   * concatenated. This is useful for joining historical aggregates with incremental updates. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -259,8 +265,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * (`rhs`) which cannot fit in memory, but contains a mostly overlapping set of keys as the left
    * collection, i.e. when the intersection of keys is sparse in the left collection. A Bloom Filter
    * of keys from the right collection (`rhs`) is used to split `this` into 2 partitions. Only those
-   * with keys in the filter go through the join and the rest are filtered out before the join. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * with keys in the filter go through the join and the rest are filtered out before the join.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -293,8 +304,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the left collection, i.e. when the intersection of keys is sparse in the left collection. A
    * Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
-   * concatenated. This is useful for joining historical aggregates with incremental updates. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -328,8 +344,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the left collection, i.e. when the intersection of keys is sparse in the left collection. A
    * Bloom Filter of keys from the right collection (`rhs`) is used to split `this` into 2
    * partitions. Only those with keys in the filter go through the join and the rest are
-   * concatenated. This is useful for joining historical aggregates with incremental updates. Read
-   * more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * concatenated. This is useful for joining historical aggregates with incremental updates.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param rhsNumKeys
    *   An estimate of the number of keys in the right collection `rhs`. This estimate is used to
@@ -457,7 +478,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * large tables.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param thisNumKeys
    *   An estimate of the number of keys in `this`. This estimate is used to find the size and
@@ -508,7 +535,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
    * and is sparse in `rhs`. A Bloom Filter of keys in `this` is used to filter out irrelevant keys
    * in `rhs`. This is useful when searching for a limited number of values from one or more very
-   * large tables. Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   * large tables.
+   *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
+   * Read more about Bloom Filter: [[com.google.common.hash.BloomFilter]].
+   *
    * @group join
    * @param thisNumKeys
    *   An estimate of the number of keys in `this`. This estimate is used to find the size and
@@ -737,7 +770,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def groupByKey: SCollection[(K, Iterable[V])] =
     this
-      .applyPerKey(GroupByKey.create[K, V]())(kvIterableToTuple)
+      .applyPerKey(GroupByKey.create[K, V]())(kvIterableToTuple)(
+        Coder.aggregate,
+        Coder.iterableCoder
+      )
       .withState(_.copy(postGbkOp = true))
 
   /**
@@ -749,12 +785,88 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Windows are preserved (batches contain elements from the same window). Batches may contain
    * elements from more than one bundle.
    *
+   * A time limit (in processing time) on how long an incomplete batch of elements is allowed to be
+   * buffered can be set. Once a batch is flushed to output, the timer is reset. The provided limit
+   * must be a positive duration or zero; a zero buffering duration effectively means no limit.
+   *
    * @param batchSize
+   * @param maxBufferingDuration
    *
    * @group per_key
    */
-  def batchByKey(batchSize: Long): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(GroupIntoBatches.ofSize(batchSize))(kvIterableToTuple)
+  def batchByKey(
+    batchSize: Long,
+    maxBufferingDuration: Duration = Duration.ZERO
+  ): SCollection[(K, Iterable[V])] = {
+    val groupIntoBatches = GroupIntoBatches
+      .ofSize[K, V](batchSize)
+      .withMaxBufferingDuration(maxBufferingDuration)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)(Coder.aggregate, Coder.iterableCoder)
+  }
+
+  /**
+   * Batches inputs to a desired batch of byte size. Batches will contain only elements of a single
+   * key.
+   *
+   * The value coder is used to determine the byte size of each element.
+   *
+   * Elements are buffered until there are an estimated batchByteSize bytes buffered, at which point
+   * they are outputed to the output [[SCollection]].
+   *
+   * Windows are preserved (batches contain elements from the same window). Batches may contain
+   * elements from more than one bundle.
+   *
+   * A time limit (in processing time) on how long an incomplete batch of elements is allowed to be
+   * buffered can be set. Once a batch is flushed to output, the timer is reset. The provided limit
+   * must be a positive duration or zero; a zero buffering duration effectively means no limit.
+   *
+   * @param batchByteSize
+   * @param maxBufferingDuration
+   *
+   * @group per_key
+   */
+  def batchByteSizedByKey(
+    batchByteSize: Long,
+    maxBufferingDuration: Duration = Duration.ZERO
+  ): SCollection[(K, Iterable[V])] = {
+    val groupIntoBatches = GroupIntoBatches
+      .ofByteSize[K, V](batchByteSize)
+      .withMaxBufferingDuration(maxBufferingDuration)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)(Coder.aggregate, Coder.iterableCoder)
+  }
+
+  /**
+   * Batches inputs to a desired weight. Batches will contain only elements of a single key.
+   *
+   * The weight of each element is computer from the provided cost function.
+   *
+   * Elements are buffered until the weight is reached, at which point they are outputed to the
+   * output [[SCollection]].
+   *
+   * Windows are preserved (batches contain elements from the same window). Batches may contain
+   * elements from more than one bundle.
+   *
+   * A time limit (in processing time) on how long an incomplete batch of elements is allowed to be
+   * buffered can be set. Once a batch is flushed to output, the timer is reset. The provided limit
+   * must be a positive duration or zero; a zero buffering duration effectively means no limit.
+   *
+   * @param weight
+   * @param cost
+   * @param maxBufferingDuration
+   *
+   * @group per_key
+   */
+  def batchWeightedByKey(
+    weight: Long,
+    cost: V => Long,
+    maxBufferingDuration: Duration = Duration.ZERO
+  ): SCollection[(K, Iterable[V])] = {
+    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
+    val groupIntoBatches = GroupIntoBatches
+      .ofByteSize[K, V](weight, weigher)
+      .withMaxBufferingDuration(maxBufferingDuration)
+    this.applyPerKey(groupIntoBatches)(kvIterableToTuple)(Coder.aggregate, Coder.iterableCoder)
+  }
 
   /**
    * Return an SCollection with the pairs from `this` whose keys are in `rhs`.
@@ -801,18 +913,19 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * Unlike [[SCollection.intersection]] this preserves duplicates in `this`.
    *
+   * Import `magnolify.guava.auto._` to get common instances of Guava
+   * [[com.google.common.hash.Funnel Funnel]] s.
+   *
    * @param rhsNumKeys
    *   An estimate of the number of keys in `rhs`. This estimate is used to find the size and number
    *   of BloomFilters that Scio would use to pre-filter `this` in a "map" step before any join.
    *   Having a value close to the actual number improves the false positives in output. When
    *   `computeExact` is set to true, a more accurate estimate of the number of keys in `rhs` would
    *   mean less shuffle when finding the exact value.
-   *
    * @param computeExact
    *   Whether or not to directly pass through bloom filter results (with a small false positive
    *   rate) or perform an additional inner join to confirm exact result set. By default this is set
    *   to false.
-   *
    * @param fpProb
    *   A fraction in range (0, 1) which would be the accepted false positive probability for this
    *   transform. By default when `computeExact` is set to `false`, this reflects the probability
@@ -821,7 +934,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   positive in the intermediate step before computing exact. Note: having fpProb = 0 doesn't
    *   mean an exact computation. This value along with `rhsNumKeys` is used for creating a
    *   BloomFilter.
-   *
    * @group per_key
    */
   def sparseIntersectByKey(
@@ -915,7 +1027,10 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def sampleByKey(sampleSize: Int): SCollection[(K, Iterable[V])] =
-    this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize))(kvIterableToTuple)
+    this.applyPerKey(Sample.fixedSizePerKey[K, V](sampleSize))(kvIterableToTuple)(
+      Coder.aggregate,
+      Coder.iterableCoder
+    )
 
   /**
    * Return a subset of this SCollection sampled by key (via stratified sampling).

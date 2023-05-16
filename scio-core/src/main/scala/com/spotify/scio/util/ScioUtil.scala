@@ -22,11 +22,16 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.ScioContext
+import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
-import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, FileSystems}
 import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 
 import scala.collection.compat.immutable.ArraySeq
@@ -86,8 +91,10 @@ private[scio] object ScioUtil {
     }
   }
 
-  def pathWithShards(path: String): String =
-    path.replaceAll("\\/+$", "") + "/part"
+  private def stripPath(path: String): String = StringUtils.stripEnd(path, "/")
+  def strippedPath(path: String): String = s"${stripPath(path)}/"
+  def pathWithPrefix(path: String, filePrefix: String): String = s"${stripPath(path)}/${filePrefix}"
+  def pathWithPartPrefix(path: String): String = s"${stripPath(path)}/part"
 
   def consistentHashCode[K](k: K): Int = k match {
     case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
@@ -96,4 +103,30 @@ private[scio] object ScioUtil {
 
   def toResourceId(directory: String): ResourceId =
     FileSystems.matchNewResource(directory, true)
+
+  def defaultFilenamePolicy(
+    path: String,
+    shardTemplate: String,
+    suffix: String,
+    isWindowed: Boolean
+  ): FilenamePolicy = {
+    val resource = FileBasedSink.convertToFileResourceIfPossible(path)
+    val prefix = StaticValueProvider.of(resource)
+    DefaultFilenamePolicy.fromStandardParameters(prefix, shardTemplate, suffix, isWindowed)
+  }
+
+  def tempDirOrDefault(tempDirectory: String, sc: ScioContext): ResourceId = {
+    Option(tempDirectory)
+      .orElse(Option(sc.options.getTempLocation))
+      .orElse(Try(sc.optionsAs[GcpOptions]).toOption.flatMap(x => Option(x.getGcpTempLocation)))
+      .map(toResourceId)
+      .getOrElse(
+        throw new IllegalArgumentException(
+          "No temporary location was specified. Specify a temporary location via --tempLocation or PipelineOptions.setTempLocation."
+        )
+      )
+  }
+
+  def isWindowed(coll: SCollection[_]): Boolean =
+    coll.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
 }

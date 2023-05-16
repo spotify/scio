@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Checkout tag
         uses: actions/checkout@v3
-      - uses: google-github-actions/auth@v0
+      - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
       - name: Cache SBT
@@ -49,7 +49,7 @@ jobs:
           SOCCO: true
           _JAVA_OPTIONS: "-Xmx1500m"
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4.3.4
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages

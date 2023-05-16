@@ -21,10 +21,9 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
 import com.spotify.scio.parquet.avro.ParquetAvroIO
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
-import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
@@ -38,32 +37,8 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection of Avro records as a Parquet file.
-   * @param schema
-   *   must be not null if `T` is of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
-   */
-  def saveAsParquetAvroFile(
-    path: String,
-    schema: Schema = WriteParam.DefaultSchema,
-    numShards: Int = WriteParam.DefaultNumShards,
-    suffix: String = WriteParam.DefaultSuffix,
-    compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = WriteParam(schema, numShards, suffix, compression, None, conf)
-    self.write(ParquetAvroIO[T](path))(param)
-  }
-
-  /**
-   * Save this SCollection of Avro records as a Parquet files written to dynamic destinations.
    * @param path
    *   output location of the write operation
-   * @param filenameFunction
-   *   an Either representing one of two functions which generates a filename. The Either must be a
-   *   Left when writing dynamic files from windowed SCollections, or a Right when writing dynamic
-   *   files from un-windowed SCollections. When the Either is a Left, the function's arguments
-   *   represent (the shard number, the total number of shards, the bounded window, the pane info
-   *   for the window) When the Either is a Right, the function's arguments represent (the shard
-   *   number, the total number of shards)
    * @param schema
    *   must be not null if `T` is of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
    * @param numShards
@@ -73,29 +48,27 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
    * @param compression
    *   defaults to snappy
    */
-  def saveAsDynamicParquetAvroFile(
+  def saveAsParquetAvroFile(
     path: String,
-    filenameFunction: Either[(Int, Int, BoundedWindow, PaneInfo) => String, (Int, Int) => String],
     schema: Schema = WriteParam.DefaultSchema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    if (
-      (self.internal.getWindowingStrategy != WindowingStrategy
-        .globalDefault() && filenameFunction.isRight) ||
-      (self.internal.getWindowingStrategy == WindowingStrategy
-        .globalDefault() && filenameFunction.isLeft)
-    ) {
-      throw new NotImplementedError(
-        "The filenameFunction value passed to saveAsDynamicParquetAvroFile does not" +
-          " support the window strategy applied to the SCollection."
-      )
-    }
-
-    val param =
-      WriteParam(schema, numShards, suffix, compression, Some(filenameFunction), conf)
+    val param = WriteParam(
+      schema,
+      numShards,
+      suffix,
+      compression,
+      conf,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier
+    )
     self.write(ParquetAvroIO[T](path))(param)
   }
 }

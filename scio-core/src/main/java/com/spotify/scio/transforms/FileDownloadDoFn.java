@@ -18,6 +18,12 @@
 package com.spotify.scio.transforms;
 
 import com.spotify.scio.util.RemoteFileUtil;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -25,13 +31,6 @@ import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /** A {@link DoFn} that downloads {@link URI} elements and processes them as local {@link Path}s. */
 public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
@@ -80,10 +79,14 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c, BoundedWindow window) {
-    batch.add(new Element(c.element(), c.timestamp(), window));
+  public void processElement(
+      @DoFn.Element URI element,
+      @Timestamp Instant timestamp,
+      OutputReceiver<OutputT> out,
+      BoundedWindow window) {
+    batch.add(new Element(element, timestamp, window));
     if (batch.size() >= batchSize) {
-      processBatch(c);
+      processBatch(out);
     }
   }
 
@@ -100,13 +103,13 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
         .add(DisplayData.item("Keep Downloaded Files", keep));
   }
 
-  private void processBatch(ProcessContext c) {
+  private void processBatch(OutputReceiver<OutputT> outputReceiver) {
     if (batch.isEmpty()) {
       return;
     }
     LOG.info("Processing batch of {}", batch.size());
     List<URI> uris = batch.stream().map(e -> e.uri).collect(Collectors.toList());
-    remoteFileUtil.download(uris).stream().map(fn::apply).forEach(c::output);
+    remoteFileUtil.download(uris).stream().map(fn::apply).forEach(outputReceiver::output);
     if (!keep) {
       LOG.info("Deleting batch of {}", batch.size());
       remoteFileUtil.delete(uris);

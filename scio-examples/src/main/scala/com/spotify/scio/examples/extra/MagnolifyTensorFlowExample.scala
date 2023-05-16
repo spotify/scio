@@ -45,7 +45,7 @@ object MagnolifyTensorFlowExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyTensorFlowWriteExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount-tf"`
 object MagnolifyTensorFlowWriteExample {
@@ -70,7 +70,7 @@ object MagnolifyTensorFlowWriteExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.MagnolifyTensorFlowReadExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=gs://[BUCKET]/[PATH]/wordcount-tf
 // --output=gs://[BUCKET]/[PATH]/wordcount"`
 object MagnolifyTensorFlowReadExample {

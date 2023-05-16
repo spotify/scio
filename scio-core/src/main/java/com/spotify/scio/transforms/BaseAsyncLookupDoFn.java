@@ -17,15 +17,8 @@
 
 package com.spotify.scio.transforms;
 
+import com.google.common.cache.AbstractCache;
 import com.google.common.cache.Cache;
-import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
-import org.apache.beam.sdk.values.KV;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.joda.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
@@ -35,6 +28,16 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import javax.annotation.CheckForNull;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.apache.beam.sdk.values.KV;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.commons.lang3.tuple.Pair;
+import org.joda.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link DoFn} that performs asynchronous lookup using the provided client. Lookup requests may
@@ -46,27 +49,25 @@ import java.util.function.Consumer;
  * @param <F> future type.
  * @param <T> client lookup value type wrapped in a Try.
  */
-public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T>>
+public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
+    extends DoFnWithResource<A, KV<A, T>, Pair<C, Cache<A, B>>>
     implements FutureHandlers.Base<F, B> {
   private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncLookupDoFn.class);
 
-  // DoFn is deserialized once per CPU core. We assign a unique UUID to each DoFn instance upon
-  // creation, so that all cloned instances share the same ID. This ensures all cores share the
-  // same Client and Cache.
-  private static final ConcurrentMap<UUID, Object> client = new ConcurrentHashMap<>();
-  private static final ConcurrentMap<UUID, Cache> cache = new ConcurrentHashMap<>();
-  private final UUID instanceId;
-
-  private final CacheSupplier<A, B, ?> cacheSupplier;
+  private final CacheSupplier<A, B> cacheSupplier;
   private final boolean deduplicate;
 
   // Data structures for handling async requests
+  private final int maxPendingRequests;
   private final Semaphore semaphore;
   private final ConcurrentMap<UUID, F> futures = new ConcurrentHashMap<>();
   private final ConcurrentMap<A, F> inFlightRequests = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
   private long requestCount;
   private long resultCount;
+
+  /** Creates the client. */
+  protected abstract C newClient();
 
   /** Perform asynchronous lookup. */
   public abstract F asyncLookup(C client, A input);
@@ -86,8 +87,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
    * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be
    * de-duplicated.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    */
   public BaseAsyncLookupDoFn(int maxPendingRequests) {
     this(maxPendingRequests, true, new NoOpCacheSupplier<>());
@@ -97,133 +98,97 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
    * Create a {@link BaseAsyncLookupDoFn} instance. Simultaneous requests for the same input may be
    * de-duplicated.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> BaseAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B, K> cacheSupplier) {
+  public BaseAsyncLookupDoFn(int maxPendingRequests, CacheSupplier<A, B> cacheSupplier) {
     this(maxPendingRequests, true, cacheSupplier);
   }
 
   /**
    * Create a {@link BaseAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the
    *     same input
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> BaseAsyncLookupDoFn(
-      int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B, K> cacheSupplier) {
-    this.instanceId = UUID.randomUUID();
+  public BaseAsyncLookupDoFn(
+      int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B> cacheSupplier) {
     this.cacheSupplier = cacheSupplier;
     this.deduplicate = deduplicate;
+    this.maxPendingRequests = maxPendingRequests;
     this.semaphore = new Semaphore(maxPendingRequests);
   }
 
-  protected abstract C newClient();
+  @Override
+  public Pair<C, Cache<A, B>> createResource() {
+    return Pair.of(newClient(), cacheSupplier.get());
+  }
 
-  @Setup
-  public void setup() {
-    client.computeIfAbsent(instanceId, instanceId -> newClient());
-    cache.computeIfAbsent(instanceId, instanceId -> cacheSupplier.createCache());
+  public C getResourceClient() {
+    return getResource().getLeft();
+  }
+
+  public Cache<A, B> getResourceCache() {
+    return getResource().getRight();
   }
 
   @StartBundle
   public void startBundle(StartBundleContext context) {
     futures.clear();
     results.clear();
+    inFlightRequests.clear();
     requestCount = 0;
     resultCount = 0;
+    semaphore.drainPermits();
+    semaphore.release(maxPendingRequests);
   }
 
   @SuppressWarnings("unchecked")
   @ProcessElement
-  public void processElement(ProcessContext c, BoundedWindow window) {
-    flush(r -> c.output(KV.of(r.input, r.output)));
-
-    // found in cache
-    final A input = c.element();
-    B cached = cacheSupplier.get(instanceId, input);
-    if (cached != null) {
-      c.output(KV.of(input, success(cached)));
-      return;
-    }
-
-    final UUID uuid = UUID.randomUUID();
-
-    if (deduplicate) {
-      // element already has an in-flight request
-      F inFlight = inFlightRequests.get(input);
-      if (inFlight != null) {
-        try {
-          futures.computeIfAbsent(
-              uuid,
-              key ->
-                  addCallback(
-                      inFlight,
-                      output -> {
-                        results.add(new Result(input, success(output), key, c.timestamp(), window));
-                        return null;
-                      },
-                      throwable -> {
-                        results.add(
-                            new Result(input, failure(throwable), key, c.timestamp(), window));
-                        return null;
-                      }));
-        } catch (Exception e) {
-          LOG.error("Failed to process element", e);
-          throw e;
-        }
-        requestCount++;
-        return;
-      }
-    }
+  public void processElement(
+      @Element A input,
+      @Timestamp Instant timestamp,
+      OutputReceiver<KV<A, T>> out,
+      BoundedWindow window) {
+    flush(r -> out.output(KV.of(r.input, r.output)));
+    final C client = getResourceClient();
+    final Cache<A, B> cache = getResourceCache();
 
     try {
-      semaphore.acquire();
-      try {
-        futures.computeIfAbsent(
-            uuid,
-            key -> {
-              final F future = asyncLookup((C) client.get(instanceId), input);
-              boolean sameFuture = false;
-              if (deduplicate) {
-                sameFuture = future.equals(inFlightRequests.computeIfAbsent(input, k -> future));
-              }
-              final boolean shouldRemove = deduplicate && sameFuture;
-              return addCallback(
-                  future,
-                  output -> {
-                    semaphore.release();
-                    if (shouldRemove) inFlightRequests.remove(input);
-                    try {
-                      cacheSupplier.put(instanceId, input, output);
-                      results.add(new Result(input, success(output), key, c.timestamp(), window));
-                    } catch (Exception e) {
-                      LOG.error("Failed to cache result", e);
-                      throw e;
-                    }
-                    return null;
-                  },
-                  throwable -> {
-                    semaphore.release();
-                    if (shouldRemove) inFlightRequests.remove(input);
-                    results.add(new Result(input, failure(throwable), key, c.timestamp(), window));
-                    return null;
-                  });
-            });
-      } catch (Exception e) {
-        semaphore.release();
-        LOG.error("Failed to process element", e);
-        throw e;
+      final UUID uuid = UUID.randomUUID();
+      final B cached = cache.getIfPresent(input);
+      final F inFlight = inFlightRequests.get(input);
+      if (cached != null) {
+        // found in cache
+        out.output(KV.of(input, success(cached)));
+      } else if (inFlight != null) {
+        // pending request for the same element
+        futures.put(uuid, handleOutput(inFlight, input, uuid, timestamp, window));
+        requestCount++;
+      } else {
+        // semaphore release is not performed on exception.
+        // let beam retry the bundle. startBundle will reset the semaphore to the
+        // maxPendingRequests permits.
+        semaphore.acquire();
+        final F future = asyncLookup(client, input);
+        // handle cache in fire & forget way
+        handleCache(future, input, cache);
+        // make sure semaphore are released when waiting for futures in finishBundle
+        final F unlockedFuture = handleSemaphore(future);
+        futures.put(uuid, handleOutput(unlockedFuture, input, uuid, timestamp, window));
+        requestCount++;
       }
     } catch (InterruptedException e) {
       LOG.error("Failed to acquire semaphore", e);
       throw new RuntimeException("Failed to acquire semaphore", e);
+    } catch (Exception e) {
+      LOG.error("Failed to process element", e);
+      throw e;
     }
-    requestCount++;
   }
 
   @FinishBundle
@@ -238,6 +203,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
         throw new RuntimeException("Failed to process futures", e);
       } catch (ExecutionException e) {
         LOG.error("Failed to process futures", e);
+        throw new RuntimeException("Failed to process futures", e);
       }
     }
     flush(r -> context.output(KV.of(r.input, r.output), r.timestamp, r.window));
@@ -248,6 +214,48 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
         "Expected requestCount == resultCount, but %s != %s",
         requestCount,
         resultCount);
+  }
+
+  private F handleOutput(F future, A input, UUID key, Instant timestamp, BoundedWindow window) {
+    return addCallback(
+        future,
+        output -> {
+          results.add(new Result(input, success(output), key, timestamp, window));
+          return null;
+        },
+        throwable -> {
+          results.add(new Result(input, failure(throwable), key, timestamp, window));
+          return null;
+        });
+  }
+
+  private F handleSemaphore(F future) {
+    return addCallback(
+        future,
+        ouput -> {
+          semaphore.release();
+          return null;
+        },
+        throwable -> {
+          semaphore.release();
+          return null;
+        });
+  }
+
+  private F handleCache(F future, A input, Cache<A, B> cache) {
+    final boolean shouldRemove =
+        deduplicate && (inFlightRequests.putIfAbsent(input, future) == null);
+    return addCallback(
+        future,
+        output -> {
+          cache.put(input, output);
+          if (shouldRemove) inFlightRequests.remove(input);
+          return null;
+        },
+        throwable -> {
+          if (shouldRemove) inFlightRequests.remove(input);
+          return null;
+        });
   }
 
   // Flush pending errors and results
@@ -343,44 +351,26 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T> extends DoFn<A, KV<A, T
   /**
    * {@link Cache} supplier for {@link BaseAsyncLookupDoFn}.
    *
-   * @param <A> input element type.
-   * @param <B> lookup value type.
    * @param <K> key type.
+   * @param <V> value type
    */
-  public abstract static class CacheSupplier<A, B, K> implements Serializable {
-    /**
-     * Create a new {@link Cache} instance. This is called once per {@link BaseAsyncLookupDoFn}
-     * instance.
-     */
-    public abstract Cache<K, B> createCache();
+  @FunctionalInterface
+  public interface CacheSupplier<K, V> extends Supplier<Cache<K, V>>, Serializable {}
 
-    /** Get cache key for the input element. */
-    public abstract K getKey(A input);
-
-    @SuppressWarnings("unchecked")
-    public B get(UUID instanceId, A item) {
-      Cache<K, B> c = cache.get(instanceId);
-      return c == null ? null : c.getIfPresent(getKey(item));
-    }
-
-    @SuppressWarnings("unchecked")
-    public void put(UUID instanceId, A item, B value) {
-      Cache<K, B> c = cache.get(instanceId);
-      if (c != null) {
-        c.put(getKey(item), value);
-      }
-    }
-  }
-
-  public static class NoOpCacheSupplier<A, B> extends CacheSupplier<A, B, String> {
-    @Override
-    public Cache<String, B> createCache() {
-      return null;
-    }
+  public static class NoOpCacheSupplier<K, V> implements CacheSupplier<K, V> {
 
     @Override
-    public String getKey(A input) {
-      return null;
+    public Cache<K, V> get() {
+      return new AbstractCache<K, V>() {
+        @Override
+        public void put(K key, V value) {}
+
+        @CheckForNull
+        @Override
+        public V getIfPresent(Object key) {
+          return null;
+        }
+      };
     }
   }
 }

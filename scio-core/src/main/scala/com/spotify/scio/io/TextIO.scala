@@ -17,64 +17,105 @@
 
 package com.spotify.scio.io
 
+import java.io.{BufferedInputStream, InputStream, SequenceInputStream}
+import java.nio.channels.Channels
+import java.util.Collections
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
-import org.apache.beam.sdk.io.{Compression, FileSystems, ShardNameTemplate, TextIO => BTextIO}
+import org.apache.beam.sdk.io.{Compression, FileSystems, TextIO => BTextIO}
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
-import java.io.{BufferedInputStream, InputStream, SequenceInputStream}
-import java.nio.channels.Channels
 import java.nio.charset.StandardCharsets
-import java.util.Collections
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, ResourceId}
 
 final case class TextIO(path: String) extends ScioIO[String] {
   override type ReadP = TextIO.ReadParam
   override type WriteP = TextIO.WriteParam
   final override val tapT: TapT.Aux[String, String] = TapOf[String]
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[String] =
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[String] = {
+    val coder = CoderMaterializer.beam(sc, Coder.stringCoder)
     sc.applyTransform(
       BTextIO
         .read()
         .from(path)
         .withCompression(params.compression)
+        .withEmptyMatchTreatment(params.emptyMatchTreatment)
+    ).setCoder(coder)
+  }
+
+  private def textOut(
+    write: BTextIO.Write,
+    path: String,
+    suffix: String,
+    numShards: Int,
+    compression: Compression,
+    header: Option[String],
+    footer: Option[String],
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    isWindowed: Boolean
+  ) = {
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed
     )
+    var transform = write
+      .to(fp)
+      .withTempDirectory(tempDirectory)
+      .withNumShards(numShards)
+      .withCompression(compression)
+
+    transform = header.fold(transform)(transform.withHeader)
+    transform = footer.fold(transform)(transform.withFooter)
+    if (!isWindowed) transform else transform.withWindowedWrites()
+  }
 
   override protected def write(data: SCollection[String], params: WriteP): Tap[String] = {
-    data.applyInternal(textOut(path, params))
+    data.applyInternal(
+      textOut(
+        BTextIO.write(),
+        path,
+        params.suffix,
+        params.numShards,
+        params.compression,
+        params.header,
+        params.footer,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicySupplier,
+        ScioUtil.isWindowed(data)
+      )
+    )
     tap(TextIO.ReadParam())
   }
 
   override def tap(params: ReadP): Tap[String] =
     TextTap(ScioUtil.addPartSuffix(path))
-
-  private def textOut(path: String, params: WriteP) = {
-    var transform = BTextIO
-      .write()
-      .to(path.replaceAll("\\/+$", ""))
-      .withSuffix(params.suffix)
-      .withShardNameTemplate(params.shardNameTemplate)
-      .withNumShards(params.numShards)
-      .withCompression(params.compression)
-
-    transform = params.header.fold(transform)(transform.withHeader)
-    transform = params.footer.fold(transform)(transform.withFooter)
-    transform = Option(params.tempDirectory)
-      .map(ScioUtil.toResourceId)
-      .fold(transform)(transform.withTempDirectory)
-
-    transform
-  }
-
 }
 
 object TextIO {
-  final case class ReadParam(compression: Compression = Compression.AUTO)
+  object ReadParam {
+    private[scio] val DefaultCompression = Compression.AUTO
+    private[scio] val DefaultEmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+  }
+
+  final case class ReadParam(
+    compression: Compression = ReadParam.DefaultCompression,
+    emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment
+  )
 
   object WriteParam {
     private[scio] val DefaultHeader = Option.empty[String]
@@ -82,17 +123,31 @@ object TextIO {
     private[scio] val DefaultSuffix = ".txt"
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
-    private[scio] val DefaultShardNameTemplate = "/part" + ShardNameTemplate.INDEX_OF_MAX
+    private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
+
+  final val DefaultWriteParam: WriteParam = WriteParam(
+    WriteParam.DefaultSuffix,
+    WriteParam.DefaultNumShards,
+    WriteParam.DefaultCompression,
+    WriteParam.DefaultHeader,
+    WriteParam.DefaultFooter,
+    WriteParam.DefaultShardNameTemplate,
+    WriteParam.DefaultTempDirectory,
+    WriteParam.DefaultFilenamePolicySupplier
+  )
+
   final case class WriteParam(
-    suffix: String = WriteParam.DefaultSuffix,
-    numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression,
-    header: Option[String] = WriteParam.DefaultHeader,
-    footer: Option[String] = WriteParam.DefaultFooter,
-    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    suffix: String,
+    numShards: Int,
+    compression: Compression,
+    header: Option[String],
+    footer: Option[String],
+    shardNameTemplate: String,
+    tempDirectory: String,
+    filenamePolicySupplier: FilenamePolicySupplier
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {

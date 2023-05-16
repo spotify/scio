@@ -44,8 +44,10 @@ data that has been written to file system using `SortedBucketSink` into a collec
       
       * `ScioContext#sortMergeGroupByKey` (1 source)
       * `ScioContext#sortMergeJoin` (2 sources)
-      * `ScioContext#sortMergeCoGroup` (1-4 sources)
+      * `ScioContext#sortMergeCoGroup` (1-22 sources)
  
+    Note that each @javadoc[TupleTag](org.apache.beam.sdk.values.TupleTag) used to create the @javadoc[SortedBucketIO.Read](org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read)s needs to have a unique Id.
+
     @@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_join }
 
 - @javadoc[SortedBucketTransform](org.apache.beam.sdk.extensions.smb.SortedBucketTransform) reads
@@ -54,7 +56,9 @@ data that has been written to file system using `SortedBucketSink`, transforms e
 function, and immediately rewrites them using the same bucketing scheme.
     Scala APIs (see: @scaladoc[SortedBucketScioContext](com.spotify.scio.smb.syntax.SortedBucketScioContext)):
 
-      * `ScioContext#sortMergeTransform` (1-3 sources)
+      * `ScioContext#sortMergeTransform` (1-22 sources)
+    
+    Note that each @javadoc[TupleTag](org.apache.beam.sdk.values.TupleTag) used to create the @javadoc[SortedBucketIO.Read](org.apache.beam.sdk.extensions.smb.SortedBucketIO.Read)s needs to have a unique Id.
             
     @@snip [SortMergeBucketExample.scala](/scio-examples/src/main/scala/com/spotify/scio/examples/extra/SortMergeBucketExample.scala) { #SortMergeBucketExample_transform }
 
@@ -123,6 +127,51 @@ mySchema
     "String".asInstanceOf[Object]
   )
 ```
+
+## Parquet
+
+SMB supports Parquet reads and writes in both Avro and case class formats.
+
+If you're using Parquet-Avro and your schema contains a _logical type_, you'll have to opt in to a logical type _supplier_
+in your Parquet `Configuration` parameter:
+
+```scala mdoc:reset
+import org.apache.avro.specific.SpecificRecordBase
+
+import org.apache.beam.sdk.extensions.smb.{AvroLogicalTypeSupplier, ParquetAvroSortedBucketIO}
+import org.apache.beam.sdk.values.TupleTag
+import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
+import com.spotify.scio.avro.TestRecord
+
+// Reads
+val readConf = new Configuration()
+readConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .read[TestRecord](new TupleTag[TestRecord], classOf[TestRecord])
+  .withConfiguration(readConf)
+
+// Writes
+val writeConf = new Configuration()
+writeConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .write(classOf[String], "myKeyField", classOf[TestRecord])
+  .withConfiguration(writeConf)
+
+// Transforms
+val transformConf = new Configuration()
+transformConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+transformConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
+
+ParquetAvroSortedBucketIO
+  .transformOutput(classOf[String], "myKeyField", classOf[TestRecord])
+  .withConfiguration(transformConf)
+```
+
+Note that if you're using a non-default Avro version (i.e. Avro 1.11), you'll have to supply a custom logical type supplier
+using Avro 1.11 classes. See @ref:[Logical Types in Parquet](../io/Parquet.md#logical-types) for more information.
 
 ## Tuning parameters for SMB transforms
 

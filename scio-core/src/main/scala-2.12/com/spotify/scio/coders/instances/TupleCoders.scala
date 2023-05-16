@@ -117,7 +117,7 @@ final private[coders] class Tuple2Coder[A, B](val ac: BCoder[A], val bc: BCoder[
 
 final private[coders] class Tuple3Coder[A, B, C](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C]) extends StructuredCoder[(A, B, C)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc).asJava
 
   @inline def onErrorMsg[TC](msg: => (String, String))(f: => TC): TC =
     try {
@@ -203,7 +203,7 @@ final private[coders] class Tuple3Coder[A, B, C](val ac: BCoder[A], val bc: BCod
 
 final private[coders] class Tuple4Coder[A, B, C, D](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D]) extends StructuredCoder[(A, B, C, D)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc).asJava
 
   @inline def onErrorMsg[TD](msg: => (String, String))(f: => TD): TD =
     try {
@@ -295,7 +295,7 @@ final private[coders] class Tuple4Coder[A, B, C, D](val ac: BCoder[A], val bc: B
 
 final private[coders] class Tuple5Coder[A, B, C, D, E](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E]) extends StructuredCoder[(A, B, C, D, E)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec).asJava
 
   @inline def onErrorMsg[TE](msg: => (String, String))(f: => TE): TE =
     try {
@@ -391,9 +391,9 @@ final private[coders] class Tuple5Coder[A, B, C, D, E](val ac: BCoder[A], val bc
 }
     
 
-final private[coders] class Tuple6Coder[A, B, C, D, E, G](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G]) extends StructuredCoder[(A, B, C, D, E, G)] {
+final private[coders] class Tuple6Coder[A, B, C, D, E, F](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F]) extends StructuredCoder[(A, B, C, D, E, F)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc).asJava
 
   @inline def onErrorMsg[TF](msg: => (String, String))(f: => TF): TF =
     try {
@@ -408,32 +408,32 @@ final private[coders] class Tuple6Coder[A, B, C, D, E, G](val ac: BCoder[A], val
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple6Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc)"
+    s"Tuple6Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -459,9 +459,9 @@ final private[coders] class Tuple6Coder[A, B, C, D, E, G](val ac: BCoder[A], val
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
-      gc.consistentWithEquals()
+      fc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -471,33 +471,33 @@ final private[coders] class Tuple6Coder[A, B, C, D, E, G](val ac: BCoder[A], val
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6)
+          fc.structuralValue(value._6)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6)
+      fc.isRegisterByteSizeObserverCheap(value._6)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
+    fc.registerByteSizeObserver(value._6, observer)
   }
 }
     
 
-final private[coders] class Tuple7Coder[A, B, C, D, E, G, H](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H]) extends StructuredCoder[(A, B, C, D, E, G, H)] {
+final private[coders] class Tuple7Coder[A, B, C, D, E, F, G](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G]) extends StructuredCoder[(A, B, C, D, E, F, G)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc).asJava
 
   @inline def onErrorMsg[TG](msg: => (String, String))(f: => TG): TG =
     try {
@@ -512,34 +512,34 @@ final private[coders] class Tuple7Coder[A, B, C, D, E, G, H](val ac: BCoder[A], 
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple7Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc)"
+    s"Tuple7Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -565,10 +565,10 @@ final private[coders] class Tuple7Coder[A, B, C, D, E, G, H](val ac: BCoder[A], 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
-      gc.consistentWithEquals() &&
-      hc.consistentWithEquals()
+      fc.consistentWithEquals() &&
+      gc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -578,36 +578,36 @@ final private[coders] class Tuple7Coder[A, B, C, D, E, G, H](val ac: BCoder[A], 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
   }
 }
     
 
-final private[coders] class Tuple8Coder[A, B, C, D, E, G, H, I](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I]) extends StructuredCoder[(A, B, C, D, E, G, H, I)] {
+final private[coders] class Tuple8Coder[A, B, C, D, E, F, G, H](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H]) extends StructuredCoder[(A, B, C, D, E, F, G, H)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc).asJava
 
   @inline def onErrorMsg[TH](msg: => (String, String))(f: => TH): TH =
     try {
@@ -622,36 +622,36 @@ final private[coders] class Tuple8Coder[A, B, C, D, E, G, H, I](val ac: BCoder[A
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple8Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic)"
+    s"Tuple8Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -677,11 +677,11 @@ final private[coders] class Tuple8Coder[A, B, C, D, E, G, H, I](val ac: BCoder[A
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
-      hc.consistentWithEquals() &&
-      ic.consistentWithEquals()
+      hc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -691,39 +691,39 @@ final private[coders] class Tuple8Coder[A, B, C, D, E, G, H, I](val ac: BCoder[A
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
   }
 }
     
 
-final private[coders] class Tuple9Coder[A, B, C, D, E, G, H, I, J](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J)] {
+final private[coders] class Tuple9Coder[A, B, C, D, E, F, G, H, I](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic).asJava
 
   @inline def onErrorMsg[TI](msg: => (String, String))(f: => TI): TI =
     try {
@@ -738,38 +738,38 @@ final private[coders] class Tuple9Coder[A, B, C, D, E, G, H, I, J](val ac: BCode
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple9Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc)"
+    s"Tuple9Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -795,12 +795,12 @@ final private[coders] class Tuple9Coder[A, B, C, D, E, G, H, I, J](val ac: BCode
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
-      ic.consistentWithEquals() &&
-      jc.consistentWithEquals()
+      ic.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -810,42 +810,42 @@ final private[coders] class Tuple9Coder[A, B, C, D, E, G, H, I, J](val ac: BCode
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
   }
 }
     
 
-final private[coders] class Tuple10Coder[A, B, C, D, E, G, H, I, J, K](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K)] {
+final private[coders] class Tuple10Coder[A, B, C, D, E, F, G, H, I, J](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc).asJava
 
   @inline def onErrorMsg[TJ](msg: => (String, String))(f: => TJ): TJ =
     try {
@@ -860,40 +860,40 @@ final private[coders] class Tuple10Coder[A, B, C, D, E, G, H, I, J, K](val ac: B
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple10Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc)"
+    s"Tuple10Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -919,13 +919,13 @@ final private[coders] class Tuple10Coder[A, B, C, D, E, G, H, I, J, K](val ac: B
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
-      jc.consistentWithEquals() &&
-      kc.consistentWithEquals()
+      jc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -935,45 +935,45 @@ final private[coders] class Tuple10Coder[A, B, C, D, E, G, H, I, J, K](val ac: B
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
   }
 }
     
 
-final private[coders] class Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L)] {
+final private[coders] class Tuple11Coder[A, B, C, D, E, F, G, H, I, J, K](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc).asJava
 
   @inline def onErrorMsg[TK](msg: => (String, String))(f: => TK): TK =
     try {
@@ -988,42 +988,42 @@ final private[coders] class Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](val ac
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple11Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc)"
+    s"Tuple11Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -1049,14 +1049,14 @@ final private[coders] class Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](val ac
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
       jc.consistentWithEquals() &&
-      kc.consistentWithEquals() &&
-      lc.consistentWithEquals()
+      kc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -1066,48 +1066,48 @@ final private[coders] class Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](val ac
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
   }
 }
     
 
-final private[coders] class Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M)] {
+final private[coders] class Tuple12Coder[A, B, C, D, E, F, G, H, I, J, K, L](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc).asJava
 
   @inline def onErrorMsg[TL](msg: => (String, String))(f: => TL): TL =
     try {
@@ -1122,44 +1122,44 @@ final private[coders] class Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](val
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple12Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc)"
+    s"Tuple12Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -1185,15 +1185,15 @@ final private[coders] class Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](val
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
       jc.consistentWithEquals() &&
       kc.consistentWithEquals() &&
-      lc.consistentWithEquals() &&
-      mc.consistentWithEquals()
+      lc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -1203,51 +1203,51 @@ final private[coders] class Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](val
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
   }
 }
     
 
-final private[coders] class Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N)] {
+final private[coders] class Tuple13Coder[A, B, C, D, E, F, G, H, I, J, K, L, M](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc).asJava
 
   @inline def onErrorMsg[TM](msg: => (String, String))(f: => TM): TM =
     try {
@@ -1262,46 +1262,46 @@ final private[coders] class Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple13Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc)"
+    s"Tuple13Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -1327,16 +1327,16 @@ final private[coders] class Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
       jc.consistentWithEquals() &&
       kc.consistentWithEquals() &&
       lc.consistentWithEquals() &&
-      mc.consistentWithEquals() &&
-      nc.consistentWithEquals()
+      mc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -1346,54 +1346,54 @@ final private[coders] class Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
   }
 }
     
 
-final private[coders] class Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O)] {
+final private[coders] class Tuple14Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc).asJava
 
   @inline def onErrorMsg[TN](msg: => (String, String))(f: => TN): TN =
     try {
@@ -1408,48 +1408,48 @@ final private[coders] class Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple14Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc)"
+    s"Tuple14Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -1475,6 +1475,7 @@ final private[coders] class Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -1482,10 +1483,9 @@ final private[coders] class Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       kc.consistentWithEquals() &&
       lc.consistentWithEquals() &&
       mc.consistentWithEquals() &&
-      nc.consistentWithEquals() &&
-      oc.consistentWithEquals()
+      nc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -1495,57 +1495,57 @@ final private[coders] class Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
   }
 }
     
 
-final private[coders] class Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P)] {
+final private[coders] class Tuple15Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc).asJava
 
   @inline def onErrorMsg[TO](msg: => (String, String))(f: => TO): TO =
     try {
@@ -1560,50 +1560,50 @@ final private[coders] class Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple15Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc)"
+    s"Tuple15Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -1629,6 +1629,7 @@ final private[coders] class Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -1637,10 +1638,9 @@ final private[coders] class Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       lc.consistentWithEquals() &&
       mc.consistentWithEquals() &&
       nc.consistentWithEquals() &&
-      oc.consistentWithEquals() &&
-      pc.consistentWithEquals()
+      oc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -1650,60 +1650,60 @@ final private[coders] class Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
   }
 }
     
 
-final private[coders] class Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q)] {
+final private[coders] class Tuple16Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc).asJava
 
   @inline def onErrorMsg[TP](msg: => (String, String))(f: => TP): TP =
     try {
@@ -1718,52 +1718,52 @@ final private[coders] class Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
-    onErrorMsg("encode" -> "_16")(qc.encode(value._16, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
+    onErrorMsg("encode" -> "_16")(pc.encode(value._16, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is)),
-      onErrorMsg("decode" -> "_16")(qc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is)),
+      onErrorMsg("decode" -> "_16")(pc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple16Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc, _16 -> $qc)"
+    s"Tuple16Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc, _16 -> $pc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc, "_16" -> qc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc, "_16" -> pc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -1789,6 +1789,7 @@ final private[coders] class Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -1798,10 +1799,9 @@ final private[coders] class Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       mc.consistentWithEquals() &&
       nc.consistentWithEquals() &&
       oc.consistentWithEquals() &&
-      pc.consistentWithEquals() &&
-      qc.consistentWithEquals()
+      pc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -1811,63 +1811,63 @@ final private[coders] class Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15),
-          qc.structuralValue(value._16)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15),
+          pc.structuralValue(value._16)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15) &&
-      qc.isRegisterByteSizeObserverCheap(value._16)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15) &&
+      pc.isRegisterByteSizeObserverCheap(value._16)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
-    qc.registerByteSizeObserver(value._16, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
+    pc.registerByteSizeObserver(value._16, observer)
   }
 }
     
 
-final private[coders] class Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R)] {
+final private[coders] class Tuple17Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc).asJava
 
   @inline def onErrorMsg[TQ](msg: => (String, String))(f: => TQ): TQ =
     try {
@@ -1882,54 +1882,54 @@ final private[coders] class Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
-    onErrorMsg("encode" -> "_16")(qc.encode(value._16, os))
-    onErrorMsg("encode" -> "_17")(rc.encode(value._17, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
+    onErrorMsg("encode" -> "_16")(pc.encode(value._16, os))
+    onErrorMsg("encode" -> "_17")(qc.encode(value._17, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is)),
-      onErrorMsg("decode" -> "_16")(qc.decode(is)),
-      onErrorMsg("decode" -> "_17")(rc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is)),
+      onErrorMsg("decode" -> "_16")(pc.decode(is)),
+      onErrorMsg("decode" -> "_17")(qc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple17Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc, _16 -> $qc, _17 -> $rc)"
+    s"Tuple17Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc, _16 -> $pc, _17 -> $qc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc, "_16" -> qc, "_17" -> rc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc, "_16" -> pc, "_17" -> qc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -1955,6 +1955,7 @@ final private[coders] class Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -1965,10 +1966,9 @@ final private[coders] class Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       nc.consistentWithEquals() &&
       oc.consistentWithEquals() &&
       pc.consistentWithEquals() &&
-      qc.consistentWithEquals() &&
-      rc.consistentWithEquals()
+      qc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -1978,66 +1978,66 @@ final private[coders] class Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15),
-          qc.structuralValue(value._16),
-          rc.structuralValue(value._17)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15),
+          pc.structuralValue(value._16),
+          qc.structuralValue(value._17)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15) &&
-      qc.isRegisterByteSizeObserverCheap(value._16) &&
-      rc.isRegisterByteSizeObserverCheap(value._17)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15) &&
+      pc.isRegisterByteSizeObserverCheap(value._16) &&
+      qc.isRegisterByteSizeObserverCheap(value._17)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
-    qc.registerByteSizeObserver(value._16, observer)
-    rc.registerByteSizeObserver(value._17, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
+    pc.registerByteSizeObserver(value._16, observer)
+    qc.registerByteSizeObserver(value._17, observer)
   }
 }
     
 
-final private[coders] class Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S)] {
+final private[coders] class Tuple18Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc).asJava
 
   @inline def onErrorMsg[TR](msg: => (String, String))(f: => TR): TR =
     try {
@@ -2052,56 +2052,56 @@ final private[coders] class Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
-    onErrorMsg("encode" -> "_16")(qc.encode(value._16, os))
-    onErrorMsg("encode" -> "_17")(rc.encode(value._17, os))
-    onErrorMsg("encode" -> "_18")(sc.encode(value._18, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
+    onErrorMsg("encode" -> "_16")(pc.encode(value._16, os))
+    onErrorMsg("encode" -> "_17")(qc.encode(value._17, os))
+    onErrorMsg("encode" -> "_18")(rc.encode(value._18, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is)),
-      onErrorMsg("decode" -> "_16")(qc.decode(is)),
-      onErrorMsg("decode" -> "_17")(rc.decode(is)),
-      onErrorMsg("decode" -> "_18")(sc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is)),
+      onErrorMsg("decode" -> "_16")(pc.decode(is)),
+      onErrorMsg("decode" -> "_17")(qc.decode(is)),
+      onErrorMsg("decode" -> "_18")(rc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple18Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc, _16 -> $qc, _17 -> $rc, _18 -> $sc)"
+    s"Tuple18Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc, _16 -> $pc, _17 -> $qc, _18 -> $rc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc, "_16" -> qc, "_17" -> rc, "_18" -> sc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc, "_16" -> pc, "_17" -> qc, "_18" -> rc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -2127,6 +2127,7 @@ final private[coders] class Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -2138,10 +2139,9 @@ final private[coders] class Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       oc.consistentWithEquals() &&
       pc.consistentWithEquals() &&
       qc.consistentWithEquals() &&
-      rc.consistentWithEquals() &&
-      sc.consistentWithEquals()
+      rc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -2151,69 +2151,69 @@ final private[coders] class Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15),
-          qc.structuralValue(value._16),
-          rc.structuralValue(value._17),
-          sc.structuralValue(value._18)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15),
+          pc.structuralValue(value._16),
+          qc.structuralValue(value._17),
+          rc.structuralValue(value._18)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15) &&
-      qc.isRegisterByteSizeObserverCheap(value._16) &&
-      rc.isRegisterByteSizeObserverCheap(value._17) &&
-      sc.isRegisterByteSizeObserverCheap(value._18)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15) &&
+      pc.isRegisterByteSizeObserverCheap(value._16) &&
+      qc.isRegisterByteSizeObserverCheap(value._17) &&
+      rc.isRegisterByteSizeObserverCheap(value._18)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
-    qc.registerByteSizeObserver(value._16, observer)
-    rc.registerByteSizeObserver(value._17, observer)
-    sc.registerByteSizeObserver(value._18, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
+    pc.registerByteSizeObserver(value._16, observer)
+    qc.registerByteSizeObserver(value._17, observer)
+    rc.registerByteSizeObserver(value._18, observer)
   }
 }
     
 
-final private[coders] class Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] {
+final private[coders] class Tuple19Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc).asJava
 
   @inline def onErrorMsg[TS](msg: => (String, String))(f: => TS): TS =
     try {
@@ -2228,58 +2228,58 @@ final private[coders] class Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
-    onErrorMsg("encode" -> "_16")(qc.encode(value._16, os))
-    onErrorMsg("encode" -> "_17")(rc.encode(value._17, os))
-    onErrorMsg("encode" -> "_18")(sc.encode(value._18, os))
-    onErrorMsg("encode" -> "_19")(tc.encode(value._19, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
+    onErrorMsg("encode" -> "_16")(pc.encode(value._16, os))
+    onErrorMsg("encode" -> "_17")(qc.encode(value._17, os))
+    onErrorMsg("encode" -> "_18")(rc.encode(value._18, os))
+    onErrorMsg("encode" -> "_19")(sc.encode(value._19, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is)),
-      onErrorMsg("decode" -> "_16")(qc.decode(is)),
-      onErrorMsg("decode" -> "_17")(rc.decode(is)),
-      onErrorMsg("decode" -> "_18")(sc.decode(is)),
-      onErrorMsg("decode" -> "_19")(tc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is)),
+      onErrorMsg("decode" -> "_16")(pc.decode(is)),
+      onErrorMsg("decode" -> "_17")(qc.decode(is)),
+      onErrorMsg("decode" -> "_18")(rc.decode(is)),
+      onErrorMsg("decode" -> "_19")(sc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple19Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc, _16 -> $qc, _17 -> $rc, _18 -> $sc, _19 -> $tc)"
+    s"Tuple19Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc, _16 -> $pc, _17 -> $qc, _18 -> $rc, _19 -> $sc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc, "_16" -> qc, "_17" -> rc, "_18" -> sc, "_19" -> tc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc, "_16" -> pc, "_17" -> qc, "_18" -> rc, "_19" -> sc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -2305,6 +2305,191 @@ final private[coders] class Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
+      gc.consistentWithEquals() &&
+      hc.consistentWithEquals() &&
+      ic.consistentWithEquals() &&
+      jc.consistentWithEquals() &&
+      kc.consistentWithEquals() &&
+      lc.consistentWithEquals() &&
+      mc.consistentWithEquals() &&
+      nc.consistentWithEquals() &&
+      oc.consistentWithEquals() &&
+      pc.consistentWithEquals() &&
+      qc.consistentWithEquals() &&
+      rc.consistentWithEquals() &&
+      sc.consistentWithEquals()
+
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S)): AnyRef =
+    if (consistentWithEquals()) {
+      value.asInstanceOf[AnyRef]
+    } else {
+        (
+          ac.structuralValue(value._1),
+          bc.structuralValue(value._2),
+          cc.structuralValue(value._3),
+          dc.structuralValue(value._4),
+          ec.structuralValue(value._5),
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15),
+          pc.structuralValue(value._16),
+          qc.structuralValue(value._17),
+          rc.structuralValue(value._18),
+          sc.structuralValue(value._19)
+        )
+    }
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S)): Boolean =
+    ac.isRegisterByteSizeObserverCheap(value._1) &&
+      bc.isRegisterByteSizeObserverCheap(value._2) &&
+      cc.isRegisterByteSizeObserverCheap(value._3) &&
+      dc.isRegisterByteSizeObserverCheap(value._4) &&
+      ec.isRegisterByteSizeObserverCheap(value._5) &&
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15) &&
+      pc.isRegisterByteSizeObserverCheap(value._16) &&
+      qc.isRegisterByteSizeObserverCheap(value._17) &&
+      rc.isRegisterByteSizeObserverCheap(value._18) &&
+      sc.isRegisterByteSizeObserverCheap(value._19)
+
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S), observer: ElementByteSizeObserver): Unit = {
+    ac.registerByteSizeObserver(value._1, observer)
+    bc.registerByteSizeObserver(value._2, observer)
+    cc.registerByteSizeObserver(value._3, observer)
+    dc.registerByteSizeObserver(value._4, observer)
+    ec.registerByteSizeObserver(value._5, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
+    pc.registerByteSizeObserver(value._16, observer)
+    qc.registerByteSizeObserver(value._17, observer)
+    rc.registerByteSizeObserver(value._18, observer)
+    sc.registerByteSizeObserver(value._19, observer)
+  }
+}
+    
+
+final private[coders] class Tuple20Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] {
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc).asJava
+
+  @inline def onErrorMsg[TT](msg: => (String, String))(f: => TT): TT =
+    try {
+      f
+    } catch {
+      case e: Exception =>
+        // allow Flink memory management, see WrappedBCoder#catching comment.
+        throw CoderStackTrace.append(
+          e,
+          s"Exception while trying to `${msg._1}` an instance" +
+            s" of Tuple20: Can't decode field ${msg._2}"
+        )
+    }
+
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T), os: OutputStream): Unit = {
+    onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
+    onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
+    onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
+    onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
+    onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
+    onErrorMsg("encode" -> "_16")(pc.encode(value._16, os))
+    onErrorMsg("encode" -> "_17")(qc.encode(value._17, os))
+    onErrorMsg("encode" -> "_18")(rc.encode(value._18, os))
+    onErrorMsg("encode" -> "_19")(sc.encode(value._19, os))
+    onErrorMsg("encode" -> "_20")(tc.encode(value._20, os))
+  }
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) = {
+    (
+      onErrorMsg("decode" -> "_1")(ac.decode(is)),
+      onErrorMsg("decode" -> "_2")(bc.decode(is)),
+      onErrorMsg("decode" -> "_3")(cc.decode(is)),
+      onErrorMsg("decode" -> "_4")(dc.decode(is)),
+      onErrorMsg("decode" -> "_5")(ec.decode(is)),
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is)),
+      onErrorMsg("decode" -> "_16")(pc.decode(is)),
+      onErrorMsg("decode" -> "_17")(qc.decode(is)),
+      onErrorMsg("decode" -> "_18")(rc.decode(is)),
+      onErrorMsg("decode" -> "_19")(sc.decode(is)),
+      onErrorMsg("decode" -> "_20")(tc.decode(is))
+    )
+  }
+
+  override def toString: String =
+    s"Tuple20Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc, _16 -> $pc, _17 -> $qc, _18 -> $rc, _19 -> $sc, _20 -> $tc)"
+
+  // delegate methods for determinism and equality checks
+
+  override def verifyDeterministic(): Unit = {
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc, "_16" -> pc, "_17" -> qc, "_18" -> rc, "_19" -> sc, "_20" -> tc)
+    val problems = cs.flatMap { case (label, c) =>
+      try {
+        c.verifyDeterministic()
+        Nil
+      } catch {
+        case e: NonDeterministicException =>
+          val reason = s"field $label is using non-deterministic $c"
+          List(reason -> e)
+      }
+    }
+
+    problems match {
+      case (_, e) :: _ =>
+        val reasons = problems.map { case (reason, _) => reason }
+        throw new NonDeterministicException(this, reasons.asJava, e)
+      case Nil =>
+    }
+  }
+
+  override def consistentWithEquals(): Boolean =
+    ac.consistentWithEquals() &&
+      bc.consistentWithEquals() &&
+      cc.consistentWithEquals() &&
+      dc.consistentWithEquals() &&
+      ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -2320,7 +2505,7 @@ final private[coders] class Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       sc.consistentWithEquals() &&
       tc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -2330,74 +2515,77 @@ final private[coders] class Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15),
-          qc.structuralValue(value._16),
-          rc.structuralValue(value._17),
-          sc.structuralValue(value._18),
-          tc.structuralValue(value._19)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15),
+          pc.structuralValue(value._16),
+          qc.structuralValue(value._17),
+          rc.structuralValue(value._18),
+          sc.structuralValue(value._19),
+          tc.structuralValue(value._20)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15) &&
-      qc.isRegisterByteSizeObserverCheap(value._16) &&
-      rc.isRegisterByteSizeObserverCheap(value._17) &&
-      sc.isRegisterByteSizeObserverCheap(value._18) &&
-      tc.isRegisterByteSizeObserverCheap(value._19)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15) &&
+      pc.isRegisterByteSizeObserverCheap(value._16) &&
+      qc.isRegisterByteSizeObserverCheap(value._17) &&
+      rc.isRegisterByteSizeObserverCheap(value._18) &&
+      sc.isRegisterByteSizeObserverCheap(value._19) &&
+      tc.isRegisterByteSizeObserverCheap(value._20)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
-    qc.registerByteSizeObserver(value._16, observer)
-    rc.registerByteSizeObserver(value._17, observer)
-    sc.registerByteSizeObserver(value._18, observer)
-    tc.registerByteSizeObserver(value._19, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
+    pc.registerByteSizeObserver(value._16, observer)
+    qc.registerByteSizeObserver(value._17, observer)
+    rc.registerByteSizeObserver(value._18, observer)
+    sc.registerByteSizeObserver(value._19, observer)
+    tc.registerByteSizeObserver(value._20, observer)
   }
 }
     
 
-final private[coders] class Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] {
+final private[coders] class Tuple21Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc).asJava
 
-  @inline def onErrorMsg[TT](msg: => (String, String))(f: => TT): TT =
+  @inline def onErrorMsg[TU](msg: => (String, String))(f: => TU): TU =
     try {
       f
     } catch {
@@ -2406,64 +2594,66 @@ final private[coders] class Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         throw CoderStackTrace.append(
           e,
           s"Exception while trying to `${msg._1}` an instance" +
-            s" of Tuple20: Can't decode field ${msg._2}"
+            s" of Tuple21: Can't decode field ${msg._2}"
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
-    onErrorMsg("encode" -> "_16")(qc.encode(value._16, os))
-    onErrorMsg("encode" -> "_17")(rc.encode(value._17, os))
-    onErrorMsg("encode" -> "_18")(sc.encode(value._18, os))
-    onErrorMsg("encode" -> "_19")(tc.encode(value._19, os))
-    onErrorMsg("encode" -> "_20")(uc.encode(value._20, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
+    onErrorMsg("encode" -> "_16")(pc.encode(value._16, os))
+    onErrorMsg("encode" -> "_17")(qc.encode(value._17, os))
+    onErrorMsg("encode" -> "_18")(rc.encode(value._18, os))
+    onErrorMsg("encode" -> "_19")(sc.encode(value._19, os))
+    onErrorMsg("encode" -> "_20")(tc.encode(value._20, os))
+    onErrorMsg("encode" -> "_21")(uc.encode(value._21, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is)),
-      onErrorMsg("decode" -> "_16")(qc.decode(is)),
-      onErrorMsg("decode" -> "_17")(rc.decode(is)),
-      onErrorMsg("decode" -> "_18")(sc.decode(is)),
-      onErrorMsg("decode" -> "_19")(tc.decode(is)),
-      onErrorMsg("decode" -> "_20")(uc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is)),
+      onErrorMsg("decode" -> "_16")(pc.decode(is)),
+      onErrorMsg("decode" -> "_17")(qc.decode(is)),
+      onErrorMsg("decode" -> "_18")(rc.decode(is)),
+      onErrorMsg("decode" -> "_19")(sc.decode(is)),
+      onErrorMsg("decode" -> "_20")(tc.decode(is)),
+      onErrorMsg("decode" -> "_21")(uc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple20Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc, _16 -> $qc, _17 -> $rc, _18 -> $sc, _19 -> $tc, _20 -> $uc)"
+    s"Tuple21Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc, _16 -> $pc, _17 -> $qc, _18 -> $rc, _19 -> $sc, _20 -> $tc, _21 -> $uc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc, "_16" -> qc, "_17" -> rc, "_18" -> sc, "_19" -> tc, "_20" -> uc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc, "_16" -> pc, "_17" -> qc, "_18" -> rc, "_19" -> sc, "_20" -> tc, "_21" -> uc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -2489,6 +2679,7 @@ final private[coders] class Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -2505,7 +2696,7 @@ final private[coders] class Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       tc.consistentWithEquals() &&
       uc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -2515,77 +2706,80 @@ final private[coders] class Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15),
-          qc.structuralValue(value._16),
-          rc.structuralValue(value._17),
-          sc.structuralValue(value._18),
-          tc.structuralValue(value._19),
-          uc.structuralValue(value._20)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15),
+          pc.structuralValue(value._16),
+          qc.structuralValue(value._17),
+          rc.structuralValue(value._18),
+          sc.structuralValue(value._19),
+          tc.structuralValue(value._20),
+          uc.structuralValue(value._21)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15) &&
-      qc.isRegisterByteSizeObserverCheap(value._16) &&
-      rc.isRegisterByteSizeObserverCheap(value._17) &&
-      sc.isRegisterByteSizeObserverCheap(value._18) &&
-      tc.isRegisterByteSizeObserverCheap(value._19) &&
-      uc.isRegisterByteSizeObserverCheap(value._20)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15) &&
+      pc.isRegisterByteSizeObserverCheap(value._16) &&
+      qc.isRegisterByteSizeObserverCheap(value._17) &&
+      rc.isRegisterByteSizeObserverCheap(value._18) &&
+      sc.isRegisterByteSizeObserverCheap(value._19) &&
+      tc.isRegisterByteSizeObserverCheap(value._20) &&
+      uc.isRegisterByteSizeObserverCheap(value._21)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
-    qc.registerByteSizeObserver(value._16, observer)
-    rc.registerByteSizeObserver(value._17, observer)
-    sc.registerByteSizeObserver(value._18, observer)
-    tc.registerByteSizeObserver(value._19, observer)
-    uc.registerByteSizeObserver(value._20, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
+    pc.registerByteSizeObserver(value._16, observer)
+    qc.registerByteSizeObserver(value._17, observer)
+    rc.registerByteSizeObserver(value._18, observer)
+    sc.registerByteSizeObserver(value._19, observer)
+    tc.registerByteSizeObserver(value._20, observer)
+    uc.registerByteSizeObserver(value._21, observer)
   }
 }
     
 
-final private[coders] class Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U], val vc: BCoder[V]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] {
+final private[coders] class Tuple22Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val fc: BCoder[F], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U], val vc: BCoder[V]) extends StructuredCoder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] {
 
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc, vc).asJava
 
-  @inline def onErrorMsg[TU](msg: => (String, String))(f: => TU): TU =
+  @inline def onErrorMsg[TV](msg: => (String, String))(f: => TV): TV =
     try {
       f
     } catch {
@@ -2594,66 +2788,68 @@ final private[coders] class Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
         throw CoderStackTrace.append(
           e,
           s"Exception while trying to `${msg._1}` an instance" +
-            s" of Tuple21: Can't decode field ${msg._2}"
+            s" of Tuple22: Can't decode field ${msg._2}"
         )
     }
 
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V), os: OutputStream): Unit = {
+  override def encode(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V), os: OutputStream): Unit = {
     onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
     onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
     onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
     onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
     onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
-    onErrorMsg("encode" -> "_16")(qc.encode(value._16, os))
-    onErrorMsg("encode" -> "_17")(rc.encode(value._17, os))
-    onErrorMsg("encode" -> "_18")(sc.encode(value._18, os))
-    onErrorMsg("encode" -> "_19")(tc.encode(value._19, os))
-    onErrorMsg("encode" -> "_20")(uc.encode(value._20, os))
-    onErrorMsg("encode" -> "_21")(vc.encode(value._21, os))
+    onErrorMsg("encode" -> "_6")(fc.encode(value._6, os))
+    onErrorMsg("encode" -> "_7")(gc.encode(value._7, os))
+    onErrorMsg("encode" -> "_8")(hc.encode(value._8, os))
+    onErrorMsg("encode" -> "_9")(ic.encode(value._9, os))
+    onErrorMsg("encode" -> "_10")(jc.encode(value._10, os))
+    onErrorMsg("encode" -> "_11")(kc.encode(value._11, os))
+    onErrorMsg("encode" -> "_12")(lc.encode(value._12, os))
+    onErrorMsg("encode" -> "_13")(mc.encode(value._13, os))
+    onErrorMsg("encode" -> "_14")(nc.encode(value._14, os))
+    onErrorMsg("encode" -> "_15")(oc.encode(value._15, os))
+    onErrorMsg("encode" -> "_16")(pc.encode(value._16, os))
+    onErrorMsg("encode" -> "_17")(qc.encode(value._17, os))
+    onErrorMsg("encode" -> "_18")(rc.encode(value._18, os))
+    onErrorMsg("encode" -> "_19")(sc.encode(value._19, os))
+    onErrorMsg("encode" -> "_20")(tc.encode(value._20, os))
+    onErrorMsg("encode" -> "_21")(uc.encode(value._21, os))
+    onErrorMsg("encode" -> "_22")(vc.encode(value._22, os))
   }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) = {
+  override def decode(is: InputStream): (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) = {
     (
       onErrorMsg("decode" -> "_1")(ac.decode(is)),
       onErrorMsg("decode" -> "_2")(bc.decode(is)),
       onErrorMsg("decode" -> "_3")(cc.decode(is)),
       onErrorMsg("decode" -> "_4")(dc.decode(is)),
       onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is)),
-      onErrorMsg("decode" -> "_16")(qc.decode(is)),
-      onErrorMsg("decode" -> "_17")(rc.decode(is)),
-      onErrorMsg("decode" -> "_18")(sc.decode(is)),
-      onErrorMsg("decode" -> "_19")(tc.decode(is)),
-      onErrorMsg("decode" -> "_20")(uc.decode(is)),
-      onErrorMsg("decode" -> "_21")(vc.decode(is))
+      onErrorMsg("decode" -> "_6")(fc.decode(is)),
+      onErrorMsg("decode" -> "_7")(gc.decode(is)),
+      onErrorMsg("decode" -> "_8")(hc.decode(is)),
+      onErrorMsg("decode" -> "_9")(ic.decode(is)),
+      onErrorMsg("decode" -> "_10")(jc.decode(is)),
+      onErrorMsg("decode" -> "_11")(kc.decode(is)),
+      onErrorMsg("decode" -> "_12")(lc.decode(is)),
+      onErrorMsg("decode" -> "_13")(mc.decode(is)),
+      onErrorMsg("decode" -> "_14")(nc.decode(is)),
+      onErrorMsg("decode" -> "_15")(oc.decode(is)),
+      onErrorMsg("decode" -> "_16")(pc.decode(is)),
+      onErrorMsg("decode" -> "_17")(qc.decode(is)),
+      onErrorMsg("decode" -> "_18")(rc.decode(is)),
+      onErrorMsg("decode" -> "_19")(sc.decode(is)),
+      onErrorMsg("decode" -> "_20")(tc.decode(is)),
+      onErrorMsg("decode" -> "_21")(uc.decode(is)),
+      onErrorMsg("decode" -> "_22")(vc.decode(is))
     )
   }
 
   override def toString: String =
-    s"Tuple21Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc, _16 -> $qc, _17 -> $rc, _18 -> $sc, _19 -> $tc, _20 -> $uc, _21 -> $vc)"
+    s"Tuple22Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $fc, _7 -> $gc, _8 -> $hc, _9 -> $ic, _10 -> $jc, _11 -> $kc, _12 -> $lc, _13 -> $mc, _14 -> $nc, _15 -> $oc, _16 -> $pc, _17 -> $qc, _18 -> $rc, _19 -> $sc, _20 -> $tc, _21 -> $uc, _22 -> $vc)"
 
   // delegate methods for determinism and equality checks
 
   override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc, "_16" -> qc, "_17" -> rc, "_18" -> sc, "_19" -> tc, "_20" -> uc, "_21" -> vc)
+    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> fc, "_7" -> gc, "_8" -> hc, "_9" -> ic, "_10" -> jc, "_11" -> kc, "_12" -> lc, "_13" -> mc, "_14" -> nc, "_15" -> oc, "_16" -> pc, "_17" -> qc, "_18" -> rc, "_19" -> sc, "_20" -> tc, "_21" -> uc, "_22" -> vc)
     val problems = cs.flatMap { case (label, c) =>
       try {
         c.verifyDeterministic()
@@ -2679,6 +2875,7 @@ final private[coders] class Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       cc.consistentWithEquals() &&
       dc.consistentWithEquals() &&
       ec.consistentWithEquals() &&
+      fc.consistentWithEquals() &&
       gc.consistentWithEquals() &&
       hc.consistentWithEquals() &&
       ic.consistentWithEquals() &&
@@ -2696,7 +2893,7 @@ final private[coders] class Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
       uc.consistentWithEquals() &&
       vc.consistentWithEquals()
 
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)): AnyRef =
+  override def structuralValue(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)): AnyRef =
     if (consistentWithEquals()) {
       value.asInstanceOf[AnyRef]
     } else {
@@ -2706,271 +2903,74 @@ final private[coders] class Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, 
           cc.structuralValue(value._3),
           dc.structuralValue(value._4),
           ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15),
-          qc.structuralValue(value._16),
-          rc.structuralValue(value._17),
-          sc.structuralValue(value._18),
-          tc.structuralValue(value._19),
-          uc.structuralValue(value._20),
-          vc.structuralValue(value._21)
+          fc.structuralValue(value._6),
+          gc.structuralValue(value._7),
+          hc.structuralValue(value._8),
+          ic.structuralValue(value._9),
+          jc.structuralValue(value._10),
+          kc.structuralValue(value._11),
+          lc.structuralValue(value._12),
+          mc.structuralValue(value._13),
+          nc.structuralValue(value._14),
+          oc.structuralValue(value._15),
+          pc.structuralValue(value._16),
+          qc.structuralValue(value._17),
+          rc.structuralValue(value._18),
+          sc.structuralValue(value._19),
+          tc.structuralValue(value._20),
+          uc.structuralValue(value._21),
+          vc.structuralValue(value._22)
         )
     }
 
   // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)): Boolean =
+  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)): Boolean =
     ac.isRegisterByteSizeObserverCheap(value._1) &&
       bc.isRegisterByteSizeObserverCheap(value._2) &&
       cc.isRegisterByteSizeObserverCheap(value._3) &&
       dc.isRegisterByteSizeObserverCheap(value._4) &&
       ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15) &&
-      qc.isRegisterByteSizeObserverCheap(value._16) &&
-      rc.isRegisterByteSizeObserverCheap(value._17) &&
-      sc.isRegisterByteSizeObserverCheap(value._18) &&
-      tc.isRegisterByteSizeObserverCheap(value._19) &&
-      uc.isRegisterByteSizeObserverCheap(value._20) &&
-      vc.isRegisterByteSizeObserverCheap(value._21)
+      fc.isRegisterByteSizeObserverCheap(value._6) &&
+      gc.isRegisterByteSizeObserverCheap(value._7) &&
+      hc.isRegisterByteSizeObserverCheap(value._8) &&
+      ic.isRegisterByteSizeObserverCheap(value._9) &&
+      jc.isRegisterByteSizeObserverCheap(value._10) &&
+      kc.isRegisterByteSizeObserverCheap(value._11) &&
+      lc.isRegisterByteSizeObserverCheap(value._12) &&
+      mc.isRegisterByteSizeObserverCheap(value._13) &&
+      nc.isRegisterByteSizeObserverCheap(value._14) &&
+      oc.isRegisterByteSizeObserverCheap(value._15) &&
+      pc.isRegisterByteSizeObserverCheap(value._16) &&
+      qc.isRegisterByteSizeObserverCheap(value._17) &&
+      rc.isRegisterByteSizeObserverCheap(value._18) &&
+      sc.isRegisterByteSizeObserverCheap(value._19) &&
+      tc.isRegisterByteSizeObserverCheap(value._20) &&
+      uc.isRegisterByteSizeObserverCheap(value._21) &&
+      vc.isRegisterByteSizeObserverCheap(value._22)
 
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V), observer: ElementByteSizeObserver): Unit = {
+  override def registerByteSizeObserver(value: (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V), observer: ElementByteSizeObserver): Unit = {
     ac.registerByteSizeObserver(value._1, observer)
     bc.registerByteSizeObserver(value._2, observer)
     cc.registerByteSizeObserver(value._3, observer)
     dc.registerByteSizeObserver(value._4, observer)
     ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
-    qc.registerByteSizeObserver(value._16, observer)
-    rc.registerByteSizeObserver(value._17, observer)
-    sc.registerByteSizeObserver(value._18, observer)
-    tc.registerByteSizeObserver(value._19, observer)
-    uc.registerByteSizeObserver(value._20, observer)
-    vc.registerByteSizeObserver(value._21, observer)
-  }
-}
-    
-
-final private[coders] class Tuple22Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W](val ac: BCoder[A], val bc: BCoder[B], val cc: BCoder[C], val dc: BCoder[D], val ec: BCoder[E], val gc: BCoder[G], val hc: BCoder[H], val ic: BCoder[I], val jc: BCoder[J], val kc: BCoder[K], val lc: BCoder[L], val mc: BCoder[M], val nc: BCoder[N], val oc: BCoder[O], val pc: BCoder[P], val qc: BCoder[Q], val rc: BCoder[R], val sc: BCoder[S], val tc: BCoder[T], val uc: BCoder[U], val vc: BCoder[V], val wc: BCoder[W]) extends StructuredCoder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)] {
-
-  override def getCoderArguments: JList[_ <: BCoder[_]] = List(ac, bc).asJava
-
-  @inline def onErrorMsg[TV](msg: => (String, String))(f: => TV): TV =
-    try {
-      f
-    } catch {
-      case e: Exception =>
-        // allow Flink memory management, see WrappedBCoder#catching comment.
-        throw CoderStackTrace.append(
-          e,
-          s"Exception while trying to `${msg._1}` an instance" +
-            s" of Tuple22: Can't decode field ${msg._2}"
-        )
-    }
-
-  override def encode(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W), os: OutputStream): Unit = {
-    onErrorMsg("encode" -> "_1")(ac.encode(value._1, os))
-    onErrorMsg("encode" -> "_2")(bc.encode(value._2, os))
-    onErrorMsg("encode" -> "_3")(cc.encode(value._3, os))
-    onErrorMsg("encode" -> "_4")(dc.encode(value._4, os))
-    onErrorMsg("encode" -> "_5")(ec.encode(value._5, os))
-    onErrorMsg("encode" -> "_6")(gc.encode(value._6, os))
-    onErrorMsg("encode" -> "_7")(hc.encode(value._7, os))
-    onErrorMsg("encode" -> "_8")(ic.encode(value._8, os))
-    onErrorMsg("encode" -> "_9")(jc.encode(value._9, os))
-    onErrorMsg("encode" -> "_10")(kc.encode(value._10, os))
-    onErrorMsg("encode" -> "_11")(lc.encode(value._11, os))
-    onErrorMsg("encode" -> "_12")(mc.encode(value._12, os))
-    onErrorMsg("encode" -> "_13")(nc.encode(value._13, os))
-    onErrorMsg("encode" -> "_14")(oc.encode(value._14, os))
-    onErrorMsg("encode" -> "_15")(pc.encode(value._15, os))
-    onErrorMsg("encode" -> "_16")(qc.encode(value._16, os))
-    onErrorMsg("encode" -> "_17")(rc.encode(value._17, os))
-    onErrorMsg("encode" -> "_18")(sc.encode(value._18, os))
-    onErrorMsg("encode" -> "_19")(tc.encode(value._19, os))
-    onErrorMsg("encode" -> "_20")(uc.encode(value._20, os))
-    onErrorMsg("encode" -> "_21")(vc.encode(value._21, os))
-    onErrorMsg("encode" -> "_22")(wc.encode(value._22, os))
-  }
-  override def decode(is: InputStream): (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W) = {
-    (
-      onErrorMsg("decode" -> "_1")(ac.decode(is)),
-      onErrorMsg("decode" -> "_2")(bc.decode(is)),
-      onErrorMsg("decode" -> "_3")(cc.decode(is)),
-      onErrorMsg("decode" -> "_4")(dc.decode(is)),
-      onErrorMsg("decode" -> "_5")(ec.decode(is)),
-      onErrorMsg("decode" -> "_6")(gc.decode(is)),
-      onErrorMsg("decode" -> "_7")(hc.decode(is)),
-      onErrorMsg("decode" -> "_8")(ic.decode(is)),
-      onErrorMsg("decode" -> "_9")(jc.decode(is)),
-      onErrorMsg("decode" -> "_10")(kc.decode(is)),
-      onErrorMsg("decode" -> "_11")(lc.decode(is)),
-      onErrorMsg("decode" -> "_12")(mc.decode(is)),
-      onErrorMsg("decode" -> "_13")(nc.decode(is)),
-      onErrorMsg("decode" -> "_14")(oc.decode(is)),
-      onErrorMsg("decode" -> "_15")(pc.decode(is)),
-      onErrorMsg("decode" -> "_16")(qc.decode(is)),
-      onErrorMsg("decode" -> "_17")(rc.decode(is)),
-      onErrorMsg("decode" -> "_18")(sc.decode(is)),
-      onErrorMsg("decode" -> "_19")(tc.decode(is)),
-      onErrorMsg("decode" -> "_20")(uc.decode(is)),
-      onErrorMsg("decode" -> "_21")(vc.decode(is)),
-      onErrorMsg("decode" -> "_22")(wc.decode(is))
-    )
-  }
-
-  override def toString: String =
-    s"Tuple22Coder(_1 -> $ac, _2 -> $bc, _3 -> $cc, _4 -> $dc, _5 -> $ec, _6 -> $gc, _7 -> $hc, _8 -> $ic, _9 -> $jc, _10 -> $kc, _11 -> $lc, _12 -> $mc, _13 -> $nc, _14 -> $oc, _15 -> $pc, _16 -> $qc, _17 -> $rc, _18 -> $sc, _19 -> $tc, _20 -> $uc, _21 -> $vc, _22 -> $wc)"
-
-  // delegate methods for determinism and equality checks
-
-  override def verifyDeterministic(): Unit = {
-    val cs = List("_1" -> ac, "_2" -> bc, "_3" -> cc, "_4" -> dc, "_5" -> ec, "_6" -> gc, "_7" -> hc, "_8" -> ic, "_9" -> jc, "_10" -> kc, "_11" -> lc, "_12" -> mc, "_13" -> nc, "_14" -> oc, "_15" -> pc, "_16" -> qc, "_17" -> rc, "_18" -> sc, "_19" -> tc, "_20" -> uc, "_21" -> vc, "_22" -> wc)
-    val problems = cs.flatMap { case (label, c) =>
-      try {
-        c.verifyDeterministic()
-        Nil
-      } catch {
-        case e: NonDeterministicException =>
-          val reason = s"field $label is using non-deterministic $c"
-          List(reason -> e)
-      }
-    }
-
-    problems match {
-      case (_, e) :: _ =>
-        val reasons = problems.map { case (reason, _) => reason }
-        throw new NonDeterministicException(this, reasons.asJava, e)
-      case Nil =>
-    }
-  }
-
-  override def consistentWithEquals(): Boolean =
-    ac.consistentWithEquals() &&
-      bc.consistentWithEquals() &&
-      cc.consistentWithEquals() &&
-      dc.consistentWithEquals() &&
-      ec.consistentWithEquals() &&
-      gc.consistentWithEquals() &&
-      hc.consistentWithEquals() &&
-      ic.consistentWithEquals() &&
-      jc.consistentWithEquals() &&
-      kc.consistentWithEquals() &&
-      lc.consistentWithEquals() &&
-      mc.consistentWithEquals() &&
-      nc.consistentWithEquals() &&
-      oc.consistentWithEquals() &&
-      pc.consistentWithEquals() &&
-      qc.consistentWithEquals() &&
-      rc.consistentWithEquals() &&
-      sc.consistentWithEquals() &&
-      tc.consistentWithEquals() &&
-      uc.consistentWithEquals() &&
-      vc.consistentWithEquals() &&
-      wc.consistentWithEquals()
-
-  override def structuralValue(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)): AnyRef =
-    if (consistentWithEquals()) {
-      value.asInstanceOf[AnyRef]
-    } else {
-        (
-          ac.structuralValue(value._1),
-          bc.structuralValue(value._2),
-          cc.structuralValue(value._3),
-          dc.structuralValue(value._4),
-          ec.structuralValue(value._5),
-          gc.structuralValue(value._6),
-          hc.structuralValue(value._7),
-          ic.structuralValue(value._8),
-          jc.structuralValue(value._9),
-          kc.structuralValue(value._10),
-          lc.structuralValue(value._11),
-          mc.structuralValue(value._12),
-          nc.structuralValue(value._13),
-          oc.structuralValue(value._14),
-          pc.structuralValue(value._15),
-          qc.structuralValue(value._16),
-          rc.structuralValue(value._17),
-          sc.structuralValue(value._18),
-          tc.structuralValue(value._19),
-          uc.structuralValue(value._20),
-          vc.structuralValue(value._21),
-          wc.structuralValue(value._22)
-        )
-    }
-
-  // delegate methods for byte size estimation
-  override def isRegisterByteSizeObserverCheap(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)): Boolean =
-    ac.isRegisterByteSizeObserverCheap(value._1) &&
-      bc.isRegisterByteSizeObserverCheap(value._2) &&
-      cc.isRegisterByteSizeObserverCheap(value._3) &&
-      dc.isRegisterByteSizeObserverCheap(value._4) &&
-      ec.isRegisterByteSizeObserverCheap(value._5) &&
-      gc.isRegisterByteSizeObserverCheap(value._6) &&
-      hc.isRegisterByteSizeObserverCheap(value._7) &&
-      ic.isRegisterByteSizeObserverCheap(value._8) &&
-      jc.isRegisterByteSizeObserverCheap(value._9) &&
-      kc.isRegisterByteSizeObserverCheap(value._10) &&
-      lc.isRegisterByteSizeObserverCheap(value._11) &&
-      mc.isRegisterByteSizeObserverCheap(value._12) &&
-      nc.isRegisterByteSizeObserverCheap(value._13) &&
-      oc.isRegisterByteSizeObserverCheap(value._14) &&
-      pc.isRegisterByteSizeObserverCheap(value._15) &&
-      qc.isRegisterByteSizeObserverCheap(value._16) &&
-      rc.isRegisterByteSizeObserverCheap(value._17) &&
-      sc.isRegisterByteSizeObserverCheap(value._18) &&
-      tc.isRegisterByteSizeObserverCheap(value._19) &&
-      uc.isRegisterByteSizeObserverCheap(value._20) &&
-      vc.isRegisterByteSizeObserverCheap(value._21) &&
-      wc.isRegisterByteSizeObserverCheap(value._22)
-
-  override def registerByteSizeObserver(value: (A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W), observer: ElementByteSizeObserver): Unit = {
-    ac.registerByteSizeObserver(value._1, observer)
-    bc.registerByteSizeObserver(value._2, observer)
-    cc.registerByteSizeObserver(value._3, observer)
-    dc.registerByteSizeObserver(value._4, observer)
-    ec.registerByteSizeObserver(value._5, observer)
-    gc.registerByteSizeObserver(value._6, observer)
-    hc.registerByteSizeObserver(value._7, observer)
-    ic.registerByteSizeObserver(value._8, observer)
-    jc.registerByteSizeObserver(value._9, observer)
-    kc.registerByteSizeObserver(value._10, observer)
-    lc.registerByteSizeObserver(value._11, observer)
-    mc.registerByteSizeObserver(value._12, observer)
-    nc.registerByteSizeObserver(value._13, observer)
-    oc.registerByteSizeObserver(value._14, observer)
-    pc.registerByteSizeObserver(value._15, observer)
-    qc.registerByteSizeObserver(value._16, observer)
-    rc.registerByteSizeObserver(value._17, observer)
-    sc.registerByteSizeObserver(value._18, observer)
-    tc.registerByteSizeObserver(value._19, observer)
-    uc.registerByteSizeObserver(value._20, observer)
-    vc.registerByteSizeObserver(value._21, observer)
-    wc.registerByteSizeObserver(value._22, observer)
+    fc.registerByteSizeObserver(value._6, observer)
+    gc.registerByteSizeObserver(value._7, observer)
+    hc.registerByteSizeObserver(value._8, observer)
+    ic.registerByteSizeObserver(value._9, observer)
+    jc.registerByteSizeObserver(value._10, observer)
+    kc.registerByteSizeObserver(value._11, observer)
+    lc.registerByteSizeObserver(value._12, observer)
+    mc.registerByteSizeObserver(value._13, observer)
+    nc.registerByteSizeObserver(value._14, observer)
+    oc.registerByteSizeObserver(value._15, observer)
+    pc.registerByteSizeObserver(value._16, observer)
+    qc.registerByteSizeObserver(value._17, observer)
+    rc.registerByteSizeObserver(value._18, observer)
+    sc.registerByteSizeObserver(value._19, observer)
+    tc.registerByteSizeObserver(value._20, observer)
+    uc.registerByteSizeObserver(value._21, observer)
+    vc.registerByteSizeObserver(value._22, observer)
   }
 }
     
@@ -2992,71 +2992,71 @@ trait TupleCoders {
     Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value)(ec => Coder.beam(new Tuple5Coder[A, B, C, D, E](ac, bc, cc, dc, ec)))}}}}
     }
 
-    implicit def tuple6Coder[A, B, C, D, E, G](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]]): Coder[(A, B, C, D, E, G)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value)(gc => Coder.beam(new Tuple6Coder[A, B, C, D, E, G](ac, bc, cc, dc, ec, gc)))}}}}}
+    implicit def tuple6Coder[A, B, C, D, E, F](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]]): Coder[(A, B, C, D, E, F)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value)(fc => Coder.beam(new Tuple6Coder[A, B, C, D, E, F](ac, bc, cc, dc, ec, fc)))}}}}}
     }
 
-    implicit def tuple7Coder[A, B, C, D, E, G, H](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]]): Coder[(A, B, C, D, E, G, H)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value)(hc => Coder.beam(new Tuple7Coder[A, B, C, D, E, G, H](ac, bc, cc, dc, ec, gc, hc)))}}}}}}
+    implicit def tuple7Coder[A, B, C, D, E, F, G](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]]): Coder[(A, B, C, D, E, F, G)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value)(gc => Coder.beam(new Tuple7Coder[A, B, C, D, E, F, G](ac, bc, cc, dc, ec, fc, gc)))}}}}}}
     }
 
-    implicit def tuple8Coder[A, B, C, D, E, G, H, I](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]]): Coder[(A, B, C, D, E, G, H, I)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value)(ic => Coder.beam(new Tuple8Coder[A, B, C, D, E, G, H, I](ac, bc, cc, dc, ec, gc, hc, ic)))}}}}}}}
+    implicit def tuple8Coder[A, B, C, D, E, F, G, H](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]]): Coder[(A, B, C, D, E, F, G, H)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value)(hc => Coder.beam(new Tuple8Coder[A, B, C, D, E, F, G, H](ac, bc, cc, dc, ec, fc, gc, hc)))}}}}}}}
     }
 
-    implicit def tuple9Coder[A, B, C, D, E, G, H, I, J](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]]): Coder[(A, B, C, D, E, G, H, I, J)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value)(jc => Coder.beam(new Tuple9Coder[A, B, C, D, E, G, H, I, J](ac, bc, cc, dc, ec, gc, hc, ic, jc)))}}}}}}}}
+    implicit def tuple9Coder[A, B, C, D, E, F, G, H, I](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]]): Coder[(A, B, C, D, E, F, G, H, I)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value)(ic => Coder.beam(new Tuple9Coder[A, B, C, D, E, F, G, H, I](ac, bc, cc, dc, ec, fc, gc, hc, ic)))}}}}}}}}
     }
 
-    implicit def tuple10Coder[A, B, C, D, E, G, H, I, J, K](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]]): Coder[(A, B, C, D, E, G, H, I, J, K)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value)(kc => Coder.beam(new Tuple10Coder[A, B, C, D, E, G, H, I, J, K](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc)))}}}}}}}}}
+    implicit def tuple10Coder[A, B, C, D, E, F, G, H, I, J](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]]): Coder[(A, B, C, D, E, F, G, H, I, J)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value)(jc => Coder.beam(new Tuple10Coder[A, B, C, D, E, F, G, H, I, J](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc)))}}}}}}}}}
     }
 
-    implicit def tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]]): Coder[(A, B, C, D, E, G, H, I, J, K, L)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value)(lc => Coder.beam(new Tuple11Coder[A, B, C, D, E, G, H, I, J, K, L](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc)))}}}}}}}}}}
+    implicit def tuple11Coder[A, B, C, D, E, F, G, H, I, J, K](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]]): Coder[(A, B, C, D, E, F, G, H, I, J, K)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value)(kc => Coder.beam(new Tuple11Coder[A, B, C, D, E, F, G, H, I, J, K](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc)))}}}}}}}}}}
     }
 
-    implicit def tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value)(mc => Coder.beam(new Tuple12Coder[A, B, C, D, E, G, H, I, J, K, L, M](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc)))}}}}}}}}}}}
+    implicit def tuple12Coder[A, B, C, D, E, F, G, H, I, J, K, L](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value)(lc => Coder.beam(new Tuple12Coder[A, B, C, D, E, F, G, H, I, J, K, L](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc)))}}}}}}}}}}}
     }
 
-    implicit def tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value)(nc => Coder.beam(new Tuple13Coder[A, B, C, D, E, G, H, I, J, K, L, M, N](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc)))}}}}}}}}}}}}
+    implicit def tuple13Coder[A, B, C, D, E, F, G, H, I, J, K, L, M](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value)(mc => Coder.beam(new Tuple13Coder[A, B, C, D, E, F, G, H, I, J, K, L, M](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc)))}}}}}}}}}}}}
     }
 
-    implicit def tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value)(oc => Coder.beam(new Tuple14Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc)))}}}}}}}}}}}}}
+    implicit def tuple14Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value)(nc => Coder.beam(new Tuple14Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc)))}}}}}}}}}}}}}
     }
 
-    implicit def tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value)(pc => Coder.beam(new Tuple15Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc)))}}}}}}}}}}}}}}
+    implicit def tuple15Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value)(oc => Coder.beam(new Tuple15Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc)))}}}}}}}}}}}}}}
     }
 
-    implicit def tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value)(qc => Coder.beam(new Tuple16Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc)))}}}}}}}}}}}}}}}
+    implicit def tuple16Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value)(pc => Coder.beam(new Tuple16Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc)))}}}}}}}}}}}}}}}
     }
 
-    implicit def tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value)(rc => Coder.beam(new Tuple17Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc)))}}}}}}}}}}}}}}}}
+    implicit def tuple17Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value)(qc => Coder.beam(new Tuple17Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc)))}}}}}}}}}}}}}}}}
     }
 
-    implicit def tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value)(sc => Coder.beam(new Tuple18Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc)))}}}}}}}}}}}}}}}}}
+    implicit def tuple18Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value)(rc => Coder.beam(new Tuple18Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc)))}}}}}}}}}}}}}}}}}
     }
 
-    implicit def tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]], CT: Strict[Coder[T]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value) { sc => Coder.transform(CT.value)(tc => Coder.beam(new Tuple19Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc)))}}}}}}}}}}}}}}}}}}
+    implicit def tuple19Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value)(sc => Coder.beam(new Tuple19Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc)))}}}}}}}}}}}}}}}}}}
     }
 
-    implicit def tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]], CT: Strict[Coder[T]], CU: Strict[Coder[U]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value) { sc => Coder.transform(CT.value) { tc => Coder.transform(CU.value)(uc => Coder.beam(new Tuple20Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc)))}}}}}}}}}}}}}}}}}}}
+    implicit def tuple20Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]], CT: Strict[Coder[T]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value) { sc => Coder.transform(CT.value)(tc => Coder.beam(new Tuple20Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc)))}}}}}}}}}}}}}}}}}}}
     }
 
-    implicit def tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]], CT: Strict[Coder[T]], CU: Strict[Coder[U]], CV: Strict[Coder[V]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value) { sc => Coder.transform(CT.value) { tc => Coder.transform(CU.value) { uc => Coder.transform(CV.value)(vc => Coder.beam(new Tuple21Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc, vc)))}}}}}}}}}}}}}}}}}}}}
+    implicit def tuple21Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]], CT: Strict[Coder[T]], CU: Strict[Coder[U]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value) { sc => Coder.transform(CT.value) { tc => Coder.transform(CU.value)(uc => Coder.beam(new Tuple21Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc)))}}}}}}}}}}}}}}}}}}}}
     }
 
-    implicit def tuple22Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]], CT: Strict[Coder[T]], CU: Strict[Coder[U]], CV: Strict[Coder[V]], CW: Strict[Coder[W]]): Coder[(A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)] = {
-    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value) { sc => Coder.transform(CT.value) { tc => Coder.transform(CU.value) { uc => Coder.transform(CV.value) { vc => Coder.transform(CW.value)(wc => Coder.beam(new Tuple22Coder[A, B, C, D, E, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W](ac, bc, cc, dc, ec, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc, vc, wc)))}}}}}}}}}}}}}}}}}}}}}
+    implicit def tuple22Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](implicit CA: Strict[Coder[A]], CB: Strict[Coder[B]], CC: Strict[Coder[C]], CD: Strict[Coder[D]], CE: Strict[Coder[E]], CF: Strict[Coder[F]], CG: Strict[Coder[G]], CH: Strict[Coder[H]], CI: Strict[Coder[I]], CJ: Strict[Coder[J]], CK: Strict[Coder[K]], CL: Strict[Coder[L]], CM: Strict[Coder[M]], CN: Strict[Coder[N]], CO: Strict[Coder[O]], CP: Strict[Coder[P]], CQ: Strict[Coder[Q]], CR: Strict[Coder[R]], CS: Strict[Coder[S]], CT: Strict[Coder[T]], CU: Strict[Coder[U]], CV: Strict[Coder[V]]): Coder[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] = {
+    Coder.transform(CA.value) { ac => Coder.transform(CB.value) { bc => Coder.transform(CC.value) { cc => Coder.transform(CD.value) { dc => Coder.transform(CE.value) { ec => Coder.transform(CF.value) { fc => Coder.transform(CG.value) { gc => Coder.transform(CH.value) { hc => Coder.transform(CI.value) { ic => Coder.transform(CJ.value) { jc => Coder.transform(CK.value) { kc => Coder.transform(CL.value) { lc => Coder.transform(CM.value) { mc => Coder.transform(CN.value) { nc => Coder.transform(CO.value) { oc => Coder.transform(CP.value) { pc => Coder.transform(CQ.value) { qc => Coder.transform(CR.value) { rc => Coder.transform(CS.value) { sc => Coder.transform(CT.value) { tc => Coder.transform(CU.value) { uc => Coder.transform(CV.value)(vc => Coder.beam(new Tuple22Coder[A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V](ac, bc, cc, dc, ec, fc, gc, hc, ic, jc, kc, lc, mc, nc, oc, pc, qc, rc, sc, tc, uc, vc)))}}}}}}}}}}}}}}}}}}}}}
     }
 }

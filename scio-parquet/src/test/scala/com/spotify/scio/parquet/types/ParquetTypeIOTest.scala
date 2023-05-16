@@ -18,13 +18,37 @@
 package com.spotify.scio.parquet.types
 
 import java.{lang => jl}
-
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.TapSpec
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec}
 import com.spotify.scio.testing.ScioIOSpec
+import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.values.SCollection
 import org.apache.commons.io.FileUtils
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
+
+class ParquetTypeIOFileNamePolicyTest extends FileNamePolicySpec[Wide] {
+  val extension: String = ".parquet"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Wide] = {
+    in.map(i => Wide(i, i.toString, Some(i), (1 to i).toList))
+      .saveAsTypedParquetFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[Wide]] = Seq(
+    _.map(i => Wide(i, i.toString, Some(i), (1 to i).toList)).saveAsTypedParquetFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
 
 class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   private val dir = tmpDir

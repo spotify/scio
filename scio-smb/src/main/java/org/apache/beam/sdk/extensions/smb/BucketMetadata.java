@@ -17,10 +17,14 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static com.google.common.base.Verify.verifyNotNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -73,7 +77,14 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
 public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisplayData {
 
-  @JsonIgnore public static final int CURRENT_VERSION = 1;
+  /**
+   * The VERSION parameter is included in the metadata.json file for every SMB. Take extreme care in
+   * bumping version: Scio versions prior to 0.12.1 perform a version compatibility check on SMB
+   * partitions which may fail if the SMB producer bumps to an incompatible version.
+   *
+   * <p>The next version bump should be to: 2
+   */
+  @JsonIgnore public static final int CURRENT_VERSION = 0;
 
   // Represents the current major version of the Beam SMB module. Storage format may differ
   // across versions and require internal code branching to ensure backwards compatibility.
@@ -85,7 +96,9 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonProperty private final Class<K1> keyClass;
 
-  @JsonProperty private final Class<K2> keyClassSecondary;
+  @JsonProperty
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final Class<K2> keyClassSecondary;
 
   @JsonProperty private final HashType hashType;
 
@@ -261,7 +274,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   byte[] getKeyBytesSecondary(V value) {
-    assert (keyCoderSecondary != null);
+    verifyNotNull(keyCoderSecondary);
     return encodeKeyBytes(extractKeySecondary(value), keyCoderSecondary);
   }
 
@@ -290,7 +303,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   public SortedBucketIO.ComparableKeyBytes primaryAndSecondaryComparableKeyBytes(V value) {
-    assert (keyCoderSecondary != null);
+    verifyNotNull(keyCoderSecondary);
     return new SortedBucketIO.ComparableKeyBytes(
         getKeyBytesPrimary(value), getKeyBytesSecondary(value));
   }
@@ -325,7 +338,13 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   // Serialization
   ////////////////////////////////////////
 
-  @JsonIgnore private static ObjectMapper objectMapper = new ObjectMapper();
+  @JsonIgnore private static ObjectMapper objectMapper = getObjectMapper();
+
+  private static ObjectMapper getObjectMapper() {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    return objectMapper;
+  }
 
   public static <K1, K2, V> BucketMetadata<K1, K2, V> from(String src) throws IOException {
     return objectMapper.readerFor(BucketMetadata.class).readValue(src);
@@ -338,7 +357,6 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   public static <K1, K2, V> void to(
       BucketMetadata<K1, K2, V> bucketMetadata, OutputStream outputStream) throws IOException {
-
     objectMapper.writeValue(outputStream, bucketMetadata);
   }
 

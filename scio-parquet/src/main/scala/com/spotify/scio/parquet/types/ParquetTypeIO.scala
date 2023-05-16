@@ -17,23 +17,24 @@
 
 package com.spotify.scio.parquet.types
 
+import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
-import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
-import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
+import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
+import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
+import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.transforms.SerializableFunctions
+import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.io.{
-  DefaultFilenamePolicy,
-  DynamicFileDestinations,
-  FileBasedSink,
-  FileSystems,
-  WriteFiles
-}
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
+import org.apache.beam.sdk.io.{DynamicFileDestinations, FileSystems, WriteFiles}
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -53,8 +54,26 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val conf = ParquetConfiguration.ofNullable(params.conf)
+    val useSplittableDoFn = conf.getBoolean(
+      ParquetReadConfiguration.UseSplittableDoFn,
+      ParquetReadConfiguration.UseSplittableDoFnDefault
+    )
+
+    if (useSplittableDoFn) {
+      readSplittableDoFn(sc, conf, params)
+    } else {
+      readLegacy(sc, conf, params)
+    }
+  }
+
+  private def readSplittableDoFn(
+    sc: ScioContext,
+    conf: Configuration,
+    params: ReadP
+  ): SCollection[T] = {
     if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(params.conf, params.predicate)
+      ParquetInputFormat.setFilterPredicate(conf, params.predicate)
     }
 
     val coder = CoderMaterializer.beam(sc, implicitly[Coder[T]])
@@ -62,29 +81,93 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     sc.applyTransform(
       ParquetRead.read(
         ReadSupportFactory.typed,
-        new SerializableConfiguration(params.conf),
+        new SerializableConfiguration(conf),
         path,
         identity[T]
       )
     ).setCoder(coder)
   }
 
-  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val job = Job.getInstance(params.conf)
-    if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
-      GcsConnectorUtil.setCredentials(job)
+  private def readLegacy(sc: ScioContext, conf: Configuration, params: ReadP): SCollection[T] = {
+    val cls = ScioUtil.classOf[T]
+    val job = Job.getInstance(conf)
+    GcsConnectorUtil.setInputPaths(sc, job, path)
+    tpe.setupInput(job)
+    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
+    job.getConfiguration.setClass("value.class", cls, cls)
+
+    if (params.predicate != null) {
+      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
     }
 
-    val resource =
-      FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
-    val prefix = StaticValueProvider.of(resource)
-    val usedFilenamePolicy =
-      DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
-    val destinations = DynamicFileDestinations.constant[T](usedFilenamePolicy)
-    val sink =
-      new ParquetTypeSink[T](prefix, destinations, tpe, job.getConfiguration, params.compression)
-    val t = WriteFiles.to(sink).withNumShards(params.numShards)
-    data.applyInternal(t)
+    val source = HadoopFormatIO
+      .read[JBoolean, T]
+      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
+      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+        override def apply(input: Void): JBoolean = true
+      })
+      .withValueTranslation(
+        new SimpleFunction[T, T]() {
+          override def apply(input: T): T = input
+          override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
+        },
+        CoderMaterializer.beam(sc, Coder[T])
+      )
+      .withConfiguration(job.getConfiguration)
+      .withSkipValueClone(job.getConfiguration.getBoolean(ParquetReadConfiguration.SkipClone, true))
+    sc.applyTransform(source).map(_.getValue)
+  }
+
+  private def parquetOut(
+    path: String,
+    suffix: String,
+    numShards: Int,
+    compression: CompressionCodecName,
+    conf: Configuration,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    isWindowed: Boolean,
+    isLocalRunner: Boolean
+  ) = {
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed
+    )
+    val dynamicDestinations =
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
+    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    val sink = new ParquetTypeFileBasedSink[T](
+      StaticValueProvider.of(tempDirectory),
+      dynamicDestinations,
+      tpe,
+      job.getConfiguration,
+      compression
+    )
+    val transform = WriteFiles.to(sink).withNumShards(numShards)
+    if (!isWindowed) transform else transform.withWindowedWrites()
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    data.applyInternal(
+      parquetOut(
+        path,
+        params.suffix,
+        params.numShards,
+        params.compression,
+        params.conf,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicySupplier,
+        ScioUtil.isWindowed(data),
+        ScioUtil.isLocalRunner(data.context.options.getRunner)
+      )
+    )
     tap(ParquetTypeIO.ReadParam[T]())
   }
 
@@ -94,8 +177,8 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
 object ParquetTypeIO {
   object ReadParam {
-    private[types] val DefaultPredicate = null
-    private[types] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultPredicate = null
+    private[scio] val DefaultConfiguration = null
   }
   final case class ReadParam[T] private (
     predicate: FilterPredicate = null,
@@ -103,17 +186,23 @@ object ParquetTypeIO {
   )
 
   object WriteParam {
-    private[types] val DefaultNumShards = 0
-    private[types] val DefaultSuffix = ".parquet"
-    private[types] val DefaultCompression = CompressionCodecName.GZIP
-    private[types] val DefaultConfiguration = new Configuration()
+    private[scio] val DefaultNumShards = 0
+    private[scio] val DefaultSuffix = ".parquet"
+    private[scio] val DefaultCompression = CompressionCodecName.GZIP
+    private[scio] val DefaultConfiguration = null
+    private[scio] val DefaultShardNameTemplate = null
+    private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam[T] private (
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
 }
 

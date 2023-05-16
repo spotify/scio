@@ -51,6 +51,7 @@ git push origin vX.Y.Z
 
 ## After successfully published artifacts
 
+- Clean the `mimaBinaryIssueFilters` in `build.sbt`
 - Run @github[scripts/bump_scio.sh](/scripts/bump_scio.sh) to update [homebrew formula](https://github.com/spotify/homebrew-public/blob/master/scio.rb) and `scioVersion` in downstream repos including [scio.g8](https://github.com/spotify/scio.g8), [featran](https://github.com/spotify/featran), etc.
 - Send external announcement to scio-users@googlegroups.com and user@beam.apache.org
 - Announce on public [Slack](https://slackin.spotify.com/)
@@ -61,10 +62,20 @@ git push origin vX.Y.Z
 ## Past release names
 ### 0.12.x
 
+- [v0.12.5](https://github.com/spotify/scio/releases/tag/v0.12.5) - _"Hispania"_
+- [v0.12.4](https://github.com/spotify/scio/releases/tag/v0.12.4) - _"Hibernia"_
+- [v0.12.3](https://github.com/spotify/scio/releases/tag/v0.12.3) - _"Helvetia"_
+- [v0.12.2](https://github.com/spotify/scio/releases/tag/v0.12.2) - _"Graecia"_
+- [v0.12.1](https://github.com/spotify/scio/releases/tag/v0.12.1) - _"Gallia"_
 - [v0.12.0](https://github.com/spotify/scio/releases/tag/v0.12.0) - _"Dalmatia"_
 
 ### 0.11.x
 
+- [v0.11.14](https://github.com/spotify/scio/releases/tag/v0.11.14) - _"Germania"_
+- [v0.11.13](https://github.com/spotify/scio/releases/tag/v0.11.13) - _"Galatia"_
+- [v0.11.12](https://github.com/spotify/scio/releases/tag/v0.11.12) - _"Formosa"_
+- [v0.11.11](https://github.com/spotify/scio/releases/tag/v0.11.11) - _"Finnia"_
+- [v0.11.10](https://github.com/spotify/scio/releases/tag/v0.11.10) - _"Dania"_
 - [v0.11.9](https://github.com/spotify/scio/releases/tag/v0.11.9) - _"Dacia"_
 - [v0.11.8](https://github.com/spotify/scio/releases/tag/v0.11.8) - _"Cyrenaica"_
 - [v0.11.7](https://github.com/spotify/scio/releases/tag/v0.11.7) - _"Creta"_

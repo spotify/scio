@@ -20,11 +20,11 @@ package com.spotify.scio.extra.csv
 import java.io.{Reader, Writer}
 import java.nio.channels.{Channels, WritableByteChannel}
 import java.nio.charset.StandardCharsets
-
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.ScioContext
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import kantan.csv._
 import kantan.codecs.compat._ // scalafix:ok
@@ -32,11 +32,11 @@ import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine
 import kantan.csv.ops._
 import org.apache.beam.sdk.{io => beam}
-import org.apache.beam.sdk.io.FileIO
+import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.transforms.{DoFn, PTransform, ParDo}
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.values.PCollection
 
 /**
@@ -88,27 +88,47 @@ import org.apache.beam.sdk.values.PCollection
  */
 object CsvIO {
 
-  final val DefaultCsvConfig: CsvConfiguration = CsvConfiguration(
+  final private val DefaultCsvConfig: CsvConfiguration = CsvConfiguration(
     cellSeparator = ',',
     quote = '"',
     quotePolicy = QuotePolicy.WhenNeeded,
     header = Header.Implicit
   )
+
   final val DefaultReadParams: ReadParam = CsvIO.ReadParam(compression = beam.Compression.AUTO)
-  final val DefaultWriteParams: WriteParam =
-    CsvIO.WriteParam(compression = beam.Compression.UNCOMPRESSED)
-  final val DefaultFileSuffix = ".csv"
+  final val DefaultWriteParams: WriteParam = CsvIO.WriteParam(
+    WriteParam.DefaultCompression,
+    WriteParam.DefaultCsvConfig,
+    WriteParam.DefaultSuffix,
+    WriteParam.DefaultNumShards,
+    WriteParam.DefaultShardNameTemplate,
+    WriteParam.DefaultTempDirectory,
+    WriteParam.DefaultFilenamePolicySupplier
+  )
 
   final case class ReadParam(
     compression: beam.Compression = beam.Compression.AUTO,
-    csvConfiguration: CsvConfiguration = DefaultCsvConfig
+    csvConfiguration: CsvConfiguration = CsvIO.DefaultCsvConfig
   )
 
+  object WriteParam {
+    private[scio] val DefaultSuffix = ".csv"
+    private[scio] val DefaultCsvConfig = CsvIO.DefaultCsvConfig
+    private[scio] val DefaultNumShards = 1 // put everything in a single file
+    private[scio] val DefaultCompression = Compression.UNCOMPRESSED
+    private[scio] val DefaultShardNameTemplate = null
+    private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultFilenamePolicySupplier = null
+  }
+
   final case class WriteParam(
-    compression: beam.Compression = beam.Compression.UNCOMPRESSED,
-    csvConfiguration: CsvConfiguration = DefaultCsvConfig,
-    suffix: String = DefaultFileSuffix,
-    numShards: Int = 1
+    compression: beam.Compression,
+    csvConfiguration: CsvConfiguration,
+    suffix: String,
+    numShards: Int,
+    shardNameTemplate: String,
+    tempDirectory: String,
+    filenamePolicySupplier: FilenamePolicySupplier
   ) {
     def toReadParam: ReadParam =
       ReadParam(compression = compression, csvConfiguration = csvConfiguration)
@@ -198,12 +218,12 @@ object CsvIO {
   ) extends DoFn[ReadableFile, T] {
 
     @ProcessElement
-    def process(pc: ProcessContext): Unit = {
-      val reader: Reader = Channels.newReader(pc.element().open(), charSet)
+    def process(@Element element: ReadableFile, out: OutputReceiver[T]): Unit = {
+      val reader: Reader = Channels.newReader(element.open(), charSet)
       implicit val engine: ReaderEngine = ReaderEngine.internalCsvReaderEngine
       reader
         .asUnsafeCsvReader[T](config)
-        .foreach(pc.output)
+        .foreach(out.output)
     }
   }
 

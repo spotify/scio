@@ -34,11 +34,8 @@ final case class JdbcShardedSelect[T: Coder, S](
   override def testId: String = s"JdbcShardedSelect(${JdbcShardedSelect.jdbcIoId(readOptions)})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-
-    val transform = Read.from(
-      new JdbcShardedSource(readOptions, CoderMaterializer.beam(sc, Coder[T]))
-    )
-
+    val coder = CoderMaterializer.beam(sc, Coder[T])
+    val transform = Read.from(new JdbcShardedSource(readOptions, coder))
     sc.applyTransform(transform)
   }
 

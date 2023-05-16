@@ -17,8 +17,16 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
+import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
+
+import com.spotify.scio.smb.TestLogicalTypes;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.avro.Schema;
-import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.io.AvroGeneratedUser;
@@ -28,23 +36,20 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.parquet.avro.AvroDataSupplier;
+import org.apache.parquet.avro.AvroReadSupport;
+import org.apache.parquet.avro.AvroWriteSupport;
 import org.apache.parquet.filter2.predicate.FilterApi;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.hamcrest.MatcherAssert;
+import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
-import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
+import scala.math.BigDecimal;
 
 /** Unit tests for {@link ParquetAvroFileOperations}. */
 public class ParquetAvroFileOperationsTest {
@@ -111,6 +116,42 @@ public class ParquetAvroFileOperationsTest {
     writer.close();
 
     final List<AvroGeneratedUser> actual = new ArrayList<>();
+    fileOperations.iterator(file).forEachRemaining(actual::add);
+
+    Assert.assertEquals(records, actual);
+  }
+
+  @Test
+  public void testLogicalTypes() throws Exception {
+    final Configuration conf = new Configuration();
+    conf.setClass(
+        AvroWriteSupport.AVRO_DATA_SUPPLIER, AvroLogicalTypeSupplier.class, AvroDataSupplier.class);
+    conf.setClass(
+        AvroReadSupport.AVRO_DATA_SUPPLIER, AvroLogicalTypeSupplier.class, AvroDataSupplier.class);
+
+    final ParquetAvroFileOperations<TestLogicalTypes> fileOperations =
+        ParquetAvroFileOperations.of(
+            TestLogicalTypes.getClassSchema(), CompressionCodecName.UNCOMPRESSED, conf);
+    final ResourceId file =
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+
+    final List<TestLogicalTypes> records =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    TestLogicalTypes.newBuilder()
+                        .setTimestamp(DateTime.now())
+                        .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal())
+                        .build())
+            .collect(Collectors.toList());
+    final FileOperations.Writer<TestLogicalTypes> writer = fileOperations.createWriter(file);
+    for (TestLogicalTypes record : records) {
+      writer.write(record);
+    }
+    writer.close();
+
+    final List<TestLogicalTypes> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
 
     Assert.assertEquals(records, actual);

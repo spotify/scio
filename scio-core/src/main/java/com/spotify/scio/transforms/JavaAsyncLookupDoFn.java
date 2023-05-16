@@ -17,9 +17,8 @@
 
 package com.spotify.scio.transforms;
 
-import org.apache.beam.sdk.transforms.DoFn;
-
 import java.util.concurrent.CompletableFuture;
+import org.apache.beam.sdk.transforms.DoFn;
 
 /**
  * A {@link DoFn} that performs asynchronous lookup using the provided client for Java 8 {@link
@@ -41,8 +40,8 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
   /**
    * Create a {@link JavaAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    */
   public JavaAsyncLookupDoFn(int maxPendingRequests) {
     super(maxPendingRequests);
@@ -51,13 +50,29 @@ public abstract class JavaAsyncLookupDoFn<A, B, C>
   /**
    * Create a {@link JavaAsyncLookupDoFn} instance.
    *
-   * @param maxPendingRequests maximum number of pending requests to prevent runner from timing out
-   *     and retrying bundles.
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
    * @param cacheSupplier supplier for lookup cache.
    */
-  public <K> JavaAsyncLookupDoFn(
-      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B, K> cacheSupplier) {
+  public JavaAsyncLookupDoFn(
+      int maxPendingRequests, BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
+  }
+
+  /**
+   * Create a {@link JavaAsyncLookupDoFn} instance.
+   *
+   * @param maxPendingRequests maximum number of pending requests on every cloned DoFn. This
+   *     prevents runner from timing out and retrying bundles.
+   * @param deduplicate if an attempt should be made to de-duplicate simultaneous requests for the
+   *     same input
+   * @param cacheSupplier supplier for lookup cache.
+   */
+  public JavaAsyncLookupDoFn(
+      int maxPendingRequests,
+      boolean deduplicate,
+      BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
+    super(maxPendingRequests, deduplicate, cacheSupplier);
   }
 
   @Override

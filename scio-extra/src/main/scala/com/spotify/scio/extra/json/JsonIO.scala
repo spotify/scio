@@ -27,6 +27,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io.TapT
+import com.spotify.scio.util.FilenamePolicySupplier
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
@@ -39,7 +40,18 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
       .map(x => params.printer.print(x.asJson))
-      .write(TextIO(path))(TextIO.WriteParam(params.suffix, params.numShards, params.compression))
+      .write(TextIO(path))(
+        TextIO.WriteParam(
+          params.suffix,
+          params.numShards,
+          params.compression,
+          None,
+          None,
+          params.shardNameTemplate,
+          params.tempDirectory,
+          params.filenamePolicySupplier
+        )
+      )
     tap(JsonIO.ReadParam(params.compression))
   }
 
@@ -56,10 +68,24 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 
 object JsonIO {
   final case class ReadParam(compression: beam.Compression = beam.Compression.AUTO)
+
+  object WriteParam {
+    private[scio] val DefaultNumShards = 0
+    private[scio] val DefaultSuffix = ".json"
+    private[scio] val DefaultCompression = beam.Compression.UNCOMPRESSED
+    private[scio] val DefaultPrinter = Printer.noSpaces
+    private[scio] val DefaultShardNameTemplate: String = null
+    private[scio] val DefaultTempDirectory = null
+    private[scio] val DefaultFilenamePolicySupplier = null
+  }
+
   final case class WriteParam(
-    suffix: String = ".json",
-    numShards: Int = 0,
-    compression: beam.Compression = beam.Compression.UNCOMPRESSED,
-    printer: Printer = Printer.noSpaces
+    suffix: String,
+    numShards: Int,
+    compression: beam.Compression,
+    printer: Printer,
+    shardNameTemplate: String,
+    tempDirectory: String,
+    filenamePolicySupplier: FilenamePolicySupplier
   )
 }

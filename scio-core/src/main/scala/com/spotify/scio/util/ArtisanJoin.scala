@@ -19,12 +19,11 @@ package com.spotify.scio.util
 
 import java.lang.{Iterable => JIterable}
 import java.util.{Iterator => JIterator}
-
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.options.ScioOptions.CheckEnabled
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.join.{CoGbkResult, CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.values.{KV, TupleTag}
@@ -44,7 +43,7 @@ private[scio] object ArtisanJoin {
       KEY,
       JIterable[A],
       JIterable[B],
-      DoFn[KV[KEY, CoGbkResult], (KEY, (A1, B1))]#ProcessContext
+      OutputReceiver[(KEY, (A1, B1))]
     ) => Unit
   ): SCollection[(KEY, (A1, B1))] = {
     if (a.state.postGbkOp || b.state.postGbkOp) {
@@ -80,13 +79,15 @@ private[scio] object ArtisanJoin {
       .withName(name)
       .applyTransform(ParDo.of(new DF {
         @ProcessElement
-        private[util] def processElement(c: DF#ProcessContext): Unit = {
-          val kv = c.element()
-          val key = kv.getKey
-          val result = kv.getValue
+        private[util] def processElement(
+          @Element element: KV[KEY, CoGbkResult],
+          out: OutputReceiver[(KEY, (A1, B1))]
+        ): Unit = {
+          val key = element.getKey
+          val result = element.getValue
           val as = result.getAll(tagA)
           val bs = result.getAll(tagB)
-          fn(key, as, bs, c)
+          fn(key, as, bs, out)
         }
       }))
       .withState(_.copy(postGbkOp = true))
@@ -100,14 +101,14 @@ private[scio] object ArtisanJoin {
     leftFn: JIterator[A] => JIterator[A1],
     rightFn: JIterator[B] => JIterator[B1]
   ): SCollection[(KEY, (A1, B1))] =
-    cogroupImpl[KEY, A, B, A1, B1](name, a, b) { case (key, as, bs, c) =>
+    cogroupImpl[KEY, A, B, A1, B1](name, a, b) { case (key, as, bs, out) =>
       val bi = rightFn(bs.iterator())
       while (bi.hasNext) {
         val b = bi.next()
         val ai = leftFn(as.iterator())
         while (ai.hasNext) {
           val a = ai.next()
-          c.output((key, (a, b)))
+          out.output((key, (a, b)))
         }
       }
     }.withState(_.copy(postGbkOp = true))
@@ -117,8 +118,8 @@ private[scio] object ArtisanJoin {
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Iterable[A], Iterable[B]))] =
-    cogroupImpl[KEY, A, B, Iterable[A], Iterable[B]](name, a, b) { case (key, a, b, c) =>
-      c.output((key, (a.asScala, b.asScala)))
+    cogroupImpl[KEY, A, B, Iterable[A], Iterable[B]](name, a, b) { case (key, a, b, out) =>
+      out.output((key, (a.asScala, b.asScala)))
     }(Coder.iterableCoder(a.valueCoder), Coder.iterableCoder(b.valueCoder))
 
   def apply[KEY, A, B](

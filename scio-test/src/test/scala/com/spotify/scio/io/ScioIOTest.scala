@@ -19,16 +19,23 @@ package com.spotify.scio.io
 
 import java.nio.ByteBuffer
 import java.nio.file.Files
-
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{CoreSysProps, ScioContext}
 import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
+import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.values.{SCollection, WindowOptions}
+import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
+import org.joda.time.{Duration, Instant}
 
+import java.io.File
+import java.util.UUID
 import scala.jdk.CollectionConverters._
 
 object ScioIOTest {
@@ -36,8 +43,240 @@ object ScioIOTest {
   case class AvroRecord(i: Int, s: String, r: List[String])
 }
 
+trait FileNamePolicySpec[T] extends ScioIOSpec {
+  val TestNumShards = 10
+
+  def mkIn(
+    sc: ScioContext,
+    inFn: ScioContext => SCollection[Int],
+    windowInput: Boolean
+  ): SCollection[Int] = {
+    val input = inFn(sc)
+    if (!windowInput) input
+    else {
+      input
+        .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
+        .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
+    }
+  }
+
+  def testWindowingFilenames(
+    inFn: ScioContext => SCollection[Int],
+    windowInput: Boolean,
+    // (windowed input, tmpDir, isBounded)
+    write: (SCollection[Int], String, Boolean) => ClosedTap[T]
+  )(
+    fileFn: Array[String] => Unit = _ => ()
+  ): Unit = {
+    val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+
+    val sc = ScioContext()
+    val in: SCollection[Int] = mkIn(sc, inFn, windowInput)
+    write(in, tmpDir.getAbsolutePath, in.internal.isBounded == IsBounded.BOUNDED)
+    sc.run().waitUntilDone()
+
+    fileFn(listFiles(tmpDir))
+    FileUtils.deleteDirectory(tmpDir)
+  }
+
+  def testFails(
+    inFn: ScioContext => SCollection[Int],
+    failWrites: Seq[SCollection[Int] => ClosedTap[T]] = Seq.empty
+  ): Unit = {
+    failWrites.foreach { failWrite =>
+      a[IllegalArgumentException] should be thrownBy {
+        val sc2 = ScioContext()
+        failWrite(mkIn(sc2, inFn, true))
+        sc2.run().waitUntilDone()
+      }
+    }
+  }
+
+  def extension: String
+  def failSaves: Seq[SCollection[Int] => ClosedTap[T]] = Seq.empty
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[T]
+
+  it should "throw when incompatible save parameters are used" in {
+    testFails(_.parallelize(1 to 100), failSaves)
+  }
+
+  it should "work with an unwindowed collection" in {
+    testWindowingFilenames(_.parallelize(1 to 100), false, save()) { files =>
+      assert(files.length >= 1)
+      all(files) should (include("/part-") and include("-of-") and include(extension))
+    }
+  }
+
+  it should "work with an unwindowed collection with a custom filename policy" in {
+    testWindowingFilenames(_.parallelize(1 to 100), false, save(testFilenamePolicySupplier)) {
+      files =>
+        assert(files.length >= 1)
+        all(files) should (include("/foo-shard-") and include("-of-numShards-") and include(
+          extension
+        ))
+    }
+  }
+
+  it should "work with a windowed collection" in {
+    testWindowingFilenames(_.parallelize(1 to 100), true, save()) { files =>
+      assert(files.length >= 1)
+      all(files) should
+        (include("/part") and include("-of-") and include("-pane-") and include(extension))
+    }
+  }
+
+  it should "work with a windowed unbounded collection" in {
+    val xxx = testStreamOf[Int]
+      .addElements(1, (2 to 10): _*)
+      .advanceWatermarkToInfinity()
+    testWindowingFilenames(_.testStream(xxx), true, save()) { files =>
+      assert(files.length == TestNumShards)
+      all(files) should
+        (include("/part") and include("-of-") and include("-pane-") and include(extension))
+    }
+  }
+
+  it should "work with a windowed unbounded collection with a custom filename policy" in {
+    val xxx = testStreamOf[Int]
+      .addElements(1, (2 to 10): _*)
+      .advanceWatermarkToInfinity()
+    testWindowingFilenames(_.testStream(xxx), true, save(testFilenamePolicySupplier)) { files =>
+      assert(files.length == TestNumShards)
+      all(files) should
+        (include("/foo-shard-") and include("-of-numShards-") and include("-window") and include(
+          extension
+        ))
+    }
+  }
+}
+
+class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
+  val extension: String = ".avro"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TestRecord] = {
+    in.map(AvroUtils.newSpecificRecord)
+      .saveAsAvroFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[TestRecord]] = Seq(
+    _.map(AvroUtils.newSpecificRecord).saveAsAvroFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
+
+class TextIOFileNamePolicyTest extends FileNamePolicySpec[String] {
+  val extension: String = ".txt"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[String] = {
+    in.map(_.toString)
+      .saveAsTextFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[String]] = Seq(
+    _.map(_.toString).saveAsTextFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
+
+class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[ScioIOTest.AvroRecord] {
+  import ScioIOTest._
+
+  val extension: String = ".obj.avro"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[AvroRecord] = {
+    in.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
+      .saveAsObjectFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[AvroRecord]] = Seq(
+    _.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList)).saveAsObjectFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
+
+class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
+  val extension: String = ".protobuf.avro"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[TrackPB] = {
+    in.map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
+      .saveAsProtobufFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[TrackPB]] = Seq(
+    _.map(x => TrackPB.newBuilder().setTrackId(x.toString).build()).saveAsProtobufFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
+
+class BinaryIOFileNamePolicyTest extends FileNamePolicySpec[Nothing] {
+  val extension: String = ".bin"
+  def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null
+  )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Nothing] = {
+    in.map(x => ByteBuffer.allocate(4).putInt(x).array)
+      .saveAsBinaryFile(
+        tmpDir,
+        // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
+        numShards = if (isBounded) 0 else TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier
+      )
+  }
+
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[Nothing]] = Seq(
+    _.map(x => ByteBuffer.allocate(4).putInt(x).array).saveAsBinaryFile(
+      "nonsense",
+      shardNameTemplate = "NNN-of-NNN",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    ),
+    _.map(x => ByteBuffer.allocate(4).putInt(x).array).saveAsBinaryFile(
+      "nonsense",
+      prefix = "blah",
+      filenamePolicySupplier = testFilenamePolicySupplier
+    )
+  )
+}
+
 class ScioIOTest extends ScioIOSpec {
   import ScioIOTest._
+  val TestNumShards = 10
 
   "AvroIO" should "work with SpecificRecord" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
@@ -63,14 +302,140 @@ class ScioIOTest extends ScioIOSpec {
   it should "work with GenericRecord and a parseFn" in {
     implicit val coder = Coder.avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
-    // No test for saveAsAvroFile because parseFn is only for i/p
+    // No test for saveAsAvroFile because parseFn is only for input
     testJobTest(xs)(AvroIO(_))(
       _.parseAvroFile[GenericRecord](_)(identity)
     )(_.saveAsAvroFile(_, schema = schema))
   }
 
+  // covers AvroIO specific, generic, and typed records, ObjectFileIO, and ProtobufIO
+  it should "write to the same filenames as previous scio versions when not using a filename policy" in {
+    import org.apache.beam.sdk.io.{AvroIO => BAvroIO}
+
+    val write1 = BAvroIO.write(ScioUtil.classOf[TestRecord])
+    val suffix = ".avro"
+    val numShards = 10
+    val codec = CodecFactory.deflateCodec(6)
+    val metadata = Map.empty[String, AnyRef]
+
+    /*
+     * pre-scio 0.12.0
+     */
+    val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out1TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    var previousTransform: BAvroIO.Write[TestRecord] = write1
+      .to(ScioUtil.pathWithPartPrefix(out1.getAbsolutePath))
+      .withSuffix(suffix)
+      .withNumShards(numShards)
+      .withCodec(codec)
+      .withMetadata(metadata.asJava)
+    previousTransform = Option(out1TempDir.getAbsolutePath)
+      .map(ScioUtil.toResourceId)
+      .fold(previousTransform)(previousTransform.withTempDirectory)
+
+    /*
+     * current scio
+     */
+    val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out2TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val sr2 = SpecificRecordIO[TestRecord](out2.getAbsolutePath)
+    val write2 = BAvroIO.write(ScioUtil.classOf[TestRecord])
+
+    val currentTransform: BAvroIO.Write[TestRecord] = sr2.avroOut(
+      write2,
+      out2.getAbsolutePath,
+      numShards,
+      suffix,
+      codec,
+      metadata,
+      null,
+      ScioUtil.toResourceId(out2TempDir.getAbsolutePath),
+      null,
+      false
+    )
+
+    // verify
+    val sc = ScioContext()
+    val data = sc.parallelize((1 to 100).map(x => AvroUtils.newSpecificRecord(x)))
+    data.applyInternal(previousTransform)
+    data.applyInternal(currentTransform)
+    sc.run().waitUntilDone()
+
+    def relativeFiles(dir: File) = listFiles(dir).map(_.stripPrefix(dir.getAbsolutePath)).sorted
+
+    relativeFiles(out1) should contain theSameElementsAs relativeFiles(out2)
+
+    FileUtils.deleteDirectory(out1TempDir)
+    FileUtils.deleteDirectory(out2TempDir)
+  }
+
+  it should "write to the same filenames as previous scio versions when not using a filename policy during a typed write" in {
+    val suffix = ".avro"
+    val numShards = 10
+    val codec = CodecFactory.deflateCodec(6)
+    val metadata = Map.empty[String, AnyRef]
+
+    /*
+     * pre-scio 0.12.0
+     */
+    val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out1TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val write1 = AvroTyped.writeTransform[AvroRecord]()
+
+    var previousTransform = write1
+      .to(ScioUtil.pathWithPartPrefix(out1.getAbsolutePath))
+      .withSuffix(suffix)
+      .withNumShards(numShards)
+      .withCodec(codec)
+      .withMetadata(metadata.asJava)
+    previousTransform = Option(out1TempDir.getAbsolutePath)
+      .map(ScioUtil.toResourceId)
+      .fold(previousTransform)(previousTransform.withTempDirectory)
+
+    /*
+     * current scio
+     */
+    val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val out2TempDir =
+      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val sr2 = AvroTyped.AvroIO[AvroRecord](out2.getAbsolutePath)
+    val write2 = AvroTyped.writeTransform[AvroRecord]()
+
+    val currentTransform = sr2.typedAvroOut(
+      write2,
+      out2.getAbsolutePath,
+      numShards,
+      suffix,
+      codec,
+      metadata,
+      null,
+      ScioUtil.toResourceId(out2TempDir.getAbsolutePath),
+      null,
+      false
+    )
+
+    // verify
+    val sc = ScioContext()
+    val data = sc.parallelize(
+      (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
+    )
+
+    data.applyInternal(previousTransform)
+    data.applyInternal(currentTransform)
+    sc.run().waitUntilDone()
+
+    def relativeFiles(dir: File) = listFiles(dir).map(_.stripPrefix(dir.getAbsolutePath)).sorted
+
+    relativeFiles(out1) should contain theSameElementsAs relativeFiles(out2)
+
+    FileUtils.deleteDirectory(out1TempDir)
+    FileUtils.deleteDirectory(out2TempDir)
+  }
+
   "ObjectFileIO" should "work" in {
-    import ScioIOTest._
     val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
     testTap(xs)(_.saveAsObjectFile(_))(".obj.avro")
     testJobTest[AvroRecord](xs)(ObjectFileIO[AvroRecord](_))(_.objectFile[AvroRecord](_))(
@@ -114,5 +479,4 @@ class ScioIOTest extends ScioIOSpec {
 
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
-
 }

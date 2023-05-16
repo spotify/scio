@@ -1,6 +1,6 @@
 # Scio
 
-[![Build Status](https://img.shields.io/github/workflow/status/spotify/scio/ci)](https://github.com/spotify/scio/actions?query=workflow%3Aci)
+[![Build Status](https://github.com/spotify/scio/actions/workflows/tests.yml/badge.svg)](https://github.com/spotify/scio/actions/workflows/tests.yml)
 [![codecov.io](https://codecov.io/github/spotify/scio/coverage.svg?branch=master)](https://codecov.io/github/spotify/scio?branch=master)
 [![GitHub license](https://img.shields.io/github/license/spotify/scio.svg)](./LICENSE)
 [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.12)
@@ -81,6 +81,7 @@ Scio includes the following artifacts:
 - `scio-elasticsearch*`: add-ons for Elasticsearch
 - `scio-extra`: extra utilities for working with collections, Breeze, etc., best effort support
 - `scio-jdbc`: add-on for JDBC IO
+- `scio-neo4j`: add-on for Neo4J IO
 - `scio-parquet`: add-on for Parquet
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
 - `scio-redis`: add-on for Redis

@@ -3,201 +3,203 @@ package v0_8_0
 
 import scalafix.v1._
 import scala.meta._
+import scala.meta.contrib._
 
 final class FixRunWithContext extends SemanticRule("FixRunWithContext") {
 
-  private def fixSubtree(name: String)(doc: SyntacticDocument): Patch =
-    doc.tree.collect {
-      case t @ Term.Select(Term.Name(`name`), Term.Name("isCompleted")) =>
+  private def fixSubtree(ctx: Term.Name)(tree: Tree): Patch =
+    tree.collect {
+      case q"$qual.isCompleted" if qual.isEqual(ctx) =>
         Patch.empty
-      case t @ Term.Select(Term.Name(`name`), Term.Name("state")) =>
+      case q"$qual.state" if qual.isEqual(ctx) =>
         Patch.empty
-      case t @ Term.Select(Term.Name(`name`), x) =>
-        Patch.replaceTree(t, s"$name.waitUntilFinish.$x")
-      case t @ Term.Apply(tn, ps) if ps.exists(x => x.toString == name) =>
-        val ps2 =
-          ps.map {
-            case t if t.toString == name => q"$t.waitUntilFinish()"
-            case t                       => t
-          }
-        Patch.replaceTree(t, Term.Apply(tn, ps2).toString)
+      case t @ q"$qual.$name" if qual.isEqual(ctx) =>
+        Patch.replaceTree(t, s"$ctx.waitUntilFinish().$name")
+      case q"$fn(..$params)" if params.exists(_.isEqual(ctx)) =>
+        params.collect {
+          case p if p.isEqual(ctx) =>
+            Patch.replaceTree(p, q"$p.waitUntilFinish()".syntax)
+        }.asPatch
     }.asPatch
 
   override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
-      // Convert val`x` of type ScioExecutionContext to ScioResult
-      // when `x` is passed to a method oo
-      // if a method is called on `x` (except `isCompleted and `state`)
-      case t @ q"val ${x} = runWithContext(${body})" =>
-        val children = t.parent.toList.flatMap(_.children).filterNot(_ == t)
-        val name = x.toString()
-        children.map(c => fixSubtree(name)(SyntacticDocument.fromTree(c))).asPatch
-      // Convert ScioExecutionContext to ScioResult in methods that return a ScioResult
-      case t @ q"def $fn(..$ps): ScioResult = {$body}" =>
+      case t @ q"val $x = runWithContext($_)" =>
+        // Convert val`x` of type ScioExecutionContext to ScioResult
+        // when `x` is passed to a method oo
+        // if a method is called on `x` (except `isCompleted and `state`)
+        val scope = t.parent.toList.flatMap(_.children).filterNot(_ == t)
+        val Pat.Var(name) = x
+        scope.map(fixSubtree(name)).asPatch
+      case t @ q"def $fn(..$ps): ScioResult = {$_}" =>
+        // Convert ScioExecutionContext to ScioResult in methods that return a ScioResult
         Patch.addRight(t, ".waitUntilFinish()")
-      case t =>
-        Patch.empty
     }.asPatch
 }
 
+object FixScioIO {
+  val ScioIO: SymbolMatcher = SymbolMatcher.normalized("com/spotify/scio/io/ScioIO")
+}
+
 final class FixScioIO extends SemanticRule("FixScioIO") {
+
+  import FixScioIO._
+
   // Check that the method is a member of an implementation of ScioIO
-  private def isScioIOMember(t: Tree)(implicit doc: SemanticDocument) =
-    t.parent
-      .collect { case p @ Template(_) =>
-        p.inits.exists(_.tpe.symbol == Symbol("com/spotify/scio/io/ScioIO#"))
-      }
-      .getOrElse(false)
+  private def isScioIOWrite(writeFn: Term.Name)(implicit doc: SemanticDocument): Boolean = {
+    val ClassSignature(_, parents, _, _) = writeFn.symbol.owner.info.get.signature
+    parents.exists {
+      case TypeRef(_, s, _) => ScioIO.matches(s)
+      case _                => false
+    }
+  }
 
   override def fix(implicit doc: SemanticDocument): Patch =
     doc.tree.collect {
       // fix return type (No Future 🤘)
-      case t @ q"""..$mods def write(
+      case t @ q"""..$mods def $writeFn(
                       $sName: SCollection[$sTpe],
-                      $psName: $psTpe): $ret = $impl""" if isScioIOMember(t) =>
-        ret.collect { case r @ Type.Apply(Type.Name("Future"), List(tapTpe)) =>
-          Patch.replaceTree(r, tapTpe.syntax)
-        }.asPatch
+                      $psName: $psTpe): $ret = $impl""" if isScioIOWrite(writeFn) =>
+        ret.collect { case r @ t"Future[$ts]" => Patch.replaceTree(r, ts.syntax) }.asPatch
     }.asPatch
 }
 
-final class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
-  private val imports =
-    scala.collection.mutable.ArrayBuffer.empty[(String, String)]
-
-  // Check that the package is not imported multiple times in the same file
-  private def addImport(p: Position, i: Importer): Patch = {
-    val Importer(s) = i
-    val Input.VirtualFile(path, _) = p.input
-
-    val t = (s.toString, path)
-    if (!imports.contains(t)) {
-      imports += t
-      Patch.addGlobalImport(i)
-    } else Patch.empty
-  }
-
+object FixSyntaxImports {
   object JDBC {
-    val fns =
-      List("JdbcScioContext", "JdbcSCollection")
-
+    val fns = List("JdbcScioContext", "JdbcSCollection")
     val `import` = importer"com.spotify.scio.jdbc._"
   }
 
   object BQ {
-    val fns =
-      List("toBigQueryScioContext", "toBigQuerySCollection")
-
+    val fns = List("toBigQueryScioContext", "toBigQuerySCollection")
     val `import` = importer"com.spotify.scio.bigquery._"
   }
+}
+
+final class FixSyntaxImports extends SemanticRule("FixSyntaxImports") {
+
+  import FixSyntaxImports._
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    val renameSymbols =
-      Patch.replaceSymbols(
-        "com/spotify/scio/transforms/AsyncLookupDoFn." ->
-          "com/spotify/scio/transforms/BaseAsyncLookupDoFn.",
-        "com.spotify.scio.jdbc.JdbcScioContext." ->
-          "com.spotify.scio.jdbc.syntax.JdbcScioContextOps."
-      )
+    val renameSymbols = Patch.replaceSymbols(
+      "com/spotify/scio/transforms/AsyncLookupDoFn." -> "com/spotify/scio/transforms/BaseAsyncLookupDoFn.",
+      "com.spotify.scio.jdbc.JdbcScioContext." -> "com.spotify.scio.jdbc.syntax.JdbcScioContextOps."
+    )
 
     doc.tree.collect {
-      case i @ Importee.Name(Name.Indeterminate(n)) if JDBC.fns.contains(n) =>
-        Patch.removeImportee(i) + addImport(i.pos, JDBC.`import`)
-      case i @ Importee.Name(Name.Indeterminate(n)) if BQ.fns.contains(n) =>
-        Patch.removeImportee(i) + addImport(i.pos, BQ.`import`)
+      case i @ importee"$name" if JDBC.fns.contains(name.value) =>
+        Patch.removeImportee(i.asInstanceOf[Importee]) + Patch.addGlobalImport(JDBC.`import`)
+      case i @ importee"$name" if BQ.fns.contains(name.value) =>
+        Patch.removeImportee(i.asInstanceOf[Importee]) + Patch.addGlobalImport(BQ.`import`)
     }.asPatch + renameSymbols
   }
 }
 
+object FixContextClose {
+  val ScioContextClose = SymbolMatcher.normalized("com/spotify/scio/ScioContext#close")
+}
+
 final class FixContextClose extends SemanticRule("FixContextClose") {
+  import FixContextClose._
+
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect { case t @ q"$x.close()" =>
-      x.symbol.info.get.signature match {
-        case ValueSignature(TypeRef(_, tpe, _)) if tpe == Symbol("com/spotify/scio/ScioContext#") =>
-          Patch.replaceTree(t, q"$x.run()".syntax)
-        case _ =>
-          Patch.empty
-      }
+    doc.tree.collect {
+      case t @ q"$qual.$fn()" if ScioContextClose.matches(fn.symbol) =>
+        Patch.replaceTree(t, q"$qual.run()".syntax)
     }.asPatch
 }
 
 final class FixTensorflow extends SemanticRule("FixTensorflow") {
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect { case t @ Term.Select(s, Term.Name("saveAsTfExampleFile")) =>
-      Patch.replaceTree(t, q"$s.saveAsTfRecordFile".syntax)
+    doc.tree.collect { case t @ q"$qual.saveAsTfExampleFile" =>
+      Patch.replaceTree(t, q"$qual.saveAsTfRecordFile".syntax)
     }.asPatch
+}
+
+object FixBigQueryDeprecations {
+  val JavaString: SymbolMatcher = SymbolMatcher.normalized("java/lang/String")
 }
 
 final class FixBigQueryDeprecations extends SemanticRule("FixBigQueryDeprecations") {
+
+  import FixBigQueryDeprecations._
+
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect { case t @ Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), x :: xs) =>
-      val term = x.symbol.info match {
-        case None => q"Table.Spec($x)"
-        case _    => q"Table.Ref($x)"
+    doc.tree.collect { case q"$_.bigQueryTable($head, ..$_)" =>
+      head.symbol.info.map(_.signature) match {
+        case None =>
+          // this can only be a string literal
+          Patch.replaceTree(head, q"Table.Spec($head)".syntax)
+        case Some(MethodSignature(_, _, TypeRef(_, sym, _))) if JavaString.matches(sym) =>
+          Patch.replaceTree(head, q"Table.Spec($head)".syntax)
+        case _ =>
+          Patch.replaceTree(head, q"Table.Ref($head)".syntax)
       }
-      val syntax = Term.Apply(Term.Select(s, Term.Name("bigQueryTable")), term :: xs).syntax
-      Patch.replaceTree(t, syntax)
     }.asPatch
 }
 
+object ConsistenceJoinNames {
+
+  val PairedScolFns = Seq(
+    "join",
+    "fullOuterJoin",
+    "leftOuterJoin",
+    "rightOuterJoin",
+    "sparseLeftOuterJoin",
+    "sparseRightOuterJoin",
+    "sparseOuterJoin",
+    "cogroup",
+    "groupWith",
+    "sparseLookup"
+  ).map(fn => SymbolMatcher.normalized(s"com/spotify/scio/values/PairSCollectionFunctions#$fn"))
+
+  val PairedHashScolFns = Seq(
+    "hashJoin",
+    "hashLeftJoin",
+    "hashFullOuterJoin",
+    "hashIntersectByKey"
+  ).map(fn => SymbolMatcher.normalized(s"com/spotify/scio/values/PairHashSCollectionFunctions#$fn"))
+
+  val PairedSkewedScolFns = Set(
+    "skewedJoin",
+    "skewedLeftJoin",
+    "skewedFullOuterJoin"
+  ).map(fn =>
+    SymbolMatcher.normalized(s"com/spotify/scio/values/PairSkewedSCollectionFunctions#$fn")
+  )
+
+  val JoinsFns: SymbolMatcher =
+    (PairedScolFns ++ PairedHashScolFns ++ PairedSkewedScolFns).reduce(_ + _)
+}
+
 final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
-  private val pairedHashScol = "com/spotify/scio/values/PairHashSCollectionFunctions#"
-  private val pairedSkewedScol = "com/spotify/scio/values/PairSkewedSCollectionFunctions#"
-  private val pairedScol = "com/spotify/scio/values/PairSCollectionFunctions#"
-  private val scoll = "com/spotify/scio/values/SCollection#"
+
+  import ConsistenceJoinNames._
+
+  private def renameNamedArgs(args: List[Term]): List[Term] =
+    args.map {
+      case q"that = $value"        => q"rhs = $value"
+      case q"that1 = $value"       => q"rhs1 = $value"
+      case q"that2 = $value"       => q"rhs2 = $value"
+      case q"that3 = $value"       => q"rhs3 = $value"
+      case q"thatNumKeys = $value" => q"rhsNumKeys = $value"
+      case p                       => p
+    }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case Term.Apply(fun, args) =>
-      fun match {
-        case Term.Select(qual, name) =>
-          name match {
-            case t @ Term.Name("hashLeftJoin") if expectedType(qual, pairedHashScol) =>
-              Patch.replaceTree(t, "hashLeftOuterJoin") + renameNamedArgs(args)
-            case t @ Term.Name("skewedLeftJoin") if expectedType(qual, pairedSkewedScol) =>
-              Patch.replaceTree(t, "skewedLeftOuterJoin") + renameNamedArgs(args)
-            case t @ Term.Name("sparseOuterJoin") if expectedType(qual, pairedScol) =>
-              Patch.replaceTree(t, "sparseFullOuterJoin") + renameNamedArgs(args)
-            case _ @(Term.Name("join") | Term.Name("fullOuterJoin") | Term.Name("leftOuterJoin") |
-                Term.Name("rightOuterJoin") | Term.Name("sparseLeftOuterJoin") |
-                Term.Name("sparseRightOuterJoin") | Term.Name("cogroup") | Term.Name("groupWith") |
-                Term.Name("sparseLookup")) if expectedType(qual, pairedScol) =>
-              renameNamedArgs(args)
-            case _ @(Term.Name("skewedJoin") | Term.Name("skewedFullOuterJoin"))
-                if expectedType(qual, pairedSkewedScol) =>
-              renameNamedArgs(args)
-            case _ @(Term.Name("hashJoin") | Term.Name("hashFullOuterJoin") |
-                Term.Name("hashIntersectByKey")) if expectedType(qual, pairedHashScol) =>
-              renameNamedArgs(args)
-            case _ => Patch.empty
-          }
-        case _ => Patch.empty
-      }
+    doc.tree.collect {
+      case t @ q"$qual.$fn(..$args)" if JoinsFns.matches(fn.symbol) =>
+        val updatedFn = fn match {
+          case Term.Name("hashLeftJoin")    => Term.Name("hashLeftOuterJoin")
+          case Term.Name("skewedLeftJoin")  => Term.Name("skewedLeftOuterJoin")
+          case Term.Name("sparseOuterJoin") => Term.Name("sparseFullOuterJoin")
+          case _                            => fn
+        }
+        val updatedArgs = renameNamedArgs(args)
+        Patch.replaceTree(t, q"$qual.$updatedFn(..$updatedArgs)".syntax)
+      case t @ q"$qual.$fn(..$args)" =>
+        println(fn.symbol)
+        Patch.empty
     }
   }.asPatch
-
-  private def expectedType(qual: Term, typStr: String)(implicit doc: SemanticDocument): Boolean =
-    qual.symbol.info.get.signature match {
-      case MethodSignature(_, _, TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(typStr).matches(typ)
-      case ValueSignature(AnnotatedType(_, TypeRef(_, typ, _))) =>
-        SymbolMatcher.exact(typStr).matches(typ)
-      case ValueSignature(TypeRef(_, typ, _)) =>
-        SymbolMatcher.exact(scoll).matches(typ)
-      case t =>
-        false
-    }
-
-  private def renameNamedArgs(args: List[Term]): Patch =
-    args.collect {
-      case Term.Assign(lhs, _) =>
-        lhs match {
-          case t2 @ Term.Name("that")        => Patch.replaceTree(t2, "rhs")
-          case t2 @ Term.Name("that1")       => Patch.replaceTree(t2, "rhs1")
-          case t2 @ Term.Name("that2")       => Patch.replaceTree(t2, "rhs2")
-          case t2 @ Term.Name("that3")       => Patch.replaceTree(t2, "rhs3")
-          case t2 @ Term.Name("thatNumKeys") => Patch.replaceTree(t2, "rhsNumKeys")
-          case s                             => Patch.empty
-        }
-      case _ => Patch.empty
-    }.asPatch
 }

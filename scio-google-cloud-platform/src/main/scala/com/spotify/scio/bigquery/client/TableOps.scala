@@ -24,7 +24,7 @@ import com.google.cloud.bigquery.storage.v1beta1.Storage._
 import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.{StorageUtil, Table => STable, TableRow}
+import com.spotify.scio.bigquery.{BigQuerySysProps, StorageUtil, Table => STable, TableRow}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
@@ -37,8 +37,8 @@ import org.joda.time.Instant
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ArrayBuffer
+import scala.jdk.CollectionConverters._
 import scala.util.Random
 import scala.util.control.NonFatal
 
@@ -47,8 +47,10 @@ private[client] object TableOps {
 
   private val TablePrefix = "scio_query"
   private val TimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmss")
-  private val StagingDatasetPrefix = "scio_bigquery_staging_"
+  private val StagingDatasetPrefix =
+    BigQuerySysProps.StagingDatasetPrefix.valueOption.getOrElse("scio_bigquery_staging_")
   private val StagingDatasetTableExpirationMs = 86400000L
+  private val StagingDatasetTableMaxTimeTravelHours = 48L
   private val StagingDatasetDescription = "Staging dataset for temporary tables"
 }
 
@@ -300,6 +302,7 @@ final private[client] class TableOps(client: Client) {
         val ds = new Dataset()
           .setDatasetReference(dsRef)
           .setDefaultTableExpirationMs(StagingDatasetTableExpirationMs)
+          .setMaxTimeTravelHours(StagingDatasetTableMaxTimeTravelHours)
           .setDescription(StagingDatasetDescription)
           .setLocation(location)
         client.execute(

@@ -50,13 +50,21 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).sum(a.semigroup).map(a.present))
+    coll.transform { in =>
+      new SCollectionWithFanout(in.map(a.prepare), fanout)
+        .sum(a.semigroup)
+        .map(a.present)
+    }
   }
 
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
   def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
-    coll.transform(_.map(a.prepare).fold(a.monoid).map(a.present))
+    coll.transform { in =>
+      new SCollectionWithFanout(in.map(a.prepare), fanout)
+        .fold(a.monoid)
+        .map(a.present)
+    }
   }
 
   /** [[SCollection.combine]] with fan out. */

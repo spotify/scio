@@ -17,6 +17,12 @@
 
 package com.spotify.scio.transforms;
 
+import java.io.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.*;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Joiner;
@@ -24,13 +30,6 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditio
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.*;
 
 /** A {@link DoFn} that pipes elements through an external command via StdIn & StdOut. */
 public class PipeDoFn extends DoFn<String, String> {
@@ -212,14 +211,15 @@ public class PipeDoFn extends DoFn<String, String> {
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c) {
+  public void processElement(@Element String element, OutputReceiver<String> out) {
     if (isNewBundle) {
       try {
         pipeProcess = Runtime.getRuntime().exec(cmdArray, envp, dir);
         stdIn = new BufferedWriter(new OutputStreamWriter(pipeProcess.getOutputStream()));
-        BufferedReader out =
+        BufferedReader reader =
             new BufferedReader(new InputStreamReader(pipeProcess.getInputStream()));
-        stdOut = CompletableFuture.runAsync(() -> out.lines().forEach(c::output), executorService);
+        stdOut =
+            CompletableFuture.runAsync(() -> reader.lines().forEach(out::output), executorService);
         LOG.info("Process started: {}", ProcessUtil.join(cmdArray));
       } catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -228,7 +228,7 @@ public class PipeDoFn extends DoFn<String, String> {
     }
 
     try {
-      stdIn.write(c.element());
+      stdIn.write(element);
       stdIn.newLine();
     } catch (IOException e) {
       throw new UncheckedIOException(e);

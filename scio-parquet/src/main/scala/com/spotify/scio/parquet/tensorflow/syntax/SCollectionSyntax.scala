@@ -20,6 +20,7 @@ package com.spotify.scio.parquet.tensorflow.syntax
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.WriteParam
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import me.lyh.parquet.tensorflow.Schema
 import org.apache.hadoop.conf.Configuration
@@ -36,9 +37,23 @@ final class SCollectionOps(private val self: SCollection[Example]) extends AnyVa
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   ): ClosedTap[Example] =
-    self.write(ParquetExampleIO(path))(WriteParam(schema, numShards, suffix, compression, conf))
+    self.write(ParquetExampleIO(path))(
+      WriteParam(
+        schema,
+        numShards,
+        suffix,
+        compression,
+        conf,
+        shardNameTemplate,
+        tempDirectory,
+        filenamePolicySupplier
+      )
+    )
 }
 
 trait SCollectionSyntax {

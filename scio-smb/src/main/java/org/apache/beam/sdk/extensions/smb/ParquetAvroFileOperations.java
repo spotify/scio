@@ -17,6 +17,10 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import java.io.IOException;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.util.NoSuchElementException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.coders.AvroCoder;
@@ -28,9 +32,13 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.parquet.avro.AvroDataSupplier;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.avro.AvroReadSupport;
+import org.apache.parquet.avro.AvroWriteSupport;
+import org.apache.parquet.avro.SpecificDataSupplier;
 import org.apache.parquet.filter2.compat.FilterCompat;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.ParquetOutputFormat;
@@ -38,19 +46,12 @@ import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
-import java.io.IOException;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.NoSuchElementException;
-
 /**
  * {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Parquet files with
  * Avro records.
  */
 public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.GZIP;
-  static final Configuration DEFAULT_CONFIGURATION = new Configuration();
-
   private final SerializableSchemaSupplier schemaSupplier;
   private final CompressionCodecName compression;
   private final SerializableConfiguration conf;
@@ -74,7 +75,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
       Schema schema, CompressionCodecName compression) {
-    return of(schema, compression, DEFAULT_CONFIGURATION);
+    return of(schema, compression, new Configuration());
   }
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
@@ -84,7 +85,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
       Schema schema, FilterPredicate predicate) {
-    return of(schema, predicate, DEFAULT_CONFIGURATION);
+    return of(schema, predicate, new Configuration());
   }
 
   public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
@@ -195,15 +196,30 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     @Override
     public void open(WritableByteChannel channel) throws IOException {
       // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
+      final Configuration configuration = conf.get();
+
       int rowGroupSize =
-          conf.get().getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE);
-      writer =
+          configuration.getInt(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE);
+      AvroParquetWriter.Builder<ValueT> builder =
           AvroParquetWriter.<ValueT>builder(new ParquetOutputFile(channel))
               .withSchema(schemaSupplier.get())
               .withCompressionCodec(compression)
-              .withConf(conf.get())
-              .withRowGroupSize(rowGroupSize)
-              .build();
+              .withConf(configuration)
+              .withRowGroupSize(rowGroupSize);
+
+      // Workaround for PARQUET-2265
+      if (configuration.getClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, null) != null) {
+        Class<? extends AvroDataSupplier> dataModelSupplier =
+            configuration.getClass(
+                AvroWriteSupport.AVRO_DATA_SUPPLIER,
+                SpecificDataSupplier.class,
+                AvroDataSupplier.class);
+        builder =
+            builder.withDataModel(
+                ReflectionUtils.newInstance(dataModelSupplier, configuration).get());
+      }
+
+      writer = builder.build();
     }
 
     @Override

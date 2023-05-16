@@ -86,7 +86,8 @@ public class SortedBucketTransformTest {
   private static final Set<String> expected = ImmutableSet.of("d1-d2", "e1-e2");
   private static final Set<String> expectedWithSides =
       ImmutableSet.of("d1-d2-1,2,3,4,5,6-x,y,z", "e1-e2-1,2,3,4,5,6-x,y,z");
-  private static final Predicate<String> predicate = (xs, s) -> !s.startsWith("c") && !s.startsWith("h");
+  private static final Predicate<String> predicate =
+      (xs, s) -> !s.startsWith("c") && !s.startsWith("h");
 
   private static final TransformFn<String, String> mergeFunction =
       (keyGroup, outputConsumer) ->

@@ -17,17 +17,16 @@
 
 package com.spotify.scio.transforms;
 
-import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
-import org.joda.time.Instant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.joda.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A {@link DoFn} that handles asynchronous requests to an external service. */
 public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
@@ -67,26 +66,37 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
   }
 
   @ProcessElement
-  public void processElement(ProcessContext c, BoundedWindow window) {
-    flush(c);
+  public void processElement(
+      @Element InputT element,
+      @Timestamp Instant timestamp,
+      OutputReceiver<OutputT> out,
+      BoundedWindow window) {
+    flush(out);
 
-    final UUID uuid = UUID.randomUUID();
-    futures.computeIfAbsent(
-        uuid,
-        key ->
-            addCallback(
-                processElement(c.element()),
-                r -> {
-                  results.add(new Result(r, key, c.timestamp(), window));
-                  return null;
-                },
-                t -> {
-                  errors.add(t);
-                  return null;
-                }));
+    try {
+      final UUID uuid = UUID.randomUUID();
+      final FutureT future = processElement(element);
+      futures.put(uuid, handleOutput(future, uuid, timestamp, window));
+    } catch (Exception e) {
+      LOG.error("Failed to process element", e);
+      throw e;
+    }
   }
 
-  private void flush(ProcessContext c) {
+  private FutureT handleOutput(FutureT future, UUID key, Instant timestamp, BoundedWindow window) {
+    return addCallback(
+        future,
+        output -> {
+          results.add(new Result(output, key, timestamp, window));
+          return null;
+        },
+        throwable -> {
+          errors.add(throwable);
+          return null;
+        });
+  }
+
+  private void flush(OutputReceiver<OutputT> outputReceiver) {
     if (!errors.isEmpty()) {
       RuntimeException e = new RuntimeException("Failed to process futures");
       Throwable t = errors.poll();
@@ -98,7 +108,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
     }
     Result r = results.poll();
     while (r != null) {
-      c.output(r.output);
+      outputReceiver.output(r.output);
       futures.remove(r.futureUuid);
       r = results.poll();
     }

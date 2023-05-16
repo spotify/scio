@@ -21,6 +21,7 @@ import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.{bigtable => beam}
@@ -53,6 +54,7 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
     s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
+    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
     val opts = bigtableOptions // defeat closure
     var read = beam.BigtableIO
       .read()
@@ -71,7 +73,7 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
     if (params.rowFilter != null) {
       read = read.withRowFilter(params.rowFilter)
     }
-    sc.applyTransform(read)
+    sc.applyTransform(read).setCoder(coder)
   }
 
   override protected def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =

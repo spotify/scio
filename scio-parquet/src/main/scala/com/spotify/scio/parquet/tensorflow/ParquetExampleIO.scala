@@ -17,18 +17,30 @@
 
 package com.spotify.scio.parquet.tensorflow
 
+import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
-import com.spotify.scio.parquet.read.{ParquetRead, ReadSupportFactory}
+import com.spotify.scio.parquet.ParquetConfiguration
+import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
-import me.lyh.parquet.tensorflow.{ExampleParquetInputFormat, ExampleParquetReader, Schema}
+import me.lyh.parquet.tensorflow.{
+  ExampleParquetInputFormat,
+  ExampleParquetReader,
+  ExampleReadSupport,
+  Schema
+}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
+import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.io._
+import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.transforms.SerializableFunctions
+import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
@@ -44,15 +56,33 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override val tapT: TapT.Aux[Example, Example] = TapOf[Example]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
-    val job = Job.getInstance(params.conf)
+    val conf = ParquetConfiguration.ofNullable(params.conf)
+    val useSplittableDoFn = conf.getBoolean(
+      ParquetReadConfiguration.UseSplittableDoFn,
+      ParquetReadConfiguration.UseSplittableDoFnDefault
+    )
+
+    if (useSplittableDoFn) {
+      readSplittableDoFn(sc, conf, params)
+    } else {
+      readLegacy(sc, conf, params)
+    }
+  }
+
+  private def readSplittableDoFn(
+    sc: ScioContext,
+    conf: Configuration,
+    params: ReadP
+  ): SCollection[Example] = {
+    val job = Job.getInstance(conf)
 
     Option(params.projection).foreach { projection =>
       ExampleParquetInputFormat.setFields(job, projection.asJava)
-      params.conf.set(ExampleParquetInputFormat.FIELDS_KEY, String.join(",", projection: _*))
+      conf.set(ExampleParquetInputFormat.FIELDS_KEY, String.join(",", projection: _*))
     }
 
     Option(params.predicate).foreach { predicate =>
-      ParquetInputFormat.setFilterPredicate(params.conf, predicate)
+      ParquetInputFormat.setFilterPredicate(conf, predicate)
     }
 
     val coder = CoderMaterializer.beam(sc, Coder[Example])
@@ -60,11 +90,40 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     sc.applyTransform(
       ParquetRead.read(
         ReadSupportFactory.example,
-        new SerializableConfiguration(params.conf),
+        new SerializableConfiguration(conf),
         path,
         identity[Example]
       )
     ).setCoder(coder)
+  }
+
+  private def readLegacy(
+    sc: ScioContext,
+    conf: Configuration,
+    params: ReadP
+  ): SCollection[Example] = {
+    val job = Job.getInstance(conf)
+    GcsConnectorUtil.setInputPaths(sc, job, path)
+    job.setInputFormatClass(classOf[ExampleParquetInputFormat])
+    job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
+    job.getConfiguration.setClass("value.class", classOf[Example], classOf[Example])
+
+    ParquetInputFormat.setReadSupportClass(job, classOf[ExampleReadSupport])
+    if (params.projection != null) {
+      ExampleParquetInputFormat.setFields(job, params.projection.asJava)
+    }
+    if (params.predicate != null) {
+      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
+    }
+
+    val source = HadoopFormatIO
+      .read[JBoolean, Example]()
+      // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
+      .withKeyTranslation(new SimpleFunction[Void, JBoolean]() {
+        override def apply(input: Void): JBoolean = true
+      })
+      .withConfiguration(job.getConfiguration)
+    sc.applyTransform(source).map(_.getValue)
   }
 
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[Example] = {
@@ -88,27 +147,58 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       }
   }
 
-  override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
-    val job = Job.getInstance(params.conf)
-    if (ScioUtil.isLocalRunner(data.context.options.getRunner)) {
-      GcsConnectorUtil.setCredentials(job)
-    }
-
-    val resource =
-      FileBasedSink.convertToFileResourceIfPossible(ScioUtil.pathWithShards(path))
-    val prefix = StaticValueProvider.of(resource)
-    val usedFilenamePolicy =
-      DefaultFilenamePolicy.fromStandardParameters(prefix, null, params.suffix, false)
-    val destinations = DynamicFileDestinations.constant[Example](usedFilenamePolicy)
-    val sink = new ParquetExampleSink(
-      prefix,
-      destinations,
-      params.schema,
-      job.getConfiguration,
-      params.compression
+  private def parquetExampleOut(
+    path: String,
+    schema: Schema,
+    suffix: String,
+    numShards: Int,
+    compression: CompressionCodecName,
+    conf: Configuration,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    isWindowed: Boolean,
+    isLocalRunner: Boolean
+  ) = {
+    val fp = FilenamePolicySupplier.resolve(
+      path,
+      suffix,
+      shardNameTemplate,
+      tempDirectory,
+      filenamePolicySupplier,
+      isWindowed
     )
-    val t = WriteFiles.to(sink).withNumShards(params.numShards)
-    data.applyInternal(t)
+    val dynamicDestinations =
+      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Example])
+    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
+    if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
+    val sink = new ParquetExampleFileBasedSink(
+      StaticValueProvider.of(tempDirectory),
+      dynamicDestinations,
+      schema,
+      job.getConfiguration,
+      compression
+    )
+    val transform = WriteFiles.to(sink).withNumShards(numShards)
+    if (!isWindowed) transform else transform.withWindowedWrites()
+  }
+
+  override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
+    data.applyInternal(
+      parquetExampleOut(
+        path,
+        params.schema,
+        params.suffix,
+        params.numShards,
+        params.compression,
+        params.conf,
+        params.shardNameTemplate,
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
+        params.filenamePolicySupplier,
+        ScioUtil.isWindowed(data),
+        ScioUtil.isLocalRunner(data.context.options.getRunner)
+      )
+    )
     tap(ParquetExampleIO.ReadParam())
   }
 
@@ -120,7 +210,7 @@ object ParquetExampleIO {
   object ReadParam {
     private[tensorflow] val DefaultProjection = null
     private[tensorflow] val DefaultPredicate = null
-    private[tensorflow] val DefaultConfiguration = new Configuration()
+    private[tensorflow] val DefaultConfiguration = null
   }
   final case class ReadParam private (
     projection: Seq[String] = ReadParam.DefaultProjection,
@@ -132,7 +222,10 @@ object ParquetExampleIO {
     private[tensorflow] val DefaultNumShards = 0
     private[tensorflow] val DefaultSuffix = ".parquet"
     private[tensorflow] val DefaultCompression = CompressionCodecName.GZIP
-    private[tensorflow] val DefaultConfiguration = new Configuration()
+    private[tensorflow] val DefaultConfiguration = null
+    private[tensorflow] val DefaultShardNameTemplate = null
+    private[tensorflow] val DefaultTempDirectory = null
+    private[tensorflow] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
@@ -140,7 +233,10 @@ object ParquetExampleIO {
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
-    conf: Configuration = WriteParam.DefaultConfiguration
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
   )
 }
 
@@ -151,7 +247,7 @@ final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadPa
     xs.iterator.flatMap { metadata =>
       val reader = ExampleParquetReader
         .builder(BeamInputFile.of(metadata.resourceId()))
-        .withConf(params.conf)
+        .withConf(Option(params.conf).getOrElse(new Configuration()))
         .build()
       new Iterator[Example] {
         private var current: Example = reader.read()

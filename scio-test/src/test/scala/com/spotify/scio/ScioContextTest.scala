@@ -25,11 +25,13 @@ import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.testing.{PipelineSpec, TestValidationOptions}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.testing.TestUtil
+
 import java.nio.charset.StandardCharsets
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.transforms.Create
+
 import scala.concurrent.duration.Duration
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.options.Validation.Required
@@ -113,7 +115,7 @@ class ScioContextTest extends PipelineSpec {
 
     val sc = ScioContext()
     val textIO = TextIO(output.getAbsolutePath)
-    sc.parallelize(Seq("a", "b", "c")).write(textIO)(TextIO.WriteParam())
+    sc.parallelize(Seq("a", "b", "c")).write(textIO)(TextIO.DefaultWriteParam)
     output.exists() shouldBe false
 
     sc.run()

@@ -20,9 +20,9 @@ package org.apache.beam.sdk.extensions.sorter;
 
 import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkArgument;
 
+import com.spotify.scio.smb.annotations.PatchedFromBeam;
 import java.io.IOException;
 import java.io.Serializable;
-import com.spotify.scio.smb.annotations.PatchedFromBeam;
 import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType;
 import org.apache.beam.sdk.values.KV;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -39,7 +39,7 @@ public class BufferedExternalSorter implements Sorter {
   private static Logger LOG = LoggerFactory.getLogger(BufferedExternalSorter.class);
 
   public static Options options() {
-    return new Options("/tmp", 100, SorterType.HADOOP);
+    return new Options(SorterSysProps.getTempLocation(), 100, SorterType.HADOOP);
   }
 
   /** Contains configuration for the sorter. */

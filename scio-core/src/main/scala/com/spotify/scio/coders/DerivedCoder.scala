@@ -17,96 +17,138 @@
 
 package com.spotify.scio.coders
 
-private object Derived extends Serializable {
-  import magnolia._
+import com.twitter.chill.ClosureCleaner
+import magnolia1._
 
-  @inline private def catching[T](msg: => String)(v: => T): T =
-    try {
-      v
-    } catch {
-      case e: Exception =>
-        /* prior to scio 0.8, a wrapped exception was thrown. It is no longer the case, as some
-        backends (e.g. Flink) use exceptions as a way to signal from the Coder to the layers above
-         here; we therefore must alter the type of exceptions passing through this block.
-         */
-        throw CoderStackTrace.append(e, msg)
+import scala.reflect.ClassTag
+
+object LowPriorityCoderDerivation {
+
+  private object ProductIndexedSeqLike {
+    def apply(p: Product): ProductIndexedSeqLike = new ProductIndexedSeqLike(p)
+  }
+
+  // Instead of converting Product.productIterator to a Seq, create a wrapped around it
+  private class ProductIndexedSeqLike private (private val p: Product) extends IndexedSeq[Any] {
+    override def length: Int = p.productArity
+    override def apply(i: Int): Any = p.productElement(i)
+  }
+
+  private object CaseClassConstructor {
+
+    // to create a case class, we only need to serialize the CaseClass's instance class
+    def apply[T](caseClass: CaseClass[Coder, T]): CaseClassConstructor[T] =
+      new CaseClassConstructor(caseClass.getClass.getName)
+  }
+
+  private class CaseClassConstructor[T] private (
+    private val className: String
+  ) extends Serializable {
+
+    @transient lazy val ctxClass: Class[_] = Class.forName(className)
+
+    @transient lazy val ctx: CaseClass[Coder, T] = {
+      ctxClass.getDeclaredFields.find {
+        _.getName == ClosureCleaner.OUTER
+      } match {
+        /* The field "$outer" is added by scala compiler to a case class if it is declared inside
+         another class. And the constructor of that compiled class requires outer field to be not
+          null.
+         If "$outer" is present it's an inner class and this scenario is officially not supported
+          by Scio */
+        case Some(_) =>
+          throw new Throwable(
+            s"Found an $$outer field in $ctxClass. Possibly it is an attempt to use inner case " +
+              "class in a Scio transformation. Inner case classes are not supported in Scio " +
+              "auto-derived macros. Move the case class to the package level or define a custom " +
+              "coder."
+          )
+        /* If "$outer" field is absent then T is not an inner class, we create an empty instance
+        of ctx */
+        case None =>
+          ClosureCleaner.instantiateClass(ctxClass).asInstanceOf[CaseClass[Coder, T]]
+      }
     }
 
-  def combineCoder[T](
-    typeName: TypeName,
-    ps: Seq[Param[Coder, T]],
-    rawConstruct: Seq[Any] => T
-  ): Coder[T] =
-    Ref(
-      typeName.full, {
-        val cs = new Array[(String, Coder[Any])](ps.length)
-        var i = 0
-        while (i < ps.length) {
-          val p = ps(i)
-          cs.update(i, (p.label, p.typeclass.asInstanceOf[Coder[Any]]))
-          i = i + 1
+    def rawConstruct(fieldValues: Seq[Any]): T = ctx.rawConstruct(fieldValues)
+  }
+
+  private object SealedTraitIdentifier {
+
+    // to find the sub-type id, we only we only need to serialize the isInstanceOf and index
+    def apply[T](sealedTrait: SealedTrait[Coder, T]): SealedTraitIdentifier[T] = {
+      val subtypes = sealedTrait.subtypes
+        .map { s =>
+          // defeat closure by accessing underlying definition
+          val field = s.getClass.getDeclaredField("isType$1")
+          field.setAccessible(true)
+          val isType = field.get(s).asInstanceOf[T => Boolean]
+          val index = s.index
+          isType -> index
         }
+      new SealedTraitIdentifier(subtypes)
+    }
+  }
 
-        @inline def destruct(v: T): Array[Any] = {
-          val arr = new Array[Any](ps.length)
-          var i = 0
-          while (i < ps.length) {
-            val p = ps(i)
-            catching(s"Error while dereferencing parameter ${p.label} in $v") {
-              arr.update(i, p.dereference(v))
-              i = i + 1
-            }
-          }
-          arr
-        }
+  private class SealedTraitIdentifier[T] private (private val subTypes: Seq[(T => Boolean, Int)])
+      extends Serializable {
+    def id(v: T): Int = subTypes.collectFirst { case (isType, index) if isType(v) => index }.get
+  }
 
-        val constructor: Seq[Any] => T =
-          ps =>
-            catching(s"Error while constructing object from parameters $ps")(
-              rawConstruct(ps)
-            )
+  def colsureFunction[E, D, R](enclosed: E)(gen: E => D => R): D => R = gen(enclosed)
 
-        Coder.record[T](typeName.full, cs, constructor, destruct)
-      }
-    )
+  def colsureSupplier[E, R](enclosed: E)(gen: E => R): () => R = () => gen(enclosed)
+
 }
 
 trait LowPriorityCoderDerivation {
-  import magnolia._
+
+  import LowPriorityCoderDerivation._
 
   type Typeclass[T] = Coder[T]
 
-  def combine[T](ctx: CaseClass[Coder, T]): Coder[T] =
+  def join[T: ClassTag](ctx: CaseClass[Coder, T]): Coder[T] = {
+    val typeName = ctx.typeName.full
+    val constructor = CaseClassConstructor(ctx)
+
     if (ctx.isValueClass) {
-      Coder.xmap(ctx.parameters(0).typeclass.asInstanceOf[Coder[Any]])(
-        a => ctx.rawConstruct(Seq(a)),
-        ctx.parameters(0).dereference
+      val p = ctx.parameters.head
+      Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
+        colsureFunction(constructor)(c => v => c.rawConstruct(Seq(v))),
+        p.dereference
       )
+    } else if (ctx.isObject) {
+      Coder.singleton(typeName, colsureSupplier(constructor)(_.rawConstruct(Seq.empty)))
     } else {
-      Derived.combineCoder(ctx.typeName, ctx.parameters, ctx.rawConstruct)
+      Coder.ref(typeName) {
+        val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
+
+        ctx.parameters.foreach { p =>
+          cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
+        }
+
+        Coder.record[T](typeName, cs)(
+          colsureFunction(constructor)(_.rawConstruct),
+          v => ProductIndexedSeqLike(v.asInstanceOf[Product])
+        )
+      }
     }
+  }
 
-  def dispatch[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
+  def split[T](sealedTrait: SealedTrait[Coder, T]): Coder[T] = {
     val typeName = sealedTrait.typeName.full
-    val idx: Map[magnolia.TypeName, Int] =
-      sealedTrait.subtypes.map(_.typeName).zipWithIndex.toMap
-    val coders: Map[Int, Coder[T]] =
-      sealedTrait.subtypes
-        .map(_.typeclass.asInstanceOf[Coder[T]])
-        .zipWithIndex
-        .map { case (c, i) => (i, c) }
-        .toMap
-
+    val identifier = SealedTraitIdentifier(sealedTrait)
+    val coders = sealedTrait.subtypes
+      .map(s => (s.index, s.typeclass.asInstanceOf[Coder[T]]))
+      .toMap
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
-      Coder.disjunction[T, Boolean](typeName, cs) { t =>
-        sealedTrait.dispatch(t)(subtype => booleanId(idx(subtype.typeName)))
-      }
+      Coder.disjunction[T, Boolean](typeName, cs)(
+        colsureFunction(identifier)(_.id).andThen(booleanId)
+      )
     } else {
-      Coder.disjunction[T, Int](typeName, coders) { t =>
-        sealedTrait.dispatch(t)(subtype => idx(subtype.typeName))
-      }
+      Coder.disjunction[T, Int](typeName, coders)(colsureFunction(identifier)(_.id))
     }
   }
 

@@ -23,7 +23,7 @@
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.ElasticsearchMinimalExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --input=[INPUT] --index=[INDEX] --esHost=[HOST] --esPort=[PORT]"`
 package com.spotify.scio.examples.extra
 

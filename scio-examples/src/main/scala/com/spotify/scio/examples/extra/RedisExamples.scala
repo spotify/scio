@@ -33,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisReadStringsExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]
 // --keyPattern=[KEY_PATTERN]
@@ -64,7 +64,7 @@ object RedisReadStringsExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisWriteBatchExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
 object RedisWriteBatchExample {
@@ -95,7 +95,7 @@ object RedisWriteBatchExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisWriteStreamingExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --subscription=[PUBSUB_SUBSCRIPTION]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]`
@@ -133,7 +133,7 @@ object RedisWriteStreamingExample {
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.RedisLookUpStringsExample
-// --project=[PROJECT] --runner=DataflowRunner --zone=[ZONE]
+// --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
 // --redisPort=[REDIS_PORT]
 object RedisLookUpStringsExample {

@@ -18,7 +18,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - run: sbt "; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
+      - run: sbt "; headerCheckAll; javafmtCheckAll; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
   scalafix-rules:
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +30,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - run: "cd scalafix; sbt test"
+      - working-directory: ./scalafix
+        run: sbt test
   mimaReport:
     runs-on: ubuntu-latest
     steps:
@@ -39,16 +40,14 @@ jobs:
           fetch-depth: 0
       - name: cache SBT
         uses: coursier/cache-action@v6
-      - name: Java ${{matrix.java}} setup
+      - name: Java 11 setup
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: ${{matrix.java}}
+          java-version: 11
       - run: sbt "++${{matrix.scala}} mimaReportBinaryIssues"
     strategy:
       matrix:
-        java:
-          - 11
         scala:
-          - 2.12.16
+          - 2.12.17
           - 2.13.8
