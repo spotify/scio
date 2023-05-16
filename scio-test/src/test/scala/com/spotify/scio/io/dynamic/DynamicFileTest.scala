@@ -33,6 +33,13 @@ import org.joda.time.{Duration, Instant}
 import scala.jdk.CollectionConverters._
 
 class DynamicFileTest extends PipelineSpec {
+
+  private def partitionIntegers(s: String): String =
+    partitionIntegers(s.toInt)
+
+  private def partitionIntegers(n: Int): String =
+    if (n % 2 == 0) "even" else "odd"
+
   private def verifyOutput(path: Path, expected: String*): Unit = {
     val actual = Files
       .list(path)
@@ -49,15 +56,16 @@ class DynamicFileTest extends PipelineSpec {
     val sc1 = ScioContext()
     sc1
       .parallelize(1 to 10)
-      .saveAsDynamicTextFile(tmpDir.toString)(s => (s.toInt % 2).toString)
+      .saveAsDynamicTextFile(tmpDir.toString)(partitionIntegers)
     sc1.run()
-    verifyOutput(tmpDir, "0", "1")
+    verifyOutput(tmpDir, "even", "odd")
 
     val sc2 = ScioContext()
-    val lines0 = sc2.textFile(s"$tmpDir/0/*.txt")
-    val lines1 = sc2.textFile(s"$tmpDir/1/*.txt")
-    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(_.toString))
-    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(_.toString))
+    val even = sc2.textFile(s"$tmpDir/even/*.txt")
+    val odd = sc2.textFile(s"$tmpDir/odd/*.txt")
+    val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
+    even should containInAnyOrder(expectedEven.map(_.toString))
+    odd should containInAnyOrder(expectedOdd.map(_.toString))
     sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
@@ -72,19 +80,20 @@ class DynamicFileTest extends PipelineSpec {
       // mysterious "Could not find proxy for val sc1" compiler error
       .timestampBy(x => new Instant(x * 60000L), Duration.ZERO)
       .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
-      .saveAsDynamicTextFile(tmpDir.toString, 1)(s => (s.toInt % 2).toString)
+      .saveAsDynamicTextFile(tmpDir.toString, 1)(partitionIntegers)
     sc1.run()
-    verifyOutput(tmpDir, "0", "1")
-    Files.list(tmpDir.resolve("0")).iterator().asScala.size shouldBe 5
-    Files.list(tmpDir.resolve("1")).iterator().asScala.size shouldBe 5
+    verifyOutput(tmpDir, "even", "odd")
+    Files.list(tmpDir.resolve("even")).iterator().asScala.size shouldBe 5
+    Files.list(tmpDir.resolve("odd")).iterator().asScala.size shouldBe 5
 
     val sc2 = ScioContext()
-    val lines0 = sc2.textFile(s"$tmpDir/0/*.txt")
-    val lines1 = sc2.textFile(s"$tmpDir/1/*.txt")
-    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(_.toString))
-    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(_.toString))
+    val even = sc2.textFile(s"$tmpDir/even/*.txt")
+    val odd = sc2.textFile(s"$tmpDir/odd/*.txt")
+    val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
+    even should containInAnyOrder(expectedEven.map(_.toString))
+    odd should containInAnyOrder(expectedOdd.map(_.toString))
     (1 to 10).foreach { x =>
-      val p = x % 2
+      val p = partitionIntegers(x % 2)
       val t1 = new Instant(x * 60000L)
       val t2 = t1.plus(60000L)
       val lines = sc2.textFile(s"$tmpDir/$p/part-$t1-$t2-*.txt")
@@ -94,21 +103,27 @@ class DynamicFileTest extends PipelineSpec {
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
-  it should "support text files with optional header" in {
+  it should "support text files with optional header and footer" in {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
-    val dynamicHeader = "dynamic-header"
     val sc1 = ScioContext()
     sc1
       .parallelize(1 to 10)
-      .saveAsDynamicTextFile(tmpDir.toString, header = dynamicHeader)(s => (s.toInt % 2).toString)
+      .saveAsDynamicTextFile(
+        path = tmpDir.toString,
+        numShards = 1,
+        header = Some("header"),
+        footer = Some("footer")
+      )(partitionIntegers)
     sc1.run()
-    verifyOutput(tmpDir, dynamicHeader, "0", "1")
+    verifyOutput(tmpDir, "even", "odd")
 
     val sc2 = ScioContext()
-    val lines0 = sc2.textFile(s"$tmpDir/0/*.txt")
-    val lines1 = sc2.textFile(s"$tmpDir/1/*.txt")
-    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(_.toString))
-    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(_.toString))
+    val even = sc2.textFile(s"$tmpDir/even/*.txt")
+    val odd = sc2.textFile(s"$tmpDir/odd/*.txt")
+    val expectedMetadata = Seq("header", "footer")
+    val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
+    even should containInAnyOrder(expectedMetadata ++ expectedEven.map(_.toString))
+    odd should containInAnyOrder(expectedMetadata ++ expectedOdd.map(_.toString))
     sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
@@ -121,16 +136,17 @@ class DynamicFileTest extends PipelineSpec {
       .parallelize(1 to 10)
       .map(newGenericRecord)
       .saveAsDynamicAvroFile(tmpDir.toString, schema = schema) { r =>
-        (r.get("int_field").toString.toInt % 2).toString
+        partitionIntegers(r.get("int_field").asInstanceOf[Int])
       }
     sc1.run()
-    verifyOutput(tmpDir, "0", "1")
+    verifyOutput(tmpDir, "even", "odd")
 
     val sc2 = ScioContext()
-    val lines0 = sc2.avroFile(s"$tmpDir/0/*.avro", schema)
-    val lines1 = sc2.avroFile(s"$tmpDir/1/*.avro", schema)
-    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newGenericRecord))
-    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newGenericRecord))
+    val even = sc2.avroFile(s"$tmpDir/even/*.avro", schema)
+    val odd = sc2.avroFile(s"$tmpDir/odd/*.avro", schema)
+    val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
+    even should containInAnyOrder(expectedEven.map(newGenericRecord))
+    odd should containInAnyOrder(expectedOdd.map(newGenericRecord))
     sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
@@ -141,15 +157,16 @@ class DynamicFileTest extends PipelineSpec {
     sc1
       .parallelize(1 to 10)
       .map(newSpecificRecord)
-      .saveAsDynamicAvroFile(tmpDir.toString)(r => (r.getIntField % 2).toString)
+      .saveAsDynamicAvroFile(tmpDir.toString)(r => partitionIntegers(r.getIntField))
     sc1.run()
-    verifyOutput(tmpDir, "0", "1")
+    verifyOutput(tmpDir, "even", "odd")
 
     val sc2 = ScioContext()
-    val lines0 = sc2.avroFile[TestRecord](s"$tmpDir/0/*.avro")
-    val lines1 = sc2.avroFile[TestRecord](s"$tmpDir/1/*.avro")
-    lines0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newSpecificRecord))
-    lines1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newSpecificRecord))
+    val even = sc2.avroFile[TestRecord](s"$tmpDir/even/*.avro")
+    val odd = sc2.avroFile[TestRecord](s"$tmpDir/odd/*.avro")
+    val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
+    even should containInAnyOrder(expectedEven.map(newSpecificRecord))
+    odd should containInAnyOrder(expectedOdd.map(newSpecificRecord))
     sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
@@ -165,19 +182,20 @@ class DynamicFileTest extends PipelineSpec {
       // mysterious "Could not find proxy for val sc1" compiler error
       .timestampBy(x => new Instant(x.getIntField * 60000L), Duration.ZERO)
       .withFixedWindows(Duration.standardMinutes(1), Duration.ZERO, WindowOptions())
-      .saveAsDynamicAvroFile(tmpDir.toString, 1)(r => (r.getIntField % 2).toString)
+      .saveAsDynamicAvroFile(tmpDir.toString, 1)(r => partitionIntegers(r.getIntField))
     sc1.run()
-    verifyOutput(tmpDir, "0", "1")
-    Files.list(tmpDir.resolve("0")).iterator().asScala.size shouldBe 5
-    Files.list(tmpDir.resolve("1")).iterator().asScala.size shouldBe 5
+    verifyOutput(tmpDir, "even", "odd")
+    Files.list(tmpDir.resolve("even")).iterator().asScala.size shouldBe 5
+    Files.list(tmpDir.resolve("odd")).iterator().asScala.size shouldBe 5
 
     val sc2 = ScioContext()
-    val records0 = sc2.avroFile[TestRecord](s"$tmpDir/0/*.avro")
-    val records1 = sc2.avroFile[TestRecord](s"$tmpDir/1/*.avro")
-    records0 should containInAnyOrder((1 to 10).filter(_ % 2 == 0).map(newSpecificRecord))
-    records1 should containInAnyOrder((1 to 10).filter(_ % 2 == 1).map(newSpecificRecord))
+    val even = sc2.avroFile[TestRecord](s"$tmpDir/even/*.avro")
+    val odd = sc2.avroFile[TestRecord](s"$tmpDir/odd/*.avro")
+    val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
+    even should containInAnyOrder(expectedEven.map(newSpecificRecord))
+    odd should containInAnyOrder(expectedOdd.map(newSpecificRecord))
     (1 to 10).foreach { x =>
-      val p = x % 2
+      val p = partitionIntegers(x % 2)
       val t1 = new Instant(x * 60000L)
       val t2 = t1.plus(60000L)
       val records = sc2.avroFile[TestRecord](s"$tmpDir/$p/part-$t1-$t2-*.avro")
@@ -191,19 +209,21 @@ class DynamicFileTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("dynamic-io-")
     val sc1 = ScioContext()
 
-    val mkProto = (x: Long) => SimplePB.newBuilder().setPlays(x).setTrackId(s"track$x").build()
+    val mkProto =
+      (x: Int) => SimplePB.newBuilder().setPlays(x.toLong).setTrackId(s"track$x").build()
     sc1
-      .parallelize(1L to 10L)
+      .parallelize(1 to 10)
       .map(mkProto)
-      .saveAsDynamicProtobufFile(tmpDir.toString)(r => (r.getPlays % 2).toString)
+      .saveAsDynamicProtobufFile(tmpDir.toString)(r => partitionIntegers(r.getPlays.toInt % 2))
     sc1.run()
-    verifyOutput(tmpDir, "0", "1")
+    verifyOutput(tmpDir, "even", "odd")
 
     val sc2 = ScioContext()
-    val lines0 = sc2.protobufFile[SimplePB](s"$tmpDir/0/*.protobuf")
-    val lines1 = sc2.protobufFile[SimplePB](s"$tmpDir/1/*.protobuf")
-    lines0 should containInAnyOrder((1L to 10L).filter(_ % 2 == 0).map(mkProto))
-    lines1 should containInAnyOrder((1L to 10L).filter(_ % 2 == 1).map(mkProto))
+    val even = sc2.protobufFile[SimplePB](s"$tmpDir/even/*.protobuf")
+    val odd = sc2.protobufFile[SimplePB](s"$tmpDir/odd/*.protobuf")
+    val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
+    even should containInAnyOrder(expectedEven.map(mkProto))
+    odd should containInAnyOrder(expectedOdd.map(mkProto))
     sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }

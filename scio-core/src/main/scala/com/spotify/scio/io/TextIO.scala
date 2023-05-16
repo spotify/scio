@@ -65,12 +65,13 @@ final case class TextIO(path: String) extends ScioIO[String] {
     isWindowed: Boolean
   ) = {
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
+      path = path,
+      prefix = null,
+      shardNameTemplate = shardNameTemplate,
+      suffix = suffix,
+      isWindowed = isWindowed,
+      filenamePolicySupplier = filenamePolicySupplier,
+      tempDirectory = tempDirectory
     )
     var transform = write
       .to(fp)

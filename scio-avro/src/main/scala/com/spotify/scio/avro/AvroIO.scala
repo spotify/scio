@@ -144,12 +144,13 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     isWindowed: Boolean
   ): beam.AvroIO.Write[U] = {
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
+      path = path,
+      prefix = null, // TODO expose prefix in API
+      shardNameTemplate = shardNameTemplate,
+      suffix = suffix,
+      isWindowed = isWindowed,
+      filenamePolicySupplier = filenamePolicySupplier,
+      tempDirectory = tempDirectory
     )
     val transform = write
       .to(fp)
@@ -352,12 +353,13 @@ object AvroTyped {
       isWindowed: Boolean
     ) = {
       val fp = FilenamePolicySupplier.resolve(
-        path,
-        suffix,
-        shardNameTemplate,
-        tempDirectory,
-        filenamePolicySupplier,
-        isWindowed
+        path = path,
+        prefix = null, // TODO expose prefix in API
+        shardNameTemplate = shardNameTemplate,
+        suffix = suffix,
+        isWindowed = isWindowed,
+        filenamePolicySupplier = filenamePolicySupplier,
+        tempDirectory = tempDirectory
       )
       val transform = write
         .to(fp)

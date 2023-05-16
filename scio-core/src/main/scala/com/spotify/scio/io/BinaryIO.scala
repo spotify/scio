@@ -67,13 +67,13 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     isWindowed: Boolean
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed,
-      prefix
+      path = path,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      suffix = suffix,
+      isWindowed = isWindowed,
+      filenamePolicySupplier = filenamePolicySupplier,
+      tempDirectory = tempDirectory
     )
     val dynamicDestinations =
       DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
