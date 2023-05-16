@@ -26,6 +26,7 @@ package com.spotify.scio.examples.cookbook
 import com.spotify.scio.bigquery._
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.values.HotKeyMethod
 
 // ## Utilities used in all examples
 object JoinUtil {
@@ -167,12 +168,11 @@ object SkewedJoinExamples {
        * Internally it identifies two groups of keys: "Hot" and the rest. Hot keys are joined using
        * Hash Join and the rest with the regular join. There are 3 ways to identify the set of hot
        * keys:
-       *   - "threshold" as a cutoff frequency;
+       *   - "threshold" as a cutoff frequency.
        *   - "top percentage" to specify the maximum relative part of all keys can be considered
-       *     hot;
+       *     hot.
        *   - "top N" to specify the absolute number of hot keys.
-       */
-      /**
+       *
        * Also, there are several optional parameters in different overloads that could tune the
        * default behavior:
        *   - `sampleFraction` - the fraction to sample keys in LHS, can improve performance if less
@@ -195,9 +195,8 @@ object SkewedJoinExamples {
        *   - `cmsSeed` - random value generator seed for CMS. No need to specify unless you
        *     deliberately expect some (non)deterministic results.
        */
-      .skewedLeftOuterJoin(countryInfo, hotKeyThreshold = 100)
-      .map { t =>
-        val (countryCode, (eventInfo, countryNameOpt)) = t
+      .skewedLeftOuterJoin(countryInfo, hotKeyMethod = HotKeyMethod.Threshold(100))
+      .map { case (countryCode, (eventInfo, countryNameOpt)) =>
         val countryName = countryNameOpt.getOrElse("none")
         formatOutput(countryCode, countryName, eventInfo)
       }
