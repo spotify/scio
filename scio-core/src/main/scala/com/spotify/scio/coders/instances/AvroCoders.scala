@@ -18,7 +18,7 @@
 package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
-import com.spotify.scio.coders.{AvroCoderMacros, Coder}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -136,10 +136,6 @@ trait AvroCoders {
     val useReflectApi = true // keep this for backward compatibility
     Coder.beam(AvroCoder.of(clazz, schema, useReflectApi))
   }
-
-  @deprecated("Use avroSpecificRecordCoder instead", since = "0.12.5")
-  def genAvro[T <: SpecificRecordBase]: Coder[T] =
-    macro AvroCoderMacros.staticInvokeCoder[T]
 
   implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
     SpecificFixedCoder[T]
