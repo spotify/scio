@@ -22,7 +22,6 @@ import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
 import org.scalactic.Equality
 import org.scalatest.matchers.should.Matchers
-import scala.jdk.CollectionConverters._
 
 final class AvroCoderTest extends AnyFlatSpec with Matchers {
 

@@ -26,7 +26,7 @@ import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Moments
 import org.apache.beam.sdk.{coders => beam}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{BigEndianLongCoder, InstantCoder}
+import org.apache.beam.sdk.coders.BigEndianLongCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
@@ -36,7 +36,6 @@ import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.jdk.CollectionConverters._
 import scala.collection.{mutable => mut}
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
