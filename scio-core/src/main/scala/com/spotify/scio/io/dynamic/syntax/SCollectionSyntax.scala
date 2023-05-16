@@ -45,13 +45,14 @@ object DynamicSCollectionOps {
     suffix: String,
     tempDirectory: String
   ): FileIO.Write[String, A] = {
+    val naming = ScioUtil.defaultNaming(Option(prefix).getOrElse("part"), suffix) _
     FileIO
       .writeDynamic[String, A]()
       .to(path)
       .by(Functions.serializableFn(destinationFn))
       .withNumShards(numShards)
       .withDestinationCoder(StringUtf8Coder.of())
-      .withNaming(Functions.serializableFn(ScioUtil.defaultNaming(prefix, suffix)))
+      .withNaming(Functions.serializableFn(naming))
       .pipe(t => Option(tempDirectory).fold(t)(t.withTempDirectory))
   }
 }
@@ -89,7 +90,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
           path = path,
           destinationFn = destinationFn,
           numShards = numShards,
-          prefix = "part", // TODO expose prefix in API
+          prefix = null, // TODO expose prefix in API
           suffix = suffix,
           tempDirectory = tempDirectory
         ).via(sink)
@@ -143,7 +144,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
           path = path,
           destinationFn = destinationFn,
           numShards = numShards,
-          prefix = "part", // TODO expose prefix in API
+          prefix = null, // TODO expose prefix in API
           suffix = suffix,
           tempDirectory = tempDirectory
         ).via(sink)
@@ -191,7 +192,7 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
         path = path,
         destinationFn = destinationFn,
         numShards = numShards,
-        prefix = "part", // TODO expose prefix in API
+        prefix = null, // TODO expose prefix in API
         suffix = suffix,
         tempDirectory = tempDirectory
       ).via(sink)
@@ -240,7 +241,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
         path = path,
         destinationFn = destinationFn,
         numShards = numShards,
-        prefix = "part", // TODO expose prefix in API
+        prefix = null, // TODO expose prefix in API
         suffix = suffix,
         tempDirectory = tempDirectory
       ).via(sink)
