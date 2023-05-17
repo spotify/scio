@@ -134,10 +134,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
       val sink = beam.AvroIO
         .sinkViaGenericRecords(
           schema,
-          new RecordFormatter[T] {
-            override def formatRecord(element: T, schema: Schema): GenericRecord =
-              element
-          }
+          (element: T, _: Schema) => element
         )
         .withCodec(codec)
         .withMetadata(nm)
@@ -227,7 +224,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
       val sink = beam.AvroIO
         .sinkViaGenericRecords(
           avroSchema,
-          (element: T, schema: Schema) => AvroBytesUtil.encode(elemCoder, element)
+          (element: T, _: Schema) => AvroBytesUtil.encode(elemCoder, element)
         )
         .withCodec(codec)
         .withMetadata(nm)
