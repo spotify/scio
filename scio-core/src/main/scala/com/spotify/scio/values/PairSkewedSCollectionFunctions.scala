@@ -211,28 +211,37 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedJoin with hotKeyMethod instead", since = "0.13.0")
-  def skewedJoin[W](
-    rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long,
-    eps: Double,
-    seed: Int,
-    delta: Double,
-    sampleFraction: Double,
-    withReplacement: Boolean
-  )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, W))] =
-    skewedJoin(
-      rhs,
-      HotKeyMethod.Threshold(hotKeyThreshold),
-      SkewedJoins.DefaultHotKeyFanout,
-      eps,
-      delta,
-      seed,
-      sampleFraction,
-      withReplacement
-    )
-
-  @deprecated("Use skewedJoin with hotKeyMethod instead", since = "0.13.0")
+  /**
+   * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
+   *
+   * Perform a skewed join where some keys on the left hand may be hot, i.e. appear more than
+   * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
+   * estimate is within `eps * N` of the true frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
+   *
+   * @note
+   *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
+   * @example
+   *   {{{
+   *   // Implicits that enabling CMS-hashing
+   *   import com.twitter.algebird.CMSHasherImplicits._
+   *   val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+   *   val hotKeyCMS = self.keys.aggregate(keyAggregator)
+   *   val p = logs.skewedJoin(logMetadata, hotKeyThreshold=8500, cms=hotKeyCMS)
+   *   }}}
+   *
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
+   * @group join
+   * @param hotKeyThreshold
+   *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
+   *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
+   *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind.
+   * @param cms
+   *   left hand side key [[com.twitter.algebird.CMS]]
+   */
   def skewedJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
@@ -347,28 +356,37 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     }
   }
 
-  @deprecated("Use skewedLeftOuterJoin with hotKeyMethod instead", since = "0.13.0")
-  def skewedLeftOuterJoin[W](
-    rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long,
-    eps: Double,
-    seed: Int,
-    delta: Double,
-    sampleFraction: Double,
-    withReplacement: Boolean
-  )(implicit hasher: CMSHasher[K]): SCollection[(K, (V, Option[W]))] =
-    skewedLeftOuterJoin(
-      rhs,
-      HotKeyMethod.Threshold(hotKeyThreshold),
-      SkewedJoins.DefaultHotKeyFanout,
-      eps,
-      delta,
-      seed,
-      sampleFraction,
-      withReplacement
-    )
-
-  @deprecated("Use skewedLeftOuterJoin with hotKeyMethod instead", since = "0.13.0")
+  /**
+   * N to 1 skew-proof flavor of [[PairSCollectionFunctions.leftOuterJoin]].
+   *
+   * Perform a skewed left join where some keys on the left hand may be hot, i.e. appear more than
+   * `hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and the
+   * estimate is within `eps * N` of the true frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
+   *
+   * @note
+   *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
+   * @example
+   *   {{{
+   *   // Implicits that enabling CMS-hashing
+   *   import com.twitter.algebird.CMSHasherImplicits._
+   *   val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+   *   val hotKeyCMS = self.keys.aggregate(keyAggregator)
+   *   val p = logs.skewedLeftOuterJoin(logMetadata, hotKeyThreshold=8500, cms=hotKeyCMS)
+   *   }}}
+   *
+   * Read more about CMS: [[com.twitter.algebird.CMS]].
+   * @group join
+   * @param hotKeyThreshold
+   *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
+   *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
+   *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind.
+   * @param cms
+   *   left hand side key [[com.twitter.algebird.CMS]]
+   */
   def skewedLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
@@ -482,28 +500,37 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
       }
   }
 
-  @deprecated("Use skewedFullOuterJoin with hotKeyMethod instead", since = "0.13.0")
-  def skewedFullOuterJoin[W](
-    rhs: SCollection[(K, W)],
-    hotKeyThreshold: Long,
-    eps: Double,
-    seed: Int,
-    delta: Double,
-    sampleFraction: Double,
-    withReplacement: Boolean
-  )(implicit hasher: CMSHasher[K]): SCollection[(K, (Option[V], Option[W]))] =
-    skewedFullOuterJoin(
-      rhs,
-      HotKeyMethod.Threshold(hotKeyThreshold),
-      SkewedJoins.DefaultHotKeyFanout,
-      eps,
-      delta,
-      seed,
-      sampleFraction,
-      withReplacement
-    )
-
-  @deprecated("Use skewedFullOuterJoin with hotKeyMethod instead", since = "0.13.0")
+  /**
+   * N to 1 skew-proof flavor of [[PairSCollectionFunctions.fullOuterJoin]].
+   *
+   * Perform a skewed full outer join where some keys on the left hand may be hot, i.e.appear more
+   * than`hotKeyThreshold` times. Frequency of a key is estimated with `1 - delta` probability, and
+   * the estimate is within `eps * N` of the true frequency.
+   *
+   * `true frequency <= estimate <= true frequency + eps * N`
+   *
+   * where N is the total size of the left hand side stream so far.
+   *
+   * @note
+   *   Make sure to `import com.twitter.algebird.CMSHasherImplicits` before using this join.
+   * @example
+   *   {{{
+   *   // Implicits that enabling CMS-hashing
+   *   import com.twitter.algebird.CMSHasherImplicits._
+   *   val keyAggregator = CMS.aggregator[K](eps, delta, seed)
+   *   val hotKeyCMS = self.keys.aggregate(keyAggregator)
+   *   val p = logs.skewedFullOuterJoin(logMetadata, hotKeyThreshold=8500, cms=hotKeyCMS)
+   *   }}}
+   *
+   * Read more about CMS: [[com.twitter.algebird.CMSMonoid]].
+   * @group join
+   * @param hotKeyThreshold
+   *   key with `hotKeyThreshold` values will be considered hot. Some runners have inefficient
+   *   `GroupByKey` implementation for groups with more than 10K values. Thus it is recommended to
+   *   set `hotKeyThreshold` to below 10K, keep upper estimation error in mind.
+   * @param cms
+   *   left hand side key [[com.twitter.algebird.CMSMonoid]]
+   */
   def skewedFullOuterJoin[W](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
