@@ -121,24 +121,21 @@ object Table {
   }
 }
 
-sealed trait ExtendedErrorInfo {
-  type Info
-
+sealed trait ExtendedErrorInfo[Info] {
   private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info]
 }
 
 object ExtendedErrorInfo {
-  final case object Enabled extends ExtendedErrorInfo {
-    override type Info = BigQueryInsertError
-
-    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
+  final case object Enabled extends ExtendedErrorInfo[BigQueryInsertError] {
+    override private[scio] def coll(
+      sc: ScioContext,
+      wr: WriteResult
+    ): SCollection[BigQueryInsertError] =
       sc.wrap(wr.getFailedInsertsWithErr())
   }
 
-  final case object Disabled extends ExtendedErrorInfo {
-    override type Info = TableRow
-
-    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info] =
+  final case object Disabled extends ExtendedErrorInfo[TableRow] {
+    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[TableRow] =
       sc.wrap(wr.getFailedInserts())
   }
 }
