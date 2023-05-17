@@ -100,7 +100,6 @@ val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
-val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.9"
 val elasticsearch8Version = "8.7.1"
 val featranVersion = "0.8.0"
@@ -453,7 +452,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-avro`,
     `scio-cassandra3`,
     `scio-core`,
-    `scio-elasticsearch6`,
+    `scio-elasticsearch-common`,
     `scio-elasticsearch7`,
     `scio-elasticsearch8`,
     `scio-examples`,
@@ -743,60 +742,8 @@ lazy val `scio-cassandra3`: Project = project
     )
   )
 
-lazy val `scio-elasticsearch6`: Project = project
-  .in(file("scio-elasticsearch/es6"))
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    description := "Scio add-on for writing to Elasticsearch",
-    libraryDependencies ++= Seq(
-      // compile
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
-      "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
-      "org.elasticsearch.client" % "transport" % elasticsearch6Version,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // test
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
-    )
-  )
-
-lazy val `scio-elasticsearch7`: Project = project
-  .in(file("scio-elasticsearch/es7"))
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    description := "Scio add-on for writing to Elasticsearch",
-    libraryDependencies ++= Seq(
-      // compile
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
-      "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
-      "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // test
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
-    )
-  )
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-
-lazy val `scio-elasticsearch8`: Project = project
-  .in(file("scio-elasticsearch/es8"))
+lazy val `scio-elasticsearch-common`: Project = project
+  .in(file("scio-elasticsearch/common"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test,it"
@@ -809,18 +756,54 @@ lazy val `scio-elasticsearch8`: Project = project
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       // compile
-      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
-      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
-      "commons-io" % "commons-io" % commonsIoVersion,
+      "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // provided
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version % Provided,
       // test
       "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % "it",
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % "it",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % "it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it"
+    )
+  )
+
+lazy val `scio-elasticsearch7`: Project = project
+  .in(file("scio-elasticsearch/es7"))
+  .dependsOn(
+    `scio-elasticsearch-common` % "compile->compile;it->it",
+    `scio-test` % "it"
+  )
+  .configs(IntegrationTest)
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(itSettings)
+  .settings(
+    description := "Scio add-on for writing to Elasticsearch",
+    libraryDependencies ++= Seq(
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch7Version
+    )
+  )
+
+lazy val `scio-elasticsearch8`: Project = project
+  .in(file("scio-elasticsearch/es8"))
+  .dependsOn(
+    `scio-elasticsearch-common` % "compile->compile;it->it",
+    `scio-test` % "it"
+  )
+  .configs(IntegrationTest)
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(itSettings)
+  .settings(
+    description := "Scio add-on for writing to Elasticsearch",
+    libraryDependencies ++= Seq(
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version
     )
   )
 
