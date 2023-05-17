@@ -26,8 +26,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy
-import org.apache.beam.sdk.io.FileIO.Write.FileNaming
-import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, FileIO, FileSystems}
+import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, FileSystems}
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.values.WindowingStrategy
@@ -107,22 +106,14 @@ private[scio] object ScioUtil {
 
   def defaultFilenamePolicy(
     path: String,
-    prefix: String,
     shardTemplate: String,
     suffix: String,
     isWindowed: Boolean
   ): FilenamePolicy = {
-    val prefixedPath = pathWithPrefix(path, prefix)
-    val resource = FileBasedSink.convertToFileResourceIfPossible(prefixedPath)
-    val baseFileName = StaticValueProvider.of(resource)
-    DefaultFilenamePolicy.fromStandardParameters(baseFileName, shardTemplate, suffix, isWindowed)
+    val resource = FileBasedSink.convertToFileResourceIfPossible(path)
+    val prefix = StaticValueProvider.of(resource)
+    DefaultFilenamePolicy.fromStandardParameters(prefix, shardTemplate, suffix, isWindowed)
   }
-
-  def defaultNaming(
-    prefix: String,
-    suffix: String
-  )(destination: String): FileNaming =
-    FileIO.Write.defaultNaming(s"$destination/$prefix", suffix)
 
   def tempDirOrDefault(tempDirectory: String, sc: ScioContext): ResourceId = {
     Option(tempDirectory)

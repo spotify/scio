@@ -30,12 +30,12 @@ trait FilenamePolicySupplier {
 object FilenamePolicySupplier {
   def resolve(
     path: String,
-    prefix: String,
-    shardNameTemplate: String,
     suffix: String,
-    isWindowed: Boolean,
+    shardNameTemplate: String,
+    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
-    tempDirectory: ResourceId
+    isWindowed: Boolean,
+    defaultPrefix: String = null
   ): FilenamePolicy = {
     require(tempDirectory != null, "tempDirectory must not be null")
     require(
@@ -43,7 +43,7 @@ object FilenamePolicySupplier {
       "shardNameTemplate and filenamePolicySupplier may not be used together"
     )
     require(
-      prefix == null || filenamePolicySupplier == null,
+      defaultPrefix == null || filenamePolicySupplier == null,
       "prefix and filenamePolicySupplier may not be used together"
     )
 
@@ -51,8 +51,7 @@ object FilenamePolicySupplier {
       .map(c => c.apply(ScioUtil.strippedPath(path), suffix))
       .getOrElse(
         ScioUtil.defaultFilenamePolicy(
-          path,
-          Option(prefix).getOrElse("part"),
+          ScioUtil.pathWithPrefix(path, Option(defaultPrefix).getOrElse("part")),
           shardNameTemplate,
           suffix,
           isWindowed

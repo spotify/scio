@@ -20,7 +20,7 @@ package com.spotify.scio.io.dynamic.syntax
 import com.google.protobuf.Message
 import com.spotify.scio.io.{ClosedTap, EmptyTap, TextIO}
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
+import com.spotify.scio.util.{Functions, ProtobufUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
@@ -33,27 +33,28 @@ import org.apache.beam.sdk.{io => beam}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
-import java.util.{HashMap => JHashMap}
 import scala.util.chaining._
+import java.util.{HashMap => JHashMap}
 
 object DynamicSCollectionOps {
   private[scio] def writeDynamic[A](
     path: String,
-    destinationFn: A => String,
     numShards: Int,
-    prefix: String,
     suffix: String,
-    tempDirectory: String
+    destinationFn: A => String,
+    tempDirectory: String = null
   ): FileIO.Write[String, A] = {
-    val naming = ScioUtil.defaultNaming(Option(prefix).getOrElse("part"), suffix) _
-    FileIO
+    val transform = FileIO
       .writeDynamic[String, A]()
       .to(path)
-      .by(Functions.serializableFn(destinationFn))
       .withNumShards(numShards)
+      .by(Functions.serializableFn(destinationFn))
       .withDestinationCoder(StringUtf8Coder.of())
-      .withNaming(Functions.serializableFn(naming))
-      .pipe(t => Option(tempDirectory).fold(t)(t.withTempDirectory))
+      .withNaming(Functions.serializableFn { destination: String =>
+        FileIO.Write.defaultNaming(s"$destination/part", suffix)
+      })
+
+    Option(tempDirectory).fold(transform)(transform.withTempDirectory)
   }
 }
 
@@ -86,14 +87,8 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
         .withCodec(codec)
         .withMetadata(nm)
       val write =
-        writeDynamic(
-          path = path,
-          destinationFn = destinationFn,
-          numShards = numShards,
-          prefix = null, // TODO expose prefix in API
-          suffix = suffix,
-          tempDirectory = tempDirectory
-        ).via(sink)
+        writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
+          .via(sink)
 
       self.applyInternal(write)
     }
@@ -140,14 +135,8 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
         .withCodec(codec)
         .withMetadata(nm)
       val write =
-        writeDynamic(
-          path = path,
-          destinationFn = destinationFn,
-          numShards = numShards,
-          prefix = null, // TODO expose prefix in API
-          suffix = suffix,
-          tempDirectory = tempDirectory
-        ).via(sink)
+        writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
+          .via(sink)
 
       self.applyInternal(write)
     }
@@ -169,9 +158,9 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
     numShards: Int = TextIO.WriteParam.DefaultNumShards,
     suffix: String = TextIO.WriteParam.DefaultSuffix,
     compression: Compression = TextIO.WriteParam.DefaultCompression,
+    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
     header: Option[String] = TextIO.WriteParam.DefaultHeader,
-    footer: Option[String] = TextIO.WriteParam.DefaultFooter,
-    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
+    footer: Option[String] = TextIO.WriteParam.DefaultFooter
   )(destinationFn: String => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       self.asInstanceOf[SCollection[String]]
@@ -188,14 +177,8 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
         .pipe(s => header.fold(s)(s.withHeader))
         .pipe(s => footer.fold(s)(s.withFooter))
 
-      val write = writeDynamic(
-        path = path,
-        destinationFn = destinationFn,
-        numShards = numShards,
-        prefix = null, // TODO expose prefix in API
-        suffix = suffix,
-        tempDirectory = tempDirectory
-      ).via(sink)
+      val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
+        .via(sink)
         .withCompression(compression)
       s.applyInternal(write)
     }
@@ -237,14 +220,9 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
         )
         .withCodec(codec)
         .withMetadata(nm)
-      val write = writeDynamic(
-        path = path,
-        destinationFn = destinationFn,
-        numShards = numShards,
-        prefix = null, // TODO expose prefix in API
-        suffix = suffix,
-        tempDirectory = tempDirectory
-      ).via(sink)
+      val write =
+        writeDynamic(path, numShards, suffix, destinationFn, tempDirectory)
+          .via(sink)
 
       self.applyInternal(write)
     }
