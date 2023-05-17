@@ -32,17 +32,14 @@ object FilenamePolicySupplier {
     prefix: String,
     shardNameTemplate: String,
     isWindowed: Boolean
-  ): FilenamePolicySupplier = {
-    require(shardNameTemplate != null, "shardNameTemplate must not be null")
-    (path: String, suffix: String) =>
-      ScioUtil.defaultFilenamePolicy(
-        path,
-        Option(prefix).getOrElse("part"),
-        shardNameTemplate,
-        suffix,
-        isWindowed
-      )
-  }
+  ): FilenamePolicySupplier = (path: String, suffix: String) =>
+    ScioUtil.defaultFilenamePolicy(
+      path,
+      Option(prefix).getOrElse("part"),
+      shardNameTemplate,
+      suffix,
+      isWindowed
+    )
 
   def resolve(
     filenamePolicySupplier: FilenamePolicySupplier,
