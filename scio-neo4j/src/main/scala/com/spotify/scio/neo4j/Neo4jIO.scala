@@ -32,7 +32,7 @@ object Neo4jIO {
   object WriteParam {
     private[neo4j] val BeamDefaultBatchSize = 5000L
   }
-  final case class WriteParam(batchSize: Long = WriteParam.BeamDefaultBatchSize)
+  final case class WriteParam private (batchSize: Long = WriteParam.BeamDefaultBatchSize)
 
   implicit private[neo4j] def recordConverter(record: Record): Value =
     Values.value(record.asMap(identity[Value]))

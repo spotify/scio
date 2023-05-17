@@ -47,7 +47,7 @@ object PubsubIO {
   case object Subscription extends ReadType
   case object Topic extends ReadType
 
-  final case class ReadParam(
+  final case class ReadParam private (
     readType: ReadType,
     clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None,
     deadLetterTopic: Option[String] = None

@@ -44,7 +44,8 @@ final class DynamicParquetAvroSCollectionOps[T](
     suffix: String = ParquetAvroIO.WriteParam.DefaultSuffix,
     compression: CompressionCodecName = ParquetAvroIO.WriteParam.DefaultCompression,
     conf: Configuration = ParquetAvroIO.WriteParam.DefaultConfiguration,
-    tempDirectory: String = ParquetAvroIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = ParquetAvroIO.WriteParam.DefaultTempDirectory,
+    prefix: String = ParquetAvroIO.WriteParam.DefaultPrefix
   )(
     destinationFn: T => String
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
@@ -63,7 +64,14 @@ final class DynamicParquetAvroSCollectionOps[T](
           compression,
           new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
         )
-      val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
+      val write = writeDynamic(
+        path = path,
+        destinationFn = destinationFn,
+        numShards = numShards,
+        prefix = prefix,
+        suffix = suffix,
+        tempDirectory = tempDirectory
+      ).via(sink)
       self.applyInternal(write)
     }
     ClosedTap[Nothing](EmptyTap)

@@ -59,19 +59,19 @@ final case class TextIO(path: String) extends ScioIO[String] {
     compression: Compression,
     header: Option[String],
     footer: Option[String],
-    shardNameTemplate: String,
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
-    isWindowed: Boolean
+    prefix: String,
+    shardNameTemplate: String,
+    isWindowed: Boolean,
+    tempDirectory: ResourceId
   ) = {
+    require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
-    )
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(path, suffix)
     var transform = write
       .to(fp)
       .withTempDirectory(tempDirectory)
@@ -93,10 +93,11 @@ final case class TextIO(path: String) extends ScioIO[String] {
         params.compression,
         params.header,
         params.footer,
-        params.shardNameTemplate,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
-        ScioUtil.isWindowed(data)
+        params.prefix,
+        params.shardNameTemplate,
+        ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
     tap(TextIO.ReadParam())
@@ -112,7 +113,7 @@ object TextIO {
     private[scio] val DefaultEmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
   }
 
-  final case class ReadParam(
+  final case class ReadParam private (
     compression: Compression = ReadParam.DefaultCompression,
     emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment
   )
@@ -123,9 +124,10 @@ object TextIO {
     private[scio] val DefaultSuffix = ".txt"
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultCompression = Compression.UNCOMPRESSED
+    private[scio] val DefaultFilenamePolicySupplier = null
+    private[scio] val DefaultPrefix = null
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final val DefaultWriteParam: WriteParam = WriteParam(
@@ -134,20 +136,22 @@ object TextIO {
     WriteParam.DefaultCompression,
     WriteParam.DefaultHeader,
     WriteParam.DefaultFooter,
+    WriteParam.DefaultFilenamePolicySupplier,
+    WriteParam.DefaultPrefix,
     WriteParam.DefaultShardNameTemplate,
-    WriteParam.DefaultTempDirectory,
-    WriteParam.DefaultFilenamePolicySupplier
+    WriteParam.DefaultTempDirectory
   )
 
-  final case class WriteParam(
+  final case class WriteParam private (
     suffix: String,
     numShards: Int,
     compression: Compression,
     header: Option[String],
     footer: Option[String],
+    filenamePolicySupplier: FilenamePolicySupplier,
+    prefix: String,
     shardNameTemplate: String,
-    tempDirectory: String,
-    filenamePolicySupplier: FilenamePolicySupplier
+    tempDirectory: String
   )
 
   private[scio] def textFile(path: String): Iterator[String] = {

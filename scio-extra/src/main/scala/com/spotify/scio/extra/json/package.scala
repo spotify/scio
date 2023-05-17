@@ -80,7 +80,8 @@ package object json extends AutoDerivation {
       shardNameTemplate: String = JsonIO.WriteParam.DefaultShardNameTemplate,
       tempDirectory: String = JsonIO.WriteParam.DefaultTempDirectory,
       filenamePolicySupplier: FilenamePolicySupplier =
-        JsonIO.WriteParam.DefaultFilenamePolicySupplier
+        JsonIO.WriteParam.DefaultFilenamePolicySupplier,
+      prefix: String = JsonIO.WriteParam.DefaultPrefix
     ): ClosedTap[T] =
       self.write(JsonIO[T](path))(
         JsonIO.WriteParam(
@@ -88,9 +89,10 @@ package object json extends AutoDerivation {
           numShards,
           compression,
           printer,
+          filenamePolicySupplier,
+          prefix,
           shardNameTemplate,
-          tempDirectory,
-          filenamePolicySupplier
+          tempDirectory
         )
       )
   }

@@ -47,9 +47,10 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
           params.compression,
           None,
           None,
+          params.filenamePolicySupplier,
+          params.prefix,
           params.shardNameTemplate,
-          params.tempDirectory,
-          params.filenamePolicySupplier
+          params.tempDirectory
         )
       )
     tap(JsonIO.ReadParam(params.compression))
@@ -67,25 +68,27 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 }
 
 object JsonIO {
-  final case class ReadParam(compression: beam.Compression = beam.Compression.AUTO)
+  final case class ReadParam private (compression: beam.Compression = beam.Compression.AUTO)
 
   object WriteParam {
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultSuffix = ".json"
     private[scio] val DefaultCompression = beam.Compression.UNCOMPRESSED
     private[scio] val DefaultPrinter = Printer.noSpaces
-    private[scio] val DefaultShardNameTemplate: String = null
-    private[scio] val DefaultTempDirectory = null
     private[scio] val DefaultFilenamePolicySupplier = null
+    private[scio] val DefaultShardNameTemplate: String = null
+    private[scio] val DefaultPrefix: String = null
+    private[scio] val DefaultTempDirectory = null
   }
 
-  final case class WriteParam(
+  final case class WriteParam private (
     suffix: String,
     numShards: Int,
     compression: beam.Compression,
     printer: Printer,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    prefix: String,
     shardNameTemplate: String,
-    tempDirectory: String,
-    filenamePolicySupplier: FilenamePolicySupplier
+    tempDirectory: String
   )
 }

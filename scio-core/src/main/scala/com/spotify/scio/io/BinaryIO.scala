@@ -53,30 +53,24 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
   private def binaryOut(
     path: String,
-    prefix: String,
     suffix: String,
     numShards: Int,
     compression: Compression,
     header: Array[Byte],
     footer: Array[Byte],
-    shardNameTemplate: String,
     framePrefix: Array[Byte] => Array[Byte],
     frameSuffix: Array[Byte] => Array[Byte],
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
-    isWindowed: Boolean
+    prefix: String,
+    shardNameTemplate: String,
+    isWindowed: Boolean,
+    tempDirectory: ResourceId
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
-    val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed,
-      prefix
-    )
-    val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
+    require(tempDirectory != null, "tempDirectory must not be null")
+    val fp = FilenamePolicySupplier
+      .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
+    val dynamicDestinations = DynamicFileDestinations
+      .constant(fp, SerializableFunctions.identity[Array[Byte]])
     val sink = new BytesSink(
       header,
       footer,
@@ -94,18 +88,18 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     data.applyInternal(
       binaryOut(
         path,
-        params.prefix,
         params.suffix,
         params.numShards,
         params.compression,
         params.header,
         params.footer,
-        params.shardNameTemplate,
         params.framePrefix,
         params.frameSuffix,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
-        ScioUtil.isWindowed(data)
+        params.prefix,
+        params.shardNameTemplate,
+        ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
     EmptyTap
@@ -147,7 +141,7 @@ object BinaryIO {
     private[scio] val DefaultFilenamePolicySupplier = null
   }
 
-  final case class WriteParam(
+  final case class WriteParam private (
     prefix: String = WriteParam.DefaultPrefix,
     suffix: String = WriteParam.DefaultSuffix,
     numShards: Int = WriteParam.DefaultNumShards,

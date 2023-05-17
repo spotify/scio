@@ -138,19 +138,19 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     suffix: String,
     codec: CodecFactory,
     metadata: Map[String, AnyRef],
-    shardNameTemplate: String,
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
-    isWindowed: Boolean
+    prefix: String,
+    shardNameTemplate: String,
+    isWindowed: Boolean,
+    tempDirectory: ResourceId
   ): beam.AvroIO.Write[U] = {
+    require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
-    )
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(path, suffix)
     val transform = write
       .to(fp)
       .withTempDirectory(tempDirectory)
@@ -197,10 +197,11 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
         params.suffix,
         params.codec,
         params.metadata,
-        params.shardNameTemplate,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
-        ScioUtil.isWindowed(data)
+        params.prefix,
+        params.shardNameTemplate,
+        ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
     tap(())
@@ -246,10 +247,11 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
         params.suffix,
         params.codec,
         params.metadata,
-        params.shardNameTemplate,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
-        ScioUtil.isWindowed(data)
+        params.prefix,
+        params.shardNameTemplate,
+        ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
     tap(())
@@ -297,26 +299,25 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 object AvroIO {
   object WriteParam {
     private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultSuffix = ""
+    private[scio] val DefaultSuffix = ".avro"
     private[scio] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     private[scio] val DefaultMetadata: Map[String, AnyRef] = Map.empty
+    private[scio] val DefaultFilenamePolicySupplier = null
+    private[scio] val DefaultPrefix = null
     private[scio] val DefaultShardNameTemplate: String = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
     numShards: Int = WriteParam.DefaultNumShards,
-    private val _suffix: String = WriteParam.DefaultSuffix,
+    suffix: String = WriteParam.DefaultSuffix,
     codec: CodecFactory = WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = WriteParam.DefaultMetadata,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
-  ) {
-    // TODO this is kinda weird when compared with the other IOs?
-    val suffix: String = _suffix + ".avro"
-  }
+    tempDirectory: String = WriteParam.DefaultTempDirectory
+  )
 
   @inline final def apply[T](id: String): AvroIO[T] =
     new AvroIO[T] with TestIO[T] {
@@ -346,19 +347,15 @@ object AvroTyped {
       suffix: String,
       codec: CodecFactory,
       metadata: Map[String, AnyRef],
-      shardNameTemplate: String,
-      tempDirectory: ResourceId,
       filenamePolicySupplier: FilenamePolicySupplier,
-      isWindowed: Boolean
+      prefix: String,
+      shardNameTemplate: String,
+      isWindowed: Boolean,
+      tempDirectory: ResourceId
     ) = {
-      val fp = FilenamePolicySupplier.resolve(
-        path,
-        suffix,
-        shardNameTemplate,
-        tempDirectory,
-        filenamePolicySupplier,
-        isWindowed
-      )
+      require(tempDirectory != null, "tempDirectory must not be null")
+      val fp = FilenamePolicySupplier
+        .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
       val transform = write
         .to(fp)
         .withTempDirectory(tempDirectory)
@@ -395,10 +392,11 @@ object AvroTyped {
           params.suffix,
           params.codec,
           params.metadata,
-          params.shardNameTemplate,
-          ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
           params.filenamePolicySupplier,
-          ScioUtil.isWindowed(data)
+          params.prefix,
+          params.shardNameTemplate,
+          ScioUtil.isWindowed(data),
+          ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
         )
       )
       tap(())

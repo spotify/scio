@@ -351,9 +351,10 @@ class ScioIOTest extends ScioIOSpec {
       codec,
       metadata,
       null,
-      ScioUtil.toResourceId(out2TempDir.getAbsolutePath),
       null,
-      false
+      null,
+      false,
+      ScioUtil.toResourceId(out2TempDir.getAbsolutePath)
     )
 
     // verify
@@ -412,9 +413,10 @@ class ScioIOTest extends ScioIOSpec {
       codec,
       metadata,
       null,
-      ScioUtil.toResourceId(out2TempDir.getAbsolutePath),
       null,
-      false
+      null,
+      false,
+      ScioUtil.toResourceId(out2TempDir.getAbsolutePath)
     )
 
     // verify

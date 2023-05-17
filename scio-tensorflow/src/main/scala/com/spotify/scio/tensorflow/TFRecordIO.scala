@@ -68,18 +68,20 @@ object TFRecordIO {
     private[tensorflow] val DefaultSuffix = ".tfrecords"
     private[tensorflow] val DefaultCompression = Compression.UNCOMPRESSED
     private[tensorflow] val DefaultNumShards = 0
+    private[tensorflow] val DefaultFilenamePolicySupplier = null
+    private[tensorflow] val DefaultPrefix = null
     private[tensorflow] val DefaultShardNameTemplate = null
     private[tensorflow] val DefaultTempDirectory = null
-    private[tensorflow] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
     suffix: String,
     compression: Compression,
     numShards: Int,
+    filenamePolicySupplier: FilenamePolicySupplier,
+    prefix: String,
     shardNameTemplate: String,
-    tempDirectory: String,
-    filenamePolicySupplier: FilenamePolicySupplier
+    tempDirectory: String
   )
 }
 
@@ -145,21 +147,22 @@ private object TFRecordMethods {
     suffix: String,
     numShards: Int,
     compression: Compression,
-    shardNameTemplate: String,
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
-    isWindowed: Boolean
+    prefix: String,
+    shardNameTemplate: String,
+    isWindowed: Boolean,
+    tempDirectory: ResourceId
   ) = {
+    require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
-    )
-    val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(path, suffix)
+
+    val dynamicDestinations = DynamicFileDestinations
+      .constant(fp, SerializableFunctions.identity[Array[Byte]])
 
     val sink = new TFRecordFileBasedSink(
       StaticValueProvider.of(tempDirectory),
@@ -178,10 +181,11 @@ private object TFRecordMethods {
         params.suffix,
         params.numShards,
         params.compression,
-        params.shardNameTemplate,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
-        ScioUtil.isWindowed(data)
+        params.prefix,
+        params.shardNameTemplate,
+        ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
 

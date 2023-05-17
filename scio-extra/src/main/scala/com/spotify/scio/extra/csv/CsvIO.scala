@@ -106,7 +106,7 @@ object CsvIO {
     WriteParam.DefaultFilenamePolicySupplier
   )
 
-  final case class ReadParam(
+  final case class ReadParam private (
     compression: beam.Compression = beam.Compression.AUTO,
     csvConfiguration: CsvConfiguration = CsvIO.DefaultCsvConfig
   )
@@ -121,7 +121,7 @@ object CsvIO {
     private[scio] val DefaultFilenamePolicySupplier = null
   }
 
-  final case class WriteParam(
+  final case class WriteParam private (
     compression: beam.Compression,
     csvConfiguration: CsvConfiguration,
     suffix: String,

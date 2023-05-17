@@ -86,22 +86,18 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     numShards: Int,
     compression: CompressionCodecName,
     conf: Configuration,
-    shardNameTemplate: String,
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
+    prefix: String,
+    shardNameTemplate: String,
     isWindowed: Boolean,
+    tempDirectory: ResourceId,
     isLocalRunner: Boolean
   ) = {
-    val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
-    )
-    val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[T])
+    require(tempDirectory != null, "tempDirectory must not be null")
+    val fp = FilenamePolicySupplier
+      .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
+    val dynamicDestinations = DynamicFileDestinations
+      .constant(fp, SerializableFunctions.identity[T])
     val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
 
@@ -139,10 +135,11 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         params.numShards,
         params.compression,
         conf,
-        params.shardNameTemplate,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
+        params.prefix,
+        params.shardNameTemplate,
         ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         ScioUtil.isLocalRunner(data.context.options.getRunner)
       )
     )
@@ -305,9 +302,10 @@ object ParquetAvroIO {
     private[scio] val DefaultSuffix = ".parquet"
     private[scio] val DefaultCompression = CompressionCodecName.GZIP
     private[scio] val DefaultConfiguration = null
+    private[scio] val DefaultFilenamePolicySupplier = null
+    private[scio] val DefaultPrefix = null
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (
@@ -316,9 +314,10 @@ object ParquetAvroIO {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 }
 

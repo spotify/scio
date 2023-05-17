@@ -51,5 +51,5 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 }
 
 object DatastoreIO {
-  final case class ReadParam(query: Query, namespace: String = null)
+  final case class ReadParam private (query: Query, namespace: String = null)
 }

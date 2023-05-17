@@ -1594,7 +1594,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = TextIO.WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier =
+      TextIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TextIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1608,9 +1610,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         compression,
         header,
         footer,
+        filenamePolicySupplier,
+        prefix,
         shardNameTemplate,
-        tempDirectory,
-        filenamePolicySupplier
+        tempDirectory
       )
     )
   }
