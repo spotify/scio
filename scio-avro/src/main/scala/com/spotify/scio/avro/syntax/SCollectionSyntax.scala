@@ -19,18 +19,17 @@ package com.spotify.scio.avro.syntax
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
+import magnolify.avro.AvroType
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 final class GenericRecordSCollectionOps(private val self: SCollection[GenericRecord])
     extends AnyVal {
@@ -124,12 +123,15 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
   }
 }
 
-final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SCollection[T])
-    extends AnyVal {
+final class TypedAvroSCollectionOps[T](
+  private val self: SCollection[T]
+) extends AnyVal {
 
   /**
-   * Save this SCollection as an Avro file. Note that element type `T` must be a case class
-   * annotated with [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
+   * Saves this SCollection as an Avro file.
+   *
+   * Note that this function uses magnolify's [[magnolify.avro.AvroType]] internally to convert case
+   * classes to Avro.
    */
   def saveAsTypedAvroFile(
     path: String,
@@ -140,7 +142,7 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
-  )(implicit ct: ClassTag[T], tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(implicit avroType: AvroType[T], coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(
       numShards,
       suffix,
@@ -199,7 +201,7 @@ trait SCollectionSyntax {
     c: SCollection[T]
   ): SpecificRecordSCollectionOps[T] = new SpecificRecordSCollectionOps[T](c)
 
-  implicit def avroTypedAvroSCollectionOps[T <: HasAvroAnnotation](
+  implicit def avroTypedAvroSCollectionOps[T](
     c: SCollection[T]
   ): TypedAvroSCollectionOps[T] = new TypedAvroSCollectionOps[T](c)
 

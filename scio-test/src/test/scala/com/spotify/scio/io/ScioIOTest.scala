@@ -17,17 +17,14 @@
 
 package com.spotify.scio.io
 
-import java.nio.ByteBuffer
-import java.nio.file.Files
-import com.spotify.scio.{CoreSysProps, ScioContext}
 import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.{SCollection, WindowOptions}
+import com.spotify.scio.{CoreSysProps, ScioContext}
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.values.PCollection.IsBounded
@@ -35,11 +32,12 @@ import org.apache.commons.io.FileUtils
 import org.joda.time.{Duration, Instant}
 
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.file.Files
 import java.util.UUID
 import scala.jdk.CollectionConverters._
 
 object ScioIOTest {
-  @AvroType.toSchema
   case class AvroRecord(i: Int, s: String, r: List[String])
 }
 

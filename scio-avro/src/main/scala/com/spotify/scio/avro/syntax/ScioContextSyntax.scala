@@ -21,15 +21,14 @@ import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.avro._
-import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
+import magnolify.avro.AvroType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[ScioContext]] with Avro methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -81,16 +80,12 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(SpecificRecordIO[T](path))
 
   /**
-   * Get a typed SCollection from an Avro schema.
+   * Get an SCollection of case classes from an Avro file.
    *
-   * Note that `T` must be annotated with
-   * [[com.spotify.scio.avro.types.AvroType AvroType.fromSchema]],
-   * [[com.spotify.scio.avro.types.AvroType AvroType.fromPath]], or
-   * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
+   * Note that this function uses magnolify's [[magnolify.avro.AvroType]] internally to convert Avro
+   * to case classes.
    */
-  def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
-    path: String
-  ): SCollection[T] =
+  def typedAvroFile[T: Coder: AvroType](path: String): SCollection[T] =
     self.read(AvroTyped.AvroIO[T](path))
 
   /**

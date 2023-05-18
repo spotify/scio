@@ -24,10 +24,9 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
-import com.spotify.scio.avro.Account
-import com.spotify.scio.avro.types.AvroType
+import com.spotify.scio.avro.{Account => JAccount}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
@@ -35,21 +34,7 @@ import org.apache.avro.generic.{GenericData, GenericRecord}
 import scala.jdk.CollectionConverters._
 
 object AvroExample {
-  @AvroType.fromSchema("""{
-      | "type":"record",
-      | "name":"Account",
-      | "namespace":"com.spotify.scio.avro",
-      | "doc":"Record for an account",
-      | "fields":[
-      |   {"name":"id","type":"int"},
-      |   {"name":"type","type":"string"},
-      |   {"name":"name","type":"string"},
-      |   {"name":"amount","type":"double"}]}
-    """.stripMargin)
-  class AccountFromSchema
-
-  @AvroType.toSchema
-  case class AccountToSchema(id: Int, `type`: String, name: String, amount: Double)
+  case class Account(id: Int, `type`: String, name: String, amount: Double)
 
   def pipeline(cmdlineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -86,10 +71,10 @@ object AvroExample {
     ()
   }
 
-  private def specificOut(sc: ScioContext, args: Args): ClosedTap[Account] =
+  private def specificOut(sc: ScioContext, args: Args): ClosedTap[JAccount] =
     sc.parallelize(1 to 100)
       .map { i =>
-        Account
+        JAccount
           .newBuilder()
           .setId(i)
           .setAmount(i.toDouble)
@@ -100,7 +85,7 @@ object AvroExample {
       .saveAsAvroFile(args("output"))
 
   private def specificIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    sc.avroFile[Account](args("input"))
+    sc.avroFile[JAccount](args("input"))
       .map(_.toString)
       .saveAsTextFile(args("output"))
 
@@ -119,14 +104,14 @@ object AvroExample {
       .saveAsAvroFile(args("output"), schema = schema)
   }
 
-  private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    sc.typedAvroFile[AccountFromSchema](args("input"))
-      .saveAsTextFile(args("output"))
+  private def typedIn(sc: ScioContext, args: Args): ClosedTap[String] = sc
+    .typedAvroFile[Account](args("input"))
+    .saveAsTextFile(args("output"))
 
-  private def typedOut(sc: ScioContext, args: Args): ClosedTap[AccountToSchema] =
+  private def typedOut(sc: ScioContext, args: Args): ClosedTap[Account] =
     sc.parallelize(1 to 100)
       .map { i =>
-        AccountToSchema(id = i, amount = i.toDouble, name = "account" + i, `type` = "checking")
+        Account(id = i, amount = i.toDouble, name = "account" + i, `type` = "checking")
       }
       .saveAsTypedAvroFile(args("output"))
 

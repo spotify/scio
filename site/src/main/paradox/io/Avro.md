@@ -8,6 +8,7 @@ Scio comes with support for reading Avro files. Avro supports generic or specifi
 
 ```scala mdoc:reset:silent
 import com.spotify.scio.ScioContext
+import com.spotify.scio.values.SCollection
 import com.spotify.scio.avro._
 
 import org.apache.avro.specific.SpecificRecord
@@ -15,13 +16,14 @@ import org.apache.avro.specific.SpecificRecord
 def sc: ScioContext = ???
 
 // SpecificRecordClass is compiled from Avro schema files
-def result = sc.avroFile[SpecificRecord]("gs://path-to-data/lake/part-*.avro")
+def result: SCollection[SpecificRecord] = sc.avroFile[SpecificRecord]("gs://path-to-data/lake/part-*.avro")
 ```
 
 ### Read Generic records
 
 ```scala mdoc:reset:silent
 import com.spotify.scio.ScioContext
+import com.spotify.scio.values.SCollection
 import com.spotify.scio.avro._
 
 import org.apache.avro.generic.GenericRecord
@@ -31,8 +33,22 @@ def yourAvroSchema: Schema = ???
 
 def sc: ScioContext = ???
 
-def result = sc.avroFile("gs://path-to-data/lake/part-*.avro", yourAvroSchema)
-// `record` is of GenericRecord type
+def result: SCollection[GenericRecord] = sc.avroFile("gs://path-to-data/lake/part-*.avro", yourAvroSchema)
+```
+
+### Read Typed Case Classes
+Scio uses [magnolify-avro](https://github.com/spotify/magnolify/blob/master/docs/avro.md) to derive an Avro schema for a given case class at compile type, similar to how @ref:[coders](../internals/Coders.md) work. See this [mapping table](https://github.com/spotify/magnolify/blob/master/docs/mapping.md) for how Scala and Avro types map.
+
+```scala mdoc:reset:silent
+import com.spotify.scio.ScioContext
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
+
+case class Foo(x: Int, s: String)
+
+def sc: ScioContext = ???
+
+def result: SCollection[Foo] = sc.typedAvroFile[Foo]("gs://path-to-data/lake/part-*.avro")
 ```
 
 ## Write Avro files
@@ -56,7 +72,7 @@ def fn(f: Foo): SpecificRecord = ???
 // type of Avro specific records will hold information about schema,
 // therefor Scio will figure out the schema by itself
 
-def result =  sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output")
+def result = sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output")
 ```
 
 ### Write Generic records
@@ -77,7 +93,22 @@ def yourAvroSchema: Schema = ???
 def fn(f: Foo): GenericRecord = ???
 
 // writing Avro generic records requires additional argument `schema`
-def result =  sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output", schema = yourAvroSchema)
+def result = sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output", schema = yourAvroSchema)
+```
+
+### Write Typed Case Classes
+
+When writing case classes as Avro files, the schema is derived from the case class and all fields are written.
+
+```scala mdoc:reset:silent
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
+
+
+case class Foo(x: Int, s: String)
+def foo: SCollection[Foo] = ???
+
+def result = foo.saveAsTypedAvroFile("gs://path-to-data/lake/output")
 ```
 
 ## Rules for schema evolution
