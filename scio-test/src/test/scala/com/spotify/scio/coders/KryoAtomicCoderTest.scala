@@ -18,13 +18,11 @@
 package com.spotify.scio.coders
 
 import java.{lang => jl, util => ju}
-
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.coders.CoderTestUtils._
 import com.spotify.scio.testing.CoderAssertions._
-
 import com.spotify.scio.testing.PipelineSpec
 import com.twitter.chill.{java => _, _}
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
@@ -45,7 +43,11 @@ class KryoAtomicCoderTest extends PipelineSpec {
   type CoderFactory = () => BCoder[Any]
   val cf: () => KryoAtomicCoder[Any] = () => new KryoAtomicCoder[Any](KryoOptions())
 
-  "KryoAtomicCoder" should "support Scala collections" in {
+  "KryoAtomicCoder" should "assert that it is not deterministic and not consistent with equals" in {
+    Pair("record", 10) kryoCoderShould beNonDeterministic() and beNotConsistentWithEquals()
+  }
+
+  it should "support Scala collections" in {
     Seq(1, 2, 3) kryoCoderShould roundtrip()
     List(1, 2, 3) kryoCoderShould roundtrip()
     Set(1, 2, 3) kryoCoderShould roundtrip()
