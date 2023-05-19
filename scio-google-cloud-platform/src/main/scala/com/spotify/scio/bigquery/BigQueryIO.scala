@@ -40,7 +40,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
 }
 import org.apache.beam.sdk.io.gcp.bigquery.{
   BigQueryAvroUtilsWrapper,
-  BigQueryInsertError,
   BigQueryUtils,
   InsertRetryPolicy,
   SchemaAndRecord,
