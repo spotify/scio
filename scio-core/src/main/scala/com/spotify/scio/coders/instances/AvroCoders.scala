@@ -27,7 +27,7 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, CustomCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
-import scala.util.Try
+import scala.util.{Failure, Try}
 import scala.reflect.{classTag, ClassTag}
 
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
@@ -128,11 +128,26 @@ trait AvroCoders {
 
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val clazz = ScioUtil.classOf[T]
+
+    def getSchemaFromEmptyInstance = try {
+      clazz.getDeclaredConstructor().newInstance().getSchema
+    } catch {
+      // when T is abstract class or interface it is not possible to retrieve a schema
+      case cause: Throwable =>
+        val msg =
+          "Failed to create a coder for SpecificRecord because it is impossible to retrieve an " +
+            s"Avro schema by instantiating $clazz. Use only a concrete type implementing " +
+            s"SpecificRecord or use GenericRecord type in your transformations if a concrete " +
+            s"type is not known in compile time."
+        throw new Throwable(msg, cause)
+    }
+
     // Try to get the schema with SpecificData.getSchema
     // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
-    // Otherwise create a default instance and call getSchema
     val schema = Try(SpecificData.get().getSchema(clazz))
-      .getOrElse(clazz.getDeclaredConstructor().newInstance().getSchema)
+      // Otherwise create a default instance and call getSchema
+      .getOrElse(getSchemaFromEmptyInstance)
+
     val useReflectApi = true // keep this for backward compatibility
     Coder.beam(AvroCoder.of(clazz, schema, useReflectApi))
   }
