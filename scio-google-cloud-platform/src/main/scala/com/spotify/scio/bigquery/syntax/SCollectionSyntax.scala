@@ -24,9 +24,7 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
   coders,
   BigQueryTyped,
-  BigQueryTypedTable,
   Clustering,
-  Table,
   TableRow,
   TableRowJsonIO,
   TimePartitioning
@@ -35,12 +33,20 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.Compression
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
+  CreateDisposition,
+  Method,
+  WriteDisposition
+}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import com.spotify.scio.bigquery.Table
+import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
+import org.joda.time.Duration
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
@@ -56,17 +62,23 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
     timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
-    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering
+    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering,
+    method: Method = BigQueryTypedTable.WriteParam.DefaultMethod,
+    triggeringFrequency: Duration = BigQueryTypedTable.WriteParam.DefaultTriggeringFrequency,
+    failedInsertRetryPolicy: InsertRetryPolicy =
+      BigQueryTypedTable.WriteParam.DefaultFailedInsertRetryPolicy
   ): ClosedTap[TableRow] = {
-    val param =
-      BigQueryTypedTable.WriteParam(
-        schema,
-        writeDisposition,
-        createDisposition,
-        tableDescription,
-        timePartitioning,
-        clustering
-      )
+    val param = BigQueryTypedTable.WriteParam(
+      method,
+      schema,
+      writeDisposition,
+      createDisposition,
+      tableDescription,
+      timePartitioning,
+      clustering,
+      triggeringFrequency,
+      failedInsertRetryPolicy
+    )
 
     self
       .covary[TableRow]
@@ -102,17 +114,23 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
     timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
-    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering
+    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering,
+    method: Method = BigQueryTypedTable.WriteParam.DefaultMethod,
+    triggeringFrequency: Duration = BigQueryTypedTable.WriteParam.DefaultTriggeringFrequency,
+    failedInsertRetryPolicy: InsertRetryPolicy =
+      BigQueryTypedTable.WriteParam.DefaultFailedInsertRetryPolicy
   ): ClosedTap[GenericRecord] = {
-    val param =
-      BigQueryTypedTable.WriteParam(
-        schema,
-        writeDisposition,
-        createDisposition,
-        tableDescription,
-        timePartitioning,
-        clustering
-      )
+    val param = BigQueryTypedTable.WriteParam(
+      method,
+      schema,
+      writeDisposition,
+      createDisposition,
+      tableDescription,
+      timePartitioning,
+      clustering,
+      triggeringFrequency,
+      failedInsertRetryPolicy
+    )
     self
       .covary[GenericRecord]
       .write(
@@ -162,9 +180,21 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning,
     writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
-    clustering: Clustering = TableWriteParam.DefaultClustering
+    clustering: Clustering = TableWriteParam.DefaultClustering,
+    method: Method = BigQueryTypedTable.WriteParam.DefaultMethod,
+    triggeringFrequency: Duration = BigQueryTypedTable.WriteParam.DefaultTriggeringFrequency,
+    failedInsertRetryPolicy: InsertRetryPolicy =
+      BigQueryTypedTable.WriteParam.DefaultFailedInsertRetryPolicy
   )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam(writeDisposition, createDisposition, timePartitioning, clustering)
+    val param = TableWriteParam(
+      method,
+      writeDisposition,
+      createDisposition,
+      timePartitioning,
+      clustering,
+      triggeringFrequency,
+      failedInsertRetryPolicy
+    )
     self.write(BigQueryTyped.Table[T](table))(param)
   }
 }

@@ -62,14 +62,14 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
    * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
    * [[org.apache.beam.sdk.io.gcp.bigquery.DynamicDestinations DynamicDestinations]].
    */
-  def saveAsBigQuery(
+  def saveAsBigQuery[Info](
     destinations: DynamicDestinations[T, _],
     formatFn: T => TableRow,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
-    extendedErrorInfo: ExtendedErrorInfo
+    extendedErrorInfo: ExtendedErrorInfo[Info]
   )(
-    insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
+    insertErrorTransform: SCollection[Info] => Unit
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
