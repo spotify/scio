@@ -21,6 +21,7 @@ import java.math.MathContext
 import java.nio.ByteBuffer
 
 import com.google.api.services.bigquery.model.{
+  Clustering => GClustering,
   TableReference => GTableReference,
   TableRow => GTableRow,
   TimePartitioning => GTimePartitioning
@@ -33,6 +34,8 @@ import org.apache.avro.LogicalTypes
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryHelpers, BigQueryInsertError, WriteResult}
 import org.joda.time._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
+
+import scala.jdk.CollectionConverters._
 
 sealed trait Source
 
@@ -286,6 +289,15 @@ case class TimePartitioning(
     if (expirationMs > 0) p = p.setExpirationMs(expirationMs)
     p
   }
+}
+
+/** Scala wrapper for [[com.google.api.services.bigquery.model.Clustering]]. */
+case class Clustering(
+  fields: Seq[String] = Seq()
+) {
+  def asJava: GClustering =
+    new GClustering()
+      .setFields(fields.asJava)
 }
 
 object Numeric {

@@ -21,8 +21,14 @@ import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQueryTyped, TableRow, TableRowJsonIO, TimePartitioning}
-import com.spotify.scio.bigquery.coders
+import com.spotify.scio.bigquery.{
+  coders,
+  BigQueryTyped,
+  Clustering,
+  TableRow,
+  TableRowJsonIO,
+  TimePartitioning
+}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
@@ -56,6 +62,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
     timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
+    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering,
     method: Method = BigQueryTypedTable.WriteParam.DefaultMethod,
     triggeringFrequency: Duration = BigQueryTypedTable.WriteParam.DefaultTriggeringFrequency,
     failedInsertRetryPolicy: InsertRetryPolicy =
@@ -68,6 +75,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       createDisposition,
       tableDescription,
       timePartitioning,
+      clustering,
       triggeringFrequency,
       failedInsertRetryPolicy
     )
@@ -106,6 +114,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     createDisposition: CreateDisposition = BigQueryTypedTable.WriteParam.DefaultCreateDisposition,
     tableDescription: String = BigQueryTypedTable.WriteParam.DefaultTableDescription,
     timePartitioning: TimePartitioning = BigQueryTypedTable.WriteParam.DefaultTimePartitioning,
+    clustering: Clustering = BigQueryTypedTable.WriteParam.DefaultClustering,
     method: Method = BigQueryTypedTable.WriteParam.DefaultMethod,
     triggeringFrequency: Duration = BigQueryTypedTable.WriteParam.DefaultTriggeringFrequency,
     failedInsertRetryPolicy: InsertRetryPolicy =
@@ -118,6 +127,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       createDisposition,
       tableDescription,
       timePartitioning,
+      clustering,
       triggeringFrequency,
       failedInsertRetryPolicy
     )
@@ -170,6 +180,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning,
     writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
     createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
+    clustering: Clustering = TableWriteParam.DefaultClustering,
     method: Method = BigQueryTypedTable.WriteParam.DefaultMethod,
     triggeringFrequency: Duration = BigQueryTypedTable.WriteParam.DefaultTriggeringFrequency,
     failedInsertRetryPolicy: InsertRetryPolicy =
@@ -180,6 +191,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       writeDisposition,
       createDisposition,
       timePartitioning,
+      clustering,
       triggeringFrequency,
       failedInsertRetryPolicy
     )

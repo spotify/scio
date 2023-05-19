@@ -119,6 +119,7 @@ private[bigquery] object Writes {
     val DefaultCreateDisposition: CreateDisposition = null
     val DefaultTableDescription: String = null
     val DefaultTimePartitioning: TimePartitioning = null
+    val DefaultClustering: Clustering = null
     val DefaultTriggeringFrequency: Duration = null
     val DefaultFailedInsertRetryPolicy: InsertRetryPolicy = null
     val DefaultExtendedErrorInfo: ExtendedErrorInfo[TableRow] = ExtendedErrorInfo.Disabled
@@ -243,6 +244,7 @@ object BigQueryTypedTable {
     createDisposition: CreateDisposition,
     tableDescription: String,
     timePartitioning: TimePartitioning,
+    clustering: Clustering,
     triggeringFrequency: Duration,
     failedInsertRetryPolicy: InsertRetryPolicy,
     extendedErrorInfo: ExtendedErrorInfo[Info],
@@ -257,6 +259,7 @@ object BigQueryTypedTable {
       createDisposition: CreateDisposition = DefaultCreateDisposition,
       tableDescription: String = DefaultTableDescription,
       timePartitioning: TimePartitioning = DefaultTimePartitioning,
+      clustering: Clustering = DefaultClustering,
       triggeringFrequency: Duration = DefaultTriggeringFrequency,
       failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy
     ): WriteParam[TableRow] = new WriteParam(
@@ -266,6 +269,7 @@ object BigQueryTypedTable {
       createDisposition,
       tableDescription,
       timePartitioning,
+      clustering,
       triggeringFrequency,
       failedInsertRetryPolicy,
       DefaultExtendedErrorInfo,
@@ -369,6 +373,7 @@ final case class BigQueryTypedTable[T: Coder](
       .pipe(w => Option(params.writeDisposition).fold(w)(w.withWriteDisposition))
       .pipe(w => Option(params.tableDescription).fold(w)(w.withTableDescription))
       .pipe(w => Option(params.timePartitioning).map(_.asJava).fold(w)(w.withTimePartitioning))
+      .pipe(w => Option(params.clustering).map(_.asJava).fold(w)(w.withClustering))
       .pipe(w => Option(params.triggeringFrequency).fold(w)(w.withTriggeringFrequency))
       .pipe(w => Option(params.failedInsertRetryPolicy).fold(w)(w.withFailedInsertRetryPolicy))
       .pipe(w => if (params.extendedErrorInfo == Disabled) w else w.withExtendedErrorInfo())
@@ -595,6 +600,7 @@ object BigQueryTyped {
         params.createDisposition,
         BigQueryType[T].tableDescription.orNull,
         params.timePartitioning,
+        params.clustering,
         params.triggeringFrequency,
         params.failedInsertRetryPolicy,
         params.extendedErrorInfo,
@@ -624,6 +630,7 @@ object BigQueryTyped {
       writeDisposition: WriteDisposition,
       createDisposition: CreateDisposition,
       timePartitioning: TimePartitioning,
+      clustering: Clustering,
       triggeringFrequency: Duration,
       failedInsertRetryPolicy: InsertRetryPolicy,
       extendedErrorInfo: ExtendedErrorInfo[Info],
@@ -636,6 +643,7 @@ object BigQueryTyped {
         writeDisposition: WriteDisposition = DefaultWriteDisposition,
         createDisposition: CreateDisposition = DefaultCreateDisposition,
         timePartitioning: TimePartitioning = DefaultTimePartitioning,
+        clustering: Clustering = DefaultClustering,
         triggeringFrequency: Duration = DefaultTriggeringFrequency,
         failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy
       ): WriteParam[TableRow] = new WriteParam(
@@ -643,6 +651,7 @@ object BigQueryTyped {
         writeDisposition,
         createDisposition,
         timePartitioning,
+        clustering,
         triggeringFrequency,
         failedInsertRetryPolicy,
         DefaultExtendedErrorInfo,
