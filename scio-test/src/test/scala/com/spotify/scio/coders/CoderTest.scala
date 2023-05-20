@@ -32,7 +32,6 @@ import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.commons.io.output.NullOutputStream
-import org.joda.time
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
