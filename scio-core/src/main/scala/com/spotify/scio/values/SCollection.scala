@@ -1333,7 +1333,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         private[scio] def processElement(
           @Element element: T,
           out: OutputReceiver[(T, W)],
-          window: BoundedWindowq
+          window: BoundedWindow
         ): Unit =
           out.output((element, window.asInstanceOf[W]))
       })
