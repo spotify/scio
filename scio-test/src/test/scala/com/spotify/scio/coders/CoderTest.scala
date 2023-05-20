@@ -32,6 +32,7 @@ import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.commons.io.output.NullOutputStream
+import org.joda.time
 import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -368,8 +369,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   // FIXME: TableRowJsonCoder cannot be tested in scio-test because of circular dependency on scio-google-cloud-platform
   it should "support all the already supported types" in {
-    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
-
     import java.math.{BigInteger, BigDecimal => jBigDecimal}
     import java.nio.file.FileSystems
 
@@ -453,9 +452,22 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       beOfType[Transform[_, _]] and
       materializeToTransformOf[BigEndianLongCoder] and
       beFullyCompliant()
+  }
+
+  it should "support IntervalWindow" in {
+    import org.apache.beam.sdk.transforms.windowing.IntervalWindow
+    val now = org.joda.time.Instant.now()
     new IntervalWindow(now.minus(4000), now) coderShould roundtrip() and
       beOfType[Beam[_]] and
       materializeTo[IntervalWindow.IntervalWindowCoder] and
+      beFullyCompliant()
+  }
+
+  it should "support GlobalWindow" in {
+    import org.apache.beam.sdk.transforms.windowing.GlobalWindow
+    GlobalWindow.INSTANCE coderShould roundtrip() and
+      beOfType[Beam[_]] and
+      materializeTo[GlobalWindow.Coder] and
       beFullyCompliant()
   }
 

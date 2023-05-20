@@ -35,6 +35,7 @@ import org.joda.time.Instant
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.testing.CoderProperties
+import org.joda.time
 
 case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
@@ -134,6 +135,20 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
     // class does not extend IKryoRegistrar
     "@KryoRegistrar class FooKryoRegistrar extends Product {}" shouldNot compile
+  }
+
+  it should "support BoundedWindow" in {
+    import org.apache.beam.sdk.transforms.windowing.BoundedWindow
+    case class TestBoundedWindow(
+      x: Int,
+      override val maxTimestamp: time.Instant = BoundedWindow.TIMESTAMP_MAX_VALUE
+    ) extends BoundedWindow
+
+    TestBoundedWindow(777) kryoCoderShould roundtrip() and
+      beOfType[Fallback[_]] and
+      materializeTo[KryoAtomicCoder[_]] and
+      beNonDeterministic() and
+      beNotConsistentWithEquals()
   }
 
   it should "support kryo registration required option" in {
