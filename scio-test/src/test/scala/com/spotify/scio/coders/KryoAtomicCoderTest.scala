@@ -35,7 +35,6 @@ import org.joda.time.Instant
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.testing.CoderProperties
-import org.joda.time
 
 case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
@@ -141,7 +140,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
     import org.apache.beam.sdk.transforms.windowing.BoundedWindow
     case class TestBoundedWindow(
       x: Int,
-      override val maxTimestamp: time.Instant = BoundedWindow.TIMESTAMP_MAX_VALUE
+      override val maxTimestamp: Instant = BoundedWindow.TIMESTAMP_MAX_VALUE
     ) extends BoundedWindow
 
     TestBoundedWindow(777) kryoCoderShould roundtrip() and
