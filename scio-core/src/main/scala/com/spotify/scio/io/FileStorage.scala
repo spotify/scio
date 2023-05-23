@@ -34,16 +34,20 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
 import java.nio.charset.StandardCharsets
-import java.util.regex.Pattern
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
 
 private[scio] object FileStorage {
+
+  private val ShardPattern = "(.*)-(\\d+)-of-(\\d+)(.*)".r
+
   @inline final def apply(path: String, suffix: String): FileStorage = new FileStorage(path, suffix)
 }
 
 final private[scio] class FileStorage(path: String, suffix: String) {
+
+  import FileStorage._
 
   private def listFiles: Seq[Metadata] =
     FileSystems
@@ -110,15 +114,16 @@ final private[scio] class FileStorage(path: String, suffix: String) {
     val files = Try(listFiles).recover { case _: FileNotFoundException => Seq.empty }.get
 
     // best effort matching shardNumber and numShards
-    val shards = ("(.*)(\\d+)\\D+(\\d+)\\D*" + Option(suffix).map(Pattern.quote).getOrElse("")).r
+    // relies of the used shardNameTemplate to be '$prefix-$shardNumber-of-$numShards$suffix' format
     val writtenShards = files
       .map(_.resourceId().toString)
       .flatMap {
-        case shards(prefix, shardNumber, numShards) =>
+        case ShardPattern(prefix, shardNumber, numShards, suffix) =>
           val part = for {
             idx <- Try(shardNumber.toInt)
             total <- Try(numShards.toInt)
-            key = (prefix, total)
+            // prefix or suffix may contain pane/window info
+            key = (prefix, suffix, total)
           } yield key -> idx
           part.toOption
         case _ =>
@@ -133,8 +138,8 @@ final private[scio] class FileStorage(path: String, suffix: String) {
       // assume progress is complete when shard info is not retrieved and files are present
       true
     } else {
-      // we managed to get shard info, verify all of then were written
-      writtenShards.forall { case ((_, total), idxs) => idxs.size == total }
+      // we managed to get shard info, verify that all of them were written
+      writtenShards.forall { case ((_, _, total), idxs) => idxs.size == total }
     }
   }
 
