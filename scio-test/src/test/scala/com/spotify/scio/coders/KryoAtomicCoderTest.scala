@@ -58,6 +58,10 @@ class KryoAtomicCoderTest extends PipelineSpec {
     ("hello", (10, 10.0)) kryoCoderShould roundtrip()
   }
 
+  it should "support Avro Schema" in {
+    Avro.user.getSchema kryoCoderShould roundtrip()
+  }
+
   it should "support Scala case classes" in {
     Pair("record", 10) kryoCoderShould roundtrip()
   }

@@ -20,7 +20,6 @@ package com.spotify.scio.coders
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.esotericsoftware.kryo.serializers.JavaSerializer
@@ -30,6 +29,7 @@ import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
+import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecordBase
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
@@ -123,6 +123,7 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     k.forClass[LocalTime](new JodaLocalTimeSerializer)
     k.forClass[LocalDateTime](new JodaLocalDateTimeSerializer)
     k.forClass[DateTime](new JodaDateTimeSerializer)
+    k.forSubclass[Schema](new SchemaSerializer)
     k.forSubclass[Path](new JPathSerializer)
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
