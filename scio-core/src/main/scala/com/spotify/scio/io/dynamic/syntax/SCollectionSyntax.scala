@@ -18,7 +18,7 @@
 package com.spotify.scio.io.dynamic.syntax
 
 import com.google.protobuf.Message
-import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.io.{ClosedTap, EmptyTap, TextIO}
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
 import com.spotify.scio.values.SCollection
@@ -165,11 +165,13 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
   /** Save this SCollection as text files specified by the destination function. */
   def saveAsDynamicTextFile(
     path: String,
-    numShards: Int = 0,
-    suffix: String = ".txt",
-    compression: Compression = Compression.UNCOMPRESSED,
-    tempDirectory: String = null,
-    prefix: String = null
+    numShards: Int = TextIO.WriteParam.DefaultNumShards,
+    suffix: String = TextIO.WriteParam.DefaultSuffix,
+    compression: Compression = TextIO.WriteParam.DefaultCompression,
+    tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
+    prefix: String = TextIO.WriteParam.DefaultPrefix,
+    header: Option[String] = TextIO.WriteParam.DefaultHeader,
+    footer: Option[String] = TextIO.WriteParam.DefaultFooter
   )(destinationFn: String => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       self.asInstanceOf[SCollection[String]]
@@ -181,6 +183,11 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
         "Text file with dynamic destinations cannot be used in a test context"
       )
     } else {
+      val sink = beam.TextIO
+        .sink()
+        .pipe(s => header.fold(s)(s.withHeader))
+        .pipe(s => footer.fold(s)(s.withFooter))
+
       val write = writeDynamic(
         path = path,
         destinationFn = destinationFn,
@@ -188,7 +195,7 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
         prefix = prefix,
         suffix = suffix,
         tempDirectory = tempDirectory
-      ).via(beam.TextIO.sink())
+      ).via(sink)
         .withCompression(compression)
       s.applyInternal(write)
     }
