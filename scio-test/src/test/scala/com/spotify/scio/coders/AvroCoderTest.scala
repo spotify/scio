@@ -23,6 +23,7 @@ import com.spotify.scio.avro._
 import com.spotify.scio.avro.StringFieldTest
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.SCollection
+import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 
 import java.nio.file.Files
@@ -30,11 +31,7 @@ import scala.jdk.CollectionConverters._
 
 class AvroCoderTest extends PipelineSpec with BeforeAndAfterAll {
 
-  private lazy val tempFolder = {
-    val dir = Files.createTempDirectory(getClass.getSimpleName)
-    dir.toFile.deleteOnExit()
-    dir
-  }
+  private val testDir = Files.createTempDirectory("scio-test-").toFile
 
   // Write Avro source to local file system
   override protected def beforeAll(): Unit = {
@@ -49,9 +46,11 @@ class AvroCoderTest extends PipelineSpec with BeforeAndAfterAll {
           .setArrayField(ImmutableList.of("someListVal"))
           .build()
       )
-      .saveAsAvroFile(tempFolder.toString)
+      .saveAsAvroFile(testDir.getAbsolutePath)
     sc.run()
   }
+
+  override def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
   // Verifies fix for BEAM-12628 Avro string encoding issue
   "Avro SpecificRecords" should "be read and serialized using java String field representations" in {
@@ -66,7 +65,7 @@ class AvroCoderTest extends PipelineSpec with BeforeAndAfterAll {
 
     val sc = ScioContext()
     val data: SCollection[StringFieldTest] = sc
-      .avroFile[StringFieldTest](tempFolder.resolve("*.avro").toString)
+      .avroSpecificFile[StringFieldTest](testDir.getAbsolutePath, ".avro")
       .map(identity)
 
     data should satisfy[StringFieldTest] { mappedData =>

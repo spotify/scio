@@ -91,7 +91,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       ParquetRead.read(
         ReadSupportFactory.example,
         new SerializableConfiguration(conf),
-        path,
+        ScioUtil.filePattern(path, params.suffix),
         identity[Example]
       )
     ).setCoder(coder)
@@ -162,8 +162,12 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     isLocalRunner: Boolean
   ) = {
     require(tempDirectory != null, "tempDirectory must not be null")
-    val fp = FilenamePolicySupplier
-      .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
+    val fp = FilenamePolicySupplier.resolve(
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[Example])
     val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
@@ -196,34 +200,43 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         ScioUtil.isLocalRunner(data.context.options.getRunner)
       )
     )
-    tap(ParquetExampleIO.ReadParam())
+    tap(ParquetExampleIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[Example] =
-    ParquetExampleTap(ScioUtil.addPartSuffix(path), params)
+    ParquetExampleTap(ScioUtil.filePattern(path, params.suffix), params)
 }
 
 object ParquetExampleIO {
-  object ReadParam {
-    private[tensorflow] val DefaultProjection = null
-    private[tensorflow] val DefaultPredicate = null
-    private[tensorflow] val DefaultConfiguration = null
+
+  private[tensorflow] object ReadParam {
+    val DefaultProjection = null
+    val DefaultPredicate = null
+    val DefaultConfiguration = null
+    val DefaultSuffix = null
+
+    def apply(params: WriteParam): ReadParam =
+      new ReadParam(
+        conf = params.conf,
+        suffix = params.suffix
+      )
   }
   final case class ReadParam private (
     projection: Seq[String] = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   )
 
-  object WriteParam {
-    private[tensorflow] val DefaultNumShards = 0
-    private[tensorflow] val DefaultSuffix = ".parquet"
-    private[tensorflow] val DefaultCompression = CompressionCodecName.GZIP
-    private[tensorflow] val DefaultConfiguration = null
-    private[tensorflow] val DefaultFilenamePolicySupplier = null
-    private[tensorflow] val DefaultPrefix = null
-    private[tensorflow] val DefaultShardNameTemplate = null
-    private[tensorflow] val DefaultTempDirectory = null
+  private[tensorflow] object WriteParam {
+    val DefaultNumShards = 0
+    val DefaultSuffix = ".parquet"
+    val DefaultCompression = CompressionCodecName.GZIP
+    val DefaultConfiguration = null
+    val DefaultFilenamePolicySupplier = null
+    val DefaultPrefix = null
+    val DefaultShardNameTemplate = null
+    val DefaultTempDirectory = null
   }
 
   final case class WriteParam private (

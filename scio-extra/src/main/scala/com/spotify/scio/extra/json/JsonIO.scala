@@ -35,7 +35,8 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(TextIO(path))(TextIO.ReadParam(params.compression)).map(decodeJson)
+    sc.read(TextIO(path))(TextIO.ReadParam(params.compression, suffix = params.suffix))
+      .map(decodeJson)
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
@@ -53,14 +54,14 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
           params.tempDirectory
         )
       )
-    tap(JsonIO.ReadParam(params.compression))
+    tap(JsonIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[T] = new Tap[T] {
     override def value: Iterator[T] =
-      TextIO.textFile(ScioUtil.addPartSuffix(path)).map(decodeJson)
+      TextIO.textFile(ScioUtil.filePattern(path, params.suffix)).map(decodeJson)
     override def open(sc: ScioContext): SCollection[T] =
-      JsonIO(ScioUtil.addPartSuffix(path)).read(sc, params)
+      JsonIO(ScioUtil.filePattern(path, params.suffix)).read(sc, params)
   }
 
   private def decodeJson(json: String): T =
@@ -68,27 +69,41 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 }
 
 object JsonIO {
-  final case class ReadParam private (compression: beam.Compression = beam.Compression.AUTO)
 
-  object WriteParam {
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultSuffix = ".json"
-    private[scio] val DefaultCompression = beam.Compression.UNCOMPRESSED
-    private[scio] val DefaultPrinter = Printer.noSpaces
-    private[scio] val DefaultFilenamePolicySupplier = null
-    private[scio] val DefaultShardNameTemplate: String = null
-    private[scio] val DefaultPrefix: String = null
-    private[scio] val DefaultTempDirectory = null
+  private[scio] object ReadParam {
+    val DefaultCompression = beam.Compression.AUTO
+    val DefaultSuffix = null
+
+    def apply(params: WriteParam): ReadParam = new ReadParam(
+      params.compression,
+      params.suffix + params.compression.getSuggestedSuffix
+    )
+  }
+
+  final case class ReadParam private (
+    compression: beam.Compression = ReadParam.DefaultCompression,
+    suffix: String = ReadParam.DefaultSuffix
+  )
+
+  private[scio] object WriteParam {
+    val DefaultNumShards = 0
+    val DefaultSuffix = ".json"
+    val DefaultCompression = beam.Compression.UNCOMPRESSED
+    val DefaultPrinter = Printer.noSpaces
+    val DefaultFilenamePolicySupplier = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultPrefix: String = null
+    val DefaultTempDirectory = null
   }
 
   final case class WriteParam private (
-    suffix: String,
-    numShards: Int,
-    compression: beam.Compression,
-    printer: Printer,
-    filenamePolicySupplier: FilenamePolicySupplier,
-    prefix: String,
-    shardNameTemplate: String,
-    tempDirectory: String
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: beam.Compression = WriteParam.DefaultCompression,
+    printer: Printer = WriteParam.DefaultPrinter,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 }

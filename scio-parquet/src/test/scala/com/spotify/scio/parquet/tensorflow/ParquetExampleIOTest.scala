@@ -19,7 +19,7 @@ package com.spotify.scio.parquet.tensorflow
 
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec}
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
@@ -29,6 +29,7 @@ import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList, Int64List}
 
+import java.nio.file.Files
 import scala.jdk.CollectionConverters._
 
 object ParquetExampleHelper {
@@ -92,17 +93,21 @@ object ParquetExampleHelper {
 class ParquetExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
   import ParquetExampleHelper._
 
-  val extension: String = ".parquet"
-  def save(
-    filenamePolicySupplier: FilenamePolicySupplier = null
+  override val suffix: String = ".parquet"
+  override def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null,
+    prefix: String = null,
+    shardNameTemplate: String = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Example] = {
     in.map(newExample)
       .saveAsParquetExampleFile(
         tmpDir,
         schema,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
-        numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicySupplier = filenamePolicySupplier
+        numShards = if (isBounded) 0 else ScioIOTest.TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier,
+        prefix = prefix,
+        shardNameTemplate = shardNameTemplate
       )
   }
 
@@ -118,18 +123,16 @@ class ParquetExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
 
 class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   import ParquetExampleHelper._
-  private val dir = tmpDir
+  private val testDir = Files.createTempDirectory("scio-test-").toFile
   private val examples = (1 to 10).map(newExample)
 
   override protected def beforeAll(): Unit = {
     val sc = ScioContext()
-    sc.parallelize(examples)
-      .saveAsParquetExampleFile(dir.toString, schema)
+    sc.parallelize(examples).saveAsParquetExampleFile(testDir.getAbsolutePath, schema)
     sc.run()
-    ()
   }
 
-  override protected def afterAll(): Unit = FileUtils.deleteDirectory(dir)
+  override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
   private val projection = Seq(
     "int64_req_1",
@@ -169,7 +172,10 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
 
   it should "read Examples" in {
     val sc = ScioContext()
-    val data = sc.parquetExampleFile(s"$dir/*.parquet")
+    val data = sc.parquetExampleFile(
+      path = testDir.getAbsolutePath,
+      suffix = ".parquet"
+    )
     data should containInAnyOrder(examples)
     sc.run()
     ()
@@ -177,7 +183,11 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
 
   it should "read Examples with projection" in {
     val sc = ScioContext()
-    val data = sc.parquetExampleFile(s"$dir/*.parquet", projection)
+    val data = sc.parquetExampleFile(
+      path = testDir.getAbsolutePath,
+      projection = projection,
+      suffix = ".parquet"
+    )
     data should containInAnyOrder(examples.map(projectFields(projection)))
     sc.run()
     ()
@@ -185,7 +195,11 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
 
   it should "read Examples with predicate" in {
     val sc = ScioContext()
-    val data = sc.parquetExampleFile(s"$dir/*.parquet", predicate = predicate)
+    val data = sc.parquetExampleFile(
+      path = testDir.getAbsolutePath,
+      predicate = predicate,
+      suffix = ".parquet"
+    )
     val expected = examples.filter { e =>
       e.getFeatures.getFeatureOrThrow("int64_req_1").getInt64List.getValue(0) <= 5L &&
       e.getFeatures.getFeatureOrThrow("float_req_2").getFloatList.getValue(0) >= 2.5f
@@ -197,7 +211,12 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
 
   it should "read Examples with projection and predicate in non-test context" in {
     val sc = ScioContext()
-    val data = sc.parquetExampleFile(s"$dir/*.parquet", projection, predicate)
+    val data = sc.parquetExampleFile(
+      path = testDir.getAbsolutePath,
+      projection = projection,
+      predicate = predicate,
+      suffix = ".parquet"
+    )
     val expected = examples
       .filter { e =>
         e.getFeatures.getFeatureOrThrow("int64_req_1").getInt64List.getValue(0) <= 5L &&

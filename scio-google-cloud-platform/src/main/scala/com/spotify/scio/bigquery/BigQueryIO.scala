@@ -433,7 +433,7 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
 
 /** Get an IO for a BigQuery TableRow JSON file. */
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
-  override type ReadP = Unit
+  override type ReadP = TableRowJsonIO.ReadParam
   override type WriteP = TableRowJsonIO.WriteParam
   final override val tapT: TapT.Aux[TableRow, TableRow] = TapOf[TableRow]
 
@@ -444,24 +444,50 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
     data.transform_("BigQuery write") {
       _.map(ScioUtil.jsonFactory.toString)
-        .applyInternal(data.textOut(path, ".json", params.numShards, params.compression))
+        .applyInternal(
+          data.textOut(
+            path = path,
+            suffix = params.suffix,
+            numShards = params.numShards,
+            compression = params.compression
+          )
+        )
     }
-    tap(())
+    tap(TableRowJsonIO.ReadParam(params))
   }
 
   override def tap(read: ReadP): Tap[TableRow] =
-    TableRowJsonTap(ScioUtil.addPartSuffix(path))
+    TableRowJsonTap(path, read.suffix)
 }
 
 object TableRowJsonIO {
-  object WriteParam {
-    private[bigquery] val DefaultNumShards = 0
-    private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
+
+  private[bigquery] object ReadParam {
+    val DefaultCompression = Compression.AUTO
+    val DefaultSuffix = null
+
+    def apply(params: WriteParam): ReadParam =
+      new ReadParam(
+        compression = params.compression,
+        suffix = params.suffix + params.compression.getSuggestedSuffix
+      )
+  }
+
+  final case class ReadParam private (
+    compression: Compression = ReadParam.DefaultCompression,
+    suffix: String = null
+  )
+
+  private[bigquery] object WriteParam {
+    val DefaultNumShards = 0
+    val DefaultCompression = Compression.UNCOMPRESSED
+    val DefaultSuffix = ".json"
   }
 
   final case class WriteParam private (
     numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression
+    compression: Compression = WriteParam.DefaultCompression,
+    suffix: String = WriteParam.DefaultSuffix
   )
 }
 

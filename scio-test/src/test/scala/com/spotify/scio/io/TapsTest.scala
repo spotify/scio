@@ -17,11 +17,8 @@
 
 package com.spotify.scio.io
 
-import java.io.File
 import java.nio.file.{Files, Path}
-import java.util.UUID
 
-import com.spotify.scio.CoreSysProps
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -31,8 +28,7 @@ import scala.concurrent.duration._
 class TapsTest extends AnyFlatSpec with Matchers {
   val data: Seq[String] = Seq("a", "b", "c")
 
-  private def tmpFile: Path =
-    new File(new File(CoreSysProps.TmpDir.value), "taps-test-" + UUID.randomUUID()).toPath
+  private def tmpFile: Path = Files.createTempFile("taps-test-", ".txt")
 
   private def writeText(p: Path, data: Seq[String]): Unit = {
     val writer = Files.newBufferedWriter(p)

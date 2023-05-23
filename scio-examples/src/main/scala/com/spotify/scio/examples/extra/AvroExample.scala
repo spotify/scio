@@ -100,7 +100,7 @@ object AvroExample {
       .saveAsAvroFile(args("output"))
 
   private def specificIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    sc.avroFile[Account](args("input"))
+    sc.avroSpecificFile[Account](args("input"))
       .map(_.toString)
       .saveAsTextFile(args("output"))
 
@@ -131,7 +131,7 @@ object AvroExample {
       .saveAsTypedAvroFile(args("output"))
 
   private def genericIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    sc.avroFile(args("input"), schema)
+    sc.avroGenericFile(args("input"), schema)
       .map(_.toString)
       .saveAsTextFile(args("output"))
 

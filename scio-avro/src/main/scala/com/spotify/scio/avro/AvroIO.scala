@@ -39,7 +39,7 @@ import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 
 final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
-  override type ReadP = Unit
+  override type ReadP = ObjectFileIO.ReadParam
   override type WriteP = ObjectFileIO.WriteParam
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
@@ -51,7 +51,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beamWithDefault(Coder[T])
-    sc.read(GenericRecordIO(path, AvroBytesUtil.schema))
+    sc.read(GenericRecordIO(path, AvroBytesUtil.schema))(params)
       .parDo(new DoFn[GenericRecord, T] {
         @ProcessElement
         private[scio] def processElement(
@@ -81,20 +81,22 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
           out.output(AvroBytesUtil.encode(elemCoder, element))
       })
       .write(GenericRecordIO(path, AvroBytesUtil.schema))(params)
-    tap(())
+    tap(AvroIO.ReadParam(params))
   }
 
   override def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](ScioUtil.addPartSuffix(path))
+    ObjectFileTap[T](path, read.suffix)
 }
 
 object ObjectFileIO {
+  type ReadParam = AvroIO.ReadParam
+  val ReadParam = AvroIO.ReadParam
   type WriteParam = AvroIO.WriteParam
   val WriteParam = AvroIO.WriteParam
 }
 
 final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
-  override type ReadP = Unit
+  override type ReadP = ProtobufIO.ReadParam
   override type WriteP = ProtobufIO.WriteParam
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
   private val protoCoder = Coder.protoMessageCoder[T]
@@ -106,7 +108,7 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
    * block file format.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(ObjectFileIO[T](path)(protoCoder))
+    sc.read(ObjectFileIO[T](path)(protoCoder))(params)
 
   /**
    * Save this SCollection as a Protobuf file.
@@ -120,10 +122,12 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
   }
 
   override def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](ScioUtil.addPartSuffix(path))(protoCoder)
+    ObjectFileTap[T](path, read.suffix)(protoCoder)
 }
 
 object ProtobufIO {
+  type ReadParam = AvroIO.ReadParam
+  val ReadParam = AvroIO.ReadParam
   type WriteParam = AvroIO.WriteParam
   val WriteParam = AvroIO.WriteParam
 }
@@ -150,7 +154,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
       prefix = prefix,
       shardNameTemplate = shardNameTemplate,
       isWindowed = isWindowed
-    )(path, suffix)
+    )(ScioUtil.strippedPath(path), suffix)
     val transform = write
       .to(fp)
       .withTempDirectory(tempDirectory)
@@ -163,7 +167,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
 
 final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: String)
     extends AvroIO[T] {
-  override type ReadP = Unit
+  override type ReadP = AvroIO.ReadParam
   override type WriteP = AvroIO.WriteParam
 
   override def testId: String = s"AvroIO($path)"
@@ -175,7 +179,10 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
     val cls = ScioUtil.classOf[T]
-    val t = beam.AvroIO.read(cls).from(path)
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    val t = beam.AvroIO
+      .read(cls)
+      .from(filePattern)
     sc
       .applyTransform(t)
       .setCoder(coder)
@@ -204,15 +211,15 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
-    tap(())
+    tap(AvroIO.ReadParam(params))
   }
 
   override def tap(read: ReadP): Tap[T] =
-    SpecificRecordTap[T](ScioUtil.addPartSuffix(path))
+    SpecificRecordTap[T](path, read.suffix)
 }
 
 final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
-  override type ReadP = Unit
+  override type ReadP = AvroIO.ReadParam
   override type WriteP = AvroIO.WriteParam
 
   override def testId: String = s"AvroIO($path)"
@@ -223,9 +230,10 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] = {
     val coder = CoderMaterializer.beam(sc, Coder.avroGenericRecordCoder(schema))
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
     val t = beam.AvroIO
       .readGenericRecords(schema)
-      .from(path)
+      .from(filePattern)
     sc
       .applyTransform(t)
       .setCoder(coder)
@@ -254,11 +262,11 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
-    tap(())
+    tap(AvroIO.ReadParam(params))
   }
 
   override def tap(read: ReadP): Tap[GenericRecord] =
-    GenericRecordTap(ScioUtil.addPartSuffix(path), schema)
+    GenericRecordTap(path, schema, read.suffix)
 }
 
 /**
@@ -271,7 +279,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
 final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord => T)(implicit
   coder: Coder[T]
 ) extends AvroIO[T] {
-  override type ReadP = Unit
+  override type ReadP = AvroIO.ReadParam
   override type WriteP = Nothing // Output is not defined for Avro Generic Parse IO.
 
   override def testId: String = s"AvroIO($path)"
@@ -280,10 +288,11 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
    * Get an SCollection[T] by applying the [[parseFn]] on
    * [[org.apache.avro.generic.GenericRecord GenericRecord]] from an Avro file.
    */
-  override protected def read(sc: ScioContext, params: Unit): SCollection[T] = {
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
     val t = beam.AvroIO
       .parseGenericRecords(Functions.serializableFn(parseFn))
-      .from(path)
+      .from(filePattern)
       .withCoder(CoderMaterializer.beam(sc, coder))
 
     sc.applyTransform(t)
@@ -292,20 +301,33 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
   /** Writes are undefined for [[GenericRecordParseIO]] since it is used only for reading. */
   override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
 
-  override def tap(read: Unit): Tap[T] =
-    GenericRecordParseTap[T](ScioUtil.addPartSuffix(path), parseFn)
+  override def tap(read: ReadP): Tap[T] =
+    GenericRecordParseTap[T](path, read.suffix, parseFn)
 }
 
 object AvroIO {
-  object WriteParam {
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultSuffix = ".avro"
-    private[scio] val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
-    private[scio] val DefaultMetadata: Map[String, AnyRef] = Map.empty
-    private[scio] val DefaultFilenamePolicySupplier = null
-    private[scio] val DefaultPrefix = null
-    private[scio] val DefaultShardNameTemplate: String = null
-    private[scio] val DefaultTempDirectory = null
+
+  private[scio] object ReadParam {
+    val DefaultSuffix: String = null
+
+    def apply(params: WriteParam): ReadParam = new ReadParam(
+      params.suffix
+    )
+  }
+
+  final case class ReadParam private (
+    suffix: String = ReadParam.DefaultSuffix
+  )
+
+  private[scio] object WriteParam {
+    val DefaultNumShards = 0
+    val DefaultSuffix = ".avro"
+    val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
+    val DefaultMetadata: Map[String, AnyRef] = Map.empty
+    val DefaultFilenamePolicySupplier = null
+    val DefaultPrefix = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory = null
   }
 
   final case class WriteParam private (
@@ -336,7 +358,7 @@ object AvroTyped {
   }
 
   final case class AvroIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String) extends ScioIO[T] {
-    override type ReadP = Unit
+    override type ReadP = avro.AvroIO.ReadParam
     override type WriteP = avro.AvroIO.WriteParam
     final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
@@ -354,8 +376,12 @@ object AvroTyped {
       tempDirectory: ResourceId
     ) = {
       require(tempDirectory != null, "tempDirectory must not be null")
-      val fp = FilenamePolicySupplier
-        .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
+      val fp = FilenamePolicySupplier.resolve(
+        filenamePolicySupplier = filenamePolicySupplier,
+        prefix = prefix,
+        shardNameTemplate = shardNameTemplate,
+        isWindowed = isWindowed
+      )(ScioUtil.strippedPath(path), suffix)
       val transform = write
         .to(fp)
         .withTempDirectory(tempDirectory)
@@ -399,12 +425,12 @@ object AvroTyped {
           ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
         )
       )
-      tap(())
+      tap(avro.AvroIO.ReadParam(params))
     }
 
     override def tap(read: ReadP): Tap[T] = {
       val avroT = AvroType[T]
-      GenericRecordTap(ScioUtil.addPartSuffix(path), avroT.schema)
+      GenericRecordTap(path, avroT.schema, read.suffix)
         .map(avroT.fromGenericRecord)
     }
   }

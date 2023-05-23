@@ -35,23 +35,28 @@ import scala.reflect.runtime.universe._
 /** Tap for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro files. */
 final case class GenericRecordTap(
   path: String,
-  @transient private val
-  schema: Schema
+  @transient private val schema: Schema,
+  suffix: String
 ) extends Tap[GenericRecord] {
   private lazy val s = Externalizer(schema)
 
-  override def value: Iterator[GenericRecord] = FileStorage(path).avroFile[GenericRecord](s.get)
+  override def value: Iterator[GenericRecord] =
+    FileStorage(path, suffix).avroFile[GenericRecord](s.get)
 
   override def open(sc: ScioContext): SCollection[GenericRecord] =
-    sc.read(GenericRecordIO(path, s.get))
+    sc.avroGenericFile(path, s.get, suffix)
 }
 
 /** Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files. */
-final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: String)
-    extends Tap[T] {
-  override def value: Iterator[T] = FileStorage(path).avroFile[T]()
+final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](
+  path: String,
+  suffix: String
+) extends Tap[T] {
+  override def value: Iterator[T] =
+    FileStorage(path, suffix).avroFile[T]()
 
-  override def open(sc: ScioContext): SCollection[T] = sc.avroFile[T](path)
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.avroSpecificFile[T](path, suffix)
 }
 
 /**
@@ -60,65 +65,86 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](path: S
  */
 final case class GenericRecordParseTap[T: Coder](
   path: String,
+  suffix: String,
   parseFn: GenericRecord => T
 ) extends Tap[T] {
   override def value: Iterator[T] =
-    FileStorage(path)
+    FileStorage(path, suffix)
       // Read Avro GenericRecords, with the writer specified schema
       .avroFile[GenericRecord](schema = null)
       .map(parseFn)
 
-  override def open(sc: ScioContext): SCollection[T] = sc.parseAvroFile(path)(parseFn)
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.parseAvroFile(path, suffix)(parseFn)
 }
 
 /**
  * Tap for object files. Note that serialization is not guaranteed to be compatible across Scio
  * releases.
  */
-case class ObjectFileTap[T: Coder](path: String) extends Tap[T] {
+case class ObjectFileTap[T: Coder](
+  path: String,
+  suffix: String
+) extends Tap[T] {
   override def value: Iterator[T] = {
     val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
-    FileStorage(path).avroFile[GenericRecord](AvroBytesUtil.schema).map { r =>
-      AvroBytesUtil.decode(elemCoder, r)
-    }
+    FileStorage(path, suffix)
+      .avroFile[GenericRecord](AvroBytesUtil.schema)
+      .map(r => AvroBytesUtil.decode(elemCoder, r))
   }
-  override def open(sc: ScioContext): SCollection[T] = sc.objectFile[T](path)
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.objectFile[T](path, suffix)
 }
 
 final case class AvroTaps(self: Taps) {
 
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
-  def protobufFile[T: Coder](path: String)(implicit ev: T <:< Message): Future[Tap[T]] =
-    self.mkTap(s"Protobuf: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
+  def protobufFile[T: Coder](path: String, suffix: String)(implicit
+    ev: T <:< Message
+  ): Future[Tap[T]] =
+    self.mkTap(
+      s"Protobuf: $path",
+      () => self.isPathDone(path, suffix),
+      () => ObjectFileTap[T](path, suffix)
+    )
 
   /** Get a `Future[Tap[T]]` of an object file. */
-  def objectFile[T: Coder](path: String): Future[Tap[T]] =
-    self.mkTap(s"Object file: $path", () => self.isPathDone(path), () => ObjectFileTap[T](path))
+  def objectFile[T: Coder](path: String, suffix: String): Future[Tap[T]] =
+    self.mkTap(
+      s"Object file: $path",
+      () => self.isPathDone(path, suffix),
+      () => ObjectFileTap[T](path, suffix)
+    )
 
   /**
    * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
    */
-  def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
+  def avroFile(path: String, schema: Schema, suffix: String): Future[Tap[GenericRecord]] =
     self.mkTap(
       s"Avro: $path",
-      () => self.isPathDone(path),
-      () => GenericRecordTap(path, schema)
+      () => self.isPathDone(path, suffix),
+      () => GenericRecordTap(path, schema, suffix)
     )
 
   /**
    * Get a `Future[Tap[T]]` for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro
    * file.
    */
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =
-    self.mkTap(s"Avro: $path", () => self.isPathDone(path), () => SpecificRecordTap[T](path))
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String, suffix: String): Future[Tap[T]] =
+    self.mkTap(
+      s"Avro: $path",
+      () => self.isPathDone(path, suffix),
+      () => SpecificRecordTap[T](path, suffix)
+    )
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
-    path: String
+    path: String,
+    suffix: String
   ): Future[Tap[T]] = {
     val avroT = AvroType[T]
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    avroFile(path, avroT.schema).map(_.map(avroT.fromGenericRecord))
+    avroFile(path, avroT.schema, suffix).map(_.map(avroT.fromGenericRecord))
   }
 }

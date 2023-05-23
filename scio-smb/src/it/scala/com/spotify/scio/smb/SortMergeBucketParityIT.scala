@@ -34,6 +34,7 @@ import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
+import java.io.File
 import scala.jdk.CollectionConverters._
 import scala.util.Random
 
@@ -64,8 +65,8 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB) = (
-        sc.avroFile(s"${inputs(0)}/*.avro", schema),
-        sc.avroFile(s"${inputs(1)}/*.avro", schema)
+        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).cogroup(avroB.keyBy(keyFn))
@@ -89,14 +90,14 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         val (lhs, rhs) = (
           SCollection.unionAll(
             List(
-              sc.avroFile(s"${inputs(0)}/*.avro", schema),
-              sc.avroFile(s"${inputs(1)}/*.avro", schema)
+              sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
+              sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro")
             )
           ),
           SCollection.unionAll(
             List(
-              sc.avroFile(s"${inputs(2)}/*.avro", schema),
-              sc.avroFile(s"${inputs(3)}/*.avro", schema)
+              sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro"),
+              sc.avroGenericFile(inputs(3).getAbsolutePath, schema, ".avro")
             )
           )
         )
@@ -116,9 +117,9 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB, avroC) = (
-        sc.avroFile(s"${inputs(0)}/*.avro", schema),
-        sc.avroFile(s"${inputs(1)}/*.avro", schema),
-        sc.avroFile(s"${inputs(2)}/*.avro", schema)
+        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).cogroup(avroB.keyBy(keyFn), avroC.keyBy(keyFn))
@@ -137,10 +138,10 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB, avroC, avroD) = (
-        sc.avroFile(s"${inputs(0)}/*.avro", schema),
-        sc.avroFile(s"${inputs(1)}/*.avro", schema),
-        sc.avroFile(s"${inputs(2)}/*.avro", schema),
-        sc.avroFile(s"${inputs(3)}/*.avro", schema)
+        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(3).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).cogroup(avroB.keyBy(keyFn), avroC.keyBy(keyFn), avroD.keyBy(keyFn))
@@ -150,7 +151,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
   "sortMergeGroupByKey" should "have parity with Scio's groupBy" in withNumSources(1) { inputs =>
     compareResults(
       _.sortMergeGroupByKey(classOf[Integer], mkRead(inputs(0)))
-    )(sc => sc.avroFile(s"${inputs(0)}/*.avro", schema).groupBy(keyFn))
+    )(sc => sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro").groupBy(keyFn))
   }
 
   "sortMergeJoin" should "have parity with a 2-way Join" in withNumSources(2) { inputs =>
@@ -163,8 +164,8 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB) = (
-        sc.avroFile(s"${inputs(0)}/*.avro", schema),
-        sc.avroFile(s"${inputs(1)}/*.avro", schema)
+        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).join(avroB.keyBy(keyFn))
@@ -185,11 +186,11 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         )
     ) { sc =>
       val (avroA, avroB, avroC, avroD, avroE) = (
-        sc.avroFile(s"${inputs(0)}/*.avro", schema),
-        sc.avroFile(s"${inputs(1)}/*.avro", schema),
-        sc.avroFile(s"${inputs(2)}/*.avro", schema),
-        sc.avroFile(s"${inputs(3)}/*.avro", schema),
-        sc.avroFile(s"${inputs(4)}/*.avro", schema)
+        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(3).getAbsolutePath, schema, ".avro"),
+        sc.avroGenericFile(inputs(4).getAbsolutePath, schema, ".avro")
       )
 
       MultiJoin.cogroup(
@@ -205,9 +206,9 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
   // Write randomly generated Avro records in SMB fashion to `numSources` destinations
   // in the local file system
   private def withNumSources(numSources: Int)(
-    testFn: Map[Int, Path] => Any
+    testFn: Map[Int, File] => Any
   ): Unit = {
-    val tempFolder = Files.createTempDirectory("smb")
+    val tempFolder = Files.createTempDirectory("smb").toFile
     val sc = ScioContext()
 
     val outputPaths = (0 until numSources).map { n =>
@@ -218,7 +219,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         gr
       }
 
-      val outputPath = tempFolder.resolve(s"source$n")
+      val outputPath = new File(tempFolder, s"source$n")
 
       sc.parallelize(data)
         .saveAsSortedBucket(
@@ -237,14 +238,14 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
     try {
       testFn(outputPaths)
     } finally {
-      FileUtils.deleteDirectory(tempFolder.toFile)
+      FileUtils.deleteDirectory(tempFolder)
     }
   }
 
-  private def mkRead(path: Path): SortedBucketIO.Read[GenericRecord] =
+  private def mkRead(path: File): SortedBucketIO.Read[GenericRecord] =
     AvroSortedBucketIO
-      .read(new TupleTag[GenericRecord](path.toString), schema)
-      .from(path.toString)
+      .read(new TupleTag[GenericRecord](path.getAbsolutePath), schema)
+      .from(path.getAbsolutePath)
 
   private def compareResults[T: Coder](
     smbOp: ScioContext => SCollection[T]

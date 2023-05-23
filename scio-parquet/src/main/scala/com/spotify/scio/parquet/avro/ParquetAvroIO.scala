@@ -94,8 +94,12 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     isLocalRunner: Boolean
   ) = {
     require(tempDirectory != null, "tempDirectory must not be null")
-    val fp = FilenamePolicySupplier
-      .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
+    val fp = FilenamePolicySupplier.resolve(
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[T])
     val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
@@ -143,38 +147,37 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         ScioUtil.isLocalRunner(data.context.options.getRunner)
       )
     )
-    tap(ParquetAvroIO.ReadParam[T, T](identity[T] _, writerSchema, null))
+    tap(ParquetAvroIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[T] =
-    ParquetAvroTap(ScioUtil.addPartSuffix(path), params)
+    ParquetAvroTap(ScioUtil.filePattern(path, params.suffix), params)
 }
 
 object ParquetAvroIO {
   private lazy val log = LoggerFactory.getLogger(getClass)
 
-  object ReadParam {
-    private[avro] val DefaultProjection = null
-    private[avro] val DefaultPredicate = null
-    private[avro] val DefaultConfiguration = null
+  private[scio] object ReadParam {
+    val DefaultProjection = null
+    val DefaultPredicate = null
+    val DefaultConfiguration = null
+    val DefaultSuffix = null
 
-    @deprecated(
-      "Use ReadParam(projectionFn, projection, predicate, conf) instead",
-      since = "0.10.0"
-    )
-    def apply[A: ClassTag, T: ClassTag](
-      projection: Schema,
-      predicate: FilterPredicate,
-      projectionFn: A => T
-    ): ReadParam[A, T] =
-      ReadParam(projectionFn, projection, predicate)
+    def apply[T: ClassTag](params: WriteParam): ReadParam[T, T] =
+      new ReadParam[T, T](
+        projectionFn = identity,
+        projection = params.schema,
+        conf = params.conf,
+        suffix = params.suffix
+      )
   }
 
   final case class ReadParam[A: ClassTag, T: ClassTag] private (
     projectionFn: A => T,
     projection: Schema = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = null
   ) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
     val isSpecific: Boolean = classOf[SpecificRecordBase] isAssignableFrom avroClass
@@ -296,16 +299,16 @@ object ParquetAvroIO {
     })
   }
 
-  object WriteParam {
-    private[scio] val DefaultSchema = null
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultSuffix = ".parquet"
-    private[scio] val DefaultCompression = CompressionCodecName.GZIP
-    private[scio] val DefaultConfiguration = null
-    private[scio] val DefaultFilenamePolicySupplier = null
-    private[scio] val DefaultPrefix = null
-    private[scio] val DefaultShardNameTemplate = null
-    private[scio] val DefaultTempDirectory = null
+  private[scio] object WriteParam {
+    val DefaultSchema = null
+    val DefaultNumShards = 0
+    val DefaultSuffix = ".parquet"
+    val DefaultCompression = CompressionCodecName.GZIP
+    val DefaultConfiguration = null
+    val DefaultFilenamePolicySupplier = null
+    val DefaultPrefix = null
+    val DefaultShardNameTemplate = null
+    val DefaultTempDirectory = null
   }
 
   final case class WriteParam private (

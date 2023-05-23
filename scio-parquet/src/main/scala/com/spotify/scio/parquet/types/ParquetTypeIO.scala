@@ -47,8 +47,8 @@ import scala.reflect.ClassTag
 final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   path: String
 ) extends ScioIO[T] {
-  override type ReadP = ParquetTypeIO.ReadParam[T]
-  override type WriteP = ParquetTypeIO.WriteParam[T]
+  override type ReadP = ParquetTypeIO.ReadParam
+  override type WriteP = ParquetTypeIO.WriteParam
   override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   private val tpe: ParquetType[T] = implicitly[ParquetType[T]]
@@ -132,8 +132,12 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     isLocalRunner: Boolean
   ) = {
     require(tempDirectory != null, "tempDirectory must not be null")
-    val fp = FilenamePolicySupplier
-      .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
+    val fp = FilenamePolicySupplier.resolve(
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[T])
     val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
@@ -165,35 +169,44 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
         ScioUtil.isLocalRunner(data.context.options.getRunner)
       )
     )
-    tap(ParquetTypeIO.ReadParam[T]())
+    tap(ParquetTypeIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[tapT.T] =
-    ParquetTypeTap(ScioUtil.addPartSuffix(path), params)
+    ParquetTypeTap(ScioUtil.filePattern(path, params.suffix), params)
 }
 
 object ParquetTypeIO {
-  object ReadParam {
-    private[scio] val DefaultPredicate = null
-    private[scio] val DefaultConfiguration = null
+
+  private[scio] object ReadParam {
+    val DefaultPredicate = null
+    val DefaultConfiguration = null
+    val DefaultSuffix = null
+
+    def apply[T](params: WriteParam): ReadParam =
+      new ReadParam(
+        conf = params.conf,
+        suffix = params.suffix
+      )
   }
-  final case class ReadParam[T] private (
+  final case class ReadParam private (
     predicate: FilterPredicate = null,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   )
 
-  object WriteParam {
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultSuffix = ".parquet"
-    private[scio] val DefaultCompression = CompressionCodecName.GZIP
-    private[scio] val DefaultConfiguration = null
-    private[scio] val DefaultFilenamePolicySupplier = null
-    private[scio] val DefaultPrefix = null
-    private[scio] val DefaultShardNameTemplate = null
-    private[scio] val DefaultTempDirectory = null
+  private[scio] object WriteParam {
+    val DefaultNumShards = 0
+    val DefaultSuffix = ".parquet"
+    val DefaultCompression = CompressionCodecName.GZIP
+    val DefaultConfiguration = null
+    val DefaultFilenamePolicySupplier = null
+    val DefaultPrefix = null
+    val DefaultShardNameTemplate = null
+    val DefaultTempDirectory = null
   }
 
-  final case class WriteParam[T] private (
+  final case class WriteParam private (
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
@@ -207,7 +220,7 @@ object ParquetTypeIO {
 
 case class ParquetTypeTap[T: ClassTag: Coder: ParquetType](
   path: String,
-  params: ParquetTypeIO.ReadParam[T]
+  params: ParquetTypeIO.ReadParam
 ) extends Tap[T] {
   override def value: Iterator[T] = {
     val tpe = implicitly[ParquetType[T]]

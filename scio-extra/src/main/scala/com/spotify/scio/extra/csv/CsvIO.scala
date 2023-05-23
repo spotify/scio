@@ -88,51 +88,56 @@ import org.apache.beam.sdk.values.PCollection
  */
 object CsvIO {
 
-  final private val DefaultCsvConfig: CsvConfiguration = CsvConfiguration(
+  private val DefaultCsvConfiguration: CsvConfiguration = CsvConfiguration(
     cellSeparator = ',',
     quote = '"',
     quotePolicy = QuotePolicy.WhenNeeded,
     header = Header.Implicit
   )
 
-  final val DefaultReadParams: ReadParam = CsvIO.ReadParam(compression = beam.Compression.AUTO)
-  final val DefaultWriteParams: WriteParam = CsvIO.WriteParam(
-    WriteParam.DefaultCompression,
-    WriteParam.DefaultCsvConfig,
-    WriteParam.DefaultSuffix,
-    WriteParam.DefaultNumShards,
-    WriteParam.DefaultShardNameTemplate,
-    WriteParam.DefaultTempDirectory,
-    WriteParam.DefaultFilenamePolicySupplier
-  )
+  final val DefaultReadParams: ReadParam = CsvIO.ReadParam()
+  final val DefaultWriteParams: WriteParam = CsvIO.WriteParam()
+
+  private[scio] object ReadParam {
+    val DefaultCompression = beam.Compression.AUTO
+    val DefaultCsvConfiguration = CsvIO.DefaultCsvConfiguration
+    val DefaultSuffix = null
+
+    def apply(params: WriteParam): ReadParam =
+      new ReadParam(
+        compression = params.compression,
+        csvConfiguration = params.csvConfiguration,
+        suffix = params.suffix + params.compression.getSuggestedSuffix
+      )
+  }
 
   final case class ReadParam private (
-    compression: beam.Compression = beam.Compression.AUTO,
-    csvConfiguration: CsvConfiguration = CsvIO.DefaultCsvConfig
+    compression: beam.Compression = ReadParam.DefaultCompression,
+    csvConfiguration: CsvConfiguration = ReadParam.DefaultCsvConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   )
 
-  object WriteParam {
-    private[scio] val DefaultSuffix = ".csv"
-    private[scio] val DefaultCsvConfig = CsvIO.DefaultCsvConfig
-    private[scio] val DefaultNumShards = 1 // put everything in a single file
-    private[scio] val DefaultCompression = Compression.UNCOMPRESSED
-    private[scio] val DefaultShardNameTemplate = null
-    private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
+  private[scio] object WriteParam {
+    val DefaultSuffix = ".csv"
+    val DefaultCsvConfig = CsvIO.DefaultCsvConfiguration
+    val DefaultNumShards = 1 // put everything in a single file
+    val DefaultCompression = Compression.UNCOMPRESSED
+    val DefaultFilenamePolicySupplier = null
+    val DefaultPrefix = null
+    val DefaultShardNameTemplate = null
+    val DefaultTempDirectory = null
   }
 
   final case class WriteParam private (
-    compression: beam.Compression,
-    csvConfiguration: CsvConfiguration,
-    suffix: String,
-    numShards: Int,
-    shardNameTemplate: String,
-    tempDirectory: String,
-    filenamePolicySupplier: FilenamePolicySupplier
-  ) {
-    def toReadParam: ReadParam =
-      ReadParam(compression = compression, csvConfiguration = csvConfiguration)
-  }
+    compression: beam.Compression = WriteParam.DefaultCompression,
+    csvConfiguration: CsvConfiguration = WriteParam.DefaultCsvConfig,
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
+  )
 
   final case class Read[T: HeaderDecoder: Coder](path: String) extends ScioIO[T] {
     override type ReadP = CsvIO.ReadParam
@@ -176,7 +181,7 @@ object CsvIO {
 
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
       data.applyInternal(csvOut(path, params))
-      tap(params.toReadParam)
+      tap(ReadParam(params))
     }
 
     override def tap(params: ReadP): Tap[T] = new CsvIO.CsvTap[T](path, params)
@@ -192,7 +197,7 @@ object CsvIO {
       .via(new CsvSink(params.csvConfiguration))
 
   private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) =
-    sc.parallelize(Seq(path))
+    sc.parallelize(Seq(ScioUtil.filePattern(path, params.suffix)))
       .withName("Read CSV")
       .readFiles(
         ParDo
@@ -206,7 +211,7 @@ object CsvIO {
       extends Tap[T] {
     override def value: Iterator[T] =
       BinaryIO
-        .openInputStreamsFor(ScioUtil.addPartSuffix(path))
+        .openInputStreamsFor(ScioUtil.filePattern(path, params.suffix))
         .flatMap(_.asUnsafeCsvReader[T](params.csvConfiguration).iterator)
 
     override def open(sc: ScioContext): SCollection[T] = CsvIO.read(sc, path, params)

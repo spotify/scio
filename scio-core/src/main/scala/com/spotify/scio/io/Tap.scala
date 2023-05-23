@@ -69,10 +69,10 @@ case class UnsupportedTap[T](msg: String) extends Tap[T] {
 }
 
 /** Tap for text files on local file system or GCS. */
-final case class TextTap(path: String) extends Tap[String] {
-  override def value: Iterator[String] = FileStorage(path).textFile
+final case class TextTap(path: String, suffix: String) extends Tap[String] {
+  override def value: Iterator[String] = FileStorage(path, suffix).textFile
 
-  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
+  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path, suffix = suffix)
 }
 
 final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
@@ -82,14 +82,13 @@ final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
     sc.parallelize[T](InMemorySink.get(id))
 }
 
-private[scio] class MaterializeTap[T: Coder] private (val path: String, coder: BCoder[T])
+private[scio] class MaterializeTap[T: Coder] private (path: String, coder: BCoder[T])
     extends Tap[T] {
-  private val _path = ScioUtil.addPartSuffix(path)
 
   override def value: Iterator[T] = {
-    val storage = FileStorage(_path)
+    val storage = FileStorage(path, MaterializeTap.Suffix)
 
-    if (storage.isDone) {
+    if (storage.isDone()) {
       storage
         .avroFile[GenericRecord](AvroBytesUtil.schema)
         .map(AvroBytesUtil.decode(coder, _))
@@ -112,12 +111,17 @@ private[scio] class MaterializeTap[T: Coder] private (val path: String, coder: B
     }
 
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
-    val read = AvroIO.readGenericRecords(AvroBytesUtil.schema).from(_path)
+    val read = AvroIO
+      .readGenericRecords(AvroBytesUtil.schema)
+      .from(ScioUtil.filePattern(path, MaterializeTap.Suffix))
     sc.applyTransform(read).parDo(dofn)
   }
 }
 
 object MaterializeTap {
+
+  private val Suffix = ".obj.avro"
+
   def apply[T: Coder](path: String, context: ScioContext): MaterializeTap[T] =
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
 }

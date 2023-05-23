@@ -47,11 +47,15 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
       )
 
       GenericRecordTap(
-        s"$userDir/*.avro",
-        SortMergeBucketExample.UserDataSchema
+        path = userDir.getAbsolutePath,
+        schema = SortMergeBucketExample.UserDataSchema,
+        suffix = ".avro"
       ).value.size shouldBe 500
 
-      SpecificRecordTap[Account](s"$accountDir/*.avro").value.size shouldBe 500
+      SpecificRecordTap[Account](
+        path = accountDir.getAbsolutePath,
+        suffix = ".avro"
+      ).value.size shouldBe 500
 
       SortMergeBucketJoinExample.main(
         Array(
@@ -61,8 +65,10 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 100
-      ()
+      TextTap(
+        path = joinOutputDir.getAbsolutePath,
+        suffix = ".txt"
+      ).value.size shouldBe 100
   }
 
   it should "transform user and account data" in withTempFolders {
@@ -82,7 +88,10 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      SpecificRecordTap[Account](s"$joinOutputDir/*.avro").value
+      SpecificRecordTap[Account](
+        joinOutputDir.getAbsolutePath,
+        ".avro"
+      ).value
         .map(account => (account.getId, account.getType.toString))
         .toList should contain theSameElementsAs (0 until 500).map((_, "combinedAmount"))
       ()

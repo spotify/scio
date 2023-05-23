@@ -63,9 +63,6 @@ private[scio] object ScioUtil {
   def getScalaJsonMapper: ObjectMapper =
     new ObjectMapper().registerModule(DefaultScalaModule)
 
-  def addPartSuffix(path: String, ext: String = ""): String =
-    if (path.endsWith("/")) s"${path}part-*$ext" else s"$path/part-*$ext"
-
   def getTempFile(context: ScioContext, fileOrPath: String = null): String = {
     val fop = Option(fileOrPath).getOrElse("scio-materialize-" + UUID.randomUUID().toString)
     val uri = URI.create(fop)
@@ -94,8 +91,22 @@ private[scio] object ScioUtil {
 
   private def stripPath(path: String): String = StringUtils.stripEnd(path, "/")
   def strippedPath(path: String): String = s"${stripPath(path)}/"
-  def pathWithPrefix(path: String, filePrefix: String): String = s"${stripPath(path)}/${filePrefix}"
-  def pathWithPartPrefix(path: String): String = pathWithPrefix(path, "part")
+  def pathWithPrefix(path: String, prefix: String): String = Option(prefix) match {
+    case Some(p) => s"${stripPath(path)}/$p"
+    case None    => s"${stripPath(path)}/part"
+  }
+
+  def filePattern(path: String, suffix: String): String =
+    Option(suffix) match {
+      case Some(_) if path.contains("*") =>
+        // path is already a pattern
+        throw new IllegalArgumentException(s"Suffix must be used with a static path but got: $path")
+      case Some(s) =>
+        // match all file with suffix in path (must be a folder)
+        s"${stripPath(path)}/*$s"
+      case None =>
+        path
+    }
 
   def consistentHashCode[K](k: K): Int = k match {
     case key: Array[_] => ArraySeq.unsafeWrapArray(key).##

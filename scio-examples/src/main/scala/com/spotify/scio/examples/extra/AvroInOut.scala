@@ -33,7 +33,7 @@ object AvroInOut {
 
     // Open Avro files as a `SCollection[TestRecord]` where `TestRecord` is an Avro specific record
     // Java class compiled from Avro schema.
-    sc.avroFile[TestRecord](args("input"))
+    sc.avroSpecificFile[TestRecord](args("input"))
       .map { r =>
         // Create a new `Account` Avro specific record. It is recommended to use the builder over
         // constructor since it's more backwards compatible.

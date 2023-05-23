@@ -34,8 +34,8 @@ import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.twitter.chill.Externalizer
 
 /** Tap for BigQuery TableRow JSON files. */
-final case class TableRowJsonTap(path: String) extends Tap[TableRow] {
-  override def value: Iterator[TableRow] = FileStorage(path).tableRowJsonFile
+final case class TableRowJsonTap(path: String, suffix: String) extends Tap[TableRow] {
+  override def value: Iterator[TableRow] = FileStorage(path, suffix).tableRowJsonFile
   override def open(sc: ScioContext): SCollection[TableRow] =
     sc.tableRowJsonFile(path)
 }
@@ -129,8 +129,12 @@ final case class BigQueryTaps(self: Taps) {
   }
 
   /** Get a `Future[Tap[TableRow]]` for a BigQuery TableRow JSON file. */
-  def tableRowJsonFile(path: String): Future[Tap[TableRow]] =
-    mkTap(s"TableRowJson: $path", () => self.isPathDone(path), () => TableRowJsonIO(path).tap(()))
+  def tableRowJsonFile(path: String, suffix: String): Future[Tap[TableRow]] =
+    mkTap(
+      s"TableRowJson: $path",
+      () => self.isPathDone(path, suffix),
+      () => TableRowJsonTap(path, suffix)
+    )
 
   def bigQueryStorage(
     table: TableReference,

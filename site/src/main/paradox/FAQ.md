@@ -94,9 +94,10 @@ object MyJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val collections =
-      Seq("gs://bucket1/data/*.avro", "gs://bucket2/data/*.avro")
-        .map(sc.avroFile[TestRecord](_))
+    val collections = Seq(
+      "gs://bucket1/data/",
+      "gs://bucket2/data/"
+    ).map(path => sc.avroSpecificFile[TestRecord](path, suffix=".avro"))
 
     val all = SCollection.unionAll(collections)
   }

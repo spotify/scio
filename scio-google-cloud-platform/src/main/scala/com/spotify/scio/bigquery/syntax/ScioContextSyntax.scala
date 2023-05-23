@@ -39,6 +39,7 @@ import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.coders.tableRowCoder
+import org.apache.beam.sdk.io.Compression
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -208,8 +209,12 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     )
 
   /** Get an SCollection for a BigQuery TableRow JSON file. */
-  def tableRowJsonFile(path: String): SCollection[TableRow] =
-    self.read(TableRowJsonIO(path))
+  def tableRowJsonFile(
+    path: String,
+    compression: Compression = TableRowJsonIO.ReadParam.DefaultCompression,
+    suffix: String = TableRowJsonIO.ReadParam.DefaultSuffix
+  ): SCollection[TableRow] =
+    self.read(TableRowJsonIO(path))(TableRowJsonIO.ReadParam(compression, suffix))
 }
 
 trait ScioContextSyntax {

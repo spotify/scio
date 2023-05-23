@@ -32,9 +32,14 @@ trait Taps {
 
   /** Get a `Future[Tap[String]]` for a text file. */
   def textFile(path: String): Future[Tap[String]] =
-    mkTap(s"Text: $path", () => isPathDone(path), () => TextTap(path))
+    mkTap(
+      s"Text: $path",
+      () => isPathDone(path, null),
+      () => TextTap(path, null)
+    )
 
-  private[scio] def isPathDone(path: String): Boolean = FileStorage(path).isDone
+  private[scio] def isPathDone(path: String, suffix: String): Boolean =
+    FileStorage(path, suffix).isDone
 
   /**
    * Make a tap, to be implemented by concrete classes.

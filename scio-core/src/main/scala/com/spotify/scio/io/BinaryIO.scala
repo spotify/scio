@@ -67,8 +67,12 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     tempDirectory: ResourceId
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
     require(tempDirectory != null, "tempDirectory must not be null")
-    val fp = FilenamePolicySupplier
-      .resolve(filenamePolicySupplier, prefix, shardNameTemplate, isWindowed)(path, suffix)
+    val fp = FilenamePolicySupplier.resolve(
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[Array[Byte]])
     val sink = new BytesSink(
@@ -127,18 +131,18 @@ object BinaryIO {
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
 
-  object WriteParam {
-    private[scio] val DefaultPrefix = null
-    private[scio] val DefaultSuffix = ".bin"
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultCompression = Compression.UNCOMPRESSED
-    private[scio] val DefaultHeader = Array.emptyByteArray
-    private[scio] val DefaultFooter = Array.emptyByteArray
-    private[scio] val DefaultShardNameTemplate: String = null
-    private[scio] val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
-    private[scio] val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
-    private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
+  private[scio] object WriteParam {
+    val DefaultPrefix = null
+    val DefaultSuffix = ".bin"
+    val DefaultNumShards = 0
+    val DefaultCompression = Compression.UNCOMPRESSED
+    val DefaultHeader = Array.emptyByteArray
+    val DefaultFooter = Array.emptyByteArray
+    val DefaultShardNameTemplate: String = null
+    val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    val DefaultTempDirectory = null
+    val DefaultFilenamePolicySupplier = null
   }
 
   final case class WriteParam private (

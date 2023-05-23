@@ -52,7 +52,7 @@ object ObjectFileJob {
 object SpecificAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.avroFile[TestRecord](args("input"))
+    sc.avroSpecificFile[TestRecord](args("input"))
       .saveAsAvroFile(args("output"))
     sc.run()
     ()
@@ -62,7 +62,7 @@ object SpecificAvroFileJob {
 object GenericAvroFileJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.avroFile(args("input"), AvroUtils.schema)
+    sc.avroGenericFile(args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
     sc.run()
     ()
