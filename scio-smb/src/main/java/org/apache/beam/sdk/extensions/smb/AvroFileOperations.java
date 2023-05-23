@@ -27,10 +27,10 @@ import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumReader;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.AvroIO;
@@ -62,30 +62,30 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     this.metadata = metadata;
   }
 
-  public static <V extends GenericRecord> AvroFileOperations<V> of(Schema schema) {
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(Schema schema) {
     return of(schema, defaultCodec());
   }
 
-  public static <V extends GenericRecord> AvroFileOperations<V> of(
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(
       Schema schema, CodecFactory codec) {
     return of(schema, codec, null);
   }
 
-  public static <V extends GenericRecord> AvroFileOperations<V> of(
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(
       Schema schema, CodecFactory codec, Map<String, Object> metadata) {
     return new AvroFileOperations<>(null, schema, codec, metadata);
   }
 
-  public static <V extends SpecificRecordBase> AvroFileOperations<V> of(Class<V> recordClass) {
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(Class<V> recordClass) {
     return of(recordClass, defaultCodec());
   }
 
-  public static <V extends SpecificRecordBase> AvroFileOperations<V> of(
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(
       Class<V> recordClass, CodecFactory codec) {
     return of(recordClass, codec, null);
   }
 
-  public static <V extends SpecificRecordBase> AvroFileOperations<V> of(
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(
       Class<V> recordClass, CodecFactory codec, Map<String, Object> metadata) {
     // Use reflection to get SR schema
     final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
