@@ -28,6 +28,8 @@ import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io.TapT
 import com.spotify.scio.util.FilenamePolicySupplier
+import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
@@ -35,7 +37,8 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(TextIO(path))(TextIO.ReadParam(params.compression)).map(decodeJson)
+    sc.read(TextIO(path))(TextIO.ReadParam(params.compression, params.emptyMatchTreatment))
+      .map(decodeJson)
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
@@ -67,7 +70,15 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 }
 
 object JsonIO {
-  final case class ReadParam(compression: beam.Compression = beam.Compression.AUTO)
+  object ReadParam {
+    private[scio] val DefaultCompression = Compression.AUTO
+    private[scio] val DefaultEmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+  }
+
+  final case class ReadParam(
+    compression: beam.Compression = ReadParam.DefaultCompression,
+    emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment
+  )
 
   object WriteParam {
     private[scio] val DefaultNumShards = 0
