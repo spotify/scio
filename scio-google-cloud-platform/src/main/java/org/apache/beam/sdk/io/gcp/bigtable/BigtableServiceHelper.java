@@ -18,11 +18,24 @@
 package org.apache.beam.sdk.io.gcp.bigtable;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
+import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import java.io.IOException;
+import org.apache.beam.sdk.options.PipelineOptions;
 
 /** Wrap {@link BigtableServiceImpl} and expose package private methods. */
 public class BigtableServiceHelper extends BigtableServiceImpl {
 
-  public BigtableServiceHelper(BigtableOptions options) {
-    super(options);
+  private static final BigtableConfig EMPTY_CONFIG = BigtableConfig.builder().build();
+
+  public BigtableServiceHelper(BigtableOptions bigtableOptions, PipelineOptions pipelineOptions)
+      throws IOException {
+    super(translateToVeneerSettings(bigtableOptions, pipelineOptions));
+  }
+
+  private static BigtableDataSettings translateToVeneerSettings(
+      BigtableOptions bigtableOptions, PipelineOptions pipelineOptions) throws IOException {
+    final BigtableConfig config =
+        BigtableConfigTranslator.translateToBigtableConfig(EMPTY_CONFIG, bigtableOptions);
+    return BigtableConfigTranslator.translateToVeneerSettings(config, pipelineOptions);
   }
 }

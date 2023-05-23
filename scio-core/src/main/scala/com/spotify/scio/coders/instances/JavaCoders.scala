@@ -35,7 +35,7 @@ import org.apache.beam.sdk.{coders => bcoders}
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
-private object VoidCoder extends AtomicCoder[Void] {
+private[coders] object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
 
   override def decode(inStream: InputStream): Void = ???
