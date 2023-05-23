@@ -139,7 +139,6 @@ final private[scio] class FileStorage(path: String, suffix: String) {
     }
   }
 
-  @nowarn("msg=parameter value path in method getDirectoryInputStream is never used")
   private[scio] def getDirectoryInputStream(
     wrapperFn: InputStream => InputStream = identity
   ): InputStream = {
