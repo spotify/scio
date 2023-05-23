@@ -27,7 +27,7 @@ import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, CustomCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
-import scala.util.{Failure, Try}
+import scala.util.Try
 import scala.reflect.{classTag, ClassTag}
 
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
