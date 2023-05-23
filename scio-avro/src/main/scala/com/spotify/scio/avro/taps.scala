@@ -99,7 +99,7 @@ case class ObjectFileTap[T: Coder](
 final case class AvroTaps(self: Taps) {
 
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
-  def protobufFile[T: Coder](path: String, suffix: String)(implicit
+  def protobufFile[T: Coder](path: String, suffix: String = null)(implicit
     ev: T <:< Message
   ): Future[Tap[T]] =
     self.mkTap(
@@ -109,28 +109,43 @@ final case class AvroTaps(self: Taps) {
     )
 
   /** Get a `Future[Tap[T]]` of an object file. */
-  def objectFile[T: Coder](path: String, suffix: String): Future[Tap[T]] =
+  def objectFile[T: Coder](path: String, suffix: String = null): Future[Tap[T]] =
     self.mkTap(
       s"Object file: $path",
       () => self.isPathDone(path, suffix),
       () => ObjectFileTap[T](path, suffix)
     )
 
+  @deprecated("Use avroGenericFile instead", since = "0.13.0")
+  def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
+    avroGenericFile(path, schema)
+
   /**
    * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
    */
-  def avroFile(path: String, schema: Schema, suffix: String): Future[Tap[GenericRecord]] =
+  def avroGenericFile(
+    path: String,
+    schema: Schema,
+    suffix: String = null
+  ): Future[Tap[GenericRecord]] =
     self.mkTap(
       s"Avro: $path",
       () => self.isPathDone(path, suffix),
       () => GenericRecordTap(path, schema, suffix)
     )
 
+  @deprecated("Use avroSpecificFile instead", since = "0.13.0")
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =
+    avroSpecificFile[T](path)
+
   /**
    * Get a `Future[Tap[T]]` for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro
    * file.
    */
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String, suffix: String): Future[Tap[T]] =
+  def avroSpecificFile[T <: SpecificRecord: ClassTag: Coder](
+    path: String,
+    suffix: String = null
+  ): Future[Tap[T]] =
     self.mkTap(
       s"Avro: $path",
       () => self.isPathDone(path, suffix),
@@ -140,11 +155,11 @@ final case class AvroTaps(self: Taps) {
   /** Get a `Future[Tap[T]]` for typed Avro source. */
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
     path: String,
-    suffix: String
+    suffix: String = null
   ): Future[Tap[T]] = {
     val avroT = AvroType[T]
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    avroFile(path, avroT.schema, suffix).map(_.map(avroT.fromGenericRecord))
+    avroGenericFile(path, avroT.schema, suffix).map(_.map(avroT.fromGenericRecord))
   }
 }

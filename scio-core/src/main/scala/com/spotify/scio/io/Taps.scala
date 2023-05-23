@@ -31,15 +31,15 @@ class TapNotAvailableException(msg: String) extends Exception(msg)
 trait Taps {
 
   /** Get a `Future[Tap[String]]` for a text file. */
-  def textFile(path: String): Future[Tap[String]] =
+  def textFile(path: String, suffix: String = null): Future[Tap[String]] =
     mkTap(
       s"Text: $path",
-      () => isPathDone(path, null),
-      () => TextTap(path, null)
+      () => isPathDone(path, suffix),
+      () => TextTap(path, suffix)
     )
 
-  private[scio] def isPathDone(path: String, suffix: String): Boolean =
-    FileStorage(path, suffix).isDone
+  private[scio] def isPathDone(path: String, suffix: String = null): Boolean =
+    FileStorage(path, suffix).isDone()
 
   /**
    * Make a tap, to be implemented by concrete classes.

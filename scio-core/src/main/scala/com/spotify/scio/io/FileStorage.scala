@@ -35,7 +35,6 @@ import org.apache.commons.io.IOUtils
 
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
-import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -111,7 +110,7 @@ final private[scio] class FileStorage(path: String, suffix: String) {
     val files = Try(listFiles).recover { case _: FileNotFoundException => Seq.empty }.get
 
     // best effort matching shardNumber and numShards
-    val shards = ("(.*)(\\d+)\\D+(\\d+)\\D*" ++ Option(suffix).map(Pattern.quote).getOrElse("")).r
+    val shards = ("(.*)(\\d+)\\D+(\\d+)\\D*" + Option(suffix).map(Pattern.quote).getOrElse("")).r
     val writtenShards = files
       .map(_.resourceId().toString)
       .flatMap {
