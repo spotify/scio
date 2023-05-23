@@ -29,15 +29,15 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.46.0"
+val beamVersion = "2.47.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.46.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.47.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
 val bigdataossVersion = "2.2.6"
-val bigtableClientVersion = "1.26.3"
+val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
 val datastoreV1ProtoClientVersion = "2.9.0"
@@ -63,29 +63,29 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.8.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.11.0/index.html
 val animalSnifferAnnotationsVersion = "1.22"
-val bigQueryStorageBetaVersion = "0.155.0"
-val bigQueryStorageVersion = "2.31.0"
-val checkerFrameworkVersion = "3.30.0"
+val bigQueryStorageBetaVersion = "0.158.1"
+val bigQueryStorageVersion = "2.34.1"
+val checkerFrameworkVersion = "3.32.0"
 val errorProneAnnotationsVersion = "2.18.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.7.4"
 val gaxHttpJsonVersion = "0.108.0"
-val gaxVersion = "2.23.0"
-val googleApiCommonVersion = "2.6.0"
-val googleAuthVersion = "1.15.0"
-val googleCloudBigTableVersion = "2.19.0"
-val googleCloudCoreVersion = "2.10.0"
-val googleCloudDatastoreVersion = "0.104.4"
-val googleCloudMonitoringVersion = "3.11.0"
-val googleCloudPubSubVersion = "1.105.2"
-val googleCloudSpannerVersion = "6.36.0"
-val googleCloudStorageVersion = "2.18.0"
-val googleCommonsProtoVersion = "2.14.0"
-val googleHttpClientsVersion = "1.42.3"
-val googleIAMVersion = "1.9.0"
-val grpcVersion = "1.52.1"
+val gaxVersion = "2.23.3"
+val googleApiCommonVersion = "2.6.3"
+val googleAuthVersion = "1.16.0"
+val googleCloudBigTableVersion = "2.20.1"
+val googleCloudCoreVersion = "2.13.0"
+val googleCloudDatastoreVersion = "0.105.1"
+val googleCloudMonitoringVersion = "3.14.0"
+val googleCloudPubSubVersion = "1.105.7"
+val googleCloudSpannerVersion = "6.38.0"
+val googleCloudStorageVersion = "2.20.2"
+val googleCommonsProtoVersion = "2.14.3"
+val googleHttpClientsVersion = "1.43.1"
+val googleIAMVersion = "1.9.3"
+val grpcVersion = "1.53.0"
 val jsr305Version = "3.0.2"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
@@ -106,7 +106,6 @@ val commonsIoVersion = "2.11.0"
 val commonsLang3Version = "3.12.0"
 val commonsMath3Version = "3.6.1"
 val commonsTextVersion = "1.10.0"
-val elasticsearch6Version = "6.8.23"
 val elasticsearch7Version = "7.17.9"
 val elasticsearch8Version = "8.7.1"
 val fansiVersion = "0.4.0"
@@ -209,17 +208,13 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
-  mimaBinaryIssueFilters := Seq(
-    // minor scio-core breaking changes for 0.12.8
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.values.SCollectionWithSideOutput.this"
-    )
-  ),
-  mimaPreviousArtifacts :=
-    previousVersion(version.value)
-      .filter(_ => publishArtifact.value)
-      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
-      .toSet
+  mimaBinaryIssueFilters := Seq.empty,
+  // enable back after 0.13
+  mimaPreviousArtifacts := Set.empty
+//    previousVersion(version.value)
+//      .filter(_ => publishArtifact.value)
+//      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+//      .toSet
 )
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
@@ -503,7 +498,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-avro`,
     `scio-cassandra3`,
     `scio-core`,
-    `scio-elasticsearch6`,
+    `scio-elasticsearch-common`,
     `scio-elasticsearch7`,
     `scio-elasticsearch8`,
     `scio-examples`,
@@ -814,68 +809,8 @@ lazy val `scio-cassandra3`: Project = project
     )
   )
 
-lazy val `scio-elasticsearch6`: Project = project
-  .in(file("scio-elasticsearch/es6"))
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    description := "Scio add-on for writing to Elasticsearch",
-    libraryDependencies ++= Seq(
-      // compile
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch6Version,
-      "org.elasticsearch" % "elasticsearch-core" % elasticsearch6Version,
-      "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch6Version,
-      "org.elasticsearch.client" % "transport" % elasticsearch6Version,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // test
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    )
-  )
-
-lazy val `scio-elasticsearch7`: Project = project
-  .in(file("scio-elasticsearch/es7"))
-  .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
-  )
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    description := "Scio add-on for writing to Elasticsearch",
-    libraryDependencies ++= Seq(
-      // compile
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.httpcomponents" % "httpasyncclient" % httpAsyncClientVersion,
-      "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
-      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.elasticsearch" % "elasticsearch" % elasticsearch7Version,
-      "org.elasticsearch" % "elasticsearch-core" % elasticsearch7Version,
-      "org.elasticsearch" % "elasticsearch-x-content" % elasticsearch7Version,
-      "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch7Version,
-      "org.elasticsearch.client" % "elasticsearch-rest-high-level-client" % elasticsearch7Version,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // test
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    )
-  )
-
-lazy val `scio-elasticsearch8`: Project = project
-  .in(file("scio-elasticsearch/es8"))
+lazy val `scio-elasticsearch-common`: Project = project
+  .in(file("scio-elasticsearch/common"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test,it"
@@ -888,8 +823,6 @@ lazy val `scio-elasticsearch8`: Project = project
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
       // compile
-      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
-      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
       "commons-io" % "commons-io" % commonsIoVersion,
       "jakarta.json" % "jakarta.json-api" % jakartaJsonVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -898,9 +831,11 @@ lazy val `scio-elasticsearch8`: Project = project
       "org.apache.httpcomponents" % "httpasyncclient" % httpAsyncClientVersion,
       "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch8Version,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // provided
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version % Provided,
+      "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch8Version % Provided,
       // test
       "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % "it",
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
@@ -909,6 +844,40 @@ lazy val `scio-elasticsearch8`: Project = project
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
+    )
+  )
+
+lazy val `scio-elasticsearch7`: Project = project
+  .in(file("scio-elasticsearch/es7"))
+  .dependsOn(
+    `scio-elasticsearch-common` % "compile->compile;it->it",
+    `scio-test` % "it"
+  )
+  .configs(IntegrationTest)
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(itSettings)
+  .settings(
+    description := "Scio add-on for writing to Elasticsearch",
+    libraryDependencies ++= Seq(
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch7Version
+    )
+  )
+
+lazy val `scio-elasticsearch8`: Project = project
+  .in(file("scio-elasticsearch/es8"))
+  .dependsOn(
+    `scio-elasticsearch-common` % "compile->compile;it->it",
+    `scio-test` % "it"
+  )
+  .configs(IntegrationTest)
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(itSettings)
+  .settings(
+    description := "Scio add-on for writing to Elasticsearch",
+    libraryDependencies ++= Seq(
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version
     )
   )
 
