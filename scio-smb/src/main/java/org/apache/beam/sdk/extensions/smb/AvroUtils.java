@@ -38,6 +38,15 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 class AvroUtils {
   private AvroUtils() {}
 
+  /**
+   * Constructs the sequence of indexes to access the nested key field from an avro {@link
+   * org.apache.avro.generic.IndexedRecord}.
+   *
+   * @param keyField name of the field (joined with '.')
+   * @param keyClass key class to ensure type correctness of the designated keyField
+   * @param schema avro schema
+   * @return sequence of index to access the keyField
+   */
   public static int[] toKeyPath(String keyField, Class<?> keyClass, Schema schema) {
     final String[] fields = keyField.split("\\.");
     final int[] path = new int[fields.length];

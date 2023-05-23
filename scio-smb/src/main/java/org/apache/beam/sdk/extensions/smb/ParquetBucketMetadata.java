@@ -338,6 +338,14 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
     }
   }
 
+  /**
+   * Constructs the sequence of getter methods to access the nested key field from a class
+   *
+   * @param keyField name of the field (joined with '.')
+   * @param keyClass key class to ensure type correctness of the designated keyField
+   * @param recordClass record class type
+   * @return sequence of getter methods to access the keyField
+   */
   private static Method[] toKeyGetters(String keyField, Class<?> keyClass, Class<?> recordClass) {
     final String[] fields = keyField.split("\\.");
     final Method[] getters = new Method[fields.length];
