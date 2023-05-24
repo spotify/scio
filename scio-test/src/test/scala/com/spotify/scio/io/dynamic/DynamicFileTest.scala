@@ -17,7 +17,7 @@
 
 package com.spotify.scio.io.dynamic
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Files
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro._
@@ -27,7 +27,6 @@ import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.options.PipelineOptionsFactory
-import org.apache.commons.io.FileUtils
 import org.joda.time.{Duration, Instant}
 
 import java.io.File

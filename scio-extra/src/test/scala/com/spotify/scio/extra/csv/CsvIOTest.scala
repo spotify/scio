@@ -195,7 +195,7 @@ class CsvIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterEach {
     )
   }
 
-  "CsvIO.ReadDoFn" should "be serializable" in withTempDir { dir =>
+  "CsvIO.ReadDoFn" should "be serializable" in {
     implicit val decoder: HeaderDecoder[TestTuple] =
       HeaderDecoder.decoder("numericValue", "stringValue")(TestTuple.apply)
     SerializableUtils.serializeToByteArray(
