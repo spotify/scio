@@ -27,7 +27,6 @@ import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.coders.StringUtf8Coder
-import org.apache.beam.sdk.io.AvroIO.RecordFormatter
 import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.{io => beam}
 

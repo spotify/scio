@@ -17,10 +17,6 @@
 
 package com.spotify.scio.io
 
-import java.io._
-import java.nio.ByteBuffer
-import java.nio.channels.{Channels, SeekableByteChannel}
-import java.util.Collections
 import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
@@ -33,7 +29,12 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.IOUtils
 
+import java.io._
+import java.nio.ByteBuffer
+import java.nio.channels.{Channels, SeekableByteChannel}
 import java.nio.charset.StandardCharsets
+import java.util.Collections
+import scala.collection.compat._ // scalafix:ok
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -114,7 +115,7 @@ final private[scio] class FileStorage(path: String, suffix: String) {
     val files = Try(listFiles).recover { case _: FileNotFoundException => Seq.empty }.get
 
     // best effort matching shardNumber and numShards
-    // relies of the used shardNameTemplate to be '$prefix-$shardNumber-of-$numShards$suffix' format
+    // relies on the shardNameTemplate to be of '$prefix-$shardNumber-of-$numShards$suffix' format
     val writtenShards = files
       .map(_.resourceId().toString)
       .flatMap {
@@ -132,7 +133,7 @@ final private[scio] class FileStorage(path: String, suffix: String) {
       .groupMap(_._1)(_._2)
 
     if (files.isEmpty) {
-      // no files in folder
+      // no file matched
       false
     } else if (writtenShards.isEmpty) {
       // assume progress is complete when shard info is not retrieved and files are present

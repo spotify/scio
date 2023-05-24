@@ -36,7 +36,6 @@ import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 
-import scala.annotation.unused
 
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = TFRecordIO.ReadParam

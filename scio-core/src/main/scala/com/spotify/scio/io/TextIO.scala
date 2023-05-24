@@ -132,8 +132,8 @@ object TextIO {
   )
 
   private[scio] object WriteParam {
-    val DefaultHeader = Option.empty[String]
-    val DefaultFooter = Option.empty[String]
+    val DefaultHeader: Option[String] = None
+    val DefaultFooter: Option[String] = None
     val DefaultSuffix = ".txt"
     val DefaultNumShards = 0
     val DefaultCompression = Compression.UNCOMPRESSED
