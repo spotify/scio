@@ -18,12 +18,11 @@ package com.spotify.scio.parquet.read
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.Account
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.values.SCollection
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.util.SerializableUtils
