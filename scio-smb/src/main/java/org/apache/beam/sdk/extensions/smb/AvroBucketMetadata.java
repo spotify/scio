@@ -25,21 +25,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 
 /**
- * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for Avro {@link GenericRecord} records.
+ * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for Avro {@link IndexedRecord} records.
  */
-public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketMetadata<K1, K2, V> {
+public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketMetadata<K1, K2, V> {
 
   @JsonProperty private final String keyField;
 
@@ -47,8 +46,8 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String keyFieldSecondary;
 
-  @JsonIgnore private final String[] keyPath;
-  @JsonIgnore private final String[] keyPathSecondary;
+  @JsonIgnore private final AtomicReference<int[]> keyPath = new AtomicReference<>();
+  @JsonIgnore private final AtomicReference<int[]> keyPathSecondary = new AtomicReference<>();
 
   public AvroBucketMetadata(
       int numBuckets,
@@ -66,17 +65,11 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
         numBuckets,
         numShards,
         keyClassPrimary,
-        AvroUtils.validateKeyField(
-            keyField,
-            keyClassPrimary,
-            new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
+        AvroUtils.validateKeyField(keyField, keyClassPrimary, recordClass),
         keyClassSecondary,
         keyFieldSecondary == null
             ? null
-            : AvroUtils.validateKeyField(
-                keyFieldSecondary,
-                keyClassSecondary,
-                new ReflectData(recordClass.getClassLoader()).getSchema(recordClass)),
+            : AvroUtils.validateKeyField(keyFieldSecondary, keyClassSecondary, recordClass),
         hashType,
         filenamePrefix);
   }
@@ -131,9 +124,6 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
             || (keyClassSecondary == null && keyFieldSecondary == null));
     this.keyField = keyField;
     this.keyFieldSecondary = keyFieldSecondary;
-    this.keyPath = AvroUtils.toKeyPath(keyField);
-    this.keyPathSecondary =
-        keyFieldSecondary == null ? null : AvroUtils.toKeyPath(keyFieldSecondary);
   }
 
   @Override
@@ -143,19 +133,29 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
 
   @Override
   public K1 extractKeyPrimary(V value) {
-    return extractKey(keyPath, value);
+    int[] path = keyPath.get();
+    if (path == null) {
+      path = AvroUtils.toKeyPath(keyField, getKeyClass(), value.getSchema());
+      keyPath.compareAndSet(null, path);
+    }
+    return extractKey(path, value);
   }
 
   @Override
   public K2 extractKeySecondary(V value) {
-    verifyNotNull(keyPathSecondary);
-    return extractKey(keyPathSecondary, value);
+    verifyNotNull(keyFieldSecondary);
+    int[] path = keyPathSecondary.get();
+    if (path == null) {
+      path = AvroUtils.toKeyPath(keyFieldSecondary, getKeyClassSecondary(), value.getSchema());
+      keyPathSecondary.compareAndSet(null, path);
+    }
+    return extractKey(path, value);
   }
 
-  private <K> K extractKey(String[] keyPath, V value) {
-    GenericRecord node = value;
+  private <K> K extractKey(int[] keyPath, V value) {
+    IndexedRecord node = value;
     for (int i = 0; i < keyPath.length - 1; i++) {
-      node = (GenericRecord) node.get(keyPath[i]);
+      node = (IndexedRecord) node.get(keyPath[i]);
     }
     @SuppressWarnings("unchecked")
     K key = (K) node.get(keyPath[keyPath.length - 1]);
@@ -174,9 +174,7 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
   public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
     if (o == null || getClass() != o.getClass()) return false;
     AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
-    return getKeyClass() == that.getKeyClass()
-        && keyField.equals(that.keyField)
-        && Arrays.equals(keyPath, that.keyPath);
+    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
   }
 
   @Override
@@ -187,16 +185,12 @@ public class AvroBucketMetadata<K1, K2, V extends GenericRecord> extends BucketM
         getKeyClassSecondary() != null
             && that.getKeyClassSecondary() != null
             && keyFieldSecondary != null
-            && that.keyFieldSecondary != null
-            && keyPathSecondary != null
-            && that.keyPathSecondary != null;
+            && that.keyFieldSecondary != null;
     // you messed up
     if (!allSecondaryPresent) return false;
     return getKeyClass() == that.getKeyClass()
         && getKeyClassSecondary() == that.getKeyClassSecondary()
         && keyField.equals(that.keyField)
-        && keyFieldSecondary.equals(that.keyFieldSecondary)
-        && Arrays.equals(keyPath, that.keyPath)
-        && Arrays.equals(keyPathSecondary, that.keyPathSecondary);
+        && keyFieldSecondary.equals(that.keyFieldSecondary);
   }
 }

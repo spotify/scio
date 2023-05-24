@@ -30,7 +30,7 @@ import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
@@ -116,7 +116,7 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
       new JTraversableSerializer[Any, mutable.Buffer[Any]]
     )
 
-    k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
+    k.forSubclass[SpecificRecord](new SpecificAvroSerializer)
     k.forSubclass[GenericRecord](new GenericAvroSerializer)
     k.forSubclass[Message](new ProtobufSerializer)
     k.forClass[LocalDate](new JodaLocalDateSerializer)

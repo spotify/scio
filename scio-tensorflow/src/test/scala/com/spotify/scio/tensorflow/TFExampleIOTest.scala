@@ -63,7 +63,7 @@ class TFExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
   override def failSaves = Seq(
     _.map(x => recordT(Record(x, x.toString))).saveAsTfRecordFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )

@@ -17,18 +17,18 @@
 
 package com.spotify.scio.coders.instances
 
-import java.io.{InputStream, OutputStream}
-import com.spotify.scio.coders.{AvroCoderMacros, Coder}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecord, SpecificRecordBase}
+import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecord}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, CustomCoder, StringUtf8Coder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
-import scala.util.Try
+import java.io.{InputStream, OutputStream}
 import scala.reflect.{classTag, ClassTag}
+import scala.util.Try
 
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
   // TODO: can we find something more efficient than String ?
@@ -136,10 +136,6 @@ trait AvroCoders {
     val useReflectApi = true // keep this for backward compatibility
     Coder.beam(AvroCoder.of(clazz, schema, useReflectApi))
   }
-
-  @deprecated("Use avroSpecificRecordCoder instead", since = "0.12.5")
-  def genAvro[T <: SpecificRecordBase]: Coder[T] =
-    macro AvroCoderMacros.staticInvokeCoder[T]
 
   implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
     SpecificFixedCoder[T]
