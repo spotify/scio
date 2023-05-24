@@ -169,7 +169,7 @@ class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   override def failSaves: Seq[SCollection[Int] => ClosedTap[TestRecord]] = Seq(
     _.map(AvroUtils.newSpecificRecord).saveAsAvroFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )
@@ -192,7 +192,7 @@ class TextIOFileNamePolicyTest extends FileNamePolicySpec[String] {
   override def failSaves: Seq[SCollection[Int] => ClosedTap[String]] = Seq(
     _.map(_.toString).saveAsTextFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )
@@ -217,7 +217,7 @@ class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[ScioIOTest.AvroRecor
   override def failSaves: Seq[SCollection[Int] => ClosedTap[AvroRecord]] = Seq(
     _.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList)).saveAsObjectFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )
@@ -240,7 +240,7 @@ class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
   override def failSaves: Seq[SCollection[Int] => ClosedTap[TrackPB]] = Seq(
     _.map(x => TrackPB.newBuilder().setTrackId(x.toString).build()).saveAsProtobufFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )
@@ -263,7 +263,7 @@ class BinaryIOFileNamePolicyTest extends FileNamePolicySpec[Nothing] {
   override def failSaves: Seq[SCollection[Int] => ClosedTap[Nothing]] = Seq(
     _.map(x => ByteBuffer.allocate(4).putInt(x).array).saveAsBinaryFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     ),
     _.map(x => ByteBuffer.allocate(4).putInt(x).array).saveAsBinaryFile(
