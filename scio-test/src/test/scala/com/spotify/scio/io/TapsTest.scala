@@ -21,7 +21,6 @@ import java.nio.file.{Files, Path}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.io.File
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
