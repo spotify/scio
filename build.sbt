@@ -661,8 +661,7 @@ lazy val `scio-macros`: Project = project
     libraryDependencies ++= Seq(
       // compile
       "com.chuusai" %% "shapeless" % shapelessVersion,
-      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
-      "org.apache.avro" % "avro" % avroVersion
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
     )
   )
 
@@ -757,7 +756,6 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (testLibs: _*),
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -861,6 +859,7 @@ lazy val `scio-elasticsearch7`: Project = project
   .settings(itSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
+    unusedCompileDependenciesFilter -= moduleFilter("co.elastic.clients", "elasticsearch-java"),
     libraryDependencies ++= Seq(
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch7Version
     )
@@ -878,6 +877,7 @@ lazy val `scio-elasticsearch8`: Project = project
   .settings(itSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
+    unusedCompileDependenciesFilter -= moduleFilter("co.elastic.clients", "elasticsearch-java"),
     libraryDependencies ++= Seq(
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version
     )
