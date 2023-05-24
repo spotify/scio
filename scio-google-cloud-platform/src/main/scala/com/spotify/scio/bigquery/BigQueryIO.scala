@@ -31,6 +31,7 @@ import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
@@ -457,7 +458,35 @@ object TableRowJsonIO {
   val ReadParam = TextIO.ReadParam
 
   type WriteParam = TextIO.WriteParam
-  val WriteParam = TextIO.WriteParam
+  private[scio] object WriteParam {
+    val DefaultSuffix = ".json"
+    val DefaultNumShards = TextIO.WriteParam.DefaultNumShards
+    val DefaultCompression = TextIO.WriteParam.DefaultCompression
+    val DefaultFilenamePolicySupplier = TextIO.WriteParam.DefaultFilenamePolicySupplier
+    val DefaultPrefix = TextIO.WriteParam.DefaultPrefix
+    val DefaultShardNameTemplate = TextIO.WriteParam.DefaultShardNameTemplate
+    val DefaultTempDirectory = TextIO.WriteParam.DefaultTempDirectory
+
+    def apply(
+      suffix: String = DefaultSuffix,
+      numShards: Int = DefaultNumShards,
+      compression: Compression = DefaultCompression,
+      filenamePolicySupplier: FilenamePolicySupplier = DefaultFilenamePolicySupplier,
+      prefix: String = DefaultPrefix,
+      shardNameTemplate: String = DefaultShardNameTemplate,
+      tempDirectory: String = DefaultTempDirectory
+    ): WriteParam = {
+      TextIO.WriteParam(
+        suffix = suffix,
+        numShards = numShards,
+        compression = compression,
+        filenamePolicySupplier = filenamePolicySupplier,
+        prefix = prefix,
+        shardNameTemplate = shardNameTemplate,
+        tempDirectory = tempDirectory
+      )
+    }
+  }
 
 }
 
