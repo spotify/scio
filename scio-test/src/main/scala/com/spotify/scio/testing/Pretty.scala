@@ -18,7 +18,7 @@
 package com.spotify.scio.testing
 
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.{registerSysProps, SysProp}
 import scala.util.Try
@@ -51,33 +51,25 @@ object Pretty {
       )
     def render(tree: Tree): Str =
       Str.join(renderer.rec(tree, 0, 0).iter.iterator.to(Iterable))
+
     Tree.Lazy { _ =>
-      val fields =
-        for {
-          f <- g.getSchema().getFields().asScala
-        } yield Str(
-          render(renderFieldName(f.name)),
-          ": ",
-          render(treeifyAvro(g.get(f.name())))
-        )
-      List(
-        Color.LightGray("{ ").toString +
-          fields.reduce((a, b) => Str(a, ", ", b)) +
-          Color.LightGray(" }")
-      ).iterator
+      val fields = g.getSchema.getFields.asScala
+        .map(f => Str(render(renderFieldName(f.name)), ": ", render(treeifyAvro(g.get(f.name())))))
+        .reduce((a, b) => Str(a, ", ", b))
+
+      Iterator(Color.LightGray("{ ").toString + fields + Color.LightGray(" }"))
     }
   }
 
-  private def renderSpecificRecord: PartialFunction[SpecificRecordBase, Tree] = { case x =>
-    val fs =
-      for {
-        f <- x.getSchema().getFields().asScala
-      } yield Tree.Infix(renderFieldName(f.name), "=", treeifyAvro(x.get(f.name())))
-    Tree.Apply(x.getClass().getSimpleName(), fs.iterator)
+  private def renderSpecificRecord: PartialFunction[SpecificRecord, Tree] = { case x =>
+    val fs = x.getSchema.getFields.asScala
+      .map(f => Tree.Infix(renderFieldName(f.name), "=", treeifyAvro(x.get(f.pos()))))
+
+    Tree.Apply(x.getClass.getSimpleName, fs.iterator)
   }
 
   private def treeifyAvro: PartialFunction[Any, Tree] = {
-    case x: SpecificRecordBase =>
+    case x: SpecificRecord =>
       renderSpecificRecord(x)
     case g: GenericRecord =>
       renderGenericRecord(g)

@@ -19,12 +19,12 @@ package com.spotify.scio.coders
 import com.spotify.scio.coders.instances.kryo.{GenericAvroSerializer, SpecificAvroSerializer}
 import com.twitter.chill._
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 
 @KryoRegistrar
 class AvroKryoRegistrar extends IKryoRegistrar {
   override def apply(k: Kryo): Unit = {
-    k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
+    k.forSubclass[SpecificRecord](new SpecificAvroSerializer)
     k.forSubclass[GenericRecord](new GenericAvroSerializer)
   }
 
