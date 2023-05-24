@@ -58,10 +58,13 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
   }
 
   override def tap(params: ReadP): Tap[T] = new Tap[T] {
-    override def value: Iterator[T] =
-      TextIO.textFile(ScioUtil.filePattern(path, params.suffix)).map(decodeJson)
+    override def value: Iterator[T] = {
+      val filePattern = ScioUtil.filePattern(path, params.suffix)
+      TextIO.textFile(filePattern).map(decodeJson)
+    }
+
     override def open(sc: ScioContext): SCollection[T] =
-      JsonIO(ScioUtil.filePattern(path, params.suffix)).read(sc, params)
+      JsonIO(path).read(sc, params)
   }
 
   private def decodeJson(json: String): T =

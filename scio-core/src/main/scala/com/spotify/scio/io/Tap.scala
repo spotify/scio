@@ -111,9 +111,10 @@ private[scio] class MaterializeTap[T: Coder] private (path: String, coder: BCode
     }
 
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
+    val filePattern = ScioUtil.filePattern(path, MaterializeTap.Suffix)
     val read = AvroIO
       .readGenericRecords(AvroBytesUtil.schema)
-      .from(ScioUtil.filePattern(path, MaterializeTap.Suffix))
+      .from(filePattern)
     sc.applyTransform(read).parDo(dofn)
   }
 }

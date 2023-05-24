@@ -75,6 +75,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     params: ReadP
   ): SCollection[Example] = {
     val job = Job.getInstance(conf)
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
 
     Option(params.projection).foreach { projection =>
       ExampleParquetInputFormat.setFields(job, projection.asJava)
@@ -91,7 +92,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       ParquetRead.read(
         ReadSupportFactory.example,
         new SerializableConfiguration(conf),
-        ScioUtil.filePattern(path, params.suffix),
+        filePattern,
         identity[Example]
       )
     ).setCoder(coder)
@@ -204,7 +205,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   }
 
   override def tap(params: ReadP): Tap[Example] =
-    ParquetExampleTap(ScioUtil.filePattern(path, params.suffix), params)
+    ParquetExampleTap(path, params)
 }
 
 object ParquetExampleIO {
@@ -255,7 +256,8 @@ object ParquetExampleIO {
 final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadParam)
     extends Tap[Example] {
   override def value: Iterator[Example] = {
-    val xs = FileSystems.`match`(path).metadata().asScala.toList
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
       val reader = ExampleParquetReader
         .builder(BeamInputFile.of(metadata.resourceId()))

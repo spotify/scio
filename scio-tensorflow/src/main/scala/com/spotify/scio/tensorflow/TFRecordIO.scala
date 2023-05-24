@@ -36,7 +36,6 @@ import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 
-
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = TFRecordIO.ReadParam
   override type WriteP = TFRecordIO.WriteParam
@@ -149,13 +148,19 @@ final case class TFSequenceExampleIO(path: String) extends ScioIO[SequenceExampl
 }
 
 private object TFRecordMethods {
-  def read(sc: ScioContext, path: String, params: TFRecordIO.ReadParam): SCollection[Array[Byte]] =
+  def read(
+    sc: ScioContext,
+    path: String,
+    params: TFRecordIO.ReadParam
+  ): SCollection[Array[Byte]] = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
     sc.applyTransform(
       beam.TFRecordIO
         .read()
-        .from(ScioUtil.filePattern(path, params.suffix))
+        .from(filePattern)
         .withCompression(params.compression)
     )
+  }
 
   private def tfWrite(
     path: String,

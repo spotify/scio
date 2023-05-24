@@ -196,23 +196,29 @@ object CsvIO {
       .withCompression(params.compression)
       .via(new CsvSink(params.csvConfiguration))
 
-  private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) =
-    sc.parallelize(Seq(ScioUtil.filePattern(path, params.suffix)))
+  private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    val read = ParDo
+      .of(CsvIO.ReadDoFn[T](params.csvConfiguration))
+      .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[T]]]
+
+    sc.parallelize(Seq(filePattern))
       .withName("Read CSV")
       .readFiles(
-        ParDo
-          .of(CsvIO.ReadDoFn[T](params.csvConfiguration))
-          .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[T]]],
-        DirectoryTreatment.PROHIBIT,
-        params.compression
+        filesTransform = read,
+        directoryTreatment = DirectoryTreatment.PROHIBIT,
+        compression = params.compression
       )
+  }
 
   final private class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam)
       extends Tap[T] {
-    override def value: Iterator[T] =
+    override def value: Iterator[T] = {
+      val filePattern = ScioUtil.filePattern(path, params.suffix)
       BinaryIO
-        .openInputStreamsFor(ScioUtil.filePattern(path, params.suffix))
+        .openInputStreamsFor(filePattern)
         .flatMap(_.asUnsafeCsvReader[T](params.csvConfiguration).iterator)
+    }
 
     override def open(sc: ScioContext): SCollection[T] = CsvIO.read(sc, path, params)
   }

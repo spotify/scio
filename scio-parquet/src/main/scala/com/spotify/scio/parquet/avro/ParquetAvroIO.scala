@@ -151,7 +151,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override def tap(params: ReadP): Tap[T] =
-    ParquetAvroTap(ScioUtil.filePattern(path, params.suffix), params)
+    ParquetAvroTap(path, params)
 }
 
 object ParquetAvroIO {
@@ -329,7 +329,8 @@ case class ParquetAvroTap[A, T: ClassTag: Coder](
   params: ParquetAvroIO.ReadParam[A, T]
 ) extends Tap[T] {
   override def value: Iterator[T] = {
-    val xs = FileSystems.`match`(path).metadata().asScala.toList
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
       val reader = AvroParquetReader
         .builder[A](BeamInputFile.of(metadata.resourceId()))

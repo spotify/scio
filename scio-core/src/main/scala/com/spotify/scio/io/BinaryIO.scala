@@ -114,7 +114,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
 object BinaryIO {
 
-  private[scio] def openInputStreamsFor(path: String): Iterator[InputStream] = {
+  private[scio] def openInputStreamsFor(pattern: String): Iterator[InputStream] = {
     val factory = new CompressorStreamFactory()
 
     def wrapInputStream(in: InputStream) = {
@@ -122,11 +122,11 @@ object BinaryIO {
       Try(factory.createCompressorInputStream(buffered)).getOrElse(buffered)
     }
 
-    listFiles(path).map(getObjectInputStream).map(wrapInputStream).iterator
+    listFiles(pattern).map(getObjectInputStream).map(wrapInputStream).iterator
   }
 
-  private def listFiles(path: String): Seq[Metadata] =
-    FileSystems.`match`(path).metadata().iterator.asScala.toSeq
+  private def listFiles(pattern: String): Seq[Metadata] =
+    FileSystems.`match`(pattern).metadata().iterator.asScala.toSeq
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
