@@ -31,7 +31,7 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support not Avro's SpecificRecord if a concrete type is not provided" in {
-    val caught = intercept[Throwable] {
+    val caught = intercept[RuntimeException] {
       Avro.user.asInstanceOf[SpecificRecord] coderShould notFallback()
     }
 
