@@ -25,10 +25,9 @@ import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
-import com.spotify.scio.util.{Functions, ScioUtil}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT, TestIO, TextIO}
+import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.io.TapT
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -37,7 +36,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, 
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-import org.apache.beam.sdk.io.{Compression, TextIO}
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.jdk.CollectionConverters._
@@ -435,25 +434,16 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type ReadP = TableRowJsonIO.ReadParam
   override type WriteP = TableRowJsonIO.WriteParam
-  final override val tapT: TapT.Aux[TableRow, TableRow] = TapOf[TableRow]
+  override val tapT: TapT.Aux[TableRow, TableRow] = TapOf[TableRow]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
-    val filePattern = ScioUtil.filePattern(path, params.suffix)
-    sc.applyTransform(TextIO.read().from(filePattern))
+    sc.read(TextIO(path))(params)
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
   }
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
     data.transform_("BigQuery write") {
-      _.map(ScioUtil.jsonFactory.toString)
-        .applyInternal(
-          data.textOut(
-            path = path,
-            suffix = params.suffix,
-            numShards = params.numShards,
-            compression = params.compression
-          )
-        )
+      _.map(ScioUtil.jsonFactory.toString).write(TextIO(path))(params)
     }
     tap(TableRowJsonIO.ReadParam(params))
   }
@@ -464,33 +454,12 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
 
 object TableRowJsonIO {
 
-  private[bigquery] object ReadParam {
-    val DefaultCompression = Compression.AUTO
-    val DefaultSuffix = null
+  type ReadParam = TextIO.ReadParam
+  val ReadParam = TextIO.ReadParam
 
-    def apply(params: WriteParam): ReadParam =
-      new ReadParam(
-        compression = params.compression,
-        suffix = params.suffix + params.compression.getSuggestedSuffix
-      )
-  }
+  type WriteParam = TextIO.WriteParam
+  val WriteParam = TextIO.WriteParam
 
-  final case class ReadParam private (
-    compression: Compression = ReadParam.DefaultCompression,
-    suffix: String = null
-  )
-
-  private[bigquery] object WriteParam {
-    val DefaultNumShards = 0
-    val DefaultCompression = Compression.UNCOMPRESSED
-    val DefaultSuffix = ".json"
-  }
-
-  final case class WriteParam private (
-    numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression,
-    suffix: String = WriteParam.DefaultSuffix
-  )
 }
 
 object BigQueryTyped {

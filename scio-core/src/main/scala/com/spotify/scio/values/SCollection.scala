@@ -1568,19 +1568,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       ClosedTap(MaterializeTap[T](path, context))
     }
 
-  private[scio] def textOut(
-    path: String,
-    suffix: String,
-    numShards: Int,
-    compression: Compression
-  ) =
-    beam.TextIO
-      .write()
-      .to(ScioUtil.pathWithPrefix(path, null)) // TODO
-      .withSuffix(suffix)
-      .withNumShards(numShards)
-      .withCompression(compression)
-
   /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.
    * @group output

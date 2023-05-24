@@ -19,18 +19,7 @@ package com.spotify.scio.bigquery.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{
-  BigQuerySelect,
-  BigQueryStorage,
-  BigQueryStorageSelect,
-  BigQueryType,
-  BigQueryTyped,
-  Query,
-  Source,
-  Table,
-  TableRow,
-  TableRowJsonIO
-}
+import com.spotify.scio.bigquery.{BigQuerySelect, BigQueryStorage, BigQueryStorageSelect, BigQueryType, BigQueryTyped, Query, Source, Table, TableRow, TableRowJsonIO}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 
@@ -40,6 +29,7 @@ import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.coders.tableRowCoder
 import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -212,9 +202,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def tableRowJsonFile(
     path: String,
     compression: Compression = TableRowJsonIO.ReadParam.DefaultCompression,
+    emptyMatchTreatment: EmptyMatchTreatment = TableRowJsonIO.ReadParam.DefaultEmptyMatchTreatment,
     suffix: String = TableRowJsonIO.ReadParam.DefaultSuffix
   ): SCollection[TableRow] =
-    self.read(TableRowJsonIO(path))(TableRowJsonIO.ReadParam(compression, suffix))
+    self.read(TableRowJsonIO(path))(TableRowJsonIO.ReadParam(compression, emptyMatchTreatment, suffix))
 }
 
 trait ScioContextSyntax {

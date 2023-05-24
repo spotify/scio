@@ -143,28 +143,18 @@ object TextIO {
     val DefaultTempDirectory = null
   }
 
-  final val DefaultWriteParam: WriteParam = WriteParam(
-    WriteParam.DefaultSuffix,
-    WriteParam.DefaultNumShards,
-    WriteParam.DefaultCompression,
-    WriteParam.DefaultHeader,
-    WriteParam.DefaultFooter,
-    WriteParam.DefaultFilenamePolicySupplier,
-    WriteParam.DefaultPrefix,
-    WriteParam.DefaultShardNameTemplate,
-    WriteParam.DefaultTempDirectory
-  )
+  val DefaultWriteParam: WriteParam = WriteParam()
 
   final case class WriteParam private (
-    suffix: String,
-    numShards: Int,
-    compression: Compression,
-    header: Option[String],
-    footer: Option[String],
-    filenamePolicySupplier: FilenamePolicySupplier,
-    prefix: String,
-    shardNameTemplate: String,
-    tempDirectory: String
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: Compression = WriteParam.DefaultCompression,
+    header: Option[String] = WriteParam.DefaultHeader,
+    footer: Option[String] = WriteParam.DefaultFooter,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 
   private[scio] def textFile(pattern: String): Iterator[String] = {
