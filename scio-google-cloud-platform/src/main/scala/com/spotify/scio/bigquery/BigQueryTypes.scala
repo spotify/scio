@@ -275,7 +275,7 @@ object DateTime {
 }
 
 /** Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]]. */
-case class TimePartitioning(
+final case class TimePartitioning(
   `type`: String,
   field: String = null,
   expirationMs: Long = 0,
@@ -292,12 +292,30 @@ case class TimePartitioning(
 }
 
 /** Scala wrapper for [[com.google.api.services.bigquery.model.Clustering]]. */
-case class Clustering(
+final case class Clustering(
   fields: Seq[String] = Seq()
 ) {
   def asJava: GClustering =
     new GClustering()
       .setFields(fields.asJava)
+}
+
+/** Scala representation for BQ write sharding. */
+sealed trait Sharding
+object Sharding {
+
+  /**
+   * enables using a dynamically determined number of shards to write to BigQuery. This can be used
+   * for both BigQueryIO.Write.Method.FILE_LOADS and BigQueryIO.Write.Method.STREAMING_INSERTS. Only
+   * applicable to unbounded data.
+   */
+  case object Auto extends Sharding
+
+  /**
+   * Control how many file shards are written when using BigQuery load jobs, or how many parallel
+   * streams are used when using Storage API writes.
+   */
+  final case class Manual(numShards: Int) extends Sharding
 }
 
 object Numeric {

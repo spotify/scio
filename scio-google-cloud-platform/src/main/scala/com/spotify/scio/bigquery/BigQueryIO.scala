@@ -121,6 +121,7 @@ private[bigquery] object Writes {
     val DefaultTimePartitioning: TimePartitioning = null
     val DefaultClustering: Clustering = null
     val DefaultTriggeringFrequency: Duration = null
+    val DefaultSharding: Sharding = null
     val DefaultFailedInsertRetryPolicy: InsertRetryPolicy = null
     val DefaultExtendedErrorInfo: ExtendedErrorInfo[TableRow] = ExtendedErrorInfo.Disabled
     def defaultInsertErrorTransform[T]: SCollection[T] => Unit = { sc =>
@@ -246,6 +247,7 @@ object BigQueryTypedTable {
     timePartitioning: TimePartitioning,
     clustering: Clustering,
     triggeringFrequency: Duration,
+    sharding: Sharding,
     failedInsertRetryPolicy: InsertRetryPolicy,
     extendedErrorInfo: ExtendedErrorInfo[Info],
     insertErrorTransform: SCollection[Info] => Unit
@@ -261,6 +263,7 @@ object BigQueryTypedTable {
       timePartitioning: TimePartitioning = DefaultTimePartitioning,
       clustering: Clustering = DefaultClustering,
       triggeringFrequency: Duration = DefaultTriggeringFrequency,
+      sharding: Sharding = DefaultSharding,
       failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy
     ): WriteParam[TableRow] = new WriteParam(
       method,
@@ -271,6 +274,7 @@ object BigQueryTypedTable {
       timePartitioning,
       clustering,
       triggeringFrequency,
+      sharding,
       failedInsertRetryPolicy,
       DefaultExtendedErrorInfo,
       defaultInsertErrorTransform
@@ -375,6 +379,19 @@ final case class BigQueryTypedTable[T: Coder](
       .pipe(w => Option(params.timePartitioning).map(_.asJava).fold(w)(w.withTimePartitioning))
       .pipe(w => Option(params.clustering).map(_.asJava).fold(w)(w.withClustering))
       .pipe(w => Option(params.triggeringFrequency).fold(w)(w.withTriggeringFrequency))
+      .pipe(w =>
+        Option(params.sharding).fold(w) {
+          case Sharding.Auto =>
+            w.withAutoSharding()
+          case Sharding.Manual(numShards) =>
+            // Depending on method, sharding uses a different API
+            w.withNumFileShards(numShards) // for FILE_LOADS
+            w.withNumStorageWriteApiStreams(
+              numShards
+            ) // for STORAGE_WRITE_API & STORAGE_API_AT_LEAST_ONCE
+          // For STREAMING_INSERTS, manual sharding must be set through NumStreamingKeys pipeline option
+        }
+      )
       .pipe(w => Option(params.failedInsertRetryPolicy).fold(w)(w.withFailedInsertRetryPolicy))
       .pipe(w => if (params.extendedErrorInfo == Disabled) w else w.withExtendedErrorInfo())
 
@@ -602,6 +619,7 @@ object BigQueryTyped {
         params.timePartitioning,
         params.clustering,
         params.triggeringFrequency,
+        params.sharding,
         params.failedInsertRetryPolicy,
         params.extendedErrorInfo,
         params.insertErrorTransform
@@ -632,6 +650,7 @@ object BigQueryTyped {
       timePartitioning: TimePartitioning,
       clustering: Clustering,
       triggeringFrequency: Duration,
+      sharding: Sharding,
       failedInsertRetryPolicy: InsertRetryPolicy,
       extendedErrorInfo: ExtendedErrorInfo[Info],
       insertErrorTransform: SCollection[Info] => Unit
@@ -645,6 +664,7 @@ object BigQueryTyped {
         timePartitioning: TimePartitioning = DefaultTimePartitioning,
         clustering: Clustering = DefaultClustering,
         triggeringFrequency: Duration = DefaultTriggeringFrequency,
+        sharding: Sharding = DefaultSharding,
         failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy
       ): WriteParam[TableRow] = new WriteParam(
         method,
@@ -653,6 +673,7 @@ object BigQueryTyped {
         timePartitioning,
         clustering,
         triggeringFrequency,
+        sharding,
         failedInsertRetryPolicy,
         DefaultExtendedErrorInfo,
         defaultInsertErrorTransform
