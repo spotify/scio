@@ -52,7 +52,7 @@ final class AvroTapIT extends AnyFlatSpec with Matchers {
 
     val tap = AvroTaps(Taps()).avroGenericFile(
       "gs://data-integration-test-eu/avro-integration-test/folder-a/folder-b/shakespeare.avro",
-      schema = schema,
+      schema = schema
     )
     val result = Await.result(tap, Duration.Inf)
 

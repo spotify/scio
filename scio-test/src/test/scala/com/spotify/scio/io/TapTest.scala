@@ -27,6 +27,7 @@ import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
@@ -159,7 +160,8 @@ class TapTest extends TapSpec {
         os.close()
       }
 
-      verifyTap(TextTap(compressDir.getAbsolutePath, suffix), data.flatten.toSet)
+      val params = TextIO.ReadParam(compression = Compression.detect(suffix), suffix = suffix)
+      verifyTap(TextTap(compressDir.getAbsolutePath, params), data.flatten.toSet)
     }
   }
 

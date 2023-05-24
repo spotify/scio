@@ -211,7 +211,7 @@ object CsvIO {
       )
   }
 
-  final private class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam)
+  final private case class CsvTap[T: HeaderDecoder: Coder](path: String, params: ReadParam)
       extends Tap[T] {
     override def value: Iterator[T] = {
       val filePattern = ScioUtil.filePattern(path, params.suffix)
@@ -220,7 +220,8 @@ object CsvIO {
         .flatMap(_.asUnsafeCsvReader[T](params.csvConfiguration).iterator)
     }
 
-    override def open(sc: ScioContext): SCollection[T] = CsvIO.read(sc, path, params)
+    override def open(sc: ScioContext): SCollection[T] =
+      CsvIO.read(sc, path, params)
   }
 
   final private[scio] case class ReadDoFn[T: HeaderDecoder](

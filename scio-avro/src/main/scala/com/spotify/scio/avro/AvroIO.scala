@@ -85,7 +85,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   }
 
   override def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](path, read.suffix)
+    ObjectFileTap[T](path, read)
 }
 
 object ObjectFileIO {
@@ -122,7 +122,7 @@ final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO
   }
 
   override def tap(read: ReadP): Tap[T] =
-    ObjectFileTap[T](path, read.suffix)(protoCoder)
+    ObjectFileTap[T](path, read)(protoCoder)
 }
 
 object ProtobufIO {
@@ -215,7 +215,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
   }
 
   override def tap(read: ReadP): Tap[T] =
-    SpecificRecordTap[T](path, read.suffix)
+    SpecificRecordTap[T](path, read)
 }
 
 final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
@@ -266,7 +266,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
   }
 
   override def tap(read: ReadP): Tap[GenericRecord] =
-    GenericRecordTap(path, schema, read.suffix)
+    GenericRecordTap(path, schema, read)
 }
 
 /**
@@ -302,7 +302,7 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
   override protected def write(data: SCollection[T], params: Nothing): Tap[T] = ???
 
   override def tap(read: ReadP): Tap[T] =
-    GenericRecordParseTap[T](path, read.suffix, parseFn)
+    GenericRecordParseTap[T](path, parseFn, read)
 }
 
 object AvroIO {
@@ -430,8 +430,7 @@ object AvroTyped {
 
     override def tap(read: ReadP): Tap[T] = {
       val avroT = AvroType[T]
-      GenericRecordTap(path, avroT.schema, read.suffix)
-        .map(avroT.fromGenericRecord)
+      GenericRecordTap(path, avroT.schema, read).map(avroT.fromGenericRecord)
     }
   }
 }

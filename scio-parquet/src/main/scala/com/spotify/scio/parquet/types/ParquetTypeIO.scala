@@ -218,7 +218,7 @@ object ParquetTypeIO {
   )
 }
 
-case class ParquetTypeTap[T: ClassTag: Coder: ParquetType](
+final case class ParquetTypeTap[T: ClassTag: Coder: ParquetType](
   path: String,
   params: ParquetTypeIO.ReadParam
 ) extends Tap[T] {
@@ -240,5 +240,6 @@ case class ParquetTypeTap[T: ClassTag: Coder: ParquetType](
     }
   }
 
-  override def open(sc: ScioContext): SCollection[T] = sc.read(ParquetTypeIO[T](path))(params)
+  override def open(sc: ScioContext): SCollection[T] =
+    sc.read(ParquetTypeIO[T](path))(params)
 }

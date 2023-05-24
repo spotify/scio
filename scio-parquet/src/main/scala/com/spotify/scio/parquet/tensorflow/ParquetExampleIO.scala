@@ -275,5 +275,6 @@ final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadPa
     }
   }
 
-  override def open(sc: ScioContext): SCollection[Example] = sc.read(ParquetExampleIO(path))(params)
+  override def open(sc: ScioContext): SCollection[Example] =
+    sc.read(ParquetExampleIO(path))(params)
 }

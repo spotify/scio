@@ -213,5 +213,5 @@ private object TFRecordMethods {
   }
 
   def tap(path: String, read: TFRecordIO.ReadParam): Tap[Array[Byte]] =
-    TFRecordFileTap(path, read.suffix)
+    TFRecordFileTap(path, read)
 }

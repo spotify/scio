@@ -108,7 +108,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
   }
 
   override def tap(params: ReadP): Tap[String] =
-    TextTap(path, params.suffix)
+    TextTap(path, params)
 }
 
 object TextIO {

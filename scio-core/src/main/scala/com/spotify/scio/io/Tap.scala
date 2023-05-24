@@ -63,16 +63,18 @@ case object EmptyTap extends Tap[Nothing] {
   override def open(sc: ScioContext): SCollection[Nothing] = sc.empty[Nothing]()
 }
 
-case class UnsupportedTap[T](msg: String) extends Tap[T] {
+final case class UnsupportedTap[T](msg: String) extends Tap[T] {
   override def value: Iterator[T] = throw new UnsupportedOperationException(msg)
   override def open(sc: ScioContext): SCollection[T] = throw new UnsupportedOperationException(msg)
 }
 
 /** Tap for text files on local file system or GCS. */
-final case class TextTap(path: String, suffix: String) extends Tap[String] {
-  override def value: Iterator[String] = FileStorage(path, suffix).textFile
+final case class TextTap(path: String, params: TextIO.ReadParam) extends Tap[String] {
+  override def value: Iterator[String] =
+    FileStorage(path, params.suffix).textFile
 
-  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path, suffix = suffix)
+  override def open(sc: ScioContext): SCollection[String] =
+    sc.read(TextIO(path))(params)
 }
 
 final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
@@ -82,7 +84,7 @@ final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
     sc.parallelize[T](InMemorySink.get(id))
 }
 
-private[scio] class MaterializeTap[T: Coder] private (path: String, coder: BCoder[T])
+final private[scio] class MaterializeTap[T: Coder] private (path: String, coder: BCoder[T])
     extends Tap[T] {
 
   override def value: Iterator[T] = {

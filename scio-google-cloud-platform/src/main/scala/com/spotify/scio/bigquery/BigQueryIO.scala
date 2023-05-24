@@ -457,7 +457,7 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   }
 
   override def tap(read: ReadP): Tap[TableRow] =
-    TableRowJsonTap(path, read.suffix)
+    TableRowJsonTap(path, read)
 }
 
 object TableRowJsonIO {

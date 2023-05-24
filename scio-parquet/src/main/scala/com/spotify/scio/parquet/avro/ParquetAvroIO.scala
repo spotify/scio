@@ -324,7 +324,7 @@ object ParquetAvroIO {
   )
 }
 
-case class ParquetAvroTap[A, T: ClassTag: Coder](
+final case class ParquetAvroTap[A, T: ClassTag: Coder](
   path: String,
   params: ParquetAvroIO.ReadParam[A, T]
 ) extends Tap[T] {

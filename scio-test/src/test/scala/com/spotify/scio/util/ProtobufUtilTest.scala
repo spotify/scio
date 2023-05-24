@@ -64,7 +64,7 @@ class ProtobufUtilTest extends AnyFlatSpec with Matchers {
     val result = sc.run().waitUntilDone()
 
     val (tapFromAvroWrite, tapFromProtoWrite) = (
-      ObjectFileTap[TrackPB](path1.getPath, ".protobuf"),
+      ObjectFileTap[TrackPB](path1.getPath, ObjectFileIO.ReadParam(".protobuf")),
       protoWriteTap.get(result)
     )
 
