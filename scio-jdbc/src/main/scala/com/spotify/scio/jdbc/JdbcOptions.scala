@@ -17,7 +17,7 @@
 
 package com.spotify.scio.jdbc
 
-import org.apache.beam.sdk.io.jdbc.JdbcIO.{DefaultRetryStrategy, RetryConfiguration}
+import org.apache.beam.sdk.io.jdbc.JdbcIO.{DefaultRetryStrategy, Read, RetryConfiguration, Write}
 
 import java.sql.{Driver, PreparedStatement, ResultSet, SQLException}
 import javax.sql.DataSource
@@ -82,7 +82,8 @@ final case class JdbcReadOptions[T](
   rowMapper: ResultSet => T,
   fetchSize: Int = JdbcIoOptions.BeamDefaultFetchSize,
   outputParallelization: Boolean = JdbcIoOptions.DefaultOutputParallelization,
-  dataSourceProviderFn: () => DataSource = null
+  dataSourceProviderFn: () => DataSource = null,
+  configOverride: Read[T] => Read[T] = identity
 ) extends JdbcIoOptions
 
 /**
@@ -118,5 +119,6 @@ final case class JdbcWriteOptions[T](
   retryConfiguration: RetryConfiguration = JdbcIoOptions.BeamDefaultRetryConfiguration,
   retryStrategy: SQLException => Boolean = new DefaultRetryStrategy().apply,
   autoSharding: Boolean = false,
-  dataSourceProviderFn: () => DataSource = null
+  dataSourceProviderFn: () => DataSource = null,
+  configOverride: Write[T] => Write[T] = identity
 ) extends JdbcIoOptions
