@@ -401,7 +401,8 @@ object AvroTyped {
      */
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val avroT = AvroType[T]
-      val t = beam.AvroIO.readGenericRecords(avroT.schema).from(path)
+      val filePattern = ScioUtil.filePattern(path, params.suffix)
+      val t = beam.AvroIO.readGenericRecords(avroT.schema).from(filePattern)
       sc.applyTransform(t).map(avroT.fromGenericRecord)
     }
 

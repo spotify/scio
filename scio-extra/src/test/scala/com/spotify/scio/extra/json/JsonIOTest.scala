@@ -23,9 +23,7 @@ import io.circe.Printer
 import com.spotify.scio._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
-import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.commons.io.FileUtils
 
 import scala.jdk.CollectionConverters._
 import scala.io.Source

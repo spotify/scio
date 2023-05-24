@@ -72,6 +72,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
     conf: Configuration,
     params: ReadP
   ): SCollection[T] = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
     if (params.predicate != null) {
       ParquetInputFormat.setFilterPredicate(conf, params.predicate)
     }
@@ -82,7 +83,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
       ParquetRead.read(
         ReadSupportFactory.typed,
         new SerializableConfiguration(conf),
-        path,
+        filePattern,
         identity[T]
       )
     ).setCoder(coder)
@@ -91,7 +92,8 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
   private def readLegacy(sc: ScioContext, conf: Configuration, params: ReadP): SCollection[T] = {
     val cls = ScioUtil.classOf[T]
     val job = Job.getInstance(conf)
-    GcsConnectorUtil.setInputPaths(sc, job, path)
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    GcsConnectorUtil.setInputPaths(sc, job, filePattern)
     tpe.setupInput(job)
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
     job.getConfiguration.setClass("value.class", cls, cls)

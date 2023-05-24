@@ -437,9 +437,11 @@ final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
   override type WriteP = TableRowJsonIO.WriteParam
   final override val tapT: TapT.Aux[TableRow, TableRow] = TapOf[TableRow]
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    sc.applyTransform(TextIO.read().from(path))
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    sc.applyTransform(TextIO.read().from(filePattern))
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
+  }
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
     data.transform_("BigQuery write") {
