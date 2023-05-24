@@ -44,7 +44,7 @@ class ParquetTypeIOFileNamePolicyTest extends FileNamePolicySpec[Wide] {
   override def failSaves: Seq[SCollection[Int] => ClosedTap[Wide]] = Seq(
     _.map(i => Wide(i, i.toString, Some(i), (1 to i).toList)).saveAsTypedParquetFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )

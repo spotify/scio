@@ -25,7 +25,7 @@ import com.spotify.scio.util.{Functions, JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io._
 import com.spotify.scio.pubsub.coders._
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import org.apache.beam.sdk.util.CoderUtils
 import org.joda.time.Instant
@@ -76,7 +76,7 @@ object PubsubIO {
   ): PubsubIO[String] =
     StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
 
-  def avro[T <: SpecificRecordBase: ClassTag](
+  def avro[T <: SpecificRecord: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
@@ -192,7 +192,7 @@ final private case class StringPubsubIOWithoutAttributes(
   }
 }
 
-final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: ClassTag](
+final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecord: ClassTag](
   name: String,
   idAttribute: String,
   timestampAttribute: String

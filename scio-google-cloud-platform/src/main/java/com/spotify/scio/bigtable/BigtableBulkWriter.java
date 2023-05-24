@@ -116,7 +116,9 @@ public class BigtableBulkWriter
     @StartBundle
     public void startBundle(StartBundleContext c) throws IOException {
       if (bigtableWriter == null) {
-        bigtableWriter = new BigtableServiceHelper(bigtableOptions).openForWriting(tableName);
+        bigtableWriter =
+            new BigtableServiceHelper(bigtableOptions, c.getPipelineOptions())
+                .openForWriting(tableName);
       }
       recordsWritten = 0;
     }
