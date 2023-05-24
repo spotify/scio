@@ -17,14 +17,11 @@
 
 package com.spotify.scio.jdbc
 
-import com.spotify.scio.values.SCollection
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
-import org.apache.beam.sdk.io.{jdbc => beam}
-import java.sql.{PreparedStatement, ResultSet}
-
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.TapT
+import com.spotify.scio.io._
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.{jdbc => beam}
 
 sealed trait JdbcIO[T] extends ScioIO[T]
 
@@ -36,9 +33,10 @@ object JdbcIO {
     }
 
   private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
-    case JdbcReadOptions(connOpts, query, _, _, _, _) => jdbcIoId(connOpts, query)
-    case JdbcWriteOptions(connOpts, statement, _, _, _, _) =>
-      jdbcIoId(connOpts, statement)
+    case readOpts: JdbcReadOptions[_] =>
+      jdbcIoId(readOpts.connectionOptions, readOpts.query)
+    case writeOpts: JdbcWriteOptions[_] =>
+      jdbcIoId(writeOpts.connectionOptions, writeOpts.statement)
   }
 
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
@@ -66,7 +64,7 @@ object JdbcIO {
 final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends JdbcIO[T] {
   override type ReadP = Unit
   override type WriteP = Nothing
-  final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
 
@@ -77,18 +75,15 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
       .withCoder(coder)
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(readOptions.connectionOptions))
       .withQuery(readOptions.query)
-      .withRowMapper(new beam.JdbcIO.RowMapper[T] {
-        override def mapRow(resultSet: ResultSet): T =
-          readOptions.rowMapper(resultSet)
-      })
+      .withRowMapper(readOptions.rowMapper(_))
       .withOutputParallelization(readOptions.outputParallelization)
 
+    if (readOptions.dataSourceProviderFn != null) {
+      transform.withDataSourceProviderFn((_: Void) => readOptions.dataSourceProviderFn())
+    }
     if (readOptions.statementPreparator != null) {
       transform = transform
-        .withStatementPreparator(new beam.JdbcIO.StatementPreparator {
-          override def setParameters(preparedStatement: PreparedStatement): Unit =
-            readOptions.statementPreparator(preparedStatement)
-        })
+        .withStatementPreparator(readOptions.statementPreparator(_))
     }
     if (readOptions.fetchSize != JdbcIoOptions.BeamDefaultFetchSize) {
       // override default fetch size.
@@ -107,7 +102,7 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
 final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[T] {
   override type ReadP = Nothing
   override type WriteP = Unit
-  final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(writeOptions)})"
 
@@ -119,16 +114,20 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[
       .write[T]()
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(writeOptions.connectionOptions))
       .withStatement(writeOptions.statement)
+
+    if (writeOptions.dataSourceProviderFn != null) {
+      transform.withDataSourceProviderFn((_: Void) => writeOptions.dataSourceProviderFn())
+    }
     if (writeOptions.preparedStatementSetter != null) {
       transform = transform
-        .withPreparedStatementSetter(new beam.JdbcIO.PreparedStatementSetter[T] {
-          override def setParameters(element: T, preparedStatement: PreparedStatement): Unit =
-            writeOptions.preparedStatementSetter(element, preparedStatement)
-        })
+        .withPreparedStatementSetter(writeOptions.preparedStatementSetter(_, _))
     }
     if (writeOptions.batchSize != JdbcIoOptions.BeamDefaultBatchSize) {
       // override default batch size.
       transform = transform.withBatchSize(writeOptions.batchSize)
+    }
+    if (writeOptions.autoSharding) {
+      transform = transform.withAutoSharding()
     }
 
     transform = transform

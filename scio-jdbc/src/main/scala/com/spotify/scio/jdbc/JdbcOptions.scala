@@ -20,6 +20,7 @@ package com.spotify.scio.jdbc
 import org.apache.beam.sdk.io.jdbc.JdbcIO.{DefaultRetryStrategy, RetryConfiguration}
 
 import java.sql.{Driver, PreparedStatement, ResultSet, SQLException}
+import javax.sql.DataSource
 
 /**
  * Options for a JDBC connection.
@@ -71,6 +72,8 @@ sealed trait JdbcIoOptions
  *   use apache beam default fetch size if the value is -1
  * @param outputParallelization
  *   reshuffle result to distribute it to all workers. Default to true.
+ * @param dataSourceProviderFn
+ *   function to provide a custom [[javax.sql.DataSource]]
  */
 final case class JdbcReadOptions[T](
   connectionOptions: JdbcConnectionOptions,
@@ -78,11 +81,17 @@ final case class JdbcReadOptions[T](
   statementPreparator: PreparedStatement => Unit = null,
   rowMapper: ResultSet => T,
   fetchSize: Int = JdbcIoOptions.BeamDefaultFetchSize,
-  outputParallelization: Boolean = JdbcIoOptions.DefaultOutputParallelization
+  outputParallelization: Boolean = JdbcIoOptions.DefaultOutputParallelization,
+  dataSourceProviderFn: () => DataSource = null
 ) extends JdbcIoOptions
 
 /**
  * Options for writing to a JDBC source.
+ *
+ * NB: in case of transient failures, Beam runners may execute parts of write multiple times for
+ * fault tolerance. Because of that, you should avoid using INSERT statements, since that risks
+ * duplicating records in the database, or failing due to primary key conflicts. Consider using
+ * MERGE ("upsert") statements supported by your database instead.
  *
  * @param connectionOptions
  *   connection options
@@ -96,6 +105,10 @@ final case class JdbcReadOptions[T](
  *   [[org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration]] for specifying retry behavior
  * @param retryStrategy
  *   A predicate of [[java.sql.SQLException]] indicating a failure to retry
+ * @param autoSharding
+ *   If true, enables using a dynamically determined number of shards to write.
+ * @param dataSourceProviderFn
+ *   function to provide a custom [[javax.sql.DataSource]]
  */
 final case class JdbcWriteOptions[T](
   connectionOptions: JdbcConnectionOptions,
@@ -103,5 +116,7 @@ final case class JdbcWriteOptions[T](
   preparedStatementSetter: (T, PreparedStatement) => Unit = null,
   batchSize: Long = JdbcIoOptions.BeamDefaultBatchSize,
   retryConfiguration: RetryConfiguration = JdbcIoOptions.BeamDefaultRetryConfiguration,
-  retryStrategy: SQLException => Boolean = new DefaultRetryStrategy().apply
+  retryStrategy: SQLException => Boolean = new DefaultRetryStrategy().apply,
+  autoSharding: Boolean = false,
+  dataSourceProviderFn: () => DataSource = null
 ) extends JdbcIoOptions
