@@ -74,7 +74,7 @@ final case class TextIO(path: String) extends ScioIO[String] {
       prefix = prefix,
       shardNameTemplate = shardNameTemplate,
       isWindowed = isWindowed
-    )(path, suffix)
+    )(ScioUtil.strippedPath(path), suffix)
 
     beam.TextIO
       .write()

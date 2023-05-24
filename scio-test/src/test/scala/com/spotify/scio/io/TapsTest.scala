@@ -18,10 +18,10 @@
 package com.spotify.scio.io
 
 import java.nio.file.{Files, Path}
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.io.File
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -53,6 +53,7 @@ class TapsTest extends AnyFlatSpec with Matchers {
   it should "fail missing text file" in {
     TapsSysProps.Algorithm.value = "immediate"
     val f = tmpFile
+    Files.delete(f)
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe true
     future.value.get.isSuccess shouldBe false
@@ -78,9 +79,11 @@ class TapsTest extends AnyFlatSpec with Matchers {
     TapsSysProps.PollingInitialInterval.value = "1000"
     TapsSysProps.PollingMaximumAttempts.value = "1"
     val f = tmpFile
+    Files.delete(f)
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe false
-
-    Await.ready(future, 10.seconds)
+    val error = Await.result(future.failed, 10.seconds)
+    error shouldBe a[TapNotAvailableException]
+    error.getMessage shouldBe s"Text: $f"
   }
 }

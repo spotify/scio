@@ -57,7 +57,7 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
       .parallelize(1 to 10)
       .saveAsDynamicTextFile(dir.getAbsolutePath)(partitionIntegers)
     sc1.run()
-    verifyOutput(dir, "0", "1")
+    verifyOutput(dir, "even", "odd")
 
     val sc2 = ScioContext()
     val even = sc2.textFile(s"$dir/even/*.txt")
@@ -203,7 +203,7 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
       .map(mkProto)
       .saveAsDynamicProtobufFile(dir.getAbsolutePath)(r => partitionIntegers(r.getPlays.toInt % 2))
     sc1.run()
-    verifyOutput(dir, "0", "1")
+    verifyOutput(dir, "even", "odd")
 
     val sc2 = ScioContext()
     val even = sc2.protobufFile[SimplePB](s"$dir/even/*.protobuf")

@@ -66,7 +66,7 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
 
       TextTap(
         path = joinOutputDir.getAbsolutePath,
-        params = TextIO.ReadParam(suffix = ".avro")
+        params = TextIO.ReadParam(suffix = ".txt")
       ).value.size shouldBe 100
   }
 

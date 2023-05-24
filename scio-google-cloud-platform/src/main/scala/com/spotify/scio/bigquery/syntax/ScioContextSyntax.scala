@@ -19,7 +19,18 @@ package com.spotify.scio.bigquery.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQuerySelect, BigQueryStorage, BigQueryStorageSelect, BigQueryType, BigQueryTyped, Query, Source, Table, TableRow, TableRowJsonIO}
+import com.spotify.scio.bigquery.{
+  BigQuerySelect,
+  BigQueryStorage,
+  BigQueryStorageSelect,
+  BigQueryType,
+  BigQueryTyped,
+  Query,
+  Source,
+  Table,
+  TableRow,
+  TableRowJsonIO
+}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 
@@ -205,7 +216,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     emptyMatchTreatment: EmptyMatchTreatment = TableRowJsonIO.ReadParam.DefaultEmptyMatchTreatment,
     suffix: String = TableRowJsonIO.ReadParam.DefaultSuffix
   ): SCollection[TableRow] =
-    self.read(TableRowJsonIO(path))(TableRowJsonIO.ReadParam(compression, emptyMatchTreatment, suffix))
+    self.read(TableRowJsonIO(path))(
+      TableRowJsonIO.ReadParam(compression, emptyMatchTreatment, suffix)
+    )
 }
 
 trait ScioContextSyntax {
