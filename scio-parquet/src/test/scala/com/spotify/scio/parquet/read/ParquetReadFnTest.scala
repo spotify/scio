@@ -253,8 +253,8 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc.run()
   }
 
-  it should "work with a projection but not a projectionFn" in {
-    val projection = Projection[Account](_.getId)
+  it should "work with a projection but not a projectionFn as long as excluded fields are nullable" in {
+    val projection = Projection[Account](_.getId, _.getType, _.getAmount)
 
     val sc = ScioContext()
     val output = sc
@@ -268,7 +268,9 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
     output should haveSize(1)
     output should satisfy[Account](
-      _.forall(a => a.getId == 300 && a.getName == null && a.getType == null && a.getAmount == null)
+      _.forall(a =>
+        a.getId == 300 && a.getName == null && a.getType == "300" && a.getAmount == 300.0
+      )
     )
     sc.run()
   }
