@@ -20,7 +20,6 @@ package com.spotify.scio.coders
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.esotericsoftware.kryo.serializers.JavaSerializer
@@ -32,6 +31,7 @@ import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
@@ -176,6 +176,12 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
     }
     o.asInstanceOf[T]
   }
+
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Kryo-encoded instances are not guaranteed to be deterministic"
+    )
 
   // This method is called by PipelineRunner to sample elements in a PCollection and estimate
   // size. This could be expensive for collections with small number of very large elements.
