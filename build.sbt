@@ -1488,6 +1488,7 @@ lazy val siteSettings = Def.settings(
         .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
     },
   // mdoc
+  mdoc / fork := false,
   // pre-compile md using mdoc
   mdocIn := (paradox / sourceDirectory).value,
   mdocExtraArguments ++= Seq("--no-link-hygiene"),
