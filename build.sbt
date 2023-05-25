@@ -563,7 +563,6 @@ lazy val `scio-core`: Project = project
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (testLibs: _*), // TODO remove from core
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
