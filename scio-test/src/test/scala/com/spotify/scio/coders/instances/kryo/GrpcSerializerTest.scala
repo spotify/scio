@@ -20,12 +20,55 @@ package com.spotify.scio.coders.instances.kryo
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import io.grpc.{Metadata, Status, StatusRuntimeException}
 import org.apache.beam.sdk.util.CoderUtils
+import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters._
 
-class GrpcSerializersTest extends AnyFlatSpec with Matchers {
+object GrpcSerializerTest {
+  private val eqMetadata: Equality[Metadata] = {
+    case (a: Metadata, b: Metadata) =>
+      a.keys().size() == b.keys().size() &&
+      a.keys.asScala.forall { k =>
+        val strKey = Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER)
+        a.get(strKey) == b.get(strKey)
+      }
+    case _ => false
+  }
+
+  private val eqStatus: Equality[Status] = {
+    case (a: Status, b: Status) =>
+      a.getCode == b.getCode &&
+      a.getDescription == b.getDescription &&
+      ((Option(a.getCause), Option(b.getCause)) match {
+        case (None, None) =>
+          true
+        case (Some(ac), Some(bc)) =>
+          ac.getClass == bc.getClass &&
+          ac.getMessage == bc.getMessage
+        case _ =>
+          false
+      })
+    case _ => false
+  }
+
+  implicit val eqStatusRuntimeException: Equality[StatusRuntimeException] = {
+    case (a: StatusRuntimeException, b: StatusRuntimeException) =>
+      a.getMessage == b.getMessage &&
+      eqStatus.areEqual(a.getStatus, b.getStatus) &&
+      ((Option(a.getTrailers), Option(b.getTrailers)) match {
+        case (None, None)         => true
+        case (Some(am), Some(bm)) => eqMetadata.areEqual(am, bm)
+        case _                    => false
+      })
+    case _ => false
+  }
+}
+
+class GrpcSerializerTest extends AnyFlatSpec with Matchers {
+
+  import GrpcSerializerTest._
 
   "StatusRuntimeException" should "roundtrip with nullable fields present" in {
     val metadata = new Metadata()
@@ -49,31 +92,6 @@ class GrpcSerializersTest extends AnyFlatSpec with Matchers {
     val bytes = CoderUtils.encodeToByteArray(kryoBCoder, t)
     val copy = CoderUtils.decodeFromByteArray(kryoBCoder, bytes)
 
-    checkStatusEq(t.getStatus, copy.getStatus)
-    checkTrailersEq(t.getTrailers, copy.getTrailers)
-  }
-
-  private def checkTrailersEq(metadata1: Metadata, metadata2: Metadata): Unit =
-    (Option(metadata1), Option(metadata2)) match {
-      case (Some(m1), Some(m2)) =>
-        m1.keys.size shouldEqual m2.keys.size
-        m1.keys.asScala.foreach { k =>
-          m1.get(Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER)) shouldEqual
-            m2.get(Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER))
-        }
-      case (None, None) =>
-      case _            => fail(s"Metadata were unequal: ($metadata1, $metadata2)")
-    }
-
-  private def checkStatusEq(s1: Status, s2: Status): Unit = {
-    s1.getCode shouldEqual s2.getCode
-    s1.getDescription shouldEqual s2.getDescription
-    if (s1.getCause != null) {
-      s1.getCause.getClass shouldEqual s2.getCause.getClass
-      s1.getCause.getMessage shouldEqual s2.getCause.getMessage
-    } else if (s2.getCause != null) {
-      fail(s"Status $s1 is missing a cause")
-    }
-    ()
+    t shouldEqual copy
   }
 }
