@@ -678,8 +678,10 @@ lazy val `scio-avro`: Project = project
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
       // compile
+      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" % "chill-java" % chillVersion,
       "org.apache.avro" % "avro" % avroVersion excludeAll (
         "com.thoughtworks.paranamer" % "paranamer"
       ),
@@ -720,6 +722,7 @@ lazy val `scio-google-cloud-platform`: Project = project
     libraryDependencies ++= Seq(
       // compile
       "com.chuusai" %% "shapeless" % shapelessVersion,
+      "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
@@ -744,6 +747,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" %% "chill" % chillVersion,
+      "com.twitter" % "chill-java" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
