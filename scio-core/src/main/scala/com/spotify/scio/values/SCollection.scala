@@ -1326,18 +1326,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   it is windowed.
    * @group window
    */
-  def withWindow[W <: BoundedWindow]: SCollection[(T, W)] =
+  def withWindow[W <: BoundedWindow: Coder]: SCollection[(T, W)] =
     this
-      .parDo(new DoFn[T, (T, BoundedWindow)] {
+      .parDo(new DoFn[T, (T, W)] {
         @ProcessElement
         private[scio] def processElement(
           @Element element: T,
-          out: OutputReceiver[(T, BoundedWindow)],
+          out: OutputReceiver[(T, W)],
           window: BoundedWindow
         ): Unit =
-          out.output((element, window))
+          out.output((element, window.asInstanceOf[W]))
       })
-      .asInstanceOf[SCollection[(T, W)]]
 
   /**
    * Assign timestamps to values. With a optional skew

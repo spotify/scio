@@ -115,7 +115,7 @@ class ParquetExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
     _.map(newExample).saveAsParquetExampleFile(
       "nonsense",
       schema,
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )

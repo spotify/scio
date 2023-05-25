@@ -62,7 +62,7 @@ class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   override def failSaves = Seq(
     _.map(AvroUtils.newSpecificRecord).saveAsParquetAvroFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )

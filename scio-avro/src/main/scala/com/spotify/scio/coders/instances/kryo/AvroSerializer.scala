@@ -22,7 +22,7 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.twitter.chill.KSerializer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.coders.AvroCoder
 
 import scala.collection.mutable.{Map => MMap}
@@ -50,7 +50,7 @@ private[coders] class GenericAvroSerializer extends KSerializer[GenericRecord] {
   }
 }
 
-private[coders] class SpecificAvroSerializer[T <: SpecificRecordBase] extends KSerializer[T] {
+private[coders] class SpecificAvroSerializer[T <: SpecificRecord] extends KSerializer[T] {
   private lazy val cache: MMap[Class[T], AvroCoder[T]] = MMap()
 
   private def getCoder(cls: Class[T]): AvroCoder[T] =

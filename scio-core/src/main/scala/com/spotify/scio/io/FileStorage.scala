@@ -17,7 +17,6 @@
 
 package com.spotify.scio.io
 
-import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.file.{DataFileReader, SeekableInput}
@@ -107,9 +106,6 @@ final private[scio] class FileStorage(path: String, suffix: String) {
     val input = getDirectoryInputStream(wrapInputStream)
     IOUtils.lineIterator(input, StandardCharsets.UTF_8).asScala
   }
-
-  def tableRowJsonFile: Iterator[TableRow] =
-    textFile.map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   def isDone(): Boolean = {
     val files = Try(listFiles).recover { case _: FileNotFoundException => Seq.empty }.get

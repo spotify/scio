@@ -29,7 +29,7 @@ import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.transforms.SimpleFunction
@@ -117,7 +117,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
+    val isAssignable = classOf[SpecificRecord].isAssignableFrom(cls)
     val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
     val conf = ParquetConfiguration.ofNullable(params.conf)
     if (
@@ -180,7 +180,7 @@ object ParquetAvroIO {
     suffix: String = null
   ) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
-    val isSpecific: Boolean = classOf[SpecificRecordBase] isAssignableFrom avroClass
+    val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
     val readSchema: Schema =
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
