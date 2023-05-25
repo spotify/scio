@@ -27,6 +27,7 @@ import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.reflect.ReflectData;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
@@ -37,31 +38,37 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 class AvroUtils {
   private AvroUtils() {}
 
-  public static String[] toKeyPath(String keyField) {
-    return keyField.split("\\.");
-  }
+  /**
+   * Constructs the sequence of indexes to access the nested key field from an avro {@link
+   * org.apache.avro.generic.IndexedRecord}.
+   *
+   * @param keyField name of the field (joined with '.')
+   * @param keyClass key class to ensure type correctness of the designated keyField
+   * @param schema avro schema
+   * @return sequence of index to access the keyField
+   */
+  public static int[] toKeyPath(String keyField, Class<?> keyClass, Schema schema) {
+    final String[] fields = keyField.split("\\.");
+    final int[] path = new int[fields.length];
 
-  public static String validateKeyField(String keyField, Class<?> keyClass, Schema schema) {
-    final String[] keyPath = toKeyPath(keyField);
-
-    Schema currSchema = schema;
-    for (int i = 0; i < keyPath.length - 1; i++) {
-      final Schema.Field field = currSchema.getField(keyPath[i]);
+    Schema cursor = schema;
+    for (int i = 0; i < fields.length - 1; i++) {
+      final Schema.Field field = cursor.getField(fields[i]);
       Preconditions.checkNotNull(
-          field, String.format("Key path %s does not exist in schema %s", keyPath[i], currSchema));
+          field, String.format("Key path %s does not exist in schema %s", fields[i], cursor));
 
-      currSchema = getSchemaOrInnerUnionSchema(field.schema());
+      cursor = getSchemaOrInnerUnionSchema(field.schema());
       Preconditions.checkArgument(
-          currSchema.getType() == Schema.Type.RECORD,
-          "Non-leaf key field " + keyPath[i] + " is not a Record type");
+          cursor.getType() == Schema.Type.RECORD,
+          "Non-leaf key field " + fields[i] + " is not a Record type");
+      path[i] = field.pos();
     }
 
-    final Schema.Field finalKeyField = currSchema.getField(keyPath[keyPath.length - 1]);
+    final Schema.Field finalKeyField = cursor.getField(fields[fields.length - 1]);
     Preconditions.checkNotNull(
         finalKeyField,
         String.format(
-            "Leaf key field %s does not exist in schema %s",
-            keyPath[keyPath.length - 1], currSchema));
+            "Leaf key field %s does not exist in schema %s", fields[fields.length - 1], cursor));
 
     final Class<?> finalKeyFieldClass = getKeyClassFromSchema(finalKeyField.schema());
 
@@ -70,7 +77,19 @@ class AvroUtils {
         String.format(
             "Key class %s did not conform to its Avro schema. Must be of class: %s",
             keyClass, finalKeyFieldClass));
+    path[fields.length - 1] = finalKeyField.pos();
 
+    return path;
+  }
+
+  public static String validateKeyField(String keyField, Class<?> keyClass, Schema schema) {
+    toKeyPath(keyField, keyClass, schema);
+    return keyField;
+  }
+
+  public static String validateKeyField(String keyField, Class<?> keyClass, Class<?> recordClass) {
+    final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
+    toKeyPath(keyField, keyClass, schema);
     return keyField;
   }
 

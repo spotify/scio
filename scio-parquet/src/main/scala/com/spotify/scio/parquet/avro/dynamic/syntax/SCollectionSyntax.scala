@@ -25,7 +25,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
@@ -54,7 +54,7 @@ final class DynamicParquetAvroSCollectionOps[T](
       )
     } else {
       val cls = ScioUtil.classOf[T]
-      val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
+      val isAssignable = classOf[SpecificRecord].isAssignableFrom(cls)
       val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else schema
       if (writerSchema == null) throw new IllegalArgumentException("Schema must not be null")
       val sink =

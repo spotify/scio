@@ -542,7 +542,6 @@ lazy val `scio-core`: Project = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion, // TODO remove from core
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
@@ -707,7 +706,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   .dependsOn(
     `scio-core` % "compile;it->it",
     `scio-avro` % "test",
-    `scio-test` % "test;it"
+    `scio-test` % "test->test;it"
   )
   .configs(IntegrationTest)
   .settings(commonSettings)

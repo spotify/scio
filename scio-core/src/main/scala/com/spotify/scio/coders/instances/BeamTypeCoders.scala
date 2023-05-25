@@ -29,7 +29,12 @@ import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
 import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
-import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
+import org.apache.beam.sdk.transforms.windowing.{
+  BoundedWindow,
+  GlobalWindow,
+  IntervalWindow,
+  PaneInfo
+}
 import org.apache.beam.sdk.values.{KV, Row}
 
 import scala.reflect.ClassTag
@@ -38,6 +43,8 @@ trait BeamTypeCoders {
   import BeamTypeCoders._
 
   implicit def intervalWindowCoder: Coder[IntervalWindow] = Coder.beam(IntervalWindow.getCoder)
+
+  implicit def globalWindowCoder: Coder[GlobalWindow] = Coder.beam(GlobalWindow.Coder.INSTANCE)
 
   implicit def boundedWindowCoder: Coder[BoundedWindow] = Coder.kryo[BoundedWindow]
 
