@@ -21,7 +21,6 @@ import java.io._
 import java.nio.ByteBuffer
 import java.nio.channels.{Channels, SeekableByteChannel}
 import java.util.Collections
-import com.google.api.services.bigquery.model.TableRow
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.file.{DataFileReader, SeekableInput}
@@ -95,9 +94,6 @@ final private[scio] class FileStorage(protected[scio] val path: String) {
     val input = getDirectoryInputStream(path, wrapInputStream)
     IOUtils.lineIterator(input, StandardCharsets.UTF_8).asScala
   }
-
-  def tableRowJsonFile: Iterator[TableRow] =
-    textFile.map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   def isDone: Boolean = {
     val partPattern = "([0-9]{5})-of-([0-9]{5})".r
