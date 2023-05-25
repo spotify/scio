@@ -18,7 +18,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-      - run: sbt "; headerCheckAll; javafmtCheckAll; scalafmtCheckAll; scalafmtSbtCheck" "; scalafixEnable; scalafixAll --check"
+      - run: > 
+          sbt "; headerCheckAll; javafmtCheckAll; scalafmtCheckAll; scalafmtSbtCheck"
+          "; scalafixEnable; scalafixAll --check"
   scalafix-rules:
     runs-on: ubuntu-latest
     steps:
@@ -32,6 +34,18 @@ jobs:
           java-version: 11
       - working-directory: ./scalafix
         run: sbt test
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: cache SBT
+        uses: coursier/cache-action@v6
+      - name: Java 11 setup
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+      - run: sbt "; undeclaredCompileDependenciesTest; unusedCompileDependenciesTest"
   mimaReport:
     runs-on: ubuntu-latest
     steps:
