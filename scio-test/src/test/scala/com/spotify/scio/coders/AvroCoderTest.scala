@@ -20,6 +20,7 @@ package com.spotify.scio.coders
 import org.scalatest.flatspec.AnyFlatSpec
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 import org.scalactic.Equality
 import org.scalatest.matchers.should.Matchers
 
@@ -27,6 +28,16 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
 
   it should "support Avro's SpecificRecord" in {
     Avro.user coderShould notFallback()
+  }
+
+  it should "support not Avro's SpecificRecord if a concrete type is not provided" in {
+    val caught = intercept[RuntimeException] {
+      Avro.user.asInstanceOf[SpecificRecord] coderShould notFallback()
+    }
+
+    caught.getMessage should startWith(
+      "Failed to create a coder for SpecificRecord because it is impossible to retrieve an Avro"
+    )
   }
 
   it should "support avrohugger generated SpecificRecord" in {
