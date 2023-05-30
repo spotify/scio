@@ -1095,7 +1095,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   a new SCollection of (key, top `num` values) pairs
    * @group per_key
    */
-  def topByKey(num: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] = this.applyPerKey(Top.perKey[K, V, Ordering[V]](num, ord))(kvListToTuple)
+  def topByKey(num: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
+    this.applyPerKey(Top.perKey[K, V, Ordering[V]](num, ord))(kvListToTuple)
 
   /**
    * Return an SCollection with the values of each tuple.

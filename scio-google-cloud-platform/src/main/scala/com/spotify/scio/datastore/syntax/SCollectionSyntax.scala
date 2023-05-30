@@ -22,6 +22,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.datastore.DatastoreIO
 import com.spotify.scio.io.ClosedTap
 import com.google.datastore.v1.Entity
+import org.apache.beam.sdk.io.gcp.{datastore => beam}
 
 final class SCollectionEntityOps[T <: Entity](private val coll: SCollection[T]) extends AnyVal {
 
@@ -29,8 +30,11 @@ final class SCollectionEntityOps[T <: Entity](private val coll: SCollection[T]) 
    * Save this SCollection as a Datastore dataset. Note that elements must be of type `Entity`.
    * @group output
    */
-  def saveAsDatastore(projectId: String): ClosedTap[Nothing] =
-    coll.covary_[Entity].write(DatastoreIO(projectId))
+  def saveAsDatastore(
+    projectId: String,
+    configOverride: beam.DatastoreV1.Write => beam.DatastoreV1.Write = null
+  ): ClosedTap[Nothing] =
+    coll.covary_[Entity].write(DatastoreIO(projectId))(DatastoreIO.WriteParam(configOverride))
 }
 
 trait SCollectionSyntax {

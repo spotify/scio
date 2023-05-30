@@ -26,24 +26,28 @@ import org.apache.beam.sdk.io.gcp.{datastore => beam}
 
 final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   override type ReadP = DatastoreIO.ReadParam
-  override type WriteP = Unit
+  override type WriteP = DatastoreIO.WriteParam
 
   override val tapT: TapT.Aux[Entity, Nothing] = EmptyTapOf[Entity]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] = {
     val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Entity])
+    val read = beam.DatastoreIO
+      .v1()
+      .read()
+      .withProjectId(projectId)
+      .withNamespace(params.namespace)
+      .withQuery(params.query)
     sc.applyTransform(
-      beam.DatastoreIO
-        .v1()
-        .read()
-        .withProjectId(projectId)
-        .withNamespace(params.namespace)
-        .withQuery(params.query)
+      Option(params.configOverride).map(_(read)).getOrElse(read)
     ).setCoder(coder)
   }
 
   override protected def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
-    data.applyInternal(beam.DatastoreIO.v1.write.withProjectId(projectId))
+    val write = beam.DatastoreIO.v1.write.withProjectId(projectId)
+    data.applyInternal(
+      Option(params.configOverride).map(_(write)).getOrElse(write)
+    )
     EmptyTap
   }
 
@@ -51,5 +55,13 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 }
 
 object DatastoreIO {
-  final case class ReadParam(query: Query, namespace: String = null)
+  final case class ReadParam(
+    query: Query,
+    namespace: String = null,
+    configOverride: beam.DatastoreV1.Read => beam.DatastoreV1.Read = null
+  )
+
+  final case class WriteParam(
+    configOverride: beam.DatastoreV1.Write => beam.DatastoreV1.Write = null
+  )
 }
