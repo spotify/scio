@@ -68,14 +68,14 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
         node: TransformHierarchy#Node
       ): PipelineVisitor.CompositeBehavior = {
         if (node.getTransform != null) {
-          actualTransforms.addOne(node.getTransform)
+          actualTransforms.append(node.getTransform)
         }
         CompositeBehavior.ENTER_TRANSFORM
       }
 
       override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
         if (node.getTransform != null) {
-          actualTransforms.addOne(node.getTransform)
+          actualTransforms.append(node.getTransform)
         }
     })
     actualTransforms
