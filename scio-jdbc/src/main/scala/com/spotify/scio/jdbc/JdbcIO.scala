@@ -89,7 +89,11 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
       // override default fetch size.
       transform = transform.withFetchSize(readOptions.fetchSize)
     }
-    sc.applyTransform(readOptions.configOverride(transform))
+    if (readOptions.configOverride != null) {
+      transform = readOptions.configOverride(transform)
+    }
+
+    sc.applyTransform(transform)
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
@@ -134,7 +138,11 @@ final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[
       .withRetryConfiguration(writeOptions.retryConfiguration)
       .withRetryStrategy(writeOptions.retryStrategy.apply)
 
-    data.applyInternal(writeOptions.configOverride(transform))
+    if (writeOptions.configOverride != null) {
+      transform = writeOptions.configOverride(transform)
+    }
+
+    data.applyInternal(transform)
     EmptyTap
   }
 

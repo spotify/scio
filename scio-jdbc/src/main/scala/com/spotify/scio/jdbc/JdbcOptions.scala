@@ -83,7 +83,7 @@ final case class JdbcReadOptions[T](
   fetchSize: Int = JdbcIoOptions.BeamDefaultFetchSize,
   outputParallelization: Boolean = JdbcIoOptions.DefaultOutputParallelization,
   dataSourceProviderFn: () => DataSource = null,
-  configOverride: Read[T] => Read[T] = identity[Read[T]] _
+  configOverride: Read[T] => Read[T] = null
 ) extends JdbcIoOptions
 
 /**
@@ -120,5 +120,5 @@ final case class JdbcWriteOptions[T](
   retryStrategy: SQLException => Boolean = new DefaultRetryStrategy().apply,
   autoSharding: Boolean = false,
   dataSourceProviderFn: () => DataSource = null,
-  configOverride: Write[T] => Write[T] = identity[Write[T]] _
+  configOverride: Write[T] => Write[T] = null
 ) extends JdbcIoOptions

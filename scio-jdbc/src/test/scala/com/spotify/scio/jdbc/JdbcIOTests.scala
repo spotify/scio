@@ -59,7 +59,6 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
   }
 
   it must "add to pipeline overridden Write transform" in {
-
     val args = Array[String]()
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val sc = ScioContext(opts)
