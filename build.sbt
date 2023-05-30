@@ -132,7 +132,6 @@ val pprintVersion = "0.8.1"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
 val scalaCollectionCompatVersion = "2.10.0"
-val scalacticVersion = "3.2.16"
 val scalaMacrosVersion = "2.1.1"
 val scalatestVersion = "3.2.16"
 val shapelessVersion = "2.3.10"
@@ -624,7 +623,7 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.scalactic" %% "scalactic" % scalacticVersion,
+      "org.scalactic" %% "scalactic" % scalatestVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // test
