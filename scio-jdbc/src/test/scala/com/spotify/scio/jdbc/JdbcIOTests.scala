@@ -6,28 +6,59 @@ import org.apache.beam.sdk.Pipeline.PipelineVisitor.CompositeBehavior
 import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
 import org.apache.beam.sdk.runners.TransformHierarchy
 import org.apache.beam.sdk.transforms.PTransform
+import org.apache.beam.sdk.transforms.display.DisplayData
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should._
 
 import java.sql.ResultSet
 import scala.collection.mutable.ArrayBuffer
+import scala.jdk.CollectionConverters._
 
-class JdbcIOTests3 extends AnyFlatSpec with Matchers {
+case class Foo(field: String)
+
+class JdbcIOTests extends AnyFlatSpec with Matchers {
+
+  private val ReadQueryId = DisplayData.Identifier.of(
+    DisplayData.Path.root(),
+    classOf[BJdbcIO.Read[_]],
+    "query"
+  )
+
+  private val WriteStatementId = "[fn]class org.apache.beam.sdk.io.jdbc.JdbcIO$WriteFn:statement"
 
   it must "add to pipeline overridden Read transform" in {
     val args = Array[String]()
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val sc = ScioContext(opts)
-    var expectedTransform: BJdbcIO.Read[String] = null
     sc.jdbcSelect[String](
-      getDefaultReadOptions(opts).copy(configOverride = r => {
-        expectedTransform = r.withQuery("overridden query")
-        expectedTransform
-      })
+      getDefaultReadOptions(opts).copy(configOverride = _.withQuery("overridden query"))
     )
 
-    expectedTransform should not be null
-    getPipelineTransforms(sc) should contain(expectedTransform)
+    val transform = getPipelineTransforms(sc).collect { case t: BJdbcIO.Read[String] => t }.head
+    val displayData = DisplayData.from(transform).asMap().asScala
+
+    displayData should contain key ReadQueryId
+    displayData(ReadQueryId).getValue should be("overridden query")
+  }
+
+  it must "add to pipeline overridden Write transform" in {
+
+    val args = Array[String]()
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
+    val sc = ScioContext(opts)
+
+    def improveWrite(statement: BJdbcIO.Write[String]) =
+      statement.withStatement("updated statement")
+
+    sc.parallelize(List("1", "2", "3"))
+      .saveAsJdbc(getDefaultWriteOptions[String](opts).copy(configOverride = improveWrite))
+
+    val transform = getPipelineTransforms(sc).filter(x => x.toString.contains("WriteFn")).head
+    val displayData =
+      DisplayData.from(transform).asMap().asScala.map { case (k, v) => (k.toString, v) }
+
+    displayData should contain key WriteStatementId
+    displayData(WriteStatementId).getValue should be("updated statement")
   }
 
   private def getPipelineTransforms(sc: ScioContext): Iterable[PTransform[_, _]] = {
@@ -36,9 +67,16 @@ class JdbcIOTests3 extends AnyFlatSpec with Matchers {
       override def enterCompositeTransform(
         node: TransformHierarchy#Node
       ): PipelineVisitor.CompositeBehavior = {
-        actualTransforms.addOne(node.getTransform)
+        if (node.getTransform != null) {
+          actualTransforms.addOne(node.getTransform)
+        }
         CompositeBehavior.ENTER_TRANSFORM
       }
+
+      override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
+        if (node.getTransform != null) {
+          actualTransforms.addOne(node.getTransform)
+        }
     })
     actualTransforms
   }
@@ -50,10 +88,11 @@ class JdbcIOTests3 extends AnyFlatSpec with Matchers {
       rowMapper = (rs: ResultSet) => rs.getString(1)
     )
 
-  def getWriteOptions(opts: CloudSqlOptions): JdbcWriteOptions[String] =
-    JdbcWriteOptions[String](
+  def getDefaultWriteOptions[T](opts: CloudSqlOptions): JdbcWriteOptions[T] =
+    JdbcWriteOptions[T](
       connectionOptions = getConnectionOptions(opts),
-      statement = "INSERT INTO <this> VALUES( ?, ? ..?)"
+      statement = "INSERT INTO <this> VALUES( ?, ? ..?)",
+      preparedStatementSetter = (_, _) => {}
     )
 
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
