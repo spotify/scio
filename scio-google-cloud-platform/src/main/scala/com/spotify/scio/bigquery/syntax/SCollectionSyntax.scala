@@ -68,7 +68,10 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     method: Method = TypedTableWriteParam.DefaultMethod,
     triggeringFrequency: Duration = TypedTableWriteParam.DefaultTriggeringFrequency,
     sharding: Sharding = TypedTableWriteParam.DefaultSharding,
-    failedInsertRetryPolicy: InsertRetryPolicy = TypedTableWriteParam.DefaultFailedInsertRetryPolicy
+    failedInsertRetryPolicy: InsertRetryPolicy =
+      TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
+    configOverride: TypedTableWriteParam.ConfigOverride[TableRow] =
+      TableWriteParam.defaultConfigOverride
   ): ClosedTap[TableRow] = {
     val param = TypedTableWriteParam(
       method,
@@ -80,7 +83,8 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       clustering,
       triggeringFrequency,
       sharding,
-      failedInsertRetryPolicy
+      failedInsertRetryPolicy,
+      configOverride
     )
 
     self
@@ -121,7 +125,10 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     method: Method = TypedTableWriteParam.DefaultMethod,
     triggeringFrequency: Duration = TypedTableWriteParam.DefaultTriggeringFrequency,
     sharding: Sharding = TypedTableWriteParam.DefaultSharding,
-    failedInsertRetryPolicy: InsertRetryPolicy = TypedTableWriteParam.DefaultFailedInsertRetryPolicy
+    failedInsertRetryPolicy: InsertRetryPolicy =
+      TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
+    configOverride: TypedTableWriteParam.ConfigOverride[GenericRecord] =
+      TypedTableWriteParam.defaultConfigOverride[GenericRecord]
   ): ClosedTap[GenericRecord] = {
     val param = TypedTableWriteParam(
       method,
@@ -133,7 +140,8 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       clustering,
       triggeringFrequency,
       sharding,
-      failedInsertRetryPolicy
+      failedInsertRetryPolicy,
+      configOverride
     )
     self
       .covary[GenericRecord]
@@ -188,9 +196,10 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     method: Method = TableWriteParam.DefaultMethod,
     triggeringFrequency: Duration = TableWriteParam.DefaultTriggeringFrequency,
     sharding: Sharding = TableWriteParam.DefaultSharding,
-    failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy
+    failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy,
+    configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.defaultConfigOverride
   )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam(
+    val param = TableWriteParam[T](
       method,
       writeDisposition,
       createDisposition,
@@ -198,7 +207,8 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       clustering,
       triggeringFrequency,
       sharding,
-      failedInsertRetryPolicy
+      failedInsertRetryPolicy,
+      configOverride
     )
     self.write(BigQueryTyped.Table[T](table))(param)
   }

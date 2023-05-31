@@ -55,6 +55,7 @@ import scala.reflect.runtime.universe._
 import scala.util.chaining._
 
 private object Reads {
+
   private[this] val cache = new ConcurrentHashMap[ScioContext, BigQuery]()
 
   @inline private def client(sc: ScioContext): BigQuery =
@@ -104,7 +105,9 @@ private object Reads {
 
 private[bigquery] object Writes {
 
-  trait WriteParam[Info] {
+  trait WriteParam[T, Info] {
+    def configOverride: beam.BigQueryIO.Write[T] => beam.BigQueryIO.Write[T]
+
     def extendedErrorInfo: ExtendedErrorInfo[Info]
     def insertErrorTransform: SCollection[Info] => Unit
 
@@ -113,6 +116,9 @@ private[bigquery] object Writes {
   }
 
   trait WriteParamDefaults {
+
+    type ConfigOverride[T] = beam.BigQueryIO.Write[T] => beam.BigQueryIO.Write[T]
+
     val DefaultMethod: WriteMethod = WriteMethod.DEFAULT
     val DefaultSchema: TableSchema = null
     val DefaultWriteDisposition: WriteDisposition = null
@@ -124,6 +130,7 @@ private[bigquery] object Writes {
     val DefaultSharding: Sharding = null
     val DefaultFailedInsertRetryPolicy: InsertRetryPolicy = null
     val DefaultExtendedErrorInfo: ExtendedErrorInfo[TableRow] = ExtendedErrorInfo.Disabled
+    def defaultConfigOverride[T]: ConfigOverride[T] = identity
     def defaultInsertErrorTransform[T]: SCollection[T] => Unit = { sc =>
       // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
       // in the pipeline graph.
@@ -238,7 +245,7 @@ object BigQueryTypedTable {
     case object TableRow extends Format[TableRow]
   }
 
-  final case class WriteParam[Info] private (
+  final case class WriteParam[T, Info] private (
     method: WriteMethod,
     schema: TableSchema,
     writeDisposition: WriteDisposition,
@@ -249,12 +256,13 @@ object BigQueryTypedTable {
     triggeringFrequency: Duration,
     sharding: Sharding,
     failedInsertRetryPolicy: InsertRetryPolicy,
+    configOverride: WriteParam.ConfigOverride[T],
     extendedErrorInfo: ExtendedErrorInfo[Info],
     insertErrorTransform: SCollection[Info] => Unit
-  ) extends Writes.WriteParam[Info]
+  ) extends Writes.WriteParam[T, Info]
 
   object WriteParam extends Writes.WriteParamDefaults {
-    @inline final private[bigquery] def apply(
+    @inline final private[bigquery] def apply[T](
       method: WriteMethod = DefaultMethod,
       schema: TableSchema = DefaultSchema,
       writeDisposition: WriteDisposition = DefaultWriteDisposition,
@@ -264,8 +272,9 @@ object BigQueryTypedTable {
       clustering: Clustering = DefaultClustering,
       triggeringFrequency: Duration = DefaultTriggeringFrequency,
       sharding: Sharding = DefaultSharding,
-      failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy
-    ): WriteParam[TableRow] = new WriteParam(
+      failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy,
+      configOverride: ConfigOverride[T] = defaultConfigOverride
+    ): WriteParam[T, TableRow] = new WriteParam(
       method,
       schema,
       writeDisposition,
@@ -276,6 +285,7 @@ object BigQueryTypedTable {
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
+      configOverride,
       DefaultExtendedErrorInfo,
       defaultInsertErrorTransform
     )
@@ -358,7 +368,7 @@ final case class BigQueryTypedTable[T: Coder](
   fn: (GenericRecord, TableSchema) => T
 ) extends BigQueryIO[T] {
   override type ReadP = Unit
-  override type WriteP = BigQueryTypedTable.WriteParam[_]
+  override type WriteP = BigQueryTypedTable.WriteParam[T, _]
 
   override def testId: String = s"BigQueryIO(${table.spec})"
 
@@ -393,6 +403,7 @@ final case class BigQueryTypedTable[T: Coder](
         }
       )
       .pipe(w => Option(params.failedInsertRetryPolicy).fold(w)(w.withFailedInsertRetryPolicy))
+      .pipe(params.configOverride)
       .pipe(w => if (params.extendedErrorInfo == Disabled) w else w.withExtendedErrorInfo())
 
     params.handleErrors(data.context, data.applyInternal(transform))
@@ -598,7 +609,7 @@ object BigQueryTyped {
   /** Get a typed SCollection for a BigQuery table. */
   final case class Table[T <: HasAnnotation: TypeTag: Coder](table: STable) extends BigQueryIO[T] {
     override type ReadP = Unit
-    override type WriteP = Table.WriteParam[_]
+    override type WriteP = Table.WriteParam[T, _]
 
     private val underlying = BigQueryTypedTable[T](
       (i: SchemaAndRecord) => BigQueryType[T].fromAvro(i.getRecord),
@@ -608,8 +619,8 @@ object BigQueryTyped {
     )
 
     private def fromTableParam[Info](
-      params: Table.WriteParam[Info]
-    ): BigQueryTypedTable.WriteParam[Info] =
+      params: Table.WriteParam[T, Info]
+    ): BigQueryTypedTable.WriteParam[T, Info] =
       BigQueryTypedTable.WriteParam(
         params.method,
         BigQueryType[T].schema,
@@ -621,6 +632,7 @@ object BigQueryTyped {
         params.triggeringFrequency,
         params.sharding,
         params.failedInsertRetryPolicy,
+        params.configOverride,
         params.extendedErrorInfo,
         params.insertErrorTransform
       )
@@ -643,7 +655,7 @@ object BigQueryTyped {
   }
 
   object Table {
-    final case class WriteParam[Info] private (
+    final case class WriteParam[T, Info] private (
       method: WriteMethod,
       writeDisposition: WriteDisposition,
       createDisposition: CreateDisposition,
@@ -652,12 +664,14 @@ object BigQueryTyped {
       triggeringFrequency: Duration,
       sharding: Sharding,
       failedInsertRetryPolicy: InsertRetryPolicy,
+      configOverride: WriteParam.ConfigOverride[T],
       extendedErrorInfo: ExtendedErrorInfo[Info],
       insertErrorTransform: SCollection[Info] => Unit
-    ) extends Writes.WriteParam[Info]
+    ) extends Writes.WriteParam[T, Info]
 
     object WriteParam extends Writes.WriteParamDefaults {
-      @inline final private[bigquery] def apply(
+
+      @inline final private[bigquery] def apply[T](
         method: WriteMethod = DefaultMethod,
         writeDisposition: WriteDisposition = DefaultWriteDisposition,
         createDisposition: CreateDisposition = DefaultCreateDisposition,
@@ -665,8 +679,9 @@ object BigQueryTyped {
         clustering: Clustering = DefaultClustering,
         triggeringFrequency: Duration = DefaultTriggeringFrequency,
         sharding: Sharding = DefaultSharding,
-        failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy
-      ): WriteParam[TableRow] = new WriteParam(
+        failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy,
+        configOverride: ConfigOverride[T]
+      ): WriteParam[T, TableRow] = new WriteParam(
         method,
         writeDisposition,
         createDisposition,
@@ -675,6 +690,7 @@ object BigQueryTyped {
         triggeringFrequency,
         sharding,
         failedInsertRetryPolicy,
+        configOverride,
         DefaultExtendedErrorInfo,
         defaultInsertErrorTransform
       )
