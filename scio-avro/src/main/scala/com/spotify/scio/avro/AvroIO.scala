@@ -310,9 +310,8 @@ object AvroIO {
   object ReadParam {
     val DefaultSuffix: String = null
 
-    def apply(params: WriteParam): ReadParam = new ReadParam(
-      params.suffix
-    )
+    private[scio] def apply(params: WriteParam): ReadParam =
+      new ReadParam(params.suffix)
   }
 
   final case class ReadParam private (

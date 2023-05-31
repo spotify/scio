@@ -78,7 +78,7 @@ object JsonIO {
     val DefaultCompression: Compression = beam.Compression.AUTO
     val DefaultSuffix: String = null
 
-    private[json] def apply(params: WriteParam): ReadParam = new ReadParam(
+    private[scio] def apply(params: WriteParam): ReadParam = new ReadParam(
       params.compression,
       params.suffix + params.compression.getSuggestedSuffix
     )

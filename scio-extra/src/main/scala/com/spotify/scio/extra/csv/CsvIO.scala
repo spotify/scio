@@ -103,7 +103,7 @@ object CsvIO {
     val DefaultCsvConfiguration: CsvConfiguration = CsvIO.DefaultCsvConfiguration
     val DefaultSuffix: String = null
 
-    private[csv] def apply(params: WriteParam): ReadParam =
+    private[scio] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         compression = params.compression,
         csvConfiguration = params.csvConfiguration,

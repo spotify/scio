@@ -163,7 +163,7 @@ object ParquetAvroIO {
     val DefaultConfiguration: Configuration = null
     val DefaultSuffix: String = null
 
-    private[parquet] def apply[T: ClassTag](params: WriteParam): ReadParam[T, T] =
+    private[scio] def apply[T: ClassTag](params: WriteParam): ReadParam[T, T] =
       new ReadParam[T, T](
         projectionFn = identity,
         projection = params.schema,

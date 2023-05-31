@@ -61,7 +61,7 @@ object TFRecordIO {
     val DefaultCompression: Compression = Compression.AUTO
     val DefaultSuffix: String = null
 
-    private[tensorflow] def apply(params: WriteParam): ReadParam =
+    private[scio] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         compression = params.compression,
         suffix = params.suffix + params.compression.getSuggestedSuffix

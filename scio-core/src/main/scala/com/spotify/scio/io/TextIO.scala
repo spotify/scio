@@ -118,7 +118,7 @@ object TextIO {
     val DefaultEmptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
     val DefaultSuffix: String = null
 
-    private[io] def apply(params: WriteParam): ReadParam =
+    private[scio] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         compression = params.compression,
         suffix = params.suffix + params.compression.getSuggestedSuffix

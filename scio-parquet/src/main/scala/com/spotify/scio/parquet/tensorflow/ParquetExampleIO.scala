@@ -216,7 +216,7 @@ object ParquetExampleIO {
     val DefaultConfiguration: Configuration = null
     val DefaultSuffix: String = null
 
-    private[parquet] def apply(params: WriteParam): ReadParam =
+    private[scio] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         conf = params.conf,
         suffix = params.suffix
