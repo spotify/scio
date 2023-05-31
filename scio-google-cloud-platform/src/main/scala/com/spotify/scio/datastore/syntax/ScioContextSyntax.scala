@@ -21,7 +21,8 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.datastore.DatastoreIO
 import com.google.datastore.v1.{Entity, Query}
-import org.apache.beam.sdk.io.gcp.{datastore => beam}
+import com.spotify.scio.datastore.DatastoreIO.ReadParam
+import org.apache.beam.sdk.io.gcp.datastore.{DatastoreV1 => BDatastore}
 
 final class ScioContextOps(private val sc: ScioContext) extends AnyVal {
 
@@ -33,9 +34,9 @@ final class ScioContextOps(private val sc: ScioContext) extends AnyVal {
     projectId: String,
     query: Query,
     namespace: String = null,
-    configOverride: beam.DatastoreV1.Read => beam.DatastoreV1.Read = null
+    configOverride: BDatastore.Read => BDatastore.Read = identity
   ): SCollection[Entity] =
-    sc.read(DatastoreIO(projectId))(DatastoreIO.ReadParam(query, namespace, configOverride))
+    sc.read(DatastoreIO(projectId))(ReadParam(query, namespace, configOverride))
 }
 
 trait ScioContextSyntax {

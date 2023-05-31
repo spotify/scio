@@ -21,23 +21,19 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.{jdbc => beam}
+import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
+
+import java.sql.{PreparedStatement, ResultSet, SQLException}
+import javax.sql.DataSource
 
 sealed trait JdbcIO[T] extends ScioIO[T]
 
 object JdbcIO {
-  final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
+  final def apply[T](opts: JdbcConnectionOptions, query: String): JdbcIO[T] =
     new JdbcIO[T] with TestIO[T] {
       final override val tapT = EmptyTapOf[T]
-      override def testId: String = s"JdbcIO(${jdbcIoId(opts)})"
+      override def testId: String = s"JdbcIO(${jdbcIoId(opts, query)})"
     }
-
-  private[jdbc] def jdbcIoId(opts: JdbcIoOptions): String = opts match {
-    case readOpts: JdbcReadOptions[_] =>
-      jdbcIoId(readOpts.connectionOptions, readOpts.query)
-    case writeOpts: JdbcWriteOptions[_] =>
-      jdbcIoId(writeOpts.connectionOptions, writeOpts.statement)
-  }
 
   private[jdbc] def jdbcIoId(opts: JdbcConnectionOptions, query: String): String = {
     val user = opts.password
@@ -47,53 +43,90 @@ object JdbcIO {
 
   private[jdbc] def dataSourceConfiguration(
     opts: JdbcConnectionOptions
-  ): beam.JdbcIO.DataSourceConfiguration =
+  ): BJdbcIO.DataSourceConfiguration =
     opts.password match {
       case Some(pass) =>
-        beam.JdbcIO.DataSourceConfiguration
+        BJdbcIO.DataSourceConfiguration
           .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
           .withUsername(opts.username)
           .withPassword(pass)
       case None =>
-        beam.JdbcIO.DataSourceConfiguration
+        BJdbcIO.DataSourceConfiguration
           .create(opts.driverClass.getCanonicalName, opts.connectionUrl)
           .withUsername(opts.username)
     }
+
+  object ReadParam {
+    private[jdbc] val BeamDefaultFetchSize = -1
+    private[jdbc] val DefaultOutputParallelization = true
+  }
+
+  final case class ReadParam[T](
+    rowMapper: ResultSet => T,
+    statementPreparator: PreparedStatement => Unit = null,
+    fetchSize: Int = ReadParam.BeamDefaultFetchSize,
+    outputParallelization: Boolean = ReadParam.DefaultOutputParallelization,
+    dataSourceProviderFn: () => DataSource = null,
+    configOverride: BJdbcIO.Read[T] => BJdbcIO.Read[T] = identity[BJdbcIO.Read[T]] _
+  )
+
+  object WriteParam {
+    private[jdbc] val BeamDefaultBatchSize = -1L
+    private[jdbc] val BeamDefaultMaxRetryAttempts = 5
+    private[jdbc] val BeamDefaultInitialRetryDelay = org.joda.time.Duration.ZERO
+    private[jdbc] val BeamDefaultMaxRetryDelay = org.joda.time.Duration.ZERO
+    private[jdbc] val BeamDefaultRetryConfiguration = BJdbcIO.RetryConfiguration.create(
+      BeamDefaultMaxRetryAttempts,
+      BeamDefaultMaxRetryDelay,
+      BeamDefaultInitialRetryDelay
+    )
+    private[jdbc] val DefaultRetryStrategy: SQLException => Boolean =
+      new BJdbcIO.DefaultRetryStrategy().apply
+    private[jdbc] val DefaultAutoSharding: Boolean = false
+  }
+
+  final case class WriteParam[T](
+    preparedStatementSetter: (T, PreparedStatement) => Unit,
+    batchSize: Long = WriteParam.BeamDefaultBatchSize,
+    retryConfiguration: BJdbcIO.RetryConfiguration = WriteParam.BeamDefaultRetryConfiguration,
+    retryStrategy: SQLException => Boolean = WriteParam.DefaultRetryStrategy,
+    autoSharding: Boolean = WriteParam.DefaultAutoSharding,
+    dataSourceProviderFn: () => DataSource = null,
+    configOverride: BJdbcIO.Write[T] => BJdbcIO.Write[T] = identity[BJdbcIO.Write[T]] _
+  )
 }
 
-final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends JdbcIO[T] {
-  override type ReadP = Unit
+final case class JdbcSelect[T: Coder](opts: JdbcConnectionOptions, query: String)
+    extends JdbcIO[T] {
+  override type ReadP = JdbcIO.ReadParam[T]
   override type WriteP = Nothing
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
-  override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(readOptions)})"
+  override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(opts, query)})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
-    var transform = beam.JdbcIO
+    var transform = BJdbcIO
       .read[T]()
       .withCoder(coder)
-      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(readOptions.connectionOptions))
-      .withQuery(readOptions.query)
-      .withRowMapper(readOptions.rowMapper(_))
-      .withOutputParallelization(readOptions.outputParallelization)
+      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
+      .withQuery(query)
+      .withRowMapper(params.rowMapper(_))
+      .withOutputParallelization(params.outputParallelization)
 
-    if (readOptions.dataSourceProviderFn != null) {
-      transform.withDataSourceProviderFn((_: Void) => readOptions.dataSourceProviderFn())
+    if (params.dataSourceProviderFn != null) {
+      transform.withDataSourceProviderFn((_: Void) => params.dataSourceProviderFn())
     }
-    if (readOptions.statementPreparator != null) {
+    if (params.statementPreparator != null) {
       transform = transform
-        .withStatementPreparator(readOptions.statementPreparator(_))
+        .withStatementPreparator(params.statementPreparator(_))
     }
-    if (readOptions.fetchSize != JdbcIoOptions.BeamDefaultFetchSize) {
+    if (params.fetchSize != JdbcIO.ReadParam.BeamDefaultFetchSize) {
       // override default fetch size.
-      transform = transform.withFetchSize(readOptions.fetchSize)
-    }
-    if (readOptions.configOverride != null) {
-      transform = readOptions.configOverride(transform)
+      transform = transform.withFetchSize(params.fetchSize)
     }
 
-    sc.applyTransform(transform)
+    sc.applyTransform(params.configOverride(transform))
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
@@ -103,46 +136,42 @@ final case class JdbcSelect[T: Coder](readOptions: JdbcReadOptions[T]) extends J
     EmptyTap
 }
 
-final case class JdbcWrite[T](writeOptions: JdbcWriteOptions[T]) extends JdbcIO[T] {
+final case class JdbcWrite[T](opts: JdbcConnectionOptions, statement: String) extends JdbcIO[T] {
   override type ReadP = Nothing
-  override type WriteP = Unit
+  override type WriteP = JdbcIO.WriteParam[T]
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
-  override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(writeOptions)})"
+  override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(opts, statement)})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException("jdbc.Write is write-only")
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    var transform = beam.JdbcIO
+    var transform = BJdbcIO
       .write[T]()
-      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(writeOptions.connectionOptions))
-      .withStatement(writeOptions.statement)
+      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
+      .withStatement(statement)
 
-    if (writeOptions.dataSourceProviderFn != null) {
-      transform.withDataSourceProviderFn((_: Void) => writeOptions.dataSourceProviderFn())
+    if (params.dataSourceProviderFn != null) {
+      transform.withDataSourceProviderFn((_: Void) => params.dataSourceProviderFn())
     }
-    if (writeOptions.preparedStatementSetter != null) {
+    if (params.preparedStatementSetter != null) {
       transform = transform
-        .withPreparedStatementSetter(writeOptions.preparedStatementSetter(_, _))
+        .withPreparedStatementSetter(params.preparedStatementSetter(_, _))
     }
-    if (writeOptions.batchSize != JdbcIoOptions.BeamDefaultBatchSize) {
+    if (params.batchSize != JdbcIO.WriteParam.BeamDefaultBatchSize) {
       // override default batch size.
-      transform = transform.withBatchSize(writeOptions.batchSize)
+      transform = transform.withBatchSize(params.batchSize)
     }
-    if (writeOptions.autoSharding) {
+    if (params.autoSharding) {
       transform = transform.withAutoSharding()
     }
 
     transform = transform
-      .withRetryConfiguration(writeOptions.retryConfiguration)
-      .withRetryStrategy(writeOptions.retryStrategy.apply)
+      .withRetryConfiguration(params.retryConfiguration)
+      .withRetryStrategy(params.retryStrategy.apply)
 
-    if (writeOptions.configOverride != null) {
-      transform = writeOptions.configOverride(transform)
-    }
-
-    data.applyInternal(transform)
+    data.applyInternal(params.configOverride(transform))
     EmptyTap
   }
 

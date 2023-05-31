@@ -48,7 +48,10 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val sc = ScioContext(opts)
     sc.jdbcSelect[String](
-      getDefaultReadOptions(opts).copy(configOverride = _.withQuery("overridden query"))
+      getConnectionOptions(opts),
+      "initial query",
+      (rs: ResultSet) => rs.getString(1),
+      configOverride = _.withQuery("overridden query")
     )
 
     val transform = getPipelineTransforms(sc).collect { case t: BJdbcIO.Read[String] => t }.head
@@ -67,7 +70,12 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
       statement.withStatement("updated statement")
 
     sc.parallelize(List("1", "2", "3"))
-      .saveAsJdbc(getDefaultWriteOptions[String](opts).copy(configOverride = improveWrite))
+      .saveAsJdbc(
+        getConnectionOptions(opts),
+        "INSERT INTO <this> VALUES( ?, ? ..?)",
+        (_, _) => {},
+        configOverride = _.withStatement("updated statement")
+      )
 
     val transform = getPipelineTransforms(sc).filter(x => x.toString.contains("WriteFn")).head
     val displayData =
@@ -97,19 +105,19 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
     actualTransforms
   }
 
-  def getDefaultReadOptions(opts: CloudSqlOptions): JdbcReadOptions[String] =
-    JdbcReadOptions(
-      connectionOptions = getConnectionOptions(opts),
-      query = "SELECT <this> FROM <this>",
-      rowMapper = (rs: ResultSet) => rs.getString(1)
-    )
-
-  def getDefaultWriteOptions[T](opts: CloudSqlOptions): JdbcWriteOptions[T] =
-    JdbcWriteOptions[T](
-      connectionOptions = getConnectionOptions(opts),
-      statement = "INSERT INTO <this> VALUES( ?, ? ..?)",
-      preparedStatementSetter = (_, _) => {}
-    )
+//  def getDefaultReadOptions(opts: CloudSqlOptions): JdbcReadOptions[String] =
+//    JdbcReadOptions(
+//      connectionOptions = getConnectionOptions(opts),
+//      query = "SELECT <this> FROM <this>",
+//      rowMapper = (rs: ResultSet) => rs.getString(1)
+//    )
+//
+//  def getDefaultWriteOptions[T](opts: CloudSqlOptions): JdbcWriteOptions[T] =
+//    JdbcWriteOptions[T](
+//      connectionOptions = getConnectionOptions(opts),
+//      statement = "INSERT INTO <this> VALUES( ?, ? ..?)",
+//      preparedStatementSetter = (_, _) => {}
+//    )
 
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
     JdbcConnectionOptions(

@@ -22,7 +22,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import org.apache.beam.sdk.io.gcp.{datastore => beam}
+import org.apache.beam.sdk.io.gcp.datastore.{DatastoreIO => BDatastoreIO, DatastoreV1 => BDatastore}
 
 final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   override type ReadP = DatastoreIO.ReadParam
@@ -32,7 +32,7 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] = {
     val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Entity])
-    val read = beam.DatastoreIO
+    val read = BDatastoreIO
       .v1()
       .read()
       .withProjectId(projectId)
@@ -44,7 +44,7 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
   }
 
   override protected def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
-    val write = beam.DatastoreIO.v1.write.withProjectId(projectId)
+    val write = BDatastoreIO.v1.write.withProjectId(projectId)
     data.applyInternal(
       Option(params.configOverride).map(_(write)).getOrElse(write)
     )
@@ -58,10 +58,10 @@ object DatastoreIO {
   final case class ReadParam(
     query: Query,
     namespace: String = null,
-    configOverride: beam.DatastoreV1.Read => beam.DatastoreV1.Read = null
+    configOverride: BDatastore.Read => BDatastore.Read = identity
   )
 
   final case class WriteParam(
-    configOverride: beam.DatastoreV1.Write => beam.DatastoreV1.Write = null
+    configOverride: BDatastore.Write => BDatastore.Write = identity
   )
 }
