@@ -66,9 +66,6 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val sc = ScioContext(opts)
 
-    def improveWrite(statement: BJdbcIO.Write[String]) =
-      statement.withStatement("updated statement")
-
     sc.parallelize(List("1", "2", "3"))
       .saveAsJdbc(
         getConnectionOptions(opts),
