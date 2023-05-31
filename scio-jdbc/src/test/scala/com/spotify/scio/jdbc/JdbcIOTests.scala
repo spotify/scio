@@ -105,20 +105,6 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
     actualTransforms
   }
 
-//  def getDefaultReadOptions(opts: CloudSqlOptions): JdbcReadOptions[String] =
-//    JdbcReadOptions(
-//      connectionOptions = getConnectionOptions(opts),
-//      query = "SELECT <this> FROM <this>",
-//      rowMapper = (rs: ResultSet) => rs.getString(1)
-//    )
-//
-//  def getDefaultWriteOptions[T](opts: CloudSqlOptions): JdbcWriteOptions[T] =
-//    JdbcWriteOptions[T](
-//      connectionOptions = getConnectionOptions(opts),
-//      statement = "INSERT INTO <this> VALUES( ?, ? ..?)",
-//      preparedStatementSetter = (_, _) => {}
-//    )
-
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
     JdbcConnectionOptions(
       username = opts.getCloudSqlUsername,

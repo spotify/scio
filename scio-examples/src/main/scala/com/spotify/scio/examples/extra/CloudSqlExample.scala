@@ -74,21 +74,4 @@ object CloudSqlExample {
       driverClass = classOf[com.mysql.jdbc.Driver],
       connectionUrl = getJdbcUrl(opts)
     )
-
-//  def getReadOptions(connOpts: JdbcConnectionOptions): JdbcReadOptions[(String, Long)] =
-//    JdbcReadOptions(
-//      connectionOptions = connOpts,
-//      query = "SELECT * FROM word_count",
-//      rowMapper = r => (r.getString(1), r.getLong(2))
-//    )
-
-//  def getWriteOptions(connOpts: JdbcConnectionOptions): JdbcWriteOptions[(String, Long)] =
-//    JdbcWriteOptions(
-//      connectionOptions = connOpts,
-//      statement = "INSERT INTO result_word_count values(?, ?)",
-//      preparedStatementSetter = (kv, s) => {
-//        s.setString(1, kv._1)
-//        s.setLong(2, kv._2)
-//      }
-//    )
 }
