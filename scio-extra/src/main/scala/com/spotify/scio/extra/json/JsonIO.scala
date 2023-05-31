@@ -28,6 +28,7 @@ import io.circe.syntax._
 import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io.TapT
 import com.spotify.scio.util.FilenamePolicySupplier
+import org.apache.beam.sdk.io.Compression
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
@@ -73,11 +74,11 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 
 object JsonIO {
 
-  private[scio] object ReadParam {
-    val DefaultCompression = beam.Compression.AUTO
-    val DefaultSuffix = null
+  object ReadParam {
+    val DefaultCompression: Compression = beam.Compression.AUTO
+    val DefaultSuffix: String = null
 
-    def apply(params: WriteParam): ReadParam = new ReadParam(
+    private[json] def apply(params: WriteParam): ReadParam = new ReadParam(
       params.compression,
       params.suffix + params.compression.getSuggestedSuffix
     )
@@ -88,21 +89,21 @@ object JsonIO {
     suffix: String = ReadParam.DefaultSuffix
   )
 
-  private[scio] object WriteParam {
-    val DefaultNumShards = 0
-    val DefaultSuffix = ".json"
-    val DefaultCompression = beam.Compression.UNCOMPRESSED
-    val DefaultPrinter = Printer.noSpaces
-    val DefaultFilenamePolicySupplier = null
+  object WriteParam {
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".json"
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultPrinter: Printer = Printer.noSpaces
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
     val DefaultShardNameTemplate: String = null
     val DefaultPrefix: String = null
-    val DefaultTempDirectory = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (
     suffix: String = WriteParam.DefaultSuffix,
     numShards: Int = WriteParam.DefaultNumShards,
-    compression: beam.Compression = WriteParam.DefaultCompression,
+    compression: Compression = WriteParam.DefaultCompression,
     printer: Printer = WriteParam.DefaultPrinter,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = WriteParam.DefaultPrefix,

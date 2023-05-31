@@ -307,7 +307,7 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
 
 object AvroIO {
 
-  private[scio] object ReadParam {
+  object ReadParam {
     val DefaultSuffix: String = null
 
     def apply(params: WriteParam): ReadParam = new ReadParam(
@@ -319,15 +319,15 @@ object AvroIO {
     suffix: String = ReadParam.DefaultSuffix
   )
 
-  private[scio] object WriteParam {
-    val DefaultNumShards = 0
-    val DefaultSuffix = ".avro"
+  object WriteParam {
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".avro"
     val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     val DefaultMetadata: Map[String, AnyRef] = Map.empty
-    val DefaultFilenamePolicySupplier = null
-    val DefaultPrefix = null
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
     val DefaultShardNameTemplate: String = null
-    val DefaultTempDirectory = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (

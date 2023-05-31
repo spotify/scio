@@ -157,13 +157,13 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 object ParquetAvroIO {
   private lazy val log = LoggerFactory.getLogger(getClass)
 
-  private[scio] object ReadParam {
-    val DefaultProjection = null
-    val DefaultPredicate = null
-    val DefaultConfiguration = null
-    val DefaultSuffix = null
+  object ReadParam {
+    val DefaultProjection: Schema = null
+    val DefaultPredicate: FilterPredicate = null
+    val DefaultConfiguration: Configuration = null
+    val DefaultSuffix: String = null
 
-    def apply[T: ClassTag](params: WriteParam): ReadParam[T, T] =
+    private[parquet] def apply[T: ClassTag](params: WriteParam): ReadParam[T, T] =
       new ReadParam[T, T](
         projectionFn = identity,
         projection = params.schema,
@@ -299,16 +299,16 @@ object ParquetAvroIO {
     })
   }
 
-  private[scio] object WriteParam {
-    val DefaultSchema = null
-    val DefaultNumShards = 0
-    val DefaultSuffix = ".parquet"
-    val DefaultCompression = CompressionCodecName.GZIP
-    val DefaultConfiguration = null
-    val DefaultFilenamePolicySupplier = null
-    val DefaultPrefix = null
-    val DefaultShardNameTemplate = null
-    val DefaultTempDirectory = null
+  object WriteParam {
+    val DefaultSchema: Schema = null
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".parquet"
+    val DefaultCompression: CompressionCodecName = CompressionCodecName.GZIP
+    val DefaultConfiguration: Configuration = null
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (

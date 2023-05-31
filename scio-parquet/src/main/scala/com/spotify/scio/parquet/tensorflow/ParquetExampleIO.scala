@@ -210,13 +210,13 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 
 object ParquetExampleIO {
 
-  private[tensorflow] object ReadParam {
-    val DefaultProjection = null
-    val DefaultPredicate = null
-    val DefaultConfiguration = null
-    val DefaultSuffix = null
+  object ReadParam {
+    val DefaultProjection: Seq[String] = null
+    val DefaultPredicate: FilterPredicate = null
+    val DefaultConfiguration: Configuration = null
+    val DefaultSuffix: String = null
 
-    def apply(params: WriteParam): ReadParam =
+    private[parquet] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         conf = params.conf,
         suffix = params.suffix
@@ -229,15 +229,15 @@ object ParquetExampleIO {
     suffix: String = ReadParam.DefaultSuffix
   )
 
-  private[tensorflow] object WriteParam {
-    val DefaultNumShards = 0
-    val DefaultSuffix = ".parquet"
-    val DefaultCompression = CompressionCodecName.GZIP
-    val DefaultConfiguration = null
-    val DefaultFilenamePolicySupplier = null
-    val DefaultPrefix = null
-    val DefaultShardNameTemplate = null
-    val DefaultTempDirectory = null
+  object WriteParam {
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".parquet"
+    val DefaultCompression: CompressionCodecName = CompressionCodecName.GZIP
+    val DefaultConfiguration: Configuration = null
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (

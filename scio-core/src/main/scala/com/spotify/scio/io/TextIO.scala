@@ -113,12 +113,12 @@ final case class TextIO(path: String) extends ScioIO[String] {
 
 object TextIO {
 
-  private[scio] object ReadParam {
-    private[scio] val DefaultCompression = Compression.AUTO
-    private[scio] val DefaultEmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
-    private[scio] val DefaultSuffix = null
+  object ReadParam {
+    val DefaultCompression: Compression = Compression.AUTO
+    val DefaultEmptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+    val DefaultSuffix: String = null
 
-    def apply(params: WriteParam): ReadParam =
+    private[io] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         compression = params.compression,
         suffix = params.suffix + params.compression.getSuggestedSuffix
@@ -131,16 +131,16 @@ object TextIO {
     suffix: String = ReadParam.DefaultSuffix
   )
 
-  private[scio] object WriteParam {
+  object WriteParam {
     val DefaultHeader: Option[String] = None
     val DefaultFooter: Option[String] = None
-    val DefaultSuffix = ".txt"
-    val DefaultNumShards = 0
-    val DefaultCompression = Compression.UNCOMPRESSED
-    val DefaultFilenamePolicySupplier = null
-    val DefaultPrefix = null
-    val DefaultShardNameTemplate = null
-    val DefaultTempDirectory = null
+    val DefaultSuffix: String = ".txt"
+    val DefaultNumShards: Int = 0
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   val DefaultWriteParam: WriteParam = WriteParam()

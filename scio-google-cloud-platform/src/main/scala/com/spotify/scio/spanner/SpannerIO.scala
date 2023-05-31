@@ -39,8 +39,8 @@ sealed trait SpannerIO[T] extends ScioIO[T] {
 
 object SpannerRead {
   object ReadParam {
-    private[spanner] val DefaultWithTransaction = false
-    private[spanner] val DefaultWithBatching = true
+    val DefaultWithTransaction: Boolean = false
+    val DefaultWithBatching: Boolean = true
   }
 
   sealed trait ReadMethod
@@ -88,8 +88,8 @@ final case class SpannerRead(config: SpannerConfig) extends SpannerIO[Struct] {
 
 object SpannerWrite {
   object WriteParam {
-    private[spanner] val DefaultFailureMode = FailureMode.FAIL_FAST
-    private[spanner] val DefaultBatchSizeBytes = 1024L * 1024L
+    val DefaultFailureMode: FailureMode = FailureMode.FAIL_FAST
+    val DefaultBatchSizeBytes: Long = 1024L * 1024L
   }
 
   final case class WriteParam private (

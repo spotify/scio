@@ -180,32 +180,32 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
 
 object ParquetTypeIO {
 
-  private[scio] object ReadParam {
-    val DefaultPredicate = null
-    val DefaultConfiguration = null
-    val DefaultSuffix = null
+  object ReadParam {
+    val DefaultPredicate: FilterPredicate = null
+    val DefaultConfiguration: Configuration = null
+    val DefaultSuffix: String = null
 
-    def apply[T](params: WriteParam): ReadParam =
+    private[parquet] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         conf = params.conf,
         suffix = params.suffix
       )
   }
   final case class ReadParam private (
-    predicate: FilterPredicate = null,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = ReadParam.DefaultSuffix
   )
 
-  private[scio] object WriteParam {
-    val DefaultNumShards = 0
-    val DefaultSuffix = ".parquet"
-    val DefaultCompression = CompressionCodecName.GZIP
-    val DefaultConfiguration = null
-    val DefaultFilenamePolicySupplier = null
-    val DefaultPrefix = null
-    val DefaultShardNameTemplate = null
-    val DefaultTempDirectory = null
+  object WriteParam {
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".parquet"
+    val DefaultCompression: CompressionCodecName = CompressionCodecName.GZIP
+    val DefaultConfiguration: Configuration = null
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (

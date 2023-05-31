@@ -92,7 +92,7 @@ private object Reads {
 }
 
 private[bigquery] object Writes {
-  trait WriteParamDefauls {
+  trait WriteParamDefaults {
     val DefaultSchema: TableSchema = null
     val DefaultWriteDisposition: WriteDisposition = null
     val DefaultCreateDisposition: CreateDisposition = null
@@ -139,7 +139,7 @@ object BigQueryIO {
 
 object BigQueryTypedSelect {
   object ReadParam {
-    private[bigquery] val DefaultFlattenResults = false
+    val DefaultFlattenResults: Boolean = false
   }
 
   final case class ReadParam private (flattenResults: Boolean = ReadParam.DefaultFlattenResults)
@@ -224,7 +224,7 @@ object BigQueryTypedTable {
     val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
   }
 
-  object WriteParam extends Writes.WriteParamDefauls {
+  object WriteParam extends Writes.WriteParamDefaults {
     @inline final def apply(
       s: TableSchema,
       wd: WriteDisposition,
@@ -403,8 +403,8 @@ final case class BigQueryStorage(
 
 object BigQueryStorage {
   object ReadParam {
-    private[bigquery] val DefaultSelectFields: List[String] = Nil
-    private[bigquery] val DefaultRowRestriction: Option[String] = None
+    val DefaultSelectFields: List[String] = Nil
+    val DefaultRowRestriction: Option[String] = None
   }
 }
 
@@ -458,14 +458,15 @@ object TableRowJsonIO {
   val ReadParam = TextIO.ReadParam
 
   type WriteParam = TextIO.WriteParam
-  private[scio] object WriteParam {
-    val DefaultSuffix = ".json"
-    val DefaultNumShards = TextIO.WriteParam.DefaultNumShards
-    val DefaultCompression = TextIO.WriteParam.DefaultCompression
-    val DefaultFilenamePolicySupplier = TextIO.WriteParam.DefaultFilenamePolicySupplier
-    val DefaultPrefix = TextIO.WriteParam.DefaultPrefix
-    val DefaultShardNameTemplate = TextIO.WriteParam.DefaultShardNameTemplate
-    val DefaultTempDirectory = TextIO.WriteParam.DefaultTempDirectory
+  object WriteParam {
+    val DefaultSuffix: String = ".json"
+    val DefaultNumShards: Int = TextIO.WriteParam.DefaultNumShards
+    val DefaultCompression: Compression = TextIO.WriteParam.DefaultCompression
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier =
+      TextIO.WriteParam.DefaultFilenamePolicySupplier
+    val DefaultPrefix: String = TextIO.WriteParam.DefaultPrefix
+    val DefaultShardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate
+    val DefaultTempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
 
     def apply(
       suffix: String = DefaultSuffix,
@@ -641,7 +642,7 @@ object BigQueryTyped {
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
     }
 
-    object WriteParam extends Writes.WriteParamDefauls {
+    object WriteParam extends Writes.WriteParamDefaults {
       @inline final def apply(
         wd: WriteDisposition,
         cd: CreateDisposition,

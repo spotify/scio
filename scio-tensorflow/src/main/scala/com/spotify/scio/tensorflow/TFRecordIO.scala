@@ -57,11 +57,11 @@ final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
 
 object TFRecordIO {
 
-  private[tensorflow] object ReadParam {
-    val DefaultCompression = Compression.AUTO
-    val DefaultSuffix = null
+  object ReadParam {
+    val DefaultCompression: Compression = Compression.AUTO
+    val DefaultSuffix: String = null
 
-    def apply(params: WriteParam): ReadParam =
+    private[tensorflow] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         compression = params.compression,
         suffix = params.suffix + params.compression.getSuggestedSuffix
@@ -73,14 +73,14 @@ object TFRecordIO {
     suffix: String = ReadParam.DefaultSuffix
   )
 
-  private[tensorflow] object WriteParam {
-    val DefaultSuffix = ".tfrecords"
-    val DefaultCompression = Compression.UNCOMPRESSED
-    val DefaultNumShards = 0
-    val DefaultFilenamePolicySupplier = null
-    val DefaultPrefix = null
-    val DefaultShardNameTemplate = null
-    val DefaultTempDirectory = null
+  object WriteParam {
+    val DefaultSuffix: String = ".tfrecords"
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultNumShards: Int = 0
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (

@@ -131,18 +131,18 @@ object BinaryIO {
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
 
-  private[scio] object WriteParam {
-    val DefaultPrefix = null
-    val DefaultSuffix = ".bin"
-    val DefaultNumShards = 0
-    val DefaultCompression = Compression.UNCOMPRESSED
-    val DefaultHeader = Array.emptyByteArray
-    val DefaultFooter = Array.emptyByteArray
+  object WriteParam {
+    val DefaultPrefix: String = null
+    val DefaultSuffix: String = ".bin"
+    val DefaultNumShards: Int = 0
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultHeader: Array[Byte] = Array.emptyByteArray
+    val DefaultFooter: Array[Byte] = Array.emptyByteArray
     val DefaultShardNameTemplate: String = null
     val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
     val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
-    val DefaultTempDirectory = null
-    val DefaultFilenamePolicySupplier = null
+    val DefaultTempDirectory: String = null
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
   }
 
   final case class WriteParam private (

@@ -95,15 +95,15 @@ object CsvIO {
     header = Header.Implicit
   )
 
-  final val DefaultReadParams: ReadParam = CsvIO.ReadParam()
-  final val DefaultWriteParams: WriteParam = CsvIO.WriteParam()
+  val DefaultReadParams: ReadParam = CsvIO.ReadParam()
+  val DefaultWriteParams: WriteParam = CsvIO.WriteParam()
 
-  private[scio] object ReadParam {
-    val DefaultCompression = beam.Compression.AUTO
-    val DefaultCsvConfiguration = CsvIO.DefaultCsvConfiguration
-    val DefaultSuffix = null
+  object ReadParam {
+    val DefaultCompression: Compression = beam.Compression.AUTO
+    val DefaultCsvConfiguration: CsvConfiguration = CsvIO.DefaultCsvConfiguration
+    val DefaultSuffix: String = null
 
-    def apply(params: WriteParam): ReadParam =
+    private[csv] def apply(params: WriteParam): ReadParam =
       new ReadParam(
         compression = params.compression,
         csvConfiguration = params.csvConfiguration,
@@ -117,15 +117,15 @@ object CsvIO {
     suffix: String = ReadParam.DefaultSuffix
   )
 
-  private[scio] object WriteParam {
-    val DefaultSuffix = ".csv"
-    val DefaultCsvConfig = CsvIO.DefaultCsvConfiguration
-    val DefaultNumShards = 1 // put everything in a single file
-    val DefaultCompression = Compression.UNCOMPRESSED
-    val DefaultFilenamePolicySupplier = null
-    val DefaultPrefix = null
-    val DefaultShardNameTemplate = null
-    val DefaultTempDirectory = null
+  object WriteParam {
+    val DefaultSuffix: String = ".csv"
+    val DefaultCsvConfig: CsvConfiguration = CsvIO.DefaultCsvConfiguration
+    val DefaultNumShards: Int = 1 // put everything in a single file
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultFilenamePolicySupplier: Null = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (
