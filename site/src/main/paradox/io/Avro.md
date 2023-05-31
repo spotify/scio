@@ -15,7 +15,7 @@ import org.apache.avro.specific.SpecificRecord
 def sc: ScioContext = ???
 
 // SpecificRecordClass is compiled from Avro schema files
-def result = sc.avroSpecificFile[SpecificRecord]("gs://path-to-data/lake/part-*.avro")
+def result = sc.avroFile[SpecificRecord]("gs://path-to-data/lake/part-*.avro")
 ```
 
 ### Read Generic records
@@ -31,7 +31,7 @@ def yourAvroSchema: Schema = ???
 
 def sc: ScioContext = ???
 
-def result = sc.avroGenericFile("gs://path-to-data/lake/part-*.avro", yourAvroSchema)
+def result = sc.avroFile("gs://path-to-data/lake/part-*.avro", yourAvroSchema)
 // `record` is of GenericRecord type
 ```
 

@@ -46,18 +46,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] =
     self.read(ObjectFileIO[T](path))(ObjectFileIO.ReadParam(suffix))
 
-  @deprecated("Use avroGenericFile instead", since = "0.13.0")
-  def avroFile(
-    path: String,
-    schema: Schema
-  ): SCollection[GenericRecord] =
-    avroGenericFile(path, schema)
+  def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
+    self.read(GenericRecordIO(path, schema))(AvroIO.ReadParam())
 
-  def avroGenericFile(
-    path: String,
-    schema: Schema,
-    suffix: String = ObjectFileIO.ReadParam.DefaultSuffix
-  ): SCollection[GenericRecord] =
+  // overloaded API. We can't use default params
+  def avroFile(path: String, schema: Schema, suffix: String): SCollection[GenericRecord] =
     self.read(GenericRecordIO(path, schema))(AvroIO.ReadParam(suffix))
 
   /**
@@ -92,20 +85,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] =
     self.read(GenericRecordParseIO[T](path, parseFn))(AvroIO.ReadParam(suffix))
 
-  @deprecated("Use avroSpecificFile instead", since = "0.13.0")
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](
-    path: String
-  ): SCollection[T] =
-    avroSpecificFile(path)
-
   /**
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
    * Avro file.
    */
-  def avroSpecificFile[T <: SpecificRecord: ClassTag: Coder](
-    path: String,
-    suffix: String = AvroIO.ReadParam.DefaultSuffix
-  ): SCollection[T] =
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
+    self.read(SpecificRecordIO[T](path))(AvroIO.ReadParam())
+
+  // overloaded API. We can't use default params
+  /**
+   * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
+   * Avro file.
+   */
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String, suffix: String): SCollection[T] =
     self.read(SpecificRecordIO[T](path))(AvroIO.ReadParam(suffix))
 
   /**

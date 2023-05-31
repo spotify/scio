@@ -73,7 +73,7 @@ object MagnolifyAvroReadExample {
     import MagnolifyAvroExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.avroGenericFile(args("input"), wordCountType.schema)
+    sc.avroFile(args("input"), wordCountType.schema)
       .map(e => wordCountType(e))
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))

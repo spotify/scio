@@ -135,8 +135,8 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
     verifyOutput(dir, "even", "odd")
 
     val sc2 = ScioContext()
-    val even = sc2.avroGenericFile(s"$dir/even/*.avro", schema)
-    val odd = sc2.avroGenericFile(s"$dir/odd/*.avro", schema)
+    val even = sc2.avroFile(s"$dir/even/*.avro", schema)
+    val odd = sc2.avroFile(s"$dir/odd/*.avro", schema)
     val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
     even should containInAnyOrder(expectedEven.map(newGenericRecord))
     odd should containInAnyOrder(expectedOdd.map(newGenericRecord))
@@ -153,8 +153,8 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
     verifyOutput(dir, "even", "odd")
 
     val sc2 = ScioContext()
-    val even = sc2.avroSpecificFile[TestRecord](s"$dir/even/*.avro")
-    val odd = sc2.avroSpecificFile[TestRecord](s"$dir/odd/*.avro")
+    val even = sc2.avroFile[TestRecord](s"$dir/even/*.avro")
+    val odd = sc2.avroFile[TestRecord](s"$dir/odd/*.avro")
     val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
     even should containInAnyOrder(expectedEven.map(newSpecificRecord))
     odd should containInAnyOrder(expectedOdd.map(newSpecificRecord))
@@ -178,8 +178,8 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
     Files.list(dir.toPath.resolve("odd")).iterator().asScala.size shouldBe 5
 
     val sc2 = ScioContext()
-    val even = sc2.avroSpecificFile[TestRecord](s"$dir/even/*.avro")
-    val odd = sc2.avroSpecificFile[TestRecord](s"$dir/odd/*.avro")
+    val even = sc2.avroFile[TestRecord](s"$dir/even/*.avro")
+    val odd = sc2.avroFile[TestRecord](s"$dir/odd/*.avro")
     val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
     even should containInAnyOrder(expectedEven.map(newSpecificRecord))
     odd should containInAnyOrder(expectedOdd.map(newSpecificRecord))
@@ -187,7 +187,7 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
       val p = partitionIntegers(x % 2)
       val t1 = new Instant(x * 60000L)
       val t2 = t1.plus(60000L)
-      val records = sc2.avroSpecificFile[TestRecord](s"$dir/$p/part-$t1-$t2-*.avro")
+      val records = sc2.avroFile[TestRecord](s"$dir/$p/part-$t1-$t2-*.avro")
       records should containSingleValue(newSpecificRecord(x))
     }
     sc2.run()

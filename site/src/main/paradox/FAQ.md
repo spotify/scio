@@ -97,7 +97,7 @@ object MyJob {
     val collections = Seq(
       "gs://bucket1/data/",
       "gs://bucket2/data/"
-    ).map(path => sc.avroSpecificFile[TestRecord](path, suffix=".avro"))
+    ).map(path => sc.avroFile[TestRecord](path, suffix=".avro"))
 
     val all = SCollection.unionAll(collections)
   }

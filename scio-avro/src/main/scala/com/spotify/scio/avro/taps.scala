@@ -119,35 +119,38 @@ final case class AvroTaps(self: Taps) {
       () => ObjectFileTap[T](path, params)
     )
 
-  @deprecated("Use avroGenericFile instead", since = "0.13.0")
-  def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
-    avroGenericFile(path, schema)
-
   /**
    * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
    */
-  def avroGenericFile(
-    path: String,
-    schema: Schema,
-    params: AvroIO.ReadParam = AvroIO.ReadParam()
-  ): Future[Tap[GenericRecord]] =
+  def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
+    avroFile(path, schema, AvroIO.ReadParam())
+
+  // overloaded API. We can't use default params
+  /**
+   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
+   */
+  def avroFile(path: String, schema: Schema, params: AvroIO.ReadParam): Future[Tap[GenericRecord]] =
     self.mkTap(
       s"Avro: $path",
       () => self.isPathDone(path, params.suffix),
       () => GenericRecordTap(path, schema, params)
     )
 
-  @deprecated("Use avroSpecificFile instead", since = "0.13.0")
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =
-    avroSpecificFile[T](path)
-
   /**
    * Get a `Future[Tap[T]]` for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro
    * file.
    */
-  def avroSpecificFile[T <: SpecificRecord: ClassTag: Coder](
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): Future[Tap[T]] =
+    avroFile[T](path, AvroIO.ReadParam())
+
+  // overloaded API. We can't use default params
+  /**
+   * Get a `Future[Tap[T]]` for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro
+   * file.
+   */
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](
     path: String,
-    params: AvroIO.ReadParam = AvroIO.ReadParam()
+    params: AvroIO.ReadParam
   ): Future[Tap[T]] =
     self.mkTap(
       s"Avro: $path",
@@ -163,6 +166,6 @@ final case class AvroTaps(self: Taps) {
     val avroT = AvroType[T]
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    avroGenericFile(path, avroT.schema, params).map(_.map(avroT.fromGenericRecord))
+    avroFile(path, avroT.schema, params).map(_.map(avroT.fromGenericRecord))
   }
 }

@@ -324,7 +324,7 @@ class ScioIOTest extends ScioIOSpec {
   "AvroIO" should "work with SpecificRecord" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
     testTap(xs)(_.saveAsAvroFile(_))(".avro")
-    testJobTest(xs)(AvroIO[TestRecord](_))(_.avroSpecificFile(_))(_.saveAsAvroFile(_))
+    testJobTest(xs)(AvroIO[TestRecord](_))(_.avroFile(_))(_.saveAsAvroFile(_))
   }
 
   it should "work with GenericRecord" in {
@@ -332,7 +332,7 @@ class ScioIOTest extends ScioIOSpec {
     implicit val coder = Coder.avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     testTap(xs)(_.saveAsAvroFile(_, schema = schema))(".avro")
-    testJobTest(xs)(AvroIO(_))(_.avroGenericFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
+    testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
   }
 
   it should "work with typed Avro" in {

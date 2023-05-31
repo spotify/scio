@@ -65,8 +65,8 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB) = (
-        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro")
+        sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).cogroup(avroB.keyBy(keyFn))
@@ -90,14 +90,14 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         val (lhs, rhs) = (
           SCollection.unionAll(
             List(
-              sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
-              sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro")
+              sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+              sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro")
             )
           ),
           SCollection.unionAll(
             List(
-              sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro"),
-              sc.avroGenericFile(inputs(3).getAbsolutePath, schema, ".avro")
+              sc.avroFile(inputs(2).getAbsolutePath, schema, ".avro"),
+              sc.avroFile(inputs(3).getAbsolutePath, schema, ".avro")
             )
           )
         )
@@ -117,9 +117,9 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB, avroC) = (
-        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro")
+        sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(2).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).cogroup(avroB.keyBy(keyFn), avroC.keyBy(keyFn))
@@ -138,10 +138,10 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB, avroC, avroD) = (
-        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(3).getAbsolutePath, schema, ".avro")
+        sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(2).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(3).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).cogroup(avroB.keyBy(keyFn), avroC.keyBy(keyFn), avroD.keyBy(keyFn))
@@ -151,7 +151,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
   "sortMergeGroupByKey" should "have parity with Scio's groupBy" in withNumSources(1) { inputs =>
     compareResults(
       _.sortMergeGroupByKey(classOf[Integer], mkRead(inputs(0)))
-    )(sc => sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro").groupBy(keyFn))
+    )(sc => sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro").groupBy(keyFn))
   }
 
   "sortMergeJoin" should "have parity with a 2-way Join" in withNumSources(2) { inputs =>
@@ -164,8 +164,8 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       )
     ) { sc =>
       val (avroA, avroB) = (
-        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro")
+        sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro")
       )
 
       avroA.keyBy(keyFn).join(avroB.keyBy(keyFn))
@@ -186,11 +186,11 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
         )
     ) { sc =>
       val (avroA, avroB, avroC, avroD, avroE) = (
-        sc.avroGenericFile(inputs(0).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(1).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(2).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(3).getAbsolutePath, schema, ".avro"),
-        sc.avroGenericFile(inputs(4).getAbsolutePath, schema, ".avro")
+        sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(2).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(3).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(4).getAbsolutePath, schema, ".avro")
       )
 
       MultiJoin.cogroup(
