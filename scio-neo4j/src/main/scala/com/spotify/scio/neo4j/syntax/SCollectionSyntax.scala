@@ -91,7 +91,7 @@ final class Neo4jSCollectionOps[T](private val self: SCollection[T]) extends Any
   def saveAsNeo4j(
     neo4jOptions: Neo4jOptions,
     unwindCypher: String,
-    batchSize: Long = WriteParam.BeamDefaultBatchSize
+    batchSize: Long = WriteParam.DefaultBatchSize
   )(implicit neo4jType: ValueType[T], coder: Coder[T]): ClosedTap[Nothing] =
     self.write(Neo4jIO[T](neo4jOptions, unwindCypher))(WriteParam(batchSize))
 }
