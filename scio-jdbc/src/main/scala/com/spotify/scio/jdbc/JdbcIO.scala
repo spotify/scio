@@ -30,6 +30,7 @@ sealed trait JdbcIO[T] extends ScioIO[T]
 
 object JdbcIO {
 
+  @deprecated("Use new API overloads with multiple parameters")
   final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
     opts match {
       case readOpts: JdbcReadOptions[_]  => apply(readOpts.connectionOptions, readOpts.query)
