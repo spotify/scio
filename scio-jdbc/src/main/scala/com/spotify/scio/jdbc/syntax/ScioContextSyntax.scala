@@ -87,7 +87,7 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
   /**
    * Sharded JDBC read from a table or materialized view.
    * @param readOptions
-   *   The following paramters in the options class could be specified:
+   *   The following parameters in the options class could be specified:
    *
    * shardColumn: the column to shard by. Must be of integer/long type ideally with evenly
    * distributed values.

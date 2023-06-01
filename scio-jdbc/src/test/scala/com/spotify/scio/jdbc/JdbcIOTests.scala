@@ -51,7 +51,7 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
       getConnectionOptions(opts),
       "initial query",
       (rs: ResultSet) => rs.getString(1),
-      configOverride = _.withQuery("overridden query")
+      configOverride = (x: BJdbcIO.Read[String]) => x.withQuery("overridden query")
     )
 
     val transform = getPipelineTransforms(sc).collect { case t: BJdbcIO.Read[String] => t }.head
