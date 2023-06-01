@@ -20,7 +20,7 @@ package com.spotify.scio.jdbc.syntax
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.jdbc.sharded.{JdbcShardedReadOptions, JdbcShardedSelect}
-import com.spotify.scio.jdbc.{JdbcConnectionOptions, JdbcIO, JdbcSelect}
+import com.spotify.scio.jdbc.{JdbcConnectionOptions, JdbcIO, JdbcReadOptions, JdbcSelect}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.jdbc.JdbcIO.Read
 
@@ -30,6 +30,18 @@ import scala.reflect.ClassTag
 
 /** Enhanced version of [[ScioContext]] with JDBC methods. */
 final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
+
+  /** Get an SCollection for a JDBC query. */
+  @deprecated("Use another overload with multiple parameters")
+  def jdbcSelect[T: ClassTag: Coder](readOptions: JdbcReadOptions[T]): SCollection[T] =
+    jdbcSelect(
+      readOptions.connectionOptions,
+      readOptions.query,
+      readOptions.rowMapper,
+      readOptions.statementPreparator,
+      readOptions.fetchSize,
+      readOptions.outputParallelization
+    )
 
   /**
    * Get an SCollection for a JDBC query.

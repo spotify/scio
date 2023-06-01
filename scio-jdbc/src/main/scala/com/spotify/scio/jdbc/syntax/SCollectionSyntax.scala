@@ -18,7 +18,7 @@
 package com.spotify.scio.jdbc.syntax
 
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.jdbc.{JdbcConnectionOptions, JdbcIO, JdbcWrite}
+import com.spotify.scio.jdbc.{JdbcConnectionOptions, JdbcIO, JdbcWrite, JdbcWriteOptions}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.jdbc.JdbcIO.{RetryConfiguration, Write}
 
@@ -27,6 +27,18 @@ import javax.sql.DataSource
 
 /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JDBC methods. */
 final class JdbcSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+
+  /** Save this SCollection as a JDBC database. */
+  @deprecated("Use another overload with multiple parameters")
+  def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): ClosedTap[Nothing] =
+    saveAsJdbc(
+      writeOptions.connectionOptions,
+      writeOptions.statement,
+      writeOptions.preparedStatementSetter,
+      writeOptions.batchSize,
+      writeOptions.retryConfiguration,
+      writeOptions.retryStrategy
+    )
 
   /**
    * Save this SCollection as a JDBC database.

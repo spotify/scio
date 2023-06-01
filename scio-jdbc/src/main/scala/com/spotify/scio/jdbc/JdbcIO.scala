@@ -29,6 +29,13 @@ import javax.sql.DataSource
 sealed trait JdbcIO[T] extends ScioIO[T]
 
 object JdbcIO {
+
+  final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
+    opts match {
+      case readOpts: JdbcReadOptions[_]  => apply(readOpts.connectionOptions, readOpts.query)
+      case readOpts: JdbcWriteOptions[_] => apply(readOpts.connectionOptions, readOpts.statement)
+    }
+
   final def apply[T](opts: JdbcConnectionOptions, query: String): JdbcIO[T] =
     new JdbcIO[T] with TestIO[T] {
       final override val tapT = EmptyTapOf[T]
