@@ -34,19 +34,18 @@ object CloudSqlExample {
     sc.jdbcSelect(
       connOptions,
       // Read from a table called `word_count` with two columns `word` and `count`
-      "SELECT * FROM word_count",
-      r => (r.getString(1), r.getLong(2))
-    ).map(kv => (kv._1.toUpperCase, kv._2))
+      "SELECT * FROM word_count"
+    )(r => (r.getString(1), r.getLong(2)))
+      .map(kv => (kv._1.toUpperCase, kv._2))
       // Write to Cloud SQL
       .saveAsJdbc(
         connOptions,
         // Write to a table called `result_word_count` with two columns `word` and `count`
-        "INSERT INTO result_word_count values(?, ?)",
-        preparedStatementSetter = (kv, s) => {
-          s.setString(1, kv._1)
-          s.setLong(2, kv._2)
-        }
-      )
+        "INSERT INTO result_word_count values(?, ?)"
+      ) { case (kv, s) =>
+        s.setString(1, kv._1)
+        s.setLong(2, kv._2)
+      }
     sc.run()
     ()
   }

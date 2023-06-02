@@ -50,9 +50,10 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
     sc.jdbcSelect[String](
       getConnectionOptions(opts),
       "initial query",
-      (rs: ResultSet) => rs.getString(1),
       configOverride = (x: BJdbcIO.Read[String]) => x.withQuery("overridden query")
-    )
+    ) { (rs: ResultSet) =>
+      rs.getString(1)
+    }
 
     val transform = getPipelineTransforms(sc).collect { case t: BJdbcIO.Read[String] => t }.head
     val displayData = DisplayData.from(transform).asMap().asScala
@@ -70,9 +71,8 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
       .saveAsJdbc(
         getConnectionOptions(opts),
         "INSERT INTO <this> VALUES( ?, ? ..?)",
-        (_, _) => {},
         configOverride = _.withStatement("updated statement")
-      )
+      ) { (_, _) => }
 
     val transform = getPipelineTransforms(sc).filter(x => x.toString.contains("WriteFn")).head
     val displayData =

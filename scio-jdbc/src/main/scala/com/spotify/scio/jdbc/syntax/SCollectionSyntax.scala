@@ -29,16 +29,15 @@ import javax.sql.DataSource
 final class JdbcSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
   /** Save this SCollection as a JDBC database. */
-  @deprecated("Use another overload with multiple parameters")
+  @deprecated("Use another overload with multiple parameters", since = "0.13.0")
   def saveAsJdbc(writeOptions: JdbcWriteOptions[T]): ClosedTap[Nothing] =
     saveAsJdbc(
       writeOptions.connectionOptions,
       writeOptions.statement,
-      writeOptions.preparedStatementSetter,
       writeOptions.batchSize,
       writeOptions.retryConfiguration,
       writeOptions.retryStrategy
-    )
+    )(writeOptions.preparedStatementSetter)
 
   /**
    * Save this SCollection as a JDBC database.
@@ -70,14 +69,13 @@ final class JdbcSCollectionOps[T](private val self: SCollection[T]) extends AnyV
   def saveAsJdbc(
     connectionOptions: JdbcConnectionOptions,
     statement: String,
-    preparedStatementSetter: (T, PreparedStatement) => Unit,
     batchSize: Long = JdbcIO.WriteParam.BeamDefaultBatchSize,
     retryConfiguration: RetryConfiguration = JdbcIO.WriteParam.BeamDefaultRetryConfiguration,
     retryStrategy: SQLException => Boolean = JdbcIO.WriteParam.DefaultRetryStrategy,
     autoSharding: Boolean = JdbcIO.WriteParam.DefaultAutoSharding,
     dataSourceProviderFn: () => DataSource = null,
     configOverride: Write[T] => Write[T] = identity
-  ): ClosedTap[Nothing] =
+  )(preparedStatementSetter: (T, PreparedStatement) => Unit): ClosedTap[Nothing] =
     self.write(JdbcWrite[T](connectionOptions, statement))(
       JdbcIO.WriteParam(
         preparedStatementSetter,

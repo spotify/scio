@@ -31,12 +31,9 @@ object JdbcJob {
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
     val sc = ScioContext(opts)
     val connectionOpts = getConnectionOptions(opts)
-    sc.jdbcSelect[String](
-      connectionOpts,
-      query,
-      rowMapper = (rs: ResultSet) => rs.getString(1)
-    ).map(_ + "J")
-      .saveAsJdbc(connectionOpts, statement, (_, _) => {})
+    sc.jdbcSelect[String](connectionOpts, query)((rs: ResultSet) => rs.getString(1))
+      .map(_ + "J")
+      .saveAsJdbc(connectionOpts, statement) { (_, _) => }
     sc.run()
     ()
   }

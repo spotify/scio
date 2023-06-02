@@ -32,16 +32,15 @@ import scala.reflect.ClassTag
 final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /** Get an SCollection for a JDBC query. */
-  @deprecated("Use another overload with multiple parameters")
+  @deprecated("Use another overload with multiple parameters", since = "0.13.0")
   def jdbcSelect[T: ClassTag: Coder](readOptions: JdbcReadOptions[T]): SCollection[T] =
     jdbcSelect(
       readOptions.connectionOptions,
       readOptions.query,
-      readOptions.rowMapper,
       readOptions.statementPreparator,
       readOptions.fetchSize,
       readOptions.outputParallelization
-    )
+    )(readOptions.rowMapper)
 
   /**
    * Get an SCollection for a JDBC query.
@@ -66,13 +65,12 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
   def jdbcSelect[T: ClassTag: Coder](
     connectionOptions: JdbcConnectionOptions,
     query: String,
-    rowMapper: ResultSet => T,
     statementPreparator: PreparedStatement => Unit = null,
     fetchSize: Int = JdbcIO.ReadParam.BeamDefaultFetchSize,
     outputParallelization: Boolean = JdbcIO.ReadParam.DefaultOutputParallelization,
     dataSourceProviderFn: () => DataSource = null,
     configOverride: Read[T] => Read[T] = identity[Read[T]] _
-  ): SCollection[T] =
+  )(rowMapper: ResultSet => T): SCollection[T] =
     self.read(JdbcSelect(connectionOptions, query))(
       JdbcIO.ReadParam(
         rowMapper,

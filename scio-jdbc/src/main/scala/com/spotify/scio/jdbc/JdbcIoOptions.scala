@@ -21,7 +21,7 @@ import org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 
-@deprecated("Use new API overloads with multiple parameters")
+@deprecated("Use new API overloads with multiple parameters", since = "0.13.0")
 sealed trait JdbcIoOptions
 
 /**
@@ -40,7 +40,7 @@ sealed trait JdbcIoOptions
  * @param outputParallelization
  *   reshuffle result to distribute it to all workers. Default to true.
  */
-@deprecated("Use new API overloads with multiple parameters")
+@deprecated("Use new API overloads with multiple parameters", since = "0.13.0")
 final case class JdbcReadOptions[T](
   connectionOptions: JdbcConnectionOptions,
   query: String,
@@ -66,7 +66,7 @@ final case class JdbcReadOptions[T](
  * @param retryStrategy
  *   A predicate of [[java.sql.SQLException]] indicating a failure to retry
  */
-@deprecated("Use new API overloads with multiple parameters")
+@deprecated("Use new API overloads with multiple parameters", since = "0.13.0")
 final case class JdbcWriteOptions[T](
   connectionOptions: JdbcConnectionOptions,
   statement: String,
