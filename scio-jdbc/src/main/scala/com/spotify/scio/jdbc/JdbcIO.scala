@@ -33,8 +33,8 @@ object JdbcIO {
   @deprecated("Use new API overloads with multiple parameters", since = "0.13.0")
   final def apply[T](opts: JdbcIoOptions): JdbcIO[T] =
     opts match {
-      case readOpts: JdbcReadOptions[_]  => apply(readOpts.connectionOptions, readOpts.query)
-      case readOpts: JdbcWriteOptions[_] => apply(readOpts.connectionOptions, readOpts.statement)
+      case readOpts: JdbcReadOptions[_]   => apply(readOpts.connectionOptions, readOpts.query)
+      case writeOpts: JdbcWriteOptions[_] => apply(writeOpts.connectionOptions, writeOpts.statement)
     }
 
   final def apply[T](opts: JdbcConnectionOptions, query: String): JdbcIO[T] =
