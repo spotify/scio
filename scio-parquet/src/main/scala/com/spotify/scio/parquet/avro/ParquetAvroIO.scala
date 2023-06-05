@@ -303,7 +303,7 @@ object ParquetAvroIO {
     val DefaultSchema: Schema = null
     val DefaultNumShards: Int = 0
     val DefaultSuffix: String = ".parquet"
-    val DefaultCompression: CompressionCodecName = CompressionCodecName.GZIP
+    val DefaultCompression: CompressionCodecName = CompressionCodecName.ZSTD
     val DefaultConfiguration: Configuration = null
     val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
     val DefaultPrefix: String = null
