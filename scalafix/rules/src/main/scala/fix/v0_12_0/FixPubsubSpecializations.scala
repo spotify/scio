@@ -1,5 +1,4 @@
-package fix
-package v0_12_0
+package fix.v0_12_0
 
 import scalafix.v1._
 
