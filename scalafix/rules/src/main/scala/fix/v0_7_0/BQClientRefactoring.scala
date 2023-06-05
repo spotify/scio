@@ -1,7 +1,7 @@
-package fix
-package v0_7_0
+package fix.v0_7_0
 
 import scalafix.v1._
+
 import scala.meta._
 
 object BQClientRefactoring {

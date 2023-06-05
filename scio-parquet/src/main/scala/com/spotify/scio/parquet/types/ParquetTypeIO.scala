@@ -188,7 +188,7 @@ object ParquetTypeIO {
   object WriteParam {
     private[scio] val DefaultNumShards = 0
     private[scio] val DefaultSuffix = ".parquet"
-    private[scio] val DefaultCompression = CompressionCodecName.GZIP
+    private[scio] val DefaultCompression = CompressionCodecName.ZSTD
     private[scio] val DefaultConfiguration = null
     private[scio] val DefaultShardNameTemplate = null
     private[scio] val DefaultTempDirectory = null
