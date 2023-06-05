@@ -1,7 +1,0 @@
--Dfile.encoding=UTF8
--Xms2G
--Xmx8G
--XX:ReservedCodeCacheSize=512m
--XX:+TieredCompilation
--XX:+UseParallelGC
-

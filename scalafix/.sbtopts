@@ -1,0 +1,7 @@
+-J-Xms2G
+-J-Xmx8G
+-J-XX:ReservedCodeCacheSize=512m
+-J-XX:+TieredCompilation
+-J-XX:+UseParallelGC
+-Dfile.encoding=UTF8
+
