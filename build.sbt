@@ -1047,11 +1047,7 @@ lazy val `scio-parquet`: Project = project
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
       "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
-      "me.lyh" %% "parquet-avro" % parquetExtraVersion excludeAll (
-        // parquet-avro depends on avro 1.10.x
-        "org.apache.avro" % "avro",
-        "org.apache.avro" % "avro-compiler"
-      ),
+      "me.lyh" %% "parquet-avro" % parquetExtraVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -1068,7 +1064,8 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
+      // provided
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // test
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
@@ -1344,7 +1341,6 @@ lazy val `scio-smb`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
@@ -1352,17 +1348,18 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (testLibs: _*),
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll ("org.apache.avro" % "avro"),
-      "org.apache.parquet" % "parquet-common" % parquetVersion,
-      "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
-      "org.apache.parquet" % "parquet-column" % parquetVersion,
-      "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
+      "org.apache.avro" % "avro" % avroVersion % Provided,
+      "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll ("org.apache.avro" % "avro"),
+      "org.apache.parquet" % "parquet-column" % parquetVersion % Provided,
+      "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
+      "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // runtime
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion % Runtime,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime,
