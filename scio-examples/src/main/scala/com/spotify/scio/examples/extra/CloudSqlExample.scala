@@ -43,9 +43,9 @@ object CloudSqlExample {
         connOptions,
         // Write to a table called `result_word_count` with two columns `word` and `count`
         "INSERT INTO result_word_count values(?, ?)"
-      ) { case (kv, s) =>
-        s.setString(1, kv._1)
-        s.setLong(2, kv._2)
+      ) { case ((word, count), s) =>
+        s.setString(1, word)
+        s.setLong(2, count)
       }
     sc.run()
     ()
