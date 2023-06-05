@@ -419,8 +419,6 @@ lazy val dataflowRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Runtime
 )
 
-// only available for scala 2.12
-// scala 2.13 is supported from spark 3.2.0
 lazy val sparkRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Runtime,
   "org.apache.spark" %% "spark-core" % sparkVersion % Runtime,
