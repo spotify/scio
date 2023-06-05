@@ -1,5 +1,4 @@
-package fix
-package v0_13_0
+package fix.v0_13_0
 
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.values.HotKeyMethod
