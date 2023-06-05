@@ -1,5 +1,4 @@
-package fix
-package v0_13_0
+package fix.v0_13_0
 
 import scalafix.v1.{MethodSignature, _}
 
