@@ -221,7 +221,7 @@ object ParquetExampleIO {
   object WriteParam {
     private[tensorflow] val DefaultNumShards = 0
     private[tensorflow] val DefaultSuffix = ".parquet"
-    private[tensorflow] val DefaultCompression = CompressionCodecName.GZIP
+    private[tensorflow] val DefaultCompression = CompressionCodecName.ZSTD
     private[tensorflow] val DefaultConfiguration = null
     private[tensorflow] val DefaultShardNameTemplate = null
     private[tensorflow] val DefaultTempDirectory = null
