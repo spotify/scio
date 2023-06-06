@@ -35,9 +35,9 @@ object CloudSqlExample {
       connOptions,
       // Read from a table called `word_count` with two columns `word` and `count`
       "SELECT * FROM word_count"
-    ) { r => 
-      r.getString(1).toUpperCase ->  r.getLong(2)
-    }
+    ) { r =>
+      r.getString(1) -> r.getLong(2)
+    }.map { case (word, count) => word.toUpperCase -> count }
       // Write to Cloud SQL
       .saveAsJdbc(
         connOptions,
