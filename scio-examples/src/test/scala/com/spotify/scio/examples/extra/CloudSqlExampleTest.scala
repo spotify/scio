@@ -32,16 +32,18 @@ class CloudSqlExampleTest extends PipelineSpec {
       )
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val connOpts = CloudSqlExample.getConnectionOptions(opts)
-    val readOpts = CloudSqlExample.getReadOptions(connOpts)
-    val writeOpts = CloudSqlExample.getWriteOptions(connOpts)
+    val query = "SELECT * FROM word_count"
+    val statement = "INSERT INTO result_word_count values(?, ?)"
 
     val input = Seq("a" -> 1L, "b" -> 2L, "c" -> 3L)
     val expected = input.map(kv => (kv._1.toUpperCase, kv._2))
 
     JobTest[com.spotify.scio.examples.extra.CloudSqlExample.type]
       .args(args: _*)
-      .input(JdbcIO(readOpts), input)
-      .output(JdbcIO[(String, Long)](writeOpts))(coll => coll should containInAnyOrder(expected))
+      .input(JdbcIO(connOpts, query), input)
+      .output(JdbcIO[(String, Long)](connOpts, statement))(coll =>
+        coll should containInAnyOrder(expected)
+      )
       .run()
   }
 }

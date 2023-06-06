@@ -17,43 +17,11 @@
 
 package com.spotify.scio.jdbc
 
-import org.apache.beam.sdk.io.jdbc.JdbcIO.{DefaultRetryStrategy, RetryConfiguration}
+import org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration
 
-import java.sql.{Driver, PreparedStatement, ResultSet, SQLException}
+import java.sql.{PreparedStatement, ResultSet, SQLException}
 
-/**
- * Options for a JDBC connection.
- *
- * @param username
- *   database login username
- * @param password
- *   database login password if exists
- * @param connectionUrl
- *   connection url, i.e "jdbc:mysql://[host]:[port]/db?"
- * @param driverClass
- *   subclass of [[java.sql.Driver]]
- */
-final case class JdbcConnectionOptions(
-  username: String,
-  password: Option[String],
-  connectionUrl: String,
-  driverClass: Class[_ <: Driver]
-)
-
-object JdbcIoOptions {
-  private[jdbc] val BeamDefaultBatchSize = -1L
-  private[jdbc] val BeamDefaultFetchSize = -1
-  private[jdbc] val BeamDefaultMaxRetryAttempts = 5
-  private[jdbc] val BeamDefaultInitialRetryDelay = org.joda.time.Duration.ZERO
-  private[jdbc] val BeamDefaultMaxRetryDelay = org.joda.time.Duration.ZERO
-  private[jdbc] val BeamDefaultRetryConfiguration = RetryConfiguration.create(
-    BeamDefaultMaxRetryAttempts,
-    BeamDefaultMaxRetryDelay,
-    BeamDefaultInitialRetryDelay
-  )
-  private[jdbc] val DefaultOutputParallelization = true
-}
-
+@deprecated("Use new API overloads with multiple parameters", since = "0.13.0")
 sealed trait JdbcIoOptions
 
 /**
@@ -72,13 +40,14 @@ sealed trait JdbcIoOptions
  * @param outputParallelization
  *   reshuffle result to distribute it to all workers. Default to true.
  */
+@deprecated("Use new API overloads with multiple parameters", since = "0.13.0")
 final case class JdbcReadOptions[T](
   connectionOptions: JdbcConnectionOptions,
   query: String,
   statementPreparator: PreparedStatement => Unit = null,
   rowMapper: ResultSet => T,
-  fetchSize: Int = JdbcIoOptions.BeamDefaultFetchSize,
-  outputParallelization: Boolean = JdbcIoOptions.DefaultOutputParallelization
+  fetchSize: Int = JdbcIO.ReadParam.BeamDefaultFetchSize,
+  outputParallelization: Boolean = JdbcIO.ReadParam.DefaultOutputParallelization
 ) extends JdbcIoOptions
 
 /**
@@ -97,11 +66,12 @@ final case class JdbcReadOptions[T](
  * @param retryStrategy
  *   A predicate of [[java.sql.SQLException]] indicating a failure to retry
  */
+@deprecated("Use new API overloads with multiple parameters", since = "0.13.0")
 final case class JdbcWriteOptions[T](
   connectionOptions: JdbcConnectionOptions,
   statement: String,
   preparedStatementSetter: (T, PreparedStatement) => Unit = null,
-  batchSize: Long = JdbcIoOptions.BeamDefaultBatchSize,
-  retryConfiguration: RetryConfiguration = JdbcIoOptions.BeamDefaultRetryConfiguration,
-  retryStrategy: SQLException => Boolean = new DefaultRetryStrategy().apply
+  batchSize: Long = JdbcIO.WriteParam.BeamDefaultBatchSize,
+  retryConfiguration: RetryConfiguration = JdbcIO.WriteParam.BeamDefaultRetryConfiguration,
+  retryStrategy: SQLException => Boolean = JdbcIO.WriteParam.DefaultRetryStrategy
 ) extends JdbcIoOptions
