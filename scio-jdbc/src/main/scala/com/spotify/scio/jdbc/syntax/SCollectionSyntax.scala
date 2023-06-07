@@ -75,7 +75,7 @@ final class JdbcSCollectionOps[T](private val self: SCollection[T]) extends AnyV
     retryStrategy: SQLException => Boolean = WriteParam.DefaultRetryStrategy,
     autoSharding: Boolean = WriteParam.DefaultAutoSharding,
     dataSourceProviderFn: () => DataSource = WriteParam.DefaultDataSourceProviderFn,
-    configOverride: Write[T] => Write[T] = WriteParam.defaultConfigOverride
+    configOverride: Write[T] => Write[T] = WriteParam.defaultConfigOverride[T]
   )(preparedStatementSetter: (T, PreparedStatement) => Unit): ClosedTap[Nothing] =
     self.write(JdbcWrite[T](connectionOptions, statement))(
       JdbcIO.WriteParam(

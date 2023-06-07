@@ -69,7 +69,7 @@ object JdbcIO {
     val DefaultOutputParallelization: Boolean = true
     val DefaultStatementPreparator: PreparedStatement => Unit = null
     val DefaultDataSourceProviderFn: () => DataSource = null
-    def dfaultConfigOverride[T]: BJdbcIO.Read[T] => BJdbcIO.Read[T] = identity
+    def defaultConfigOverride[T]: BJdbcIO.Read[T] => BJdbcIO.Read[T] = identity
   }
 
   final case class ReadParam[T] private (
@@ -78,7 +78,7 @@ object JdbcIO {
     fetchSize: Int = ReadParam.BeamDefaultFetchSize,
     outputParallelization: Boolean = ReadParam.DefaultOutputParallelization,
     dataSourceProviderFn: () => DataSource = ReadParam.DefaultDataSourceProviderFn,
-    configOverride: BJdbcIO.Read[T] => BJdbcIO.Read[T] = ReadParam.dfaultConfigOverride
+    configOverride: BJdbcIO.Read[T] => BJdbcIO.Read[T] = ReadParam.defaultConfigOverride[T]
   )
 
   object WriteParam {
@@ -105,7 +105,7 @@ object JdbcIO {
     retryStrategy: SQLException => Boolean = WriteParam.DefaultRetryStrategy,
     autoSharding: Boolean = WriteParam.DefaultAutoSharding,
     dataSourceProviderFn: () => DataSource = WriteParam.DefaultDataSourceProviderFn,
-    configOverride: BJdbcIO.Write[T] => BJdbcIO.Write[T] = WriteParam.defaultConfigOverride
+    configOverride: BJdbcIO.Write[T] => BJdbcIO.Write[T] = WriteParam.defaultConfigOverride[T]
   )
 }
 

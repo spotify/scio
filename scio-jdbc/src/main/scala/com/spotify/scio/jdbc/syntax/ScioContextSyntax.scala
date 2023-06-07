@@ -70,7 +70,7 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
     fetchSize: Int = ReadParam.BeamDefaultFetchSize,
     outputParallelization: Boolean = ReadParam.DefaultOutputParallelization,
     dataSourceProviderFn: () => DataSource = ReadParam.DefaultDataSourceProviderFn,
-    configOverride: Read[T] => Read[T] = ReadParam.dfaultConfigOverride
+    configOverride: Read[T] => Read[T] = ReadParam.defaultConfigOverride[T]
   )(rowMapper: ResultSet => T): SCollection[T] =
     self.read(JdbcSelect(connectionOptions, query))(
       JdbcIO.ReadParam(
