@@ -84,13 +84,13 @@ object TFRecordIO {
   }
 
   final case class WriteParam private (
-    suffix: String,
-    compression: Compression,
-    numShards: Int,
-    filenamePolicySupplier: FilenamePolicySupplier,
-    prefix: String,
-    shardNameTemplate: String,
-    tempDirectory: String
+    suffix: String = WriteParam.DefaultSuffix,
+    compression: Compression = WriteParam.DefaultCompression,
+    numShards: Int = WriteParam.DefaultNumShards,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 }
 

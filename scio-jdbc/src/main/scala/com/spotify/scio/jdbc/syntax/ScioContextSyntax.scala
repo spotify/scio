@@ -21,6 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.jdbc.sharded.{JdbcShardedReadOptions, JdbcShardedSelect}
 import com.spotify.scio.jdbc.{JdbcConnectionOptions, JdbcIO, JdbcReadOptions, JdbcSelect}
+import com.spotify.scio.jdbc.JdbcIO.ReadParam
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.jdbc.JdbcIO.Read
 
@@ -65,11 +66,11 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
   def jdbcSelect[T: ClassTag: Coder](
     connectionOptions: JdbcConnectionOptions,
     query: String,
-    statementPreparator: PreparedStatement => Unit = null,
-    fetchSize: Int = JdbcIO.ReadParam.BeamDefaultFetchSize,
-    outputParallelization: Boolean = JdbcIO.ReadParam.DefaultOutputParallelization,
-    dataSourceProviderFn: () => DataSource = null,
-    configOverride: Read[T] => Read[T] = identity[Read[T]] _
+    statementPreparator: PreparedStatement => Unit = ReadParam.DefaultStatementPreparator,
+    fetchSize: Int = ReadParam.BeamDefaultFetchSize,
+    outputParallelization: Boolean = ReadParam.DefaultOutputParallelization,
+    dataSourceProviderFn: () => DataSource = ReadParam.DefaultDataSourceProviderFn,
+    configOverride: Read[T] => Read[T] = ReadParam.dfaultConfigOverride
   )(rowMapper: ResultSet => T): SCollection[T] =
     self.read(JdbcSelect(connectionOptions, query))(
       JdbcIO.ReadParam(

@@ -65,42 +65,47 @@ object JdbcIO {
     }
 
   object ReadParam {
-    private[jdbc] val BeamDefaultFetchSize = -1
-    private[jdbc] val DefaultOutputParallelization = true
+    val BeamDefaultFetchSize: Int = -1
+    val DefaultOutputParallelization: Boolean = true
+    val DefaultStatementPreparator: PreparedStatement => Unit = null
+    val DefaultDataSourceProviderFn: () => DataSource = null
+    def dfaultConfigOverride[T]: BJdbcIO.Read[T] => BJdbcIO.Read[T] = identity
   }
 
-  final case class ReadParam[T](
+  final case class ReadParam[T] private (
     rowMapper: ResultSet => T,
-    statementPreparator: PreparedStatement => Unit = null,
+    statementPreparator: PreparedStatement => Unit = ReadParam.DefaultStatementPreparator,
     fetchSize: Int = ReadParam.BeamDefaultFetchSize,
     outputParallelization: Boolean = ReadParam.DefaultOutputParallelization,
-    dataSourceProviderFn: () => DataSource = null,
-    configOverride: BJdbcIO.Read[T] => BJdbcIO.Read[T] = identity[BJdbcIO.Read[T]] _
+    dataSourceProviderFn: () => DataSource = ReadParam.DefaultDataSourceProviderFn,
+    configOverride: BJdbcIO.Read[T] => BJdbcIO.Read[T] = ReadParam.dfaultConfigOverride
   )
 
   object WriteParam {
-    private[jdbc] val BeamDefaultBatchSize = -1L
-    private[jdbc] val BeamDefaultMaxRetryAttempts = 5
-    private[jdbc] val BeamDefaultInitialRetryDelay = org.joda.time.Duration.ZERO
-    private[jdbc] val BeamDefaultMaxRetryDelay = org.joda.time.Duration.ZERO
-    private[jdbc] val BeamDefaultRetryConfiguration = BJdbcIO.RetryConfiguration.create(
+    val BeamDefaultBatchSize = -1L
+    val BeamDefaultMaxRetryAttempts = 5
+    val BeamDefaultInitialRetryDelay = org.joda.time.Duration.ZERO
+    val BeamDefaultMaxRetryDelay = org.joda.time.Duration.ZERO
+    val BeamDefaultRetryConfiguration = BJdbcIO.RetryConfiguration.create(
       BeamDefaultMaxRetryAttempts,
       BeamDefaultMaxRetryDelay,
       BeamDefaultInitialRetryDelay
     )
-    private[jdbc] val DefaultRetryStrategy: SQLException => Boolean =
+    val DefaultRetryStrategy: SQLException => Boolean =
       new BJdbcIO.DefaultRetryStrategy().apply
-    private[jdbc] val DefaultAutoSharding: Boolean = false
+    val DefaultAutoSharding: Boolean = false
+    val DefaultDataSourceProviderFn: () => DataSource = null
+    def defaultConfigOverride[T]: BJdbcIO.Write[T] => BJdbcIO.Write[T] = identity
   }
 
-  final case class WriteParam[T](
+  final case class WriteParam[T] private (
     preparedStatementSetter: (T, PreparedStatement) => Unit,
     batchSize: Long = WriteParam.BeamDefaultBatchSize,
     retryConfiguration: BJdbcIO.RetryConfiguration = WriteParam.BeamDefaultRetryConfiguration,
     retryStrategy: SQLException => Boolean = WriteParam.DefaultRetryStrategy,
     autoSharding: Boolean = WriteParam.DefaultAutoSharding,
-    dataSourceProviderFn: () => DataSource = null,
-    configOverride: BJdbcIO.Write[T] => BJdbcIO.Write[T] = identity[BJdbcIO.Write[T]] _
+    dataSourceProviderFn: () => DataSource = WriteParam.DefaultDataSourceProviderFn,
+    configOverride: BJdbcIO.Write[T] => BJdbcIO.Write[T] = WriteParam.defaultConfigOverride
   )
 }
 

@@ -49,8 +49,8 @@ object PubsubIO {
 
   final case class ReadParam private (
     readType: ReadType,
-    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None,
-    deadLetterTopic: Option[String] = None
+    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = ReadParam.DefaultClientFactory,
+    deadLetterTopic: Option[String] = ReadParam.DefaultDeadLetterTopic
   ) {
     val isSubscription: Boolean = readType match {
       case Subscription => true
@@ -58,16 +58,25 @@ object PubsubIO {
     }
   }
   object ReadParam {
+    val DefaultClientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
+    val DefaultDeadLetterTopic: Option[String] = None
+
     // required for back compatibility
     def apply(isSubscription: Boolean): ReadParam =
       if (isSubscription) ReadParam(Subscription) else ReadParam(Topic)
   }
 
-  final case class WriteParam(
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None,
-    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
+  final case class WriteParam private (
+    maxBatchSize: Option[Int] = WriteParam.DefaultMaxBatchSize,
+    maxBatchBytesSize: Option[Int] = WriteParam.DefaultMaxBatchBytesSize,
+    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = WriteParam.DefaultClientFactory
   )
+
+  object WriteParam {
+    val DefaultMaxBatchSize: Option[Int] = None
+    val DefaultMaxBatchBytesSize: Option[Int] = None
+    val DefaultClientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
+  }
 
   def string(
     name: String,
