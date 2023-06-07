@@ -41,7 +41,7 @@ val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
 val datastoreV1ProtoClientVersion = "2.9.0"
-val flinkVersion = "1.15.0"
+val flinkVersion = "1.16.0"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "31.1-jre"
@@ -419,8 +419,6 @@ lazy val dataflowRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Runtime
 )
 
-// only available for scala 2.12
-// scala 2.13 is supported from spark 3.2.0
 lazy val sparkRunnerDependencies = Seq(
   "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Runtime,
   "org.apache.spark" %% "spark-core" % sparkVersion % Runtime,
@@ -428,7 +426,7 @@ lazy val sparkRunnerDependencies = Seq(
 )
 
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion % Runtime,
+  "org.apache.beam" % "beam-runners-flink-1.16" % beamVersion % Runtime,
   "org.apache.flink" % "flink-clients" % flinkVersion % Runtime,
   "org.apache.flink" % "flink-streaming-java" % flinkVersion % Runtime
 )
@@ -572,7 +570,7 @@ lazy val `scio-core`: Project = project
       // provided
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion % Provided,
-      "org.apache.beam" % "beam-runners-flink-1.15" % beamVersion % Provided,
+      "org.apache.beam" % "beam-runners-flink-1.16" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided
