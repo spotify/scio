@@ -1556,7 +1556,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val avroCoder = Coder.avroGenericRecordCoder(schema)
       val write = beam.AvroIO
         .writeGenericRecords(schema)
-        .to(ScioUtil.pathWithPartPrefix(path))
+        .to(ScioUtil.pathWithPrefix(path, "part"))
         .withSuffix(".obj.avro")
         .withCodec(CodecFactory.deflateCodec(6))
         .withMetadata(Map.empty[String, AnyRef].asJava)
@@ -1566,19 +1566,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         .applyInternal(write)
       ClosedTap(MaterializeTap[T](path, context))
     }
-
-  private[scio] def textOut(
-    path: String,
-    suffix: String,
-    numShards: Int,
-    compression: Compression
-  ) =
-    beam.TextIO
-      .write()
-      .to(ScioUtil.pathWithPartPrefix(path))
-      .withSuffix(suffix)
-      .withNumShards(numShards)
-      .withCompression(compression)
 
   /**
    * Save this SCollection as a text file. Note that elements must be of type `String`.
@@ -1593,7 +1580,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     footer: Option[String] = TextIO.WriteParam.DefaultFooter,
     shardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TextIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = TextIO.WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier =
+      TextIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TextIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T]): ClosedTap[String] = {
     val s = if (classOf[String] isAssignableFrom ct.runtimeClass) {
       this.asInstanceOf[SCollection[String]]
@@ -1607,9 +1596,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
         compression,
         header,
         footer,
+        filenamePolicySupplier,
+        prefix,
         shardNameTemplate,
-        tempDirectory,
-        filenamePolicySupplier
+        tempDirectory
       )
     )
   }

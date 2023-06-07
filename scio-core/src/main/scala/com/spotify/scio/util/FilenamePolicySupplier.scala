@@ -28,35 +28,35 @@ trait FilenamePolicySupplier {
 }
 
 object FilenamePolicySupplier {
-  def resolve(
-    path: String,
-    suffix: String,
+  def apply(
+    prefix: String,
     shardNameTemplate: String,
-    tempDirectory: ResourceId,
+    isWindowed: Boolean
+  ): FilenamePolicySupplier = (path: String, suffix: String) =>
+    ScioUtil.defaultFilenamePolicy(
+      path,
+      Option(prefix).getOrElse("part"),
+      shardNameTemplate,
+      suffix,
+      isWindowed
+    )
+
+  def resolve(
     filenamePolicySupplier: FilenamePolicySupplier,
-    isWindowed: Boolean,
-    defaultPrefix: String = null
-  ): FilenamePolicy = {
-    require(tempDirectory != null, "tempDirectory must not be null")
+    prefix: String,
+    shardNameTemplate: String,
+    isWindowed: Boolean
+  ): FilenamePolicySupplier = {
     require(
       shardNameTemplate == null || filenamePolicySupplier == null,
       "shardNameTemplate and filenamePolicySupplier may not be used together"
     )
     require(
-      defaultPrefix == null || filenamePolicySupplier == null,
+      prefix == null || filenamePolicySupplier == null,
       "prefix and filenamePolicySupplier may not be used together"
     )
-
     Option(filenamePolicySupplier)
-      .map(c => c.apply(ScioUtil.strippedPath(path), suffix))
-      .getOrElse(
-        ScioUtil.defaultFilenamePolicy(
-          ScioUtil.pathWithPrefix(path, Option(defaultPrefix).getOrElse("part")),
-          shardNameTemplate,
-          suffix,
-          isWindowed
-        )
-      )
+      .getOrElse(FilenamePolicySupplier(prefix, shardNameTemplate, isWindowed))
   }
 
   def filenamePolicySupplierOf(

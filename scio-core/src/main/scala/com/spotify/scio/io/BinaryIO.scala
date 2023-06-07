@@ -53,30 +53,28 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
   private def binaryOut(
     path: String,
-    prefix: String,
     suffix: String,
     numShards: Int,
     compression: Compression,
     header: Array[Byte],
     footer: Array[Byte],
-    shardNameTemplate: String,
     framePrefix: Array[Byte] => Array[Byte],
     frameSuffix: Array[Byte] => Array[Byte],
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
-    isWindowed: Boolean
+    prefix: String,
+    shardNameTemplate: String,
+    isWindowed: Boolean,
+    tempDirectory: ResourceId
   ): WriteFiles[Array[Byte], Void, Array[Byte]] = {
+    require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed,
-      prefix
-    )
-    val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(ScioUtil.strippedPath(path), suffix)
+    val dynamicDestinations = DynamicFileDestinations
+      .constant(fp, SerializableFunctions.identity[Array[Byte]])
     val sink = new BytesSink(
       header,
       footer,
@@ -94,18 +92,18 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
     data.applyInternal(
       binaryOut(
         path,
-        params.prefix,
         params.suffix,
         params.numShards,
         params.compression,
         params.header,
         params.footer,
-        params.shardNameTemplate,
         params.framePrefix,
         params.frameSuffix,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
-        ScioUtil.isWindowed(data)
+        params.prefix,
+        params.shardNameTemplate,
+        ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
     EmptyTap
@@ -116,7 +114,7 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
 object BinaryIO {
 
-  private[scio] def openInputStreamsFor(path: String): Iterator[InputStream] = {
+  private[scio] def openInputStreamsFor(pattern: String): Iterator[InputStream] = {
     val factory = new CompressorStreamFactory()
 
     def wrapInputStream(in: InputStream) = {
@@ -124,30 +122,30 @@ object BinaryIO {
       Try(factory.createCompressorInputStream(buffered)).getOrElse(buffered)
     }
 
-    listFiles(path).map(getObjectInputStream).map(wrapInputStream).iterator
+    listFiles(pattern).map(getObjectInputStream).map(wrapInputStream).iterator
   }
 
-  private def listFiles(path: String): Seq[Metadata] =
-    FileSystems.`match`(path).metadata().iterator.asScala.toSeq
+  private def listFiles(pattern: String): Seq[Metadata] =
+    FileSystems.`match`(pattern).metadata().iterator.asScala.toSeq
 
   private def getObjectInputStream(meta: Metadata): InputStream =
     Channels.newInputStream(FileSystems.open(meta.resourceId()))
 
   object WriteParam {
-    private[scio] val DefaultPrefix = null
-    private[scio] val DefaultSuffix = ".bin"
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultCompression = Compression.UNCOMPRESSED
-    private[scio] val DefaultHeader = Array.emptyByteArray
-    private[scio] val DefaultFooter = Array.emptyByteArray
-    private[scio] val DefaultShardNameTemplate: String = null
-    private[scio] val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
-    private[scio] val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
-    private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultSuffix: String = ".bin"
+    val DefaultNumShards: Int = 0
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultHeader: Array[Byte] = Array.emptyByteArray
+    val DefaultFooter: Array[Byte] = Array.emptyByteArray
+    val DefaultShardNameTemplate: String = null
+    val DefaultFramePrefix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    val DefaultFrameSuffix: Array[Byte] => Array[Byte] = _ => Array.emptyByteArray
+    val DefaultTempDirectory: String = null
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
   }
 
-  final case class WriteParam(
+  final case class WriteParam private (
     prefix: String = WriteParam.DefaultPrefix,
     suffix: String = WriteParam.DefaultSuffix,
     numShards: Int = WriteParam.DefaultNumShards,

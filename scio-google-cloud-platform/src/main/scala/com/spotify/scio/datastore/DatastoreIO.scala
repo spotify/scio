@@ -55,13 +55,23 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
 }
 
 object DatastoreIO {
-  final case class ReadParam(
+
+  object ReadParam {
+    val DefaultNamespace: String = null
+    val DefaultConfigOverride: BDatastore.Read => BDatastore.Read = identity
+  }
+
+  final case class ReadParam private (
     query: Query,
-    namespace: String = null,
-    configOverride: BDatastore.Read => BDatastore.Read = identity
+    namespace: String = ReadParam.DefaultNamespace,
+    configOverride: BDatastore.Read => BDatastore.Read = ReadParam.DefaultConfigOverride
   )
 
-  final case class WriteParam(
-    configOverride: BDatastore.Write => BDatastore.Write = identity
+  object WriteParam {
+    val DefaultConfigOverride: BDatastore.Write => BDatastore.Write = identity
+  }
+
+  final case class WriteParam private (
+    configOverride: BDatastore.Write => BDatastore.Write = WriteParam.DefaultConfigOverride
   )
 }

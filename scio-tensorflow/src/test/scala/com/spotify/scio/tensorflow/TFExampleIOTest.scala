@@ -17,8 +17,7 @@
 
 package com.spotify.scio.tensorflow
 
-import com.google.protobuf.ByteString
-import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec}
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest}
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
@@ -28,9 +27,7 @@ import org.tensorflow.proto.example.Example
 object TFExampleIOTest {
   case class Record(i: Int, s: String)
 
-  implicit val efInt: ExampleField.Primitive[Int] = ExampleField.from[Long](_.toInt)(_.toLong)
-  implicit val efString: ExampleField.Primitive[String] =
-    ExampleField.from[ByteString](_.toStringUtf8)(ByteString.copyFromUtf8)
+  import magnolify.tensorflow.unsafe.{efInt, efString}
   val recordT: ExampleType[Record] = ExampleType[Record]
 }
 
@@ -47,16 +44,20 @@ class TFExampleIOTest extends ScioIOSpec {
 class TFExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
   import TFExampleIOTest._
 
-  val extension: String = ".tfrecords"
-  def save(
-    filenamePolicySupplier: FilenamePolicySupplier = null
+  override val suffix: String = ".tfrecords"
+  override def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null,
+    prefix: String = null,
+    shardNameTemplate: String = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Example] = {
     in.map(x => recordT(Record(x, x.toString)))
       .saveAsTfRecordFile(
         tmpDir,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
-        numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicySupplier = filenamePolicySupplier
+        numShards = if (isBounded) 0 else ScioIOTest.TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier,
+        prefix = prefix,
+        shardNameTemplate = shardNameTemplate
       )
   }
 

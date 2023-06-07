@@ -23,9 +23,7 @@ import io.circe.Printer
 import com.spotify.scio._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.testing._
-import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
-import org.apache.commons.io.FileUtils
 
 import scala.jdk.CollectionConverters._
 import scala.io.Source
@@ -44,11 +42,10 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
     testJobTest(xs)(JsonIO(_))(_.jsonFile(_))(_.saveAsJsonFile(_))
   }
 
-  it should "support custom printer" in {
-    val dir = tmpDir
+  it should "support custom printer" in withTempDir { dir =>
     val t = runWithFileFuture {
       _.parallelize(xs)
-        .saveAsJsonFile(dir.getPath, printer = Printer.noSpaces.copy(dropNullValues = true))
+        .saveAsJsonFile(dir.getAbsolutePath, printer = Printer.noSpaces.copy(dropNullValues = true))
     }
     verifyTap(t, xs.toSet)
     val result = Files
@@ -61,10 +58,9 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
       s"""{"i":$x,"s":"$x"${if (x % 2 == 0) s""","o":$x""" else ""}}"""
     }
     result should contain theSameElementsAs expected
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "handle invalid JSON" in {
+  it should "handle invalid JSON" in withTempDir { dir =>
     val badData = Seq(
       """{"i":1, "s":hello}""",
       """{"i":1}""",
@@ -72,16 +68,16 @@ class JsonIOTest extends ScioIOSpec with TapSpec {
       """{"i":1, "s":1}""",
       """{"i":"hello", "s":1}"""
     )
-    val dir = tmpDir
     runWithFileFuture {
-      _.parallelize(badData).saveAsTextFile(dir.getPath)
+      _.parallelize(badData).saveAsTextFile(dir.getAbsolutePath, suffix = ".json")
     }
 
     val sc = ScioContext()
-    sc.jsonFile[Record](ScioUtil.addPartSuffix(dir.getPath))
+    sc.jsonFile[Record](
+      path = dir.getAbsolutePath,
+      suffix = ".json"
+    )
 
     a[PipelineExecutionException] should be thrownBy { sc.run() }
-
-    FileUtils.deleteDirectory(dir)
   }
 }

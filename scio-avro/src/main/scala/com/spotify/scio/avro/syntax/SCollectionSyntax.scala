@@ -48,16 +48,19 @@ final class GenericRecordSCollectionOps(private val self: SCollection[GenericRec
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier =
+      AvroIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   ): ClosedTap[GenericRecord] = {
     val param = AvroIO.WriteParam(
       numShards,
       suffix,
       codec,
       metadata,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.write(GenericRecordIO(path, schema))(param)
   }
@@ -74,21 +77,24 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
   def saveAsObjectFile(
     path: String,
     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-    suffix: String = ".obj",
+    suffix: String = ".obj.avro",
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier =
+      AvroIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(implicit coder: Coder[T]): ClosedTap[T] = {
     val param = ObjectFileIO.WriteParam(
       numShards,
       suffix,
       codec,
       metadata,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.write(ObjectFileIO(path))(param)
   }
@@ -109,16 +115,19 @@ final class SpecificRecordSCollectionOps[T <: SpecificRecord](private val self: 
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier =
+      AvroIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(
       numShards,
       suffix,
       codec,
       metadata,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.write(SpecificRecordIO[T](path))(param)
   }
@@ -139,16 +148,19 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier =
+      AvroIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T], tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(
       numShards,
       suffix,
       codec,
       metadata,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.write(AvroTyped.AvroIO[T](path))(param)
   }
@@ -165,21 +177,24 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
   def saveAsProtobufFile(
     path: String,
     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-    suffix: String = ".protobuf",
+    suffix: String = ".protobuf.avro",
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = AvroIO.WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier =
+      AvroIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = ProtobufIO.WriteParam(
       numShards,
       suffix,
       codec,
       metadata,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.write(ProtobufIO[T](path))(param)
   }
