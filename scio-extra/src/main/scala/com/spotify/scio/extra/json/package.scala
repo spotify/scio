@@ -22,10 +22,12 @@ import com.spotify.scio.annotations.experimental
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.extra.json.JsonIO.ReadParam
 import com.spotify.scio.util.FilenamePolicySupplier
 import io.circe.Printer
 import io.circe.generic.AutoDerivation
 import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 
 /**
  * Main package for JSON APIs. Import all.
@@ -59,12 +61,13 @@ package object json extends AutoDerivation {
     def jsonFile[T: Decoder: Coder](
       path: String,
       compression: Compression = JsonIO.ReadParam.DefaultCompression,
+      emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment,
       suffix: String = JsonIO.ReadParam.DefaultSuffix
     ): SCollection[T] = {
       implicit val encoder: Encoder[T] = new Encoder[T] {
         final override def apply(a: T): io.circe.Json = ???
       }
-      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, suffix))
+      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, emptyMatchTreatment, suffix))
     }
   }
 

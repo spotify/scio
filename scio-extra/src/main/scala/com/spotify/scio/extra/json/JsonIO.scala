@@ -25,7 +25,6 @@ import com.spotify.scio.coders.Coder
 import io.circe.Printer
 import io.circe.parser._
 import io.circe.syntax._
-import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io.TapT
 import com.spotify.scio.util.FilenamePolicySupplier
 import org.apache.beam.sdk.io.Compression
@@ -33,28 +32,15 @@ import org.apache.beam.sdk.io.Compression
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
   override type WriteP = JsonIO.WriteParam
-  final override val tapT: TapT.Aux[T, T] = TapOf[T]
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(TextIO(path))(TextIO.ReadParam(params.compression, suffix = params.suffix))
-      .map(decodeJson)
+    sc.read(TextIO(path))(params).map(decodeJson)
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
       .map(x => params.printer.print(x.asJson))
-      .write(TextIO(path))(
-        TextIO.WriteParam(
-          params.suffix,
-          params.numShards,
-          params.compression,
-          None,
-          None,
-          params.filenamePolicySupplier,
-          params.prefix,
-          params.shardNameTemplate,
-          params.tempDirectory
-        )
-      )
+      .write(TextIO(path))(params)
     tap(JsonIO.ReadParam(params))
   }
 
@@ -74,20 +60,8 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 
 object JsonIO {
 
-  object ReadParam {
-    val DefaultCompression: Compression = beam.Compression.AUTO
-    val DefaultSuffix: String = null
-
-    private[scio] def apply(params: WriteParam): ReadParam = new ReadParam(
-      params.compression,
-      params.suffix + params.compression.getSuggestedSuffix
-    )
-  }
-
-  final case class ReadParam private (
-    compression: beam.Compression = ReadParam.DefaultCompression,
-    suffix: String = ReadParam.DefaultSuffix
-  )
+  type ReadParam = TextIO.ReadParam
+  val ReadParam = TextIO.ReadParam
 
   object WriteParam {
     val DefaultNumShards: Int = 0
@@ -98,6 +72,19 @@ object JsonIO {
     val DefaultShardNameTemplate: String = null
     val DefaultPrefix: String = null
     val DefaultTempDirectory: String = null
+
+    implicit private[JsonIO] def textWriteParam(params: WriteParam): TextIO.WriteParam =
+      TextIO.WriteParam(
+        suffix = params.suffix,
+        numShards = params.numShards,
+        compression = params.compression,
+        header = None, // no header in json
+        footer = None, // no footer in json
+        filenamePolicySupplier = params.filenamePolicySupplier,
+        prefix = params.prefix,
+        shardNameTemplate = params.shardNameTemplate,
+        tempDirectory = params.tempDirectory
+      )
   }
 
   final case class WriteParam private (
