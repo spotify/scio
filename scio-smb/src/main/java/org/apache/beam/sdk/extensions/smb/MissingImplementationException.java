@@ -16,7 +16,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class MissingImplementationException extends RuntimeException {
 

@@ -1348,6 +1348,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (testLibs: _*),
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
