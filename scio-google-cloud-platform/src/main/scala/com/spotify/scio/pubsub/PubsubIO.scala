@@ -25,7 +25,7 @@ import com.spotify.scio.util.{Functions, JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.io._
 import com.spotify.scio.pubsub.coders._
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import org.apache.beam.sdk.util.CoderUtils
 import org.joda.time.Instant
@@ -47,10 +47,10 @@ object PubsubIO {
   case object Subscription extends ReadType
   case object Topic extends ReadType
 
-  final case class ReadParam(
+  final case class ReadParam private (
     readType: ReadType,
-    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None,
-    deadLetterTopic: Option[String] = None
+    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = ReadParam.DefaultClientFactory,
+    deadLetterTopic: Option[String] = ReadParam.DefaultDeadLetterTopic
   ) {
     val isSubscription: Boolean = readType match {
       case Subscription => true
@@ -58,16 +58,25 @@ object PubsubIO {
     }
   }
   object ReadParam {
+    val DefaultClientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
+    val DefaultDeadLetterTopic: Option[String] = None
+
     // required for back compatibility
     def apply(isSubscription: Boolean): ReadParam =
       if (isSubscription) ReadParam(Subscription) else ReadParam(Topic)
   }
 
-  final case class WriteParam(
-    maxBatchSize: Option[Int] = None,
-    maxBatchBytesSize: Option[Int] = None,
-    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
+  final case class WriteParam private (
+    maxBatchSize: Option[Int] = WriteParam.DefaultMaxBatchSize,
+    maxBatchBytesSize: Option[Int] = WriteParam.DefaultMaxBatchBytesSize,
+    clientFactory: Option[beam.PubsubClient.PubsubClientFactory] = WriteParam.DefaultClientFactory
   )
+
+  object WriteParam {
+    val DefaultMaxBatchSize: Option[Int] = None
+    val DefaultMaxBatchBytesSize: Option[Int] = None
+    val DefaultClientFactory: Option[beam.PubsubClient.PubsubClientFactory] = None
+  }
 
   def string(
     name: String,
@@ -76,7 +85,7 @@ object PubsubIO {
   ): PubsubIO[String] =
     StringPubsubIOWithoutAttributes(name, idAttribute, timestampAttribute)
 
-  def avro[T <: SpecificRecordBase: ClassTag](
+  def avro[T <: SpecificRecord: ClassTag](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
@@ -192,7 +201,7 @@ final private case class StringPubsubIOWithoutAttributes(
   }
 }
 
-final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecordBase: ClassTag](
+final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecord: ClassTag](
   name: String,
   idAttribute: String,
   timestampAttribute: String

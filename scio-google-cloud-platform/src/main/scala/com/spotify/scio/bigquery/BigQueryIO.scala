@@ -25,19 +25,18 @@ import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TestIO}
-import com.spotify.scio.util.{Functions, ScioUtil}
+import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT, TestIO, TextIO}
+import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.io.TapT
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-import org.apache.beam.sdk.io.{Compression, TextIO}
 import org.apache.beam.sdk.transforms.SerializableFunction
 
 import scala.jdk.CollectionConverters._
@@ -93,7 +92,7 @@ private object Reads {
 }
 
 private[bigquery] object Writes {
-  trait WriteParamDefauls {
+  trait WriteParamDefaults {
     val DefaultSchema: TableSchema = null
     val DefaultWriteDisposition: WriteDisposition = null
     val DefaultCreateDisposition: CreateDisposition = null
@@ -140,7 +139,7 @@ object BigQueryIO {
 
 object BigQueryTypedSelect {
   object ReadParam {
-    private[bigquery] val DefaultFlattenResults = false
+    val DefaultFlattenResults: Boolean = false
   }
 
   final case class ReadParam private (flattenResults: Boolean = ReadParam.DefaultFlattenResults)
@@ -225,7 +224,7 @@ object BigQueryTypedTable {
     val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
   }
 
-  object WriteParam extends Writes.WriteParamDefauls {
+  object WriteParam extends Writes.WriteParamDefaults {
     @inline final def apply(
       s: TableSchema,
       wd: WriteDisposition,
@@ -404,8 +403,8 @@ final case class BigQueryStorage(
 
 object BigQueryStorage {
   object ReadParam {
-    private[bigquery] val DefaultSelectFields: List[String] = Nil
-    private[bigquery] val DefaultRowRestriction: Option[String] = None
+    val DefaultSelectFields: List[String] = Nil
+    val DefaultRowRestriction: Option[String] = None
   }
 }
 
@@ -433,36 +432,63 @@ final case class BigQueryStorageSelect(sqlQuery: Query) extends BigQueryIO[Table
 
 /** Get an IO for a BigQuery TableRow JSON file. */
 final case class TableRowJsonIO(path: String) extends ScioIO[TableRow] {
-  override type ReadP = Unit
+  override type ReadP = TableRowJsonIO.ReadParam
   override type WriteP = TableRowJsonIO.WriteParam
-  final override val tapT: TapT.Aux[TableRow, TableRow] = TapOf[TableRow]
+  override val tapT: TapT.Aux[TableRow, TableRow] = TapOf[TableRow]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[TableRow] =
-    sc.applyTransform(TextIO.read().from(path))
+    sc.read(TextIO(path))(params)
       .map(e => ScioUtil.jsonFactory.fromString(e, classOf[TableRow]))
 
   override protected def write(data: SCollection[TableRow], params: WriteP): Tap[TableRow] = {
-    data.transform_("BigQuery write") {
-      _.map(ScioUtil.jsonFactory.toString)
-        .applyInternal(data.textOut(path, ".json", params.numShards, params.compression))
-    }
-    tap(())
+    data
+      .map(ScioUtil.jsonFactory.toString)
+      .withName("BigQuery write")
+      .write(TextIO(path))(params)
+    tap(TableRowJsonIO.ReadParam(params))
   }
 
   override def tap(read: ReadP): Tap[TableRow] =
-    TableRowJsonTap(ScioUtil.addPartSuffix(path))
+    TableRowJsonTap(path, read)
 }
 
 object TableRowJsonIO {
+
+  type ReadParam = TextIO.ReadParam
+  val ReadParam = TextIO.ReadParam
+
+  type WriteParam = TextIO.WriteParam
   object WriteParam {
-    private[bigquery] val DefaultNumShards = 0
-    private[bigquery] val DefaultCompression = Compression.UNCOMPRESSED
+    val DefaultSuffix: String = ".json"
+    val DefaultNumShards: Int = TextIO.WriteParam.DefaultNumShards
+    val DefaultCompression: Compression = TextIO.WriteParam.DefaultCompression
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier =
+      TextIO.WriteParam.DefaultFilenamePolicySupplier
+    val DefaultPrefix: String = TextIO.WriteParam.DefaultPrefix
+    val DefaultShardNameTemplate: String = TextIO.WriteParam.DefaultShardNameTemplate
+    val DefaultTempDirectory: String = TextIO.WriteParam.DefaultTempDirectory
+
+    def apply(
+      suffix: String = DefaultSuffix,
+      numShards: Int = DefaultNumShards,
+      compression: Compression = DefaultCompression,
+      filenamePolicySupplier: FilenamePolicySupplier = DefaultFilenamePolicySupplier,
+      prefix: String = DefaultPrefix,
+      shardNameTemplate: String = DefaultShardNameTemplate,
+      tempDirectory: String = DefaultTempDirectory
+    ): WriteParam = {
+      TextIO.WriteParam(
+        suffix = suffix,
+        numShards = numShards,
+        compression = compression,
+        filenamePolicySupplier = filenamePolicySupplier,
+        prefix = prefix,
+        shardNameTemplate = shardNameTemplate,
+        tempDirectory = tempDirectory
+      )
+    }
   }
 
-  final case class WriteParam private (
-    numShards: Int = WriteParam.DefaultNumShards,
-    compression: Compression = WriteParam.DefaultCompression
-  )
 }
 
 object BigQueryTyped {
@@ -616,7 +642,7 @@ object BigQueryTyped {
       val insertErrorTransform: SCollection[extendedErrorInfo.Info] => Unit
     }
 
-    object WriteParam extends Writes.WriteParamDefauls {
+    object WriteParam extends Writes.WriteParamDefaults {
       @inline final def apply(
         wd: WriteDisposition,
         cd: CreateDisposition,

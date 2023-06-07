@@ -29,8 +29,15 @@ import java.util.concurrent.ThreadLocalRandom
 
 import com.spotify.scio._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.streaming.DISCARDING_FIRED_PANES
+import com.spotify.scio.values.WindowOptions
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.transforms.windowing.{GlobalWindow, IntervalWindow}
+import org.apache.beam.sdk.transforms.windowing.{
+  AfterWatermark,
+  GlobalWindow,
+  IntervalWindow,
+  Repeatedly
+}
 import org.apache.beam.sdk.util.MimeTypes
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{Duration, Instant}
@@ -83,6 +90,13 @@ object WindowedWordCount {
 
     if (outputGlobalWindow) {
       wordCounts
+        .withGlobalWindow(
+          WindowOptions(
+            allowedLateness = Duration.ZERO,
+            trigger = Repeatedly.forever(AfterWatermark.pastEndOfWindow()),
+            accumulationMode = DISCARDING_FIRED_PANES
+          )
+        )
         .withWindow[GlobalWindow]
         .flatMap { case ((_, counts), _) => counts }
         .saveAsTextFile("output.txt")

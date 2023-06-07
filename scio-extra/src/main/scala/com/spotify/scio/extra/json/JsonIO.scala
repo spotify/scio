@@ -37,7 +37,11 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(TextIO(path))(TextIO.ReadParam(params.compression, params.emptyMatchTreatment))
+    sc.read(TextIO(path))(TextIO.ReadParam(
+      compression = params.compression,
+      suffix = params.suffix,
+      emptyMatchTreatment = params.emptyMatchTreatment
+    ))
       .map(decodeJson)
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
@@ -50,19 +54,23 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
           params.compression,
           None,
           None,
+          params.filenamePolicySupplier,
+          params.prefix,
           params.shardNameTemplate,
-          params.tempDirectory,
-          params.filenamePolicySupplier
+          params.tempDirectory
         )
       )
-    tap(JsonIO.ReadParam(params.compression))
+    tap(JsonIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[T] = new Tap[T] {
-    override def value: Iterator[T] =
-      TextIO.textFile(ScioUtil.addPartSuffix(path)).map(decodeJson)
+    override def value: Iterator[T] = {
+      val filePattern = ScioUtil.filePattern(path, params.suffix)
+      TextIO.textFile(filePattern).map(decodeJson)
+    }
+
     override def open(sc: ScioContext): SCollection[T] =
-      JsonIO(ScioUtil.addPartSuffix(path)).read(sc, params)
+      JsonIO(path).read(sc, params)
   }
 
   private def decodeJson(json: String): T =
@@ -70,33 +78,44 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 }
 
 object JsonIO {
+
   object ReadParam {
-    private[scio] val DefaultCompression = Compression.AUTO
-    private[scio] val DefaultEmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+    val DefaultCompression: Compression = beam.Compression.AUTO
+    val DefaultSuffix: String = null
+    val DefaultEmptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+
+
+    private[scio] def apply(params: WriteParam): ReadParam = new ReadParam(
+      params.compression,
+      params.suffix + params.compression.getSuggestedSuffix
+    )
   }
 
-  final case class ReadParam(
+  final case class ReadParam private (
     compression: beam.Compression = ReadParam.DefaultCompression,
+    suffix: String = ReadParam.DefaultSuffix,
     emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment
   )
 
   object WriteParam {
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultSuffix = ".json"
-    private[scio] val DefaultCompression = beam.Compression.UNCOMPRESSED
-    private[scio] val DefaultPrinter = Printer.noSpaces
-    private[scio] val DefaultShardNameTemplate: String = null
-    private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".json"
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultPrinter: Printer = Printer.noSpaces
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultPrefix: String = null
+    val DefaultTempDirectory: String = null
   }
 
-  final case class WriteParam(
-    suffix: String,
-    numShards: Int,
-    compression: beam.Compression,
-    printer: Printer,
-    shardNameTemplate: String,
-    tempDirectory: String,
-    filenamePolicySupplier: FilenamePolicySupplier
+  final case class WriteParam private (
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: Compression = WriteParam.DefaultCompression,
+    printer: Printer = WriteParam.DefaultPrinter,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 }

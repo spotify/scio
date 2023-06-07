@@ -19,7 +19,7 @@ package com.spotify.scio.parquet.types
 
 import java.{lang => jl}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, TapSpec}
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
@@ -27,42 +27,46 @@ import org.apache.commons.io.FileUtils
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
 
+import java.nio.file.Files
+
 class ParquetTypeIOFileNamePolicyTest extends FileNamePolicySpec[Wide] {
-  val extension: String = ".parquet"
-  def save(
-    filenamePolicySupplier: FilenamePolicySupplier = null
+  override val suffix: String = ".parquet"
+  override def save(
+    filenamePolicySupplier: FilenamePolicySupplier = null,
+    prefix: String = null,
+    shardNameTemplate: String = null
   )(in: SCollection[Int], tmpDir: String, isBounded: Boolean): ClosedTap[Wide] = {
     in.map(i => Wide(i, i.toString, Some(i), (1 to i).toList))
       .saveAsTypedParquetFile(
         tmpDir,
         // TODO there is an exception with auto-sharding that fails for unbounded streams due to a GBK so numShards must be specified
-        numShards = if (isBounded) 0 else TestNumShards,
-        filenamePolicySupplier = filenamePolicySupplier
+        numShards = if (isBounded) 0 else ScioIOTest.TestNumShards,
+        filenamePolicySupplier = filenamePolicySupplier,
+        prefix = prefix,
+        shardNameTemplate = shardNameTemplate
       )
   }
 
   override def failSaves: Seq[SCollection[Int] => ClosedTap[Wide]] = Seq(
     _.map(i => Wide(i, i.toString, Some(i), (1 to i).toList)).saveAsTypedParquetFile(
       "nonsense",
-      shardNameTemplate = "NNN-of-NNN",
+      shardNameTemplate = "SSS-of-NNN",
       filenamePolicySupplier = testFilenamePolicySupplier
     )
   )
 }
 
 class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
-  private val dir = tmpDir
+  private val testDir = Files.createTempDirectory("scio-test-").toFile
   private val records = (1 to 10).map(newRecord)
 
   override protected def beforeAll(): Unit = {
     val sc = ScioContext()
-    sc.parallelize(records)
-      .saveAsTypedParquetFile(dir.toString)
+    sc.parallelize(records).saveAsTypedParquetFile(testDir.getAbsolutePath)
     sc.run()
-    ()
   }
 
-  override protected def afterAll(): Unit = FileUtils.deleteDirectory(dir)
+  override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
   private def newRecord(i: Int): Wide = Wide(i, i.toString, Some(i), (1 to i).toList)
 
@@ -81,35 +85,45 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
   it should "read case classes" in {
     val sc = ScioContext()
-    val data = sc.typedParquetFile[Wide](s"$dir/*.parquet")
+    val data = sc.typedParquetFile[Wide](
+      path = testDir.getAbsolutePath,
+      suffix = ".parquet"
+    )
     data should containInAnyOrder(records)
     sc.run()
-    ()
   }
 
   it should "read case classes with projection" in {
     val sc = ScioContext()
-    val data = sc.typedParquetFile[Narrow](s"$dir/*.parquet")
+    val data = sc.typedParquetFile[Narrow](
+      path = testDir.getAbsolutePath,
+      suffix = ".parquet"
+    )
     data should containInAnyOrder(records.map(r => Narrow(r.i, r.r)))
     sc.run()
-    ()
   }
 
   it should "read case classes with predicate" in {
     val sc = ScioContext()
-    val data = sc.typedParquetFile[Wide](s"$dir/*.parquet", predicate = predicate)
+    val data = sc.typedParquetFile[Wide](
+      path = testDir.getAbsolutePath,
+      predicate = predicate,
+      suffix = ".parquet"
+    )
     data should containInAnyOrder(records.filter(t => t.i <= 5 || t.o.exists(_ >= 95)))
     sc.run()
-    ()
   }
 
   it should "read case classes with projection and predicate" in {
     val sc = ScioContext()
-    val data = sc.typedParquetFile[Narrow](s"$dir/*.parquet", predicate = predicate)
+    val data = sc.typedParquetFile[Narrow](
+      path = testDir.getAbsolutePath,
+      predicate = predicate,
+      suffix = ".parquet"
+    )
     val expected = records.filter(t => t.i <= 5 || t.o.exists(_ >= 95)).map(t => Narrow(t.i, t.r))
     data should containInAnyOrder(expected)
     sc.run()
-    ()
   }
 }
 

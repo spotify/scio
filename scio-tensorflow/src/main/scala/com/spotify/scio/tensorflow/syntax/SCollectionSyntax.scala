@@ -158,15 +158,17 @@ final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]
     shardNameTemplate: String = TFExampleIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TFExampleIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
-      TFExampleIO.WriteParam.DefaultFilenamePolicySupplier
+      TFExampleIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TFExampleIO.WriteParam.DefaultPrefix
   ): ClosedTap[Example] = {
     val param = TFExampleIO.WriteParam(
       suffix,
       compression,
       numShards,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.covary[Example].write(TFExampleIO(path))(param)
   }
@@ -228,15 +230,17 @@ final class TFRecordSCollectionOps[T <: Array[Byte]](private val self: SCollecti
     shardNameTemplate: String = TFExampleIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TFExampleIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
-      TFExampleIO.WriteParam.DefaultFilenamePolicySupplier
+      TFExampleIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TFExampleIO.WriteParam.DefaultPrefix
   )(implicit ev: T <:< Array[Byte]): ClosedTap[Array[Byte]] = {
     val param = TFRecordIO.WriteParam(
       suffix,
       compression,
       numShards,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.covary[Array[Byte]].write(TFRecordIO(path))(param)
   }
@@ -259,15 +263,17 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
     shardNameTemplate: String = TFExampleIO.WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = TFExampleIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
-      TFExampleIO.WriteParam.DefaultFilenamePolicySupplier
+      TFExampleIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TFExampleIO.WriteParam.DefaultPrefix
   ): ClosedTap[SequenceExample] = {
     val param = TFExampleIO.WriteParam(
       suffix,
       compression,
       numShards,
+      filenamePolicySupplier,
+      prefix,
       shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      tempDirectory
     )
     self.covary[SequenceExample].write(TFSequenceExampleIO(path))(param)
   }

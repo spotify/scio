@@ -33,9 +33,12 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     path: String,
     projection: Seq[String] = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   ): SCollection[Example] =
-    self.read(ParquetExampleIO(path))(ParquetExampleIO.ReadParam(projection, predicate, conf))
+    self.read(ParquetExampleIO(path))(
+      ParquetExampleIO.ReadParam(projection, predicate, conf, suffix)
+    )
 }
 
 trait ScioContextSyntax {

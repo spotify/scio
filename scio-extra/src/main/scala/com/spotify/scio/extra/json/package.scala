@@ -60,13 +60,14 @@ package object json extends AutoDerivation {
     @experimental
     def jsonFile[T: Decoder: Coder](
       path: String,
-      compression: Compression = ReadParam.DefaultCompression,
+      compression: Compression = JsonIO.ReadParam.DefaultCompression,
+      suffix: String = JsonIO.ReadParam.DefaultSuffix,
       emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment
     ): SCollection[T] = {
       implicit val encoder: Encoder[T] = new Encoder[T] {
         final override def apply(a: T): io.circe.Json = ???
       }
-      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, emptyMatchTreatment))
+      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, suffix, emptyMatchTreatment))
     }
   }
 
@@ -83,7 +84,8 @@ package object json extends AutoDerivation {
       shardNameTemplate: String = JsonIO.WriteParam.DefaultShardNameTemplate,
       tempDirectory: String = JsonIO.WriteParam.DefaultTempDirectory,
       filenamePolicySupplier: FilenamePolicySupplier =
-        JsonIO.WriteParam.DefaultFilenamePolicySupplier
+        JsonIO.WriteParam.DefaultFilenamePolicySupplier,
+      prefix: String = JsonIO.WriteParam.DefaultPrefix
     ): ClosedTap[T] =
       self.write(JsonIO[T](path))(
         JsonIO.WriteParam(
@@ -91,9 +93,10 @@ package object json extends AutoDerivation {
           numShards,
           compression,
           printer,
+          filenamePolicySupplier,
+          prefix,
           shardNameTemplate,
-          tempDirectory,
-          filenamePolicySupplier
+          tempDirectory
         )
       )
   }

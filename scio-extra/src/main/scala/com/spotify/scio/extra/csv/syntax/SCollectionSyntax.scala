@@ -40,17 +40,19 @@ trait SCollectionSyntax {
       shardNameTemplate: String = CsvIO.WriteParam.DefaultShardNameTemplate,
       tempDirectory: String = CsvIO.WriteParam.DefaultTempDirectory,
       filenamePolicySupplier: FilenamePolicySupplier =
-        CsvIO.WriteParam.DefaultFilenamePolicySupplier
+        CsvIO.WriteParam.DefaultFilenamePolicySupplier,
+      prefix: String = CsvIO.WriteParam.DefaultPrefix
     )(implicit coder: Coder[T], enc: HeaderEncoder[T]): ClosedTap[Nothing] =
       self.write(CsvIO.Write[T](path))(
         CsvIO.WriteParam(
-          compression,
-          csvConfig,
-          suffix,
-          numShards,
-          shardNameTemplate,
-          tempDirectory,
-          filenamePolicySupplier
+          compression = compression,
+          csvConfiguration = csvConfig,
+          suffix = suffix,
+          numShards = numShards,
+          filenamePolicySupplier = filenamePolicySupplier,
+          prefix = prefix,
+          shardNameTemplate = shardNameTemplate,
+          tempDirectory = tempDirectory
         )
       )
   }

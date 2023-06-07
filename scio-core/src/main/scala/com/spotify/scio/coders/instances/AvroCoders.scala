@@ -128,11 +128,21 @@ trait AvroCoders {
 
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val clazz = ScioUtil.classOf[T]
+
     // Try to get the schema with SpecificData.getSchema
     // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
-    // Otherwise create a default instance and call getSchema
     val schema = Try(SpecificData.get().getSchema(clazz))
-      .getOrElse(clazz.getDeclaredConstructor().newInstance().getSchema)
+      // Otherwise create a default instance and call getSchema
+      .orElse(Try(clazz.getDeclaredConstructor().newInstance().getSchema))
+      .getOrElse {
+        val msg =
+          "Failed to create a coder for SpecificRecord because it is impossible to retrieve an " +
+            s"Avro schema by instantiating $clazz. Use only a concrete type implementing " +
+            s"SpecificRecord or use GenericRecord type in your transformations if a concrete " +
+            s"type is not known in compile time."
+        throw new RuntimeException(msg)
+      }
+
     val useReflectApi = true // keep this for backward compatibility
     Coder.beam(AvroCoder.of(clazz, schema, useReflectApi))
   }

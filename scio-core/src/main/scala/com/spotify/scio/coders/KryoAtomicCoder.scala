@@ -20,20 +20,17 @@ package com.spotify.scio.coders
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.esotericsoftware.kryo.serializers.JavaSerializer
 import com.google.protobuf.{ByteString, Message}
-import com.spotify.scio.coders.instances.kryo.{GrpcSerializers => grpc, _}
+import com.spotify.scio.coders.instances.kryo._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderException, InstantCoder}
-import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.VarInt
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
@@ -98,7 +95,6 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
   override def apply(k: Kryo): Unit = {
     logger.debug("Loading common Kryo serializers...")
     k.forClass(new CoderSerializer(InstantCoder.of()))
-    k.forClass(new CoderSerializer(TableRowJsonCoder.of()))
     // Java Iterable/Collection are missing proper equality check, use custom CBF as a
     // workaround
     k.register(
@@ -116,8 +112,6 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
       new JTraversableSerializer[Any, mutable.Buffer[Any]]
     )
 
-    k.forSubclass[SpecificRecordBase](new SpecificAvroSerializer)
-    k.forSubclass[GenericRecord](new GenericAvroSerializer)
     k.forSubclass[Message](new ProtobufSerializer)
     k.forClass[LocalDate](new JodaLocalDateSerializer)
     k.forClass[LocalTime](new JodaLocalTimeSerializer)
@@ -126,8 +120,8 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     k.forSubclass[Path](new JPathSerializer)
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
-    k.forClass[io.grpc.Status](new grpc.StatusSerializer)
-    k.forSubclass[io.grpc.StatusRuntimeException](new grpc.StatusRuntimeExceptionSerializer)
+    k.forClass[io.grpc.Status](new StatusSerializer)
+    k.forSubclass[io.grpc.StatusRuntimeException](new StatusRuntimeExceptionSerializer)
     k.addDefaultSerializer(classOf[Throwable], new JavaSerializer)
     ()
   }
@@ -176,6 +170,12 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
     }
     o.asInstanceOf[T]
   }
+
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Kryo-encoded instances are not guaranteed to be deterministic"
+    )
 
   // This method is called by PipelineRunner to sample elements in a PCollection and estimate
   // size. This could be expensive for collections with small number of very large elements.

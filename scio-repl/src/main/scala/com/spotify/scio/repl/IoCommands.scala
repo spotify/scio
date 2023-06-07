@@ -26,7 +26,7 @@ import com.spotify.scio.repl.compat._ // scalafix:ok
 import kantan.csv.{rfc, RowDecoder, RowEncoder}
 import org.apache.avro.file.{DataFileStream, DataFileWriter}
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecordBase}
+import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.util.MimeTypes
@@ -49,7 +49,7 @@ class IoCommands(options: PipelineOptions) {
   /** Read from an Avro file on local filesystem or GCS. */
   def readAvro[T: ClassTag](path: String): Iterator[T] = {
     val cls = ScioUtil.classOf[T]
-    val reader = if (classOf[SpecificRecordBase] isAssignableFrom cls) {
+    val reader = if (classOf[SpecificRecord] isAssignableFrom cls) {
       new SpecificDatumReader[T]()
     } else {
       new GenericDatumReader[T]()
@@ -88,8 +88,8 @@ class IoCommands(options: PipelineOptions) {
   def writeAvro[T: ClassTag](path: String, data: Seq[T]): Unit = {
     val cls = ScioUtil.classOf[T]
     val (writer, schema) =
-      if (classOf[SpecificRecordBase] isAssignableFrom cls) {
-        (new SpecificDatumWriter[T](cls), data.head.asInstanceOf[SpecificRecordBase].getSchema)
+      if (classOf[SpecificRecord] isAssignableFrom cls) {
+        (new SpecificDatumWriter[T](cls), data.head.asInstanceOf[SpecificRecord].getSchema)
       } else {
         (new GenericDatumWriter[T](), data.head.asInstanceOf[GenericRecord].getSchema)
       }

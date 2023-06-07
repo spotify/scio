@@ -19,9 +19,8 @@ package com.spotify.scio.examples.extra
 
 import java.io.File
 import java.nio.file.Files
-
-import com.spotify.scio.avro.{Account, GenericRecordTap, SpecificRecordTap}
-import com.spotify.scio.io.TextTap
+import com.spotify.scio.avro.{Account, AvroIO, GenericRecordTap, SpecificRecordTap}
+import com.spotify.scio.io.{TextIO, TextTap}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -47,11 +46,15 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
       )
 
       GenericRecordTap(
-        s"$userDir/*.avro",
-        SortMergeBucketExample.UserDataSchema
+        path = userDir.getAbsolutePath,
+        schema = SortMergeBucketExample.UserDataSchema,
+        params = AvroIO.ReadParam(".avro")
       ).value.size shouldBe 500
 
-      SpecificRecordTap[Account](s"$accountDir/*.avro").value.size shouldBe 500
+      SpecificRecordTap[Account](
+        path = accountDir.getAbsolutePath,
+        params = AvroIO.ReadParam(".avro")
+      ).value.size shouldBe 500
 
       SortMergeBucketJoinExample.main(
         Array(
@@ -61,8 +64,10 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      TextTap(s"$joinOutputDir/*.txt").value.size shouldBe 100
-      ()
+      TextTap(
+        path = joinOutputDir.getAbsolutePath,
+        params = TextIO.ReadParam(suffix = ".txt")
+      ).value.size shouldBe 100
   }
 
   it should "transform user and account data" in withTempFolders {
@@ -82,7 +87,10 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      SpecificRecordTap[Account](s"$joinOutputDir/*.avro").value
+      SpecificRecordTap[Account](
+        joinOutputDir.getAbsolutePath,
+        AvroIO.ReadParam(".avro")
+      ).value
         .map(account => (account.getId, account.getType.toString))
         .toList should contain theSameElementsAs (0 until 500).map((_, "combinedAmount"))
       ()

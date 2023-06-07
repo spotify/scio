@@ -17,11 +17,7 @@
 
 package com.spotify.scio.io
 
-import java.io.File
 import java.nio.file.{Files, Path}
-import java.util.UUID
-
-import com.spotify.scio.CoreSysProps
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -31,8 +27,7 @@ import scala.concurrent.duration._
 class TapsTest extends AnyFlatSpec with Matchers {
   val data: Seq[String] = Seq("a", "b", "c")
 
-  private def tmpFile: Path =
-    new File(new File(CoreSysProps.TmpDir.value), "taps-test-" + UUID.randomUUID()).toPath
+  private def tmpFile: Path = Files.createTempFile("taps-test-", ".txt")
 
   private def writeText(p: Path, data: Seq[String]): Unit = {
     val writer = Files.newBufferedWriter(p)
@@ -57,6 +52,7 @@ class TapsTest extends AnyFlatSpec with Matchers {
   it should "fail missing text file" in {
     TapsSysProps.Algorithm.value = "immediate"
     val f = tmpFile
+    Files.delete(f)
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe true
     future.value.get.isSuccess shouldBe false
@@ -82,9 +78,11 @@ class TapsTest extends AnyFlatSpec with Matchers {
     TapsSysProps.PollingInitialInterval.value = "1000"
     TapsSysProps.PollingMaximumAttempts.value = "1"
     val f = tmpFile
+    Files.delete(f)
     val future = Taps().textFile(f.toString)
     future.isCompleted shouldBe false
-
-    Await.ready(future, 10.seconds)
+    val error = Await.result(future.failed, 10.seconds)
+    error shouldBe a[TapNotAvailableException]
+    error.getMessage shouldBe s"Text: $f"
   }
 }
