@@ -193,9 +193,11 @@ final private[client] class TableOps(client: Client) {
   def create(table: Table): Unit =
     withBigQueryService(_.createTable(table))
 
-  def create(tableRef: TableReference,
-             schema: TableSchema,
-             description: Option[String] = None): Unit = {
+  def create(
+    tableRef: TableReference,
+    schema: TableSchema,
+    description: Option[String] = None
+  ): Unit = {
     val table = new Table()
       .setTableReference(tableRef)
       .setSchema(schema)
