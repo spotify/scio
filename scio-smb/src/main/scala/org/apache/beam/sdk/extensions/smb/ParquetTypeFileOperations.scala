@@ -33,7 +33,7 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import java.nio.channels.{ReadableByteChannel, WritableByteChannel}
 
 object ParquetTypeFileOperations {
-  val DefaultCompression = CompressionCodecName.GZIP
+  val DefaultCompression = CompressionCodecName.ZSTD
   val DefaultConfiguration: Configuration = null
 
   def apply[T: Coder: ParquetType](): ParquetTypeFileOperations[T] = apply(DefaultCompression)

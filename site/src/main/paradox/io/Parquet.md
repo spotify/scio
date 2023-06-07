@@ -287,7 +287,9 @@ val parquetConf: Configuration = {
 Here are some other recommended settings.
 
 - `numShards` - This should be explicitly set so that the size of each output file is smaller than but close to `parquet.block.size`, i.e. 1 GiB. This guarantees that each file contains 1 row group only and reduces seeks.
-- `compression` - `SNAPPY` and `GZIP` work out of the box. Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better on GCS.
+- `compression` - Parquet defaults to ZSTD compression with a level of 3; compression level can be set to any integer from 1-22 using the configuration option `parquet.compression.codec.zstd.level`. `SNAPPY` and `GZIP` compression types also work out of the box; Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better than Snappy on GCS.
+
+A full list of Parquet configuration options can be found [here](https://github.com/apache/parquet-mr/blob/master/parquet-hadoop/README.md).
 
 ## Parquet Reads in Scio 0.12.0+
 
