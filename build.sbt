@@ -1554,6 +1554,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "commons-codec" % "commons-codec" % commonsCodecVersion,
+  "commons-io" % "commons-io" % commonsIoVersion,
   "io.dropwizard.metrics" % "metrics-core" % metricsVersion,
   "io.grpc" % "grpc-all" % grpcVersion,
   "io.grpc" % "grpc-alts" % grpcVersion,
