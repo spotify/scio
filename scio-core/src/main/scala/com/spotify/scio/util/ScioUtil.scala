@@ -90,23 +90,28 @@ private[scio] object ScioUtil {
   }
 
   private def stripPath(path: String): String = StringUtils.stripEnd(path, "/")
-  def strippedPath(path: String): String = s"${stripPath(path)}/"
-  def pathWithPrefix(path: String, prefix: String): String = Option(prefix) match {
-    case Some(p) => s"${stripPath(path)}/$p"
-    case None    => s"${stripPath(path)}/part"
+  def strippedPath(path: String): String = {
+    require(path != null, "Path must not be null")
+    s"${stripPath(path)}/"
+  }
+  def pathWithPrefix(path: String, prefix: String): String = {
+    require(path != null, "Path must not be null")
+    stripPath(path) + "/" + Option(prefix).getOrElse("part")
   }
 
-  def filePattern(path: String, suffix: String): String =
+  def filePattern(path: String, suffix: String): String = {
+    require(path != null, "Path must not be null")
     Option(suffix) match {
       case Some(_) if path.contains("*") =>
         // path is already a pattern
         throw new IllegalArgumentException(s"Suffix must be used with a static path but got: $path")
       case Some(s) =>
         // match all file with suffix in path (must be a folder)
-        s"${stripPath(path)}/*$s"
+        stripPath(path) + "/*" + s
       case None =>
         path
     }
+  }
 
   def consistentHashCode[K](k: K): Int = k match {
     case key: Array[_] => ArraySeq.unsafeWrapArray(key).##
