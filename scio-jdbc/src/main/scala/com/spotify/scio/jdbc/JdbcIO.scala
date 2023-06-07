@@ -22,6 +22,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
+import org.joda.time.Duration
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 import javax.sql.DataSource
@@ -82,15 +83,16 @@ object JdbcIO {
   )
 
   object WriteParam {
-    val BeamDefaultBatchSize = -1L
-    val BeamDefaultMaxRetryAttempts = 5
-    val BeamDefaultInitialRetryDelay = org.joda.time.Duration.ZERO
-    val BeamDefaultMaxRetryDelay = org.joda.time.Duration.ZERO
-    val BeamDefaultRetryConfiguration = BJdbcIO.RetryConfiguration.create(
-      BeamDefaultMaxRetryAttempts,
-      BeamDefaultMaxRetryDelay,
-      BeamDefaultInitialRetryDelay
-    )
+    val BeamDefaultBatchSize: Long = -1L
+    val BeamDefaultMaxRetryAttempts: Int = 5
+    val BeamDefaultInitialRetryDelay: Duration = org.joda.time.Duration.ZERO
+    val BeamDefaultMaxRetryDelay: Duration = org.joda.time.Duration.ZERO
+    val BeamDefaultRetryConfiguration: BJdbcIO.RetryConfiguration =
+      BJdbcIO.RetryConfiguration.create(
+        BeamDefaultMaxRetryAttempts,
+        BeamDefaultMaxRetryDelay,
+        BeamDefaultInitialRetryDelay
+      )
     val DefaultRetryStrategy: SQLException => Boolean =
       new BJdbcIO.DefaultRetryStrategy().apply
     val DefaultAutoSharding: Boolean = false
