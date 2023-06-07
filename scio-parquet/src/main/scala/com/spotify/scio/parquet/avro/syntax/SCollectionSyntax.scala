@@ -47,6 +47,11 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
    *   defaults to .parquet
    * @param compression
    *   defaults to snappy
+   * @param conf
+   * @param shardNameTemplate
+   * @param tempDirectory
+   * @param filenamePolicySupplier
+   * @param prefix
    */
   def saveAsParquetAvroFile(
     path: String,
@@ -57,17 +62,19 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
     conf: Configuration = WriteParam.DefaultConfiguration,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = WriteParam(
-      schema,
-      numShards,
-      suffix,
-      compression,
-      conf,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier
+      schema = schema,
+      numShards = numShards,
+      suffix = suffix,
+      compression = compression,
+      conf = conf,
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      tempDirectory = tempDirectory
     )
     self.write(ParquetAvroIO[T](path))(param)
   }

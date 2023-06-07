@@ -75,19 +75,18 @@ final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends Sci
 
 object ElasticsearchIO {
   object WriteParam {
-    private[elasticsearch] val DefaultErrorFn: BulkExecutionException => Unit = m => throw m
-    private[elasticsearch] val DefaultFlushInterval = Duration.standardSeconds(1)
-    private[elasticsearch] val DefaultNumShards = -1L
-    private[elasticsearch] val DefaultMaxBulkRequestOperations = 3000
-    private[elasticsearch] val DefaultMaxBulkRequestBytes = 5L * 1024L * 1024L
-    private[elasticsearch] val DefaultMaxRetries = 3
-    private[elasticsearch] val DefaultRetryPause = Duration.millis(35000)
-    private[elasticsearch] val DefaultRetryConfig = RetryConfig(
+    val DefaultErrorFn: BulkExecutionException => Unit = m => throw m
+    val DefaultFlushInterval: Duration = Duration.standardSeconds(1)
+    val DefaultNumShards: Long = -1L
+    val DefaultMaxBulkRequestOperations: Int = 3000
+    val DefaultMaxBulkRequestBytes: Long = 5L * 1024L * 1024L
+    val DefaultMaxRetries: Int = 3
+    val DefaultRetryPause: Duration = Duration.millis(35000)
+    val DefaultRetryConfig: RetryConfig = RetryConfig(
       maxRetries = WriteParam.DefaultMaxRetries,
       retryPause = WriteParam.DefaultRetryPause
     )
   }
-
   final case class WriteParam[T] private (
     f: T => Iterable[BulkOperation],
     errorFn: BulkExecutionException => Unit = WriteParam.DefaultErrorFn,

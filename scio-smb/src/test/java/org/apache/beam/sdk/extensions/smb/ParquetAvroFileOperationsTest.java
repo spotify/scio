@@ -217,13 +217,13 @@ public class ParquetAvroFileOperationsTest {
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("compression", Compression.UNCOMPRESSED.toString()));
     MatcherAssert.assertThat(
-        displayData, hasDisplayItem("compressionCodecName", CompressionCodecName.GZIP.name()));
+        displayData, hasDisplayItem("compressionCodecName", CompressionCodecName.ZSTD.name()));
     MatcherAssert.assertThat(displayData, hasDisplayItem("schema", USER_SCHEMA.getFullName()));
   }
 
   private void writeFile(ResourceId file) throws IOException {
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(USER_SCHEMA, CompressionCodecName.GZIP);
+        ParquetAvroFileOperations.of(USER_SCHEMA, CompressionCodecName.ZSTD);
     final FileOperations.Writer<GenericRecord> writer = fileOperations.createWriter(file);
     for (GenericRecord record : USER_RECORDS) {
       writer.write(record);

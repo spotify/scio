@@ -46,6 +46,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.util.FilenamePolicySupplier
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
 import org.joda.time.Duration
@@ -99,10 +100,27 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
   def saveAsTableRowJsonFile(
     path: String,
     numShards: Int = TableRowJsonWriteParam.DefaultNumShards,
-    compression: Compression = TableRowJsonWriteParam.DefaultCompression
+    suffix: String = TableRowJsonWriteParam.DefaultSuffix,
+    compression: Compression = TableRowJsonWriteParam.DefaultCompression,
+    shardNameTemplate: String = TableRowJsonWriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = TableRowJsonWriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      TableRowJsonWriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TableRowJsonWriteParam.DefaultPrefix
   ): ClosedTap[TableRow] = {
-    val param = TableRowJsonWriteParam(numShards, compression)
-    self.covary[TableRow].write(TableRowJsonIO(path))(param)
+    self
+      .covary[TableRow]
+      .write(TableRowJsonIO(path))(
+        TableRowJsonWriteParam(
+          suffix = suffix,
+          numShards = numShards,
+          compression = compression,
+          filenamePolicySupplier = filenamePolicySupplier,
+          prefix = prefix,
+          shardNameTemplate = shardNameTemplate,
+          tempDirectory = tempDirectory
+        )
+      )
   }
 }
 

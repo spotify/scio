@@ -24,28 +24,19 @@ import org.apache.beam.sdk.io.{jdbc => beam}
 import com.spotify.scio.testing._
 
 object JdbcJob {
+
+  val query = "SELECT <this> FROM <this>"
+  val statement = "INSERT INTO <this> VALUES( ?, ? ..?)"
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
     val sc = ScioContext(opts)
-    sc.jdbcSelect(getReadOptions(opts))
+    val connectionOpts = getConnectionOptions(opts)
+    sc.jdbcSelect[String](connectionOpts, query)((rs: ResultSet) => rs.getString(1))
       .map(_ + "J")
-      .saveAsJdbc(getWriteOptions(opts))
+      .saveAsJdbc(connectionOpts, statement) { (_, _) => }
     sc.run()
     ()
   }
-
-  def getReadOptions(opts: CloudSqlOptions): JdbcReadOptions[String] =
-    JdbcReadOptions(
-      connectionOptions = getConnectionOptions(opts),
-      query = "SELECT <this> FROM <this>",
-      rowMapper = (rs: ResultSet) => rs.getString(1)
-    )
-
-  def getWriteOptions(opts: CloudSqlOptions): JdbcWriteOptions[String] =
-    JdbcWriteOptions[String](
-      connectionOptions = getConnectionOptions(opts),
-      statement = "INSERT INTO <this> VALUES( ?, ? ..?)"
-    )
 
   def connectionUrl(opts: CloudSqlOptions): String =
     s"jdbc:mysql://google/${opts.getCloudSqlDb}?" +
@@ -70,13 +61,14 @@ class JdbcTest extends PipelineSpec {
       "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
     )
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args.toArray)
-    val readOpts = JdbcJob.getReadOptions(opts)
-    val writeOpts = JdbcJob.getWriteOptions(opts)
+    val connectionOpts = JdbcJob.getConnectionOptions(opts)
 
     JobTest[JdbcJob.type]
       .args(args: _*)
-      .input(JdbcIO[String](readOpts), Seq("a", "b", "c"))
-      .output(JdbcIO[String](writeOpts))(coll => coll should containInAnyOrder(xs))
+      .input(JdbcIO[String](connectionOpts, JdbcJob.query), Seq("a", "b", "c"))
+      .output(JdbcIO[String](connectionOpts, JdbcJob.statement))(coll =>
+        coll should containInAnyOrder(xs)
+      )
       .run()
   }
 
@@ -96,15 +88,16 @@ class JdbcTest extends PipelineSpec {
       "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
     )
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args.toArray)
-    val readOpts = JdbcJob.getReadOptions(opts)
-    val writeOpts = JdbcJob.getWriteOptions(opts)
+    val connectionOpts = JdbcJob.getConnectionOptions(opts)
 
     val expected = Seq("aJ", "bJ", "cJ")
 
     JobTest[JdbcJob.type]
       .args(args: _*)
-      .input(JdbcIO[String](readOpts), Seq("a", "b", "c"))
-      .output(JdbcIO[String](writeOpts))(coll => coll should containInAnyOrder(expected))
+      .input(JdbcIO[String](connectionOpts, JdbcJob.query), Seq("a", "b", "c"))
+      .output(JdbcIO[String](connectionOpts, JdbcJob.statement))(coll =>
+        coll should containInAnyOrder(expected)
+      )
       .run()
   }
 

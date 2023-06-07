@@ -93,8 +93,8 @@ final case class RedisRead(connectionOptions: RedisConnectionOptions, keyPattern
 
 object RedisRead {
   object ReadParam {
-    private[redis] val DefaultBatchSize: Int = 1000
-    private[redis] val DefaultOutputParallelization: Boolean = true
+    val DefaultBatchSize: Int = 1000
+    val DefaultOutputParallelization: Boolean = true
   }
 
   final case class ReadParam private (

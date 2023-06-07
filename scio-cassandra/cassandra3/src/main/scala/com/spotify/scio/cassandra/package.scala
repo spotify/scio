@@ -65,7 +65,7 @@ package object cassandra {
      */
     def saveAsCassandra(
       opts: CassandraOptions,
-      parallelism: Int = CassandraIO.WriteParam.DefaultPar
+      parallelism: Int = CassandraIO.WriteParam.DefaultParallelism
     )(f: T => Seq[Any]): ClosedTap[Nothing] =
       self.write(CassandraIO[T](opts))(CassandraIO.WriteParam(f, parallelism))
   }

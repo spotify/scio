@@ -30,10 +30,10 @@ object ElasticsearchIOBehavior {
   val Password = "changeme"
 
   final case class Person(
-                           name: String,
-                           lastname: String,
-                           job_description: String
-                         )
+    name: String,
+    lastname: String,
+    job_description: String
+  )
 
   val ImageName: DockerImageName = {
     // get the elasticsearch version for the java client properties

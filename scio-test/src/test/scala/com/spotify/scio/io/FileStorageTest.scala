@@ -17,31 +17,44 @@
 
 package com.spotify.scio.io
 
-import java.nio.file.Files
-
+import org.apache.commons.io.FileUtils
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.io.File
+import java.nio.file.Files
+
 class FileStorageTest extends AnyFlatSpec with Matchers {
-  "FileStorage.isDone" should "return true on an empty directory" in {
-    val dir = Files.createTempDirectory("file-storage-")
-    dir.toFile.deleteOnExit()
-    FileStorage(dir.toFile.getAbsolutePath).isDone shouldBe true
+
+  def withTempDirectory(test: File => Any): Unit = {
+    val dir = Files.createTempDirectory("file-storage-").toFile
+    try {
+      test(dir)
+    } finally {
+      FileUtils.deleteDirectory(dir)
+    }
   }
 
-  it should "return false on non existing files" in {
-    val dir = Files.createTempDirectory("file-storage-")
-    dir.toFile.deleteOnExit()
-    FileStorage(dir.toFile.getAbsolutePath + "/*").isDone shouldBe false
+  "FileStorage.isDone" should "return false on an empty directory" in withTempDirectory { dir =>
+    FileStorage(dir.getAbsolutePath, ".txt").isDone() shouldBe false
   }
 
-  it should "return true on existing files" in {
-    val dir = Files.createTempDirectory("file-storage-")
-    val f1 = Files.createTempFile(dir, "part", ".avro")
-    val f2 = Files.createTempFile(dir, "part", ".avro")
-    dir.toFile.deleteOnExit()
-    f1.toFile.deleteOnExit()
-    f2.toFile.deleteOnExit()
-    FileStorage(dir.toFile.getAbsolutePath + "/*.avro").isDone shouldBe true
+  it should "return true for non sharded files" in withTempDirectory { dir =>
+    new File(dir, "result.txt").createNewFile()
+    FileStorage(dir.getAbsolutePath, ".txt").isDone() shouldBe true
+  }
+
+  it should "return true on existing files" in withTempDirectory { dir =>
+    new File(dir, "part-01-of-02.txt").createNewFile()
+    new File(dir, "part-02-of-02.txt").createNewFile()
+    FileStorage(dir.getAbsolutePath, ".txt").isDone() shouldBe true
+  }
+
+  it should "return false when shards are missing" in withTempDirectory { dir =>
+    new File(dir, "pane-1-part-01-of-02.txt").createNewFile()
+    new File(dir, "pane-1-part-02-of-02.txt").createNewFile()
+    // missing pane-1-part-01-of-02.txt
+    new File(dir, "pane-2-part-02-of-02.txt").createNewFile()
+    FileStorage(dir.getAbsolutePath, ".txt").isDone() shouldBe false
   }
 }

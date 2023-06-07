@@ -19,23 +19,22 @@ package com.spotify.scio.parquet.read
 import com.spotify.scio.ScioContext
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.types._
+import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.io.File
 import java.nio.file.Files
 import java.util.UUID
 
 case class Record(strField: String)
 
 class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
+  private val testDir = Files.createTempDirectory("scio-test").toFile
+  private val testMultiDir = new File(testDir, "multi")
+  private val testSingleDir = new File(testDir, "single")
   private val records = (1 to 500).map(_ => Record(UUID.randomUUID().toString)).toList
-
-  private val directory = {
-    val d = Files.createTempDirectory("parquet")
-    d.toFile.deleteOnExit()
-    d.toString
-  }
 
   override def beforeAll(): Unit = {
     // Multiple row-groups
@@ -46,12 +45,13 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     val sc = ScioContext()
     val data = sc.parallelize(records)
-
-    data.saveAsTypedParquetFile(s"$directory/multi", conf = multiRowGroupConf)
-    data.saveAsTypedParquetFile(s"$directory/single", conf = singleRowGroupConf)
+    data.saveAsTypedParquetFile(testMultiDir.getAbsolutePath, conf = multiRowGroupConf)
+    data.saveAsTypedParquetFile(testSingleDir.getAbsolutePath, conf = singleRowGroupConf)
 
     sc.run()
   }
+
+  override def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
   "Parquet ReadFn" should "read at file-level granularity for files with multiple row groups" in {
     val granularityConf = ParquetConfiguration.of(
@@ -61,7 +61,11 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     val sc = ScioContext()
     val tap = sc
-      .typedParquetFile[Record](s"$directory/multi/*.parquet", conf = granularityConf)
+      .typedParquetFile[Record](
+        path = testMultiDir.getAbsolutePath,
+        conf = granularityConf,
+        suffix = ".parquet"
+      )
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
@@ -77,7 +81,11 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     val sc = ScioContext()
     val tap = sc
-      .typedParquetFile[Record](s"$directory/single/*.parquet", conf = granularityConf)
+      .typedParquetFile[Record](
+        path = testSingleDir.getAbsolutePath,
+        conf = granularityConf,
+        suffix = ".parquet"
+      )
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
@@ -93,7 +101,11 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     val sc = ScioContext()
     val tap = sc
-      .typedParquetFile[Record](s"$directory/multi/*.parquet", conf = granularityConf)
+      .typedParquetFile[Record](
+        path = testMultiDir.getAbsolutePath,
+        conf = granularityConf,
+        suffix = ".parquet"
+      )
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
@@ -109,7 +121,11 @@ class ParquetReadFnTest extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
     val sc = ScioContext()
     val tap = sc
-      .typedParquetFile[Record](s"$directory/single/*.parquet", conf = granularityConf)
+      .typedParquetFile[Record](
+        path = testSingleDir.getAbsolutePath,
+        conf = granularityConf,
+        suffix = ".parquet"
+      )
       .materialize
 
     val readElements = sc.run().waitUntilDone().tap(tap).value.toList
