@@ -61,13 +61,13 @@ package object json extends AutoDerivation {
     def jsonFile[T: Decoder: Coder](
       path: String,
       compression: Compression = JsonIO.ReadParam.DefaultCompression,
-      suffix: String = JsonIO.ReadParam.DefaultSuffix,
-      emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment
+      emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment,
+      suffix: String = JsonIO.ReadParam.DefaultSuffix
     ): SCollection[T] = {
       implicit val encoder: Encoder[T] = new Encoder[T] {
         final override def apply(a: T): io.circe.Json = ???
       }
-      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, suffix, emptyMatchTreatment))
+      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, emptyMatchTreatment, suffix))
     }
   }
 
