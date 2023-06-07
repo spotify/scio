@@ -57,12 +57,6 @@ class AlgebirdSpec extends AnyPropSpec with ScalaCheckDrivenPropertyChecks with 
         .map(aggregator.prepare)
         .reduce(aggregator.semigroup.plus)
       aggregator.present(a)
-
-
-      case class A()
-      val semi: Monoid[A] = ???
-      val xxx: List[A] = ???
-      semi.sum()
     }
 
     def map[U](f: T => U): SColl[U] = new SColl(internal.map(f))
