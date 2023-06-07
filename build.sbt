@@ -1421,14 +1421,22 @@ lazy val site: Project = project
     MdocPlugin
   )
   .dependsOn(
-    `scio-macros`,
-    `scio-core`,
     `scio-avro`,
+    `scio-cassandra3`,
+    `scio-core`,
+    `scio-elasticsearch-common`,
+    `scio-elasticsearch8`,
+    `scio-extra`,
     `scio-google-cloud-platform`,
+    `scio-grpc` % "compile->test",
+    `scio-jdbc`,
+    `scio-macros`,
+    `scio-neo4j`,
     `scio-parquet`,
+    `scio-redis`,
     `scio-smb`,
+    `scio-tensorflow`,
     `scio-test` % "compile->test",
-    `scio-extra`
   )
   .settings(commonSettings)
   .settings(macroSettings)
@@ -1447,18 +1455,21 @@ lazy val site: Project = project
     ScalaUnidoc / siteSubdirName := "api",
     ScalaUnidoc / scalacOptions := Seq.empty,
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-      `scio-core`,
-      `scio-test`,
       `scio-avro`,
-      `scio-google-cloud-platform`,
       `scio-cassandra3`,
+      `scio-core`,
+      `scio-elasticsearch-common`,
       `scio-elasticsearch8`,
       `scio-extra`,
+      `scio-google-cloud-platform`,
+      `scio-grpc`,
       `scio-jdbc`,
+      `scio-neo4j`,
       `scio-parquet`,
+      `scio-redis`,
+      `scio-smb`,
       `scio-tensorflow`,
-      `scio-macros`,
-      `scio-smb`
+      `scio-test`,
     ),
     // unidoc handles class paths differently than compile and may give older
     // versions high precedence.

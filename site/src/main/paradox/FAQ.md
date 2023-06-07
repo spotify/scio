@@ -18,7 +18,7 @@ For a incomplete list of users, see the [[Powered By]] page.
 
 #### What's the relationship between Scio and Apache Beam?
 
-Scio is a Scala API built on top of [Apache Beam](https://beam.apache.org/)'s Java SDK. Scio aims to offer a concise, idiomatic Scala API for a subset of Beam's features, plus extras we find useful, like REPL, type safe BigQuery, and IO taps.
+Scio is a Scala API built on top of [Apache Beam](https://beam.apache.org/)'s Java SDK. Scio offers a concise, idiomatic Scala API for a subset of Beam's features, plus extras we find useful, like REPL, type safe BigQuery, and IO taps.
 
 #### What's the relationship between Scio and Google Cloud Dataflow?
 
@@ -143,7 +143,7 @@ See @extref[BeamExample.scala](example:BeamExample) for more details. Custom I/O
 - Consider `skewedJoin` if some keys on the LHS are extremely hot.
 - Consider `sparseOuterJoin` if you want a full outer join where RHS is much smaller than LHS, but may not fit in memory.
 - Consider `cogroup` if you need to access value groups of each key.
-- [`MultiJoin`](https://spotify.github.io/scio/api/com/spotify/scio/util/MultiJoin$.html) supports inner, left, outer join and cogroup of up to 22 inputs.
+- @scaladoc[`MultiJoin`](com.spotify.scio.util.MultiJoin$) supports inner, left, outer join and cogroup of up to 22 inputs.
 - For multi-joins larger inputs should be on the left, e.g. `size(a) >= size(b) >= size(c) >= size(d)` in `MultiJoin(a, b, c, d)`.
 - Check out these [slides](http://www.lyh.me/slides/joins.html) for more information on joins.
 - Also see this section on [Cloud Dataflow Shuffle](https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle) service.

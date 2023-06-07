@@ -118,13 +118,13 @@ If your Avro schema contains a logical type, you'll need to supply an additional
 
 If you're using the default version of Avro (1.8), you can use Scio's pre-built logical type conversions:
 
-```scala mdoc:reset
+```scala mdoc:compile-only
 import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
 
-val sc: ScioContext = ScioContext()
+val sc: ScioContext = ???
 val data: SCollection[TestRecord] = sc.parallelize(List[TestRecord]())
 
 // Reads
@@ -293,4 +293,4 @@ Here are some other recommended settings.
 
 Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation,
 backed by the new Beam [SplittableDoFn](https://beam.apache.org/blog/splittable-do-fn/) API, by following the instructions
-@ref:[here](../migrations/v0.12.0-Migration-Guide.md#parquet-reads).
+@ref:[here](../releases/migrations/v0.12.0-Migration-Guide.md#parquet-reads).

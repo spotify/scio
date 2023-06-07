@@ -1,6 +1,6 @@
 # Breaking Changelog
 
-## Breaking changes since 0.12.0 (@ref:[v0.12.0 Migration Guide](../migrations/v0.12.0-Migration-Guide.md))
+## Breaking changes since 0.12.0 (@ref:[v0.12.0 Migration Guide](migrations/v0.12.0-Migration-Guide.md))
 - Removed `com.spotify.scio.extra.bigquery`
 - Removed `com.spotify.scio.pubsub` specializations
 - Changed type signatures of SMB methods to accommodate secondary-keyed SMB
@@ -14,24 +14,24 @@
     )
   ```
 
-## Breaking changes since Scio 0.10.0 (@ref:[v0.10.0 Migration Guide](../migrations/v0.10.0-Migration-Guide.md))
+## Breaking changes since Scio 0.10.0 (@ref:[v0.10.0 Migration Guide](migrations/v0.10.0-Migration-Guide.md))
 - Move GCP modules to `scio-google-cloud-platform`
 - Simplify coder implicits
 
-## Breaking changes since Scio 0.9.0 (@ref:[v0.9.0 Migration Guide](../migrations/v0.9.0-Migration-Guide.md))
+## Breaking changes since Scio 0.9.0 (@ref:[v0.9.0 Migration Guide](migrations/v0.9.0-Migration-Guide.md))
 - Drop Scala 2.11, add Scala 2.13 support
 - Remove deprecated modules `scio-cassandra2` and `scio-elasticsearch2`
 - Remove deprecated methods since 0.8.0
 - Switch from Algebird `Hash128[K]` to Guava `Funnel[K]` for Bloom filter and sparse transforms
 
-## Breaking changes since Scio 0.8.0 (@ref:[v0.8.0 Migration Guide](../migrations/v0.8.0-Migration-Guide.md))
+## Breaking changes since Scio 0.8.0 (@ref:[v0.8.0 Migration Guide](migrations/v0.8.0-Migration-Guide.md))
 - `ScioIO`s no longer return `Future`
 - `ScioContext#close` returns `ScioExecutionContext` instead of `ScioResult`
 - Async `DoFn` refactor
 - Deprecate `scio-cassandra2` and `scio-elasticsearch2`
 - `ContextAndArgs#typed` no longer accepts list-case #2221
 
-## Breaking changes since Scio 0.7.0 (@ref:[v0.7.0 Migration Guide](../migrations/v0.7.0-Migration-Guide.md))
+## Breaking changes since Scio 0.7.0 (@ref:[v0.7.0 Migration Guide](migrations/v0.7.0-Migration-Guide.md))
 
 - New [Magnolia](https://github.com/softwaremill/magnolia) based @ref:[Coders](../internals/Coders.md) derivation
 - New @ref:[ScioIO](../internals/ScioIO.md) replaces `TestIO[T]` to simplify IO implementation and stubbing in `JobTest`

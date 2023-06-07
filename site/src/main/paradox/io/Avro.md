@@ -6,13 +6,13 @@ Scio comes with support for reading Avro files. Avro supports generic or specifi
 
 ### Read Specific records
 
-```scala mdoc:reset:silent
+```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 
 import org.apache.avro.specific.SpecificRecord
 
-def sc: ScioContext = ???
+val sc: ScioContext = ???
 
 // SpecificRecordClass is compiled from Avro schema files
 def result = sc.avroFile[SpecificRecord]("gs://path-to-data/lake/part-*.avro")
@@ -20,7 +20,7 @@ def result = sc.avroFile[SpecificRecord]("gs://path-to-data/lake/part-*.avro")
 
 ### Read Generic records
 
-```scala mdoc:reset:silent
+```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 
@@ -29,7 +29,7 @@ import org.apache.avro.Schema
 
 def yourAvroSchema: Schema = ???
 
-def sc: ScioContext = ???
+val sc: ScioContext = ???
 
 def result = sc.avroFile("gs://path-to-data/lake/part-*.avro", yourAvroSchema)
 // `record` is of GenericRecord type
@@ -41,14 +41,14 @@ Scio comes with support for writing Avro files. Avro supports generic or specifi
 
 ### Write Specific records
 
-```scala mdoc:reset:silent
+```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.avro._
 
 import org.apache.avro.specific.SpecificRecord
 
 case class Foo(x: Int, s: String)
-def sc: SCollection[Foo] = ???
+val sc: SCollection[Foo] = ???
 
 // convert to avro SpecificRecord
 def fn(f: Foo): SpecificRecord = ???
@@ -61,7 +61,7 @@ def result =  sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output")
 
 ### Write Generic records
 
-```scala mdoc:reset:silent
+```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.avro._
 
@@ -69,7 +69,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.avro.Schema
 
 case class Foo(x: Int, s: String)
-def sc: SCollection[Foo] = ???
+val sc: SCollection[Foo] = ???
 
 def yourAvroSchema: Schema = ???
 
@@ -85,8 +85,8 @@ def result =  sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output", schema 
 * Unless impossible, provide default values for your fields.
 * New field must have a default value.
 * You can only delete field which has default value.
-* Do not change data type of an existing fields. If needed add a new field to the schema.
-* Do not rename existing fields. If needed use aliases.
+* Do not change the data type of existing fields. If needed, add a new field to the schema.
+* Do not rename existing fields. If needed, use aliases.
 
 ## Common issues/guidelines
 

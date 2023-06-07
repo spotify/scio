@@ -256,7 +256,7 @@ scalacOptions += "-Xmacro-settings:show-coder-fallback=true"
 
 ## How to build a custom Coder
 
-It is possible for the user to define their own `Coder` implementation. Scio provides [builder functions](https://spotify.github.io/scio/api/com/spotify/scio/coders/CoderGrammar.html) in the `Coder` object. If you want to create a custom `Coder`, you should use one of the those three builder:
+It is possible for the user to define their own `Coder` implementation. Scio provides @scaladoc[builder functions](com.spotify.scio.coders.CoderGrammar) in the `Coder` object. If you want to create a custom `Coder`, you should use one of the those three builder:
 
 - **`Coder.beam`**: Create a Scio `Coder` that simply wraps a Beam implementation. For example:
 ```scala mdoc
@@ -288,7 +288,7 @@ Note that in test mode (when you use `JobTest`), Scio will make sure that all th
 
 ### Testing custom coders
 
-Scio provides a few assertions specific to coders. See [CoderAssertions](https://spotify.github.io/scio/api/com/spotify/scio/testing/CoderAssertions$.html).
+Scio provides a few assertions specific to coders. See @scaladoc[CoderAssertions](com.spotify.scio.testing.CoderAssertions$).
 
 ## Null values support
 
@@ -316,4 +316,4 @@ There are 2 ways to fix this issue:
 ## Upgrading to `v0.7.0` or above: Migrating to static coder
 
 Migrating to Scio `0.7.x` from an older version is likely to break a few things at compile time in your project.
-See the complete @ref:[v0.7.0 Migration Guide](../migrations/v0.7.0-Migration-Guide.md) for more information.
+See the complete @ref:[v0.7.0 Migration Guide](../releases/migrations/v0.7.0-Migration-Guide.md) for more information.

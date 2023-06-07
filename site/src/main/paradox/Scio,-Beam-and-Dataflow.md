@@ -2,7 +2,7 @@
 
 Check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. Also see this comparison between [[Scio, Scalding and Spark]] APIs.
 
-Scio aims to be a thin wrapper on top of Beam while offering idiomatic Scala style API.
+Scio is a thin wrapper on top of Beam offering idiomatic Scala style API.
 
 ## Basics
 
@@ -27,7 +27,7 @@ Scio aims to be a thin wrapper on top of Beam while offering idiomatic Scala sty
 - Most @javadoc[`IO`](org.apache.beam.sdk.io.package-summary) Read transforms are implemented as methods on `ScioContext`, e.g. `avroFile`, `textFile`, `bigQueryTable`.
 - Most `IO` Write transforms are implemented as methods on `SCollection`, e.g. `saveAsAvroFile`, `saveAsTextFile`, `saveAsBigQueryTable`.
 - These IO operations also detects when the `ScioContext` is running in a @scaladoc[`JobTest`](com.spotify.scio.testing.JobTest$) and manages test IO in memory.
-- Write options also return a @scaladoc[`ClosedTap`](com.spotify.scio.io.ClosedTap). Once the job completes you can open the @scaladoc[`Tap`](com.spotify.scio.io.Tap). `Tap` abstracts away the logic of reading the dataset directly as an `Iterator[T]` or re-opening it in another `ScioContext`. The `Future` is complete once the job finishes. This can be used to do light weight pipeline orchestration e.g. @extref[WordCountOrchestration.scala](example:WordCountOrchestration).
+- Write options also return a @scaladoc[`ClosedTap`](com.spotify.scio.io.ClosedTap). Once the job completes you can open the @scaladoc[`Tap`](com.spotify.scio.io.Tap). `Tap` abstracts away the logic of reading the dataset directly as an `Iterator[T]` or re-opening it in another `ScioContext`. The `Future` is complete once the job finishes. This can be used to do lightweight pipeline orchestration e.g. @extref[WordCountOrchestration.scala](example:WordCountOrchestration).
 
 ## ByKey operations
 

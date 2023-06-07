@@ -20,12 +20,10 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 
 ## Documentation
 - @ref:[Getting Started](Getting-Started.md) - current API documentation
-- @ref:[Scio REPL](Scio-REPL.md) - tutorial for the interactive Scio REPL
 - @ref:[Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md) - how Scio concepts map to Beam and Dataflow
 - @ref:[Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md) - comparison of these frameworks
 - @ref:[Runners](Runners.md) - how Scio handles Beam runners and runner specific logic
 - @ref:[Scio data guideline](Scio-data-guideline.md) - guideline for common problems
-- @ref:[Apache Beam](Apache-Beam.md) - notes on Apache Beam compatibility
 - @ref:[Releases](releases/index.md) - Detailed release notes on new Scio releases
 - @ref:[FAQ](FAQ.md) - frequently asked questions
 - @ref:[Powered By](Powered-By.md) - see who is using Scio in production
@@ -86,19 +84,17 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 * @ref:[Examples](examples.md)
 * @ref:[IO](io/index.md)
 * @ref:[Testing](Scio-Unit-Tests.md)
-* @ref:[REPL](Scio-REPL.md)
 * @ref:[Internals](internals/index.md)
 * @ref:[Extras](extras/index.md)
-* @ref:[Migration guides](migrations/index.md)
 * @ref:[Development](dev/index.md)
 * @ref:[Scaladoc](scaladoc.md)
 * @ref:[Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md)
 * @ref:[Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md)
 * @ref:[Runners](Runners.md)
 * @ref:[Data guideline](Scio-data-guideline.md)
-* @ref:[Beam Compatibility Guide](Apache-Beam.md)
 * @ref:[Releases](releases/index.md)
 * @ref:[FAQ](FAQ.md)
 * @ref:[Powered By](Powered-By.md)
+* @ref:[Joins](Joins.md)
 
 @@@

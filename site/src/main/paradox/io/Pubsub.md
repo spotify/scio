@@ -6,7 +6,7 @@ Scio supports [Google Cloud PubSub](https://cloud.google.com/pubsub/docs/overvie
 
 Use the appropriate `PubsubIO` method with `ScioContext.read` to read into strings, avro, protobuf, beam's `PubsubMessage`, or into any type supported by a scio `Coder`. Pass a `PubsubIO.ReadParam` to configure whether reading from a topic or subscription.
 
-```scala
+```scala mdoc:compile-only
 import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.pubsub._
@@ -25,7 +25,7 @@ val d: PubsubIO[PubsubMessage] = PubsubIO.pubsub[PubsubMessage]("messages")
 case class MyClass(s: String, i: Int)
 val e: PubsubIO[MyClass] = PubsubIO.coder[MyClass]("myclasses")
 
-val sc = ScioContext()
+val sc: ScioContext = ???
 
 // read strings from a subscription
 val in1: SCollection[String] = sc.read(a)(PubsubIO.ReadParam(PubsubIO.Subscription))
@@ -36,17 +36,17 @@ val in2: SCollection[String] = sc.read(a)(PubsubIO.ReadParam(PubsubIO.Topic))
 
 The `withAttributes` methods give access to the PubSub attributes within the SCollection:
 
-```scala
+```scala mdoc:compile-only
 import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.pubsub._
 
-val sc = ScioContext()
+val sc: ScioContext = ???
 val in: SCollection[(String, Map[String, String])] =
   sc.read(PubsubIO.withAttributes[String]("strings"))(PubsubIO.ReadParam(PubsubIO.Subscription))
     .map { case (element, attributes) =>
       attributes.get("name")
-      // ...
+      ???
     }
 ```
 
@@ -54,7 +54,7 @@ val in: SCollection[(String, Map[String, String])] =
 
 PubSub write methods use the same PubSubIO methods as reading:
 
-```scala
+```scala mdoc:compile-only
 import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.pubsub._
@@ -81,7 +81,7 @@ myClasses.write(PubsubIO.coder[MyClass]("myClasses"))(PubsubIO.WriteParam())
 
 Writing attributes:
 
-```scala
+```scala mdoc:compile-only
 import com.spotify.scio._
 import com.spotify.scio.values._
 import com.spotify.scio.pubsub._

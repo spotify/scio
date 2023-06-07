@@ -1,7 +1,7 @@
 # Sort Merge Bucket
 
 Sort Merge Bucket is a technique for writing data to file system in deterministic file locations,
-sorted according by some pre-determined key, so that it can later be read in as key groups with
+sorted according to some pre-determined key, so that it can later be read in as key groups with
 no shuffle required. Since each element is assigned a file destination (bucket) based on a hash
 of its join key, we can use the same technique to cogroup multiple Sources as long as they're
 written using the same key and hashing scheme.
