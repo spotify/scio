@@ -32,8 +32,6 @@ import com.twitter.chill.ClosureCleaner
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.Compression
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryUtils, SchemaAndRecord}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.{Method => ReadMethod}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   CreateDisposition,
@@ -396,10 +394,10 @@ final case class BigQueryTypedTable[T: Coder](
             w.withAutoSharding()
           case Sharding.Manual(numShards) =>
             // Depending on method, sharding uses a different API
-            w.withNumFileShards(numShards) // for FILE_LOADS
-            w.withNumStorageWriteApiStreams(
-              numShards
-            ) // for STORAGE_WRITE_API & STORAGE_API_AT_LEAST_ONCE
+            // for FILE_LOADS
+            w.withNumFileShards(numShards)
+            // for STORAGE_WRITE_API & STORAGE_API_AT_LEAST_ONCE
+            w.withNumStorageWriteApiStreams(numShards)
           // For STREAMING_INSERTS, manual sharding must be set through NumStreamingKeys pipeline option
         }
       )
@@ -646,25 +644,6 @@ object BigQueryTyped {
       table
     )
 
-    private def fromTableParam[Info](
-      params: Table.WriteParam[T, Info]
-    ): BigQueryTypedTable.WriteParam[T, Info] =
-      BigQueryTypedTable.WriteParam(
-        params.method,
-        BigQueryType[T].schema,
-        params.writeDisposition,
-        params.createDisposition,
-        BigQueryType[T].tableDescription.orNull,
-        params.timePartitioning,
-        params.clustering,
-        params.triggeringFrequency,
-        params.sharding,
-        params.failedInsertRetryPolicy,
-        params.configOverride,
-        params.extendedErrorInfo,
-        params.insertErrorTransform
-      )
-
     override def testId: String = s"BigQueryIO(${table.spec})"
 
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
@@ -673,8 +652,7 @@ object BigQueryTyped {
     override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
       data
         .withName(s"${data.tfName}$$Write")
-        .write(underlying)(fromTableParam(params))
-
+        .write(underlying)(params)
       tap(())
     }
 
@@ -722,6 +700,25 @@ object BigQueryTyped {
         DefaultExtendedErrorInfo,
         defaultInsertErrorTransform
       )
+
+      implicit private[Table] def typedTableWriteParam[T: TypeTag, Info](
+        params: Table.WriteParam[T, Info]
+      ): BigQueryTypedTable.WriteParam[T, Info] =
+        BigQueryTypedTable.WriteParam(
+          params.method,
+          BigQueryType[T].schema,
+          params.writeDisposition,
+          params.createDisposition,
+          BigQueryType[T].tableDescription.orNull,
+          params.timePartitioning,
+          params.clustering,
+          params.triggeringFrequency,
+          params.sharding,
+          params.failedInsertRetryPolicy,
+          params.configOverride,
+          params.extendedErrorInfo,
+          params.insertErrorTransform
+        )
     }
 
   }
