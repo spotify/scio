@@ -20,12 +20,15 @@ package com.spotify.scio.jdbc
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
+import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.jdbc.JdbcIO.{PreparedStatementSetter, StatementPreparator}
 import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
 import org.joda.time.Duration
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 import javax.sql.DataSource
+import scala.util.chaining._
 
 sealed trait JdbcIO[T] extends ScioIO[T]
 
@@ -121,25 +124,31 @@ final case class JdbcSelect[T: Coder](opts: JdbcConnectionOptions, query: String
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
-    var transform = BJdbcIO
+    val transform = BJdbcIO
       .read[T]()
       .withCoder(coder)
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
       .withQuery(query)
       .withRowMapper(params.rowMapper(_))
       .withOutputParallelization(params.outputParallelization)
-
-    if (params.dataSourceProviderFn != null) {
-      transform.withDataSourceProviderFn((_: Void) => params.dataSourceProviderFn())
-    }
-    if (params.statementPreparator != null) {
-      transform = transform
-        .withStatementPreparator(params.statementPreparator(_))
-    }
-    if (params.fetchSize != JdbcIO.ReadParam.BeamDefaultFetchSize) {
-      // override default fetch size.
-      transform = transform.withFetchSize(params.fetchSize)
-    }
+      .pipe { r =>
+        Option(params.dataSourceProviderFn)
+          .map(fn => Functions.serializableFn[Void, DataSource](_ => fn()))
+          .fold(r)(r.withDataSourceProviderFn)
+      }
+      .pipe { r =>
+        Option(params.statementPreparator)
+          .map[StatementPreparator](fn => fn(_))
+          .fold(r)(r.withStatementPreparator)
+      }
+      .pipe { r =>
+        if (params.fetchSize != JdbcIO.ReadParam.BeamDefaultFetchSize) {
+          // override default fetch size.
+          r.withFetchSize(params.fetchSize)
+        } else {
+          r
+        }
+      }
 
     sc.applyTransform(params.configOverride(transform))
   }
@@ -162,29 +171,31 @@ final case class JdbcWrite[T](opts: JdbcConnectionOptions, statement: String) ex
     throw new UnsupportedOperationException("jdbc.Write is write-only")
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    var transform = BJdbcIO
+    val transform = BJdbcIO
       .write[T]()
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
       .withStatement(statement)
-
-    if (params.dataSourceProviderFn != null) {
-      transform.withDataSourceProviderFn((_: Void) => params.dataSourceProviderFn())
-    }
-    if (params.preparedStatementSetter != null) {
-      transform = transform
-        .withPreparedStatementSetter(params.preparedStatementSetter(_, _))
-    }
-    if (params.batchSize != JdbcIO.WriteParam.BeamDefaultBatchSize) {
-      // override default batch size.
-      transform = transform.withBatchSize(params.batchSize)
-    }
-    if (params.autoSharding) {
-      transform = transform.withAutoSharding()
-    }
-
-    transform = transform
       .withRetryConfiguration(params.retryConfiguration)
       .withRetryStrategy(params.retryStrategy.apply)
+      .pipe { w =>
+        Option(params.dataSourceProviderFn)
+          .map(fn => Functions.serializableFn[Void, DataSource](_ => fn()))
+          .fold(w)(w.withDataSourceProviderFn)
+      }
+      .pipe { w =>
+        Option(params.preparedStatementSetter)
+          .map[PreparedStatementSetter[T]](fn => fn(_, _))
+          .fold(w)(w.withPreparedStatementSetter)
+      }
+      .pipe { w =>
+        if (params.batchSize != JdbcIO.WriteParam.BeamDefaultBatchSize) {
+          // override default batch size.
+          w.withBatchSize(params.batchSize)
+        } else {
+          w
+        }
+      }
+      .pipe(w => if (params.autoSharding) w.withAutoSharding() else w)
 
     data.applyInternal(params.configOverride(transform))
     EmptyTap
