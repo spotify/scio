@@ -31,16 +31,16 @@ jobs:
           - 11
           - 17
         scala:
-          - 2.12.17
-          - 2.13.8
+          - 2.12.18
+          - 2.13.11
         include:
-          - scala: 2.13.8
+          - scala: 2.13.11
             java: 11
             coverage: true
         exclude:
-          - scala: 2.12.17
+          - scala: 2.12.18
             java: 8
-          - scala: 2.12.17
+          - scala: 2.12.18
             java: 17
   repl-test:
     runs-on: ubuntu-latest
@@ -61,5 +61,5 @@ jobs:
         java:
           - 11
         scala:
-          - 2.12.17
-          - 2.13.8
+          - 2.12.18
+          - 2.13.11
