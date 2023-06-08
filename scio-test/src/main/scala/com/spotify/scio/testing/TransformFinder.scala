@@ -23,6 +23,22 @@ import org.apache.beam.sdk.transforms.PTransform
 
 import scala.collection.mutable
 
+/**
+ * Pipeline visitor collection all matched [[PTransform]]. This can be used in test to make sure the
+ * underlying transforms are properly configured
+ *
+ * @Example
+ *   {{{
+ *   val sc = ... // the pipeline containing a named transform
+ *   val matcher = new EqualNamePTransformMatcher(name)
+ *   val finder = new TransformFinder(matcher)
+ *   sc.pipeline.traverseTopologically(finder)
+ *   val transform = finder.result().head
+ *   // check transform configuration in the DisplayData
+ *   val displayData = DisplayData.from(transform).asMap().asScala
+ *   displayData("config").getValue shouldBe expected
+ *   }}}
+ */
 class TransformFinder(matcher: PTransformMatcher) extends PipelineVisitor.Defaults {
 
   private val matches = mutable.Set.empty[org.apache.beam.sdk.runners.TransformHierarchy#Node]
@@ -45,12 +61,14 @@ class TransformFinder(matcher: PTransformMatcher) extends PipelineVisitor.Defaul
   }
 
   override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit = {
-    if (freedNodes.contains(node.getEnclosingNode)) freedNodes += node
-    else if (matcher.matches(node.toAppliedPTransform(getPipeline))) {
+    if (freedNodes.contains(node.getEnclosingNode)) {
+      freedNodes += node
+    } else if (matcher.matches(node.toAppliedPTransform(getPipeline))) {
       matches += node
       freedNodes += node
     }
   }
 
+  /** @return Collected matched [[PTransform]] */
   def result(): Iterable[PTransform[_, _]] = matches.map(_.getTransform).toList
 }

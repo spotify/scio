@@ -98,10 +98,10 @@ final class BigQueryIOTest extends ScioIOSpec {
 
     val finder = new TransformFinder(new EqualNamePTransformMatcher(name))
     sc.pipeline.traverseTopologically(finder)
-    val transform = finder.result().headOption
-    transform should not be empty
-    val displayData = DisplayData.from(transform.get).asMap().asScala
-    displayData.get(TableDescriptionId).map(_.getValue) shouldBe Some(desc)
+    val transform = finder.result().head
+    val displayData = DisplayData.from(transform).asMap().asScala
+    displayData should contain key TableDescriptionId
+    displayData(TableDescriptionId).getValue shouldBe desc
   }
 
   it should "work with TableRow" in {
