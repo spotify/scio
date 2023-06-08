@@ -41,6 +41,16 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 /** API for reading and writing Avro sorted-bucket files. */
 public class AvroSortedBucketIO {
   private static final String DEFAULT_SUFFIX = ".avro";
+
+  // make sure avro is part of the classpath
+  static {
+    try {
+      Class.forName("org.apache.avro.Schema");
+    } catch (ClassNotFoundException e) {
+      throw new MissingImplementationException("avro", e);
+    }
+  }
+
   /** Returns a new {@link Read} for Avro generic records. */
   public static Read<GenericRecord> read(TupleTag<GenericRecord> tupleTag, Schema schema) {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<GenericRecord>()
