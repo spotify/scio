@@ -18,44 +18,48 @@
 package com.spotify.scio.jdbc
 
 import com.spotify.scio.ScioContext
-import org.apache.beam.sdk.Pipeline.PipelineVisitor
-import org.apache.beam.sdk.Pipeline.PipelineVisitor.CompositeBehavior
+import com.spotify.scio.testing.{EqualNamePTransformMatcher, TransformFinder}
 import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
-import org.apache.beam.sdk.runners.TransformHierarchy
-import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.transforms.display.DisplayData
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should._
 
-import java.sql.ResultSet
-import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters._
 
 case class Foo(field: String)
 
-class JdbcIOTests extends AnyFlatSpec with Matchers {
-
+object JdbcIOTest {
   private val ReadQueryId = DisplayData.Identifier.of(
     DisplayData.Path.root(),
     classOf[BJdbcIO.Read[_]],
     "query"
   )
 
-  private val WriteStatementId = "[fn]class org.apache.beam.sdk.io.jdbc.JdbcIO$WriteFn:statement"
+  private val WriteStatementId = DisplayData.Identifier.of(
+    DisplayData.Path.absolute("fn"),
+    Class.forName("org.apache.beam.sdk.io.jdbc.JdbcIO$WriteFn"),
+    "statement"
+  )
+}
+
+class JdbcIOTest extends AnyFlatSpec with Matchers {
+  import JdbcIOTest._
 
   it must "add to pipeline overridden Read transform" in {
     val args = Array[String]()
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
+    val name = "jdbcSelect"
     val sc = ScioContext(opts)
-    sc.jdbcSelect[String](
-      getConnectionOptions(opts),
-      "initial query",
-      configOverride = (x: BJdbcIO.Read[String]) => x.withQuery("overridden query")
-    ) { (rs: ResultSet) =>
-      rs.getString(1)
-    }
+    sc.withName(name)
+      .jdbcSelect[String](
+        getConnectionOptions(opts),
+        "initial query",
+        configOverride = (x: BJdbcIO.Read[String]) => x.withQuery("overridden query")
+      )(rs => rs.getString(1))
 
-    val transform = getPipelineTransforms(sc).collect { case t: BJdbcIO.Read[String] => t }.head
+    val finder = new TransformFinder(new EqualNamePTransformMatcher(name))
+    sc.pipeline.traverseTopologically(finder)
+    val transform = finder.result().head
     val displayData = DisplayData.from(transform).asMap().asScala
 
     displayData should contain key ReadQueryId
@@ -66,40 +70,23 @@ class JdbcIOTests extends AnyFlatSpec with Matchers {
     val args = Array[String]()
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
     val sc = ScioContext(opts)
-
+    val name = "saveAsJdbc"
     sc.parallelize(List("1", "2", "3"))
+      .withName(name)
       .saveAsJdbc(
         getConnectionOptions(opts),
-        "INSERT INTO <this> VALUES( ?, ? ..?)",
+        "INSERT INTO <this> VALUES(?)",
         configOverride = _.withStatement("updated statement")
-      ) { (_, _) => }
+      )((x, ps) => ps.setString(0, x))
 
-    val transform = getPipelineTransforms(sc).filter(x => x.toString.contains("WriteFn")).head
-    val displayData =
-      DisplayData.from(transform).asMap().asScala.map { case (k, v) => (k.toString, v) }
-
+    // find the underlying jdbc write
+    val finder = new TransformFinder(new EqualNamePTransformMatcher(name + "/ParDo(Write)"))
+    sc.pipeline.traverseTopologically(finder)
+    val transform = finder.result().head
+    val displayData = DisplayData.from(transform).asMap().asScala
+    println(displayData)
     displayData should contain key WriteStatementId
     displayData(WriteStatementId).getValue should be("updated statement")
-  }
-
-  private def getPipelineTransforms(sc: ScioContext): Iterable[PTransform[_, _]] = {
-    val actualTransforms = new ArrayBuffer[PTransform[_, _]]()
-    sc.pipeline.traverseTopologically(new PipelineVisitor.Defaults {
-      override def enterCompositeTransform(
-        node: TransformHierarchy#Node
-      ): PipelineVisitor.CompositeBehavior = {
-        if (node.getTransform != null) {
-          actualTransforms.append(node.getTransform)
-        }
-        CompositeBehavior.ENTER_TRANSFORM
-      }
-
-      override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
-        if (node.getTransform != null) {
-          actualTransforms.append(node.getTransform)
-        }
-    })
-    actualTransforms
   }
 
   def getConnectionOptions(opts: CloudSqlOptions): JdbcConnectionOptions =
