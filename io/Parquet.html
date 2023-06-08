@@ -210,7 +210,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-94c05b67+20230505-1317*
+<i class="md-icon" title="Version">label_outline</i> 0.13.0-RC1+0-1f32fd60+20230608-1604*
 </label>
 </li>
 </ul>
@@ -464,8 +464,9 @@ val parquetConf: Configuration = {
 <p>Here are some other recommended settings.</p>
 <ul>
   <li><code>numShards</code> - This should be explicitly set so that the size of each output file is smaller than but close to <code>parquet.block.size</code>, i.e. 1 GiB. This guarantees that each file contains 1 row group only and reduces seeks.</li>
-  <li><code>compression</code> - <code>SNAPPY</code> and <code>GZIP</code> work out of the box. Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better on GCS.</li>
+  <li><code>compression</code> - Parquet defaults to ZSTD compression with a level of 3; compression level can be set to any integer from 1-22 using the configuration option <code>parquet.compression.codec.zstd.level</code>. <code>SNAPPY</code> and <code>GZIP</code> compression types also work out of the box; Snappy is less CPU intensive but has lower compression ratio. In our benchmarks GZIP seem to work better than Snappy on GCS.</li>
 </ul>
+<p>A full list of Parquet configuration options can be found <a href="https://github.com/apache/parquet-mr/blob/master/parquet-hadoop/README.md">here</a>.</p>
 <h2><a href="#parquet-reads-in-scio-0-12-0-" name="parquet-reads-in-scio-0-12-0-" class="anchor"><span class="anchor-link"></span></a>Parquet Reads in Scio 0.12.0+</h2>
 <p>Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation, backed by the new Beam <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, by following the instructions <a href="../migrations/v0.12.0-Migration-Guide.html#parquet-reads">here</a>.</p>
 </div>
@@ -476,7 +477,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-94c05b67+20230505-1317*
+0.13.0-RC1+0-1f32fd60+20230608-1604*
 </span>
 </div>
 </article>

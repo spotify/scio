@@ -284,6 +284,7 @@ hr {
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/index.html" data-tooltip="<span>com.spotify.scio.bigquery</span>">bigquery</a></span>._
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>._
 <span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/index.html" data-tooltip="<span>com.spotify.scio.examples</span>">examples</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/common/index.html" data-tooltip="<span>com.spotify.scio.examples.common</span>">common</a></span>.<span class="identifier">ExampleData</span>
+<span class="keyword">import</span> <span class="identifier">com</span>.<span class="identifier">spotify</span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" data-tooltip="<span>com.spotify.scio</span>">scio</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/index.html" data-tooltip="<span>com.spotify.scio.values</span>">values</a></span>.<span class="identifier">HotKeyMethod</span>
 &nbsp;</div>
               </section>
             
@@ -484,12 +485,11 @@ a <code>SideInput</code> of <code>Map[String, String]</code></p></p></div>
        * Internally it identifies two groups of keys: "Hot" and the rest. Hot keys are joined using
        * Hash Join and the rest with the regular join. There are 3 ways to identify the set of hot
        * keys:
-       *   - "threshold" as a cutoff frequency;
+       *   - "threshold" as a cutoff frequency.
        *   - "top percentage" to specify the maximum relative part of all keys can be considered
-       *     hot;
+       *     hot.
        *   - "top N" to specify the absolute number of hot keys.
-       */
-      /**
+       *
        * Also, there are several optional parameters in different overloads that could tune the
        * default behavior:
        *   - `sampleFraction` - the fraction to sample keys in LHS, can improve performance if less
@@ -512,9 +512,8 @@ a <code>SideInput</code> of <code>Map[String, String]</code></p></p></div>
        *   - `cmsSeed` - random value generator seed for CMS. No need to specify unless you
        *     deliberately expect some (non)deterministic results.
        */
-      .<span class="identifier">skewedLeftOuterJoin</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[(String, String)]</span>">countryInfo</a></span>, <span class="identifier">hotKeyThreshold</span> = <span class="number">100</span>)
-      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$23:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$23: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">map</a></span> { <span class="identifier">t</span> =>
-        <span class="keyword">val</span> (<span class="identifier">countryCode</span>, (<span class="identifier">eventInfo</span>, <span class="identifier">countryNameOpt</span>)) = <span class="identifier">t</span>
+      .<span class="identifier">skewedLeftOuterJoin</span>(<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" data-tooltip="<span>com.spotify.scio.values.SCollection[(String, String)]</span>">countryInfo</a></span>, <span class="identifier">hotKeyMethod</span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/HotKeyMethod$.html" data-tooltip="<span>com.spotify.scio.values.HotKeyMethod</span>">HotKeyMethod</a></span>.<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/HotKeyMethod$$Threshold$.html#apply(value:Long)::com.spotify.scio.values.HotKeyMethod.Threshold" data-tooltip="<span>com.spotify.scio.values.HotKeyMethod.Threshold.apply(value: Long): : com.spotify.scio.values.HotKeyMethod.Threshold</span>">Threshold</a></span>(<span class="number">100</span>))
+      .<span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#map[U](f:T=>U)(implicitevidence$23:com.spotify.scio.coders.Coder[U])::com.spotify.scio.values.SCollection[U]" data-tooltip="<span>com.spotify.scio.values.SCollection.map[U](f: T => U)(implicit evidence$23: com.spotify.scio.coders.Coder[U]): : com.spotify.scio.values.SCollection[U]</span>">map</a></span> { <span class="keyword">case</span> (<span class="identifier">countryCode</span>, (<span class="identifier">eventInfo</span>, <span class="identifier">countryNameOpt</span>)) =>
         <span class="keyword">val</span> <span class="identifier">countryName</span> = <span class="identifier">countryNameOpt</span>.<span class="identifier">getOrElse</span>(<span class="string">"none"</span>)
         <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/examples/cookbook/JoinUtil$.html#formatOutput(countryCode:String,countryName:String,eventInfo:String)::String" data-tooltip="<span>com.spotify.scio.examples.cookbook.JoinUtil.formatOutput(countryCode: String, countryName: String, eventInfo: String): : String</span>">formatOutput</a></span>(<span class="identifier">countryCode</span>, <span class="identifier">countryName</span>, <span class="identifier">eventInfo</span>)
       }
