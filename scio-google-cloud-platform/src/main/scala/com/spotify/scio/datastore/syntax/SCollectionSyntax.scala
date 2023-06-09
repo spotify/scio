@@ -33,7 +33,7 @@ final class SCollectionEntityOps[T <: Entity](private val coll: SCollection[T]) 
    */
   def saveAsDatastore(
     projectId: String,
-    configOverride: BDatastore.Write => BDatastore.Write = identity
+    configOverride: BDatastore.Write => BDatastore.Write = WriteParam.DefaultConfigOverride
   ): ClosedTap[Nothing] =
     coll.covary_[Entity].write(DatastoreIO(projectId))(WriteParam(configOverride))
 }

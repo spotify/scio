@@ -25,41 +25,33 @@ import com.spotify.scio.coders.Coder
 import io.circe.Printer
 import io.circe.parser._
 import io.circe.syntax._
-import org.apache.beam.sdk.{io => beam}
 import com.spotify.scio.io.TapT
 import com.spotify.scio.util.FilenamePolicySupplier
+import org.apache.beam.sdk.io.Compression
 
 final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO[T] {
   override type ReadP = JsonIO.ReadParam
   override type WriteP = JsonIO.WriteParam
-  final override val tapT: TapT.Aux[T, T] = TapOf[T]
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(TextIO(path))(TextIO.ReadParam(params.compression)).map(decodeJson)
+    sc.read(TextIO(path))(params).map(decodeJson)
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     data
       .map(x => params.printer.print(x.asJson))
-      .write(TextIO(path))(
-        TextIO.WriteParam(
-          params.suffix,
-          params.numShards,
-          params.compression,
-          None,
-          None,
-          params.shardNameTemplate,
-          params.tempDirectory,
-          params.filenamePolicySupplier
-        )
-      )
-    tap(JsonIO.ReadParam(params.compression))
+      .write(TextIO(path))(params)
+    tap(JsonIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[T] = new Tap[T] {
-    override def value: Iterator[T] =
-      TextIO.textFile(ScioUtil.addPartSuffix(path)).map(decodeJson)
+    override def value: Iterator[T] = {
+      val filePattern = ScioUtil.filePattern(path, params.suffix)
+      TextIO.textFile(filePattern).map(decodeJson)
+    }
+
     override def open(sc: ScioContext): SCollection[T] =
-      JsonIO(ScioUtil.addPartSuffix(path)).read(sc, params)
+      JsonIO(path).read(sc, params)
   }
 
   private def decodeJson(json: String): T =
@@ -67,25 +59,42 @@ final case class JsonIO[T: Encoder: Decoder: Coder](path: String) extends ScioIO
 }
 
 object JsonIO {
-  final case class ReadParam(compression: beam.Compression = beam.Compression.AUTO)
+
+  type ReadParam = TextIO.ReadParam
+  val ReadParam = TextIO.ReadParam
 
   object WriteParam {
-    private[scio] val DefaultNumShards = 0
-    private[scio] val DefaultSuffix = ".json"
-    private[scio] val DefaultCompression = beam.Compression.UNCOMPRESSED
-    private[scio] val DefaultPrinter = Printer.noSpaces
-    private[scio] val DefaultShardNameTemplate: String = null
-    private[scio] val DefaultTempDirectory = null
-    private[scio] val DefaultFilenamePolicySupplier = null
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".json"
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultPrinter: Printer = Printer.noSpaces
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultPrefix: String = null
+    val DefaultTempDirectory: String = null
+
+    implicit private[JsonIO] def textWriteParam(params: WriteParam): TextIO.WriteParam =
+      TextIO.WriteParam(
+        suffix = params.suffix,
+        numShards = params.numShards,
+        compression = params.compression,
+        header = None, // no header in json
+        footer = None, // no footer in json
+        filenamePolicySupplier = params.filenamePolicySupplier,
+        prefix = params.prefix,
+        shardNameTemplate = params.shardNameTemplate,
+        tempDirectory = params.tempDirectory
+      )
   }
 
-  final case class WriteParam(
-    suffix: String,
-    numShards: Int,
-    compression: beam.Compression,
-    printer: Printer,
-    shardNameTemplate: String,
-    tempDirectory: String,
-    filenamePolicySupplier: FilenamePolicySupplier
+  final case class WriteParam private (
+    suffix: String = WriteParam.DefaultSuffix,
+    numShards: Int = WriteParam.DefaultNumShards,
+    compression: Compression = WriteParam.DefaultCompression,
+    printer: Printer = WriteParam.DefaultPrinter,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 }

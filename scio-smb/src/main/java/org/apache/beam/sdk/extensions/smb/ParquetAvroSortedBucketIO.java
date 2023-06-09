@@ -44,6 +44,16 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 /** API for reading and writing Parquet sorted-bucket files as Avro. */
 public class ParquetAvroSortedBucketIO {
   private static final String DEFAULT_SUFFIX = ".parquet";
+
+  // make sure parquet is part of the classpath
+  static {
+    try {
+      Class.forName("org.apache.parquet.schema.Types");
+    } catch (ClassNotFoundException e) {
+      throw new MissingImplementationException("parquet", e);
+    }
+  }
+
   /** Returns a new {@link Read} for Avro generic records. */
   public static Read<GenericRecord> read(TupleTag<GenericRecord> tupleTag, Schema schema) {
     return new AutoValue_ParquetAvroSortedBucketIO_Read.Builder<GenericRecord>()

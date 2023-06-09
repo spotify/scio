@@ -40,11 +40,18 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Serialized objects are stored in Avro files to leverage Avro's block file format. Note that
    * serialization is not guaranteed to be compatible across Scio releases.
    */
-  def objectFile[T: Coder](path: String): SCollection[T] =
-    self.read(ObjectFileIO[T](path))
+  def objectFile[T: Coder](
+    path: String,
+    suffix: String = ObjectFileIO.ReadParam.DefaultSuffix
+  ): SCollection[T] =
+    self.read(ObjectFileIO[T](path))(ObjectFileIO.ReadParam(suffix))
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
-    self.read(GenericRecordIO(path, schema))
+    self.read(GenericRecordIO(path, schema))(AvroIO.ReadParam())
+
+  // overloaded API. We can't use default params
+  def avroFile(path: String, schema: Schema, suffix: String): SCollection[GenericRecord] =
+    self.read(GenericRecordIO(path, schema))(AvroIO.ReadParam(suffix))
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying parseFn to map a
@@ -70,15 +77,28 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * }}}
    */
   @experimental
-  def parseAvroFile[T: Coder](path: String)(parseFn: GenericRecord => T): SCollection[T] =
-    self.read(GenericRecordParseIO[T](path, parseFn))
+  def parseAvroFile[T: Coder](
+    path: String,
+    suffix: String = AvroIO.ReadParam.DefaultSuffix
+  )(
+    parseFn: GenericRecord => T
+  ): SCollection[T] =
+    self.read(GenericRecordParseIO[T](path, parseFn))(AvroIO.ReadParam(suffix))
 
   /**
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
    * Avro file.
    */
   def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
-    self.read(SpecificRecordIO[T](path))
+    self.read(SpecificRecordIO[T](path))(AvroIO.ReadParam())
+
+  // overloaded API. We can't use default params
+  /**
+   * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
+   * Avro file.
+   */
+  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String, suffix: String): SCollection[T] =
+    self.read(SpecificRecordIO[T](path))(AvroIO.ReadParam(suffix))
 
   /**
    * Get a typed SCollection from an Avro schema.
@@ -89,9 +109,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.avro.types.AvroType AvroType.toSchema]].
    */
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
-    path: String
+    path: String,
+    suffix: String = AvroIO.ReadParam.DefaultSuffix
   ): SCollection[T] =
-    self.read(AvroTyped.AvroIO[T](path))
+    self.read(AvroTyped.AvroIO[T](path))(AvroIO.ReadParam(suffix))
 
   /**
    * Get an SCollection for a Protobuf file.
@@ -99,8 +120,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
    * block file format.
    */
-  def protobufFile[T <: Message: ClassTag](path: String): SCollection[T] =
-    self.read(ProtobufIO[T](path))
+  def protobufFile[T <: Message: ClassTag](
+    path: String,
+    suffix: String = ProtobufIO.ReadParam.DefaultSuffix
+  ): SCollection[T] =
+    self.read(ProtobufIO[T](path))(ProtobufIO.ReadParam(suffix))
 }
 
 /** Enhanced with Avro methods. */

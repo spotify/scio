@@ -54,11 +54,11 @@ final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
 
 object CassandraIO {
   object WriteParam {
-    private[cassandra] val DefaultPar = 0
+    val DefaultParallelism = 0
   }
 
   final case class WriteParam[T] private (
     outputFn: T => Seq[Any],
-    parallelism: Int = WriteParam.DefaultPar
+    parallelism: Int = WriteParam.DefaultParallelism
   )
 }

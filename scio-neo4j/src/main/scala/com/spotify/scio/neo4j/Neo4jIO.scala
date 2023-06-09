@@ -30,9 +30,9 @@ import scala.util.matching.Regex
 object Neo4jIO {
 
   object WriteParam {
-    private[neo4j] val BeamDefaultBatchSize = 5000L
+    val DefaultBatchSize: Long = 5000L
   }
-  final case class WriteParam(batchSize: Long = WriteParam.BeamDefaultBatchSize)
+  final case class WriteParam private (batchSize: Long = WriteParam.DefaultBatchSize)
 
   implicit private[neo4j] def recordConverter(record: Record): Value =
     Values.value(record.asMap(identity[Value]))

@@ -18,7 +18,6 @@
 package com.spotify.scio.testing
 
 import java.io.File
-import java.util.UUID
 import com.spotify.scio._
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
@@ -35,10 +34,13 @@ import org.apache.beam.sdk.transforms.windowing.{
 }
 import org.apache.commons.io.FileUtils
 
+import java.nio.file.Files
 import scala.reflect.ClassTag
 
 /** Trait for unit testing [[ScioIO]]. */
 trait ScioIOSpec extends PipelineSpec {
+  def testPrefix: String = "foo-shard-"
+  def testShardNameTemplate: String = "SS-of-num-shards-NN"
 
   def testFilenamePolicySupplier(
     path: String,
@@ -62,7 +64,7 @@ trait ScioIOSpec extends PipelineSpec {
           val unitary = paneInfo.isFirst && paneInfo.isLast
           if (unitary) "" else s"-pane${paneInfo.getTiming}-index${paneInfo.getIndex}"
         }
-        val filename = s"foo-shard-${shardNumber}-of-numShards-${numShards}${w}${p}"
+        val filename = s"foo-shard-$shardNumber-of-num-shards-$numShards$w$p"
         resource.getCurrentDirectory.resolve(
           filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
           StandardResolveOptions.RESOLVE_FILE
@@ -74,7 +76,7 @@ trait ScioIOSpec extends PipelineSpec {
         numShards: Int,
         outputFileHints: FileBasedSink.OutputFileHints
       ): ResourceId = {
-        val filename = s"foo-shard-${shardNumber}-of-numShards-${numShards}"
+        val filename = s"foo-shard-$shardNumber-of-num-shards-$numShards"
         resource.getCurrentDirectory.resolve(
           filename + suffix + outputFileHints.getSuggestedFilenameSuffix,
           StandardResolveOptions.RESOLVE_FILE
@@ -83,18 +85,17 @@ trait ScioIOSpec extends PipelineSpec {
     }
   }
 
-  def listFiles(tmpDir: File): Array[String] = {
+  def listFiles(tmpDir: File): Seq[File] = {
     tmpDir
       .listFiles()
-      .filterNot(_.getName.startsWith("_"))
-      .filterNot(_.getName.startsWith("."))
-      .map(_.toString)
+      .filterNot(x => x.getName.startsWith("_"))
+      .filterNot(x => x.getName.startsWith("."))
   }
 
   def testTap[T: Coder](
     xs: Seq[T]
   )(writeFn: (SCollection[T], String) => ClosedTap[T])(suffix: String): Unit = {
-    val tmpDir = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    val tmpDir = Files.createTempDirectory("scio-test-").toFile
 
     val sc = ScioContext()
     val data = sc.parallelize(xs)
@@ -102,7 +103,7 @@ trait ScioIOSpec extends PipelineSpec {
     val scioResult = sc.run().waitUntilDone()
     val tap = scioResult.tap(closedTap)
 
-    val files = listFiles(tmpDir)
+    val files = listFiles(tmpDir).map(_.getName)
     tap.value.toSeq should contain theSameElementsAs xs
     tap.open(ScioContext()) should containInAnyOrder(xs)
     all(files) should endWith(suffix)

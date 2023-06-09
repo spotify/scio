@@ -20,11 +20,15 @@ package com.spotify.scio.jdbc
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
+import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.jdbc.JdbcIO.{PreparedStatementSetter, StatementPreparator}
 import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
+import org.joda.time.Duration
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 import javax.sql.DataSource
+import scala.util.chaining._
 
 sealed trait JdbcIO[T] extends ScioIO[T]
 
@@ -65,42 +69,48 @@ object JdbcIO {
     }
 
   object ReadParam {
-    private[jdbc] val BeamDefaultFetchSize = -1
-    private[jdbc] val DefaultOutputParallelization = true
+    val BeamDefaultFetchSize: Int = -1
+    val DefaultOutputParallelization: Boolean = true
+    val DefaultStatementPreparator: PreparedStatement => Unit = null
+    val DefaultDataSourceProviderFn: () => DataSource = null
+    def defaultConfigOverride[T]: BJdbcIO.Read[T] => BJdbcIO.Read[T] = identity
   }
 
-  final case class ReadParam[T](
+  final case class ReadParam[T] private (
     rowMapper: ResultSet => T,
-    statementPreparator: PreparedStatement => Unit = null,
+    statementPreparator: PreparedStatement => Unit = ReadParam.DefaultStatementPreparator,
     fetchSize: Int = ReadParam.BeamDefaultFetchSize,
     outputParallelization: Boolean = ReadParam.DefaultOutputParallelization,
-    dataSourceProviderFn: () => DataSource = null,
-    configOverride: BJdbcIO.Read[T] => BJdbcIO.Read[T] = identity[BJdbcIO.Read[T]] _
+    dataSourceProviderFn: () => DataSource = ReadParam.DefaultDataSourceProviderFn,
+    configOverride: BJdbcIO.Read[T] => BJdbcIO.Read[T] = ReadParam.defaultConfigOverride[T]
   )
 
   object WriteParam {
-    private[jdbc] val BeamDefaultBatchSize = -1L
-    private[jdbc] val BeamDefaultMaxRetryAttempts = 5
-    private[jdbc] val BeamDefaultInitialRetryDelay = org.joda.time.Duration.ZERO
-    private[jdbc] val BeamDefaultMaxRetryDelay = org.joda.time.Duration.ZERO
-    private[jdbc] val BeamDefaultRetryConfiguration = BJdbcIO.RetryConfiguration.create(
-      BeamDefaultMaxRetryAttempts,
-      BeamDefaultMaxRetryDelay,
-      BeamDefaultInitialRetryDelay
-    )
-    private[jdbc] val DefaultRetryStrategy: SQLException => Boolean =
+    val BeamDefaultBatchSize: Long = -1L
+    val BeamDefaultMaxRetryAttempts: Int = 5
+    val BeamDefaultInitialRetryDelay: Duration = org.joda.time.Duration.ZERO
+    val BeamDefaultMaxRetryDelay: Duration = org.joda.time.Duration.ZERO
+    val BeamDefaultRetryConfiguration: BJdbcIO.RetryConfiguration =
+      BJdbcIO.RetryConfiguration.create(
+        BeamDefaultMaxRetryAttempts,
+        BeamDefaultMaxRetryDelay,
+        BeamDefaultInitialRetryDelay
+      )
+    val DefaultRetryStrategy: SQLException => Boolean =
       new BJdbcIO.DefaultRetryStrategy().apply
-    private[jdbc] val DefaultAutoSharding: Boolean = false
+    val DefaultAutoSharding: Boolean = false
+    val DefaultDataSourceProviderFn: () => DataSource = null
+    def defaultConfigOverride[T]: BJdbcIO.Write[T] => BJdbcIO.Write[T] = identity
   }
 
-  final case class WriteParam[T](
+  final case class WriteParam[T] private (
     preparedStatementSetter: (T, PreparedStatement) => Unit,
     batchSize: Long = WriteParam.BeamDefaultBatchSize,
     retryConfiguration: BJdbcIO.RetryConfiguration = WriteParam.BeamDefaultRetryConfiguration,
     retryStrategy: SQLException => Boolean = WriteParam.DefaultRetryStrategy,
     autoSharding: Boolean = WriteParam.DefaultAutoSharding,
-    dataSourceProviderFn: () => DataSource = null,
-    configOverride: BJdbcIO.Write[T] => BJdbcIO.Write[T] = identity[BJdbcIO.Write[T]] _
+    dataSourceProviderFn: () => DataSource = WriteParam.DefaultDataSourceProviderFn,
+    configOverride: BJdbcIO.Write[T] => BJdbcIO.Write[T] = WriteParam.defaultConfigOverride[T]
   )
 }
 
@@ -114,25 +124,31 @@ final case class JdbcSelect[T: Coder](opts: JdbcConnectionOptions, query: String
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val coder = CoderMaterializer.beam(sc, Coder[T])
-    var transform = BJdbcIO
+    val transform = BJdbcIO
       .read[T]()
       .withCoder(coder)
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
       .withQuery(query)
       .withRowMapper(params.rowMapper(_))
       .withOutputParallelization(params.outputParallelization)
-
-    if (params.dataSourceProviderFn != null) {
-      transform.withDataSourceProviderFn((_: Void) => params.dataSourceProviderFn())
-    }
-    if (params.statementPreparator != null) {
-      transform = transform
-        .withStatementPreparator(params.statementPreparator(_))
-    }
-    if (params.fetchSize != JdbcIO.ReadParam.BeamDefaultFetchSize) {
-      // override default fetch size.
-      transform = transform.withFetchSize(params.fetchSize)
-    }
+      .pipe { r =>
+        Option(params.dataSourceProviderFn)
+          .map(fn => Functions.serializableFn[Void, DataSource](_ => fn()))
+          .fold(r)(r.withDataSourceProviderFn)
+      }
+      .pipe { r =>
+        Option(params.statementPreparator)
+          .map[StatementPreparator](fn => fn(_))
+          .fold(r)(r.withStatementPreparator)
+      }
+      .pipe { r =>
+        if (params.fetchSize != JdbcIO.ReadParam.BeamDefaultFetchSize) {
+          // override default fetch size.
+          r.withFetchSize(params.fetchSize)
+        } else {
+          r
+        }
+      }
 
     sc.applyTransform(params.configOverride(transform))
   }
@@ -155,29 +171,31 @@ final case class JdbcWrite[T](opts: JdbcConnectionOptions, statement: String) ex
     throw new UnsupportedOperationException("jdbc.Write is write-only")
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
-    var transform = BJdbcIO
+    val transform = BJdbcIO
       .write[T]()
       .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
       .withStatement(statement)
-
-    if (params.dataSourceProviderFn != null) {
-      transform.withDataSourceProviderFn((_: Void) => params.dataSourceProviderFn())
-    }
-    if (params.preparedStatementSetter != null) {
-      transform = transform
-        .withPreparedStatementSetter(params.preparedStatementSetter(_, _))
-    }
-    if (params.batchSize != JdbcIO.WriteParam.BeamDefaultBatchSize) {
-      // override default batch size.
-      transform = transform.withBatchSize(params.batchSize)
-    }
-    if (params.autoSharding) {
-      transform = transform.withAutoSharding()
-    }
-
-    transform = transform
       .withRetryConfiguration(params.retryConfiguration)
       .withRetryStrategy(params.retryStrategy.apply)
+      .pipe { w =>
+        Option(params.dataSourceProviderFn)
+          .map(fn => Functions.serializableFn[Void, DataSource](_ => fn()))
+          .fold(w)(w.withDataSourceProviderFn)
+      }
+      .pipe { w =>
+        Option(params.preparedStatementSetter)
+          .map[PreparedStatementSetter[T]](fn => fn(_, _))
+          .fold(w)(w.withPreparedStatementSetter)
+      }
+      .pipe { w =>
+        if (params.batchSize != JdbcIO.WriteParam.BeamDefaultBatchSize) {
+          // override default batch size.
+          w.withBatchSize(params.batchSize)
+        } else {
+          w
+        }
+      }
+      .pipe(w => if (params.autoSharding) w.withAutoSharding() else w)
 
     data.applyInternal(params.configOverride(transform))
     EmptyTap

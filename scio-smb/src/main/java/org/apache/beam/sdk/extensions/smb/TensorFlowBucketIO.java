@@ -40,6 +40,15 @@ import org.tensorflow.proto.example.Example;
 public class TensorFlowBucketIO {
   private static final String DEFAULT_SUFFIX = ".tfrecord";
 
+  // make sure tensorflow is part of the classpath
+  static {
+    try {
+      Class.forName("org.tensorflow.proto.example.Example");
+    } catch (ClassNotFoundException e) {
+      throw new MissingImplementationException("tensorflow", e);
+    }
+  }
+
   /**
    * Returns a new {@link Read} for TensorFlow TFRecord files with TensorFlow {@link Example}
    * records.

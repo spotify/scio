@@ -19,6 +19,7 @@ package com.spotify.scio.jdbc.syntax
 
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.jdbc.{JdbcConnectionOptions, JdbcIO, JdbcWrite, JdbcWriteOptions}
+import com.spotify.scio.jdbc.JdbcIO.WriteParam
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.jdbc.JdbcIO.{RetryConfiguration, Write}
 
@@ -69,12 +70,12 @@ final class JdbcSCollectionOps[T](private val self: SCollection[T]) extends AnyV
   def saveAsJdbc(
     connectionOptions: JdbcConnectionOptions,
     statement: String,
-    batchSize: Long = JdbcIO.WriteParam.BeamDefaultBatchSize,
-    retryConfiguration: RetryConfiguration = JdbcIO.WriteParam.BeamDefaultRetryConfiguration,
-    retryStrategy: SQLException => Boolean = JdbcIO.WriteParam.DefaultRetryStrategy,
-    autoSharding: Boolean = JdbcIO.WriteParam.DefaultAutoSharding,
-    dataSourceProviderFn: () => DataSource = null,
-    configOverride: Write[T] => Write[T] = identity
+    batchSize: Long = WriteParam.BeamDefaultBatchSize,
+    retryConfiguration: RetryConfiguration = WriteParam.BeamDefaultRetryConfiguration,
+    retryStrategy: SQLException => Boolean = WriteParam.DefaultRetryStrategy,
+    autoSharding: Boolean = WriteParam.DefaultAutoSharding,
+    dataSourceProviderFn: () => DataSource = WriteParam.DefaultDataSourceProviderFn,
+    configOverride: Write[T] => Write[T] = WriteParam.defaultConfigOverride[T]
   )(preparedStatementSetter: (T, PreparedStatement) => Unit): ClosedTap[Nothing] =
     self.write(JdbcWrite[T](connectionOptions, statement))(
       JdbcIO.WriteParam(

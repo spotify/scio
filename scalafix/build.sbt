@@ -88,6 +88,16 @@ lazy val `output-0_12` = project
     libraryDependencies ++= scio(Scio.`0.12`)
   )
 
+//lazy val `input-0_13` = project
+//  .settings(
+//    libraryDependencies ++= scio(Scio.`0.12`)
+//  )
+//
+//lazy val `output-0_13` = project
+//  .settings(
+//    libraryDependencies ++= scio(Scio.`0.13`)
+//  )
+
 lazy val tests = project
   .enablePlugins(ScalafixTestkitPlugin)
   .dependsOn(rules)
@@ -98,7 +108,8 @@ lazy val tests = project
         `input-0_7` / Compile / compile,
         `input-0_8` / Compile / compile,
         `input-0_10` / Compile / compile,
-        `input-0_12` / Compile / compile
+        `input-0_12` / Compile / compile,
+        // `input-0_13` / Compile / compile
       )
       .value,
     scalafixTestkitOutputSourceDirectories :=
@@ -106,14 +117,17 @@ lazy val tests = project
         (`output-0_8` / Compile / sourceDirectories).value ++
         (`output-0_10` / Compile / sourceDirectories).value ++
         (`output-0_12` / Compile / sourceDirectories).value,
+        // (`output-0_13` / Compile / sourceDirectories).value,
     scalafixTestkitInputSourceDirectories :=
       (`input-0_7` / Compile / sourceDirectories).value ++
         (`input-0_8` / Compile / sourceDirectories).value ++
         (`input-0_10` / Compile / sourceDirectories).value ++
         (`input-0_12` / Compile / sourceDirectories).value,
+        // (`input-0_13` / Compile / sourceDirectories).value,
     scalafixTestkitInputClasspath :=
       (`input-0_7` / Compile / fullClasspath).value ++
         (`input-0_8` / Compile / fullClasspath).value ++
         (`input-0_10` / Compile / fullClasspath).value ++
-        (`input-0_12` / Compile / fullClasspath).value
+        (`input-0_12` / Compile / fullClasspath).value // ++
+        // (`input-0_13` / Compile / fullClasspath).value
   )

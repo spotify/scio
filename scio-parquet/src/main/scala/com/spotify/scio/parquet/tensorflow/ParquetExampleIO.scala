@@ -75,6 +75,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     params: ReadP
   ): SCollection[Example] = {
     val job = Job.getInstance(conf)
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
 
     Option(params.projection).foreach { projection =>
       ExampleParquetInputFormat.setFields(job, projection.asJava)
@@ -91,7 +92,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       ParquetRead.read(
         ReadSupportFactory.example,
         new SerializableConfiguration(conf),
-        path,
+        filePattern,
         identity[Example]
       )
     ).setCoder(coder)
@@ -154,22 +155,22 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     numShards: Int,
     compression: CompressionCodecName,
     conf: Configuration,
-    shardNameTemplate: String,
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
+    prefix: String,
+    shardNameTemplate: String,
     isWindowed: Boolean,
+    tempDirectory: ResourceId,
     isLocalRunner: Boolean
   ) = {
+    require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
-    )
-    val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Example])
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(ScioUtil.strippedPath(path), suffix)
+    val dynamicDestinations = DynamicFileDestinations
+      .constant(fp, SerializableFunctions.identity[Example])
     val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
     val sink = new ParquetExampleFileBasedSink(
@@ -192,40 +193,51 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         params.numShards,
         params.compression,
         params.conf,
-        params.shardNameTemplate,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
+        params.prefix,
+        params.shardNameTemplate,
         ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         ScioUtil.isLocalRunner(data.context.options.getRunner)
       )
     )
-    tap(ParquetExampleIO.ReadParam())
+    tap(ParquetExampleIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[Example] =
-    ParquetExampleTap(ScioUtil.addPartSuffix(path), params)
+    ParquetExampleTap(path, params)
 }
 
 object ParquetExampleIO {
+
   object ReadParam {
-    private[tensorflow] val DefaultProjection = null
-    private[tensorflow] val DefaultPredicate = null
-    private[tensorflow] val DefaultConfiguration = null
+    val DefaultProjection: Seq[String] = null
+    val DefaultPredicate: FilterPredicate = null
+    val DefaultConfiguration: Configuration = null
+    val DefaultSuffix: String = null
+
+    private[scio] def apply(params: WriteParam): ReadParam =
+      new ReadParam(
+        conf = params.conf,
+        suffix = params.suffix
+      )
   }
   final case class ReadParam private (
     projection: Seq[String] = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   )
 
   object WriteParam {
-    private[tensorflow] val DefaultNumShards = 0
-    private[tensorflow] val DefaultSuffix = ".parquet"
-    private[tensorflow] val DefaultCompression = CompressionCodecName.ZSTD
-    private[tensorflow] val DefaultConfiguration = null
-    private[tensorflow] val DefaultShardNameTemplate = null
-    private[tensorflow] val DefaultTempDirectory = null
-    private[tensorflow] val DefaultFilenamePolicySupplier = null
+    val DefaultNumShards: Int = 0
+    val DefaultSuffix: String = ".parquet"
+    val DefaultCompression: CompressionCodecName = CompressionCodecName.ZSTD
+    val DefaultConfiguration: Configuration = null
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (
@@ -234,16 +246,18 @@ object ParquetExampleIO {
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
     conf: Configuration = WriteParam.DefaultConfiguration,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory,
-    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 }
 
 final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadParam)
     extends Tap[Example] {
   override def value: Iterator[Example] = {
-    val xs = FileSystems.`match`(path).metadata().asScala.toList
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
       val reader = ExampleParquetReader
         .builder(BeamInputFile.of(metadata.resourceId()))
@@ -261,5 +275,6 @@ final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadPa
     }
   }
 
-  override def open(sc: ScioContext): SCollection[Example] = sc.read(ParquetExampleIO(path))(params)
+  override def open(sc: ScioContext): SCollection[Example] =
+    sc.read(ParquetExampleIO(path))(params)
 }

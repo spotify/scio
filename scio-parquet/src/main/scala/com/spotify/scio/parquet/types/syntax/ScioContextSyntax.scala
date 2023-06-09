@@ -35,9 +35,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def typedParquetFile[T: ClassTag: Coder: ParquetType](
     path: String,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   ): SCollection[T] =
-    self.read(ParquetTypeIO[T](path))(ParquetTypeIO.ReadParam(predicate, conf))
+    self.read(ParquetTypeIO[T](path))(ParquetTypeIO.ReadParam(predicate, conf, suffix))
 }
 trait ScioContextSyntax {
   implicit def parquetTypeScioContext(c: ScioContext): ScioContextOps = new ScioContextOps(c)

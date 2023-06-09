@@ -87,8 +87,8 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 
 object BigtableRead {
   object ReadParam {
-    private[bigtable] val DefaultKeyRanges: Seq[ByteKeyRange] = Seq.empty[ByteKeyRange]
-    private[bigtable] val DefaultRowFilter: RowFilter = null
+    val DefaultKeyRanges: Seq[ByteKeyRange] = Seq.empty[ByteKeyRange]
+    val DefaultRowFilter: RowFilter = null
 
     def apply(keyRange: ByteKeyRange) = new ReadParam(Seq(keyRange))
 

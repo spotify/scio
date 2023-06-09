@@ -33,8 +33,8 @@ final class ScioContextOps(private val sc: ScioContext) extends AnyVal {
   def datastore(
     projectId: String,
     query: Query,
-    namespace: String = null,
-    configOverride: BDatastore.Read => BDatastore.Read = identity
+    namespace: String = ReadParam.DefaultNamespace,
+    configOverride: BDatastore.Read => BDatastore.Read = ReadParam.DefaultConfigOverride
   ): SCollection[Entity] =
     sc.read(DatastoreIO(projectId))(ReadParam(query, namespace, configOverride))
 }
