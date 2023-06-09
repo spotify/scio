@@ -1490,8 +1490,9 @@ lazy val site: Project = project
       "javadoc.org.apache.beam.sdk.extensions.smb.base_url" ->
         "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
       "javadoc.org.apache.beam.base_url" -> s"https://beam.apache.org/releases/javadoc/$beamVersion",
-      "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs/",
-      "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api"
+      "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs",
+      "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api",
+      "scaladoc.kantan.base_url" -> "https://nrinaudo.github.io/kantan.csv/api"
     ),
     Compile / paradoxMaterialTheme := ParadoxMaterialTheme()
       .withFavicon("images/favicon.ico")

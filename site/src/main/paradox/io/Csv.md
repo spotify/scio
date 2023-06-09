@@ -2,7 +2,7 @@
 
 Scio supports reading and writing _typed_ CSV via [kantan](https://nrinaudo.github.io/kantan.csv/)
 
-Kantan provides a `CsvConfiguration` that allows users to configure the CSV handling, Scio's default config:
+Kantan provides a @scaladoc[`CsvConfiguration`](kantan.csv.CsvConfiguration) that allows users to configure the CSV handling, Scio's default config:
 
 ```scala
 import kantan.csv._
@@ -24,7 +24,7 @@ Note that the entire file must be read into memory since CSVs are not trivially 
 
 ### Read with a header
 
-For CSV files with a header, reading requires an implicit `HeaderDecoder` for your type.
+For CSV files with a header, reading requires an implicit @scaladoc[`HeaderDecoder`](kantan.csv.HeaderDecoder) for your type.
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
@@ -41,7 +41,7 @@ val elements: SCollection[A] = sc.csvFile("gs://<input-path>/*.csv")
 
 ### Read without a header
 
-For CSV files without a header, an implicit `RowDecoder` must be in scope and the read must be provided with a config specifying that there is no header:
+For CSV files without a header, an implicit @scaladoc[`RowDecoder`](kantan.csv.RowDecoder) must be in scope and the read must be provided with a config specifying that there is no header:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
@@ -64,7 +64,7 @@ Writing to CSV is supported via @scaladoc[`saveAsCsvFile`](com.spotify.scio.extr
 
 ### Write with a header
 
-Writing with a header requires an implicit `HeaderEncoder` to be in scope:
+Writing with a header requires an implicit @scaladoc[`HeaderEncoder`](kantan.csv.HeaderEncoder) to be in scope:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
@@ -82,7 +82,7 @@ elements.saveAsCsvFile("gs://<output-path>/")
 
 ### Write without a header
 
-Writing without a header requires an implicit `RowEncoder` to be in scope:
+Writing without a header requires an implicit @scaladoc[`RowEncoder`](kantan.csv.RowEncoder) to be in scope:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
