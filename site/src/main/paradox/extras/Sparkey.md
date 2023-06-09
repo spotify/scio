@@ -34,6 +34,8 @@ tracks.withSideInputs(artistNameSI)
   }
 ```
 
+See also @ref[Large Hash Joins](../Joins.md#large-hash-join), which do the same thing as this simple example but with a more compact syntax.
+
 ## Writing
 
 If a sparkey can be reused by multiple pipelines, it can be saved permanently with @scaladoc[`asSparkey`](com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkey(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri])
@@ -48,7 +50,7 @@ elements.asSparkey("gs://output-path")
 
 ## Reading
 
-Previously-written sparkeys can be loaded
+Previously-written sparkeys can be loaded directly as side-inputs:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
@@ -57,9 +59,5 @@ import com.spotify.scio.extra.sparkey._
 import com.spotify.sparkey._
 
 val sc: ScioContext = ???
-val xxx: SideInput[SparkeyReader] = sc.sparkeySideInput("gs://input-path")
+val sparkeySI: SideInput[SparkeyReader] = sc.sparkeySideInput("gs://input-path")
 ```
-
-## Large Hash Joins
-
-See @ref[Joins](../Joins.md)

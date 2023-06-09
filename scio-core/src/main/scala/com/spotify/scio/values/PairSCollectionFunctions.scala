@@ -780,7 +780,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Batches inputs to a desired batch size. Batches will contain only elements of a single key.
    *
    * Elements are buffered until there are batchSize elements buffered, at which point they are
-   * outputed to the output [[SCollection]].
+   * emitted to the output [[SCollection]].
    *
    * Windows are preserved (batches contain elements from the same window). Batches may contain
    * elements from more than one bundle.
@@ -811,7 +811,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * The value coder is used to determine the byte size of each element.
    *
    * Elements are buffered until there are an estimated batchByteSize bytes buffered, at which point
-   * they are outputed to the output [[SCollection]].
+   * they are emitted to the output [[SCollection]].
    *
    * Windows are preserved (batches contain elements from the same window). Batches may contain
    * elements from more than one bundle.
@@ -840,7 +840,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * The weight of each element is computer from the provided cost function.
    *
-   * Elements are buffered until the weight is reached, at which point they are outputed to the
+   * Elements are buffered until the weight is reached, at which point they are emitted to the
    * output [[SCollection]].
    *
    * Windows are preserved (batches contain elements from the same window). Batches may contain

@@ -183,7 +183,7 @@ val result = sc
     .take(3)
 ```
 
-In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return `Future[Tap[T]]` where a [`Tap[T]`](http://spotify.github.io/scio/api/com/spotify/scio/io/Tap.html) encapsulates some dataset that can be re-opened in another context or directly.
+In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return `Future[Tap[T]]` where a @scaladoc[`Tap[T]`](com.spotify.scio.io.Tap) encapsulates some dataset that can be re-opened in another context or directly.
 
 Use `:scioOpts` to view or update Dataflow options inside the REPL. New options will be applied the next time you create a context.
 

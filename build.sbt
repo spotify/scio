@@ -1484,13 +1484,18 @@ lazy val site: Project = project
     // paradox
     paradox / sourceManaged := mdocOut.value,
     paradoxProperties ++= Map(
+      "github.base_url" -> "https://github.com/spotify/scio",
+      "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html",
+      "javadoc.com.google.api.services.bigquery.base_url" ->
+        "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/",
+      "javadoc.com.google.common.hash.base_url" ->
+        s"https://guava.dev/releases/$guavaVersion/api/docs",
       "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api",
       "javadoc.org.apache.beam.sdk.extensions.smb.base_url" ->
         "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
       "javadoc.org.apache.beam.base_url" -> s"https://beam.apache.org/releases/javadoc/$beamVersion",
-      "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api",
-      "github.base_url" -> "https://github.com/spotify/scio",
-      "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html"
+      "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs/",
+      "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api"
     ),
     Compile / paradoxMaterialTheme := ParadoxMaterialTheme()
       .withFavicon("images/favicon.ico")
