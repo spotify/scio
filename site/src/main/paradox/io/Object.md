@@ -1,6 +1,6 @@
 # Object file
 
-"Object files" can be used to save a `SCollection` of records with an arbitrary type by using Beam's coder infrastructure.
+"Object files" can be used to save an `SCollection` of records with an arbitrary type by using Beam's coder infrastructure.
 Each record is encoded to a byte array by the available Beam coder, the bytes are then wrapped in a simple Avro record containing a single byte field, then saved to disk.
 
 Object files are convenient for ad-hoc work, but it should be preferred to use a real schema-backed format when possible.

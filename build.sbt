@@ -1491,6 +1491,7 @@ lazy val site: Project = project
         "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
       "javadoc.org.apache.beam.base_url" -> s"https://beam.apache.org/releases/javadoc/$beamVersion",
       "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs",
+      "javadoc.org.apache.avro.base_url" -> "https://avro.apache.org/docs/current/api/java/",
       "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api",
       "scaladoc.kantan.base_url" -> "https://nrinaudo.github.io/kantan.csv/api"
     ),

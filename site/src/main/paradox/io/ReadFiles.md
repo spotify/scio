@@ -1,6 +1,6 @@
 # ReadFiles
 
-Scio supports reading file paths from a `SCollection[String]` into various formats.
+Scio supports reading file paths from an `SCollection[String]` into various formats.
 
 ## Read as text lines
 

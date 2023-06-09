@@ -15,7 +15,7 @@ val elements: SCollection[String] = sc.textFile("gs://<input-path>/*.txt")
 
 ## Writing text
 
-A `SCollection[String]` or `SCollection` of any class implementing `toString` can be written out to a newline-delimited text file via @scaladoc[`saveAsTextFile`](com.spotify.scio.values.SCollection#saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression,header:Option[String],footer:Option[String],shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[String]).
+An `SCollection[String]` or `SCollection` of any class implementing `toString` can be written out to a newline-delimited text file via @scaladoc[`saveAsTextFile`](com.spotify.scio.values.SCollection#saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression,header:Option[String],footer:Option[String],shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[String]).
 An optional `header` and `footer` parameter can be provided.
 
 ```scala mdoc:compile-only

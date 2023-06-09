@@ -48,7 +48,7 @@
 
 ## Breaking changes since Scio 0.4.0
 
-- Accumulators are replaced by the new metrics API, see @extref[MetricsExample.scala](example:MetricsExample) for more
+- Accumulators are replaced by the new metrics API, see @extref[MetricsExample](example:MetricsExample) for more
 - `com.spotify.scio.hdfs` package and related APIs (`ScioContext#hdfs*`, `SCollection#saveAsHdfs*`) are removed, regular file IO API should now support both GCS and HDFS (if `scio-hdfs` is included as a dependency).
 - Starting Scio 0.4.4, Beam runner is completely decoupled from `scio-core`. See [[Runners]] page for more details.
 

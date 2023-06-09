@@ -7,7 +7,7 @@
 
 Scio is a Scala API for [Apache Beam](https://beam.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](https://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
 
-@ref:[Getting Started](Getting-Started.md) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [[Scio, Scalding and Spark]]. Finally check out this document about the relationship between [[Scio, Beam and Dataflow]].
+@ref:[Getting Started](Getting-Started.md) is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between [[Scio, Scalding and Spark]].
 
 Example Scio pipelines and tests can be found under @github[scio-examples](/scio-examples/src). A lot of them are direct ports from Beam's Java [examples](https://github.com/apache/beam/tree/master/examples). See this [page](https://spotify.github.io/scio/examples/) for some of them with side-by-side explanation. Also see [Big Data Rosetta Code](https://github.com/spotify/big-data-rosetta-code) for common data processing code snippets in Scio, Scalding and Spark.
 
@@ -20,7 +20,6 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 
 ## Documentation
 - @ref:[Getting Started](Getting-Started.md) - current API documentation
-- @ref:[Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md) - how Scio concepts map to Beam and Dataflow
 - @ref:[Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md) - comparison of these frameworks
 - @ref:[Runners](Runners.md) - how Scio handles Beam runners and runner specific logic
 - @ref:[Scio data guideline](Scio-data-guideline.md) - guideline for common problems
@@ -91,7 +90,6 @@ See @scaladoc[Scio Scaladocs](com.spotify.scio.index)  for current API documenta
 * @ref:[Extras](extras/index.md)
 * @ref:[Development](dev/index.md)
 * @ref:[Scaladoc](scaladoc.md)
-* @ref:[Scio, Beam and Dataflow](Scio,-Beam-and-Dataflow.md)
 * @ref:[Scio, Scalding and Spark](Scio,-Scalding-and-Spark.md)
 * @ref:[Runners](Runners.md)
 * @ref:[Data guideline](Scio-data-guideline.md)

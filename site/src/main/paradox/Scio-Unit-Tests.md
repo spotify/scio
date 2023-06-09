@@ -55,7 +55,7 @@ Since we have two input sources, we have to specify both in the `JobTest`. Note 
 ### Test partial pipeline
 To test a section of a pipeline, use `runWithContext`. The TriggerExample.extractFlowInfo test in @github[TriggerExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) tests only the extractFlowInfo part of the pipeline.
 
-The data variable hold the test data and `sc.parallelize` will transform the input iterable to a `SCollection` of strings. TriggerExample.extractFlowInfo will be executed using the `ScioContext` and you can then specify assertions against the result of the pipeline.
+The data variable hold the test data and `sc.parallelize` will transform the input iterable to an `SCollection` of strings. TriggerExample.extractFlowInfo will be executed using the `ScioContext` and you can then specify assertions against the result of the pipeline.
 
 @@snip [TriggerExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) { #TriggerExampleTest_example }
 

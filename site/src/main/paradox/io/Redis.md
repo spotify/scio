@@ -26,7 +26,7 @@ Looking up specific keys from redis can be done with @scaladoc[`RedisDoFn`](com.
 
 # Write
 
-Writes to Redis require a `SCollection` of a subclass of @scaladoc[`RedisMutation`](com.spotify.scio.redis.types.RedisMutation).
+Writes to Redis require an `SCollection` of a subclass of @scaladoc[`RedisMutation`](com.spotify.scio.redis.types.RedisMutation).
 Writes work in both batch and streaming modes via @scaladoc[`saveAsRedis`](com.spotify.scio.redis.syntax.SCollectionRedisOps#saveAsRedis(connectionOptions:com.spotify.scio.redis.RedisConnectionOptions,batchSize:Int):com.spotify.scio.io.ClosedTap[Nothing]):
 
 ```scala mdoc:compile-only

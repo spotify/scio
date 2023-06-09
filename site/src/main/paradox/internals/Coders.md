@@ -7,7 +7,7 @@ As per [Beam's documentation](https://beam.apache.org/documentation/programming-
 > When Beam runners execute your pipeline, they often need to materialize the intermediate data in your PCollections, which requires converting elements to and from byte strings. The Beam SDKs use objects called Coders to describe how the elements of a given PCollection may be encoded and decoded.
 
 For the most part, coders are used when Beam transfer intermediate data between workers over the network. They may also be used by beam to test instances for equality.
-Anytime you create a `SCollection[T]`, Beam needs to know how to go from an instance of `T` to an array of bytes, and from that array of bytes to an instance of `T`.
+Anytime you create an `SCollection[T]`, Beam needs to know how to go from an instance of `T` to an array of bytes, and from that array of bytes to an instance of `T`.
 
 The Beam SDK defines a class called `Coder` that roughly looks like this:
 
@@ -18,7 +18,7 @@ public abstract class Coder<T> implements Serializable {
 }
 ```
 
-Beam provides built-in Coders for various basic Java types (`Integer`, `Long`, `Double`, etc.). But anytime you create a new class, and that class is used in a `SCollection`, a beam coder needs to be provided.
+Beam provides built-in Coders for various basic Java types (`Integer`, `Long`, `Double`, etc.). But anytime you create a new class, and that class is used in an `SCollection`, a beam coder needs to be provided.
 
 ```scala mdoc:silent
 import com.spotify.scio.values.SCollection
@@ -292,7 +292,7 @@ Scio provides a few assertions specific to coders. See @scaladoc[CoderAssertions
 
 ## Null values support
 
-By default and for performance reasons, Scio coders will expect the values to serialized to never be `null`.
+By default, and for performance reasons, Scio coders will expect the values to serialized to never be `null`.
 
 This may cause the following exception to be thrown:
 

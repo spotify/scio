@@ -6,7 +6,7 @@ Scio uses [magnolify's](https://github.com/spotify/magnolify) `magnolify-neo4j` 
 
 ## Static query
 
-@scaladoc[`neo4jCypher`](com.spotify.scio.neo4j.syntax.Neo4jScioContextOps#neo4jCypher[T](neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitevidence$1:magnolify.neo4j.ValueType[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]) returns a `SCollection` of results for a Neo4J cypher query, mapped to a specified case class type.
+@scaladoc[`neo4jCypher`](com.spotify.scio.neo4j.syntax.Neo4jScioContextOps#neo4jCypher[T](neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitevidence$1:magnolify.neo4j.ValueType[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]) returns an `SCollection` of results for a Neo4J cypher query, mapped to a specified case class type.
 
 ```scala mdoc:compile-only
 import com.spotify.scio._

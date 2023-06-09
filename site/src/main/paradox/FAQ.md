@@ -129,11 +129,11 @@ object MyJob {
 
 Scio exposes a few things to allow easy integration with native Beam Java API, notably:
 
-- `ScioContext#customInput` to apply a `PTransform[_ >: PBegin, PCollection[T]]` (source) and get a `SCollection[T]`.
-- `SCollection#applyTransform` to apply a `PTransform[_ >: PCollection[T], PCollection[U]]` and get a `SCollection[U]`
+- `ScioContext#customInput` to apply a `PTransform[_ >: PBegin, PCollection[T]]` (source) and get an `SCollection[T]`.
+- `SCollection#applyTransform` to apply a `PTransform[_ >: PCollection[T], PCollection[U]]` and get an `SCollection[U]`
 - `SCollection#saveAsCustomOutput` to apply a `PTransform[_ >: PCollection[T], PDone]` (sink) and get a `ClosedTap[T]`.
 
-See @extref[BeamExample.scala](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[`JobTest`](com.spotify.scio.testing.JobTest$) harness.
+See @extref[BeamExample](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[`JobTest`](com.spotify.scio.testing.JobTest$) harness.
 
 #### What are the different types of joins and performance implication?
 
