@@ -52,7 +52,7 @@ import kantan.csv._
 case class A(i: Int, s: String)
 
 implicit val decoder: RowDecoder[A] = RowDecoder.ordered { (col1: Int, col2: String) => A(col1, col2) }
-val config = CsvIO.DefaultCsvConfig.withoutHeader
+val config = CsvIO.DefaultCsvConfiguration.withoutHeader
 
 val sc: ScioContext = ???
 val elements: SCollection[A] = sc.csvFile("gs://<input-path>/*.csv", CsvIO.ReadParam(csvConfiguration = config))
