@@ -34,7 +34,7 @@ jobs:
           - 2.12.17
           - 2.13.8
         include:
-          - scala: 2.13.8
+          - scala: 2.13.11
             java: 11
             coverage: true
         exclude:
