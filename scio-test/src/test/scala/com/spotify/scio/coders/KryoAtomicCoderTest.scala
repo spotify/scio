@@ -64,7 +64,8 @@ class KryoAtomicCoderTest extends PipelineSpec {
     Pair("record", 10) kryoCoderShould roundtrip()
   }
 
-  it should "support wrapped iterables" in {
+  // Enable once https://github.com/scala/scala/pull/10425 is release
+  ignore should "support wrapped iterables" in {
     // handle immutable underlying Java collections
     val list = List(1, 2, 3).asJava
 
