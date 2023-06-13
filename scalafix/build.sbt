@@ -10,6 +10,7 @@ inThisBuild(
     publish / skip := true,
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
+    semanticdbIncludeInJar := true,
     scalafmtOnCompile := false,
     scalafmtConfig := baseDirectory.value / ".." / ".scalafmt.conf",
     // discard scala-xml conflict for old scio releases
@@ -137,8 +138,8 @@ lazy val tests = projectMatrix
     axisValues = Seq(scio0_7, VirtualAxis.jvm),
     _.settings(
       moduleName := name.value + scio0_7.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_7` / Compile / sourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_7` / Compile / sourceDirectories).value,
+      scalafixTestkitOutputSourceDirectories := (`output-0_7` / Compile / unmanagedSourceDirectories).value,
+      scalafixTestkitInputSourceDirectories := (`input-0_7` / Compile / unmanagedSourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_7` / Compile / fullClasspath).value
     ).dependsOn(rules)
   )
@@ -147,8 +148,8 @@ lazy val tests = projectMatrix
     axisValues = Seq(scio0_8, VirtualAxis.jvm),
     _.settings(
       moduleName := name.value + scio0_8.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_8` / Compile / sourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_8` / Compile / sourceDirectories).value,
+      scalafixTestkitOutputSourceDirectories := (`output-0_8` / Compile / unmanagedSourceDirectories).value,
+      scalafixTestkitInputSourceDirectories := (`input-0_8` / Compile / unmanagedSourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_8` / Compile / fullClasspath).value
     ).dependsOn(rules)
   )
@@ -157,8 +158,8 @@ lazy val tests = projectMatrix
     axisValues = Seq(scio0_10, VirtualAxis.jvm),
     _.settings(
       moduleName := name.value + scio0_10.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_10` / Compile / sourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_10` / Compile / sourceDirectories).value,
+      scalafixTestkitOutputSourceDirectories := (`output-0_10` / Compile / unmanagedSourceDirectories).value,
+      scalafixTestkitInputSourceDirectories := (`input-0_10` / Compile / unmanagedSourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_10` / Compile / fullClasspath).value
     ).dependsOn(rules)
   )
@@ -167,8 +168,8 @@ lazy val tests = projectMatrix
     axisValues = Seq(scio0_12, VirtualAxis.jvm),
     _.settings(
       moduleName := name.value + scio0_12.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_12` / Compile / sourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_12` / Compile / sourceDirectories).value,
+      scalafixTestkitOutputSourceDirectories := (`output-0_12` / Compile / unmanagedSourceDirectories).value,
+      scalafixTestkitInputSourceDirectories := (`input-0_12` / Compile / unmanagedSourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_12` / Compile / fullClasspath).value
     ).dependsOn(rules)
   )
@@ -177,8 +178,8 @@ lazy val tests = projectMatrix
     axisValues = Seq(scio0_13, VirtualAxis.jvm),
     _.settings(
       moduleName := name.value + scio0_13.idSuffix,
-      scalafixTestkitOutputSourceDirectories := (`output-0_13` / Compile / sourceDirectories).value,
-      scalafixTestkitInputSourceDirectories := (`input-0_13` / Compile / sourceDirectories).value,
+      scalafixTestkitOutputSourceDirectories := (`output-0_13` / Compile / unmanagedSourceDirectories).value,
+      scalafixTestkitInputSourceDirectories := (`input-0_13` / Compile / unmanagedSourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_13` / Compile / fullClasspath).value
     ).dependsOn(rules)
   )
