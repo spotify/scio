@@ -43,8 +43,8 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
   )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
     import self.coder
     val uncurried = (c: Client, r: Request) => f(c)(r)
-    self
-      .parDo(
+    self.transform { in =>
+      in.parDo(
         GrpcDoFn
           .newBuilder[Request, Response, Client]()
           .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
@@ -53,9 +53,9 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
           .withMaxPendingRequests(maxPendingRequests)
           .withCacheSupplier(cacheSupplier)
           .build()
-      )
-      .map(kvToTuple)
-      .mapValues(_.asScala)
+      ).map(kvToTuple)
+        .mapValues(_.asScala)
+    }
   }
 
   def grpcLookupStream[Response: Coder, Client <: AbstractStub[Client]](
@@ -73,8 +73,8 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
       f(client)(request, observer)
       observer
     }
-    self
-      .parDo(
+    self.transform { in =>
+      in.parDo(
         GrpcDoFn
           .newBuilder[Request, JIterable[Response], Client]()
           .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
@@ -83,9 +83,9 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
           .withMaxPendingRequests(maxPendingRequests)
           .withCacheSupplier(cacheSupplier)
           .build()
-      )
-      .map(kvToTuple)
-      .mapValues(_.asScala.map(_.asScala))
+      ).map(kvToTuple)
+        .mapValues(_.asScala.map(_.asScala))
+    }
   }
 
 }
