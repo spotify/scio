@@ -30,10 +30,11 @@ import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
  * performing the full combine.
  */
 class SCollectionWithHotKeyFanout[K, V] private[values] (
-  private val context: ScioContext,
   private val self: PairSCollectionFunctions[K, V],
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
+
+  private[this] val context: ScioContext = self.self.context
   implicit private[this] val valueCoder: Coder[V] = self.valueCoder
 
   private def withFanout[K0, I, O](
@@ -73,7 +74,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     self.self.transform { in =>
       val a = aggregator // defeat closure
-      new SCollectionWithHotKeyFanout(context, in.mapValues(a.prepare), hotKeyFanout)
+      new SCollectionWithHotKeyFanout(in.mapValues(a.prepare), hotKeyFanout)
         .sumByKey(a.semigroup)
         .mapValues(a.present)
     }
@@ -87,7 +88,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   ): SCollection[(K, U)] = {
     self.self.transform { in =>
       val a = aggregator // defeat closure
-      new SCollectionWithHotKeyFanout(context, in.mapValues(a.prepare), hotKeyFanout)
+      new SCollectionWithHotKeyFanout(in.mapValues(a.prepare), hotKeyFanout)
         .foldByKey(a.monoid)
         .mapValues(a.present)
     }
