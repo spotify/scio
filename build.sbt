@@ -1182,7 +1182,7 @@ lazy val `scio-examples`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "mysql-socket-factory" % "1.11.1" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.11.2" % Runtime,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
