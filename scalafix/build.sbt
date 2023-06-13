@@ -136,7 +136,7 @@ lazy val tests = projectMatrix
     scalaVersions = Seq(V.scala212),
     axisValues = Seq(scio0_7, VirtualAxis.jvm),
     _.settings(
-      moduleName := name.value + "-0_7",
+      moduleName := name.value + scio0_7.idSuffix,
       scalafixTestkitOutputSourceDirectories := (`output-0_7` / Compile / sourceDirectories).value,
       scalafixTestkitInputSourceDirectories := (`input-0_7` / Compile / sourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_7` / Compile / fullClasspath).value
@@ -146,7 +146,7 @@ lazy val tests = projectMatrix
     scalaVersions = Seq(V.scala212),
     axisValues = Seq(scio0_8, VirtualAxis.jvm),
     _.settings(
-      moduleName := name.value + "-0_8",
+      moduleName := name.value + scio0_8.idSuffix,
       scalafixTestkitOutputSourceDirectories := (`output-0_8` / Compile / sourceDirectories).value,
       scalafixTestkitInputSourceDirectories := (`input-0_8` / Compile / sourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_8` / Compile / fullClasspath).value
@@ -156,7 +156,7 @@ lazy val tests = projectMatrix
     scalaVersions = Seq(V.scala212),
     axisValues = Seq(scio0_10, VirtualAxis.jvm),
     _.settings(
-      moduleName := name.value + "-0_10",
+      moduleName := name.value + scio0_10.idSuffix,
       scalafixTestkitOutputSourceDirectories := (`output-0_10` / Compile / sourceDirectories).value,
       scalafixTestkitInputSourceDirectories := (`input-0_10` / Compile / sourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_10` / Compile / fullClasspath).value
@@ -166,7 +166,7 @@ lazy val tests = projectMatrix
     scalaVersions = Seq(V.scala212),
     axisValues = Seq(scio0_12, VirtualAxis.jvm),
     _.settings(
-      moduleName := name.value + "-0_12",
+      moduleName := name.value + scio0_12.idSuffix,
       scalafixTestkitOutputSourceDirectories := (`output-0_12` / Compile / sourceDirectories).value,
       scalafixTestkitInputSourceDirectories := (`input-0_12` / Compile / sourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_12` / Compile / fullClasspath).value
@@ -176,7 +176,7 @@ lazy val tests = projectMatrix
     scalaVersions = Seq(V.scala212),
     axisValues = Seq(scio0_13, VirtualAxis.jvm),
     _.settings(
-      moduleName := name.value + "-0_13",
+      moduleName := name.value + scio0_13.idSuffix,
       scalafixTestkitOutputSourceDirectories := (`output-0_13` / Compile / sourceDirectories).value,
       scalafixTestkitInputSourceDirectories := (`input-0_13` / Compile / sourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_13` / Compile / fullClasspath).value
