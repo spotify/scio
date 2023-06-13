@@ -57,7 +57,7 @@ final class PredictSCollectionOps[T](private val self: SCollection[T]) {
    * @param signatureName
    *   name of [[org.tensorflow.framework.SignatureDef]] s to be used to run the prediction.
    */
-  def predict[V: Coder, W](
+  def predict[V: Coder](
     savedModelUri: String,
     fetchOps: Seq[String],
     options: TensorFlowModel.Options,
@@ -88,7 +88,7 @@ final class PredictSCollectionOps[T](private val self: SCollection[T]) {
    * @param signatureName
    *   name of [[org.tensorflow.framework.SignatureDef]] s to be used to run the prediction.
    */
-  def predictWithSigDef[V: Coder, W](
+  def predictWithSigDef[V: Coder](
     savedModelUri: String,
     options: TensorFlowModel.Options,
     fetchOps: Option[Seq[String]] = PredictSCollectionOps.DefaultFetchOps,
