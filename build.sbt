@@ -1493,6 +1493,7 @@ lazy val site: Project = project
       "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs",
       "javadoc.org.apache.avro.base_url" -> "https://avro.apache.org/docs/current/api/java/",
       "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api",
+      "scaladoc.com.twitter.algebird.base_url" -> "https://twitter.github.io/algebird/api/",
       "scaladoc.kantan.base_url" -> "https://nrinaudo.github.io/kantan.csv/api"
     ),
     Compile / paradoxMaterialTheme := ParadoxMaterialTheme()

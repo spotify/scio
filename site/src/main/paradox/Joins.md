@@ -41,7 +41,7 @@ val b: SCollection[(String, Int)] = ???
 val elements: SCollection[(String, (String, Int))] = a.join(b)
 ```
 
-@scaladoc[`leftOuterJoin`](com.spotify.scio.values.PairSCollectionFunctions#leftOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]) produces elements of `(K (V, Option[W]))`, where the key `K` is in the LHS but may not be in the RHS
+@scaladoc[`leftOuterJoin`](com.spotify.scio.values.PairSCollectionFunctions#leftOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]) produces elements of `(K (V, Option[W]))`, where the key `K` is in the LHS but may not be in the RHS:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
@@ -51,7 +51,7 @@ val b: SCollection[(String, Int)] = ???
 val elements: SCollection[(String, (String, Option[Int]))] = a.leftOuterJoin(b)
 ```
 
-@scaladoc[`rightOuterJoin`](com.spotify.scio.values.PairSCollectionFunctions#rightOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],W))]) produces elements of `(K, (Option[V], W]))`, where the key `K` is in the RHS but may not be in the LHS
+@scaladoc[`rightOuterJoin`](com.spotify.scio.values.PairSCollectionFunctions#rightOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],W))]) produces elements of `(K, (Option[V], W]))`, where the key `K` is in the RHS but may not be in the LHS:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
@@ -61,7 +61,7 @@ val b: SCollection[(String, Int)] = ???
 val elements: SCollection[(String, (Option[String], Int))] = a.rightOuterJoin(b)
 ```
 
-@scaladoc[`fullOuterJoin`](com.spotify.scio.values.PairSCollectionFunctions#fullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]) produces elements of `(K (Option[V], Option[W]))`, where the key `K` can be in either side
+@scaladoc[`fullOuterJoin`](com.spotify.scio.values.PairSCollectionFunctions#fullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]) produces elements of `(K (Option[V], Option[W]))`, where the key `K` can be in either side:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
@@ -87,7 +87,6 @@ val elements: SCollection[(String, (Int, Boolean, Float))] = MultiJoin(a, b, c)
 
 Scio's @scaladoc[`hashJoin`](com.spotify.scio.values.PairHashSCollectionFunctions#hashJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(V,W))]) and variants @scaladoc[`hashLeftOuterJoin`](com.spotify.scio.values.PairHashSCollectionFunctions#hashLeftOuterJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]), and @scaladoc[`hashFullOuterJoin`](com.spotify.scio.values.PairHashSCollectionFunctions#hashFullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]) provide a convenient syntax over the top of Beam's SideInput class to avoid shuffle during the join.
 The RHS should fit in memory, as with normal @ref[SideInputs](SideInputs.md).
-If you already have a side input over a `Map` type, 
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
@@ -95,6 +94,17 @@ import com.spotify.scio.values.SCollection
 val a: SCollection[(String, Int)] = ???
 val b: SCollection[(String, Boolean)] = ???
 val elements: SCollection[(String, (Int, Boolean))] = a.hashJoin(b)
+```
+
+In the less-common case where the LHS contains only keys to be looked-up, @scaladoc[`hashLookup`](com.spotify.scio.values.SCollection#hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)]):com.spotify.scio.values.SCollection[(T,Iterable[V])]) will join in all matching values from the RHS.
+Again, the RHS should fit in memory.
+
+```scala mdoc:compile-only
+import com.spotify.scio.values.SCollection
+
+val a: SCollection[String] = ???
+val b: SCollection[(String, String)] = ???
+val elements: SCollection[(String, Iterable[String])] = a.hashLookup(b)
 ```
 
 In addition, Scio also provides the shuffle-free intersection and subtraction operations @scaladoc[`hashIntersectByKey`](com.spotify.scio.values.PairHashSCollectionFunctions#hashIntersectByKey(rhs:com.spotify.scio.values.SCollection[K]):com.spotify.scio.values.SCollection[(K,V)]) and @scaladoc[`hashSubtractByKey`](com.spotify.scio.values.PairHashSCollectionFunctions#hashSubtractByKey(sideInput:com.spotify.scio.values.SideInput[Set[K]]):com.spotify.scio.values.SCollection[(K,V)]).
@@ -192,7 +202,7 @@ The chill sides are joined normally, while the hot side of the RHS is `hashJoin`
 Scio provides @scaladoc[`skewedJoin`](com.spotify.scio.values.PairSkewedSCollectionFunctions), @scaladoc[`skewedLeftOuterJoin`](com.spotify.scio.values.PairSkewedSCollectionFunctions), and @scaladoc[`skewedFullOuterJoin`](com.spotify.scio.values.PairSkewedSCollectionFunctions) variants.
 Import `com.twitter.algebird.CMSHasherImplicits._` for the implicits required for count-min sketch.
 
-```scala
+```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 import com.twitter.algebird.CMSHasherImplicits._
 
