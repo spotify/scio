@@ -96,9 +96,6 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     PRIMARY_AND_SECONDARY
   }
 
-  // Dataflow calls split() with a suggested byte size that assumes a higher throughput than
-  // SMB joins have. By adjusting this suggestion we can arrive at a more optimal parallelism.
-  static final Double DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR = 0.5;
   private static final Logger LOG = LoggerFactory.getLogger(SortedBucketSource.class);
   private static final AtomicInteger metricsId = new AtomicInteger(1);
 
@@ -216,7 +213,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
             targetParallelism,
             getEstimatedSizeBytes(options),
             desiredBundleSizeBytes,
-            DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR);
+            options.as(SortedBucketOptions.class).getSortedBucketSplitAdjustmentFactor());
     final long estSplitSize = estimatedSizeBytes / numSplits;
     final DecimalFormat sizeFormat = new DecimalFormat("0.00");
     LOG.info(

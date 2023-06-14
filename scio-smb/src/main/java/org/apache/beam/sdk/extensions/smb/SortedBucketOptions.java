@@ -34,4 +34,12 @@ public interface SortedBucketOptions extends PipelineOptions {
   int getSortedBucketReadDiskBufferMb();
 
   void setSortedBucketReadDiskBufferMb(int readDiskBufferMb);
+
+  @Description(
+      "Factor to multiply the runner-provided `desiredBundleSizeBytes` during SMB reads. A lower value "
+          + "results in more generated splits, which can improve scaling at read-time.")
+  @Default.Double(0.5D)
+  double getSortedBucketSplitAdjustmentFactor();
+
+  void setSortedBucketSplitAdjustmentFactor(double sortedBucketSplitAdjustmentFactor);
 }

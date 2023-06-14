@@ -18,7 +18,6 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput;
-import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSecondaryKeyedBucktedInput;
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
@@ -697,8 +696,7 @@ public class SortedBucketSourceTest {
       SortedBucketSource<String> source, int desiredByteSize) throws Exception {
     final PipelineOptions opts = PipelineOptionsFactory.create();
     final List<SortedBucketSource<String>> splitSources =
-        (List<SortedBucketSource<String>>)
-            source.split((long) (desiredByteSize / DESIRED_SIZE_BYTES_ADJUSTMENT_FACTOR), opts);
+        (List<SortedBucketSource<String>>) source.split((long) (desiredByteSize / 0.5D), opts);
     splitSources.sort(Comparator.comparingInt(SortedBucketSource::getBucketOffset));
 
     return splitSources;
