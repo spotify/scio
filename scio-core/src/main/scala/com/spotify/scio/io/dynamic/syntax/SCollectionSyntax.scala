@@ -29,6 +29,7 @@ import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.coders.StringUtf8Coder
 import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.{io => beam}
+import org.apache.beam.sdk.extensions.avro.{io => avroio}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
@@ -81,7 +82,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
       val cls = ct.runtimeClass.asInstanceOf[Class[T]]
       val nm = new JHashMap[String, AnyRef]()
       nm.putAll(metadata.asJava)
-      val sink = beam.AvroIO
+      val sink = avroio.AvroIO
         .sink(cls)
         .withCodec(codec)
         .withMetadata(nm)
@@ -130,7 +131,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
     } else {
       val nm = new JHashMap[String, AnyRef]()
       nm.putAll(metadata.asJava)
-      val sink = beam.AvroIO
+      val sink = avroio.AvroIO
         .sinkViaGenericRecords(
           schema,
           (element: T, _: Schema) => element
@@ -227,7 +228,7 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
         "Protobuf file with dynamic destinations cannot be used in a test context"
       )
     } else {
-      val sink = beam.AvroIO
+      val sink = avroio.AvroIO
         .sinkViaGenericRecords(
           avroSchema,
           (element: T, _: Schema) => AvroBytesUtil.encode(elemCoder, element)

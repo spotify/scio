@@ -682,6 +682,7 @@ lazy val `scio-avro`: Project = project
         "com.thoughtworks.paranamer" % "paranamer"
       ),
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,

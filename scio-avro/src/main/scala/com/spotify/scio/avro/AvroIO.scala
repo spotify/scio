@@ -32,7 +32,7 @@ import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.{io => beam}
+import org.apache.beam.sdk.extensions.avro.{io => beam}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
