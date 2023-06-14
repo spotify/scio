@@ -1431,7 +1431,7 @@ lazy val site: Project = project
     `scio-redis`,
     `scio-smb`,
     `scio-tensorflow`,
-    `scio-test` % "compile->test",
+    `scio-test` % "compile->test"
   )
   .settings(commonSettings)
   .settings(macroSettings)
@@ -1464,7 +1464,7 @@ lazy val site: Project = project
       `scio-redis`,
       `scio-smb`,
       `scio-tensorflow`,
-      `scio-test`,
+      `scio-test`
     ),
     // unidoc handles class paths differently than compile and may give older
     // versions high precedence.
