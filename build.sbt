@@ -624,12 +624,13 @@ lazy val `scio-test`: Project = project
       "org.scalactic" %% "scalactic" % scalatestVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
+      // runtime
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
