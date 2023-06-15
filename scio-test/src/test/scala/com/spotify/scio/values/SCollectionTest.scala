@@ -38,7 +38,7 @@ import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder, RefCoder}
+import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder}

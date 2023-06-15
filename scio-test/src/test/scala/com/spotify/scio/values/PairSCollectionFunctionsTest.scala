@@ -24,13 +24,7 @@ import com.spotify.scio.hash._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Aggregator
 import magnolify.guava.auto._
-import org.apache.beam.sdk.coders.{
-  KvCoder,
-  NullableCoder,
-  StringUtf8Coder,
-  StructuredCoder,
-  VarIntCoder
-}
+import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder, StructuredCoder, VarIntCoder}
 
 import scala.collection.mutable
 
@@ -53,8 +47,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val beamKeyCoder = coll.keyCoder.asInstanceOf[Beam[_]]
       beamKeyCoder.beam shouldBe StringUtf8Coder.of()
 
-      coll.valueCoder shouldBe a[Beam[Int]]
-      val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[Int]]
+      coll.valueCoder shouldBe a[Beam[_]]
+      val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[_]]
       beamValueCoder.beam shouldBe VarIntCoder.of()
     }
   }
@@ -82,8 +76,8 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val beamKeyCoder = coll.keyCoder.asInstanceOf[Beam[_]]
       beamKeyCoder.beam shouldBe StringUtf8Coder.of()
 
-      coll.valueCoder shouldBe a[Beam[Int]]
-      val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[Int]]
+      coll.valueCoder shouldBe a[Beam[_]]
+      val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[_]]
       beamValueCoder.beam shouldBe VarIntCoder.of()
     }
   }
