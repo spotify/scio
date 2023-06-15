@@ -309,7 +309,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def union(that: SCollection[T]): SCollection[T] = {
     val o = PCollectionList
       .of(internal)
-      .and(that.internal)
+      // flink UnionOperator checks strict coder equality
+      // since scio does a lot of (un)wrapping, equality may fail.
+      // Force that collection to use this coder
+      .and(that.internal.setCoder(internal.getCoder))
       .apply(this.tfName, Flatten.pCollections())
     context.wrap(o)
   }

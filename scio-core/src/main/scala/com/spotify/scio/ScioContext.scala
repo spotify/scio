@@ -752,12 +752,19 @@ class ScioContext private[scio] (
   // `T: Coder` context bound is required since `scs` might be empty.
   def unionAll[T: Coder](scs: => Iterable[SCollection[T]]): SCollection[T] = {
     val tfName = this.tfName // evaluate eagerly to avoid overriding `scs` names
-    scs match {
-      case Nil => empty()
-      case contents =>
+    scs.toList match {
+      case Nil =>
+        empty()
+      case x :: Nil =>
+        x
+      case x :: xs =>
         wrap(
           PCollectionList
-            .of(contents.map(_.internal).asJava)
+            .of(x.internal)
+            // flink UnionOperator checks strict coder equality
+            // since scio does a lot of (un)wrapping, equality may fail.
+            // Force all collections to use the head coder
+            .and(xs.map(_.internal.setCoder(x.internal.getCoder)).asJava)
             .apply(tfName, Flatten.pCollections())
         )
     }

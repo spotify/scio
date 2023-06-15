@@ -136,8 +136,8 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support unionAll() with an empty list" in {
-    runWithContext(sc => sc.unionAll(List[SCollection[Unit]]()) should beEmpty)
+  it should "support unionAll() with an empty iterable" in {
+    runWithContext(sc => sc.unionAll[String](Set.empty) should beEmpty)
   }
 
   it should "support unionAll() with named transforms" in {
