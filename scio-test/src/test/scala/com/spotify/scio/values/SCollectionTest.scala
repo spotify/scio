@@ -38,10 +38,10 @@ import org.joda.time.{DateTimeConstants, Duration, Instant}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
-import com.spotify.scio.coders.{Beam, Coder}
+import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder, RefCoder}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.schemas.Schema
-import org.apache.beam.sdk.coders.StringUtf8Coder
+import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder}
 
 import java.nio.charset.StandardCharsets
 
@@ -54,14 +54,39 @@ class SCollectionTest extends PipelineSpec {
 
   import SCollectionTest._
 
-  "SCollection" should "propagate unwrapped coders" in {
+  "SCollection" should "propagates unwrapped coders" in {
+    runWithContext { sc =>
+      val coll = sc.empty[String]()
+      // internal is wrapped
+      val internalCoder = coll.internal.getCoder
+      internalCoder shouldBe a[MaterializedCoder[_]]
+      val materializedCoder = internalCoder.asInstanceOf[MaterializedCoder[_]]
+      materializedCoder.bcoder shouldBe StringUtf8Coder.of()
+      // implicit SCollection coder is not
+      val scioCoder = coll.coder
+      scioCoder shouldBe a[Beam[_]]
+      val beamCoder = scioCoder.asInstanceOf[Beam[_]]
+      beamCoder.beam shouldBe StringUtf8Coder.of()
+    }
+  }
+
+  it should "propagates unwrapped nullable coders" in {
     runWithContext { sc =>
       sc.optionsAs[ScioOptions].setNullableCoders(true)
 
       val coll = sc.empty[String]()
-      coll.coder shouldBe a[Beam[String]]
-      // No WrappedCoder nor NullableCoder
-      coll.coder.asInstanceOf[Beam[String]].beam shouldBe StringUtf8Coder.of()
+      // internal is wrapped
+      val internalCoder = coll.internal.getCoder
+      internalCoder shouldBe a[MaterializedCoder[_]]
+      val materializedCoder = internalCoder.asInstanceOf[MaterializedCoder[_]]
+      materializedCoder.bcoder shouldBe a[NullableCoder[_]]
+      val nullableCoder = materializedCoder.bcoder.asInstanceOf[NullableCoder[_]]
+      nullableCoder.getValueCoder shouldBe StringUtf8Coder.of()
+      // implicit SCollection coder is not
+      val scioCoder = coll.coder
+      scioCoder shouldBe a[Beam[_]]
+      val beamCoder = scioCoder.asInstanceOf[Beam[_]]
+      beamCoder.beam shouldBe StringUtf8Coder.of()
     }
   }
 
