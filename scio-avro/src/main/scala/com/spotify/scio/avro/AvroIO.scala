@@ -32,7 +32,7 @@ import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.{io => beam}
+import org.apache.beam.sdk.extensions.avro.io.{AvroIO => BAvroIO}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
@@ -136,7 +136,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   protected[scio] def avroOut[U](
-    write: beam.AvroIO.Write[U],
+    write: BAvroIO.Write[U],
     path: String,
     numShards: Int,
     suffix: String,
@@ -147,7 +147,7 @@ sealed trait AvroIO[T] extends ScioIO[T] {
     shardNameTemplate: String,
     isWindowed: Boolean,
     tempDirectory: ResourceId
-  ): beam.AvroIO.Write[U] = {
+  ): BAvroIO.Write[U] = {
     require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
       filenamePolicySupplier = filenamePolicySupplier,
@@ -180,7 +180,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val coder = CoderMaterializer.beam(sc, Coder[T])
     val cls = ScioUtil.classOf[T]
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    val t = beam.AvroIO
+    val t = BAvroIO
       .read(cls)
       .from(filePattern)
     sc
@@ -194,7 +194,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val cls = ScioUtil.classOf[T]
-    val t = beam.AvroIO.write(cls)
+    val t = BAvroIO.write(cls)
 
     data.applyInternal(
       avroOut(
@@ -231,7 +231,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
   override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] = {
     val coder = CoderMaterializer.beam(sc, Coder.avroGenericRecordCoder(schema))
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    val t = beam.AvroIO
+    val t = BAvroIO
       .readGenericRecords(schema)
       .from(filePattern)
     sc
@@ -246,7 +246,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
     data: SCollection[GenericRecord],
     params: WriteP
   ): Tap[GenericRecord] = {
-    val t = beam.AvroIO.writeGenericRecords(schema)
+    val t = BAvroIO.writeGenericRecords(schema)
     data.applyInternal(
       avroOut(
         t,
@@ -290,7 +290,7 @@ final case class GenericRecordParseIO[T](path: String, parseFn: GenericRecord =>
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    val t = beam.AvroIO
+    val t = BAvroIO
       .parseGenericRecords(Functions.serializableFn(parseFn))
       .from(filePattern)
       .withCoder(CoderMaterializer.beam(sc, coder))
@@ -348,9 +348,9 @@ object AvroIO {
 
 object AvroTyped {
   private[scio] def writeTransform[T <: HasAvroAnnotation: TypeTag: Coder]()
-    : beam.AvroIO.TypedWrite[T, Void, GenericRecord] = {
+    : BAvroIO.TypedWrite[T, Void, GenericRecord] = {
     val avroT = AvroType[T]
-    beam.AvroIO
+    BAvroIO
       .writeCustomTypeToGenericRecords()
       .withFormatFunction(Functions.serializableFn(avroT.toGenericRecord))
       .withSchema(avroT.schema)
@@ -362,7 +362,7 @@ object AvroTyped {
     final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
     private[scio] def typedAvroOut[U](
-      write: beam.AvroIO.TypedWrite[U, Void, GenericRecord],
+      write: BAvroIO.TypedWrite[U, Void, GenericRecord],
       path: String,
       numShards: Int,
       suffix: String,
@@ -401,7 +401,7 @@ object AvroTyped {
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
       val avroT = AvroType[T]
       val filePattern = ScioUtil.filePattern(path, params.suffix)
-      val t = beam.AvroIO.readGenericRecords(avroT.schema).from(filePattern)
+      val t = BAvroIO.readGenericRecords(avroT.schema).from(filePattern)
       sc.applyTransform(t).map(avroT.fromGenericRecord)
     }
 

@@ -23,7 +23,8 @@ import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecord}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{AtomicCoder, AvroCoder, CustomCoder, StringUtf8Coder}
+import org.apache.beam.sdk.coders.{AtomicCoder, CustomCoder, StringUtf8Coder}
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import java.io.{InputStream, OutputStream}
@@ -71,7 +72,7 @@ final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 /**
  * Implementation is legit only for SpecificFixed, not GenericFixed
  * @see
- *   [[org.apache.beam.sdk.coders.AvroCoder]]
+ *   [[org.apache.beam.sdk.extensions.avro.coders.AvroCoder]]
  */
 final private class SpecificFixedCoder[A <: SpecificFixed](cls: Class[A]) extends CustomCoder[A] {
   // lazy because AVRO Schema isn't serializable

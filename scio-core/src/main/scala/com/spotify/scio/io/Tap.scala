@@ -24,7 +24,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.{Coder => BCoder}
-import org.apache.beam.sdk.io.AvroIO
+import org.apache.beam.sdk.extensions.avro.io.AvroIO
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 

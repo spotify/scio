@@ -200,7 +200,7 @@ object ParquetAvroIO {
       }
 
       // Needed to make GenericRecord read by parquet-avro work with Beam's
-      // org.apache.beam.sdk.coders.AvroCoder.
+      // org.apache.beam.sdk.extensions.avro.coders.AvroCoder
       if (!isSpecific) {
         jobConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
 

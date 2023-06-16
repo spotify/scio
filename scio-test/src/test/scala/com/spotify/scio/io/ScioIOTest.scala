@@ -353,7 +353,7 @@ class ScioIOTest extends ScioIOSpec {
 
   // covers AvroIO specific, generic, and typed records, ObjectFileIO, and ProtobufIO
   it should "write to the same filenames as previous scio versions when not using a filename policy" in {
-    import org.apache.beam.sdk.io.{AvroIO => BAvroIO}
+    import org.apache.beam.sdk.extensions.avro.io.{AvroIO => BAvroIO}
 
     val write1 = BAvroIO.write(ScioUtil.classOf[TestRecord])
     val suffix = ".avro"
