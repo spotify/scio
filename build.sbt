@@ -610,7 +610,6 @@ lazy val `scio-test`: Project = project
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
-      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
