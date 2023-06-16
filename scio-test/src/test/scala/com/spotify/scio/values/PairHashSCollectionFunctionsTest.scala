@@ -78,8 +78,21 @@ class PairHashSCollectionFunctionsTest extends PipelineSpec {
       val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
       val p2 = sc.parallelize[(String, Int)](Map.empty).asMultiMapSideInput
       val p = p1.hashJoin(p2)
+      p should containInAnyOrder(Seq.empty[(String, (Int, Int))])
+    }
+  }
+
+  it should "support hashJoin() with transformed .asMultiMapSideInput" in {
+    runWithContext { sc =>
+      val p1 = sc.parallelize(Seq(("a", 1), ("a", 2), ("b", 3)))
+      val p2 = sc
+        .parallelize(Seq(("a", "11"), ("b", "12"), ("b", "13")))
+        .asMultiMapSideInput
+        .map(_.map { case (k, vs) => k -> vs.map(_.toInt) })
+
+      val p = p1.hashJoin(p2)
       p should
-        containInAnyOrder(Seq.empty[(String, (Int, Int))])
+        containInAnyOrder(Seq(("a", (1, 11)), ("a", (2, 11)), ("b", (3, 12)), ("b", (3, 13))))
     }
   }
 

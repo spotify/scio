@@ -39,8 +39,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashJoin[W](
     rhs: SCollection[(K, W)]
-  ): SCollection[(K, (V, W))] =
+  ): SCollection[(K, (V, W))] = {
+    implicit val wCoder = BeamCoders.getTupleCoders(rhs)._2
     hashJoin(rhs.asMultiMapSingletonSideInput)
+  }
 
   /**
    * Perform an inner join with a MultiMap `SideInput[Map[K, Iterable[V]]`
@@ -56,20 +58,17 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group join
    */
-  def hashJoin[W](
+  def hashJoin[W: Coder](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  ): SCollection[(K, (V, W))] = {
-    implicit val wCoder = BeamCoders.getMultiMapKV(sideInput)._2
-    self.transform { in =>
-      in.withSideInputs(sideInput)
-        .flatMap[(K, (V, W))] { (kv, sideInputCtx) =>
-          sideInputCtx(sideInput)
-            .getOrElse(kv._1, Iterable.empty[W])
-            .iterator
-            .map(w => (kv._1, (kv._2, w)))
-        }
-        .toSCollection
-    }
+  ): SCollection[(K, (V, W))] = self.transform { in =>
+    in.withSideInputs(sideInput)
+      .flatMap[(K, (V, W))] { (kv, sideInputCtx) =>
+        sideInputCtx(sideInput)
+          .getOrElse(kv._1, Iterable.empty[W])
+          .iterator
+          .map(w => (kv._1, (kv._2, w)))
+      }
+      .toSCollection
   }
 
   /**
@@ -87,8 +86,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashLeftOuterJoin[W](
     rhs: SCollection[(K, W)]
-  ): SCollection[(K, (V, Option[W]))] =
+  ): SCollection[(K, (V, Option[W]))] = {
+    implicit val wCoder: Coder[W] = BeamCoders.getTupleCoders(rhs)._2
     hashLeftOuterJoin(rhs.asMultiMapSingletonSideInput)
+  }
 
   /**
    * Perform a left outer join with a MultiMap `SideInput[Map[K, Iterable[V]]`
@@ -101,19 +102,16 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   }}}
    * @group join
    */
-  def hashLeftOuterJoin[W](
+  def hashLeftOuterJoin[W: Coder](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  ): SCollection[(K, (V, Option[W]))] = {
-    implicit val wCoder = BeamCoders.getMultiMapKV(sideInput)._2
-    self.transform { in =>
-      in.withSideInputs(sideInput)
-        .flatMap[(K, (V, Option[W]))] { case ((k, v), sideInputCtx) =>
-          val rhsSideMap = sideInputCtx(sideInput)
-          if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
-          else Iterator((k, (v, None)))
-        }
-        .toSCollection
-    }
+  ): SCollection[(K, (V, Option[W]))] = self.transform { in =>
+    in.withSideInputs(sideInput)
+      .flatMap[(K, (V, Option[W]))] { case ((k, v), sideInputCtx) =>
+        val rhsSideMap = sideInputCtx(sideInput)
+        if (rhsSideMap.contains(k)) rhsSideMap(k).iterator.map(w => (k, (v, Some(w))))
+        else Iterator((k, (v, None)))
+      }
+      .toSCollection
   }
 
   /**
@@ -124,8 +122,10 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def hashFullOuterJoin[W](
     rhs: SCollection[(K, W)]
-  ): SCollection[(K, (Option[V], Option[W]))] =
+  ): SCollection[(K, (Option[V], Option[W]))] = {
+    implicit val wCoder: Coder[W] = BeamCoders.getTupleCoders(rhs)._2
     hashFullOuterJoin(rhs.asMultiMapSingletonSideInput)
+  }
 
   /**
    * Perform a full outer join with a `SideInput[Map[K, Iterable[W]]]`.
@@ -139,38 +139,35 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group join
    */
-  def hashFullOuterJoin[W](
+  def hashFullOuterJoin[W: Coder](
     sideInput: SideInput[Map[K, Iterable[W]]]
-  ): SCollection[(K, (Option[V], Option[W]))] = {
-    implicit val wCoder = BeamCoders.getMultiMapKV(sideInput)._2
-    self.transform { in =>
-      val leftHashed = in
-        .withSideInputs(sideInput)
-        .flatMap { case ((k, v), sideInputCtx) =>
-          val rhsSideMap = sideInputCtx(sideInput)
-          if (rhsSideMap.contains(k)) {
-            rhsSideMap(k).iterator
-              .map[(K, (Option[V], Option[W]), Boolean)](w => (k, (Some(v), Some(w)), true))
-          } else {
-            Iterator((k, (Some(v), None), false))
-          }
+  ): SCollection[(K, (Option[V], Option[W]))] = self.transform { in =>
+    val leftHashed = in
+      .withSideInputs(sideInput)
+      .flatMap { case ((k, v), sideInputCtx) =>
+        val rhsSideMap = sideInputCtx(sideInput)
+        if (rhsSideMap.contains(k)) {
+          rhsSideMap(k).iterator
+            .map[(K, (Option[V], Option[W]), Boolean)](w => (k, (Some(v), Some(w)), true))
+        } else {
+          Iterator((k, (Some(v), None), false))
         }
-        .toSCollection
+      }
+      .toSCollection
 
-      val rightHashed = leftHashed
-        .filter(_._3)
-        .map(_._1)
-        .aggregate(Set.empty[K])(_ + _, _ ++ _)
-        .withSideInputs(sideInput)
-        .flatMap { (mk, sideInputCtx) =>
-          val m = sideInputCtx(sideInput)
-          (m.keySet diff mk)
-            .flatMap(k => m(k).iterator.map[(K, (Option[V], Option[W]))](w => (k, (None, Some(w)))))
-        }
-        .toSCollection
+    val rightHashed = leftHashed
+      .filter(_._3)
+      .map(_._1)
+      .aggregate(Set.empty[K])(_ + _, _ ++ _)
+      .withSideInputs(sideInput)
+      .flatMap { (mk, sideInputCtx) =>
+        val m = sideInputCtx(sideInput)
+        (m.keySet diff mk)
+          .flatMap(k => m(k).iterator.map[(K, (Option[V], Option[W]))](w => (k, (None, Some(w)))))
+      }
+      .toSCollection
 
-      leftHashed.map(x => (x._1, x._2)) ++ rightHashed
-    }
+    leftHashed.map(x => (x._1, x._2)) ++ rightHashed
   }
 
   /**

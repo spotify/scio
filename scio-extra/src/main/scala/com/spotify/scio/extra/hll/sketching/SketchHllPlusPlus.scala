@@ -61,7 +61,7 @@ case class SketchHllPlusPlus[T](p: Int, sp: Int) extends ApproxDistinctCounter[T
   override def estimateDistinctCountPerKey[K](
     in: SCollection[(K, T)]
   ): SCollection[(K, Long)] = {
-    implicit val (keyCoder, _): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
+    implicit val keyCoder: Coder[K] = BeamCoders.getTupleCoders(in)._1
 
     in.toKV
       .applyTransform(

@@ -60,7 +60,7 @@ case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCo
       .asInstanceOf[SCollection[Long]]
 
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
-    implicit val (keyCoder, _): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
+    implicit val keyCoder: Coder[K] = BeamCoders.getTupleCoders(in)._1
     in.toKV
       .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))
       .map(klToTuple)
@@ -83,7 +83,7 @@ case class ApproximateUniqueCounterByError[T](maximumEstimationError: Double = 0
       .asInstanceOf[SCollection[Long]]
 
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
-    implicit val (keyCoder, _): (Coder[K], Coder[T]) = BeamCoders.getTupleCoders(in)
+    implicit val keyCoder: Coder[K] = BeamCoders.getTupleCoders(in)._1
     in.toKV
       .applyTransform(beam.ApproximateUnique.perKey[K, T](maximumEstimationError))
       .map(klToTuple)
