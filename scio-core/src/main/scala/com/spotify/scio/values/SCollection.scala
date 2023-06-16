@@ -47,7 +47,7 @@ import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => beam}
-import org.apache.beam.sdk.extensions.avro.{io => avroio}
+import org.apache.beam.sdk.extensions.avro.io.{AvroIO => BAvroIO}
 import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
@@ -1555,7 +1555,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       val elemCoder = CoderMaterializer.beam(context, coder)
       val schema = AvroBytesUtil.schema
       val avroCoder = Coder.avroGenericRecordCoder(schema)
-      val write = avroio.AvroIO
+      val write = BAvroIO
         .writeGenericRecords(schema)
         .to(ScioUtil.pathWithPrefix(path, "part"))
         .withSuffix(".obj.avro")
