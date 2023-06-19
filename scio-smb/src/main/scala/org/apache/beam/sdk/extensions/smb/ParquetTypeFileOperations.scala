@@ -33,8 +33,17 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import java.nio.channels.{ReadableByteChannel, WritableByteChannel}
 
 object ParquetTypeFileOperations {
-  val DefaultCompression = CompressionCodecName.GZIP
+
+  val DefaultCompression = CompressionCodecName.ZSTD
   val DefaultConfiguration: Configuration = null
+
+  // make sure parquet is part of the classpath
+  try {
+    Class.forName("org.apache.parquet.schema.Types");
+  } catch {
+    case e: ClassNotFoundException =>
+      throw new MissingImplementationException("parquet", e);
+  }
 
   def apply[T: Coder: ParquetType](): ParquetTypeFileOperations[T] = apply(DefaultCompression)
 

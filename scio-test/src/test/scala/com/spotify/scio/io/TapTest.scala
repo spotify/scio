@@ -17,26 +17,26 @@
 
 package com.spotify.scio.io
 
-import java.io._
-import java.nio.ByteBuffer
-import java.util.UUID
 import com.spotify.scio._
-import com.spotify.scio.avro._
 import com.spotify.scio.avro.AvroUtils._
+import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
 import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.util.ScioUtil
+import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.options.ScioOptions
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.generic.GenericData
-import org.apache.avro.Schema
 
+import java.io._
+import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.util.UUID
 
 trait TapSpec extends PipelineSpec {
   def verifyTap[T: Coder](tap: Tap[T], expected: Set[T]): Unit = {
@@ -60,8 +60,14 @@ trait TapSpec extends PipelineSpec {
     scioResult.tap(f)
   }
 
-  def tmpDir: File =
-    new File(new File(sys.props("java.io.tmpdir")), "scio-test-" + UUID.randomUUID())
+  def withTempDir(test: File => Any): Unit = {
+    val dir = Files.createTempDirectory("scio-test-").toFile
+    try {
+      test(dir)
+    } finally {
+      FileUtils.deleteDirectory(dir)
+    }
+  }
 }
 
 class TapTest extends TapSpec {
@@ -85,33 +91,28 @@ class TapTest extends TapSpec {
     verifyTap(t, expectedRecords)
   }
 
-  it should "support saveAsAvroFile with SpecificRecord" in {
-    val dir = tmpDir
+  it should "support saveAsAvroFile with SpecificRecord" in withTempDir { dir =>
     val t = runWithFileFuture {
       _.parallelize(Seq(1, 2, 3))
         .map(newSpecificRecord)
-        .saveAsAvroFile(dir.getPath)
+        .saveAsAvroFile(dir.getAbsolutePath)
     }
     verifyTap(t, Set(1, 2, 3).map(newSpecificRecord))
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "support saveAsAvroFile with GenericRecord" in {
-    val dir = tmpDir
+  it should "support saveAsAvroFile with GenericRecord" in withTempDir { dir =>
     val t = runWithFileFuture {
       _.parallelize(Seq(1, 2, 3))
         .map(newGenericRecord)
-        .saveAsAvroFile(dir.getPath, schema = schema)
+        .saveAsAvroFile(dir.getAbsolutePath, schema = schema)
     }
     verifyTap(t, Set(1, 2, 3).map(newGenericRecord))
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "support saveAsAvroFile with reflect record" in {
+  it should "support saveAsAvroFile with reflect record" in withTempDir { dir =>
     import com.spotify.scio.coders.AvroBytesUtil
     implicit val coder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
 
-    val dir = tmpDir
     val tap = runWithFileFuture {
       _.parallelize(Seq("a", "b", "c"))
         .map { s =>
@@ -119,7 +120,7 @@ class TapTest extends TapSpec {
           record.put("bytes", ByteBuffer.wrap(s.getBytes))
           record
         }
-        .saveAsAvroFile(dir.getPath, schema = AvroBytesUtil.schema)
+        .saveAsAvroFile(dir.getAbsolutePath, schema = AvroBytesUtil.schema)
     }
 
     val result = tap
@@ -129,41 +130,42 @@ class TapTest extends TapSpec {
       }
 
     verifyTap(result, Set("a", "b", "c"))
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "support saveAsTextFile" in {
-    val dir = tmpDir
+  it should "support saveAsTextFile" in withTempDir { dir =>
     val t = runWithFileFuture {
       _.parallelize(Seq("a", "b", "c"))
-        .saveAsTextFile(dir.getPath)
+        .saveAsTextFile(dir.getAbsolutePath)
     }
     verifyTap(t, Set("a", "b", "c"))
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "support reading compressed text files" in {
+  it should "support reading compressed text files" in withTempDir { dir =>
     val nFiles = 10
     val nLines = 100
-    val data =
-      Array.fill(nFiles)(Array.fill(nLines)(UUID.randomUUID().toString))
-    for ((cType, ext) <- Seq(("gz", "gz"), ("bzip2", "bz2"))) {
-      val dir = tmpDir
-      dir.mkdir()
-      for (i <- 0 until nFiles) {
-        val file = new File(dir, "part-%05d-%05d.%s".format(i, nFiles, ext))
+    val data = Array.fill(nFiles)(Array.fill(nLines)(UUID.randomUUID().toString))
+
+    Seq(
+      CompressorStreamFactory.GZIP -> ".gz",
+      CompressorStreamFactory.BZIP2 -> ".bz2"
+    ).map { case (cType, ext) =>
+      val compressDir = new File(dir, cType)
+      compressDir.mkdir()
+      val suffix = ".txt" + ext
+      (0 until nFiles).foreach { f =>
+        val file = new File(compressDir, f"part-$f%05d-of-$nFiles%05d$suffix%s")
         val os = new CompressorStreamFactory()
           .createCompressorOutputStream(cType, new FileOutputStream(file))
-        data(i).foreach(l => IOUtils.write(l + "\n", os, StandardCharsets.UTF_8))
+        IOUtils.write(data(f).mkString("", "\n", "\n"), os, StandardCharsets.UTF_8)
         os.close()
       }
-      verifyTap(TextTap(ScioUtil.addPartSuffix(dir.getPath, ext)), data.flatten.toSet)
-      FileUtils.deleteDirectory(dir)
+
+      val params = TextIO.ReadParam(compression = Compression.detect(suffix), suffix = suffix)
+      verifyTap(TextTap(compressDir.getAbsolutePath, params), data.flatten.toSet)
     }
   }
 
-  it should "support saveAsProtobuf proto version 2" in {
-    val dir = tmpDir
+  it should "support saveAsProtobuf proto version 2" in withTempDir { dir =>
     val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     // use java protos otherwise we would have to pull in pb-scala
     def mkProto(t: (String, Long)): SimplePBV2 =
@@ -175,11 +177,10 @@ class TapTest extends TapSpec {
     val t = runWithFileFuture {
       _.parallelize(data)
         .map(mkProto)
-        .saveAsProtobufFile(dir.getPath)
+        .saveAsProtobufFile(dir.getAbsolutePath)
     }
     val expected = data.map(mkProto).toSet
     verifyTap(t, expected)
-    FileUtils.deleteDirectory(dir)
   }
 
   // use java protos otherwise we would have to pull in pb-scala
@@ -190,67 +191,63 @@ class TapTest extends TapSpec {
       .setTrackId(t._1)
       .build()
 
-  it should "support saveAsProtobuf proto version 3" in {
-    val dir = tmpDir
+  it should "support saveAsProtobuf proto version 3" in withTempDir { dir =>
     val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val t = runWithFileFuture {
       _.parallelize(data)
         .map(mkProto3)
-        .saveAsProtobufFile(dir.getPath)
+        .saveAsProtobufFile(dir.getAbsolutePath)
     }
     val expected = data.map(mkProto3).toSet
     verifyTap(t, expected)
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "support saveAsProtobuf write with nullableCoders" in {
-    val dir = tmpDir
+  it should "support saveAsProtobuf write with nullableCoders" in withTempDir { dir =>
     val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val actual = data.map(mkProto3)
     val t = runWithFileFuture { sc =>
       sc.optionsAs[ScioOptions].setNullableCoders(true)
       sc.parallelize(actual)
-        .saveAsProtobufFile(dir.getPath)
+        .saveAsProtobufFile(dir.getAbsolutePath)
     }
     val expected = actual.toSet
     verifyTap(t, expected)
 
     val sc = ScioContext()
-    sc.protobufFile[SimplePBV3](s"$dir/*.avro") should containInAnyOrder(expected)
+    sc.protobufFile[SimplePBV3](
+      path = dir.getAbsolutePath,
+      suffix = ".protobuf.avro"
+    ) should containInAnyOrder(expected)
     sc.run()
-
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "support saveAsProtobuf read with nullableCoders" in {
-    val dir = tmpDir
+  it should "support saveAsProtobuf read with nullableCoders" in withTempDir { dir =>
     val data = Seq(("a", 1L), ("b", 2L), ("c", 3L))
     val actual = data.map(mkProto3)
     val t = runWithFileFuture {
       _.parallelize(actual)
-        .saveAsProtobufFile(dir.getPath)
+        .saveAsProtobufFile(dir.getAbsolutePath)
     }
     val expected = actual.toSet
     verifyTap(t, expected)
 
     val sc = ScioContext()
     sc.optionsAs[ScioOptions].setNullableCoders(true)
-    sc.protobufFile[SimplePBV3](s"$dir/*.avro") should containInAnyOrder(expected)
+    sc.protobufFile[SimplePBV3](
+      path = dir.getAbsolutePath,
+      suffix = ".protobuf.avro"
+    ) should containInAnyOrder(expected)
     sc.run()
-
-    FileUtils.deleteDirectory(dir)
   }
 
-  it should "keep parent after Tap.map" in {
-    val dir = tmpDir
+  it should "keep parent after Tap.map" in withTempDir { dir =>
     val t = runWithFileFuture {
       _.parallelize(Seq(1, 2, 3))
-        .saveAsTextFile(dir.getPath)
+        .saveAsTextFile(dir.getAbsolutePath)
     }.map(_.toInt)
     verifyTap(t, Set(1, 2, 3))
     t.isInstanceOf[Tap[Int]] shouldBe true
     t.parent.get.isInstanceOf[Tap[_]] shouldBe true
-    FileUtils.deleteDirectory(dir)
   }
 
   it should "support waitForResult" in {

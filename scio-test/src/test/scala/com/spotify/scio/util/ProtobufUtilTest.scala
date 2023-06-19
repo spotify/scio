@@ -37,7 +37,6 @@ class ProtobufUtilTest extends AnyFlatSpec with Matchers {
 
   "ProtobufUtil" should "convert Message -> GenericRecords that can be written and read" in {
     val sc = ScioContext()
-
     val dir = Files.createTempDirectory("protobuf-util-")
     val (path1, path2) = (new File(s"$dir/1"), new File(s"$dir/2"))
     path1.deleteOnExit()
@@ -65,7 +64,7 @@ class ProtobufUtilTest extends AnyFlatSpec with Matchers {
     val result = sc.run().waitUntilDone()
 
     val (tapFromAvroWrite, tapFromProtoWrite) = (
-      ObjectFileTap[TrackPB](ScioUtil.addPartSuffix(path1.getPath)),
+      ObjectFileTap[TrackPB](path1.getPath, ObjectFileIO.ReadParam(".protobuf")),
       protoWriteTap.get(result)
     )
 

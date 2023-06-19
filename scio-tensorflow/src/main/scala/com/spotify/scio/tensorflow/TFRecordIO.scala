@@ -36,8 +36,6 @@ import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 
-import scala.annotation.unused
-
 final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
   override type ReadP = TFRecordIO.ReadParam
   override type WriteP = TFRecordIO.WriteParam
@@ -50,36 +48,49 @@ final case class TFRecordIO(path: String) extends ScioIO[Array[Byte]] {
 
   override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Array[Byte]] = {
     TFRecordMethods.write(data, path, params)
-    tap(TFRecordIO.ReadParam(params.compression))
+    tap(TFRecordIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[Array[Byte]] =
-    TFRecordMethods.tap(params, path)
+    TFRecordMethods.tap(path, params)
 }
 
 object TFRecordIO {
+
   object ReadParam {
-    private[tensorflow] val DefaultCompression = Compression.AUTO
+    val DefaultCompression: Compression = Compression.AUTO
+    val DefaultSuffix: String = null
+
+    private[scio] def apply(params: WriteParam): ReadParam =
+      new ReadParam(
+        compression = params.compression,
+        suffix = params.suffix + params.compression.getSuggestedSuffix
+      )
   }
 
-  final case class ReadParam private (compression: Compression = ReadParam.DefaultCompression)
+  final case class ReadParam private (
+    compression: Compression = ReadParam.DefaultCompression,
+    suffix: String = ReadParam.DefaultSuffix
+  )
 
   object WriteParam {
-    private[tensorflow] val DefaultSuffix = ".tfrecords"
-    private[tensorflow] val DefaultCompression = Compression.UNCOMPRESSED
-    private[tensorflow] val DefaultNumShards = 0
-    private[tensorflow] val DefaultShardNameTemplate = null
-    private[tensorflow] val DefaultTempDirectory = null
-    private[tensorflow] val DefaultFilenamePolicySupplier = null
+    val DefaultSuffix: String = ".tfrecords"
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultNumShards: Int = 0
+    val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
+    val DefaultPrefix: String = null
+    val DefaultShardNameTemplate: String = null
+    val DefaultTempDirectory: String = null
   }
 
   final case class WriteParam private (
-    suffix: String,
-    compression: Compression,
-    numShards: Int,
-    shardNameTemplate: String,
-    tempDirectory: String,
-    filenamePolicySupplier: FilenamePolicySupplier
+    suffix: String = WriteParam.DefaultSuffix,
+    compression: Compression = WriteParam.DefaultCompression,
+    numShards: Int = WriteParam.DefaultNumShards,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory
   )
 }
 
@@ -95,17 +106,17 @@ final case class TFExampleIO(path: String) extends ScioIO[Example] {
 
   override protected def write(data: SCollection[Example], params: WriteP): Tap[Example] = {
     TFRecordMethods.write(data.map(_.toByteArray), path, params)
-    tap(TFExampleIO.ReadParam(params.compression))
+    tap(TFExampleIO.ReadParam(params))
   }
 
   override def tap(params: ReadP): Tap[Example] =
-    TFRecordMethods.tap(params, path).map(Example.parseFrom)
+    TFRecordMethods.tap(path, params).map(Example.parseFrom)
 }
 
 object TFExampleIO {
   type ReadParam = TFRecordIO.ReadParam
-  type WriteParam = TFRecordIO.WriteParam
   val ReadParam = TFRecordIO.ReadParam
+  type WriteParam = TFRecordIO.WriteParam
   val WriteParam = TFRecordIO.WriteParam
 }
 
@@ -124,42 +135,54 @@ final case class TFSequenceExampleIO(path: String) extends ScioIO[SequenceExampl
     params: WriteP
   ): Tap[SequenceExample] = {
     TFRecordMethods.write(data.map(_.toByteArray), path, params)
-    tap(TFExampleIO.ReadParam(params.compression))
+    tap(
+      TFExampleIO.ReadParam(
+        params.compression,
+        params.suffix + params.compression.getSuggestedSuffix
+      )
+    )
   }
 
   override def tap(params: ReadP): Tap[SequenceExample] =
-    TFRecordMethods.tap(params, path).map(SequenceExample.parseFrom)
+    TFRecordMethods.tap(path, params).map(SequenceExample.parseFrom)
 }
 
 private object TFRecordMethods {
-  def read(sc: ScioContext, path: String, params: TFRecordIO.ReadParam): SCollection[Array[Byte]] =
+  def read(
+    sc: ScioContext,
+    path: String,
+    params: TFRecordIO.ReadParam
+  ): SCollection[Array[Byte]] = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
     sc.applyTransform(
       beam.TFRecordIO
         .read()
-        .from(path)
+        .from(filePattern)
         .withCompression(params.compression)
     )
+  }
 
   private def tfWrite(
     path: String,
     suffix: String,
     numShards: Int,
     compression: Compression,
-    shardNameTemplate: String,
-    tempDirectory: ResourceId,
     filenamePolicySupplier: FilenamePolicySupplier,
-    isWindowed: Boolean
+    prefix: String,
+    shardNameTemplate: String,
+    isWindowed: Boolean,
+    tempDirectory: ResourceId
   ) = {
+    require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
-      path,
-      suffix,
-      shardNameTemplate,
-      tempDirectory,
-      filenamePolicySupplier,
-      isWindowed
-    )
-    val dynamicDestinations =
-      DynamicFileDestinations.constant(fp, SerializableFunctions.identity[Array[Byte]])
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      isWindowed = isWindowed
+    )(ScioUtil.strippedPath(path), suffix)
+
+    val dynamicDestinations = DynamicFileDestinations
+      .constant(fp, SerializableFunctions.identity[Array[Byte]])
 
     val sink = new TFRecordFileBasedSink(
       StaticValueProvider.of(tempDirectory),
@@ -178,16 +201,17 @@ private object TFRecordMethods {
         params.suffix,
         params.numShards,
         params.compression,
-        params.shardNameTemplate,
-        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
         params.filenamePolicySupplier,
-        ScioUtil.isWindowed(data)
+        params.prefix,
+        params.shardNameTemplate,
+        ScioUtil.isWindowed(data),
+        ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
       )
     )
 
     ()
   }
 
-  def tap(@unused read: TFRecordIO.ReadParam, path: String): Tap[Array[Byte]] =
-    TFRecordFileTap(ScioUtil.addPartSuffix(path))
+  def tap(path: String, read: TFRecordIO.ReadParam): Tap[Array[Byte]] =
+    TFRecordFileTap(path, read)
 }

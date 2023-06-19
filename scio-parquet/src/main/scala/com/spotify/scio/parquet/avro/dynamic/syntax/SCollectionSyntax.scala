@@ -25,7 +25,7 @@ import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.reflect.ReflectData
-import org.apache.avro.specific.SpecificRecordBase
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
@@ -44,7 +44,8 @@ final class DynamicParquetAvroSCollectionOps[T](
     suffix: String = ParquetAvroIO.WriteParam.DefaultSuffix,
     compression: CompressionCodecName = ParquetAvroIO.WriteParam.DefaultCompression,
     conf: Configuration = ParquetAvroIO.WriteParam.DefaultConfiguration,
-    tempDirectory: String = ParquetAvroIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = ParquetAvroIO.WriteParam.DefaultTempDirectory,
+    prefix: String = ParquetAvroIO.WriteParam.DefaultPrefix
   )(
     destinationFn: T => String
   )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
@@ -54,7 +55,7 @@ final class DynamicParquetAvroSCollectionOps[T](
       )
     } else {
       val cls = ScioUtil.classOf[T]
-      val isAssignable = classOf[SpecificRecordBase].isAssignableFrom(cls)
+      val isAssignable = classOf[SpecificRecord].isAssignableFrom(cls)
       val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else schema
       if (writerSchema == null) throw new IllegalArgumentException("Schema must not be null")
       val sink =
@@ -63,7 +64,14 @@ final class DynamicParquetAvroSCollectionOps[T](
           compression,
           new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
         )
-      val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
+      val write = writeDynamic(
+        path = path,
+        destinationFn = destinationFn,
+        numShards = numShards,
+        prefix = prefix,
+        suffix = suffix,
+        tempDirectory = tempDirectory
+      ).via(sink)
       self.applyInternal(write)
     }
     ClosedTap[Nothing](EmptyTap)

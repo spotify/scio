@@ -64,14 +64,18 @@ function, and immediately rewrites them using the same bucketing scheme.
 
 ## What kind of data can I write using SMB?
 
-SMB writes are supported for Avro (GenericRecord and SpecificRecord), JSON, Parquet, and Tensorflow records.
-See API bindings in:
+SMB writes are supported for multiple formats:
 
-- @javadoc[AvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO)
-- @javadoc[JsonSortedBucketIO](org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO)
-- @javadoc[ParquetAvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO)
-- @javadoc[ParquetTypesSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetTypesSortedBucketIO)
-- @javadoc[TensorFlowBucketIO](org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO)
+- Avro (GenericRecord and SpecificRecord) when also depending on `scio-avro`.
+  - @javadoc[AvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO)
+- JSON
+  - @javadoc[JsonSortedBucketIO](org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO)
+- Parquet when also depending on  `scio-parquet`
+  - @javadoc[ParquetAvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO)
+  - @javadoc[ParquetTypesSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetTypesSortedBucketIO)
+- Tensorflow when also depending on `scio-tensorflow`
+  - @javadoc[TensorFlowBucketIO](org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO)
+
 ## Null keys in SMB datasets
 
 If the key field of one or more PCollection elements is null, those elements will be diverted into a special

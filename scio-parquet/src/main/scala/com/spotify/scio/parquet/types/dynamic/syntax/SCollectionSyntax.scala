@@ -40,7 +40,8 @@ final class DynamicParquetTypeSCollectionOps[T](
     suffix: String = ParquetTypeIO.WriteParam.DefaultSuffix,
     compression: CompressionCodecName = ParquetTypeIO.WriteParam.DefaultCompression,
     conf: Configuration = ParquetTypeIO.WriteParam.DefaultConfiguration,
-    tempDirectory: String = ParquetTypeIO.WriteParam.DefaultTempDirectory
+    tempDirectory: String = ParquetTypeIO.WriteParam.DefaultTempDirectory,
+    prefix: String = ParquetTypeIO.WriteParam.DefaultPrefix
   )(
     destinationFn: T => String
   )(implicit ct: ClassTag[T], coder: Coder[T], pt: ParquetType[T]): ClosedTap[Nothing] = {
@@ -53,7 +54,14 @@ final class DynamicParquetTypeSCollectionOps[T](
         compression,
         new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
       )
-      val write = writeDynamic(path, numShards, suffix, destinationFn, tempDirectory).via(sink)
+      val write = writeDynamic(
+        path = path,
+        destinationFn = destinationFn,
+        numShards = numShards,
+        prefix = prefix,
+        suffix = suffix,
+        tempDirectory = tempDirectory
+      ).via(sink)
       self.applyInternal(write)
     }
     ClosedTap[Nothing](EmptyTap)

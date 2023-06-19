@@ -22,9 +22,10 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.NoSuchElementException;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.avro.generic.IndexedRecord;
+import org.apache.avro.reflect.ReflectData;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
@@ -51,7 +52,7 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
  * Avro records.
  */
 public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
-  static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.GZIP;
+  static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.ZSTD;
   private final SerializableSchemaSupplier schemaSupplier;
   private final CompressionCodecName compression;
   private final SerializableConfiguration conf;
@@ -69,27 +70,55 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     this.predicate = predicate;
   }
 
-  public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(Schema schema) {
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(Schema schema) {
     return of(schema, DEFAULT_COMPRESSION);
   }
 
-  public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
       Schema schema, CompressionCodecName compression) {
     return of(schema, compression, new Configuration());
   }
 
-  public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
       Schema schema, CompressionCodecName compression, Configuration conf) {
     return new ParquetAvroFileOperations<>(schema, compression, conf, null);
   }
 
-  public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
       Schema schema, FilterPredicate predicate) {
     return of(schema, predicate, new Configuration());
   }
 
-  public static <V extends GenericRecord> ParquetAvroFileOperations<V> of(
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
       Schema schema, FilterPredicate predicate, Configuration conf) {
+    return new ParquetAvroFileOperations<>(schema, DEFAULT_COMPRESSION, conf, predicate);
+  }
+
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(Class<V> recordClass) {
+    return of(recordClass, DEFAULT_COMPRESSION);
+  }
+
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
+      Class<V> recordClass, CompressionCodecName compression) {
+    return of(recordClass, compression, new Configuration());
+  }
+
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
+      Class<V> recordClass, CompressionCodecName compression, Configuration conf) {
+    // Use reflection to get SR schema
+    final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
+    return new ParquetAvroFileOperations<>(schema, compression, conf, null);
+  }
+
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
+      Class<V> recordClass, FilterPredicate predicate) {
+    return of(recordClass, predicate, new Configuration());
+  }
+
+  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
+      Class<V> recordClass, FilterPredicate predicate, Configuration conf) {
+    // Use reflection to get SR schema
+    final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
     return new ParquetAvroFileOperations<>(schema, DEFAULT_COMPRESSION, conf, predicate);
   }
 

@@ -24,7 +24,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.{Coder => BCoder}
-import org.apache.beam.sdk.io.AvroIO
+import org.apache.beam.sdk.extensions.avro.io.AvroIO
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 
@@ -63,16 +63,18 @@ case object EmptyTap extends Tap[Nothing] {
   override def open(sc: ScioContext): SCollection[Nothing] = sc.empty[Nothing]()
 }
 
-case class UnsupportedTap[T](msg: String) extends Tap[T] {
+final case class UnsupportedTap[T](msg: String) extends Tap[T] {
   override def value: Iterator[T] = throw new UnsupportedOperationException(msg)
   override def open(sc: ScioContext): SCollection[T] = throw new UnsupportedOperationException(msg)
 }
 
 /** Tap for text files on local file system or GCS. */
-final case class TextTap(path: String) extends Tap[String] {
-  override def value: Iterator[String] = FileStorage(path).textFile
+final case class TextTap(path: String, params: TextIO.ReadParam) extends Tap[String] {
+  override def value: Iterator[String] =
+    FileStorage(path, params.suffix).textFile
 
-  override def open(sc: ScioContext): SCollection[String] = sc.textFile(path)
+  override def open(sc: ScioContext): SCollection[String] =
+    sc.read(TextIO(path))(params)
 }
 
 final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
@@ -82,14 +84,13 @@ final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
     sc.parallelize[T](InMemorySink.get(id))
 }
 
-private[scio] class MaterializeTap[T: Coder] private (val path: String, coder: BCoder[T])
+final private[scio] class MaterializeTap[T: Coder] private (path: String, coder: BCoder[T])
     extends Tap[T] {
-  private val _path = ScioUtil.addPartSuffix(path)
 
   override def value: Iterator[T] = {
-    val storage = FileStorage(_path)
+    val storage = FileStorage(path, MaterializeTap.Suffix)
 
-    if (storage.isDone) {
+    if (storage.isDone()) {
       storage
         .avroFile[GenericRecord](AvroBytesUtil.schema)
         .map(AvroBytesUtil.decode(coder, _))
@@ -112,12 +113,18 @@ private[scio] class MaterializeTap[T: Coder] private (val path: String, coder: B
     }
 
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
-    val read = AvroIO.readGenericRecords(AvroBytesUtil.schema).from(_path)
+    val filePattern = ScioUtil.filePattern(path, MaterializeTap.Suffix)
+    val read = AvroIO
+      .readGenericRecords(AvroBytesUtil.schema)
+      .from(filePattern)
     sc.applyTransform(read).parDo(dofn)
   }
 }
 
 object MaterializeTap {
+
+  private val Suffix = ".obj.avro"
+
   def apply[T: Coder](path: String, context: ScioContext): MaterializeTap[T] =
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
 }

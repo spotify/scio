@@ -23,8 +23,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.reflect.ReflectData;
-import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
@@ -43,9 +44,19 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 /** API for reading and writing Parquet sorted-bucket files as Avro. */
 public class ParquetAvroSortedBucketIO {
   private static final String DEFAULT_SUFFIX = ".parquet";
+
+  // make sure parquet is part of the classpath
+  static {
+    try {
+      Class.forName("org.apache.parquet.schema.Types");
+    } catch (ClassNotFoundException e) {
+      throw new MissingImplementationException("parquet", e);
+    }
+  }
+
   /** Returns a new {@link Read} for Avro generic records. */
   public static Read<GenericRecord> read(TupleTag<GenericRecord> tupleTag, Schema schema) {
-    return new AutoValue_ParquetAvroSortedBucketIO_Read.Builder<>()
+    return new AutoValue_ParquetAvroSortedBucketIO_Read.Builder<GenericRecord>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setSchema(schema)
@@ -54,7 +65,7 @@ public class ParquetAvroSortedBucketIO {
   }
 
   /** Returns a new {@link Read} for Avro specific records. */
-  public static <T extends SpecificRecordBase> Read<T> read(
+  public static <T extends SpecificRecord> Read<T> read(
       TupleTag<T> tupleTag, Class<T> recordClass) {
     return new AutoValue_ParquetAvroSortedBucketIO_Read.Builder<T>()
         .setTupleTag(tupleTag)
@@ -80,14 +91,14 @@ public class ParquetAvroSortedBucketIO {
       Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Schema schema) {
-    return ParquetAvroSortedBucketIO.newBuilder(
+    return ParquetAvroSortedBucketIO.<K1, K2, GenericRecord>newBuilder(
             keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
         .setSchema(schema)
         .build();
   }
 
   /** Returns a new {@link Write} for Avro specific records. */
-  public static <K1, T extends SpecificRecordBase> Write<K1, Void, T> write(
+  public static <K1, T extends SpecificRecord> Write<K1, Void, T> write(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return ParquetAvroSortedBucketIO.<K1, Void, T>newBuilder(
             keyClassPrimary, keyFieldPrimary, null, null)
@@ -96,7 +107,7 @@ public class ParquetAvroSortedBucketIO {
   }
 
   /** Returns a new {@link Write} for Avro specific records. */
-  public static <K1, K2, T extends SpecificRecordBase> Write<K1, K2, T> write(
+  public static <K1, K2, T extends SpecificRecord> Write<K1, K2, T> write(
       Class<K1> keyClassPrimary,
       String keyFieldPrimary,
       Class<K2> keyClassSecondary,
@@ -108,7 +119,7 @@ public class ParquetAvroSortedBucketIO {
         .build();
   }
 
-  private static <K1, K2, T extends GenericRecord> Write.Builder<K1, K2, T> newBuilder(
+  private static <K1, K2, T extends IndexedRecord> Write.Builder<K1, K2, T> newBuilder(
       Class<K1> keyClassPrimary,
       String keyFieldPrimary,
       Class<K2> keyClassSecondary,
@@ -156,14 +167,14 @@ public class ParquetAvroSortedBucketIO {
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
-  public static <K1, T extends SpecificRecordBase> TransformOutput<K1, Void, T> transformOutput(
+  public static <K1, T extends SpecificRecord> TransformOutput<K1, Void, T> transformOutput(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return ParquetAvroSortedBucketIO.transformOutput(
         keyClassPrimary, keyFieldPrimary, null, null, recordClass);
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
-  public static <K1, K2, T extends SpecificRecordBase> TransformOutput<K1, K2, T> transformOutput(
+  public static <K1, K2, T extends SpecificRecord> TransformOutput<K1, K2, T> transformOutput(
       Class<K1> keyClassPrimary,
       String keyFieldPrimary,
       Class<K2> keyClassSecondary,
@@ -188,7 +199,7 @@ public class ParquetAvroSortedBucketIO {
 
   /** Reads from Avro sorted-bucket files, to be used with {@link SortedBucketIO.CoGbk}. */
   @AutoValue
-  public abstract static class Read<T extends GenericRecord> extends SortedBucketIO.Read<T> {
+  public abstract static class Read<T extends IndexedRecord> extends SortedBucketIO.Read<T> {
     @Nullable
     abstract ImmutableList<String> getInputDirectories();
 
@@ -211,7 +222,7 @@ public class ParquetAvroSortedBucketIO {
     abstract Builder<T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<T extends GenericRecord> {
+    abstract static class Builder<T extends IndexedRecord> {
       abstract Builder<T> setTupleTag(TupleTag<T> tupleTag);
 
       abstract Builder<T> setInputDirectories(List<String> inputDirectories);
@@ -287,7 +298,7 @@ public class ParquetAvroSortedBucketIO {
 
   /** Writes to Avro sorted-bucket files using {@link SortedBucketSink}. */
   @AutoValue
-  public abstract static class Write<K1, K2, T extends GenericRecord>
+  public abstract static class Write<K1, K2, T extends IndexedRecord>
       extends SortedBucketIO.Write<K1, K2, T> {
 
     @Nullable
@@ -309,7 +320,7 @@ public class ParquetAvroSortedBucketIO {
     abstract Builder<K1, K2, T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K1, K2, T extends GenericRecord> {
+    abstract static class Builder<K1, K2, T extends IndexedRecord> {
       // Common
       abstract Builder<K1, K2, T> setNumBuckets(int numBuckets);
 
@@ -380,11 +391,9 @@ public class ParquetAvroSortedBucketIO {
 
     @Override
     FileOperations<T> getFileOperations() {
-      final Schema schema =
-          getRecordClass() == null
-              ? getSchema()
-              : new ReflectData(getRecordClass().getClassLoader()).getSchema(getRecordClass());
-      return ParquetAvroFileOperations.of(schema, getCompression(), getConfiguration());
+      return getRecordClass() == null
+          ? ParquetAvroFileOperations.of(getSchema(), getCompression(), getConfiguration())
+          : ParquetAvroFileOperations.of(getRecordClass(), getCompression(), getConfiguration());
     }
 
     @Override
@@ -442,7 +451,7 @@ public class ParquetAvroSortedBucketIO {
 
   /** Writes to Avro sorted-bucket files using {@link SortedBucketTransform}. */
   @AutoValue
-  public abstract static class TransformOutput<K1, K2, T extends GenericRecord>
+  public abstract static class TransformOutput<K1, K2, T extends IndexedRecord>
       extends SortedBucketIO.TransformOutput<K1, K2, T> {
     @Nullable
     abstract String getKeyFieldPrimary();
@@ -463,7 +472,7 @@ public class ParquetAvroSortedBucketIO {
     abstract Builder<K1, K2, T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K1, K2, T extends GenericRecord> {
+    abstract static class Builder<K1, K2, T extends IndexedRecord> {
       abstract Builder<K1, K2, T> setKeyClassPrimary(Class<K1> keyClassPrimary);
 
       abstract Builder<K1, K2, T> setKeyClassSecondary(Class<K2> keyClassSecondary);

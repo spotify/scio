@@ -25,7 +25,8 @@ import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.avro.generic.IndexedRecord;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
@@ -40,9 +41,19 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Immutabl
 /** API for reading and writing Avro sorted-bucket files. */
 public class AvroSortedBucketIO {
   private static final String DEFAULT_SUFFIX = ".avro";
+
+  // make sure avro is part of the classpath
+  static {
+    try {
+      Class.forName("org.apache.avro.Schema");
+    } catch (ClassNotFoundException e) {
+      throw new MissingImplementationException("avro", e);
+    }
+  }
+
   /** Returns a new {@link Read} for Avro generic records. */
   public static Read<GenericRecord> read(TupleTag<GenericRecord> tupleTag, Schema schema) {
-    return new AutoValue_AvroSortedBucketIO_Read.Builder<>()
+    return new AutoValue_AvroSortedBucketIO_Read.Builder<GenericRecord>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setSchema(schema)
@@ -50,7 +61,7 @@ public class AvroSortedBucketIO {
   }
 
   /** Returns a new {@link Read} for Avro specific records. */
-  public static <T extends SpecificRecordBase> Read<T> read(
+  public static <T extends SpecificRecord> Read<T> read(
       TupleTag<T> tupleTag, Class<T> recordClass) {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<T>()
         .setTupleTag(tupleTag)
@@ -75,14 +86,14 @@ public class AvroSortedBucketIO {
       Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Schema schema) {
-    return AvroSortedBucketIO.newBuilder(
+    return AvroSortedBucketIO.<K1, K2, GenericRecord>newBuilder(
             keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
         .setSchema(schema)
         .build();
   }
 
   /** Returns a new {@link Write} for Avro specific records. */
-  public static <K1, T extends SpecificRecordBase> Write<K1, Void, T> write(
+  public static <K1, T extends SpecificRecord> Write<K1, Void, T> write(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return AvroSortedBucketIO.<K1, Void, T>newBuilder(keyClassPrimary, keyFieldPrimary, null, null)
         .setRecordClass(recordClass)
@@ -90,7 +101,7 @@ public class AvroSortedBucketIO {
   }
 
   /** Returns a new {@link Write} for Avro specific records. */
-  public static <K1, K2, T extends SpecificRecordBase> Write<K1, K2, T> write(
+  public static <K1, K2, T extends SpecificRecord> Write<K1, K2, T> write(
       Class<K1> keyClassPrimary,
       String keyFieldPrimary,
       Class<K2> keyClassSecondary,
@@ -102,7 +113,7 @@ public class AvroSortedBucketIO {
         .build();
   }
 
-  private static <K1, K2, T extends GenericRecord> Write.Builder<K1, K2, T> newBuilder(
+  private static <K1, K2, T extends IndexedRecord> Write.Builder<K1, K2, T> newBuilder(
       Class<K1> keyClassPrimary,
       String keyFieldPrimary,
       Class<K2> keyClassSecondary,
@@ -149,14 +160,14 @@ public class AvroSortedBucketIO {
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
-  public static <K1, T extends SpecificRecordBase> TransformOutput<K1, Void, T> transformOutput(
+  public static <K1, T extends SpecificRecord> TransformOutput<K1, Void, T> transformOutput(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return AvroSortedBucketIO.transformOutput(
         keyClassPrimary, keyFieldPrimary, null, null, recordClass);
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
-  public static <K1, K2, T extends SpecificRecordBase> TransformOutput<K1, K2, T> transformOutput(
+  public static <K1, K2, T extends SpecificRecord> TransformOutput<K1, K2, T> transformOutput(
       Class<K1> keyClassPrimary,
       String keyFieldPrimary,
       Class<K2> keyClassSecondary,
@@ -180,7 +191,7 @@ public class AvroSortedBucketIO {
 
   /** Reads from Avro sorted-bucket files, to be used with {@link SortedBucketIO.CoGbk}. */
   @AutoValue
-  public abstract static class Read<T extends GenericRecord> extends SortedBucketIO.Read<T> {
+  public abstract static class Read<T extends IndexedRecord> extends SortedBucketIO.Read<T> {
     @Nullable
     abstract ImmutableList<String> getInputDirectories();
 
@@ -198,7 +209,7 @@ public class AvroSortedBucketIO {
     abstract Builder<T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<T extends GenericRecord> {
+    abstract static class Builder<T extends IndexedRecord> {
       abstract Builder<T> setTupleTag(TupleTag<T> tupleTag);
 
       abstract Builder<T> setInputDirectories(List<String> inputDirectories);
@@ -242,9 +253,9 @@ public class AvroSortedBucketIO {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =
           getRecordClass() == null
-              ? AvroFileOperations.of(getSchema())
+              ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema())
               : (AvroFileOperations<T>)
-                  AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass());
+                  AvroFileOperations.of((Class<SpecificRecord>) getRecordClass());
       return SortedBucketSource.BucketedInput.of(
           keying,
           getTupleTag(),
@@ -261,7 +272,7 @@ public class AvroSortedBucketIO {
 
   /** Writes to Avro sorted-bucket files using {@link SortedBucketSink}. */
   @AutoValue
-  public abstract static class Write<K1, K2, T extends GenericRecord>
+  public abstract static class Write<K1, K2, T extends IndexedRecord>
       extends SortedBucketIO.Write<K1, K2, T> {
     @Nullable
     abstract String getKeyFieldPrimary();
@@ -283,7 +294,7 @@ public class AvroSortedBucketIO {
     abstract Builder<K1, K2, T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K1, K2, T extends GenericRecord> {
+    abstract static class Builder<K1, K2, T extends IndexedRecord> {
       // Common
       abstract Builder<K1, K2, T> setNumBuckets(int numBuckets);
 
@@ -361,9 +372,9 @@ public class AvroSortedBucketIO {
     @Override
     FileOperations<T> getFileOperations() {
       return getRecordClass() == null
-          ? AvroFileOperations.of(getSchema(), getCodec())
+          ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema(), getCodec())
           : (AvroFileOperations<T>)
-              AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
+              AvroFileOperations.of((Class<SpecificRecord>) getRecordClass(), getCodec());
     }
 
     @SuppressWarnings("unchecked")
@@ -429,7 +440,7 @@ public class AvroSortedBucketIO {
 
   /** Writes to Avro sorted-bucket files using {@link SortedBucketTransform}. */
   @AutoValue
-  public abstract static class TransformOutput<K1, K2, T extends GenericRecord>
+  public abstract static class TransformOutput<K1, K2, T extends IndexedRecord>
       extends SortedBucketIO.TransformOutput<K1, K2, T> {
 
     abstract String getKeyFieldPrimary();
@@ -448,7 +459,7 @@ public class AvroSortedBucketIO {
     abstract Builder<K1, K2, T> toBuilder();
 
     @AutoValue.Builder
-    abstract static class Builder<K1, K2, T extends GenericRecord> {
+    abstract static class Builder<K1, K2, T extends IndexedRecord> {
       abstract Builder<K1, K2, T> setKeyClassPrimary(Class<K1> keyClass);
 
       abstract Builder<K1, K2, T> setKeyClassSecondary(Class<K2> keyClass);
@@ -508,9 +519,9 @@ public class AvroSortedBucketIO {
     @Override
     FileOperations<T> getFileOperations() {
       return getRecordClass() == null
-          ? AvroFileOperations.of(getSchema(), getCodec())
+          ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema(), getCodec())
           : (AvroFileOperations<T>)
-              AvroFileOperations.of((Class<SpecificRecordBase>) getRecordClass(), getCodec());
+              AvroFileOperations.of((Class<SpecificRecord>) getRecordClass(), getCodec());
     }
 
     @Override

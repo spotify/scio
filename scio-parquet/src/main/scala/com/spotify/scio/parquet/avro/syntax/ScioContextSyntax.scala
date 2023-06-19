@@ -46,10 +46,11 @@ final class ScioContextOps(@transient private val self: ScioContext) extends Any
     path: String,
     projection: Schema = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
-    conf: Configuration = ReadParam.DefaultConfiguration
+    conf: Configuration = ReadParam.DefaultConfiguration,
+    suffix: String = ReadParam.DefaultSuffix
   ): ParquetAvroFile[T] =
     self.requireNotClosed {
-      new ParquetAvroFile[T](self, path, projection, predicate, conf)
+      new ParquetAvroFile[T](self, path, projection, predicate, conf, suffix)
     }
 }
 
@@ -58,7 +59,8 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
   path: String,
   projection: Schema,
   predicate: FilterPredicate,
-  conf: Configuration
+  conf: Configuration,
+  suffix: String
 ) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -67,7 +69,7 @@ class ParquetAvroFile[T: ClassTag] private[avro] (
    * file.
    */
   def map[U: ClassTag: Coder](f: T => U): SCollection[U] = {
-    val param = ParquetAvroIO.ReadParam[T, U](f, projection, predicate, conf)
+    val param = ParquetAvroIO.ReadParam[T, U](f, projection, predicate, conf, suffix)
     context.read(ParquetAvroIO[U](path))(param)
   }
 
