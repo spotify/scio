@@ -253,7 +253,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles[Account](
+        ParquetRead.readAvro[Account](
           predicate = Predicate[Account](_.getId == 300)
         )
       ) should containSingleValue(avroRecords.find(_.getId == 300).get)
@@ -267,7 +267,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     val output = sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles[Account](
+        ParquetRead.readAvro[Account](
           projection,
           Predicate[Account](_.getId == 300)
         )
@@ -290,7 +290,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles(
+        ParquetRead.readAvro(
           projection,
           (a: Account) => a.getId.toInt,
           Predicate[Account](_.getId == 300),
@@ -308,7 +308,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     sc
       .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/avro"))
       .readFiles(
-        ParquetRead.readAvroSpecificRecordFiles(
+        ParquetRead.readAvro(
           projection,
           (tr: Account) => tr.getId.toInt,
           Predicate[Account](_.getId == 300),
@@ -320,7 +320,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
   it should "be serializable" in {
     SerializableUtils.ensureSerializable(
-      ParquetRead.readAvroSpecificRecordFiles(
+      ParquetRead.readAvro(
         Projection[Account](_.getId),
         (tr: Account) => tr.getId.toInt,
         Predicate[Account](_.getId == 300),
