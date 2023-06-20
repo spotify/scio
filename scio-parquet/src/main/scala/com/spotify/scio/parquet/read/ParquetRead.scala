@@ -87,6 +87,57 @@ object ParquetRead {
    *
    * @param projectionFn
    *   a function mapping T => R
+   */
+  def readTyped[T: ClassTag: ParquetType, R](
+    projectionFn: T => R
+  ): PTransform[PCollection[ReadableFile], PCollection[R]] = readTyped(
+    projectionFn,
+    null,
+    null
+  )
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Scala case classes of type R, where
+   * R is mapped from type T
+   *
+   * @param projectionFn
+   *   a function mapping T => R
+   * @param predicate
+   *   a Parquet [[FilterApi]] predicate
+   */
+  def readTyped[T: ClassTag: ParquetType, R](
+    projectionFn: T => R,
+    predicate: FilterPredicate
+  ): PTransform[PCollection[ReadableFile], PCollection[R]] = readTyped(
+    projectionFn,
+    predicate,
+    null
+  )
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Scala case classes of type R, where
+   * R is mapped from type T
+   *
+   * @param projectionFn
+   *   a function mapping T => R
+   * @param conf
+   *   a Parquet [[Configuration]]
+   */
+  def readTyped[T: ClassTag: ParquetType, R](
+    projectionFn: T => R,
+    conf: Configuration
+  ): PTransform[PCollection[ReadableFile], PCollection[R]] = readTyped(
+    projectionFn,
+    null,
+    conf
+  )
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Scala case classes of type R, where
+   * R is mapped from type T
+   *
+   * @param projectionFn
+   *   a function mapping T => R
    * @param predicate
    *   a Parquet [[FilterApi]] predicate
    * @param conf
@@ -121,6 +172,68 @@ object ParquetRead {
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[GenericRecord]] =
     readAvroGenericRecordFiles[GenericRecord](schema, identity, predicate, conf)
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Avro [[GenericRecord]]s using the
+   * supplied schema, then applies a mapping function to convert the Avro records into type T
+   *
+   * @param schema
+   *   The Avro [[Schema]] to use for Parquet reads; can be a projection of the full file schema
+   * @param projectionFn
+   *   a function mapping [[GenericRecord]] => T
+   */
+  def readAvroGenericRecordFiles[T](
+    schema: Schema,
+    projectionFn: GenericRecord => T
+  ): PTransform[PCollection[ReadableFile], PCollection[T]] = readAvroGenericRecordFiles(
+    schema,
+    projectionFn,
+    null,
+    null
+  )
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Avro [[GenericRecord]]s using the
+   * supplied schema, then applies a mapping function to convert the Avro records into type T
+   *
+   * @param schema
+   *   The Avro [[Schema]] to use for Parquet reads; can be a projection of the full file schema
+   * @param projectionFn
+   *   a function mapping [[GenericRecord]] => T
+   * @param predicate
+   *   a Parquet [[FilterPredicate]] predicate
+   */
+  def readAvroGenericRecordFiles[T](
+    schema: Schema,
+    projectionFn: GenericRecord => T,
+    predicate: FilterPredicate
+  ): PTransform[PCollection[ReadableFile], PCollection[T]] = readAvroGenericRecordFiles(
+    schema,
+    projectionFn,
+    predicate,
+    null
+  )
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Avro [[GenericRecord]]s using the
+   * supplied schema, then applies a mapping function to convert the Avro records into type T
+   *
+   * @param schema
+   *   The Avro [[Schema]] to use for Parquet reads; can be a projection of the full file schema
+   * @param projectionFn
+   *   a function mapping [[GenericRecord]] => T
+   * @param conf
+   *   a Parquet [[Configuration]]
+   */
+  def readAvroGenericRecordFiles[T](
+    schema: Schema,
+    projectionFn: GenericRecord => T,
+    conf: Configuration
+  ): PTransform[PCollection[ReadableFile], PCollection[T]] = readAvroGenericRecordFiles(
+    schema,
+    projectionFn,
+    conf
+  )
 
   /**
    * A ReadFiles implementation that reads Parquet file(s) into Avro [[GenericRecord]]s using the
@@ -180,6 +293,69 @@ object ParquetRead {
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[T]] =
     readAvro[T, T](projection, identity, predicate, conf)
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Avro [[SpecificRecord]]s using the
+   * supplied schema, then applies a mapping function to convert the Avro records into type T
+   *
+   * @param projection
+   *   an [[Schema]] used for Projection, made up of a subset of fields from the full Avro type `T`
+   * @param projectionFn
+   *   a function mapping T => R
+   */
+  def readAvro[T <: SpecificRecord: ClassTag, R](
+    projection: Schema,
+    projectionFn: T => R
+  ): PTransform[PCollection[ReadableFile], PCollection[R]] = readAvro(
+    projection,
+    projectionFn,
+    null,
+    null
+  )
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Avro [[SpecificRecord]]s using the
+   * supplied schema, then applies a mapping function to convert the Avro records into type T
+   *
+   * @param projection
+   *   an [[Schema]] used for Projection, made up of a subset of fields from the full Avro type `T`
+   * @param projectionFn
+   *   a function mapping T => R
+   * @param predicate
+   *   a Parquet [[FilterPredicate]] predicate
+   */
+  def readAvro[T <: SpecificRecord: ClassTag, R](
+    projection: Schema,
+    projectionFn: T => R,
+    predicate: FilterPredicate
+  ): PTransform[PCollection[ReadableFile], PCollection[R]] = readAvro(
+    projection,
+    projectionFn,
+    predicate,
+    null
+  )
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into Avro [[SpecificRecord]]s using the
+   * supplied schema, then applies a mapping function to convert the Avro records into type T
+   *
+   * @param projection
+   *   an [[Schema]] used for Projection, made up of a subset of fields from the full Avro type `T`
+   * @param projectionFn
+   *   a function mapping T => R
+   * @param conf
+   *   a Parquet [[Configuration]]
+   */
+  def readAvro[T <: SpecificRecord: ClassTag, R](
+    projection: Schema,
+    projectionFn: T => R,
+    conf: Configuration
+  ): PTransform[PCollection[ReadableFile], PCollection[R]] = readAvro(
+    projection,
+    projectionFn,
+    null,
+    conf
+  )
 
   /**
    * A ReadFiles implementation that reads Parquet file(s) into Avro [[SpecificRecord]]s using the

@@ -210,8 +210,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
         ParquetRead.readAvroGenericRecordFiles(
           projection,
           _.get("id").toString.toInt,
-          predicate = Predicate[Account](_.getId <= 300),
-          conf = null
+          predicate = Predicate[Account](_.getId <= 300)
         )
       ) should containInAnyOrder(251 to 300)
 
@@ -229,8 +228,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
         ParquetRead.readAvroGenericRecordFiles(
           projection,
           _.get("id").toString.toInt,
-          predicate = Predicate[Account](_.getId <= 300),
-          conf = null
+          predicate = Predicate[Account](_.getId <= 300)
         )
       ) should containInAnyOrder(251 to 300)
 
@@ -242,8 +240,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       ParquetRead.readAvroGenericRecordFiles(
         Projection[Account](_.getId),
         _.get("int_field").toString.toInt,
-        predicate = Predicate[Account](_.getId <= 300),
-        conf = null
+        predicate = Predicate[Account](_.getId <= 300)
       )
     )
   }
@@ -293,8 +290,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
         ParquetRead.readAvro(
           projection,
           (a: Account) => a.getId.toInt,
-          Predicate[Account](_.getId == 300),
-          null
+          Predicate[Account](_.getId == 300)
         )
       ) should containSingleValue(300)
     sc.run()
@@ -311,8 +307,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
         ParquetRead.readAvro(
           projection,
           (tr: Account) => tr.getId.toInt,
-          Predicate[Account](_.getId == 300),
-          null
+          Predicate[Account](_.getId == 300)
         )
       ) should containSingleValue(300)
     sc.run()
@@ -323,8 +318,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       ParquetRead.readAvro(
         Projection[Account](_.getId),
         (tr: Account) => tr.getId.toInt,
-        Predicate[Account](_.getId == 300),
-        null
+        Predicate[Account](_.getId == 300)
       )
     )
   }
