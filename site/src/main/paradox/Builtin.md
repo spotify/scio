@@ -39,6 +39,7 @@ val result: SCollection[(String, String)] = elements.keyBy(_.head.toString)
 ```
 
 Once keyed, elements with the same key can be grouped so that they can be processed together:
+
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 
@@ -47,6 +48,7 @@ val result: SCollection[(String, Iterable[String])] = elements.groupByKey
 ```
 
 Distinct elements can be found with @scaladoc[`distinct`](com.spotify.scio.values.SCollection#distinct:com.spotify.scio.values.SCollection[T]) (or the `distinctBy` and `distinctByKey` variants):
+
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 
@@ -56,6 +58,7 @@ val distinct: SCollection[String] = elements.distinct
 
 Elements can be split into different `SCollection`s with @scaladoc[`partition`](com.spotify.scio.values.SCollection#partition(p:T=%3EBoolean):(com.spotify.scio.values.SCollection[T],com.spotify.scio.values.SCollection[T])), which can be useful for error handling.
 Note that the number of partitions should be small.
+
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 
@@ -63,7 +66,19 @@ val elements: SCollection[Int] = ???
 val (lessThanFive, greaterThanFive): (SCollection[Int], SCollection[Int]) = elements.partition(_ > 5)
 ```
 
+`SCollection`s of the same type can be combined with a @scaladoc[`union`](com.spotify.scio.values.SCollection#union(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T]) (or
+@scaladoc[`unionAll`](com.spotify.scio.ScioContext#unionAll[T](scs:=%3EIterable[com.spotify.scio.values.SCollection[T]])(implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T])) operation.
+
+```scala mdoc:compile-only
+import com.spotify.scio.values.SCollection
+
+val a: SCollection[Int] = ???
+val b: SCollection[Int] = ???
+val elements: SCollection[Int] = a.union(b)
+```
+
 Elements can be printed to the console for inspection at any point of the graph by using @scaladoc[`debug`](com.spotify.scio.values.SCollection#debug(out:()=%3Ejava.io.PrintStream,prefix:String,enabled:Boolean):com.spotify.scio.values.SCollection[T]):
+
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 

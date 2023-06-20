@@ -6,13 +6,6 @@ All joins operate over `SCollection`s containing 2-tuples, where the first tuple
 The order in which `SCollection`s are joined matters; larger datasets should be further to the left.
 For example in `a.join(b)`, `a` should be the larger of the two datasets and by convention `a` is called the left-hand-side or _LHS_, while `b` is the right-hand-side or _RHS_.
 
-## Union
-
-Unions are a special case where two `SCollection`s of the same type are to be combined into one.
-
-@scaladoc[`union`](com.spotify.scio.values.SCollection#union(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T])
-@scaladoc[`unionAll`](com.spotify.scio.ScioContext#unionAll[T](scs:=%3EIterable[com.spotify.scio.values.SCollection[T]])(implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T])
-
 ## Cogroup
 
 The Beam transform which underlies the standard joins below is the [Cogroup](https://beam.apache.org/documentation/programming-guide/#cogroupbykey).

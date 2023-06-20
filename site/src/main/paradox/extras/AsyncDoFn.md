@@ -10,8 +10,9 @@ Scio provides several future-specific subclasses to choose from depending on the
 
 `BaseAsyncDoFn` will wait for all futures for all bundle elements to be returned before completing the bundle.
 A failure of any request for an item in the bundle will cause the entire bundle to be retried.
+Requests should therefore be idempotent.
 
-Given this mock client:
+Given this Guava-based mock client:
 ```scala
 import com.google.common.util.concurrent.{ListenableFuture, Futures}
 
@@ -20,7 +21,7 @@ case class MyClient(value: String) {
 }
 ```
 
-A custom `DoFn` can be defined using `GuavaAsyncDoFn`, since the client returns `ListenableFuture`.
+For client which returns a `ListenableFuture`, a custom `DoFn` can be defined using `GuavaAsyncDoFn`.
 Note the configured `ResourceType`, which will re-use the client for all threads on a worker, see @scaladoc[`ResourceType`](com.spotify.scio.transforms.DoFnWithResource.ResourceType) for more details.
 
 ```scala

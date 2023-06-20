@@ -4,7 +4,7 @@ Scio supports JDBC reads and writes.
 
 ## Reads
 
-Reads come in two flavors: a query-based variant backed by Beam's [`JdbcIO`](https://beam.apache.org/releases/javadoc/2.47.0/org/apache/beam/sdk/io/jdbc/JdbcIO.html) and a "sharded select" that performs a parallelizable bulk read on an entire table.
+Reads come in two flavors: a query-based variant backed by Beam's @javadoc[`JdbcIO`](org.apache.beam.sdk.io.jdbc.JdbcIO) and a "sharded select" that performs a parallelizable bulk read on an entire table.
 
 ### Read via query
 

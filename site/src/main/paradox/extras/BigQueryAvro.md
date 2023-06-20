@@ -1,6 +1,6 @@
 # BigQueryAvro
 
-Scio provides support for converting an Avro schemas a BigQuery [`TableSchema`s](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableSchema.html) and Avro `SpecificRecord`s to a BigQuery [`TableRow`s](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableRow.html).
+Scio provides support for converting Avro schemas to BigQuery [`TableSchema`s](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableSchema.html) and Avro `SpecificRecord`s to a BigQuery [`TableRow`s](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableRow.html).
 
 ```scala mdoc:compile-only
 import com.spotify.scio.extra.bigquery.AvroConverters

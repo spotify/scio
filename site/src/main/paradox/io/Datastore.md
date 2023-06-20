@@ -1,6 +1,6 @@
 # Datastore
 
-Scio supports [Google Datastore](https://cloud.google.com/datastore) via Beam's [DatastoreIO](https://beam.apache.org/releases/javadoc/2.47.0/org/apache/beam/sdk/io/gcp/datastore/DatastoreIO.html).
+Scio supports [Google Datastore](https://cloud.google.com/datastore) via Beam's @javadoc[DatastoreIO](org.apache.beam.sdk.io.gcp.datastore.DatastoreIO).
 
 [Magnolify's](https://github.com/spotify/magnolify) `EntityType` (available as part of the `magnolify-datastore` artifact) provides automatically-derived mappings between Datastore's `Entity` and scala case classes. See [full documentation here](https://github.com/spotify/magnolify/blob/main/docs/datastore.md) and [an example usage here](https://spotify.github.io/scio/examples/MagnolifyDatastoreExample.scala.html).
 
