@@ -63,7 +63,8 @@ val zetasketchVersion = "0.1.0"
 val googleApiServicesBigQueryVersion = s"v2-rev20220924-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
+// beam is rev20220705 but conflicts with libraries-bom
+val googleApiServicesStorageVersion = s"v1-rev20230301-$googleClientsVersion"
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.14.0/index.html
@@ -624,12 +625,13 @@ lazy val `scio-test`: Project = project
       "org.scalactic" %% "scalactic" % scalatestVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
+      // runtime
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
       "com.spotify" % "annoy" % annoyVersion % "test",
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
       "com.twitter" %% "algebird-test" % algebirdVersion % "test",
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
@@ -1183,6 +1185,7 @@ lazy val `scio-examples`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
+      "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.12.0" % Runtime,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
