@@ -25,7 +25,6 @@ import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.commons.io.FileUtils
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
-import org.apache.beam.sdk.coders.AvroCoder
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.io.api.Binary
@@ -281,8 +280,6 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
   it should "work with a projection and a projectionFn" in {
     val projection = Projection[Account](_.getId)
-    implicit val coder = Coder.beam(AvroCoder.of(classOf[Account], projection))
-
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
@@ -298,8 +295,6 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
   it should "work with a projection and a projectionFn on files with multiple row groups" in {
     val projection = Projection[Account](_.getId)
-    implicit val coder = Coder.beam(AvroCoder.of(classOf[Account], projection))
-
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/avro"))
