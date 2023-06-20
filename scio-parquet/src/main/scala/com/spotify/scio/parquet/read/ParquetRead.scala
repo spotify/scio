@@ -75,8 +75,8 @@ object ParquetRead {
   def readTyped[T: ClassTag: ParquetType](
     predicate: FilterPredicate = null,
     conf: Configuration = null
-  ): PTransform[PCollection[ReadableFile], PCollection[T]] = readTyped[T, T](
-    identity,
+  ): PTransform[PCollection[ReadableFile], PCollection[T]] = readTyped(
+    identity[T],
     predicate,
     conf
   )
@@ -171,7 +171,7 @@ object ParquetRead {
     predicate: FilterPredicate = null,
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[GenericRecord]] =
-    readAvroGenericRecordFiles[GenericRecord](schema, identity, predicate, conf)
+    readAvroGenericRecordFiles(schema, identity[GenericRecord], predicate, conf)
 
   /**
    * A ReadFiles implementation that reads Parquet file(s) into Avro [[GenericRecord]]s using the
@@ -292,7 +292,7 @@ object ParquetRead {
     predicate: FilterPredicate = null,
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[T]] =
-    readAvro[T, T](projection, identity, predicate, conf)
+    readAvro(projection, identity[T], predicate, conf)
 
   /**
    * A ReadFiles implementation that reads Parquet file(s) into Avro [[SpecificRecord]]s using the
