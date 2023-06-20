@@ -63,7 +63,8 @@ val zetasketchVersion = "0.1.0"
 val googleApiServicesBigQueryVersion = s"v2-rev20220924-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20220705-$googleClientsVersion"
+// beam is rev20220705 but conflicts with libraries-bom
+val googleApiServicesStorageVersion = s"v1-rev20230301-$googleClientsVersion"
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.14.0/index.html
