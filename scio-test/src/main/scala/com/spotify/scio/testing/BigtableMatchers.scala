@@ -21,7 +21,6 @@ import com.google.bigtable.v2.Mutation
 import com.google.bigtable.v2.Mutation.MutationCase
 import com.google.protobuf.ByteString
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.Coder
 
 import org.scalatest.matchers.{MatchResult, Matcher}
 
@@ -33,10 +32,6 @@ trait BigtableMatchers extends SCollectionMatchers {
 
   type BTRow = (ByteString, Iterable[Mutation])
   type BTCollection = SCollection[BTRow]
-
-  // Needed because scalac is an idiot
-  implicit def btCollCoder: Coder[BTRow] =
-    Coder.gen[(ByteString, Iterable[Mutation])]
 
   /** Provide an implicit BT serializer for common cell value type String. */
   implicit def stringBTSerializer(s: String): ByteString =

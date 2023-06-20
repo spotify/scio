@@ -17,29 +17,68 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.coders.Beam
+import com.spotify.scio.coders.{Beam, MaterializedCoder}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.spotify.scio.hash._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Aggregator
 import magnolify.guava.auto._
-import org.apache.beam.sdk.coders.{StringUtf8Coder, VarIntCoder}
+import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder, StructuredCoder, VarIntCoder}
 
 import scala.collection.mutable
 
 class PairSCollectionFunctionsTest extends PipelineSpec {
-  "PairSCollection" should "propagate unwrapped coders" in {
+  "PairSCollection" should "propagates unwrapped coders" in {
+    runWithContext { sc =>
+      val coll = sc.empty[(String, Int)]()
+      // internal is wrapped
+      val internalCoder = coll.internal.getCoder
+      internalCoder shouldBe a[MaterializedCoder[_]]
+      val materializedCoder = internalCoder.asInstanceOf[MaterializedCoder[_]]
+      materializedCoder.bcoder shouldBe a[StructuredCoder[_]]
+      val tupleCoder = materializedCoder.bcoder.asInstanceOf[StructuredCoder[_]]
+      val keyCoder = tupleCoder.getComponents.get(0)
+      keyCoder shouldBe StringUtf8Coder.of()
+      val valueCoder = tupleCoder.getComponents.get(1)
+      valueCoder shouldBe VarIntCoder.of()
+      // implicit SCollection key and value coder aren't
+      coll.keyCoder shouldBe a[Beam[_]]
+      val beamKeyCoder = coll.keyCoder.asInstanceOf[Beam[_]]
+      beamKeyCoder.beam shouldBe StringUtf8Coder.of()
+
+      coll.valueCoder shouldBe a[Beam[_]]
+      val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[_]]
+      beamValueCoder.beam shouldBe VarIntCoder.of()
+    }
+  }
+
+  it should "propagate unwrapped nullable coders" in {
     runWithContext { sc =>
       sc.optionsAs[ScioOptions].setNullableCoders(true)
 
       val coll = sc.empty[(String, Int)]()
-      coll.keyCoder shouldBe a[Beam[String]]
-      // No WrappedCoder nor NullableCoder
-      coll.keyCoder.asInstanceOf[Beam[String]].beam shouldBe StringUtf8Coder.of()
+      // internal is wrapped
+      val internalCoder = coll.internal.getCoder
+      internalCoder shouldBe a[MaterializedCoder[_]]
+      val materializedCoder = internalCoder.asInstanceOf[MaterializedCoder[_]]
+      materializedCoder.bcoder shouldBe a[NullableCoder[_]]
+      val nullableTupleCoder = materializedCoder.bcoder.asInstanceOf[NullableCoder[_]]
+      val tupleCoder = nullableTupleCoder.getValueCoder.asInstanceOf[StructuredCoder[_]]
+      val keyCoder = tupleCoder.getComponents.get(0)
+      keyCoder shouldBe a[NullableCoder[_]]
+      keyCoder.asInstanceOf[NullableCoder[_]].getValueCoder shouldBe StringUtf8Coder.of()
+      val valueCoder = tupleCoder.getComponents.get(1)
+      valueCoder shouldBe a[NullableCoder[_]]
+      valueCoder.asInstanceOf[NullableCoder[_]].getValueCoder shouldBe VarIntCoder.of()
+      // implicit SCollection key and value coder aren't
+      coll.keyCoder shouldBe a[Beam[_]]
+      val beamKeyCoder = coll.keyCoder.asInstanceOf[Beam[_]]
+      beamKeyCoder.beam shouldBe StringUtf8Coder.of()
 
-      coll.valueCoder shouldBe a[Beam[Int]]
-      coll.valueCoder.asInstanceOf[Beam[Int]].beam shouldBe VarIntCoder.of()
+      coll.valueCoder shouldBe a[Beam[_]]
+      val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[_]]
+      beamValueCoder.beam shouldBe VarIntCoder.of()
     }
   }
 
