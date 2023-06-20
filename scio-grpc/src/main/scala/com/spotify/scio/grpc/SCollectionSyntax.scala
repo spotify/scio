@@ -40,23 +40,26 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     clientFactory: Channel => Client,
     maxPendingRequests: Int,
     cacheSupplier: CacheSupplier[Request, Response] = new NoOpCacheSupplier[Request, Response]()
-  )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] = {
-    import self.coder
-    val uncurried = (c: Client, r: Request) => f(c)(r)
-    self
-      .parDo(
+  )(f: Client => Request => ListenableFuture[Response]): SCollection[(Request, Try[Response])] =
+    self.transform { in =>
+      import self.coder
+      val cs = ClosureCleaner.clean(channelSupplier)
+      val cf = Functions.serializableFn(clientFactory)
+      val lfn = Functions.serializableBiFn[Client, Request, ListenableFuture[Response]] {
+        (client, request) => f(client)(request)
+      }
+      in.parDo(
         GrpcDoFn
           .newBuilder[Request, Response, Client]()
-          .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
-          .withNewClientFn(Functions.serializableFn(clientFactory))
-          .withLookupFn(Functions.serializableBiFn(uncurried))
+          .withChannelSupplier(() => cs())
+          .withNewClientFn(cf)
+          .withLookupFn(lfn)
           .withMaxPendingRequests(maxPendingRequests)
           .withCacheSupplier(cacheSupplier)
           .build()
-      )
-      .map(kvToTuple)
-      .mapValues(_.asScala)
-  }
+      ).map(kvToTuple)
+        .mapValues(_.asScala)
+    }
 
   def grpcLookupStream[Response: Coder, Client <: AbstractStub[Client]](
     channelSupplier: () => Channel,
@@ -66,25 +69,26 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
       new NoOpCacheSupplier[Request, JIterable[Response]]()
   )(
     f: Client => (Request, StreamObserver[Response]) => Unit
-  ): SCollection[(Request, Try[Iterable[Response]])] = {
+  ): SCollection[(Request, Try[Iterable[Response]])] = self.transform { in =>
     import self.coder
-    val uncurried = (client: Client, request: Request) => {
-      val observer = new StreamObservableFuture[Response]()
-      f(client)(request, observer)
-      observer
+    val cs = ClosureCleaner.clean(channelSupplier)
+    val cf = Functions.serializableFn(clientFactory)
+    val lfn = Functions.serializableBiFn[Client, Request, ListenableFuture[JIterable[Response]]] {
+      (client, request) =>
+        val observer = new StreamObservableFuture[Response]()
+        f(client)(request, observer)
+        observer
     }
-    self
-      .parDo(
-        GrpcDoFn
-          .newBuilder[Request, JIterable[Response], Client]()
-          .withChannelSupplier(() => ClosureCleaner.clean(channelSupplier)())
-          .withNewClientFn(Functions.serializableFn(clientFactory))
-          .withLookupFn(Functions.serializableBiFn(uncurried))
-          .withMaxPendingRequests(maxPendingRequests)
-          .withCacheSupplier(cacheSupplier)
-          .build()
-      )
-      .map(kvToTuple)
+    in.parDo(
+      GrpcDoFn
+        .newBuilder[Request, JIterable[Response], Client]()
+        .withChannelSupplier(() => cs())
+        .withNewClientFn(cf)
+        .withLookupFn(lfn)
+        .withMaxPendingRequests(maxPendingRequests)
+        .withCacheSupplier(cacheSupplier)
+        .build()
+    ).map(kvToTuple)
       .mapValues(_.asScala.map(_.asScala))
   }
 
