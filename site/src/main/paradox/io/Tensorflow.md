@@ -74,7 +74,7 @@ val result: SCollection[B] = elements.predict[B]("gs://model-path", fetchOpts, o
 val b: SCollection[B] = elements.predictWithSigDef[B]("gs://model-path", options)(toTensors)(fromTensors _)
 ```
 
-For an `SCollection` of some subclass of `Example`, a prediction can be made via @scaladoc[`predictTfExamples`](com.spotify.scio.tensorflow.syntax.PredictSCollectionOps#predictTfExamples[V](savedModelUri:String,options:com.spotify.zoltar.tf.TensorFlowModel.Options,exampleInputOp:String,fetchOps:Option[Seq[String]],signatureName:String)(outFn:(T,Map[String,org.tensorflow.Tensor])=%3EV)(implicitevidence$3:com.spotify.scio.coders.Coder[V],implicitev:T%3C:%3Corg.tensorflow.proto.example.Example):com.spotify.scio.values.SCollection[V]):com.spotify.scio.values.SCollection[V]):
+For an `SCollection` of some subclass of `Example`, a prediction can be made via @scaladoc[`predictTfExamples`](com.spotify.scio.tensorflow.syntax.PredictSCollectionOps#predictTfExamples[V](savedModelUri:String,options:com.spotify.zoltar.tf.TensorFlowModel.Options,exampleInputOp:String,fetchOps:Option[Seq[String]],signatureName:String)(outFn:(T,Map[String,org.tensorflow.Tensor])=%3EV)(implicitevidence$3:com.spotify.scio.coders.Coder[V],implicitev:T%3C:%3Corg.tensorflow.proto.example.Example):com.spotify.scio.values.SCollection[V]):
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
