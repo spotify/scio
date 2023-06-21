@@ -136,7 +136,7 @@ object SkewedJoins {
 }
 
 /**
- * Extra functions available on SCollections of (key, value) pairs for skwed joins through an
+ * Extra functions available on SCollections of (key, value) pairs for skewed joins through an
  * implicit conversion.
  *
  * @groupname cogroup

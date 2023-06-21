@@ -146,6 +146,7 @@ object RedisLookUpStringsExample {
     val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
 
     sc.parallelize(Seq("key1", "key2", "unknownKey"))
+      // #RedisLookup_example
       .parDo(
         new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
           override def request(value: String, client: Client)(implicit
@@ -156,6 +157,7 @@ object RedisLookUpStringsExample {
               .map { case r: List[String @unchecked] => (value, r.headOption) }
         }
       )
+      // #RedisLookup_example
       .debug()
 
     sc.run()

@@ -1421,14 +1421,22 @@ lazy val site: Project = project
     MdocPlugin
   )
   .dependsOn(
-    `scio-macros`,
-    `scio-core`,
     `scio-avro`,
+    `scio-cassandra3`,
+    `scio-core`,
+    `scio-elasticsearch-common`,
+    `scio-elasticsearch8`,
+    `scio-extra`,
     `scio-google-cloud-platform`,
+    `scio-grpc` % "compile->test",
+    `scio-jdbc`,
+    `scio-macros`,
+    `scio-neo4j`,
     `scio-parquet`,
+    `scio-redis`,
     `scio-smb`,
-    `scio-test` % "compile->test",
-    `scio-extra`
+    `scio-tensorflow`,
+    `scio-test` % "compile->test"
   )
   .settings(commonSettings)
   .settings(macroSettings)
@@ -1447,18 +1455,21 @@ lazy val site: Project = project
     ScalaUnidoc / siteSubdirName := "api",
     ScalaUnidoc / scalacOptions := Seq.empty,
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-      `scio-core`,
-      `scio-test`,
       `scio-avro`,
-      `scio-google-cloud-platform`,
       `scio-cassandra3`,
+      `scio-core`,
+      `scio-elasticsearch-common`,
       `scio-elasticsearch8`,
       `scio-extra`,
+      `scio-google-cloud-platform`,
+      `scio-grpc`,
       `scio-jdbc`,
+      `scio-neo4j`,
       `scio-parquet`,
+      `scio-redis`,
+      `scio-smb`,
       `scio-tensorflow`,
-      `scio-macros`,
-      `scio-smb`
+      `scio-test`
     ),
     // unidoc handles class paths differently than compile and may give older
     // versions high precedence.
@@ -1474,13 +1485,21 @@ lazy val site: Project = project
     // paradox
     paradox / sourceManaged := mdocOut.value,
     paradoxProperties ++= Map(
+      "github.base_url" -> "https://github.com/spotify/scio",
+      "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html",
+      "javadoc.com.google.api.services.bigquery.base_url" ->
+        "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/",
+      "javadoc.com.google.common.hash.base_url" ->
+        s"https://guava.dev/releases/$guavaVersion/api/docs",
       "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api",
       "javadoc.org.apache.beam.sdk.extensions.smb.base_url" ->
         "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
       "javadoc.org.apache.beam.base_url" -> s"https://beam.apache.org/releases/javadoc/$beamVersion",
+      "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs",
+      "javadoc.org.apache.avro.base_url" -> "https://avro.apache.org/docs/current/api/java/",
       "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api",
-      "github.base_url" -> "https://github.com/spotify/scio",
-      "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html"
+      "scaladoc.com.twitter.algebird.base_url" -> "https://twitter.github.io/algebird/api/",
+      "scaladoc.kantan.base_url" -> "https://nrinaudo.github.io/kantan.csv/api"
     ),
     Compile / paradoxMaterialTheme := ParadoxMaterialTheme()
       .withFavicon("images/favicon.ico")

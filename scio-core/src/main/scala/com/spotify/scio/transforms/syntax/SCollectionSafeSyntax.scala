@@ -32,7 +32,7 @@ trait SCollectionSafeSyntax {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with specialized
    * versions of flatMap.
    */
-  implicit class SpecializedFlatMapSCollection[T](private val self: SCollection[T]) {
+  implicit class SafeFlatMapSCollection[T](private val self: SCollection[T]) {
 
     /**
      * Latency optimized flavor of

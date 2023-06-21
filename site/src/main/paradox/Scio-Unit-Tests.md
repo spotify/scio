@@ -35,7 +35,7 @@ Using `JobTest`, you can test the entire pipeline. Specify the type of the class
 
 The `input` function injects your input test data. Note that the `TestIO[T]` should match the input source used in the pipeline e.g. TextIO for sc.textFile, AvroIO for sc.avro. The TextIO id (“in.txt”) should match the one specified in the args.
 
-The output function evaluates the output of the pipeline using the provided assertion from the `SCollectionMatchers`. More info on `SCollectionMatchers` can be found [here](https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html). In this example, we are asserting that the output of the pipeline should contain an `SCollection` with elements that in the expected variable in any order.
+The output function evaluates the output of the pipeline using the provided assertion from the `SCollectionMatchers`. More info on `SCollectionMatchers` can be found @scaladoc[here](com.spotify.scio.testing.SCollectionMatchers$). In this example, we are asserting that the output of the pipeline should contain an `SCollection` with elements that in the expected variable in any order.
 Also, note that the `TestIO[T]` should match the output used in the pipeline e.g. TextIO for sc.saveAsTextFile
 
 The run function will run the pipeline.
@@ -55,7 +55,7 @@ Since we have two input sources, we have to specify both in the `JobTest`. Note 
 ### Test partial pipeline
 To test a section of a pipeline, use `runWithContext`. The TriggerExample.extractFlowInfo test in @github[TriggerExampleTest](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) tests only the extractFlowInfo part of the pipeline.
 
-The data variable hold the test data and `sc.parallelize` will transform the input iterable to a `SCollection` of strings. TriggerExample.extractFlowInfo will be executed using the `ScioContext` and you can then specify assertions against the result of the pipeline.
+The data variable hold the test data and `sc.parallelize` will transform the input Iterable to an `SCollection` of strings. TriggerExample.extractFlowInfo will be executed using the `ScioContext` and you can then specify assertions against the result of the pipeline.
 
 @@snip [TriggerExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) { #TriggerExampleTest_example }
 
@@ -82,7 +82,7 @@ To run the test, we use the `runWithContext`, this will run calculateTeamScores 
 
 @@snip [LeaderBoardTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala) { #LeaderBoardTest_example_3 }
 
-Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLatePanes`, `inFinalPane`, and `inOnlyPane`. You can find the full list [here](https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html). More information on testing unbounded pipelines can be found [here](https://beam.apache.org/blog/2016/10/20/test-stream.html).
+Scio provides more `SCollection` assertions such as `inWindow`, `inCombinedNonLatePanes`, `inFinalPane`, and `inOnlyPane`. You can find the full list @scaladoc[here](com.spotify.scio.testing.SCollectionMatchers). More information on testing unbounded pipelines can be found [here](https://beam.apache.org/blog/2016/10/20/test-stream.html).
 
 ### Test with transform overrides
 

@@ -56,14 +56,15 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 ## Beam dependencies
 
-Scio's other library dependencies are kept in sync with Beam's to avoid compatibility issues. You can find
-Beam's dependency list in its [Groovy config](https://github.com/apache/beam/blob/v2.35.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy) (substitute the version tag in the URL with the desired Beam version). Additionally, Beam keeps many of its Google dependencies in sync with a [central BOM](https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/24.0.0/artifact_details.html) (subsitute the version tag in the URL with the value of `google_cloud_platform_libraries_bom` from Beam). Scio users who suspect incompatibility issues in their pipelines (common issues are GRPC, Netty, or Guava) can run `sbt evicted` and `sbt dependencyTree` to ensure their direct and transitive dependencies don't conflict with Scio or Beam.
+Scio's other library dependencies are kept in sync with Beam's to avoid compatibility issues. Scio will typically _not_ bump dependency versions beyond what is supported in Beam due to the large test surface and the potential for data loss.
+
+You can find Beam's dependency list in its [Groovy config](https://github.com/apache/beam/blob/v2.35.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy) (substitute the version tag in the URL with the desired Beam version). Additionally, Beam keeps many of its Google dependencies in sync with a [central BOM](https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/24.0.0/artifact_details.html) (substitute the version tag in the URL with the value of `google_cloud_platform_libraries_bom` from Beam). Scio users who suspect incompatibility issues in their pipelines (common issues are GRPC, Netty, or Guava) can run `sbt evicted` and `sbt dependencyTree` to ensure their direct and transitive dependencies don't conflict with Scio or Beam.
 
 ## Release cycle and backport procedures
 
 Scio has a frequent release cycle, roughly every 2-4 weeks, as compared to months for the upstream Apache Beam. We also aim to stay a step ahead by pulling changes from upstream and contributing new ones back.
 
-Let's call the Beam version that Scio depends on `current`, and upstream master `latest`. Here're the procedures for backporting changes.
+Let's call the Beam version that Scio depends on `current`, and upstream master `latest`. Here are the procedures for backporting changes:
 
 For changes available in `latest` but not in `current`:
 - Copy Java files from `latest` to Scio repo

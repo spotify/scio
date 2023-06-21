@@ -28,7 +28,8 @@ import com.spotify.scio.jdbc.JdbcConnectionOptions
  * @param tableName
  *   Name of a table or materialized view to read from
  * @param shardColumn
- *   Column to shard by. Must be of integer/long type ideally with evenly distributed values
+ *   Column to shard by. Should ideally have evenly distributed values. Column type must have a
+ *   corresponding [[com.spotify.scio.jdbc.sharded.Shard]] implementation.
  * @param rowMapper
  *   Function to map from a SQL [[java.sql.ResultSet]] to `T`
  * @param fetchSize

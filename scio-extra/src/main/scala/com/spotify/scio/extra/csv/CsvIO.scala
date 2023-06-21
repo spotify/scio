@@ -88,7 +88,7 @@ import org.apache.beam.sdk.values.PCollection
  */
 object CsvIO {
 
-  private val DefaultCsvConfiguration: CsvConfiguration = CsvConfiguration(
+  val DefaultCsvConfiguration: CsvConfiguration = CsvConfiguration(
     cellSeparator = ',',
     quote = '"',
     quotePolicy = QuotePolicy.WhenNeeded,

@@ -6,16 +6,16 @@
 
 ### TableRow
 
-BigQuery rows are represented as [`TableRow`](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableRow.html) in the BigQuery Java API which is basically a `Map<String, Object>`. Fields are accessed by name strings and values must be cast or converted to the desired type, both of which are error prone process.
+BigQuery rows are represented as @javadoc[`TableRow`](com.google.api.services.bigquery.model.TableRow) in the BigQuery Java API which is basically a `Map<String, Object>`. Fields are accessed by name strings and values must be cast or converted to the desired type, both of which are error prone process.
 
 ### Type safe BigQuery
 
-The type safe BigQuery API in Scio represents rows as case classes and generates [`TableSchema`](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/com/google/api/services/bigquery/model/TableSchema.html) converters automatically at compile time with the following mapping logic:
+The type safe BigQuery API in Scio represents rows as case classes and generates @javadoc[`TableSchema`](com.google.api.services.bigquery.model.TableSchema) converters automatically at compile time with the following mapping logic:
 
 - Nullable fields are mapped to `Option[T]`s
 - Repeated fields are mapped to `List[T]`s
 - Records are mapped to nested case classes
-- Timestamps are mapped to Joda Time [`Instant`](http://www.joda.org/joda-time/apidocs/org/joda/time/class-use/Instant.html)
+- Timestamps are mapped to Joda Time @javadoc[`Instant`](org.joda.time.Instant)
 
 See documentation for @scaladoc[BigQueryType](com.spotify.scio.bigquery.types.BigQueryType$) for the complete list of supported types.
 

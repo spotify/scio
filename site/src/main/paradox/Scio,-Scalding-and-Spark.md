@@ -1,6 +1,6 @@
 # Scio, Spark and Scalding
 
-Check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts. Also read more about the relationship between [[Scio, Beam and Dataflow]].
+Check out the [Beam Programming Guide](https://beam.apache.org/documentation/programming-guide/) first for a detailed explanation of the Beam programming model and concepts.
 
 Scio's API is heavily influenced by Spark with a lot of ideas from Scalding.
 
@@ -14,7 +14,7 @@ The Scio API is heavily influenced by Spark but there are some minor differences
 - @scaladoc[`PairSCollectionFunctions`](com.spotify.scio.values.PairSCollectionFunctions) and @scaladoc[`DoubleSCollectionFunctions`](com.spotify.scio.values.DoubleSCollectionFunctions) are specialized versions of `SCollection` and equivalent to Spark's [`PairRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions) and [`DoubleRDDFunctions`](https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.DoubleRDDFunctions).
 - Execution planning is static and happens before the job is submitted. There is no driver node in a Dataflow cluster and one can only perform the equivalent of Spark [_transformations_](http://spark.apache.org/docs/latest/programming-guide.html#transformations) (`RDD` &rarr; `RDD`) but not [_actions_](http://spark.apache.org/docs/latest/programming-guide.html#actions) (`RDD` &rarr; driver local memory).
 - There is no [_broadcast_](http://spark.apache.org/docs/latest/programming-guide.html#broadcast-variables) either but the pattern of `RDD` &rarr; driver via _action_ and driver &rarr; `RDD` via _broadcast_ can be replaced with `SCollection.asSingletonSideInput` and `SCollection.withSideInputs`.
-- There is no [`DStream`](https://spark.apache.org/docs/latest/streaming-programming-guide.html#discretized-streams-dstreams) (continuous series of `RDD`s) like in Spark Streaming. Values in a `SCollection` are windowed based on timestamp and windowing operation. The same API works regardless of batch (single global window by default) or streaming mode. Aggregation type _transformations_ that produce `SCollection`s of a single value under global window will produce one value each window when a non-global window is defined.
+- There is no [`DStream`](https://spark.apache.org/docs/latest/streaming-programming-guide.html#discretized-streams-dstreams) (continuous series of `RDD`s) like in Spark Streaming. Values in an `SCollection` are windowed based on timestamp and windowing operation. The same API works regardless of batch (single global window by default) or streaming mode. Aggregation type _transformations_ that produce `SCollection`s of a single value under global window will produce one value each window when a non-global window is defined.
 - `SCollection` has extra methods for side input, side output, and windowing.
 
 ## Scio and Scalding
