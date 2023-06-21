@@ -1,5 +1,12 @@
 # Breaking Changelog
 
+## Breaking changes since 0.13.0
+- Removed `scio-elasticsearch6`
+- Migrate `scio-elasticsearch7` to new [java client](https://www.elastic.co/guide/en/elasticsearch/client/java-api-client/7.17/introduction.html)
+- Changed `skewedJoin` API (scalafix @github[rule](scalafix/rules/src/main/scala/fix/v0_13_0/FixSkewedJoins.scala) provided)
+- New File based ScioIO parameters (notably `prefix` in the read params)
+- Removal of unused type parameter on tensorflow `predict` and `predictWithSigDef`
+
 ## Breaking changes since 0.12.0 (@ref:[v0.12.0 Migration Guide](migrations/v0.12.0-Migration-Guide.md))
 - Removed `com.spotify.scio.extra.bigquery`
 - Removed `com.spotify.scio.pubsub` specializations
