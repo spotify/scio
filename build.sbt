@@ -1485,18 +1485,17 @@ lazy val site: Project = project
     // paradox
     paradox / sourceManaged := mdocOut.value,
     paradoxProperties ++= Map(
-      "github.base_url" -> "https://github.com/spotify/scio",
       "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html",
-      "javadoc.com.google.api.services.bigquery.base_url" ->
-        "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/",
-      "javadoc.com.google.common.hash.base_url" ->
-        s"https://guava.dev/releases/$guavaVersion/api/docs",
+      "github.base_url" -> "https://github.com/spotify/scio",
+      "javadoc.com.google.api.services.bigquery.base_url" -> "https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/",
+      "javadoc.com.google.common.hash.base_url" -> s"https://guava.dev/releases/$guavaVersion/api/docs",
       "javadoc.com.spotify.scio.base_url" -> "http://spotify.github.com/scio/api",
-      "javadoc.org.apache.beam.sdk.extensions.smb.base_url" ->
-        "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
-      "javadoc.org.apache.beam.base_url" -> s"https://beam.apache.org/releases/javadoc/$beamVersion",
-      "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs",
       "javadoc.org.apache.avro.base_url" -> "https://avro.apache.org/docs/current/api/java/",
+      "javadoc.org.apache.beam.base_url" -> s"https://beam.apache.org/releases/javadoc/$beamVersion",
+      "javadoc.org.apache.beam.sdk.extensions.smb.base_url" -> "https://spotify.github.io/scio/api/org/apache/beam/sdk/extensions/smb",
+      "javadoc.org.joda.time.base_url" -> "https://www.joda.org/joda-time/apidocs",
+      "javadoc.org.tensorflow.base_url" -> "https://www.tensorflow.org/jvm/api_docs/java/",
+      "javadoc.org.tensorflow.link_style" -> "direct",
       "scaladoc.com.spotify.scio.base_url" -> "https://spotify.github.io/scio/api",
       "scaladoc.com.twitter.algebird.base_url" -> "https://twitter.github.io/algebird/api/",
       "scaladoc.kantan.base_url" -> "https://nrinaudo.github.io/kantan.csv/api"
