@@ -139,18 +139,35 @@ spotify/scio
 </div>
 <ul>
   <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
-  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="../Joins.html" class="page">Joins</a></li>
+  <li><a href="../SideInputs.html" class="page">Side Inputs</a></li>
   <li><a href="../io/index.html" class="page">IO</a>
   <ul>
     <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/Binary.html" class="page">Binary</a></li>
     <li><a href="../io/BigQuery.html" class="page">BigQuery</a></li>
     <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="../io/Csv.html" class="page">CSV</a></li>
+    <li><a href="../io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="../io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="../io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="../io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="../io/Json.html" class="page">Json</a></li>
+    <li><a href="../io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="../io/Object.html" class="page">Object file</a></li>
     <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
     <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="../io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="../io/Redis.html" class="page">Redis</a></li>
+    <li><a href="../io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="../io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="../io/Text.html" class="page">Text</a></li>
   </ul></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
   <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
-  <li><a href="../Scio-REPL.html" class="page">REPL</a></li>
   <li><a href="../internals/index.html" class="page">Internals</a>
   <ul>
     <li><a href="../internals/Coders.html" class="page">Coder Typeclass</a></li>
@@ -161,16 +178,18 @@ spotify/scio
   <li><a href="../extras/index.html" class="page">Extras</a>
   <ul>
     <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="../extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="../extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="../extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="../extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="../extras/Fanout.html" class="page">Fanout</a></li>
     <li><a href="../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="../extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="../extras/Sorter.html" class="page">Sorter</a></li>
     <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
-  </ul></li>
-  <li><a href="../migrations/index.html" class="page">Migration Guides</a>
-  <ul>
-    <li><a href="../migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
-    <li><a href="../migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
-    <li><a href="../migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
-    <li><a href="../migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="../migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
+    <li><a href="../extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="../extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="../extras/Transforms.html" class="page">Transforms</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -180,18 +199,17 @@ spotify/scio
     <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
   </ul></li>
   <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
-  <li><a href="../Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
   <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
   <li><a href="../Runners.html" class="page">Runners</a></li>
   <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
-  <li><a href="../Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
   <li><a href="../releases/index.html" class="page">Releases</a>
   <ul>
+    <li><a href="../releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="../releases/migrations/index.html" class="page">Migration Guides</a></li>
     <li><a href="../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
     <li><a href="../releases/v0.12.0.html" class="active page">v0.12.0 Release Blog</a></li>
   </ul></li>
   <li><a href="../FAQ.html" class="page">FAQ</a></li>
-  <li><a href="../Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
@@ -209,7 +227,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.0-RC1+0-1f32fd60+20230608-1604*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
 </label>
 </li>
 </ul>
@@ -238,7 +256,7 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#v0-12-0-release-blog" name="v0-12-0-release-blog" class="anchor"><span class="anchor-link"></span></a>v0.12.0 Release Blog</h1>
-<p>Scio 0.12.0 contains many new features, performance improvements, and a few breaking changes. You can find the technical Migration Guide <a href="../migrations/v0.12.0-Migration-Guide.html">here</a> with code samples and Scalafix instructions, and the full release notes are <a href="https://github.com/spotify/scio/releases/tag/v0.12.0">here</a>.</p>
+<p>Scio 0.12.0 contains many new features, performance improvements, and a few breaking changes. You can find the technical Migration Guide <a href="migrations/v0.12.0-Migration-Guide.html">here</a> with code samples and Scalafix instructions, and the full release notes are <a href="https://github.com/spotify/scio/releases/tag/v0.12.0">here</a>.</p>
 <h2><a href="#new-features" name="new-features" class="anchor"><span class="anchor-link"></span></a>New Features</h2>
 <h3><a href="#windowing-api-for-file-writes" name="windowing-api-for-file-writes" class="anchor"><span class="anchor-link"></span></a>Windowing API for file writes</h3>
 <p>We&rsquo;ve improved Scio API support for windowed file writes. Most file IOs now have three new, optional parameters: <code>shardNameTemplate</code>, <code>filenamePolicySupplier</code>, and <code>tempDirectory</code>. Windowed writes can be applied with either a <code>shardNameTemplate</code> or a <code>filenamePolicySupplier</code>. <code>shardNameTemplate</code> allows users to specify a shorthand for their desired output file format, for example:</p>
@@ -250,7 +268,7 @@ data.saveAsAvroFile(&quot;/some-path&quot;, numShards = 2, shardNameTemplate = &
 part-000-of-002.avro
 part-001-of-002.avro
 </code></pre>
-<p>In contrast, <code>filenamePolicySupplier</code> gives you more fine-grained control by allowing you to specify a full <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/sdk/io/FileBasedSink.FilenamePolicy.html" title="org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy"><code>FilenamePolicy</code></a> based on the supplied <code>path</code> and <code>suffix</code>:</p>
+<p>In contrast, <code>filenamePolicySupplier</code> gives you more fine-grained control by allowing you to specify a full <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/io/FileBasedSink.FilenamePolicy.html" title="org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy"><code>FilenamePolicy</code></a> based on the supplied <code>path</code> and <code>suffix</code>:</p>
 <pre class="prettyprint"><code class="language-scala">data.saveAsAvroFile(path, schema, filenamePolicySupplier =
   (path: String, suffix: String) =&gt; new FilenamePolicy {
     override def windowedFilename(shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = ???
@@ -264,19 +282,19 @@ part-001-of-002.avro
   .batchByKey(batchSize = 100L)
 </code></pre>
 <h3><a href="#splittabledofn-based-parquet-reads" name="splittabledofn-based-parquet-reads" class="anchor"><span class="anchor-link"></span></a>SplittableDoFn-based Parquet reads</h3>
-<p>We&rsquo;ve introduced an opt-in new Parquet reads implementation, which implements Beam&rsquo;s <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, as an alternative to the default <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/sdk/io/BoundedSource.html" title="org.apache.beam.sdk.io.BoundedSource"><code>BoundedSource</code></a>-backed implementation. We&rsquo;ve observed greatly improved Dataflow metrics with this new implementation (total VCPU time, total memory time), when run with <strong>Dataflow Runner V1</strong> (the default), workers may not scale up as much, resulting in an overall slower wall time. Therefore, we recommend trying out the new Parquet read in conjunction with <a href="https://cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#dataflow-runner-v2"><strong>Dataflow Runner V2</strong></a>.</p>
+<p>We&rsquo;ve introduced an opt-in new Parquet reads implementation, which implements Beam&rsquo;s <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, as an alternative to the default <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/io/BoundedSource.html" title="org.apache.beam.sdk.io.BoundedSource"><code>BoundedSource</code></a>-backed implementation. We&rsquo;ve observed greatly improved Dataflow metrics with this new implementation (total VCPU time, total memory time), when run with <strong>Dataflow Runner V1</strong> (the default), workers may not scale up as much, resulting in an overall slower wall time. Therefore, we recommend trying out the new Parquet read in conjunction with <a href="https://cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#dataflow-runner-v2"><strong>Dataflow Runner V2</strong></a>.</p>
 <p>You can opt in by adding an entry to your Parquet read&rsquo;s Configuration:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.parquet._
 
 sc.typedParquetFile[T](path, conf = ParquetConfiguration.of(&quot;scio.parquet.read.useSplittableDoFn&quot; -&gt; true))
 </code></pre>
-<p>You can find more information, and other migration options, <a href="../migrations/v0.12.0-Migration-Guide.html#parquet-reads">here</a>.</p>
+<p>You can find more information, and other migration options, <a href="migrations/v0.12.0-Migration-Guide.html#parquet-reads">here</a>.</p>
 <h3><a href="#grpc-lookup-api" name="grpc-lookup-api" class="anchor"><span class="anchor-link"></span></a>GRPC Lookup API</h3>
 <p>Scio 0.12.0 includes a new artifact, <code>scio-grpc</code>, that provides a custom <code>AsyncLookupDoFn</code> implementation specifically for GRPC service lookups. Both unary and server-streaming lookups are supported.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.grpc._
 
 data
-  .map { case (str1, str2) =&gt; ConcatRequest.newBuilder.setStr1(str1).setStr2(str2).build)
+  .map { case (str1, str2) =&gt; ConcatRequest.newBuilder.setStr1(str1).setStr2(str2).build }
   .grpcLookup[ConcatResponse, ConcatServiceFutureStub](
       () =&gt; NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
       ConcatServiceGrpc.newFutureStub,
@@ -357,11 +375,11 @@ extra:       parquet.avro.schema = {&quot;type&quot;:&quot;record&quot;,&quot;na
 <h2><a href="#breaking-changes" name="breaking-changes" class="anchor"><span class="anchor-link"></span></a>Breaking changes</h2>
 <p>Scio 0.12.0 has a few breaking changes. The most impactful changes include:</p>
 <ul>
-  <li><a href="https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide.html#removal-of-com-spotify-scio-pubsub-specializations">Pubsub read API changes</a></li>
-  <li><a href="https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide.html#com-spotify-scio-extra-bigquery-removal">scio-extra bigquery removal</a></li>
-  <li><a href="https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide.html#parquetio-saveasdynamicparquetavrofile-saveasparquetavrofile">Parquet&rsquo;s saveAsDynamicParquetAvroFile removed in favor of saveAsParquetAvroFile</a></li>
+  <li><a href="migrations/v0.12.0-Migration-Guide.html#removal-of-com-spotify-scio-pubsub-specializations">Pubsub read API changes</a></li>
+  <li><a href="migrations/v0.12.0-Migration-Guide.html#com-spotify-scio-extra-bigquery-removal">scio-extra bigquery removal</a></li>
+  <li><a href="migrations/v0.12.0-Migration-Guide.html#parquetio-saveasdynamicparquetavrofile-saveasparquetavrofile">Parquet&rsquo;s saveAsDynamicParquetAvroFile removed in favor of saveAsParquetAvroFile</a></li>
 </ul>
-<p>A full list of breaking changes can be found on our <a href="../migrations/v0.12.0-Migration-Guide.html">Migration Guide</a>.</p>
+<p>A full list of breaking changes can be found on our <a href="migrations/v0.12.0-Migration-Guide.html">Migration Guide</a>.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/v0.12.0.md" title="Edit this page" class="md-source-file md-edit">
@@ -370,7 +388,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.0-RC1+0-1f32fd60+20230608-1604*
+0.0.0+1-f9106dfb+20230622-0006*
 </span>
 </div>
 </article>

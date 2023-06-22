@@ -139,18 +139,35 @@ spotify/scio
 </div>
 <ul>
   <li><a href="Getting-Started.html" class="page">Getting Started</a></li>
-  <li><a href="examples.html" class="page">Examples</a></li>
+  <li><a href="Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="Joins.html" class="page">Joins</a></li>
+  <li><a href="SideInputs.html" class="page">Side Inputs</a></li>
   <li><a href="io/index.html" class="page">IO</a>
   <ul>
     <li><a href="io/Avro.html" class="page">Avro</a></li>
+    <li><a href="io/Binary.html" class="page">Binary</a></li>
     <li><a href="io/BigQuery.html" class="page">BigQuery</a></li>
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="io/Csv.html" class="page">CSV</a></li>
+    <li><a href="io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="io/Json.html" class="page">Json</a></li>
+    <li><a href="io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="io/Object.html" class="page">Object file</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
     <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="io/Redis.html" class="page">Redis</a></li>
+    <li><a href="io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="io/Text.html" class="page">Text</a></li>
   </ul></li>
+  <li><a href="examples.html" class="page">Examples</a></li>
   <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
-  <li><a href="Scio-REPL.html" class="page">REPL</a></li>
   <li><a href="internals/index.html" class="page">Internals</a>
   <ul>
     <li><a href="internals/Coders.html" class="page">Coder Typeclass</a></li>
@@ -161,16 +178,18 @@ spotify/scio
   <li><a href="extras/index.html" class="page">Extras</a>
   <ul>
     <li><a href="extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="extras/Fanout.html" class="page">Fanout</a></li>
     <li><a href="extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="extras/Sorter.html" class="page">Sorter</a></li>
     <li><a href="extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
-  </ul></li>
-  <li><a href="migrations/index.html" class="page">Migration Guides</a>
-  <ul>
-    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
-    <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
-    <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
-    <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
+    <li><a href="extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="extras/Transforms.html" class="page">Transforms</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -180,18 +199,17 @@ spotify/scio
     <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
   </ul></li>
   <li><a href="scaladoc.html" class="page">Scaladoc</a></li>
-  <li><a href="Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
   <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
   <li><a href="Runners.html" class="page">Runners</a></li>
   <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
-  <li><a href="Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
   <li><a href="releases/index.html" class="page">Releases</a>
   <ul>
+    <li><a href="releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="releases/migrations/index.html" class="page">Migration Guides</a></li>
     <li><a href="releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
     <li><a href="releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
   </ul></li>
   <li><a href="FAQ.html" class="active page">FAQ</a></li>
-  <li><a href="Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
@@ -213,7 +231,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.0-RC1+0-1f32fd60+20230608-1604*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
 </label>
 </li>
 </ul>
@@ -279,7 +297,7 @@ spotify/scio
     <li><a href="FAQ.html#how-do-i-unit-test-bigquery-queries-" class="header">How do I unit test BigQuery queries?</a></li>
     <li><a href="FAQ.html#how-do-i-stream-to-a-partitioned-bigquery-table-" class="header">How do I stream to a partitioned BigQuery table?</a></li>
     <li><a href="FAQ.html#how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" class="header">How do I invalidate cached BigQuery results or disable cache?</a></li>
-    <li><a href="FAQ.html#how-does-bigquery-determines-job-priority-" class="header">How does BigQuery determines job priority?</a></li>
+    <li><a href="FAQ.html#how-does-bigquery-determine-job-priority-" class="header">How does BigQuery determine job priority?</a></li>
   </ul></li>
   <li><a href="FAQ.html#streaming-questions" class="header">Streaming questions</a>
   <ul>
@@ -318,13 +336,12 @@ spotify/scio
 </div>
 <h3><a href="#general-questions" name="general-questions" class="anchor"><span class="anchor-link"></span></a>General questions</h3>
 <h4><a href="#whats-the-status-of-scio-" name="whats-the-status-of-scio-" class="anchor"><span class="anchor-link"></span></a>What&rsquo;s the status of Scio?</h4>
-<p>Scio is widely being used for production data pipelines at Spotify and is our preferred framework for building new pipelines on Google Cloud. We run Scio on <a href="https://cloud.google.com/dataflow/">Google Cloud Dataflow</a> service in both batch and streaming modes. However it&rsquo;s still under heavy development and there might be minor breaking API changes from time to time.</p>
+<p>Scio is widely being used for production data pipelines at Spotify and is our preferred framework for building new pipelines on Google Cloud. We run Scio on <a href="https://cloud.google.com/dataflow/">Google Cloud Dataflow</a> service in both batch and streaming modes. It is still under development and there may be minor breaking API changes.</p>
 <h4><a href="#whos-using-scio-" name="whos-using-scio-" class="anchor"><span class="anchor-link"></span></a>Who&rsquo;s using Scio?</h4>
 <p>Spotify uses Scio for all new data pipelines running on Google Cloud Platform, including music recommendation, monetization, artist insights and business analysis. We also use BigQuery, Bigtable and Datastore heavily with Scio. We use Scio in both batch and streaming mode.</p>
-<p>As of mid 2017, there&rsquo;re 200+ developers and 700+ production pipelines. The largest batch job we&rsquo;ve seen uses 800 n1-highmem-32 workers (25600 CPUs, 166.4TB RAM) and processes 325 billion rows from Bigtable (240TB). We also have numerous jobs that process 10TB+ of BigQuery data daily. On the streaming front, we have many jobs with 30+ n1-standard-16 workers (480 CPUs, 1.8TB RAM) and SSD disks for real time machine learning or reporting.</p>
-<p>For a incomplete list of users, see the <a href="./Powered-By.html">Powered By</a> page.</p>
+<p>As of mid 2017, there are 200+ developers and 700+ production pipelines. The largest batch job we&rsquo;ve seen uses 800 n1-highmem-32 workers (25600 CPUs, 166.4TB RAM) and processes 325 billion rows from Bigtable (240TB). We also have numerous jobs that process 10TB+ of BigQuery data daily. On the streaming front, we have many jobs with 30+ n1-standard-16 workers (480 CPUs, 1.8TB RAM) and SSD disks for real time machine learning or reporting.</p>
 <h4><a href="#whats-the-relationship-between-scio-and-apache-beam-" name="whats-the-relationship-between-scio-and-apache-beam-" class="anchor"><span class="anchor-link"></span></a>What&rsquo;s the relationship between Scio and Apache Beam?</h4>
-<p>Scio is a Scala API built on top of <a href="https://beam.apache.org/">Apache Beam</a>&rsquo;s Java SDK. Scio aims to offer a concise, idiomatic Scala API for a subset of Beam&rsquo;s features, plus extras we find useful, like REPL, type safe BigQuery, and IO taps.</p>
+<p>Scio is a Scala API built on top of <a href="https://beam.apache.org/">Apache Beam</a>&rsquo;s Java SDK. Scio offers a concise, idiomatic Scala API for a subset of Beam&rsquo;s features, plus extras we find useful, like REPL, type safe BigQuery, and IO taps.</p>
 <h4><a href="#whats-the-relationship-between-scio-and-google-cloud-dataflow-" name="whats-the-relationship-between-scio-and-google-cloud-dataflow-" class="anchor"><span class="anchor-link"></span></a>What&rsquo;s the relationship between Scio and Google Cloud Dataflow?</h4>
 <p>Scio (version before 0.3.0) was originally built on top of Google Cloud Dataflow&rsquo;s <a href="https://github.com/GoogleCloudPlatform/DataflowJavaSDK">Java SDK</a>. Google donated the code base to Apache and renamed it Beam. Cloud Dataflow became one of the supported runners, alongside Apache Flink &amp; Apache Spark. Scio 0.3.x is built on top of Beam 0.6.0 and 0.4.x is built on top of Beam 2.x. Many users run Scio on the Dataflow runner today.</p>
 <h4><a href="#how-does-scio-compare-to-scalding-or-spark-" name="how-does-scio-compare-to-scalding-or-spark-" class="anchor"><span class="anchor-link"></span></a>How does Scio compare to Scalding or Spark?</h4>
@@ -352,7 +369,7 @@ spotify/scio
 )
 </code></pre>
 <h4><a href="#how-do-i-unit-test-pipelines-" name="how-do-i-unit-test-pipelines-" class="anchor"><span class="anchor-link"></span></a>How do I unit test pipelines?</h4>
-<p>Any Scala or Java unit testing frameworks can be used with Scio but we provide some utilities for <a href="http://www.scalatest.org/">ScalaTest</a>.</p>
+<p>Any Scala or Java unit testing frameworks can be used with Scio, but we provide some utilities for <a href="http://www.scalatest.org/">ScalaTest</a>.</p>
 <ul>
   <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/PipelineTestUtils.html" title="com.spotify.scio.testing.PipelineTestUtils"><code>PipelineTestUtils</code></a> - utilities for testing parts of a pipeline</li>
   <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html" title="com.spotify.scio.testing.JobTest"><code>JobTest</code></a> - for testing pipelines end-to-end with complete arguments and IO coverage</li>
@@ -406,11 +423,11 @@ object MyJob {
 <h4><a href="#how-do-i-use-beams-java-api-in-scio-" name="how-do-i-use-beams-java-api-in-scio-" class="anchor"><span class="anchor-link"></span></a>How do I use Beam&rsquo;s Java API in Scio?</h4>
 <p>Scio exposes a few things to allow easy integration with native Beam Java API, notably:</p>
 <ul>
-  <li><code>ScioContext#customInput</code> to apply a <code>PTransform[_ &gt;: PBegin, PCollection[T]]</code> (source) and get a <code>SCollection[T]</code>.</li>
-  <li><code>SCollection#applyTransform</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PCollection[U]]</code> and get a <code>SCollection[U]</code></li>
+  <li><code>ScioContext#customInput</code> to apply a <code>PTransform[_ &gt;: PBegin, PCollection[T]]</code> (source) and get an <code>SCollection[T]</code>.</li>
+  <li><code>SCollection#applyTransform</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PCollection[U]]</code> and get an <code>SCollection[U]</code></li>
   <li><code>SCollection#saveAsCustomOutput</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PDone]</code> (sink) and get a <code>ClosedTap[T]</code>.</li>
 </ul>
-<p>See <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample.scala</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html" title="com.spotify.scio.testing.JobTest"><code>`JobTest`</code></a> harness.</p>
+<p>See <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html" title="com.spotify.scio.testing.JobTest"><code>`JobTest`</code></a> harness.</p>
 <h4><a href="#what-are-the-different-types-of-joins-and-performance-implication-" name="what-are-the-different-types-of-joins-and-performance-implication-" class="anchor"><span class="anchor-link"></span></a>What are the different types of joins and performance implication?</h4>
 <ul>
   <li>Inner (<code>a.join(b)</code>), left (<code>a.leftOuterJoin(b)</code>), outer (<code>a.fullOuterJoin(b)</code>) performs better with a large LHS. So <code>a</code> should be the larger data set with potentially more hot keys, i.e. key with many values. Every key-value pair from every input is shuffled.</li>
@@ -418,7 +435,7 @@ object MyJob {
   <li>Consider <code>skewedJoin</code> if some keys on the LHS are extremely hot.</li>
   <li>Consider <code>sparseOuterJoin</code> if you want a full outer join where RHS is much smaller than LHS, but may not fit in memory.</li>
   <li>Consider <code>cogroup</code> if you need to access value groups of each key.</li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/util/MultiJoin$.html"><code>MultiJoin</code></a> supports inner, left, outer join and cogroup of up to 22 inputs.</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/util/MultiJoin$.html" title="com.spotify.scio.util.MultiJoin"><code>`MultiJoin`</code></a> supports inner, left, outer join and cogroup of up to 22 inputs.</li>
   <li>For multi-joins larger inputs should be on the left, e.g. <code>size(a) &gt;= size(b) &gt;= size(c) &gt;= size(d)</code> in <code>MultiJoin(a, b, c, d)</code>.</li>
   <li>Check out these <a href="http://www.lyh.me/slides/joins.html">slides</a> for more information on joins.</li>
   <li>Also see this section on <a href="https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle">Cloud Dataflow Shuffle</a> service.</li>
@@ -498,7 +515,7 @@ def doSomethingWithRow(row: Row) = {
 <h4><a href="#how-do-i-unit-test-bigquery-queries-" name="how-do-i-unit-test-bigquery-queries-" class="anchor"><span class="anchor-link"></span></a>How do I unit test BigQuery queries?</h4>
 <p>BigQuery doesn&rsquo;t provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at <a href="https://github.com/spotify/scio/tree/master/scio-bigquery/src/it/scala/com/spotify/scio/bigquery/BigQueryIT.scala">BigQueryIT.scala</a>. <code>MockBigQuery</code> will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.</p>
 <h4><a href="#how-do-i-stream-to-a-partitioned-bigquery-table-" name="how-do-i-stream-to-a-partitioned-bigquery-table-" class="anchor"><span class="anchor-link"></span></a>How do I stream to a partitioned BigQuery table?</h4>
-<p>Currently there is no way to create a <a href="https://cloud.google.com/bigquery/docs/partitioned-tables">partitioned</a> BigQuery table via Scio/Beam when streaming, however it is possible to stream to a partitioned table if it is already created.</p>
+<p>Currently, there is no way to create a <a href="https://cloud.google.com/bigquery/docs/partitioned-tables">partitioned</a> BigQuery table via Scio/Beam when streaming, however it is possible to stream to a partitioned table if it is already created.</p>
 <p>This can be done by using fixed windows and using the window bounds to infer date. As of Scio 0.4.0-beta2 this looks as follows:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import com.spotify.scio.pubsub._
@@ -546,8 +563,8 @@ object BQPartitionedJob {
 <p>In Scio 0.3.X it is possible to achieve the same behaviour using <code>SerializableFunction[BoundedWindow, String]</code> and <code>BigQueryIO.Write.to</code>. It is also possible to stream to separate tables with a Date suffix by modifying <code>DayPartitionFunction</code>, specifying the Schema, and changing the CreateDisposition to <code>CreateDisposition.CREATE_IF_NEEDED</code>.</p>
 <h4><a href="#how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" name="how-do-i-invalidate-cached-bigquery-results-or-disable-cache-" class="anchor"><span class="anchor-link"></span></a>How do I invalidate cached BigQuery results or disable cache?</h4>
 <p>Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/client/BigQuery.html" title="com.spotify.scio.bigquery.client.BigQuery"><code>BigQuery client</code></a> in Scio caches query result in system property <code>bigquery.cache.directory</code>, which defaults to <code>$PWD/.bigquery</code>. Use <code>rm -rf .bigquery</code> to invalidate all cached results. To disable caching, set system property <code>bigquery.cache.enabled</code> to <code>false</code>.</p>
-<h4><a href="#how-does-bigquery-determines-job-priority-" name="how-does-bigquery-determines-job-priority-" class="anchor"><span class="anchor-link"></span></a>How does BigQuery determines job priority?</h4>
-<p>By default Scio runs BigQuery jobs with <code>BATCH</code> priority except when in the REPL where it runs with <code>INTERACTIVE</code>. To override this, set system property <code>bigquery.priority</code> to either <code>BATCH</code> or <code>INTERACTIVE</code>.</p>
+<h4><a href="#how-does-bigquery-determine-job-priority-" name="how-does-bigquery-determine-job-priority-" class="anchor"><span class="anchor-link"></span></a>How does BigQuery determine job priority?</h4>
+<p>By default, Scio runs BigQuery jobs with <code>BATCH</code> priority except when in the REPL where it runs with <code>INTERACTIVE</code>. To override this, set system property <code>bigquery.priority</code> to either <code>BATCH</code> or <code>INTERACTIVE</code>.</p>
 <h3><a href="#streaming-questions" name="streaming-questions" class="anchor"><span class="anchor-link"></span></a>Streaming questions</h3>
 <h4><a href="#how-do-i-update-a-streaming-job-" name="how-do-i-update-a-streaming-job-" class="anchor"><span class="anchor-link"></span></a>How do I update a streaming job?</h4>
 <p>Dataflow allows streaming jobs to be updated on the fly by specifying <code>--update</code>, along with <code>--jobName=[your_job]</code> on the command line. See <a href="https://cloud.google.com/dataflow/pipelines/updating-a-pipeline">https://cloud.google.com/dataflow/pipelines/updating-a-pipeline</a> for detailed docs. Note that for this to work, Dataflow needs to be able to identify which transformations from the original job map to those in the replacement job. The easiest way to do so is to give unique names to transforms in the code itself. In Scio, this can be achieved by calling <code>.withName()</code> before applying the transform. For example:</p>
@@ -566,7 +583,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <ul>
   <li>For Scio version &gt;= <code>0.4.0</code></li>
 </ul>
-<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/sdk/io/FileSystems.html" title="org.apache.beam.sdk.io.FileSystems"><code>Filesystems</code></a> abstraction:</p>
+<p>Starting from Scio <code>0.4.0</code> you can use Apache Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/io/FileSystems.html" title="org.apache.beam.sdk.io.FileSystems"><code>Filesystems</code></a> abstraction:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import org.apache.beam.sdk.io.FileSystems
 // the path can be any of the supported Filesystems, e.g. local, GCS, HDFS
 def readmeResource = FileSystems.matchNewResource(&quot;gs://&lt;bucket&gt;/README.md&quot;, false)
@@ -576,7 +593,7 @@ def readme = FileSystems.open(readmeResource)
   <li>For Scio version &lt; <code>0.4.0</code></li>
 </ul><div class="callout note "><div class="callout-title">Note</div>
 <p>This part is GCS specific.</p></div>
-<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
+<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.ContextAndArgs
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 
@@ -589,7 +606,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#how-do-i-reduce-datastore-boilerplate-" name="how-do-i-reduce-datastore-boilerplate-" class="anchor"><span class="anchor-link"></span></a>How do I reduce Datastore boilerplate?</h4>
 <p>Datastore <code>Entity</code> class is actually generated from <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala">Protobuf</a> which uses the builder pattern and very boilerplate heavy. You can use the <a href="https://github.com/spotify/magnolify">Magnolify</a> library to seamlessly convert bewteen case classes and <code>Entity</code>s. See <a href="https://spotify.github.io/scio/examples/MagnolifyDatastoreExample.scala.html">MagnolifyDatastoreExample.scala</a> for an example job and <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala">MagnolifyDatastoreExampleTest.scala</a> for tests.</p>
 <h4><a href="#how-do-i-throttle-bigtable-writes-" name="how-do-i-throttle-bigtable-writes-" class="anchor"><span class="anchor-link"></span></a>How do I throttle Bigtable writes?</h4>
-<p>Currently Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.</p>
+<p>Currently, Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:invisible">val btProjectId = &quot;&quot;
 val btInstanceId = &quot;&quot;
 val btTableId = &quot;&quot;
@@ -715,7 +732,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 </code></pre>
 <h3><a href="#common-issues" name="common-issues" class="anchor"><span class="anchor-link"></span></a>Common issues</h3>
 <h4><a href="#what-does-mean-" name="what-does-mean-" class="anchor"><span class="anchor-link"></span></a>What does &ldquo;Cannot prove that T1 &lt;:&lt; T2&rdquo; mean?</h4>
-<p>Sometimes you get an error message like <code>Cannot prove that T1 &lt;:&lt; T2</code> when saving an <code>SCollection</code>. This is because some sink methods have an implicit argument like this which means element type <code>T</code> of <code>SCollection[T]</code> must be a sub-type of <code>TableRow</code> in order to save it to BigQuery. You have to map out elements to the required type before saving.</p>
+<p>Sometimes you get an error message like <code>Cannot prove that T1 &lt;:&lt; T2</code> when saving an <code>SCollection</code>. This is because some sink methods have an implicit argument like this which means element type <code>T</code> of <code>SCollection[T]</code> must be a subtype of <code>TableRow</code> in order to save it to BigQuery. You have to map out elements to the required type before saving.</p>
 <pre class="prettyprint"><code class="language-scala">def saveAsBigQuery(tableSpec: String)(implicit ev: T &lt;:&lt; TableRow)
 </code></pre>
 <p>In the case of <code>saveAsTypedBigQuery</code> you might get an <code>Cannot prove that T &lt;:&lt; com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation.</code> error message. This API requires an <code>SCollection[T]</code> where <code>T</code> is a case class annotated with <code>@BigQueryType.toTable</code>. For example:</p>
@@ -762,7 +779,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 <h4><a href="#how-to-inspect-the-content-of-an-scollection-" name="how-to-inspect-the-content-of-an-scollection-" class="anchor"><span class="anchor-link"></span></a>How to inspect the content of an <code>SCollection</code>?</h4>
 <p>There is multiple options here: - Use <code>debug()</code> method on an <code>SCollection</code> to print its content as the data flows through the DAG during the execution (after the <code>run</code> or <code>runAndCollect</code>) - Use a debugger and setup break points - make sure to break inside of your functions to stop control at the execution not the pipeline construction time - In <a href="./Scio-REPL.html">Scio-REPL</a>, use <code>runAndCollect()</code> to execute the pipeline and materialize the contents of an <code>SCollection</code></p>
 <h4><a href="#how-do-i-improve-side-input-performance-" name="how-do-i-improve-side-input-performance-" class="anchor"><span class="anchor-link"></span></a>How do I improve side input performance?</h4>
-<p>By default Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
+<p>By default, Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Therefore jobs with large side inputs may be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions
@@ -774,7 +791,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 }
 </code></pre>
 <h4><a href="#how-do-i-control-concurrency-number-of-dofn-threads-in-dataflow-workers" name="how-do-i-control-concurrency-number-of-dofn-threads-in-dataflow-workers" class="anchor"><span class="anchor-link"></span></a>How do I control concurrency (number of DoFn threads) in Dataflow workers</h4>
-<p>By default Google Cloud Dataflow will use as many threads (concurrent DoFns) per worker as appropriate (precise definition is an implementation detail), in some cases you might want to control this. Use <code>NumberOfWorkerHarnessThreads</code> option from <code>DataflowPipelineDebugOptions</code>. For example to use a single thread per worker on 8 vCPU machine, simply specify 8 vCPU worker machine type, and <code>--numberOfWorkerHarnessThreads=1</code> in CLI or set corresponding option in <code>DataflowPipelineDebugOptions</code>.</p>
+<p>By default, Google Cloud Dataflow will use as many threads (concurrent DoFns) per worker as appropriate (precise definition is an implementation detail), in some cases you might want to control this. Use <code>NumberOfWorkerHarnessThreads</code> option from <code>DataflowPipelineDebugOptions</code>. For example to use a single thread per worker on 8 vCPU machine, simply specify 8 vCPU worker machine type, and <code>--numberOfWorkerHarnessThreads=1</code> in CLI or set corresponding option in <code>DataflowPipelineDebugOptions</code>.</p>
 <h4><a href="#how-to-manually-investigate-a-cloud-dataflow-worker" name="how-to-manually-investigate-a-cloud-dataflow-worker" class="anchor"><span class="anchor-link"></span></a>How to manually investigate a Cloud Dataflow worker</h4>
 <p>First find the VM of the worker, the easiest place is through the GCE instance groups:</p>
 <pre><code>gcloud compute ssh --project=&lt;project&gt; --zone=&lt;zone&gt; &lt;VM&gt;
@@ -806,7 +823,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.0-RC1+0-1f32fd60+20230608-1604*
+0.0.0+1-f9106dfb+20230622-0006*
 </span>
 </div>
 </article>
@@ -827,19 +844,6 @@ Previous
 </span>
 v0.12.0 Release Blog
 </span>
-</div>
-</a>
-<a href="Powered-By.html" title="Powered By" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
-<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-<span class="md-flex__ellipsis">
-<span class="md-footer-nav__direction">
-Next
-</span>
-Powered By
-</span>
-</div>
-<div class="md-flex__cell md-flex__cell--shrink">
-<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
 </div>
 </a>
 </nav>

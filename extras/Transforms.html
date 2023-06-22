@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="../images/favicon.ico">
+<title>Transforms · Scio</title>
+<link rel="stylesheet" href="../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../lib/prettify/prettify.css">
+<script src="../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+Transforms
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../images/logo.png" width="24" height="24">
+</a>
+<a href="../index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="../Joins.html" class="page">Joins</a></li>
+  <li><a href="../SideInputs.html" class="page">Side Inputs</a></li>
+  <li><a href="../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../io/Binary.html" class="page">Binary</a></li>
+    <li><a href="../io/BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="../io/Csv.html" class="page">CSV</a></li>
+    <li><a href="../io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="../io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="../io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="../io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="../io/Json.html" class="page">Json</a></li>
+    <li><a href="../io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="../io/Object.html" class="page">Object file</a></li>
+    <li><a href="../io/Parquet.html" class="page">Parquet</a></li>
+    <li><a href="../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="../io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="../io/Redis.html" class="page">Redis</a></li>
+    <li><a href="../io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="../io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="../io/Text.html" class="page">Text</a></li>
+  </ul></li>
+  <li><a href="../examples.html" class="page">Examples</a></li>
+  <li><a href="../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="../extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="../extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="../extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="../extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="../extras/Fanout.html" class="page">Fanout</a></li>
+    <li><a href="../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="../extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="../extras/Sorter.html" class="page">Sorter</a></li>
+    <li><a href="../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
+    <li><a href="../extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="../extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="../extras/Transforms.html" class="active page">Transforms</a></li>
+  </ul></li>
+  <li><a href="../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../dev/build.html" class="page">Build</a></li>
+    <li><a href="../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../Runners.html" class="page">Runners</a></li>
+  <li><a href="../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../releases/index.html" class="page">Releases</a>
+  <ul>
+    <li><a href="../releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="../releases/migrations/index.html" class="page">Migration Guides</a></li>
+    <li><a href="../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
+    <li><a href="../releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
+  </ul></li>
+  <li><a href="../FAQ.html" class="page">FAQ</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../extras/Transforms.html#transforms" class="header">Transforms</a>
+  <ul>
+    <li><a href="../extras/Transforms.html#withresource" class="header">WithResource</a></li>
+    <li><a href="../extras/Transforms.html#filedownload" class="header">FileDownload</a></li>
+    <li><a href="../extras/Transforms.html#safe-flatmap" class="header">Safe flatMap</a></li>
+    <li><a href="../extras/Transforms.html#pipe" class="header">Pipe</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../extras/Transforms.html#transforms" class="header">Transforms</a>
+  <ul>
+    <li><a href="../extras/Transforms.html#withresource" class="header">WithResource</a></li>
+    <li><a href="../extras/Transforms.html#filedownload" class="header">FileDownload</a></li>
+    <li><a href="../extras/Transforms.html#safe-flatmap" class="header">Safe flatMap</a></li>
+    <li><a href="../extras/Transforms.html#pipe" class="header">Pipe</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#transforms" name="transforms" class="anchor"><span class="anchor-link"></span></a>Transforms</h1>
+<p>The <code>com.spotify.scio.transforms</code> package provides a selection of transforms with additional functionality.</p>
+<h1><a href="#withresource" name="withresource" class="anchor"><span class="anchor-link"></span></a>WithResource</h1>
+<p>The <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/syntax/SCollectionWithResourceSyntax$$SCollectionWithResourceFunctions.html" title="com.spotify.scio.transforms.syntax.SCollectionWithResourceSyntax.SCollectionWithResourceFunctions"><code>WithResource</code></a> syntax provides a convenient wrapper around <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/DoFnWithResource.html" title="com.spotify.scio.transforms.DoFnWithResource"><code>DoFnWithResource</code></a> that allows reuse of some resource class, for example an API client, according to the specified <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/DoFnWithResource$$ResourceType.html" title="com.spotify.scio.transforms.DoFnWithResource.ResourceType"><code>ResourceType</code></a> behavior for variants of <code>map</code>, <code>filter</code>, <code>flatMap</code>, and <code>collect</code>:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.transforms._
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
+
+class Client(val name: String)
+class ClientNotThreadSafe() {
+  private var state: Int = 0
+  def name(): String = {
+    val out = s&quot;c$state&quot;
+    state = state + 1
+    out
+  }
+}
+
+val elements: SCollection[String] = ???
+
+elements.mapWithResource(new Client(&quot;c1&quot;), ResourceType.PER_CLASS) { 
+  case (client, s) =&gt; s + client.name
+}
+elements.filterWithResource(new Client(&quot;c2&quot;), ResourceType.PER_INSTANCE) { 
+  case (client, s) =&gt; s.nonEmpty
+}
+elements.collectWithResource(new Client(&quot;c3&quot;), ResourceType.PER_INSTANCE) {
+  case (client, s) if s.nonEmpty =&gt; s + client.name
+}
+elements.flatMapWithResource(new ClientNotThreadSafe(), ResourceType.PER_CLONE) {
+  case (client, s) =&gt; s + client.name()
+}
+</code></pre>
+<h2><a href="#custom-parallelism" name="custom-parallelism" class="anchor"><span class="anchor-link"></span></a>Custom Parallelism</h2>
+<p>By default, a worker on dataflow batch pipeline will have a number of threads equal to the number of vCPUs. In dataflow streaming, the <a href="https://github.com/apache/beam/blob/98210d99b8530346b66fcffe66b893924c910bea/runners/google-cloud-dataflow-java/worker/src/main/java/org/apache/beam/runners/dataflow/worker/StreamingDataflowWorker.java#L181">default number of threads is 300</a>.</p>
+<p>To limit the number of concurrent items being processed a worker, <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/syntax/SCollectionParallelismSyntax$$CustomParallelismSCollection.html" title="com.spotify.scio.transforms.syntax.SCollectionParallelismSyntax.CustomParallelismSCollection"><code>CustomParallelism</code></a> syntax allows setting a <code>parallelism</code> argument on variants of <code>map</code>, <code>filter</code>, <code>flatMap</code>, and <code>collect</code>:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.transforms._
+
+val elements: SCollection[String] = ???
+elements.mapWithParallelism(5) { s =&gt; s + &quot;_append&quot; }
+elements.filterWithParallelism(5) { s =&gt; s.nonEmpty }
+elements.flatMapWithParallelism(5) { s =&gt; s.split(&quot;,&quot;) }
+elements.collectWithParallelism(5) { case s if s.nonEmpty =&gt; s + &quot;_append&quot; }
+</code></pre>
+<h1><a href="#filedownload" name="filedownload" class="anchor"><span class="anchor-link"></span></a>FileDownload</h1>
+<p>The <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/syntax/SCollectionFileDownloadSyntax$$FileDownloadSCollection.html" title="com.spotify.scio.transforms.syntax.SCollectionFileDownloadSyntax.FileDownloadSCollection"><code>FileDownload</code></a> syntax provides support for downloading arbitrary <code>URI</code>s to a local file, then handling the results:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.transforms._
+import scala.jdk.CollectionConverters._
+import java.net.URI
+import java.nio.file.Files
+import java.nio.charset.StandardCharsets
+  
+val uris: SCollection[URI] = ???
+val fileContents: SCollection[String] = uris.mapFile { path =&gt;
+  new String(Files.readAllBytes(path), StandardCharsets.UTF_8) 
+}
+val lines: SCollection[String] = uris.flatMapFile { path =&gt; 
+  Files.readAllLines(path).asScala
+}
+</code></pre>
+<h1><a href="#safe-flatmap" name="safe-flatmap" class="anchor"><span class="anchor-link"></span></a>Safe flatMap</h1>
+<p>The <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/syntax/SCollectionSafeSyntax$$SpecializedFlatMapSCollection.html" title="com.spotify.scio.transforms.syntax.SCollectionSafeSyntax.SpecializedFlatMapSCollection"><code>Safe</code></a> syntax provides a <code>safeFlatMap</code> function that captures any exceptions thrown by the body of the transform and partitions its output into an <code>SCollection</code> of successfully-output elements and an <code>SCollection</code> of the exception-throwing input elements and the <code>Throwable</code> they produced.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.transforms._
+
+val elements: SCollection[String] = ???
+val (ok: SCollection[Int], bad: SCollection[(String, Throwable)]) = elements
+  .safeFlatMap { in =&gt;
+    in.split(&quot;,&quot;).map { s =&gt; s.toInt }
+  }
+</code></pre>
+<h1><a href="#pipe" name="pipe" class="anchor"><span class="anchor-link"></span></a>Pipe</h1>
+<p>The <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/syntax/SCollectionPipeSyntax$$PipeSCollection.html" title="com.spotify.scio.transforms.syntax.SCollectionPipeSyntax.PipeSCollection"><code>Pipe</code></a> syntax provides a method to pass elements of an <code>SCollection[String]</code> to a specified command-line program. Additional arguments allow configuration of the working directory, application environment, and setup &amp; teardown commands.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.transforms._
+
+val elements: SCollection[String] = ???
+val upperElements: SCollection[String] = elements.pipe(&quot;tr [:lower:] [:upper:]&quot;)
+</code></pre>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/extras/Transforms.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.0.0+1-f9106dfb+20230622-0006*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../extras/Scio-REPL.html" title="REPL" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+REPL
+</span>
+</div>
+</a>
+<a href="../dev/index.html" title="Development" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Development
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2020 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../assets/javascripts/application.583bbe55.js"></script>
+<script src="../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../."}})</script>
+<script type="text/javascript" src="../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

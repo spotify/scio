@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="images/favicon.ico">
+<title>Joins · Scio</title>
+<link rel="stylesheet" href="assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="lib/prettify/prettify.css">
+<script src="assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="assets/fonts/material-icons.css">
+<link rel="stylesheet" href="assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+Joins
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="images/logo.png" width="24" height="24">
+</a>
+<a href="index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="Joins.html" class="active page">Joins</a></li>
+  <li><a href="SideInputs.html" class="page">Side Inputs</a></li>
+  <li><a href="io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="io/Avro.html" class="page">Avro</a></li>
+    <li><a href="io/Binary.html" class="page">Binary</a></li>
+    <li><a href="io/BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="io/Csv.html" class="page">CSV</a></li>
+    <li><a href="io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="io/Json.html" class="page">Json</a></li>
+    <li><a href="io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="io/Object.html" class="page">Object file</a></li>
+    <li><a href="io/Parquet.html" class="page">Parquet</a></li>
+    <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="io/Redis.html" class="page">Redis</a></li>
+    <li><a href="io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="io/Text.html" class="page">Text</a></li>
+  </ul></li>
+  <li><a href="examples.html" class="page">Examples</a></li>
+  <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="extras/Fanout.html" class="page">Fanout</a></li>
+    <li><a href="extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="extras/Sorter.html" class="page">Sorter</a></li>
+    <li><a href="extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
+    <li><a href="extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="extras/Transforms.html" class="page">Transforms</a></li>
+  </ul></li>
+  <li><a href="dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="dev/build.html" class="page">Build</a></li>
+    <li><a href="dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="Runners.html" class="page">Runners</a></li>
+  <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="releases/index.html" class="page">Releases</a>
+  <ul>
+    <li><a href="releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="releases/migrations/index.html" class="page">Migration Guides</a></li>
+    <li><a href="releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
+    <li><a href="releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
+  </ul></li>
+  <li><a href="FAQ.html" class="page">FAQ</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Joins.html#joins" class="header">Joins</a>
+  <ul>
+    <li><a href="Joins.html#cogroup" class="header">Cogroup</a></li>
+    <li><a href="Joins.html#standard-joins" class="header">Standard joins</a></li>
+    <li><a href="Joins.html#hash-joins" class="header">Hash joins</a></li>
+    <li><a href="Joins.html#large-hash-join" class="header">Large hash join</a></li>
+    <li><a href="Joins.html#sparse-join" class="header">Sparse join</a></li>
+    <li><a href="Joins.html#skewed-join" class="header">Skewed Join</a></li>
+    <li><a href="Joins.html#sort-merge-bucket-smb-" class="header">Sort Merge Bucket (SMB)</a></li>
+    <li><a href="Joins.html#see-also" class="header">See also</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="Joins.html#joins" class="header">Joins</a>
+  <ul>
+    <li><a href="Joins.html#cogroup" class="header">Cogroup</a></li>
+    <li><a href="Joins.html#standard-joins" class="header">Standard joins</a></li>
+    <li><a href="Joins.html#hash-joins" class="header">Hash joins</a></li>
+    <li><a href="Joins.html#large-hash-join" class="header">Large hash join</a></li>
+    <li><a href="Joins.html#sparse-join" class="header">Sparse join</a></li>
+    <li><a href="Joins.html#skewed-join" class="header">Skewed Join</a></li>
+    <li><a href="Joins.html#sort-merge-bucket-smb-" class="header">Sort Merge Bucket (SMB)</a></li>
+    <li><a href="Joins.html#see-also" class="header">See also</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#joins" name="joins" class="anchor"><span class="anchor-link"></span></a>Joins</h1>
+<p>Scio provides a full suite of join functionality and a few extras that solve tricky edge-cases in large-scale data processing.</p>
+<p>All joins operate over <code>SCollection</code>s containing 2-tuples, where the first tuple item is considered the <em>key</em> and the second the <em>value</em>. The order in which <code>SCollection</code>s are joined matters; larger datasets should be further to the left. For example in <code>a.join(b)</code>, <code>a</code> should be the larger of the two datasets and by convention <code>a</code> is called the left-hand-side or <em>LHS</em>, while <code>b</code> is the right-hand-side or <em>RHS</em>.</p>
+<h2><a href="#cogroup" name="cogroup" class="anchor"><span class="anchor-link"></span></a>Cogroup</h2>
+<p>The Beam transform which underlies the standard joins below is the <a href="https://beam.apache.org/documentation/programming-guide/#cogroupbykey">Cogroup</a>. Scio also provides a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#cogroup[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Iterable[V],Iterable[W]))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`cogroup`</code></a> operation, which returns iterables from each <code>SCollection</code> containing all the values which match each key:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.values.SCollection
+
+val a: SCollection[(String, String)] = ???
+val b: SCollection[(String, Int)] = ???
+val elements: SCollection[(String, (Iterable[String], Iterable[Int]))] = a.cogroup(b)
+</code></pre>
+<h2><a href="#standard-joins" name="standard-joins" class="anchor"><span class="anchor-link"></span></a>Standard joins</h2>
+<p>Scio&rsquo;s standard joins have SQL-like names with SQL-like semantics. In the examples below, the contents of the LHS are of type <code>(K, V)</code>, while the RHS are of type <code>(K, W)</code>.</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#join[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`join`</code></a> produces elements of <code>(K, (V, W))</code>, where the key <code>K</code> must be in both the LHS and RHS:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+
+val a: SCollection[(String, String)] = ???
+val b: SCollection[(String, Int)] = ???
+val elements: SCollection[(String, (String, Int))] = a.join(b)
+</code></pre>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#leftOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`leftOuterJoin`</code></a> produces elements of <code>(K (V, Option[W]))</code>, where the key <code>K</code> is in the LHS but may not be in the RHS:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+
+val a: SCollection[(String, String)] = ???
+val b: SCollection[(String, Int)] = ???
+val elements: SCollection[(String, (String, Option[Int]))] = a.leftOuterJoin(b)
+</code></pre>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#rightOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],W))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`rightOuterJoin`</code></a> produces elements of <code>(K, (Option[V], W]))</code>, where the key <code>K</code> is in the RHS but may not be in the LHS:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+
+val a: SCollection[(String, String)] = ???
+val b: SCollection[(String, Int)] = ???
+val elements: SCollection[(String, (Option[String], Int))] = a.rightOuterJoin(b)
+</code></pre>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#fullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`fullOuterJoin`</code></a> produces elements of <code>(K (Option[V], Option[W]))</code>, where the key <code>K</code> can be in either side:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+
+val a: SCollection[(String, String)] = ???
+val b: SCollection[(String, Int)] = ???
+val elements: SCollection[(String, (Option[String], Option[Int]))] = a.fullOuterJoin(b)
+</code></pre>
+<p>When multiple joins of the same type are chained, it is more efficient to use Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/util/MultiJoin.html" title="com.spotify.scio.util.MultiJoin"><code>`MultiJoin`</code></a> class. Instead of <code>a.join(b).join(c)</code> prefer <code>MultiJoin</code> (or its variants, <code>MultiJoin.left</code>, <code>MultiJoin.outer</code>, <code>MultiJoin.cogroup</code>):</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.util.MultiJoin
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[(String, Boolean)] = ???
+val c: SCollection[(String, Float)] = ???
+val elements: SCollection[(String, (Int, Boolean, Float))] = MultiJoin(a, b, c)
+</code></pre>
+<h2><a href="#hash-joins" name="hash-joins" class="anchor"><span class="anchor-link"></span></a>Hash joins</h2>
+<p>Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairHashSCollectionFunctions.html#hashJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="com.spotify.scio.values.PairHashSCollectionFunctions"><code>`hashJoin`</code></a> and variants <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairHashSCollectionFunctions.html#hashLeftOuterJoin[W](sideInput:com.spotify.scio.values.SideInput[Map[K,Iterable[W]]]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="com.spotify.scio.values.PairHashSCollectionFunctions"><code>`hashLeftOuterJoin`</code></a>, and <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairHashSCollectionFunctions.html#hashFullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="com.spotify.scio.values.PairHashSCollectionFunctions"><code>`hashFullOuterJoin`</code></a> provide a convenient syntax over the top of Beam&rsquo;s SideInput class to avoid shuffle during the join. The RHS should fit in memory, as with normal <a href="SideInputs.html">SideInputs</a>.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[(String, Boolean)] = ???
+val elements: SCollection[(String, (Int, Boolean))] = a.hashJoin(b)
+</code></pre>
+<p>In the less-common case where the LHS contains only keys to be looked-up, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#hashLookup[V](that:com.spotify.scio.values.SCollection[(T,V)]):com.spotify.scio.values.SCollection[(T,Iterable[V])]" title="com.spotify.scio.values.SCollection"><code>`hashLookup`</code></a> will join in all matching values from the RHS. Again, the RHS should fit in memory.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+
+val a: SCollection[String] = ???
+val b: SCollection[(String, String)] = ???
+val elements: SCollection[(String, Iterable[String])] = a.hashLookup(b)
+</code></pre>
+<p>In addition, Scio also provides the shuffle-free intersection and subtraction operations <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairHashSCollectionFunctions.html#hashIntersectByKey(rhs:com.spotify.scio.values.SCollection[K]):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.values.PairHashSCollectionFunctions"><code>`hashIntersectByKey`</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairHashSCollectionFunctions.html#hashSubtractByKey(sideInput:com.spotify.scio.values.SideInput[Set[K]]):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.values.PairHashSCollectionFunctions"><code>`hashSubtractByKey`</code></a>.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[String] = ???
+
+val subtracted: SCollection[(String, Int)] = a.hashSubtractByKey(b)
+val intersected: SCollection[(String, Int)] = a.hashIntersectByKey(b)
+</code></pre>
+<h2><a href="#large-hash-join" name="large-hash-join" class="anchor"><span class="anchor-link"></span></a>Large hash join</h2>
+<p>Similar to Hash Joins, Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/PairLargeHashSCollectionFunctions.html#largeHashJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],numShards:Short,compressionType:com.spotify.sparkey.CompressionType,compressionBlockSize:Int):com.spotify.scio.values.SCollection[(K,(V,W))]" title="com.spotify.scio.extra.sparkey.PairLargeHashSCollectionFunctions"><code>`largeHashJoin`</code></a> and variants <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/PairLargeHashSCollectionFunctions.html#largeHashLeftOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],numShards:Short,compressionType:com.spotify.sparkey.CompressionType,compressionBlockSize:Int):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="com.spotify.scio.extra.sparkey.PairLargeHashSCollectionFunctions"><code>`largeHashLeftOuterJoin`</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/PairLargeHashSCollectionFunctions.html#largeHashFullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],numShards:Short,compressionType:com.spotify.sparkey.CompressionType,compressionBlockSize:Int):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="com.spotify.scio.extra.sparkey.PairLargeHashSCollectionFunctions"><code>`largeHashFullOuterJoin`</code></a> provide a convenient syntax on top of Scio&rsquo;s <a href="extras/Sparkey.html">Sparkey</a> support to avoid shuffle during a join. Use of sparkey requires only that the RHS fit on disk.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.extra.sparkey._
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[(String, Boolean)] = ???
+val elements: SCollection[(String, (Int, Boolean))] = a.largeHashJoin(b)
+</code></pre>
+<p>Larger shuffle-free intersection and subtraction operations are also provided as <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/PairLargeHashSCollectionFunctions.html#largeHashIntersectByKey(rhs:com.spotify.scio.values.SCollection[K],numShards:Short,compressionType:com.spotify.sparkey.CompressionType,compressionBlockSize:Int):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.extra.sparkey.PairLargeHashSCollectionFunctions"><code>`largeHashIntersectByKey`</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/PairLargeHashSCollectionFunctions.html#largeHashSubtractByKey(rhs:com.spotify.scio.values.SCollection[K],numShards:Short,compressionType:com.spotify.sparkey.CompressionType,compressionBlockSize:Int):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.extra.sparkey.PairLargeHashSCollectionFunctions"><code>`largeHashSubtractByKey`</code></a>.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.extra.sparkey._
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[String] = ???
+
+val subtracted: SCollection[(String, Int)] = a.largeHashSubtractByKey(b)
+val intersected: SCollection[(String, Int)] = a.largeHashIntersectByKey(b)
+</code></pre>
+<h2><a href="#sparse-join" name="sparse-join" class="anchor"><span class="anchor-link"></span></a>Sparse join</h2>
+<p>Scio supports a &lsquo;sparse join&rsquo; for cases where both the LHS and RHS of a join are large, but where the keys in the RHS cover a relatively small number of rows in the LHS.</p>
+<p>In this case, an optimization of the join can significantly reduce the shuffle. The keys of the RHS are inserted into a <a href="https://en.wikipedia.org/wiki/Bloom_filter">Bloom Filter</a>, a probabilistic data structure that effectively acts as a <code>Set</code> but with some risk of false positives. Elements in the LHS dataset are partitioned by passing an element&rsquo;s key through the filter and splitting the dataset on whether the key is found or not. All LHS keys which are found in the filter are <em>probably</em> in the RHS dataset, so a full join is performed on these elements. Any LHS key <em>not found</em> in the filter are <em>definitely not</em> in the RHS dataset, so these items can be handled without a join. To properly size the Bloom filter, an estimate of the number of keys in the RHS (<code>rhsNumKeys</code>) must be provided to the join function.</p>
+<p>In addition to <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#sparseJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],rhsNumKeys:Long,fpProb:Double)(implicitfunnel:com.google.common.hash.Funnel[K]):com.spotify.scio.values.SCollection[(K,(V,W))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`sparseJoin`</code></a> (and variants <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#sparseLeftOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],rhsNumKeys:Long,fpProb:Double)(implicitfunnel:com.google.common.hash.Funnel[K]):com.spotify.scio.values.SCollection[(K,(V,Option[W]))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`sparseLeftOuterJoin`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#sparseRightOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],rhsNumKeys:Long,fpProb:Double)(implicitfunnel:com.google.common.hash.Funnel[K]):com.spotify.scio.values.SCollection[(K,(Option[V],W))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`sparseRightOuterJoin`</code></a>, and <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#sparseFullOuterJoin[W](rhs:com.spotify.scio.values.SCollection[(K,W)],rhsNumKeys:Long,fpProb:Double)(implicitfunnel:com.google.common.hash.Funnel[K]):com.spotify.scio.values.SCollection[(K,(Option[V],Option[W]))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`sparseFullOuterJoin`</code></a>) Scio also provides a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#sparseIntersectByKey(rhs:com.spotify.scio.values.SCollection[K],rhsNumKeys:Long,computeExact:Boolean,fpProb:Double)(implicitfunnel:com.google.common.hash.Funnel[K]):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`sparseIntersectByKey`</code></a> implementation. Scio uses Guava&rsquo;s <a href="https://guava.dev/releases/31.1-jre/api/docs/?com/google/common/hash/BloomFilter.html" title="com.google.common.hash.BloomFilter"><code>BloomFilter</code></a>. Import <code>magnolify.guava.auto._</code> to get common instances of Guava <a href="https://guava.dev/releases/31.1-jre/api/docs/?com/google/common/hash/Funnel.html" title="com.google.common.hash.Funnel"><code>Funnel</code></a>:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import magnolify.guava.auto._
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[(String, Boolean)] = ???
+val c: SCollection[String] = ???
+
+val bNumKeys: Int = ???
+val joined = a.sparseJoin(b, bNumKeys)
+
+val cNumKeys: Int = ???
+val intersected: SCollection[(String, Int)] = a.sparseIntersectByKey(c, cNumKeys)
+</code></pre>
+<p>Finally, Scio provides <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#sparseLookup[A](rhs:com.spotify.scio.values.SCollection[(K,A)],thisNumKeys:Long)(implicitfunnel:com.google.common.hash.Funnel[K]):com.spotify.scio.values.SCollection[(K,(V,Iterable[A]))]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`sparseLookup`</code></a>, a special-case for joining all items from the RHS with matching keys into the LHS items with that key. Differently than the other <code>sparse</code> variants, in this case an estimate of the number of keys in the LHS must be provided:</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import magnolify.guava.auto._
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[(String, String)] = ???
+
+val aNumKeys: Int = ???
+val lookedUp: SCollection[(String, (Int, Iterable[String]))] = a.sparseLookup(b, aNumKeys)
+</code></pre>
+<h2><a href="#skewed-join" name="skewed-join" class="anchor"><span class="anchor-link"></span></a>Skewed Join</h2>
+<p>Similar to sparse joins, Scio supports a &lsquo;skewed join&rsquo; for the special case in which some keys in a dataset are very frequent, or <em>hot</em>.</p>
+<p>Scio uses a <a href="https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch">Count-Min sketch</a> (or <em>CMS</em>), a probabilistic data structure that is internally similar to a Bloom filter, but which provides an estimated count for a given item which is explicitly an _over_estimate. The keys of the LHS are counted and those which exceed the value of the <code>hotKeyThreshold</code> parameter (default: <code>9000</code>) plus an error bound are considered &lsquo;hot&rsquo;, while any remaining key is &lsquo;cold&rsquo;. Both the LHS and RHS are divided into &lsquo;hot&rsquo; and &lsquo;chill&rsquo; partitions. The chill sides are joined normally, while the hot side of the RHS is <code>hashJoin</code>ed into the hot LHS, avoiding shuffle on this segment of the dataset.</p>
+<p>Scio provides <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSkewedSCollectionFunctions.html" title="com.spotify.scio.values.PairSkewedSCollectionFunctions"><code>`skewedJoin`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSkewedSCollectionFunctions.html" title="com.spotify.scio.values.PairSkewedSCollectionFunctions"><code>`skewedLeftOuterJoin`</code></a>, and <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSkewedSCollectionFunctions.html" title="com.spotify.scio.values.PairSkewedSCollectionFunctions"><code>`skewedFullOuterJoin`</code></a> variants. Import <code>com.twitter.algebird.CMSHasherImplicits._</code> for the implicits required for count-min sketch.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.twitter.algebird.CMSHasherImplicits._
+
+val a: SCollection[(String, Int)] = ???
+val b: SCollection[(String, String)] = ???
+val elements: SCollection[(String, (Int, String))] = a.skewedJoin(b)
+</code></pre>
+<h2><a href="#sort-merge-bucket-smb-" name="sort-merge-bucket-smb-" class="anchor"><span class="anchor-link"></span></a>Sort Merge Bucket (SMB)</h2>
+<p>Sort-Merge Buckets allow for shuffle-free joins of large datasets. See <a href="extras/Sort-Merge-Bucket.html">Sort Merge Bucket</a></p>
+<h2><a href="#see-also" name="see-also" class="anchor"><span class="anchor-link"></span></a>See also</h2>
+<ul>
+  <li><a href="https://youtu.be/cGvaQp_h5ek?t=6257">Join Optimizations at Spotify</a> How Scio can save you time and money with clever join strategies and approximate algorithms, Apache Beam Summit 2022</li>
+</ul>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/Joins.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.0.0+1-f9106dfb+20230622-0006*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="Builtin.html" title="Built-in Functionality" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Built-in Functionality
+</span>
+</div>
+</a>
+<a href="SideInputs.html" title="Side Inputs" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Side Inputs
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2020 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="assets/javascripts/application.583bbe55.js"></script>
+<script src="assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"."}})</script>
+<script type="text/javascript" src="lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>

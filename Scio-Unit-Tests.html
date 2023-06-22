@@ -139,18 +139,35 @@ spotify/scio
 </div>
 <ul>
   <li><a href="Getting-Started.html" class="page">Getting Started</a></li>
-  <li><a href="examples.html" class="page">Examples</a></li>
+  <li><a href="Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="Joins.html" class="page">Joins</a></li>
+  <li><a href="SideInputs.html" class="page">Side Inputs</a></li>
   <li><a href="io/index.html" class="page">IO</a>
   <ul>
     <li><a href="io/Avro.html" class="page">Avro</a></li>
+    <li><a href="io/Binary.html" class="page">Binary</a></li>
     <li><a href="io/BigQuery.html" class="page">BigQuery</a></li>
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="io/Csv.html" class="page">CSV</a></li>
+    <li><a href="io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="io/Json.html" class="page">Json</a></li>
+    <li><a href="io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="io/Object.html" class="page">Object file</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
     <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="io/Redis.html" class="page">Redis</a></li>
+    <li><a href="io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="io/Text.html" class="page">Text</a></li>
   </ul></li>
+  <li><a href="examples.html" class="page">Examples</a></li>
   <li><a href="Scio-Unit-Tests.html" class="active page">Testing</a></li>
-  <li><a href="Scio-REPL.html" class="page">REPL</a></li>
   <li><a href="internals/index.html" class="page">Internals</a>
   <ul>
     <li><a href="internals/Coders.html" class="page">Coder Typeclass</a></li>
@@ -161,16 +178,18 @@ spotify/scio
   <li><a href="extras/index.html" class="page">Extras</a>
   <ul>
     <li><a href="extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="extras/Fanout.html" class="page">Fanout</a></li>
     <li><a href="extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="extras/Sorter.html" class="page">Sorter</a></li>
     <li><a href="extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
-  </ul></li>
-  <li><a href="migrations/index.html" class="page">Migration Guides</a>
-  <ul>
-    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
-    <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
-    <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
-    <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
+    <li><a href="extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="extras/Transforms.html" class="page">Transforms</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -180,18 +199,17 @@ spotify/scio
     <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
   </ul></li>
   <li><a href="scaladoc.html" class="page">Scaladoc</a></li>
-  <li><a href="Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
   <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
   <li><a href="Runners.html" class="page">Runners</a></li>
   <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
-  <li><a href="Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
   <li><a href="releases/index.html" class="page">Releases</a>
   <ul>
+    <li><a href="releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="releases/migrations/index.html" class="page">Migration Guides</a></li>
     <li><a href="releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
     <li><a href="releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
   </ul></li>
   <li><a href="FAQ.html" class="page">FAQ</a></li>
-  <li><a href="Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
@@ -212,7 +230,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.0-RC1+0-1f32fd60+20230608-1604*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
 </label>
 </li>
 </ul>
@@ -273,7 +291,7 @@ spotify/scio
     .run()
 }</code></pre>
 <p>The <code>input</code> function injects your input test data. Note that the <code>TestIO[T]</code> should match the input source used in the pipeline e.g. TextIO for sc.textFile, AvroIO for sc.avro. The TextIO id (“in.txt”) should match the one specified in the args.</p>
-<p>The output function evaluates the output of the pipeline using the provided assertion from the <code>SCollectionMatchers</code>. More info on <code>SCollectionMatchers</code> can be found <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. In this example, we are asserting that the output of the pipeline should contain an <code>SCollection</code> with elements that in the expected variable in any order. Also, note that the <code>TestIO[T]</code> should match the output used in the pipeline e.g. TextIO for sc.saveAsTextFile</p>
+<p>The output function evaluates the output of the pipeline using the provided assertion from the <code>SCollectionMatchers</code>. More info on <code>SCollectionMatchers</code> can be found <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers$.html" title="com.spotify.scio.testing.SCollectionMatchers"><code>here</code></a>. In this example, we are asserting that the output of the pipeline should contain an <code>SCollection</code> with elements that in the expected variable in any order. Also, note that the <code>TestIO[T]</code> should match the output used in the pipeline e.g. TextIO for sc.saveAsTextFile</p>
 <p>The run function will run the pipeline.</p>
 <h3><a href="#test-for-pipeline-with-sideinput" name="test-for-pipeline-with-sideinput" class="anchor"><span class="anchor-link"></span></a>Test for pipeline with sideinput</h3>
 <p>We will use the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/JoinExamplesTest.scala#L73">SideInputJoinExamples</a> test in JoinExamplesTest to illustrate how to write a test for pipelines with sideinputs. The <a href="https://spotify.github.io/scio/examples/JoinExamples.scala.html">SideInputJoinExamples</a> pipeline has two input sources, one for eventsInfo and the other for countryInfo. CountryInfo is used as a sideinput to join with eventInfo.</p>
@@ -312,7 +330,7 @@ spotify/scio
 }</code></pre>
 <h3><a href="#test-partial-pipeline" name="test-partial-pipeline" class="anchor"><span class="anchor-link"></span></a>Test partial pipeline</h3>
 <p>To test a section of a pipeline, use <code>runWithContext</code>. The TriggerExample.extractFlowInfo test in <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala">TriggerExampleTest</a> tests only the extractFlowInfo part of the pipeline.</p>
-<p>The data variable hold the test data and <code>sc.parallelize</code> will transform the input iterable to a <code>SCollection</code> of strings. TriggerExample.extractFlowInfo will be executed using the <code>ScioContext</code> and you can then specify assertions against the result of the pipeline.</p>
+<p>The data variable hold the test data and <code>sc.parallelize</code> will transform the input Iterable to an <code>SCollection</code> of strings. TriggerExample.extractFlowInfo will be executed using the <code>ScioContext</code> and you can then specify assertions against the result of the pipeline.</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala#L25-L37" target="_blank" title="Go to snippet source">source</a><code class="language-scala">&quot;TriggerExample.extractFlowInfo&quot; should &quot;work&quot; in {
   val data = Seq(
     &quot;01/01/2010 00:00:00,1108302,94,E,ML,36,100,29,0.0065,66,9,1,0.001,74.8,1,9,3,0.0028,71,1,9,&quot;
@@ -365,7 +383,7 @@ spotify/scio
     containInAnyOrder(Seq((blueOne.team, 12), (redOne.team, 4)))
   }
 }</code></pre>
-<p>Scio provides more <code>SCollection</code> assertions such as <code>inWindow</code>, <code>inCombinedNonLatePanes</code>, <code>inFinalPane</code>, and <code>inOnlyPane</code>. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html">here</a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
+<p>Scio provides more <code>SCollection</code> assertions such as <code>inWindow</code>, <code>inCombinedNonLatePanes</code>, <code>inFinalPane</code>, and <code>inOnlyPane</code>. You can find the full list <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/SCollectionMatchers.html" title="com.spotify.scio.testing.SCollectionMatchers"><code>here</code></a>. More information on testing unbounded pipelines can be found <a href="https://beam.apache.org/blog/2016/10/20/test-stream.html">here</a>.</p>
 <h3><a href="#test-with-transform-overrides" name="test-with-transform-overrides" class="anchor"><span class="anchor-link"></span></a>Test with transform overrides</h3>
 <p>Scio provides a method to replace arbitrary <em>named</em> <code>PTransform</code>s in a test context; this is primarily useful for mocking requests to external services.</p>
 <p>In this example, the <code>GuavaLookupDoFn</code> stands in for a transform that contacts an external service. A <code>ParDo</code> <code>PTransform</code> is created from the <code>DoFn</code> (<code>ParDo.of</code>), then applied to the pipeline (<code>applyTransform</code>) with a unique name (<code>myTransform</code>).</p>
@@ -429,7 +447,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.0-RC1+0-1f32fd60+20230608-1604*
+0.0.0+1-f9106dfb+20230622-0006*
 </span>
 </div>
 </article>
@@ -439,7 +457,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="io/Pubsub.html" title="PubSub" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="examples.html" title="Examples" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -448,17 +466,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-PubSub
+Examples
 </span>
 </div>
 </a>
-<a href="Scio-REPL.html" title="REPL" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="internals/index.html" title="Internals" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-REPL
+Internals
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

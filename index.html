@@ -134,18 +134,35 @@ spotify/scio
 </div>
 <ul>
   <li><a href="Getting-Started.html" class="page">Getting Started</a></li>
-  <li><a href="examples.html" class="page">Examples</a></li>
+  <li><a href="Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="Joins.html" class="page">Joins</a></li>
+  <li><a href="SideInputs.html" class="page">Side Inputs</a></li>
   <li><a href="io/index.html" class="page">IO</a>
   <ul>
     <li><a href="io/Avro.html" class="page">Avro</a></li>
+    <li><a href="io/Binary.html" class="page">Binary</a></li>
     <li><a href="io/BigQuery.html" class="page">BigQuery</a></li>
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="io/Csv.html" class="page">CSV</a></li>
+    <li><a href="io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="io/Json.html" class="page">Json</a></li>
+    <li><a href="io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="io/Object.html" class="page">Object file</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
     <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="io/Redis.html" class="page">Redis</a></li>
+    <li><a href="io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="io/Text.html" class="page">Text</a></li>
   </ul></li>
+  <li><a href="examples.html" class="page">Examples</a></li>
   <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
-  <li><a href="Scio-REPL.html" class="page">REPL</a></li>
   <li><a href="internals/index.html" class="page">Internals</a>
   <ul>
     <li><a href="internals/Coders.html" class="page">Coder Typeclass</a></li>
@@ -156,16 +173,18 @@ spotify/scio
   <li><a href="extras/index.html" class="page">Extras</a>
   <ul>
     <li><a href="extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="extras/Fanout.html" class="page">Fanout</a></li>
     <li><a href="extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="extras/Sorter.html" class="page">Sorter</a></li>
     <li><a href="extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
-  </ul></li>
-  <li><a href="migrations/index.html" class="page">Migration Guides</a>
-  <ul>
-    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
-    <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
-    <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
-    <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
+    <li><a href="extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="extras/Transforms.html" class="page">Transforms</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -175,18 +194,17 @@ spotify/scio
     <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
   </ul></li>
   <li><a href="scaladoc.html" class="page">Scaladoc</a></li>
-  <li><a href="Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
   <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
   <li><a href="Runners.html" class="page">Runners</a></li>
   <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
-  <li><a href="Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
   <li><a href="releases/index.html" class="page">Releases</a>
   <ul>
+    <li><a href="releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="releases/migrations/index.html" class="page">Migration Guides</a></li>
     <li><a href="releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
     <li><a href="releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
   </ul></li>
   <li><a href="FAQ.html" class="page">FAQ</a></li>
-  <li><a href="Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
@@ -206,7 +224,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.0-RC1+0-1f32fd60+20230608-1604*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
 </label>
 </li>
 </ul>
@@ -242,7 +260,7 @@ spotify/scio
 </blockquote>
 <h1><a href="#scio" name="scio" class="anchor"><span class="anchor-link"></span></a>Scio</h1>
 <p>Scio is a Scala API for <a href="https://beam.apache.org/">Apache Beam</a> and <a href="https://github.com/GoogleCloudPlatform/DataflowJavaSDK">Google Cloud Dataflow</a> inspired by <a href="https://spark.apache.org/">Apache Spark</a> and <a href="https://github.com/twitter/scalding">Scalding</a>.</p>
-<p><a href="Getting-Started.html">Getting Started</a> is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the <a href="https://beam.apache.org/documentation/programming-guide/">Beam Programming Guide</a> first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between <a href="./Scio%2C-Scalding-and-Spark.html">Scio, Scalding and Spark</a>. Finally check out this document about the relationship between <a href="./Scio%2C-Beam-and-Dataflow.html">Scio, Beam and Dataflow</a>.</p>
+<p><a href="Getting-Started.html">Getting Started</a> is the best place to start with Scio. If you are new to Apache Beam and distributed data processing, check out the <a href="https://beam.apache.org/documentation/programming-guide/">Beam Programming Guide</a> first for a detailed explanation of the Beam programming model and concepts. If you have experience with other Scala data processing libraries, check out this comparison between <a href="./Scio%2C-Scalding-and-Spark.html">Scio, Scalding and Spark</a>.</p>
 <p>Example Scio pipelines and tests can be found under <a href="https://github.com/spotify/scio/tree/master/scio-examples/src">scio-examples</a>. A lot of them are direct ports from Beam&rsquo;s Java <a href="https://github.com/apache/beam/tree/master/examples">examples</a>. See this <a href="https://spotify.github.io/scio/examples/">page</a> for some of them with side-by-side explanation. Also see <a href="https://github.com/spotify/big-data-rosetta-code">Big Data Rosetta Code</a> for common data processing code snippets in Scio, Scalding and Spark.</p>
 <p>See <a href="https://spotify.github.io/scio/api/com/spotify/scio/index.html" title="com.spotify.scio"><code>Scio Scaladocs</code></a> for current API documentation.</p>
 <h2><a href="#getting-help" name="getting-help" class="anchor"><span class="anchor-link"></span></a>Getting help</h2>
@@ -254,15 +272,11 @@ spotify/scio
 <h2><a href="#documentation" name="documentation" class="anchor"><span class="anchor-link"></span></a>Documentation</h2>
 <ul>
   <li><a href="Getting-Started.html">Getting Started</a> - current API documentation</li>
-  <li><a href="Scio-REPL.html">Scio REPL</a> - tutorial for the interactive Scio REPL</li>
-  <li><a href="Scio,-Beam-and-Dataflow.html">Scio, Beam and Dataflow</a> - how Scio concepts map to Beam and Dataflow</li>
   <li><a href="Scio,-Scalding-and-Spark.html">Scio, Scalding and Spark</a> - comparison of these frameworks</li>
   <li><a href="Runners.html">Runners</a> - how Scio handles Beam runners and runner specific logic</li>
   <li><a href="Scio-data-guideline.html">Scio data guideline</a> - guideline for common problems</li>
-  <li><a href="Apache-Beam.html">Apache Beam</a> - notes on Apache Beam compatibility</li>
   <li><a href="releases/index.html">Releases</a> - Detailed release notes on new Scio releases</li>
   <li><a href="FAQ.html">FAQ</a> - frequently asked questions</li>
-  <li><a href="Powered-By.html">Powered By</a> - see who is using Scio in production</li>
 </ul>
 <h3><a href="#io" name="io" class="anchor"><span class="anchor-link"></span></a>IO</h3>
 <ul>
@@ -297,6 +311,7 @@ spotify/scio
 </ul>
 <h2><a href="#presentations" name="presentations" class="anchor"><span class="anchor-link"></span></a>Presentations</h2>
 <ul>
+  <li><a href="https://www.youtube.com/watch?v=cGvaQp_h5ek">Scio in Depth</a> - Apache Beam Summit, 2022</li>
   <li><a href="https://engineering.atspotify.com/2019/10/16/techbytes-data-processing-with-scio/">Techbytes: Data Processing with Scio</a> - Spotify Engineering Talk, 2019</li>
   <li><a href="https://engineering.atspotify.com/2019/10/16/techbytes-handling-big-data-at-spotify/">Techbytes: Handling Big Data at Spotify</a> - Spotify Engineering Talk, 2019</li>
   <li><a href="https://docs.google.com/presentation/d/1F02Lwnqm9H3cGqDQhIZ3gbftyLQSnVMRxX69H_d04OE/edit#slide=id.p4">Scio - Big Data on Google Cloud with Scala and Scio</a> - Apache Beam Summit London 2018 Talk</li>
@@ -327,7 +342,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.0-RC1+0-1f32fd60+20230608-1604*
+0.0.0+1-f9106dfb+20230622-0006*
 </span>
 </div>
 </article>

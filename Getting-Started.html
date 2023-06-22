@@ -139,18 +139,35 @@ spotify/scio
 </div>
 <ul>
   <li><a href="Getting-Started.html" class="active page">Getting Started</a></li>
-  <li><a href="examples.html" class="page">Examples</a></li>
+  <li><a href="Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="Joins.html" class="page">Joins</a></li>
+  <li><a href="SideInputs.html" class="page">Side Inputs</a></li>
   <li><a href="io/index.html" class="page">IO</a>
   <ul>
     <li><a href="io/Avro.html" class="page">Avro</a></li>
+    <li><a href="io/Binary.html" class="page">Binary</a></li>
     <li><a href="io/BigQuery.html" class="page">BigQuery</a></li>
     <li><a href="io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="io/Csv.html" class="page">CSV</a></li>
+    <li><a href="io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="io/Json.html" class="page">Json</a></li>
+    <li><a href="io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="io/Object.html" class="page">Object file</a></li>
     <li><a href="io/Parquet.html" class="page">Parquet</a></li>
     <li><a href="io/Protobuf.html" class="page">Protobuf</a></li>
     <li><a href="io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="io/Redis.html" class="page">Redis</a></li>
+    <li><a href="io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="io/Text.html" class="page">Text</a></li>
   </ul></li>
+  <li><a href="examples.html" class="page">Examples</a></li>
   <li><a href="Scio-Unit-Tests.html" class="page">Testing</a></li>
-  <li><a href="Scio-REPL.html" class="page">REPL</a></li>
   <li><a href="internals/index.html" class="page">Internals</a>
   <ul>
     <li><a href="internals/Coders.html" class="page">Coder Typeclass</a></li>
@@ -161,16 +178,18 @@ spotify/scio
   <li><a href="extras/index.html" class="page">Extras</a>
   <ul>
     <li><a href="extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="extras/Fanout.html" class="page">Fanout</a></li>
     <li><a href="extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="extras/Sorter.html" class="page">Sorter</a></li>
     <li><a href="extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
-  </ul></li>
-  <li><a href="migrations/index.html" class="page">Migration Guides</a>
-  <ul>
-    <li><a href="migrations/v0.7.0-Migration-Guide.html" class="page">Scio v0.7.0</a></li>
-    <li><a href="migrations/v0.8.0-Migration-Guide.html" class="page">Scio v0.8.0</a></li>
-    <li><a href="migrations/v0.9.0-Migration-Guide.html" class="page">Scio v0.9.0</a></li>
-    <li><a href="migrations/v0.10.0-Migration-Guide.html" class="page">Scio v0.10.0</a></li>
-    <li><a href="migrations/v0.12.0-Migration-Guide.html" class="page">Scio v0.12.0</a></li>
+    <li><a href="extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="extras/Transforms.html" class="page">Transforms</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -180,18 +199,17 @@ spotify/scio
     <li><a href="dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
   </ul></li>
   <li><a href="scaladoc.html" class="page">Scaladoc</a></li>
-  <li><a href="Scio,-Beam-and-Dataflow.html" class="page">Scio, Beam and Dataflow</a></li>
   <li><a href="Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
   <li><a href="Runners.html" class="page">Runners</a></li>
   <li><a href="Scio-data-guideline.html" class="page">Data Guidelines</a></li>
-  <li><a href="Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
   <li><a href="releases/index.html" class="page">Releases</a>
   <ul>
+    <li><a href="releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="releases/migrations/index.html" class="page">Migration Guides</a></li>
     <li><a href="releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
     <li><a href="releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
   </ul></li>
   <li><a href="FAQ.html" class="page">FAQ</a></li>
-  <li><a href="Powered-By.html" class="page">Powered By</a></li>
 </ul>
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
@@ -211,7 +229,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.0-RC1+0-1f32fd60+20230608-1604*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
 </label>
 </li>
 </ul>
@@ -261,7 +279,7 @@ sbt publishLocal
 <pre class="prettyprint"><code class="language-bash">sbt compile test:compile
 </code></pre>
 <h2><a href="#running-the-examples" name="running-the-examples" class="anchor"><span class="anchor-link"></span></a>Running the Examples</h2>
-<p>You can execute the examples locally from SBT. By default pipelines will be executed using the <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and local filesystem will be used for input and output. Take a look at the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples">examples</a> to find out more.</p>
+<p>You can execute the examples locally from SBT. By default pipelines will be executed using the <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and local filesystem will be used for input and output. Take a look at the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples">examples</a> to find out more.</p>
 <pre><code>neville@localhost scio $ sbt
 [info] ...
 &gt; project scio-examples
@@ -269,7 +287,7 @@ sbt publishLocal
 &gt; runMain com.spotify.scio.examples.WordCount --input=&lt;FILE PATTERN&gt; --output=&lt;DIRECTORY&gt;
 </code></pre><div class="callout note "><div class="callout-title">Note</div>
 <p>Unlike Hadoop, Scio or Dataflow input should be file patterns and not directories, i.e. <code>gs://bucket/path/part-*.txt</code> and not <code>gs://bucket/path</code>. Output on the other hand should be directories just like Hadoop, so <code>gs://bucket/path</code> will produce files like <code>gs://bucket/path/part-00000-of-00005.txt</code>.</p></div>
-<p>Use the <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.</p>
+<p>Use the <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.</p>
 <pre><code>neville@localhost scio $ sbt
 [info] ...
 &gt; project scio-examples
@@ -317,8 +335,8 @@ addCompilerPlugin(&quot;org.scalamacros&quot; % &quot;paradise&quot; % &quot;2.1
   <li><a href="https://cloud.google.com/dataflow/service/dataflow-service-desc">Service Optimization and Execution</a></li>
 </ul>
 <p>The defaults should work well for most cases but we sometimes tune the following parameters manually. - <code>--workerMachineType</code> - start with smaller types like <code>n1-standard-1</code> and go up if you run into memory problem. <code>n1-standard-4</code> works well for a lot of our memory hungry jobs. - <code>--maxNumWorkers</code> - avoid setting it to too high, i.e. 1000 or close to quota, since that reduces available instances for other jobs and more workers means more expensive shuffle. - <code>--diskSizeGb</code> - increase this if you run into disk space problem during shuffle, or alternatively optimize code by replacing <code>groupByKey</code> with <code>reduceByKey</code> or <code>sumByKey</code>. - <code>--workerDiskType</code> - specify SSD for jobs with really expensive shuffles. See a list of disk types <a href="https://cloud.google.com/compute/docs/reference/latest/diskTypes">here</a>. Also see this <a href="https://cloud.google.com/compute/docs/disks/performance">page</a> about persistent disk size and type. - <code>--network</code> - specify this if you use VPN to communicate with external services, e.g. HDFS on an on-premise cluster.</p>
-<p>More Dataflow pipeline specific options available can be found in <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"><code>`DataflowPipelineOptions`</code></a> and super interfaces. Some more useful ones are from <a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineWorkerPoolOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions"><code>`DataflowPipelineWorkerPoolOptions`</code></a>.</p>
-<p><a href="https://beam.apache.org/releases/javadoc/2.47.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>`DataflowWorkerHarnessOptions#getWorkerCacheMb`</code></a> affects side input performance but needs an extra step to enable. See this <a href="FAQ.html#how-do-i-improve-side-input-performance-">FAQ item</a>.</p>
+<p>More Dataflow pipeline specific options available can be found in <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"><code>`DataflowPipelineOptions`</code></a> and super interfaces. Some more useful ones are from <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineWorkerPoolOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions"><code>`DataflowPipelineWorkerPoolOptions`</code></a>.</p>
+<p><a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>`DataflowWorkerHarnessOptions#getWorkerCacheMb`</code></a> affects side input performance but needs an extra step to enable. See this <a href="FAQ.html#how-do-i-improve-side-input-performance-">FAQ item</a>.</p>
 <p>There are a few more experimental settings that might help specific scenarios: - <code>--experiments=shuffle_mode=service</code> - use external <a href="https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle">shuffle service</a> instead of local disk - <code>--experiments=enable_custom_bigquery_sink</code> - new custom sink that works around certain limitations when writing to BigQuery - <code>--experiments=worker_region-&lt;REGION&gt;</code> - use specified Google Cloud region instead of zone for more flexible capacity</p>
 </div>
 <div>
@@ -328,7 +346,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.0-RC1+0-1f32fd60+20230608-1604*
+0.0.0+1-f9106dfb+20230622-0006*
 </span>
 </div>
 </article>
@@ -351,13 +369,13 @@ Scio
 </span>
 </div>
 </a>
-<a href="examples.html" title="Examples" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="Builtin.html" title="Built-in Functionality" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Examples
+Built-in Functionality
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="x-ua-compatible" content="ie=edge">
+<meta name="description" content="Scio - Documentation">
+<meta name="generator" content="Paradox, paradox-material-theme=0.6.0, mkdocs-material=3.0.3">
+
+<meta name="lang:clipboard.copy" content="Copy to clipboard">
+<meta name="lang:clipboard.copied" content="Copied to clipboard">
+<meta name="lang:search.language" content="">
+<meta name="lang:search.pipeline.stopwords" content="true">
+<meta name="lang:search.pipeline.trimmer" content="true">
+<meta name="lang:search.result.none" content="No matching documents">
+<meta name="lang:search.result.one" content="1 matching document">
+<meta name="lang:search.result.other" content="# matching documents">
+<meta name="lang:search.tokenizer" content="[\s\-]+">
+
+
+<meta name="description" content="Scio - Documentation">
+<link rel="shortcut icon" href="../../images/favicon.ico">
+<title>Scio v0.9.0 · Scio</title>
+<link rel="stylesheet" href="../../assets/stylesheets/application.451f80e5.css">
+<link rel="stylesheet" href="../../assets/stylesheets/application-palette.22915126.css">
+<link rel="stylesheet" href="../../lib/material__tabs/dist/mdc.tabs.min.css">
+<link rel="stylesheet" href="../../lib/prettify/prettify.css">
+<script src="../../assets/javascripts/modernizr.1aa3b519.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+<style>
+body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}
+code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}
+</style>
+<link rel="stylesheet" href="../../assets/fonts/font-awesome.css">
+<link rel="stylesheet" href="../../assets/fonts/material-icons.css">
+<link rel="stylesheet" href="../../assets/stylesheets/paradox-material-theme.css">
+</head>
+<body
+data-md-color-primary="white"
+data-md-color-accent="indigo"
+>
+<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+<label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+<header class="md-header" data-md-component="header">
+<nav class="md-header-nav md-grid">
+<div class="md-flex">
+<div class="md-flex__cell md-flex__cell--shrink">
+<a href="../../index.html" title="Scio" class="md-header-nav__button md-logo">
+<img src="../../images/logo.png" width="24" height="24">
+</a>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch">
+<div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+<span class="md-header-nav__topic">
+Scio
+</span>
+<span class="md-header-nav__topic">
+Scio v0.9.0
+</span>
+</div>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+<label class="md-icon md-search__icon" for="__search"></label>
+<button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">&#xE5CD;</button>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix>
+<div class="md-search-result" data-md-component="result">
+<div class="md-search-result__meta">
+Type to start searching
+</div>
+<ol class="md-search-result__list"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<div class="md-header-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+</div>
+</div>
+</nav>
+</header>
+
+<div class="md-container">
+<main class="md-main">
+<div class="md-main__inner md-grid" data-md-component="container">
+<div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--primary" data-md-level="0" style="visibility: hidden">
+<label class="md-nav__title md-nav__title--site" for="drawer">
+<a href="../../index.html" title="Scio" class="md-nav__button md-logo">
+<span class="md-nav__button md-logo">
+<img src="../../images/logo.png" width="24" height="24">
+</a>
+<a href="../../index.html" title="Scio">
+Scio
+</a>
+</label>
+<div class="md-nav__source">
+<a href="https://github.com/spotify/scio"
+title="Go to repository"
+class="md-source"
+data-md-source="github">
+<div class="md-source__icon">
+<i class="fa fa-github"></i>
+</div>
+<div class="md-source__repository">
+spotify/scio
+</div>
+</a>
+
+</div>
+<ul>
+  <li><a href="../../Getting-Started.html" class="page">Getting Started</a></li>
+  <li><a href="../../Builtin.html" class="page">Built-in Functionality</a></li>
+  <li><a href="../../Joins.html" class="page">Joins</a></li>
+  <li><a href="../../SideInputs.html" class="page">Side Inputs</a></li>
+  <li><a href="../../io/index.html" class="page">IO</a>
+  <ul>
+    <li><a href="../../io/Avro.html" class="page">Avro</a></li>
+    <li><a href="../../io/Binary.html" class="page">Binary</a></li>
+    <li><a href="../../io/BigQuery.html" class="page">BigQuery</a></li>
+    <li><a href="../../io/Bigtable.html" class="page">Bigtable</a></li>
+    <li><a href="../../io/Cassandra.html" class="page">Cassandra</a></li>
+    <li><a href="../../io/Csv.html" class="page">CSV</a></li>
+    <li><a href="../../io/Datastore.html" class="page">Datastore</a></li>
+    <li><a href="../../io/Grpc.html" class="page">GRPC</a></li>
+    <li><a href="../../io/Elasticsearch.html" class="page">Elasticsearch</a></li>
+    <li><a href="../../io/Jdbc.html" class="page">JDBC</a></li>
+    <li><a href="../../io/Json.html" class="page">Json</a></li>
+    <li><a href="../../io/Neo4J.html" class="page">Neo4J</a></li>
+    <li><a href="../../io/Object.html" class="page">Object file</a></li>
+    <li><a href="../../io/Parquet.html" class="page">Parquet</a></li>
+    <li><a href="../../io/Protobuf.html" class="page">Protobuf</a></li>
+    <li><a href="../../io/Pubsub.html" class="page">PubSub</a></li>
+    <li><a href="../../io/ReadFiles.html" class="page">ReadFiles</a></li>
+    <li><a href="../../io/Redis.html" class="page">Redis</a></li>
+    <li><a href="../../io/Spanner.html" class="page">Spanner</a></li>
+    <li><a href="../../io/Tensorflow.html" class="page">Tensorflow</a></li>
+    <li><a href="../../io/Text.html" class="page">Text</a></li>
+  </ul></li>
+  <li><a href="../../examples.html" class="page">Examples</a></li>
+  <li><a href="../../Scio-Unit-Tests.html" class="page">Testing</a></li>
+  <li><a href="../../internals/index.html" class="page">Internals</a>
+  <ul>
+    <li><a href="../../internals/Coders.html" class="page">Coder Typeclass</a></li>
+    <li><a href="../../internals/Kryo.html" class="page">Kryo</a></li>
+    <li><a href="../../internals/OverrideTypeProvider.html" class="page">OverrideTypeProvider</a></li>
+    <li><a href="../../internals/ScioIO.html" class="page">ScioIO</a></li>
+  </ul></li>
+  <li><a href="../../extras/index.html" class="page">Extras</a>
+  <ul>
+    <li><a href="../../extras/Algebird.html" class="page">Algebird</a></li>
+    <li><a href="../../extras/Annoy.html" class="page">Annoy</a></li>
+    <li><a href="../../extras/AsyncDoFn.html" class="page">AsyncDoFn</a></li>
+    <li><a href="../../extras/BigQueryAvro.html" class="page">BigQueryAvro</a></li>
+    <li><a href="../../extras/DistCache.html" class="page">DistCache</a></li>
+    <li><a href="../../extras/Fanout.html" class="page">Fanout</a></li>
+    <li><a href="../../extras/HyperLogLog.html" class="page">HyperLogLog</a></li>
+    <li><a href="../../extras/MutableScalableBloomFilter.html" class="page">MutableScalableBloomFilter</a></li>
+    <li><a href="../../extras/Sorter.html" class="page">Sorter</a></li>
+    <li><a href="../../extras/Sort-Merge-Bucket.html" class="page">Sort Merge Bucket</a></li>
+    <li><a href="../../extras/Sparkey.html" class="page">Sparkey</a></li>
+    <li><a href="../../extras/Scio-REPL.html" class="page">REPL</a></li>
+    <li><a href="../../extras/Transforms.html" class="page">Transforms</a></li>
+  </ul></li>
+  <li><a href="../../dev/index.html" class="page">Development</a>
+  <ul>
+    <li><a href="../../dev/build.html" class="page">Build</a></li>
+    <li><a href="../../dev/Style-Guide.html" class="page">Style Guide</a></li>
+    <li><a href="../../dev/How-to-Release.html" class="page">How to Release</a></li>
+    <li><a href="../../dev/Design-Philosophy.html" class="page">Design Philosophy</a></li>
+  </ul></li>
+  <li><a href="../../scaladoc.html" class="page">Scaladoc</a></li>
+  <li><a href="../../Scio,-Scalding-and-Spark.html" class="page">Scio, Spark and Scalding</a></li>
+  <li><a href="../../Runners.html" class="page">Runners</a></li>
+  <li><a href="../../Scio-data-guideline.html" class="page">Data Guidelines</a></li>
+  <li><a href="../../releases/index.html" class="page">Releases</a>
+  <ul>
+    <li><a href="../../releases/Apache-Beam.html" class="page">Apache Beam Compatibility</a></li>
+    <li><a href="../../releases/migrations/index.html" class="page">Migration Guides</a></li>
+    <li><a href="../../releases/breaking-changes.html" class="page">Breaking Changelog</a></li>
+    <li><a href="../../releases/v0.12.0.html" class="page">v0.12.0 Release Blog</a></li>
+  </ul></li>
+  <li><a href="../../FAQ.html" class="page">FAQ</a></li>
+</ul>
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#scio-v0-9-0" class="header">Scio v0.9.0</a>
+  <ul>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#bloom-filter" class="header">Bloom Filter</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#ios" class="header">IO&rsquo;s</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#sciocontext" class="header">ScioContext</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#scala-2-11-drop" class="header">Scala 2.11 drop</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</nav>
+<ul style="display: none">
+<li class="md-nav__item md-version" id="project.version">
+<label class="md-nav__link" for="__version">
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+</label>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">Table of contents</label>
+<ul>
+  <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#scio-v0-9-0" class="header">Scio v0.9.0</a>
+  <ul>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#bloom-filter" class="header">Bloom Filter</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#ios" class="header">IO&rsquo;s</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#sciocontext" class="header">ScioContext</a></li>
+    <li><a href="../../releases/migrations/v0.9.0-Migration-Guide.html#scala-2-11-drop" class="header">Scala 2.11 drop</a></li>
+  </ul></li>
+</ul>
+</nav>
+
+</div>
+</div>
+</div>
+<div class="md-content">
+<article class="md-content__inner md-typeset">
+<div class="md-content__searchable">
+<h1><a href="#scio-v0-9-0" name="scio-v0-9-0" class="anchor"><span class="anchor-link"></span></a>Scio v0.9.0</h1>
+<h2><a href="#tl-dr" name="tl-dr" class="anchor"><span class="anchor-link"></span></a>TL;DR</h2>
+<ul>
+  <li><a href="#bloom-filter">Bloom Filter</a></li>
+  <li><a href="#ios">IO&rsquo;s</a></li>
+  <li><a href="#sciocontext">ScioContext</a></li>
+  <li><a href="#scala-2-11-drop">Scala 2.11 drop</a></li>
+</ul><div class="callout warning "><div class="callout-title">Warning</div>
+<p>For all the details, refer to the <a href="https://github.com/spotify/scio/releases/tag/v0.9.0">release notes</a> on GitHub.</p></div>
+<h2><a href="#bloom-filter" name="bloom-filter" class="anchor"><span class="anchor-link"></span></a>Bloom Filter</h2>
+<p>In 0.9.0 we switched from our custom Bloom Filter implementation to Guava Bloom Filter for <code>sparse</code> transforms, e.g. <code>sparseJoin</code>, <code>sparseLookup</code>. As a result, we also switched from Algebird <a href="http://twitter.github.io/algebird/api/#com.twitter.algebird.Hash128"><code>Hash128[K]</code></a> to Guava <a href="https://guava.dev/releases/snapshot-jre/api/docs/com/google/common/hash/Funnel.html"><code>Funnel[K]</code></a> type class for hashing items into the Bloom Filter. Implicit <code>Funnel[K]</code> instances are available through <code>magnolify-guava</code> and need to be imported like this:</p>
+<pre class="prettyprint"><code class="language-scala">import magnolify.guava.auto._
+</code></pre>
+<p>If for error messages like this:</p>
+<pre><code>could not find implicit value for parameter hash: com.spotify.scio.hash.BloomFilter.Hash[T]
+</code></pre>
+<p>The switch also adds the following benefits:</p>
+<p>Previously <code>Hash128[K]</code> only provides instances for <code>Int</code>, <code>Long</code>, <code>String</code>, <code>Array[Byte]</code>, <code>Array[Int]</code> and <code>Array[Long]</code>, while <code>magnolify-guava</code> can derive <code>Funnel[K]</code> for most common types including tuples, case classes, etc.</p>
+<p>We also added an <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/ApproxFilter.html" title="com.spotify.scio.hash.ApproxFilter"><code>`ApproxFilter`</code></a> abstraction to allow extensible approximate filter implementations. <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/BloomFilter.html" title="com.spotify.scio.hash.BloomFilter"><code>`BloomFilter`</code></a> extends <code>ApproxFilter</code> and allows us to create filters &amp; side inputs from <code>Iterable[T]</code> &amp; <code>SCollection[T]</code>. The result filter instances are serializable. For example:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.hash._
+import com.spotify.scio.values._
+import magnolify.guava._
+
+val bf: BloomFilter[String] = Seq(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;).asApproxFilter(BloomFilter)
+
+val sc = ScioContext()
+val data = sc.parallelize(Seq(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;))
+val bfs: SCollection[BloomFilter[String]] = data.asApproxFilter(BloomFilter)
+val bfsi: SideInput[BloomFilter[String]] = data.asApproxFilterSideInput(BloomFilter)
+
+val bfCoder: Coder[BloomFilter[String]] = BloomFilter.filterCoder
+</code></pre>
+<h2><a href="#ios" name="ios" class="anchor"><span class="anchor-link"></span></a>IO&rsquo;s</h2>
+<h3><a href="#bigquery" name="bigquery" class="anchor"><span class="anchor-link"></span></a>BigQuery</h3>
+<p>In <code>scio</code> <code>0.8.0</code> we introduced some <a href="v0.8.0-Migration-Guide.html#bigquery">deprecations</a> and with this version, we are enforcing them. What this means is that all <code>BigQuery</code> operations should expect a <code>Table</code> type that can be created either from a table reference or spec:</p>
+<pre class="prettyprint"><code class="language-scala">def tableSpecString: String = ???
+
+def table: Table = Table.Spec(tableSpecString)
+</code></pre>
+<p>or</p>
+<pre class="prettyprint"><code class="language-scala">def tableReference: TableReference = ???
+
+def table: Table = Table.Ref(tableReference)
+</code></pre>
+<p>Bellow are some of the affected methods and suggestion on how you can migrate:</p>
+<pre class="prettyprint"><code class="language-diff">- typedBigQuery(table: TableReference, ...)
++ typedBigQuery(table: Table.Ref(tableReference), ...)
+
+- typedBigQuery(tableSpec: String, ...)
++ typedBigQuery(tableSpec: Table.Spec(tableSpec), ...)
+
+- saveAsBigQuery(table: TableReference, ...)
++ saveAsBigQueryTable(table: Table.Ref(tableReference), ...)
+
+- saveAsBigQuery(tableSpec: String, ...)
++ saveAsBigQueryTable(tableSpec: Table.Spec(tableSpec), ...)
+
+- saveAsTypedBigQuery(table: TableReference, ...)
++ saveAsTypedBigQueryTable(table: Table.Ref(tableReference), ...)
+
+- saveAsTypedBigQuery(tableSpec: String, ...)
++ saveAsTypedBigQueryTable(tableSpec: Table.Spec(tableSpec), ...)
+</code></pre>
+<p>Methods with only argument type change:</p>
+<pre class="prettyprint"><code class="language-diff">- bigQuerySelect(query: String, ...)
++ bigQuerySelect(query: Query(sql), ...)
+
+- saveAsTypedBigQuery(table: TableReference, ...)
++ saveAsTypedBigQuery(table: Table.Ref(tableReference), ...)
+
+- saveAsTypedBigQuery(tableSpec: String, ...)
++ saveAsTypedBigQuery(tableSpec: Table.Spec(tableSpec), ...)
+</code></pre>
+<h4><a href="#bigquery-deprecations" name="bigquery-deprecations" class="anchor"><span class="anchor-link"></span></a>BigQuery deprecations</h4>
+<p>With <code>0.9.0</code> we introduced a new method <code>queryRaw</code> to <code>BigQueryType.fromQuery</code> and deprecated the existing one <code>query</code>. This is scheduled for removal in the next release.</p>
+<h3><a href="#avro" name="avro" class="anchor"><span class="anchor-link"></span></a>Avro</h3>
+<p><code>ReflectiveRecordIO</code> was removed in this release and this means that we no longer need to pass a type param when reading <code>GenericRecord</code> making things a little bit cleaner. This unfortunately means that you will need to update your code by removing the type param from <code>avroFile</code>.</p>
+<pre class="prettyprint"><code class="language-diff">val sc: ScioContext = ???
+
+- sc.avroFile[GenericRecord](path, schema)
++ sc.avroFile(path, schema)
+</code></pre>
+<h3><a href="#tensorflow" name="tensorflow" class="anchor"><span class="anchor-link"></span></a>Tensorflow</h3>
+<p>Removed <code>saveAsTfExampleFile</code> in favor of <code>saveAsTfRecordFile</code> as they express better underlying format in each <code>Example</code>&rsquo;s are being written.</p>
+<pre class="prettyprint"><code class="language-diff">val coll: SCollection[T &lt;: Example] = ???
+
+- coll.saveAsTfExampleFile(...)
++ coll.saveAsTfRecordFile(...)
+</code></pre>
+<h3><a href="#end-of-life" name="end-of-life" class="anchor"><span class="anchor-link"></span></a>End-of-Life</h3>
+<p><code>scio-cassandra2</code> and <code>scio-elasticsearch2</code> reached end-of-life and were removed.</p>
+<h2><a href="#sciocontext" name="sciocontext" class="anchor"><span class="anchor-link"></span></a>ScioContext</h2>
+<p>All the deprecated behavior around execution and pipeline result in <code>0.8.x</code> was removed!</p>
+<p>This means that to start your pipeline you need to:</p>
+<pre class="prettyprint"><code class="language-diff">val sc: ScioContext = ???
+
+- val result: ScioResult = sc.close()
++ val execution: ScioExecutionContext = sc.run()
+</code></pre>
+<p>and to get a <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" title="com.spotify.scio.ScioResult"><code>ScioResult</code></a> you need to:</p>
+<pre class="prettyprint"><code class="language-diff">val sc: ScioContext = ???
+
+- val result: ScioResult = sc.close()
++ val result: ScioResult = sc.run().waitUntilDone(Duration.Inf)
+</code></pre>
+<h2><a href="#scala-2-11-drop" name="scala-2-11-drop" class="anchor"><span class="anchor-link"></span></a>Scala 2.11 drop</h2>
+<p><code>2.11</code> served us well! The ecosystem is moving on and so are we! From this version forward we will only support <code>2.12</code> and <code>2.13</code>!</p>
+<p>Migrating from <code>2.11</code> to <code>2.12</code> should not imply any code update, it should be as easy as updating your <code>build.sbt</code>:</p>
+<pre class="prettyprint"><code class="language-diff">- scalaVersion := &quot;2.11.12&quot;
++ scalaVersion := &quot;2.12.13&quot;
+</code></pre>
+<p>However, migrating to <code>2.13</code> might require some changes, especially around collections! we advise you to look at the <code>Scala</code> migration <a href="https://docs.scala-lang.org/overviews/core/collections-migration-213.html">guide</a> for an in-depth overview of the most important changes.</p>
+</div>
+<div>
+<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/migrations/v0.9.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
+Edit this page
+</a>
+</div>
+<div class="print-only">
+<span class="md-source-file md-version">
+0.0.0+1-f9106dfb+20230622-0006*
+</span>
+</div>
+</article>
+</div>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-nav">
+<nav class="md-footer-nav__inner md-grid">
+<a href="../../releases/migrations/v0.8.0-Migration-Guide.html" title="Scio v0.8.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+</div>
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Previous
+</span>
+Scio v0.8.0
+</span>
+</div>
+</a>
+<a href="../../releases/migrations/v0.10.0-Migration-Guide.html" title="Scio v0.10.0" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+<span class="md-flex__ellipsis">
+<span class="md-footer-nav__direction">
+Next
+</span>
+Scio v0.10.0
+</span>
+</div>
+<div class="md-flex__cell md-flex__cell--shrink">
+<i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+</div>
+</a>
+</nav>
+</div>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-footer-copyright">
+<div class="md-footer-copyright__highlight">
+Copyright (C) 2020 Spotify AB
+</div>
+Powered by
+<a href="https://github.com/lightbend/paradox">Paradox</a>
+and
+<a href="https://jonas.github.io/paradox-material-theme/">Paradox Material Theme</a>
+
+</div>
+<div class="md-footer-social">
+<a href="https://github.com/spotify" class="md-footer-social__link fa fa-github"></a><a href="https://twitter.com/spotifyeng" class="md-footer-social__link fa fa-twitter"></a>
+</div>
+
+</div>
+</div>
+</footer>
+
+</div>
+<script src="../../assets/javascripts/application.583bbe55.js"></script>
+<script src="../../assets/javascripts/paradox-material-theme.js"></script>
+<script>app.initialize({version:"0.17",url:{base:"../../."}})</script>
+<script type="text/javascript" src="../../lib/prettify/prettify.js"></script>
+<script type="text/javascript" src="../../lib/prettify/lang-scala.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function(event) {
+window.prettyPrint && prettyPrint();
+});
+</script>
+</body>
+</html>
