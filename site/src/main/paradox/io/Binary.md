@@ -6,7 +6,7 @@ See @ref:[read as binary](ReadFiles.md#read-as-binary) for reading an entire fil
 
 ## Write Binary files
 
-Binary writes are supported on `SCollection[Array[Byte]]` with the @scaladoc[`saveAsBinaryFile`](com.spotify.scio.values.SCollection#saveAsBinaryFile(path:String,numShards:Int,prefix:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,header:Array[Byte],footer:Array[Byte],shardNameTemplate:String,framePrefix:Array[Byte]=%3EArray[Byte],frameSuffix:Array[Byte]=%3EArray[Byte],tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitev:T%3C:%3CArray[Byte]):com.spotify.scio.io.ClosedTap[Nothing]) method:
+Binary writes are supported on `SCollection[Array[Byte]]` with the @scaladoc[saveAsBinaryFile](com.spotify.scio.values.SCollection#saveAsBinaryFile(path:String,numShards:Int,prefix:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,header:Array[Byte],footer:Array[Byte],shardNameTemplate:String,framePrefix:Array[Byte]=%3EArray[Byte],frameSuffix:Array[Byte]=%3EArray[Byte],tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitev:T%3C:%3CArray[Byte]):com.spotify.scio.io.ClosedTap[Nothing]) method:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection

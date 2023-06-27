@@ -133,7 +133,7 @@ Scio exposes a few things to allow easy integration with native Beam Java API, n
 - `SCollection#applyTransform` to apply a `PTransform[_ >: PCollection[T], PCollection[U]]` and get an `SCollection[U]`
 - `SCollection#saveAsCustomOutput` to apply a `PTransform[_ >: PCollection[T], PDone]` (sink) and get a `ClosedTap[T]`.
 
-See @extref[BeamExample](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[`JobTest`](com.spotify.scio.testing.JobTest$) harness.
+See @extref[BeamExample](example:BeamExample) for more details. Custom I/O can also be tested via the @scaladoc[JobTest](com.spotify.scio.testing.JobTest$) harness.
 
 #### What are the different types of joins and performance implication?
 
@@ -142,7 +142,7 @@ See @extref[BeamExample](example:BeamExample) for more details. Custom I/O can a
 - Consider `skewedJoin` if some keys on the LHS are extremely hot.
 - Consider `sparseOuterJoin` if you want a full outer join where RHS is much smaller than LHS, but may not fit in memory.
 - Consider `cogroup` if you need to access value groups of each key.
-- @scaladoc[`MultiJoin`](com.spotify.scio.util.MultiJoin$) supports inner, left, outer join and cogroup of up to 22 inputs.
+- @scaladoc[MultiJoin](com.spotify.scio.util.MultiJoin$) supports inner, left, outer join and cogroup of up to 22 inputs.
 - For multi-joins larger inputs should be on the left, e.g. `size(a) >= size(b) >= size(c) >= size(d)` in `MultiJoin(a, b, c, d)`.
 - Check out these [slides](http://www.lyh.me/slides/joins.html) for more information on joins.
 - Also see this section on [Cloud Dataflow Shuffle](https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle) service.
@@ -346,7 +346,7 @@ def readme = FileSystems.open(readmeResource)
 This part is GCS specific.
 @@@
 
-You can get a @javadoc[`GcsUtil`](org.apache.beam.sdk.extensions.gcp.options.GcsOptions#getGcsUtil--) instance from `ScioContext`, which can be used to open GCS files in read or write mode.
+You can get a @javadoc[GcsUtil](org.apache.beam.sdk.extensions.gcp.options.GcsOptions#getGcsUtil--) instance from `ScioContext`, which can be used to open GCS files in read or write mode.
 
 ```scala mdoc:reset:silent
 import com.spotify.scio.ContextAndArgs

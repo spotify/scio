@@ -37,7 +37,7 @@ Scio context available as 'sc'
 scio>
 ```
 
-A @scaladoc[`ScioContext`](com.spotify.scio.ScioContext) is created on REPL startup as `sc` and a starting point to most operations. Use `tab` completion, history and other REPL goodies to play around.
+A @scaladoc[ScioContext](com.spotify.scio.ScioContext) is created on REPL startup as `sc` and a starting point to most operations. Use `tab` completion, history and other REPL goodies to play around.
 
 ### Start from SBT console (Scala `2.11.x`+ only)
 
@@ -101,7 +101,7 @@ val scioResult = sc.run().waitUntilDone()
 val values = scioResult.tap(wordCount).value.take(3)
 ```
 
-Make sure `README.md` is in the current directory. This example counts words in local file using a local runner (@javadoc[`DirectRunner`](org.apache.beam.runners.direct.DirectRunner) and writes result in a local file. The pipeline and actual computation starts on `sc.run()`. The last command take 3 lines from results and prints them.
+Make sure `README.md` is in the current directory. This example counts words in local file using a local runner (@javadoc[DirectRunner](org.apache.beam.runners.direct.DirectRunner) and writes result in a local file. The pipeline and actual computation starts on `sc.run()`. The last command take 3 lines from results and prints them.
 
 ### Local pipeline ++
 
@@ -183,7 +183,7 @@ val result = sc
     .take(3)
 ```
 
-In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return `Future[Tap[T]]` where a @scaladoc[`Tap[T]`](com.spotify.scio.io.Tap) encapsulates some dataset that can be re-opened in another context or directly.
+In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return `Future[Tap[T]]` where a @scaladoc[Tap[T]](com.spotify.scio.io.Tap) encapsulates some dataset that can be re-opened in another context or directly.
 
 Use `:scioOpts` to view or update Dataflow options inside the REPL. New options will be applied the next time you create a context.
 
@@ -321,7 +321,7 @@ def result = sc.run()
 
 ### Running jobs asynchronously
 
-When using REPL and Dataflow service consider using the non-blocking @javadoc[`DataflowRunner`](org.apache.beam.runners.dataflow.DataflowRunner) for a more interactive experience. To start:
+When using REPL and Dataflow service consider using the non-blocking @javadoc[DataflowRunner](org.apache.beam.runners.dataflow.DataflowRunner) for a more interactive experience. To start:
 
 ```
 java -jar scio-repl-0.7.0.jar \
@@ -366,7 +366,7 @@ def result = sc.run()
 def state = result.state
 ```
 
-Note that now `sc.run()` doesn't block and wait until job completes and gives back control of the REPL right away. Use @scaladoc[`ScioExecutionContext`](com.spotify.scio.ScioExecutionContext) to check for progress, results and orchestrate jobs.
+Note that now `sc.run()` doesn't block and wait until job completes and gives back control of the REPL right away. Use @scaladoc[ScioExecutionContext](com.spotify.scio.ScioExecutionContext) to check for progress, results and orchestrate jobs.
 
 ### Multiple Scio contexts
 
@@ -386,7 +386,7 @@ You can use those in combination with `DataflowRunner` to run multiple pipelines
 
 ### BigQuery client
 
-Whenever possible leverage BigQuery! @scaladoc[`@BigQueryType`](com.spotify.scio.bigquery.types.BigQueryType) annotations enable type safe and civilized
+Whenever possible leverage BigQuery! @scaladoc[@BigQueryType](com.spotify.scio.bigquery.types.BigQueryType) annotations enable type safe and civilized
  integration with BigQuery inside Scio. Here is example of using the annotations and BigQuery client to read and write typed data directly without Scio context.
 
 ```

@@ -4,7 +4,7 @@ Scio supports reading and writing from [Google Cloud Spanner](https://cloud.goog
 
 ## Read from Spanner
 
-Reads from Spanner occur via a query with @scaladoc[`spannerQuery`](com.spotify.scio.spanner.syntax.SpannerScioContextOps#spannerQuery(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,query:String,withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]) or for an entire table with @scaladoc[`spannerTable`](com.spotify.scio.spanner.syntax.SpannerScioContextOps#spannerTable(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,table:String,columns:Seq[String],withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]). Both return an `SCollection` of [`Struct`](https://www.javadoc.io/doc/com.google.cloud/google-cloud-spanner/6.38.0/com/google/cloud/spanner/Struct.html):
+Reads from Spanner occur via a query with @scaladoc[spannerQuery](com.spotify.scio.spanner.syntax.SpannerScioContextOps#spannerQuery(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,query:String,withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]) or for an entire table with @scaladoc[spannerTable](com.spotify.scio.spanner.syntax.SpannerScioContextOps#spannerTable(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,table:String,columns:Seq[String],withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]). Both return an `SCollection` of [`Struct`](https://www.javadoc.io/doc/com.google.cloud/google-cloud-spanner/6.38.0/com/google/cloud/spanner/Struct.html):
 
 To read with a query:
 
@@ -46,7 +46,7 @@ val tableStructs: SCollection[Struct] = sc.spannerTable(config, "table", columns
 
 ## Write to Spanner
 
-An `SCollection` containing [`Mutation`](https://javadoc.io/static/com.google.cloud/google-cloud-spanner/6.36.0/com/google/cloud/spanner/Mutation.html#com.google.cloud.spanner.Mutation) instances can be written to Spanner via @scaladoc[`saveAsSpanner`](com.spotify.scio.spanner.syntax.SpannerSCollectionOps#saveAsSpanner(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,failureMode:org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode,batchSizeBytes:Long):com.spotify.scio.io.ClosedTap[Nothing]):
+An `SCollection` containing [`Mutation`](https://javadoc.io/static/com.google.cloud/google-cloud-spanner/6.36.0/com/google/cloud/spanner/Mutation.html#com.google.cloud.spanner.Mutation) instances can be written to Spanner via @scaladoc[saveAsSpanner](com.spotify.scio.spanner.syntax.SpannerSCollectionOps#saveAsSpanner(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,failureMode:org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode,batchSizeBytes:Long):com.spotify.scio.io.ClosedTap[Nothing]):
 
 ```scala mdoc:compile-only
 import com.spotify.scio.spanner._

@@ -6,7 +6,7 @@ Scio uses [magnolify's](https://github.com/spotify/magnolify) `magnolify-neo4j` 
 
 ## Static query
 
-@scaladoc[`neo4jCypher`](com.spotify.scio.neo4j.syntax.Neo4jScioContextOps#neo4jCypher[T](neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitevidence$1:magnolify.neo4j.ValueType[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]) returns an `SCollection` of results for a Neo4J cypher query, mapped to a specified case class type.
+@scaladoc[neo4jCypher](com.spotify.scio.neo4j.syntax.Neo4jScioContextOps#neo4jCypher[T](neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitevidence$1:magnolify.neo4j.ValueType[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]) returns an `SCollection` of results for a Neo4J cypher query, mapped to a specified case class type.
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
@@ -27,7 +27,7 @@ val entities: SCollection[Entity] = sc
 
 ## Parameterized query
 
-@scaladoc[`neo4jCypher`](com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps#neo4jCypher[U](neo4jConf:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitneo4jInType:magnolify.neo4j.ValueType[T],implicitneo4jOutType:magnolify.neo4j.ValueType[U],implicitcoder:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]) can also construct queries from parameters in an existing `SCollection`:
+@scaladoc[neo4jCypher](com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps#neo4jCypher[U](neo4jConf:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitneo4jInType:magnolify.neo4j.ValueType[T],implicitneo4jOutType:magnolify.neo4j.ValueType[U],implicitcoder:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]) can also construct queries from parameters in an existing `SCollection`:
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
@@ -61,7 +61,7 @@ input.neo4jCypher[Role](opts, queryRoles)
 
 ## Writes
 
-Instances can be written via @scaladoc[`saveAsNeo4j`](com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps#saveAsNeo4j(neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,unwindCypher:String,batchSize:Long)(implicitneo4jType:magnolify.neo4j.ValueType[T],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[Nothing]):
+Instances can be written via @scaladoc[saveAsNeo4j](com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps#saveAsNeo4j(neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,unwindCypher:String,batchSize:Long)(implicitneo4jType:magnolify.neo4j.ValueType[T],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[Nothing]):
 
 ```scala mdoc:compile-only
 import com.spotify.scio._

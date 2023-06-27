@@ -8,7 +8,7 @@ The `aggregate`, `combine`, `fold`, `reduce`, `sum` transforms and their keyed v
 
 ## WithFanout
 
-@scaladoc[`withFanout`](com.spotify.scio.values.SCollection#withFanout(fanout:Int):com.spotify.scio.values.SCollectionWithFanout[T]) aggregates over the number of synthetic keys specified by the `fanout` argument:
+@scaladoc[withFanout](com.spotify.scio.values.SCollection#withFanout(fanout:Int):com.spotify.scio.values.SCollectionWithFanout[T]) aggregates over the number of synthetic keys specified by the `fanout` argument:
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
@@ -20,7 +20,7 @@ val result: SCollection[Int] = elements.withFanout(fanout = 10).sum
 
 ## WithHotKeyFanout
 
-For hot keys, two variants allow a user to specify either a static fanout via an integer `hotKeyFanout` argument to @scaladoc[`withHotKeyFanout`](com.spotify.scio.values.PairSCollectionFunctions#withHotKeyFanout(hotKeyFanout:Int):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]), or a dynamic per-key fanout via a function `K => Int` argument, also called `hotKeyFanout` to @scaladoc[`withHotKeyFanout`](com.spotify.scio.values.PairSCollectionFunctions#withHotKeyFanout(hotKeyFanout:K=%3EInt):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]):
+For hot keys, two variants allow a user to specify either a static fanout via an integer `hotKeyFanout` argument to @scaladoc[withHotKeyFanout](com.spotify.scio.values.PairSCollectionFunctions#withHotKeyFanout(hotKeyFanout:Int):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]), or a dynamic per-key fanout via a function `K => Int` argument, also called `hotKeyFanout` to @scaladoc[withHotKeyFanout](com.spotify.scio.values.PairSCollectionFunctions#withHotKeyFanout(hotKeyFanout:K=%3EInt):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]):
 
 ```scala
 import com.spotify.scio._

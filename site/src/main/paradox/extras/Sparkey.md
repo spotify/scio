@@ -10,7 +10,7 @@ Scio supports writing any type with a coder to a sparkey by first converting
 ## As a Side-Input
 
 A sparkey side-input is a good choice when you have a very large dataset that needs to be joined with a relatively small dataset, but one which is still too large to fit into memory.
-In this case, the @scaladoc[`asSparkeySideInput`](com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkeySideInput(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]) method can be used to broadcast the smaller dataset to all workers and avoid shuffle.
+In this case, the @scaladoc[asSparkeySideInput](com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkeySideInput(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]) method can be used to broadcast the smaller dataset to all workers and avoid shuffle.
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.{SCollection, SideInput}
@@ -38,7 +38,7 @@ See also @ref[Large Hash Joins](../Joins.md#large-hash-join), which do the same 
 
 ## Writing
 
-If a sparkey can be reused by multiple pipelines, it can be saved permanently with @scaladoc[`asSparkey`](com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkey(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri])
+If a sparkey can be reused by multiple pipelines, it can be saved permanently with @scaladoc[asSparkey](com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkey(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri])
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
