@@ -8,10 +8,7 @@ Reads come in two flavors: a query-based variant backed by Beam's @javadoc[`Jdbc
 
 ### Read via query
 
-Query-based reads 
-
-@scaladoc[`jdbcSelect`](com.spotify.scio.jdbc.syntax.JdbcScioContextOps#jdbcSelect[T](readOptions:com.spotify.scio.jdbc.JdbcReadOptions[T])(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T])
-
+Query-based reads are supported with @scaladoc[`jdbcSelect`](com.spotify.scio.jdbc.syntax.JdbcScioContextOps#jdbcSelect[T](readOptions:com.spotify.scio.jdbc.JdbcReadOptions[T])(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]).
 In @scaladoc[`JdbcReadOptions`](com.spotify.scio.jdbc.JdbcReadOptions), the `rowMapper` argument must be provided to map between a `java.sql.ResultSet` to the result type `T`. The `statementPreparator` argument may be used to set static parameters in the query, usually passed as arguments to the pipeline.
 
 ```scala mdoc:compile-only
@@ -36,9 +33,9 @@ val readOptions = JdbcReadOptions(
 val elements: SCollection[(String, Long)] = sc.jdbcSelect(readOptions)
 ```
 
-### Read via sharded select
+### Parallelized table read
 
-Reading data with @scaladoc[`jdbcShardedSelect`](com.spotify.scio.jdbc.syntax.JdbcScioContextOps#jdbcShardedSelect[T,S](readOptions:com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions[T,S])(implicitevidence$3:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]) allows more efficient reads when an entire table is to be read.
+When an entire table is to be read, the input table can be sharded based on some column value and each shard read in parallel with @scaladoc[`jdbcShardedSelect`](com.spotify.scio.jdbc.syntax.JdbcScioContextOps#jdbcShardedSelect[T,S](readOptions:com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions[T,S])(implicitevidence$3:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]).
 
 @scaladoc[`JdbcShardedReadOptions`](com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions) requires:
 
