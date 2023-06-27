@@ -1,6 +1,6 @@
 # DistCache
 
-Scio supports a distributed cache, @scaladoc[`DistCache`](com.spotify.scio.values.DistCache), that is similar to Hadoop's. 
+Scio supports a distributed cache, @scaladoc[DistCache](com.spotify.scio.values.DistCache), that is similar to Hadoop's. 
 
 A set of one or more paths that back the DistCache are lazily downloaded by all workers, then passed through a user-defined initialization function `initFn` to be deserialized into an in-memory representation that can be used by all threads on that worker.
 

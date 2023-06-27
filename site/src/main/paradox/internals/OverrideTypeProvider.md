@@ -1,6 +1,6 @@
 # OverrideTypeProvider
 
-The @scaladoc[`OverrideTypeProvider`](com.spotify.scio.bigquery.validation.OverrideTypeProvider) trait allows the user to provide custom mappings from BigQuery types to custom Scala types.
+The @scaladoc[OverrideTypeProvider](com.spotify.scio.bigquery.validation.OverrideTypeProvider) trait allows the user to provide custom mappings from BigQuery types to custom Scala types.
 
 This can be used for a number of use cases:
 

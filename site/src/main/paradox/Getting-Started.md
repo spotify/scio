@@ -34,7 +34,7 @@ sbt compile test:compile
 
 ## Running the Examples
 
-You can execute the examples locally from SBT. By default pipelines will be executed using the @javadoc[`DirectRunner`](org.apache.beam.runners.direct.DirectRunner) and local filesystem will be used for input and output. Take a look at the @github[examples](/scio-examples/src/main/scala/com/spotify/scio/examples) to find out more.
+You can execute the examples locally from SBT. By default pipelines will be executed using the @javadoc[DirectRunner](org.apache.beam.runners.direct.DirectRunner) and local filesystem will be used for input and output. Take a look at the @github[examples](/scio-examples/src/main/scala/com/spotify/scio/examples) to find out more.
 
 ```
 neville@localhost scio $ sbt
@@ -48,7 +48,7 @@ neville@localhost scio $ sbt
 Unlike Hadoop, Scio or Dataflow input should be file patterns and not directories, i.e. `gs://bucket/path/part-*.txt` and not `gs://bucket/path`. Output on the other hand should be directories just like Hadoop, so `gs://bucket/path` will produce files like `gs://bucket/path/part-00000-of-00005.txt`.
 @@@
 
-Use the @javadoc[`DataflowRunner`](org.apache.beam.runners.dataflow.DataflowRunner) to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.
+Use the @javadoc[DataflowRunner](org.apache.beam.runners.dataflow.DataflowRunner) to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.
 
 ```
 neville@localhost scio $ sbt
@@ -118,9 +118,9 @@ The defaults should work well for most cases but we sometimes tune the following
 - `--workerDiskType` - specify SSD for jobs with really expensive shuffles. See a list of disk types [here](https://cloud.google.com/compute/docs/reference/latest/diskTypes). Also see this [page](https://cloud.google.com/compute/docs/disks/performance) about persistent disk size and type.
 - `--network` - specify this if you use VPN to communicate with external services, e.g. HDFS on an on-premise cluster.
 
-More Dataflow pipeline specific options available can be found in @javadoc[`DataflowPipelineOptions`](org.apache.beam.runners.dataflow.options.DataflowPipelineOptions) and super interfaces. Some more useful ones are from @javadoc[`DataflowPipelineWorkerPoolOptions`](org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions).
+More Dataflow pipeline specific options available can be found in @javadoc[DataflowPipelineOptions](org.apache.beam.runners.dataflow.options.DataflowPipelineOptions) and super interfaces. Some more useful ones are from @javadoc[DataflowPipelineWorkerPoolOptions](org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions).
 
-@javadoc[`DataflowWorkerHarnessOptions#getWorkerCacheMb`](org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions#getWorkerCacheMb--) affects side input performance but needs an extra step to enable. See this @ref:[FAQ item](FAQ.md#how-do-i-improve-side-input-performance-).
+@javadoc[DataflowWorkerHarnessOptions#getWorkerCacheMb](org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions#getWorkerCacheMb--) affects side input performance but needs an extra step to enable. See this @ref:[FAQ item](FAQ.md#how-do-i-improve-side-input-performance-).
 
 There are a few more experimental settings that might help specific scenarios:
 - `--experiments=shuffle_mode=service` - use external [shuffle service](https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle) instead of local disk

@@ -209,12 +209,10 @@ def previousVersion(currentVersion: String): Option[String] = {
 
 lazy val mimaSettings = Def.settings(
   mimaBinaryIssueFilters := Seq.empty,
-  // enable back after 0.13
-  mimaPreviousArtifacts := Set.empty
-//    previousVersion(version.value)
-//      .filter(_ => publishArtifact.value)
-//      .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
-//      .toSet
+  mimaPreviousArtifacts := previousVersion(version.value)
+    .filter(_ => publishArtifact.value)
+    .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+    .toSet
 )
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
@@ -1504,7 +1502,7 @@ lazy val site: Project = project
       .withFavicon("images/favicon.ico")
       .withColor("white", "indigo")
       .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2020 Spotify AB")
+      .withCopyright("Copyright (C) 2023 Spotify AB")
       .withRepository(uri("https://github.com/spotify/scio"))
       .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng")),
     // sbt-site

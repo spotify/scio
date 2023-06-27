@@ -1,6 +1,6 @@
 # ScioIO
 
-Scio `0.7.0` introduces a new @scaladoc[`ScioIO[T]`](com.spotify.scio.io.ScioIO) trait to simplify IO implementation and stubbing in `JobTest`. This page lists some major changes to this new API.
+Scio `0.7.0` introduces a new @scaladoc[ScioIO[T]](com.spotify.scio.io.ScioIO) trait to simplify IO implementation and stubbing in `JobTest`. This page lists some major changes to this new API.
 
 ## Dependencies
 

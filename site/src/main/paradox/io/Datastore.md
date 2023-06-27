@@ -6,7 +6,7 @@ Scio supports [Google Datastore](https://cloud.google.com/datastore) via Beam's 
 
 ## Reads
 
-Read an `SCollection` of `com.google.datastore.v1.Entity` from Datastore with @scaladoc[`datastore`](com.spotify.scio.datastore.syntax.ScioContextOps#datastore(projectId:String,query:com.google.datastore.v1.Query,namespace:String):com.spotify.scio.values.SCollection[com.google.datastore.v1.Entity]):
+Read an `SCollection` of `com.google.datastore.v1.Entity` from Datastore with @scaladoc[datastore](com.spotify.scio.datastore.syntax.ScioContextOps#datastore(projectId:String,query:com.google.datastore.v1.Query,namespace:String):com.spotify.scio.values.SCollection[com.google.datastore.v1.Entity]):
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
@@ -25,7 +25,7 @@ val entities: SCollection[Entity] = sc.datastore(projectId, query)
 
 Write a collection of 
 
-@scaladoc[`saveAsDatastore`](com.spotify.scio.datastore.syntax.SCollectionEntityOps#saveAsDatastore(projectId:String):com.spotify.scio.io.ClosedTap[Nothing])
+@scaladoc[saveAsDatastore](com.spotify.scio.datastore.syntax.SCollectionEntityOps#saveAsDatastore(projectId:String):com.spotify.scio.io.ClosedTap[Nothing])
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
