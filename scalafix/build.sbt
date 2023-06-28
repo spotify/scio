@@ -56,6 +56,7 @@ def scio(version: String): List[ModuleID] = {
   val modules = List(
     "scio-core",
     "scio-avro",
+    "scio-parquet",
     "scio-test",
     "scio-jdbc",
     "scio-tensorflow"

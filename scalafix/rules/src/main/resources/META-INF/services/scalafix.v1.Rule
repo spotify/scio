@@ -14,3 +14,4 @@ fix.v0_12_0.FixBqSaveAsTable
 fix.v0_12_0.FixPubsubSpecializations
 fix.v0_13_0.FixSkewedJoins
 fix.v0_13_0.FixTfParameter
+fix.v0_13_0.FixTaps
