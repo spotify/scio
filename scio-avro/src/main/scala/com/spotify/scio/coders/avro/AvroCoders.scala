@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.coders.instances
+package com.spotify.scio.coders.avro
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
@@ -28,7 +28,7 @@ import org.apache.beam.sdk.extensions.avro.coders.AvroCoder
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import java.io.{InputStream, OutputStream}
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.{ClassTag, classTag}
 import scala.util.Try
 
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
