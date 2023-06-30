@@ -41,7 +41,7 @@ lazy val root = project
       `output-0_13`,
       // scalafix
       rules
-    ): _*,
+    ): _*
   )
 
 lazy val rules = project
