@@ -111,7 +111,7 @@ class ParquetExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
       )
   }
 
-  override def failSaves = Seq(
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[Example]] = Seq(
     _.map(newExample).saveAsParquetExampleFile(
       "nonsense",
       schema,
