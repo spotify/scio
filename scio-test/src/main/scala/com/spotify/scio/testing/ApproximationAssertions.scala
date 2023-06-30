@@ -64,9 +64,9 @@ object ApproximationAssertions {
   }
 
   /**
-   * Check corresponding expected value is off by error percentage.
-   * i.e. if actual value is `A`, expected values is `B` with error percentage `E`, then assert
-   * following. (B - ((B / 100) * E)) <= A <= (B + ((B / 100) * E)
+   * Check corresponding expected value is off by error percentage. i.e. if actual value is `A`,
+   * expected values is `B` with error percentage `E`, then assert following. (B - ((B / 100) * E))
+   * <= A <= (B + ((B / 100) * E)
    *
    * Assert above for each element pair.
    * @param expected
@@ -90,9 +90,8 @@ object ApproximationAssertions {
 
   /**
    * Similar to above but works with tuples. Check corresponding expected value is off by error
-   * percentage.
-   * i.e. if acutal value is `A`, expected values is `B` with error percentage `E`, then assert
-   * following. (B - ((B / 100) * E)) <= A <= (B + ((B / 100) * E)
+   * percentage. i.e. if acutal value is `A`, expected values is `B` with error percentage `E`, then
+   * assert following. (B - ((B / 100) * E)) <= A <= (B + ((B / 100) * E)
    *
    * Assert above for each key in the actual.
    * @param expected
