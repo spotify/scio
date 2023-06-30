@@ -59,7 +59,7 @@ class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
       )
   }
 
-  override def failSaves = Seq(
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[TestRecord]] = Seq(
     _.map(AvroUtils.newSpecificRecord).saveAsParquetAvroFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",

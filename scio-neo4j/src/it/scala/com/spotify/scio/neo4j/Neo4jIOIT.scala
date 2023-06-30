@@ -2,13 +2,13 @@ package com.spotify.scio.neo4j
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, Neo4jContainer}
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.neo4j.driver.{AuthTokens, Driver, GraphDatabase}
 import org.scalatest.concurrent.Eventually
 import org.testcontainers.utility.DockerImageName
 
 import scala.jdk.CollectionConverters._
+import org.apache.beam.sdk.options.PipelineOptions
 
 object Neo4jIOIT {
 
@@ -69,14 +69,14 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
     } finally session.close()
   }
 
-  val martin = Person("Martin Sheen")
-  val morgan = Person("Morgan Freeman")
-  val michael = Person("Michael Douglas")
+  val martin: Person = Person("Martin Sheen")
+  val morgan: Person = Person("Morgan Freeman")
+  val michael: Person = Person("Michael Douglas")
 
-  val americanPresident = Movie("American President", 1995)
+  val americanPresident: Movie = Movie("American President", 1995)
 
-  val options = PipelineOptionsFactory.create()
-  lazy val neo4jOptions = Neo4jOptions(
+  val options: PipelineOptions = PipelineOptionsFactory.create()
+  lazy val neo4jOptions: Neo4jOptions = Neo4jOptions(
     Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
   )
 
