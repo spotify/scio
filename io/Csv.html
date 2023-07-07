@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -255,7 +255,7 @@ spotify/scio
 <div class="md-content__searchable">
 <h1><a href="#csv" name="csv" class="anchor"><span class="anchor-link"></span></a>CSV</h1>
 <p>Scio supports reading and writing <em>typed</em> CSV via <a href="https://nrinaudo.github.io/kantan.csv/">kantan</a></p>
-<p>Kantan provides a <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/CsvConfiguration.html" title="kantan.csv.CsvConfiguration"><code>`CsvConfiguration`</code></a> that allows users to configure the CSV handling, Scio&rsquo;s default config:</p>
+<p>Kantan provides a <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/CsvConfiguration.html" title="kantan.csv.CsvConfiguration"><code>CsvConfiguration</code></a> that allows users to configure the CSV handling, Scio&rsquo;s default config:</p>
 <pre class="prettyprint"><code class="language-scala">import kantan.csv._
 import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 
@@ -267,9 +267,9 @@ CsvConfiguration(
 )
 </code></pre>
 <h2><a href="#read-csv" name="read-csv" class="anchor"><span class="anchor-link"></span></a>Read CSV</h2>
-<p>FIXME this csvFile link is incorrectly getting two $$ Reading CSV is supported via <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/csv/syntax/ScioContextSyntax$$CsvScioContext.html#csvFile[T](path:String,params:com.spotify.scio.extra.csv.CsvIO.ReadParam)(implicitevidence$1:kantan.csv.HeaderDecoder[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.extra.csv.syntax.ScioContextSyntax.CsvScioContext"><code>`csvFile`</code></a>. Note that the entire file must be read into memory since CSVs are not trivially splittable.</p>
+<p>FIXME this csvFile link is incorrectly getting two $$ Reading CSV is supported via <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/csv/syntax/ScioContextSyntax$$CsvScioContext.html#csvFile[T](path:String,params:com.spotify.scio.extra.csv.CsvIO.ReadParam)(implicitevidence$1:kantan.csv.HeaderDecoder[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.extra.csv.syntax.ScioContextSyntax.CsvScioContext"><code>csvFile</code></a>. Note that the entire file must be read into memory since CSVs are not trivially splittable.</p>
 <h3><a href="#read-with-a-header" name="read-with-a-header" class="anchor"><span class="anchor-link"></span></a>Read with a header</h3>
-<p>For CSV files with a header, reading requires an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/HeaderDecoder.html" title="kantan.csv.HeaderDecoder"><code>`HeaderDecoder`</code></a> for your type.</p>
+<p>For CSV files with a header, reading requires an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/HeaderDecoder.html" title="kantan.csv.HeaderDecoder"><code>HeaderDecoder</code></a> for your type.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.csv._
@@ -282,7 +282,7 @@ val sc: ScioContext = ???
 val elements: SCollection[A] = sc.csvFile(&quot;gs://&lt;input-path&gt;/*.csv&quot;)
 </code></pre>
 <h3><a href="#read-without-a-header" name="read-without-a-header" class="anchor"><span class="anchor-link"></span></a>Read without a header</h3>
-<p>For CSV files without a header, an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/RowDecoder.html" title="kantan.csv.RowDecoder"><code>`RowDecoder`</code></a> must be in scope and the read must be provided with a config specifying that there is no header:</p>
+<p>For CSV files without a header, an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/RowDecoder.html" title="kantan.csv.RowDecoder"><code>RowDecoder</code></a> must be in scope and the read must be provided with a config specifying that there is no header:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.csv._
@@ -297,9 +297,9 @@ val sc: ScioContext = ???
 val elements: SCollection[A] = sc.csvFile(&quot;gs://&lt;input-path&gt;/*.csv&quot;, CsvIO.ReadParam(csvConfiguration = config))
 </code></pre>
 <h2><a href="#write-csv" name="write-csv" class="anchor"><span class="anchor-link"></span></a>Write CSV</h2>
-<p>Writing to CSV is supported via <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/csv/syntax/SCollectionSyntax$$WritableCsvSCollection.html#saveAsCsvFile(path:String,suffix:String,csvConfig:kantan.csv.CsvConfiguration,numShards:Int,compression:org.apache.beam.sdk.io.Compression,shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitcoder:com.spotify.scio.coders.Coder[T],implicitenc:kantan.csv.HeaderEncoder[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.extra.csv.syntax.SCollectionSyntax.WritableCsvSCollection"><code>`saveAsCsvFile`</code></a>.</p>
+<p>Writing to CSV is supported via <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/csv/syntax/SCollectionSyntax$$WritableCsvSCollection.html#saveAsCsvFile(path:String,suffix:String,csvConfig:kantan.csv.CsvConfiguration,numShards:Int,compression:org.apache.beam.sdk.io.Compression,shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitcoder:com.spotify.scio.coders.Coder[T],implicitenc:kantan.csv.HeaderEncoder[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.extra.csv.syntax.SCollectionSyntax.WritableCsvSCollection"><code>saveAsCsvFile</code></a>.</p>
 <h3><a href="#write-with-a-header" name="write-with-a-header" class="anchor"><span class="anchor-link"></span></a>Write with a header</h3>
-<p>Writing with a header requires an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/HeaderEncoder.html" title="kantan.csv.HeaderEncoder"><code>`HeaderEncoder`</code></a> to be in scope:</p>
+<p>Writing with a header requires an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/HeaderEncoder.html" title="kantan.csv.HeaderEncoder"><code>HeaderEncoder</code></a> to be in scope:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.csv._
@@ -313,7 +313,7 @@ val elements: SCollection[A] = ???
 elements.saveAsCsvFile(&quot;gs://&lt;output-path&gt;/&quot;)
 </code></pre>
 <h3><a href="#write-without-a-header" name="write-without-a-header" class="anchor"><span class="anchor-link"></span></a>Write without a header</h3>
-<p>Writing without a header requires an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/RowEncoder.html" title="kantan.csv.RowEncoder"><code>`RowEncoder`</code></a> to be in scope:</p>
+<p>Writing without a header requires an implicit <a href="https://nrinaudo.github.io/kantan.csv/api/kantan/csv/RowEncoder.html" title="kantan.csv.RowEncoder"><code>RowEncoder</code></a> to be in scope:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.csv._
@@ -334,7 +334,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -376,7 +376,7 @@ Datastore
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

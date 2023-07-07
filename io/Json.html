@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -254,10 +254,10 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#json" name="json" class="anchor"><span class="anchor-link"></span></a>Json</h1>
-<p>Scio supports reading and writing type-safe Json to a case class via <a href="https://circe.github.io/circe/">circe</a>. Scio must be able to derive <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json.html#Encoder[T]=io.circe.Encoder[T]" title="com.spotify.scio.extra.json"><code>`Encoder`</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json.html#Decoder[T]=io.circe.Decoder[T]" title="com.spotify.scio.extra.json"><code>`Decoder`</code></a> instances for the record type.</p>
+<p>Scio supports reading and writing type-safe Json to a case class via <a href="https://circe.github.io/circe/">circe</a>. Scio must be able to derive <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json.html#Encoder[T]=io.circe.Encoder[T]" title="com.spotify.scio.extra.json"><code>Encoder</code></a> and <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json.html#Decoder[T]=io.circe.Decoder[T]" title="com.spotify.scio.extra.json"><code>Decoder</code></a> instances for the record type.</p>
 <p>If you need support for custom encoders or decoders, see the <a href="https://circe.github.io/circe/codecs/custom-codecs.html">circe documentation</a></p>
 <h2><a href="#reading-json" name="reading-json" class="anchor"><span class="anchor-link"></span></a>Reading Json</h2>
-<p>Read Json into a record type with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json/JsonScioContext.html#jsonFile[T](path:String,compression:org.apache.beam.sdk.io.Compression)(implicitevidence$1:com.spotify.scio.extra.json.package.Decoder[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.extra.json.JsonScioContext"><code>`jsonFile`</code></a>:</p>
+<p>Read Json into a record type with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json/JsonScioContext.html#jsonFile[T](path:String,compression:org.apache.beam.sdk.io.Compression)(implicitevidence$1:com.spotify.scio.extra.json.package.Decoder[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.extra.json.JsonScioContext"><code>jsonFile</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.json._
@@ -268,7 +268,7 @@ val sc: ScioContext = ???
 val records: SCollection[Record] = sc.jsonFile[Record](&quot;input.json&quot;)
 </code></pre>
 <h2><a href="#writing-json" name="writing-json" class="anchor"><span class="anchor-link"></span></a>Writing Json</h2>
-<p>Write to Json with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json/JsonSCollection.html#saveAsJsonFile(path:String,suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,printer:io.circe.Printer,shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier):com.spotify.scio.io.ClosedTap[T]" title="com.spotify.scio.extra.json.JsonSCollection"><code>`saveAsJsonFile`</code></a>, which optionally takes a custom <code>printer</code> argument of type <a href="https://circe.github.io/circe/api/io/circe/Printer.html"><code>io.circe.Printer</code></a> for controlling formatting.</p>
+<p>Write to Json with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/json/JsonSCollection.html#saveAsJsonFile(path:String,suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,printer:io.circe.Printer,shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier):com.spotify.scio.io.ClosedTap[T]" title="com.spotify.scio.extra.json.JsonSCollection"><code>saveAsJsonFile</code></a>, which optionally takes a custom <code>printer</code> argument of type <a href="https://circe.github.io/circe/api/io/circe/Printer.html"><code>io.circe.Printer</code></a> for controlling formatting.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.extra.json._
 import com.spotify.scio.values.SCollection
@@ -286,7 +286,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -328,7 +328,7 @@ Neo4J
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -227,7 +227,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -283,7 +283,7 @@ Scio context available as &#39;sc&#39;
 
 scio&gt;
 </code></pre>
-<p>A <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" title="com.spotify.scio.ScioContext"><code>`ScioContext`</code></a> is created on REPL startup as <code>sc</code> and a starting point to most operations. Use <code>tab</code> completion, history and other REPL goodies to play around.</p>
+<p>A <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" title="com.spotify.scio.ScioContext"><code>ScioContext</code></a> is created on REPL startup as <code>sc</code> and a starting point to most operations. Use <code>tab</code> completion, history and other REPL goodies to play around.</p>
 <h3><a href="#start-from-sbt-console-scala-2-11-x-only-" name="start-from-sbt-console-scala-2-11-x-only-" class="anchor"><span class="anchor-link"></span></a>Start from SBT console (Scala <code>2.11.x</code>+ only)</h3>
 <pre><code>$ git clone git@github.com:spotify/scio.git
 Cloning into &#39;scio&#39;...
@@ -330,7 +330,7 @@ val scioResult = sc.run().waitUntilDone()
 
 val values = scioResult.tap(wordCount).value.take(3)
 </code></pre>
-<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>`DirectRunner`</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
 <h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
 <p>In the next example we will spice things up a bit and read data from GCS:</p>
 <pre><code>:newScio
@@ -394,7 +394,7 @@ val result = sc
     .value
     .take(3)
 </code></pre>
-<p>In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return <code>Future[Tap[T]]</code> where a <a href="https://spotify.github.io/scio/api/com/spotify/scio/io/Tap.html" title="com.spotify.scio.io.Tap"><code>`Tap[T]`</code></a> encapsulates some dataset that can be re-opened in another context or directly.</p>
+<p>In this case we are reading data from GCS and performing computation in GCE virtual machines managed by Dataflow service. The last line is an example of reading data from GCS files to local memory after a context is closed. Most write operations in Scio return <code>Future[Tap[T]]</code> where a <a href="https://spotify.github.io/scio/api/com/spotify/scio/io/Tap.html" title="com.spotify.scio.io.Tap"><code>Tap[T]</code></a> encapsulates some dataset that can be re-opened in another context or directly.</p>
 <p>Use <code>:scioOpts</code> to view or update Dataflow options inside the REPL. New options will be applied the next time you create a context.</p>
 <h3><a href="#ad-hoc-local-mode" name="ad-hoc-local-mode" class="anchor"><span class="anchor-link"></span></a>Ad-hoc local mode</h3>
 <p>You may start the REPL in distributed mode and run pipelines to aggregate from large datasets, and play around the results in local mode. You can create a local Scio context any time with <code>:newLocalScio &lt;name&gt;</code> and use it for local computations.</p>
@@ -501,7 +501,7 @@ def tap: ClosedTap[String] = evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
 def result = sc.run()
 </code></pre>
 <h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
-<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>`DataflowRunner`</code></a> for a more interactive experience. To start:</p>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
 <pre><code>java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
 &gt; --stagingLocation=&lt;stagin-dir&gt; \
@@ -539,7 +539,7 @@ def result = sc.run()
 
 def state = result.state
 </code></pre>
-<p>Note that now <code>sc.run()</code> doesn&rsquo;t block and wait until job completes and gives back control of the REPL right away. Use <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html" title="com.spotify.scio.ScioExecutionContext"><code>`ScioExecutionContext`</code></a> to check for progress, results and orchestrate jobs.</p>
+<p>Note that now <code>sc.run()</code> doesn&rsquo;t block and wait until job completes and gives back control of the REPL right away. Use <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html" title="com.spotify.scio.ScioExecutionContext"><code>ScioExecutionContext</code></a> to check for progress, results and orchestrate jobs.</p>
 <h3><a href="#multiple-scio-contexts" name="multiple-scio-contexts" class="anchor"><span class="anchor-link"></span></a>Multiple Scio contexts</h3>
 <p>You can use multiple Scio context objects to work with several pipelines at the same time, simply use magic <code>:newScio &lt;context name&gt;</code>, for example:</p>
 <pre><code>scio&gt; :newScio c1
@@ -551,7 +551,7 @@ Scio context available as &#39;lc&#39;
 </code></pre>
 <p>You can use those in combination with <code>DataflowRunner</code> to run multiple pipelines in the same session or wire them with for comprehension over futures.</p>
 <h3><a href="#bigquery-client" name="bigquery-client" class="anchor"><span class="anchor-link"></span></a>BigQuery client</h3>
-<p>Whenever possible leverage BigQuery! <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType.html" title="com.spotify.scio.bigquery.types.BigQueryType"><code>`@BigQueryType`</code></a> annotations enable type safe and civilized  integration with BigQuery inside Scio. Here is example of using the annotations and BigQuery client to read and write typed data directly without Scio context.</p>
+<p>Whenever possible leverage BigQuery! <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType.html" title="com.spotify.scio.bigquery.types.BigQueryType"><code>@BigQueryType</code></a> annotations enable type safe and civilized  integration with BigQuery inside Scio. Here is example of using the annotations and BigQuery client to read and write typed data directly without Scio context.</p>
 <pre><code>$ java -jar -Dbigquery.project=&lt;project-id&gt; scio-repl-0.7.0.jar
 Welcome to
                  _____
@@ -628,7 +628,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -670,7 +670,7 @@ Transforms
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

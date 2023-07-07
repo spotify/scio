@@ -20,7 +20,7 @@
 
 <meta name="description" content="Scio - Documentation">
 <link rel="shortcut icon" href="../../images/favicon.ico">
-<title>Scio v0.10.0 · Scio</title>
+<title>Scio v0.13.0 · Scio</title>
 <link rel="stylesheet" href="../../assets/stylesheets/application.451f80e5.css">
 <link rel="stylesheet" href="../../assets/stylesheets/application-palette.22915126.css">
 <link rel="stylesheet" href="../../lib/material__tabs/dist/mdc.tabs.min.css">
@@ -59,7 +59,7 @@ data-md-color-accent="indigo"
 Scio
 </span>
 <span class="md-header-nav__topic">
-Scio v0.10.0
+Scio v0.13.0
 </span>
 </div>
 </div>
@@ -214,11 +214,15 @@ spotify/scio
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#scio-v0-10-0" class="header">Scio v0.10.0</a>
+  <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#scio-v0-13-0" class="header">Scio v0.13.0</a>
   <ul>
-    <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
-    <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#google-cloud-platform-modules" class="header">Google Cloud Platform Modules</a></li>
-    <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#coder-implicits" class="header">Coder Implicits</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#gcs-connector-now-explicitly-required" class="header">gcs-connector now explicitly required</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#removed-scio-elasticsearch6" class="header">Removed <code>scio-elasticsearch6</code></a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#scio-elasticsearch7-migrated-to-java-client" class="header"><code>scio-elasticsearch7</code> migrated to java client</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#new-file-based-scioio-parameters" class="header">New File based ScioIO parameters</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#kryo-coders-nondeterministic" class="header">Kryo Coders nondeterministic</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#changed-skewedjoin-api" class="header">Changed <code>skewedJoin</code> API</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#tensorflow-unused-predict-type-parameter" class="header">Tensorflow unused predict type parameter</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -240,11 +244,15 @@ spotify/scio
 <nav class="md-nav md-nav--secondary">
 <label class="md-nav__title" for="__toc">Table of contents</label>
 <ul>
-  <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#scio-v0-10-0" class="header">Scio v0.10.0</a>
+  <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#scio-v0-13-0" class="header">Scio v0.13.0</a>
   <ul>
-    <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#tl-dr" class="header">TL;DR</a></li>
-    <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#google-cloud-platform-modules" class="header">Google Cloud Platform Modules</a></li>
-    <li><a href="../../releases/migrations/v0.10.0-Migration-Guide.html#coder-implicits" class="header">Coder Implicits</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#gcs-connector-now-explicitly-required" class="header">gcs-connector now explicitly required</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#removed-scio-elasticsearch6" class="header">Removed <code>scio-elasticsearch6</code></a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#scio-elasticsearch7-migrated-to-java-client" class="header"><code>scio-elasticsearch7</code> migrated to java client</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#new-file-based-scioio-parameters" class="header">New File based ScioIO parameters</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#kryo-coders-nondeterministic" class="header">Kryo Coders nondeterministic</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#changed-skewedjoin-api" class="header">Changed <code>skewedJoin</code> API</a></li>
+    <li><a href="../../releases/migrations/v0.13.0-Migration-Guide.html#tensorflow-unused-predict-type-parameter" class="header">Tensorflow unused predict type parameter</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -255,49 +263,41 @@ spotify/scio
 <div class="md-content">
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
-<h1><a href="#scio-v0-10-0" name="scio-v0-10-0" class="anchor"><span class="anchor-link"></span></a>Scio v0.10.0</h1>
-<h2><a href="#tl-dr" name="tl-dr" class="anchor"><span class="anchor-link"></span></a>TL;DR</h2>
-<ul>
-  <li><a href="#google-cloud-platform-modules">Google Cloud Platform Modules</a></li>
-  <li><a href="#coder-implicits">Coder Implicits</a></li>
-</ul>
-<h2><a href="#google-cloud-platform-modules" name="google-cloud-platform-modules" class="anchor"><span class="anchor-link"></span></a>Google Cloud Platform Modules</h2>
-<p>All Google Cloud Platform related components are moved under <code>scio-google-cloud-platform</code>. This includes Datastore, originally part of <code>scio-core</code> and the following modules. </p>
-<ul>
-  <li><code>scio-bigquery</code></li>
-  <li><code>scio-bigtable</code></li>
-  <li><code>scio-spanner</code></li>
-</ul>
-<p>Update your <code>build.sbt</code> accordingly, for example:</p>
-<pre class="prettyprint"><code class="language-diff">    libraryDependencies ++= Seq(
-      &quot;com.spotify&quot; %% &quot;scio-core&quot; % scioVersion,
--     &quot;com.spotify&quot; %% &quot;scio-bigquery&quot; % scioVersion,
--     &quot;com.spotify&quot; %% &quot;scio-bigtable&quot; % scioVersion,
--     &quot;com.spotify&quot; %% &quot;scio-spanner&quot; % scioVersion,
-+     &quot;com.spotify&quot; %% &quot;scio-google-cloud-platform&quot; % scioVersion,
-      &quot;com.spotify&quot; %% &quot;scio-test&quot; % scioVersion % Test
-    )
+<h1><a href="#scio-v0-13-0" name="scio-v0-13-0" class="anchor"><span class="anchor-link"></span></a>Scio v0.13.0</h1>
+<h2><a href="#gcs-connector-now-explicitly-required" name="gcs-connector-now-explicitly-required" class="anchor"><span class="anchor-link"></span></a>gcs-connector now explicitly required</h2>
+<p>Previously Scio shipped with <code>com.google.cloud.bigdataoss:gcs-connector</code> as part of <code>scio-parquet</code>. This dependency is now removed, so <code>gcs-connector</code> must be explicitly enabled if using parquet on GCS:</p>
+<pre><code>val bigdataossVersion = &quot;2.2.6&quot;
+
+libraryDependencies ++= Seq(
+  &quot;com.google.cloud.bigdataoss&quot; % &quot;gcs-connector&quot; % s&quot;hadoop2-$bigdataossVersion&quot;
+)
 </code></pre>
-<h2><a href="#coder-implicits" name="coder-implicits" class="anchor"><span class="anchor-link"></span></a>Coder Implicits</h2>
-<p>Coder inference has been greatly simplified and many cases of <code>(implicit koder: Coder[K], voder: Coder[V])</code> implicit arguments are removed from the public API. While this is source level compatible for the most part, there are a few exceptions. They should also be covered by the scalafix rules.</p>
-<pre class="prettyprint"><code class="language-diff">    val ints: SCollection[Int] = sc.parallelize(1 to 100)
-    val kvs: SCollection[(String, Int)] = ints.keyBy(&quot;key&quot; + _)
-
-    // SCollection methods with implicit Ordering[T]
--   ints.top(10, Ordering[Int].reverse)
--   ints.quantileApprox(10, Ordering[Int].reverse)
-+   ints.top(10)(Ordering[Int].reverse)
-+   ints.quantileApprox(10)(Ordering[Int].reverse)
-
-    // PairSCollection methods with implicit Ordering[T]
--   kvs.topByKey(10, Ordering[Int].reverse)
--   kvs.approxQuantilesByKey(10, Ordering[Int].reverse)
-+   kvs.topByKey(10)(Ordering[Int].reverse)
-+   kvs.approxQuantilesByKey(10)(Ordering[Int].reverse)
+<h2><a href="#removed-scio-elasticsearch6" name="removed-scio-elasticsearch6" class="anchor"><span class="anchor-link"></span></a>Removed <code>scio-elasticsearch6</code></h2>
+<p>Please migrate to <code>scio-elasticsearch8</code>.</p>
+<h2><a href="#scio-elasticsearch7-migrated-to-java-client" name="scio-elasticsearch7-migrated-to-java-client" class="anchor"><span class="anchor-link"></span></a><code>scio-elasticsearch7</code> migrated to java client</h2>
+<p><code>saveAsElasticsearch</code> now requires a transform function returning <code>co.elastic.clients.elasticsearch.core.bulk.BulkOperation</code> instead of <code>org.elasticsearch.action.DocWriteRequest</code>.</p>
+<h2><a href="#new-file-based-scioio-parameters" name="new-file-based-scioio-parameters" class="anchor"><span class="anchor-link"></span></a>New File based ScioIO parameters</h2>
+<p>File-based IOs now consistently have a <code>suffix</code> parameter. In cases where <code>ReadParam</code> was <code>Unit</code>, then a new param will be required. This is the case for example with <code>AvroIO</code> and <code>GenericRecordIO</code>:</p>
+<pre class="prettyprint"><code class="language-diff">- sc.read(GenericRecordIO(path, schema))
++ sc.read(GenericRecordIO(path, schema))(AvroIO.ReadParam(suffix))
+- sc.read(SpecificRecordIO[T](path))
++ sc.read(SpecificRecordIO[T](path))(AvroIO.ReadParam(suffix))
+</code></pre>
+<h2><a href="#kryo-coders-nondeterministic" name="kryo-coders-nondeterministic" class="anchor"><span class="anchor-link"></span></a>Kryo Coders nondeterministic</h2>
+<p>Kryo coders in Scio have long been marked as deterministic but users were cautioned to not use them in cases where determinism is important (e.g. with <code>distinct</code> or to encode keys in keyed operations) and when the Kryo coders were not explicitly known to be deterministic. Users who did not understand or follow these instructions could silently produce corrupt data or incomplete results.</p>
+<p>Kryo coders are now marked as nondeterministic in all cases and an exception will be thrown if used in keyed operations.</p>
+<h2><a href="#changed-skewedjoin-api" name="changed-skewedjoin-api" class="anchor"><span class="anchor-link"></span></a>Changed <code>skewedJoin</code> API</h2>
+<p>Removes some variants of <code>skewedJoin</code> APIs with <code>Long</code> threshold parameters. Use the variants with a <code>HotKeyMethod</code> parameter instead, providing <code>HotKeyMethod.Threshold(myThresold)</code> as its value.</p>
+<h2><a href="#tensorflow-unused-predict-type-parameter" name="tensorflow-unused-predict-type-parameter" class="anchor"><span class="anchor-link"></span></a>Tensorflow unused predict type parameter</h2>
+<p>The Tensorflow <code>predict</code> and <code>predictWithSigDef</code> methods had an unused type parameter that is now removed.</p>
+<pre class="prettyprint"><code class="language-diff">- elements.predict[B, D](&quot;gs://model-path&quot;, fetchOpts, options)(toTensors)(fromTensors)
++ elements.predict[B](&quot;gs://model-path&quot;, fetchOpts, options)(toTensors)(fromTensors)
+- elements.predictWithSigDef[B, D](&quot;gs://model-path&quot;, options)(toTensors)(fromTensors _)
++ elements.predictWithSigDef[B](&quot;gs://model-path&quot;, options)(toTensors)(fromTensors _)
 </code></pre>
 </div>
 <div>
-<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/migrations/v0.10.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
+<a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/migrations/v0.13.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
 Edit this page
 </a>
 </div>
@@ -313,7 +313,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../../releases/migrations/v0.9.0-Migration-Guide.html" title="Scio v0.9.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../../releases/migrations/v0.12.0-Migration-Guide.html" title="Scio v0.12.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -322,17 +322,17 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Scio v0.9.0
+Scio v0.12.0
 </span>
 </div>
 </a>
-<a href="../../releases/migrations/v0.12.0-Migration-Guide.html" title="Scio v0.12.0" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../../releases/breaking-changes.html" title="Breaking Changelog" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Scio v0.12.0
+Breaking Changelog
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">

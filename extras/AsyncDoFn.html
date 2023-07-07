@@ -218,7 +218,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -229,11 +229,11 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#asyncdofn" name="asyncdofn" class="anchor"><span class="anchor-link"></span></a>AsyncDoFn</h1>
-<p>Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/BaseAsyncDoFn.html" title="com.spotify.scio.transforms.BaseAsyncDoFn"><code>`BaseAsyncDoFn`</code></a> provides standard handling for sending asynchronous requests and capturing the responses for a bundle of pipeline elements. <code>BaseAsyncDoFn</code> is a subclass of <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/DoFnWithResource.html" title="com.spotify.scio.transforms.DoFnWithResource"><code>`DoFnWithResource`</code></a> which handles the creation and re-use of client classes. Scio provides several future-specific subclasses to choose from depending on the return type of the client:</p>
+<p>Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/BaseAsyncDoFn.html" title="com.spotify.scio.transforms.BaseAsyncDoFn"><code>BaseAsyncDoFn</code></a> provides standard handling for sending asynchronous requests and capturing the responses for a bundle of pipeline elements. <code>BaseAsyncDoFn</code> is a subclass of <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/DoFnWithResource.html" title="com.spotify.scio.transforms.DoFnWithResource"><code>DoFnWithResource</code></a> which handles the creation and re-use of client classes. Scio provides several future-specific subclasses to choose from depending on the return type of the client:</p>
 <ul>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/GuavaAsyncDoFn.html" title="com.spotify.scio.transforms.GuavaAsyncDoFn"><code>`GuavaAsyncDoFn`</code></a> for clients that return Guava&rsquo;s <code>ListenableFuture</code></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/JavaAsyncDoFn.html" title="com.spotify.scio.transforms.JavaAsyncDoFn"><code>`JavaAsyncDoFn`</code></a> for clients that return <code>CompletableFuture</code></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/ScalaAsyncDoFn.html" title="com.spotify.scio.transforms.ScalaAsyncDoFn"><code>`ScalaAsyncDoFn`</code></a> for clients that return a scala <code>Future</code></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/GuavaAsyncDoFn.html" title="com.spotify.scio.transforms.GuavaAsyncDoFn"><code>GuavaAsyncDoFn</code></a> for clients that return Guava&rsquo;s <code>ListenableFuture</code></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/JavaAsyncDoFn.html" title="com.spotify.scio.transforms.JavaAsyncDoFn"><code>JavaAsyncDoFn</code></a> for clients that return <code>CompletableFuture</code></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/ScalaAsyncDoFn.html" title="com.spotify.scio.transforms.ScalaAsyncDoFn"><code>ScalaAsyncDoFn</code></a> for clients that return a scala <code>Future</code></li>
 </ul>
 <p><code>BaseAsyncDoFn</code> will wait for all futures for all bundle elements to be returned before completing the bundle. A failure of any request for an item in the bundle will cause the entire bundle to be retried. Requests should therefore be idempotent.</p>
 <p>Given this Guava-based mock client:</p>
@@ -243,7 +243,7 @@ case class MyClient(value: String) {
   def request(i: Int): ListenableFuture[String] = Futures.immediateFuture(s&quot;$value$i&quot;)
 }
 </code></pre>
-<p>For client which returns a <code>ListenableFuture</code>, a custom <code>DoFn</code> can be defined using <code>GuavaAsyncDoFn</code>. Note the configured <code>ResourceType</code>, which will re-use the client for all threads on a worker, see <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/DoFnWithResource$$ResourceType.html" title="com.spotify.scio.transforms.DoFnWithResource.ResourceType"><code>`ResourceType`</code></a> for more details.</p>
+<p>For client which returns a <code>ListenableFuture</code>, a custom <code>DoFn</code> can be defined using <code>GuavaAsyncDoFn</code>. Note the configured <code>ResourceType</code>, which will re-use the client for all threads on a worker, see <a href="https://spotify.github.io/scio/api/com/spotify/scio/transforms/DoFnWithResource$$ResourceType.html" title="com.spotify.scio.transforms.DoFnWithResource.ResourceType"><code>ResourceType</code></a> for more details.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.transforms._
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.values.SCollection
@@ -267,7 +267,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -309,7 +309,7 @@ BigQueryAvro
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

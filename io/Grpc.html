@@ -218,7 +218,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -230,7 +230,7 @@ spotify/scio
 <div class="md-content__searchable">
 <h1><a href="#grpc" name="grpc" class="anchor"><span class="anchor-link"></span></a>GRPC</h1>
 <p>Scio supports lookups via <a href="https://grpc.io/">GRPC</a> in the <code>scio-grpc</code> artifact.</p>
-<p>Given an <code>SCollection</code> of GRPC request objects (<code>ConcatRequest</code> below), <a href="https://spotify.github.io/scio/api/com/spotify/scio/grpc/GrpcSCollectionOps.html#grpcLookup[Response,Client%3C:io.grpc.stub.AbstractFutureStub[Client]](channelSupplier:()=%3Eio.grpc.Channel,clientFactory:io.grpc.Channel=%3EClient,maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier[Request,Response])(f:Client=%3E(Request=%3Ecom.google.common.util.concurrent.ListenableFuture[Response]))(implicitevidence$1:com.spotify.scio.coders.Coder[Response]):com.spotify.scio.values.SCollection[(Request,scala.util.Try[Response])]" title="com.spotify.scio.grpc.GrpcSCollectionOps"><code>`grpcLookup`</code></a> (or <a href="https://spotify.github.io/scio/api/com/spotify/scio/grpc/GrpcSCollectionOps.html#grpcLookupStream[Response,Client%3C:io.grpc.stub.AbstractStub[Client]](channelSupplier:()=%3Eio.grpc.Channel,clientFactory:io.grpc.Channel=%3EClient,maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier[Request,Iterable[Response]])(f:Client=%3E((Request,io.grpc.stub.StreamObserver[Response])=%3EUnit))(implicitevidence$2:com.spotify.scio.coders.Coder[Response]):com.spotify.scio.values.SCollection[(Request,scala.util.Try[Iterable[Response]])]" title="com.spotify.scio.grpc.GrpcSCollectionOps"><code>`grpcLookupStream`</code></a> for iterable responses) provides a concise syntax for handling responses:</p>
+<p>Given an <code>SCollection</code> of GRPC request objects (<code>ConcatRequest</code> below), <a href="https://spotify.github.io/scio/api/com/spotify/scio/grpc/GrpcSCollectionOps.html#grpcLookup[Response,Client%3C:io.grpc.stub.AbstractFutureStub[Client]](channelSupplier:()=%3Eio.grpc.Channel,clientFactory:io.grpc.Channel=%3EClient,maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier[Request,Response])(f:Client=%3E(Request=%3Ecom.google.common.util.concurrent.ListenableFuture[Response]))(implicitevidence$1:com.spotify.scio.coders.Coder[Response]):com.spotify.scio.values.SCollection[(Request,scala.util.Try[Response])]" title="com.spotify.scio.grpc.GrpcSCollectionOps"><code>grpcLookup</code></a> (or <a href="https://spotify.github.io/scio/api/com/spotify/scio/grpc/GrpcSCollectionOps.html#grpcLookupStream[Response,Client%3C:io.grpc.stub.AbstractStub[Client]](channelSupplier:()=%3Eio.grpc.Channel,clientFactory:io.grpc.Channel=%3EClient,maxPendingRequests:Int,cacheSupplier:com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier[Request,Iterable[Response]])(f:Client=%3E((Request,io.grpc.stub.StreamObserver[Response])=%3EUnit))(implicitevidence$2:com.spotify.scio.coders.Coder[Response]):com.spotify.scio.values.SCollection[(Request,scala.util.Try[Iterable[Response]])]" title="com.spotify.scio.grpc.GrpcSCollectionOps"><code>grpcLookupStream</code></a> for iterable responses) provides a concise syntax for handling responses:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.grpc._
@@ -255,7 +255,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -297,7 +297,7 @@ Elasticsearch
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

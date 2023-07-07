@@ -233,7 +233,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -342,10 +342,10 @@ sc.parquetExampleFile(path, conf = ParquetConfiguration.of(&quot;scio.parquet.re
 <p>Note that if you&rsquo;re using DataflowRunner, you&rsquo;ll get the best performance (in terms of worker scaling and overall resource usage) out of a SplittableDoFn-based read by enabling <a href="https://cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#dataflow-runner-v2">Dataflow Runner V2</a>. You can enable this in your Dataflow pipeline by supplying the pipeline argument <code>--experiments=use_runner_v2</code> to your job.</p>
 <p>Our plan is to support Legacy Parquet for all Scio 0.12.x versions, but fully deprecate and remove support by 0.13.x.</p>
 <h2><a href="#async-lookup-dofn" name="async-lookup-dofn" class="anchor"><span class="anchor-link"></span></a>Async lookup DoFn</h2>
-<p>All Async lookup DoFn have been reworked and now extends <code>DoFnWithResource</code>. After upgrade you&rsquo;ll get the following error:</p>
+<p>All Async lookup DoFn have been reworked and now extends <code>DoFnWithResource</code>. After upgrade, you&rsquo;ll get the following error:</p>
 <pre><code>class MyLookupDoFn needs to be abstract, since method getResourceType in class DoFnWithResource of type ()com.spotify.scio.transforms.DoFnWithResource.ResourceType is not defined
 </code></pre>
-<p>You must now implement the methor and return the appropriate resource type for your client: - <code>ResourceType.PER_INSTANCE</code> if your client is thread safe (this was the previous behavior) - <code>ResourceType.PER_CLONE</code> if your client is not thread safe - <code>ResourceType.PER_CLASS</code> if your client is mean to be shared among all instanciations</p>
+<p>You must now implement the method and return the appropriate resource type for your client: - <code>ResourceType.PER_INSTANCE</code> if your client is thread safe (this was the previous behavior) - <code>ResourceType.PER_CLONE</code> if your client is not thread safe - <code>ResourceType.PER_CLASS</code> if your client is meant to be shared among all instances</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/migrations/v0.12.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
@@ -354,7 +354,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -377,13 +377,13 @@ Scio v0.10.0
 </span>
 </div>
 </a>
-<a href="../../releases/breaking-changes.html" title="Breaking Changelog" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+<a href="../../releases/migrations/v0.13.0-Migration-Guide.html" title="Scio v0.13.0" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
 <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
 <span class="md-flex__ellipsis">
 <span class="md-footer-nav__direction">
 Next
 </span>
-Breaking Changelog
+Scio v0.13.0
 </span>
 </div>
 <div class="md-flex__cell md-flex__cell--shrink">
@@ -396,7 +396,7 @@ Breaking Changelog
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

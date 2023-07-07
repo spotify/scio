@@ -225,7 +225,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -254,7 +254,7 @@ spotify/scio
 <h1><a href="#elasticsearch" name="elasticsearch" class="anchor"><span class="anchor-link"></span></a>Elasticsearch</h1>
 <p>Scio supports writing to <a href="https://github.com/elastic/elasticsearch">Elasticsearch</a>.</p>
 <h2><a href="#writes" name="writes" class="anchor"><span class="anchor-link"></span></a>Writes</h2>
-<p>An <code>SCollection</code> of arbitrary elements can be saved to Elasticsearch with <a href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/ElasticsearchSCollection.html#saveAsElasticsearch(esOptions:com.spotify.scio.elasticsearch.ElasticsearchOptions,flushInterval:org.joda.time.Duration,numOfShards:Long,maxBulkRequestOperations:Int,maxBulkRequestBytes:Long,errorFn:org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException=%3EUnit,retry:com.spotify.scio.elasticsearch.ElasticsearchIO.RetryConfig)(f:T=%3EIterable[co.elastic.clients.elasticsearch.core.bulk.BulkOperation]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.elasticsearch.ElasticsearchSCollection"><code>`saveAsElasticsearch`</code></a>. The <a href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/ElasticsearchOptions.html" title="com.spotify.scio.elasticsearch.ElasticsearchOptions"><code>ElasticsearchOptions</code></a>-typed <code>esOptions</code> argument requires a <code>mapperFactory</code> argument capable of mapping the element type to json. <code>saveAsElasticsearch</code> takes a second argument list, whose single argument <code>f</code> can be provided as a block, and which maps the input type to Elasticsearch <a href="https://artifacts.elastic.co/javadoc/co/elastic/clients/elasticsearch-java/8.8.0/co/elastic/clients/elasticsearch/core/bulk/BulkOperation.html">BulkOperations</a>.</p>
+<p>An <code>SCollection</code> of arbitrary elements can be saved to Elasticsearch with <a href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/ElasticsearchSCollection.html#saveAsElasticsearch(esOptions:com.spotify.scio.elasticsearch.ElasticsearchOptions,flushInterval:org.joda.time.Duration,numOfShards:Long,maxBulkRequestOperations:Int,maxBulkRequestBytes:Long,errorFn:org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException=%3EUnit,retry:com.spotify.scio.elasticsearch.ElasticsearchIO.RetryConfig)(f:T=%3EIterable[co.elastic.clients.elasticsearch.core.bulk.BulkOperation]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.elasticsearch.ElasticsearchSCollection"><code>saveAsElasticsearch</code></a>. The <a href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/ElasticsearchOptions.html" title="com.spotify.scio.elasticsearch.ElasticsearchOptions"><code>ElasticsearchOptions</code></a>-typed <code>esOptions</code> argument requires a <code>mapperFactory</code> argument capable of mapping the element type to json. <code>saveAsElasticsearch</code> takes a second argument list, whose single argument <code>f</code> can be provided as a block, and which maps the input type to Elasticsearch <a href="https://artifacts.elastic.co/javadoc/co/elastic/clients/elasticsearch-java/8.8.0/co/elastic/clients/elasticsearch/core/bulk/BulkOperation.html">BulkOperations</a>.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.elasticsearch._
@@ -307,7 +307,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -349,7 +349,7 @@ JDBC
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -229,7 +229,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -277,7 +277,7 @@ spotify/scio
 </code></pre>
 <p>The switch also adds the following benefits:</p>
 <p>Previously <code>Hash128[K]</code> only provides instances for <code>Int</code>, <code>Long</code>, <code>String</code>, <code>Array[Byte]</code>, <code>Array[Int]</code> and <code>Array[Long]</code>, while <code>magnolify-guava</code> can derive <code>Funnel[K]</code> for most common types including tuples, case classes, etc.</p>
-<p>We also added an <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/ApproxFilter.html" title="com.spotify.scio.hash.ApproxFilter"><code>`ApproxFilter`</code></a> abstraction to allow extensible approximate filter implementations. <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/BloomFilter.html" title="com.spotify.scio.hash.BloomFilter"><code>`BloomFilter`</code></a> extends <code>ApproxFilter</code> and allows us to create filters &amp; side inputs from <code>Iterable[T]</code> &amp; <code>SCollection[T]</code>. The result filter instances are serializable. For example:</p>
+<p>We also added an <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/ApproxFilter.html" title="com.spotify.scio.hash.ApproxFilter"><code>ApproxFilter</code></a> abstraction to allow extensible approximate filter implementations. <a href="https://spotify.github.io/scio/api/com/spotify/scio/hash/BloomFilter.html" title="com.spotify.scio.hash.BloomFilter"><code>BloomFilter</code></a> extends <code>ApproxFilter</code> and allows us to create filters &amp; side inputs from <code>Iterable[T]</code> &amp; <code>SCollection[T]</code>. The result filter instances are serializable. For example:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.hash._
@@ -381,7 +381,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -423,7 +423,7 @@ Scio v0.10.0
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

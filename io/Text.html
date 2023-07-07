@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -255,7 +255,7 @@ spotify/scio
 <div class="md-content__searchable">
 <h1><a href="#text" name="text" class="anchor"><span class="anchor-link"></span></a>Text</h1>
 <h2><a href="#reading-text" name="reading-text" class="anchor"><span class="anchor-link"></span></a>Reading text</h2>
-<p>Scio reads newline-delimited text via <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#textFile(path:String,compression:org.apache.beam.sdk.io.Compression):com.spotify.scio.values.SCollection[String]" title="com.spotify.scio.ScioContext"><code>`textFile`</code></a>:</p>
+<p>Scio reads newline-delimited text via <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#textFile(path:String,compression:org.apache.beam.sdk.io.Compression):com.spotify.scio.values.SCollection[String]" title="com.spotify.scio.ScioContext"><code>textFile</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.values.SCollection
@@ -264,7 +264,7 @@ val sc: ScioContext = ???
 val elements: SCollection[String] = sc.textFile(&quot;gs://&lt;input-path&gt;/*.txt&quot;)
 </code></pre>
 <h2><a href="#writing-text" name="writing-text" class="anchor"><span class="anchor-link"></span></a>Writing text</h2>
-<p>An <code>SCollection[String]</code> or <code>SCollection</code> of any class implementing <code>toString</code> can be written out to a newline-delimited text file via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression,header:Option[String],footer:Option[String],shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[String]" title="com.spotify.scio.values.SCollection"><code>`saveAsTextFile`</code></a>. An optional <code>header</code> and <code>footer</code> parameter can be provided.</p>
+<p>An <code>SCollection[String]</code> or <code>SCollection</code> of any class implementing <code>toString</code> can be written out to a newline-delimited text file via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#saveAsTextFile(path:String,numShards:Int,suffix:String,compression:org.apache.beam.sdk.io.Compression,header:Option[String],footer:Option[String],shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitct:scala.reflect.ClassTag[T]):com.spotify.scio.io.ClosedTap[String]" title="com.spotify.scio.values.SCollection"><code>saveAsTextFile</code></a>. An optional <code>header</code> and <code>footer</code> parameter can be provided.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.values.SCollection
@@ -284,7 +284,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -326,7 +326,7 @@ Examples
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

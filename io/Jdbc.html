@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -256,11 +256,9 @@ spotify/scio
 <h1><a href="#jdbc" name="jdbc" class="anchor"><span class="anchor-link"></span></a>JDBC</h1>
 <p>Scio supports JDBC reads and writes.</p>
 <h2><a href="#reads" name="reads" class="anchor"><span class="anchor-link"></span></a>Reads</h2>
-<p>Reads come in two flavors: a query-based variant backed by Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/io/jdbc/JdbcIO.html" title="org.apache.beam.sdk.io.jdbc.JdbcIO"><code>`JdbcIO`</code></a> and a &ldquo;sharded select&rdquo; that performs a parallelizable bulk read on an entire table.</p>
+<p>Reads come in two flavors: a query-based variant backed by Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/io/jdbc/JdbcIO.html" title="org.apache.beam.sdk.io.jdbc.JdbcIO"><code>JdbcIO</code></a> and a &ldquo;sharded select&rdquo; that performs a parallelizable bulk read on an entire table.</p>
 <h3><a href="#read-via-query" name="read-via-query" class="anchor"><span class="anchor-link"></span></a>Read via query</h3>
-<p>Query-based reads </p>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcSelect[T](readOptions:com.spotify.scio.jdbc.JdbcReadOptions[T])(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>`jdbcSelect`</code></a></p>
-<p>In <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcReadOptions.html" title="com.spotify.scio.jdbc.JdbcReadOptions"><code>`JdbcReadOptions`</code></a>, the <code>rowMapper</code> argument must be provided to map between a <code>java.sql.ResultSet</code> to the result type <code>T</code>. The <code>statementPreparator</code> argument may be used to set static parameters in the query, usually passed as arguments to the pipeline.</p>
+<p>Query-based reads are supported with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcSelect[T](readOptions:com.spotify.scio.jdbc.JdbcReadOptions[T])(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>jdbcSelect</code></a>. In <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcReadOptions.html" title="com.spotify.scio.jdbc.JdbcReadOptions"><code>JdbcReadOptions</code></a>, the <code>rowMapper</code> argument must be provided to map between a <code>java.sql.ResultSet</code> to the result type <code>T</code>. The <code>statementPreparator</code> argument may be used to set static parameters in the query, usually passed as arguments to the pipeline.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.jdbc._
@@ -281,14 +279,14 @@ val readOptions = JdbcReadOptions(
 )
 val elements: SCollection[(String, Long)] = sc.jdbcSelect(readOptions)
 </code></pre>
-<h3><a href="#read-via-sharded-select" name="read-via-sharded-select" class="anchor"><span class="anchor-link"></span></a>Read via sharded select</h3>
-<p>Reading data with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcShardedSelect[T,S](readOptions:com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions[T,S])(implicitevidence$3:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>`jdbcShardedSelect`</code></a> allows more efficient reads when an entire table is to be read.</p>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/JdbcShardedReadOptions.html" title="com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions"><code>`JdbcShardedReadOptions`</code></a> requires:</p>
+<h3><a href="#parallelized-table-read" name="parallelized-table-read" class="anchor"><span class="anchor-link"></span></a>Parallelized table read</h3>
+<p>When an entire table is to be read, the input table can be sharded based on some column value and each shard read in parallel with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcShardedSelect[T,S](readOptions:com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions[T,S])(implicitevidence$3:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>jdbcShardedSelect</code></a>.</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/JdbcShardedReadOptions.html" title="com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions"><code>JdbcShardedReadOptions</code></a> requires:</p>
 <ul>
   <li>A <code>rowMapper</code> with the same function as in <code>jdbcSelect</code></li>
   <li>The <code>tableName</code> of the table to be read</li>
   <li>A <code>shardColumn</code>, the column on which the read will be sharded. This column must be indexed and should have an index where <code>shardColumn</code> is not part of a composite index.</li>
-  <li>A <code>shard</code> (<a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/Shard$.html" title="com.spotify.scio.jdbc.sharded.Shard"><code>Shard</code></a>) implementation for the type of <code>shardColumn</code>. Provided implementations are <code>Int</code>, <code>Long</code>, <code>BigDecimal</code>, <code>Double</code>, <code>Float</code>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$HexUpperString.html" title="com.spotify.scio.jdbc.sharded.ShardString.HexUpperString"><code>`ShardString.HexUpperString`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$HexLowerString.html" title="com.spotify.scio.jdbc.sharded.ShardString.HexLowerString"><code>`ShardString.HexLowerString`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$UuidUpperString.html" title="com.spotify.scio.jdbc.sharded.ShardString.UuidUpperString"><code>`ShardString.UuidUpperString`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$UuidLowerString.html" title="com.spotify.scio.jdbc.sharded.ShardString.UuidLowerString"><code>`ShardString.UuidLowerString`</code></a>, and <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$Base64String.html" title="com.spotify.scio.jdbc.sharded.ShardString.Base64String"><code>`ShardString.Base64String`</code></a>.</li>
+  <li>A <code>shard</code> (<a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/Shard$.html" title="com.spotify.scio.jdbc.sharded.Shard"><code>Shard</code></a>) implementation for the type of <code>shardColumn</code>. Provided implementations are <code>Int</code>, <code>Long</code>, <code>BigDecimal</code>, <code>Double</code>, <code>Float</code>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$HexUpperString.html" title="com.spotify.scio.jdbc.sharded.ShardString.HexUpperString"><code>ShardString.HexUpperString</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$HexLowerString.html" title="com.spotify.scio.jdbc.sharded.ShardString.HexLowerString"><code>ShardString.HexLowerString</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$UuidUpperString.html" title="com.spotify.scio.jdbc.sharded.ShardString.UuidUpperString"><code>ShardString.UuidUpperString</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$UuidLowerString.html" title="com.spotify.scio.jdbc.sharded.ShardString.UuidLowerString"><code>ShardString.UuidLowerString</code></a>, and <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/sharded/ShardString$$Base64String.html" title="com.spotify.scio.jdbc.sharded.ShardString.Base64String"><code>ShardString.Base64String</code></a>.</li>
 </ul>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
@@ -312,7 +310,7 @@ val shardedReadOptions = JdbcShardedReadOptions[(String, Long), Long](
 val elements: SCollection[(String, Long)] = sc.jdbcShardedSelect(shardedReadOptions)
 </code></pre>
 <h2><a href="#writes" name="writes" class="anchor"><span class="anchor-link"></span></a>Writes</h2>
-<p>Write to JDBC with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcSCollectionOps.html#saveAsJdbc(writeOptions:com.spotify.scio.jdbc.JdbcWriteOptions[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.jdbc.syntax.JdbcSCollectionOps"><code>`saveAsJdbc`</code></a> configured with an instance of <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcWriteOptions.html" title="com.spotify.scio.jdbc.JdbcWriteOptions"><code>`JdbcWriteOptions`</code></a>, where the <code>preparedStatementSetter</code> receives an instance of the type-to-be-written and a <code>PreparedStatement</code> and appropriately sets the statement fields:</p>
+<p>Write to JDBC with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcSCollectionOps.html#saveAsJdbc(writeOptions:com.spotify.scio.jdbc.JdbcWriteOptions[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.jdbc.syntax.JdbcSCollectionOps"><code>saveAsJdbc</code></a> configured with an instance of <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcWriteOptions.html" title="com.spotify.scio.jdbc.JdbcWriteOptions"><code>JdbcWriteOptions</code></a>, where the <code>preparedStatementSetter</code> receives an instance of the type-to-be-written and a <code>PreparedStatement</code> and appropriately sets the statement fields:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.jdbc._
@@ -341,7 +339,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -383,7 +381,7 @@ Json
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

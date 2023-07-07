@@ -229,7 +229,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -263,14 +263,14 @@ spotify/scio
 <h2><a href="#background" name="background" class="anchor"><span class="anchor-link"></span></a>Background</h2>
 <p><strong>NOTE that there are currently two BigQuery dialects, the <a href="https://cloud.google.com/bigquery/query-reference">legacy query</a> syntax and the new <a href="https://cloud.google.com/bigquery/sql-reference/">SQL 2011 standard</a>. The SQL standard is highly recommended since it generates dry-run schemas consistent with actual result and eliminates a lot of edge cases when working with records in a type-safe manner. To use standard SQL, prefix your query with <code>#standardsql</code>.</strong></p>
 <h3><a href="#tablerow" name="tablerow" class="anchor"><span class="anchor-link"></span></a>TableRow</h3>
-<p>BigQuery rows are represented as <a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/?com/google/api/services/bigquery/model/TableRow.html" title="com.google.api.services.bigquery.model.TableRow"><code>`TableRow`</code></a> in the BigQuery Java API which is basically a <code>Map&lt;String, Object&gt;</code>. Fields are accessed by name strings and values must be cast or converted to the desired type, both of which are error prone process.</p>
+<p>BigQuery rows are represented as <a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/?com/google/api/services/bigquery/model/TableRow.html" title="com.google.api.services.bigquery.model.TableRow"><code>TableRow</code></a> in the BigQuery Java API which is basically a <code>Map&lt;String, Object&gt;</code>. Fields are accessed by name strings and values must be cast or converted to the desired type, both of which are error prone process.</p>
 <h3><a href="#type-safe-bigquery" name="type-safe-bigquery" class="anchor"><span class="anchor-link"></span></a>Type safe BigQuery</h3>
-<p>The type safe BigQuery API in Scio represents rows as case classes and generates <a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/?com/google/api/services/bigquery/model/TableSchema.html" title="com.google.api.services.bigquery.model.TableSchema"><code>`TableSchema`</code></a> converters automatically at compile time with the following mapping logic:</p>
+<p>The type safe BigQuery API in Scio represents rows as case classes and generates <a href="https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/java/latest/?com/google/api/services/bigquery/model/TableSchema.html" title="com.google.api.services.bigquery.model.TableSchema"><code>TableSchema</code></a> converters automatically at compile time with the following mapping logic:</p>
 <ul>
   <li>Nullable fields are mapped to <code>Option[T]</code>s</li>
   <li>Repeated fields are mapped to <code>List[T]</code>s</li>
   <li>Records are mapped to nested case classes</li>
-  <li>Timestamps are mapped to Joda Time <a href="https://www.joda.org/joda-time/apidocs/?org/joda/time/Instant.html" title="org.joda.time.Instant"><code>`Instant`</code></a></li>
+  <li>Timestamps are mapped to Joda Time <a href="https://www.joda.org/joda-time/apidocs/?org/joda/time/Instant.html" title="org.joda.time.Instant"><code>Instant</code></a></li>
 </ul>
 <p>See documentation for <a href="https://spotify.github.io/scio/api/com/spotify/scio/bigquery/types/BigQueryType$.html" title="com.spotify.scio.bigquery.types.BigQueryType"><code>BigQueryType</code></a> for the complete list of supported types.</p>
 <h2><a href="#type-annotations" name="type-annotations" class="anchor"><span class="anchor-link"></span></a>Type annotations</h2>
@@ -550,7 +550,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -592,7 +592,7 @@ Bigtable
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

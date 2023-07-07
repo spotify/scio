@@ -231,7 +231,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -427,7 +427,7 @@ object MyJob {
   <li><code>SCollection#applyTransform</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PCollection[U]]</code> and get an <code>SCollection[U]</code></li>
   <li><code>SCollection#saveAsCustomOutput</code> to apply a <code>PTransform[_ &gt;: PCollection[T], PDone]</code> (sink) and get a <code>ClosedTap[T]</code>.</li>
 </ul>
-<p>See <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html" title="com.spotify.scio.testing.JobTest"><code>`JobTest`</code></a> harness.</p>
+<p>See <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample</a> for more details. Custom I/O can also be tested via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/testing/JobTest$.html" title="com.spotify.scio.testing.JobTest"><code>JobTest</code></a> harness.</p>
 <h4><a href="#what-are-the-different-types-of-joins-and-performance-implication-" name="what-are-the-different-types-of-joins-and-performance-implication-" class="anchor"><span class="anchor-link"></span></a>What are the different types of joins and performance implication?</h4>
 <ul>
   <li>Inner (<code>a.join(b)</code>), left (<code>a.leftOuterJoin(b)</code>), outer (<code>a.fullOuterJoin(b)</code>) performs better with a large LHS. So <code>a</code> should be the larger data set with potentially more hot keys, i.e. key with many values. Every key-value pair from every input is shuffled.</li>
@@ -435,7 +435,7 @@ object MyJob {
   <li>Consider <code>skewedJoin</code> if some keys on the LHS are extremely hot.</li>
   <li>Consider <code>sparseOuterJoin</code> if you want a full outer join where RHS is much smaller than LHS, but may not fit in memory.</li>
   <li>Consider <code>cogroup</code> if you need to access value groups of each key.</li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/util/MultiJoin$.html" title="com.spotify.scio.util.MultiJoin"><code>`MultiJoin`</code></a> supports inner, left, outer join and cogroup of up to 22 inputs.</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/util/MultiJoin$.html" title="com.spotify.scio.util.MultiJoin"><code>MultiJoin</code></a> supports inner, left, outer join and cogroup of up to 22 inputs.</li>
   <li>For multi-joins larger inputs should be on the left, e.g. <code>size(a) &gt;= size(b) &gt;= size(c) &gt;= size(d)</code> in <code>MultiJoin(a, b, c, d)</code>.</li>
   <li>Check out these <a href="http://www.lyh.me/slides/joins.html">slides</a> for more information on joins.</li>
   <li>Also see this section on <a href="https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle">Cloud Dataflow Shuffle</a> service.</li>
@@ -593,7 +593,7 @@ def readme = FileSystems.open(readmeResource)
   <li>For Scio version &lt; <code>0.4.0</code></li>
 </ul><div class="callout note "><div class="callout-title">Note</div>
 <p>This part is GCS specific.</p></div>
-<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>`GcsUtil`</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
+<p>You can get a <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/extensions/gcp/options/GcsOptions.html#getGcsUtil--" title="org.apache.beam.sdk.extensions.gcp.options.GcsOptions"><code>GcsUtil</code></a> instance from <code>ScioContext</code>, which can be used to open GCS files in read or write mode.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.ContextAndArgs
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 
@@ -823,7 +823,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -852,7 +852,7 @@ v0.12.0 Release Blog
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

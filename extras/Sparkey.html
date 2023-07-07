@@ -227,7 +227,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -260,7 +260,7 @@ spotify/scio
 <p>At Spotify, sparkeys are typically used in pipelines as side-inputs where the size of the side-input would be too large to reasonably fit into memory but can still fit on disk. Scio&rsquo;s suite of <code>largeHash</code> functions are backed by sparkeys.</p>
 <p>Scio supports writing any type with a coder to a sparkey by first converting </p>
 <h2><a href="#as-a-side-input" name="as-a-side-input" class="anchor"><span class="anchor-link"></span></a>As a Side-Input</h2>
-<p>A sparkey side-input is a good choice when you have a very large dataset that needs to be joined with a relatively small dataset, but one which is still too large to fit into memory. In this case, the <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/SparkeyPairSCollection.html#asSparkeySideInput(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]" title="com.spotify.scio.extra.sparkey.SparkeyPairSCollection"><code>`asSparkeySideInput`</code></a> method can be used to broadcast the smaller dataset to all workers and avoid shuffle.</p>
+<p>A sparkey side-input is a good choice when you have a very large dataset that needs to be joined with a relatively small dataset, but one which is still too large to fit into memory. In this case, the <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/SparkeyPairSCollection.html#asSparkeySideInput(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SideInput[com.spotify.sparkey.SparkeyReader]" title="com.spotify.scio.extra.sparkey.SparkeyPairSCollection"><code>asSparkeySideInput</code></a> method can be used to broadcast the smaller dataset to all workers and avoid shuffle.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.scio.extra.sparkey._
 import com.spotify.sparkey._
@@ -283,7 +283,7 @@ tracks.withSideInputs(artistNameSI)
 </code></pre>
 <p>See also <a href="../Joins.html#large-hash-join">Large Hash Joins</a>, which do the same thing as this simple example but with a more compact syntax.</p>
 <h2><a href="#writing" name="writing" class="anchor"><span class="anchor-link"></span></a>Writing</h2>
-<p>If a sparkey can be reused by multiple pipelines, it can be saved permanently with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/SparkeyPairSCollection.html#asSparkey(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri]" title="com.spotify.scio.extra.sparkey.SparkeyPairSCollection"><code>`asSparkey`</code></a></p>
+<p>If a sparkey can be reused by multiple pipelines, it can be saved permanently with <a href="https://spotify.github.io/scio/api/com/spotify/scio/extra/sparkey/SparkeyPairSCollection.html#asSparkey(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri]" title="com.spotify.scio.extra.sparkey.SparkeyPairSCollection"><code>asSparkey</code></a></p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.sparkey._
 
@@ -308,7 +308,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -350,7 +350,7 @@ REPL
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

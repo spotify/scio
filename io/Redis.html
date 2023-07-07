@@ -227,7 +227,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -258,7 +258,7 @@ spotify/scio
 <h1><a href="#redis" name="redis" class="anchor"><span class="anchor-link"></span></a>Redis</h1>
 <p>Scio provides support for <a href="https://redis.io/">Redis</a> in the <code>scio-redis</code> artifact.</p>
 <h1><a href="#batch-read" name="batch-read" class="anchor"><span class="anchor-link"></span></a>Batch read</h1>
-<p>Reading key-value pairs from redis for a specific key pattern is supported via <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/syntax/ScioContextOps.html#redis(connectionOptions:com.spotify.scio.redis.RedisConnectionOptions,keyPattern:String,batchSize:Int,outputParallelization:Boolean):com.spotify.scio.values.SCollection[(String,String)]" title="com.spotify.scio.redis.syntax.ScioContextOps"><code>`redis`</code></a>:</p>
+<p>Reading key-value pairs from redis for a specific key pattern is supported via <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/syntax/ScioContextOps.html#redis(connectionOptions:com.spotify.scio.redis.RedisConnectionOptions,keyPattern:String,batchSize:Int,outputParallelization:Boolean):com.spotify.scio.values.SCollection[(String,String)]" title="com.spotify.scio.redis.syntax.ScioContextOps"><code>redis</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.redis._
@@ -270,7 +270,7 @@ val keyPattern = &quot;foo*&quot;
 val elements: SCollection[(String, String)] = sc.redis(connectionOptions, keyPattern)
 </code></pre>
 <h1><a href="#lookups" name="lookups" class="anchor"><span class="anchor-link"></span></a>Lookups</h1>
-<p>Looking up specific keys from redis can be done with <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/RedisDoFn.html" title="com.spotify.scio.redis.RedisDoFn"><code>`RedisDoFn`</code></a>:</p>
+<p>Looking up specific keys from redis can be done with <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/RedisDoFn.html" title="com.spotify.scio.redis.RedisDoFn"><code>RedisDoFn</code></a>:</p>
 <pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples/extra/RedisExamples.scala#L150-L159" target="_blank" title="Go to snippet source">source</a><code class="language-scala">.parDo(
   new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
     override def request(value: String, client: Client)(implicit
@@ -282,7 +282,7 @@ val elements: SCollection[(String, String)] = sc.redis(connectionOptions, keyPat
   }
 )</code></pre>
 <h1><a href="#write" name="write" class="anchor"><span class="anchor-link"></span></a>Write</h1>
-<p>Writes to Redis require an <code>SCollection</code> of a subclass of <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/types/RedisMutation.html" title="com.spotify.scio.redis.types.RedisMutation"><code>`RedisMutation`</code></a>. Writes work in both batch and streaming modes via <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/syntax/SCollectionRedisOps.html#saveAsRedis(connectionOptions:com.spotify.scio.redis.RedisConnectionOptions,batchSize:Int):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.redis.syntax.SCollectionRedisOps"><code>`saveAsRedis`</code></a>:</p>
+<p>Writes to Redis require an <code>SCollection</code> of a subclass of <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/types/RedisMutation.html" title="com.spotify.scio.redis.types.RedisMutation"><code>RedisMutation</code></a>. Writes work in both batch and streaming modes via <a href="https://spotify.github.io/scio/api/com/spotify/scio/redis/syntax/SCollectionRedisOps.html#saveAsRedis(connectionOptions:com.spotify.scio.redis.RedisConnectionOptions,batchSize:Int):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.redis.syntax.SCollectionRedisOps"><code>saveAsRedis</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.redis._
@@ -301,7 +301,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -343,7 +343,7 @@ Spanner
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -256,7 +256,7 @@ spotify/scio
 <h1><a href="#spanner" name="spanner" class="anchor"><span class="anchor-link"></span></a>Spanner</h1>
 <p>Scio supports reading and writing from <a href="https://cloud.google.com/spanner">Google Cloud Spanner</a>.</p>
 <h2><a href="#read-from-spanner" name="read-from-spanner" class="anchor"><span class="anchor-link"></span></a>Read from Spanner</h2>
-<p>Reads from Spanner occur via a query with <a href="https://spotify.github.io/scio/api/com/spotify/scio/spanner/syntax/SpannerScioContextOps.html#spannerQuery(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,query:String,withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]" title="com.spotify.scio.spanner.syntax.SpannerScioContextOps"><code>`spannerQuery`</code></a> or for an entire table with <a href="https://spotify.github.io/scio/api/com/spotify/scio/spanner/syntax/SpannerScioContextOps.html#spannerTable(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,table:String,columns:Seq[String],withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]" title="com.spotify.scio.spanner.syntax.SpannerScioContextOps"><code>`spannerTable`</code></a>. Both return an <code>SCollection</code> of <a href="https://www.javadoc.io/doc/com.google.cloud/google-cloud-spanner/6.38.0/com/google/cloud/spanner/Struct.html"><code>Struct</code></a>:</p>
+<p>Reads from Spanner occur via a query with <a href="https://spotify.github.io/scio/api/com/spotify/scio/spanner/syntax/SpannerScioContextOps.html#spannerQuery(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,query:String,withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]" title="com.spotify.scio.spanner.syntax.SpannerScioContextOps"><code>spannerQuery</code></a> or for an entire table with <a href="https://spotify.github.io/scio/api/com/spotify/scio/spanner/syntax/SpannerScioContextOps.html#spannerTable(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,table:String,columns:Seq[String],withBatching:Boolean,withTransaction:Boolean):com.spotify.scio.values.SCollection[com.google.cloud.spanner.Struct]" title="com.spotify.scio.spanner.syntax.SpannerScioContextOps"><code>spannerTable</code></a>. Both return an <code>SCollection</code> of <a href="https://www.javadoc.io/doc/com.google.cloud/google-cloud-spanner/6.38.0/com/google/cloud/spanner/Struct.html"><code>Struct</code></a>:</p>
 <p>To read with a query:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.spanner._
@@ -290,7 +290,7 @@ val sc: ScioContext = ???
 val tableStructs: SCollection[Struct] = sc.spannerTable(config, &quot;table&quot;, columns=List(&quot;a&quot;, &quot;b&quot;))
 </code></pre>
 <h2><a href="#write-to-spanner" name="write-to-spanner" class="anchor"><span class="anchor-link"></span></a>Write to Spanner</h2>
-<p>An <code>SCollection</code> containing <a href="https://javadoc.io/static/com.google.cloud/google-cloud-spanner/6.36.0/com/google/cloud/spanner/Mutation.html#com.google.cloud.spanner.Mutation"><code>Mutation</code></a> instances can be written to Spanner via <a href="https://spotify.github.io/scio/api/com/spotify/scio/spanner/syntax/SpannerSCollectionOps.html#saveAsSpanner(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,failureMode:org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode,batchSizeBytes:Long):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.spanner.syntax.SpannerSCollectionOps"><code>`saveAsSpanner`</code></a>:</p>
+<p>An <code>SCollection</code> containing <a href="https://javadoc.io/static/com.google.cloud/google-cloud-spanner/6.36.0/com/google/cloud/spanner/Mutation.html#com.google.cloud.spanner.Mutation"><code>Mutation</code></a> instances can be written to Spanner via <a href="https://spotify.github.io/scio/api/com/spotify/scio/spanner/syntax/SpannerSCollectionOps.html#saveAsSpanner(spannerConfig:org.apache.beam.sdk.io.gcp.spanner.SpannerConfig,failureMode:org.apache.beam.sdk.io.gcp.spanner.SpannerIO.FailureMode,batchSizeBytes:Long):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.spanner.syntax.SpannerSCollectionOps"><code>saveAsSpanner</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.spanner._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.gcp.spanner.SpannerConfig
@@ -313,7 +313,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -355,7 +355,7 @@ Tensorflow
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

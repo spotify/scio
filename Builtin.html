@@ -235,7 +235,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -275,19 +275,19 @@ spotify/scio
 <p>Scio is a thin wrapper on top of Beam offering idiomatic Scala APIs. Check out the <a href="https://beam.apache.org/documentation/programming-guide/">Beam Programming Guide</a> first for a detailed explanation of the Beam programming model and concepts.</p>
 <h2><a href="#basics" name="basics" class="anchor"><span class="anchor-link"></span></a>Basics</h2>
 <ul>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" title="com.spotify.scio.ScioContext"><code>`ScioContext`</code></a> wraps Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/Pipeline.html" title="org.apache.beam.sdk.Pipeline"><code>`Pipeline`</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" title="com.spotify.scio.values.SCollection"><code>`SCollection`</code></a> wraps Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/values/PCollection.html" title="org.apache.beam.sdk.values.PCollection"><code>`PCollection`</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" title="com.spotify.scio.ScioResult"><code>`ScioResult`</code></a> wraps Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/PipelineResult.html" title="org.apache.beam.sdk.PipelineResult"><code>`PipelineResult`</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html" title="com.spotify.scio.ScioContext"><code>ScioContext</code></a> wraps Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/Pipeline.html" title="org.apache.beam.sdk.Pipeline"><code>Pipeline</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html" title="com.spotify.scio.values.SCollection"><code>SCollection</code></a> wraps Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/values/PCollection.html" title="org.apache.beam.sdk.values.PCollection"><code>PCollection</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioResult.html" title="com.spotify.scio.ScioResult"><code>ScioResult</code></a> wraps Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/PipelineResult.html" title="org.apache.beam.sdk.PipelineResult"><code>PipelineResult</code></a></li>
 </ul>
 <p>See dedicated sections on: - <a href="io/index.html">IO</a> - <a href="Joins.html">Joins</a> - <a href="SideInputs.html">Side Inputs</a></p>
 <h2><a href="#core-functionality" name="core-functionality" class="anchor"><span class="anchor-link"></span></a>Core functionality</h2>
-<p>A <code>ScioContext</code> represents the pipeline and is the starting point for performing reads and the means by which the pipeline is executed. Execute a pipeline by invoking <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" title="com.spotify.scio.ScioContext"><code>`run`</code></a> and await completion by chaining <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html#waitUntilDone(duration:scala.concurrent.duration.Duration,cancelJob:Boolean):com.spotify.scio.ScioResult" title="com.spotify.scio.ScioExecutionContext"><code>`waitUntilDone`</code></a>:</p>
+<p>A <code>ScioContext</code> represents the pipeline and is the starting point for performing reads and the means by which the pipeline is executed. Execute a pipeline by invoking <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#run():com.spotify.scio.ScioExecutionContext" title="com.spotify.scio.ScioContext"><code>run</code></a> and await completion by chaining <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioExecutionContext.html#waitUntilDone(duration:scala.concurrent.duration.Duration,cancelJob:Boolean):com.spotify.scio.ScioResult" title="com.spotify.scio.ScioExecutionContext"><code>waitUntilDone</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 val sc: ScioContext = ???
 sc.run().waitUntilDone()
 </code></pre>
 <p><code>SCollection</code> is the representation of the data in a pipeline at a particular point in the execution graph preceding or following a transform. <code>SCollection</code>s have many of the methods you would expect on a standard Scala collection: <code>map</code>, <code>filter</code>, <code>flatten</code>, <code>flatMap</code>, <code>reduce</code>, <code>collect</code>, <code>fold</code>, and <code>take</code>.</p>
-<p>Any <code>SCollection</code> of 2-tuples is considered a <em>keyed</em> <code>SCollection</code> and the various <a href="Joins.html">joins</a> and <code>*ByKey</code> variants of other methods become available. The first item in the tuple is considered the key and the second item the value. The <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#keyBy[K](f:T=%3EK)(implicitevidence$22:com.spotify.scio.coders.Coder[K]):com.spotify.scio.values.SCollection[(K,T)]" title="com.spotify.scio.values.SCollection"><code>`keyBy`</code></a> method creates a keyed <code>SCollection</code>, where the user-defined function extracts the key from the exising values:</p>
+<p>Any <code>SCollection</code> of 2-tuples is considered a <em>keyed</em> <code>SCollection</code> and the various <a href="Joins.html">joins</a> and <code>*ByKey</code> variants of other methods become available. The first item in the tuple is considered the key and the second item the value. The <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#keyBy[K](f:T=%3EK)(implicitevidence$22:com.spotify.scio.coders.Coder[K]):com.spotify.scio.values.SCollection[(K,T)]" title="com.spotify.scio.values.SCollection"><code>keyBy</code></a> method creates a keyed <code>SCollection</code>, where the user-defined function extracts the key from the exising values:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val elements: SCollection[String] = ???
@@ -299,26 +299,26 @@ val result: SCollection[(String, String)] = elements.keyBy(_.head.toString)
 val elements: SCollection[(String, String)] = ???
 val result: SCollection[(String, Iterable[String])] = elements.groupByKey
 </code></pre>
-<p>Distinct elements can be found with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#distinct:com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`distinct`</code></a> (or the <code>distinctBy</code> and <code>distinctByKey</code> variants):</p>
+<p>Distinct elements can be found with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#distinct:com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>distinct</code></a> (or the <code>distinctBy</code> and <code>distinctByKey</code> variants):</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val elements: SCollection[String] = ???
 val distinct: SCollection[String] = elements.distinct
 </code></pre>
-<p>Elements can be split into different <code>SCollection</code>s with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#partition(p:T=%3EBoolean):(com.spotify.scio.values.SCollection[T],com.spotify.scio.values.SCollection[T])" title="com.spotify.scio.values.SCollection"><code>`partition`</code></a>, which can be useful for error handling. Note that the number of partitions should be small.</p>
+<p>Elements can be split into different <code>SCollection</code>s with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#partition(p:T=%3EBoolean):(com.spotify.scio.values.SCollection[T],com.spotify.scio.values.SCollection[T])" title="com.spotify.scio.values.SCollection"><code>partition</code></a>, which can be useful for error handling. Note that the number of partitions should be small.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val elements: SCollection[Int] = ???
 val (lessThanFive, greaterThanFive): (SCollection[Int], SCollection[Int]) = elements.partition(_ &gt; 5)
 </code></pre>
-<p><code>SCollection</code>s of the same type can be combined with a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#union(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`union`</code></a> (or <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#unionAll[T](scs:=%3EIterable[com.spotify.scio.values.SCollection[T]])(implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.ScioContext"><code>`unionAll`</code></a>) operation.</p>
+<p><code>SCollection</code>s of the same type can be combined with a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#union(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>union</code></a> (or <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#unionAll[T](scs:=%3EIterable[com.spotify.scio.values.SCollection[T]])(implicitevidence$6:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.ScioContext"><code>unionAll</code></a>) operation.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val a: SCollection[Int] = ???
 val b: SCollection[Int] = ???
 val elements: SCollection[Int] = a.union(b)
 </code></pre>
-<p>Elements can be printed to the console for inspection at any point of the graph by using <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#debug(out:()=%3Ejava.io.PrintStream,prefix:String,enabled:Boolean):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`debug`</code></a>:</p>
+<p>Elements can be printed to the console for inspection at any point of the graph by using <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#debug(out:()=%3Ejava.io.PrintStream,prefix:String,enabled:Boolean):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>debug</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val elements: SCollection[String] = ???
@@ -348,9 +348,9 @@ val myArg: String = args.getMyArg
 <p>Scio provides a suite of built-in aggregations. All <code>*ByKey</code> variants do the same as the normal function, but per-key for keyed <code>SCollection</code>s.</p>
 <h3><a href="#counting" name="counting" class="anchor"><span class="anchor-link"></span></a>Counting</h3>
 <ul>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#count:com.spotify.scio.values.SCollection[Long]" title="com.spotify.scio.values.SCollection"><code>`count`</code></a> (or <code>countByKey</code>) counts the number of elements</li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#countByValue:com.spotify.scio.values.SCollection[(T,Long)]" title="com.spotify.scio.values.SCollection"><code>`countByValue`</code></a> counts the number of elements for each value in a <code>SCollection[T]</code></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#countApproxDistinct(estimator:com.spotify.scio.estimators.ApproxDistinctCounter[T]):com.spotify.scio.values.SCollection[Long]" title="com.spotify.scio.values.SCollection"><code>`countApproxDistinct`</code></a> (or <code>countApproxDistinctByKey</code>) estimates a distinct count, with Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/transforms/ApproximateUnique.html" title="org.apache.beam.sdk.transforms.ApproximateUnique"><code>ApproximateUnique</code></a> or Scio&rsquo;s HyperLogLog-based <a href="https://spotify.github.io/scio/api/com/spotify/scio/estimators/ApproxDistinctCounter.html" title="com.spotify.scio.estimators.ApproxDistinctCounter"><code>ApproxDistinctCounter</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#count:com.spotify.scio.values.SCollection[Long]" title="com.spotify.scio.values.SCollection"><code>count</code></a> (or <code>countByKey</code>) counts the number of elements</li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#countByValue:com.spotify.scio.values.SCollection[(T,Long)]" title="com.spotify.scio.values.SCollection"><code>countByValue</code></a> counts the number of elements for each value in a <code>SCollection[T]</code></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#countApproxDistinct(estimator:com.spotify.scio.estimators.ApproxDistinctCounter[T]):com.spotify.scio.values.SCollection[Long]" title="com.spotify.scio.values.SCollection"><code>countApproxDistinct</code></a> (or <code>countApproxDistinctByKey</code>) estimates a distinct count, with Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/transforms/ApproximateUnique.html" title="org.apache.beam.sdk.transforms.ApproximateUnique"><code>ApproximateUnique</code></a> or Scio&rsquo;s HyperLogLog-based <a href="https://spotify.github.io/scio/api/com/spotify/scio/estimators/ApproxDistinctCounter.html" title="com.spotify.scio.estimators.ApproxDistinctCounter"><code>ApproxDistinctCounter</code></a></li>
 </ul>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.hll.zetasketch.ZetaSketchHllPlusPlus
@@ -361,12 +361,12 @@ val result: SCollection[Long] = elements.countApproxDistinct(sketch)
 </code></pre>
 <h3><a href="#statistics" name="statistics" class="anchor"><span class="anchor-link"></span></a>Statistics</h3>
 <ul>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#max(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`max`</code></a> (or <code>maxByKey</code>) finds the maximum element given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Ordering.html" title="scala.math.Ordering"><code>Ordering</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#min(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`min`</code></a> (or <code>minByKey</code>) finds the minimum element given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Ordering.html" title="scala.math.Ordering"><code>Ordering</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#mean(implicitev:Numeric[T]):com.spotify.scio.values.SCollection[Double]" title="com.spotify.scio.values.SCollection"><code>`mean`</code></a> finds the mean given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Numeric.html" title="scala.math.Numeric"><code>Numeric</code></a></li>
-  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#quantilesApprox(numQuantiles:Int)(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[Iterable[T]]" title="com.spotify.scio.values.SCollection"><code>`quantilesApprox`</code></a> (or <code>approxQuantilesByKey</code>) finds the distribution using Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/transforms/ApproximateQuantiles.html" title="org.apache.beam.sdk.transforms.ApproximateQuantiles"><code>ApproximateQuantiles</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#max(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>max</code></a> (or <code>maxByKey</code>) finds the maximum element given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Ordering.html" title="scala.math.Ordering"><code>Ordering</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#min(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>min</code></a> (or <code>minByKey</code>) finds the minimum element given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Ordering.html" title="scala.math.Ordering"><code>Ordering</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#mean(implicitev:Numeric[T]):com.spotify.scio.values.SCollection[Double]" title="com.spotify.scio.values.SCollection"><code>mean</code></a> finds the mean given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Numeric.html" title="scala.math.Numeric"><code>Numeric</code></a></li>
+  <li><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#quantilesApprox(numQuantiles:Int)(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[Iterable[T]]" title="com.spotify.scio.values.SCollection"><code>quantilesApprox</code></a> (or <code>approxQuantilesByKey</code>) finds the distribution using Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/transforms/ApproximateQuantiles.html" title="org.apache.beam.sdk.transforms.ApproximateQuantiles"><code>ApproximateQuantiles</code></a></li>
 </ul>
-<p>For <code>SCollection</code>s containing <code>Double</code>, Scio additionally provides a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/DoubleSCollectionFunctions.html#stats:com.spotify.scio.values.SCollection[com.spotify.scio.util.StatCounter]" title="com.spotify.scio.values.DoubleSCollectionFunctions"><code>`stats`</code></a> method that computes the count, mean, min, max, variance, standard deviation, sample variance, and sample standard deviation over the <code>SCollection</code>. Convenience methods are available directly on the <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/DoubleSCollectionFunctions.html" title="com.spotify.scio.values.DoubleSCollectionFunctions"><code>`SCollection`</code></a> if only a single value is required:</p>
+<p>For <code>SCollection</code>s containing <code>Double</code>, Scio additionally provides a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/DoubleSCollectionFunctions.html#stats:com.spotify.scio.values.SCollection[com.spotify.scio.util.StatCounter]" title="com.spotify.scio.values.DoubleSCollectionFunctions"><code>stats</code></a> method that computes the count, mean, min, max, variance, standard deviation, sample variance, and sample standard deviation over the <code>SCollection</code>. Convenience methods are available directly on the <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/DoubleSCollectionFunctions.html" title="com.spotify.scio.values.DoubleSCollectionFunctions"><code>SCollection</code></a> if only a single value is required:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 import com.spotify.scio.util.StatCounter
 
@@ -378,7 +378,7 @@ val variance: SCollection[Double] = stats.map { s =&gt; s.variance }
 val stdev: SCollection[Double] = elements.stdev
 </code></pre>
 <h3><a href="#sums-combinations" name="sums-combinations" class="anchor"><span class="anchor-link"></span></a>Sums &amp; combinations</h3>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=%3EC)(mergeValue:(C,T)=%3EC)(mergeCombiners:(C,C)=%3EC)(implicitevidence$15:com.spotify.scio.coders.Coder[C]):com.spotify.scio.values.SCollection[C]" title="com.spotify.scio.values.SCollection"><code>`combine`</code></a> (or <code>combineByKey</code>) combines elements with a set of user-defined functions:</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#combine[C](createCombiner:T=%3EC)(mergeValue:(C,T)=%3EC)(mergeCombiners:(C,C)=%3EC)(implicitevidence$15:com.spotify.scio.coders.Coder[C]):com.spotify.scio.values.SCollection[C]" title="com.spotify.scio.values.SCollection"><code>combine</code></a> (or <code>combineByKey</code>) combines elements with a set of user-defined functions:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 case class A(count: Long, total: Long)
@@ -391,7 +391,7 @@ object A {
 val elements: SCollection[Int] = ???
 elements.combine(A.apply)(A.mergeValue)(A.mergeCombiners)
 </code></pre>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#sum(implicitsg:com.twitter.algebird.Semigroup[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`sum`</code></a> (or <code>sumByKey</code>) sums elements given a <a href="https://twitter.github.io/algebird/api/com/twitter/algebird/Semigroup.html" title="com.twitter.algebird.Semigroup"><code>Semigroup</code></a>, while <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.MonoidAggregator[T,A,U])(implicitevidence$12:com.spotify.scio.coders.Coder[A],implicitevidence$13:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="com.spotify.scio.values.SCollection"><code>`aggregate`</code></a> (or <code>aggregateByKey</code>) aggregates elements either with a set of user-defined functions, via a <a href="https://twitter.github.io/algebird/api/com/twitter/algebird/Aggregator.html" title="com.twitter.algebird.Aggregator"><code>Aggregator</code></a>, or via a <a href="https://twitter.github.io/algebird/api/com/twitter/algebird/MonoidAggregator.html" title="com.twitter.algebird.MonoidAggregator"><code>MonoidAggregator</code></a>.</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#sum(implicitsg:com.twitter.algebird.Semigroup[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>sum</code></a> (or <code>sumByKey</code>) sums elements given a <a href="https://twitter.github.io/algebird/api/com/twitter/algebird/Semigroup.html" title="com.twitter.algebird.Semigroup"><code>Semigroup</code></a>, while <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#aggregate[A,U](aggregator:com.twitter.algebird.MonoidAggregator[T,A,U])(implicitevidence$12:com.spotify.scio.coders.Coder[A],implicitevidence$13:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="com.spotify.scio.values.SCollection"><code>aggregate</code></a> (or <code>aggregateByKey</code>) aggregates elements either with a set of user-defined functions, via a <a href="https://twitter.github.io/algebird/api/com/twitter/algebird/Aggregator.html" title="com.twitter.algebird.Aggregator"><code>Aggregator</code></a>, or via a <a href="https://twitter.github.io/algebird/api/com/twitter/algebird/MonoidAggregator.html" title="com.twitter.algebird.MonoidAggregator"><code>MonoidAggregator</code></a>.</p>
 <p>Both <code>Semigroup</code> and <code>Monoid</code> instances can be derived with <a href="https://github.com/spotify/magnolify/blob/main/docs/derivation.md">magnolify</a>, assuming the behavior for the primitive types is what you expect.</p><div class="callout note "><div class="callout-title">Note</div>
 <p>Note that for <code>String</code> the default <code>Semigroup[String]</code> behavior is to append, which is usually not what you want.</p></div>
 <p>Fully-automatic derivation can be very concise but relies on some implicit magic:</p>
@@ -432,7 +432,7 @@ val counterValue: metrics.MetricValue[Long] = sr.counter(counter)
 val counterMap: Map[MetricName, metrics.MetricValue[Long]] = sr.allCounters
 </code></pre>
 <h2><a href="#taps-materialization" name="taps-materialization" class="anchor"><span class="anchor-link"></span></a>Taps &amp; Materialization</h2>
-<p>Writes return a <a href="https://spotify.github.io/scio/api/com/spotify/scio/io/ClosedTap.html" title="com.spotify.scio.io.ClosedTap"><code>`ClosedTap`</code></a>, which provides an interface to access the written results or pass them to a subsequent Scio job.</p>
+<p>Writes return a <a href="https://spotify.github.io/scio/api/com/spotify/scio/io/ClosedTap.html" title="com.spotify.scio.io.ClosedTap"><code>ClosedTap</code></a>, which provides an interface to access the written results or pass them to a subsequent Scio job.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.io.{Tap, ClosedTap}
 import com.spotify.scio.values.SCollection
@@ -449,7 +449,7 @@ val textContexts: Iterator[String] = textTap.value
 val sc2: ScioContext = ???
 val results: SCollection[String] = textTap.open(sc)
 </code></pre>
-<p>The same mechanism underlies Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#materialize:com.spotify.scio.io.ClosedTap[T]" title="com.spotify.scio.values.SCollection"><code>`materialize`</code></a> method, which will save the contents of an <code>SCollection</code> at the point of the <code>materialize</code> to a temporary location and make them available after the pipeline completes:</p>
+<p>The same mechanism underlies Scio&rsquo;s <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#materialize:com.spotify.scio.io.ClosedTap[T]" title="com.spotify.scio.values.SCollection"><code>materialize</code></a> method, which will save the contents of an <code>SCollection</code> at the point of the <code>materialize</code> to a temporary location and make them available after the pipeline completes:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.io.{Tap, ClosedTap}
 import com.spotify.scio.values.SCollection
@@ -464,7 +464,7 @@ val textTap: Tap[String] = sr.tap(materializeTap)
 <p>See also: <a href="https://spotify.github.io/scio/examples/WordCountOrchestration.scala.html">WordCountOrchestration</a> example.</p>
 <h2><a href="#use-native-beam-functionality" name="use-native-beam-functionality" class="anchor"><span class="anchor-link"></span></a>Use native Beam functionality</h2>
 <p>If there is a need to use a Beam IO or transform for which Scio does not have an API, you can easily use the native Beam API for single steps in a pipeline otherwise written in Scio.</p>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#customInput[T,I%3E:org.apache.beam.sdk.values.PBegin%3C:org.apache.beam.sdk.values.PInput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.ScioContext"><code>`customInput`</code></a> supports reading from a Beam source; any transform of type <code>PTransform[PBegin, PCollection[T]]</code>:</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#customInput[T,I%3E:org.apache.beam.sdk.values.PBegin%3C:org.apache.beam.sdk.values.PInput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[I,org.apache.beam.sdk.values.PCollection[T]]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.ScioContext"><code>customInput</code></a> supports reading from a Beam source; any transform of type <code>PTransform[PBegin, PCollection[T]]</code>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.PTransform
@@ -477,7 +477,7 @@ val filePattern: String = ???
 val textRead: PTransform[PBegin, PCollection[String]] = TextIO.read().from(filePattern)
 val elements: SCollection[String] = sc.customInput(&quot;ReadText&quot;, textRead)
 </code></pre>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#saveAsCustomOutput[O%3C:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.values.SCollection"><code>`saveAsCustomOutput`</code></a> supports writing to a Beam sink; any transform of type <code>PTransform[PCollection[T], PDone]</code>:</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#saveAsCustomOutput[O%3C:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.values.SCollection"><code>saveAsCustomOutput</code></a> supports writing to a Beam sink; any transform of type <code>PTransform[PCollection[T], PDone]</code>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.PTransform
@@ -489,7 +489,7 @@ val elements: SCollection[String] = ???
 val textWrite: PTransform[PCollection[String], PDone] = TextIO.write().to(outputLocation)
 elements.saveAsCustomOutput(&quot;WriteText&quot;, textWrite)
 </code></pre>
-<p>Finally, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_%3E:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="com.spotify.scio.values.SCollection"><code>`applyTransform`</code></a> supports using any Beam transform of type <code>PTransform[PCollection[T], PCollection[U]]</code>:</p>
+<p>Finally, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_%3E:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="com.spotify.scio.values.SCollection"><code>applyTransform</code></a> supports using any Beam transform of type <code>PTransform[PCollection[T], PCollection[U]]</code>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.{PTransform, Sum}
@@ -504,7 +504,7 @@ val result: SCollection[lang.Double] = elements
 </code></pre>
 <p>See also: <a href="https://spotify.github.io/scio/examples/BeamExample.scala.html">BeamExample</a></p>
 <h2><a href="#windowing" name="windowing" class="anchor"><span class="anchor-link"></span></a>Windowing</h2>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#timestampBy(f:T=%3Eorg.joda.time.Instant,allowedTimestampSkew:org.joda.time.Duration):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`timestampBy`</code></a> allows for changing an element&rsquo;s timestamp:</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#timestampBy(f:T=%3Eorg.joda.time.Instant,allowedTimestampSkew:org.joda.time.Duration):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>timestampBy</code></a> allows for changing an element&rsquo;s timestamp:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 import org.joda.time.Instant
 
@@ -512,14 +512,14 @@ case class A(timestamp: Instant, value: String)
 val elements: SCollection[A] = ???
 val timestamped: SCollection[A] = elements.timestampBy(_.timestamp)
 </code></pre>
-<p>The <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withTimestamp:com.spotify.scio.values.SCollection[(T,org.joda.time.Instant)]" title="com.spotify.scio.values.SCollection"><code>`withTimestamp`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withWindow[W%3C:org.apache.beam.sdk.transforms.windowing.BoundedWindow]:com.spotify.scio.values.SCollection[(T,W)]" title="com.spotify.scio.values.SCollection"><code>`withWindow`</code></a>, and <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withPaneInfo:com.spotify.scio.values.SCollection[(T,org.apache.beam.sdk.transforms.windowing.PaneInfo)]" title="com.spotify.scio.values.SCollection"><code>`withPaneInfo`</code></a> functions flatten window metadata into the <code>SCollection</code>:</p>
+<p>The <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withTimestamp:com.spotify.scio.values.SCollection[(T,org.joda.time.Instant)]" title="com.spotify.scio.values.SCollection"><code>withTimestamp</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withWindow[W%3C:org.apache.beam.sdk.transforms.windowing.BoundedWindow]:com.spotify.scio.values.SCollection[(T,W)]" title="com.spotify.scio.values.SCollection"><code>withWindow</code></a>, and <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withPaneInfo:com.spotify.scio.values.SCollection[(T,org.apache.beam.sdk.transforms.windowing.PaneInfo)]" title="com.spotify.scio.values.SCollection"><code>withPaneInfo</code></a> functions flatten window metadata into the <code>SCollection</code>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 import org.joda.time.Instant
 
 val elements: SCollection[String] = ???
 val timestamped: SCollection[(String, Instant)] = elements.withTimestamp
 </code></pre>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#toWindowed:com.spotify.scio.values.WindowedSCollection[T]" title="com.spotify.scio.values.SCollection"><code>`toWindowed`</code></a> converts the <code>SCollection</code> to a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/WindowedSCollection.html" title="com.spotify.scio.values.WindowedSCollection"><code>`WindowedSCollection`</code></a> whose elements are all instances of <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/WindowedValue.html" title="com.spotify.scio.values.WindowedValue"><code>`WindowedValue`</code></a>, which gives full access to the windowing metadata:</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#toWindowed:com.spotify.scio.values.WindowedSCollection[T]" title="com.spotify.scio.values.SCollection"><code>toWindowed</code></a> converts the <code>SCollection</code> to a <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/WindowedSCollection.html" title="com.spotify.scio.values.WindowedSCollection"><code>WindowedSCollection</code></a> whose elements are all instances of <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/WindowedValue.html" title="com.spotify.scio.values.WindowedValue"><code>WindowedValue</code></a>, which gives full access to the windowing metadata:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values._
 import org.joda.time.Instant
 
@@ -529,7 +529,7 @@ windowed.map { v: WindowedValue[String] =&gt;
   v.withTimestamp(Instant.now())
 }
 </code></pre>
-<p>Scio provides convenience functions for the common types of windowing (<a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withFixedWindows(duration:org.joda.time.Duration,offset:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`withFixedWindows`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withSlidingWindows(size:org.joda.time.Duration,period:org.joda.time.Duration,offset:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`withSlidingWindows`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withSessionWindows(gapDuration:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`withSessionWindows`</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withGlobalWindow(options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`withGlobalWindow`</code></a>) but also provides full control over the windowing with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withWindowFn[W%3C:org.apache.beam.sdk.transforms.windowing.BoundedWindow](fn:org.apache.beam.sdk.transforms.windowing.WindowFn[_,W],options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`withWindowFn`</code></a>.</p>
+<p>Scio provides convenience functions for the common types of windowing (<a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withFixedWindows(duration:org.joda.time.Duration,offset:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>withFixedWindows</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withSlidingWindows(size:org.joda.time.Duration,period:org.joda.time.Duration,offset:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>withSlidingWindows</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withSessionWindows(gapDuration:org.joda.time.Duration,options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>withSessionWindows</code></a>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withGlobalWindow(options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>withGlobalWindow</code></a>) but also provides full control over the windowing with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withWindowFn[W%3C:org.apache.beam.sdk.transforms.windowing.BoundedWindow](fn:org.apache.beam.sdk.transforms.windowing.WindowFn[_,W],options:com.spotify.scio.values.WindowOptions):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>withWindowFn</code></a>.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
 
@@ -545,7 +545,7 @@ val elements: SCollection[String] = ???
 val batchedElements: SCollection[Iterable[String]] = elements.batch(10)
 </code></pre>
 <h2><a href="#misc" name="misc" class="anchor"><span class="anchor-link"></span></a>Misc</h2>
-<p>Some elements of an <code>SCollection</code> can be randomly sampled using <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#sample(withReplacement:Boolean,fraction:Double):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`sample`</code></a>:</p>
+<p>Some elements of an <code>SCollection</code> can be randomly sampled using <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#sample(withReplacement:Boolean,fraction:Double):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>sample</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val elements: SCollection[String] = ???
@@ -558,27 +558,27 @@ val elements: SCollection[Int] = ???
 val weights: Array[Double] = Array(0.2, 0.6, 0.2)
 val splits: Array[SCollection[Int]] = elements.randomSplit(weights)
 </code></pre>
-<p>The &ldquo;top&rdquo; <em>n</em> elements of an <code>SCollection</code> given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Ordering.html" title="scala.math.Ordering"><code>Ordering</code></a> can be found with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#top(num:Int)(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[Iterable[T]]" title="com.spotify.scio.values.SCollection"><code>`top`</code></a>:</p>
+<p>The &ldquo;top&rdquo; <em>n</em> elements of an <code>SCollection</code> given some <a href="http://www.scala-lang.org/api/2.13.11/scala/math/Ordering.html" title="scala.math.Ordering"><code>Ordering</code></a> can be found with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#top(num:Int)(implicitord:Ordering[T]):com.spotify.scio.values.SCollection[Iterable[T]]" title="com.spotify.scio.values.SCollection"><code>top</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val elements: SCollection[Int] = ???
 val top10: SCollection[Iterable[Int]] = elements.top(10)
 </code></pre>
-<p>The common elements of two <code>SCollections</code> can be found with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`intersection`</code></a>:</p>
+<p>The common elements of two <code>SCollections</code> can be found with <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#intersection(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>intersection</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val a: SCollection[String] = ???
 val b: SCollection[String] = ???
 val common: SCollection[String] = a.intersection(b)
 </code></pre>
-<p>For a keyed <code>SCollection</code>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#intersectByKey(rhs:com.spotify.scio.values.SCollection[K]):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`intersectByKey`</code></a> will give the elements in the LHS whose keys are in the RHS:</p>
+<p>For a keyed <code>SCollection</code>, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#intersectByKey(rhs:com.spotify.scio.values.SCollection[K]):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>intersectByKey</code></a> will give the elements in the LHS whose keys are in the RHS:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val a: SCollection[(String, Int)] = ???
 val b: SCollection[String] = ???
 val common: SCollection[(String, Int)] = a.intersectByKey(b)
 </code></pre>
-<p>Similarly, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#subtract(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>`subtract`</code></a> (or <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#subtractByKey(rhs:com.spotify.scio.values.SCollection[K]):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`subtractByKey`</code></a>) will give the elements in the LHS that are not present in the RHS:</p>
+<p>Similarly, <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#subtract(that:com.spotify.scio.values.SCollection[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.values.SCollection"><code>subtract</code></a> (or <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#subtractByKey(rhs:com.spotify.scio.values.SCollection[K]):com.spotify.scio.values.SCollection[(K,V)]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>subtractByKey</code></a>) will give the elements in the LHS that are not present in the RHS:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 
 val a: SCollection[String] = ???
@@ -593,7 +593,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -635,7 +635,7 @@ Joins
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

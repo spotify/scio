@@ -227,7 +227,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -259,7 +259,7 @@ spotify/scio
 <p>Scio provides support <a href="https://neo4j.com/">Neo4J</a> in the <code>scio-neo4j</code> artifact.</p>
 <p>Scio uses <a href="https://github.com/spotify/magnolify">magnolify&rsquo;s</a> <code>magnolify-neo4j</code> to convert to and from Neo4J types. </p>
 <h2><a href="#static-query" name="static-query" class="anchor"><span class="anchor-link"></span></a>Static query</h2>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/neo4j/syntax/Neo4jScioContextOps.html#neo4jCypher[T](neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitevidence$1:magnolify.neo4j.ValueType[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.neo4j.syntax.Neo4jScioContextOps"><code>`neo4jCypher`</code></a> returns an <code>SCollection</code> of results for a Neo4J cypher query, mapped to a specified case class type.</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/neo4j/syntax/Neo4jScioContextOps.html#neo4jCypher[T](neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitevidence$1:magnolify.neo4j.ValueType[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.neo4j.syntax.Neo4jScioContextOps"><code>neo4jCypher</code></a> returns an <code>SCollection</code> of results for a Neo4J cypher query, mapped to a specified case class type.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.neo4j._
@@ -276,7 +276,7 @@ val entities: SCollection[Entity] = sc
   .neo4jCypher[Entity](opts, query)
 </code></pre>
 <h2><a href="#parameterized-query" name="parameterized-query" class="anchor"><span class="anchor-link"></span></a>Parameterized query</h2>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/neo4j/syntax/Neo4jSCollectionOps.html#neo4jCypher[U](neo4jConf:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitneo4jInType:magnolify.neo4j.ValueType[T],implicitneo4jOutType:magnolify.neo4j.ValueType[U],implicitcoder:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps"><code>`neo4jCypher`</code></a> can also construct queries from parameters in an existing <code>SCollection</code>:</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/neo4j/syntax/Neo4jSCollectionOps.html#neo4jCypher[U](neo4jConf:com.spotify.scio.neo4j.Neo4jOptions,cypher:String)(implicitneo4jInType:magnolify.neo4j.ValueType[T],implicitneo4jOutType:magnolify.neo4j.ValueType[U],implicitcoder:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]" title="com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps"><code>neo4jCypher</code></a> can also construct queries from parameters in an existing <code>SCollection</code>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.neo4j._
@@ -306,7 +306,7 @@ val queryRoles =
 input.neo4jCypher[Role](opts, queryRoles)
 </code></pre>
 <h2><a href="#writes" name="writes" class="anchor"><span class="anchor-link"></span></a>Writes</h2>
-<p>Instances can be written via <a href="https://spotify.github.io/scio/api/com/spotify/scio/neo4j/syntax/Neo4jSCollectionOps.html#saveAsNeo4j(neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,unwindCypher:String,batchSize:Long)(implicitneo4jType:magnolify.neo4j.ValueType[T],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps"><code>`saveAsNeo4j`</code></a>:</p>
+<p>Instances can be written via <a href="https://spotify.github.io/scio/api/com/spotify/scio/neo4j/syntax/Neo4jSCollectionOps.html#saveAsNeo4j(neo4jOptions:com.spotify.scio.neo4j.Neo4jOptions,unwindCypher:String,batchSize:Long)(implicitneo4jType:magnolify.neo4j.ValueType[T],implicitcoder:com.spotify.scio.coders.Coder[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.neo4j.syntax.Neo4jSCollectionOps"><code>saveAsNeo4j</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.neo4j._
@@ -332,7 +332,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -374,7 +374,7 @@ Object file
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

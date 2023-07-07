@@ -235,7 +235,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -275,9 +275,9 @@ spotify/scio
 <h2><a href="#breaking-changes-since-0-13-0" name="breaking-changes-since-0-13-0" class="anchor"><span class="anchor-link"></span></a>Breaking changes since 0.13.0</h2>
 <ul>
   <li>Removed <code>scio-elasticsearch6</code></li>
-  <li>Migrate <code>scio-elasticsearch7</code> to new <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-api-client/7.17/introduction.html">java client</a></li>
+  <li>Migrated <code>scio-elasticsearch7</code> to new <a href="https://www.elastic.co/guide/en/elasticsearch/client/java-api-client/7.17/introduction.html">java client</a></li>
   <li>Changed <code>skewedJoin</code> API (scalafix <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/scalafix/rules/src/main/scala/fix/v0_13_0/FixSkewedJoins.scala">rule</a> provided)</li>
-  <li>New File based ScioIO parameters (notably <code>prefix</code> in the read params)</li>
+  <li>New File based ScioIO parameters (notably <code>suffix</code> in the read params)</li>
   <li>Removal of unused type parameter on tensorflow <code>predict</code> and <code>predictWithSigDef</code></li>
 </ul>
 <h2><a href="#breaking-changes-since-0-12-0-" name="breaking-changes-since-0-12-0-" class="anchor"><span class="anchor-link"></span></a>Breaking changes since 0.12.0 (<a href="migrations/v0.12.0-Migration-Guide.html">v0.12.0 Migration Guide</a>)</h2>
@@ -357,7 +357,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -367,7 +367,7 @@ Edit this page
 <footer class="md-footer">
 <div class="md-footer-nav">
 <nav class="md-footer-nav__inner md-grid">
-<a href="../releases/migrations/v0.12.0-Migration-Guide.html" title="Scio v0.12.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+<a href="../releases/migrations/v0.13.0-Migration-Guide.html" title="Scio v0.13.0" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
 <div class="md-flex__cell md-flex__cell--shrink">
 <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
 </div>
@@ -376,7 +376,7 @@ Edit this page
 <span class="md-footer-nav__direction">
 Previous
 </span>
-Scio v0.12.0
+Scio v0.13.0
 </span>
 </div>
 </a>
@@ -399,7 +399,7 @@ v0.12.0 Release Blog
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>

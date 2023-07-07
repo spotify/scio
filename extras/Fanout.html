@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-f9106dfb+20230622-0006*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-220d1d98+20230707-1952*
 </label>
 </li>
 </ul>
@@ -257,7 +257,7 @@ spotify/scio
 <p>Scio ships with two <code>SCollection</code> variants that provide <em>fanout</em> over aggregations where an interim aggregation is performed before the final aggregation is computed. The interim step pairs the data to be aggregated with a synthetic key, then aggregates within this artificial keyspace before passing the partial aggregations on to the final aggregation step. The interim step requires an additional shuffle but can make the aggregation more parallelizable and reduces the impact of a hot key.</p>
 <p>The <code>aggregate</code>, <code>combine</code>, <code>fold</code>, <code>reduce</code>, <code>sum</code> transforms and their keyed variants are supported.</p>
 <h2><a href="#withfanout" name="withfanout" class="anchor"><span class="anchor-link"></span></a>WithFanout</h2>
-<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withFanout(fanout:Int):com.spotify.scio.values.SCollectionWithFanout[T]" title="com.spotify.scio.values.SCollection"><code>`withFanout`</code></a> aggregates over the number of synthetic keys specified by the <code>fanout</code> argument:</p>
+<p><a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#withFanout(fanout:Int):com.spotify.scio.values.SCollectionWithFanout[T]" title="com.spotify.scio.values.SCollection"><code>withFanout</code></a> aggregates over the number of synthetic keys specified by the <code>fanout</code> argument:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 
@@ -265,7 +265,7 @@ val elements: SCollection[Int] = ???
 val result: SCollection[Int] = elements.withFanout(fanout = 10).sum
 </code></pre>
 <h2><a href="#withhotkeyfanout" name="withhotkeyfanout" class="anchor"><span class="anchor-link"></span></a>WithHotKeyFanout</h2>
-<p>For hot keys, two variants allow a user to specify either a static fanout via an integer <code>hotKeyFanout</code> argument to <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#withHotKeyFanout(hotKeyFanout:Int):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`withHotKeyFanout`</code></a>, or a dynamic per-key fanout via a function <code>K =&gt; Int</code> argument, also called <code>hotKeyFanout</code> to <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#withHotKeyFanout(hotKeyFanout:K=%3EInt):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>`withHotKeyFanout`</code></a>:</p>
+<p>For hot keys, two variants allow a user to specify either a static fanout via an integer <code>hotKeyFanout</code> argument to <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#withHotKeyFanout(hotKeyFanout:Int):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>withHotKeyFanout</code></a>, or a dynamic per-key fanout via a function <code>K =&gt; Int</code> argument, also called <code>hotKeyFanout</code> to <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/PairSCollectionFunctions.html#withHotKeyFanout(hotKeyFanout:K=%3EInt):com.spotify.scio.values.SCollectionWithHotKeyFanout[K,V]" title="com.spotify.scio.values.PairSCollectionFunctions"><code>withHotKeyFanout</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 
@@ -283,7 +283,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-f9106dfb+20230622-0006*
+0.0.0+1-220d1d98+20230707-1952*
 </span>
 </div>
 </article>
@@ -325,7 +325,7 @@ HyperLogLog
 <div class="md-footer-meta__inner md-grid">
 <div class="md-footer-copyright">
 <div class="md-footer-copyright__highlight">
-Copyright (C) 2020 Spotify AB
+Copyright (C) 2023 Spotify AB
 </div>
 Powered by
 <a href="https://github.com/lightbend/paradox">Paradox</a>
