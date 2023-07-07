@@ -17,16 +17,20 @@
 
 package com.spotify.scio.io
 
-import java.io.{BufferedInputStream, InputStream, OutputStream}
-import java.nio.channels.{Channels, WritableByteChannel}
+import com.google.common.io.CountingInputStream
+
+import java.io.{BufferedInputStream, EOFException, InputStream, OutputStream}
+import java.nio.channels.{Channels, ReadableByteChannel, WritableByteChannel}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.BinaryIO.BytesSink
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.coders.ByteArrayCoder
+import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.io._
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
-import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, ResourceId}
+import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.util.MimeTypes
@@ -34,6 +38,129 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+
+final case class BinaryIORead(path: String) extends ScioIO[Array[Byte]] {
+  override type ReadP = BinaryIORead.ReadParam
+  override type WriteP = Nothing
+  override val tapT: TapT.Aux[Array[Byte], Nothing] = EmptyTapOf[Array[Byte]]
+
+  override def testId: String = s"BinaryIORead($path)"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] = {
+    val filePattern = ScioUtil.filePattern(path, params.suffix)
+    val desiredBundleSizeBytes = 64 * 1024 * 1024L // 64 mb
+    val coder = ByteArrayCoder.of()
+    val srcFn = Functions.serializableFn { path: String =>
+      new BinaryIORead.BinarySource(path, params.emptyMatchTreatment, params.reader)
+    }
+
+    sc.withName("Create filepattern")
+      .parallelize(List(filePattern))
+      .applyTransform("Match All", FileIO.matchAll())
+      .applyTransform(
+        "Read Matches",
+        FileIO
+          .readMatches()
+          .withCompression(params.compression)
+          .withDirectoryTreatment(DirectoryTreatment.PROHIBIT)
+      )
+      .applyTransform(
+        "Read all via FileBasedSource",
+        new ReadAllViaFileBasedSource[Array[Byte]](desiredBundleSizeBytes, srcFn, coder)
+      )
+  }
+
+  override protected def write(data: SCollection[Array[Byte]], params: WriteP): Tap[Nothing] =
+    throw new UnsupportedOperationException("BinaryIORead is read-only")
+
+  override def tap(params: ReadP): Tap[Nothing] = EmptyTap
+}
+
+object BinaryIORead {
+
+  object ReadParam {
+    val DefaultSuffix: String = ".bin"
+    val DefaultCompression: Compression = Compression.UNCOMPRESSED
+    val DefaultEmptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+  }
+
+  final case class ReadParam private (
+    reader: BinaryFileReader,
+    compression: Compression = ReadParam.DefaultCompression,
+    emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment,
+    suffix: String = ReadParam.DefaultSuffix
+  )
+
+  trait BinaryFileReader {
+    type State
+
+    /** @return The initial read state. */
+    def start(is: InputStream): State
+
+    /**
+     * @return
+     *   The updated read state, record bytes. Return null for record byte array when no record is
+     *   read.
+     */
+    def readRecord(state: State, is: InputStream): (State, Array[Byte])
+
+    /** Read any footer and perform any required validation after the last record is read. */
+    def end(state: State, is: InputStream): Unit = ()
+  }
+
+  final private[scio] class BinarySource(
+    path: String,
+    emptyMatchTreatment: EmptyMatchTreatment,
+    binaryFileReader: BinaryFileReader
+  ) extends FileBasedSource[Array[Byte]](
+        StaticValueProvider.of(path),
+        emptyMatchTreatment,
+        Long.MaxValue
+      ) {
+    override def isSplittable: Boolean = false
+    override def createForSubrangeOfFile(
+      fileMetadata: Metadata,
+      start: Long,
+      end: Long
+    ): FileBasedSource[Array[Byte]] =
+      throw new NotImplementedError("BinarySource is not splittable.")
+    override def createSingleFileReader(
+      options: PipelineOptions
+    ): FileBasedSource.FileBasedReader[Array[Byte]] =
+      new FileBasedSource.FileBasedReader[Array[Byte]](this) {
+        var is: CountingInputStream = _
+        var state: binaryFileReader.State = _
+        var startOfRecord: Long = _
+        var current: Option[Array[Byte]] = None
+        // exception matches method contract
+        override def getCurrentOffset: Long = current.map(_ => startOfRecord).get
+        // exception matches method contract
+        override def getCurrent: Array[Byte] = current.get
+        override def startReading(channel: ReadableByteChannel): Unit = {
+          is = new CountingInputStream(Channels.newInputStream(channel))
+          val newState = binaryFileReader.start(is)
+          state = newState
+        }
+        override def readNextRecord(): Boolean = {
+          startOfRecord = is.getCount
+          try {
+            val (newState, record) = binaryFileReader.readRecord(state, is)
+            state = newState
+            current = Option(record)
+          } catch {
+            case _: EOFException =>
+              current = None
+          }
+          current match {
+            case Some(_) => true
+            case None =>
+              binaryFileReader.end(state, is)
+              false
+          }
+        }
+      }
+  }
+}
 
 /**
  * A ScioIO class for writing raw bytes to files. Like TextIO, but without newline delimiters and

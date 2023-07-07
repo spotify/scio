@@ -19,10 +19,15 @@ package com.spotify.scio.schemas
 
 import java.util.{List => jList, Map => jMap}
 import com.spotify.scio.{FeatureFlag, IsJavaBean, MacroSettings}
-import com.spotify.scio.schemas.instances.{JavaInstances, JodaInstances, LowPrioritySchemaDerivation, ScalaInstances}
+import com.spotify.scio.schemas.instances.{
+  JavaInstances,
+  JodaInstances,
+  LowPrioritySchemaDerivation,
+  ScalaInstances
+}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.schemas.Schema.FieldType
-import org.apache.beam.sdk.schemas.{SchemaProvider, Schema => BSchema}
+import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaProvider}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 import com.twitter.chill.ClosureCleaner
@@ -31,7 +36,7 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.values.TupleTag
 
-import scala.collection.{SortedSet, mutable}
+import scala.collection.{mutable, SortedSet}
 
 object Schema extends JodaInstances with LowPrioritySchemaDerivation {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c

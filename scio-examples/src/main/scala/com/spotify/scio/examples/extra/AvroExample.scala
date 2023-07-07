@@ -105,8 +105,9 @@ object AvroExample {
       .saveAsTextFile(args("output"))
 
   private def genericOut(sc: ScioContext, args: Args): ClosedTap[GenericRecord] = {
+    import com.spotify.scio.coders.avro._
     // Avro generic record encoding is more efficient with an explicit schema
-    implicit def genericCoder = Coder.avroGenericRecordCoder(schema)
+    implicit def genericCoder = avroGenericRecordCoder(schema)
     sc.parallelize(1 to 100)
       .map[GenericRecord] { i =>
         val r = new GenericData.Record(schema)

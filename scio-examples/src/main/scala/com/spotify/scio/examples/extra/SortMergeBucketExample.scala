@@ -68,9 +68,10 @@ object SortMergeBucketExample {
 
 object SortMergeBucketWriteExample {
   import com.spotify.scio.smb._
+  import com.spotify.scio.coders.avro._
 
   implicit val coder: Coder[GenericRecord] =
-    Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+    avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
   def pipeline(cmdLineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
@@ -124,9 +125,10 @@ object SortMergeBucketWriteExample {
 
 object SortMergeBucketJoinExample {
   import com.spotify.scio.smb._
+  import com.spotify.scio.coders.avro._
 
   implicit val coder: Coder[GenericRecord] =
-    Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+    avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
   case class UserAccountData(userId: String, age: Int, balance: Double) {
     override def toString: String = s"$userId\t$age\t$balance"

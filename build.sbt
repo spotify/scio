@@ -704,7 +704,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   .in(file("scio-google-cloud-platform"))
   .dependsOn(
     `scio-core` % "compile;it->it",
-    `scio-avro` % "test",
+    `scio-avro`,
     `scio-test` % "test->test;it"
   )
   .configs(IntegrationTest)

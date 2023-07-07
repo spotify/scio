@@ -21,6 +21,7 @@ import java.nio.file.{Files, Path}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.avro._
 import com.spotify.scio.smb.util.SMBMultiJoin
 import com.spotify.scio.util.MultiJoin
 import com.spotify.scio.values.SCollection
@@ -53,7 +54,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
   private val keyFn: GenericRecord => Integer = _.get("key").toString.toInt
 
-  implicit private val coder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
+  implicit private val coder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
 
   "sortMergeCoGroup" should "have parity with a 2-way CoGroup" in withNumSources(2) { inputs =>
     compareResults(

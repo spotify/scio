@@ -329,7 +329,7 @@ class ScioIOTest extends ScioIOSpec {
 
   it should "work with GenericRecord" in {
     import AvroUtils.schema
-    implicit val coder = Coder.avroGenericRecordCoder(schema)
+    implicit val coder = com.spotify.scio.coders.avro.avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     testTap(xs)(_.saveAsAvroFile(_, schema = schema))(".avro")
     testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
@@ -343,7 +343,7 @@ class ScioIOTest extends ScioIOSpec {
   }
 
   it should "work with GenericRecord and a parseFn" in {
-    implicit val coder = Coder.avroGenericRecordCoder(schema)
+    implicit val coder = com.spotify.scio.coders.avro.avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     // No test for saveAsAvroFile because parseFn is only for input
     testJobTest(xs)(AvroIO(_))(

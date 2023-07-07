@@ -18,15 +18,15 @@
 package com.spotify.scio.io
 
 import java.util.UUID
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.io.MaterializeTap.materializeReader
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.coders.{Coder => BCoder}
-import org.apache.beam.sdk.extensions.avro.io.AvroIO
-import org.apache.beam.sdk.transforms.DoFn
-import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
+import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
+import org.apache.beam.sdk.util.CoderUtils
+
+import java.io.{EOFException, InputStream}
 
 /**
  * Placeholder to an external data set that can either be load into memory as an iterator or opened
@@ -88,12 +88,36 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
     extends Tap[T] {
 
   override def value: Iterator[T] = {
-    val storage = FileStorage(path, MaterializeTap.Suffix)
-
+    val storage = FileStorage(path, BinaryIORead.ReadParam.DefaultSuffix)
     if (storage.isDone()) {
-      storage
-        .avroFile[GenericRecord](AvroBytesUtil.schema)
-        .map(AvroBytesUtil.decode(coder, _))
+      val filePattern = ScioUtil.filePattern(path, BinaryIORead.ReadParam.DefaultSuffix)
+      BinaryIO
+        .openInputStreamsFor(filePattern)
+        .flatMap { is =>
+          new Iterator[T] {
+            private val reader = materializeReader()
+            private val ignoredState = reader.start(is)
+            private var rec: Option[Array[Byte]] = None
+            read()
+
+            def read(): Unit = {
+              try {
+                val (_, optRecord) = reader.readRecord(ignoredState, is)
+                rec = Option(optRecord)
+              } catch {
+                case _: EOFException =>
+                  rec = None
+              }
+            }
+
+            override def hasNext: Boolean = rec.isDefined
+            override def next(): T = {
+              val ret = rec.map(arr => CoderUtils.decodeFromByteArray(coder, arr)).get
+              read()
+              ret
+            }
+          }
+        }
     } else {
       throw new RuntimeException(
         "Tap failed to materialize to filesystem. Did you " +
@@ -102,31 +126,24 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
     }
   }
 
-  private def dofn =
-    new DoFn[GenericRecord, T] {
-      @ProcessElement
-      private[scio] def processElement(
-        @Element element: GenericRecord,
-        out: OutputReceiver[T]
-      ): Unit =
-        out.output(AvroBytesUtil.decode(coder, element))
-    }
-
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
-    val filePattern = ScioUtil.filePattern(path, MaterializeTap.Suffix)
-    val read = AvroIO
-      .readGenericRecords(AvroBytesUtil.schema)
-      .from(filePattern)
-    sc.applyTransform(read).parDo(dofn)
+    sc.binaryFile(path, reader = materializeReader())
+      .map(ar => CoderUtils.decodeFromByteArray[T](coder, ar))
   }
 }
 
 object MaterializeTap {
-
-  private val Suffix = ".obj.avro"
-
   def apply[T: Coder](path: String, context: ScioContext): MaterializeTap[T] =
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
+
+  private[scio] def materializeReader(): BinaryIORead.BinaryFileReader =
+    new BinaryIORead.BinaryFileReader {
+      private val c: BCoder[Array[Byte]] = ByteArrayCoder.of()
+      override type State = Unit
+      override def start(is: InputStream): State = ()
+      override def readRecord(state: State, is: InputStream): (State, Array[Byte]) =
+        ((), c.decode(is))
+    }
 }
 
 final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {

@@ -46,9 +46,10 @@ object MagnolifyAvroExample {
 object MagnolifyAvroWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import MagnolifyAvroExample._
+    import com.spotify.scio.coders.avro._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    implicit def genericCoder = Coder.avroGenericRecordCoder(wordCountType.schema)
+    implicit def genericCoder = avroGenericRecordCoder(wordCountType.schema)
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue

@@ -17,7 +17,6 @@
 
 package com.spotify.scio.avro.dynamic.syntax
 
-
 import com.google.protobuf.Message
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
@@ -132,7 +131,6 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
   }
 }
 
-
 final class DynamicProtobufSCollectionOps[T <: Message](private val self: SCollection[T])
     extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
@@ -182,17 +180,16 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
 
 trait AvroSyntax {
   implicit def dynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
-                                                                         sc: SCollection[T]
-                                                                       ): DynamicSpecificRecordSCollectionOps[T] =
+    sc: SCollection[T]
+  ): DynamicSpecificRecordSCollectionOps[T] =
     new DynamicSpecificRecordSCollectionOps(sc)
 
   implicit def dynamicGenericRecordSCollectionOps[T <: GenericRecord](
-                                                                       sc: SCollection[T]
-                                                                     ): DynamicGenericRecordSCollectionOps[T] =
+    sc: SCollection[T]
+  ): DynamicGenericRecordSCollectionOps[T] =
     new DynamicGenericRecordSCollectionOps(sc)
 
-
   implicit def dynamicProtobufSCollectionOps[T <: Message](
-                                                            sc: SCollection[T]
-                                                          ): DynamicProtobufSCollectionOps[T] = new DynamicProtobufSCollectionOps(sc)
+    sc: SCollection[T]
+  ): DynamicProtobufSCollectionOps[T] = new DynamicProtobufSCollectionOps(sc)
 }

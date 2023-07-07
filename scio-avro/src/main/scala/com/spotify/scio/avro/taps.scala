@@ -19,6 +19,7 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio._
+import com.spotify.scio.avro.io.AvroFileStorage
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
@@ -41,7 +42,7 @@ final case class GenericRecordTap(
   private lazy val s = Externalizer(schema)
 
   override def value: Iterator[GenericRecord] =
-    FileStorage(path, params.suffix).avroFile[GenericRecord](s.get)
+    AvroFileStorage(path, params.suffix).avroFile[GenericRecord](s.get)
 
   override def open(sc: ScioContext): SCollection[GenericRecord] =
     sc.read(GenericRecordIO(path, s.get))(params)
@@ -53,7 +54,7 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag: Coder](
   params: AvroIO.ReadParam
 ) extends Tap[T] {
   override def value: Iterator[T] =
-    FileStorage(path, params.suffix).avroFile[T]()
+    AvroFileStorage(path, params.suffix).avroFile[T]()
 
   override def open(sc: ScioContext): SCollection[T] =
     sc.read(SpecificRecordIO[T](path))(params)
@@ -69,7 +70,7 @@ final case class GenericRecordParseTap[T: Coder](
   params: AvroIO.ReadParam
 ) extends Tap[T] {
   override def value: Iterator[T] =
-    FileStorage(path, params.suffix)
+    AvroFileStorage(path, params.suffix)
       // Read Avro GenericRecords, with the writer specified schema
       .avroFile[GenericRecord](schema = null)
       .map(parseFn)
@@ -88,7 +89,7 @@ final case class ObjectFileTap[T: Coder](
 ) extends Tap[T] {
   override def value: Iterator[T] = {
     val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
-    FileStorage(path, params.suffix)
+    AvroFileStorage(path, params.suffix)
       .avroFile[GenericRecord](AvroBytesUtil.schema)
       .map(r => AvroBytesUtil.decode(elemCoder, r))
   }

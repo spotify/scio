@@ -179,12 +179,14 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   "readAvroGenericRecordFiles" should "work with a projection but no projectionFn" in {
+    import com.spotify.scio.coders.avro._
+
     val projection = Projection[Account](_.getId)
     val expectedOut: Seq[GenericRecord] = (251 to 300).map { i =>
       new GenericRecordBuilder(projection).set("id", i).build()
     }
 
-    implicit val coder = Coder.avroGenericRecordCoder(projection)
+    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
@@ -199,9 +201,11 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "work with a projection and projectionFn" in {
+    import com.spotify.scio.coders.avro._
+
     val projection = Projection[Account](_.getId)
 
-    implicit val coder = Coder.avroGenericRecordCoder(projection)
+    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
@@ -217,9 +221,11 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "work with a projection and projectionFn on files with multiple row groups" in {
+    import com.spotify.scio.coders.avro._
+
     val projection = Projection[Account](_.getId)
 
-    implicit val coder = Coder.avroGenericRecordCoder(projection)
+    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/avro"))

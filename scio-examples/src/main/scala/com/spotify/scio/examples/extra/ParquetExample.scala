@@ -119,8 +119,9 @@ object ParquetExample {
   }
 
   private def avroGenericIn(sc: ScioContext, args: Args): ClosedTap[String] = {
+    import com.spotify.scio.coders.avro._
     val schema = Account.getClassSchema
-    implicit val genericRecordCoder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
+    implicit val genericRecordCoder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
 
     val parquetIn = sc.parquetAvroFile[GenericRecord](args("input"), schema)
 

@@ -31,6 +31,11 @@ import java.nio.channels.SeekableByteChannel
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
+object AvroFileStorage {
+  @inline final def apply(path: String, suffix: String): AvroFileStorage =
+    new AvroFileStorage(path, suffix)
+}
+
 final private[scio] class AvroFileStorage(path: String, suffix: String) {
 
   private def getAvroSeekableInput(meta: Metadata): SeekableInput =
@@ -66,7 +71,8 @@ final private[scio] class AvroFileStorage(path: String, suffix: String) {
     avroFile(new SpecificDatumReader[T](ScioUtil.classOf[T]))
 
   def avroFile[T](reader: GenericDatumReader[T]): Iterator[T] =
-    FileStorage.listFiles(path, suffix)
+    FileStorage
+      .listFiles(path, suffix)
       .map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
       .map(_.iterator().asScala)
       .reduce(_ ++ _)

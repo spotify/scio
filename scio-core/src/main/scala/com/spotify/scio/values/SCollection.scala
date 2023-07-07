@@ -21,7 +21,7 @@ import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.estimators.{
   ApproxDistinctCounter,
   ApproximateUniqueCounter,
@@ -35,7 +35,6 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.Compression
@@ -43,11 +42,10 @@ import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.windowing._
-import org.apache.beam.sdk.util.SerializableUtils
+import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => beam}
-import org.apache.beam.sdk.extensions.avro.io.{AvroIO => BAvroIO}
 import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
@@ -1553,18 +1551,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val elemCoder = CoderMaterializer.beam(context, coder)
-      val schema = AvroBytesUtil.schema
-      val avroCoder = Coder.avroGenericRecordCoder(schema)
-      val write = BAvroIO
-        .writeGenericRecords(schema)
-        .to(ScioUtil.pathWithPrefix(path, "part"))
-        .withSuffix(".obj.avro")
-        .withCodec(CodecFactory.deflateCodec(6))
-        .withMetadata(Map.empty[String, AnyRef].asJava)
-
       this
-        .map(c => AvroBytesUtil.encode(elemCoder, c))(avroCoder)
-        .applyInternal(write)
+        .map(e => CoderUtils.encodeToByteArray(elemCoder, e))
+        .saveAsBinaryFile(path)
       ClosedTap(MaterializeTap[T](path, context))
     }
 

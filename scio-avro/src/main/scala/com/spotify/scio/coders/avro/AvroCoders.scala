@@ -28,7 +28,7 @@ import org.apache.beam.sdk.extensions.avro.coders.AvroCoder
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import java.io.{InputStream, OutputStream}
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 import scala.util.Try
 
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {

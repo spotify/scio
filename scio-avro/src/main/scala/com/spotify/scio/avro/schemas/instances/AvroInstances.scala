@@ -27,7 +27,7 @@ import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
 trait AvroInstances {
   implicit def avroSchema[T <: SpecificRecord: ClassTag]: Schema[T] = {

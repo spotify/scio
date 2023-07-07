@@ -20,6 +20,7 @@ package com.spotify.scio.jmh
 import com.spotify.scio.{ScioContext, ScioExecutionContext}
 import com.spotify.scio.avro._
 import com.spotify.scio.coders._
+import com.spotify.scio.coders.avro._
 import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder}
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.transforms.GroupByKey
@@ -65,8 +66,7 @@ class GroupByBenchmark {
   }
 
   val source = "src/test/resources/events-10000-0.avro"
-  implicit val coderGenericRecord: Coder[GenericRecord] =
-    Coder.avroGenericRecordCoder(avroSchema)
+  implicit val coderGenericRecord: Coder[GenericRecord] = avroGenericRecordCoder(avroSchema)
 
   val charCoder: BCoder[Char] = CoderMaterializer.beamWithDefault(Coder[Char])
   val doubleCoder: BCoder[Double] = CoderMaterializer.beamWithDefault(Coder[Double])

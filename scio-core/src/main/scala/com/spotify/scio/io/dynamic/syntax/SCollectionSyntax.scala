@@ -97,7 +97,6 @@ final class DynamicSCollectionOps[T](private val self: SCollection[T]) extends A
   }
 }
 
-
 trait SCollectionSyntax {
   implicit def dynamicSCollectionOps[T](sc: SCollection[T]): DynamicSCollectionOps[T] =
     new DynamicSCollectionOps(sc)

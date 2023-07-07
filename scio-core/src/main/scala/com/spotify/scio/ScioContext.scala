@@ -712,6 +712,17 @@ class ScioContext private[scio] (
   ): SCollection[String] =
     this.read(TextIO(path))(TextIO.ReadParam(compression, emptyMatchTreatment, suffix))
 
+  def binaryFile(
+    path: String,
+    reader: BinaryIORead.BinaryFileReader,
+    compression: beam.Compression = BinaryIORead.ReadParam.DefaultCompression,
+    emptyMatchTreatment: beam.fs.EmptyMatchTreatment = TextIO.ReadParam.DefaultEmptyMatchTreatment,
+    suffix: String = BinaryIORead.ReadParam.DefaultSuffix
+  ): SCollection[Array[Byte]] =
+    this.read(BinaryIORead(path))(
+      BinaryIORead.ReadParam(reader, compression, emptyMatchTreatment, suffix)
+    )
+
   /**
    * Get an SCollection with a custom input transform. The transform should have a unique name.
    * @group input

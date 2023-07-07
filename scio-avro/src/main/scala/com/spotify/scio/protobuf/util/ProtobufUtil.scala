@@ -22,7 +22,7 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
 object ProtobufUtil {
 

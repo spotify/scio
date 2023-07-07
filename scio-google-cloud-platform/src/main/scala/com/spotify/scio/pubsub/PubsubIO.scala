@@ -209,7 +209,7 @@ final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecord: Clas
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val coder = CoderMaterializer.beam(sc, Coder.avroSpecificRecordCoder[T])
+    val coder = CoderMaterializer.beam(sc, com.spotify.scio.coders.avro.avroSpecificRecordCoder[T])
     val t = setup(beam.PubsubIO.readAvros(cls), params)
     sc.applyTransform(t).setCoder(coder)
   }
