@@ -23,7 +23,7 @@ import com.spotify.scio.io.MaterializeTap.materializeReader
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
+import org.apache.beam.sdk.coders.{ByteArrayCoder, CoderException, Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
 import java.io.{EOFException, InputStream}
@@ -103,7 +103,7 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
             def read(): Unit = {
               try {
                 val (_, optRecord) = reader.readRecord(ignoredState, is)
-                rec = Option(optRecord)
+                rec = Option(optRecord).flatMap { x => if(x.isEmpty) None else Some(x) }
               } catch {
                 case _: EOFException =>
                   rec = None
@@ -112,7 +112,7 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
 
             override def hasNext: Boolean = rec.isDefined
             override def next(): T = {
-              val ret = rec.map(arr => CoderUtils.decodeFromByteArray(coder, arr)).get
+              val ret = rec.map { arr => CoderUtils.decodeFromByteArray(coder, arr) }.get
               read()
               ret
             }

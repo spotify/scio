@@ -35,7 +35,7 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.coders.{Coder => BCoder}
+import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
@@ -1551,8 +1551,15 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       saveAsInMemoryTap
     } else {
       val elemCoder = CoderMaterializer.beam(context, coder)
+      val arrCoder = ByteArrayCoder.of()
       this
-        .map(e => CoderUtils.encodeToByteArray(elemCoder, e))
+        .map { e =>
+          CoderUtils.encodeToByteArray(
+            arrCoder,
+            CoderUtils.encodeToByteArray(elemCoder, e),
+            BCoder.Context.NESTED
+          )
+        }
         .saveAsBinaryFile(path)
       ClosedTap(MaterializeTap[T](path, context))
     }

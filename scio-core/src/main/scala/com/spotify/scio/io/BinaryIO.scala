@@ -142,11 +142,11 @@ object BinaryIORead {
           state = newState
         }
         override def readNextRecord(): Boolean = {
-          startOfRecord = is.getCount
+          startOfRecord = is.getCount + 1
           try {
             val (newState, record) = binaryFileReader.readRecord(state, is)
             state = newState
-            current = Option(record)
+            current = Option(record).flatMap { x => if(x.isEmpty) None else Some(x) }
           } catch {
             case _: EOFException =>
               current = None
