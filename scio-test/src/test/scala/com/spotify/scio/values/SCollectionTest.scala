@@ -881,7 +881,7 @@ class SCollectionTest extends PipelineSpec {
       val originalCoder = original.internal.getCoder
       val tappedCoder = tapped.internal.getCoder
       originalCoder shouldBe tappedCoder
-    }
+    }.waitUntilDone()
 
     elements should contain theSameElementsAs input
     elements.clear()

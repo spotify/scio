@@ -108,6 +108,62 @@ object BinaryIORead {
     def end(state: State, is: InputStream): Unit = ()
   }
 
+  final private[scio] class BinarySingleFileSource(
+    binaryFileReader: BinaryFileReader,
+    metadata: Metadata,
+    start: Long,
+    end: Long
+  ) extends FileBasedSource[Array[Byte]](metadata, Long.MaxValue, start, end) {
+    override def isSplittable: Boolean = false
+
+    override def createForSubrangeOfFile(
+      fileMetadata: Metadata,
+      start: Long,
+      end: Long
+    ): FileBasedSource[Array[Byte]] =
+      throw new NotImplementedError()
+
+    override def createSingleFileReader(
+      options: PipelineOptions
+    ): FileBasedSource.FileBasedReader[Array[Byte]] =
+      new FileBasedSource.FileBasedReader[Array[Byte]](this) {
+        var is: CountingInputStream = _
+        var state: binaryFileReader.State = _
+        var startOfRecord: Long = _
+        var current: Option[Array[Byte]] = None
+
+        // exception matches method contract
+        override def getCurrentOffset: Long = current.map(_ => startOfRecord).get
+
+        // exception matches method contract
+        override def getCurrent: Array[Byte] = current.get
+
+        override def startReading(channel: ReadableByteChannel): Unit = {
+          is = new CountingInputStream(Channels.newInputStream(channel))
+          val newState = binaryFileReader.start(is)
+          state = newState
+        }
+
+        override def readNextRecord(): Boolean = {
+          startOfRecord = is.getCount + 1
+          try {
+            val (newState, record) = binaryFileReader.readRecord(state, is)
+            state = newState
+            current = Option(record).flatMap(x => if (x.isEmpty) None else Some(x))
+          } catch {
+            case _: EOFException =>
+              current = None
+          }
+          current match {
+            case Some(_) => true
+            case None =>
+              binaryFileReader.end(state, is)
+              false
+          }
+        }
+      }
+  }
+
   final private[scio] class BinarySource(
     path: String,
     emptyMatchTreatment: EmptyMatchTreatment,
@@ -123,42 +179,11 @@ object BinaryIORead {
       start: Long,
       end: Long
     ): FileBasedSource[Array[Byte]] =
-      throw new NotImplementedError("BinarySource is not splittable.")
+      new BinarySingleFileSource(binaryFileReader, fileMetadata, start, end)
+
     override def createSingleFileReader(
       options: PipelineOptions
-    ): FileBasedSource.FileBasedReader[Array[Byte]] =
-      new FileBasedSource.FileBasedReader[Array[Byte]](this) {
-        var is: CountingInputStream = _
-        var state: binaryFileReader.State = _
-        var startOfRecord: Long = _
-        var current: Option[Array[Byte]] = None
-        // exception matches method contract
-        override def getCurrentOffset: Long = current.map(_ => startOfRecord).get
-        // exception matches method contract
-        override def getCurrent: Array[Byte] = current.get
-        override def startReading(channel: ReadableByteChannel): Unit = {
-          is = new CountingInputStream(Channels.newInputStream(channel))
-          val newState = binaryFileReader.start(is)
-          state = newState
-        }
-        override def readNextRecord(): Boolean = {
-          startOfRecord = is.getCount + 1
-          try {
-            val (newState, record) = binaryFileReader.readRecord(state, is)
-            state = newState
-            current = Option(record).flatMap { x => if(x.isEmpty) None else Some(x) }
-          } catch {
-            case _: EOFException =>
-              current = None
-          }
-          current match {
-            case Some(_) => true
-            case None =>
-              binaryFileReader.end(state, is)
-              false
-          }
-        }
-      }
+    ): FileBasedSource.FileBasedReader[Array[Byte]] = throw new NotImplementedError()
   }
 }
 

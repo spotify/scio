@@ -96,7 +96,7 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
       shardNameTemplate,
       tempDirectory
     )
-    self.write(ObjectFileIO(path))(param)
+    self.write(ObjectFileIO(path)(coder))(param)
   }
 }
 
