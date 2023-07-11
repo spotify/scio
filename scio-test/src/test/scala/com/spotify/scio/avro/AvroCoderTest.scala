@@ -49,7 +49,7 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
     val schema = Avro.user.getSchema
     val record: GenericRecord = Avro.user
 
-    implicit val c: Coder[GenericRecord] = com.spotify.scio.coders.avro.avroGenericRecordCoder
+    implicit val c: Coder[GenericRecord] = avroGenericRecordCoder
     schema
     implicit val eq: Equality[GenericRecord] =
       (a: GenericRecord, b: Any) => a.toString === b.toString

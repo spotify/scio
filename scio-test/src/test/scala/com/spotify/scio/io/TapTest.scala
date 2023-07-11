@@ -72,8 +72,7 @@ trait TapSpec extends PipelineSpec {
 
 class TapTest extends TapSpec {
   val schema: Schema = newGenericRecord(1).getSchema
-  implicit def coder: Coder[GenericRecord] =
-    com.spotify.scio.coders.avro.avroGenericRecordCoder(schema)
+  implicit def coder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
 
   private def makeRecords(sc: ScioContext) =
     sc.parallelize(Seq(1, 2, 3))
@@ -112,7 +111,7 @@ class TapTest extends TapSpec {
 
   it should "support saveAsAvroFile with reflect record" in withTempDir { dir =>
     import com.spotify.scio.coders.AvroBytesUtil
-    implicit val coder = com.spotify.scio.coders.avro.avroGenericRecordCoder(AvroBytesUtil.schema)
+    implicit val coder = avroGenericRecordCoder(AvroBytesUtil.schema)
 
     val tap = runWithFileFuture {
       _.parallelize(Seq("a", "b", "c"))

@@ -23,7 +23,7 @@ import com.spotify.scio.io.MaterializeTap.materializeReader
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
-import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder, CoderException}
+import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
 import java.io.{EOFException, InputStream}

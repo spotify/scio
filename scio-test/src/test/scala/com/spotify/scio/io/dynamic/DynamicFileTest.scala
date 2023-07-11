@@ -22,7 +22,6 @@ import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.dynamic._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.testing.PipelineSpec
@@ -125,7 +124,7 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
 
   it should "support generic Avro files" in withTempDir { dir =>
     val sc1 = ScioContext()
-    implicit val coder = com.spotify.scio.coders.avro.avroGenericRecordCoder(schema)
+    implicit val coder = avroGenericRecordCoder(schema)
     sc1
       .parallelize(1 to 10)
       .map(newGenericRecord)

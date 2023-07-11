@@ -22,7 +22,7 @@ import com.spotify.scio._
 import com.spotify.scio.avro.io.AvroFileStorage
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.io.{FileStorage, Tap, Taps}
+import com.spotify.scio.io.{Tap, Taps}
 import com.spotify.scio.values._
 import com.twitter.chill.Externalizer
 import org.apache.avro.Schema

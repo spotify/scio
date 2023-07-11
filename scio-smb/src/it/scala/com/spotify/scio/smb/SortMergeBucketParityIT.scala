@@ -17,7 +17,7 @@
 
 package com.spotify.scio.smb
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Files
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder

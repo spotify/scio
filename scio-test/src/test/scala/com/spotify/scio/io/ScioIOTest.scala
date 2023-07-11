@@ -22,7 +22,6 @@ import java.nio.file.Files
 import com.spotify.scio.{CoreSysProps, ScioContext}
 import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
 import com.spotify.scio.util.ScioUtil
@@ -329,7 +328,7 @@ class ScioIOTest extends ScioIOSpec {
 
   it should "work with GenericRecord" in {
     import AvroUtils.schema
-    implicit val coder = com.spotify.scio.coders.avro.avroGenericRecordCoder(schema)
+    implicit val coder = avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     testTap(xs)(_.saveAsAvroFile(_, schema = schema))(".avro")
     testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
@@ -343,7 +342,7 @@ class ScioIOTest extends ScioIOSpec {
   }
 
   it should "work with GenericRecord and a parseFn" in {
-    implicit val coder = com.spotify.scio.coders.avro.avroGenericRecordCoder(schema)
+    implicit val coder = avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     // No test for saveAsAvroFile because parseFn is only for input
     testJobTest(xs)(AvroIO(_))(

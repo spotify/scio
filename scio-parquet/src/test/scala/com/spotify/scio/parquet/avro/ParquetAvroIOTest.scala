@@ -19,7 +19,6 @@ package com.spotify.scio.parquet.avro
 
 import java.io.File
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec, TextIO}
 import com.spotify.scio.parquet.ParquetConfiguration
@@ -59,7 +58,7 @@ class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
       )
   }
 
-  override def failSaves = Seq(
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[TestRecord]] = Seq(
     _.map(AvroUtils.newSpecificRecord).saveAsParquetAvroFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
