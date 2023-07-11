@@ -95,7 +95,7 @@ val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
 val protobufVersion = "3.21.12"
 
-val algebirdVersion = "0.13.9"
+val algebirdVersion = "0.13.10"
 val algebraVersion = "2.9.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
