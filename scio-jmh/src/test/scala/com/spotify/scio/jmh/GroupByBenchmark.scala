@@ -20,7 +20,6 @@ package com.spotify.scio.jmh
 import com.spotify.scio.{ScioContext, ScioExecutionContext}
 import com.spotify.scio.avro._
 import com.spotify.scio.coders._
-import com.spotify.scio.coders.avro._
 import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder}
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.transforms.GroupByKey

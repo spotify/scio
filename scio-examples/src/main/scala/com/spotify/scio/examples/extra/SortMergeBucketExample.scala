@@ -27,7 +27,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.{ContextAndArgs, ScioContext}
-import com.spotify.scio.avro.Account
+import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
@@ -68,7 +68,6 @@ object SortMergeBucketExample {
 
 object SortMergeBucketWriteExample {
   import com.spotify.scio.smb._
-  import com.spotify.scio.coders.avro._
 
   implicit val coder: Coder[GenericRecord] =
     avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
@@ -125,7 +124,6 @@ object SortMergeBucketWriteExample {
 
 object SortMergeBucketJoinExample {
   import com.spotify.scio.smb._
-  import com.spotify.scio.coders.avro._
 
   implicit val coder: Coder[GenericRecord] =
     avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)

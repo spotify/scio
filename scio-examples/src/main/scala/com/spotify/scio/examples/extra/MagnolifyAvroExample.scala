@@ -22,7 +22,6 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.examples.common.ExampleData
 
@@ -46,7 +45,6 @@ object MagnolifyAvroExample {
 object MagnolifyAvroWriteExample {
   def main(cmdlineArgs: Array[String]): Unit = {
     import MagnolifyAvroExample._
-    import com.spotify.scio.coders.avro._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     implicit def genericCoder = avroGenericRecordCoder(wordCountType.schema)

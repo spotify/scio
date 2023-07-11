@@ -175,8 +175,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "write and read GenericRecords with default logical types" in withTempDir { dir =>
-    import com.spotify.scio.coders.avro._
-
     val records: Seq[GenericRecord] = (1 to 10).map { _ =>
       val gr = new GenericRecordBuilder(TestLogicalTypes.SCHEMA$)
       gr.set("timestamp", DateTime.now())
@@ -279,8 +277,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "read/write generic records" in withTempDir { dir =>
-    import com.spotify.scio.coders.avro._
-
     val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
     val sc1 = ScioContext()
     implicit val coder = avroGenericRecordCoder(AvroUtils.schema)
@@ -303,8 +299,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "write windowed generic records to dynamic destinations" in withTempDir { dir =>
-    import com.spotify.scio.coders.avro._
-
     // This test follows the same pattern as com.spotify.scio.io.dynamic.DynamicFileTest
     val genericRecords = (0 until 10).map(AvroUtils.newGenericRecord)
     val options = PipelineOptionsFactory.fromArgs("--streaming=true").create()
@@ -368,8 +362,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "write generic records to dynamic destinations" in withTempDir { dir =>
-    import com.spotify.scio.coders.avro._
-
     val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
     val sc = ScioContext()
     implicit val coder = avroGenericRecordCoder(AvroUtils.schema)
@@ -400,8 +392,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
   it should "throw exception when filename functions not correctly defined for dynamic destinations" in withTempDir {
     dir =>
-      import com.spotify.scio.coders.avro._
-
       val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
       implicit val coder = avroGenericRecordCoder(AvroUtils.schema)
 

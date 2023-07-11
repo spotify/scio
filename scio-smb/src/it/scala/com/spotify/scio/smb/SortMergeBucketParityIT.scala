@@ -21,7 +21,6 @@ import java.nio.file.{Files, Path}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.coders.avro._
 import com.spotify.scio.smb.util.SMBMultiJoin
 import com.spotify.scio.util.MultiJoin
 import com.spotify.scio.values.SCollection

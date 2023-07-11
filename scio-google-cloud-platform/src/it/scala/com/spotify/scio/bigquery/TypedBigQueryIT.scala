@@ -19,10 +19,9 @@ package com.spotify.scio.bigquery
 
 import com.google.protobuf.ByteString
 import com.spotify.scio._
+import com.spotify.scio.avro._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.coders.avro._
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
 import org.apache.avro.{LogicalTypes, Schema}

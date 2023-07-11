@@ -24,10 +24,10 @@ package com.spotify.scio.examples.extra
 
 import com.google.protobuf.ByteString
 import com.spotify.scio._
+import com.spotify.scio.avro._
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.parquet.tensorflow._
-import com.spotify.scio.avro.{Account, AccountStatus}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.ParquetConfiguration
@@ -119,7 +119,6 @@ object ParquetExample {
   }
 
   private def avroGenericIn(sc: ScioContext, args: Args): ClosedTap[String] = {
-    import com.spotify.scio.coders.avro._
     val schema = Account.getClassSchema
     implicit val genericRecordCoder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
 
