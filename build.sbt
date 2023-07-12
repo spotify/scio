@@ -209,10 +209,12 @@ def previousVersion(currentVersion: String): Option[String] = {
 
 lazy val mimaSettings = Def.settings(
   mimaBinaryIssueFilters := Seq.empty,
-  mimaPreviousArtifacts := previousVersion(version.value)
-    .filter(_ => publishArtifact.value)
-    .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
-    .toSet
+  // TODO enable back after 0.14
+  mimaPreviousArtifacts := Set.empty
+//  mimaPreviousArtifacts := previousVersion(version.value)
+//    .filter(_ => publishArtifact.value)
+//    .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+//    .toSet
 )
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
