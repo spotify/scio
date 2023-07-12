@@ -38,15 +38,11 @@ import java.nio.ByteBuffer
 
 def intToPaddedArray(i: Int) = ByteBuffer.allocate(4).putInt(i).array()
 
-val numRecords: Int = ???
-val header = Array(1, 2, 3) ++ intToPaddedArray(numRecords)
-val footer = Array(4, 5, 6)
-
 val byteArrays: SCollection[Array[Byte]] = ???
 byteArrays.saveAsBinaryFile(
   "gs://<output-dir>",
-  header = header,
-  footer = footer,
+  header = Array(1, 2, 3),
+  footer = Array(4, 5, 6),
   framePrefix = arr => intToPaddedArray(arr.length),
   frameSuffix = _ => Array(0)
 )
