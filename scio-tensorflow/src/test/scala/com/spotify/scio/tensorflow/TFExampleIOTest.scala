@@ -61,7 +61,7 @@ class TFExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
       )
   }
 
-  override def failSaves = Seq(
+  override def failSaves: Seq[SCollection[Int] => ClosedTap[Example]] = Seq(
     _.map(x => recordT(Record(x, x.toString))).saveAsTfRecordFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
