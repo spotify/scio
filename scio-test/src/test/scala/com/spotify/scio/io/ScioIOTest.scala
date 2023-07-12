@@ -29,6 +29,8 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.coders.ByteArrayCoder
+import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
 import org.joda.time.{Duration, Instant}
@@ -498,11 +500,43 @@ class ScioIOTest extends ScioIOSpec {
   }
 
   "BinaryIO" should "work" in {
-    val xs = (1 to 100).map(i => ByteBuffer.allocate(4).putInt(i).array)
-    testJobTestOutput(xs)(BinaryIO(_))(_.saveAsBinaryFile(_))
+    val xs = List((1 to 100).toArray.map(_.toByte))
+    testJobTest(xs)(BinaryIO(_))(_.binaryFile(_, MaterializeTap.MaterializeReader))(
+      _.saveAsBinaryFile(_)
+    )
   }
 
-  "BinaryIO" should "output files to $prefix/part-*" in {
+  it should "be able to read back records" in {
+    import org.apache.beam.sdk.coders.{Coder => BCoder}
+    val bac = ByteArrayCoder.of()
+    val in = (1 to 10)
+      .map(i => 0 to i)
+      .map(_.toArray.map(_.toByte))
+
+    val tmpDir = Files.createTempDirectory("binary-io-")
+    val sc = ScioContext()
+    val xs = in.map(CoderUtils.encodeToByteArray(bac, _, BCoder.Context.NESTED))
+    sc.parallelize(xs).saveAsBinaryFile(tmpDir.toString)
+    sc.run()
+
+    import com.google.protobuf.ByteString
+    val sc2 = ScioContext()
+    val x = sc2
+      .binaryFile(tmpDir.toString, MaterializeTap.MaterializeReader)
+      .map(ByteString.copyFrom)
+    val expected = sc2.parallelize(in).map(ByteString.copyFrom)
+    x.intersection(expected).count.tap { cnt =>
+      if (cnt != in.size) throw new IllegalStateException(s"Expected ${in.size}, got $cnt")
+    }
+    x.subtract(expected).count.tap { cnt =>
+      if (cnt != 0) throw new IllegalStateException(s"Expected 0, got $cnt")
+    }
+    sc2.run()
+
+    FileUtils.deleteDirectory(tmpDir.toFile)
+  }
+
+  it should "output files to $prefix/part-*" in {
     val tmpDir = Files.createTempDirectory("binary-io-")
 
     val sc = ScioContext()

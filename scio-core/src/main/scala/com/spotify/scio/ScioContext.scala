@@ -714,13 +714,13 @@ class ScioContext private[scio] (
 
   def binaryFile(
     path: String,
-    reader: BinaryIORead.BinaryFileReader,
-    compression: beam.Compression = BinaryIORead.ReadParam.DefaultCompression,
+    reader: BinaryIO.BinaryFileReader,
+    compression: beam.Compression = BinaryIO.ReadParam.DefaultCompression,
     emptyMatchTreatment: beam.fs.EmptyMatchTreatment = TextIO.ReadParam.DefaultEmptyMatchTreatment,
-    suffix: String = BinaryIORead.ReadParam.DefaultSuffix
+    suffix: String = BinaryIO.ReadParam.DefaultSuffix
   ): SCollection[Array[Byte]] =
-    this.read(BinaryIORead(path))(
-      BinaryIORead.ReadParam(reader, compression, emptyMatchTreatment, suffix)
+    this.read(BinaryIO(path))(
+      BinaryIO.ReadParam(reader, compression, emptyMatchTreatment, suffix)
     )
 
   /**

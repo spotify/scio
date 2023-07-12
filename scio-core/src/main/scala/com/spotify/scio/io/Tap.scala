@@ -19,7 +19,6 @@ package com.spotify.scio.io
 
 import java.util.UUID
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.MaterializeTap.materializeReader
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
@@ -88,14 +87,14 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
     extends Tap[T] {
 
   override def value: Iterator[T] = {
-    val storage = FileStorage(path, BinaryIORead.ReadParam.DefaultSuffix)
+    val storage = FileStorage(path, BinaryIO.ReadParam.DefaultSuffix)
     if (storage.isDone()) {
-      val filePattern = ScioUtil.filePattern(path, BinaryIORead.ReadParam.DefaultSuffix)
+      val filePattern = ScioUtil.filePattern(path, BinaryIO.ReadParam.DefaultSuffix)
       BinaryIO
         .openInputStreamsFor(filePattern)
         .flatMap { is =>
           new Iterator[T] {
-            private val reader = materializeReader()
+            private val reader = MaterializeTap.MaterializeReader
             private val ignoredState = reader.start(is)
             private var rec: Option[Array[Byte]] = None
             read()
@@ -127,7 +126,7 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
   }
 
   override def open(sc: ScioContext): SCollection[T] = sc.requireNotClosed {
-    sc.binaryFile(path, reader = materializeReader())
+    sc.binaryFile(path, reader = MaterializeTap.MaterializeReader)
       .map(ar => CoderUtils.decodeFromByteArray[T](coder, ar))
   }
 }
@@ -136,15 +135,12 @@ object MaterializeTap {
   def apply[T: Coder](path: String, context: ScioContext): MaterializeTap[T] =
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
 
-  private[scio] def materializeReader(): BinaryIORead.BinaryFileReader = {
-    // FIXME `with Serializable` is not very elegant ... make case class
-    new BinaryIORead.BinaryFileReader with Serializable {
-      private val c: BCoder[Array[Byte]] = ByteArrayCoder.of()
-      override type State = Unit
-      override def start(is: InputStream): State = ()
-      override def readRecord(state: State, is: InputStream): (State, Array[Byte]) =
-        ((), c.decode(is))
-    }
+  case object MaterializeReader extends BinaryIO.BinaryFileReader {
+    private val c: BCoder[Array[Byte]] = ByteArrayCoder.of()
+    override type State = Unit
+    override def start(is: InputStream): State = ()
+    override def readRecord(state: State, is: InputStream): (State, Array[Byte]) =
+      ((), c.decode(is))
   }
 }
 
