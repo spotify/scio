@@ -712,6 +712,13 @@ class ScioContext private[scio] (
   ): SCollection[String] =
     this.read(TextIO(path))(TextIO.ReadParam(compression, emptyMatchTreatment, suffix))
 
+  /**
+   * Get an SCollection of `Array[Byte]` from a binary file.
+   *
+   * @param reader
+   *   An instance of `BinaryFileReader` for the specific binary format used by the input file.
+   * @group input
+   */
   def binaryFile(
     path: String,
     reader: BinaryIO.BinaryFileReader,

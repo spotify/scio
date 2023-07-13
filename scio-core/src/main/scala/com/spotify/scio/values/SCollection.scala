@@ -1557,6 +1557,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           CoderUtils.encodeToByteArray(
             arrCoder,
             CoderUtils.encodeToByteArray(elemCoder, e),
+            // encode record length
             BCoder.Context.NESTED
           )
         }

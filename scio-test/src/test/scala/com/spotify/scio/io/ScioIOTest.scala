@@ -506,7 +506,7 @@ class ScioIOTest extends ScioIOSpec {
     )
   }
 
-  it should "be able to read back records" in {
+  it should "round-trip records" in {
     import org.apache.beam.sdk.coders.{Coder => BCoder}
     val bac = ByteArrayCoder.of()
     val in = (1 to 10)

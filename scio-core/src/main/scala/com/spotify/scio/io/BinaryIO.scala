@@ -246,10 +246,16 @@ object BinaryIO {
     suffix: String = ReadParam.DefaultSuffix
   )
 
+  /** Trait for reading binary file formats */
   trait BinaryFileReader {
+
+    /**
+     * State constructed during `start` and maintained through reading, potentially updated during
+     * each record read
+     */
     type State
 
-    /** @return The initial read state. */
+    /** Read any header and construct the initial read state. */
     def start(is: InputStream): State
 
     /**
@@ -301,14 +307,9 @@ object BinaryIO {
 
         override def readNextRecord(): Boolean = {
           startOfRecord = is.getCount + 1
-          try {
-            val (newState, record) = binaryFileReader.readRecord(state, is)
-            state = newState
-            current = Option(record).flatMap(x => if (x.isEmpty) None else Some(x))
-          } catch {
-            case _: EOFException =>
-              current = None
-          }
+          val (newState, record) = binaryFileReader.readRecord(state, is)
+          state = newState
+          current = Option(record)
           current match {
             case Some(_) => true
             case None =>

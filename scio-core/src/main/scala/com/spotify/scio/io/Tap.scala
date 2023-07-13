@@ -100,13 +100,8 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
             read()
 
             def read(): Unit = {
-              try {
-                val (_, optRecord) = reader.readRecord(ignoredState, is)
-                rec = Option(optRecord).flatMap(x => if (x.isEmpty) None else Some(x))
-              } catch {
-                case _: EOFException =>
-                  rec = None
-              }
+              val (_, optRecord) = reader.readRecord(ignoredState, is)
+              rec = Option(optRecord).flatMap(x => if (x.isEmpty) None else Some(x))
             }
 
             override def hasNext: Boolean = rec.isDefined
@@ -139,8 +134,15 @@ object MaterializeTap {
     private val c: BCoder[Array[Byte]] = ByteArrayCoder.of()
     override type State = Unit
     override def start(is: InputStream): State = ()
-    override def readRecord(state: State, is: InputStream): (State, Array[Byte]) =
-      ((), c.decode(is))
+    override def readRecord(state: State, is: InputStream): (State, Array[Byte]) = {
+      val out =
+        try {
+          c.decode(is)
+        } catch {
+          case _: EOFException => null
+        }
+      (state, out)
+    }
   }
 }
 
