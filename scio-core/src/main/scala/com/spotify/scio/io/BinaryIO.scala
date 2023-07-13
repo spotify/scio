@@ -19,7 +19,7 @@ package com.spotify.scio.io
 
 import com.google.common.io.CountingInputStream
 
-import java.io.{BufferedInputStream, EOFException, InputStream, OutputStream}
+import java.io.{BufferedInputStream, InputStream, OutputStream}
 import java.nio.channels.{Channels, ReadableByteChannel, WritableByteChannel}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.BinaryIO.BytesSink
