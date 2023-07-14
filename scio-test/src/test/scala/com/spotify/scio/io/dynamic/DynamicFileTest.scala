@@ -206,8 +206,8 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
     verifyOutput(dir, "even", "odd")
 
     val sc2 = ScioContext()
-    val even = sc2.protobufFile[SimplePB](s"$dir/even/*.protobuf")
-    val odd = sc2.protobufFile[SimplePB](s"$dir/odd/*.protobuf")
+    val even = sc2.protobufFile[SimplePB](s"$dir/even/*.protobuf.avro")
+    val odd = sc2.protobufFile[SimplePB](s"$dir/odd/*.protobuf.avro")
     val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
     even should containInAnyOrder(expectedEven.map(mkProto))
     odd should containInAnyOrder(expectedOdd.map(mkProto))
