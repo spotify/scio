@@ -24,4 +24,4 @@ package com.spotify.scio.avro
  * import com.spotify.scio.avro.dynamic._
  * }}}
  */
-package object dynamic extends syntax.AvroSyntax
+package object dynamic extends syntax.AvroDynamicSCollectionSyntax

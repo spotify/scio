@@ -18,6 +18,7 @@
 package com.spotify.scio.avro.dynamic.syntax
 
 import com.google.protobuf.Message
+import com.spotify.scio.avro.AvroIO
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps
@@ -41,12 +42,12 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
   /** Save this SCollection as Avro files specified by the destination function. */
   def saveAsDynamicAvroFile(
     path: String,
-    numShards: Int = 0,
-    suffix: String = ".avro",
-    codec: CodecFactory = CodecFactory.deflateCodec(6),
-    metadata: Map[String, AnyRef] = Map.empty,
-    tempDirectory: String = null,
-    prefix: String = null
+    numShards: Int = AvroIO.WriteParam.DefaultNumShards,
+    suffix: String = AvroIO.WriteParam.DefaultSuffix,
+    codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
+    tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(
     destinationFn: T => String
   )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
@@ -83,7 +84,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
  * methods.
  */
-final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val self: SCollection[T])
+final class DynamicGenericRecordSCollectionOps(private val self: SCollection[GenericRecord])
     extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
 
@@ -91,14 +92,14 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
   def saveAsDynamicAvroFile(
     path: String,
     schema: Schema,
-    numShards: Int = 0,
-    suffix: String = ".avro",
-    codec: CodecFactory = CodecFactory.deflateCodec(6),
-    metadata: Map[String, AnyRef] = Map.empty,
-    tempDirectory: String = null,
-    prefix: String = null
+    numShards: Int = AvroIO.WriteParam.DefaultNumShards,
+    suffix: String = AvroIO.WriteParam.DefaultSuffix,
+    codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
+    tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(
-    destinationFn: T => String
+    destinationFn: GenericRecord => String
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
@@ -110,7 +111,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
       val sink = BAvroIO
         .sinkViaGenericRecords(
           schema,
-          (element: T, _: Schema) => element
+          (element: GenericRecord, _: Schema) => element
         )
         .withCodec(codec)
         .withMetadata(nm)
@@ -137,12 +138,12 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
 
   def saveAsDynamicProtobufFile(
     path: String,
-    numShards: Int = 0,
-    suffix: String = ".protobuf",
-    codec: CodecFactory = CodecFactory.deflateCodec(6),
-    metadata: Map[String, AnyRef] = Map.empty,
-    tempDirectory: String = null,
-    prefix: String = null
+    numShards: Int = AvroIO.WriteParam.DefaultNumShards,
+    suffix: String = AvroIO.WriteParam.DefaultSuffixProtobuf,
+    codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
+    tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
+    prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     val protoCoder = Coder.protoMessageCoder[T]
     val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
@@ -178,15 +179,15 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
   }
 }
 
-trait AvroSyntax {
+trait AvroDynamicSCollectionSyntax {
   implicit def dynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
     sc: SCollection[T]
   ): DynamicSpecificRecordSCollectionOps[T] =
     new DynamicSpecificRecordSCollectionOps(sc)
 
-  implicit def dynamicGenericRecordSCollectionOps[T <: GenericRecord](
-    sc: SCollection[T]
-  ): DynamicGenericRecordSCollectionOps[T] =
+  implicit def dynamicGenericRecordSCollectionOps(
+    sc: SCollection[GenericRecord]
+  ): DynamicGenericRecordSCollectionOps =
     new DynamicGenericRecordSCollectionOps(sc)
 
   implicit def dynamicProtobufSCollectionOps[T <: Message](

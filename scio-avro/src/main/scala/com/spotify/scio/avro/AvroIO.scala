@@ -323,6 +323,8 @@ object AvroIO {
   object WriteParam {
     val DefaultNumShards: Int = 0
     val DefaultSuffix: String = ".avro"
+    val DefaultSuffixProtobuf: String = ".protobuf.avro"
+    val DefaultSuffixObjectFile: String = ".obj.avro"
     val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     val DefaultMetadata: Map[String, AnyRef] = Map.empty
     val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
