@@ -21,7 +21,7 @@ import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{AvroBytesUtil, BeamCoders, Coder, CoderMaterializer, KVCoder}
 import com.spotify.scio.estimators.{
   ApproxDistinctCounter,
   ApproximateUniqueCounter,
@@ -38,7 +38,7 @@ import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.avro.file.CodecFactory
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
-import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.{Compression, ReadAllViaFileBasedSourceWithFilename}
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
@@ -52,7 +52,7 @@ import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -1454,6 +1454,22 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
               .apply(filesTransform)
         })
     }
+
+  def readFilesWithFilename[A: Coder](
+    srcFn: String => beam.FileBasedSource[A],
+    defaultBundleSizeBytes: Long = 64 * 1024 * 1024L, // 64 mb
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO
+  )(implicit ev: T <:< String): SCollection[(String, A)] = {
+    val kvCoder = KVCoder(Coder[String], implicitly[Coder[A]])
+    val transform = new ReadAllViaFileBasedSourceWithFilename[A](
+      defaultBundleSizeBytes,
+      Functions.serializableFn(srcFn),
+      CoderMaterializer.beam(context, kvCoder)
+    )
+    readFiles(transform, directoryTreatment, compression)
+      .map(TupleFunctions.kvToTuple[String, A])
+  }
 
   /**
    * Pairs each element with the value of the provided [[SideInput]] in the element's window.

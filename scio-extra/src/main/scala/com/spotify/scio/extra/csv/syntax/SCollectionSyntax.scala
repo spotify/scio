@@ -23,10 +23,16 @@ import com.spotify.scio.extra.csv.CsvIO
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
+import kantan.csv.engine.ReaderEngine
 import kantan.csv.{CsvConfiguration, HeaderDecoder, HeaderEncoder}
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadableFile
-import org.apache.beam.sdk.transforms.ParDo
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
+import org.apache.beam.sdk.transforms.{DoFn, ParDo}
+
+import java.io.Reader
+import java.nio.channels.Channels
+import java.nio.charset.StandardCharsets
 
 trait SCollectionSyntax {
   implicit final class WritableCsvSCollection[T](private val self: SCollection[T]) {
@@ -63,5 +69,12 @@ trait SCollectionSyntax {
       self
         .withName("Read CSV")
         .applyTransform(ParDo.of(CsvIO.ReadDoFn[T](csvConfiguration)))
+
+    def readCsvWithFilename[T: HeaderDecoder: Coder](
+      csvConfiguration: CsvConfiguration
+    ): SCollection[(String, T)] =
+      self
+        .withName("Read CSV")
+        .applyTransform(ParDo.of(CsvIO.ReadWithFilenameDoFn[T](csvConfiguration)))
   }
 }

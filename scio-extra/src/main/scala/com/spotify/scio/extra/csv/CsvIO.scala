@@ -239,6 +239,24 @@ object CsvIO {
     }
   }
 
+  final private[scio] case class ReadWithFilenameDoFn[T: HeaderDecoder](
+    config: CsvConfiguration,
+    charSet: String = StandardCharsets.UTF_8.name()
+  ) extends DoFn[ReadableFile, (String, T)] {
+
+    @ProcessElement
+    def process(@Element element: ReadableFile, out: OutputReceiver[(String, T)]): Unit = {
+      val reader: Reader = Channels.newReader(element.open(), charSet)
+      val fn = element.getMetadata.resourceId().toString
+      implicit val engine: ReaderEngine = ReaderEngine.internalCsvReaderEngine
+      reader
+        .asUnsafeCsvReader[T](config)
+        .foreach { t =>
+          out.output((fn, t))
+        }
+    }
+  }
+
   final private class CsvSink[T: HeaderEncoder](csvConfig: CsvConfiguration)
       extends FileIO.Sink[T] {
     var csvWriter: CsvWriter[T] = _
