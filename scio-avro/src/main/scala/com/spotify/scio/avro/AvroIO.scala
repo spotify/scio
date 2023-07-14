@@ -20,7 +20,6 @@ package com.spotify.scio.avro
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.avro._
 import com.spotify.scio.{avro, ScioContext}
 import com.spotify.scio.io._
 import com.spotify.scio.protobuf.util.ProtobufUtil

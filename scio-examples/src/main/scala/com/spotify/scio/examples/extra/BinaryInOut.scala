@@ -53,6 +53,7 @@ object BinaryInOut {
     sc2
       // Read back the just-written data, parsing the written files with `MyBinaryFileReader`.
       .binaryFile(args("output"), MyBinaryFileReader)
+      .map(_.mkString("Array(", ",", ")"))
       .debug()
     sc2.run().waitUntilDone()
   }
