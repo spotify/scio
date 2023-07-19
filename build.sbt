@@ -89,6 +89,7 @@ val googleCommonsProtoVersion = "2.20.0"
 val googleHttpClientsVersion = "1.43.1"
 val googleIAMVersion = "1.15.0"
 val grpcVersion = "1.55.1"
+val j2objcAnnotationsVersion = "1.3"
 val jsr305Version = "3.0.2"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
@@ -1561,6 +1562,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientsVersion,
+  "com.google.j2objc" % "j2objc-annotations" % j2objcAnnotationsVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "commons-codec" % "commons-codec" % commonsCodecVersion,
