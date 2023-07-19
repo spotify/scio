@@ -21,10 +21,14 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.avro.io.{DatumReader, DatumWriter}
+import org.apache.avro.reflect.{ReflectDatumReader, ReflectDatumWriter}
 import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecord}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, CustomCoder, StringUtf8Coder}
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
+import org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import java.io.{InputStream, OutputStream}
@@ -127,25 +131,48 @@ trait AvroCoders {
   def avroGenericRecordCoder: Coder[GenericRecord] =
     Coder.beam(new SlowGenericRecordCoder)
 
+  // Try to get the schema with SpecificData.getSchema
+  // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
+  // Otherwise create a default instance and call getSchema
+  private def schemaForClass[T <: SpecificRecord](clazz: Class[T]): Try[Schema] =
+    Try(SpecificData.get().getSchema(clazz))
+      .orElse(Try(clazz.getDeclaredConstructor().newInstance().getSchema))
+
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val clazz = ScioUtil.classOf[T]
+    val schema = schemaForClass(clazz).getOrElse {
+      val msg =
+        "Failed to create a coder for SpecificRecord because it is impossible to retrieve an " +
+          s"Avro schema by instantiating $clazz. Use only a concrete type implementing " +
+          s"SpecificRecord or use GenericRecord type in your transformations if a concrete " +
+          s"type is not known in compile time."
+      throw new RuntimeException(msg)
+    }
 
-    // Try to get the schema with SpecificData.getSchema
-    // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
-    val schema = Try(SpecificData.get().getSchema(clazz))
-      // Otherwise create a default instance and call getSchema
-      .orElse(Try(clazz.getDeclaredConstructor().newInstance().getSchema))
-      .getOrElse {
-        val msg =
-          "Failed to create a coder for SpecificRecord because it is impossible to retrieve an " +
-            s"Avro schema by instantiating $clazz. Use only a concrete type implementing " +
-            s"SpecificRecord or use GenericRecord type in your transformations if a concrete " +
-            s"type is not known in compile time."
-        throw new RuntimeException(msg)
+    val factory = new AvroDatumFactory(clazz) {
+      override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+        // create the datum writer using the schema api
+        // class API might be unsafe. See schemaForClass
+        val datumReader = new ReflectDatumReader[T](schemaForClass(clazz).get);
+        datumReader.setExpected(reader)
+        datumReader.setSchema(writer)
+        // for backward compat, add logical type support by default
+        AvroUtils.addLogicalTypeConversions(datumReader.getData)
+        datumReader
       }
 
-    val useReflectApi = true // keep this for backward compatibility
-    Coder.beam(AvroCoder.of(clazz, schema, useReflectApi))
+      override def apply(writer: Schema): DatumWriter[T] = {
+        // create the datum writer using the schema api
+        // class API might be unsafe. See schemaForClass
+        val datumWriter = new ReflectDatumWriter[T](schemaForClass(clazz).get)
+        datumWriter.setSchema(writer)
+        // for backward compat, add logical type support by default
+        AvroUtils.addLogicalTypeConversions(datumWriter.getData)
+        datumWriter
+      }
+    }
+
+    Coder.beam(AvroCoder.of(factory, schema))
   }
 
   implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
