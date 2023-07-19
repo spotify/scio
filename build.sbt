@@ -1255,6 +1255,18 @@ lazy val `scio-repl`: Project = project
               case None    => Left("Error merging beam avro classes")
             }
           }
+        case PathList("org", "checkerframework", _*) =>
+          // prefer checker-qual classes packaged in checkerframework libs
+          CustomMergeStrategy("CheckerQual") { conflicts =>
+            import sbtassembly.Assembly._
+            conflicts.collectFirst {
+              case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
+                JarEntry(t, s)
+            } match {
+              case Some(e) => Right(Vector(e))
+              case None    => Left("Error merging checker-qual classes")
+            }
+          }
         case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
           // arbitrary pick last conflicting InstanceBuilder
           MergeStrategy.last
