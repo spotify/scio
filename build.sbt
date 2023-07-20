@@ -1244,11 +1244,11 @@ lazy val `scio-repl`: Project = project
     assembly / assemblyMergeStrategy ~= { old =>
       {
         case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
-          // prefer beam-runners-direct-java until we explicitly move to beam-sdks-java-extensions-avro
+          // prefer beam avro classes from extensions lib instead of ones shipped in runners
           CustomMergeStrategy("BeamAvro") { conflicts =>
             import sbtassembly.Assembly._
             conflicts.collectFirst {
-              case Library(ModuleCoordinate(_, "beam-runners-direct-java", _), _, t, s) =>
+              case Library(ModuleCoordinate(_, "beam-sdks-java-extensions-avro", _), _, t, s) =>
                 JarEntry(t, s)
             } match {
               case Some(e) => Right(Vector(e))
