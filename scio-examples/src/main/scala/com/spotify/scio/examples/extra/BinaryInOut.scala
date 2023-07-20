@@ -85,9 +85,9 @@ object BinaryInOut {
       // argument.
       val sizeBuf = new Array[Byte](4)
       val sizeBytesRead = is.read(sizeBuf)
-      // If the entire file has been consumed so return `null` to indicate that the read is
-      // complete. If a record count was maintained in `state`, then once all records were read a
-      // similar value should be returned.
+      // If the entire file has been consumed return `null` to indicate that the read is complete.
+      // If a record count was maintained in `state`, then once all records were read a similar
+      // value should be returned.
       if (sizeBytesRead == -1) (state, null)
       else {
         if (sizeBytesRead != 4) fail(s"Failed to read record size $sizeBytesRead")

@@ -16,3 +16,6 @@ fix.v0_13_0.FixSkewedJoins
 fix.v0_13_0.FixTfParameter
 fix.v0_13_0.FixTaps
 fix.v0_14_0.FixAvroSchemasPackage
+fix.v0_14_0.FixAvroCoder
+fix.v0_14_0.FixDynamicAvro
+

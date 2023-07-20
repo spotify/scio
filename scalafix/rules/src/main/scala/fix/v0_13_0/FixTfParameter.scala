@@ -1,9 +1,8 @@
 package fix.v0_13_0
 
-import scalafix.v1.{MethodSignature, _}
+import scalafix.v1._
 
 import scala.meta._
-import scala.meta.contrib._
 
 object FixTfParameter {
   private val Ops = "com/spotify/scio/tensorflow/syntax/PredictSCollectionOps"
