@@ -29,10 +29,10 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.48.0"
+val beamVersion = "2.49.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.48.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.49.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -43,11 +43,11 @@ val commonsCompressVersion = "1.21"
 val commonsIoVersion = "2.7"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
-val datastoreV1ProtoClientVersion = "2.9.0"
+val datastoreV1ProtoClientVersion = "2.15.0"
 val flinkVersion = "1.16.0"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
-val guavaVersion = "31.1-jre"
+val guavaVersion = "32.0.1-jre"
 val hadoopVersion = "2.10.2"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
@@ -63,37 +63,37 @@ val zetasketchVersion = "0.1.0"
 val googleApiServicesBigQueryVersion = s"v2-rev20220924-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-// beam is rev20220705 but conflicts with libraries-bom
 val googleApiServicesStorageVersion = s"v1-rev20230301-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.14.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.17.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val bigQueryStorageBetaVersion = "0.160.1"
-val bigQueryStorageVersion = "2.36.1"
+val bigQueryStorageBetaVersion = "0.162.0"
+val bigQueryStorageVersion = "2.38.0"
 val checkerFrameworkVersion = "3.32.0"
 val errorProneAnnotationsVersion = "2.18.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.111.0"
-val gaxVersion = "2.26.0"
-val googleApiCommonVersion = "2.9.0"
-val googleAuthVersion = "1.16.0"
-val googleCloudBigTableVersion = "2.22.0"
-val googleCloudCoreVersion = "2.16.0"
-val googleCloudDatastoreVersion = "0.105.5"
-val googleCloudMonitoringVersion = "3.17.0"
-val googleCloudPubSubVersion = "1.105.11"
-val googleCloudSpannerVersion = "6.41.0"
-val googleCloudStorageVersion = "2.22.1"
-val googleCommonsProtoVersion = "2.17.0"
+val gaxHttpJsonVersion = "0.114.0"
+val gaxVersion = "2.29.0"
+val googleApiCommonVersion = "2.12.0"
+val googleAuthVersion = "1.17.0"
+val googleCloudBigTableVersion = "2.23.3"
+val googleCloudCoreVersion = "2.19.0"
+val googleCloudDatastoreVersion = "0.106.0"
+val googleCloudMonitoringVersion = "3.20.0"
+val googleCloudPubSubVersion = "1.105.14"
+val googleCloudSpannerVersion = "6.43.0"
+val googleCloudStorageVersion = "2.22.4"
+val googleCommonsProtoVersion = "2.20.0"
 val googleHttpClientsVersion = "1.43.1"
-val googleIAMVersion = "1.12.0"
-val grpcVersion = "1.54.0"
+val googleIAMVersion = "1.15.0"
+val grpcVersion = "1.55.1"
+val j2objcAnnotationsVersion = "1.3"
 val jsr305Version = "3.0.2"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
-val protobufVersion = "3.21.12"
+val protobufVersion = "3.23.2"
 
 val algebirdVersion = "0.13.10"
 val algebraVersion = "2.9.0"
@@ -144,14 +144,6 @@ val zoltarVersion = "0.6.0"
 val scalatestplusVersion = s"$scalatestVersion.0"
 
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
-
-// to remove after beam 2.48
-// fixed in https://github.com/apache/beam/pull/25713
-val testLibs = Seq[ExclusionRule](
-  "junit" % "junit",
-  "org.hamcrest" % "hamcrest",
-  "org.hamcrest" % "hamcrest-core"
-)
 
 ThisBuild / tpolecatDefaultOptionsMode := DevMode
 ThisBuild / tpolecatDevModeOptions ~= { opts =>
@@ -758,7 +750,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (testLibs: _*),
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
@@ -1176,17 +1168,17 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "mysql" % "mysql-connector-java" % "8.0.33",
+      "com.mysql" % "mysql-connector-j" % "8.1.0",
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion excludeAll (testLibs: _*),
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (testLibs: _*),
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.12.0" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.13.0" % Runtime,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
@@ -1231,13 +1223,13 @@ lazy val `scio-repl`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion excludeAll (
         "com.google.cloud.bigdataoss" % "gcsio"
       ),
-      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion excludeAll (testLibs: _*),
+      "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Runtime excludeAll (testLibs: _*),
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Runtime,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime
     ),
@@ -1263,6 +1255,18 @@ lazy val `scio-repl`: Project = project
             } match {
               case Some(e) => Right(Vector(e))
               case None    => Left("Error merging beam avro classes")
+            }
+          }
+        case PathList("org", "checkerframework", _*) =>
+          // prefer checker-qual classes packaged in checkerframework libs
+          CustomMergeStrategy("CheckerQual") { conflicts =>
+            import sbtassembly.Assembly._
+            conflicts.collectFirst {
+              case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
+                JarEntry(t, s)
+            } match {
+              case Some(e) => Right(Vector(e))
+              case None    => Left("Error merging checker-qual classes")
             }
           }
         case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
@@ -1348,7 +1352,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
       // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (testLibs: _*),
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
@@ -1572,6 +1576,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
   "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientsVersion,
+  "com.google.j2objc" % "j2objc-annotations" % j2objcAnnotationsVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
   "commons-codec" % "commons-codec" % commonsCodecVersion,
