@@ -150,10 +150,12 @@ trait AvroCoders {
     }
 
     val factory = new AvroDatumFactory(clazz) {
+      private val schemaString = schema.toString()
+
       override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
         // create the datum writer using the schema api
         // class API might be unsafe. See schemaForClass
-        val datumReader = new ReflectDatumReader[T](schemaForClass(clazz).get);
+        val datumReader = new ReflectDatumReader[T](new Schema.Parser().parse(schemaString))
         datumReader.setExpected(reader)
         datumReader.setSchema(writer)
         // for backward compat, add logical type support by default
@@ -164,7 +166,7 @@ trait AvroCoders {
       override def apply(writer: Schema): DatumWriter[T] = {
         // create the datum writer using the schema api
         // class API might be unsafe. See schemaForClass
-        val datumWriter = new ReflectDatumWriter[T](schemaForClass(clazz).get)
+        val datumWriter = new ReflectDatumWriter[T](new Schema.Parser().parse(schemaString))
         datumWriter.setSchema(writer)
         // for backward compat, add logical type support by default
         AvroUtils.addLogicalTypeConversions(datumWriter.getData)
