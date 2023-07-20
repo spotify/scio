@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.0-dev1+0-eef183d9+20230714-2042*
+<i class="md-icon" title="Version">label_outline</i> 0.13.1+0-308f3320+20230720-1402*
 </label>
 </li>
 </ul>
@@ -256,7 +256,7 @@ spotify/scio
 <h1><a href="#jdbc" name="jdbc" class="anchor"><span class="anchor-link"></span></a>JDBC</h1>
 <p>Scio supports JDBC reads and writes.</p>
 <h2><a href="#reads" name="reads" class="anchor"><span class="anchor-link"></span></a>Reads</h2>
-<p>Reads come in two flavors: a query-based variant backed by Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.48.0/?org/apache/beam/sdk/io/jdbc/JdbcIO.html" title="org.apache.beam.sdk.io.jdbc.JdbcIO"><code>JdbcIO</code></a> and a &ldquo;sharded select&rdquo; that performs a parallelizable bulk read on an entire table.</p>
+<p>Reads come in two flavors: a query-based variant backed by Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.49.0/?org/apache/beam/sdk/io/jdbc/JdbcIO.html" title="org.apache.beam.sdk.io.jdbc.JdbcIO"><code>JdbcIO</code></a> and a &ldquo;sharded select&rdquo; that performs a parallelizable bulk read on an entire table.</p>
 <h3><a href="#read-via-query" name="read-via-query" class="anchor"><span class="anchor-link"></span></a>Read via query</h3>
 <p>Query-based reads are supported with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcSelect[T](readOptions:com.spotify.scio.jdbc.JdbcReadOptions[T])(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>jdbcSelect</code></a>. In <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcReadOptions.html" title="com.spotify.scio.jdbc.JdbcReadOptions"><code>JdbcReadOptions</code></a>, the <code>rowMapper</code> argument must be provided to map between a <code>java.sql.ResultSet</code> to the result type <code>T</code>. The <code>statementPreparator</code> argument may be used to set static parameters in the query, usually passed as arguments to the pipeline.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
@@ -339,7 +339,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.0-dev1+0-eef183d9+20230714-2042*
+0.13.1+0-308f3320+20230720-1402*
 </span>
 </div>
 </article>

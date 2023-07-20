@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.0-dev1+0-eef183d9+20230714-2042*
+<i class="md-icon" title="Version">label_outline</i> 0.13.1+0-308f3320+20230720-1402*
 </label>
 </li>
 </ul>
@@ -255,16 +255,7 @@ spotify/scio
 <div class="md-content__searchable">
 <h1><a href="#binary" name="binary" class="anchor"><span class="anchor-link"></span></a>Binary</h1>
 <h2><a href="#read-binary-files" name="read-binary-files" class="anchor"><span class="anchor-link"></span></a>Read Binary files</h2>
-<p>See <a href="ReadFiles.html#read-as-binary">read as binary</a> for reading an entire file as a single binary record.</p>
-<p>Binary reads are supported via the <a href="https://spotify.github.io/scio/api/com/spotify/scio/ScioContext.html#binaryFile(path:String,reader:com.spotify.scio.io.BinaryIO.BinaryFileReader,compression:org.apache.beam.sdk.io.Compression,emptyMatchTreatment:org.apache.beam.sdk.io.fs.EmptyMatchTreatment,suffix:String):com.spotify.scio.values.SCollection[Array[Byte]]" title="com.spotify.scio.ScioContext"><code>binaryFile</code></a>, with a <a href="https://spotify.github.io/scio/api/com/spotify/scio/io/BinaryIO$$BinaryFileReader.html" title="com.spotify.scio.io.BinaryIO.BinaryFileReader"><code>BinaryFileReader</code></a> instance provided that can parse the underlying binary file format.</p>
-<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
-import com.spotify.scio.io.BinaryIO.BinaryFileReader
-
-val sc: ScioContext = ???
-val myBinaryFileReader: BinaryFileReader = ???
-sc.binaryFile(&quot;gs://&lt;input-dir&gt;&quot;, myBinaryFileReader)
-</code></pre>
-<p>The complexity of the reader is determined by the complexity of the input format. See <a href="https://spotify.github.io/scio/examples/BinaryInOut.scala.html">BinaryInOut</a> for a fully-worked example.</p>
+<p>See <a href="ReadFiles.html#read-as-binary">read as binary</a> for reading an entire file as a binary record.</p>
 <h2><a href="#write-binary-files" name="write-binary-files" class="anchor"><span class="anchor-link"></span></a>Write Binary files</h2>
 <p>Binary writes are supported on <code>SCollection[Array[Byte]]</code> with the <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#saveAsBinaryFile(path:String,numShards:Int,prefix:String,suffix:String,compression:org.apache.beam.sdk.io.Compression,header:Array[Byte],footer:Array[Byte],shardNameTemplate:String,framePrefix:Array[Byte]=%3EArray[Byte],frameSuffix:Array[Byte]=%3EArray[Byte],tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier)(implicitev:T%3C:%3CArray[Byte]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.values.SCollection"><code>saveAsBinaryFile</code></a> method:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
@@ -272,18 +263,16 @@ sc.binaryFile(&quot;gs://&lt;input-dir&gt;&quot;, myBinaryFileReader)
 val byteArrays: SCollection[Array[Byte]] = ???
 byteArrays.saveAsBinaryFile(&quot;gs://&lt;output-dir&gt;&quot;)
 </code></pre>
-<p>A static <code>header</code> and <code>footer</code> argument are provided, along with the framing parameters <code>framePrefix</code> and <code>frameSuffix</code>. In this example, we record a magic number in the header along with the number of records in the file and a magic number in the footer.</p>
+<p>A static <code>header</code> and <code>footer</code> argument are provided, along with the framing parameters <code>framePrefix</code> and <code>frameSuffix</code>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
 import java.nio.ByteBuffer
-
-def intToPaddedArray(i: Int) = ByteBuffer.allocate(4).putInt(i).array()
 
 val byteArrays: SCollection[Array[Byte]] = ???
 byteArrays.saveAsBinaryFile(
   &quot;gs://&lt;output-dir&gt;&quot;,
   header = Array(1, 2, 3),
   footer = Array(4, 5, 6),
-  framePrefix = arr =&gt; intToPaddedArray(arr.length),
+  framePrefix = arr =&gt; ByteBuffer.allocate(4).putInt(arr.length).array(),
   frameSuffix = _ =&gt; Array(0)
 )
 </code></pre>
@@ -296,7 +285,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.0-dev1+0-eef183d9+20230714-2042*
+0.13.1+0-308f3320+20230720-1402*
 </span>
 </div>
 </article>
