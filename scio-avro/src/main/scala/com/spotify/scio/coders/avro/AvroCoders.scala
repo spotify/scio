@@ -113,6 +113,15 @@ private object SpecificFixedCoder {
   }
 }
 
+object AvroCoders {
+  // Try to get the schema with SpecificData.getSchema
+  // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
+  // Otherwise create a default instance and call getSchema
+  private def schemaForClass[T <: SpecificRecord](clazz: Class[T]): Try[Schema] =
+    Try(SpecificData.get().getSchema(clazz))
+      .orElse(Try(clazz.getDeclaredConstructor().newInstance().getSchema))
+}
+
 trait AvroCoders {
 
   /**
@@ -131,16 +140,9 @@ trait AvroCoders {
   def avroGenericRecordCoder: Coder[GenericRecord] =
     Coder.beam(new SlowGenericRecordCoder)
 
-  // Try to get the schema with SpecificData.getSchema
-  // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
-  // Otherwise create a default instance and call getSchema
-  private def schemaForClass[T <: SpecificRecord](clazz: Class[T]): Try[Schema] =
-    Try(SpecificData.get().getSchema(clazz))
-      .orElse(Try(clazz.getDeclaredConstructor().newInstance().getSchema))
-
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val clazz = ScioUtil.classOf[T]
-    val schema = schemaForClass(clazz).getOrElse {
+    val schema = AvroCoders.schemaForClass(clazz).getOrElse {
       val msg =
         "Failed to create a coder for SpecificRecord because it is impossible to retrieve an " +
           s"Avro schema by instantiating $clazz. Use only a concrete type implementing " +
@@ -150,12 +152,10 @@ trait AvroCoders {
     }
 
     val factory = new AvroDatumFactory(clazz) {
-      private val schemaString = schema.toString()
-
       override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
         // create the datum writer using the schema api
         // class API might be unsafe. See schemaForClass
-        val datumReader = new ReflectDatumReader[T](new Schema.Parser().parse(schemaString))
+        val datumReader = new ReflectDatumReader[T](AvroCoders.schemaForClass(clazz).get)
         datumReader.setExpected(reader)
         datumReader.setSchema(writer)
         // for backward compat, add logical type support by default
@@ -166,7 +166,7 @@ trait AvroCoders {
       override def apply(writer: Schema): DatumWriter[T] = {
         // create the datum writer using the schema api
         // class API might be unsafe. See schemaForClass
-        val datumWriter = new ReflectDatumWriter[T](new Schema.Parser().parse(schemaString))
+        val datumWriter = new ReflectDatumWriter[T](AvroCoders.schemaForClass(clazz).get)
         datumWriter.setSchema(writer)
         // for backward compat, add logical type support by default
         AvroUtils.addLogicalTypeConversions(datumWriter.getData)
