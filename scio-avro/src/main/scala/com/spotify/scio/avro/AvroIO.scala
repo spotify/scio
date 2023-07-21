@@ -20,11 +20,12 @@ package com.spotify.scio.avro
 import com.google.protobuf.Message
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
-import com.spotify.scio.io._
-import com.spotify.scio.util.FilenamePolicySupplier
-import com.spotify.scio.util.{Functions, ProtobufUtil, ScioUtil}
-import com.spotify.scio.values._
 import com.spotify.scio.{avro, ScioContext}
+import com.spotify.scio.io._
+import com.spotify.scio.protobuf.util.ProtobufUtil
+import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{Functions, ScioUtil}
+import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
@@ -70,7 +71,7 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val elemCoder = CoderMaterializer.beamWithDefault(Coder[T])
-    implicit val bcoder = Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
+    implicit val bcoder = avroGenericRecordCoder(AvroBytesUtil.schema)
     data
       .parDo(new DoFn[T, GenericRecord] {
         @ProcessElement
@@ -229,7 +230,7 @@ final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[Ge
    * file.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[GenericRecord] = {
-    val coder = CoderMaterializer.beam(sc, Coder.avroGenericRecordCoder(schema))
+    val coder = CoderMaterializer.beam(sc, avroGenericRecordCoder(schema))
     val filePattern = ScioUtil.filePattern(path, params.suffix)
     val t = BAvroIO
       .readGenericRecords(schema)
@@ -321,6 +322,8 @@ object AvroIO {
   object WriteParam {
     val DefaultNumShards: Int = 0
     val DefaultSuffix: String = ".avro"
+    val DefaultSuffixProtobuf: String = ".protobuf.avro"
+    val DefaultSuffixObjectFile: String = ".obj.avro"
     val DefaultCodec: CodecFactory = CodecFactory.deflateCodec(6)
     val DefaultMetadata: Map[String, AnyRef] = Map.empty
     val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null

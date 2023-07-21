@@ -15,9 +15,10 @@
  * under the License.
  */
 
-package com.spotify.scio.util
+package com.spotify.scio.protobuf.util
 
 import com.google.protobuf.Message
+import com.spotify.scio.avro._
 import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
@@ -32,8 +33,7 @@ object ProtobufUtil {
    *
    * `implicit val avroMessageCoder: Coder[GenericRecord] = ProtobufUtil.AvroMessageCoder`
    */
-  lazy val AvroMessageCoder: Coder[GenericRecord] =
-    Coder.avroGenericRecordCoder(AvroBytesUtil.schema)
+  lazy val AvroMessageCoder: Coder[GenericRecord] = avroGenericRecordCoder(AvroBytesUtil.schema)
 
   /** The Avro [[Schema]] corresponding to an Avro-encoded Protobuf [[Message]]. */
   lazy val AvroMessageSchema: Schema = AvroBytesUtil.schema

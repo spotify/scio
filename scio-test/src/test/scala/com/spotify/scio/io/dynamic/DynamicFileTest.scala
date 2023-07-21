@@ -21,7 +21,7 @@ import java.nio.file.Files
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro._
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.avro.dynamic._
 import com.spotify.scio.io.TapSpec
 import com.spotify.scio.proto.SimpleV2.SimplePB
 import com.spotify.scio.testing.PipelineSpec
@@ -124,7 +124,7 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
 
   it should "support generic Avro files" in withTempDir { dir =>
     val sc1 = ScioContext()
-    implicit val coder = Coder.avroGenericRecordCoder(schema)
+    implicit val coder = avroGenericRecordCoder(schema)
     sc1
       .parallelize(1 to 10)
       .map(newGenericRecord)
@@ -206,8 +206,8 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
     verifyOutput(dir, "even", "odd")
 
     val sc2 = ScioContext()
-    val even = sc2.protobufFile[SimplePB](s"$dir/even/*.protobuf")
-    val odd = sc2.protobufFile[SimplePB](s"$dir/odd/*.protobuf")
+    val even = sc2.protobufFile[SimplePB](s"$dir/even/*.protobuf.avro")
+    val odd = sc2.protobufFile[SimplePB](s"$dir/odd/*.protobuf.avro")
     val (expectedEven, expectedOdd) = (1 to 10).partition(_ % 2 == 0)
     even should containInAnyOrder(expectedEven.map(mkProto))
     odd should containInAnyOrder(expectedOdd.map(mkProto))

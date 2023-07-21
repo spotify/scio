@@ -39,6 +39,9 @@ lazy val root = project
       // 0.13
       `input-0_13`,
       `output-0_13`,
+      // 0.14
+      `input-0_14`,
+      `output-0_14`,
       // scalafix
       rules
     ): _*
@@ -125,11 +128,22 @@ lazy val `output-0_13` = project
     libraryDependencies ++= scio(Scio.`0.13`)
   )
 
+lazy val `input-0_14` = project
+  .settings(
+    libraryDependencies ++= scio(Scio.`0.13`)
+  )
+
+lazy val `output-0_14` = project
+  .settings(
+    libraryDependencies ++= scio(Scio.`0.14`)
+  )
+
 lazy val scio0_7 = ConfigAxis("-scio-0_7", "-0_7-")
 lazy val scio0_8 = ConfigAxis("-scio-0_8", "-0_8-")
 lazy val scio0_10 = ConfigAxis("-scio-0_10", "-0_10-")
 lazy val scio0_12 = ConfigAxis("-scio-0_12", "-0_12-")
 lazy val scio0_13 = ConfigAxis("-scio-0_13", "-0_13-")
+lazy val scio0_14 = ConfigAxis("-scio-0_14", "-0_14-")
 
 lazy val tests = projectMatrix
   .in(file("tests"))
@@ -182,5 +196,15 @@ lazy val tests = projectMatrix
       scalafixTestkitOutputSourceDirectories := (`output-0_13` / Compile / unmanagedSourceDirectories).value,
       scalafixTestkitInputSourceDirectories := (`input-0_13` / Compile / unmanagedSourceDirectories).value,
       scalafixTestkitInputClasspath := (`input-0_13` / Compile / fullClasspath).value
+    ).dependsOn(rules)
+  )
+  .customRow(
+    scalaVersions = Seq(V.scala212),
+    axisValues = Seq(scio0_14, VirtualAxis.jvm),
+    _.settings(
+      moduleName := name.value + scio0_14.idSuffix,
+      scalafixTestkitOutputSourceDirectories := (`output-0_14` / Compile / unmanagedSourceDirectories).value,
+      scalafixTestkitInputSourceDirectories := (`input-0_14` / Compile / unmanagedSourceDirectories).value,
+      scalafixTestkitInputClasspath := (`input-0_14` / Compile / fullClasspath).value
     ).dependsOn(rules)
   )

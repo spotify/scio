@@ -548,11 +548,8 @@ lazy val `scio-core`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % grpcVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-      "org.apache.avro" % "avro" % avroVersion, // TODO remove from core
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
@@ -672,6 +669,7 @@ lazy val `scio-avro`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
+      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion excludeAll (
         "com.thoughtworks.paranamer" % "paranamer"
       ),
@@ -698,7 +696,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   .in(file("scio-google-cloud-platform"))
   .dependsOn(
     `scio-core` % "compile;it->it",
-    `scio-avro` % "test",
+    `scio-avro`,
     `scio-test` % "test->test;it"
   )
   .configs(IntegrationTest)
@@ -1246,11 +1244,11 @@ lazy val `scio-repl`: Project = project
     assembly / assemblyMergeStrategy ~= { old =>
       {
         case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
-          // prefer beam-runners-direct-java until we explicitly move to beam-sdks-java-extensions-avro
+          // prefer beam avro classes from extensions lib instead of ones shipped in runners
           CustomMergeStrategy("BeamAvro") { conflicts =>
             import sbtassembly.Assembly._
             conflicts.collectFirst {
-              case Library(ModuleCoordinate(_, "beam-runners-direct-java", _), _, t, s) =>
+              case Library(ModuleCoordinate(_, "beam-sdks-java-extensions-avro", _), _, t, s) =>
                 JarEntry(t, s)
             } match {
               case Some(e) => Right(Vector(e))

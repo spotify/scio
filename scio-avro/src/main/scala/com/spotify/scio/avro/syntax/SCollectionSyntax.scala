@@ -77,7 +77,7 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
   def saveAsObjectFile(
     path: String,
     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-    suffix: String = ".obj.avro",
+    suffix: String = AvroIO.WriteParam.DefaultSuffixObjectFile,
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
@@ -96,7 +96,7 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
       shardNameTemplate,
       tempDirectory
     )
-    self.write(ObjectFileIO(path))(param)
+    self.write(ObjectFileIO[T](path))(param)
   }
 }
 
@@ -151,7 +151,7 @@ final class TypedAvroSCollectionOps[T <: HasAvroAnnotation](private val self: SC
     filenamePolicySupplier: FilenamePolicySupplier =
       AvroIO.WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = AvroIO.WriteParam.DefaultPrefix
-  )(implicit ct: ClassTag[T], tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = AvroIO.WriteParam(
       numShards,
       suffix,
@@ -177,7 +177,7 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
   def saveAsProtobufFile(
     path: String,
     numShards: Int = AvroIO.WriteParam.DefaultNumShards,
-    suffix: String = ".protobuf.avro",
+    suffix: String = AvroIO.WriteParam.DefaultSuffixProtobuf,
     codec: CodecFactory = AvroIO.WriteParam.DefaultCodec,
     metadata: Map[String, AnyRef] = AvroIO.WriteParam.DefaultMetadata,
     shardNameTemplate: String = AvroIO.WriteParam.DefaultShardNameTemplate,
@@ -185,7 +185,7 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
     filenamePolicySupplier: FilenamePolicySupplier =
       AvroIO.WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = AvroIO.WriteParam.DefaultPrefix
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(implicit ct: ClassTag[T]): ClosedTap[T] = {
     val param = ProtobufIO.WriteParam(
       numShards,
       suffix,
