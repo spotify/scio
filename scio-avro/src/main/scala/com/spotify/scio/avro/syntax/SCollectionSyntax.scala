@@ -18,7 +18,6 @@
 package com.spotify.scio.avro.syntax
 
 import com.google.protobuf.Message
-//import com.spotify.scio.avro.{AvroIO, GenericRecordIO, ObjectFileIO, AvroTyped, SpecificRecordIO, ProtobufIO}
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
