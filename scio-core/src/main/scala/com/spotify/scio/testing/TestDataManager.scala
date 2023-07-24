@@ -36,7 +36,7 @@ sealed private[scio] trait JobInputSource[T] {
   val asIterable: Try[Iterable[T]]
 }
 
-final private[scio] case class TestStreamInputSource[T: Coder](
+final private[scio] case class TestStreamInputSource[T](
   stream: TestStream[T]
 ) extends JobInputSource[T] {
   override val asIterable: Try[Iterable[T]] = Failure(

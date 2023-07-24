@@ -152,6 +152,7 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     ScalacOptions.privateWarnDeadCode,
     ScalacOptions.privateWarnValueDiscard,
     ScalacOptions.warnDeadCode,
+    ScalacOptions.warnNonUnitStatement,
     ScalacOptions.warnValueDiscard
   )
 
@@ -163,7 +164,6 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     Scalac.privateBackendParallelism,
     Scalac.privateWarnMacrosOption,
     Scalac.release8,
-    Scalac.targetOption,
     Scalac.warnConfOption,
     Scalac.warnMacrosOption
   )

@@ -119,7 +119,7 @@ object JobTest {
      * Feed an input in the form of a `PTransform[PBegin, PCollection[T]]` to the pipeline being
      * tested. Note that `PTransform` inputs may not be supported for all `TestIO[T]` types.
      */
-    def inputStream[T: Coder](io: ScioIO[T], stream: TestStream[T]): Builder =
+    def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
       input(io, TestStreamInputSource(stream))
 
     private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {

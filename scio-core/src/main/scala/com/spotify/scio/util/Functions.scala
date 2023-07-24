@@ -284,7 +284,7 @@ private[scio] object Functions {
       override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
     }
 
-  abstract private class ReduceFn[T: Coder] extends CombineFn[T, JList[T], T] {
+  abstract private class ReduceFn[T] extends CombineFn[T, JList[T], T] {
     override def createAccumulator(): JList[T] = new JArrayList[T]()
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {

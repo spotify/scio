@@ -36,8 +36,8 @@ import com.spotify.sparkey.CompressionType
  */
 class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
 
-  implicit private[this] val (keyCoder, valueCoder): (Coder[K], Coder[V]) =
-    (self.keyCoder, self.valueCoder)
+  implicit private val keyCoder: Coder[K] = self.keyCoder
+  implicit private val valueCoder: Coder[V] = self.valueCoder
 
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be <<10x

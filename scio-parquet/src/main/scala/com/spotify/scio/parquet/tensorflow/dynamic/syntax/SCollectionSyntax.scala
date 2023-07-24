@@ -16,7 +16,6 @@
 
 package com.spotify.scio.parquet.tensorflow.dynamic.syntax
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps.writeDynamic
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.parquet.ParquetConfiguration
@@ -28,8 +27,6 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.Example
-
-import scala.reflect.ClassTag
 
 final class DynamicParquetExampleSCollectionOps(
   private val self: SCollection[Example]
@@ -50,7 +47,7 @@ final class DynamicParquetExampleSCollectionOps(
     prefix: String = ParquetExampleIO.WriteParam.DefaultPrefix
   )(
     destinationFn: Example => String
-  )(implicit ct: ClassTag[Example], coder: Coder[Example]): ClosedTap[Nothing] = {
+  ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
         "Parquet example file with dynamic destinations cannot be used in a test context"

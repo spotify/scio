@@ -24,6 +24,7 @@ import com.spotify.scio.schemas.{ArrayType, MapType, RawRecord, Schema, Type}
 import org.apache.beam.sdk.schemas.JavaBeanSchema
 import org.apache.beam.sdk.schemas.Schema.{FieldType, LogicalType}
 
+import scala.annotation.nowarn
 import scala.reflect.ClassTag
 
 trait JavaInstances {
@@ -66,6 +67,9 @@ trait JavaInstances {
   ): Schema[java.util.Map[K, V]] =
     MapType(ks, vs, identity, identity)
 
+  @nowarn(
+    "msg=evidence parameter evidence.* of type com.spotify.scio.IsJavaBean\\[.\\] in .* is never used"
+  )
   implicit def javaBeanSchema[T: IsJavaBean: ClassTag]: RawRecord[T] =
     RawRecord[T](new JavaBeanSchema())
 

@@ -71,7 +71,7 @@ trait JavaCoders extends JavaBeanCoders {
     Coder.transform(c)(bc => Coder.beam(bcoders.ListCoder.of(bc)))
 
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
-    Coder.xmap(jlistCoder[T])(new java.util.ArrayList(_), identity)
+    Coder.xmap(jListCoder[T])(new java.util.ArrayList(_), identity)
 
   implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
     Coder.transform(ck)(bk => Coder.transform(cv)(bv => Coder.beam(bcoders.MapCoder.of(bk, bv))))

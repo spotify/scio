@@ -16,7 +16,6 @@
 
 package com.spotify.scio.parquet.avro.dynamic.syntax
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps.writeDynamic
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.parquet.ParquetConfiguration
@@ -48,7 +47,7 @@ final class DynamicParquetAvroSCollectionOps[T](
     prefix: String = ParquetAvroIO.WriteParam.DefaultPrefix
   )(
     destinationFn: T => String
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[Nothing] = {
+  )(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
         "Parquet avro file with dynamic destinations cannot be used in a test context"

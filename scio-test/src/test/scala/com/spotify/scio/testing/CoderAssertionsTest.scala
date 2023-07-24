@@ -25,7 +25,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io.{InputStream, NotSerializableException, ObjectOutputStream, OutputStream}
-import scala.annotation.nowarn
 
 case class Foo(id: String)
 
@@ -44,7 +43,6 @@ class CoderAssertionsTest extends AnyFlatSpec with Matchers {
   // A coder that can't be serialized
   private def notSerializableCoder: Coder[Foo] =
     Coder.beam(new CustomCoder[Foo] {
-      @nowarn
       private def writeObject(oos: ObjectOutputStream): Unit =
         throw new NotSerializableException()
       override def encode(value: Foo, outStream: OutputStream): Unit = ???

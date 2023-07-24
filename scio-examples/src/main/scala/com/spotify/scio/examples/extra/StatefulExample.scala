@@ -29,10 +29,13 @@ import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, StateId}
 import org.apache.beam.sdk.values.KV
 
+import scala.annotation.nowarn
+
 object StatefulExample {
   // States are persisted on a per-key-and-window basis
   type DoFnT = DoFn[KV[String, Int], KV[String, (Int, Int)]]
 
+  @nowarn("msg=private val count in class StatefulDoFn is never used")
   class StatefulDoFn extends DoFnT {
     // Declare mutable state
     @StateId("count") private val count = StateSpecs.value[JInt]()
@@ -52,7 +55,7 @@ object StatefulExample {
   }
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, _) = ContextAndArgs(cmdlineArgs)
 
     val input = for {
       k <- Seq("a", "b")

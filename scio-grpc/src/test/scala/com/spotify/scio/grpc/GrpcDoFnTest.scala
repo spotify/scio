@@ -23,6 +23,7 @@ import com.spotify.concat.v1.ConcatServiceGrpc.{
   ConcatServiceStub
 }
 import com.spotify.concat.v1._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import io.grpc.netty.NettyChannelBuilder
@@ -46,6 +47,9 @@ object GrpcDoFnTest {
   }
 
   val ServiceUri: String = s"dns:///localhost:$LocalPort"
+
+  implicit val coderRequest: Coder[ConcatRequest] = Coder.protoMessageCoder[ConcatRequest]
+  implicit val coderResponse: Coder[ConcatResponse] = Coder.protoMessageCoder[ConcatResponse]
 
   def concatOrdered(request: ConcatRequest): ConcatResponse = ConcatResponse
     .newBuilder()

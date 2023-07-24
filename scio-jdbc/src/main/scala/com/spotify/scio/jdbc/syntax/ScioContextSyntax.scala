@@ -63,7 +63,7 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
    * @param configOverride
    *   function to override or replace a Read transform before applying it
    */
-  def jdbcSelect[T: ClassTag: Coder](
+  def jdbcSelect[T: Coder](
     connectionOptions: JdbcConnectionOptions,
     query: String,
     statementPreparator: PreparedStatement => Unit = ReadParam.DefaultStatementPreparator,

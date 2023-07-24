@@ -42,7 +42,7 @@ trait SCollectionSyntax {
       filenamePolicySupplier: FilenamePolicySupplier =
         CsvIO.WriteParam.DefaultFilenamePolicySupplier,
       prefix: String = CsvIO.WriteParam.DefaultPrefix
-    )(implicit coder: Coder[T], enc: HeaderEncoder[T]): ClosedTap[Nothing] =
+    )(implicit enc: HeaderEncoder[T]): ClosedTap[Nothing] =
       self.write(CsvIO.Write[T](path))(
         CsvIO.WriteParam(
           compression = compression,

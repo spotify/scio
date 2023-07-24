@@ -23,14 +23,13 @@ import com.spotify.scio.testing._
 
 class CloudSqlExampleTest extends PipelineSpec {
   "CloudSqlExample" should "work" in {
-    val args =
-      Array(
-        "--cloudSqlUsername=john",
-        "--cloudSqlPassword=secret",
-        "--cloudSqlDb=mydb",
-        "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
-      )
-    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args)
+    val args = Seq(
+      "--cloudSqlUsername=john",
+      "--cloudSqlPassword=secret",
+      "--cloudSqlDb=mydb",
+      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
+    )
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args.toArray)
     val connOpts = CloudSqlExample.getConnectionOptions(opts)
     val query = "SELECT * FROM word_count"
     val statement = "INSERT INTO result_word_count values(?, ?)"

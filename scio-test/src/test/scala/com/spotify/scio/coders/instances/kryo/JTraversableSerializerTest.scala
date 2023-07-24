@@ -22,10 +22,8 @@ import com.twitter.chill.{Kryo, KryoSerializer}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.reflect.ClassTag
-
 class JTraversableSerializerTest extends AnyFlatSpec with Matchers {
-  private def testRoundTrip[T: ClassTag, C <: Iterable[T]](
+  private def testRoundTrip[T, C <: Iterable[T]](
     ser: JTraversableSerializer[T, C],
     elems: C
   ): Unit = {

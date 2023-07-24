@@ -51,10 +51,13 @@ private[scio] object BeamCoders {
     Some(unwrap(options, coder))
       .collect { case c: StructuredCoder[_] => c }
       .map(_.getComponents.asScala.toList)
-      .collect { case (c1: BCoder[K]) :: (c2: BCoder[V]) :: Nil =>
-        val k = Coder.beam(unwrap(options, c1))
-        val v = Coder.beam(unwrap(options, c2))
-        k -> v
+      .collect {
+        case (c1: BCoder[K @unchecked]) ::
+            (c2: BCoder[V @unchecked]) ::
+            Nil =>
+          val k = Coder.beam(unwrap(options, c1))
+          val v = Coder.beam(unwrap(options, c2))
+          k -> v
       }
       .getOrElse {
         throw new IllegalArgumentException(
@@ -69,11 +72,15 @@ private[scio] object BeamCoders {
     Some(unwrap(options, coder))
       .collect { case c: StructuredCoder[_] => c }
       .map(_.getComponents.asScala.toList)
-      .collect { case (c1: BCoder[A]) :: (c2: BCoder[B]) :: (c3: BCoder[C]) :: Nil =>
-        val a = Coder.beam(unwrap(options, c1))
-        val b = Coder.beam(unwrap(options, c2))
-        val c = Coder.beam(unwrap(options, c3))
-        (a, b, c)
+      .collect {
+        case (c1: BCoder[A @unchecked]) ::
+            (c2: BCoder[B @unchecked]) ::
+            (c3: BCoder[C @unchecked]) ::
+            Nil =>
+          val a = Coder.beam(unwrap(options, c1))
+          val b = Coder.beam(unwrap(options, c2))
+          val c = Coder.beam(unwrap(options, c3))
+          (a, b, c)
       }
       .getOrElse {
         throw new IllegalArgumentException(
@@ -91,7 +98,11 @@ private[scio] object BeamCoders {
       .collect { case c: StructuredCoder[_] => c }
       .map(_.getComponents.asScala.toList)
       .collect {
-        case (c1: BCoder[A]) :: (c2: BCoder[B]) :: (c3: BCoder[C]) :: (c4: BCoder[D]) :: Nil =>
+        case (c1: BCoder[A @unchecked]) ::
+            (c2: BCoder[B @unchecked]) ::
+            (c3: BCoder[C @unchecked]) ::
+            (c4: BCoder[D @unchecked]) ::
+            Nil =>
           val a = Coder.beam(unwrap(options, c1))
           val b = Coder.beam(unwrap(options, c2))
           val c = Coder.beam(unwrap(options, c3))

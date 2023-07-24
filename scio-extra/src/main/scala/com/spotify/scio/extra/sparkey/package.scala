@@ -21,7 +21,7 @@ import java.lang.Math.floorMod
 import java.util.UUID
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.util.{Cache, RemoteFileUtil}
 import com.spotify.scio.values.{SCollection, SideInput}
@@ -181,7 +181,7 @@ package object sparkey extends SparkeyReaderInstances {
     compressionType: CompressionType,
     compressionBlockSize: Int,
     elements: Iterable[(K, V)]
-  )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
+  )(implicit w: SparkeyWritable[K, V]): SparkeyUri = {
     val writer = new SparkeyWriter(uri, rfu, compressionType, compressionBlockSize, maxMemoryUsage)
     val it = elements.iterator
     while (it.hasNext) {
@@ -204,8 +204,8 @@ package object sparkey extends SparkeyReaderInstances {
 
     import SparkeyPairSCollection._
 
-    implicit val kvCoder: Coder[(K, V)] = BeamCoders.getCoder(self)
-    implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
+    implicit val keyCoder: Coder[K] = self.keyCoder
+    implicit val valueCoder: Coder[V] = self.valueCoder
 
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.

@@ -100,21 +100,21 @@ object PubsubIO {
   ): PubsubIO[T] =
     MessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def pubsub[T <: beam.PubsubMessage: ClassTag](
+  def pubsub[T <: beam.PubsubMessage](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     PubSubMessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def coder[T: Coder: ClassTag](
+  def coder[T: Coder](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def withAttributes[T: ClassTag: Coder](
+  def withAttributes[T: Coder](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
@@ -291,7 +291,7 @@ final private case class FallbackPubsubIOWithoutAttributes[T: Coder](
   }
 }
 
-final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
+final private case class PubsubIOWithAttributes[T: Coder](
   name: String,
   idAttribute: String,
   timestampAttribute: String

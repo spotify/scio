@@ -17,8 +17,6 @@
 
 package com.spotify.scio.bigquery.types
 
-import java.math.MathContext
-
 import cats.Eq
 import cats.instances.all._
 import com.google.protobuf.ByteString
@@ -48,13 +46,10 @@ final class ConverterProviderSpec
   implicit val arbDate: Arbitrary[LocalDate] = Arbitrary(Gen.const(LocalDate.now()))
   implicit val arbTime: Arbitrary[LocalTime] = Arbitrary(Gen.const(LocalTime.now()))
   implicit val arbDatetime: Arbitrary[LocalDateTime] = Arbitrary(Gen.const(LocalDateTime.now()))
-  implicit val arbNumericBigDecimal = Arbitrary { // scalafix:ok
-    for {
-      bd <- Arbitrary.arbitrary[BigDecimal]
-    } yield {
-      val rounded = BigDecimal(bd.toString(), new MathContext(Numeric.MaxNumericPrecision))
-      Numeric(rounded)
-    }
+  implicit val arbNumericBigDecimal: Arbitrary[BigDecimal] = Arbitrary {
+    Arbitrary.arbBigDecimal.arbitrary
+      .retryUntil(_.precision <= Numeric.MaxNumericPrecision)
+      .map(Numeric.apply)
   }
   implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
   implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
