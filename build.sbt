@@ -898,6 +898,7 @@ lazy val `scio-extra`: Project = project
       "com.google.zetasketch" % "zetasketch" % zetasketchVersion,
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" % "annoy" % annoyVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
