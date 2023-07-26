@@ -128,6 +128,7 @@ package object sparkey extends SparkeyReaderInstances {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
+
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. If the
@@ -137,7 +138,8 @@ package object sparkey extends SparkeyReaderInstances {
     @experimental
     def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
       val paths = Seq[SparkeyUri](SparkeyUri(basePath))
-      val view: PCollectionView[SparkeyUri] = self.parallelize(paths)
+      val view: PCollectionView[SparkeyUri] = self
+        .parallelize(paths)
         .applyInternal(View.asSingleton())
       new SparkeySideInput(view)
     }
@@ -250,11 +252,15 @@ package object sparkey extends SparkeyReaderInstances {
       }
 
       val baseUri = SparkeyUri(basePath)
-      val outputUri = if(isUnsharded) baseUri else SparkeyUri(s"$basePath/*")
+      val outputUri = if (isUnsharded) baseUri else SparkeyUri(s"$basePath/*")
       logger.info(s"Saving as Sparkey with $numShards shards: $basePath")
 
       def resourcesForPattern(pattern: String): mutable.Buffer[ResourceId] =
-        FileSystems.`match`(pattern, EmptyMatchTreatment.ALLOW).metadata().asScala.map(_.resourceId())
+        FileSystems
+          .`match`(pattern, EmptyMatchTreatment.ALLOW)
+          .metadata()
+          .asScala
+          .map(_.resourceId())
 
       self.transform { collection =>
         // shard by key hash
@@ -269,7 +275,7 @@ package object sparkey extends SparkeyReaderInstances {
           .withSideInputs(shardsWithKeys)
           .flatMap { case (shard, ctx) =>
             val shardExists = ctx(shardsWithKeys).contains(shard)
-            if(shardExists) None else Some(shard -> Iterable.empty[(K, V)])
+            if (shardExists) None else Some(shard -> Iterable.empty[(K, V)])
           }
           .toSCollection
 
@@ -292,8 +298,7 @@ package object sparkey extends SparkeyReaderInstances {
 
         // TODO WriteFiles inserts a reshuffle here for unclear reasons
 
-        tempShardUris
-          .reifyAsListInGlobalWindow
+        tempShardUris.reifyAsListInGlobalWindow
           .map { seq =>
             val items = seq.toList
 
@@ -301,17 +306,18 @@ package object sparkey extends SparkeyReaderInstances {
             val (srcPaths, dstPaths, dstUris) = items
               .foldLeft((List.empty[ResourceId], List.empty[ResourceId], List.empty[SparkeyUri])) {
                 case ((srcs, dsts, uris), (shard, uri)) =>
-                  if(isUnsharded && shard != 0)
+                  if (isUnsharded && shard != 0)
                     throw new IllegalArgumentException(s"numShards=1 but got shard=$shard")
                   // assumes paths always returns things in the same order 🙃
-                  val dstUri = if(isUnsharded) baseUri else baseUri.sparkeyUriForShard(shard, numShards)
+                  val dstUri =
+                    if (isUnsharded) baseUri else baseUri.sparkeyUriForShard(shard, numShards)
                   val dstUris = uris :+ dstUri
 
                   val srcResources = srcs ++ uri.paths
                   val dstResources = dsts ++ dstUri.paths
 
                   (srcResources, dstResources, dstUris)
-            }
+              }
 
             logger.info(s"Copying ${items.size} files.")
             // per FileBasedSink.java#783 ignore errors as files may have previously been deleted
@@ -324,7 +330,9 @@ package object sparkey extends SparkeyReaderInstances {
 
             // cleanup orphan files per FileBasedSink.removeTemporaryFiles
             val orphanTempFiles = resourcesForPattern(s"${tempPath}/*")
-            orphanTempFiles.foreach { r => logger.warn("Will also remove unknown temporary file {}.", r)}
+            orphanTempFiles.foreach { r =>
+              logger.warn("Will also remove unknown temporary file {}.", r)
+            }
             FileSystems.delete(orphanTempFiles.asJava, StandardMoveOptions.IGNORE_MISSING_FILES)
             // clean up temp dir, can fail, but failure is to be ignored per FileBasedSink
             val tempPathResource = resourcesForPattern(tempPath)
@@ -628,7 +636,9 @@ package object sparkey extends SparkeyReaderInstances {
       extends SideInput[SparkeyReader] {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      SparkeySideInput.checkMemory(context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions)))
+      SparkeySideInput.checkMemory(
+        context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions))
+      )
   }
 
   /**

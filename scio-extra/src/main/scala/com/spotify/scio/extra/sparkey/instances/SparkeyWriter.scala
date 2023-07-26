@@ -25,17 +25,18 @@ import java.io.File
 import java.net.URI
 import java.nio.file.{Files, Paths}
 
-
 private[sparkey] class SparkeyWriter(
-                                      val uri: SparkeyUri,
-                                      rfu: RemoteFileUtil,
-                                      compressionType: CompressionType,
-                                      compressionBlockSize: Int,
-                                      maxMemoryUsage: Long = -1
-                                    ) {
-  private val localFile = if(uri.isLocal) uri.basePath else {
-    Files.createTempDirectory("sparkey-").resolve("data").toString
-  }
+  val uri: SparkeyUri,
+  rfu: RemoteFileUtil,
+  compressionType: CompressionType,
+  compressionBlockSize: Int,
+  maxMemoryUsage: Long = -1
+) {
+  private val localFile =
+    if (uri.isLocal) uri.basePath
+    else {
+      Files.createTempDirectory("sparkey-").resolve("data").toString
+    }
 
   private lazy val delegate = {
     val file = new File(localFile)
@@ -55,7 +56,7 @@ private[sparkey] class SparkeyWriter(
     delegate.writeHash()
     delegate.close()
 
-    if(!uri.isLocal) {
+    if (!uri.isLocal) {
       // Copy .spi and .spl to GCS
       SparkeyUri.extensions.foreach { e =>
         val src = Paths.get(localFile + e)
