@@ -22,11 +22,11 @@ import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.dynamic.ParquetExampleSink
 import com.spotify.scio.values.SCollection
-import me.lyh.parquet.tensorflow.Schema
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.Example
+import org.tensorflow.metadata.v0.Schema
 
 final class DynamicParquetExampleSCollectionOps(
   private val self: SCollection[Example]

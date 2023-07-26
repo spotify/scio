@@ -17,7 +17,6 @@
 package com.spotify.scio.parquet.read
 
 import magnolify.parquet.ParquetType
-import me.lyh.parquet.tensorflow.ExampleReadSupport
 import org.apache.parquet.avro.AvroReadSupport
 import org.apache.parquet.hadoop.api.ReadSupport
 import org.tensorflow.proto.example.Example
@@ -36,6 +35,6 @@ object ReadSupportFactory {
   }
 
   def example: ReadSupportFactory[Example] = new ReadSupportFactory[Example] {
-    def readSupport: ReadSupport[Example] = new ExampleReadSupport()
+    def readSupport: ReadSupport[Example] = ???
   }
 }
