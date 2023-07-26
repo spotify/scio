@@ -302,23 +302,23 @@ package object sparkey extends SparkeyReaderInstances {
           .map { seq =>
             val items = seq.toList
 
-            // accumulate source files, destination files, and the corresponding destination uris
-            val (srcPaths, dstPaths, dstUris) = items
-              .foldLeft((List.empty[ResourceId], List.empty[ResourceId], List.empty[SparkeyUri])) {
-                case ((srcs, dsts, uris), (shard, uri)) =>
+            // accumulate source files and destination files
+            val (srcPaths, dstPaths) = items
+              .foldLeft((List.empty[ResourceId], List.empty[ResourceId])) {
+                case ((srcs, dsts), (shard, uri)) =>
                   if (isUnsharded && shard != 0)
                     throw new IllegalArgumentException(s"numShards=1 but got shard=$shard")
                   // assumes paths always returns things in the same order 🙃
                   val dstUri =
                     if (isUnsharded) baseUri else baseUri.sparkeyUriForShard(shard, numShards)
-                  val dstUris = uris :+ dstUri
 
                   val srcResources = srcs ++ uri.paths
                   val dstResources = dsts ++ dstUri.paths
 
-                  (srcResources, dstResources, dstUris)
+                  (srcResources, dstResources)
               }
 
+            // rename source files to dest files
             logger.info(s"Copying ${items.size} files.")
             // per FileBasedSink.java#783 ignore errors as files may have previously been deleted
             FileSystems.rename(
