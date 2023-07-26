@@ -34,7 +34,6 @@ import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
-import java.net.URI
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
