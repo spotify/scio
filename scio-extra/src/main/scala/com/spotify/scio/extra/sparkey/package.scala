@@ -204,6 +204,7 @@ package object sparkey extends SparkeyReaderInstances {
 
     import SparkeyPairSCollection._
 
+    implicit val kvCoder: Coder[(K, V)] = BeamCoders.getCoder(self)
     implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
 
     /**
