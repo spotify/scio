@@ -23,15 +23,19 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.instances._
-import com.spotify.scio.util.Cache
+import com.spotify.scio.util.{Cache, RemoteFileUtil}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.{CompressionType, SparkeyReader}
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.fs.MoveOptions.StandardMoveOptions
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, ResourceId}
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
+import java.net.URI
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.hashing.MurmurHash3
 
@@ -124,14 +128,6 @@ package object sparkey extends SparkeyReaderInstances {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {
-    private def singleViewOf(basePath: String): PCollectionView[SparkeyUri] =
-      self.parallelize(Seq(SparkeyUri(basePath, self.options))).applyInternal(View.asSingleton())
-
-    private def shardedViewOf(basePath: String): PCollectionView[SparkeyUri] =
-      self
-        .parallelize(Seq[SparkeyUri](ShardedSparkeyUri(basePath, self.options)))
-        .applyInternal(View.asSingleton())
-
     /**
      * Create a SideInput of `SparkeyReader` from a [[SparkeyUri]] base path, to be used with
      * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. If the
@@ -140,13 +136,9 @@ package object sparkey extends SparkeyReaderInstances {
      */
     @experimental
     def sparkeySideInput(basePath: String): SideInput[SparkeyReader] = {
-      val view = if (basePath.endsWith("*")) {
-        val basePathWithoutGlobPart = basePath.split("/").dropRight(1).mkString("/")
-        shardedViewOf(basePathWithoutGlobPart)
-      } else {
-        singleViewOf(basePath)
-      }
-
+      val paths = Seq[SparkeyUri](SparkeyUri(basePath))
+      val view: PCollectionView[SparkeyUri] = self.parallelize(paths)
+        .applyInternal(View.asSingleton())
       new SparkeySideInput(view)
     }
 
@@ -183,12 +175,13 @@ package object sparkey extends SparkeyReaderInstances {
 
   private def writeToSparkey[K, V](
     uri: SparkeyUri,
+    rfu: RemoteFileUtil,
     maxMemoryUsage: Long,
     compressionType: CompressionType,
     compressionBlockSize: Int,
     elements: Iterable[(K, V)]
   )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
-    val writer = new SparkeyWriter(uri, compressionType, compressionBlockSize, maxMemoryUsage)
+    val writer = new SparkeyWriter(uri, rfu, compressionType, compressionBlockSize, maxMemoryUsage)
     val it = elements.iterator
     while (it.hasNext) {
       val kv = it.next()
@@ -241,23 +234,55 @@ package object sparkey extends SparkeyReaderInstances {
           s"Compression block size must be > 0 for $compressionType"
         )
       }
+      val isUnsharded = numShards == 1
 
-      val tempLocation = self.context.options.getTempLocation()
-      val tempPath = s"$tempLocation/sparkey-${UUID.randomUUID}"
-      val basePath = if (path == null) tempPath else path
-      val nonShardedUri = SparkeyUri(basePath, self.context.options)
-      require(!nonShardedUri.exists, s"Sparkey URI $nonShardedUri already exists")
-      val uri = ShardedSparkeyUri(basePath, self.context.options)
-      require(!uri.exists, s"Sparkey URI $uri already exists")
+      val rfu = RemoteFileUtil.create(self.context.options)
+      val tempLocation = self.context.options.getTempLocation
+      // root destination to which all _interim_ results are written,
+      // deleted upon successful completion of the write
+      val tempPath = s"$tempLocation/sparkey-temp-${UUID.randomUUID}"
+      // the final destination for sparkey files. A temp dir if not permanently persisted.
+      val basePath = Option(path).getOrElse(s"$tempLocation/sparkey-${UUID.randomUUID}")
 
+      // verify that we're not writing to a previously-used output dir
+      List(SparkeyUri(basePath), SparkeyUri(s"$basePath/*")).foreach { uri =>
+        require(!uri.exists(rfu), s"Sparkey URI ${uri.basePath} already exists")
+      }
+
+      val baseUri = SparkeyUri(basePath)
+      val outputUri = if(isUnsharded) baseUri else SparkeyUri(s"$basePath/*")
       logger.info(s"Saving as Sparkey with $numShards shards: $basePath")
 
+      def resourcesForPattern(pattern: String): mutable.Buffer[ResourceId] =
+        FileSystems.`match`(pattern, EmptyMatchTreatment.ALLOW).metadata().asScala.map(_.resourceId())
+
       self.transform { collection =>
+        // shard by key hash
         val shards = collection
           .groupBy { case (k, _) => floorMod(w.shardHash(k), numShards.toInt).toShort }
+
+        // gather shards that actually have values
+        val shardsWithKeys = shards.keys.asSetSingletonSideInput
+        // fill in missing shards
+        val missingShards = shards.context
+          .parallelize((0 until numShards.toInt).map(_.toShort))
+          .withSideInputs(shardsWithKeys)
+          .flatMap { case (shard, ctx) =>
+            val shardExists = ctx(shardsWithKeys).contains(shard)
+            if(shardExists) None else Some(shard -> Iterable.empty[(K, V)])
+          }
+          .toSCollection
+
+        // write files to temporary locations
+        val tempShardUris = shards
+          .union(missingShards)
           .map { case (shard, xs) =>
+            // use a temp uri so that if a bundle fails retries will not fail
+            val tempUri = SparkeyUri(s"$tempPath/${UUID.randomUUID}")
+            // perform the write to the temp uri
             shard -> writeToSparkey(
-              uri.sparkeyUriForShard(shard, numShards),
+              tempUri.sparkeyUriForShard(shard, numShards),
+              rfu,
               maxMemoryUsage,
               compressionType,
               compressionBlockSize,
@@ -265,46 +290,52 @@ package object sparkey extends SparkeyReaderInstances {
             )
           }
 
-        val shardsMap = shards.asMapSideInput
+        // TODO WriteFiles inserts a reshuffle here for unclear reasons
 
-        val uris = shards.context
-          .parallelize((0 until numShards.toInt).map(_.toShort))
-          .withSideInputs(shardsMap)
-          .map { case (shard, sideContext) =>
-            sideContext(shardsMap).getOrElse(
-              shard,
-              writeToSparkey(
-                uri.sparkeyUriForShard(shard, numShards),
-                maxMemoryUsage,
-                compressionType,
-                compressionBlockSize,
-                Iterable.empty[(K, V)]
-              )
-            )
-          }
-          .toSCollection
+        tempShardUris
+          .reifyAsListInGlobalWindow
+          .map { seq =>
+            val items = seq.toList
 
-        uris.reifyAsListInGlobalWindow
-          .map { _ =>
-            if (numShards == 1) {
-              val src = FileSystems
-                .`match`(basePath + "/*")
-                .metadata()
-                .asScala
-                .map(_.resourceId())
-                .sortWith(_.getFilename < _.getFilename)
-                .asJava
-              val dst = SparkeyUri.extensions
-                .map(ext => FileSystems.matchNewResource(s"$basePath$ext", false))
-                .asJava
+            // accumulate source files, destination files, and the corresponding destination uris
+            val (srcPaths, dstPaths, dstUris) = items
+              .foldLeft((List.empty[ResourceId], List.empty[ResourceId], List.empty[SparkeyUri])) {
+                case ((srcs, dsts, uris), (shard, uri)) =>
+                  if(isUnsharded && shard != 0)
+                    throw new IllegalArgumentException(s"numShards=1 but got shard=$shard")
+                  // assumes paths always returns things in the same order 🙃
+                  val dstUri = if(isUnsharded) baseUri else baseUri.sparkeyUriForShard(shard, numShards)
+                  val dstUris = uris :+ dstUri
 
-              FileSystems.rename(src, dst)
+                  val srcResources = srcs ++ uri.paths
+                  val dstResources = dsts ++ dstUri.paths
 
-              nonShardedUri
-            } else {
-              uri
+                  (srcResources, dstResources, dstUris)
             }
 
+            logger.info(s"Copying ${items.size} files.")
+            // per FileBasedSink.java#783 ignore errors as files may have previously been deleted
+            FileSystems.rename(
+              srcPaths.asJava,
+              dstPaths.asJava,
+              StandardMoveOptions.IGNORE_MISSING_FILES,
+              StandardMoveOptions.SKIP_IF_DESTINATION_EXISTS
+            )
+
+            // cleanup orphan files per FileBasedSink.removeTemporaryFiles
+            val orphanTempFiles = resourcesForPattern(s"${tempPath}/*")
+            orphanTempFiles.foreach { r => logger.warn("Will also remove unknown temporary file {}.", r)}
+            FileSystems.delete(orphanTempFiles.asJava, StandardMoveOptions.IGNORE_MISSING_FILES)
+            // clean up temp dir, can fail, but failure is to be ignored per FileBasedSink
+            val tempPathResource = resourcesForPattern(tempPath)
+            try {
+              FileSystems.delete(tempPathResource.asJava, StandardMoveOptions.IGNORE_MISSING_FILES)
+            } catch {
+              case _: Exception =>
+                logger.warn("Failed to remove temporary directory: [{}].", tempPath)
+            }
+
+            outputUri
           }
       }
     }
@@ -597,7 +628,7 @@ package object sparkey extends SparkeyReaderInstances {
       extends SideInput[SparkeyReader] {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyReader =
-      SparkeySideInput.checkMemory(context.sideInput(view).getReader)
+      SparkeySideInput.checkMemory(context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions)))
   }
 
   /**
@@ -607,12 +638,13 @@ package object sparkey extends SparkeyReaderInstances {
   private class LargeMapSideInput[K: Coder, V: Coder](val view: PCollectionView[SparkeyUri])
       extends SideInput[SparkeyMap[K, V]] {
     override def updateCacheOnGlobalWindow: Boolean = false
-    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyMap[K, V] =
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeyMap[K, V] = {
       new SparkeyMap(
-        context.sideInput(view).getReader,
+        context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions)),
         CoderMaterializer.beam(context.getPipelineOptions, Coder[K]),
         CoderMaterializer.beam(context.getPipelineOptions, Coder[V])
       )
+    }
   }
 
   /**
@@ -624,7 +656,7 @@ package object sparkey extends SparkeyReaderInstances {
     override def updateCacheOnGlobalWindow: Boolean = false
     override def get[I, O](context: DoFn[I, O]#ProcessContext): SparkeySet[K] =
       new SparkeySet(
-        context.sideInput(view).getReader,
+        context.sideInput(view).getReader(RemoteFileUtil.create(context.getPipelineOptions)),
         CoderMaterializer.beam(context.getPipelineOptions, Coder[K])
       )
   }
