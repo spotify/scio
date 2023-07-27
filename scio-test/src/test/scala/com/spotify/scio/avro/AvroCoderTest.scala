@@ -15,13 +15,14 @@
  * under the License.
  */
 
-package com.spotify.scio.coders
+package com.spotify.scio.avro
 
-import org.scalatest.flatspec.AnyFlatSpec
+import com.spotify.scio.coders.{Avro, Coder, FixedSpecificDataExample}
 import com.spotify.scio.testing.CoderAssertions._
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.scalactic.Equality
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 final class AvroCoderTest extends AnyFlatSpec with Matchers {
@@ -48,7 +49,7 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
     val schema = Avro.user.getSchema
     val record: GenericRecord = Avro.user
 
-    implicit val c: Coder[GenericRecord] = Coder.avroGenericRecordCoder(schema)
+    implicit val c: Coder[GenericRecord] = avroGenericRecordCoder(schema)
     implicit val eq: Equality[GenericRecord] =
       (a: GenericRecord, b: Any) => a.toString === b.toString
 

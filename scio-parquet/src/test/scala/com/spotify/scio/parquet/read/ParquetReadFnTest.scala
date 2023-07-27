@@ -17,8 +17,7 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.Account
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.avro._
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
@@ -184,7 +183,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       new GenericRecordBuilder(projection).set("id", i).build()
     }
 
-    implicit val coder = Coder.avroGenericRecordCoder(projection)
+    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
@@ -201,7 +200,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   it should "work with a projection and projectionFn" in {
     val projection = Projection[Account](_.getId)
 
-    implicit val coder = Coder.avroGenericRecordCoder(projection)
+    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
@@ -219,7 +218,7 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   it should "work with a projection and projectionFn on files with multiple row groups" in {
     val projection = Projection[Account](_.getId)
 
-    implicit val coder = Coder.avroGenericRecordCoder(projection)
+    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/avro"))

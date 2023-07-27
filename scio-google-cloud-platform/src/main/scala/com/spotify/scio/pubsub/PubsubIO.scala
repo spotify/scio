@@ -23,6 +23,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{Functions, JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
 import com.spotify.scio.io._
 import com.spotify.scio.pubsub.coders._
 import org.apache.avro.specific.SpecificRecord
@@ -209,7 +210,7 @@ final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecord: Clas
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val coder = CoderMaterializer.beam(sc, Coder.avroSpecificRecordCoder[T])
+    val coder = CoderMaterializer.beam(sc, avroSpecificRecordCoder[T])
     val t = setup(beam.PubsubIO.readAvros(cls), params)
     sc.applyTransform(t).setCoder(coder)
   }

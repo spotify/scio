@@ -17,13 +17,12 @@
 
 package com.spotify.scio.coders
 
-import java.nio.ByteBuffer
-
-import org.apache.avro.{Schema => ASchema}
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.{Schema => ASchema}
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
+import java.nio.ByteBuffer
 import scala.jdk.CollectionConverters._
 
 private[scio] object AvroBytesUtil {

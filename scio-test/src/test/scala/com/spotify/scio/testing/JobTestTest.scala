@@ -71,7 +71,7 @@ object GenericAvroFileJob {
 
 object GenericParseFnAvroFileJob {
 
-  implicit val coder: Coder[GenericRecord] = Coder.avroGenericRecordCoder(AvroUtils.schema)
+  implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(AvroUtils.schema)
 
   // A class with some fields from the Avro Record
   case class PartialFieldsAvro(intField: Int)
@@ -366,7 +366,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   def testGenericAvroFileJob(xs: Seq[GenericRecord]): Unit = {
-    implicit val coder = Coder.avroGenericRecordCoder
+    implicit val coder = avroGenericRecordCoder
     JobTest[GenericAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[GenericRecord]("in.avro"), (1 to 3).map(newGenericRecord))
@@ -389,7 +389,7 @@ class JobTestTest extends PipelineSpec {
 
   def testGenericParseAvroFileJob(xs: Seq[GenericRecord]): Unit = {
     import GenericParseFnAvroFileJob.PartialFieldsAvro
-    implicit val coder: Coder[GenericRecord] = Coder.avroGenericRecordCoder
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder
     JobTest[GenericParseFnAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[PartialFieldsAvro]("in.avro"), (1 to 3).map(PartialFieldsAvro))

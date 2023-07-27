@@ -18,10 +18,8 @@
 package com.spotify.scio.schemas
 
 import java.util.{List => jList, Map => jMap}
-
 import com.spotify.scio.{FeatureFlag, IsJavaBean, MacroSettings}
 import com.spotify.scio.schemas.instances.{
-  AvroInstances,
   JavaInstances,
   JodaInstances,
   LowPrioritySchemaDerivation,
@@ -40,7 +38,7 @@ import org.apache.beam.sdk.values.TupleTag
 
 import scala.collection.{mutable, SortedSet}
 
-object Schema extends JodaInstances with AvroInstances with LowPrioritySchemaDerivation {
+object Schema extends JodaInstances with LowPrioritySchemaDerivation {
   @inline final def apply[T](implicit c: Schema[T]): Schema[T] = c
 
   implicit val jByteSchema: Type[java.lang.Byte] = JavaInstances.jByteSchema

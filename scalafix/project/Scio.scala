@@ -7,4 +7,6 @@ object Scio {
   val `0.11` = "0.11.9"
   val `0.12` = "0.12.0"
   val `0.13` = "0.13.0"
+  // TODO update
+  val `0.14` = "0.14.0-dev1"
 }
