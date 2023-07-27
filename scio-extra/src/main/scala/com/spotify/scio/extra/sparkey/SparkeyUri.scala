@@ -34,27 +34,32 @@ case class InvalidShards(str: String) extends RuntimeException(str)
 
 object SparkeyUri {
   def extensions: Seq[String] = Seq(".spi", ".spl")
-  def basePathForShard(basePath: String, shardIndex: Short, numShards: Short): String =
-    f"$basePath/part-$shardIndex%05d-of-$numShards%05d"
 }
 
+/**
+ * Represents the base URI for a Sparkey index and log file, either on the local or a remote file
+ * system. For remote file systems, `basePath` should be in the form
+ * 'scheme://<bucket>/<path>/<sparkey-prefix>'. For local files, it should be in the form
+ * '/<path>/<sparkey-prefix>'. Note that `basePath` must not be a folder or GCS bucket as it is a
+ * base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
+ */
 case class SparkeyUri(path: String) {
   private[sparkey] val isLocal = ScioUtil.isLocalUri(new URI(path))
   private val isSharded = path.endsWith("*")
   private[sparkey] val basePath =
     if (!isSharded) path else path.split("/").dropRight(1).mkString("/")
 
-  private[sparkey] def globExpression: String = s"$basePath/part-*"
+  private[sparkey] def globExpression: String = {
+    if (!isSharded) throw new IllegalArgumentException("Internal use only for sharded sparkeys.")
+    s"$basePath/part-*"
+  }
 
   private[sparkey] def sparkeyUriForShard(shard: Short, numShards: Short): SparkeyUri =
-    SparkeyUri(SparkeyUri.basePathForShard(basePath, shard, numShards))
+    SparkeyUri(f"$basePath/part-$shard%05d-of-$numShards%05d")
 
   private[sparkey] def paths: Seq[ResourceId] = {
     if (isSharded) throw new IllegalStateException("Internal use only for single files.")
-    SparkeyUri.extensions.map { e =>
-      val url = if (isLocal) new File(basePath + e).toString else new URI(basePath + e).toString
-      FileSystems.matchNewResource(url, false)
-    }
+    SparkeyUri.extensions.map(e => FileSystems.matchNewResource(basePath + e, false))
   }
 
   private def downloadRemoteUris(paths: Seq[String], rfu: RemoteFileUtil): mutable.Buffer[Path] = {
@@ -65,10 +70,7 @@ case class SparkeyUri(path: String) {
   def getReader(rfu: RemoteFileUtil): SparkeyReader = {
     if (!isSharded) {
       val path =
-        if (isLocal) new File(basePath)
-        else {
-          downloadRemoteUris(Seq(basePath), rfu).head.toFile
-        }
+        if (isLocal) new File(basePath) else downloadRemoteUris(Seq(basePath), rfu).head.toFile
       new ThreadLocalSparkeyReader(path)
     } else {
       val (basePaths, numShards) =
@@ -85,37 +87,41 @@ case class SparkeyUri(path: String) {
   }
 
   def exists(rfu: RemoteFileUtil): Boolean = {
-    if (!isSharded) {
-      if (isLocal) {
-        SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
-      } else {
-        SparkeyUri.extensions.map(e => new URI(basePath + e)).exists(uri => rfu.remoteExists(uri))
-      }
-    } else {
-      val (basePaths, _) =
-        ShardedSparkeyUri.basePathsAndCount(EmptyMatchTreatment.ALLOW, globExpression)
-      if (isLocal) {
-        basePaths.exists(p => SparkeyUri.extensions.map(e => new File(p + e)).exists(_.exists))
-      } else {
-        basePaths.exists(p => SparkeyUri.extensions.exists(e => rfu.remoteExists(new URI(p + e))))
-      }
-    }
+    def localExists(bp: Seq[String]): Boolean =
+      bp.exists(p => SparkeyUri.extensions.map(e => new File(p + e)).exists(_.exists))
+    def remoteExists(bp: Seq[String]): Boolean =
+      bp.exists(p => SparkeyUri.extensions.exists(e => rfu.remoteExists(new URI(p + e))))
 
+    val paths =
+      if (!isSharded) Seq(basePath)
+      else {
+        val (basePaths, _) = ShardedSparkeyUri
+          .basePathsAndCount(EmptyMatchTreatment.ALLOW, globExpression)
+        basePaths
+      }
+    if (isLocal) localExists(paths) else remoteExists(paths)
   }
 }
 
 private[sparkey] object ShardedSparkeyUri {
-  private[sparkey] def numShardsFromPath(path: String): Short =
-    path.split("-of-").toList.last.split("\\.").head.toShort
-
-  private[sparkey] def shardIndexFromPath(path: String): Short =
-    path.split("part-").toList.last.split("-of-").head.toShort
+  private[sparkey] def shardsFromPath(path: String): (Short, Short) = {
+    "part-([0-9]+)-of-([0-9]+)".r
+      .findFirstMatchIn(path)
+      .map { m =>
+        val shard = m.group(1).toShort
+        val numShards = m.group(2).toShort
+        (shard, numShards)
+      }
+      .getOrElse {
+        throw new IllegalStateException(s"Could not find shard and numShards in [$path]")
+      }
+  }
 
   private[sparkey] def localReadersByShard(
     localBasePaths: Iterable[String]
   ): Map[Short, SparkeyReader] =
     localBasePaths.iterator.map { path =>
-      val shardIndex = ShardedSparkeyUri.shardIndexFromPath(path)
+      val (shardIndex, _) = shardsFromPath(path)
       val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
       (shardIndex, reader)
     }.toMap
@@ -128,16 +134,13 @@ private[sparkey] object ShardedSparkeyUri {
     val paths = matchResult.metadata().asScala.map(_.resourceId.toString)
 
     val indexPaths = paths.filter(_.endsWith(".spi")).sorted
+    val shardInfo = indexPaths.map(shardsFromPath)
 
-    val allStartParts = indexPaths.map(ShardedSparkeyUri.shardIndexFromPath)
-    val allEndParts = indexPaths.map(ShardedSparkeyUri.numShardsFromPath)
-
-    val distinctNumShards = allEndParts.distinct.toList
-
+    val distinctNumShards = shardInfo.map { case (_, numShards) => numShards }.distinct.toList
     distinctNumShards match {
       case Nil => (Seq.empty[String], 0)
       case numShards :: Nil =>
-        val numShardFiles = allStartParts.toSet.size
+        val numShardFiles = shardInfo.map { case (shardIdx, _) => shardIdx }.toSet.size
         require(
           numShardFiles <= numShards,
           "Expected the number of Sparkey shards to be less than or equal to the " +
