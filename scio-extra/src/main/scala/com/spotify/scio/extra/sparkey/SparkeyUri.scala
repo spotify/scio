@@ -30,7 +30,7 @@ import java.nio.file.Path
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
-case class InvalidShards(str: String) extends RuntimeException(str)
+case class InvalidNumShardsException(str: String) extends RuntimeException(str)
 
 object SparkeyUri {
   def extensions: Seq[String] = Seq(".spi", ".spl")
@@ -50,7 +50,7 @@ case class SparkeyUri(path: String) {
     if (!isSharded) path else path.split("/").dropRight(1).mkString("/")
 
   private[sparkey] def globExpression: String = {
-    if (!isSharded) throw new IllegalArgumentException("Internal use only for sharded sparkeys.")
+    require(isSharded, "glob only valid for sharded sparkeys.")
     s"$basePath/part-*"
   }
 
@@ -58,7 +58,7 @@ case class SparkeyUri(path: String) {
     SparkeyUri(f"$basePath/part-$shard%05d-of-$numShards%05d")
 
   private[sparkey] def paths: Seq[ResourceId] = {
-    if (isSharded) throw new IllegalStateException("Internal use only for single files.")
+    require(!isSharded, "paths only valid for unsharded sparkeys.")
     SparkeyUri.extensions.map(e => FileSystems.matchNewResource(basePath + e, false))
   }
 
@@ -151,7 +151,7 @@ private[sparkey] object ShardedSparkeyUri {
 
         (basePaths, numShards)
       case _ =>
-        throw new InvalidShards(
+        throw InvalidNumShardsException(
           s"Expected .spi files to end with the same shard count, got: $distinctNumShards."
         )
     }

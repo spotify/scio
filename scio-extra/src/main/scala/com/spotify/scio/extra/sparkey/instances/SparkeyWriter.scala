@@ -32,7 +32,7 @@ private[sparkey] class SparkeyWriter(
   compressionBlockSize: Int,
   maxMemoryUsage: Long = -1
 ) {
-  private val localFile =
+  private lazy val localFile =
     if (uri.isLocal) uri.basePath
     else {
       Files.createTempDirectory("sparkey-").resolve("data").toString
