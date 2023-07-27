@@ -17,11 +17,9 @@ Credentials(
     
 - Create a PGP key, for example on [keybase.io](https://keybase.io/), and [distribute](https://www.gnupg.org/gph/en/manual/x457.html) it to a public keyserver 
 
-## Update documentation and version matrix
+## Update version matrix
 
-- Pick a release name from [here](https://en.wikipedia.org/wiki/List_of_Latin_phrases_%28full%29), [here](https://en.wikipedia.org/wiki/List_of_songs_with_Latin_lyrics), [here](https://harrypotter.fandom.com/wiki/List_of_spells), [here](https://en.wikipedia.org/wiki/List_of_Latin_names_of_cities), [here](https://en.wikipedia.org/wiki/List_of_Latin_names_of_countries), or other interesting sources<sup>*</sup>
-- Update the list of release names below
-- If the release includes a Beam version bump, update the @ref:[version matrix](../releases/Apache-Beam.md)
+If the release includes a Beam version bump, update the @ref:[version matrix](../releases/Apache-Beam.md)
 
 ## Automatic (CI)
 
