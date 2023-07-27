@@ -21,7 +21,7 @@ import java.io.PrintStream
 import java.lang.{Boolean => JBoolean, Double => JDouble, Iterable => JIterable}
 import java.util.concurrent.ThreadLocalRandom
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.estimators.{
   ApproxDistinctCounter,
   ApproximateUniqueCounter,
@@ -999,7 +999,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def hashLookup[V](
     that: SCollection[(T, V)]
   ): SCollection[(T, Iterable[V])] = {
-    implicit val vCoder = BeamCoders.getTupleCoders(that)._2
+    implicit val vCoder = that.valueCoder
     this.transform { in =>
       val side = that.asMultiMapSingletonSideInput
       in.withSideInputs(side)

@@ -21,7 +21,7 @@ import java.lang.Math.floorMod
 import java.util.UUID
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.util.{Cache, RemoteFileUtil}
 import com.spotify.scio.values.{SCollection, SideInput}
@@ -204,8 +204,9 @@ package object sparkey extends SparkeyReaderInstances {
 
     import SparkeyPairSCollection._
 
-    implicit val keyCoder: Coder[K] = self.keyCoder
-    implicit val valueCoder: Coder[V] = self.valueCoder
+    // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
+    implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
+    implicit private lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.

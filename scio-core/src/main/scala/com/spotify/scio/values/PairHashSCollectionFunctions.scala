@@ -28,8 +28,9 @@ import com.spotify.scio.coders.{BeamCoders, Coder}
  */
 class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
-  implicit private val keyCoder: Coder[K] = self.keyCoder
-  implicit private val valueCoder: Coder[V] = self.valueCoder
+  // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
+  implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
+  implicit private lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be tiny and
@@ -40,7 +41,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def hashJoin[W](
     rhs: SCollection[(K, W)]
   ): SCollection[(K, (V, W))] = {
-    implicit val wCoder = BeamCoders.getTupleCoders(rhs)._2
+    implicit val wCoder = rhs.valueCoder
     hashJoin(rhs.asMultiMapSingletonSideInput)
   }
 
@@ -87,7 +88,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def hashLeftOuterJoin[W](
     rhs: SCollection[(K, W)]
   ): SCollection[(K, (V, Option[W]))] = {
-    implicit val wCoder: Coder[W] = BeamCoders.getTupleCoders(rhs)._2
+    implicit val wCoder: Coder[W] = BeamCoders.getValueCoder(rhs)
     hashLeftOuterJoin(rhs.asMultiMapSingletonSideInput)
   }
 
@@ -123,7 +124,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
   def hashFullOuterJoin[W](
     rhs: SCollection[(K, W)]
   ): SCollection[(K, (Option[V], Option[W]))] = {
-    implicit val wCoder: Coder[W] = BeamCoders.getTupleCoders(rhs)._2
+    implicit val wCoder: Coder[W] = BeamCoders.getValueCoder(rhs)
     hashFullOuterJoin(rhs.asMultiMapSingletonSideInput)
   }
 

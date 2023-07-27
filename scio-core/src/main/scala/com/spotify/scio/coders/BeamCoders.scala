@@ -66,6 +66,12 @@ private[scio] object BeamCoders {
       }
   }
 
+  /** Get key coder from an `SCollection[(K, V)]`. */
+  def getKeyCoder[K, V](coll: SCollection[(K, V)]): Coder[K] = getTupleCoders[K, V](coll)._1
+
+  /** Get value coder from an `SCollection[(K, V)]`. */
+  def getValueCoder[K, V](coll: SCollection[(K, V)]): Coder[V] = getTupleCoders[K, V](coll)._2
+
   def getTuple3Coders[A, B, C](coll: SCollection[(A, B, C)]): (Coder[A], Coder[B], Coder[C]) = {
     val options = CoderOptions(coll.context.options)
     val coder = coll.internal.getCoder
