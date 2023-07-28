@@ -441,10 +441,10 @@ lazy val protobufConfigSettings = Def.settings(
   PB.targets := Seq(
     PB.gens.java(protobufVersion) -> (ThisScope.copy(config = Zero) / sourceManaged).value /
       "compiled_proto" /
-      configuration.value.name,
+      Defaults.nameForSrc(configuration.value.name),
     PB.gens.plugin("grpc-java") -> (ThisScope.copy(config = Zero) / sourceManaged).value /
       "compiled_grpc" /
-      configuration.value.name
+      Defaults.nameForSrc(configuration.value.name)
   ),
   managedSourceDirectories ++= PB.targets.value.map(_.outputPath)
 )
@@ -985,7 +985,6 @@ lazy val `scio-parquet`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
-//      "me.lyh" % "parquet-tensorflow" % parquetExtraVersion,
       "me.lyh" %% "parquet-avro" % parquetExtraVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,

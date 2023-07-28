@@ -33,7 +33,7 @@ import org.tensorflow.metadata.v0.Schema;
 
 public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Example> {
 
-//  private final String schemaString;
+  private final Schema schema;
   private final SerializableConfiguration conf;
   private final CompressionCodecName compression;
 
@@ -44,14 +44,14 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
       Configuration conf,
       CompressionCodecName compression) {
     super(baseOutputFileName, dynamicDestinations);
-//    this.schemaString = schema.toJson();
+    this.schema = schema;
     this.conf = new SerializableConfiguration(conf);
     this.compression = compression;
   }
 
   @Override
   public FileBasedSink.WriteOperation<Void, Example> createWriteOperation() {
-    return new ParquetExampleWriteOperation(this, /*schemaString,*/ conf, compression);
+    return new ParquetExampleWriteOperation(this, schema, conf, compression);
   }
 
   // =======================================================================
@@ -59,24 +59,24 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
   // =======================================================================
 
   static class ParquetExampleWriteOperation extends FileBasedSink.WriteOperation<Void, Example> {
-//    private final String schemaString;
+    private final Schema schema;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
 
     ParquetExampleWriteOperation(
         FileBasedSink<Example, Void, Example> sink,
-//        String schemaString,
+        Schema schema,
         SerializableConfiguration conf,
         CompressionCodecName compression) {
       super(sink);
-//      this.schemaString = schemaString;
+      this.schema = schema;
       this.conf = conf;
       this.compression = compression;
     }
 
     @Override
     public Writer<Void, Example> createWriter() throws Exception {
-      return new ParquetExampleWriter(this, Schema.newBuilder().build(), conf, compression);
+      return new ParquetExampleWriter(this, schema, conf, compression);
     }
   }
 
@@ -105,9 +105,9 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-//      ExampleParquetWriter.Builder builder =
-//          ExampleParquetWriter.builder(outputFile).withSchema(schema);
-//      writer = WriterUtils.build(builder, conf.get(), compression);
+      ExampleParquetWriter.Builder builder =
+          ExampleParquetWriter.builder(outputFile).withSchema(schema);
+      writer = WriterUtils.build(builder, conf.get(), compression);
     }
 
     @Override

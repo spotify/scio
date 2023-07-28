@@ -75,8 +75,8 @@ trait ParquetDynamicTest extends PipelineSpec {
 
 class ParquetTensorflowDynamicTest extends ParquetDynamicTest {
   import com.google.protobuf.ByteString
-  import me.lyh.parquet.tensorflow.Schema
   import org.tensorflow.proto.example._
+  import org.tensorflow.metadata.{v0 => tfmd}
   import com.spotify.scio.parquet.tensorflow._
   import com.spotify.scio.parquet.tensorflow.dynamic._
 
@@ -109,13 +109,14 @@ class ParquetTensorflowDynamicTest extends ParquetDynamicTest {
   val input: Seq[Example] = Random.shuffle(aNames.map(tfRec(0, _)) ++ bNames.map(tfRec(1, _)))
 
   it should "support Parquet Example files" in {
-    val schema = {
-      val builder = Schema.newBuilder()
-      builder.required(s"ints", Schema.Type.INT64)
-      builder.required(s"floats", Schema.Type.FLOAT)
-      builder.required(s"strings", Schema.Type.BYTES)
-      builder.named("Example")
-    }
+    // format: off
+    val schema = tfmd.Schema
+      .newBuilder()
+      .addFeature(tfmd.Feature.newBuilder().setType(tfmd.FeatureType.INT).setName("ints").build())
+      .addFeature(tfmd.Feature.newBuilder().setType(tfmd.FeatureType.FLOAT).setName("floats").build())
+      .addFeature(tfmd.Feature.newBuilder().setType(tfmd.FeatureType.BYTES).setName("strings").build())
+      .build()
+    // format: on
 
     val getStr: Example => String = _.getFeatures
       .getFeatureOrThrow("strings")
