@@ -19,15 +19,22 @@ package com.spotify.scio.extra.sparkey
 
 import java.io.File
 import java.net.URI
-import java.nio.file.{Files, Paths}
-
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
+import com.spotify.scio.extra.sparkey.instances.ShardedSparkeyReader
 import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
-import com.spotify.sparkey.{CompressionType, Sparkey, SparkeyReader}
-import org.apache.beam.sdk.options.PipelineOptions
+import com.spotify.sparkey.SparkeyReader
+import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult, ResourceId}
 
+import java.nio.file.Path
+import scala.collection.mutable
 import scala.jdk.CollectionConverters._
+
+case class InvalidNumShardsException(str: String) extends RuntimeException(str)
+
+object SparkeyUri {
+  def extensions: Seq[String] = Seq(".spi", ".spl")
+}
 
 /**
  * Represents the base URI for a Sparkey index and log file, either on the local or a remote file
@@ -36,87 +43,117 @@ import scala.jdk.CollectionConverters._
  * '/<path>/<sparkey-prefix>'. Note that `basePath` must not be a folder or GCS bucket as it is a
  * base path representing two files - <sparkey-prefix>.spi and <sparkey-prefix>.spl.
  */
-trait SparkeyUri extends Serializable {
-  val basePath: String
-  def getReader: SparkeyReader
+case class SparkeyUri(path: String) {
+  private[sparkey] val isLocal = ScioUtil.isLocalUri(new URI(path))
+  private val isSharded = path.endsWith("*")
+  private[sparkey] val basePath =
+    if (!isSharded) path else path.split("/").dropRight(1).mkString("/")
 
-  private[sparkey] def exists: Boolean
-  override def toString: String = basePath
-}
+  private[sparkey] def globExpression: String = {
+    require(isSharded, "glob only valid for sharded sparkeys.")
+    s"$basePath/part-*"
+  }
 
-private[sparkey] object SparkeyUri {
-  def apply(basePath: String, opts: PipelineOptions): SparkeyUri =
-    if (ScioUtil.isLocalUri(new URI(basePath))) {
-      LocalSparkeyUri(basePath)
+  private[sparkey] def sparkeyUriForShard(shard: Short, numShards: Short): SparkeyUri =
+    SparkeyUri(f"$basePath/part-$shard%05d-of-$numShards%05d")
+
+  private[sparkey] def paths: Seq[ResourceId] = {
+    require(!isSharded, "paths only valid for unsharded sparkeys.")
+    SparkeyUri.extensions.map(e => FileSystems.matchNewResource(basePath + e, false))
+  }
+
+  private def downloadRemoteUris(paths: Seq[String], rfu: RemoteFileUtil): mutable.Buffer[Path] = {
+    val downloadPaths = paths.flatMap(bp => SparkeyUri.extensions.map(e => new URI(s"$bp$e")))
+    rfu.download(downloadPaths.asJava).asScala
+  }
+
+  def getReader(rfu: RemoteFileUtil): SparkeyReader = {
+    if (!isSharded) {
+      val path =
+        if (isLocal) new File(basePath) else downloadRemoteUris(Seq(basePath), rfu).head.toFile
+      new ThreadLocalSparkeyReader(path)
     } else {
-      RemoteSparkeyUri(basePath, opts)
-    }
-  def extensions: Seq[String] = Seq(".spi", ".spl")
-
-  implicit def coderSparkeyURI: Coder[SparkeyUri] = Coder.kryo[SparkeyUri]
-}
-
-private case class LocalSparkeyUri(basePath: String) extends SparkeyUri {
-  override def getReader: SparkeyReader =
-    new ThreadLocalSparkeyReader(new File(basePath))
-  override private[sparkey] def exists: Boolean =
-    SparkeyUri.extensions.map(e => new File(basePath + e)).exists(_.exists)
-}
-
-private object RemoteSparkeyUri {
-  def apply(basePath: String, options: PipelineOptions): RemoteSparkeyUri =
-    RemoteSparkeyUri(basePath, RemoteFileUtil.create(options))
-}
-
-private case class RemoteSparkeyUri(basePath: String, rfu: RemoteFileUtil) extends SparkeyUri {
-  override def getReader: SparkeyReader = {
-    val uris = SparkeyUri.extensions.map(e => new URI(basePath + e))
-    val paths = rfu.download(uris.asJava).asScala
-    new ThreadLocalSparkeyReader(paths.head.toFile)
-  }
-  override private[sparkey] def exists: Boolean =
-    SparkeyUri.extensions
-      .exists(e => rfu.remoteExists(new URI(basePath + e)))
-}
-
-private[sparkey] class SparkeyWriter(
-  val uri: SparkeyUri,
-  compressionType: CompressionType,
-  compressionBlockSize: Int,
-  maxMemoryUsage: Long = -1
-) {
-  private val localFile = uri match {
-    case u: LocalSparkeyUri  => u.basePath
-    case _: RemoteSparkeyUri => Files.createTempDirectory("sparkey-").resolve("data").toString
-    case _                   => throw new NotImplementedError(s"Unsupported SparkeyUri $uri")
-  }
-
-  private lazy val delegate = {
-    val file = new File(localFile)
-    Files.createDirectories(file.getParentFile.toPath)
-    Sparkey.createNew(file, compressionType, compressionBlockSize)
-  }
-
-  def put(key: String, value: String): Unit = delegate.put(key, value)
-
-  def put(key: Array[Byte], value: Array[Byte]): Unit = delegate.put(key, value)
-
-  def close(): Unit = {
-    delegate.flush()
-    if (maxMemoryUsage > 0) {
-      delegate.setMaxMemory(maxMemoryUsage)
-    }
-    delegate.writeHash()
-    delegate.close()
-    uri match {
-      case u: RemoteSparkeyUri =>
-        // Copy .spi and .spl to GCS
-        SparkeyUri.extensions.foreach { e =>
-          val src = Paths.get(localFile + e)
-          val dst = new URI(u.basePath + e)
-          u.rfu.upload(src, dst)
+      val (basePaths, numShards) =
+        ShardedSparkeyUri.basePathsAndCount(EmptyMatchTreatment.DISALLOW, globExpression)
+      val paths =
+        if (isLocal) basePaths
+        else {
+          downloadRemoteUris(basePaths, rfu)
+            .map(_.toAbsolutePath.toString.replaceAll("\\.sp[il]$", ""))
+            .toSet
         }
-      case _ => ()
+      new ShardedSparkeyReader(ShardedSparkeyUri.localReadersByShard(paths), numShards)
+    }
+  }
+
+  def exists(rfu: RemoteFileUtil): Boolean = {
+    def localExists(bp: Seq[String]): Boolean =
+      bp.exists(p => SparkeyUri.extensions.map(e => new File(p + e)).exists(_.exists))
+    def remoteExists(bp: Seq[String]): Boolean =
+      bp.exists(p => SparkeyUri.extensions.exists(e => rfu.remoteExists(new URI(p + e))))
+
+    val paths =
+      if (!isSharded) Seq(basePath)
+      else {
+        val (basePaths, _) = ShardedSparkeyUri
+          .basePathsAndCount(EmptyMatchTreatment.ALLOW, globExpression)
+        basePaths
+      }
+    if (isLocal) localExists(paths) else remoteExists(paths)
+  }
+}
+
+private[sparkey] object ShardedSparkeyUri {
+  private[sparkey] def shardsFromPath(path: String): (Short, Short) = {
+    "part-([0-9]+)-of-([0-9]+)".r
+      .findFirstMatchIn(path)
+      .map { m =>
+        val shard = m.group(1).toShort
+        val numShards = m.group(2).toShort
+        (shard, numShards)
+      }
+      .getOrElse {
+        throw new IllegalStateException(s"Could not find shard and numShards in [$path]")
+      }
+  }
+
+  private[sparkey] def localReadersByShard(
+    localBasePaths: Iterable[String]
+  ): Map[Short, SparkeyReader] =
+    localBasePaths.iterator.map { path =>
+      val (shardIndex, _) = shardsFromPath(path)
+      val reader = new ThreadLocalSparkeyReader(new File(path + ".spi"))
+      (shardIndex, reader)
+    }.toMap
+
+  def basePathsAndCount(
+    emptyMatchTreatment: EmptyMatchTreatment,
+    globExpression: String
+  ): (Seq[String], Short) = {
+    val matchResult: MatchResult = FileSystems.`match`(globExpression, emptyMatchTreatment)
+    val paths = matchResult.metadata().asScala.map(_.resourceId.toString)
+
+    val indexPaths = paths.filter(_.endsWith(".spi")).sorted
+    val shardInfo = indexPaths.map(shardsFromPath)
+
+    val distinctNumShards = shardInfo.map { case (_, numShards) => numShards }.distinct.toList
+    distinctNumShards match {
+      case Nil => (Seq.empty[String], 0)
+      case numShards :: Nil =>
+        val numShardFiles = shardInfo.map { case (shardIdx, _) => shardIdx }.toSet.size
+        require(
+          numShardFiles <= numShards,
+          "Expected the number of Sparkey shards to be less than or equal to the " +
+            s"total shard count ($numShards), but found $numShardFiles"
+        )
+
+        val basePaths = indexPaths.iterator.map(_.replaceAll("\\.spi$", "")).toSeq
+
+        (basePaths, numShards)
+      case _ =>
+        throw InvalidNumShardsException(
+          s"Expected .spi files to end with the same shard count, got: $distinctNumShards."
+        )
     }
   }
 }

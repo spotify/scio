@@ -109,7 +109,7 @@ class SparkeyTest extends PipelineSpec {
     val sc = ScioContext()
     val p = sc.parallelize(sideData).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
-    val sparkeyUri = scioResult.tap(p).value.next().asInstanceOf[ShardedSparkeyUri]
+    val sparkeyUri = scioResult.tap(p).value.next()
     val globExpression = sparkeyUri.globExpression
 
     val sc2 = ScioContext()
@@ -132,7 +132,7 @@ class SparkeyTest extends PipelineSpec {
     val p = sc.parallelize(bigSideData).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
 
-    val sparkeyUri = scioResult.tap(p).value.next().asInstanceOf[LocalShardedSparkeyUri]
+    val sparkeyUri = scioResult.tap(p).value.next()
 
     val allSparkeyFiles = FileSystems
       .`match`(sparkeyUri.globExpression)
@@ -146,7 +146,8 @@ class SparkeyTest extends PipelineSpec {
     val readers = basePaths.map(basePath => Sparkey.open(new File(basePath)))
     readers.map(_.toMap.toList.toMap).reduce(_ ++ _) shouldBe bigSideData.toMap
 
-    val shardedReader = sparkeyUri.getReader
+    val rfu = RemoteFileUtil.create(sc.options)
+    val shardedReader = sparkeyUri.getReader(rfu)
     shardedReader.toMap shouldBe bigSideData.toMap
 
     bigSideData.foreach { case (expectedKey, expectedValue) =>
@@ -161,7 +162,7 @@ class SparkeyTest extends PipelineSpec {
     val p = sc.parallelize(Seq.empty[(String, String)]).asSparkey(numShards = 2).materialize
     val scioResult = sc.run().waitUntilFinish()
 
-    val sparkeyUri = scioResult.tap(p).value.next().asInstanceOf[LocalShardedSparkeyUri]
+    val sparkeyUri = scioResult.tap(p).value.next()
 
     val allSparkeyFiles = FileSystems
       .`match`(sparkeyUri.globExpression)
@@ -279,9 +280,10 @@ class SparkeyTest extends PipelineSpec {
 
     val scioResult = sc.run().waitUntilFinish()
 
+    val rfu = RemoteFileUtil.create(sc.options)
     scioResult.tap(result).value.toList.sorted shouldBe input.map(sideData.toMap).sorted
     val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
-    val shardedReader = sparkeyUri.getReader
+    val shardedReader = sparkeyUri.getReader(rfu)
     sideData.foreach { case (expectedKey, expectedValue) =>
       shardedReader.get(expectedKey) shouldBe Some(expectedValue)
     }
@@ -309,8 +311,9 @@ class SparkeyTest extends PipelineSpec {
     val sideDataMap = sideData.toMap
     scioResult.tap(result).value.toList.sorted shouldBe input.flatMap(sideDataMap.get).sorted
 
+    val rfu = RemoteFileUtil.create(sc.options)
     val sparkeyUri = scioResult.tap(sparkeyMaterialized).value.next()
-    val shardedReader = sparkeyUri.getReader
+    val shardedReader = sparkeyUri.getReader(rfu)
     sideData.foreach { case (expectedKey, expectedValue) =>
       shardedReader.get(expectedKey) shouldBe Some(expectedValue)
     }
