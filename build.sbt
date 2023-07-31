@@ -710,7 +710,6 @@ lazy val `scio-google-cloud-platform`: Project = project
     description := "Scio add-on for Google Cloud Platform",
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
@@ -1032,7 +1031,6 @@ lazy val `scio-parquet`: Project = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
