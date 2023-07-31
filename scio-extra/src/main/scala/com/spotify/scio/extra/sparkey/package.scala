@@ -205,6 +205,7 @@ package object sparkey extends SparkeyReaderInstances {
     import SparkeyPairSCollection._
 
     // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
+    implicit private lazy val coder: Coder[(K, V)] = BeamCoders.getCoder(self)
     implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
     implicit private lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
@@ -525,7 +526,7 @@ package object sparkey extends SparkeyReaderInstances {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySetSCollection[T](private val self: SCollection[T]) {
-    implicit val coder: Coder[T] = self.coder
+    implicit private lazy val coder: Coder[T] = BeamCoders.getCoder(self)
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
