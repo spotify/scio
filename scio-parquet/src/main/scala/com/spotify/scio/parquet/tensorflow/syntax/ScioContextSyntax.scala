@@ -22,7 +22,6 @@ import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.ReadParam
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.tensorflow.metadata.v0.Schema
 import org.tensorflow.proto.example.Example
 

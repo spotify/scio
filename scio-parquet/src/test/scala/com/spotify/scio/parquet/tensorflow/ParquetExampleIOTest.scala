@@ -24,7 +24,6 @@ import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.commons.io.FileUtils
-import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.metadata.{v0 => tfmd}
 import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList, Int64List}
