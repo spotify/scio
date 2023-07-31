@@ -38,7 +38,7 @@ public class ExampleParquetInputFormat extends ParquetInputFormat<Example> {
    *
    * @param job a job
    * @param requestedProjection the requested projection schema
-   * @see #setAvroReadSchema(org.apache.hadoop.mapreduce.Job, org.tensorflow.metadata.v0.Schema)
+   * @see #setExampleReadSchema(org.apache.hadoop.mapreduce.Job, org.tensorflow.metadata.v0.Schema)
    * @see
    *     com.spotify.scio.parquet.tensorflow.ExampleParquetOutputFormat#setSchema(org.apache.hadoop.mapreduce.Job,
    *     org.tensorflow.metadata.v0.Schema)

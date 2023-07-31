@@ -29,19 +29,17 @@ import org.tensorflow.proto.example.Example;
 public class ExampleReadSupport extends ReadSupport<Example> {
 
   public static String EXAMPLE_REQUESTED_PROJECTION = "parquet.example.projection";
-  private static final String EXAMPLE_READ_SCHEMA = "parquet.avro.read.schema";
+  private static final String EXAMPLE_READ_SCHEMA = "parquet.example.read.schema";
 
-  static final String EXAMPLE_SCHEMA_METADATA_KEY = "parquet.example.schema";
-  static final String EXAMPLE_NAME_METADATA_KEY = "parquet.example.name";
-
-  private static final String EXAMPLE_READ_SCHEMA_METADATA_KEY = "avro.read.schema";
+  static final String EXAMPLE_SCHEMA_METADATA_KEY = "example.schema";
+  static final String EXAMPLE_READ_SCHEMA_METADATA_KEY = "example.read.schema";
 
   /**
    * @param configuration a configuration
    * @param requestedProjection the requested projection schema
    * @see
-   *     org.apache.parquet.avro.AvroParquetInputFormat#setRequestedProjection(org.apache.hadoop.mapreduce.Job,
-   *     org.apache.avro.Schema)
+   *     com.spotify.scio.parquet.tensorflow.ExampleParquetInputFormat#setRequestedProjection(org.apache.hadoop.mapreduce.Job,
+   *     org.tensorflow.metadata.v0.Schema)
    */
   public static void setRequestedProjection(
       Configuration configuration, Schema requestedProjection) {
@@ -97,7 +95,7 @@ public class ExampleReadSupport extends ReadSupport<Example> {
         tfSchema =
             TextFormat.parse(keyValueMetaData.get(EXAMPLE_SCHEMA_METADATA_KEY), Schema.class);
       } else {
-        // default to converting the Parquet schema into an Avro schema
+        // default to converting the Parquet schema into an example schema
         tfSchema = new ExampleSchemaConverter(configuration).convert(parquetSchema);
       }
     } catch (TextFormat.ParseException e) {

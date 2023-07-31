@@ -38,12 +38,10 @@ import org.tensorflow.proto.example.Example;
 public class ExampleWriteSupport extends WriteSupport<Example> {
 
   private RecordConsumer recordConsumer;
-  private String name;
   private MessageType rootSchema;
   private Schema rootTFSchema;
 
   static final String EXAMPLE_SCHEMA = "parquet.example.schema";
-  static final String EXAMPLE_NAME = "parquet.example.name";
 
   /**
    * @param configuration a configuration
@@ -72,16 +70,14 @@ public class ExampleWriteSupport extends WriteSupport<Example> {
   public WriteContext init(Configuration configuration) {
     if (rootTFSchema == null) {
       try {
-        this.name = configuration.get(configuration.get(EXAMPLE_NAME));
         this.rootTFSchema = TextFormat.parse(configuration.get(EXAMPLE_SCHEMA), Schema.class);
-        this.rootSchema = new ExampleSchemaConverter(configuration).convert(name, rootTFSchema);
+        this.rootSchema = new ExampleSchemaConverter(configuration).convert(rootTFSchema);
       } catch (TextFormat.ParseException e) {
         throw new RuntimeException(e);
       }
     }
 
     Map<String, String> extraMetaData = new HashMap<String, String>();
-    extraMetaData.put(ExampleReadSupport.EXAMPLE_NAME_METADATA_KEY, name);
     extraMetaData.put(
         ExampleReadSupport.EXAMPLE_SCHEMA_METADATA_KEY,
         TextFormat.printer().printToString(rootTFSchema));

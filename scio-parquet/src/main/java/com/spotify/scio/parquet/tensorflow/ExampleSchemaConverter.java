@@ -25,7 +25,6 @@ import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types;
-import org.tensorflow.metadata.v0.Annotation;
 import org.tensorflow.metadata.v0.Feature;
 import org.tensorflow.metadata.v0.FeatureType;
 import org.tensorflow.metadata.v0.Schema;
@@ -34,8 +33,8 @@ public class ExampleSchemaConverter {
 
   public ExampleSchemaConverter(Configuration conf) {}
 
-  public MessageType convert(String name, Schema tfSchema) {
-    return new MessageType(name, convertFeatures(tfSchema.getFeatureList()));
+  public MessageType convert(Schema tfSchema) {
+    return new MessageType("example", convertFeatures(tfSchema.getFeatureList()));
   }
 
   private List<Type> convertFeatures(List<Feature> features) {
@@ -66,22 +65,17 @@ public class ExampleSchemaConverter {
   }
 
   public Schema convert(MessageType parquetSchema) {
-    return convertFields(parquetSchema.getFields());
+    return Schema.newBuilder().addAllFeature(convertFields(parquetSchema.getFields())).build();
   }
 
-  private Schema convertFields(List<Type> parquetFields) {
+  private List<Feature> convertFields(List<Type> parquetFields) {
     List<Feature> features = new ArrayList<Feature>();
     for (Type parquetType : parquetFields) {
       Feature feature = convertField(parquetType);
       features.add(feature);
     }
 
-    Schema schema =
-        Schema.newBuilder()
-            .addAllFeature(features)
-            .setAnnotation(Annotation.newBuilder().build()) // TODO
-            .build();
-    return schema;
+    return features;
   }
 
   private Feature convertField(final Type parquetType) {
