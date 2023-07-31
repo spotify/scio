@@ -144,11 +144,6 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     .build()
   // format: on
 
-  private val predicate = FilterApi.and(
-    FilterApi.ltEq(FilterApi.longColumn("int64_req_1"), java.lang.Long.valueOf(5L)),
-    FilterApi.gtEq(FilterApi.floatColumn("float_req_2"), java.lang.Float.valueOf(2.5f))
-  )
-
   private def projectFields(projection: tfmd.Schema): Example => Example = (e: Example) => {
     val m = e.getFeatures.getFeatureMap.asScala
     Example
@@ -186,41 +181,6 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
       suffix = ".parquet"
     )
     data should containInAnyOrder(examples.map(projectFields(projection)))
-    sc.run()
-    ()
-  }
-
-  it should "read Examples with predicate" in {
-    val sc = ScioContext()
-    val data = sc.parquetExampleFile(
-      path = testDir.getAbsolutePath,
-      predicate = predicate,
-      suffix = ".parquet"
-    )
-    val expected = examples.filter { e =>
-      e.getFeatures.getFeatureOrThrow("int64_req_1").getInt64List.getValue(0) <= 5L &&
-      e.getFeatures.getFeatureOrThrow("float_req_2").getFloatList.getValue(0) >= 2.5f
-    }
-    data should containInAnyOrder(expected)
-    sc.run()
-    ()
-  }
-
-  it should "read Examples with projection and predicate in non-test context" in {
-    val sc = ScioContext()
-    val data = sc.parquetExampleFile(
-      path = testDir.getAbsolutePath,
-      projection = projection,
-      predicate = predicate,
-      suffix = ".parquet"
-    )
-    val expected = examples
-      .filter { e =>
-        e.getFeatures.getFeatureOrThrow("int64_req_1").getInt64List.getValue(0) <= 5L &&
-        e.getFeatures.getFeatureOrThrow("float_req_2").getFloatList.getValue(0) >= 2.5f
-      }
-      .map(projectFields(projection))
-    data should containInAnyOrder(expected)
     sc.run()
     ()
   }

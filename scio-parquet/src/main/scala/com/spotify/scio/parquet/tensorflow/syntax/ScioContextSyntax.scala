@@ -33,12 +33,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def parquetExampleFile(
     path: String,
     projection: Schema = ReadParam.DefaultProjection,
-    predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = ReadParam.DefaultSuffix
   ): SCollection[Example] =
     self.read(ParquetExampleIO(path))(
-      ParquetExampleIO.ReadParam(projection, predicate, conf, suffix)
+      ParquetExampleIO.ReadParam(projection, conf, suffix)
     )
 }
 

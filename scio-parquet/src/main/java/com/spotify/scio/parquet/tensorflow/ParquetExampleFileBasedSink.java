@@ -28,8 +28,8 @@ import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-import org.tensorflow.proto.example.Example;
 import org.tensorflow.metadata.v0.Schema;
+import org.tensorflow.proto.example.Example;
 
 public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Example> {
 

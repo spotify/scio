@@ -73,10 +73,6 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       ExampleParquetInputFormat.setExampleReadSchema(job, projection)
     }
 
-//    Option(params.predicate).foreach { predicate =>
-//      ParquetInputFormat.setFilterPredicate(conf, predicate)
-//    }
-
     val coder = CoderMaterializer.beam(sc, Coder[Example])
 
     sc.applyTransform(
@@ -105,10 +101,6 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       ExampleParquetInputFormat.setRequestedProjection(job, projection)
       ExampleParquetInputFormat.setExampleReadSchema(job, projection)
     }
-
-//    Option(params.predicate != null).foreach { predicate =>
-//      ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
-//    }
 
     val source = HadoopFormatIO
       .read[JBoolean, Example]()
@@ -206,7 +198,6 @@ object ParquetExampleIO {
 
   object ReadParam {
     val DefaultProjection: Schema = null
-    val DefaultPredicate: FilterPredicate = null
     val DefaultConfiguration: Configuration = null
     val DefaultSuffix: String = null
 
@@ -218,7 +209,6 @@ object ParquetExampleIO {
   }
   final case class ReadParam private (
     projection: Schema = ReadParam.DefaultProjection,
-    predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = ReadParam.DefaultSuffix
   )
