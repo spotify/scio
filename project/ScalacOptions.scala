@@ -17,9 +17,8 @@
 
 import sbt.librarymanagement.{SemanticSelector, VersionNumber}
 import java.lang.Runtime
-import _root_.io.github.davidgregory084.ScalacOption
-import _root_.io.github.davidgregory084.ScalaVersion._
-import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport.ScalacOptions
+import org.typelevel.scalacoptions.{ ScalacOption, ScalacOptions }
+import org.typelevel.scalacoptions.ScalaVersion._
 
 object Scalac {
 
