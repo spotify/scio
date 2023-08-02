@@ -18,18 +18,23 @@
 package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
-import org.apache.beam.sdk.coders.{Coder => BCoder, StructuredCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
-import java.util.{Collections, List => JList}
+import java.util.{List => JList}
 
-/*
- * */
-sealed abstract private[scio] class WrappedCoder[T] extends StructuredCoder[T] {
+sealed abstract private[scio] class WrappedCoder[T] extends CustomCoder[T] {
   def bcoder: BCoder[T]
 
+  override def equals(obj: Any): Boolean = obj match {
+    case that: WrappedCoder[_] => bcoder == that.bcoder
+    case _                     => false
+  }
+
+  override def hashCode(): Int = bcoder.hashCode
+
   override def getCoderArguments: JList[_ <: BCoder[_]] =
-    Collections.singletonList(bcoder)
+    bcoder.getCoderArguments
 
   override def encode(value: T, os: OutputStream): Unit =
     bcoder.encode(value, os)
