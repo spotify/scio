@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import com.spotify.scio.coders.CoderMaterializer.CoderOptions
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.coders.{Coder => BCoder, NullableCoder, StructuredCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, NullableCoder}
 import org.apache.beam.sdk.values.PCollection
 
 import scala.annotation.tailrec

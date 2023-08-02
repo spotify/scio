@@ -1,12 +1,51 @@
+/*
+ * Copyright 2023 Spotify AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.spotify.scio.coders
 
 import com.spotify.scio.ScioContext
-import org.apache.beam.sdk.coders.{BigEndianShortCoder, ByteCoder, StringUtf8Coder, VarIntCoder}
+import org.apache.beam.sdk.coders.{
+  BigEndianShortCoder,
+  ByteCoder,
+  Coder => BCoder,
+  StringUtf8Coder,
+  StructuredCoder,
+  VarIntCoder
+}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 
+import java.io.{InputStream, OutputStream}
+import java.util.{Arrays => JArrays, List => JList}
+
+object BeamCodersTest {
+  class CustomKeyValueCoder[K, V](keyCoder: BCoder[K], valueCoder: BCoder[V])
+      extends StructuredCoder[(String, Int)] {
+    override def encode(value: (String, Int), outStream: OutputStream): Unit = ???
+    override def decode(inStream: InputStream): (String, Int) = ???
+    override def getCoderArguments: JList[_ <: BCoder[_]] =
+      JArrays.asList(keyCoder, valueCoder)
+    override def verifyDeterministic(): Unit = ???
+  }
+}
+
 class BeamCodersTest extends AnyFlatSpec with Matchers with TableDrivenPropertyChecks {
+
+  import BeamCodersTest._
 
   "BeamCoders" should "get scio coder from SCollection" in {
     val sc = ScioContext()
@@ -21,7 +60,8 @@ class BeamCodersTest extends AnyFlatSpec with Matchers with TableDrivenPropertyC
     val coders = Table[Coder[(String, Int)]](
       "coder",
       Coder.tuple2Coder,
-      Coder.gen
+      Coder.gen,
+      Coder.beam(new CustomKeyValueCoder(StringUtf8Coder.of(), VarIntCoder.of()))
     )
 
     forAll(coders) { coder =>
