@@ -22,7 +22,7 @@ import org.apache.parquet.hadoop.util.ContextUtil;
 import org.tensorflow.metadata.v0.Schema;
 import org.tensorflow.proto.example.Example;
 
-public class ExampleParquetInputFormat extends ParquetInputFormat<Example> {
+public class TensorflowExampleParquetInputFormat extends ParquetInputFormat<Example> {
 
   /**
    * Set the subset of columns to read (projection pushdown). Specified as an tensorflow schema, the
@@ -39,12 +39,11 @@ public class ExampleParquetInputFormat extends ParquetInputFormat<Example> {
    * @param job a job
    * @param requestedProjection the requested projection schema
    * @see #setExampleReadSchema(org.apache.hadoop.mapreduce.Job, org.tensorflow.metadata.v0.Schema)
-   * @see
-   *     com.spotify.scio.parquet.tensorflow.ExampleParquetOutputFormat#setSchema(org.apache.hadoop.mapreduce.Job,
+   * @see TensorflowExampleParquetOutputFormat#setSchema(org.apache.hadoop.mapreduce.Job,
    *     org.tensorflow.metadata.v0.Schema)
    */
   public static void setRequestedProjection(Job job, Schema requestedProjection) {
-    ExampleReadSupport.setRequestedProjection(
+    TensorflowExampleReadSupport.setRequestedProjection(
         ContextUtil.getConfiguration(job), requestedProjection);
   }
 
@@ -56,11 +55,11 @@ public class ExampleParquetInputFormat extends ParquetInputFormat<Example> {
    * @param tfReadSchema the requested schema
    * @see #setRequestedProjection(org.apache.hadoop.mapreduce.Job,
    *     org.tensorflow.metadata.v0.Schema)
-   * @see
-   *     com.spotify.scio.parquet.tensorflow.ExampleParquetOutputFormat#setSchema(org.apache.hadoop.mapreduce.Job,
+   * @see TensorflowExampleParquetOutputFormat#setSchema(org.apache.hadoop.mapreduce.Job,
    *     org.tensorflow.metadata.v0.Schema)
    */
   public static void setExampleReadSchema(Job job, Schema tfReadSchema) {
-    ExampleReadSupport.setExampleReadSchema(ContextUtil.getConfiguration(job), tfReadSchema);
+    TensorflowExampleReadSupport.setExampleReadSchema(
+        ContextUtil.getConfiguration(job), tfReadSchema);
   }
 }

@@ -22,12 +22,12 @@ import org.apache.parquet.schema.MessageType;
 import org.tensorflow.metadata.v0.Schema;
 import org.tensorflow.proto.example.Example;
 
-public class ExampleRecordMaterializer extends RecordMaterializer<Example> {
+public class TensorflowExampleRecordMaterializer extends RecordMaterializer<Example> {
 
-  private ExampleConverters.ExampleConverter root;
+  private TensorflowExampleConverters.ExampleConverter root;
 
-  public ExampleRecordMaterializer(MessageType requestedSchema, Schema tfSchema) {
-    this.root = new ExampleConverters.ExampleConverter(requestedSchema, tfSchema);
+  public TensorflowExampleRecordMaterializer(MessageType requestedSchema, Schema tfSchema) {
+    this.root = new TensorflowExampleConverters.ExampleConverter(requestedSchema, tfSchema);
   }
 
   @Override

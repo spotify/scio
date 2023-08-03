@@ -16,7 +16,7 @@
 
 package com.spotify.scio.parquet.tensorflow.dynamic
 
-import com.spotify.scio.parquet.tensorflow.ExampleParquetWriter
+import com.spotify.scio.parquet.tensorflow.TensorflowExampleParquetWriter
 import com.spotify.scio.parquet.{BeamOutputFile, WriterUtils}
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
@@ -37,7 +37,7 @@ class ParquetExampleSink(
 
   override def open(channel: WritableByteChannel): Unit = {
     val outputFile = BeamOutputFile.of(channel)
-    val builder = ExampleParquetWriter.builder(outputFile).withSchema(schema)
+    val builder = TensorflowExampleParquetWriter.builder(outputFile).withSchema(schema)
     writer = WriterUtils.build(builder, conf.get, compression)
   }
 

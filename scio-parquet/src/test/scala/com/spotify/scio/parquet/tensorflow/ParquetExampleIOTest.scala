@@ -23,6 +23,8 @@ import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.parquet.types._
+import magnolify.parquet.ParquetType
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.metadata.{v0 => tfmd}
@@ -32,6 +34,21 @@ import java.nio.file.Files
 import scala.jdk.CollectionConverters._
 
 object ParquetExampleHelper {
+
+  final case class LegacyExampleParquet(
+    int64_req_1: Long,
+    float_req_1: Float,
+    bytes_req_1: Array[Byte],
+    int64_opt_1: Option[Long],
+    float_opt_1: Option[Float],
+    bytes_opt_1: Option[Array[Byte]],
+    int64_rep_1: List[Long],
+    float_rep_1: List[Float],
+    bytes_rep_1: List[Array[Byte]]
+  )
+  implicit val ptLegacyExampleParquet: ParquetType[LegacyExampleParquet] =
+    ParquetType[LegacyExampleParquet]
+  
   // format: off
   private[tensorflow] val schema = tfmd.Schema.newBuilder()
     .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"int64_req_$i").setType(tfmd.FeatureType.INT).build()).asJava)
@@ -117,16 +134,39 @@ class ParquetExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
 
 class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   import ParquetExampleHelper._
-  private val testDir = Files.createTempDirectory("scio-test-").toFile
+  private val testDir = Files.createTempDirectory("scio-test-")
+  private val currentDir = testDir.resolve("current").toFile
+  private val legacyDir = testDir.resolve("legacy").toFile
   private val examples = (1 to 10).map(newExample)
 
   override protected def beforeAll(): Unit = {
     val sc = ScioContext()
-    sc.parallelize(examples).saveAsParquetExampleFile(testDir.getAbsolutePath, schema)
+    val coll = sc.parallelize(examples)
+    coll.saveAsParquetExampleFile(currentDir.getAbsolutePath, schema)
+
+    // legacy: old saveAsParquetExampleFile schema included field repetition
+    // make sure we can still read parquet file with non-repeated fields
+    coll
+      .map { e =>
+        val fs = e.getFeatures.getFeatureMap.asScala
+        LegacyExampleParquet(
+          int64_req_1 = fs("int64_req_1").getInt64List.getValueList.asScala.head,
+          float_req_1 = fs("float_req_1").getFloatList.getValueList.asScala.head,
+          bytes_req_1 = fs("bytes_req_1").getBytesList.getValueList.asScala.head.toByteArray,
+          int64_opt_1 = None,
+          float_opt_1 = None,
+          bytes_opt_1 = None,
+          int64_rep_1 = fs("int64_rep_1").getInt64List.getValueList.asScala.toList.map(Long.unbox),
+          float_rep_1 = fs("float_rep_1").getFloatList.getValueList.asScala.toList.map(Float.unbox),
+          bytes_rep_1 =
+            fs("bytes_rep_1").getBytesList.getValueList.asScala.toList.map(_.toByteArray)
+        )
+      }
+      .saveAsTypedParquetFile(legacyDir.getAbsolutePath)
     sc.run()
   }
 
-  override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
+  override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir.toFile)
 
   // format: off
   private val projection = tfmd.Schema
@@ -164,7 +204,7 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
   it should "read Examples" in {
     val sc = ScioContext()
     val data = sc.parquetExampleFile(
-      path = testDir.getAbsolutePath,
+      path = currentDir.getAbsolutePath,
       suffix = ".parquet"
     )
     data should containInAnyOrder(examples)
@@ -175,10 +215,22 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
   it should "read Examples with projection" in {
     val sc = ScioContext()
     val data = sc.parquetExampleFile(
-      path = testDir.getAbsolutePath,
+      path = currentDir.getAbsolutePath,
       projection = projection,
       suffix = ".parquet"
     )
+    data should containInAnyOrder(examples.map(projectFields(projection)))
+    sc.run()
+    ()
+  }
+
+  it should "read Examples from legacy example parquet file" in {
+    val sc = ScioContext()
+    val data = sc.parquetExampleFile(
+      path = legacyDir.getAbsolutePath,
+      suffix = ".parquet"
+    )
+    // we have only stored index 1 fields for legacy tests (same as projection)
     data should containInAnyOrder(examples.map(projectFields(projection)))
     sc.run()
     ()

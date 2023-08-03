@@ -35,7 +35,7 @@ import org.tensorflow.metadata.v0.FeatureType;
 import org.tensorflow.metadata.v0.Schema;
 import org.tensorflow.proto.example.Example;
 
-public class ExampleWriteSupport extends WriteSupport<Example> {
+public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
 
   private RecordConsumer recordConsumer;
   private MessageType rootSchema;
@@ -46,17 +46,16 @@ public class ExampleWriteSupport extends WriteSupport<Example> {
   /**
    * @param configuration a configuration
    * @param schema the write schema
-   * @see
-   *     com.spotify.scio.parquet.tensorflow.ExampleParquetOutputFormat#setSchema(org.apache.hadoop.mapreduce.Job,
+   * @see TensorflowExampleParquetOutputFormat#setSchema(org.apache.hadoop.mapreduce.Job,
    *     org.tensorflow.metadata.v0.Schema)
    */
   public static void setSchema(Configuration configuration, Schema schema) {
     configuration.set(EXAMPLE_SCHEMA, TextFormat.printer().printToString(schema));
   }
 
-  public ExampleWriteSupport() {}
+  public TensorflowExampleWriteSupport() {}
 
-  public ExampleWriteSupport(MessageType schema, Schema tfSchema) {
+  public TensorflowExampleWriteSupport(MessageType schema, Schema tfSchema) {
     this.rootSchema = schema;
     this.rootTFSchema = tfSchema;
   }
@@ -71,7 +70,7 @@ public class ExampleWriteSupport extends WriteSupport<Example> {
     if (rootTFSchema == null) {
       try {
         this.rootTFSchema = TextFormat.parse(configuration.get(EXAMPLE_SCHEMA), Schema.class);
-        this.rootSchema = new ExampleSchemaConverter(configuration).convert(rootTFSchema);
+        this.rootSchema = new TensorflowExampleSchemaConverter(configuration).convert(rootTFSchema);
       } catch (TextFormat.ParseException e) {
         throw new RuntimeException(e);
       }
@@ -79,7 +78,7 @@ public class ExampleWriteSupport extends WriteSupport<Example> {
 
     Map<String, String> extraMetaData = new HashMap<String, String>();
     extraMetaData.put(
-        ExampleReadSupport.EXAMPLE_SCHEMA_METADATA_KEY,
+        TensorflowExampleReadSupport.EXAMPLE_SCHEMA_METADATA_KEY,
         TextFormat.printer().printToString(rootTFSchema));
     return new WriteContext(rootSchema, extraMetaData);
   }

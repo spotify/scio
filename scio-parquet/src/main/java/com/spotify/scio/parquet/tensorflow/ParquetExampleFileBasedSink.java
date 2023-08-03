@@ -105,8 +105,8 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
-      ExampleParquetWriter.Builder builder =
-          ExampleParquetWriter.builder(outputFile).withSchema(schema);
+      TensorflowExampleParquetWriter.Builder builder =
+          TensorflowExampleParquetWriter.builder(outputFile).withSchema(schema);
       writer = WriterUtils.build(builder, conf.get(), compression);
     }
 

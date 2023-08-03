@@ -33,7 +33,7 @@ import org.tensorflow.proto.example.Features;
 import org.tensorflow.proto.example.FloatList;
 import org.tensorflow.proto.example.Int64List;
 
-class ExampleConverters {
+class TensorflowExampleConverters {
   static class ExampleConverter extends GroupConverter {
     private final String[] names;
     private final FeatureConverter[] converters;
@@ -52,8 +52,8 @@ class ExampleConverters {
                       org.tensorflow.metadata.v0.Feature::getType));
       for (int i = 0; i < parquetSchema.getFieldCount(); i++) {
         String featureName = parquetSchema.getFieldName(i);
-        FeatureType type = featureTypes.get(featureName);
         names[i] = featureName;
+        FeatureType type = featureTypes.get(featureName);
         switch (type) {
           case INT:
             converters[i] = new IntConverter();

@@ -27,13 +27,13 @@ import org.apache.parquet.io.OutputFile;
 import org.tensorflow.metadata.v0.Schema;
 import org.tensorflow.proto.example.Example;
 
-public class ExampleParquetWriter extends ParquetWriter<Example> {
+public class TensorflowExampleParquetWriter extends ParquetWriter<Example> {
 
   public static Builder builder(OutputFile file) {
     return new Builder(file);
   }
 
-  ExampleParquetWriter(
+  TensorflowExampleParquetWriter(
       Path file,
       WriteSupport<Example> writeSupport,
       CompressionCodecName compressionCodecName,
@@ -58,7 +58,8 @@ public class ExampleParquetWriter extends ParquetWriter<Example> {
   }
 
   private static WriteSupport<Example> writeSupport(Configuration conf, Schema schema) {
-    return new ExampleWriteSupport(new ExampleSchemaConverter(conf).convert("", schema), schema);
+    return new TensorflowExampleWriteSupport(
+        new TensorflowExampleSchemaConverter(conf).convert(schema), schema);
   }
 
   public static class Builder extends ParquetWriter.Builder<Example, Builder> {
@@ -80,7 +81,7 @@ public class ExampleParquetWriter extends ParquetWriter<Example> {
 
     @Override
     protected WriteSupport<Example> getWriteSupport(Configuration conf) {
-      return ExampleParquetWriter.writeSupport(conf, schema);
+      return TensorflowExampleParquetWriter.writeSupport(conf, schema);
     }
   }
 }

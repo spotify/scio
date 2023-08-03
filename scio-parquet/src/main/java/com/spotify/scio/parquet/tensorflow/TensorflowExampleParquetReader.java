@@ -25,11 +25,11 @@ import org.apache.parquet.hadoop.api.ReadSupport;
 import org.apache.parquet.io.InputFile;
 import org.tensorflow.proto.example.Example;
 
-public class ExampleParquetReader extends ParquetReader<Example> {
+public class TensorflowExampleParquetReader extends ParquetReader<Example> {
 
-  ExampleParquetReader(Configuration conf, Path file, UnboundRecordFilter unboundRecordFilter)
-      throws IOException {
-    super(conf, file, new ExampleReadSupport(), unboundRecordFilter);
+  TensorflowExampleParquetReader(
+      Configuration conf, Path file, UnboundRecordFilter unboundRecordFilter) throws IOException {
+    super(conf, file, new TensorflowExampleReadSupport(), unboundRecordFilter);
   }
 
   public static Builder builder(InputFile file) {
@@ -43,7 +43,7 @@ public class ExampleParquetReader extends ParquetReader<Example> {
 
     @Override
     protected ReadSupport<Example> getReadSupport() {
-      return new ExampleReadSupport();
+      return new TensorflowExampleReadSupport();
     }
   }
 }

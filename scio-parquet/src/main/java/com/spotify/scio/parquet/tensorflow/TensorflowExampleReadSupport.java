@@ -26,19 +26,19 @@ import org.apache.parquet.schema.MessageType;
 import org.tensorflow.metadata.v0.Schema;
 import org.tensorflow.proto.example.Example;
 
-public class ExampleReadSupport extends ReadSupport<Example> {
+public class TensorflowExampleReadSupport extends ReadSupport<Example> {
 
-  public static String EXAMPLE_REQUESTED_PROJECTION = "parquet.example.projection";
-  private static final String EXAMPLE_READ_SCHEMA = "parquet.example.read.schema";
+  public static String EXAMPLE_REQUESTED_PROJECTION = "parquet.tensorflow.example.projection";
+  private static final String EXAMPLE_READ_SCHEMA = "parquet.tensorflow.example.read.schema";
 
-  static final String EXAMPLE_SCHEMA_METADATA_KEY = "example.schema";
-  static final String EXAMPLE_READ_SCHEMA_METADATA_KEY = "example.read.schema";
+  static final String EXAMPLE_SCHEMA_METADATA_KEY = "parquet.tensorflow.example.schema";
+  static final String EXAMPLE_READ_SCHEMA_METADATA_KEY = "parquet.tensorflow.example.read.schema";
 
   /**
    * @param configuration a configuration
    * @param requestedProjection the requested projection schema
    * @see
-   *     com.spotify.scio.parquet.tensorflow.ExampleParquetInputFormat#setRequestedProjection(org.apache.hadoop.mapreduce.Job,
+   *     TensorflowExampleParquetInputFormat#setRequestedProjection(org.apache.hadoop.mapreduce.Job,
    *     org.tensorflow.metadata.v0.Schema)
    */
   public static void setRequestedProjection(
@@ -55,17 +55,16 @@ public class ExampleReadSupport extends ReadSupport<Example> {
   public ReadContext init(
       Configuration configuration, Map<String, String> keyValueMetaData, MessageType fileSchema) {
     MessageType projection = fileSchema;
-    Map<String, String> metadata = new LinkedHashMap<String, String>();
+    Map<String, String> metadata = new LinkedHashMap<>();
 
     String requestedProjectionString = configuration.get(EXAMPLE_REQUESTED_PROJECTION);
     if (requestedProjectionString != null) {
       try {
         Schema tfRequestedProjection = TextFormat.parse(requestedProjectionString, Schema.class);
         projection =
-            new ExampleSchemaConverter(configuration)
-                .convert(fileSchema.getName(), tfRequestedProjection);
+            new TensorflowExampleSchemaConverter(configuration).convert(tfRequestedProjection);
       } catch (TextFormat.ParseException e) {
-        throw new RuntimeException("Failre parsing projection schema", e);
+        throw new RuntimeException("Invalid tensorflow schema", e);
       }
     }
 
@@ -96,12 +95,12 @@ public class ExampleReadSupport extends ReadSupport<Example> {
             TextFormat.parse(keyValueMetaData.get(EXAMPLE_SCHEMA_METADATA_KEY), Schema.class);
       } else {
         // default to converting the Parquet schema into an example schema
-        tfSchema = new ExampleSchemaConverter(configuration).convert(parquetSchema);
+        tfSchema = new TensorflowExampleSchemaConverter(configuration).convert(parquetSchema);
       }
     } catch (TextFormat.ParseException e) {
       throw new RuntimeException("Invalid tensorflow schema", e);
     }
 
-    return new ExampleRecordMaterializer(parquetSchema, tfSchema);
+    return new TensorflowExampleRecordMaterializer(parquetSchema, tfSchema);
   }
 }

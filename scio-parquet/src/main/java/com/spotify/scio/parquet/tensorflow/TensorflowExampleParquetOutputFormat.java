@@ -22,7 +22,7 @@ import org.apache.parquet.hadoop.util.ContextUtil;
 import org.tensorflow.metadata.v0.Schema;
 import org.tensorflow.proto.example.Example;
 
-public class ExampleParquetOutputFormat extends ParquetOutputFormat<Example> {
+public class TensorflowExampleParquetOutputFormat extends ParquetOutputFormat<Example> {
 
   /**
    * Set the example schema to use for writing. The schema is translated into a Parquet schema so
@@ -32,15 +32,14 @@ public class ExampleParquetOutputFormat extends ParquetOutputFormat<Example> {
    *
    * @param job a job
    * @param schema a schema for the data that will be written
-   * @see
-   *     com.spotify.scio.parquet.tensorflow.ExampleParquetInputFormat#setExampleReadSchema(org.apache.hadoop.mapreduce.Job,
+   * @see TensorflowExampleParquetInputFormat#setExampleReadSchema(org.apache.hadoop.mapreduce.Job,
    *     org.tensorflow.metadata.v0.Schema)
    */
   public static void setSchema(Job job, Schema schema) {
-    ExampleWriteSupport.setSchema(ContextUtil.getConfiguration(job), schema);
+    TensorflowExampleWriteSupport.setSchema(ContextUtil.getConfiguration(job), schema);
   }
 
-  public ExampleParquetOutputFormat() {
-    super(new ExampleWriteSupport());
+  public TensorflowExampleParquetOutputFormat() {
+    super(new TensorflowExampleWriteSupport());
   }
 }

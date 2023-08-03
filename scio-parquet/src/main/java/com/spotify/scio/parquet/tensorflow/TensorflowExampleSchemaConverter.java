@@ -29,9 +29,9 @@ import org.tensorflow.metadata.v0.Feature;
 import org.tensorflow.metadata.v0.FeatureType;
 import org.tensorflow.metadata.v0.Schema;
 
-public class ExampleSchemaConverter {
+public class TensorflowExampleSchemaConverter {
 
-  public ExampleSchemaConverter(Configuration conf) {}
+  public TensorflowExampleSchemaConverter(Configuration conf) {}
 
   public MessageType convert(Schema tfSchema) {
     return new MessageType("example", convertFeatures(tfSchema.getFeatureList()));
@@ -69,7 +69,7 @@ public class ExampleSchemaConverter {
   }
 
   private List<Feature> convertFields(List<Type> parquetFields) {
-    List<Feature> features = new ArrayList<Feature>();
+    List<Feature> features = new ArrayList<>();
     for (Type parquetType : parquetFields) {
       Feature feature = convertField(parquetType);
       features.add(feature);
@@ -82,6 +82,7 @@ public class ExampleSchemaConverter {
     if (!parquetType.isPrimitive()) {
       throw new IllegalArgumentException("Only primitive fields are supported");
     } else {
+      final String featureName = parquetType.getName();
       final PrimitiveType asPrimitive = parquetType.asPrimitiveType();
       final PrimitiveType.PrimitiveTypeName parquetPrimitiveTypeName =
           asPrimitive.getPrimitiveTypeName();
@@ -90,7 +91,7 @@ public class ExampleSchemaConverter {
               new PrimitiveType.PrimitiveTypeNameConverter<Feature, RuntimeException>() {
                 @Override
                 public Feature convertINT64(PrimitiveType.PrimitiveTypeName primitiveTypeName) {
-                  return Feature.newBuilder().setType(FeatureType.INT).build();
+                  return Feature.newBuilder().setName(featureName).setType(FeatureType.INT).build();
                 }
 
                 @Override
@@ -116,7 +117,10 @@ public class ExampleSchemaConverter {
 
                 @Override
                 public Feature convertFLOAT(PrimitiveType.PrimitiveTypeName primitiveTypeName) {
-                  return Feature.newBuilder().setType(FeatureType.FLOAT).build();
+                  return Feature.newBuilder()
+                      .setName(featureName)
+                      .setType(FeatureType.FLOAT)
+                      .build();
                 }
 
                 @Override
@@ -135,7 +139,10 @@ public class ExampleSchemaConverter {
 
                 @Override
                 public Feature convertBINARY(PrimitiveType.PrimitiveTypeName primitiveTypeName) {
-                  return Feature.newBuilder().setType(FeatureType.BYTES).build();
+                  return Feature.newBuilder()
+                      .setName(featureName)
+                      .setType(FeatureType.BYTES)
+                      .build();
                 }
               });
       return feature;

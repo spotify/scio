@@ -68,8 +68,8 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     val filePattern = ScioUtil.filePattern(path, params.suffix)
 
     Option(params.projection).foreach { projection =>
-      ExampleParquetInputFormat.setRequestedProjection(job, projection)
-      ExampleParquetInputFormat.setExampleReadSchema(job, projection)
+      TensorflowExampleParquetInputFormat.setRequestedProjection(job, projection)
+      TensorflowExampleParquetInputFormat.setExampleReadSchema(job, projection)
     }
 
     val coder = CoderMaterializer.beam(sc, Coder[Example])
@@ -91,14 +91,14 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   ): SCollection[Example] = {
     val job = Job.getInstance(conf)
     GcsConnectorUtil.setInputPaths(sc, job, path)
-    job.setInputFormatClass(classOf[ExampleParquetInputFormat])
+    job.setInputFormatClass(classOf[TensorflowExampleParquetInputFormat])
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
     job.getConfiguration.setClass("value.class", classOf[Example], classOf[Example])
 
-    ParquetInputFormat.setReadSupportClass(job, classOf[ExampleReadSupport])
+    ParquetInputFormat.setReadSupportClass(job, classOf[TensorflowExampleReadSupport])
     Option(params.projection).foreach { projection =>
-      ExampleParquetInputFormat.setRequestedProjection(job, projection)
-      ExampleParquetInputFormat.setExampleReadSchema(job, projection)
+      TensorflowExampleParquetInputFormat.setRequestedProjection(job, projection)
+      TensorflowExampleParquetInputFormat.setExampleReadSchema(job, projection)
     }
 
     val source = HadoopFormatIO
@@ -242,7 +242,7 @@ final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadPa
     val filePattern = ScioUtil.filePattern(path, params.suffix)
     val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
-      val reader: ParquetReader[Example] = ExampleParquetReader
+      val reader: ParquetReader[Example] = TensorflowExampleParquetReader
         .builder(BeamInputFile.of(metadata.resourceId()))
         .withConf(Option(params.conf).getOrElse(new Configuration()))
         .build()
