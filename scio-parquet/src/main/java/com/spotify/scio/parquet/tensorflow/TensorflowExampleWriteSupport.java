@@ -98,14 +98,17 @@ public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
   private void writeRecordFields(GroupType schema, Schema tfSchema, Example example) {
     List<Type> fields = schema.getFields();
     List<Feature> mdFeatures = tfSchema.getFeatureList();
+    Map<String, org.tensorflow.proto.example.Feature> features =
+        example.getFeatures().getFeatureMap();
+
     for (int index = 0; index < mdFeatures.size(); index++) {
       Feature mdFeature = mdFeatures.get(index);
       FeatureType type = mdFeature.getType();
+
+      // if feature is missing in the example, return an empty tensor
       org.tensorflow.proto.example.Feature value =
-          example
-              .getFeatures()
-              .getFeatureOrDefault(
-                  mdFeature.getName(), org.tensorflow.proto.example.Feature.getDefaultInstance());
+          features.getOrDefault(
+              mdFeature.getName(), org.tensorflow.proto.example.Feature.getDefaultInstance());
       Type fieldType = fields.get(index);
       String fieldName = fieldType.getName();
       switch (type) {
@@ -133,6 +136,8 @@ public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
 
   private <T> void writeField(String name, int index, List<T> values, Consumer<T> add) {
     if (!values.isEmpty()) {
+      // we won't be able to disambiguate missing feature from empty tensor
+      // as parquet does not allow empty fields
       recordConsumer.startField(name, index);
       values.forEach(add);
       recordConsumer.endField(name, index);

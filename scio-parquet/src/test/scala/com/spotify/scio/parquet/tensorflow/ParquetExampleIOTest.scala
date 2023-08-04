@@ -35,31 +35,35 @@ import scala.jdk.CollectionConverters._
 
 object ParquetExampleHelper {
 
+  private val repetition = Seq(
+    "required",
+    "optional",
+    "repeated",
+    "empty"
+  )
+
   final case class LegacyExampleParquet(
-    int64_req_1: Long,
-    float_req_1: Float,
-    bytes_req_1: Array[Byte],
-    int64_opt_1: Option[Long],
-    float_opt_1: Option[Float],
-    bytes_opt_1: Option[Array[Byte]],
-    int64_rep_1: List[Long],
-    float_rep_1: List[Float],
-    bytes_rep_1: List[Array[Byte]]
+    int64_required: Long,
+    int64_optional: Option[Long],
+    int64_repeated: List[Long],
+    int64_empty: List[Long],
+    float_required: Float,
+    float_optional: Option[Float],
+    float_repeated: List[Float],
+    float_empty: List[Float],
+    bytes_required: String,
+    bytes_optional: Option[String],
+    bytes_repeated: List[String],
+    bytes_empty: List[String]
   )
   implicit val ptLegacyExampleParquet: ParquetType[LegacyExampleParquet] =
     ParquetType[LegacyExampleParquet]
   
   // format: off
   private[tensorflow] val schema = tfmd.Schema.newBuilder()
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"int64_req_$i").setType(tfmd.FeatureType.INT).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"float_req_$i").setType(tfmd.FeatureType.FLOAT).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"bytes_req_$i").setType(tfmd.FeatureType.BYTES).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"int64_opt_$i").setType(tfmd.FeatureType.INT).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"float_opt_$i").setType(tfmd.FeatureType.FLOAT).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"bytes_opt_$i").setType(tfmd.FeatureType.BYTES).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"int64_rep_$i").setType(tfmd.FeatureType.INT).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"float_rep_$i").setType(tfmd.FeatureType.FLOAT).build()).asJava)
-    .addAllFeature((1 to 5).map(i => tfmd.Feature.newBuilder().setName(s"bytes_rep_$i").setType(tfmd.FeatureType.BYTES).build()).asJava)
+    .addAllFeature(repetition.map(r => tfmd.Feature.newBuilder().setName(s"int64_$r").setType(tfmd.FeatureType.INT).build()).asJava)
+    .addAllFeature(repetition.map(r => tfmd.Feature.newBuilder().setName(s"float_$r").setType(tfmd.FeatureType.FLOAT).build()).asJava)
+    .addAllFeature(repetition.map(r => tfmd.Feature.newBuilder().setName(s"bytes_$r").setType(tfmd.FeatureType.BYTES).build()).asJava)
     .build()
   // format: on
 
@@ -85,18 +89,44 @@ object ParquetExampleHelper {
 
   // format: off
   private[tensorflow] def newExample(i: Int): Example = {
+    val long = i.toLong
+    val float = i.toFloat
+    val str = i.toString
+
+    // parquet limitation. At read time, we can't disambiguate
+    // empty tensor from missing feature (both considered as missing)
     val features = Features.newBuilder()
-      .putAllFeature((1 to 5).map(i => s"int64_req_$i" -> longs(i.toLong)).toMap.asJava)
-      .putAllFeature((1 to 5).map(i => s"float_req_$i" -> floats(i.toFloat)).toMap.asJava)
-      .putAllFeature((1 to 5).map(i => s"bytes_req_$i" -> bytes(s"bytes$i")).toMap.asJava)
-      .putAllFeature((1 to 5).filter(_ % 2 == 0).map(i => s"int64_opt_$i" -> longs(i.toLong)).toMap.asJava)
-      .putAllFeature((1 to 5).filter(_ % 2 == 0).map(i => s"float_opt_$i" -> floats(i.toFloat)).toMap.asJava)
-      .putAllFeature((1 to 5).filter(_ % 2 == 0).map(i => s"bytes_opt_$i" -> bytes(s"bytes$i")).toMap.asJava)
-      .putAllFeature((1 to 5).map(i => s"int64_rep_$i" -> longs(Seq.fill(5)(i.toLong): _*)).toMap.asJava)
-      .putAllFeature((1 to 5).map(i => s"float_rep_$i" -> floats(Seq.fill(5)(i.toFloat): _*)).toMap.asJava)
-      .putAllFeature((1 to 5).map(i => s"bytes_rep_$i" -> bytes(Seq.fill(5)(s"bytes$i"): _*)).toMap.asJava)
+      .putFeature("int64_required", longs(long))
+      .putFeature("int64_repeated", longs(long, long, long))
+      // .putFeature("int64_empty", longs())
+      .putFeature("float_required", floats(float))
+      .putFeature("float_repeated", floats(float, float, float))
+      // .putFeature("float_empty", floats())
+      .putFeature("bytes_required", bytes(str))
+      .putFeature("bytes_repeated", bytes(str, str, str))
+      // .putFeature("bytes_empty", bytes())
       .build()
     Example.newBuilder().setFeatures(features).build()
+  }
+
+  private[tensorflow] def newLegacy(i: Int): LegacyExampleParquet = {
+    val long = i.toLong
+    val float = i.toFloat
+    val str = i.toString
+    LegacyExampleParquet(
+      int64_required = long,
+      int64_optional = None,
+      int64_repeated = List(long, long, long),
+      int64_empty = List.empty,
+      float_required = float,
+      float_optional = None,
+      float_repeated = List(float, float, float),
+      float_empty = List.empty,
+      bytes_required = str,
+      bytes_optional = None,
+      bytes_repeated = List(str, str, str),
+      bytes_empty = List.empty
+    )
   }
   // format: on
 }
@@ -141,28 +171,12 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
 
   override protected def beforeAll(): Unit = {
     val sc = ScioContext()
-    val coll = sc.parallelize(examples)
-    coll.saveAsParquetExampleFile(currentDir.getAbsolutePath, schema)
+    val coll = sc.parallelize(1 to 10)
+    coll.map(newExample).saveAsParquetExampleFile(currentDir.getAbsolutePath, schema)
 
     // legacy: old saveAsParquetExampleFile schema included field repetition
     // make sure we can still read parquet file with non-repeated fields
-    coll
-      .map { e =>
-        val fs = e.getFeatures.getFeatureMap.asScala
-        LegacyExampleParquet(
-          int64_req_1 = fs("int64_req_1").getInt64List.getValueList.asScala.head,
-          float_req_1 = fs("float_req_1").getFloatList.getValueList.asScala.head,
-          bytes_req_1 = fs("bytes_req_1").getBytesList.getValueList.asScala.head.toByteArray,
-          int64_opt_1 = None,
-          float_opt_1 = None,
-          bytes_opt_1 = None,
-          int64_rep_1 = fs("int64_rep_1").getInt64List.getValueList.asScala.toList.map(Long.unbox),
-          float_rep_1 = fs("float_rep_1").getFloatList.getValueList.asScala.toList.map(Float.unbox),
-          bytes_rep_1 =
-            fs("bytes_rep_1").getBytesList.getValueList.asScala.toList.map(_.toByteArray)
-        )
-      }
-      .saveAsTypedParquetFile(legacyDir.getAbsolutePath)
+    coll.map(newLegacy).saveAsTypedParquetFile(legacyDir.getAbsolutePath)
     sc.run()
   }
 
@@ -171,19 +185,13 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
   // format: off
   private val projection = tfmd.Schema
     .newBuilder()
-    .addFeature(tfmd.Feature.newBuilder().setName("int64_req_1").setType(tfmd.FeatureType.INT).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("float_req_1").setType(tfmd.FeatureType.FLOAT).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("bytes_req_1").setType(tfmd.FeatureType.BYTES).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("int64_opt_1").setType(tfmd.FeatureType.INT).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("float_opt_1").setType(tfmd.FeatureType.FLOAT).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("bytes_opt_1").setType(tfmd.FeatureType.BYTES).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("int64_rep_1").setType(tfmd.FeatureType.INT).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("float_rep_1").setType(tfmd.FeatureType.FLOAT).build())
-    .addFeature(tfmd.Feature.newBuilder().setName("bytes_rep_1").setType(tfmd.FeatureType.BYTES).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("int64_required").setType(tfmd.FeatureType.INT).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("float_required").setType(tfmd.FeatureType.FLOAT).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("bytes_required").setType(tfmd.FeatureType.BYTES).build())
     .build()
   // format: on
 
-  private def projectFields(projection: tfmd.Schema): Example => Example = (e: Example) => {
+  private def projectFields(projection: tfmd.Schema): Example => Example = { (e: Example) =>
     val m = e.getFeatures.getFeatureMap.asScala
     Example
       .newBuilder()
@@ -230,8 +238,7 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
       path = legacyDir.getAbsolutePath,
       suffix = ".parquet"
     )
-    // we have only stored index 1 fields for legacy tests (same as projection)
-    data should containInAnyOrder(examples.map(projectFields(projection)))
+    data should containInAnyOrder(examples)
     sc.run()
     ()
   }
