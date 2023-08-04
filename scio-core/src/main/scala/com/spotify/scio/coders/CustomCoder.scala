@@ -19,10 +19,10 @@ package com.spotify.scio.coders
 
 import java.io.{InputStream, OutputStream}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder, StructuredCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
-import java.util.Objects
+import java.util.{List => JList, Objects}
 import scala.jdk.CollectionConverters._
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,7 +120,9 @@ final private[scio] class RecordCoder[T](
   val cs: IndexedSeq[(String, BCoder[Any])],
   construct: Seq[Any] => T,
   destruct: T => IndexedSeq[Any]
-) extends CustomCoder[T] {
+) extends StructuredCoder[T] {
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] = cs.map(_._2).asJava
 
   override def toString: String = {
     val body = cs.map { case (l, c) => s"$l -> $c" }.mkString(", ")

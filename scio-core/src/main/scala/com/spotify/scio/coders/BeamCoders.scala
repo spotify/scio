@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import com.spotify.scio.coders.CoderMaterializer.CoderOptions
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.coders.{Coder => BCoder, NullableCoder, StructuredCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, NullableCoder}
 import org.apache.beam.sdk.values.PCollection
 
 import scala.annotation.tailrec
@@ -49,8 +49,7 @@ private[scio] object BeamCoders {
     val options = CoderOptions(coll.context.options)
     val coder = coll.internal.getCoder
     Some(unwrap(options, coder))
-      .collect { case c: StructuredCoder[_] => c }
-      .map(_.getComponents.asScala.toList)
+      .map(_.getCoderArguments.asScala.toList)
       .collect { case (c1: BCoder[K]) :: (c2: BCoder[V]) :: Nil =>
         val k = Coder.beam(unwrap(options, c1))
         val v = Coder.beam(unwrap(options, c2))
@@ -67,8 +66,7 @@ private[scio] object BeamCoders {
     val options = CoderOptions(coll.context.options)
     val coder = coll.internal.getCoder
     Some(unwrap(options, coder))
-      .collect { case c: StructuredCoder[_] => c }
-      .map(_.getComponents.asScala.toList)
+      .map(_.getCoderArguments.asScala.toList)
       .collect { case (c1: BCoder[A]) :: (c2: BCoder[B]) :: (c3: BCoder[C]) :: Nil =>
         val a = Coder.beam(unwrap(options, c1))
         val b = Coder.beam(unwrap(options, c2))
@@ -88,8 +86,7 @@ private[scio] object BeamCoders {
     val options = CoderOptions(coll.context.options)
     val coder = coll.internal.getCoder
     Some(unwrap(options, coder))
-      .collect { case c: StructuredCoder[_] => c }
-      .map(_.getComponents.asScala.toList)
+      .map(_.getCoderArguments.asScala.toList)
       .collect {
         case (c1: BCoder[A]) :: (c2: BCoder[B]) :: (c3: BCoder[C]) :: (c4: BCoder[D]) :: Nil =>
           val a = Coder.beam(unwrap(options, c1))
