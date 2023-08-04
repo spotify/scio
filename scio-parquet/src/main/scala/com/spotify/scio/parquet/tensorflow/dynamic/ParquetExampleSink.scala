@@ -16,7 +16,7 @@
 
 package com.spotify.scio.parquet.tensorflow.dynamic
 
-import com.spotify.scio.parquet.tensorflow.TensorflowExampleParquetWriter
+import com.spotify.parquet.tensorflow.TensorflowExampleParquetWriter
 import com.spotify.scio.parquet.{BeamOutputFile, WriterUtils}
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration

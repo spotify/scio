@@ -17,6 +17,7 @@
 
 package com.spotify.scio.parquet.tensorflow;
 
+import com.spotify.parquet.tensorflow.TensorflowExampleParquetWriter;
 import com.spotify.scio.parquet.BeamOutputFile;
 import com.spotify.scio.parquet.WriterUtils;
 import java.nio.channels.WritableByteChannel;

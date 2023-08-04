@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.spotify.scio.parquet.tensorflow;
+package com.spotify.parquet.tensorflow;
 
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;

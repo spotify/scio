@@ -17,6 +17,12 @@
 
 package com.spotify.scio.parquet.tensorflow
 
+import com.spotify.parquet.tensorflow.{
+  TensorflowExampleParquetInputFormat,
+  TensorflowExampleParquetReader,
+  TensorflowExampleReadSupport
+}
+
 import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}

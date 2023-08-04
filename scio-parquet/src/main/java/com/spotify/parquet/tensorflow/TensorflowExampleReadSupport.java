@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.spotify.scio.parquet.tensorflow;
+package com.spotify.parquet.tensorflow;
 
 import com.google.protobuf.TextFormat;
 import java.util.LinkedHashMap;

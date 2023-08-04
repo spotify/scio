@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.spotify.scio.parquet.tensorflow;
+package com.spotify.parquet.tensorflow;
 
 import org.apache.parquet.io.api.GroupConverter;
 import org.apache.parquet.io.api.RecordMaterializer;
