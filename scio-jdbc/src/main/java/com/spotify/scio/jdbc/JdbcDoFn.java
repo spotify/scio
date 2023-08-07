@@ -72,9 +72,7 @@ public abstract class JdbcDoFn<A, B> extends DoFn<A, B> {
   }
 
   @ProcessElement
-  public void processElement(
-      @Element A input,
-      OutputReceiver<B> out) {
+  public void processElement(@Element A input, OutputReceiver<B> out) {
     B result = lookup(connection, input);
     out.output(result);
   }
