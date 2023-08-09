@@ -18,6 +18,7 @@
 package com.spotify.scio.jdbc
 
 import com.spotify.scio.testing.PipelineSpec
+import org.apache.commons.lang3.SerializationUtils
 
 import java.io.PrintWriter
 import java.sql.Connection
@@ -34,6 +35,16 @@ class JdbcDoFnTest extends PipelineSpec {
 
     val output = runWithData(1 to 10)(_.parDo(doFn))
     output should contain theSameElementsAs (1 to 10).map(_.toString)
+  }
+
+  "JdbcDoFn" should "be serializable" in {
+    val doFn = new JdbcDoFn[Int, String](_ => new DataSourceMock()) {
+      override def lookup(connection: Connection, input: Int): String = ???
+    }
+    doFn.setup()
+    doFn.startBundle()
+
+    SerializationUtils.serialize(doFn)
   }
 }
 
