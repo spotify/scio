@@ -17,60 +17,51 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro._
 import com.spotify.scio.parquet.ParquetConfiguration
-import com.spotify.scio.parquet.avro._
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.commons.io.FileUtils
-import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.SerializableUtils
+import org.apache.commons.io.FileUtils
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.io.api.Binary
 import org.scalatest.BeforeAndAfterAll
 
 import java.io.File
-import java.nio.file.{Files, Paths}
+import java.nio.file.Files
 import scala.jdk.CollectionConverters._
 
 case class Record(strField: String)
 
 class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
   private val testDir = Files.createTempDirectory("scio-test").toFile
+
+  // Multiple row-groups
+  private val multiRowGroupConf = ParquetConfiguration.of("parquet.block.size" -> 16)
   private val testMultiDir = new File(testDir, "multi")
+  // Single row-group
+  private val singleRowGroupConf = ParquetConfiguration.of("parquet.block.size" -> 1073741824)
   private val testSingleDir = new File(testDir, "single")
+
   private val typedRecords = (1 to 250).map(i => Record(i.toString)).toList
-  private val avroRecords = (251 to 500).map(i =>
-    Account
-      .newBuilder()
-      .setId(i)
-      .setType(i.toString)
-      .setName(i.toString)
-      .setAmount(i.toDouble)
-      .build
-  )
 
   override def beforeAll(): Unit = {
-    // Multiple row-groups
-    val multiRowGroupConf = ParquetConfiguration.of("parquet.block.size" -> 16)
-    // Single row-group
-    val singleRowGroupConf = ParquetConfiguration.of("parquet.block.size" -> 1073741824)
-
     val sc = ScioContext()
     val typedData = sc.parallelize(typedRecords)
-    val avroData = sc.parallelize(avroRecords)
-
-    typedData.saveAsTypedParquetFile(s"$testMultiDir/typed", conf = multiRowGroupConf)
-    typedData.saveAsTypedParquetFile(s"$testSingleDir/typed", conf = singleRowGroupConf)
-
-    avroData.saveAsParquetAvroFile(s"$testMultiDir/avro", conf = multiRowGroupConf)
-    avroData.saveAsParquetAvroFile(s"$testSingleDir/avro", conf = singleRowGroupConf)
-
+    typedData.saveAsTypedParquetFile(testMultiDir.getAbsolutePath, conf = multiRowGroupConf)
+    typedData.saveAsTypedParquetFile(testSingleDir.getAbsolutePath, conf = singleRowGroupConf)
     sc.run()
   }
 
   override def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
+
+  private def listFiles(dir: File): Seq[String] =
+    Files
+      .list(dir.toPath)
+      .iterator()
+      .asScala
+      .map(_.toFile.toPath.toString)
+      .toSeq
 
   "Parquet ReadFn" should "read at file-level granularity for files with multiple row groups" in {
     val granularityConf = ParquetConfiguration.of(
@@ -79,13 +70,11 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     )
 
     val sc = ScioContext()
+    val result = sc
+      .parallelize(listFiles(testMultiDir))
+      .readFiles(ParquetRead.readTypedFiles[Record](conf = granularityConf))
 
-    sc
-      .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/typed"))
-      .readFiles(
-        ParquetRead.readTyped[Record](conf = granularityConf)
-      ) should containInAnyOrder(typedRecords)
-
+    result should containInAnyOrder(typedRecords)
     sc.run()
   }
 
@@ -96,13 +85,11 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     )
 
     val sc = ScioContext()
+    val result = sc
+      .parallelize(listFiles(testMultiDir))
+      .readFiles(ParquetRead.readTypedFiles[Record](conf = granularityConf))
 
-    sc
-      .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/typed"))
-      .readFiles(
-        ParquetRead.readTyped[Record](conf = granularityConf)
-      ) should containInAnyOrder(typedRecords)
-
+    result should containInAnyOrder(typedRecords)
     sc.run()
   }
 
@@ -113,13 +100,13 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     )
 
     val sc = ScioContext()
-    sc
+    val result = sc
       .typedParquetFile[Record](
-        path = s"${testMultiDir.getAbsolutePath}/typed",
+        path = testMultiDir.getAbsolutePath,
         conf = granularityConf,
         suffix = ".parquet"
-      ) should containInAnyOrder(typedRecords)
-
+      )
+    result should containInAnyOrder(typedRecords)
     sc.run()
   }
 
@@ -130,186 +117,48 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     )
 
     val sc = ScioContext()
-    sc
+    val result = sc
       .typedParquetFile[Record](
-        path = s"${testSingleDir.getAbsolutePath}/typed",
+        path = testSingleDir.getAbsolutePath,
         conf = granularityConf,
         suffix = ".parquet"
-      ) should containInAnyOrder(typedRecords)
-
+      )
+    result should containInAnyOrder(typedRecords)
     sc.run()
   }
 
   "readTyped" should "work with a predicate" in {
     val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/typed"))
+    val result = sc
+      .parallelize(listFiles(testSingleDir))
       .readFiles(
-        ParquetRead.readTyped[Record](
+        ParquetRead.readTypedFiles[Record](
           FilterApi.eq(FilterApi.binaryColumn("strField"), Binary.fromString("1"))
         )
-      ) should containSingleValue(Record("1"))
-
+      )
+    result should containSingleValue(Record("1"))
     sc.run()
   }
 
-  it should "work with a predicate and projection fn" in {
+  it should "work with a predicate and projection" in {
     val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/typed"))
+    val result = sc
+      .parallelize(listFiles(testSingleDir))
       .readFiles(
-        ParquetRead.readTyped(
-          (r: Record) => r.strField,
+        ParquetRead.readTypedFiles[Record](
           FilterApi.eq(FilterApi.binaryColumn("strField"), Binary.fromString("1")),
           ParquetConfiguration.empty()
         )
-      ) should containSingleValue("1")
-
+      )
+    result should containSingleValue(Record("1"))
     sc.run()
   }
 
   it should "be serializable" in {
     SerializableUtils.ensureSerializable(
-      ParquetRead.readTyped(
-        (r: Record) => r.strField,
+      ParquetRead.readTypedFiles[Record](
         FilterApi.eq(FilterApi.binaryColumn("strField"), Binary.fromString("1")),
         ParquetConfiguration.empty()
-      )
-    )
-  }
-
-  "readAvroGenericRecordFiles" should "work with a projection but no projectionFn" in {
-    val projection = Projection[Account](_.getId)
-    val expectedOut: Seq[GenericRecord] = (251 to 300).map { i =>
-      new GenericRecordBuilder(projection).set("id", i).build()
-    }
-
-    implicit val coder = avroGenericRecordCoder(projection)
-    val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
-      .readFiles(
-        ParquetRead.readAvroGenericRecordFiles(
-          projection,
-          predicate = Predicate[Account](_.getId <= 300)
-        )
-      ) should containInAnyOrder(expectedOut)
-
-    sc.run()
-  }
-
-  it should "work with a projection and projectionFn" in {
-    val projection = Projection[Account](_.getId)
-    val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
-      .readFiles(
-        ParquetRead.readAvroGenericRecordFiles(
-          projection,
-          _.get("id").toString.toInt,
-          predicate = Predicate[Account](_.getId <= 300)
-        )
-      ) should containInAnyOrder(251 to 300)
-
-    sc.run()
-  }
-
-  it should "work with a projection and projectionFn on files with multiple row groups" in {
-    val projection = Projection[Account](_.getId)
-    val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/avro"))
-      .readFiles(
-        ParquetRead.readAvroGenericRecordFiles(
-          projection,
-          _.get("id").toString.toInt,
-          predicate = Predicate[Account](_.getId <= 300)
-        )
-      ) should containInAnyOrder(251 to 300)
-
-    sc.run()
-  }
-
-  it should "be serializable" in {
-    SerializableUtils.ensureSerializable(
-      ParquetRead.readAvroGenericRecordFiles(
-        Projection[Account](_.getId),
-        _.get("int_field").toString.toInt,
-        predicate = Predicate[Account](_.getId <= 300)
-      )
-    )
-  }
-
-  "readAvro" should "work without a projection or a projectionFn" in {
-    val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
-      .readFiles(
-        ParquetRead.readAvro[Account](
-          predicate = Predicate[Account](_.getId == 300)
-        )
-      ) should containSingleValue(avroRecords.find(_.getId == 300).get)
-    sc.run()
-  }
-
-  it should "work with a projection but not a projectionFn as long as excluded fields are nullable" in {
-    val projection = Projection[Account](_.getId, _.getType, _.getAmount)
-
-    val sc = ScioContext()
-    val output = sc
-      .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
-      .readFiles(
-        ParquetRead.readAvro[Account](
-          projection,
-          Predicate[Account](_.getId == 300)
-        )
-      )
-
-    output should haveSize(1)
-    output should satisfy[Account](
-      _.forall(a =>
-        a.getId == 300 && a.getName == null && a.getType == "300" && a.getAmount == 300.0
-      )
-    )
-    sc.run()
-  }
-
-  it should "work with a projection and a projectionFn" in {
-    val projection = Projection[Account](_.getId)
-    val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
-      .readFiles(
-        ParquetRead.readAvro(
-          projection,
-          (a: Account) => a.getId.toInt,
-          Predicate[Account](_.getId == 300)
-        )
-      ) should containSingleValue(300)
-    sc.run()
-  }
-
-  it should "work with a projection and a projectionFn on files with multiple row groups" in {
-    val projection = Projection[Account](_.getId)
-    val sc = ScioContext()
-    sc
-      .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/avro"))
-      .readFiles(
-        ParquetRead.readAvro(
-          projection,
-          (tr: Account) => tr.getId.toInt,
-          Predicate[Account](_.getId == 300)
-        )
-      ) should containSingleValue(300)
-    sc.run()
-  }
-
-  it should "be serializable" in {
-    SerializableUtils.ensureSerializable(
-      ParquetRead.readAvro(
-        Projection[Account](_.getId),
-        (tr: Account) => tr.getId.toInt,
-        Predicate[Account](_.getId == 300)
       )
     )
   }
@@ -343,12 +192,4 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       PipelineOptionsFactory.fromArgs().create()
     ) shouldBe true
   }
-
-  private def listFiles(dir: String): Seq[String] =
-    Files
-      .list(Paths.get(dir))
-      .iterator()
-      .asScala
-      .map(_.toFile.toPath.toString)
-      .toSeq
 }

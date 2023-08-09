@@ -47,11 +47,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     self.read(ObjectFileIO[T](path))(ObjectFileIO.ReadParam(suffix))
 
   def avroFile(path: String, schema: Schema): SCollection[GenericRecord] =
-    self.read(GenericRecordIO(path, schema))(AvroIO.ReadParam())
+    avroFile(path, schema, GenericRecordIO.ReadParam.DefaultSuffix)
 
   // overloaded API. We can't use default params
   def avroFile(path: String, schema: Schema, suffix: String): SCollection[GenericRecord] =
-    self.read(GenericRecordIO(path, schema))(AvroIO.ReadParam(suffix))
+    self.read(GenericRecordIO(path, schema))(GenericRecordIO.ReadParam(suffix))
 
   /**
    * Get an SCollection of type [[T]] for data stored in Avro format after applying parseFn to map a
@@ -79,26 +79,26 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   @experimental
   def parseAvroFile[T: Coder](
     path: String,
-    suffix: String = AvroIO.ReadParam.DefaultSuffix
+    suffix: String = GenericRecordParseIO.ReadParam.DefaultSuffix
   )(
     parseFn: GenericRecord => T
   ): SCollection[T] =
-    self.read(GenericRecordParseIO[T](path, parseFn))(AvroIO.ReadParam(suffix))
+    self.read(GenericRecordParseIO[T](path, parseFn))(GenericRecordParseIO.ReadParam(suffix))
 
   /**
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
    * Avro file.
    */
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String): SCollection[T] =
-    self.read(SpecificRecordIO[T](path))(AvroIO.ReadParam())
+  def avroFile[T <: SpecificRecord: ClassTag](path: String): SCollection[T] =
+    avroFile(path, SpecificRecordIO.ReadParam.DefaultSuffix)
 
   // overloaded API. We can't use default params
   /**
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an
    * Avro file.
    */
-  def avroFile[T <: SpecificRecord: ClassTag: Coder](path: String, suffix: String): SCollection[T] =
-    self.read(SpecificRecordIO[T](path))(AvroIO.ReadParam(suffix))
+  def avroFile[T <: SpecificRecord: ClassTag](path: String, suffix: String): SCollection[T] =
+    self.read(SpecificRecordIO[T](path))(SpecificRecordIO.ReadParam(suffix))
 
   /**
    * Get a typed SCollection from an Avro schema.
@@ -110,9 +110,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def typedAvroFile[T <: HasAvroAnnotation: TypeTag: Coder](
     path: String,
-    suffix: String = AvroIO.ReadParam.DefaultSuffix
+    suffix: String = AvroTypedIO.ReadParam.DefaultSuffix
   ): SCollection[T] =
-    self.read(AvroTyped.AvroIO[T](path))(AvroIO.ReadParam(suffix))
+    self.read(AvroTypedIO[T](path))(AvroTypedIO.ReadParam(suffix))
 
   /**
    * Get an SCollection for a Protobuf file.

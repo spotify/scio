@@ -112,22 +112,7 @@ public class ParquetAvroFileBasedSink<T> extends FileBasedSink<T, Void, T> {
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
       Configuration configuration = conf.get();
-
-      AvroParquetWriter.Builder<T> builder =
-          AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
-
-      // Workaround for PARQUET-2265
-      if (configuration.getClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, null) != null) {
-        Class<? extends AvroDataSupplier> dataModelSupplier =
-            configuration.getClass(
-                AvroWriteSupport.AVRO_DATA_SUPPLIER,
-                SpecificDataSupplier.class,
-                AvroDataSupplier.class);
-        builder =
-            builder.withDataModel(
-                ReflectionUtils.newInstance(dataModelSupplier, configuration).get());
-      }
-
+      AvroParquetWriter.Builder<T> builder = AvroParquetWriter.<T>builder(outputFile).withSchema(schema);
       writer = WriterUtils.build(builder, configuration, compression);
     }
 

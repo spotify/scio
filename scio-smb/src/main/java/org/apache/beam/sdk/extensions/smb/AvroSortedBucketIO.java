@@ -29,6 +29,7 @@ import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
@@ -167,12 +168,34 @@ public class AvroSortedBucketIO {
   }
 
   /** Returns a new {@link TransformOutput} for Avro specific records. */
+  public static <K1, T extends SpecificRecord> TransformOutput<K1, Void, T> transformOutput(
+      Class<K1> keyClassPrimary, String keyFieldPrimary, AvroDatumFactory<T> datumFactory) {
+    return AvroSortedBucketIO.transformOutput(
+        keyClassPrimary, keyFieldPrimary, null, null, datumFactory);
+  }
+
+  /** Returns a new {@link TransformOutput} for Avro specific records. */
   public static <K1, K2, T extends SpecificRecord> TransformOutput<K1, K2, T> transformOutput(
       Class<K1> keyClassPrimary,
       String keyFieldPrimary,
       Class<K2> keyClassSecondary,
       String keyFieldSecondary,
       Class<T> recordClass) {
+    return transformOutput(
+        keyClassPrimary,
+        keyFieldPrimary,
+        keyClassSecondary,
+        keyFieldSecondary,
+        AvroDatumFactory.of(recordClass));
+  }
+
+  /** Returns a new {@link TransformOutput} for Avro specific records. */
+  public static <K1, K2, T extends SpecificRecord> TransformOutput<K1, K2, T> transformOutput(
+      Class<K1> keyClassPrimary,
+      String keyFieldPrimary,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      AvroDatumFactory<T> datumFactory) {
     return new AutoValue_AvroSortedBucketIO_TransformOutput.Builder<K1, K2, T>()
         .setFilenameSuffix(DEFAULT_SUFFIX)
         .setFilenamePrefix(SortedBucketIO.DEFAULT_FILENAME_PREFIX)
@@ -181,7 +204,7 @@ public class AvroSortedBucketIO {
         .setKeyClassSecondary(keyClassSecondary)
         .setKeyFieldPrimary(keyFieldPrimary)
         .setKeyFieldSecondary(keyFieldSecondary)
-        .setRecordClass(recordClass)
+        .setDatumFactory(datumFactory)
         .build();
   }
 
@@ -448,11 +471,10 @@ public class AvroSortedBucketIO {
     @Nullable
     abstract String getKeyFieldSecondary();
 
-    @Nullable
-    abstract Schema getSchema();
+    abstract AvroDatumFactory<T> getDatumFactory();
 
     @Nullable
-    abstract Class<T> getRecordClass();
+    abstract Schema getSchema();
 
     abstract CodecFactory getCodec();
 
@@ -477,9 +499,9 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K1, K2, T> setKeyFieldSecondary(String keyFieldPrimary);
 
-      abstract Builder<K1, K2, T> setSchema(Schema schema);
+      abstract Builder<K1, K2, T> setDatumFactory(AvroDatumFactory<T> datumFactory);
 
-      abstract Builder<K1, K2, T> setRecordClass(Class<T> recordClass);
+      abstract Builder<K1, K2, T> setSchema(Schema schema);
 
       abstract Builder<K1, K2, T> setCodec(CodecFactory codec);
 
@@ -518,10 +540,7 @@ public class AvroSortedBucketIO {
     @SuppressWarnings("unchecked")
     @Override
     FileOperations<T> getFileOperations() {
-      return getRecordClass() == null
-          ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema(), getCodec())
-          : (AvroFileOperations<T>)
-              AvroFileOperations.of((Class<SpecificRecord>) getRecordClass(), getCodec());
+      return AvroFileOperations.of(getDatumFactory(), getCodec());
     }
 
     @Override
@@ -531,9 +550,9 @@ public class AvroSortedBucketIO {
       final Class<K1> keyClassPrimary = getKeyClassPrimary();
       final Class<K2> keyClassSecondary = getKeyClassSecondary();
       final String filenamePrefix = getFilenamePrefix();
-      final Class<T> recordClass = getRecordClass();
+      final Class<T> recordClass = getDatumFactory().getType();
 
-      if (recordClass == null) {
+      if (recordClass == GenericRecord.class) {
         final SerializableSchemaSupplier schemaSupplier =
             new SerializableSchemaSupplier(getSchema());
 

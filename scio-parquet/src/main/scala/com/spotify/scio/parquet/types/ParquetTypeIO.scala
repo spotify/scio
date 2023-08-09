@@ -79,8 +79,7 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
       ParquetRead.read(
         ReadSupportFactory.typed,
         new SerializableConfiguration(conf),
-        filePattern,
-        identity[T]
+        filePattern
       )
     ).setCoder(coder)
   }

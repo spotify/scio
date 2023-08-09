@@ -300,7 +300,7 @@ object BigQueryTypedTable {
 
   private[this] def genericRecord(
     table: Table
-  )(implicit c: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] =
+  )(implicit coder: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] =
     BigQueryTypedTable(
       _.getRecord(),
       identity[GenericRecord],

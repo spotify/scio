@@ -24,7 +24,3 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.9")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.6")
 
 libraryDependencies += "org.apache.avro" % "avro-compiler" % "1.8.2"
-
-// force usage of scala-xml v2
-// See https://github.com/scoverage/sbt-scoverage/issues/439
-dependencyOverrides += "org.scala-lang.modules" %% "scala-xml" % "2.1.0"

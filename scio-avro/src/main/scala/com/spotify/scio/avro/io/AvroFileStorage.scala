@@ -17,12 +17,15 @@
 
 package com.spotify.scio.avro.io
 
+import com.spotify.scio.avro.{GenericRecordDatumFactory, SpecificRecordDatumFactory}
 import com.spotify.scio.io.FileStorage
 import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord, IndexedRecord}
 import org.apache.avro.file.{DataFileReader, SeekableInput}
-import org.apache.avro.generic.GenericDatumReader
-import org.apache.avro.specific.SpecificDatumReader
+import org.apache.avro.specific.{SpecificData, SpecificDatumReader, SpecificRecord}
 import com.spotify.scio.util.ScioUtil
+import org.apache.avro.io.DatumReader
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory.SpecificDatumFactory
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 
@@ -64,17 +67,20 @@ final private[scio] class AvroFileStorage(path: String, suffix: String) {
       override def close(): Unit = in.close()
     }
 
-  def avroFile[T](schema: Schema): Iterator[T] =
-    avroFile(new GenericDatumReader[T](schema))
+  def avroFile(schema: Schema): Iterator[GenericRecord] =
+    avroFile(GenericRecordDatumFactory(schema, schema))
 
-  def avroFile[T: ClassTag](): Iterator[T] =
-    avroFile(new SpecificDatumReader[T](ScioUtil.classOf[T]))
+  def avroFile[T <: SpecificRecord: ClassTag](): Iterator[T] = {
+    val recordClass = ScioUtil.classOf[T]
+    val factory = new SpecificRecordDatumFactory[T](recordClass)
+    val schema = SpecificData.get().getSchema(recordClass)
+    avroFile(factory(schema, schema))
+  }
 
-  def avroFile[T](reader: GenericDatumReader[T]): Iterator[T] =
+  def avroFile[T <: IndexedRecord](reader: DatumReader[T]): Iterator[T] =
     FileStorage
       .listFiles(path, suffix)
       .map(m => DataFileReader.openReader(getAvroSeekableInput(m), reader))
       .map(_.iterator().asScala)
       .reduce(_ ++ _)
-
 }

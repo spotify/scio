@@ -64,7 +64,7 @@
         {"name": "double_field", "type": ["null", "double"], "default": null},
         {"name": "boolean_field", "type": ["null", "boolean"], "default": null},
         {"name": "string_field", "type": ["null", "string"], "default": null},
-        {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": null}
+        {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": []}
     ]
 },
 {
@@ -73,13 +73,9 @@
     "type": "record",
     "doc": "Record for testing string decoding",
     "fields": [
-        {"name": "strField", "type": ["null", "string"]},
-        {"name": "mapField", "type": [
-            "null", {"type": "map", "values": "string"}
-        ], "default": null},
-        {"name": "arrayField", "type": [
-            "null", {"type": "array", "items": "string"}
-        ], "default": null}
+        {"name": "strField", "type": "string", "default": ""},
+        {"name": "mapField", "type": {"type": "map", "values": "string"}, "default": {}},
+        {"name": "arrayField", "type": {"type": "array", "items": "string"}, "default": []}
     ]
 },
 {

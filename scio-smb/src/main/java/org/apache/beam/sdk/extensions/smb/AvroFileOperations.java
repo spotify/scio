@@ -25,13 +25,10 @@ import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.reflect.ReflectData;
-import org.apache.avro.reflect.ReflectDatumReader;
-import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory;
@@ -46,7 +43,7 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
 
 /** {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Avro files. */
 public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
-  private final Class<ValueT> recordClass;
+  private final AvroDatumFactory<ValueT> datumFactory;
   private final SerializableSchemaSupplier schemaSupplier;
   private final PatchedSerializableAvroCodecFactory codec;
   private final Map<String, Object> metadata;
@@ -56,26 +53,29 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   }
 
   private AvroFileOperations(
-      Class<ValueT> recordClass, Schema schema, CodecFactory codec, Map<String, Object> metadata) {
+      AvroDatumFactory<ValueT> datumFactory,
+      Schema schema,
+      CodecFactory codec,
+      Map<String, Object> metadata) {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY); // Avro has its own compression via codec
-    this.recordClass = recordClass;
+    this.datumFactory = datumFactory;
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
     this.codec = new PatchedSerializableAvroCodecFactory(codec);
     this.metadata = metadata;
   }
 
-  public static <V extends IndexedRecord> AvroFileOperations<V> of(Schema schema) {
+  public static AvroFileOperations<GenericRecord> of(Schema schema) {
     return of(schema, defaultCodec());
   }
 
-  public static <V extends IndexedRecord> AvroFileOperations<V> of(
-      Schema schema, CodecFactory codec) {
+  public static AvroFileOperations<GenericRecord> of(Schema schema, CodecFactory codec) {
     return of(schema, codec, null);
   }
 
-  public static <V extends IndexedRecord> AvroFileOperations<V> of(
+  public static AvroFileOperations<GenericRecord> of(
       Schema schema, CodecFactory codec, Map<String, Object> metadata) {
-    return new AvroFileOperations<>(null, schema, codec, metadata);
+    return new AvroFileOperations<>(
+        AvroDatumFactory.GenericDatumFactory.INSTANCE, schema, codec, metadata);
   }
 
   public static <V extends IndexedRecord> AvroFileOperations<V> of(Class<V> recordClass) {
@@ -89,9 +89,25 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends IndexedRecord> AvroFileOperations<V> of(
       Class<V> recordClass, CodecFactory codec, Map<String, Object> metadata) {
+    return of(AvroDatumFactory.of(recordClass), codec, metadata);
+  }
+
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(
+      AvroDatumFactory<V> datumFactory) {
+    return of(datumFactory, defaultCodec());
+  }
+
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(
+      AvroDatumFactory<V> datumFactory, CodecFactory codec) {
+    return of(datumFactory, codec, null);
+  }
+
+  public static <V extends IndexedRecord> AvroFileOperations<V> of(
+      AvroDatumFactory<V> datumFactory, CodecFactory codec, Map<String, Object> metadata) {
+    final Class<V> recordClass = datumFactory.getType();
     // Use reflection to get SR schema
     final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
-    return new AvroFileOperations<>(recordClass, schema, codec, metadata);
+    return new AvroFileOperations<>(datumFactory, schema, codec, metadata);
   }
 
   @Override
@@ -103,42 +119,27 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   @Override
   protected Reader<ValueT> createReader() {
-    return new AvroReader<>(recordClass, schemaSupplier);
+    return new AvroReader<>(datumFactory, schemaSupplier);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   protected FileIO.Sink<ValueT> createSink() {
-    final AvroIO.Sink<ValueT> sink =
-        recordClass == null
-            // https://github.com/spotify/scio/issues/2649
-            // force GenericDatumWriter instead of ReflectDatumWriter
-            ? (AvroIO.Sink<ValueT>)
-                AvroIO.<GenericRecord>sink(getSchema())
-                    .withDatumWriterFactory(AvroDatumFactory.generic())
-            : AvroIO.sink(recordClass)
-                .withDatumWriterFactory(
-                    (writer) -> {
-                      // same as SpecificRecordDatumFactory in scio-avro
-                      ReflectData data = new ReflectData(recordClass.getClassLoader());
-                      org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
-                          .addLogicalTypeConversions(data);
-                      return new ReflectDatumWriter<>(writer, data);
-                    });
-
+    AvroIO.Sink<ValueT> sink =
+        ((AvroIO.Sink<ValueT>) AvroIO.sink(getSchema()))
+            .withDatumWriterFactory(datumFactory)
+            .withCodec(codec.getCodec());
     if (metadata != null) {
-      return sink.withMetadata(metadata);
+      sink = sink.withMetadata(metadata);
     }
 
-    return sink.withCodec(codec.getCodec());
+    return sink;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Coder<ValueT> getCoder() {
-    return recordClass == null
-        ? (AvroCoder<ValueT>) AvroCoder.of(getSchema())
-        : AvroCoder.of(recordClass, true);
+    return AvroCoder.of(datumFactory, getSchema());
   }
 
   Schema getSchema() {
@@ -146,7 +147,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   }
 
   Class<ValueT> getRecordClass() {
-    return recordClass;
+    return datumFactory.getType();
   }
 
   private static class SerializableSchemaString implements Serializable {
@@ -183,12 +184,12 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   ////////////////////////////////////////
 
   private static class AvroReader<ValueT> extends FileOperations.Reader<ValueT> {
-    private Class<ValueT> recordClass;
+    private AvroDatumFactory<ValueT> datumFactory;
     private SerializableSchemaSupplier schemaSupplier;
     private transient DataFileStream<ValueT> reader;
 
-    AvroReader(Class<ValueT> recordClass, SerializableSchemaSupplier schemaSupplier) {
-      this.recordClass = recordClass;
+    AvroReader(AvroDatumFactory<ValueT> datumFactory, SerializableSchemaSupplier schemaSupplier) {
+      this.datumFactory = datumFactory;
       this.schemaSupplier = schemaSupplier;
     }
 
@@ -196,16 +197,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     public void prepareRead(ReadableByteChannel channel) throws IOException {
       final Schema schema = schemaSupplier.get();
 
-      DatumReader<ValueT> datumReader;
-      if (recordClass == null) {
-        datumReader = new GenericDatumReader<>(schema);
-      } else {
-        // same as SpecificRecordDatumFactory in scio-avro
-        ReflectData data = new ReflectData(recordClass.getClassLoader());
-        org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils.addLogicalTypeConversions(data);
-        datumReader = new ReflectDatumReader<>(schema, schema, data);
-      }
-
+      DatumReader<ValueT> datumReader = datumFactory.apply(schema, schema);
       reader = new DataFileStream<>(Channels.newInputStream(channel), datumReader);
     }
 

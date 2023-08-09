@@ -35,7 +35,6 @@ val beamVersion = "2.51.0"
 // https://github.com/apache/beam/blob/v2.51.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = "1.8.2"
 val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
@@ -48,7 +47,6 @@ val flinkVersion = "1.16.0"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
-val hadoopVersion = "2.10.2"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.14.1"
@@ -57,13 +55,16 @@ val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.87.Final"
 val slf4jVersion = "1.7.30"
-val sparkVersion = "3.4.1"
 val zetasketchVersion = "0.1.0"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20230520-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
+// tested versions
+val avroVersion = "1.8.2" // https://github.com/apache/beam/blob/v2.49.0/sdks/java/extensions/avro/build.gradle
+val hadoopVersion = "3.2.4" // https://github.com/apache/beam/blob/v2.49.0/sdks/java/io/hadoop-common/build.gradle
+val sparkVersion = "3.4.1" // https://github.com/apache/beam/blob/v2.49.0/runners/spark/3/build.gradle
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.22.0/index.html
@@ -127,7 +128,7 @@ val metricsVersion = "4.2.22"
 val neo4jDriverVersion = "4.4.12"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
-val parquetVersion = "1.12.3"
+val parquetVersion = "1.13.1"
 val pprintVersion = "0.8.1"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"

@@ -24,10 +24,8 @@ import com.spotify.scio.avro.AvroUtils.schema
 import com.spotify.scio.avro._
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing._
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
-import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.coders.ByteArrayCoder
 import org.apache.beam.sdk.util.CoderUtils
@@ -350,131 +348,6 @@ class ScioIOTest extends ScioIOSpec {
     testJobTest(xs)(AvroIO(_))(
       _.parseAvroFile[GenericRecord](_)(identity)
     )(_.saveAsAvroFile(_, schema = schema))
-  }
-
-  // covers AvroIO specific, generic, and typed records, ObjectFileIO, and ProtobufIO
-  it should "write to the same filenames as previous scio versions when not using a filename policy" in {
-    import org.apache.beam.sdk.extensions.avro.io.{AvroIO => BAvroIO}
-
-    val write1 = BAvroIO.write(ScioUtil.classOf[TestRecord])
-    val suffix = ".avro"
-    val numShards = 10
-    val codec = CodecFactory.deflateCodec(6)
-    val metadata = Map.empty[String, AnyRef]
-
-    /*
-     * pre-scio 0.12.0
-     */
-    val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out1TempDir =
-      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    var previousTransform: BAvroIO.Write[TestRecord] = write1
-      .to(ScioUtil.pathWithPrefix(out1.getAbsolutePath, null))
-      .withSuffix(suffix)
-      .withNumShards(numShards)
-      .withCodec(codec)
-      .withMetadata(metadata.asJava)
-    previousTransform = Option(out1TempDir.getAbsolutePath)
-      .map(ScioUtil.toResourceId)
-      .fold(previousTransform)(previousTransform.withTempDirectory)
-
-    /*
-     * current scio
-     */
-    val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out2TempDir =
-      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val sr2 = SpecificRecordIO[TestRecord](out2.getAbsolutePath)
-    val write2 = BAvroIO.write(ScioUtil.classOf[TestRecord])
-
-    val currentTransform: BAvroIO.Write[TestRecord] = sr2.avroOut(
-      write2,
-      out2.getAbsolutePath,
-      numShards,
-      suffix,
-      codec,
-      metadata,
-      null,
-      null,
-      null,
-      false,
-      ScioUtil.toResourceId(out2TempDir.getAbsolutePath)
-    )
-
-    // verify
-    val sc = ScioContext()
-    val data = sc.parallelize((1 to 100).map(x => AvroUtils.newSpecificRecord(x)))
-    data.applyInternal(previousTransform)
-    data.applyInternal(currentTransform)
-    sc.run().waitUntilDone()
-
-    relativeFiles(out1) should contain theSameElementsAs relativeFiles(out2)
-
-    FileUtils.deleteDirectory(out1TempDir)
-    FileUtils.deleteDirectory(out2TempDir)
-  }
-
-  it should "write to the same filenames as previous scio versions when not using a filename policy during a typed write" in {
-    val suffix = ".avro"
-    val numShards = 10
-    val codec = CodecFactory.deflateCodec(6)
-    val metadata = Map.empty[String, AnyRef]
-
-    /*
-     * pre-scio 0.12.0
-     */
-    val out1 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out1TempDir =
-      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val write1 = AvroTyped.writeTransform[AvroRecord]()
-
-    var previousTransform = write1
-      .to(ScioUtil.pathWithPrefix(out1.getAbsolutePath, null))
-      .withSuffix(suffix)
-      .withNumShards(numShards)
-      .withCodec(codec)
-      .withMetadata(metadata.asJava)
-    previousTransform = Option(out1TempDir.getAbsolutePath)
-      .map(ScioUtil.toResourceId)
-      .fold(previousTransform)(previousTransform.withTempDirectory)
-
-    /*
-     * current scio
-     */
-    val out2 = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val out2TempDir =
-      new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
-    val sr2 = AvroTyped.AvroIO[AvroRecord](out2.getAbsolutePath)
-    val write2 = AvroTyped.writeTransform[AvroRecord]()
-
-    val currentTransform = sr2.typedAvroOut(
-      write2,
-      out2.getAbsolutePath,
-      numShards,
-      suffix,
-      codec,
-      metadata,
-      null,
-      null,
-      null,
-      false,
-      ScioUtil.toResourceId(out2TempDir.getAbsolutePath)
-    )
-
-    // verify
-    val sc = ScioContext()
-    val data = sc.parallelize(
-      (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    )
-
-    data.applyInternal(previousTransform)
-    data.applyInternal(currentTransform)
-    sc.run().waitUntilDone()
-
-    relativeFiles(out1) should contain theSameElementsAs relativeFiles(out2)
-
-    FileUtils.deleteDirectory(out1TempDir)
-    FileUtils.deleteDirectory(out2TempDir)
   }
 
   "ObjectFileIO" should "work" in {

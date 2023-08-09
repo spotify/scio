@@ -18,55 +18,31 @@
 package com.spotify.scio.avro
 
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.{GenericData, GenericRecord, GenericRecordBuilder}
 
 import scala.jdk.CollectionConverters._
 
 object AvroUtils {
-  private def f(name: String, tpe: Schema.Type) =
-    new Schema.Field(
-      name,
-      Schema.createUnion(List(Schema.create(Schema.Type.NULL), Schema.create(tpe)).asJava),
-      null: String,
-      null: AnyRef
-    )
 
-  private def fArr(name: String, tpe: Schema.Type) =
-    new Schema.Field(name, Schema.createArray(Schema.create(tpe)), null: String, null: AnyRef)
+  val schema: Schema = TestRecord.getClassSchema
 
-  val schema: Schema = Schema.createRecord("GenericTestRecord", null, null, false)
-  schema.setFields(
-    List(
-      f("int_field", Schema.Type.INT),
-      f("long_field", Schema.Type.LONG),
-      f("float_field", Schema.Type.FLOAT),
-      f("double_field", Schema.Type.DOUBLE),
-      f("boolean_field", Schema.Type.BOOLEAN),
-      f("string_field", Schema.Type.STRING),
-      fArr("array_field", Schema.Type.STRING)
-    ).asJava
+  def newGenericRecord(i: Int): GenericRecord = new GenericRecordBuilder(schema)
+    .set("int_field", i)
+    .set("long_field", i.toLong)
+    .set("float_field", i.toFloat)
+    .set("double_field", i.toDouble)
+    .set("boolean_field", true)
+    .set("string_field", "hello")
+    .set("array_field", List[CharSequence]("a", "b", "c").asJava)
+    .build()
+
+  def newSpecificRecord(i: Int): TestRecord = new TestRecord(
+    i,
+    i.toLong,
+    i.toFloat,
+    i.toDouble,
+    true,
+    "hello",
+    List[CharSequence]("a", "b", "c").asJava
   )
-
-  def newGenericRecord(i: Int): GenericRecord = {
-    val r = new GenericData.Record(schema)
-    r.put("int_field", 1 * i)
-    r.put("long_field", 1L * i)
-    r.put("float_field", 1f * i)
-    r.put("double_field", 1.0 * i)
-    r.put("boolean_field", true)
-    r.put("string_field", "hello")
-    r.put("array_field", List[CharSequence]("a", "b", "c").asJava)
-    r
-  }
-
-  def newSpecificRecord(i: Int): TestRecord =
-    new TestRecord(
-      i,
-      i.toLong,
-      i.toFloat,
-      i.toDouble,
-      true,
-      "hello",
-      List[CharSequence]("a", "b", "c").asJava
-    )
 }

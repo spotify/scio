@@ -17,26 +17,53 @@
 package com.spotify.scio.avro
 
 import org.apache.avro.Schema
-import org.apache.avro.io.{DatumReader, DatumWriter}
-import org.apache.avro.reflect.{ReflectData, ReflectDatumReader, ReflectDatumWriter}
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
+import org.apache.avro.io.DatumReader
+import org.apache.avro.specific.{SpecificDatumReader, SpecificRecord}
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
-import org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
 
 /**
- * Custom AvroDatumFactory for avro AvroDatumFactory relying on avro reflect so that underlying
- * CharSequence type is String
+ * AvroDatumFactory for [[GenericRecord]] forcing underlying [[CharSequence]] implementation to
+ * [[String]]
+ *
+ * Avro default [[CharSequence]] implementation is [[org.apache.avro.util.Utf8]] which can't be used
+ * when joining or as SMB keys as it doest not implement equals
  */
-private[scio] class SpecificRecordDatumFactory[T](recordType: Class[T])
-    extends AvroDatumFactory[T](recordType) {
-  override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
-    val data = new ReflectData(recordType.getClassLoader)
-    AvroUtils.addLogicalTypeConversions(data)
-    new ReflectDatumReader[T](writer, reader, data)
-  }
+private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericDatumFactory {
 
-  override def apply(writer: Schema): DatumWriter[T] = {
-    val data = new ReflectData(recordType.getClassLoader)
-    AvroUtils.addLogicalTypeConversions(data)
-    new ReflectDatumWriter[T](writer, data)
+  private class ScioGenericDatumReader extends GenericDatumReader[GenericRecord] {
+    override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
+      case cls if cls == classOf[CharSequence] => classOf[String]
+      case cls                                 => cls
+    }
+  }
+  override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] = {
+    val datumReader = new ScioGenericDatumReader()
+    datumReader.setExpected(reader)
+    datumReader.setSchema(writer)
+    datumReader
+  }
+}
+
+/**
+ * AvroDatumFactory for [[SpecificRecord]] forcing underlying [[CharSequence]] implementation to
+ * [[String]]
+ *
+ * Avro default [[CharSequence]] implementation is [[org.apache.avro.util.Utf8]] which can't be used
+ * when joining or as SMB keys as it doest not implement equals
+ */
+private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: Class[T])
+    extends AvroDatumFactory.SpecificDatumFactory[T](recordType) {
+  private class ScioSpecificDatumReader extends SpecificDatumReader[T](recordType) {
+    override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
+      case cls if cls == classOf[CharSequence] => classOf[String]
+      case cls                                 => cls
+    }
+  }
+  override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
+    val datumReader = new ScioSpecificDatumReader()
+    datumReader.setExpected(reader)
+    datumReader.setSchema(writer)
+    datumReader
   }
 }

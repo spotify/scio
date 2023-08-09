@@ -122,7 +122,7 @@ object ParquetExample {
     val schema = Account.getClassSchema
     implicit val genericRecordCoder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
 
-    val parquetIn = sc.parquetAvroFile[GenericRecord](args("input"), schema)
+    val parquetIn = sc.parquetAvroGenericRecordFile(args("input"), schema)
 
     // Catches a specific bug with encoding GenericRecords read by parquet-avro
     parquetIn

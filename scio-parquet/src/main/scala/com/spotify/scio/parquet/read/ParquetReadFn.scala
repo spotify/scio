@@ -17,7 +17,6 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.BeamInputFile
-import com.spotify.scio.parquet.read.ParquetReadFn._
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.range.OffsetRange
@@ -39,7 +38,7 @@ import scala.jdk.CollectionConverters._
 
 object ParquetReadFn {
   @transient
-  private lazy val logger = LoggerFactory.getLogger(classOf[ParquetReadFn[_, _]])
+  private lazy val logger = LoggerFactory.getLogger(classOf[ParquetReadFn[_]])
 
   sealed private trait SplitGranularity
   private object SplitGranularity {
@@ -60,11 +59,12 @@ object ParquetReadFn {
   private val EntireFileRange = new OffsetRange(0, 1)
 }
 
-class ParquetReadFn[T, R](
+class ParquetReadFn[T](
   readSupportFactory: ReadSupportFactory[T],
-  conf: SerializableConfiguration,
-  projectionFn: SerializableFunction[T, R]
-) extends DoFn[ReadableFile, R] {
+  conf: SerializableConfiguration
+) extends DoFn[ReadableFile, T] {
+  import ParquetReadFn._
+
   @transient
   private lazy val options = HadoopReadOptions.builder(conf.get()).build()
 
@@ -76,7 +76,7 @@ class ParquetReadFn[T, R](
         ParquetReadConfiguration.SplitGranularity,
         ParquetReadConfiguration.SplitGranularityFile
       ) match {
-      case ParquetReadConfiguration.SplitGranularityFile     => SplitGranularity.File
+      case ParquetReadConfiguration.SplitGranularityFile => SplitGranularity.File
       case ParquetReadConfiguration.SplitGranularityRowGroup => SplitGranularity.RowGroup
       case other: String =>
         logger.warn(
@@ -94,7 +94,7 @@ class ParquetReadFn[T, R](
         ParquetReadConfiguration.FilterGranularity,
         ParquetReadConfiguration.FilterGranularityRecord
       ) match {
-      case ParquetReadConfiguration.FilterGranularityPage   => FilterGranularity.Page
+      case ParquetReadConfiguration.FilterGranularityPage => FilterGranularity.Page
       case ParquetReadConfiguration.FilterGranularityRecord => FilterGranularity.Record
       case other: String =>
         logger.warn(
@@ -160,7 +160,7 @@ class ParquetReadFn[T, R](
   def processElement(
     @Element file: ReadableFile,
     tracker: RestrictionTracker[OffsetRange, Long],
-    out: DoFn.OutputReceiver[R]
+    out: DoFn.OutputReceiver[T]
   ): Unit = {
     logger.debug(
       "reading file from offset {} to {}",
@@ -207,8 +207,7 @@ class ParquetReadFn[T, R](
               pages.getRowCount,
               file,
               recordReader,
-              out,
-              projectionFn
+              out
             )
             pages = filterGranularity.readNextRowGroup(reader)
           }
@@ -228,8 +227,7 @@ class ParquetReadFn[T, R](
               pages.getRowCount,
               file,
               recordReader,
-              out,
-              projectionFn
+              out
             )
 
             currentRowGroupIndex += 1
@@ -245,8 +243,7 @@ class ParquetReadFn[T, R](
     rowCount: Long,
     file: ReadableFile,
     recordReader: RecordReader[T],
-    outputReceiver: DoFn.OutputReceiver[R],
-    projectionFn: SerializableFunction[T, R]
+    outputReceiver: DoFn.OutputReceiver[T]
   ): Unit = {
     logger.debug(
       "row group {} read in memory. row count = {}",
@@ -272,7 +269,7 @@ class ParquetReadFn[T, R](
           )
 
         } else {
-          outputReceiver.output(projectionFn(record))
+          outputReceiver.output(record)
         }
 
         currentRow += 1
