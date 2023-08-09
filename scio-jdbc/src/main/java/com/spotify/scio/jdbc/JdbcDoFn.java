@@ -32,8 +32,8 @@ import org.apache.beam.sdk.transforms.SerializableFunction;
 public abstract class JdbcDoFn<A, B> extends DoFn<A, B> {
 
   private final SerializableFunction<Void, DataSource> dataSourceProviderFn;
-  transient private DataSource dataSource;
-  transient private Connection connection;
+  private transient DataSource dataSource;
+  private transient Connection connection;
 
   protected JdbcDoFn(SerializableFunction<Void, DataSource> dataSourceProviderFn) {
     this.dataSourceProviderFn = dataSourceProviderFn;
