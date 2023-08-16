@@ -22,7 +22,7 @@ import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.io.{DatumReader, DatumWriter}
-import org.apache.avro.reflect.{ReflectDatumReader, ReflectDatumWriter}
+import org.apache.avro.reflect.{ReflectData, ReflectDatumReader, ReflectDatumWriter}
 import org.apache.avro.specific.{SpecificData, SpecificFixed, SpecificRecord}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{AtomicCoder, CustomCoder, StringUtf8Coder}
@@ -153,9 +153,7 @@ trait AvroCoders {
       override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
         // create the datum writer using the schema api
         // class API might be unsafe. See schemaForClass
-        val datumReader = new ReflectDatumReader[T](schemaForClass(clazz).get);
-        datumReader.setExpected(reader)
-        datumReader.setSchema(writer)
+        val datumReader = new ReflectDatumReader[T](writer, reader, new ReflectData())
         // for backward compat, add logical type support by default
         AvroUtils.addLogicalTypeConversions(datumReader.getData)
         datumReader
@@ -164,8 +162,7 @@ trait AvroCoders {
       override def apply(writer: Schema): DatumWriter[T] = {
         // create the datum writer using the schema api
         // class API might be unsafe. See schemaForClass
-        val datumWriter = new ReflectDatumWriter[T](schemaForClass(clazz).get)
-        datumWriter.setSchema(writer)
+        val datumWriter = new ReflectDatumWriter[T](writer, new ReflectData())
         // for backward compat, add logical type support by default
         AvroUtils.addLogicalTypeConversions(datumWriter.getData)
         datumWriter
