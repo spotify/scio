@@ -18,22 +18,25 @@
 package com.spotify.scio.jdbc
 
 import java.sql.ResultSet
-
 import com.spotify.scio._
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.io.TextIO
+import com.spotify.scio.jdbc.JdbcPartitionedRead.PartitionColumn
 import org.apache.beam.sdk.io.{jdbc => beam}
 import com.spotify.scio.testing._
+import org.apache.beam.sdk.values.TypeDescriptors
 
 object JdbcJob {
 
-  val query = "SELECT <this> FROM <this>"
-  val statement = "INSERT INTO <this> VALUES( ?, ? ..?)"
+  val Query = "SELECT <this> FROM <this>"
+  val Statement = "INSERT INTO <this> VALUES( ?, ? ..?)"
   def main(cmdlineArgs: Array[String]): Unit = {
     val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
     val sc = ScioContext(opts)
     val connectionOpts = getConnectionOptions(opts)
-    sc.jdbcSelect[String](connectionOpts, query)((rs: ResultSet) => rs.getString(1))
+    sc.jdbcSelect[String](connectionOpts, Query)((rs: ResultSet) => rs.getString(1))
       .map(_ + "J")
-      .saveAsJdbc(connectionOpts, statement) { (_, _) => }
+      .saveAsJdbc(connectionOpts, Statement) { (_, _) => }
     sc.run()
     ()
   }
@@ -52,6 +55,26 @@ object JdbcJob {
     )
 }
 
+object JdbcPartitionedJob {
+
+  val Table = "table"
+  val IdColumn = PartitionColumn.long("id")
+
+  val OutputPath = "output"
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](cmdlineArgs)
+    val sc = ScioContext(opts)
+    val connectionOpts = JdbcJob.getConnectionOptions(opts)
+
+    sc.jdbcPartitionedRead(connectionOpts, Table, IdColumn)((rs: ResultSet) => rs.getString(1))
+      .map(_ + "J")
+      .saveAsTextFile(OutputPath)
+    sc.run()
+    ()
+  }
+}
+
 class JdbcTest extends PipelineSpec {
   def testJdbc(xs: String*): Unit = {
     val args = Seq(
@@ -65,8 +88,8 @@ class JdbcTest extends PipelineSpec {
 
     JobTest[JdbcJob.type]
       .args(args: _*)
-      .input(JdbcIO[String](connectionOpts, JdbcJob.query), Seq("a", "b", "c"))
-      .output(JdbcIO[String](connectionOpts, JdbcJob.statement))(coll =>
+      .input(JdbcIO[String](connectionOpts, JdbcJob.Query), Seq("a", "b", "c"))
+      .output(JdbcIO[String](connectionOpts, JdbcJob.Statement))(coll =>
         coll should containInAnyOrder(xs)
       )
       .run()
@@ -81,7 +104,7 @@ class JdbcTest extends PipelineSpec {
     an[AssertionError] should be thrownBy { testJdbc("aJ", "bJ", "cJ", "dJ") }
   }
 
-  it should "connnect via JDBC without a password" in {
+  it should "identify JDBC IOs from connection options and query" in {
     val args = Seq(
       "--cloudSqlUsername=john",
       "--cloudSqlDb=mydb",
@@ -94,8 +117,33 @@ class JdbcTest extends PipelineSpec {
 
     JobTest[JdbcJob.type]
       .args(args: _*)
-      .input(JdbcIO[String](connectionOpts, JdbcJob.query), Seq("a", "b", "c"))
-      .output(JdbcIO[String](connectionOpts, JdbcJob.statement))(coll =>
+      .input(JdbcIO[String](connectionOpts, JdbcJob.Query), Seq("a", "b", "c"))
+      .output(JdbcIO[String](connectionOpts, JdbcJob.Statement))(coll =>
+        coll should containInAnyOrder(expected)
+      )
+      .run()
+  }
+
+  it should "identify JDBC partitioned read from connection options and table" in {
+    val args = Seq(
+      "--cloudSqlUsername=john",
+      "--cloudSqlDb=mydb",
+      "--cloudSqlInstanceConnectionName=project-id:zone:db-instance-name"
+    )
+    val (opts, _) = ScioContext.parseArguments[CloudSqlOptions](args.toArray)
+    val connectionOpts = JdbcJob.getConnectionOptions(opts)
+
+    val expected = Seq("aJ", "bJ", "cJ")
+
+    JdbcPartitionedJob.IdColumn.typeDescriptor shouldBe TypeDescriptors.longs()
+
+    JobTest[JdbcPartitionedJob.type]
+      .args(args: _*)
+      .input(
+        JdbcIO[String](connectionOpts, JdbcPartitionedJob.Table),
+        Seq("a", "b", "c")
+      )
+      .output(TextIO(JdbcPartitionedJob.OutputPath))(coll =>
         coll should containInAnyOrder(expected)
       )
       .run()

@@ -19,11 +19,17 @@ package com.spotify.scio.jdbc.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.jdbc.sharded.{JdbcShardedReadOptions, JdbcShardedSelect}
-import com.spotify.scio.jdbc.{JdbcConnectionOptions, JdbcIO, JdbcReadOptions, JdbcSelect}
-import com.spotify.scio.jdbc.JdbcIO.ReadParam
+import com.spotify.scio.jdbc.JdbcPartitionedRead.PartitionColumn
+import com.spotify.scio.jdbc.sharded.{JdbcShardedReadOptions, JdbcShardedSelect, Shard}
+import com.spotify.scio.jdbc.{
+  JdbcConnectionOptions,
+  JdbcIO,
+  JdbcPartitionedRead,
+  JdbcReadOptions,
+  JdbcSelect
+}
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.jdbc.JdbcIO.Read
+import org.apache.beam.sdk.io.jdbc.JdbcIO.{Read, ReadWithPartitions}
 
 import java.sql.{PreparedStatement, ResultSet}
 import javax.sql.DataSource
@@ -66,11 +72,11 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
   def jdbcSelect[T: ClassTag: Coder](
     connectionOptions: JdbcConnectionOptions,
     query: String,
-    statementPreparator: PreparedStatement => Unit = ReadParam.DefaultStatementPreparator,
-    fetchSize: Int = ReadParam.BeamDefaultFetchSize,
-    outputParallelization: Boolean = ReadParam.DefaultOutputParallelization,
-    dataSourceProviderFn: () => DataSource = ReadParam.DefaultDataSourceProviderFn,
-    configOverride: Read[T] => Read[T] = ReadParam.defaultConfigOverride[T]
+    statementPreparator: PreparedStatement => Unit = JdbcIO.ReadParam.DefaultStatementPreparator,
+    fetchSize: Int = JdbcIO.ReadParam.BeamDefaultFetchSize,
+    outputParallelization: Boolean = JdbcIO.ReadParam.DefaultOutputParallelization,
+    dataSourceProviderFn: () => DataSource = JdbcIO.ReadParam.DefaultDataSourceProviderFn,
+    configOverride: Read[T] => Read[T] = JdbcIO.ReadParam.defaultConfigOverride[T]
   )(rowMapper: ResultSet => T): SCollection[T] =
     self.read(JdbcSelect(connectionOptions, query))(
       JdbcIO.ReadParam(
@@ -110,6 +116,25 @@ final class JdbcScioContextOps(private val self: ScioContext) extends AnyVal {
   def jdbcShardedSelect[T: Coder, S](
     readOptions: JdbcShardedReadOptions[T, S]
   ): SCollection[T] = self.read(JdbcShardedSelect(readOptions))
+
+  def jdbcPartitionedRead[T: Coder, S](
+    connectionOptions: JdbcConnectionOptions,
+    table: String,
+    partitionColumn: PartitionColumn[S],
+    numPartitions: Int = JdbcPartitionedRead.ReadParam.DefaultNumPartitions,
+    dataSourceProviderFn: () => DataSource = JdbcIO.ReadParam.DefaultDataSourceProviderFn,
+    configOverride: ReadWithPartitions[T, S] => ReadWithPartitions[T, S] =
+      JdbcPartitionedRead.ReadParam.defaultConfigOverride[T, S]
+  )(rowMapper: ResultSet => T): SCollection[T] = {
+    val params = JdbcPartitionedRead.ReadParam(
+      partitionColumn,
+      rowMapper,
+      numPartitions,
+      dataSourceProviderFn,
+      configOverride
+    )
+    self.read(JdbcPartitionedRead[T, S](connectionOptions, table))(params)
+  }
 
 }
 trait ScioContextSyntax {
