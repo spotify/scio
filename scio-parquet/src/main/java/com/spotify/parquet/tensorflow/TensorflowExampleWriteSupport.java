@@ -41,7 +41,7 @@ public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
   private MessageType rootSchema;
   private Schema rootTFSchema;
 
-  static final String EXAMPLE_SCHEMA = "parquet.example.schema";
+  static final String EXAMPLE_SCHEMA = "parquet.tensorflow.example.schema";
 
   /**
    * @param configuration a configuration
