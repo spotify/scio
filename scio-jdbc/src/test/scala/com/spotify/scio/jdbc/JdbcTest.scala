@@ -17,14 +17,14 @@
 
 package com.spotify.scio.jdbc
 
-import java.sql.ResultSet
 import com.spotify.scio._
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.TextIO
 import com.spotify.scio.jdbc.JdbcPartitionedRead.PartitionColumn
-import org.apache.beam.sdk.io.{jdbc => beam}
 import com.spotify.scio.testing._
+import org.apache.beam.sdk.io.{jdbc => beam}
 import org.apache.beam.sdk.values.TypeDescriptors
+
+import java.sql.ResultSet
 
 object JdbcJob {
 
