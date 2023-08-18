@@ -227,7 +227,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.1+0-308f3320+20230720-1402*
+<i class="md-icon" title="Version">label_outline</i> 0.13.2+0-f99635d0+20230818-1244*
 </label>
 </li>
 </ul>
@@ -282,7 +282,7 @@ spotify/scio
 <p>RUN THIS BEFORE UPGRADING SCIO</p></div>
 <p>You&rsquo;ll need to prepare your tests code for migration. For this to run properly, you code needs to compile.</p>
 <p>Run the following command in the sbt shell:</p>
-<pre><code>&gt; test:scalafix github:spotify/scio/FixAvroIO
+<pre><code>&gt; test:scalafix https://raw.githubusercontent.com/spotify/scio/main/scalafix/rules/src/main/scala/fix/v0_7_0/FixAvroIO.scala
 [info] Running scalafix on 78 Scala sources
 [success] Total time: 7 s, completed Oct 17, 2018 12:49:31 PM
 </code></pre>
@@ -316,15 +316,15 @@ spotify/scio
 </table>
 <p>You can see all the rules <a href="https://github.com/spotify/scio/tree/master/scalafix/rules/src/main/scala/fix">here</a>.</p>
 <p>In your sbt shell, you can now apply the 3 other rules:</p>
-<pre><code>&gt; scalafix github:spotify/scio/AddMissingImports
+<pre><code>&gt; scalafix https://raw.githubusercontent.com/spotify/scio/main/scalafix/rules/src/main/scala/fix/v0_7_0/AddMissingImports.scala
 [info] Running scalafix on 173 Scala sources
 [success] Total time: 16 s, completed Oct 17, 2018 12:01:31 PM
 
-&gt; scalafix github:spotify/scio/RewriteSysProp
+&gt; scalafix https://raw.githubusercontent.com/spotify/scio/main/scalafix/rules/src/main/scala/fix/v0_7_0/RewriteSysProp.scala
 [info] Running scalafix on 173 Scala sources
 [success] Total time: 6 s, completed Oct 17, 2018 12:34:00 PM
 
-&gt; scalafix github:spotify/scio/BQClientRefactoring
+&gt; scalafix https://raw.githubusercontent.com/spotify/scio/main/scalafix/rules/src/main/scala/fix/v0_7_0/BQClientRefactoring.scala
 [info] Running scalafix on 173 Scala sources
 [success] Total time: 3 s, completed Oct 17, 2018 12:34:20 PM
 </code></pre>
@@ -572,7 +572,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.1+0-308f3320+20230720-1402*
+0.13.2+0-f99635d0+20230818-1244*
 </span>
 </div>
 </article>
