@@ -57,7 +57,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   private[this] val context: ScioContext = self.context
 
-  implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
+  implicit lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
+  implicit lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
   private[scio] def toKV: SCollection[KV[K, V]] =
     self.map(kv => KV.of(kv._1, kv._2))

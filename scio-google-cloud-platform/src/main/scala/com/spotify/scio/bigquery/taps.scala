@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery
 import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
+import com.spotify.scio.avro._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{FileStorage, Tap, Taps}
@@ -28,7 +29,6 @@ import org.apache.avro.generic.GenericRecord
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.twitter.chill.Externalizer
@@ -52,7 +52,9 @@ final case class BigQueryTypedTap[T: Coder](table: Table, fn: (GenericRecord, Ta
 
   override def open(sc: ScioContext): SCollection[T] = {
     val ser = Externalizer(ts)
-    sc.read(BigQueryTypedTable(table, Format.GenericRecord)).map(gr => fn(gr, ser.get))
+    // TODO this is inefficient. Migrate to TableRow API ?
+    val coder = avroGenericRecordCoder
+    sc.read(BigQueryTypedTable(table, Format.GenericRecord)(coder)).map(gr => fn(gr, ser.get))
   }
 }
 
@@ -108,7 +110,7 @@ final case class BigQueryTaps(self: Taps) {
     bigQueryTable(BigQueryHelpers.parseTableSpec(tableSpec))
 
   /** Get a `Future[Tap[T]]` for typed BigQuery source. */
-  def typedBigQuery[T <: HasAnnotation: TypeTag: ClassTag: Coder](
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: String = null
   ): Future[Tap[T]] = {
     val bqt = BigQueryType[T]

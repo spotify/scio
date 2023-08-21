@@ -25,9 +25,15 @@ import org.apache.beam.sdk.extensions.sorter.ExternalSorter.Options.SorterType
 import org.apache.beam.sdk.extensions.sorter.{BufferedExternalSorter, SortValues}
 import org.apache.beam.sdk.values.KV
 
+import scala.annotation.nowarn
 import scala.collection.AbstractIterator
 import scala.jdk.CollectionConverters._
 
+@nowarn(
+  "msg=evidence parameter evidence.* " +
+    "of type com.spotify.scio.extra.sorter.SortingKey\\[K2\\] " +
+    "in class SorterOps is never used"
+)
 final class SorterOps[K1, K2: SortingKey, V](self: SCollection[(K1, Iterable[(K2, V)])]) {
 
   /**

@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.hll.sketching
 
-import com.spotify.scio.coders.{BeamCoders, Coder}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.util.TupleFunctions.klToTuple
 import com.spotify.scio.values.SCollection
@@ -61,7 +61,7 @@ case class SketchHllPlusPlus[T](p: Int, sp: Int) extends ApproxDistinctCounter[T
   override def estimateDistinctCountPerKey[K](
     in: SCollection[(K, T)]
   ): SCollection[(K, Long)] = {
-    implicit val keyCoder: Coder[K] = BeamCoders.getTupleCoders(in)._1
+    implicit val keyCoder: Coder[K] = in.keyCoder
 
     in.toKV
       .applyTransform(

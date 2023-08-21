@@ -43,7 +43,7 @@ object MetricsExample {
   val gauge: Gauge = ScioMetrics.gauge[MetricsExample.type]("gauge")
 
   def main(cmdlineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val (sc, _) = ContextAndArgs(cmdlineArgs)
 
     // Create and initialize counters from ScioContext
     sc.initCounter("ctxcount")

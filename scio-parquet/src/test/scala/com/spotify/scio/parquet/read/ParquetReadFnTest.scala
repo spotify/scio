@@ -199,8 +199,6 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
   it should "work with a projection and projectionFn" in {
     val projection = Projection[Account](_.getId)
-
-    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testSingleDir.getAbsolutePath}/avro"))
@@ -217,8 +215,6 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
 
   it should "work with a projection and projectionFn on files with multiple row groups" in {
     val projection = Projection[Account](_.getId)
-
-    implicit val coder = avroGenericRecordCoder(projection)
     val sc = ScioContext()
     sc
       .parallelize(listFiles(s"${testMultiDir.getAbsolutePath}/avro"))

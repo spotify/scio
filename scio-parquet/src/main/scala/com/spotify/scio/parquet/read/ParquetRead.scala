@@ -72,7 +72,7 @@ object ParquetRead {
    * @param conf
    *   a Parquet [[Configuration]], if desired
    */
-  def readTyped[T: ClassTag: ParquetType](
+  def readTyped[T: ParquetType](
     predicate: FilterPredicate = null,
     conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[T]] = readTyped(
@@ -88,7 +88,7 @@ object ParquetRead {
    * @param projectionFn
    *   a function mapping T => R
    */
-  def readTyped[T: ClassTag: ParquetType, R](
+  def readTyped[T: ParquetType, R](
     projectionFn: T => R
   ): PTransform[PCollection[ReadableFile], PCollection[R]] = readTyped(
     projectionFn,
@@ -105,7 +105,7 @@ object ParquetRead {
    * @param predicate
    *   a Parquet [[FilterApi]] predicate
    */
-  def readTyped[T: ClassTag: ParquetType, R](
+  def readTyped[T: ParquetType, R](
     projectionFn: T => R,
     predicate: FilterPredicate
   ): PTransform[PCollection[ReadableFile], PCollection[R]] = readTyped(
@@ -123,7 +123,7 @@ object ParquetRead {
    * @param conf
    *   a Parquet [[Configuration]]
    */
-  def readTyped[T: ClassTag: ParquetType, R](
+  def readTyped[T: ParquetType, R](
     projectionFn: T => R,
     conf: Configuration
   ): PTransform[PCollection[ReadableFile], PCollection[R]] = readTyped(
@@ -143,7 +143,7 @@ object ParquetRead {
    * @param conf
    *   a Parquet [[Configuration]]
    */
-  def readTyped[T: ClassTag: ParquetType, R](
+  def readTyped[T: ParquetType, R](
     projectionFn: T => R,
     predicate: FilterPredicate,
     conf: Configuration

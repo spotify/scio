@@ -34,7 +34,6 @@ import com.spotify.scio.bigquery.{
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
@@ -118,15 +117,15 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def bigQueryStorage(query: Query): SCollection[TableRow] =
     self.read(BigQueryStorageSelect(query))
 
-  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] =
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] =
     typedBigQuery(None)
 
-  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: Source
   ): SCollection[T] = typedBigQuery(Option(newSource))
 
   /** Get a typed SCollection for BigQuery Table or a SELECT query using the Storage API. */
-  def typedBigQuery[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
     newSource: Option[Source]
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
@@ -147,7 +146,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]] or
    * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
    */
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](): SCollection[T] = {
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isQuery) {
       self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
@@ -159,7 +158,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     }
   }
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table
   ): SCollection[T] =
     self.read(
@@ -170,7 +169,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     )
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     rowRestriction: String
   ): SCollection[T] = {
     val bqt = BigQueryType[T]
@@ -184,7 +183,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     )
   }
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table,
     rowRestriction: String
   ): SCollection[T] =
@@ -196,7 +195,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       )
     )
 
-  def typedBigQueryStorage[T <: HasAnnotation: ClassTag: TypeTag: Coder](
+  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
     table: Table,
     selectedFields: List[String],
     rowRestriction: String

@@ -26,7 +26,6 @@ import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
 
 class DistCacheIT extends PipelineSpec {
   "GCS DistCache" should "work" in {
@@ -36,7 +35,7 @@ class DistCacheIT extends PipelineSpec {
     }
   }
 
-  def runWithDistCache[T: ClassTag](
+  def runWithDistCache[T](
     data: Iterable[String]
   )(fn: (ScioContext, DistCache[List[String]]) => T): ScioResult = {
     val sc = ScioContext()

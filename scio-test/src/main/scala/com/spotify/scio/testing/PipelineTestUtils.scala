@@ -70,7 +70,7 @@ trait PipelineTestUtils {
    * } shouldBe Seq(6)
    * }}}
    */
-  def runWithData[T: Coder, U: Coder](
+  def runWithData[T: Coder, U](
     data: Iterable[T]
   )(fn: SCollection[T] => SCollection[U]): Seq[U] =
     runWithLocalOutput(sc => fn(sc.parallelize(data)))._2
@@ -91,7 +91,7 @@ trait PipelineTestUtils {
    * @return
    *   output data
    */
-  def runWithData[T1: Coder, T2: Coder, U: Coder](data1: Iterable[T1], data2: Iterable[T2])(
+  def runWithData[T1: Coder, T2: Coder, U](data1: Iterable[T1], data2: Iterable[T2])(
     fn: (SCollection[T1], SCollection[T2]) => SCollection[U]
   ): Seq[U] =
     runWithLocalOutput(sc => fn(sc.parallelize(data1), sc.parallelize(data2)))._2
@@ -114,7 +114,7 @@ trait PipelineTestUtils {
    * @return
    *   output data
    */
-  def runWithData[T1: Coder, T2: Coder, T3: Coder, U: Coder](
+  def runWithData[T1: Coder, T2: Coder, T3: Coder, U](
     data1: Iterable[T1],
     data2: Iterable[T2],
     data3: Iterable[T3]
@@ -143,7 +143,7 @@ trait PipelineTestUtils {
    * @return
    *   output data
    */
-  def runWithData[T1: Coder, T2: Coder, T3: Coder, T4: Coder, U: Coder](
+  def runWithData[T1: Coder, T2: Coder, T3: Coder, T4: Coder, U](
     data1: Iterable[T1],
     data2: Iterable[T2],
     data3: Iterable[T3],

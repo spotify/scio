@@ -563,7 +563,7 @@ class ScioContext private[scio] (
 
     if (_counters.nonEmpty) {
       val counters = _counters.toArray
-      this.parallelize(Seq(0)).withName("Initialize counters").map { _ =>
+      this.parallelize(Seq(0)).withName("Initialize counters").tap { _ =>
         counters.foreach(_.inc(0))
       }
     }

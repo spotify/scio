@@ -423,8 +423,7 @@ private[types] object TypeProvider {
           case q"selectedFields = List(..$xs)" => namedArgs("selectedFields") = xs.map(str)
           case q"rowRestriction = $s"          => namedArgs("rowRestriction") = List(str(s))
           case q"List(..$xs)"                  => posList += xs.map(str)
-          case q"$s"                           => posList += List(str(s))
-          case _                               => throw new Exception("Invalid macro application")
+          case s                               => posList += List(str(s))
         }
         val posArgs = List("args", "selectedFields", "rowRestriction").zip(posList).toMap
         val dups = posArgs.keySet intersect namedArgs.keySet
@@ -436,6 +435,7 @@ private[types] object TypeProvider {
         val selectedFields = argMap.getOrElse("selectedFields", Nil)
         val rowRestriction = argMap.getOrElse("rowRestriction", Nil).headOption
         (table, args, selectedFields, rowRestriction)
+      case _ => throw new Exception("Invalid macro application")
     }
   }
 

@@ -43,7 +43,6 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   WriteDisposition
 }
 
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.util.FilenamePolicySupplier
@@ -216,7 +215,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     sharding: Sharding = TableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy,
     configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.defaultConfigOverride
-  )(implicit tt: TypeTag[T], ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
+  )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = TableWriteParam[T](
       method,
       writeDisposition,

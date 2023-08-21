@@ -17,7 +17,9 @@
 
 package com.spotify.scio.bigquery
 
+import com.spotify.scio.avro._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.testing._
 import org.apache.avro.generic.GenericRecord
@@ -84,6 +86,7 @@ final class BigQueryIOTest extends ScioIOSpec {
     val name = "saveAsBigQueryTable"
     val desc = "table-description"
     val sc = ScioContext()
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder
     val io = BigQueryTypedTable[GenericRecord](
       table = Table.Spec("project:dataset.out_table"),
       format = Format.GenericRecord

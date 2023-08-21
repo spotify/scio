@@ -350,7 +350,7 @@ object AvroIO {
 }
 
 object AvroTyped {
-  private[scio] def writeTransform[T <: HasAvroAnnotation: TypeTag: Coder]()
+  private[scio] def writeTransform[T <: HasAvroAnnotation: TypeTag]()
     : BAvroIO.TypedWrite[T, Void, GenericRecord] = {
     val avroT = AvroType[T]
     BAvroIO

@@ -34,7 +34,6 @@ import org.hamcrest.Matchers
 import org.hamcrest.MatcherAssert.assertThat
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
 import com.twitter.chill.ClosureCleaner
 import cats.kernel.Eq
 import org.apache.beam.sdk.testing.SerializableMatchers
@@ -129,30 +128,30 @@ private object ScioMatchers {
       }
     }
 
-  def assertThatFn[T: Eq: Coder](
+  def assertThatFn[T: Eq](
     mm: h.Matcher[JIterable[TestWrapper[T]]]
   ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => assertThat(TestWrapper.wrap(in), mm))
 
-  def assertThatNotFn[T: Eq: Coder](
+  def assertThatNotFn[T: Eq](
     mm: h.Matcher[JIterable[TestWrapper[T]]]
   ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => assertThat(TestWrapper.wrap(in), Matchers.not(mm)))
 
-  def assert[T: Eq: Coder](
+  def assert[T: Eq](
     p: Iterable[TestWrapper[T]] => Boolean
   ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => Predef.assert(p(TestWrapper.wrap(in).asScala)))
 
-  def assertSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean): SerializableFunction[T, Void] =
+  def assertSingle[T: Eq](p: TestWrapper[T] => Boolean): SerializableFunction[T, Void] =
     makeFnSingle[T](in => Predef.assert(p(TestWrapper(in))))
 
-  def assertNot[T: Eq: Coder](
+  def assertNot[T: Eq](
     p: Iterable[TestWrapper[T]] => Boolean
   ): SerializableFunction[JIterable[T], Void] =
     makeFn[T](in => Predef.assert(!p(TestWrapper.wrap(in).asScala)))
 
-  def assertNotSingle[T: Eq: Coder](p: TestWrapper[T] => Boolean): SerializableFunction[T, Void] =
+  def assertNotSingle[T: Eq](p: TestWrapper[T] => Boolean): SerializableFunction[T, Void] =
     makeFnSingle[T](in => Predef.assert(!p(TestWrapper(in))))
 
   def isEqualTo[T: Eq: Coder](context: ScioContext, t: T): SerializableFunction[T, Void] = {
@@ -251,7 +250,7 @@ trait SCollectionMatchers extends EqInstances {
    * SCollection assertion only applied to the specified window, running the checker only on the
    * on-time pane for each key.
    */
-  def inOnTimePane[T: ClassTag](window: BoundedWindow)(matcher: MatcherBuilder[T]): Matcher[T] =
+  def inOnTimePane[T](window: BoundedWindow)(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
       case value: SingleMatcher[T, _] =>
         value.matcher(_.inOnTimePane(window))
@@ -260,7 +259,7 @@ trait SCollectionMatchers extends EqInstances {
     }
 
   /** SCollection assertion only applied to the specified window. */
-  def inWindow[T: ClassTag, B: ClassTag](
+  def inWindow[T, B](
     window: BoundedWindow
   )(matcher: IterableMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inWindow(window))
@@ -269,7 +268,7 @@ trait SCollectionMatchers extends EqInstances {
    * SCollection assertion only applied to the specified window across all panes that were not
    * produced by the arrival of late data.
    */
-  def inCombinedNonLatePanes[T: ClassTag, B: ClassTag](
+  def inCombinedNonLatePanes[T, B](
     window: BoundedWindow
   )(matcher: IterableMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inCombinedNonLatePanes(window))
@@ -278,7 +277,7 @@ trait SCollectionMatchers extends EqInstances {
    * SCollection assertion only applied to the specified window, running the checker only on the
    * final pane for each key.
    */
-  def inFinalPane[T: ClassTag, B: ClassTag](
+  def inFinalPane[T, B](
     window: BoundedWindow
   )(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
@@ -292,7 +291,7 @@ trait SCollectionMatchers extends EqInstances {
    * SCollection assertion only applied to the specified window, running the checker only on the
    * late pane for each key.
    */
-  def inLatePane[T: ClassTag, B: ClassTag](
+  def inLatePane[T, B](
     window: BoundedWindow
   )(matcher: MatcherBuilder[T]): Matcher[T] =
     matcher match {
@@ -320,13 +319,13 @@ trait SCollectionMatchers extends EqInstances {
    * SCollection assertion only applied to the specified window. The assertion expect outputs to be
    * produced to the provided window exactly once.
    */
-  def inOnlyPane[T: ClassTag, B: ClassTag](
+  def inOnlyPane[T, B](
     window: BoundedWindow
   )(matcher: SingleMatcher[T, B]): Matcher[T] =
     matcher.matcher(_.inOnlyPane(window))
 
   /** SCollection assertion only applied to early timing global window. */
-  def inEarlyGlobalWindowPanes[T: ClassTag, B: ClassTag](
+  def inEarlyGlobalWindowPanes[T, B](
     matcher: IterableMatcher[T, B]
   ): Matcher[T] =
     matcher.matcher(_.inEarlyGlobalWindowPanes)

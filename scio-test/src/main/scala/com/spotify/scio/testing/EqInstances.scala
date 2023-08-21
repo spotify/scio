@@ -19,11 +19,13 @@ package com.spotify.scio.testing
 
 import cats.kernel.Eq
 
+import scala.annotation.nowarn
+
 sealed trait FallbackEqInstances {
   implicit def fallbackEq[A]: Eq[A] = new Eq[A] {
     def eqv(x: A, y: A): Boolean =
       (x, y) match {
-        case (x: Array[_], y: Array[_]) => x.sameElements(y)
+        case (x: Array[_], y: Array[_]) => x.sameElements(y): @nowarn
         case _                          => Eq.fromUniversalEquals[A].eqv(x, y)
       }
   }

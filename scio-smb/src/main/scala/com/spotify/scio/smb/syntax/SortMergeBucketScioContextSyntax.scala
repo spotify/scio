@@ -758,7 +758,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     coGbk: Transformable[KeyType, K1, K2],
     toR: CoGbkResult => R
   ) extends Serializable {
-    def to[W: Coder](
+    def to[W](
       output: SortedBucketIO.TransformOutput[K1, K2, W]
     ): SortMergeTransformWriteBuilder[KeyType, R, W] =
       new SortMergeTransformWriteBuilder(coGbk.transform(output), toR)

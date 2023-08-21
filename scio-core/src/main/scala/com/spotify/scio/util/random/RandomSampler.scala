@@ -133,7 +133,7 @@ abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, D
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  @nowarn("msg=parameter value c in method startBundle is never used")
+  @nowarn("msg=parameter c in method startBundle is never used")
   @StartBundle
   def startBundle(c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
     rngs = fractions.iterator.map { case (k, v) =>

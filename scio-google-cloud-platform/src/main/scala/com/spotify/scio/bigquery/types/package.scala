@@ -32,7 +32,7 @@ package object types {
    *                 @description("user age") age: Int)
    * }}}
    */
-  @nowarn("msg=parameter value value in class description is never used")
+  @nowarn("msg=parameter value in class description is never used")
   final class description(value: String) extends StaticAnnotation with Serializable
 
   /**

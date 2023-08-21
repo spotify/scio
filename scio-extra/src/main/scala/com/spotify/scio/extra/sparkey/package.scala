@@ -181,7 +181,7 @@ package object sparkey extends SparkeyReaderInstances {
     compressionType: CompressionType,
     compressionBlockSize: Int,
     elements: Iterable[(K, V)]
-  )(implicit w: SparkeyWritable[K, V], koder: Coder[K], voder: Coder[V]): SparkeyUri = {
+  )(implicit w: SparkeyWritable[K, V]): SparkeyUri = {
     val writer = new SparkeyWriter(uri, rfu, compressionType, compressionBlockSize, maxMemoryUsage)
     val it = elements.iterator
     while (it.hasNext) {
@@ -204,8 +204,10 @@ package object sparkey extends SparkeyReaderInstances {
 
     import SparkeyPairSCollection._
 
-    implicit val kvCoder: Coder[(K, V)] = BeamCoders.getCoder(self)
-    implicit val (keyCoder, valueCoder): (Coder[K], Coder[V]) = BeamCoders.getTupleCoders(self)
+    // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
+    implicit private lazy val coder: Coder[(K, V)] = BeamCoders.getCoder(self)
+    implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
+    implicit private lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
@@ -524,7 +526,7 @@ package object sparkey extends SparkeyReaderInstances {
    * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
    */
   implicit class SparkeySetSCollection[T](private val self: SCollection[T]) {
-    implicit val coder: Coder[T] = self.coder
+    implicit private lazy val coder: Coder[T] = BeamCoders.getCoder(self)
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
