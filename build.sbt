@@ -138,6 +138,7 @@ val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val testContainersVersion = "0.41.0"
+val voyagerVersion = "1.2.0"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -914,6 +915,7 @@ lazy val `scio-extra`: Project = project
       "org.scalanlp" %% "breeze" % breezeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
+      "com.spotify" % "voyager" % voyagerVersion,
       // test
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
