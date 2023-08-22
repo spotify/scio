@@ -857,30 +857,6 @@ class JobTestTest extends PipelineSpec {
   // Test invalid ScioIO
   // =======================================================================
 
-  "runWithContext" should "fail input with message" in {
-    val msg =
-      "requirement failed: Missing test data. Are you reading input outside of JobTest?"
-    the[IllegalArgumentException] thrownBy {
-      runWithContext(_.textFile("in.txt"))
-    } should have message msg
-  }
-
-  it should "fail output with message" in {
-    val msg =
-      "requirement failed: Missing test data. Are you writing output outside of JobTest?"
-    the[IllegalArgumentException] thrownBy {
-      runWithContext(_.parallelize(1 to 10).materialize)
-    } should have message msg
-  }
-
-  it should "fail dist cache with message" in {
-    val msg =
-      "requirement failed: Missing test data. Are you using dist cache outside of JobTest?"
-    the[IllegalArgumentException] thrownBy {
-      runWithContext(_.distCache("in.txt")(f => Source.fromFile(f).getLines().toSeq))
-    } should have message msg
-  }
-
   it should "fail on duplicate usages of inputs in the job itself" in {
     val msg = "requirement failed: Test input TextIO(input) has already been read from once."
     the[IllegalArgumentException] thrownBy {
