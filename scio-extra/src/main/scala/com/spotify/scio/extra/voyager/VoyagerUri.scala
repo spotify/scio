@@ -1,14 +1,14 @@
 package com.spotify.scio.extra.voyager
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.util.ScioUtil
+import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
+
 import java.nio.charset.StandardCharsets
 import com.spotify.voyager.jni.{Index, StringIndex}
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.options.PipelineOptions
 
 import scala.jdk.CollectionConverters
-
 import scala.collection.mutable
 import java.io.File
 import java.net.URI
@@ -28,6 +28,7 @@ private[voyager] object VoyagerUri {
     } else {
       new RemoteVoyagerUri(path, opts)
     }
+  def files: Seq[String] = Seq("index.hnsw", "names.json")
   implicit val voyagerUriCoder: Coder[VoyagerUri] = Coder.kryo[VoyagerUri]
 }
 
@@ -37,20 +38,33 @@ private class LocalVoyagerUri(val path: String) extends VoyagerUri {
     dim: Int
   ): VoyagerReader = ???
 
-  override private[voyager] def saveAndClose(voyagerWriter: VoyagerWriter): Unit = ???
+  override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
+    val indexPath = path + "/index.hnsw"
+    val namesPath = path + "/names.json"
+    w.save(indexPath, namesPath)
+    w.close()
+  }
 
-  override private[voyager] def exists: Boolean = new File(path).exists()
+  override private[voyager] def exists: Boolean =
+    VoyagerUri.files.map(f => new File(path + "/" + f)).exists(_.exists())
 }
 
-private class RemoteVoyagerUri(val path: String, option: PipelineOptions) extends VoyagerUri {
+private class RemoteVoyagerUri(val path: String, options: PipelineOptions) extends VoyagerUri {
+  private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
   override private[voyager] def getReader(
     distanceMeasure: VoyagerDistanceMeasure,
     dim: Int
   ): VoyagerReader = ???
 
-  override private[voyager] def saveAndClose(voyagerWriter: VoyagerWriter): Unit = ???
+  override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
+    val indexPath = path + "/index.hnsw"
+    val namesPath = path + "/names.json"
+    w.save(indexPath, namesPath)
+    w.close()
+  }
 
-  override private[voyager] def exists: Boolean = ???
+  override private[voyager] def exists: Boolean =
+    VoyagerUri.files.exists(f => rfu.remoteExists(new URI(path + "/" + f)))
 }
 
 private[voyager] class VoyagerWriter(
