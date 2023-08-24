@@ -1,10 +1,9 @@
 package com.spotify.scio.extra
 
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.values.DistCache
+import com.spotify.scio.values.{DistCache, SCollection}
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
-import com.spotify.voyager.jni.Index
-import org.apache.beam.sdk.values.PCollectionView
+import com.spotify.voyager.jni.{Index, StringIndex}
 
 package object voyager {
   sealed abstract class VoyagerDistanceMeasure
@@ -17,6 +16,8 @@ package object voyager {
   case object Float32 extends VoyagerStorageType
   case object E4M3 extends VoyagerStorageType
 
+  case class VoyagerResult(label: String, distance: Float)
+
   class VoyagerReader private[voyager] (
     path: String,
     distanceMeasure: VoyagerDistanceMeasure,
@@ -24,7 +25,11 @@ package object voyager {
     dim: Int
   ) {
     require(dim > 0, "Vector dimension should be > 0")
-    private val index: Index = {
+
+    private val indexPath: String = path + "/index.hnsw"
+    private val namesPath: String = path + "/names.json"
+
+    private val index: StringIndex = {
       val spaceType = distanceMeasure match {
         case Euclidean => SpaceType.Euclidean
         case Cosine    => SpaceType.Cosine
@@ -36,22 +41,44 @@ package object voyager {
         case Float32 => StorageDataType.Float32
         case E4M3    => StorageDataType.E4M3
       }
-      Index.load(path, spaceType, dim, storageDataType)
+      StringIndex.load(indexPath, namesPath, spaceType, dim, storageDataType)
     }
+    // figure out index path + names path
 
-    def getNearest(v: Array[Float], maxNumResults: Int) = index.query(v, maxNumResults)
-
-    def getItemVector(i: Int) = index.getVector(i)
+//    def getNearest(v: Array[Float], maxNumResults: Int) = index.query(v, maxNumResults)
+//
+//    def getItemVector(i: Int) = index.getVector(i)
   }
 
-  @experimental
-  def asVoyager(
-    path: String,
-    m: Int,
-    ef: Int,
-    voyagerDistanceMeasure: VoyagerDistanceMeasure
-  ): String =
-    ""
+  implicit class VoyagerPairSCollection(
+    @transient private val self: SCollection[(String, Array[Float])]
+  ) extends AnyVal {
+
+    @experimental
+    def asVoyager(
+      path: String,
+      voyagerDistanceMeasure: VoyagerDistanceMeasure,
+      voyagerStorageType: VoyagerStorageType,
+      dim: Int,
+      ef: Long,
+      m: Long
+    ): SCollection[VoyagerUri] = {
+      val uri: VoyagerUri = VoyagerUri(path, self.context.options)
+      require(!uri.exists, s"Voyager URI ${uri.path} already exists")
+      self.transform { in =>
+        {
+          in.groupBy(_ => ())
+            .map { case (_, xs) =>
+              val voyagerWriter: VoyagerWriter =
+                new VoyagerWriter(voyagerDistanceMeasure, voyagerStorageType, dim, ef, m)
+              voyagerWriter.write(xs)
+              uri
+            }
+        }
+      }
+    }
+
+  }
 
   def asVoyagerDistCache(): DistCache[VoyagerReader] = ???
 
