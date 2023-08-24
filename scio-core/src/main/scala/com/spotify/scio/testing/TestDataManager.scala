@@ -26,7 +26,6 @@ import org.apache.beam.sdk.Pipeline
 import org.apache.beam.sdk.testing.TestStream
 
 import scala.collection.concurrent.TrieMap
-import scala.collection.mutable
 import scala.collection.mutable.{Set => MSet}
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
