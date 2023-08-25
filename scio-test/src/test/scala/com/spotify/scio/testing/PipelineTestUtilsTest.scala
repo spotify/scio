@@ -79,4 +79,14 @@ class PipelineTestUtilsTest
     }
   }
 
+  it should "override named transforms if type signature are compatible" in {
+    // TransformOverride accepts CharSequence and will be given Strings
+    runWithOverrides(TransformOverride.of("prefix", (x: CharSequence) => s"override-$x")) { sc =>
+      val actual = sc
+        .parallelize(Seq("a", "b"))
+        .withName("prefix")
+        .map(x => s"prefix-$x")
+      actual should containInAnyOrder(Seq("override-a", "override-b"))
+    }
+  }
 }
