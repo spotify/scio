@@ -62,7 +62,7 @@ public class TensorflowExampleWriteSupport extends WriteSupport<Example> {
 
   @Override
   public String getName() {
-    return "example";
+    return "tensorflow.example";
   }
 
   @Override
