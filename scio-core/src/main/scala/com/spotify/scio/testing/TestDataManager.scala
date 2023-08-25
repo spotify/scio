@@ -146,10 +146,10 @@ private[scio] object TestDataManager {
 
   def setup(
     testId: String,
-    ins: Map[String, JobInputSource[_]] = Map.empty,
-    outs: Map[String, SCollection[_] => Any] = Map.empty,
-    dcs: Map[DistCacheIO[_], _] = Map.empty,
-    xformOverrides: Set[PTransformOverride] = Set.empty
+    ins: Map[String, JobInputSource[_]],
+    outs: Map[String, SCollection[_] => Any],
+    dcs: Map[DistCacheIO[_], _],
+    xformOverrides: Set[PTransformOverride]
   ): Unit = {
     inputs += (testId -> new TestInput(ins))
     outputs += (testId -> new TestOutput(outs))

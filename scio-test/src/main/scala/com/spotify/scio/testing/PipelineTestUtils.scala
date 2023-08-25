@@ -23,6 +23,8 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.runners.PTransformOverride
 
+import scala.jdk.CollectionConverters._
+
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
 
@@ -176,9 +178,8 @@ trait PipelineTestUtils {
     overrides: PTransformOverride*
   )(fn: ScioContext => Any): ScioExecutionContext = {
     val sc = ScioContext.forTest()
-    val testId = sc.optionsAs[ApplicationNameOptions].getAppName
-    TestDataManager.setup(testId, xformOverrides = overrides.toSet)
     fn(sc)
+    sc.pipeline.replaceAll(overrides.toList.asJava)
     sc.run()
   }
 
