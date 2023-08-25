@@ -76,11 +76,16 @@ object TransformOverride {
     java.lang.Double.TYPE -> classOf[java.lang.Double]
   )
 
-  private def typeValidation[A, B](failMsg: String, aIn: Class[A], bIn: Class[B]): Unit = {
+  private def typeValidation[A, B](
+    expectedIn: Class[B],
+    actualIn: Class[A],
+    failMsg: String
+  ): Unit = {
     // get normal java types instead of primitives
-    val (a, b) = (primitiveMapping.getOrElse(aIn, aIn), primitiveMapping.getOrElse(bIn, bIn))
-    if (!a.isAssignableFrom(b))
-      throw new IllegalArgumentException(s"$failMsg Expected: ${aIn} Found: ${bIn}")
+    val expected = primitiveMapping.getOrElse(expectedIn, expectedIn)
+    val actual = primitiveMapping.getOrElse(actualIn, actualIn)
+    if (!expected.isAssignableFrom(actual))
+      throw new IllegalArgumentException(s"$failMsg Expected: $expected Found: $actual")
   }
 
   /**
@@ -105,9 +110,9 @@ object TransformOverride {
   def of[T: ClassTag, U](name: String, fn: T => U): PTransformOverride = {
     val wrappedFn: T => U = fn.compose { t: T =>
       typeValidation(
-        s"Input for override transform $name does not match pipeline transform.",
+        implicitly[ClassTag[T]].runtimeClass,
         t.getClass,
-        implicitly[ClassTag[T]].runtimeClass
+        s"Input for override transform $name does not match pipeline transform."
       )
       t
     }
@@ -132,9 +137,9 @@ object TransformOverride {
     val wrappedFn: T => JIterable[U] = fn
       .compose { t: T =>
         typeValidation(
-          s"Input for override transform $name does not match pipeline transform.",
+          implicitly[ClassTag[T]].runtimeClass,
           t.getClass,
-          implicitly[ClassTag[T]].runtimeClass
+          s"Input for override transform $name does not match pipeline transform."
         )
         t
       }
