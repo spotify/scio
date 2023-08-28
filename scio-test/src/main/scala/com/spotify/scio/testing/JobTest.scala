@@ -19,7 +19,7 @@ package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
 import com.spotify.scio.ScioResult
-import com.spotify.scio.io.ScioIO
+import com.spotify.scio.io.{KeyedIO, ScioIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
@@ -115,12 +115,18 @@ object JobTest {
     def input[T: Coder](io: ScioIO[T], value: Iterable[T]): Builder =
       input(io, IterableInputSource(value))
 
+    def keyedInput[K: Coder, T: Coder](io: KeyedIO[K, T], value: Iterable[T]): Builder =
+      input(io, IterableInputSource(value.map(x => io.keyBy(x) -> x)))
+
     /**
      * Feed an input in the form of a `PTransform[PBegin, PCollection[T]]` to the pipeline being
      * tested. Note that `PTransform` inputs may not be supported for all `TestIO[T]` types.
      */
     def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
       input(io, TestStreamInputSource(stream))
+
+    def keyedInputStream[K: Coder, T: Coder](io: KeyedIO[K, T], stream: Iterable[T]): Builder =
+      input(io, IterableInputSource(stream.map(x => io.keyBy(x) -> x)))
 
     private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {
       require(!state.input.contains(io.testId), "Duplicate test input: " + io.testId)

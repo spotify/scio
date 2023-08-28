@@ -108,10 +108,6 @@ public class JsonSortedBucketIO {
    */
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<TableRow> {
-    @Nullable
-    abstract ImmutableList<String> getInputDirectories();
-
-    abstract String getFilenameSuffix();
 
     abstract Compression getCompression();
 

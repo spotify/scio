@@ -125,10 +125,6 @@ public class TensorFlowBucketIO {
    */
   @AutoValue
   public abstract static class Read extends SortedBucketIO.Read<Example> {
-    @Nullable
-    abstract ImmutableList<String> getInputDirectories();
-
-    abstract String getFilenameSuffix();
 
     abstract Compression getCompression();
 

@@ -193,11 +193,6 @@ public class AvroSortedBucketIO {
   @AutoValue
   public abstract static class Read<T extends IndexedRecord> extends SortedBucketIO.Read<T> {
     @Nullable
-    abstract ImmutableList<String> getInputDirectories();
-
-    abstract String getFilenameSuffix();
-
-    @Nullable
     abstract Schema getSchema();
 
     @Nullable

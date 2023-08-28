@@ -21,6 +21,8 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.smb.SMBIO
+import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values._
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.{AbsCoGbkTransform, Transformable}
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.{BucketItem, MergedBucket}
@@ -68,35 +70,44 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
     lhs: SortedBucketIO.Read[L],
     rhs: SortedBucketIO.Read[R],
     targetParallelism: TargetParallelism = TargetParallelism.auto()
-  ): SCollection[(K, (L, R))] = {
-    val t = SortedBucketIO.read(keyClass).of(lhs, rhs).withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
-    val tfName = self.tfName
+  ): SCollection[(K, (L, R))] = self.requireNotClosed {
+    if (self.isTest) {
+      val testInput = TestDataManager.getInput(self.testId.get)
+      val idLhs = lhs.getInputDirectories.asScala.mkString(",")
+      val testLhs = testInput[(K, L)](SMBIO(idLhs, null)).toSCollection(self)
+      val idRhs = rhs.getInputDirectories.asScala.mkString(",")
+      val testRhs = testInput[(K, R)](SMBIO(idRhs, null)).toSCollection(self)
+      testLhs.join(testRhs)
+    } else {
+      val t = SortedBucketIO.read(keyClass).of(lhs, rhs).withTargetParallelism(targetParallelism)
+      val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
+      val tfName = self.tfName
 
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
-      .withName(tfName)
-      .applyTransform(ParDo.of(new DoFn[KV[K, CoGbkResult], (K, (L, R))] {
-        @ProcessElement
-        private[smb] def processElement(
-          @Element element: KV[K, CoGbkResult],
-          out: OutputReceiver[(K, (L, R))]
-        ): Unit = {
-          val cgbkResult = element.getValue
-          val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
-          val itB = resB.iterator()
-          val key = element.getKey
+      self
+        .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+        .withName(tfName)
+        .applyTransform(ParDo.of(new DoFn[KV[K, CoGbkResult], (K, (L, R))] {
+          @ProcessElement
+          private[smb] def processElement(
+            @Element element: KV[K, CoGbkResult],
+            out: OutputReceiver[(K, (L, R))]
+          ): Unit = {
+            val cgbkResult = element.getValue
+            val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
+            val itB = resB.iterator()
+            val key = element.getKey
 
-          while (itB.hasNext) {
-            val b = itB.next()
-            val ai = resA.iterator()
-            while (ai.hasNext) {
-              val a = ai.next()
-              out.output((key, (a, b)))
+            while (itB.hasNext) {
+              val b = itB.next()
+              val ai = resA.iterator()
+              while (ai.hasNext) {
+                val a = ai.next()
+                out.output((key, (a, b)))
+              }
             }
           }
-        }
-      }))
+        }))
+    }
   }
 
   /** Secondary keyed variant. */

@@ -159,6 +159,10 @@ trait TestIO[T] extends ScioIO[T] {
     throw new UnsupportedOperationException(s"$this is for testing purpose only")
 }
 
+trait KeyedIO[K, T] extends ScioIO[(K, T)] {
+  def keyBy: T => K
+}
+
 /**
  * Special version of [[ScioIO]] for use with [[ScioContext.customInput]] and
  * [[SCollection.saveAsCustomOutput]].
