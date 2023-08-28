@@ -27,7 +27,7 @@ import java.util.Collections
 
 object SmbJob {
 
-  def main(cmdlineArgs: Array[String]) = {
+  def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     sc.sortMergeJoin(
