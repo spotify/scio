@@ -73,10 +73,8 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   ): SCollection[(K, (L, R))] = self.requireNotClosed {
     if (self.isTest) {
       val testInput = TestDataManager.getInput(self.testId.get)
-      val idLhs = lhs.getInputDirectories.asScala.mkString(",")
-      val testLhs = testInput[(K, L)](SMBIO(idLhs, null)).toSCollection(self)
-      val idRhs = rhs.getInputDirectories.asScala.mkString(",")
-      val testRhs = testInput[(K, R)](SMBIO(idRhs, null)).toSCollection(self)
+      val testLhs = testInput[(K, L)](SMBIO.testId(lhs)).toSCollection(self)
+      val testRhs = testInput[(K, R)](SMBIO.testId(rhs)).toSCollection(self)
       testLhs.join(testRhs)
     } else {
       val t = SortedBucketIO.read(keyClass).of(lhs, rhs).withTargetParallelism(targetParallelism)

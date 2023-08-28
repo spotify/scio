@@ -18,8 +18,10 @@
 package com.spotify.scio.io
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.SCollection
+
 import scala.annotation.unused
 
 sealed trait TapT[A] extends Serializable {
@@ -159,8 +161,10 @@ trait TestIO[T] extends ScioIO[T] {
     throw new UnsupportedOperationException(s"$this is for testing purpose only")
 }
 
-trait KeyedIO[K, T] extends ScioIO[(K, T)] {
-  def keyBy: T => K
+trait KeyedIO[T] { self: ScioIO[T] =>
+  type KeyT
+  def keyBy: T => KeyT
+  def keyCoder: Coder[KeyT]
 }
 
 /**

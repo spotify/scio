@@ -109,14 +109,19 @@ object JobTest {
 
     /**
      * Feed an input in the form of a raw `Iterable[T]` to the pipeline being tested. Note that
-     * `TestIO[T]` must match the one used inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")`
+     * `ScioIO[T]` must match the one used inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")`
      * with `sc.avroFile[MyRecord]("in.avro")`.
      */
-    def input[T: Coder](io: ScioIO[T], value: Iterable[T]): Builder =
-      input(io, IterableInputSource(value))
-
-    def keyedInput[K: Coder, T: Coder](io: KeyedIO[K, T], value: Iterable[T]): Builder =
-      input(io, IterableInputSource(value.map(x => io.keyBy(x) -> x)))
+    def input[T: Coder](io: ScioIO[T], value: Iterable[T]): Builder = {
+      val source = io match {
+        case kio: KeyedIO[T @unchecked] =>
+          implicit val keyCoder: Coder[kio.KeyT] = kio.keyCoder
+          IterableInputSource(value.map(x => kio.keyBy(x) -> x))
+        case _ =>
+          IterableInputSource(value)
+      }
+      input(io, source)
+    }
 
     /**
      * Feed an input in the form of a `PTransform[PBegin, PCollection[T]]` to the pipeline being
@@ -125,10 +130,7 @@ object JobTest {
     def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
       input(io, TestStreamInputSource(stream))
 
-    def keyedInputStream[K: Coder, T: Coder](io: KeyedIO[K, T], stream: Iterable[T]): Builder =
-      input(io, IterableInputSource(stream.map(x => io.keyBy(x) -> x)))
-
-    private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {
+    private def input(io: ScioIO[_], value: JobInputSource[_]): Builder = {
       require(!state.input.contains(io.testId), "Duplicate test input: " + io.testId)
       state = state.copy(input = state.input + (io.testId -> value))
       this

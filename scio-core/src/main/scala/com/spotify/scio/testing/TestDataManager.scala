@@ -64,8 +64,8 @@ private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
   val s: MSet[String] =
     java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
 
-  def apply[T](io: ScioIO[T]): JobInputSource[T] = {
-    val key = io.testId
+  def apply[T](io: ScioIO[T]): JobInputSource[T] = apply(io.testId)
+  def apply[T](key: String): JobInputSource[T] = {
     require(
       m.contains(key),
       s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}"

@@ -16,9 +16,21 @@
 
 package com.spotify.scio.smb
 
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{KeyedIO, TapOf, TapT, TestIO}
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO
 
-final case class SMBIO[K, T](id: String, keyBy: T => K) extends KeyedIO[K, T] with TestIO[(K, T)] {
-  override val tapT: TapT.Aux[(K, T), (K, T)] = TapOf[(K, T)]
-  override def testId: String = s"SMBIO($id)"
+import scala.jdk.CollectionConverters._
+
+final case class SMBIO[K: Coder, T](id: String, keyBy: T => K) extends TestIO[T] with KeyedIO[T] {
+  override type KeyT = K
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
+  override def testId: String = SMBIO.testId(id)
+  override def keyCoder: Coder[K] = Coder[K]
+}
+
+object SMBIO {
+  private[smb] def testId(read: SortedBucketIO.Read[_]): String =
+    testId(read.getInputDirectories.asScala.mkString(","))
+  private def testId(id: String): String = s"SMBIO($id)"
 }

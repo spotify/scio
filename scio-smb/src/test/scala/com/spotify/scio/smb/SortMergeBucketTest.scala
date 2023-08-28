@@ -62,9 +62,8 @@ class SortMergeBucketTest extends PipelineSpec {
         "--accounts=accounts",
         "--output=output"
       )
-      .keyedInput(SMBIO[Integer, User]("users", _.getId), Seq(user))
-      // input is also possible but error prone as key must be given manually
-      .input(SMBIO[Integer, Account]("accounts", _.getId), Seq(account.getId -> account))
+      .input(SMBIO[Integer, User]("users", _.getId), Seq(user))
+      .input(SMBIO[Integer, Account]("accounts", _.getId), Seq(account))
       .output(TextIO("output"))(_ should containInAnyOrder(Seq("lastname=12.5")))
       .run()
   }
