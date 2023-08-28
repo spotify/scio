@@ -16,7 +16,11 @@ import java.nio.file.{Files, Paths}
 
 trait VoyagerUri extends Serializable {
   val path: String
-  private[voyager] def getReader(distanceMeasure: VoyagerDistanceMeasure, dim: Int): VoyagerReader
+  private[voyager] def getReader(
+    distanceMeasure: VoyagerDistanceMeasure,
+    storageType: VoyagerStorageType,
+    dim: Int
+  ): VoyagerReader
   private[voyager] def saveAndClose(voyagerWriter: VoyagerWriter): Unit
   private[voyager] def exists: Boolean
 }
@@ -35,8 +39,10 @@ private[voyager] object VoyagerUri {
 private class LocalVoyagerUri(val path: String) extends VoyagerUri {
   override private[voyager] def getReader(
     distanceMeasure: VoyagerDistanceMeasure,
+    storageType: VoyagerStorageType,
     dim: Int
-  ): VoyagerReader = ???
+  ): VoyagerReader =
+    new VoyagerReader(path, distanceMeasure, storageType, dim)
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
     val indexPath = path + "/index.hnsw"
@@ -53,8 +59,12 @@ private class RemoteVoyagerUri(val path: String, options: PipelineOptions) exten
   private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
   override private[voyager] def getReader(
     distanceMeasure: VoyagerDistanceMeasure,
+    storageType: VoyagerStorageType,
     dim: Int
-  ): VoyagerReader = ???
+  ): VoyagerReader = {
+    val localPath = rfu.download(new URI(path))
+    new VoyagerReader(localPath.toString, distanceMeasure, storageType, dim)
+  }
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
     val indexPath = path + "/index.hnsw"

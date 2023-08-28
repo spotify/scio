@@ -16,8 +16,6 @@ package object voyager {
   case object Float32 extends VoyagerStorageType
   case object E4M3 extends VoyagerStorageType
 
-  case class VoyagerResult(label: String, distance: Float)
-
   class VoyagerReader private[voyager] (
     path: String,
     distanceMeasure: VoyagerDistanceMeasure,
@@ -60,8 +58,8 @@ package object voyager {
       voyagerDistanceMeasure: VoyagerDistanceMeasure,
       voyagerStorageType: VoyagerStorageType,
       dim: Int,
-      ef: Long,
-      m: Long
+      ef: Long = 200L,
+      m: Long = 16L
     ): SCollection[VoyagerUri] = {
       val uri: VoyagerUri = VoyagerUri(path, self.context.options)
       require(!uri.exists, s"Voyager URI ${uri.path} already exists")
@@ -72,6 +70,7 @@ package object voyager {
               val voyagerWriter: VoyagerWriter =
                 new VoyagerWriter(voyagerDistanceMeasure, voyagerStorageType, dim, ef, m)
               voyagerWriter.write(xs)
+              voyagerWriter.save("index.hnsw", "names.json")
               uri
             }
         }
