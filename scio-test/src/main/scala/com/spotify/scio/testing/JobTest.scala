@@ -22,13 +22,16 @@ import com.spotify.scio.ScioResult
 import com.spotify.scio.io.{KeyedIO, ScioIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.runners.PTransformOverride
 import org.apache.beam.sdk.testing.TestStream
+import org.apache.beam.sdk.testing.TestStream.{ElementEvent, Event}
+import org.apache.beam.sdk.values.TimestampedValue
 import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
+import scala.jdk.CollectionConverters._
 
 /**
  * Set up a Scio job for end-to-end unit testing. To be used in a
@@ -125,10 +128,29 @@ object JobTest {
 
     /**
      * Feed an input in the form of a `PTransform[PBegin, PCollection[T]]` to the pipeline being
-     * tested. Note that `PTransform` inputs may not be supported for all `TestIO[T]` types.
+     * tested. Note that `PTransform` inputs may not be supported for all `ScioIO[T]` types.
      */
-    def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
-      input(io, TestStreamInputSource(stream))
+    def inputStream[T: Coder](io: ScioIO[T], stream: TestStream[T]): Builder = {
+      val source = io match {
+        case kio: KeyedIO[T @unchecked] =>
+          implicit val keyCoder: Coder[kio.KeyT] = kio.keyCoder
+          val bCoder = CoderMaterializer.beamWithDefault(Coder[(kio.KeyT, T)])
+          val kvEvents = stream.getEvents.asScala.map {
+            case elemEvent: ElementEvent[T @unchecked] =>
+              val values = elemEvent.getElements.asScala.map { e =>
+                val value = e.getValue
+                val ts = e.getTimestamp
+                TimestampedValue.of[(kio.KeyT, T)](kio.keyBy(value) -> value, ts)
+              }
+              ElementEvent.add(values.asJava)
+            case e => e.asInstanceOf[Event[(kio.KeyT, T)]]
+          }
+          TestStreamInputSource(TestStream.fromRawEvents(bCoder, kvEvents.asJava))
+        case _ =>
+          TestStreamInputSource(stream)
+      }
+      input(io, source)
+    }
 
     private def input(io: ScioIO[_], value: JobInputSource[_]): Builder = {
       require(!state.input.contains(io.testId), "Duplicate test input: " + io.testId)
