@@ -497,7 +497,6 @@ public class SortedBucketIO {
     @Nullable
     public abstract ImmutableList<String> getInputDirectories();
 
-
     abstract String getFilenameSuffix();
 
     public abstract TupleTag<V> getTupleTag();
