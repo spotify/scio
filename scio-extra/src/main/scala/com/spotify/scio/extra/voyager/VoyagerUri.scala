@@ -4,7 +4,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 
 import java.nio.charset.StandardCharsets
-import com.spotify.voyager.jni.{Index, StringIndex}
+import com.spotify.voyager.jni.Index
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.options.PipelineOptions
 
@@ -12,7 +12,7 @@ import scala.jdk.CollectionConverters
 import scala.collection.mutable
 import java.io.File
 import java.net.URI
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 trait VoyagerUri extends Serializable {
   val path: String
@@ -45,9 +45,7 @@ private class LocalVoyagerUri(val path: String) extends VoyagerUri {
     new VoyagerReader(path, distanceMeasure, storageType, dim)
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
-    val indexPath = path + "/index.hnsw"
-    val namesPath = path + "/names.json"
-    w.save(indexPath, namesPath)
+    w.save(path)
     w.close()
   }
 
@@ -67,9 +65,7 @@ private class RemoteVoyagerUri(val path: String, options: PipelineOptions) exten
   }
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
-    val indexPath = path + "/index.hnsw"
-    val namesPath = path + "/names.json"
-    w.save(indexPath, namesPath)
+    w.save(path)
     w.close()
   }
 
@@ -131,7 +127,10 @@ private[voyager] class VoyagerWriter(
     ()
   }
 
-  def save(indexFileName: String, namesFileName: String): Unit = {
+  def save(path: String): Unit = {
+    val basePath: Path = Paths.get(path)
+    val indexFileName: String = basePath.resolve("index.hnsw").toString
+    val namesFileName: String = basePath.resolve("names.json").toString
     index.saveIndex(indexFileName)
     Files.write(
       Paths.get(namesFileName),

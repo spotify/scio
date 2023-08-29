@@ -1,9 +1,14 @@
 package com.spotify.scio.extra
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.values.{DistCache, SCollection}
+import com.spotify.scio.values.{DistCache, SCollection, SideInput}
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import com.spotify.voyager.jni.{Index, StringIndex}
+import org.apache.beam.sdk.transforms.{DoFn, View}
+import org.apache.beam.sdk.values.PCollectionView
+
+import java.nio.file.{Path, Paths}
 
 package object voyager {
   sealed abstract class VoyagerDistanceMeasure
@@ -16,6 +21,8 @@ package object voyager {
   case object Float32 extends VoyagerStorageType
   case object E4M3 extends VoyagerStorageType
 
+  case class VoyagerResult(value: String, distance: Float)
+
   class VoyagerReader private[voyager] (
     path: String,
     distanceMeasure: VoyagerDistanceMeasure,
@@ -24,8 +31,9 @@ package object voyager {
   ) {
     require(dim > 0, "Vector dimension should be > 0")
 
-    private val indexPath: String = path + "/index.hnsw"
-    private val namesPath: String = path + "/names.json"
+    private val basePath: Path = Paths.get(path)
+    private val indexFileName: String = basePath.resolve("index.hnsw").toString
+    private val namesFileName: String = basePath.resolve("names.json").toString
 
     private val index: StringIndex = {
       val spaceType = distanceMeasure match {
@@ -39,13 +47,17 @@ package object voyager {
         case Float32 => StorageDataType.Float32
         case E4M3    => StorageDataType.E4M3
       }
-      StringIndex.load(indexPath, namesPath, spaceType, dim, storageDataType)
+      StringIndex.load(indexFileName, namesFileName, spaceType, dim, storageDataType)
     }
-    // figure out index path + names path
 
-//    def getNearest(v: Array[Float], maxNumResults: Int) = index.query(v, maxNumResults)
-//
-//    def getItemVector(i: Int) = index.getVector(i)
+    def getNearest(v: Array[Float], maxNumResults: Int, ef: Int): Array[VoyagerResult] = {
+      val queryResults = index.query(v, maxNumResults, ef)
+      queryResults.getNames
+        .zip(queryResults.getDistances)
+        .map { case (name, distance) =>
+          VoyagerResult(name, distance.toFloat)
+        }
+    }
   }
 
   implicit class VoyagerPairSCollection(
@@ -70,7 +82,7 @@ package object voyager {
               val voyagerWriter: VoyagerWriter =
                 new VoyagerWriter(voyagerDistanceMeasure, voyagerStorageType, dim, ef, m)
               voyagerWriter.write(xs)
-              voyagerWriter.save("index.hnsw", "names.json")
+              voyagerWriter.save(path)
               uri
             }
         }
@@ -79,14 +91,33 @@ package object voyager {
 
   }
 
-  def asVoyagerDistCache(): DistCache[VoyagerReader] = ???
+  def asVoyagerSideInput(): SideInput[VoyagerReader] = ???
 
-//  private class VoyagerDistCache(
-//    val view: PCollectionView[VoyagerUri],
-//    distanceMeasure: VoyagerDistanceMeasure,
-//    dim: Int
-//  ) extends DistCache[VoyagerReader] {
-//    override def apply(): VoyagerReader = ???
-//  }
+  /**
+   * To be used with with side inputs
+   * @param self
+   */
+  implicit class VoyagerScioContext(private val self: ScioContext) extends AnyVal {
+    def voyagerSideInput(
+      path: String,
+      distanceMeasure: VoyagerDistanceMeasure,
+      storageType: VoyagerStorageType,
+      dim: Int
+    ): SideInput[VoyagerReader] = {
+      val uri = VoyagerUri(path, self.options)
+      val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
+      new VoyagerSideInput(view, distanceMeasure, storageType, dim)
+    }
+  }
+
+  private class VoyagerSideInput(
+    val view: PCollectionView[VoyagerUri],
+    distanceMeasure: VoyagerDistanceMeasure,
+    storageType: VoyagerStorageType,
+    dim: Int
+  ) extends SideInput[VoyagerReader] {
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader =
+      context.sideInput(view).getReader(distanceMeasure, storageType, dim)
+  }
 
 }
