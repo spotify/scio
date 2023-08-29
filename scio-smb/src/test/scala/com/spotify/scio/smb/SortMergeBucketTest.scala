@@ -24,6 +24,7 @@ import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, TargetParallelism
 import org.apache.beam.sdk.values.TupleTag
 
 import java.util.Collections
+import scala.jdk.CollectionConverters._
 
 object SmbJob {
 
@@ -48,23 +49,80 @@ object SmbJob {
 
 }
 
+object SmbTransformJob {
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    sc.sortMergeTransform(
+      classOf[Integer],
+      AvroSortedBucketIO
+        .read(new TupleTag[User]("lhs"), classOf[User])
+        .from(args("users")),
+      AvroSortedBucketIO
+        .read(new TupleTag[Account]("rhs"), classOf[Account])
+        .from(args("accounts")),
+      TargetParallelism.auto()
+    ).to(
+      AvroSortedBucketIO
+        .transformOutput(classOf[Integer], "id", classOf[User])
+        .to(args("output"))
+    ).via { case (_, (users, accounts), outputCollector) =>
+      users
+        .map { u =>
+          val sortedAccounts = accounts.toList
+            .sortBy(_.getAmount)(Ordering[java.lang.Double].reverse)
+            .asJava
+          User
+            .newBuilder(u)
+            .setAccounts(sortedAccounts)
+            .build()
+        }
+        .foreach(outputCollector.accept)
+    }
+
+    sc.run().waitUntilDone()
+  }
+
+}
+
 class SortMergeBucketTest extends PipelineSpec {
+  val accountA: Account = new Account(1, "typeA", "nameA", 12.5, null)
+  val accountB: Account = new Account(1, "typeB", "nameB", 7.0, null)
+  val address = new Address("street1", "street2", "city", "state", "01234", "Sweden")
+  val user =
+    new User(1, "lastname", "firstname", "email@foobar.com", Collections.emptyList(), address)
 
-  "SMB" should "be able to mock input and output" in {
-    val account: Account = new Account(1, "type", "name", 12.5, null)
-    val address = new Address("street1", "street2", "city", "state", "01234", "Sweden")
-    val user =
-      new User(1, "lastname", "firstname", "email@foobar.com", Collections.emptyList(), address)
+  val joinedUserAccounts =
+    User.newBuilder(user).setAccounts(List(accountA, accountB).asJava).build()
 
+  "SortMergeBucket" should "be able to mock sortMergeTransform input" in {
     JobTest[SmbJob.type]
       .args(
-        "--users=users",
-        "--accounts=accounts",
-        "--output=output"
+        "--users=gs://users",
+        "--accounts=gs://accounts",
+        "--output=gs://output"
       )
-      .input(SortedBucketIO[Integer, User]("users", _.getId), Seq(user))
-      .input(SortedBucketIO[Integer, Account]("accounts", _.getId), Seq(account))
-      .output(TextIO("output"))(_ should containInAnyOrder(Seq("lastname=12.5")))
+      .input(SortedBucketIO[Integer, User]("gs://users", _.getId), Seq(user))
+      .input(SortedBucketIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+      .output(TextIO("gs://output"))(
+        _ should containInAnyOrder(Seq("lastname=12.5", "lastname=7.0"))
+      )
+      .run()
+  }
+
+  it should "be able to mock sortMergeTransform" in {
+    JobTest[SmbTransformJob.type]
+      .args(
+        "--users=gs://users",
+        "--accounts=gs://accounts",
+        "--output=gs://output"
+      )
+      .input(SortedBucketIO[Integer, User]("gs://users", _.getId), Seq(user))
+      .input(SortedBucketIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+      .output(SortedBucketIO[Integer, User]("gs://output", _.getId))(
+        _ should containInAnyOrder(Seq(joinedUserAccounts))
+      )
       .run()
   }
 

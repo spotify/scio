@@ -495,9 +495,9 @@ public class SortedBucketIO {
   public abstract static class Read<V> implements Serializable {
 
     @Nullable
-    public abstract ImmutableList<String> getInputDirectories();
+    abstract ImmutableList<String> getInputDirectories();
 
-    public abstract String getFilenameSuffix();
+    abstract String getFilenameSuffix();
 
     public abstract TupleTag<V> getTupleTag();
 

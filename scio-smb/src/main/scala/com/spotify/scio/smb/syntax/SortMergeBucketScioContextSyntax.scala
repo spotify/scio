@@ -20,18 +20,15 @@ package com.spotify.scio.smb.syntax
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{ClosedTap, EmptyTap}
-import com.spotify.scio.smb.SortedBucketIO
+import com.spotify.scio.smb.SortMergeTransform
+import com.spotify.scio.smb.util.SMBMultiJoin
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values._
-import org.apache.beam.sdk.extensions.smb.SortedBucketIO.{AbsCoGbkTransform, Transformable}
-import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.{BucketItem, MergedBucket}
-import org.apache.beam.sdk.extensions.{smb => beam}
+import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketIOUtil, TargetParallelism}
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.join.CoGbkResult
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
-import org.apache.beam.sdk.values.{KV, PCollectionView}
+import org.apache.beam.sdk.values.KV
 
 import scala.jdk.CollectionConverters._
 
@@ -67,18 +64,17 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeJoin[K: Coder, L: Coder, R: Coder](
     keyClass: Class[K],
-    lhs: beam.SortedBucketIO.Read[L],
-    rhs: beam.SortedBucketIO.Read[R],
-    targetParallelism: beam.TargetParallelism = beam.TargetParallelism.auto()
+    lhs: SortedBucketIO.Read[L],
+    rhs: SortedBucketIO.Read[R],
+    targetParallelism: TargetParallelism = TargetParallelism.auto()
   ): SCollection[(K, (L, R))] = self.requireNotClosed {
     if (self.isTest) {
-      val testInput = TestDataManager.getInput(self.testId.get)
-      val testLhs = testInput[(K, L)](SortedBucketIO.testId(lhs)).toSCollection(self)
-      val testRhs = testInput[(K, R)](SortedBucketIO.testId(rhs)).toSCollection(self)
-      testLhs.join(testRhs)
+      testJoin(lhs, rhs)
     } else {
-      val t =
-        beam.SortedBucketIO.read(keyClass).of(lhs, rhs).withTargetParallelism(targetParallelism)
+      val t = SortedBucketIO
+        .read(keyClass)
+        .of(lhs, rhs)
+        .withTargetParallelism(targetParallelism)
       val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
       val tfName = self.tfName
 
@@ -114,43 +110,47 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   def sortMergeJoin[K1: Coder, K2: Coder, L: Coder, R: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    lhs: beam.SortedBucketIO.Read[L],
-    rhs: beam.SortedBucketIO.Read[R],
-    targetParallelism: beam.TargetParallelism
-  ): SCollection[((K1, K2), (L, R))] = {
-    val t = beam.SortedBucketIO
-      .read(keyClass, keyClassSecondary)
-      .of(lhs)
-      .and(rhs)
-      .withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
-    val tfName = self.tfName
+    lhs: SortedBucketIO.Read[L],
+    rhs: SortedBucketIO.Read[R],
+    targetParallelism: TargetParallelism
+  ): SCollection[((K1, K2), (L, R))] = self.requireNotClosed {
+    if (self.isTest) {
+      testJoin(lhs, rhs)
+    } else {
+      val t = SortedBucketIO
+        .read(keyClass, keyClassSecondary)
+        .of(lhs)
+        .and(rhs)
+        .withTargetParallelism(targetParallelism)
+      val (tupleTagA, tupleTagB) = (lhs.getTupleTag, rhs.getTupleTag)
+      val tfName = self.tfName
 
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
-      .withName(tfName)
-      .applyTransform(ParDo.of(new DoFn[KV[KV[K1, K2], CoGbkResult], ((K1, K2), (L, R))] {
-        @ProcessElement
-        private[smb] def processElement(
-          @Element element: KV[KV[K1, K2], CoGbkResult],
-          out: OutputReceiver[((K1, K2), (L, R))]
-        ): Unit = {
-          val cgbkResult = element.getValue
-          val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
-          val itB = resB.iterator()
-          val k = element.getKey
-          val outKey = (k.getKey, k.getValue)
+      self
+        .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+        .withName(tfName)
+        .applyTransform(ParDo.of(new DoFn[KV[KV[K1, K2], CoGbkResult], ((K1, K2), (L, R))] {
+          @ProcessElement
+          private[smb] def processElement(
+            @Element element: KV[KV[K1, K2], CoGbkResult],
+            out: OutputReceiver[((K1, K2), (L, R))]
+          ): Unit = {
+            val cgbkResult = element.getValue
+            val (resA, resB) = (cgbkResult.getAll(tupleTagA), cgbkResult.getAll(tupleTagB))
+            val itB = resB.iterator()
+            val k = element.getKey
+            val outKey = (k.getKey, k.getValue)
 
-          while (itB.hasNext) {
-            val b = itB.next()
-            val ai = resA.iterator()
-            while (ai.hasNext) {
-              val a = ai.next()
-              out.output((outKey, (a, b)))
+            while (itB.hasNext) {
+              val b = itB.next()
+              val ai = resA.iterator()
+              while (ai.hasNext) {
+                val a = ai.next()
+                out.output((outKey, (a, b)))
+              }
             }
           }
-        }
-      }))
+        }))
+    }
   }
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
@@ -158,10 +158,20 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   def sortMergeJoin[K1: Coder, K2: Coder, L: Coder, R: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    lhs: beam.SortedBucketIO.Read[L],
-    rhs: beam.SortedBucketIO.Read[R]
+    lhs: SortedBucketIO.Read[L],
+    rhs: SortedBucketIO.Read[R]
   ): SCollection[((K1, K2), (L, R))] =
-    sortMergeJoin(keyClass, keyClassSecondary, lhs, rhs, beam.TargetParallelism.auto())
+    sortMergeJoin(keyClass, keyClassSecondary, lhs, rhs, TargetParallelism.auto())
+
+  private def testJoin[K, L, R](
+    lhs: SortedBucketIO.Read[L],
+    rhs: SortedBucketIO.Read[R]
+  ): SCollection[(K, (L, R))] = {
+    val testInput = TestDataManager.getInput(self.testId.get)
+    val testLhs = testInput[(K, L)](SortedBucketIOUtil.testId(lhs)).toSCollection(self)
+    val testRhs = testInput[(K, R)](SortedBucketIOUtil.testId(rhs)).toSCollection(self)
+    testLhs.join(testRhs)
+  }
 
   /**
    * For each key K in `read` return a resulting SCollection that contains a tuple with the list of
@@ -182,22 +192,26 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeGroupByKey[K: Coder, V: Coder](
     keyClass: Class[K],
-    read: beam.SortedBucketIO.Read[V],
-    targetParallelism: beam.TargetParallelism = beam.TargetParallelism.auto()
-  ): SCollection[(K, Iterable[V])] = {
-    val t = beam.SortedBucketIO.read(keyClass).of(read).withTargetParallelism(targetParallelism)
-    val tupleTag = read.getTupleTag
-    val tfName = self.tfName
+    read: SortedBucketIO.Read[V],
+    targetParallelism: TargetParallelism = TargetParallelism.auto()
+  ): SCollection[(K, Iterable[V])] = self.requireNotClosed {
+    if (self.isTest) {
+      testCoGroupByKey(read)
+    } else {
+      val t = SortedBucketIO.read(keyClass).of(read).withTargetParallelism(targetParallelism)
+      val tupleTag = read.getTupleTag
+      val tfName = self.tfName
 
-    self
-      .wrap(self.pipeline.apply(s"SMB GroupByKey@$tfName", t))
-      .withName(tfName)
-      .map { kv =>
-        (
-          kv.getKey,
-          kv.getValue.getAll(tupleTag).asScala
-        )
-      }
+      self
+        .wrap(self.pipeline.apply(s"SMB GroupByKey@$tfName", t))
+        .withName(tfName)
+        .map { kv =>
+          (
+            kv.getKey,
+            kv.getValue.getAll(tupleTag).asScala
+          )
+        }
+    }
   }
 
   /** Secondary keyed variant. */
@@ -205,26 +219,37 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   def sortMergeGroupByKey[K1: Coder, K2: Coder, V: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    read: beam.SortedBucketIO.Read[V],
-    targetParallelism: beam.TargetParallelism
-  ): SCollection[((K1, K2), Iterable[V])] = {
-    val t = beam.SortedBucketIO
-      .read(keyClass, keyClassSecondary)
-      .of(read)
-      .withTargetParallelism(targetParallelism)
-    val tupleTag = read.getTupleTag
-    val tfName = self.tfName
+    read: SortedBucketIO.Read[V],
+    targetParallelism: TargetParallelism
+  ): SCollection[((K1, K2), Iterable[V])] = self.requireNotClosed {
+    if (self.isTest) {
+      testCoGroupByKey(read)
+    } else {
+      val t = SortedBucketIO
+        .read(keyClass, keyClassSecondary)
+        .of(read)
+        .withTargetParallelism(targetParallelism)
+      val tupleTag = read.getTupleTag
+      val tfName = self.tfName
 
-    self
-      .wrap(self.pipeline.apply(s"SMB GroupByKey@$tfName", t))
-      .withName(tfName)
-      .map { kv =>
-        val k = kv.getKey
-        (
-          (k.getKey, k.getValue),
-          kv.getValue.getAll(tupleTag).asScala
-        )
-      }
+      self
+        .wrap(self.pipeline.apply(s"SMB GroupByKey@$tfName", t))
+        .withName(tfName)
+        .map { kv =>
+          val k = kv.getKey
+          (
+            (k.getKey, k.getValue),
+            kv.getValue.getAll(tupleTag).asScala
+          )
+        }
+    }
+  }
+
+  private def testCoGroupByKey[K, V](
+    read: SortedBucketIO.Read[V]
+  ): SCollection[(K, Iterable[V])] = {
+    val testInput = TestDataManager.getInput(self.testId.get)
+    testInput[(K, V)](SortedBucketIOUtil.testId(read)).toSCollection(self).groupByKey
   }
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
@@ -232,9 +257,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   def sortMergeGroupByKey[K1: Coder, K2: Coder, V: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    read: beam.SortedBucketIO.Read[V]
+    read: SortedBucketIO.Read[V]
   ): SCollection[((K1, K2), Iterable[V])] =
-    sortMergeGroupByKey(keyClass, keyClassSecondary, read, beam.TargetParallelism.auto())
+    sortMergeGroupByKey(keyClass, keyClassSecondary, read, TargetParallelism.auto())
 
   /**
    * For each key K in `a` or `b` return a resulting SCollection that contains a tuple with the list
@@ -255,67 +280,52 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
     keyClass: Class[K],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    targetParallelism: beam.TargetParallelism = beam.TargetParallelism.auto()
-  ): SCollection[(K, (Iterable[A], Iterable[B]))] = {
-    val t = beam.SortedBucketIO.read(keyClass).of(a, b).withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB) = (
-      a.getTupleTag,
-      b.getTupleTag
-    )
-    val tfName = self.tfName
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    targetParallelism: TargetParallelism = TargetParallelism.auto()
+  ): SCollection[(K, (Iterable[A], Iterable[B]))] =
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, targetParallelism)
 
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
-      .withName(tfName)
-      .map { kv =>
-        val cgbkResult = kv.getValue
-
-        (
-          kv.getKey,
-          (
-            cgbkResult.getAll(tupleTagA).asScala,
-            cgbkResult.getAll(tupleTagB).asScala
-          )
-        )
-      }
-  }
+  /** `targetParallelism` defaults to `TargetParallelism.auto()` */
+  def sortMergeCoGroup[K: Coder, A: Coder, B: Coder](
+    keyClass: Class[K],
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B]
+  ): SCollection[(K, (Iterable[A], Iterable[B]))] =
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b)
 
   /** Secondary keyed variant. */
   @experimental
   def sortMergeCoGroup[K1: Coder, K2: Coder, A: Coder, B: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    targetParallelism: beam.TargetParallelism
-  ): SCollection[((K1, K2), (Iterable[A], Iterable[B]))] = {
-    val t = beam.SortedBucketIO
-      .read(keyClass, keyClassSecondary)
-      .of(a)
-      .and(b)
-      .withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB) = (
-      a.getTupleTag,
-      b.getTupleTag
-    )
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    targetParallelism: TargetParallelism
+  ): SCollection[((K1, K2), (Iterable[A], Iterable[B]))] = self.requireNotClosed {
     val tfName = self.tfName
+    val keyed = if (self.isTest) {
+      SMBMultiJoin(self).testCoGroup[KV[K1, K2]](a, b)
+    } else {
+      val t = SortedBucketIO
+        .read(keyClass, keyClassSecondary)
+        .of(a)
+        .and(b)
+        .withTargetParallelism(targetParallelism)
 
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+      self.wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+    }
+
+    keyed
       .withName(tfName)
       .map { kv =>
-        val cgbkResult = kv.getValue
         val k = kv.getKey
-
-        (
-          (k.getKey, k.getValue),
-          (
-            cgbkResult.getAll(tupleTagA).asScala,
-            cgbkResult.getAll(tupleTagB).asScala
-          )
-        )
+        val k1 = k.getKey
+        val k2 = k.getValue
+        val cgbkResult = kv.getValue
+        val asForK = cgbkResult.getAll(a.getTupleTag).asScala
+        val bsForK = cgbkResult.getAll(b.getTupleTag).asScala
+        (k1, k2) -> (asForK, bsForK)
       }
   }
 
@@ -324,10 +334,10 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   def sortMergeCoGroup[K1: Coder, K2: Coder, A: Coder, B: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B]
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B]
   ): SCollection[((K1, K2), (Iterable[A], Iterable[B]))] =
-    sortMergeCoGroup(keyClass, keyClassSecondary, a, b, beam.TargetParallelism.auto())
+    sortMergeCoGroup(keyClass, keyClassSecondary, a, b, TargetParallelism.auto())
 
   /**
    * For each key K in `a` or `b` or `c`, return a resulting SCollection that contains a tuple with
@@ -348,87 +358,58 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C],
-    targetParallelism: beam.TargetParallelism
-  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] = {
-    val t = beam.SortedBucketIO
-      .read(keyClass)
-      .of(a, b, c)
-      .withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB, tupleTagC) = (
-      a.getTupleTag,
-      b.getTupleTag,
-      c.getTupleTag
-    )
-    val tfName = self.tfName
-
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
-      .withName(tfName)
-      .map { kv =>
-        val cgbkResult = kv.getValue
-
-        (
-          kv.getKey,
-          (
-            cgbkResult.getAll(tupleTagA).asScala,
-            cgbkResult.getAll(tupleTagB).asScala,
-            cgbkResult.getAll(tupleTagC).asScala
-          )
-        )
-      }
-  }
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    targetParallelism: TargetParallelism
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] =
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, c, targetParallelism)
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C]
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C]
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C]))] =
-    sortMergeCoGroup(keyClass, a, b, c, beam.TargetParallelism.auto())
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, c)
 
   /** Secondary keyed variant */
   @experimental
   def sortMergeCoGroup[K1: Coder, K2: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C],
-    targetParallelism: beam.TargetParallelism
-  ): SCollection[((K1, K2), (Iterable[A], Iterable[B], Iterable[C]))] = {
-    val t = beam.SortedBucketIO
-      .read(keyClass, keyClassSecondary)
-      .of(a)
-      .and(b)
-      .and(c)
-      .withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB, tupleTagC) = (
-      a.getTupleTag,
-      b.getTupleTag,
-      c.getTupleTag
-    )
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    targetParallelism: TargetParallelism
+  ): SCollection[((K1, K2), (Iterable[A], Iterable[B], Iterable[C]))] = self.requireNotClosed {
     val tfName = self.tfName
+    val keyed = if (self.isTest) {
+      SMBMultiJoin(self).testCoGroup(a, b, c)
+    } else {
+      val t = SortedBucketIO
+        .read(keyClass, keyClassSecondary)
+        .of(a)
+        .and(b)
+        .and(c)
+        .withTargetParallelism(targetParallelism)
+      self.wrap(self.pipeline.apply(s"SMB CoGroupForKey@$tfName", t))
+    }
 
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
+    keyed
       .withName(tfName)
       .map { kv =>
-        val cgbkResult = kv.getValue
         val k = kv.getKey
+        val k1 = k.getKey
+        val k2 = k.getValue
+        val cgbkResult = kv.getValue
+        val asForK = cgbkResult.getAll(a.getTupleTag).asScala
+        val bsForK = cgbkResult.getAll(b.getTupleTag).asScala
+        val csForK = cgbkResult.getAll(c.getTupleTag).asScala
 
-        (
-          (k.getKey, k.getValue),
-          (
-            cgbkResult.getAll(tupleTagA).asScala,
-            cgbkResult.getAll(tupleTagB).asScala,
-            cgbkResult.getAll(tupleTagC).asScala
-          )
-        )
+        (k1, k2) -> (asForK, bsForK, csForK)
       }
   }
 
@@ -437,9 +418,9 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   def sortMergeCoGroup[K1: Coder, K2: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C]
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C]
   ): SCollection[((K1, K2), (Iterable[A], Iterable[B], Iterable[C]))] =
     sortMergeCoGroup(keyClass, keyClassSecondary, a, b, c)
 
@@ -462,109 +443,80 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
     keyClass: Class[K],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C],
-    d: beam.SortedBucketIO.Read[D],
-    targetParallelism: beam.TargetParallelism
-  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] = {
-    val t = beam.SortedBucketIO
-      .read(keyClass)
-      .of(a, b, c, d)
-      .withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB, tupleTagC, tupleTagD) = (
-      a.getTupleTag,
-      b.getTupleTag,
-      c.getTupleTag,
-      d.getTupleTag
-    )
-    val tfName = self.tfName
-
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
-      .withName(tfName)
-      .map { kv =>
-        val cgbkResult = kv.getValue
-
-        (
-          kv.getKey,
-          (
-            cgbkResult.getAll(tupleTagA).asScala,
-            cgbkResult.getAll(tupleTagB).asScala,
-            cgbkResult.getAll(tupleTagC).asScala,
-            cgbkResult.getAll(tupleTagD).asScala
-          )
-        )
-      }
-  }
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D],
+    targetParallelism: TargetParallelism
+  ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] =
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, c, d, targetParallelism)
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
   def sortMergeCoGroup[K: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
     keyClass: Class[K],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C],
-    d: beam.SortedBucketIO.Read[D]
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D]
   ): SCollection[(K, (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] =
-    sortMergeCoGroup(keyClass, a, b, c, d, beam.TargetParallelism.auto())
+    SMBMultiJoin(self).sortMergeCoGroup(keyClass, a, b, c, d)
 
   /** Secondary keyed variant */
   @experimental
   def sortMergeCoGroup[K1: Coder, K2: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C],
-    d: beam.SortedBucketIO.Read[D],
-    targetParallelism: beam.TargetParallelism
-  ): SCollection[((K1, K2), (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] = {
-    val t = beam.SortedBucketIO
-      .read(keyClass, keyClassSecondary)
-      .of(a)
-      .and(b)
-      .and(c)
-      .and(d)
-      .withTargetParallelism(targetParallelism)
-    val (tupleTagA, tupleTagB, tupleTagC, tupleTagD) = (
-      a.getTupleTag,
-      b.getTupleTag,
-      c.getTupleTag,
-      d.getTupleTag
-    )
-    val tfName = self.tfName
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D],
+    targetParallelism: TargetParallelism
+  ): SCollection[((K1, K2), (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] =
+    self.requireNotClosed {
+      val tfName = self.tfName
+      val keyed = if (self.isTest) {
+        SMBMultiJoin(self).testCoGroup(a, b, c, d)
+      } else {
+        val t = SortedBucketIO
+          .read(keyClass, keyClassSecondary)
+          .of(a)
+          .and(b)
+          .and(c)
+          .and(d)
+          .withTargetParallelism(targetParallelism)
 
-    self
-      .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
-      .withName(tfName)
-      .map { kv =>
-        val cgbkResult = kv.getValue
-        val k = kv.getKey
-
-        (
-          (k.getKey, k.getValue),
-          (
-            cgbkResult.getAll(tupleTagA).asScala,
-            cgbkResult.getAll(tupleTagB).asScala,
-            cgbkResult.getAll(tupleTagC).asScala,
-            cgbkResult.getAll(tupleTagD).asScala
-          )
-        )
+        self
+          .wrap(self.pipeline.apply(s"SMB CoGroupByKey@$tfName", t))
       }
-  }
+
+      keyed
+        .withName(tfName)
+        .map { kv =>
+          val k = kv.getKey
+          val k1 = k.getKey
+          val k2 = k.getValue
+          val cgbkResult = kv.getValue
+          val asForK = cgbkResult.getAll(a.getTupleTag).asScala
+          val bsForK = cgbkResult.getAll(b.getTupleTag).asScala
+          val csForK = cgbkResult.getAll(c.getTupleTag).asScala
+          val dsForK = cgbkResult.getAll(d.getTupleTag).asScala
+
+          (k1, k2) -> (asForK, bsForK, csForK, dsForK)
+        }
+    }
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
   def sortMergeCoGroup[K1: Coder, K2: Coder, A: Coder, B: Coder, C: Coder, D: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    a: beam.SortedBucketIO.Read[A],
-    b: beam.SortedBucketIO.Read[B],
-    c: beam.SortedBucketIO.Read[C],
-    d: beam.SortedBucketIO.Read[D]
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    d: SortedBucketIO.Read[D]
   ): SCollection[((K1, K2), (Iterable[A], Iterable[B], Iterable[C], Iterable[D]))] =
-    sortMergeCoGroup(keyClass, keyClassSecondary, a, b, c, d, beam.TargetParallelism.auto())
+    sortMergeCoGroup(keyClass, keyClassSecondary, a, b, c, d, TargetParallelism.auto())
 
   /**
    * Perform a [[SortedBucketScioContext.sortMergeGroupByKey]] operation, then immediately apply a
@@ -575,43 +527,56 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @group per_key
    */
   @experimental
-  def sortMergeTransform[K, R](
+  def sortMergeTransform[K: Coder, R: Coder](
     keyClass: Class[K],
-    read: beam.SortedBucketIO.Read[R],
-    targetParallelism: beam.TargetParallelism
-  ): SortMergeTransformReadBuilder[K, K, Void, Iterable[R]] = {
-    val tupleTag = read.getTupleTag
+    read: SortedBucketIO.Read[R],
+    targetParallelism: TargetParallelism
+  ): SortMergeTransform.ReadBuilder[K, K, Void, Iterable[R]] = self.requireNotClosed {
+    if (self.isTest) {
+      new SortMergeTransform.ReadBuilderTest(self, testCoGroupByKey(read))
+    } else {
+      val tupleTag = read.getTupleTag
 
-    new SortMergeTransformReadBuilder(
-      beam.SortedBucketIO.read(keyClass).of(read).withTargetParallelism(targetParallelism),
-      _.getAll(tupleTag).asScala
-    )
+      new SortMergeTransform.ReadBuilderImpl(
+        self,
+        SortedBucketIO.read(keyClass).of(read).withTargetParallelism(targetParallelism),
+        _.getAll(tupleTag).asScala
+      )
+    }
   }
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
-  def sortMergeTransform[K, R](
+  def sortMergeTransform[K: Coder, R: Coder](
     keyClass: Class[K],
-    read: beam.SortedBucketIO.Read[R]
-  ): SortMergeTransformReadBuilder[K, K, Void, Iterable[R]] =
-    sortMergeTransform(keyClass, read, beam.TargetParallelism.auto())
+    read: SortedBucketIO.Read[R]
+  ): SortMergeTransform.ReadBuilder[K, K, Void, Iterable[R]] =
+    sortMergeTransform(keyClass, read, TargetParallelism.auto())
 
   /** Secondary keyed variant */
   @experimental
-  def sortMergeTransform[K1, K2, R](
+  def sortMergeTransform[K1: Coder, K2: Coder, R: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    read: beam.SortedBucketIO.Read[R],
-    targetParallelism: beam.TargetParallelism
-  ): SortMergeTransformReadBuilder[KV[K1, K2], K1, K2, Iterable[R]] = {
+    read: SortedBucketIO.Read[R],
+    targetParallelism: TargetParallelism
+  ): SortMergeTransform.ReadBuilder[KV[K1, K2], K1, K2, Iterable[R]] = self.requireNotClosed {
     val tupleTag = read.getTupleTag
-    new SortMergeTransformReadBuilder(
-      beam.SortedBucketIO
+    val fromResult = (result: CoGbkResult) => result.getAll(tupleTag).asScala
+    if (self.isTest) {
+      val result = SMBMultiJoin(self).testCoGroup[(K1, K2)](read)
+      val keyed = result.map { kv =>
+        val (k1, k2) = kv.getKey
+        KV.of(k1, k2) -> fromResult(kv.getValue)
+      }
+      new SortMergeTransform.ReadBuilderTest(self, keyed)
+    } else {
+      val t = SortedBucketIO
         .read(keyClass, keyClassSecondary)
         .of(read)
-        .withTargetParallelism(targetParallelism),
-      _.getAll(tupleTag).asScala
-    )
+        .withTargetParallelism(targetParallelism)
+      new SortMergeTransform.ReadBuilderImpl(self, t, fromResult)
+    }
   }
 
   /**
@@ -623,61 +588,67 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @group cogroup
    */
   @experimental
-  def sortMergeTransform[K, A, B](
+  def sortMergeTransform[K: Coder, A: Coder, B: Coder](
     keyClass: Class[K],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B],
-    targetParallelism: beam.TargetParallelism
-  ): SortMergeTransformReadBuilder[K, K, Void, (Iterable[A], Iterable[B])] = {
-    val tupleTagA = readA.getTupleTag
-    val tupleTagB = readB.getTupleTag
-
-    new SortMergeTransformReadBuilder(
-      beam.SortedBucketIO.read(keyClass).of(readA, readB).withTargetParallelism(targetParallelism),
-      cgbk => (cgbk.getAll(tupleTagA).asScala, cgbk.getAll(tupleTagB).asScala)
-    )
-  }
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    targetParallelism: TargetParallelism
+  ): SortMergeTransform.ReadBuilder[K, K, Void, (Iterable[A], Iterable[B])] =
+    SMBMultiJoin(self).sortMergeTransform(keyClass, a, b, targetParallelism)
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
-  def sortMergeTransform[K, A, B](
+  def sortMergeTransform[K: Coder, A: Coder, B: Coder](
     keyClass: Class[K],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B]
-  ): SortMergeTransformReadBuilder[K, K, Void, (Iterable[A], Iterable[B])] =
-    sortMergeTransform(keyClass, readA, readB, beam.TargetParallelism.auto())
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B]
+  ): SortMergeTransform.ReadBuilder[K, K, Void, (Iterable[A], Iterable[B])] =
+    SMBMultiJoin(self).sortMergeTransform(keyClass, a, b)
 
   /** Secondary keyed variant */
   @experimental
-  def sortMergeTransform[K1, K2, A, B](
+  def sortMergeTransform[K1: Coder, K2: Coder, A: Coder, B: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B],
-    targetParallelism: beam.TargetParallelism
-  ): SortMergeTransformReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B])] = {
-    val tupleTagA = readA.getTupleTag
-    val tupleTagB = readB.getTupleTag
-
-    new SortMergeTransformReadBuilder(
-      beam.SortedBucketIO
-        .read(keyClass, keyClassSecondary)
-        .of(readA)
-        .and(readB)
-        .withTargetParallelism(targetParallelism),
-      cgbk => (cgbk.getAll(tupleTagA).asScala, cgbk.getAll(tupleTagB).asScala)
-    )
-  }
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    targetParallelism: TargetParallelism
+  ): SortMergeTransform.ReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B])] =
+    self.requireNotClosed {
+      val tupleTagA = a.getTupleTag
+      val tupleTagB = b.getTupleTag
+      val fromResult = { (result: CoGbkResult) =>
+        (
+          result.getAll(tupleTagA).asScala,
+          result.getAll(tupleTagB).asScala
+        )
+      }
+      if (self.isTest) {
+        val result = SMBMultiJoin(self).testCoGroup[(K1, K2)](a, b)
+        val keyed = result.map { kv =>
+          val (k1, k2) = kv.getKey
+          KV.of(k1, k2) -> fromResult(kv.getValue)
+        }
+        new SortMergeTransform.ReadBuilderTest(self, keyed)
+      } else {
+        val transform = SortedBucketIO
+          .read(keyClass, keyClassSecondary)
+          .of(a)
+          .and(b)
+          .withTargetParallelism(targetParallelism)
+        new SortMergeTransform.ReadBuilderImpl(self, transform, fromResult)
+      }
+    }
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
-  def sortMergeTransform[K1, K2, A, B](
+  def sortMergeTransform[K1: Coder, K2: Coder, A: Coder, B: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B]
-  ): SortMergeTransformReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B])] =
-    sortMergeTransform(keyClass, keyClassSecondary, readA, readB)
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B]
+  ): SortMergeTransform.ReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B])] =
+    sortMergeTransform(keyClass, keyClassSecondary, a, b)
 
   /**
    * Perform a 3-way [[SortedBucketScioContext.sortMergeCoGroup]] operation, then immediately apply
@@ -688,176 +659,89 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @group cogroup
    */
   @experimental
-  def sortMergeTransform[K, A, B, C](
+  def sortMergeTransform[K: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B],
-    readC: beam.SortedBucketIO.Read[C],
-    targetParallelism: beam.TargetParallelism
-  ): SortMergeTransformReadBuilder[K, K, Void, (Iterable[A], Iterable[B], Iterable[C])] = {
-    val tupleTagA = readA.getTupleTag
-    val tupleTagB = readB.getTupleTag
-    val tupleTagC = readC.getTupleTag
-
-    new SortMergeTransformReadBuilder(
-      beam.SortedBucketIO
-        .read(keyClass)
-        .of(readA, readB, readC)
-        .withTargetParallelism(targetParallelism),
-      cgbk =>
-        (
-          cgbk.getAll(tupleTagA).asScala,
-          cgbk.getAll(tupleTagB).asScala,
-          cgbk.getAll(tupleTagC).asScala
-        )
-    )
-  }
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    targetParallelism: TargetParallelism
+  ): SortMergeTransform.ReadBuilder[K, K, Void, (Iterable[A], Iterable[B], Iterable[C])] =
+    SMBMultiJoin(self).sortMergeTransform(keyClass, a, b, c, targetParallelism)
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
-  def sortMergeTransform[K, A, B, C](
+  def sortMergeTransform[K: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B],
-    readC: beam.SortedBucketIO.Read[C]
-  ): SortMergeTransformReadBuilder[K, K, Void, (Iterable[A], Iterable[B], Iterable[C])] =
-    sortMergeTransform(keyClass, readA, readB, readC, beam.TargetParallelism.auto())
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C]
+  ): SortMergeTransform.ReadBuilder[K, K, Void, (Iterable[A], Iterable[B], Iterable[C])] =
+    SMBMultiJoin(self).sortMergeTransform(keyClass, a, b, c)
 
   /** Secondary keyed variant */
   @experimental
-  def sortMergeTransform[K1, K2, A, B, C](
+  def sortMergeTransform[K1: Coder, K2: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B],
-    readC: beam.SortedBucketIO.Read[C],
-    targetParallelism: beam.TargetParallelism
-  ): SortMergeTransformReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B], Iterable[C])] = {
-    val tupleTagA = readA.getTupleTag
-    val tupleTagB = readB.getTupleTag
-    val tupleTagC = readC.getTupleTag
-
-    new SortMergeTransformReadBuilder(
-      beam.SortedBucketIO
-        .read(keyClass, keyClassSecondary)
-        .of(readA)
-        .and(readB)
-        .and(readC)
-        .withTargetParallelism(targetParallelism),
-      cgbk =>
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C],
+    targetParallelism: TargetParallelism
+  ): SortMergeTransform.ReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B], Iterable[C])] =
+    self.requireNotClosed {
+      val tupleTagA = a.getTupleTag
+      val tupleTagB = b.getTupleTag
+      val tupleTagC = c.getTupleTag
+      val fromResult = { (result: CoGbkResult) =>
         (
-          cgbk.getAll(tupleTagA).asScala,
-          cgbk.getAll(tupleTagB).asScala,
-          cgbk.getAll(tupleTagC).asScala
+          result.getAll(tupleTagA).asScala,
+          result.getAll(tupleTagB).asScala,
+          result.getAll(tupleTagC).asScala
         )
-    )
-  }
+      }
+      if (self.isTest) {
+        val result = SMBMultiJoin(self).testCoGroup[(K1, K2)](a, b)
+        val keyed = result.map { kv =>
+          val (k1, k2) = kv.getKey
+          KV.of(k1, k2) -> fromResult(kv.getValue)
+        }
+        new SortMergeTransform.ReadBuilderTest(self, keyed)
+      } else {
+        val transform = SortedBucketIO
+          .read(keyClass, keyClassSecondary)
+          .of(a)
+          .and(b)
+          .and(c)
+          .withTargetParallelism(targetParallelism)
+        new SortMergeTransform.ReadBuilderImpl(self, transform, fromResult)
+      }
+    }
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
-  def sortMergeTransform[K1, K2, A, B, C](
+  def sortMergeTransform[K1: Coder, K2: Coder, A: Coder, B: Coder, C: Coder](
     keyClass: Class[K1],
     keyClassSecondary: Class[K2],
-    readA: beam.SortedBucketIO.Read[A],
-    readB: beam.SortedBucketIO.Read[B],
-    readC: beam.SortedBucketIO.Read[C]
-  ): SortMergeTransformReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B], Iterable[C])] =
+    a: SortedBucketIO.Read[A],
+    b: SortedBucketIO.Read[B],
+    c: SortedBucketIO.Read[C]
+  ): SortMergeTransform.ReadBuilder[KV[K1, K2], K1, K2, (Iterable[A], Iterable[B], Iterable[C])] =
     sortMergeTransform(
       keyClass,
       keyClassSecondary,
-      readA,
-      readB,
-      readC,
-      beam.TargetParallelism.auto()
+      a,
+      b,
+      c,
+      TargetParallelism.auto()
     )
 
-  class SortMergeTransformReadBuilder[KeyType, K1, K2, R](
-    coGbk: Transformable[KeyType, K1, K2],
-    toR: CoGbkResult => R
-  ) extends Serializable {
-    def to[W: Coder](
-      output: beam.SortedBucketIO.TransformOutput[K1, K2, W]
-    ): SortMergeTransformWriteBuilder[KeyType, R, W] =
-      new SortMergeTransformWriteBuilder(coGbk.transform(output), toR)
-  }
-
-  class SortMergeTransformWriteBuilder[KeyType, R, W](
-    transform: AbsCoGbkTransform[KeyType, W],
-    toR: CoGbkResult => R
-  ) extends Serializable {
-    def withSideInputs(
-      sides: SideInput[_]*
-    ): SortMergeTransformWithSideInputsWriteBuilder[KeyType, R, W] =
-      new SortMergeTransformWithSideInputsWriteBuilder(transform, toR, sides)
-
-    /**
-     * Defines the transforming function applied to each key group, where the output(s) are sent to
-     * the provided consumer via its `accept` function.
-     *
-     * The key group is defined as a key K and records R, where R represents the unpacked
-     * [[CoGbkResult]] converted to Scala Iterables. Note that, unless a
-     * [[org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate]] is provided to the
-     * PTransform, the Scala Iterable is backed by a lazy iterator, and will only materialize if
-     * .toList or similar function is used in the transformFn. If you have extremely large key
-     * groups, take care to only materialize as much of the Iterable as is needed.
-     */
-    def via(
-      transformFn: (KeyType, R, beam.SortedBucketTransform.SerializableConsumer[W]) => Unit
-    ): ClosedTap[Nothing] = {
-      val fn = new beam.SortedBucketTransform.TransformFn[KeyType, W]() {
-        override def writeTransform(
-          keyGroup: KV[KeyType, CoGbkResult],
-          outputConsumer: beam.SortedBucketTransform.SerializableConsumer[W]
-        ): Unit =
-          transformFn.apply(
-            keyGroup.getKey,
-            toR(keyGroup.getValue),
-            outputConsumer
-          )
-      }
-
-      val t = transform.via(fn)
-      val tfName = self.tfName(Some("sortMergeTransform"))
-      self.applyInternal(tfName, t)
-      ClosedTap[Nothing](EmptyTap)
-    }
-  }
-
-  class SortMergeTransformWithSideInputsWriteBuilder[KeyType, R, W](
-    transform: AbsCoGbkTransform[KeyType, W],
-    toR: CoGbkResult => R,
-    sides: Iterable[SideInput[_]]
-  ) extends Serializable {
-    def via(
-      transformFn: (
-        KeyType,
-        R,
-        SideInputContext[_],
-        beam.SortedBucketTransform.SerializableConsumer[W]
-      ) => Unit
-    ): ClosedTap[Nothing] = {
-      val sideViews: java.lang.Iterable[PCollectionView[_]] = sides.map(_.view).asJava
-
-      val fn = new beam.SortedBucketTransform.TransformFnWithSideInputContext[KeyType, W]() {
-        override def writeTransform(
-          keyGroup: KV[KeyType, CoGbkResult],
-          c: DoFn[BucketItem, MergedBucket]#ProcessContext,
-          outputConsumer: beam.SortedBucketTransform.SerializableConsumer[W],
-          window: BoundedWindow
-        ): Unit = {
-          val ctx =
-            new SideInputContext(c.asInstanceOf[DoFn[BucketItem, AnyRef]#ProcessContext], window)
-          transformFn.apply(
-            keyGroup.getKey,
-            toR(keyGroup.getValue),
-            ctx,
-            outputConsumer
-          )
-        }
-      }
-      val t = transform.via(fn, sideViews)
-      self.applyInternal(t)
-      ClosedTap[Nothing](EmptyTap)
-    }
-  }
+  @deprecated("Use SortMergeTransform.ReadBuilder instead", "0.14.0")
+  type SortMergeTransformReadBuilder[KeyType, K1, K2, R] =
+    SortMergeTransform.ReadBuilder[KeyType, K1, K2, R]
+  @deprecated("Use SortMergeTransform.WriteBuilder instead", "0.14.0")
+  type SortMergeTransformWriteBuilder[KeyType, R, W] =
+    SortMergeTransform.WriteBuilder[KeyType, R, W]
+  @deprecated("Use SortMergeTransform.WithSideInputsWriteBuilder instead", "0.14.0")
+  type SortMergeTransformWithSideInputsWriteBuilder[KeyType, R, W] =
+    SortMergeTransform.WithSideInputsWriteBuilder[KeyType, R, W]
 }

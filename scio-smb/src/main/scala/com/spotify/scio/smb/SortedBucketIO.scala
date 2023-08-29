@@ -18,24 +18,25 @@ package com.spotify.scio.smb
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{KeyedIO, TapOf, TapT, TestIO}
-import org.apache.beam.sdk.extensions.smb.{SortedBucketIO => BIO}
+import com.spotify.scio.util.ScioUtil
 
 import scala.jdk.CollectionConverters._
 
-final class SortedBucketIO[K, T](id: String, override val keyBy: T => K)(implicit
+final class SortedBucketIO[K, T](path: String, override val keyBy: T => K)(implicit
   override val keyCoder: Coder[K]
 ) extends TestIO[T]
     with KeyedIO[T] {
   override type KeyT = K
   override val tapT: TapT.Aux[T, T] = TapOf[T]
-  override def testId: String = SortedBucketIO.testId(id)
+  override def testId: String = SortedBucketIO.testId(path)
 }
 
 object SortedBucketIO {
-  def apply[K: Coder, T](id: String, keyBy: T => K): SortedBucketIO[K, T] =
-    new SortedBucketIO[K, T](id, keyBy)
+  def apply[K: Coder, T](path: String, keyBy: T => K): SortedBucketIO[K, T] =
+    new SortedBucketIO[K, T](path, keyBy)
 
-  private[smb] def testId(read: BIO.Read[_]): String =
-    testId(read.getInputDirectories.asScala.mkString(","))
-  private def testId(id: String): String = s"SortedBucketIO($id)"
+  def testId(paths: String*): String = {
+    val normalizedPaths = paths.map(p => ScioUtil.strippedPath(p) + "/").mkString(",")
+    s"SortedBucketIO($normalizedPaths)"
+  }
 }
