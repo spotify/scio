@@ -82,7 +82,7 @@ object ParquetTypeSortedBucketIO {
       this.copy(configuration = configuration)
 
     override def getInputDirectories: ImmutableList[String] =
-      ImmutableList.copyOf(inputDirectories.asJavaCollection)
+      ImmutableList.copyOf(inputDirectories.asJava: java.lang.Iterable[String])
     override def getFilenameSuffix: String = filenameSuffix
     override def getTupleTag: TupleTag[T] = tupleTag
 
