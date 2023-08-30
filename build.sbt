@@ -249,6 +249,9 @@ val commonSettings = formatSettings ++
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     excludeDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-io-kafka",
+      // logger implementation must be given by the runner lib
+      "ch.qos.reload4j" % "reload4j",
+      "log4j" % "log4j",
       "org.slf4j" % "slf4j-log4j12",
       "org.slf4j" % "slf4j-reload4j"
     ),
