@@ -1062,7 +1062,7 @@ lazy val `scio-examples`: Project = project
     `scio-elasticsearch8`,
     `scio-neo4j`,
     `scio-tensorflow`,
-    `scio-test`,
+    `scio-test` % "compile->test",
     `scio-smb`,
     `scio-redis`,
     `scio-parquet`
