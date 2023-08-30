@@ -24,4 +24,4 @@ jobs:
         env:
           BEAM_RUNNERS: DataflowRunner
       - name: Run Dataflow jobs
-        run: sbt "scio-examples/IntegrationTest/runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"
+        run: sbt "scio-examples/Test/runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"

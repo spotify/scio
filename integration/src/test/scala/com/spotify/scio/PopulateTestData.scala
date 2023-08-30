@@ -30,9 +30,12 @@ import scala.jdk.CollectionConverters._
 object PopulateTestData {
   private lazy val log = LoggerFactory.getLogger(getClass)
 
-  def main(args: Array[String]): Unit = populate("data-integration-test-eu")
+  def main(args: Array[String]): Unit = {
+    populateFiles("data-integration-test-eu")
+    populateSql()
+  }
 
-  def populate(bucket: String): Unit = {
+  def populateFiles(bucket: String): Unit = {
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
 
     val root = Paths.get("src/it/resources")
@@ -49,5 +52,40 @@ object PopulateTestData {
         dst.close()
         log.info(s"Populated file $resourceId.")
       }
+  }
+
+  // See https://learn.microsoft.com/en-us/sql/connect/ado-net/sql/compare-guid-uniqueidentifier-values?view=sql-server-ver16
+  def populateSql(): Unit = {
+    import com.spotify.scio.jdbc.sharded.JdbcUtils
+    import com.spotify.scio.jdbc.JdbcIOIT._
+
+    val conn = JdbcUtils.createConnection(connection)
+    try {
+      val stmt = conn.createStatement()
+      val query =
+        s"""DROP TABLE IF EXISTS $tableId;
+           |CREATE TABLE $tableId
+           |(
+           |    guid UNIQUEIDENTIFIER
+           |        CONSTRAINT guid_default DEFAULT
+           |        NEWSEQUENTIALID() ROWGUIDCOL,
+           |    name VARCHAR(60),
+           |
+           |    CONSTRAINT guid_pk PRIMARY KEY (guid)
+           |);
+           |INSERT INTO $tableId (guid, name)
+           |VALUES
+           | (CAST('3AAAAAAA-BBBB-CCCC-DDDD-2EEEEEEEEEEE' AS UNIQUEIDENTIFIER), 'Bob'),
+           | (CAST('2AAAAAAA-BBBB-CCCC-DDDD-1EEEEEEEEEEE' AS UNIQUEIDENTIFIER), 'Alice'),
+           | (CAST('1AAAAAAA-BBBB-CCCC-DDDD-3EEEEEEEEEEE' AS UNIQUEIDENTIFIER), 'Carol');
+           |""".stripMargin
+      try {
+        stmt.execute(query)
+      } finally {
+        stmt.close()
+      }
+    } finally {
+      conn.close()
+    }
   }
 }

@@ -375,26 +375,6 @@ lazy val jUnitSettings = Def.settings(
   testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-a")
 )
 
-lazy val itSettings = Defaults.itSettings ++
-  inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
-  inConfig(IntegrationTest)(scalafmtConfigSettings) ++
-  headerSettings(IntegrationTest) ++
-  scalafixConfigSettings(IntegrationTest) ++
-  inConfig(IntegrationTest)(
-    Def.settings(
-      javaOptions ++= (Test / javaOptions).value,
-      classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-      // exclude all sources if we don't have GCP credentials
-      unmanagedSources / excludeFilter := {
-        if (BuildCredentials.exists) {
-          HiddenFileFilter
-        } else {
-          HiddenFileFilter || "*.scala"
-        }
-      }
-    )
-  )
-
 lazy val macroSettings = Def.settings(
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   libraryDependencies ++= {
@@ -660,7 +640,6 @@ lazy val `scio-avro`: Project = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(macroSettings)
-  .settings(itSettings)
   .settings(
     description := "Scio add-on for working with Avro",
     libraryDependencies ++= Seq(
@@ -691,15 +670,13 @@ lazy val `scio-avro`: Project = project
 lazy val `scio-google-cloud-platform`: Project = project
   .in(file("scio-google-cloud-platform"))
   .dependsOn(
-    `scio-core` % "compile;it->it",
+    `scio-core`,
     `scio-avro`,
-    `scio-test` % "test->test;it"
+    `scio-test` % "test->test"
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(macroSettings)
-  .settings(itSettings)
   .settings(jUnitSettings)
   .settings(beamRunnerSettings)
   .settings(
@@ -747,15 +724,15 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
-      "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % "test,it",
-      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
-      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
-      "org.hamcrest" % "hamcrest" % hamcrestVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.typelevel" %% "cats-core" % catsVersion % "test"
+      "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % Test,
+      "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
+      "org.typelevel" %% "cats-core" % catsVersion % Test
     )
   )
 
@@ -763,12 +740,10 @@ lazy val `scio-cassandra3`: Project = project
   .in(file("scio-cassandra/cassandra3"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % "test;it"
+    `scio-test` % "test"
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(
     description := "Scio add-on for Apache Cassandra 3.x",
     libraryDependencies ++= Seq(
@@ -785,9 +760,9 @@ lazy val `scio-cassandra3`: Project = project
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       // test
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
 
@@ -795,12 +770,10 @@ lazy val `scio-elasticsearch-common`: Project = project
   .in(file("scio-elasticsearch/common"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % "test,it"
+    `scio-test` % "test"
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
@@ -819,25 +792,18 @@ lazy val `scio-elasticsearch-common`: Project = project
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version % Provided,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch8Version % Provided,
       // test
-      "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % "it",
-      "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
-      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % "it",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % "it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
 
 lazy val `scio-elasticsearch7`: Project = project
   .in(file("scio-elasticsearch/es7"))
   .dependsOn(
-    `scio-elasticsearch-common` % "compile->compile;it->it",
-    `scio-test` % "it"
+    `scio-elasticsearch-common`
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     unusedCompileDependenciesFilter -= moduleFilter("co.elastic.clients", "elasticsearch-java"),
@@ -849,13 +815,10 @@ lazy val `scio-elasticsearch7`: Project = project
 lazy val `scio-elasticsearch8`: Project = project
   .in(file("scio-elasticsearch/es8"))
   .dependsOn(
-    `scio-elasticsearch-common` % "compile->compile;it->it",
-    `scio-test` % "it"
+    `scio-elasticsearch-common`,
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     unusedCompileDependenciesFilter -= moduleFilter("co.elastic.clients", "elasticsearch-java"),
@@ -868,15 +831,13 @@ lazy val `scio-extra`: Project = project
   .in(file("scio-extra"))
   .dependsOn(
     `scio-core` % "compile->compile;provided->provided",
-    `scio-test` % "it->it;test->test",
+    `scio-test` % "test->test",
     `scio-avro`,
     `scio-google-cloud-platform`,
     `scio-macros`
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
@@ -909,10 +870,10 @@ lazy val `scio-extra`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       // test
-      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test,it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
+      "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Test,
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
     Compile / sourceDirectories := (Compile / sourceDirectories).value
       .filterNot(_.getPath.endsWith("/src_managed/main")),
@@ -952,11 +913,9 @@ lazy val `scio-jdbc`: Project = project
   .in(file("scio-jdbc"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % "test,it"
+    `scio-test` % "test"
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
-  .settings(itSettings)
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for JDBC",
@@ -967,10 +926,7 @@ lazy val `scio-jdbc`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // test
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.0" % "it",
-      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.4.2.jre11" % "it"
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     )
   )
 
@@ -978,11 +934,9 @@ lazy val `scio-neo4j`: Project = project
   .in(file("scio-neo4j"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % "test,it"
+    `scio-test` % "test"
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
-  .settings(itSettings)
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for Neo4J",
@@ -992,11 +946,7 @@ lazy val `scio-neo4j`: Project = project
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-neo4j" % beamVersion,
-      "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
-      // test
-      "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % "it",
-      "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "it"
+      "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion
     )
   )
 
@@ -1066,7 +1016,6 @@ lazy val `scio-tensorflow`: Project = project
   )
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(protobufSettings)
   .settings(
     description := "Scio add-on for TensorFlow",
@@ -1112,15 +1061,13 @@ lazy val `scio-examples`: Project = project
     `scio-elasticsearch8`,
     `scio-neo4j`,
     `scio-tensorflow`,
-    `scio-test` % "compile->test",
+    `scio-test`,
     `scio-smb`,
     `scio-redis`,
     `scio-parquet`
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(soccoSettings)
-  .settings(itSettings)
   .settings(jUnitSettings)
   .settings(beamRunnerSettings)
   .settings(macroSettings)
@@ -1324,13 +1271,10 @@ lazy val `scio-smb`: Project = project
   .in(file("scio-smb"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % "test;it",
-    `scio-avro` % IntegrationTest
+    `scio-test` % Test,
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(jUnitSettings)
   .settings(beamRunnerSettings)
   .settings(
@@ -1382,11 +1326,11 @@ lazy val `scio-smb`: Project = project
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
-      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % "it,test" classifier "tests",
-      "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "it,test",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "it,test"
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Test classifier "tests",
+      "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
     javacOptions ++= {
       (Compile / sourceManaged).value.mkdirs()
@@ -1403,7 +1347,6 @@ lazy val `scio-redis`: Project = project
   )
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(
     description := "Scio integration with Redis",
     libraryDependencies ++= Seq(
@@ -1425,14 +1368,30 @@ lazy val integration: Project = project
   .dependsOn(
     `scio-core` % "test->provided,test",
     `scio-avro` % "test->test",
-    `scio-test` % "test->test"
+    `scio-test` % "test->test",
+    `scio-cassandra3` % "test->test",
+    `scio-elasticsearch8` % "test->test",
+    `scio-extra` % "test->test",
+    `scio-google-cloud-platform` % "test->test",
+    `scio-jdbc` % "test->test",
+    `scio-neo4j` % "test->test",
+    `scio-smb` % "test->test"
   )
   .settings(commonSettings)
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
+      // test
+      "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % Test,
+      "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % Test,
+      "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % Test,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % Test,
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.0" % Test,
+      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.4.2.jre11" % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
 

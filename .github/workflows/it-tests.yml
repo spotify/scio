@@ -27,7 +27,7 @@ jobs:
         env:
           BQ_READ_TIMEOUT: 30000
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
-      - run: sbt IntegrationTest/test
+      - run: sbt integration/test
 
   build-docs:
     name: Build documentation
