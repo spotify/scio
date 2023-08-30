@@ -1382,6 +1382,7 @@ lazy val integration: Project = project
   .settings(
     publish / skip := true,
     test / aggregate := false,
+    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // test
       "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % Test,
