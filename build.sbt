@@ -518,11 +518,9 @@ lazy val `scio-core`: Project = project
   .in(file("scio-core"))
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(`scio-macros`)
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(macroSettings)
-  .settings(itSettings)
   .settings(
     description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
     Compile / resources ++= Seq(
@@ -580,13 +578,11 @@ lazy val `scio-core`: Project = project
 lazy val `scio-test`: Project = project
   .in(file("scio-test"))
   .dependsOn(
-    `scio-core` % "compile->compile;it->it",
-    `scio-avro` % "compile->test;it->it"
+    `scio-core` % "compile",
+    `scio-avro` % "compile->test"
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(itSettings)
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(protobufSettings)
@@ -624,16 +620,15 @@ lazy val `scio-test`: Project = project
       // runtime
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
-      "com.spotify" % "annoy" % annoyVersion % "test",
-      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % "it",
-      "com.spotify.sparkey" % "sparkey" % sparkeyVersion % "test",
-      "com.twitter" %% "algebird-test" % algebirdVersion % "test",
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % "test,it",
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test" classifier "tests",
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
+      "com.spotify" % "annoy" % annoyVersion % Test,
+      "com.spotify.sparkey" % "sparkey" % sparkeyVersion % Test,
+      "com.twitter" %% "algebird-test" % algebirdVersion % Test,
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
     Test / testGrouping := splitTests(
@@ -660,9 +655,8 @@ lazy val `scio-macros`: Project = project
 lazy val `scio-avro`: Project = project
   .in(file("scio-avro"))
   .dependsOn(
-    `scio-core` % "compile;it->it"
+    `scio-core`
   )
-  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(macroSettings)
@@ -683,15 +677,14 @@ lazy val `scio-avro`: Project = project
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
-      "com.spotify" %% "magnolify-cats" % magnolifyVersion % "test",
-      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % "test",
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % "test,it",
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % "it",
-      "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
-      "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
-      "org.typelevel" %% "cats-core" % catsVersion % "test"
+      "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
+      "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % Test,
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
+      "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
+      "org.typelevel" %% "cats-core" % catsVersion % Test
     )
   )
 
@@ -1424,6 +1417,22 @@ lazy val `scio-redis`: Project = project
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+    )
+  )
+
+lazy val integration: Project = project
+  .in(file("integration"))
+  .dependsOn(
+    `scio-core` % "test->provided,test",
+    `scio-avro` % "test->test",
+    `scio-test` % "test->test"
+  )
+  .settings(commonSettings)
+  .settings(
+    publish / skip := true,
+    libraryDependencies ++= Seq(
+      "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test,
     )
   )
 
