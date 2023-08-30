@@ -816,7 +816,7 @@ lazy val `scio-elasticsearch7`: Project = project
 lazy val `scio-elasticsearch8`: Project = project
   .in(file("scio-elasticsearch/es8"))
   .dependsOn(
-    `scio-elasticsearch-common`,
+    `scio-elasticsearch-common`
   )
   .settings(commonSettings)
   .settings(publishSettings)
@@ -1272,7 +1272,7 @@ lazy val `scio-smb`: Project = project
   .in(file("scio-smb"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % Test,
+    `scio-test` % Test
   )
   .settings(commonSettings)
   .settings(publishSettings)
