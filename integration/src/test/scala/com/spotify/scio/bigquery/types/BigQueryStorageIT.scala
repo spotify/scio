@@ -32,8 +32,8 @@ import org.scalatest.matchers.should.Matchers
 import scala.jdk.CollectionConverters._
 
 // scio-test/it:runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
-class StorageIT extends AnyFlatSpec with Matchers {
-  import StorageIT._
+class BigQueryStorageIT extends AnyFlatSpec with Matchers {
+  import BigQueryStorageIT._
 
   "fromStorage" should "work with REQUIRED fields" in {
     val t = new Instant(0)
@@ -283,7 +283,7 @@ class StorageIT extends AnyFlatSpec with Matchers {
   }
 }
 
-object StorageIT {
+object BigQueryStorageIT {
   @BigQueryType.fromStorage("data-integration-test:storage.required")
   class Required
 

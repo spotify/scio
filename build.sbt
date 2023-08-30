@@ -1397,7 +1397,15 @@ lazy val integration: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    )
+    ),
+    // exclude problematic sources if we don't have GCP credentials
+    unmanagedSources / excludeFilter := {
+      if (BuildCredentials.exists) {
+        HiddenFileFilter
+      } else {
+        HiddenFileFilter || "BigQuery*.scala"
+      }
+    }
   )
 
 // =======================================================================
