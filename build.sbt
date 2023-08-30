@@ -1126,7 +1126,10 @@ lazy val `scio-examples`: Project = project
       if (BuildCredentials.exists) {
         HiddenFileFilter
       } else {
-        HiddenFileFilter || "TypedBigQueryTornadoes*.scala" || "TypedStorageBigQueryTornadoes*.scala"
+        HiddenFileFilter ||
+        "TypedBigQueryTornadoes*.scala" ||
+        "TypedStorageBigQueryTornadoes*.scala" ||
+        "RunPreReleaseIT.scala"
       }
     },
     run / fork := true,
@@ -1383,7 +1386,8 @@ lazy val integration: Project = project
   .settings(macroSettings)
   .settings(
     publish / skip := true,
-    test / aggregate := false,
+    compile / skip := !BuildCredentials.exists,
+    test / skip := !BuildCredentials.exists,
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // test
@@ -1397,15 +1401,7 @@ lazy val integration: Project = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    ),
-    // exclude problematic sources if we don't have GCP credentials
-    unmanagedSources / excludeFilter := {
-      if (BuildCredentials.exists) {
-        HiddenFileFilter
-      } else {
-        HiddenFileFilter || "BigQuery*.scala"
-      }
-    }
+    )
   )
 
 // =======================================================================
