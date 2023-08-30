@@ -29,25 +29,25 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.49.0"
+val beamVersion = "2.50.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.49.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.50.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
-val bigdataossVersion = "2.2.6"
+val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
-val commonsIoVersion = "2.7"
+val commonsIoVersion = "2.13.0"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
-val datastoreV1ProtoClientVersion = "2.15.0"
+val datastoreV1ProtoClientVersion = "2.16.3"
 val flinkVersion = "1.16.0"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
-val guavaVersion = "32.0.1-jre"
+val guavaVersion = "32.1.2-jre"
 val hadoopVersion = "2.10.2"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
@@ -55,41 +55,40 @@ val jacksonVersion = "2.14.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
-val nettyVersion = "4.1.77.Final"
+val nettyVersion = "4.1.87.Final"
 val slf4jVersion = "1.7.30"
-val sparkVersion = "3.1.2"
+val sparkVersion = "3.4.1"
 val zetasketchVersion = "0.1.0"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20220924-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20230520-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20230301-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.17.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.22.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val bigQueryStorageBetaVersion = "0.162.0"
-val bigQueryStorageVersion = "2.38.0"
-val checkerFrameworkVersion = "3.32.0"
+val bigQueryStorageBetaVersion = "0.165.1"
+val bigQueryStorageVersion = "2.41.1"
+val checkerFrameworkVersion = "3.33.0"
 val errorProneAnnotationsVersion = "2.18.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.7.4"
-val gaxHttpJsonVersion = "0.114.0"
-val gaxVersion = "2.29.0"
-val googleApiCommonVersion = "2.12.0"
-val googleAuthVersion = "1.17.0"
-val googleCloudBigTableVersion = "2.23.3"
-val googleCloudCoreVersion = "2.19.0"
-val googleCloudDatastoreVersion = "0.106.0"
-val googleCloudMonitoringVersion = "3.20.0"
-val googleCloudPubSubVersion = "1.105.14"
-val googleCloudSpannerVersion = "6.43.0"
-val googleCloudStorageVersion = "2.22.4"
-val googleCommonsProtoVersion = "2.20.0"
-val googleHttpClientsVersion = "1.43.1"
-val googleIAMVersion = "1.15.0"
-val grpcVersion = "1.55.1"
-val j2objcAnnotationsVersion = "1.3"
+val gaxVersion = "2.32.0"
+val googleApiCommonVersion = "2.15.0"
+val googleAuthVersion = "1.19.0"
+val googleCloudBigTableVersion = "2.26.0"
+val googleCloudCoreVersion = "2.22.0"
+val googleCloudDatastoreVersion = "0.107.3"
+val googleCloudMonitoringVersion = "3.24.0"
+val googleCloudPubSubVersion = "1.106.1"
+val googleCloudSpannerVersion = "6.45.0"
+val googleCloudStorageVersion = "2.26.0"
+val googleCommonsProtoVersion = "2.23.0"
+val googleHttpClientsVersion = "1.43.3"
+val googleIAMVersion = "1.18.0"
+val grpcVersion = "1.56.1"
+val j2objcAnnotationsVersion = "2.8"
 val jsr305Version = "3.0.2"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
@@ -1548,7 +1547,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "api-common" % googleApiCommonVersion,
   "com.google.api" % "gax" % gaxVersion,
   "com.google.api" % "gax-grpc" % gaxVersion,
-  "com.google.api" % "gax-httpjson" % gaxHttpJsonVersion,
+  "com.google.api" % "gax-httpjson" % gaxVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
