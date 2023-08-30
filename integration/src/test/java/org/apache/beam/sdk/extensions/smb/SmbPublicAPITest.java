@@ -65,15 +65,15 @@ public class SmbPublicAPITest {
                 new TupleTag<>(),
                 Collections.singletonList("in"),
                 ".avro",
-                new MyFileOperation(), null)
-        ),
+                new MyFileOperation(),
+                null)),
         TargetParallelism.auto(),
-        null
-    );
+        null);
   }
 
   private static class MyMetadata extends BucketMetadata<String, Void, String> {
-    private MyMetadata(int numBuckets, int numShards, Class<String> keyClass, BucketMetadata.HashType hashType)
+    private MyMetadata(
+        int numBuckets, int numShards, Class<String> keyClass, BucketMetadata.HashType hashType)
         throws CannotProvideCoderException, Coder.NonDeterministicException {
       super(BucketMetadata.CURRENT_VERSION, numBuckets, numShards, keyClass, hashType);
     }
@@ -97,7 +97,6 @@ public class SmbPublicAPITest {
     public Void extractKeySecondary(final String value) {
       return null;
     }
-
   }
 
   private static class MyFileOperation extends FileOperations<String> {

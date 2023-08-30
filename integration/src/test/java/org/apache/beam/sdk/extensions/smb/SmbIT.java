@@ -43,17 +43,19 @@ public class SmbIT {
 
     System.arraycopy(args, 0, smbSinkArgs, 3, args.length);
 
-    final String[] smbSourceArgs = new String[] {
-        "--avroSource=" + avroSource,
-        "--jsonSource=" + jsonSource,
-        "--tempLocation=" + tempLocation
-    };
+    final String[] smbSourceArgs =
+        new String[] {
+          "--avroSource=" + avroSource,
+          "--jsonSource=" + jsonSource,
+          "--tempLocation=" + tempLocation
+        };
 
-    final String[] coGroupByKeyArgs = new String[] {
-        "--avroSource=" + avroSource.resolve("bucket-*.avro"),
-        "--jsonSource=" + jsonSource.resolve("bucket-*.json"),
-        "--tempLocation=" + tempLocation
-    };
+    final String[] coGroupByKeyArgs =
+        new String[] {
+          "--avroSource=" + avroSource.resolve("bucket-*.avro"),
+          "--jsonSource=" + jsonSource.resolve("bucket-*.json"),
+          "--tempLocation=" + tempLocation
+        };
 
     try {
       SinkBenchmark.main(smbSinkArgs);
@@ -62,10 +64,7 @@ public class SmbIT {
       // Baseline comparison with default CGBK implementation
       CoGroupByKeyBenchmark.main(coGroupByKeyArgs);
     } finally {
-      Files.walk(temp)
-        .sorted(Comparator.reverseOrder())
-        .map(Path::toFile)
-        .forEach(File::delete);
+      Files.walk(temp).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
     }
   }
 }

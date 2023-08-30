@@ -42,9 +42,9 @@ import org.apache.beam.sdk.values.TypeDescriptor;
 /**
  * Benchmark of {@link SortedBucketSink}.
  *
- * <p>Generates 2 collections with `numKeys` unique keys each, the Avro one with [0, maxRecordsPerKey]
- * values per key, uniformly distributed, and the JSON one [0, maxRecordsPerKey / 10] values per
- * key.
+ * <p>Generates 2 collections with `numKeys` unique keys each, the Avro one with [0,
+ * maxRecordsPerKey] values per key, uniformly distributed, and the JSON one [0, maxRecordsPerKey /
+ * 10] values per key.
  */
 public class SinkBenchmark {
 

@@ -24,11 +24,11 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult.State;
-import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
-import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.extensions.avro.io.AvroIO;
+import org.apache.beam.sdk.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -93,7 +93,6 @@ public class CoGroupByKeyBenchmark {
     final TupleTag<AvroGeneratedUser> tl = new TupleTag<>();
     final TupleTag<TableRow> tr = new TupleTag<>();
 
-
     KeyedPCollectionTuple.of(tl, lhs)
         .and(tr, rhs)
         .apply(CoGroupByKey.create())
@@ -116,15 +115,15 @@ public class CoGroupByKeyBenchmark {
                         }
                       }
                       return output;
-                    })
-        ).apply(Count.globally())
+                    }))
+        .apply(Count.globally())
         .apply(
-          MapElements.into(TypeDescriptors.longs())
-              .via(
-                  c -> {
-                    System.out.println("Global count = " + c);
-                    return c;
-                  }));
+            MapElements.into(TypeDescriptors.longs())
+                .via(
+                    c -> {
+                      System.out.println("Global count = " + c);
+                      return c;
+                    }));
 
     final long startTime = System.currentTimeMillis();
     final State state = pipeline.run().waitUntilFinish();
