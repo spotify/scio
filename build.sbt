@@ -1388,6 +1388,7 @@ lazy val integration: Project = project
     publish / skip := true,
     compile / skip := !BuildCredentials.exists,
     test / skip := !BuildCredentials.exists,
+    scalafix / skip := !BuildCredentials.exists,
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // test
