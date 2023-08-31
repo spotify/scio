@@ -250,6 +250,7 @@ val commonSettings = formatSettings ++
     excludeDependencies ++= Seq(
       "org.apache.beam" % "beam-sdks-java-io-kafka",
       // logger implementation must be given by the runner lib
+      "ch.qos.logback" % "logback-classic",
       "ch.qos.reload4j" % "reload4j",
       "log4j" % "log4j",
       "org.slf4j" % "slf4j-log4j12",
@@ -789,10 +790,7 @@ lazy val `scio-cassandra3`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" %% "chill" % chillVersion,
-      "org.apache.cassandra" % "cassandra-all" % cassandraVersion excludeAll (
-        "ch.qos.logback" % "logback-classic",
-        "org.slf4j" % "log4j-over-slf4j"
-      ),
+      "org.apache.cassandra" % "cassandra-all" % cassandraVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
@@ -1180,8 +1178,6 @@ lazy val `scio-examples`: Project = project
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.13.1" % Runtime,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
