@@ -57,12 +57,8 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Example] = {
     val conf = ParquetConfiguration.ofNullable(params.conf)
-    val useSplittableDoFn = conf.getBoolean(
-      ParquetReadConfiguration.UseSplittableDoFn,
-      ParquetReadConfiguration.UseSplittableDoFnDefault
-    )
 
-    if (useSplittableDoFn) {
+    if (ParquetReadConfiguration.getUseSplittableDoFn(conf, sc.options)) {
       readSplittableDoFn(sc, conf, params)
     } else {
       readLegacy(sc, conf, params)
