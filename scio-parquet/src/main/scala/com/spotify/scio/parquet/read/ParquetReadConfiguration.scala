@@ -45,16 +45,18 @@ object ParquetReadConfiguration {
   private[scio] def getUseSplittableDoFn(conf: Configuration, opts: PipelineOptions): Boolean = {
     Option(conf.get(UseSplittableDoFn)) match {
       case Some(v) => v.toBoolean
-      case None
-          if Option(opts.as(classOf[ExperimentalOptions]).getExperiments)
-            .exists(_.contains("use_runner_v2")) =>
+      case None if dataflowRunnerV2Enabled(opts) =>
         log.info(
           "Defaulting to SplittableDoFn-based Parquet read as Dataflow Runner V2 is enabled. To opt out, " +
-            "set `scio.parquet.read.useSplittableDoFn -> false` in your Configuration."
+            "set `scio.parquet.read.useSplittableDoFn -> false` in your read Configuration."
         )
         true
       case None =>
         UseSplittableDoFnDefault
     }
   }
+
+  private def dataflowRunnerV2Enabled(opts: PipelineOptions): Boolean =
+    Option(opts.as(classOf[ExperimentalOptions]).getExperiments)
+      .exists(_.contains("use_runner_v2"))
 }
