@@ -52,4 +52,4 @@ jobs:
         env:
           BQ_READ_TIMEOUT: 30000
       - name: Build documentation
-        run: sbt site/makeSite
+        run: sbt "site/makeSite"

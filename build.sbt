@@ -491,8 +491,7 @@ lazy val root: Project = Project("scio", file("."))
     `scio-repl`,
     `scio-smb`,
     `scio-tensorflow`,
-    `scio-test`,
-    `integration`
+    `scio-test`
   )
 
 lazy val `scio-core`: Project = project
@@ -1386,9 +1385,6 @@ lazy val integration: Project = project
   .settings(macroSettings)
   .settings(
     publish / skip := true,
-    compile / skip := !BuildCredentials.exists,
-    test / skip := !BuildCredentials.exists,
-    scalafix / skip := !BuildCredentials.exists,
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // test
