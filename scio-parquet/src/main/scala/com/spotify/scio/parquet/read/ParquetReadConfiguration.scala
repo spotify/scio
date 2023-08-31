@@ -57,6 +57,5 @@ object ParquetReadConfiguration {
   }
 
   private def dataflowRunnerV2Enabled(opts: PipelineOptions): Boolean =
-    Option(opts.as(classOf[ExperimentalOptions]).getExperiments)
-      .exists(_.contains("use_runner_v2"))
+    Option(opts.as(classOf[ExperimentalOptions]).getExperiments).exists(_.contains("use_runner_v2"))
 }
