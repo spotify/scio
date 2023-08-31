@@ -21,7 +21,7 @@ import org.apache.hadoop.conf.Configuration
 import org.slf4j.LoggerFactory
 
 object ParquetReadConfiguration {
-  private[parquet] val log = LoggerFactory.getLogger(getClass)
+  private val log = LoggerFactory.getLogger(getClass)
 
   // Key
   val SplitGranularity = "scio.parquet.read.splitgranularity"
