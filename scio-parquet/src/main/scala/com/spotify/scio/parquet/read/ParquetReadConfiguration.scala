@@ -16,7 +16,12 @@
 
 package com.spotify.scio.parquet.read
 
+import org.apache.beam.sdk.options.{ExperimentalOptions, PipelineOptions}
+import org.apache.hadoop.conf.Configuration
+import org.slf4j.LoggerFactory
+
 object ParquetReadConfiguration {
+  private[parquet] val log = LoggerFactory.getLogger(getClass)
 
   // Key
   val SplitGranularity = "scio.parquet.read.splitgranularity"
@@ -36,4 +41,18 @@ object ParquetReadConfiguration {
   // SplittableDoFn
   val UseSplittableDoFn = "scio.parquet.read.useSplittableDoFn"
   private[scio] val UseSplittableDoFnDefault = false
+
+  private[scio] def getUseSplittableDoFn(conf: Configuration, opts: PipelineOptions): Boolean = {
+    Option(conf.get(UseSplittableDoFn)) match {
+      case Some(v) => v.toBoolean
+      case None if opts.as(classOf[ExperimentalOptions]).getExperiments.contains("use_runner_v2") =>
+        log.info(
+          "Defaulting to SplittableDoFn-based Parquet read as Dataflow Runner V2 is enabled. To opt out, " +
+            "set `scio.parquet.read.useSplittableDoFn -> false` in your Configuration."
+        )
+        true
+      case None =>
+        UseSplittableDoFnDefault
+    }
+  }
 }

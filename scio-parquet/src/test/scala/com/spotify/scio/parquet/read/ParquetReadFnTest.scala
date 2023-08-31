@@ -25,6 +25,7 @@ import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.commons.io.FileUtils
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.io.api.Binary
@@ -316,6 +317,31 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
         Predicate[Account](_.getId == 300)
       )
     )
+  }
+
+  "ParquetReadConfiguration" should "default to using splittableDoFn only if RunnerV2 experiment is enabled" in {
+    // Default to true if RunnerV2 is set and user hasn't configured SDF explicitly
+    ParquetReadConfiguration.getUseSplittableDoFn(
+      ParquetConfiguration.empty(),
+      PipelineOptionsFactory.fromArgs("--experiments=use_runner_v2,another_experiment").create()
+    ) shouldBe true
+
+    // Default to false if RunnerV2 is not set
+    ParquetReadConfiguration.getUseSplittableDoFn(
+      ParquetConfiguration.empty(),
+      PipelineOptionsFactory.fromArgs("--experiments=another_experiment").create()
+    ) shouldBe false
+
+    ParquetReadConfiguration.getUseSplittableDoFn(
+      ParquetConfiguration.empty(),
+      PipelineOptionsFactory.fromArgs().create()
+    ) shouldBe false
+
+    // Respect user's configuration, if set
+    ParquetReadConfiguration.getUseSplittableDoFn(
+      ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false),
+      PipelineOptionsFactory.fromArgs("--experiments=use_runner_v2").create()
+    ) shouldBe false
   }
 
   private def listFiles(dir: String): Seq[String] =
