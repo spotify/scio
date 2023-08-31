@@ -342,6 +342,11 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
       ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false),
       PipelineOptionsFactory.fromArgs("--experiments=use_runner_v2").create()
     ) shouldBe false
+
+    ParquetReadConfiguration.getUseSplittableDoFn(
+      ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> true),
+      PipelineOptionsFactory.fromArgs().create()
+    ) shouldBe true
   }
 
   private def listFiles(dir: String): Seq[String] =
