@@ -242,7 +242,7 @@ Add the following import to handle typed Parquet in a way compatible with Parque
 import magnolify.parquet.ParquetArray.AvroCompat._
 ```
 
-The same Avro schema evolution principles apply to Parquet, i.e. only append `OPTIONAL` or `REPEATED` fields with default `null` or `[]`. See this [test](https://github.com/spotify/magnolify/blob/master/parquet/src/test/scala/magnolify/parquet/test/SchemaEvolutionSuite.scala) for some common scenarios w.r.t. Parquet schema evolution.
+The same Avro schema evolution principles apply to Parquet, i.e. only append `OPTIONAL` or `REPEATED` fields with default `null` or `[]`. See this [test](https://github.com/spotify/magnolify/blob/main/parquet/src/test/scala/magnolify/parquet/SchemaEvolutionSuite.scala) for some common scenarios w.r.t. Parquet schema evolution.
 
 ## Configuring Parquet
 
