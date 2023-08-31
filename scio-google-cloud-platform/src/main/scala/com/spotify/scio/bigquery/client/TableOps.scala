@@ -190,13 +190,20 @@ final private[client] class TableOps(client: Client) {
     b.result()
   }
 
-  def create(table: Table): Unit = withBigQueryService(_.createTable(table))
+  def create(table: Table): Unit =
+    withBigQueryService(_.createTable(table))
 
-  def create(table: TableReference, schema: TableSchema): Unit =
-    create(new Table().setTableReference(table).setSchema(schema))
-
-  def create(tableSpec: String, schema: TableSchema): Unit =
-    create(bq.BigQueryHelpers.parseTableSpec(tableSpec), schema)
+  def create(
+    tableRef: TableReference,
+    schema: TableSchema,
+    description: Option[String] = None
+  ): Unit = {
+    val table = new Table()
+      .setTableReference(tableRef)
+      .setSchema(schema)
+      .setDescription(description.orNull)
+    create(table)
+  }
 
   /**
    * Check if table exists. Returns `true` if table exists, `false` is table definitely does not

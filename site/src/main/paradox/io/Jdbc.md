@@ -8,8 +8,10 @@ Reads come in two flavors: a query-based variant backed by Beam's @javadoc[JdbcI
 
 ### Read via query
 
-Query-based reads are supported with @scaladoc[jdbcSelect](com.spotify.scio.jdbc.syntax.JdbcScioContextOps#jdbcSelect[T](readOptions:com.spotify.scio.jdbc.JdbcReadOptions[T])(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]).
-In @scaladoc[JdbcReadOptions](com.spotify.scio.jdbc.JdbcReadOptions), the `rowMapper` argument must be provided to map between a `java.sql.ResultSet` to the result type `T`. The `statementPreparator` argument may be used to set static parameters in the query, usually passed as arguments to the pipeline.
+Query-based reads are supported with @scaladoc[jdbcSelect](com.spotify.scio.jdbc.syntax.JdbcScioContextOps#jdbcSelect[T](connectionOptions:com.spotify.scio.jdbc.JdbcConnectionOptions,query:String,statementPreparator:java.sql.PreparedStatement=%3EUnit,fetchSize:Int,outputParallelization:Boolean,dataSourceProviderFn:()=%3E,javax.sql.DataSource,configOverride:org.apache.beam.sdk.io.jdbc.JdbcIO.Read[T]=%3Eorg.apache.beam.sdk.io.jdbc.JdbcIO.Read[T])(rowMapper:java.sql.ResultSet=%3ET)(implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]).
+It expects a @scaladoc[JdbcConnectionOptions](com.spotify.scio.jdbc.JdbcConnectionOptions) to connect to the database.
+The `statementPreparator` argument may be used to set static parameters in the query, usually passed as arguments to the pipeline.
+The curried `rowMapper` function argument maps between a `java.sql.ResultSet` to the result type `T`.
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
@@ -22,15 +24,12 @@ val sourceArg: String = args("wordCountSourceArg")
 
 val jdbcUrl: String = ???
 val driverClass: Class[Driver] = ???
-val connOpts = JdbcConnectionOptions("username", Some("password"), jdbcUrl, driverClass)
+val jdbcOptions = JdbcConnectionOptions("username", Some("password"), jdbcUrl, driverClass)
+val query = "SELECT word, word_count FROM word_count WHERE source = ?"
 
-val readOptions = JdbcReadOptions(
-  connectionOptions = connOpts,
-  query = "SELECT word, word_count FROM word_count WHERE source = ?",
-  statementPreparator = _.setString(1, sourceArg),
-  rowMapper = r => (r.getString(1), r.getLong(2))
-)
-val elements: SCollection[(String, Long)] = sc.jdbcSelect(readOptions)
+val elements: SCollection[(String, Long)] = sc.jdbcSelect(jdbcOptions, query, _.setString(1, sourceArg)) { r =>
+  r.getString(1) -> r.getLong(2)
+}
 ```
 
 ### Parallelized table read
@@ -69,7 +68,9 @@ val elements: SCollection[(String, Long)] = sc.jdbcShardedSelect(shardedReadOpti
 
 ## Writes
 
-Write to JDBC with @scaladoc[saveAsJdbc](com.spotify.scio.jdbc.syntax.JdbcSCollectionOps#saveAsJdbc(writeOptions:com.spotify.scio.jdbc.JdbcWriteOptions[T]):com.spotify.scio.io.ClosedTap[Nothing]) configured with an instance of @scaladoc[JdbcWriteOptions](com.spotify.scio.jdbc.JdbcWriteOptions), where the `preparedStatementSetter` receives an instance of the type-to-be-written and a `PreparedStatement` and appropriately sets the statement fields:
+Write to JDBC with @scaladoc[saveAsJdbc](com.spotify.scio.jdbc.syntax.JdbcSCollectionOps#saveAsJdbc(connectionOptions:com.spotify.scio.jdbc.JdbcConnectionOptions,statement:String,batchSize:Long,retryConfiguration:org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration,retryStrategy:java.sql.SQLException=%3EBoolean,autoSharding:Boolean,dataSourceProviderFn:()=%3Ejavax.sql.DataSource,configOverride:org.apache.beam.sdk.io.jdbc.JdbcIO.Write[T]=%3Eorg.apache.beam.sdk.io.jdbc.JdbcIO.Write[T])(preparedStatementSetter:(T,java.sql.PreparedStatement)=%3EUnit):com.spotify.scio.io.ClosedTap[Nothing]).
+It expects a @scaladoc[JdbcConnectionOptions](com.spotify.scio.jdbc.JdbcConnectionOptions) to connect to the database.
+The curried `preparedStatementSetter` function argument receives an instance of the type-to-be-written and a `PreparedStatement` and appropriately sets the statement fields.
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
@@ -79,16 +80,12 @@ import java.sql.Driver
 
 val jdbcUrl: String = ???
 val driverClass: Class[Driver] = ???
-val connOpts = JdbcConnectionOptions("username", Some("password"), jdbcUrl, driverClass)
-
-val writeOptions = JdbcWriteOptions[(String, Long)](
-  connectionOptions = connOpts,
-  statement = "INSERT INTO word_count (word, count) values (?, ?)",
-  preparedStatementSetter = (kv, s) => {
-    s.setString(1, kv._1)
-    s.setLong(2, kv._2)
-  })
+val jdbcOptions = JdbcConnectionOptions("username", Some("password"), jdbcUrl, driverClass)
+val statement = "INSERT INTO word_count (word, count) values (?, ?)"
 
 val elements: SCollection[(String, Long)] = ???
-elements.saveAsJdbc(writeOptions)
+elements.saveAsJdbc(jdbcOptions, statement) { case ((word, count), statement) =>
+  statement.setString(1, word)
+  statement.setLong(2, count)
+}
 ```

@@ -142,11 +142,15 @@ final class BigQuery private (val client: Client) {
       createDisposition
     )
 
-  def createTypedTable[T <: HasAnnotation: TypeTag](table: Table): Unit =
-    tables.create(table.setSchema(BigQueryType[T].schema))
+  def createTypedTable[T <: HasAnnotation: TypeTag](table: Table): Unit = {
+    val typedTable = table
+      .setSchema(BigQueryType[T].schema)
+      .setDescription(BigQueryType[T].tableDescription.orNull)
+    tables.create(typedTable)
+  }
 
   def createTypedTable[T <: HasAnnotation: TypeTag](table: TableReference): Unit =
-    tables.create(table, BigQueryType[T].schema)
+    tables.create(table, BigQueryType[T].schema, BigQueryType[T].tableDescription)
 
   def createTypedTable[T <: HasAnnotation: TypeTag](tableSpec: String): Unit =
     createTypedTable(beam.BigQueryHelpers.parseTableSpec(tableSpec))
