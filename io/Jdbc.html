@@ -226,7 +226,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.2+0-f99635d0+20230818-1244*
+<i class="md-icon" title="Version">label_outline</i> 0.13.3+0-467a53a4+20230901-1430*
 </label>
 </li>
 </ul>
@@ -256,9 +256,9 @@ spotify/scio
 <h1><a href="#jdbc" name="jdbc" class="anchor"><span class="anchor-link"></span></a>JDBC</h1>
 <p>Scio supports JDBC reads and writes.</p>
 <h2><a href="#reads" name="reads" class="anchor"><span class="anchor-link"></span></a>Reads</h2>
-<p>Reads come in two flavors: a query-based variant backed by Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.49.0/?org/apache/beam/sdk/io/jdbc/JdbcIO.html" title="org.apache.beam.sdk.io.jdbc.JdbcIO"><code>JdbcIO</code></a> and a &ldquo;sharded select&rdquo; that performs a parallelizable bulk read on an entire table.</p>
+<p>Reads come in two flavors: a query-based variant backed by Beam&rsquo;s <a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/sdk/io/jdbc/JdbcIO.html" title="org.apache.beam.sdk.io.jdbc.JdbcIO"><code>JdbcIO</code></a> and a &ldquo;sharded select&rdquo; that performs a parallelizable bulk read on an entire table.</p>
 <h3><a href="#read-via-query" name="read-via-query" class="anchor"><span class="anchor-link"></span></a>Read via query</h3>
-<p>Query-based reads are supported with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcSelect[T](readOptions:com.spotify.scio.jdbc.JdbcReadOptions[T])(implicitevidence$1:scala.reflect.ClassTag[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>jdbcSelect</code></a>. In <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcReadOptions.html" title="com.spotify.scio.jdbc.JdbcReadOptions"><code>JdbcReadOptions</code></a>, the <code>rowMapper</code> argument must be provided to map between a <code>java.sql.ResultSet</code> to the result type <code>T</code>. The <code>statementPreparator</code> argument may be used to set static parameters in the query, usually passed as arguments to the pipeline.</p>
+<p>Query-based reads are supported with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcSelect[T](connectionOptions:com.spotify.scio.jdbc.JdbcConnectionOptions,query:String,statementPreparator:java.sql.PreparedStatement=%3EUnit,fetchSize:Int,outputParallelization:Boolean,dataSourceProviderFn:()=%3E,javax.sql.DataSource,configOverride:org.apache.beam.sdk.io.jdbc.JdbcIO.Read[T]=%3Eorg.apache.beam.sdk.io.jdbc.JdbcIO.Read[T])(rowMapper:java.sql.ResultSet=%3ET)(implicitevidence$3:scala.reflect.ClassTag[T],implicitevidence$4:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>jdbcSelect</code></a>. It expects a <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcConnectionOptions.html" title="com.spotify.scio.jdbc.JdbcConnectionOptions"><code>JdbcConnectionOptions</code></a> to connect to the database. The <code>statementPreparator</code> argument may be used to set static parameters in the query, usually passed as arguments to the pipeline. The curried <code>rowMapper</code> function argument maps between a <code>java.sql.ResultSet</code> to the result type <code>T</code>.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.jdbc._
@@ -269,15 +269,12 @@ val sourceArg: String = args(&quot;wordCountSourceArg&quot;)
 
 val jdbcUrl: String = ???
 val driverClass: Class[Driver] = ???
-val connOpts = JdbcConnectionOptions(&quot;username&quot;, Some(&quot;password&quot;), jdbcUrl, driverClass)
+val jdbcOptions = JdbcConnectionOptions(&quot;username&quot;, Some(&quot;password&quot;), jdbcUrl, driverClass)
+val query = &quot;SELECT word, word_count FROM word_count WHERE source = ?&quot;
 
-val readOptions = JdbcReadOptions(
-  connectionOptions = connOpts,
-  query = &quot;SELECT word, word_count FROM word_count WHERE source = ?&quot;,
-  statementPreparator = _.setString(1, sourceArg),
-  rowMapper = r =&gt; (r.getString(1), r.getLong(2))
-)
-val elements: SCollection[(String, Long)] = sc.jdbcSelect(readOptions)
+val elements: SCollection[(String, Long)] = sc.jdbcSelect(jdbcOptions, query, _.setString(1, sourceArg)) { r =&gt;
+  r.getString(1) -&gt; r.getLong(2)
+}
 </code></pre>
 <h3><a href="#parallelized-table-read" name="parallelized-table-read" class="anchor"><span class="anchor-link"></span></a>Parallelized table read</h3>
 <p>When an entire table is to be read, the input table can be sharded based on some column value and each shard read in parallel with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcScioContextOps.html#jdbcShardedSelect[T,S](readOptions:com.spotify.scio.jdbc.sharded.JdbcShardedReadOptions[T,S])(implicitevidence$3:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]" title="com.spotify.scio.jdbc.syntax.JdbcScioContextOps"><code>jdbcShardedSelect</code></a>.</p>
@@ -310,7 +307,7 @@ val shardedReadOptions = JdbcShardedReadOptions[(String, Long), Long](
 val elements: SCollection[(String, Long)] = sc.jdbcShardedSelect(shardedReadOptions)
 </code></pre>
 <h2><a href="#writes" name="writes" class="anchor"><span class="anchor-link"></span></a>Writes</h2>
-<p>Write to JDBC with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcSCollectionOps.html#saveAsJdbc(writeOptions:com.spotify.scio.jdbc.JdbcWriteOptions[T]):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.jdbc.syntax.JdbcSCollectionOps"><code>saveAsJdbc</code></a> configured with an instance of <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcWriteOptions.html" title="com.spotify.scio.jdbc.JdbcWriteOptions"><code>JdbcWriteOptions</code></a>, where the <code>preparedStatementSetter</code> receives an instance of the type-to-be-written and a <code>PreparedStatement</code> and appropriately sets the statement fields:</p>
+<p>Write to JDBC with <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/syntax/JdbcSCollectionOps.html#saveAsJdbc(connectionOptions:com.spotify.scio.jdbc.JdbcConnectionOptions,statement:String,batchSize:Long,retryConfiguration:org.apache.beam.sdk.io.jdbc.JdbcIO.RetryConfiguration,retryStrategy:java.sql.SQLException=%3EBoolean,autoSharding:Boolean,dataSourceProviderFn:()=%3Ejavax.sql.DataSource,configOverride:org.apache.beam.sdk.io.jdbc.JdbcIO.Write[T]=%3Eorg.apache.beam.sdk.io.jdbc.JdbcIO.Write[T])(preparedStatementSetter:(T,java.sql.PreparedStatement)=%3EUnit):com.spotify.scio.io.ClosedTap[Nothing]" title="com.spotify.scio.jdbc.syntax.JdbcSCollectionOps"><code>saveAsJdbc</code></a>. It expects a <a href="https://spotify.github.io/scio/api/com/spotify/scio/jdbc/JdbcConnectionOptions.html" title="com.spotify.scio.jdbc.JdbcConnectionOptions"><code>JdbcConnectionOptions</code></a> to connect to the database. The curried <code>preparedStatementSetter</code> function argument receives an instance of the type-to-be-written and a <code>PreparedStatement</code> and appropriately sets the statement fields.</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.jdbc._
@@ -318,18 +315,14 @@ import java.sql.Driver
 
 val jdbcUrl: String = ???
 val driverClass: Class[Driver] = ???
-val connOpts = JdbcConnectionOptions(&quot;username&quot;, Some(&quot;password&quot;), jdbcUrl, driverClass)
-
-val writeOptions = JdbcWriteOptions[(String, Long)](
-  connectionOptions = connOpts,
-  statement = &quot;INSERT INTO word_count (word, count) values (?, ?)&quot;,
-  preparedStatementSetter = (kv, s) =&gt; {
-    s.setString(1, kv._1)
-    s.setLong(2, kv._2)
-  })
+val jdbcOptions = JdbcConnectionOptions(&quot;username&quot;, Some(&quot;password&quot;), jdbcUrl, driverClass)
+val statement = &quot;INSERT INTO word_count (word, count) values (?, ?)&quot;
 
 val elements: SCollection[(String, Long)] = ???
-elements.saveAsJdbc(writeOptions)
+elements.saveAsJdbc(jdbcOptions, statement) { case ((word, count), statement) =&gt;
+  statement.setString(1, word)
+  statement.setLong(2, count)
+}
 </code></pre>
 </div>
 <div>
@@ -339,7 +332,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.2+0-f99635d0+20230818-1244*
+0.13.3+0-467a53a4+20230901-1430*
 </span>
 </div>
 </article>

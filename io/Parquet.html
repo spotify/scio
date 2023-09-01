@@ -228,7 +228,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.2+0-f99635d0+20230818-1244*
+<i class="md-icon" title="Version">label_outline</i> 0.13.3+0-467a53a4+20230901-1430*
 </label>
 </li>
 </ul>
@@ -447,7 +447,7 @@ def result = input.saveAsTypedParquetFile(&quot;gs://path-to-data/lake/output&qu
 <p>Add the following import to handle typed Parquet in a way compatible with Parquet Avro:</p>
 <pre class="prettyprint"><code class="language-scala">import magnolify.parquet.ParquetArray.AvroCompat._
 </code></pre>
-<p>The same Avro schema evolution principles apply to Parquet, i.e. only append <code>OPTIONAL</code> or <code>REPEATED</code> fields with default <code>null</code> or <code>[]</code>. See this <a href="https://github.com/spotify/magnolify/blob/master/parquet/src/test/scala/magnolify/parquet/test/SchemaEvolutionSuite.scala">test</a> for some common scenarios w.r.t. Parquet schema evolution.</p>
+<p>The same Avro schema evolution principles apply to Parquet, i.e. only append <code>OPTIONAL</code> or <code>REPEATED</code> fields with default <code>null</code> or <code>[]</code>. See this <a href="https://github.com/spotify/magnolify/blob/main/parquet/src/test/scala/magnolify/parquet/SchemaEvolutionSuite.scala">test</a> for some common scenarios w.r.t. Parquet schema evolution.</p>
 <h2><a href="#configuring-parquet" name="configuring-parquet" class="anchor"><span class="anchor-link"></span></a>Configuring Parquet</h2>
 <p>The Parquet Java <a href="https://github.com/apache/parquet-mr">library</a> heavily relies on Hadoop&rsquo;s <code>Job</code> API. Therefore, in both the Parquet library and in scio-parquet, we use Hadoop&rsquo;s <a href="https://hadoop.apache.org/docs/r2.10.2/api/org/apache/hadoop/conf/Configuration.html">Configuration</a> class to manage most Parquet read and write options.</p>
 <p>The <code>Configuration</code> class, when initialized, will load default values from the first available <code>core-site.xml</code> found on the classpath. Scio-parquet provides a default <a href="https://github.com/spotify/scio/blob/main/scio-parquet/src/main/resources/core-site.xml"><code>core-site.xml</code> implementation</a>: if your Scio pipeline has a dependency on <code>scio-parquet</code>, these default options will be picked up in your pipeline.</p>
@@ -495,7 +495,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.2+0-f99635d0+20230818-1244*
+0.13.3+0-467a53a4+20230901-1430*
 </span>
 </div>
 </article>
