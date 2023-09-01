@@ -183,6 +183,7 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
     val t = BAvroIO
       .read(cls)
       .from(filePattern)
+      .withDatumReaderFactory(new SpecificRecordDatumFactory[T](cls))
     sc
       .applyTransform(t)
       .setCoder(coder)
@@ -194,7 +195,9 @@ final case class SpecificRecordIO[T <: SpecificRecord: ClassTag: Coder](path: St
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val cls = ScioUtil.classOf[T]
-    val t = BAvroIO.write(cls)
+    val t = BAvroIO
+      .write(cls)
+      .withDatumWriterFactory(new SpecificRecordDatumFactory[T](cls))
 
     data.applyInternal(
       avroOut(
