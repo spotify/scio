@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets
 import com.spotify.voyager.jni.Index
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.options.PipelineOptions
+import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters
 import scala.collection.mutable
@@ -15,6 +16,7 @@ import java.net.URI
 import java.nio.file.{Files, Path, Paths}
 
 trait VoyagerUri extends Serializable {
+  val logger = LoggerFactory.getLogger(this.getClass)
   val path: String
   private[voyager] def getReader(
     distanceMeasure: VoyagerDistanceMeasure,
@@ -65,8 +67,18 @@ private class RemoteVoyagerUri(val path: String, options: PipelineOptions) exten
   }
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
-    w.save(path)
+    val tempPath: Path = Files.createTempDirectory("")
+    logger.info(s"temp path: $path")
+    w.save(tempPath.toString)
     w.close()
+
+    VoyagerUri.files.foreach { f =>
+      val filePath = tempPath.resolve(f)
+      logger.info(s"resolved filePath $filePath")
+      rfu.upload(Paths.get(filePath.toString), new URI(path + "/" + f))
+      Files.delete(filePath)
+    }
+
   }
 
   override private[voyager] def exists: Boolean =
@@ -80,6 +92,7 @@ private[voyager] class VoyagerWriter(
   ef: Long = 200L,
   m: Long = 16L
 ) {
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   // Chunk size experiments - <chunk_size>, <num_chunks>
   // 4096, 6062: 2022-11-16 14:07:07.358 -> 2022-11-16 16:50:59.109 = 2hr 50min.  1.68s per chunk
@@ -128,9 +141,8 @@ private[voyager] class VoyagerWriter(
   }
 
   def save(path: String): Unit = {
-    val basePath: Path = Paths.get(path)
-    val indexFileName: String = basePath.resolve("index.hnsw").toString
-    val namesFileName: String = basePath.resolve("names.json").toString
+    val indexFileName: String = path + "/index.hnsw"
+    val namesFileName: String = path + "/names.json"
     index.saveIndex(indexFileName)
     Files.write(
       Paths.get(namesFileName),

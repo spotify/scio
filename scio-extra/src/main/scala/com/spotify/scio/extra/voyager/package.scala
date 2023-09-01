@@ -7,8 +7,10 @@ import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import com.spotify.voyager.jni.{Index, StringIndex}
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
+import org.slf4j.LoggerFactory
 
 import java.nio.file.{Path, Paths}
+import java.util.UUID
 
 package object voyager {
   sealed abstract class VoyagerDistanceMeasure
@@ -20,6 +22,7 @@ package object voyager {
   case object Float8 extends VoyagerStorageType
   case object Float32 extends VoyagerStorageType
   case object E4M3 extends VoyagerStorageType
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   case class VoyagerResult(value: String, distance: Float)
 
@@ -60,41 +63,9 @@ package object voyager {
     }
   }
 
-  implicit class VoyagerPairSCollection(
-    @transient private val self: SCollection[(String, Array[Float])]
-  ) extends AnyVal {
-
-    @experimental
-    def asVoyager(
-      path: String,
-      voyagerDistanceMeasure: VoyagerDistanceMeasure,
-      voyagerStorageType: VoyagerStorageType,
-      dim: Int,
-      ef: Long = 200L,
-      m: Long = 16L
-    ): SCollection[VoyagerUri] = {
-      val uri: VoyagerUri = VoyagerUri(path, self.context.options)
-      require(!uri.exists, s"Voyager URI ${uri.path} already exists")
-      self.transform { in =>
-        {
-          in.groupBy(_ => ())
-            .map { case (_, xs) =>
-              val voyagerWriter: VoyagerWriter =
-                new VoyagerWriter(voyagerDistanceMeasure, voyagerStorageType, dim, ef, m)
-              voyagerWriter.write(xs)
-              voyagerWriter.save(path)
-              uri
-            }
-        }
-      }
-    }
-
-  }
-
-  def asVoyagerSideInput(): SideInput[VoyagerReader] = ???
-
   /**
    * To be used with with side inputs
+   *
    * @param self
    */
   implicit class VoyagerScioContext(private val self: ScioContext) extends AnyVal {
@@ -106,6 +77,78 @@ package object voyager {
     ): SideInput[VoyagerReader] = {
       val uri = VoyagerUri(path, self.options)
       val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
+      new VoyagerSideInput(view, distanceMeasure, storageType, dim)
+    }
+  }
+
+  implicit class VoyagerPairSCollection(
+    @transient private val self: SCollection[(String, Array[Float])]
+  ) extends AnyVal {
+
+    @experimental
+    def asVoyager(
+      path: String,
+      voyagerDistanceMeasure: VoyagerDistanceMeasure,
+      voyagerStorageType: VoyagerStorageType,
+      dim: Int,
+      ef: Long,
+      m: Long
+    ): SCollection[VoyagerUri] = {
+      val uri: VoyagerUri = VoyagerUri(path, self.context.options)
+      require(!uri.exists, s"Voyager URI ${uri.path} already exists")
+      logger.info(s"Vyager URI :${uri.path}")
+      self.transform { in =>
+        {
+          in.groupBy(_ => ())
+            .map { case (_, xs) =>
+              val voyagerWriter: VoyagerWriter =
+                new VoyagerWriter(voyagerDistanceMeasure, voyagerStorageType, dim, ef, m)
+
+              voyagerWriter.write(xs)
+              uri.saveAndClose(voyagerWriter)
+              uri
+            }
+        }
+      }
+    }
+
+    @experimental
+    def asVoyager(
+      distanceMeasure: VoyagerDistanceMeasure,
+      storageType: VoyagerStorageType,
+      dim: Int,
+      ef: Long = 200L,
+      m: Long = 16L
+    ): SCollection[VoyagerUri] = {
+      val uuid: UUID = UUID.randomUUID()
+      val tempLocation: String = self.context.options.getTempLocation
+      require(tempLocation != null, s"--tempLocation arg is required")
+      val path = s"$tempLocation/voyager-build-$uuid"
+      this.asVoyager(path, distanceMeasure, storageType, dim, ef, m)
+    }
+
+    def asVoyagerSideInput(
+      distanceMeasure: VoyagerDistanceMeasure,
+      storageType: VoyagerStorageType,
+      dim: Int,
+      ef: Long = 200L,
+      m: Long = 16L
+    ): SideInput[VoyagerReader] =
+      self
+        .asVoyager(distanceMeasure, storageType, dim, ef, m)
+        .asVoyagerSideInput(distanceMeasure, storageType, dim)
+  }
+
+  implicit class AnnoySCollection(@transient private val self: SCollection[VoyagerUri])
+      extends AnyVal {
+
+    @experimental
+    def asVoyagerSideInput(
+      distanceMeasure: VoyagerDistanceMeasure,
+      storageType: VoyagerStorageType,
+      dim: Int
+    ): SideInput[VoyagerReader] = {
+      val view = self.applyInternal(View.asSingleton())
       new VoyagerSideInput(view, distanceMeasure, storageType, dim)
     }
   }

@@ -23,7 +23,7 @@ class VoyagerTest extends PipelineSpec {
     val sc = ScioContext()
     val p: ClosedTap[VoyagerUri] =
       sc.parallelize(sideData)
-        .asVoyager(basePath, distanceMeasure, storageType, dim)
+        .asVoyager(basePath, distanceMeasure, storageType, dim, 200L, 16L)
         .materialize
 
     val scioResult: ScioResult = sc.run().waitUntilFinish()
@@ -59,7 +59,7 @@ class VoyagerTest extends PipelineSpec {
 
     the[IllegalArgumentException] thrownBy {
       runWithContext {
-        _.parallelize(sideData).asVoyager(tmpDir.toString, Cosine, E4M3, dim)
+        _.parallelize(sideData).asVoyager(tmpDir.toString, Cosine, E4M3, dim, 200L, 16L)
       }
     } should have message s"requirement failed: Voyager URI $tmpDir already exists"
 
