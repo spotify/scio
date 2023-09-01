@@ -148,8 +148,8 @@ object ScioIO {
 
 /** Base trait for [[ScioIO]] without business logic, for stubbing mock data with `JobTest`. */
 trait TestIO[T] extends ScioIO[T] {
-  override type ReadP = Nothing
-  override type WriteP = Nothing
+  override type ReadP = Unit
+  override type WriteP = Unit
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     throw new UnsupportedOperationException(s"$this is for testing purpose only")

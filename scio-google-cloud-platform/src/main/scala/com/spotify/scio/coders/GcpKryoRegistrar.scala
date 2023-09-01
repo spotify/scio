@@ -16,17 +16,13 @@
 
 package com.spotify.scio.coders
 
-import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException
 import com.spotify.scio.bigquery.TableRow
 import com.spotify.scio.coders.instances.kryo.CoderSerializer
-import com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer
 import com.twitter.chill._
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 
 @KryoRegistrar
 class GcpKryoRegistrar extends IKryoRegistrar {
-  override def apply(k: Kryo): Unit = {
+  override def apply(k: Kryo): Unit =
     k.forClass[TableRow](new CoderSerializer(TableRowJsonCoder.of()))
-    k.forClass[BigtableRetriesExhaustedException](new BigtableRetriesExhaustedExceptionSerializer)
-  }
 }

@@ -17,6 +17,8 @@
 
 package com.spotify.scio.testing
 
+import cats.Eq
+
 import java.io.File
 import com.spotify.scio._
 import com.spotify.scio.io._
@@ -110,79 +112,71 @@ trait ScioIOSpec extends PipelineSpec {
     FileUtils.deleteDirectory(tmpDir)
   }
 
-  def testJobTestInput[T: ClassTag: Coder](xs: Seq[T], in: String = "in")(
+  def testJobTestInput[T: ClassTag: Coder: Eq](xs: Seq[T], in: String = "in")(
     ioFn: String => ScioIO[T]
   )(readFn: (ScioContext, String) => SCollection[T]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
-      readFn(sc, argz("input")).saveAsTextFile("out")
+      readFn(sc, argz("input")).write(CustomIO[T]("out"))
       sc.run()
-      ()
     }
 
     val builder = com.spotify.scio.testing
       .JobTest("null")
       .input(ioFn(in), xs)
-      .output(TextIO("out")) { coll =>
-        coll should containInAnyOrder(xs.map(_.toString))
-        ()
+      .output(CustomIO[T]("out")) { coll =>
+        coll should containInAnyOrder(xs)
       }
     builder.setUp()
     runMain(Array(s"--input=$in") :+ s"--appName=${builder.testId}")
     builder.tearDown()
 
-    the[IllegalArgumentException] thrownBy {
+    val e = the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
         .input(CustomIO[T](in), xs)
-        .output(TextIO("out")) { coll =>
-          coll should containInAnyOrder(xs.map(_.toString))
-          ()
+        .output(CustomIO[T]("out")) { coll =>
+          coll should containInAnyOrder(xs)
         }
       builder.setUp()
       runMain(Array(s"--input=$in") :+ s"--appName=${builder.testId}")
       builder.tearDown()
-    } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, " +
-      s"available: [CustomIO($in)]"
-    ()
+    }
+    e should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, available: [CustomIO($in)]"
   }
 
-  def testJobTestOutput[T: Coder, WT](xs: Seq[T], out: String = "out")(
+  def testJobTestOutput[T: Coder: Eq](xs: Seq[T], out: String = "out")(
     ioFn: String => ScioIO[T]
-  )(writeFn: (SCollection[T], String) => ClosedTap[WT]): Unit = {
+  )(writeFn: (SCollection[T], String) => ClosedTap[_]): Unit = {
     def runMain(args: Array[String]): Unit = {
       val (sc, argz) = ContextAndArgs(args)
       writeFn(sc.parallelize(xs), argz("output"))
       sc.run()
-      ()
     }
 
     val builder = com.spotify.scio.testing
       .JobTest("null")
       .output(ioFn(out)) { coll =>
         coll should containInAnyOrder(xs)
-        ()
       }
     builder.setUp()
     runMain(Array(s"--output=$out") :+ s"--appName=${builder.testId}")
     builder.tearDown()
 
-    the[IllegalArgumentException] thrownBy {
+    val e = the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
         .output(CustomIO[T](out)) { coll =>
           coll should containInAnyOrder(xs)
-          ()
         }
       builder.setUp()
       runMain(Array(s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
-    } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
-      s"available: [CustomIO($out)]"
-    ()
+    }
+    e should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, available: [CustomIO($out)]"
   }
 
-  def testJobTest[T: Coder](xs: Seq[T], in: String = "in", out: String = "out")(
+  def testJobTest[T: Coder: Eq](xs: Seq[T], in: String = "in", out: String = "out")(
     ioFn: String => ScioIO[T]
   )(
     readFn: (ScioContext, String) => SCollection[T]
@@ -192,7 +186,6 @@ trait ScioIOSpec extends PipelineSpec {
       val data = readFn(sc, argz("input"))
       writeFn(data, argz("output"))
       sc.run()
-      ()
     }
 
     val builder = com.spotify.scio.testing
@@ -206,33 +199,31 @@ trait ScioIOSpec extends PipelineSpec {
     runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
     builder.tearDown()
 
-    the[IllegalArgumentException] thrownBy {
+    val e1 = the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
         .input(CustomIO[T](in), xs)
         .output(ioFn(out)) { coll =>
           coll should containInAnyOrder(xs)
-          ()
         }
       builder.setUp()
       runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
-    } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, " +
-      s"available: [CustomIO($in)]"
+    }
+    e1 should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, available: [CustomIO($in)]"
 
-    the[IllegalArgumentException] thrownBy {
+    val e2 = the[IllegalArgumentException] thrownBy {
       val builder = com.spotify.scio.testing
         .JobTest("null")
         .input(ioFn(in), xs)
         .output(CustomIO[T](out)) { coll =>
           coll should containInAnyOrder(xs)
-          ()
         }
       builder.setUp()
       runMain(Array(s"--input=$in", s"--output=$out") :+ s"--appName=${builder.testId}")
       builder.tearDown()
-    } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, " +
-      s"available: [CustomIO($out)]"
-    ()
+    }
+
+    e2 should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, available: [CustomIO($out)]"
   }
 }

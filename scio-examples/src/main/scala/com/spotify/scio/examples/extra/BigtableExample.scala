@@ -18,35 +18,31 @@
 // Example: Bigtable Input and Output
 package com.spotify.scio.examples.extra
 
-import com.google.bigtable.v2.{Mutation, Row}
-import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.bigtable._
 import com.spotify.scio.examples.common.ExampleData
+import org.apache.hadoop.hbase.client.{Mutation, Put, Result}
+import org.apache.hadoop.hbase.{HColumnDescriptor, HTableDescriptor, TableName}
 import org.joda.time.Duration
+
+import java.nio.charset.StandardCharsets
 
 // This depends on APIs from `scio-bigtable` and imports from `com.spotify.scio.bigtable._`.
 object BigtableExample {
-  val FAMILY_NAME: String = "count"
-  val COLUMN_QUALIFIER: ByteString = ByteString.copyFromUtf8("long")
+  val FAMILY_NAME: Array[Byte] = "count".getBytes(StandardCharsets.UTF_8)
+  val COLUMN_QUALIFIER: Array[Byte] = "long".getBytes(StandardCharsets.UTF_8)
 
   // Convert a key-value pair to a Bigtable `Mutation` for writing
-  def toMutation(key: String, value: Long): (ByteString, Iterable[Mutation]) = {
-    val m = Mutations.newSetCell(
-      FAMILY_NAME,
-      COLUMN_QUALIFIER,
-      ByteString.copyFromUtf8(value.toString),
-      0L
-    )
-    (ByteString.copyFromUtf8(key), Iterable(m))
-  }
+  def toPutMutation(key: String, value: Long): Mutation =
+    new Put(key.getBytes(StandardCharsets.UTF_8))
+      .addColumn(FAMILY_NAME, COLUMN_QUALIFIER, 0L, BigInt(value).toByteArray)
 
-  // Convert a Bigtable `Row` from reading to a formatted key-value string
-  def fromRow(r: Row): String =
-    r.getKey.toStringUtf8 + ": " + r
-      .getValue(FAMILY_NAME, COLUMN_QUALIFIER)
-      .get
-      .toStringUtf8
+  // Convert a Bigtable `Result` from reading to a formatted key-value string
+  def fromRow(r: Result): String = {
+    val key = new String(r.getRow, StandardCharsets.UTF_8)
+    val value = BigInt(r.getValue(FAMILY_NAME, COLUMN_QUALIFIER)).toLong
+    s"$key:$value"
+  }
 }
 
 // ## Bigtable Write example
@@ -70,28 +66,28 @@ object BigtableWriteExample {
     // Bump up the number of bigtable nodes before writing so that the extra traffic does not
     // affect production service. A sleep period is inserted to ensure all new nodes are online
     // before the ingestion starts.
-    sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 15)
+    sc.resizeClusters(btProjectId, btInstanceId, 15)
 
     // Ensure that destination tables and column families exist
+    val table = new HTableDescriptor(TableName.valueOf(btTableId))
+      .addFamily(new HColumnDescriptor(BigtableExample.FAMILY_NAME))
     sc.ensureTables(
       btProjectId,
       btInstanceId,
-      Map(
-        btTableId -> List(BigtableExample.FAMILY_NAME)
-      )
+      List(table)
     )
 
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .map(kv => BigtableExample.toMutation(kv._1, kv._2))
+      .map { case (word, count) => BigtableExample.toPutMutation(word, count) }
       .saveAsBigtable(btProjectId, btInstanceId, btTableId)
 
     sc.run().waitUntilDone()
 
     // Bring down the number of nodes after the job ends to save cost. There is no need to wait
     // after bumping the nodes down.
-    sc.updateNumberOfBigtableNodes(btProjectId, btInstanceId, 3, Duration.ZERO)
+    sc.resizeClusters(btProjectId, btInstanceId, 3, Duration.ZERO)
   }
 }
 

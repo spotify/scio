@@ -17,18 +17,13 @@
 
 package com.spotify.scio.bigtable
 
-import java.nio.charset.Charset
-
-import com.google.bigtable.admin.v2._
-import com.google.bigtable.admin.v2.ModifyColumnFamiliesRequest.Modification
-import com.google.cloud.bigtable.config.BigtableOptions
-import com.google.cloud.bigtable.grpc._
-import com.google.protobuf.{ByteString, Duration => ProtoDuration}
-import org.joda.time.Duration
+import com.google.cloud.bigtable.beam.{CloudBigtableConfiguration, CloudBigtableTableConfiguration}
+import com.google.cloud.bigtable.hbase.BigtableConfiguration
+import org.apache.hadoop.hbase.client.AbstractBigtableAdmin
+import org.apache.hadoop.hbase.{HTableDescriptor, TableName}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.jdk.CollectionConverters._
-import scala.util.Try
+import java.nio.charset.StandardCharsets
 
 /** Bigtable Table Admin API helper commands. */
 object TableAdmin {
@@ -37,261 +32,77 @@ object TableAdmin {
   object CreateDisposition {
     case object Never extends CreateDisposition
     case object CreateIfNeeded extends CreateDisposition
-    val default = CreateIfNeeded
+    def default: CreateDisposition = CreateIfNeeded
   }
 
   private val log: Logger = LoggerFactory.getLogger(TableAdmin.getClass)
 
-  private def adminClient[A](
-    bigtableOptions: BigtableOptions
-  )(f: BigtableTableAdminClient => A): Try[A] = {
-    val channel =
-      ChannelPoolCreator.createPool(bigtableOptions)
-    val executorService =
-      BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
-    val client = new BigtableTableAdminGrpcClient(channel, executorService, bigtableOptions)
-
-    val result = Try(f(client))
-    channel.shutdownNow()
-    result
+  private def execute[A](
+    config: CloudBigtableConfiguration
+  )(f: AbstractBigtableAdmin => A): A = {
+    val connection = BigtableConfiguration.connect(config.toHBaseConfig)
+    try {
+      f(connection.getAdmin.asInstanceOf[AbstractBigtableAdmin])
+    } finally {
+      connection.close()
+    }
   }
-
-  /**
-   * Retrieves a set of tables from the given instancePath.
-   *
-   * @param client
-   *   Client for calling Bigtable.
-   * @param instancePath
-   *   String of the form "projects/$project/instances/$instance".
-   * @return
-   */
-  private def fetchTables(client: BigtableTableAdminClient, instancePath: String): Set[String] =
-    client
-      .listTables(
-        ListTablesRequest
-          .newBuilder()
-          .setParent(instancePath)
-          .build()
-      )
-      .getTablesList
-      .asScala
-      .map(_.getName)
-      .toSet
 
   /**
    * Ensure that tables and column families exist. Checks for existence of tables or creates them if
    * they do not exist. Also checks for existence of column families within each table and creates
    * them if they do not exist.
    *
-   * @param tablesAndColumnFamilies
-   *   A map of tables and column families. Keys are table names. Values are a list of column family
-   *   names.
+   * @param config
+   *   Bigtable configuration
+   * @param tables
+   *   List of tables to check existence
+   * @param createDisposition
+   *   Create disposition One of [CreateIfNeeded, Never]
    */
   def ensureTables(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, Iterable[String]],
+    config: CloudBigtableConfiguration,
+    tables: Iterable[HTableDescriptor],
     createDisposition: CreateDisposition = CreateDisposition.default
   ): Unit = {
-    val tcf = tablesAndColumnFamilies.iterator.map { case (k, l) =>
-      k -> l.map(_ -> None)
-    }.toMap
-    ensureTablesImpl(bigtableOptions, tcf, createDisposition).get
-  }
-
-  /**
-   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
-   * they do not exist. Also checks for existence of column families within each table and creates
-   * them if they do not exist.
-   *
-   * @param tablesAndColumnFamilies
-   *   A map of tables and column families. Keys are table names. Values are a list of column family
-   *   names along with the desired cell expiration. Cell expiration is the duration before which
-   *   garbage collection of a cell may occur. Note: minimum granularity is one second.
-   */
-  def ensureTablesWithExpiration(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, Iterable[(String, Option[Duration])]],
-    createDisposition: CreateDisposition = CreateDisposition.default
-  ): Unit = {
-    // Convert Duration to GcRule
-    val x = tablesAndColumnFamilies.iterator.map { case (k, v) =>
-      k -> v.map { case (columnFamily, duration) =>
-        (columnFamily, duration.map(gcRuleFromDuration))
-      }
-    }.toMap
-
-    ensureTablesImpl(bigtableOptions, x, createDisposition).get
-  }
-
-  /**
-   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
-   * they do not exist. Also checks for existence of column families within each table and creates
-   * them if they do not exist.
-   *
-   * @param tablesAndColumnFamilies
-   *   A map of tables and column families. Keys are table names. Values are a list of column family
-   *   names along with the desired GcRule.
-   */
-  def ensureTablesWithGcRules(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, Iterable[(String, Option[GcRule])]],
-    createDisposition: CreateDisposition = CreateDisposition.default
-  ): Unit =
-    ensureTablesImpl(bigtableOptions, tablesAndColumnFamilies, createDisposition).get
-
-  /**
-   * Ensure that tables and column families exist. Checks for existence of tables or creates them if
-   * they do not exist. Also checks for existence of column families within each table and creates
-   * them if they do not exist.
-   *
-   * @param tablesAndColumnFamilies
-   *   A map of tables and column families. Keys are table names. Values are a list of column family
-   *   names.
-   */
-  private def ensureTablesImpl(
-    bigtableOptions: BigtableOptions,
-    tablesAndColumnFamilies: Map[String, Iterable[(String, Option[GcRule])]],
-    createDisposition: CreateDisposition
-  ): Try[Unit] = {
-    val project = bigtableOptions.getProjectId
-    val instance = bigtableOptions.getInstanceId
-    val instancePath = s"projects/$project/instances/$instance"
-
-    log.info("Ensuring tables and column families exist in instance {}", instance)
-
-    adminClient(bigtableOptions) { client =>
-      val existingTables = fetchTables(client, instancePath)
-
-      tablesAndColumnFamilies.foreach { case (table, columnFamilies) =>
-        val tablePath = s"$instancePath/tables/$table"
-
-        val exists = existingTables.contains(tablePath)
+    log.info("Ensuring tables and column families exist in instance {}", config.getInstanceId)
+    execute(config) { client =>
+      val existingTables = client.listTableNames().toSet
+      tables.foreach { table =>
+        val tableName = table.getTableName
+        val exists = existingTables.contains(tableName)
         createDisposition match {
           case _ if exists =>
-            log.info("Table {} exists", table)
+            log.info("Table {} exists", tableName)
+            val existingTable = client.getTableDescriptor(tableName)
+            if (existingTable != table) {
+              log.info("Modifying table {}", tableName)
+              client.modifyTable(tableName, table)
+            }
           case CreateDisposition.CreateIfNeeded =>
-            log.info("Creating table {}", table)
-            client.createTable(
-              CreateTableRequest
-                .newBuilder()
-                .setParent(instancePath)
-                .setTableId(table)
-                .build()
-            )
+            log.info("Creating table {}", tableName)
+            client.createTable(table)
           case CreateDisposition.Never =>
-            throw new IllegalStateException(s"Table $table does not exist")
+            throw new IllegalStateException(s"Table $tableName does not exist")
         }
-
-        ensureColumnFamilies(client, tablePath, columnFamilies, createDisposition)
       }
     }
   }
 
   /**
-   * Ensure that column families exist. Checks for existence of column families and creates them if
-   * they don't exist.
+   * Permanently deletes a row range from the specified table that match a particular prefix.
    *
-   * @param tablePath
-   *   A full table path that the bigtable API expects, in the form of
-   *   `projects/projectId/instances/instanceId/tables/tableId`
-   * @param columnFamilies
-   *   A list of column family names.
+   * @param config
+   *   Bigtable configuration
+   * @param tableName
+   *   Table name
+   * @param prefix
+   *   Row key prefix
    */
-  private def ensureColumnFamilies(
-    client: BigtableTableAdminClient,
-    tablePath: String,
-    columnFamilies: Iterable[(String, Option[GcRule])],
-    createDisposition: CreateDisposition
+  def dropRowRange(
+    config: CloudBigtableTableConfiguration,
+    tableName: TableName,
+    prefix: String
   ): Unit =
-    createDisposition match {
-      case CreateDisposition.CreateIfNeeded =>
-        val tableInfo =
-          client.getTable(GetTableRequest.newBuilder().setName(tablePath).build)
-
-        val cfList = columnFamilies
-          .map { case (n, gcRule) =>
-            val cf = tableInfo
-              .getColumnFamiliesOrDefault(n, ColumnFamily.newBuilder().build())
-              .toBuilder
-              .setGcRule(gcRule.getOrElse(GcRule.getDefaultInstance))
-              .build()
-
-            (n, cf)
-          }
-        val modifications =
-          cfList.map { case (n, cf) =>
-            val mod = Modification.newBuilder().setId(n)
-            if (tableInfo.containsColumnFamilies(n)) {
-              mod.setUpdate(cf)
-            } else {
-              mod.setCreate(cf)
-            }
-            mod.build()
-          }
-
-        log.info(
-          "Modifying or updating {} column families for table {}",
-          modifications.size,
-          tablePath
-        )
-
-        if (modifications.nonEmpty) {
-          client.modifyColumnFamily(
-            ModifyColumnFamiliesRequest
-              .newBuilder()
-              .setName(tablePath)
-              .addAllModifications(modifications.asJava)
-              .build
-          )
-        }
-        ()
-      case CreateDisposition.Never =>
-        ()
-    }
-
-  private def gcRuleFromDuration(duration: Duration): GcRule = {
-    val protoDuration = ProtoDuration.newBuilder.setSeconds(duration.getStandardSeconds)
-    GcRule.newBuilder.setMaxAge(protoDuration).build
-  }
-
-  /**
-   * Permanently deletes a row range from the specified table that match a particular prefix.
-   *
-   * @param table
-   *   table name
-   * @param rowPrefix
-   *   row key prefix
-   */
-  def dropRowRange(bigtableOptions: BigtableOptions, table: String, rowPrefix: String): Try[Unit] =
-    adminClient(bigtableOptions) { client =>
-      val project = bigtableOptions.getProjectId
-      val instance = bigtableOptions.getInstanceId
-      val instancePath = s"projects/$project/instances/$instance"
-      val tablePath = s"$instancePath/tables/$table"
-
-      dropRowRange(tablePath, rowPrefix, client)
-    }
-
-  /**
-   * Permanently deletes a row range from the specified table that match a particular prefix.
-   *
-   * @param tablePath
-   *   A full table path that the bigtable API expects, in the form of
-   *   `projects/projectId/instances/instanceId/tables/tableId`
-   * @param rowPrefix
-   *   row key prefix
-   */
-  private def dropRowRange(
-    tablePath: String,
-    rowPrefix: String,
-    client: BigtableTableAdminClient
-  ): Unit = {
-    val request = DropRowRangeRequest
-      .newBuilder()
-      .setName(tablePath)
-      .setRowKeyPrefix(ByteString.copyFrom(rowPrefix, Charset.forName("UTF-8")))
-      .build()
-
-    client.dropRowRange(request)
-  }
+    execute(config)(_.deleteRowRangeByPrefix(tableName, prefix.getBytes(StandardCharsets.UTF_8)))
 }

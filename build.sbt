@@ -37,7 +37,6 @@ val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
 val bigdataossVersion = "2.2.16"
-val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
 val commonsIoVersion = "2.13.0"
@@ -99,6 +98,7 @@ val algebraVersion = "2.9.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.1.0"
+val bigtableHbaseBeamVersion = "2.11.0"
 val caffeineVersion = "2.9.3"
 val cassandraDriverVersion = "3.11.4"
 val cassandraVersion = "3.11.16"
@@ -733,8 +733,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
-      "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
+      "com.google.cloud.bigtable" % "bigtable-hbase-beam" % bigtableHbaseBeamVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
@@ -753,6 +752,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-hbase" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
