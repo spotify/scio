@@ -27,9 +27,9 @@ import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import io.grpc.Channel
 import io.grpc.stub.{AbstractFutureStub, AbstractStub, StreamObserver}
+import org.apache.commons.lang3.tuple.Pair
 
 import java.lang.{Iterable => JIterable}
-
 import scala.util.Try
 import scala.jdk.CollectionConverters._
 
@@ -92,6 +92,62 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
       .mapValues(_.asScala.map(_.asScala))
   }
 
+  def batchGrpcLookup[
+    BatchRequest: Coder,
+    BatchResponse: Coder,
+    Output: Coder,
+    Client <: AbstractFutureStub[Client]
+  ](
+    channelSupplier: () => Channel,
+    clientFactory: Channel => Client,
+    maxPendingRequests: Int,
+    batchSize: Int,
+    cacheSupplier: CacheSupplier[String, Output] = new NoOpCacheSupplier[String, Output]()
+  )(
+    lookupFn: Client => BatchRequest => ListenableFuture[BatchResponse],
+    batchRequestFn: Seq[Request] => BatchRequest,
+    batchResponseFn: BatchResponse => Seq[(String, Output)],
+    idExtractorFn: Request => String
+  ): SCollection[(Request, Try[Output])] = {
+    self.transform { in =>
+      val cleanedChannelSupplier = ClosureCleaner.clean(channelSupplier)
+      val serializableClientFactory = Functions.serializableFn(clientFactory)
+      val serializableLookupFn =
+        Functions.serializableBiFn[Client, BatchRequest, ListenableFuture[BatchResponse]] {
+          (client, request) => lookupFn(client)(request)
+        }
+
+      val translatedBatchRequestFn =
+        (inputs: java.util.List[Request]) => batchRequestFn(inputs.asScala.toSeq)
+      val serializableBatchRequestFn = Functions.serializableFn(translatedBatchRequestFn)
+
+      val translatedBatchResponseFn = (batchResponse: BatchResponse) =>
+        {
+          batchResponseFn(batchResponse).map { case (input, output) =>
+            Pair.of(input, output)
+          }
+        }.asJava
+
+      val serializableBatchResponseFn = Functions.serializableFn(translatedBatchResponseFn)
+      val serializableIdExtractorFn = Functions.serializableFn(idExtractorFn)
+
+      in.parDo(
+        BatchedGrpcDoFn
+          .newBuilder[Request, BatchRequest, BatchResponse, Output, Client]()
+          .withChannelSupplier(() => cleanedChannelSupplier())
+          .withNewClientFn(serializableClientFactory)
+          .withLookupFn(serializableLookupFn)
+          .withMaxPendingRequests(maxPendingRequests)
+          .withBatchSize(batchSize)
+          .withBatchRequestFn(serializableBatchRequestFn)
+          .withBatchResponseFn(serializableBatchResponseFn)
+          .withIdExtractionFn(serializableIdExtractorFn)
+          .withCacheSupplier(cacheSupplier)
+          .build()
+      ).map(kvToTuple _)
+        .mapValues(_.asScala)
+    }
+  }
 }
 
 trait SCollectionSyntax {
