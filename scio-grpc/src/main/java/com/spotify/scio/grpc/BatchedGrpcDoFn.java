@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Spotify AB
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.spotify.scio.grpc;
 
 import static java.util.Objects.requireNonNull;
@@ -18,19 +34,22 @@ import org.apache.commons.lang3.tuple.Pair;
 /**
  * DoFn that makes API calls that can be batched and individually cached over a managed GRPC
  * channel.
- * @param <Input>         input element type.
- * @param <BatchRequest>  batched input element type
+ *
+ * @param <Input> input element type.
+ * @param <BatchRequest> batched input element type
  * @param <BatchResponse> batched output element type
- * @param <Output>        client lookup value type.
- * @param <Client>    client type.
+ * @param <Output> client lookup value type.
+ * @param <Client> client type.
  */
-public class BatchedGrpcDoFn<Input, BatchRequest, BatchResponse, Output, Client extends AbstractFutureStub<Client>> extends
-    BatchedGuavaAsyncLookupDoFn<Input, BatchRequest, BatchResponse, Output, Client> {
+public class BatchedGrpcDoFn<
+        Input, BatchRequest, BatchResponse, Output, Client extends AbstractFutureStub<Client>>
+    extends BatchedGuavaAsyncLookupDoFn<Input, BatchRequest, BatchResponse, Output, Client> {
 
   private final ChannelSupplier channelSupplier;
   private final SerializableFunction<Channel, Client> newClientFn;
 
-  private final SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>> lookupFn;
+  private final SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>>
+      lookupFn;
 
   public BatchedGrpcDoFn(
       ChannelSupplier channelSupplier,
@@ -41,9 +60,13 @@ public class BatchedGrpcDoFn<Input, BatchRequest, BatchResponse, Output, Client 
       SerializableFunction<Input, String> idExtractorFn,
       Integer maxPendingRequests,
       Integer batchSize,
-      CacheSupplier<String, Output> cacheSupplier
-  ) {
-    super(batchSize, maxPendingRequests, cacheSupplier, batchRequestFn, batchResponseFn,
+      CacheSupplier<String, Output> cacheSupplier) {
+    super(
+        batchSize,
+        maxPendingRequests,
+        cacheSupplier,
+        batchRequestFn,
+        batchResponseFn,
         idExtractorFn);
     this.channelSupplier = channelSupplier;
     this.newClientFn = newClientFn;
@@ -65,18 +88,28 @@ public class BatchedGrpcDoFn<Input, BatchRequest, BatchResponse, Output, Client 
     return newClientFn.apply(channelSupplier.get());
   }
 
-  public static <Input, BatchRequest, BatchResponse, Output, ClientType
-      extends AbstractFutureStub<ClientType>>
-  Builder<Input, BatchRequest, BatchResponse, Output, ClientType> newBuilder() {
+  public static <
+          Input,
+          BatchRequest,
+          BatchResponse,
+          Output,
+          ClientType extends AbstractFutureStub<ClientType>>
+      Builder<Input, BatchRequest, BatchResponse, Output, ClientType> newBuilder() {
     return new Builder<>();
   }
 
-  public static class Builder<Input, BatchRequest, BatchResponse, Output, ClientType extends AbstractFutureStub<ClientType>> implements
-      Serializable {
+  public static class Builder<
+          Input,
+          BatchRequest,
+          BatchResponse,
+          Output,
+          ClientType extends AbstractFutureStub<ClientType>>
+      implements Serializable {
 
     private ChannelSupplier channelSupplier;
     private SerializableFunction<Channel, ClientType> newClientFn;
-    private SerializableBiFunction<ClientType, BatchRequest, ListenableFuture<BatchResponse>> lookupFn;
+    private SerializableBiFunction<ClientType, BatchRequest, ListenableFuture<BatchResponse>>
+        lookupFn;
     private SerializableFunction<List<Input>, BatchRequest> batchRequestFn;
     private SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn;
     private SerializableFunction<Input, String> idExtractionFn;
@@ -85,64 +118,56 @@ public class BatchedGrpcDoFn<Input, BatchRequest, BatchResponse, Output, Client 
     private CacheSupplier<String, Output> cacheSupplier;
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withChannelSupplier(
-        ChannelSupplier channelSupplier
-    ) {
+        ChannelSupplier channelSupplier) {
       this.channelSupplier = channelSupplier;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withNewClientFn(
-        SerializableFunction<Channel, ClientType> newClientFn
-    ) {
+        SerializableFunction<Channel, ClientType> newClientFn) {
       this.newClientFn = newClientFn;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withLookupFn(
-        SerializableBiFunction<ClientType, BatchRequest, ListenableFuture<BatchResponse>> lookupFn
-    ) {
+        SerializableBiFunction<ClientType, BatchRequest, ListenableFuture<BatchResponse>>
+            lookupFn) {
       this.lookupFn = lookupFn;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withBatchRequestFn(
-        SerializableFunction<List<Input>, BatchRequest> batchRequestFn
-    ) {
+        SerializableFunction<List<Input>, BatchRequest> batchRequestFn) {
       this.batchRequestFn = batchRequestFn;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withBatchResponseFn(
-        SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn
-    ) {
+        SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn) {
       this.batchResponseFn = batchResponseFn;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withIdExtractionFn(
-        SerializableFunction<Input, String> idExtractionFn
-    ) {
+        SerializableFunction<Input, String> idExtractionFn) {
       this.idExtractionFn = idExtractionFn;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withMaxPendingRequests(
-        Integer maxPendingRequests
-    ) {
+        Integer maxPendingRequests) {
       this.maxPendingRequests = maxPendingRequests;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withBatchSize(
-        Integer batchSize
-    ) {
+        Integer batchSize) {
       this.batchSize = batchSize;
       return this;
     }
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withCacheSupplier(
-        CacheSupplier<String, Output> cacheSupplier
-    ) {
+        CacheSupplier<String, Output> cacheSupplier) {
       this.cacheSupplier = cacheSupplier;
       return this;
     }
@@ -167,8 +192,7 @@ public class BatchedGrpcDoFn<Input, BatchRequest, BatchResponse, Output, Client 
           idExtractionFn,
           maxPendingRequests,
           batchSize,
-          cacheSupplier
-      );
+          cacheSupplier);
     }
   }
 }
