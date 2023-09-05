@@ -93,25 +93,23 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
   }
 
   def batchGrpcLookup[
-    BatchRequest: Coder,
-    BatchResponse: Coder,
-    Output: Coder,
+    BatchRequest,
+    BatchResponse,
+    Response: Coder,
     Client <: AbstractFutureStub[Client]
   ](
-    channelSupplier: () => Channel,
-    clientFactory: Channel => Client,
-    batchSize: Int,
-    batchRequestFn: Seq[Request] => BatchRequest,
-    batchResponseFn: BatchResponse => Seq[(String, Output)],
-    idExtractorFn: Request => String,
-    maxPendingRequests: Int,
-    cacheSupplier: CacheSupplier[String, Output] = new NoOpCacheSupplier[String, Output]()
+     channelSupplier: () => Channel,
+     clientFactory: Channel => Client,
+     batchSize: Int,
+     batchRequestFn: Seq[Request] => BatchRequest,
+     batchResponseFn: BatchResponse => Seq[(String, Response)],
+     idExtractorFn: Request => String,
+     maxPendingRequests: Int,
+     cacheSupplier: CacheSupplier[String, Response] = new NoOpCacheSupplier[String, Response]()
   )(
     lookupFn: Client => BatchRequest => ListenableFuture[BatchResponse]
-  )(implicit
-    requestCoder: Coder[Request],
-    tryCoder: Coder[Try[Output]]
-  ): SCollection[(Request, Try[Output])] = {
+  ): SCollection[(Request, Try[Response])] = {
+    import self.coder
     self.transform { in =>
       val cleanedChannelSupplier = ClosureCleaner.clean(channelSupplier)
       val serializableClientFactory = Functions.serializableFn(clientFactory)
@@ -136,7 +134,7 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
 
       in.parDo(
         BatchedGrpcDoFn
-          .newBuilder[Request, BatchRequest, BatchResponse, Output, Client]()
+          .newBuilder[Request, BatchRequest, BatchResponse, Response, Client]()
           .withChannelSupplier(() => cleanedChannelSupplier())
           .withNewClientFn(serializableClientFactory)
           .withLookupFn(serializableLookupFn)
