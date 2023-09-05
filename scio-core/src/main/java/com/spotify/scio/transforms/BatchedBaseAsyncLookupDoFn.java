@@ -69,7 +69,7 @@ public abstract class BatchedBaseAsyncLookupDoFn<
   private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<Pair<UUID, Input>> inputElements =
       new ConcurrentLinkedQueue<>();
-  private long requestCount;
+  private long elementsRequestedCount;
   private long resultCount;
   private final SerializableFunction<List<Input>, BatchRequest> batchRequestFn;
   private final SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn;
@@ -118,7 +118,7 @@ public abstract class BatchedBaseAsyncLookupDoFn<
     futures.clear();
     results.clear();
     inputsMap.clear();
-    requestCount = 0;
+    elementsRequestedCount = 0;
     resultCount = 0;
     semaphore.drainPermits();
     semaphore.release(maxPendingRequests);
@@ -192,9 +192,9 @@ public abstract class BatchedBaseAsyncLookupDoFn<
 
     // Make sure all requests are processed
     Preconditions.checkState(
-        requestCount == resultCount,
+        elementsRequestedCount == resultCount,
         "Expected requestCount == resultCount, but %s != %s",
-        requestCount,
+        elementsRequestedCount,
         resultCount);
   }
 
@@ -220,7 +220,7 @@ public abstract class BatchedBaseAsyncLookupDoFn<
     final FutureType unlockedFuture = handleSemaphore(future);
 
     futures.put(uuid, handleOutput(unlockedFuture, inputsOnly, uuid));
-    requestCount++;
+    elementsRequestedCount += elementsToBatch.size();
   }
 
   private FutureType handleOutput(FutureType future, List<Input> batchInput, UUID key) {
