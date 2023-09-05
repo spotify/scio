@@ -40,7 +40,7 @@ class TestWriterUtils extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   "WriterUtils" should "set configuration values correctly" in {
     val path = testDir.toPath.resolve("avro-files")
 
-    val (sc, _) = ContextAndArgs(Array())
+    val sc = ScioContext()
     sc.parallelize(1 to 10)
       .map { r =>
         Account
