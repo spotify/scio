@@ -18,9 +18,6 @@ import scala.jdk.CollectionConverters._
 class TestWriterUtils extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
   private lazy val testDir = Files.createTempDirectory("scio-parquet-writer-utils-test-").toFile
 
-  case class NestedRecord(fieldC: String)
-  case class Record(fieldA: Int, fieldB: NestedRecord)
-
   override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
   "WriterUtils" should "set configuration values correctly" in {
@@ -71,9 +68,9 @@ class TestWriterUtils extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
       hasBloomFilter = true,
       Seq(
         Encoding.BIT_PACKED,
-        Encoding.RLE,
+        Encoding.RLE, // RLE encoding is used for optional fields
         Encoding.PLAIN
-      ) // RLE encoding is used for optional fields
+      )
     )
     assertColumn(
       columnEncodings(3),
