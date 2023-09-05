@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.grpc.GrpcDoFn.ChannelSupplier;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
 import com.spotify.scio.transforms.BatchedGuavaAsyncLookupDoFn;
-import com.spotify.scio.transforms.DoFnWithResource.ResourceType;
 import io.grpc.Channel;
 import io.grpc.stub.AbstractFutureStub;
 import java.io.Serializable;
@@ -112,7 +111,7 @@ public class BatchedGrpcDoFn<
         lookupFn;
     private SerializableFunction<List<Input>, BatchRequest> batchRequestFn;
     private SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn;
-    private SerializableFunction<Input, String> idExtractionFn;
+    private SerializableFunction<Input, String> idExtractorFn;
     private Integer maxPendingRequests;
     private Integer batchSize;
     private CacheSupplier<String, Output> cacheSupplier;
@@ -148,9 +147,9 @@ public class BatchedGrpcDoFn<
       return this;
     }
 
-    public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withIdExtractionFn(
-        SerializableFunction<Input, String> idExtractionFn) {
-      this.idExtractionFn = idExtractionFn;
+    public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withIdExtractorFn(
+        SerializableFunction<Input, String> idExtractorFn) {
+      this.idExtractorFn = idExtractorFn;
       return this;
     }
 
@@ -178,7 +177,7 @@ public class BatchedGrpcDoFn<
       requireNonNull(lookupFn, "lookupFn must not be null");
       requireNonNull(batchRequestFn, "batchRequestFn must not be null");
       requireNonNull(batchResponseFn, "batchResponseFn must not be null");
-      requireNonNull(idExtractionFn, "idExtractionFn must not be null");
+      requireNonNull(idExtractorFn, "idExtractorFn must not be null");
       requireNonNull(maxPendingRequests, "maxPendingRequests must not be null");
       requireNonNull(batchSize, "batchSize must not be null");
       requireNonNull(cacheSupplier, "cacheSupplier must not be null");
@@ -189,7 +188,7 @@ public class BatchedGrpcDoFn<
           lookupFn,
           batchRequestFn,
           batchResponseFn,
-          idExtractionFn,
+          idExtractorFn,
           maxPendingRequests,
           batchSize,
           cacheSupplier);

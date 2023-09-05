@@ -141,7 +141,7 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
           .withBatchSize(batchSize)
           .withBatchRequestFn(serializableBatchRequestFn)
           .withBatchResponseFn(serializableBatchResponseFn)
-          .withIdExtractionFn(serializableIdExtractorFn)
+          .withIdExtractorFn(serializableIdExtractorFn)
           .withCacheSupplier(cacheSupplier)
           .build()
       ).map(kvToTuple _)
