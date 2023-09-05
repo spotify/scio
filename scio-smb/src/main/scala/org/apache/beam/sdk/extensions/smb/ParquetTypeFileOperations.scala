@@ -127,17 +127,13 @@ private case class ParquetTypeSink[T](
     extends FileIO.Sink[T] {
   @transient private var writer: ParquetWriter[T] = _
 
-  override def open(channel: WritableByteChannel): Unit = {
-    // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
-    val rowGroupSize =
-      conf.get().getLong(ParquetOutputFormat.BLOCK_SIZE, ParquetWriter.DEFAULT_BLOCK_SIZE)
-    writer = pt
-      .writeBuilder(new ParquetOutputFile(channel))
-      .withCompressionCodec(compression)
-      .withConf(conf.get())
-      .withRowGroupSize(rowGroupSize)
-      .build()
-  }
+  override def open(channel: WritableByteChannel): Unit =
+    writer = ParquetUtils.buildWriter(
+      pt
+        .writeBuilder(new ParquetOutputFile(channel)),
+      conf.get(),
+      compression
+    )
 
   override def write(element: T): Unit = writer.write(element)
   override def flush(): Unit = writer.close()
