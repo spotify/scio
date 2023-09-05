@@ -100,14 +100,14 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
   ](
     channelSupplier: () => Channel,
     clientFactory: Channel => Client,
-    maxPendingRequests: Int,
     batchSize: Int,
-    cacheSupplier: CacheSupplier[String, Output] = new NoOpCacheSupplier[String, Output]()
-  )(
-    lookupFn: Client => BatchRequest => ListenableFuture[BatchResponse],
     batchRequestFn: Seq[Request] => BatchRequest,
     batchResponseFn: BatchResponse => Seq[(String, Output)],
-    idExtractorFn: Request => String
+    idExtractorFn: Request => String,
+    maxPendingRequests: Int,
+    cacheSupplier: CacheSupplier[String, Output] = new NoOpCacheSupplier[String, Output]()
+  )(
+    lookupFn: Client => BatchRequest => ListenableFuture[BatchResponse]
   ): SCollection[(Request, Try[Output])] = {
     self.transform { in =>
       val cleanedChannelSupplier = ClosureCleaner.clean(channelSupplier)

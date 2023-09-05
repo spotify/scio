@@ -62,11 +62,11 @@ public class BatchedGrpcDoFn<
       CacheSupplier<String, Output> cacheSupplier) {
     super(
         batchSize,
-        maxPendingRequests,
-        cacheSupplier,
         batchRequestFn,
         batchResponseFn,
-        idExtractorFn);
+        idExtractorFn,
+        maxPendingRequests,
+        cacheSupplier);
     this.channelSupplier = channelSupplier;
     this.newClientFn = newClientFn;
     this.lookupFn = lookupFn;
