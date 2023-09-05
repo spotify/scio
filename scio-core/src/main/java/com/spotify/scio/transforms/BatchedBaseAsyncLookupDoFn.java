@@ -16,6 +16,8 @@
 
 package com.spotify.scio.transforms;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.common.cache.Cache;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
 import java.util.List;
@@ -132,8 +134,10 @@ public abstract class BatchedBaseAsyncLookupDoFn<
     final Cache<String, Output> cache = getResourceCache();
 
     try {
+      final String inputId = this.idExtractorFn.apply(input);
+      requireNonNull(inputId, "idExtractorFn returned null");
 
-      final Output cached = cache.getIfPresent(input);
+      final Output cached = cache.getIfPresent(inputId);
 
       if (cached != null) {
         // found in cache
@@ -141,7 +145,7 @@ public abstract class BatchedBaseAsyncLookupDoFn<
       } else {
         final UUID uuid = UUID.randomUUID();
         inputElements.offer(Pair.of(uuid, input));
-        inputsMap.put(this.idExtractorFn.apply(input), Triple.of(input, timestamp, window));
+        inputsMap.put(inputId, Triple.of(input, timestamp, window));
       }
 
       if (inputElements.size() >= batchSize) {
