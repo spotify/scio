@@ -325,7 +325,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
         val cgbkResult = kv.getValue
         val asForK = cgbkResult.getAll(a.getTupleTag).asScala
         val bsForK = cgbkResult.getAll(b.getTupleTag).asScala
-        (k1, k2) -> (asForK, bsForK)
+        (k1, k2) -> ((asForK, bsForK))
       }
   }
 
@@ -409,7 +409,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
         val bsForK = cgbkResult.getAll(b.getTupleTag).asScala
         val csForK = cgbkResult.getAll(c.getTupleTag).asScala
 
-        (k1, k2) -> (asForK, bsForK, csForK)
+        (k1, k2) -> ((asForK, bsForK, csForK))
       }
   }
 
@@ -502,7 +502,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
           val csForK = cgbkResult.getAll(c.getTupleTag).asScala
           val dsForK = cgbkResult.getAll(d.getTupleTag).asScala
 
-          (k1, k2) -> (asForK, bsForK, csForK, dsForK)
+          (k1, k2) -> ((asForK, bsForK, csForK, dsForK))
         }
     }
 

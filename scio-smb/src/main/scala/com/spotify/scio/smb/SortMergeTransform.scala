@@ -21,12 +21,12 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.{SCollection, SideInput, SideInputContext}
-import org.apache.beam.sdk.extensions.smb.{
-  SortedBucketIO,
-  SortedBucketIOUtil,
-  SortedBucketTransform
+import org.apache.beam.sdk.extensions.smb.{SortedBucketIOUtil, SortedBucketTransform}
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO.{
+  AbsCoGbkTransform,
+  TransformOutput,
+  Transformable
 }
-import org.apache.beam.sdk.extensions.smb.SortedBucketIO.{AbsCoGbkTransform, Transformable}
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.{BucketItem, MergedBucket}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
@@ -39,7 +39,7 @@ import scala.jdk.CollectionConverters._
 object SortMergeTransform {
   sealed trait ReadBuilder[KeyType, K1, K2, R] extends Serializable {
     def to[W: Coder](
-      output: SortedBucketIO.TransformOutput[K1, K2, W]
+      output: TransformOutput[K1, K2, W]
     ): WriteBuilder[KeyType, R, W]
   }
 
@@ -49,7 +49,7 @@ object SortMergeTransform {
     fromResult: CoGbkResult => R
   ) extends ReadBuilder[KeyType, K1, K2, R] {
     override def to[W: Coder](
-      output: SortedBucketIO.TransformOutput[K1, K2, W]
+      output: TransformOutput[K1, K2, W]
     ): WriteBuilder[KeyType, R, W] =
       new WriteBuilderImpl(sc, coGbk.transform(output), fromResult)
   }
@@ -59,7 +59,7 @@ object SortMergeTransform {
     read: => SCollection[(KeyType, R)]
   ) extends ReadBuilder[KeyType, K1, K2, R] {
     override def to[W: Coder](
-      output: SortedBucketIO.TransformOutput[K1, K2, W]
+      output: TransformOutput[K1, K2, W]
     ): WriteBuilder[KeyType, R, W] =
       new WriteBuilderTest(sc, read, output)
   }
@@ -120,7 +120,7 @@ object SortMergeTransform {
   private[smb] class WriteBuilderTest[KeyType, K1, K2, R, W: Coder](
     sc: ScioContext,
     read: => SCollection[(KeyType, R)],
-    output: SortedBucketIO.TransformOutput[K1, K2, W]
+    output: TransformOutput[K1, K2, W]
   ) extends WriteBuilder[KeyType, R, W] {
 
     override def withSideInputs(
@@ -204,7 +204,7 @@ object SortMergeTransform {
   private[smb] class WithSideInputsWriteBuilderTest[KeyType, K1, K2, R, W: Coder](
     sc: ScioContext,
     read: => SCollection[(KeyType, R)],
-    output: SortedBucketIO.TransformOutput[K1, K2, W]
+    output: TransformOutput[K1, K2, W]
   ) extends WithSideInputsWriteBuilder[KeyType, R, W] {
     override def via(
       transformFn: (

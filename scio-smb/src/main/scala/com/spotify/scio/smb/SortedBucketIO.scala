@@ -20,8 +20,6 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{KeyedIO, TapOf, TapT, TestIO}
 import com.spotify.scio.util.ScioUtil
 
-import scala.jdk.CollectionConverters._
-
 final class SortedBucketIO[K, T](path: String, override val keyBy: T => K)(implicit
   override val keyCoder: Coder[K]
 ) extends TestIO[T]

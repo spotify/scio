@@ -136,10 +136,12 @@ class SortMergeBucketTest extends PipelineSpec {
       .input(SortedBucketIO[Integer, User]("gs://users", _.getId), Seq(user))
       .input(SortedBucketIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
       .output(SortedBucketIO[Integer, User]("gs://output", _.getId))(
-        _ should containInAnyOrder(Seq(
-          User.newBuilder(user).setAccounts(Collections.singletonList(accountA)).build(),
-          User.newBuilder(user).setAccounts(Collections.singletonList(accountB)).build(),
-        ))
+        _ should containInAnyOrder(
+          Seq(
+            User.newBuilder(user).setAccounts(Collections.singletonList(accountA)).build(),
+            User.newBuilder(user).setAccounts(Collections.singletonList(accountB)).build()
+          )
+        )
       )
       .run()
   }
