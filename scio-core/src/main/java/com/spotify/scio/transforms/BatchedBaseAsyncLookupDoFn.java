@@ -193,7 +193,7 @@ public abstract class BatchedBaseAsyncLookupDoFn<
     // Make sure all requests are processed
     Preconditions.checkState(
         elementsRequestedCount == resultCount,
-        "Expected requestCount == resultCount, but %s != %s",
+        "Expected elementsRequestedCount == resultCount, but %s != %s",
         elementsRequestedCount,
         resultCount);
   }
