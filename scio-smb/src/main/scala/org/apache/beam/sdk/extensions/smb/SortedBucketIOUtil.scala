@@ -25,6 +25,9 @@ object SortedBucketIOUtil {
   def testId(read: beam.SortedBucketIO.Read[_]): String =
     scio.SortedBucketIO.testId(read.getInputDirectories.asScala.toSeq: _*)
 
+  def testId(write: beam.SortedBucketIO.Write[_, _, _]): String =
+    scio.SortedBucketIO.testId(write.getOutputDirectory.toString)
+
   def testId(write: beam.SortedBucketIO.TransformOutput[_, _, _]): String =
     scio.SortedBucketIO.testId(write.getOutputDirectory.toString)
 }
