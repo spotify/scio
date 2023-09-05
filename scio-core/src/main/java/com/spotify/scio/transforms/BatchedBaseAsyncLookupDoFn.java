@@ -20,7 +20,11 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.cache.Cache;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -60,29 +64,31 @@ public abstract class BatchedBaseAsyncLookupDoFn<
   private static final Logger LOG = LoggerFactory.getLogger(BatchedBaseAsyncLookupDoFn.class);
 
   // Data structures for handling async requests
-  private final int maxPendingRequests;
   private final int batchSize;
-  private final Semaphore semaphore;
-  private final ConcurrentMap<UUID, FutureType> futures = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, Triple<Input, Instant, BoundedWindow>> inputsMap =
-      new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
-  private final ConcurrentLinkedQueue<Pair<UUID, Input>> inputElements =
-      new ConcurrentLinkedQueue<>();
-  private long elementsRequestedCount;
-  private long resultCount;
   private final SerializableFunction<List<Input>, BatchRequest> batchRequestFn;
   private final SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn;
   private final SerializableFunction<Input, String> idExtractorFn;
+  private final int maxPendingRequests;
   private final CacheSupplier<String, Output> cacheSupplier;
+
+  private final Semaphore semaphore;
+  private final ConcurrentMap<UUID, FutureType> futures = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, List<Triple<Input, Instant, BoundedWindow>>> inputs =
+      new ConcurrentHashMap<>();
+
+  private final Queue<Input> batch = new ArrayDeque<>();
+  private final ConcurrentLinkedQueue<Pair<UUID, List<Result>>> results =
+      new ConcurrentLinkedQueue<>();
+  private long inputCount;
+  private long outputCount;
 
   public BatchedBaseAsyncLookupDoFn(
       int batchSize,
-      int maxPendingRequests,
-      CacheSupplier<String, Output> cacheSupplier,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
-      SerializableFunction<Input, String> idExtractorFn) {
+      SerializableFunction<Input, String> idExtractorFn,
+      int maxPendingRequests,
+      CacheSupplier<String, Output> cacheSupplier) {
     this.cacheSupplier = cacheSupplier;
     this.batchRequestFn = batchRequestFn;
     this.batchResponseFn = batchResponseFn;
@@ -117,9 +123,10 @@ public abstract class BatchedBaseAsyncLookupDoFn<
   public void startBundle(StartBundleContext context) {
     futures.clear();
     results.clear();
-    inputsMap.clear();
-    elementsRequestedCount = 0;
-    resultCount = 0;
+    inputs.clear();
+    batch.clear();
+    inputCount = 0;
+    outputCount = 0;
     semaphore.drainPermits();
     semaphore.release(maxPendingRequests);
   }
@@ -130,31 +137,35 @@ public abstract class BatchedBaseAsyncLookupDoFn<
       @Timestamp Instant timestamp,
       OutputReceiver<KV<Input, TryWrapper>> out,
       BoundedWindow window) {
+    inputCount++;
     flush(r -> out.output(KV.of(r.input, r.output)));
     final Cache<String, Output> cache = getResourceCache();
 
     try {
-      final String inputId = this.idExtractorFn.apply(input);
-      requireNonNull(inputId, "idExtractorFn returned null");
+      final String id = this.idExtractorFn.apply(input);
+      requireNonNull(id, "idExtractorFn returned null");
 
-      final Output cached = cache.getIfPresent(inputId);
+      final Output cached = cache.getIfPresent(id);
 
       if (cached != null) {
         // found in cache
         out.output(KV.of(input, success(cached)));
+        outputCount++;
       } else {
-        final UUID uuid = UUID.randomUUID();
-        inputElements.offer(Pair.of(uuid, input));
-        inputsMap.put(inputId, Triple.of(input, timestamp, window));
+        inputs.compute(
+            id,
+            (k, v) -> {
+              if (v == null) {
+                v = new LinkedList<>();
+                batch.add(input);
+              }
+              v.add(Triple.of(input, timestamp, window));
+              return v;
+            });
       }
 
-      if (inputElements.size() >= batchSize) {
-        final List<Pair<UUID, Input>> elementsToBatch =
-            inputElements.stream()
-                .limit(batchSize)
-                .peek(inputElements::remove)
-                .collect(Collectors.toList());
-        createRequests(elementsToBatch);
+      if (batch.size() >= batchSize) {
+        createRequest();
       }
 
     } catch (InterruptedException e) {
@@ -170,12 +181,9 @@ public abstract class BatchedBaseAsyncLookupDoFn<
   public void finishBundle(FinishBundleContext context) {
 
     // send remaining
-    final List<Pair<UUID, Input>> remainingElements =
-        inputElements.stream().peek(inputElements::remove).collect(Collectors.toList());
-
     try {
       /** @todo handle exception properly * */
-      createRequests(remainingElements);
+      createRequest();
       if (!futures.isEmpty()) {
         // Block until all pending futures are complete
         waitForFutures(futures.values());
@@ -192,35 +200,31 @@ public abstract class BatchedBaseAsyncLookupDoFn<
 
     // Make sure all requests are processed
     Preconditions.checkState(
-        elementsRequestedCount == resultCount,
-        "Expected elementsRequestedCount == resultCount, but %s != %s",
-        elementsRequestedCount,
-        resultCount);
+        inputCount == outputCount,
+        "Expected requestCount == responseCount, but %s != %s",
+        inputCount,
+        outputCount);
   }
 
-  private void createRequests(List<Pair<UUID, Input>> elementsToBatch) throws InterruptedException {
+  private void createRequest() throws InterruptedException {
     final ClientType client = getResourceClient();
     final Cache<String, Output> cache = getResourceCache();
-    final UUID uuid = UUID.randomUUID();
-
-    final List<Input> inputsOnly =
-        elementsToBatch.stream().map(Pair::getRight).collect(Collectors.toList());
-
-    final BatchRequest batch = batchRequestFn.apply(inputsOnly);
+    final UUID key = UUID.randomUUID();
+    final List<Input> elems = new ArrayList<>(batch);
+    final BatchRequest request = batchRequestFn.apply(elems);
 
     // semaphore release is not performed on exception.
     // let beam retry the bundle. startBundle will reset the semaphore to the
     // maxPendingRequests permits.
     semaphore.acquire();
-    final FutureType future = asyncLookup(client, batch);
-
+    final FutureType future = asyncLookup(client, request);
     // handle cache in fire & forget way
     handleCache(future, cache);
     // make sure semaphore are released when waiting for futures in finishBundle
     final FutureType unlockedFuture = handleSemaphore(future);
 
-    futures.put(uuid, handleOutput(unlockedFuture, inputsOnly, uuid));
-    elementsRequestedCount += elementsToBatch.size();
+    futures.put(key, handleOutput(unlockedFuture, elems, key));
+    batch.clear();
   }
 
   private FutureType handleOutput(FutureType future, List<Input> batchInput, UUID key) {
@@ -231,35 +235,37 @@ public abstract class BatchedBaseAsyncLookupDoFn<
               .apply(response)
               .forEach(
                   pair -> {
-                    final Triple<Input, Instant, BoundedWindow> originalInput =
-                        inputsMap.get(pair.getLeft());
-                    final Input input = originalInput.getLeft();
-                    final String inputID = this.idExtractorFn.apply(input);
+                    final String id = pair.getLeft();
                     final Output output = pair.getRight();
-                    results.add(
-                        new Result(
-                            input,
-                            success(output),
-                            key,
-                            originalInput.getMiddle(),
-                            originalInput.getRight()));
-                    this.inputsMap.remove(inputID);
+                    final List<Result> batchResult =
+                        inputs.remove(id).stream()
+                            .map(
+                                processInput -> {
+                                  final Input input = processInput.getLeft();
+                                  final Instant ts = processInput.getMiddle();
+                                  final BoundedWindow w = processInput.getRight();
+                                  return new Result(input, success(output), ts, w);
+                                })
+                            .collect(Collectors.toList());
+                    results.add(Pair.of(key, batchResult));
                   });
           return null;
         },
         throwable -> {
           batchInput.forEach(
-              input -> {
-                final String inputID = this.idExtractorFn.apply(input);
-                final Triple<Input, Instant, BoundedWindow> originalInput = inputsMap.get(inputID);
-                results.add(
-                    new Result(
-                        input,
-                        failure(throwable),
-                        key,
-                        originalInput.getMiddle(),
-                        originalInput.getRight()));
-                this.inputsMap.remove(inputID);
+              element -> {
+                final String id = idExtractorFn.apply(element);
+                final List<Result> batchResult =
+                    inputs.remove(id).stream()
+                        .map(
+                            processInput -> {
+                              final Input input = processInput.getLeft();
+                              final Instant ts = processInput.getMiddle();
+                              final BoundedWindow w = processInput.getRight();
+                              return new Result(input, failure(throwable), ts, w);
+                            })
+                        .collect(Collectors.toList());
+                results.add(Pair.of(key, batchResult));
               });
           return null;
         });
@@ -286,42 +292,37 @@ public abstract class BatchedBaseAsyncLookupDoFn<
               .apply(response)
               .forEach(
                   pair -> {
-                    final String inputID = pair.getLeft();
+                    final String id = pair.getLeft();
                     final Output output = pair.getRight();
-
-                    cache.put(inputID, output);
+                    cache.put(id, output);
                   });
           return null;
         },
-        throwable -> {
-          return null;
-        });
+        throwable -> null);
   }
 
   // Flush pending elements errors and results
   private void flush(Consumer<Result> outputFn) {
-    Result r = results.poll();
+    Pair<UUID, List<Result>> r = results.poll();
     while (r != null) {
-      outputFn.accept(r);
-      resultCount++;
-      futures.remove(r.futureUuid);
+      final UUID key = r.getKey();
+      final List<Result> batchResult = r.getValue();
+      batchResult.forEach(outputFn);
+      outputCount += batchResult.size();
+      futures.remove(key);
       r = results.poll();
     }
   }
 
   private class Result {
-
     private Input input;
     private TryWrapper output;
-    private UUID futureUuid;
     private Instant timestamp;
     private BoundedWindow window;
 
-    Result(
-        Input input, TryWrapper output, UUID futureUuid, Instant timestamp, BoundedWindow window) {
+    Result(Input input, TryWrapper output, Instant timestamp, BoundedWindow window) {
       this.input = input;
       this.output = output;
-      this.futureUuid = futureUuid;
       this.timestamp = timestamp;
       this.window = window;
     }

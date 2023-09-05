@@ -44,18 +44,18 @@ public abstract class BatchedGuavaAsyncLookupDoFn<
 
   public BatchedGuavaAsyncLookupDoFn(
       int batchSize,
-      int maxPendingRequests,
-      CacheSupplier<String, Output> cacheSupplier,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
-      SerializableFunction<Input, String> idExtractorFn) {
+      SerializableFunction<Input, String> idExtractorFn,
+      int maxPendingRequests,
+      CacheSupplier<String, Output> cacheSupplier) {
     super(
         batchSize,
-        maxPendingRequests,
-        cacheSupplier,
         batchRequestFn,
         batchResponseFn,
-        idExtractorFn);
+        idExtractorFn,
+        maxPendingRequests,
+        cacheSupplier);
   }
 
   @Override
