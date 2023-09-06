@@ -1049,8 +1049,9 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // runtime
+      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime, // log4j is excluded from hadoop
       // provided
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // test
