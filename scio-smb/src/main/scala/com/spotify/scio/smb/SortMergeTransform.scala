@@ -44,7 +44,7 @@ object SortMergeTransform {
   }
 
   private[smb] class ReadBuilderImpl[KeyType, K1, K2, R](
-    sc: ScioContext,
+    @transient private val sc: ScioContext,
     coGbk: Transformable[KeyType, K1, K2],
     fromResult: CoGbkResult => R
   ) extends ReadBuilder[KeyType, K1, K2, R] {
@@ -55,7 +55,7 @@ object SortMergeTransform {
   }
 
   private[smb] class ReadBuilderTest[KeyType, K1, K2, R](
-    sc: ScioContext,
+    @transient private val sc: ScioContext,
     read: => SCollection[(KeyType, R)]
   ) extends ReadBuilder[KeyType, K1, K2, R] {
     override def to[W: Coder](
@@ -86,7 +86,7 @@ object SortMergeTransform {
   }
 
   private[smb] class WriteBuilderImpl[KeyType, R, W](
-    sc: ScioContext,
+    @transient private val sc: ScioContext,
     transform: AbsCoGbkTransform[KeyType, W],
     fromResult: CoGbkResult => R
   ) extends WriteBuilder[KeyType, R, W] {
@@ -118,7 +118,7 @@ object SortMergeTransform {
   }
 
   private[smb] class WriteBuilderTest[KeyType, K1, K2, R, W: Coder](
-    sc: ScioContext,
+    @transient private val sc: ScioContext,
     read: => SCollection[(KeyType, R)],
     output: TransformOutput[K1, K2, W]
   ) extends WriteBuilder[KeyType, R, W] {
@@ -163,7 +163,7 @@ object SortMergeTransform {
   }
 
   private[smb] class WithSideInputsWriteBuilderImpl[KeyType, R, W](
-    sc: ScioContext,
+    @transient private val sc: ScioContext,
     transform: AbsCoGbkTransform[KeyType, W],
     toR: CoGbkResult => R,
     sides: Iterable[SideInput[_]]
@@ -202,7 +202,7 @@ object SortMergeTransform {
   }
 
   private[smb] class WithSideInputsWriteBuilderTest[KeyType, K1, K2, R, W: Coder](
-    sc: ScioContext,
+    @transient private val sc: ScioContext,
     read: => SCollection[(KeyType, R)],
     output: TransformOutput[K1, K2, W]
   ) extends WithSideInputsWriteBuilder[KeyType, R, W] {
