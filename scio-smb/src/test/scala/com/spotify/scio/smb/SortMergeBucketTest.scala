@@ -42,9 +42,10 @@ trait SmbJob {
     .write(keyClass, keyField, classOf[User])
     .to(args("output"))
 
-  def avroTransformOutput(args: Args) = AvroSortedBucketIO
-    .transformOutput(keyClass, keyField, classOf[User])
-    .to(args("output"))
+  def avroTransformOutput(args: Args): AvroSortedBucketIO.TransformOutput[Integer, Void, User] =
+    AvroSortedBucketIO
+      .transformOutput(keyClass, keyField, classOf[User])
+      .to(args("output"))
 
   def setUserAccounts(users: Iterable[User], accounts: Iterable[Account]): User = {
     val u :: Nil = users.toList
@@ -117,13 +118,15 @@ object SmbTransformJob extends SmbJob {
 }
 
 class SortMergeBucketTest extends PipelineSpec {
-  val accountA: Account = new Account(1, "typeA", "nameA", 12.5, null)
-  val accountB: Account = new Account(1, "typeB", "nameB", 7.0, null)
-  val address = new Address("street1", "street2", "city", "state", "01234", "Sweden")
-  val user =
+  private val accountA =
+    new Account(1, "typeA", "nameA", 12.5, null)
+  private val accountB =
+    new Account(1, "typeB", "nameB", 7.0, null)
+  private val address =
+    new Address("street1", "street2", "city", "state", "01234", "Sweden")
+  private val user =
     new User(1, "lastname", "firstname", "email@foobar.com", Collections.emptyList(), address)
-
-  val joinedUserAccounts =
+  private val joinedUserAccounts =
     User.newBuilder(user).setAccounts(List(accountA, accountB).asJava).build()
 
   "SortMergeBucket" should "be able to mock sortMergeTransform input and saveAsSortedBucket output" in {
