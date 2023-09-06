@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.hadoop.ParquetOutputFormat;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
@@ -56,9 +57,11 @@ public class WriterUtils {
         .withConf(conf)
         .withCompressionCodec(compression)
         .withPageSize(ParquetOutputFormat.getPageSize(conf))
+        .withPageRowCountLimit(conf.getInt(ParquetOutputFormat.PAGE_ROW_COUNT_LIMIT, ParquetProperties.DEFAULT_PAGE_ROW_COUNT_LIMIT))
+        .withPageWriteChecksumEnabled(ParquetOutputFormat.getPageWriteChecksumEnabled(conf))
         .withWriterVersion(ParquetOutputFormat.getWriterVersion(conf))
-        .withDictionaryEncoding(ParquetOutputFormat.getEnableDictionary(conf))
         .withBloomFilterEnabled(ParquetOutputFormat.getBloomFilterEnabled(conf))
+        .withDictionaryEncoding(ParquetOutputFormat.getEnableDictionary(conf))
         .withDictionaryPageSize(ParquetOutputFormat.getDictionaryPageSize(conf))
         .withMaxRowCountForPageSizeCheck(ParquetOutputFormat.getMaxRowCountForPageSizeCheck(conf))
         .withMinRowCountForPageSizeCheck(ParquetOutputFormat.getMinRowCountForPageSizeCheck(conf))
