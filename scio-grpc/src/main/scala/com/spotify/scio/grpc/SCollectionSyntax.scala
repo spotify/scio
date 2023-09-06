@@ -98,14 +98,14 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     Response: Coder,
     Client <: AbstractFutureStub[Client]
   ](
-     channelSupplier: () => Channel,
-     clientFactory: Channel => Client,
-     batchSize: Int,
-     batchRequestFn: Seq[Request] => BatchRequest,
-     batchResponseFn: BatchResponse => Seq[(String, Response)],
-     idExtractorFn: Request => String,
-     maxPendingRequests: Int,
-     cacheSupplier: CacheSupplier[String, Response] = new NoOpCacheSupplier[String, Response]()
+    channelSupplier: () => Channel,
+    clientFactory: Channel => Client,
+    batchSize: Int,
+    batchRequestFn: Seq[Request] => BatchRequest,
+    batchResponseFn: BatchResponse => Seq[(String, Response)],
+    idExtractorFn: Request => String,
+    maxPendingRequests: Int,
+    cacheSupplier: CacheSupplier[String, Response] = new NoOpCacheSupplier[String, Response]()
   )(
     lookupFn: Client => BatchRequest => ListenableFuture[BatchResponse]
   ): SCollection[(Request, Try[Response])] = {
