@@ -1358,7 +1358,6 @@ lazy val `scio-smb`: Project = project
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Provided, // log4j is excluded from hadoop
       // runtime
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion % Runtime,
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime,
@@ -1366,6 +1365,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "it,test",
+      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "it,test", // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "it,test"
     ),
     javacOptions ++= {
