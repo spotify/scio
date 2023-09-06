@@ -20,7 +20,9 @@ import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.values.SideInput
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.util.MimeTypes
 
+import java.nio.ByteBuffer
 import scala.jdk.CollectionConverters._
 
 class VoyagerIT extends PipelineSpec {
@@ -56,6 +58,32 @@ class VoyagerIT extends PipelineSpec {
           .map(_.resourceId())
 
         FileSystems.delete(files.asJava)
+      }
+    }
+  }
+
+  it should "support .asVoyagerSideInput using GCS tempLocation" in {
+    runWithContext { sc =>
+      FileSystems.setDefaultPipelineOptions(sc.options)
+
+      val tempLocation = ItUtils.gcpTempLocation("voyager-it")
+      val namePath = tempLocation + "/names.json"
+      val indexPath = tempLocation + "/index.hnsw"
+      val nameResourceId = FileSystems.matchNewResource(namePath, false)
+      val indexResourceId = FileSystems.matchNewResource(indexPath, false)
+
+      try {
+        val f1 = FileSystems.create(nameResourceId, MimeTypes.BINARY)
+        val f2 = FileSystems.create(indexResourceId, MimeTypes.BINARY)
+        f1.write(ByteBuffer.wrap("test-data".getBytes()))
+        f1.close()
+        f2.write(ByteBuffer.wrap("test-data".getBytes()))
+        f2.close()
+        the[IllegalArgumentException] thrownBy {
+          sc.parallelize(sideData).asVoyager(distanceMeasure, storageType, dim)
+        } should have message s""
+      } finally {
+        FileSystems.delete(Seq(nameResourceId, indexResourceId).asJava)
       }
     }
   }
