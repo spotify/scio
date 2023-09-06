@@ -237,6 +237,15 @@ public abstract class BatchedBaseAsyncLookupDoFn<
                   pair -> {
                     final String id = pair.getLeft();
                     final Output output = pair.getRight();
+
+                    if(!inputs.containsKey(id)) {
+                      LOG.error("The ID '{}' received in the gRPC batch response does not " +
+                          "match any IDs extracted via the idExtractorFn for the requested  " +
+                          "batch sent to the gRPC endpoint. Please ensure that the IDs returned " +
+                          "from the gRPC endpoints match the IDs extracted using the provided" +
+                          "idExtractorFn for the same input.", id);
+                    };
+
                     final List<Result> batchResult =
                         inputs.remove(id).stream()
                             .map(
