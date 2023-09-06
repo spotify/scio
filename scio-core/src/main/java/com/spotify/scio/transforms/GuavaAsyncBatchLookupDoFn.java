@@ -30,9 +30,9 @@ import org.apache.commons.lang3.tuple.Pair;
  * @param <Output> client lookup value type.
  * @param <ClientType> client type.
  */
-public abstract class BatchedGuavaAsyncLookupDoFn<
+public abstract class GuavaAsyncBatchLookupDoFn<
         Input, BatchRequest, BatchResponse, Output, ClientType>
-    extends BatchedBaseAsyncLookupDoFn<
+    extends BaseAsyncBatchLookupDoFn<
         Input,
         BatchRequest,
         BatchResponse,
@@ -42,7 +42,16 @@ public abstract class BatchedGuavaAsyncLookupDoFn<
         Try<Output>>
     implements FutureHandlers.Guava<BatchResponse> {
 
-  public BatchedGuavaAsyncLookupDoFn(
+  public GuavaAsyncBatchLookupDoFn(
+      int batchSize,
+      SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
+      SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
+      SerializableFunction<Input, String> idExtractorFn,
+      int maxPendingRequests) {
+    super(batchSize, batchRequestFn, batchResponseFn, idExtractorFn, maxPendingRequests);
+  }
+
+  public GuavaAsyncBatchLookupDoFn(
       int batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,

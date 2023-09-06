@@ -20,8 +20,9 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.grpc.GrpcDoFn.ChannelSupplier;
+import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
-import com.spotify.scio.transforms.BatchedGuavaAsyncLookupDoFn;
+import com.spotify.scio.transforms.GuavaAsyncBatchLookupDoFn;
 import io.grpc.Channel;
 import io.grpc.stub.AbstractFutureStub;
 import java.io.Serializable;
@@ -40,9 +41,9 @@ import org.apache.commons.lang3.tuple.Pair;
  * @param <Output> client lookup value type.
  * @param <Client> client type.
  */
-public class BatchedGrpcDoFn<
+public class GrpcBatchDoFn<
         Input, BatchRequest, BatchResponse, Output, Client extends AbstractFutureStub<Client>>
-    extends BatchedGuavaAsyncLookupDoFn<Input, BatchRequest, BatchResponse, Output, Client> {
+    extends GuavaAsyncBatchLookupDoFn<Input, BatchRequest, BatchResponse, Output, Client> {
 
   private final ChannelSupplier channelSupplier;
   private final SerializableFunction<Channel, Client> newClientFn;
@@ -50,15 +51,30 @@ public class BatchedGrpcDoFn<
   private final SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>>
       lookupFn;
 
-  public BatchedGrpcDoFn(
+  public GrpcBatchDoFn(
       ChannelSupplier channelSupplier,
       SerializableFunction<Channel, Client> newClientFn,
-      SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>> lookupFn,
+      Integer batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
       SerializableFunction<Input, String> idExtractorFn,
-      Integer maxPendingRequests,
+      SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>> lookupFn,
+      Integer maxPendingRequests) {
+    super(batchSize, batchRequestFn, batchResponseFn, idExtractorFn, maxPendingRequests);
+    this.channelSupplier = channelSupplier;
+    this.newClientFn = newClientFn;
+    this.lookupFn = lookupFn;
+  }
+
+  public GrpcBatchDoFn(
+      ChannelSupplier channelSupplier,
+      SerializableFunction<Channel, Client> newClientFn,
       Integer batchSize,
+      SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
+      SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
+      SerializableFunction<Input, String> idExtractorFn,
+      SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>> lookupFn,
+      Integer maxPendingRequests,
       CacheSupplier<String, Output> cacheSupplier) {
     super(
         batchSize,
@@ -114,7 +130,8 @@ public class BatchedGrpcDoFn<
     private SerializableFunction<Input, String> idExtractorFn;
     private Integer maxPendingRequests;
     private Integer batchSize;
-    private CacheSupplier<String, Output> cacheSupplier;
+    private CacheSupplier<String, Output> cacheSupplier =
+        new BaseAsyncLookupDoFn.NoOpCacheSupplier<>();
 
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withChannelSupplier(
         ChannelSupplier channelSupplier) {
@@ -171,7 +188,7 @@ public class BatchedGrpcDoFn<
       return this;
     }
 
-    public BatchedGrpcDoFn<Input, BatchRequest, BatchResponse, Output, ClientType> build() {
+    public GrpcBatchDoFn<Input, BatchRequest, BatchResponse, Output, ClientType> build() {
       requireNonNull(channelSupplier, "channelSupplier must not be null");
       requireNonNull(newClientFn, "newClientFn must not be null");
       requireNonNull(lookupFn, "lookupFn must not be null");
@@ -182,15 +199,15 @@ public class BatchedGrpcDoFn<
       requireNonNull(batchSize, "batchSize must not be null");
       requireNonNull(cacheSupplier, "cacheSupplier must not be null");
 
-      return new BatchedGrpcDoFn<>(
+      return new GrpcBatchDoFn<>(
           channelSupplier,
           newClientFn,
-          lookupFn,
+          batchSize,
           batchRequestFn,
           batchResponseFn,
           idExtractorFn,
+          lookupFn,
           maxPendingRequests,
-          batchSize,
           cacheSupplier);
     }
   }

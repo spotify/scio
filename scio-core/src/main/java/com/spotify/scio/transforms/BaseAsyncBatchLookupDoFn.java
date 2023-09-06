@@ -56,12 +56,12 @@ import org.slf4j.LoggerFactory;
  * @param <FutureType> future type.
  * @param <TryWrapper> client lookup value type wrapped in a Try.
  */
-public abstract class BatchedBaseAsyncLookupDoFn<
+public abstract class BaseAsyncBatchLookupDoFn<
         Input, BatchRequest, BatchResponse, Output, ClientType, FutureType, TryWrapper>
     extends DoFnWithResource<Input, KV<Input, TryWrapper>, Pair<ClientType, Cache<String, Output>>>
     implements FutureHandlers.Base<FutureType, BatchResponse> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BatchedBaseAsyncLookupDoFn.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncBatchLookupDoFn.class);
 
   // Data structures for handling async requests
   private final int batchSize;
@@ -82,20 +82,35 @@ public abstract class BatchedBaseAsyncLookupDoFn<
   private long inputCount;
   private long outputCount;
 
-  public BatchedBaseAsyncLookupDoFn(
+  public BaseAsyncBatchLookupDoFn(
+      int batchSize,
+      SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
+      SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
+      SerializableFunction<Input, String> idExtractorFn,
+      int maxPendingRequests) {
+    this(
+        batchSize,
+        batchRequestFn,
+        batchResponseFn,
+        idExtractorFn,
+        maxPendingRequests,
+        new BaseAsyncLookupDoFn.NoOpCacheSupplier<>());
+  }
+
+  public BaseAsyncBatchLookupDoFn(
       int batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
       SerializableFunction<Input, String> idExtractorFn,
       int maxPendingRequests,
       CacheSupplier<String, Output> cacheSupplier) {
-    this.cacheSupplier = cacheSupplier;
+    this.batchSize = batchSize;
     this.batchRequestFn = batchRequestFn;
     this.batchResponseFn = batchResponseFn;
     this.idExtractorFn = idExtractorFn;
     this.maxPendingRequests = maxPendingRequests;
-    this.batchSize = batchSize;
     this.semaphore = new Semaphore(maxPendingRequests);
+    this.cacheSupplier = cacheSupplier;
   }
 
   protected abstract ClientType newClient();
@@ -238,13 +253,16 @@ public abstract class BatchedBaseAsyncLookupDoFn<
                     final String id = pair.getLeft();
                     final Output output = pair.getRight();
 
-                    if(!inputs.containsKey(id)) {
-                      LOG.error("The ID '{}' received in the gRPC batch response does not " +
-                          "match any IDs extracted via the idExtractorFn for the requested  " +
-                          "batch sent to the gRPC endpoint. Please ensure that the IDs returned " +
-                          "from the gRPC endpoints match the IDs extracted using the provided" +
-                          "idExtractorFn for the same input.", id);
-                    };
+                    if (!inputs.containsKey(id)) {
+                      LOG.error(
+                          "The ID '{}' received in the gRPC batch response does not "
+                              + "match any IDs extracted via the idExtractorFn for the requested  "
+                              + "batch sent to the gRPC endpoint. Please ensure that the IDs returned "
+                              + "from the gRPC endpoints match the IDs extracted using the provided"
+                              + "idExtractorFn for the same input.",
+                          id);
+                    }
+                    ;
 
                     final List<Result> batchResult =
                         inputs.remove(id).stream()

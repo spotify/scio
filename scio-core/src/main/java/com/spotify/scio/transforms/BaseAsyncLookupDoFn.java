@@ -54,8 +54,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     implements FutureHandlers.Base<F, B> {
   private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncLookupDoFn.class);
 
-  private final CacheSupplier<A, B> cacheSupplier;
   private final boolean deduplicate;
+  private final CacheSupplier<A, B> cacheSupplier;
 
   // Data structures for handling async requests
   private final int maxPendingRequests;
@@ -117,9 +117,9 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
    */
   public BaseAsyncLookupDoFn(
       int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B> cacheSupplier) {
-    this.cacheSupplier = cacheSupplier;
-    this.deduplicate = deduplicate;
     this.maxPendingRequests = maxPendingRequests;
+    this.deduplicate = deduplicate;
+    this.cacheSupplier = cacheSupplier;
     this.semaphore = new Semaphore(maxPendingRequests);
   }
 

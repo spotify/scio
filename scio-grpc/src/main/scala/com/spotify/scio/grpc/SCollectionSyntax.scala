@@ -132,7 +132,7 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     val serializableIdExtractorFn = Functions.serializableFn(idExtractorFn)
 
     in.parDo(
-      BatchedGrpcDoFn
+      GrpcBatchDoFn
         .newBuilder[Request, BatchRequest, BatchResponse, Response, Client]()
         .withChannelSupplier(() => cleanedChannelSupplier())
         .withNewClientFn(serializableClientFactory)

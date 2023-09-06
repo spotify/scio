@@ -47,7 +47,7 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       SerializableFunction<Channel, ClientT> newClientFn,
       SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn,
       Integer maxPendingRequests) {
-    super(maxPendingRequests, new NoOpCacheSupplier<>());
+    super(maxPendingRequests);
     this.channelSupplier = channelSupplier;
     this.newClientFn = newClientFn;
     this.lookupFn = lookupFn;
