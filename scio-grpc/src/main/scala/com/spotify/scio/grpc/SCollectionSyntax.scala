@@ -92,7 +92,7 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
       .mapValues(_.asScala.map(_.asScala))
   }
 
-  def batchGrpcLookup[
+  def grpcBatchLookup[
     BatchRequest,
     BatchResponse,
     Response: Coder,
@@ -107,47 +107,45 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     maxPendingRequests: Int,
     cacheSupplier: CacheSupplier[String, Response] = new NoOpCacheSupplier[String, Response]()
   )(
-    lookupFn: Client => BatchRequest => ListenableFuture[BatchResponse]
-  ): SCollection[(Request, Try[Response])] = {
+    f: Client => BatchRequest => ListenableFuture[BatchResponse]
+  ): SCollection[(Request, Try[Response])] = self.transform { in =>
     import self.coder
-    self.transform { in =>
-      val cleanedChannelSupplier = ClosureCleaner.clean(channelSupplier)
-      val serializableClientFactory = Functions.serializableFn(clientFactory)
-      val serializableLookupFn =
-        Functions.serializableBiFn[Client, BatchRequest, ListenableFuture[BatchResponse]] {
-          (client, request) => lookupFn(client)(request)
-        }
+    val cleanedChannelSupplier = ClosureCleaner.clean(channelSupplier)
+    val serializableClientFactory = Functions.serializableFn(clientFactory)
+    val serializableLookupFn =
+      Functions.serializableBiFn[Client, BatchRequest, ListenableFuture[BatchResponse]] {
+        (client, request) => f(client)(request)
+      }
 
-      val translatedBatchRequestFn =
-        (inputs: java.util.List[Request]) => batchRequestFn(inputs.asScala.toSeq)
-      val serializableBatchRequestFn = Functions.serializableFn(translatedBatchRequestFn)
+    val serializableBatchRequestFn =
+      Functions.serializableFn[java.util.List[Request], BatchRequest] { inputs =>
+        batchRequestFn(inputs.asScala.toSeq)
+      }
 
-      val translatedBatchResponseFn = (batchResponse: BatchResponse) =>
-        {
+    val serializableBatchResponseFn =
+      Functions.serializableFn[BatchResponse, java.util.List[Pair[String, Response]]] {
+        batchResponse =>
           batchResponseFn(batchResponse).map { case (input, output) =>
             Pair.of(input, output)
-          }
-        }.asJava
+          }.asJava
+      }
+    val serializableIdExtractorFn = Functions.serializableFn(idExtractorFn)
 
-      val serializableBatchResponseFn = Functions.serializableFn(translatedBatchResponseFn)
-      val serializableIdExtractorFn = Functions.serializableFn(idExtractorFn)
-
-      in.parDo(
-        BatchedGrpcDoFn
-          .newBuilder[Request, BatchRequest, BatchResponse, Response, Client]()
-          .withChannelSupplier(() => cleanedChannelSupplier())
-          .withNewClientFn(serializableClientFactory)
-          .withLookupFn(serializableLookupFn)
-          .withMaxPendingRequests(maxPendingRequests)
-          .withBatchSize(batchSize)
-          .withBatchRequestFn(serializableBatchRequestFn)
-          .withBatchResponseFn(serializableBatchResponseFn)
-          .withIdExtractorFn(serializableIdExtractorFn)
-          .withCacheSupplier(cacheSupplier)
-          .build()
-      ).map(kvToTuple _)
-        .mapValues(_.asScala)
-    }
+    in.parDo(
+      BatchedGrpcDoFn
+        .newBuilder[Request, BatchRequest, BatchResponse, Response, Client]()
+        .withChannelSupplier(() => cleanedChannelSupplier())
+        .withNewClientFn(serializableClientFactory)
+        .withLookupFn(serializableLookupFn)
+        .withMaxPendingRequests(maxPendingRequests)
+        .withBatchSize(batchSize)
+        .withBatchRequestFn(serializableBatchRequestFn)
+        .withBatchResponseFn(serializableBatchResponseFn)
+        .withIdExtractorFn(serializableIdExtractorFn)
+        .withCacheSupplier(cacheSupplier)
+        .build()
+    ).map(kvToTuple _)
+      .mapValues(_.asScala)
   }
 }
 
