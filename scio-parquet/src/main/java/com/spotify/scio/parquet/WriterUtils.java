@@ -55,6 +55,8 @@ public class WriterUtils {
     return builder
         .withConf(conf)
         .withCompressionCodec(compression)
+        .withPageSize(ParquetOutputFormat.getPageSize(conf))
+        .withWriterVersion(ParquetOutputFormat.getWriterVersion(conf))
         .withDictionaryEncoding(ParquetOutputFormat.getEnableDictionary(conf))
         .withBloomFilterEnabled(ParquetOutputFormat.getBloomFilterEnabled(conf))
         .withDictionaryPageSize(ParquetOutputFormat.getDictionaryPageSize(conf))
