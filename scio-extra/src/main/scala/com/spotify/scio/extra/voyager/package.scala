@@ -43,16 +43,13 @@ package object voyager {
   case class VoyagerResult(value: String, distance: Float)
 
   class VoyagerReader private[voyager] (
-    path: String,
+    indexFileName: String,
+    namesFileName: String,
     distanceMeasure: VoyagerDistanceMeasure,
     storageType: VoyagerStorageType,
     dim: Int
   ) {
     require(dim > 0, "Vector dimension should be > 0")
-
-    private val basePath: Path = Paths.get(path)
-    private val indexFileName: String = basePath.resolve("index.hnsw").toString
-    private val namesFileName: String = basePath.resolve("names.json").toString
 
     private val index: StringIndex = {
       val spaceType = distanceMeasure match {
@@ -86,12 +83,13 @@ package object voyager {
    */
   implicit class VoyagerScioContext(private val self: ScioContext) extends AnyVal {
     def voyagerSideInput(
-      path: String,
+      indexPath: String,
+      namesPath: String = null,
       distanceMeasure: VoyagerDistanceMeasure,
       storageType: VoyagerStorageType,
       dim: Int
     ): SideInput[VoyagerReader] = {
-      val uri = VoyagerUri(path, self.options)
+      val uri = VoyagerUri(indexPath, namesPath, self.options)
       val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
       new VoyagerSideInput(view, distanceMeasure, storageType, dim)
     }
@@ -103,16 +101,16 @@ package object voyager {
 
     @experimental
     def asVoyager(
-      path: String,
+      indexPath: String,
       voyagerDistanceMeasure: VoyagerDistanceMeasure,
       voyagerStorageType: VoyagerStorageType,
       dim: Int,
       ef: Long,
       m: Long
     ): SCollection[VoyagerUri] = {
-      val uri: VoyagerUri = VoyagerUri(path, self.context.options)
-      require(!uri.exists, s"Voyager URI ${uri.path} already exists")
-      logger.info(s"Vyager URI :${uri.path}")
+      val uri: VoyagerUri = VoyagerUri(indexPath, indexPath, self.context.options)
+      require(!uri.exists, s"Voyager URI ${uri.indexPath} already exists")
+      logger.info(s"Voyager URI :${uri.indexPath}")
       self.transform { in =>
         {
           in.groupBy(_ => ())
