@@ -32,7 +32,7 @@ import java.util.stream.Collectors
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, IterableHasAsJava}
 import scala.util.{Success, Try}
 
-object BatchedGrpcDoFnTest {
+object GrpcBatchDoFnTest {
 
   // Find port in the companion object
   // So we can serialize the target uri
@@ -81,9 +81,9 @@ object BatchedGrpcDoFnTest {
   }
 }
 
-class BatchedGrpcDoFnTest extends PipelineSpec with BeforeAndAfterAll {
+class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
 
-  import BatchedGrpcDoFnTest._
+  import GrpcBatchDoFnTest._
 
   val server: Server = ServerBuilder
     .forPort(LocalPort)
