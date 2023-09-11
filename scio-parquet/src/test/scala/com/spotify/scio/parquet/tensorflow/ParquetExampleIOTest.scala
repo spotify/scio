@@ -20,25 +20,24 @@ package com.spotify.scio.parquet.tensorflow
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
+import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.parquet.types._
 import magnolify.parquet.ParquetType
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
-import org.tensorflow.metadata.v0.{FixedShape, ValueCount, ValueCountList}
 import org.tensorflow.metadata.{v0 => tfmd}
-import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList, Int64List}
+import org.tensorflow.proto.example._
 
 import java.nio.file.Files
 import scala.jdk.CollectionConverters._
 
 object ParquetExampleHelper {
 
-  private val required = ValueCount.newBuilder().setMin(1).setMax(1).build()
-  private val optional = ValueCount.newBuilder().setMin(0).setMax(1).build()
-  private val repeated = ValueCount.newBuilder().setMin(1).setMax(4).build()
+  private val required = tfmd.ValueCount.newBuilder().setMin(1).setMax(1).build()
+  private val optional = tfmd.ValueCount.newBuilder().setMin(0).setMax(1).build()
+  private val repeated = tfmd.ValueCount.newBuilder().setMin(1).setMax(4).build()
 
   final case class LegacyExampleParquet(
     int64_required: Long,
