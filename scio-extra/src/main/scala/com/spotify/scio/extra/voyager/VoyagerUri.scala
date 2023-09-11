@@ -33,8 +33,7 @@ import java.nio.file.{Files, Path, Paths}
 
 trait VoyagerUri extends Serializable {
   val logger = LoggerFactory.getLogger(this.getClass)
-  val indexPath: String
-  val namesPath: String
+  val path: String
   private[voyager] def getReader(
     distanceMeasure: VoyagerDistanceMeasure,
     storageType: VoyagerStorageType,
@@ -45,12 +44,11 @@ trait VoyagerUri extends Serializable {
 }
 
 private[voyager] object VoyagerUri {
-  def apply(indexPath: String, namesPath: String = null, opts: PipelineOptions): VoyagerUri = {
-    val actualNamesPath = Option(namesPath).getOrElse(indexPath)
-    if (ScioUtil.isLocalUri(new URI(indexPath))) {
-      new LocalVoyagerUri(indexPath, actualNamesPath)
+  def apply(path: String, opts: PipelineOptions): VoyagerUri = {
+    if (ScioUtil.isLocalUri(new URI(path))) {
+      new LocalVoyagerUri(path)
     } else {
-      new RemoteVoyagerUri(indexPath, actualNamesPath, opts)
+      new RemoteVoyagerUri(path, opts)
     }
   }
 
@@ -58,30 +56,29 @@ private[voyager] object VoyagerUri {
   implicit val voyagerUriCoder: Coder[VoyagerUri] = Coder.kryo[VoyagerUri]
 }
 
-private class LocalVoyagerUri(val indexPath: String, val namesPath: String) extends VoyagerUri {
+private class LocalVoyagerUri(val path: String) extends VoyagerUri {
   override private[voyager] def getReader(
     distanceMeasure: VoyagerDistanceMeasure,
     storageType: VoyagerStorageType,
     dim: Int
   ): VoyagerReader = {
 
-    val indexFileName: String = indexPath + "/index.hnsw"
-    val namesFileName: String = namesPath + "/names.json"
+    val indexFileName: String = path + "/index.hnsw"
+    val namesFileName: String = path + "/names.json"
     new VoyagerReader(indexFileName, namesFileName, distanceMeasure, storageType, dim)
   }
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
-    w.save(indexPath, namesPath)
+    w.save(path)
     w.close()
   }
 
   override private[voyager] def exists: Boolean =
-    new File(indexPath + "/index.hnsw").exists() && new File(namesPath + "/names.json").exists()
+    VoyagerUri.files.exists(f => new File(path + "/" + f).exists())
 }
 
 private class RemoteVoyagerUri(
-  val indexPath: String,
-  val namesPath: String,
+  val path: String,
   options: PipelineOptions
 ) extends VoyagerUri {
   private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
@@ -90,30 +87,26 @@ private class RemoteVoyagerUri(
     storageType: VoyagerStorageType,
     dim: Int
   ): VoyagerReader = {
-    val indexFileName: String = rfu.download(new URI(indexPath + "/index.hnsw")).toString
-    val namesFileName: String = rfu.download(new URI(namesPath + "/names.json")).toString
+    val indexFileName: String = rfu.download(new URI(path + "/index.hnsw")).toString
+    val namesFileName: String = rfu.download(new URI(path + "/names.json")).toString
     new VoyagerReader(indexFileName, namesFileName, distanceMeasure, storageType, dim)
   }
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
     val tempPath: Path = Files.createTempDirectory("")
     logger.info(s"temp path: $tempPath")
-    w.save(tempPath.toString, tempPath.toString)
+    w.save(tempPath.toString)
     w.close()
 
-    val tempIndexPath = tempPath.resolve("index.hnsw")
-    rfu.upload(Paths.get(tempIndexPath.toString), new URI(indexPath + "/index.hnsw"))
-    val tempNamesPath = tempPath.resolve("names.json")
-    rfu.upload(Paths.get(tempNamesPath.toString), new URI(namesPath + "/names.json"))
-
-    Files.delete(tempIndexPath)
-    Files.delete(tempNamesPath)
+    VoyagerUri.files.foreach { f =>
+      val tf = tempPath.resolve(f)
+      rfu.upload(Paths.get(tf.toString), new URI(path + "/" + f))
+      Files.delete(tf)
+    }
   }
 
   override private[voyager] def exists: Boolean =
-    rfu.remoteExists(new URI(indexPath + "/index.hnsw")) && rfu.remoteExists(
-      new URI(namesPath + "/names.json")
-    )
+    VoyagerUri.files.exists(f => rfu.remoteExists(new URI(path + "/" + f)))
 }
 
 private[voyager] class VoyagerWriter(
@@ -171,9 +164,9 @@ private[voyager] class VoyagerWriter(
     ()
   }
 
-  def save(indexPath: String, namesPath: String): Unit = {
-    val indexFileName: String = indexPath + "/index.hnsw"
-    val namesFileName: String = namesPath + "/names.json"
+  def save(path: String): Unit = {
+    val indexFileName: String = path + "/index.hnsw"
+    val namesFileName: String = path + "/names.json"
     index.saveIndex(indexFileName)
     Files.write(
       Paths.get(namesFileName),

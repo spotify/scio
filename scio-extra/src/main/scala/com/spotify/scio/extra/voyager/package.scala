@@ -25,8 +25,8 @@ import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
-import java.nio.file.{Path, Paths}
 import java.util.UUID
+import scala.collection.mutable
 
 package object voyager {
   sealed abstract class VoyagerDistanceMeasure
@@ -41,6 +41,8 @@ package object voyager {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   case class VoyagerResult(value: String, distance: Float)
+
+  val VOYAGER_URI_MAP: mutable.Map[VoyagerUri, VoyagerReader] = mutable.HashMap.empty
 
   class VoyagerReader private[voyager] (
     indexFileName: String,
@@ -83,13 +85,12 @@ package object voyager {
    */
   implicit class VoyagerScioContext(private val self: ScioContext) extends AnyVal {
     def voyagerSideInput(
-      indexPath: String,
-      namesPath: String = null,
+      path: String,
       distanceMeasure: VoyagerDistanceMeasure,
       storageType: VoyagerStorageType,
       dim: Int
     ): SideInput[VoyagerReader] = {
-      val uri = VoyagerUri(indexPath, namesPath, self.options)
+      val uri = VoyagerUri(path, self.options)
       val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
       new VoyagerSideInput(view, distanceMeasure, storageType, dim)
     }
@@ -101,16 +102,16 @@ package object voyager {
 
     @experimental
     def asVoyager(
-      indexPath: String,
+      path: String,
       voyagerDistanceMeasure: VoyagerDistanceMeasure,
       voyagerStorageType: VoyagerStorageType,
       dim: Int,
       ef: Long,
       m: Long
     ): SCollection[VoyagerUri] = {
-      val uri: VoyagerUri = VoyagerUri(indexPath, indexPath, self.context.options)
-      require(!uri.exists, s"Voyager URI ${uri.indexPath} already exists")
-      logger.info(s"Voyager URI :${uri.indexPath}")
+      val uri: VoyagerUri = VoyagerUri(path, self.context.options)
+      require(!uri.exists, s"Voyager URI ${uri.path} already exists")
+      logger.info(s"Voyager URI :${uri.path}")
       self.transform { in =>
         {
           in.groupBy(_ => ())
@@ -173,8 +174,16 @@ package object voyager {
     storageType: VoyagerStorageType,
     dim: Int
   ) extends SideInput[VoyagerReader] {
-    override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader =
-      context.sideInput(view).getReader(distanceMeasure, storageType, dim)
+    override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {
+      val uri = context.sideInput(view)
+      VOYAGER_URI_MAP.synchronized {
+        if (!VOYAGER_URI_MAP.contains(uri)) {
+          VOYAGER_URI_MAP.put(uri, uri.getReader(distanceMeasure, storageType, dim))
+        }
+        VOYAGER_URI_MAP(uri)
+      }
+
+    }
   }
 
 }

@@ -43,7 +43,7 @@ class VoyagerTest extends PipelineSpec {
         .materialize
 
     val scioResult: ScioResult = sc.run().waitUntilFinish()
-    val path: String = scioResult.tap(p).value.next.indexPath
+    val path: String = scioResult.tap(p).value.next.path
 
     val index: StringIndex = StringIndex.load(
       path + "/index.hnsw",
