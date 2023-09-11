@@ -27,7 +27,10 @@ import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types;
 import org.tensorflow.metadata.v0.Feature;
 import org.tensorflow.metadata.v0.FeatureType;
+import org.tensorflow.metadata.v0.FixedShape;
 import org.tensorflow.metadata.v0.Schema;
+import org.tensorflow.metadata.v0.ValueCount;
+import org.tensorflow.metadata.v0.ValueCountList;
 
 public class TensorflowExampleSchemaConverter {
 
@@ -48,16 +51,54 @@ public class TensorflowExampleSchemaConverter {
     return types;
   }
 
+  private Type.Repetition repetitionShape(FixedShape shape) {
+    if (shape.getDimCount() == 1 && shape.getDim(0).getSize() == 1) {
+      return Type.Repetition.REQUIRED;
+    } else {
+      return Type.Repetition.REPEATED;
+    }
+  }
+
+  private Type.Repetition repetitionValueCount(ValueCount valueCount) {
+    long min = valueCount.getMin();
+    long max = valueCount.getMax();
+    if (min == 0 && max == 1) {
+      return Type.Repetition.OPTIONAL;
+    } else if (min == 1 && max == 1) {
+      return Type.Repetition.REQUIRED;
+    } else {
+      return Type.Repetition.REPEATED;
+    }
+  }
+
+  private Type.Repetition repetitionValueCounts(ValueCountList valueCounts) {
+    if (valueCounts.getValueCountCount() == 1) {
+      return repetitionValueCount(valueCounts.getValueCount(0));
+    } else {
+      return Type.Repetition.REPEATED;
+    }
+  }
+
   private Type convertFeature(Feature feature) {
     String name = feature.getName();
     Types.PrimitiveBuilder<PrimitiveType> builder;
+
+    Type.Repetition repetition;
+    if (feature.hasShape()) {
+      repetition = repetitionShape(feature.getShape());
+    } else if (feature.hasValueCount()) {
+      repetition = repetitionValueCount(feature.getValueCount());
+    } else {
+      repetition = repetitionValueCounts(feature.getValueCounts());
+    }
+
     FeatureType type = feature.getType();
     if (type.equals(FeatureType.INT)) {
-      builder = Types.primitive(INT64, Type.Repetition.REPEATED);
+      builder = Types.primitive(INT64, repetition);
     } else if (type.equals(FeatureType.FLOAT)) {
-      builder = Types.primitive(FLOAT, Type.Repetition.REPEATED);
+      builder = Types.primitive(FLOAT, repetition);
     } else if (type.equals(FeatureType.BYTES)) {
-      builder = Types.primitive(BINARY, Type.Repetition.REPEATED);
+      builder = Types.primitive(BINARY, repetition);
     } else {
       throw new UnsupportedOperationException("Cannot convert tensorflow type " + type);
     }
@@ -78,15 +119,26 @@ public class TensorflowExampleSchemaConverter {
     return features;
   }
 
+  private ValueCount convertRepetition(Type.Repetition repetition) {
+    switch (repetition) {
+      case REQUIRED:
+        return ValueCount.newBuilder().setMin(1).setMax(1).build();
+      case OPTIONAL:
+        return ValueCount.newBuilder().setMin(0).setMax(1).build();
+      default:
+        return null;
+    }
+  }
+
   private Feature convertField(final Type parquetType) {
     if (!parquetType.isPrimitive()) {
-      throw new IllegalArgumentException("Only primitive fields are supported");
+      throw new UnsupportedOperationException("Only primitive fields are supported");
     } else {
       final String featureName = parquetType.getName();
       final PrimitiveType asPrimitive = parquetType.asPrimitiveType();
       final PrimitiveType.PrimitiveTypeName parquetPrimitiveTypeName =
           asPrimitive.getPrimitiveTypeName();
-      Feature feature =
+      final Feature feature =
           parquetPrimitiveTypeName.convert(
               new PrimitiveType.PrimitiveTypeNameConverter<Feature, RuntimeException>() {
                 @Override
@@ -97,21 +149,21 @@ public class TensorflowExampleSchemaConverter {
                 @Override
                 public Feature convertINT96(PrimitiveType.PrimitiveTypeName primitiveTypeName)
                     throws RuntimeException {
-                  throw new IllegalArgumentException(
+                  throw new UnsupportedOperationException(
                       "Unsupported primitive type: " + primitiveTypeName);
                 }
 
                 @Override
                 public Feature convertFIXED_LEN_BYTE_ARRAY(
                     PrimitiveType.PrimitiveTypeName primitiveTypeName) throws RuntimeException {
-                  throw new IllegalArgumentException(
+                  throw new UnsupportedOperationException(
                       "Unsupported primitive type: " + primitiveTypeName);
                 }
 
                 @Override
                 public Feature convertBOOLEAN(PrimitiveType.PrimitiveTypeName primitiveTypeName)
-                    throws RuntimeException {
-                  throw new IllegalArgumentException(
+                    throws UnsupportedOperationException {
+                  throw new UnsupportedOperationException(
                       "Unsupported primitive type: " + primitiveTypeName);
                 }
 
@@ -126,14 +178,14 @@ public class TensorflowExampleSchemaConverter {
                 @Override
                 public Feature convertDOUBLE(PrimitiveType.PrimitiveTypeName primitiveTypeName)
                     throws RuntimeException {
-                  throw new IllegalArgumentException(
+                  throw new UnsupportedOperationException(
                       "Unsupported primitive type: " + primitiveTypeName);
                 }
 
                 @Override
                 public Feature convertINT32(PrimitiveType.PrimitiveTypeName primitiveTypeName)
                     throws RuntimeException {
-                  throw new IllegalArgumentException(
+                  throw new UnsupportedOperationException(
                       "Unsupported primitive type: " + primitiveTypeName);
                 }
 
@@ -145,7 +197,8 @@ public class TensorflowExampleSchemaConverter {
                       .build();
                 }
               });
-      return feature;
+      final ValueCount valueCount = convertRepetition(asPrimitive.getRepetition());
+      return valueCount == null ? feature : feature.toBuilder().setValueCount(valueCount).build();
     }
   }
 }

@@ -27,6 +27,7 @@ import com.spotify.scio.parquet.types._
 import magnolify.parquet.ParquetType
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
+import org.tensorflow.metadata.v0.{FixedShape, ValueCount, ValueCountList}
 import org.tensorflow.metadata.{v0 => tfmd}
 import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList, Int64List}
 
@@ -35,12 +36,9 @@ import scala.jdk.CollectionConverters._
 
 object ParquetExampleHelper {
 
-  private val repetition = Seq(
-    "required",
-    "optional",
-    "repeated",
-    "empty"
-  )
+  private val required = ValueCount.newBuilder().setMin(1).setMax(1).build()
+  private val optional = ValueCount.newBuilder().setMin(0).setMax(1).build()
+  private val repeated = ValueCount.newBuilder().setMin(1).setMax(4).build()
 
   final case class LegacyExampleParquet(
     int64_required: Long,
@@ -58,12 +56,21 @@ object ParquetExampleHelper {
   )
   implicit val ptLegacyExampleParquet: ParquetType[LegacyExampleParquet] =
     ParquetType[LegacyExampleParquet]
-  
+
   // format: off
   private[tensorflow] val schema = tfmd.Schema.newBuilder()
-    .addAllFeature(repetition.map(r => tfmd.Feature.newBuilder().setName(s"int64_$r").setType(tfmd.FeatureType.INT).build()).asJava)
-    .addAllFeature(repetition.map(r => tfmd.Feature.newBuilder().setName(s"float_$r").setType(tfmd.FeatureType.FLOAT).build()).asJava)
-    .addAllFeature(repetition.map(r => tfmd.Feature.newBuilder().setName(s"bytes_$r").setType(tfmd.FeatureType.BYTES).build()).asJava)
+    .addFeature(tfmd.Feature.newBuilder().setName("int64_required").setType(tfmd.FeatureType.INT).setValueCount(required).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("int64_optional").setType(tfmd.FeatureType.INT).setValueCount(optional).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("int64_repeated").setType(tfmd.FeatureType.INT).setValueCount(repeated).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("int64_empty").setType(tfmd.FeatureType.INT).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("float_required").setType(tfmd.FeatureType.FLOAT).setValueCount(required).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("float_optional").setType(tfmd.FeatureType.FLOAT).setValueCount(optional).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("float_repeated").setType(tfmd.FeatureType.FLOAT).setValueCount(repeated).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("float_empty").setType(tfmd.FeatureType.FLOAT).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("bytes_required").setType(tfmd.FeatureType.BYTES).setValueCount(required).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("bytes_optional").setType(tfmd.FeatureType.BYTES).setValueCount(optional).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("bytes_repeated").setType(tfmd.FeatureType.BYTES).setValueCount(repeated).build())
+    .addFeature(tfmd.Feature.newBuilder().setName("bytes_empty").setType(tfmd.FeatureType.BYTES).build())
     .build()
   // format: on
 
