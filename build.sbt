@@ -15,16 +15,15 @@
  * under the License.
  */
 
-import sbt._
-import Keys._
-import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
-import sbtassembly.AssemblyPlugin.autoImport._
-import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
-import com.typesafe.tools.mima.core._
-import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
-import bloop.integrations.sbt.BloopDefaults
-import de.heikoseeberger.sbtheader.CommentCreator
 import _root_.io.github.davidgregory084.DevMode
+import bloop.integrations.sbt.BloopDefaults
+import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import de.heikoseeberger.sbtheader.CommentCreator
+import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
+import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
+import sbt.*
+import sbt.Keys.*
+import sbtassembly.AssemblyPlugin.autoImport.*
 
 ThisBuild / turbo := true
 
@@ -138,7 +137,7 @@ val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val testContainersVersion = "0.41.0"
-val voyagerVersion = "1.2.0"
+val voyagerVersion = "1.2.6"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -1242,7 +1241,7 @@ lazy val `scio-repl`: Project = project
         case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
           // prefer beam avro classes from extensions lib instead of ones shipped in runners
           CustomMergeStrategy("BeamAvro") { conflicts =>
-            import sbtassembly.Assembly._
+            import sbtassembly.Assembly.*
             conflicts.collectFirst {
               case Library(ModuleCoordinate(_, "beam-sdks-java-extensions-avro", _), _, t, s) =>
                 JarEntry(t, s)
@@ -1254,7 +1253,7 @@ lazy val `scio-repl`: Project = project
         case PathList("org", "checkerframework", _*) =>
           // prefer checker-qual classes packaged in checkerframework libs
           CustomMergeStrategy("CheckerQual") { conflicts =>
-            import sbtassembly.Assembly._
+            import sbtassembly.Assembly.*
             conflicts.collectFirst {
               case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
                 JarEntry(t, s)
