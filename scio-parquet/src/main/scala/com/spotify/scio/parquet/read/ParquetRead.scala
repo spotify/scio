@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 
-
 trait ParquetRead {
 
   def read[T](
