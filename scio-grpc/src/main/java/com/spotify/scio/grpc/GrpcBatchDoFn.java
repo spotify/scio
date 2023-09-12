@@ -146,10 +146,9 @@ public class GrpcBatchDoFn<
     }
 
     /**
-     * Sets a new client function.
-     * This method takes a {@link SerializableFunction} that creates a gRPC async stub
-     * of type {@code <ClientType>} from the provided {@link Channel}. The new client function
-     * will be used to create the client for making gRPC requests.
+     * Sets a new client function. This method takes a {@link SerializableFunction} that creates a
+     * gRPC async stub of type {@code <ClientType>} from the provided {@link Channel}. The new
+     * client function will be used to create the client for making gRPC requests.
      *
      * @param newClientFn The {@link SerializableFunction} that creates the gRPC async stub.
      * @return The updated {@link Builder} instance.
@@ -161,15 +160,13 @@ public class GrpcBatchDoFn<
     }
 
     /**
-     * Sets the lookup function to be used for performing batch requests.
-     * This provided {@link SerializableBiFunction} should take a gRPC {@code <ClientType>} and a
-     * {@code <BatchRequest>} as input and returns a {@link ListenableFuture} of a
-     * {@code <BatchResponse>}.
+     * Sets the lookup function to be used for performing batch requests. This provided {@link
+     * SerializableBiFunction} should take a gRPC {@code <ClientType>} and a {@code <BatchRequest>}
+     * as input and returns a {@link ListenableFuture} of a {@code <BatchResponse>}.
      *
      * @param lookupFn The lookup function to be used for performing batch requests.
      * @return The updated {@link Builder} instance.
      */
-
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withLookupFn(
         SerializableBiFunction<ClientType, BatchRequest, ListenableFuture<BatchResponse>>
             lookupFn) {
@@ -178,11 +175,10 @@ public class GrpcBatchDoFn<
     }
 
     /**
-     * Sets the batch request function.
-     * This method takes a {@link SerializableFunction} that takes a {@link List} of {@code <Input>}
-     * objects representing the elements that will go into the {@code <BatchRequest>}.
-     * The {@link SerializableFunction} should return the {@code <BatchRequest>} that will be sent
-     * via gRPC.
+     * Sets the batch request function. This method takes a {@link SerializableFunction} that takes
+     * a {@link List} of {@code <Input>} objects representing the elements that will go into the
+     * {@code <BatchRequest>}. The {@link SerializableFunction} should return the {@code
+     * <BatchRequest>} that will be sent via gRPC.
      *
      * @param batchRequestFn The batch request function.
      * @return The updated {@link Builder} instance.
@@ -192,7 +188,6 @@ public class GrpcBatchDoFn<
       this.batchRequestFn = batchRequestFn;
       return this;
     }
-
 
     /**
      * Sets the batch response function.
@@ -206,7 +201,6 @@ public class GrpcBatchDoFn<
      * @param batchResponseFn The batch response function to be set.
      * @return The updated {@link Builder} instance.
      */
-
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withBatchResponseFn(
         SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn) {
       this.batchResponseFn = batchResponseFn;
@@ -214,12 +208,11 @@ public class GrpcBatchDoFn<
     }
 
     /**
-     * Sets the ID extractor function.
-     * The ID extractor function is a {@link SerializableFunction} that takes a single
-     * {@code <Input>} as a parameter and returns a String. The returned {@link String} represents
-     * a unique ID identifying the {@code <Input>}. This ID is used to match the {@code <Output>}
-     * inside the {@code <BatchResponse>}. Additionally, it is passed to the
-     * {@link com.spotify.scio.util.Cache} as the key to if a {@link CacheSupplier} is provided.
+     * Sets the ID extractor function. The ID extractor function is a {@link SerializableFunction}
+     * that takes a single {@code <Input>} as a parameter and returns a String. The returned {@link
+     * String} represents a unique ID identifying the {@code <Input>}. This ID is used to match the
+     * {@code <Output>} inside the {@code <BatchResponse>}. Additionally, it is passed to the {@link
+     * com.spotify.scio.util.Cache} as the key to if a {@link CacheSupplier} is provided.
      *
      * @param idExtractorFn the ID extractor function to set
      * @return The updated {@link Builder} instance.
@@ -231,9 +224,8 @@ public class GrpcBatchDoFn<
     }
 
     /**
-     * Sets the maximum number of pending requests allowed.
-     * This number represents the maximum number of parallel batch requests that can be created
-     * per DoFn instance.
+     * Sets the maximum number of pending requests allowed. This number represents the maximum
+     * number of parallel batch requests that can be created per DoFn instance.
      *
      * @param maxPendingRequests The maximum number of pending requests for the batch processing.
      * @return The updated {@link Builder} instance.
@@ -245,12 +237,11 @@ public class GrpcBatchDoFn<
     }
 
     /**
-     * Sets the batch size for batching elements.
-     * The batch size determines the maximum number of elements that can be batched into a single
-     * {@code <BatchRequest>}.
-     * Batches are created from the bundle elements, and we do not batch across bundles.
-     * If the batch size is set to a value less than 0, batches will be created with a single
-     * element in each.
+     * Sets the batch size for batching elements. The batch size determines the maximum number of
+     * elements that can be batched into a single {@code <BatchRequest>}. Batches are created from
+     * the bundle elements, and we do not batch across bundles. If the batch size is set to a value
+     * less than 0, batches will be created with a single element in each.
+     *
      * @param batchSize The batch size to set.
      * @return The updated {@link Builder} instance.
      */
@@ -261,11 +252,10 @@ public class GrpcBatchDoFn<
     }
 
     /**
-     * Sets the cache supplier for the Builder.
-     * This method allows you to set a {@link CacheSupplier} that is capable of supplying a
-     * {@link com.spotify.scio.util.Cache} of type {@link String} and {@code <Output>}. Where the
-     * {@link String} is the ID returned from the IdExtractorFn and is matched to a specific
-     * {@code <Output>} from the {@code <BatchResponse>}.
+     * Sets the cache supplier for the Builder. This method allows you to set a {@link
+     * CacheSupplier} that is capable of supplying a {@link com.spotify.scio.util.Cache} of type
+     * {@link String} and {@code <Output>}. Where the {@link String} is the ID returned from the
+     * IdExtractorFn and is matched to a specific {@code <Output>} from the {@code <BatchResponse>}.
      *
      * @param cacheSupplier the {@link CacheSupplier} to set for the Builder
      * @return The updated {@link Builder} instance.
