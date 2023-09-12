@@ -261,21 +261,20 @@ public abstract class BaseAsyncBatchLookupDoFn<
                               + "from the gRPC endpoints match the IDs extracted using the provided"
                               + "idExtractorFn for the same input.",
                           id);
+                    } else {
+                      final List<Result> batchResult =
+                          inputs.remove(id).stream()
+                              .map(
+                                  processInput -> {
+                                    final Input input = processInput.getLeft();
+                                    final Instant ts = processInput.getMiddle();
+                                    final BoundedWindow w = processInput.getRight();
+                                    return new Result(input, success(output), ts, w);
+                                  })
+                              .collect(Collectors.toList());
+                      results.add(Pair.of(key, batchResult));
                     }
-                    ;
-
-                    final List<Result> batchResult =
-                        inputs.remove(id).stream()
-                            .map(
-                                processInput -> {
-                                  final Input input = processInput.getLeft();
-                                  final Instant ts = processInput.getMiddle();
-                                  final BoundedWindow w = processInput.getRight();
-                                  return new Result(input, success(output), ts, w);
-                                })
-                            .collect(Collectors.toList());
-                    results.add(Pair.of(key, batchResult));
-                  });
+              });
           return null;
         },
         throwable -> {

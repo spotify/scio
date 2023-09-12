@@ -29,7 +29,7 @@ import org.scalatest.BeforeAndAfterAll
 
 import java.net.ServerSocket
 import java.util.stream.Collectors
-import scala.jdk.CollectionConverters.{CollectionHasAsScala, IterableHasAsJava}
+import scala.jdk.CollectionConverters._
 import scala.util.{Success, Try}
 
 object GrpcBatchDoFnTest {
@@ -49,7 +49,12 @@ object GrpcBatchDoFnTest {
   def processBatch(request: BatchRequest): BatchResponse =
     BatchResponse
       .newBuilder()
-      .addAllResponse(request.getRequestsList.stream().map(concat).collect(Collectors.toList()))
+      .addAllResponse(
+        request.getRequestsList
+          .stream()
+          .map[ConcatResponseWithID](concat)
+          .collect(Collectors.toList())
+      )
       .build()
 
   def concatBatchRequest(inputs: Seq[ConcatRequestWithID]): BatchRequest =
