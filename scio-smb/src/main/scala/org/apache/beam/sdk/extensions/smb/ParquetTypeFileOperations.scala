@@ -27,7 +27,7 @@ import org.apache.beam.sdk.util.MimeTypes
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.hadoop.{ParquetOutputFormat, ParquetReader, ParquetWriter}
+import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import java.nio.channels.{ReadableByteChannel, WritableByteChannel}
