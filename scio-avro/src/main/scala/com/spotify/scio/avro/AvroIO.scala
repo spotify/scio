@@ -220,6 +220,8 @@ final case class ObjectFileIO[T: Coder](
   override type WriteP = ObjectFileIO.WriteParam
   override val tapT: TapT.Aux[T, T] = TapOf[T]
 
+  override def testId: String = s"ObjectFileIO($path)"
+
   private lazy val underlying: GenericRecordIO =
     GenericRecordIO(path, AvroBytesUtil.schema, datumFactory)
 
@@ -265,6 +267,8 @@ final case class ProtobufIO[T <: Message: ClassTag: Coder](
   override type ReadP = ProtobufIO.ReadParam
   override type WriteP = ProtobufIO.WriteParam
   override val tapT: TapT.Aux[T, T] = TapOf[T]
+
+  override def testId: String = s"ProtobufIO($path)"
 
   private lazy val underlying: ObjectFileIO[T] = ObjectFileIO(path, datumFactory)
 

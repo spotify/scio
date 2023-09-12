@@ -35,7 +35,6 @@ import scala.reflect.ClassTag
 final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
   // TODO: can we find something more efficient than String ?
   private val sc = StringUtf8Coder.of()
-  @transient private lazy val parser = new Schema.Parser()
 
   private def genericCoder(schema: Schema): BCoder[GenericRecord] =
     AvroCoder.of(GenericRecordDatumFactory, schema)
@@ -49,7 +48,7 @@ final private class SlowGenericRecordCoder extends AtomicCoder[GenericRecord] {
 
   override def decode(is: InputStream): GenericRecord = {
     val schemaStr = sc.decode(is)
-    val schema = parser.parse(schemaStr)
+    val schema = new Schema.Parser().parse(schemaStr)
     val coder = genericCoder(schema)
     coder.decode(is)
   }
