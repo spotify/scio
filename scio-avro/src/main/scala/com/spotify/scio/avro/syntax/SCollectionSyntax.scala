@@ -28,7 +28,6 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._

@@ -18,24 +18,16 @@ package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.avro.ParquetAvroRead
-import com.spotify.scio.util.{Functions, ScioUtil}
-import com.twitter.chill.ClosureCleaner
 import magnolify.parquet.ParquetType
-import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
-import org.apache.avro.reflect.ReflectData
-import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
-import org.apache.beam.sdk.transforms.{PTransform, ParDo, SerializableFunction}
+import org.apache.beam.sdk.transforms.{PTransform, ParDo}
 import org.apache.beam.sdk.values.{PBegin, PCollection}
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.avro.{AvroReadSupport, GenericDataSupplier}
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 
-import scala.reflect.ClassTag
 
 trait ParquetRead {
 

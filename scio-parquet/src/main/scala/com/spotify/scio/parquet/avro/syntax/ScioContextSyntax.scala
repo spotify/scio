@@ -18,21 +18,17 @@
 package com.spotify.scio.parquet.avro.syntax
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.avro.{
-  ParquetAvroIO,
   ParquetGenericRecordIO,
   ParquetSpecificRecordIO
 }
 import com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam
-import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
-import org.apache.avro.specific.{SpecificData, SpecificRecord}
+import org.apache.avro.specific.SpecificRecord
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
 

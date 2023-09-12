@@ -38,7 +38,7 @@ import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam.{
 import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord, IndexedRecord}
@@ -59,7 +59,7 @@ import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.ClassTag
 
 sealed trait ParquetAvroIO[T <: IndexedRecord] extends ScioIO[T] {
 

@@ -27,7 +27,7 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.values.PCollection
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport}
+import org.apache.parquet.avro.AvroReadSupport
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 

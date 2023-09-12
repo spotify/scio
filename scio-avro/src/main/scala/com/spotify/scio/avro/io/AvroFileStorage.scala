@@ -20,12 +20,11 @@ package com.spotify.scio.avro.io
 import com.spotify.scio.avro.{GenericRecordDatumFactory, SpecificRecordDatumFactory}
 import com.spotify.scio.io.FileStorage
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericDatumReader, GenericRecord, IndexedRecord}
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.avro.file.{DataFileReader, SeekableInput}
-import org.apache.avro.specific.{SpecificData, SpecificDatumReader, SpecificRecord}
+import org.apache.avro.specific.{SpecificData, SpecificRecord}
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.io.DatumReader
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory.SpecificDatumFactory
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata
 
