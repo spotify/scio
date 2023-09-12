@@ -18,7 +18,7 @@
 package com.spotify.scio.avro
 
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericRecord, GenericRecordBuilder}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 
 import scala.jdk.CollectionConverters._
 

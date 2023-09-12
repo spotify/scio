@@ -27,7 +27,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.prop.{TableDrivenPropertyChecks, TableFor1, Tables}
+import org.scalatest.prop.TableDrivenPropertyChecks
 
 import java.io.File
 import java.nio.file.Files
