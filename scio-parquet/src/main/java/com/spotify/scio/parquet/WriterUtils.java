@@ -57,7 +57,10 @@ public class WriterUtils {
         .withConf(conf)
         .withCompressionCodec(compression)
         .withPageSize(ParquetOutputFormat.getPageSize(conf))
-        .withPageRowCountLimit(conf.getInt(ParquetOutputFormat.PAGE_ROW_COUNT_LIMIT, ParquetProperties.DEFAULT_PAGE_ROW_COUNT_LIMIT))
+        .withPageRowCountLimit(
+            conf.getInt(
+                ParquetOutputFormat.PAGE_ROW_COUNT_LIMIT,
+                ParquetProperties.DEFAULT_PAGE_ROW_COUNT_LIMIT))
         .withPageWriteChecksumEnabled(ParquetOutputFormat.getPageWriteChecksumEnabled(conf))
         .withWriterVersion(ParquetOutputFormat.getWriterVersion(conf))
         .withBloomFilterEnabled(ParquetOutputFormat.getBloomFilterEnabled(conf))
