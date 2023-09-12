@@ -47,6 +47,8 @@ import java.io.File
 import java.nio.file.Files
 import scala.util.chaining._
 
+import scala.concurrent.duration._
+
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
   override val suffix: String = ".parquet"
   override def save(
@@ -280,7 +282,10 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         // mysterious "Could not find proxy for val sc1" compiler error
         // take each records int value and multiply it by half hour, so we should have 2 records in each hour window
         .timestampBy(
-          x => new Instant(x.get("int_field").asInstanceOf[Int] * 1800000L),
+          x =>
+            Instant.ofEpochMilli(
+              (30.minutes * x.get("long_field").asInstanceOf[Long]).toMillis - 1
+            ),
           Duration.ZERO
         )
         .withFixedWindows(Duration.standardHours(1), Duration.ZERO, WindowOptions())
@@ -300,7 +305,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val files = recursiveListFiles(dir)
     files.length shouldBe 5
 
-    (0 until 10)
+    (1 to 10)
       .sliding(2, 2)
       .zipWithIndex
       .foreach { case (window, idx) =>
