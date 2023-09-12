@@ -18,11 +18,23 @@
 package com.spotify.scio.parquet.avro
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.{GenericRecordDatumFactory, SpecificRecordDatumFactory, avroCoder}
+import com.spotify.scio.avro.{avroCoder, GenericRecordDatumFactory, SpecificRecordDatumFactory}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT, TestIO}
-import com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam.{DefaultConfiguration, DefaultPredicate, DefaultProjection, DefaultSuffix}
-import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam.{DefaultCompression, DefaultFilenamePolicySupplier, DefaultNumShards, DefaultPrefix, DefaultShardNameTemplate, DefaultTempDirectory}
+import com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam.{
+  DefaultConfiguration,
+  DefaultPredicate,
+  DefaultProjection,
+  DefaultSuffix
+}
+import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam.{
+  DefaultCompression,
+  DefaultFilenamePolicySupplier,
+  DefaultNumShards,
+  DefaultPrefix,
+  DefaultShardNameTemplate,
+  DefaultTempDirectory
+}
 import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.parquet.{BeamInputFile, GcsConnectorUtil, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
@@ -138,10 +150,7 @@ sealed trait ParquetAvroIO[T <: IndexedRecord] extends ScioIO[T] {
         projectedFields match {
           case None => record
           case Some(projection) =>
-            record
-              .getSchema
-              .getFields
-              .asScala
+            record.getSchema.getFields.asScala
               .foldLeft(GenericData.get().deepCopy(record.getSchema, record)) { (r, f) =>
                 val names = Set(f.name()) ++ f.aliases().asScala.toSet
                 if (projection.intersect(names).isEmpty) {
@@ -218,7 +227,7 @@ sealed trait ParquetAvroIO[T <: IndexedRecord] extends ScioIO[T] {
 object ParquetAvroIO {
 
   private class Identity[T](cls: Class[T])
-      extends SimpleFunction[T, T](SerializableFunctions.identity) {
+      extends SimpleFunction[T, T](SerializableFunctions.identity[T]) {
     override def getInputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
     override def getOutputTypeDescriptor: TypeDescriptor[T] = TypeDescriptor.of(cls)
   }

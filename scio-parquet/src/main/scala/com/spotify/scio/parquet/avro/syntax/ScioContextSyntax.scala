@@ -19,7 +19,11 @@ package com.spotify.scio.parquet.avro.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.parquet.avro.{ParquetAvroIO, ParquetGenericRecordIO, ParquetSpecificRecordIO}
+import com.spotify.scio.parquet.avro.{
+  ParquetAvroIO,
+  ParquetGenericRecordIO,
+  ParquetSpecificRecordIO
+}
 import com.spotify.scio.parquet.avro.ParquetAvroIO.ReadParam
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection

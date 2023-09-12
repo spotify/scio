@@ -17,7 +17,7 @@
 package com.spotify.scio.parquet.avro
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.avro.{AvroUtils, TestRecord, avroGenericRecordCoder}
+import com.spotify.scio.avro.{avroGenericRecordCoder, AvroUtils, TestRecord}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.read.ParquetRead

@@ -32,7 +32,10 @@ import org.apache.avro.specific.{SpecificData, SpecificDatumReader, SpecificDatu
 import org.apache.avro.{Conversions, Schema}
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory.{GenericDatumFactory, SpecificDatumFactory}
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory.{
+  GenericDatumFactory,
+  SpecificDatumFactory
+}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
@@ -75,8 +78,8 @@ object ParquetAvroIOTest {
 
   final class TestLogicalTypesDataSupplier extends AvroDataSupplier {
     override def get(): GenericData = new GenericData()
-        .tap(_.addLogicalTypeConversion(new TimeConversions.TimestampConversion))
-        .tap(_.addLogicalTypeConversion(new Conversions.DecimalConversion))
+      .tap(_.addLogicalTypeConversion(new TimeConversions.TimestampConversion))
+      .tap(_.addLogicalTypeConversion(new Conversions.DecimalConversion))
   }
 }
 
@@ -186,7 +189,8 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     }
 
     runWithRealContext(options) { sc =>
-      val result = sc.read(genericIO)(ParquetGenericRecordIO.ReadParam(conf = conf, suffix = ".parquet"))
+      val result =
+        sc.read(genericIO)(ParquetGenericRecordIO.ReadParam(conf = conf, suffix = ".parquet"))
       result should containInAnyOrder(records)
     }
   }
@@ -355,14 +359,15 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       e.getCause shouldBe a[NotImplementedError]
   }
 
-  it should "throw exception when filename functions not correctly defined for windowed dynamic destinations" in withTempDir { dir =>
-    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(AvroUtils.schema)
+  it should "throw exception when filename functions not correctly defined for windowed dynamic destinations" in withTempDir {
+    dir =>
+      implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(AvroUtils.schema)
 
-    val filenamePolicySupplier = FilenamePolicySupplier.filenamePolicySupplierOf(
-      unwindowed = (_, _) => "test for exception handling"
-    )
+      val filenamePolicySupplier = FilenamePolicySupplier.filenamePolicySupplierOf(
+        unwindowed = (_, _) => "test for exception handling"
+      )
 
-    val e = the[PipelineExecutionException] thrownBy {
+      val e = the[PipelineExecutionException] thrownBy {
         runWithRealContext(options) { sc =>
           sc.parallelize(genericRecords)
             .timestampBy(

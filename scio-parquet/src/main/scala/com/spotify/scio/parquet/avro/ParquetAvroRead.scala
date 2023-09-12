@@ -52,7 +52,7 @@ trait ParquetAvroRead { self: ParquetRead =>
     schema: Schema,
     projection: Schema = null,
     predicate: FilterPredicate = null,
-    conf: Configuration = null,
+    conf: Configuration = null
   ): PTransform[PCollection[ReadableFile], PCollection[GenericRecord]] = {
     val configuration = ParquetConfiguration.ofNullable(conf)
 
