@@ -15,15 +15,16 @@
  * under the License.
  */
 
-import _root_.io.github.davidgregory084.DevMode
-import bloop.integrations.sbt.BloopDefaults
-import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
-import de.heikoseeberger.sbtheader.CommentCreator
+import sbt._
+import Keys._
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
+import sbtassembly.AssemblyPlugin.autoImport._
+import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import com.typesafe.tools.mima.core._
 import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
-import sbt.*
-import sbt.Keys.*
-import sbtassembly.AssemblyPlugin.autoImport.*
+import bloop.integrations.sbt.BloopDefaults
+import de.heikoseeberger.sbtheader.CommentCreator
+import _root_.io.github.davidgregory084.DevMode
 
 ThisBuild / turbo := true
 
@@ -1241,7 +1242,7 @@ lazy val `scio-repl`: Project = project
         case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
           // prefer beam avro classes from extensions lib instead of ones shipped in runners
           CustomMergeStrategy("BeamAvro") { conflicts =>
-            import sbtassembly.Assembly.*
+            import sbtassembly.Assembly._
             conflicts.collectFirst {
               case Library(ModuleCoordinate(_, "beam-sdks-java-extensions-avro", _), _, t, s) =>
                 JarEntry(t, s)
@@ -1253,7 +1254,7 @@ lazy val `scio-repl`: Project = project
         case PathList("org", "checkerframework", _*) =>
           // prefer checker-qual classes packaged in checkerframework libs
           CustomMergeStrategy("CheckerQual") { conflicts =>
-            import sbtassembly.Assembly.*
+            import sbtassembly.Assembly._
             conflicts.collectFirst {
               case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
                 JarEntry(t, s)
