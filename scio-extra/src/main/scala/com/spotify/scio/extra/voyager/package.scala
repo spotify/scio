@@ -18,9 +18,9 @@ package com.spotify.scio.extra
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.values.{DistCache, SCollection, SideInput}
+import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
-import com.spotify.voyager.jni.{Index, StringIndex}
+import com.spotify.voyager.jni.StringIndex
 import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import java.util.UUID
 import scala.collection.mutable
 
+/** Main package for Voyager side input APIs. Import all. */
 package object voyager {
   sealed abstract class VoyagerDistanceMeasure
   case object Euclidean extends VoyagerDistanceMeasure
@@ -44,6 +45,22 @@ package object voyager {
 
   val VOYAGER_URI_MAP: mutable.Map[VoyagerUri, VoyagerReader] = mutable.HashMap.empty
 
+  /**
+   * Voyager reader class for nearest neighbor lookups. Supports looking up neighbors for a vector
+   * and returning the string labels and distances associated.
+   *
+   * @param indexFileName
+   *   The path to the `index.hnsw` local or remote file.
+   * @param namesFileName
+   *   The path to the `names.json` local or remote file.
+   * @param distanceMeasure
+   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+   *   (inner product).
+   * @param storageType
+   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+   * @param dim
+   *   Number of dimensions in vectors.
+   */
   class VoyagerReader private[voyager] (
     indexFileName: String,
     namesFileName: String,
@@ -68,22 +85,40 @@ package object voyager {
       StringIndex.load(indexFileName, namesFileName, spaceType, dim, storageDataType)
     }
 
+    /**
+     * Gets maxNumResults nearest neighbors for vector v using ef (where ef is the size of the
+     * dynamic list for the nearest neighbors during search).
+     */
     def getNearest(v: Array[Float], maxNumResults: Int, ef: Int): Array[VoyagerResult] = {
       val queryResults = index.query(v, maxNumResults, ef)
       queryResults.getNames
         .zip(queryResults.getDistances)
         .map { case (name, distance) =>
-          VoyagerResult(name, distance.toFloat)
+          VoyagerResult(name, distance)
         }
     }
   }
 
-  /**
-   * To be used with with side inputs
-   *
-   * @param self
-   */
+  /** Enhanced version of [[ScioContext]] with Voyager methods */
   implicit class VoyagerScioContext(private val self: ScioContext) extends AnyVal {
+
+    /**
+     * Creates a SideInput of [[VoyagerReader]] from an [[VoyagerUri]] base path. To be used with
+     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]
+     *
+     * @param path
+     *   The directory path to be used for the [[VoyagerUri]].
+     * @param distanceMeasure
+     *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+     *   (inner product).
+     * @param storageType
+     *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+     * @param dim
+     *   Number of dimensions in vectors.
+     * @return
+     *   A [[SideInput]] of the [[VoyagerReader]] to be used for querying.
+     */
+    @experimental
     def voyagerSideInput(
       path: String,
       distanceMeasure: VoyagerDistanceMeasure,
@@ -100,11 +135,33 @@ package object voyager {
     @transient private val self: SCollection[(String, Array[Float])]
   ) extends AnyVal {
 
+    /**
+     * Write the key-value pairs of this SCollection as a Voyager index to a specified location
+     * using the parameters specified.
+     *
+     * @param path
+     *   The directory path to be used for the [[VoyagerUri]].
+     * @param distanceMeasure
+     *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+     *   (inner product).
+     * @param storageType
+     *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+     * @param dim
+     *   Number of dimensions in vectors.
+     * @param ef
+     *   The size of the dynamic list of neighbors used during construction time. This parameter
+     *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
+     *   documentation https://github.com/nmslib/hnswlib.
+     * @param m
+     *   The number of outgoing connections in the graph.
+     * @return
+     *   A [[VoyagerUri]] representing where the index was written to.
+     */
     @experimental
     def asVoyager(
       path: String,
-      voyagerDistanceMeasure: VoyagerDistanceMeasure,
-      voyagerStorageType: VoyagerStorageType,
+      distanceMeasure: VoyagerDistanceMeasure,
+      storageType: VoyagerStorageType,
       dim: Int,
       ef: Long,
       m: Long
@@ -117,7 +174,7 @@ package object voyager {
           in.groupBy(_ => ())
             .map { case (_, xs) =>
               val voyagerWriter: VoyagerWriter =
-                new VoyagerWriter(voyagerDistanceMeasure, voyagerStorageType, dim, ef, m)
+                new VoyagerWriter(distanceMeasure, storageType, dim, ef, m)
 
               voyagerWriter.write(xs)
               uri.saveAndClose(voyagerWriter)
@@ -127,6 +184,26 @@ package object voyager {
       }
     }
 
+    /**
+     * Write the key-value pairs of this SCollection as a Voyager index to a temporary location and
+     * building the index using the parameters specified.
+     *
+     * @param distanceMeasure
+     *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+     *   (inner product).
+     * @param storageType
+     *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+     * @param dim
+     *   Number of dimensions in vectors.
+     * @param ef
+     *   The size of the dynamic list of neighbors used during construction time. This parameter
+     *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
+     *   documentation https://github.com/nmslib/hnswlib.
+     * @param m
+     *   The number of outgoing connections in the graph.
+     * @return
+     *   A [[VoyagerUri]] representing where the index was written to.
+     */
     @experimental
     def asVoyager(
       distanceMeasure: VoyagerDistanceMeasure,
@@ -142,6 +219,28 @@ package object voyager {
       this.asVoyager(path, distanceMeasure, storageType, dim, ef, m)
     }
 
+    /**
+     * Write the key-value pairs of this SCollection as a Voyager index to a temporary location,
+     * building the index using the parameters specified and then loading the reader into a side
+     * input.
+     *
+     * @param distanceMeasure
+     *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+     *   (inner product).
+     * @param storageType
+     *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+     * @param dim
+     *   Number of dimensions in vectors.
+     * @param ef
+     *   The size of the dynamic list of neighbors used during construction time. This parameter
+     *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
+     *   documentation https://github.com/nmslib/hnswlib.
+     * @param m
+     *   The number of outgoing connections in the graph.
+     * @return
+     *   A SideInput with a [[VoyagerReader]]
+     */
+    @experimental
     def asVoyagerSideInput(
       distanceMeasure: VoyagerDistanceMeasure,
       storageType: VoyagerStorageType,
@@ -154,9 +253,26 @@ package object voyager {
         .asVoyagerSideInput(distanceMeasure, storageType, dim)
   }
 
+  /**
+   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Voyager methods.
+   */
   implicit class AnnoySCollection(@transient private val self: SCollection[VoyagerUri])
       extends AnyVal {
 
+    /**
+     * Load the Voyager index stored at [[VoyagerUri]] in this
+     * [[com.spotify.scio.values.SCollection SCollection]].
+     *
+     * @param distanceMeasure
+     *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+     *   (inner product).
+     * @param storageType
+     *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+     * @param dim
+     *   Number of dimensions in vectors.
+     * @return
+     *   SideInput[VoyagerReader]
+     */
     @experimental
     def asVoyagerSideInput(
       distanceMeasure: VoyagerDistanceMeasure,
@@ -168,6 +284,10 @@ package object voyager {
     }
   }
 
+  /**
+   * Construction for a VoyagerSide input that leverages a synchronized map to ensure that the
+   * reader is only loaded once per [[VoyagerUri]].
+   */
   private class VoyagerSideInput(
     val view: PCollectionView[VoyagerUri],
     distanceMeasure: VoyagerDistanceMeasure,

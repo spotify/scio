@@ -18,19 +18,23 @@ package com.spotify.scio.extra.voyager
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
-
-import java.nio.charset.StandardCharsets
 import com.spotify.voyager.jni.Index
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.options.PipelineOptions
 import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters
-import scala.collection.mutable
 import java.io.File
 import java.net.URI
+import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
+import scala.collection.mutable
 
+/**
+ * Represents the base URI for a voyager index, either on a local or a remote file system. For
+ * remote file systems, the `path` should be in the form 'scheme://<bucket>/<path>/'. For local
+ * files, it should be in the form '/<path>/'. The `path` specified represents the directory where
+ * the `index.hnsw` and `names.json` are.
+ */
 trait VoyagerUri extends Serializable {
   val logger = LoggerFactory.getLogger(this.getClass)
   val path: String
@@ -99,7 +103,7 @@ private class RemoteVoyagerUri(
     w.close()
 
     VoyagerUri.files.foreach { f =>
-      val tf = tempPath.resolve(f)
+      val tf: Path = tempPath.resolve(f)
       rfu.upload(Paths.get(tf.toString), new URI(path + "/" + f))
       Files.delete(tf)
     }
@@ -116,7 +120,6 @@ private[voyager] class VoyagerWriter(
   ef: Long = 200L,
   m: Long = 16L
 ) {
-  private val logger = LoggerFactory.getLogger(this.getClass)
 
   // Chunk size experiments - <chunk_size>, <num_chunks>
   // 4096, 6062: 2022-11-16 14:07:07.358 -> 2022-11-16 16:50:59.109 = 2hr 50min.  1.68s per chunk
