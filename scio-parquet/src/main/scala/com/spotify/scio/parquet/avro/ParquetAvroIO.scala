@@ -41,8 +41,8 @@ import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericDatumReader, GenericRecord, IndexedRecord}
-import org.apache.avro.specific.{SpecificData, SpecificRecord}
+import org.apache.avro.generic.{GenericDatumReader, GenericRecord, IndexedRecord}
+import org.apache.avro.specific.{SpecificData, SpecificRecord, SpecificRecordBase}
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io._
@@ -148,18 +148,28 @@ sealed trait ParquetAvroIO[T <: IndexedRecord] extends ScioIO[T] {
       .toSCollection(sc)
       .map { record =>
         projectedFields match {
-          case None => record
+          case None             => record
           case Some(projection) =>
+            // SpecificData.getForClass is only available for 1.9+
+            val data = record match {
+              case _: SpecificRecordBase =>
+                val classModelField = record.getClass.getDeclaredField("MODEL$")
+                classModelField.setAccessible(true)
+                classModelField.get(null).asInstanceOf[SpecificData]
+              case _ =>
+                SpecificData.get()
+            }
+
+            // beam forbids mutations. Create a new record
+            val copy = data.deepCopy(record.getSchema, record)
             record.getSchema.getFields.asScala
-              .foldLeft(GenericData.get().deepCopy(record.getSchema, record)) { (r, f) =>
+              .foldLeft(copy) { (c, f) =>
                 val names = Set(f.name()) ++ f.aliases().asScala.toSet
                 if (projection.intersect(names).isEmpty) {
-                  // field is not part of the projection. set default value
-                  val i = f.pos()
-                  val v = GenericData.get().getDefaultValue(f)
-                  r.put(i, v)
+                  // field is not part of the projection. user default value
+                  c.put(f.pos(), data.getDefaultValue(f))
                 }
-                r
+                c
               }
         }
       }
@@ -286,16 +296,6 @@ object ParquetAvroIO {
     shardNameTemplate: String = DefaultShardNameTemplate,
     tempDirectory: String = DefaultTempDirectory
   )
-
-//  private[avro] def containsLogicalType(s: Schema): Boolean = {
-//    s.getLogicalType != null || (s.getType match {
-//      case Schema.Type.RECORD => s.getFields.asScala.exists(f => containsLogicalType(f.schema()))
-//      case Schema.Type.ARRAY  => containsLogicalType(s.getElementType)
-//      case Schema.Type.UNION  => s.getTypes.asScala.exists(t => containsLogicalType(t))
-//      case Schema.Type.MAP    => containsLogicalType(s.getValueType)
-//      case _                  => false
-//    })
-//  }
 }
 
 final case class ParquetGenericRecordIO(

@@ -41,7 +41,13 @@ object ParquetExample {
    * These case classes represent both full and projected field mappings from the [[Account]] Avro
    * record.
    */
-  case class AccountFull(id: Int, `type`: String, name: Option[String], amount: Double)
+  case class AccountFull(
+    id: Int,
+    `type`: String,
+    name: Option[String],
+    amount: Double,
+    accountStatus: Option[AccountStatus]
+  )
   case class AccountProjection(id: Int, name: Option[String])
 
   /**
@@ -108,13 +114,11 @@ object ParquetExample {
 
   private def avroSpecificIn(sc: ScioContext, args: Args): ClosedTap[String] = {
     // Macros for generating column projections and row predicates
-    val projection = Projection[Account](_.getId, _.getName, _.getAmount)
+    // account_status is the only field with default value that can be left out the projection
+    val projection = Projection[Account](_.getId, _.getType, _.getName, _.getAmount)
     val predicate = Predicate[Account](x => x.getAmount > 0)
 
     sc.parquetAvroFile[Account](args("input"), projection, predicate)
-      // The result Account records are not complete Avro objects. Only the projected columns are present while the rest are null.
-      // These objects may fail serialization and it’s recommended that you map them out to tuples or case classes right after reading.
-      .map(x => AccountProjection(x.getId, Some(x.getName.toString)))
       .saveAsTextFile(args("output"))
   }
 
@@ -146,12 +150,19 @@ object ParquetExample {
       // but close to `parquet.block.size`, i.e. 1 GiB. This guarantees that each file contains 1 row group only and reduces seeks.
       .saveAsParquetAvroFile(args("output"), numShards = 1, conf = fineTunedParquetWriterConfig)
 
+  private[extra] def toScalaFull(account: Account): AccountFull =
+    AccountFull(
+      account.getId,
+      account.getType.toString,
+      Some(account.getName.toString),
+      account.getAmount,
+      Some(account.getAccountStatus)
+    )
+
   private def typedOut(sc: ScioContext, args: Args): ClosedTap[AccountFull] =
     sc.parallelize(fakeData)
-      .map(x => AccountFull(x.getId, x.getType.toString, Some(x.getName.toString), x.getAmount))
-      .saveAsTypedParquetFile(
-        args("output")
-      )
+      .map(toScalaFull)
+      .saveAsTypedParquetFile(args("output"))
 
   private[extra] def toExample(account: Account): Example = {
     val features = Features
