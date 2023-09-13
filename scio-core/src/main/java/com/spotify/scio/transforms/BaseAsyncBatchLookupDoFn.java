@@ -252,8 +252,11 @@ public abstract class BaseAsyncBatchLookupDoFn<
                   pair -> {
                     final String id = pair.getLeft();
                     final Output output = pair.getRight();
-
-                    if (!inputs.containsKey(id)) {
+                    final List<Triple<Input, Instant, BoundedWindow>> processInputs =
+                        inputs.remove(id);
+                    if (processInputs == null) {
+                      // no need to fail future here as we're only interested in its completion
+                      // finishBundle will fail the checkState as we do not produce any result
                       LOG.error(
                           "The ID '{}' received in the gRPC batch response does not "
                               + "match any IDs extracted via the idExtractorFn for the requested  "
@@ -263,7 +266,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
                           id);
                     } else {
                       final List<Result> batchResult =
-                          inputs.remove(id).stream()
+                          processInputs.stream()
                               .map(
                                   processInput -> {
                                     final Input input = processInput.getLeft();
@@ -274,7 +277,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
                               .collect(Collectors.toList());
                       results.add(Pair.of(key, batchResult));
                     }
-              });
+                  });
           return null;
         },
         throwable -> {
