@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.extra.voyager
 
 import com.spotify.scio.{ScioContext, ScioResult}
@@ -26,9 +27,9 @@ import java.io.File
 import java.nio.file.Files
 
 class VoyagerTest extends PipelineSpec {
-  val distanceMeasure = Cosine
-  val storageType = E4M3
-  val dim = 2
+  val spaceType: SpaceType = SpaceType.Cosine
+  val storageDataType: StorageDataType = StorageDataType.E4M3
+  val dim: Int = 2
 
   val sideData: Seq[(String, Array[Float])] =
     Seq(("1", Array(2.5f, 7.2f)), ("2", Array(1.2f, 2.2f)), ("3", Array(5.6f, 3.4f)))
@@ -39,7 +40,7 @@ class VoyagerTest extends PipelineSpec {
     val sc = ScioContext()
     val p: ClosedTap[VoyagerUri] =
       sc.parallelize(sideData)
-        .asVoyager(basePath, distanceMeasure, storageType, dim, 200L, 16L)
+        .asVoyager(basePath, spaceType, storageDataType, dim, 200L, 16L)
         .materialize
 
     val scioResult: ScioResult = sc.run().waitUntilFinish()
@@ -75,7 +76,14 @@ class VoyagerTest extends PipelineSpec {
 
     the[IllegalArgumentException] thrownBy {
       runWithContext {
-        _.parallelize(sideData).asVoyager(tmpDir.toString, Cosine, E4M3, dim, 200L, 16L)
+        _.parallelize(sideData).asVoyager(
+          tmpDir.toString,
+          spaceType,
+          storageDataType,
+          dim,
+          200L,
+          16L
+        )
       }
     } should have message s"requirement failed: Voyager URI $tmpDir already exists"
 

@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.extra
 
 import com.spotify.scio.ScioContext
@@ -30,20 +31,13 @@ import scala.collection.mutable
 
 /** Main package for Voyager side input APIs. Import all. */
 package object voyager {
-  sealed abstract class VoyagerDistanceMeasure
-  case object Euclidean extends VoyagerDistanceMeasure
-  case object Cosine extends VoyagerDistanceMeasure
-  case object Dot extends VoyagerDistanceMeasure
-
-  sealed abstract class VoyagerStorageType
-  case object Float8 extends VoyagerStorageType
-  case object Float32 extends VoyagerStorageType
-  case object E4M3 extends VoyagerStorageType
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  @transient lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   case class VoyagerResult(value: String, distance: Float)
 
-  val VOYAGER_URI_MAP: mutable.Map[VoyagerUri, VoyagerReader] = mutable.HashMap.empty
+  private val VOYAGER_URI_MAP: mutable.Map[VoyagerUri, VoyagerReader] = mutable.HashMap.empty
+  private[voyager] val RANDOM_SEED: Long = 1L
+  private[voyager] val CHUNK_SIZE: Int = 32786 // 2^15
 
   /**
    * Voyager reader class for nearest neighbor lookups. Supports looking up neighbors for a vector
@@ -53,10 +47,10 @@ package object voyager {
    *   The path to the `index.hnsw` local or remote file.
    * @param namesFileName
    *   The path to the `names.json` local or remote file.
-   * @param distanceMeasure
+   * @param spaceType
    *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
    *   (inner product).
-   * @param storageType
+   * @param storageDataType
    *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
    * @param dim
    *   Number of dimensions in vectors.
@@ -64,26 +58,14 @@ package object voyager {
   class VoyagerReader private[voyager] (
     indexFileName: String,
     namesFileName: String,
-    distanceMeasure: VoyagerDistanceMeasure,
-    storageType: VoyagerStorageType,
+    spaceType: SpaceType,
+    storageDataType: StorageDataType,
     dim: Int
   ) {
     require(dim > 0, "Vector dimension should be > 0")
 
-    private val index: StringIndex = {
-      val spaceType = distanceMeasure match {
-        case Euclidean => SpaceType.Euclidean
-        case Cosine    => SpaceType.Cosine
-        case Dot       => SpaceType.InnerProduct
-      }
-
-      val storageDataType = storageType match {
-        case Float8  => StorageDataType.Float8
-        case Float32 => StorageDataType.Float32
-        case E4M3    => StorageDataType.E4M3
-      }
+    private val index: StringIndex =
       StringIndex.load(indexFileName, namesFileName, spaceType, dim, storageDataType)
-    }
 
     /**
      * Gets maxNumResults nearest neighbors for vector v using ef (where ef is the size of the
@@ -108,10 +90,10 @@ package object voyager {
      *
      * @param path
      *   The directory path to be used for the [[VoyagerUri]].
-     * @param distanceMeasure
+     * @param spaceType
      *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
      *   (inner product).
-     * @param storageType
+     * @param storageDataType
      *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
      * @param dim
      *   Number of dimensions in vectors.
@@ -121,13 +103,13 @@ package object voyager {
     @experimental
     def voyagerSideInput(
       path: String,
-      distanceMeasure: VoyagerDistanceMeasure,
-      storageType: VoyagerStorageType,
+      spaceType: SpaceType,
+      storageDataType: StorageDataType,
       dim: Int
     ): SideInput[VoyagerReader] = {
       val uri = VoyagerUri(path, self.options)
       val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
-      new VoyagerSideInput(view, distanceMeasure, storageType, dim)
+      new VoyagerSideInput(view, spaceType, storageDataType, dim)
     }
   }
 
@@ -141,11 +123,11 @@ package object voyager {
      *
      * @param path
      *   The directory path to be used for the [[VoyagerUri]].
-     * @param distanceMeasure
+     * @param spaceType
      *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
      *   (inner product).
-     * @param storageType
-     *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+     * @param storageDataType
+     *   The storage data type of the vectors at rest. One of Float8, Float32 or E4M3.
      * @param dim
      *   Number of dimensions in vectors.
      * @param ef
@@ -160,8 +142,8 @@ package object voyager {
     @experimental
     def asVoyager(
       path: String,
-      distanceMeasure: VoyagerDistanceMeasure,
-      storageType: VoyagerStorageType,
+      spaceType: SpaceType,
+      storageDataType: StorageDataType,
       dim: Int,
       ef: Long,
       m: Long
@@ -174,7 +156,7 @@ package object voyager {
           in.groupBy(_ => ())
             .map { case (_, xs) =>
               val voyagerWriter: VoyagerWriter =
-                new VoyagerWriter(distanceMeasure, storageType, dim, ef, m)
+                new VoyagerWriter(spaceType, storageDataType, dim, ef, m)
 
               voyagerWriter.write(xs)
               uri.saveAndClose(voyagerWriter)
@@ -191,7 +173,7 @@ package object voyager {
      * @param distanceMeasure
      *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
      *   (inner product).
-     * @param storageType
+     * @param storageDataType
      *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
      * @param dim
      *   Number of dimensions in vectors.
@@ -206,8 +188,8 @@ package object voyager {
      */
     @experimental
     def asVoyager(
-      distanceMeasure: VoyagerDistanceMeasure,
-      storageType: VoyagerStorageType,
+      distanceMeasure: SpaceType,
+      storageDataType: StorageDataType,
       dim: Int,
       ef: Long = 200L,
       m: Long = 16L
@@ -216,7 +198,7 @@ package object voyager {
       val tempLocation: String = self.context.options.getTempLocation
       require(tempLocation != null, s"--tempLocation arg is required")
       val path = s"$tempLocation/voyager-build-$uuid"
-      this.asVoyager(path, distanceMeasure, storageType, dim, ef, m)
+      this.asVoyager(path, distanceMeasure, storageDataType, dim, ef, m)
     }
 
     /**
@@ -224,7 +206,7 @@ package object voyager {
      * building the index using the parameters specified and then loading the reader into a side
      * input.
      *
-     * @param distanceMeasure
+     * @param spaceType
      *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
      *   (inner product).
      * @param storageType
@@ -242,15 +224,15 @@ package object voyager {
      */
     @experimental
     def asVoyagerSideInput(
-      distanceMeasure: VoyagerDistanceMeasure,
-      storageType: VoyagerStorageType,
+      spaceType: SpaceType,
+      storageType: StorageDataType,
       dim: Int,
       ef: Long = 200L,
       m: Long = 16L
     ): SideInput[VoyagerReader] =
       self
-        .asVoyager(distanceMeasure, storageType, dim, ef, m)
-        .asVoyagerSideInput(distanceMeasure, storageType, dim)
+        .asVoyager(spaceType, storageType, dim, ef, m)
+        .asVoyagerSideInput(spaceType, storageType, dim)
   }
 
   /**
@@ -263,7 +245,7 @@ package object voyager {
      * Load the Voyager index stored at [[VoyagerUri]] in this
      * [[com.spotify.scio.values.SCollection SCollection]].
      *
-     * @param distanceMeasure
+     * @param spaceType
      *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
      *   (inner product).
      * @param storageType
@@ -275,12 +257,12 @@ package object voyager {
      */
     @experimental
     def asVoyagerSideInput(
-      distanceMeasure: VoyagerDistanceMeasure,
-      storageType: VoyagerStorageType,
+      spaceType: SpaceType,
+      storageType: StorageDataType,
       dim: Int
     ): SideInput[VoyagerReader] = {
       val view = self.applyInternal(View.asSingleton())
-      new VoyagerSideInput(view, distanceMeasure, storageType, dim)
+      new VoyagerSideInput(view, spaceType, storageType, dim)
     }
   }
 
@@ -290,8 +272,8 @@ package object voyager {
    */
   private class VoyagerSideInput(
     val view: PCollectionView[VoyagerUri],
-    distanceMeasure: VoyagerDistanceMeasure,
-    storageType: VoyagerStorageType,
+    distanceMeasure: SpaceType,
+    storageType: StorageDataType,
     dim: Int
   ) extends SideInput[VoyagerReader] {
     override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {

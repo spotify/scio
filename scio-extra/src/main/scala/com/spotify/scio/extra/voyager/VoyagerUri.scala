@@ -14,6 +14,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.spotify.scio.extra.voyager
 
 import com.spotify.scio.coders.Coder
@@ -21,7 +22,6 @@ import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.voyager.jni.Index
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.options.PipelineOptions
-import org.slf4j.LoggerFactory
 
 import java.io.File
 import java.net.URI
@@ -36,11 +36,10 @@ import scala.collection.mutable
  * the `index.hnsw` and `names.json` are.
  */
 trait VoyagerUri extends Serializable {
-  val logger = LoggerFactory.getLogger(this.getClass)
-  val path: String
+  def path: String
   private[voyager] def getReader(
-    distanceMeasure: VoyagerDistanceMeasure,
-    storageType: VoyagerStorageType,
+    distanceMeasure: SpaceType,
+    storageDataType: StorageDataType,
     dim: Int
   ): VoyagerReader
   private[voyager] def saveAndClose(voyagerWriter: VoyagerWriter): Unit
@@ -62,8 +61,8 @@ private[voyager] object VoyagerUri {
 
 private class LocalVoyagerUri(val path: String) extends VoyagerUri {
   override private[voyager] def getReader(
-    distanceMeasure: VoyagerDistanceMeasure,
-    storageType: VoyagerStorageType,
+    distanceMeasure: SpaceType,
+    storageType: StorageDataType,
     dim: Int
   ): VoyagerReader = {
 
@@ -87,8 +86,8 @@ private class RemoteVoyagerUri(
 ) extends VoyagerUri {
   private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
   override private[voyager] def getReader(
-    distanceMeasure: VoyagerDistanceMeasure,
-    storageType: VoyagerStorageType,
+    distanceMeasure: SpaceType,
+    storageType: StorageDataType,
     dim: Int
   ): VoyagerReader = {
     val indexFileName: String = rfu.download(new URI(path + "/index.hnsw")).toString
@@ -114,39 +113,18 @@ private class RemoteVoyagerUri(
 }
 
 private[voyager] class VoyagerWriter(
-  distanceMeasure: VoyagerDistanceMeasure,
-  storageType: VoyagerStorageType,
+  spaceType: SpaceType,
+  storageDataType: StorageDataType,
   dim: Int,
   ef: Long = 200L,
   m: Long = 16L
 ) {
-
-  // Chunk size experiments - <chunk_size>, <num_chunks>
-  // 4096, 6062: 2022-11-16 14:07:07.358 -> 2022-11-16 16:50:59.109 = 2hr 50min.  1.68s per chunk
-  // 32786, 758: 2022-11-16 15:37:11.374 -> 2022-11-16 16:50:29.396 = 1hr 13min.  5.77s per chunk
-  // 131072, 190: 2022-11-17 13:38:08.421 -> 2022-11-17 15:42:39.929 = 2hr 6min.  39.79s per chunk
-  private val chunkSize = 32786 // 2^15
-  private val randomSeed = 1L
   private[this] val namesOutput = mutable.ListBuffer.empty[String]
 
-  private[this] val index: Index = {
-    val spaceType = distanceMeasure match {
-      case Euclidean => SpaceType.Euclidean
-      case Cosine    => SpaceType.Cosine
-      case Dot       => SpaceType.InnerProduct
-    }
-
-    val storageDataType = storageType match {
-      case Float8  => StorageDataType.Float8
-      case Float32 => StorageDataType.Float32
-      case E4M3    => StorageDataType.E4M3
-    }
-    new Index(spaceType, dim, m, ef, randomSeed, chunkSize, storageDataType)
-  }
+  private[this] val index: Index =
+    new Index(spaceType, dim, m, ef, RANDOM_SEED, CHUNK_SIZE, storageDataType)
 
   def write(vectors: Iterable[(String, Array[Float])]): Unit = {
-    var batchNum = 1
-
     val nameVectorIndexIterator = vectors.iterator.zipWithIndex
       .map { case ((name, vector), idx) =>
         (name, vector, idx.longValue())
@@ -154,13 +132,11 @@ private[voyager] class VoyagerWriter(
 
     while (nameVectorIndexIterator.hasNext) {
       val (nameArray, vectorArray, indexArray) = nameVectorIndexIterator
-        .take(chunkSize)
+        .take(CHUNK_SIZE)
         .toArray
         .unzip3
 
       index.addItems(vectorArray, indexArray, -1)
-
-      batchNum += 1
       namesOutput ++= nameArray
     }
 

@@ -19,6 +19,7 @@ package com.spotify.scio.extra.voyager
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.values.SideInput
+import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
 
@@ -27,8 +28,8 @@ import scala.jdk.CollectionConverters._
 
 class VoyagerIT extends PipelineSpec {
   val dim: Int = 2
-  val storageType: VoyagerStorageType = E4M3
-  val distanceMeasure: VoyagerDistanceMeasure = Cosine
+  val storageType: StorageDataType = StorageDataType.E4M3
+  val distanceMeasure: SpaceType = SpaceType.Cosine
 
   val sideData: Seq[(String, Array[Float])] =
     Seq(("1", Array(2.5f, 7.2f)), ("2", Array(1.2f, 2.2f)), ("3", Array(5.6f, 3.4f)))
