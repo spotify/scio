@@ -121,10 +121,6 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testLogicalTypes() throws Exception {
     final Configuration conf = new Configuration();
-    //    conf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, GenericDataLogicalTypeSupplier.class,
-    // AvroDataSupplier.class);
-    //    conf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, GenericDataLogicalTypeSupplier.class,
-    // AvroDataSupplier.class);
 
     final ParquetAvroFileOperations<TestLogicalTypes> fileOperations =
         ParquetAvroFileOperations.of(
