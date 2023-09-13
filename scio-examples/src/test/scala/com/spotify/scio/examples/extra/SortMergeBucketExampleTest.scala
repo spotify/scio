@@ -55,14 +55,14 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
       GenericRecordTap(
         path = userDir.getAbsolutePath,
         schema = SortMergeBucketExample.UserDataSchema,
-        params = AvroIO.ReadParam(".avro"),
-        datumFactory = GenericRecordDatumFactory
+        datumFactory = GenericRecordDatumFactory,
+        params = AvroIO.ReadParam(".avro")
       ).value.size shouldBe 500
 
       SpecificRecordTap[Account](
         path = accountDir.getAbsolutePath,
-        params = AvroIO.ReadParam(".avro"),
-        datumFactory = new SpecificRecordDatumFactory(classOf[Account])
+        datumFactory = new SpecificRecordDatumFactory(classOf[Account]),
+        params = AvroIO.ReadParam(".avro")
       ).value.size shouldBe 500
 
       SortMergeBucketJoinExample.main(
