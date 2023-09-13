@@ -62,12 +62,12 @@ val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
 // tested versions
-val avroVersion =
-  "1.8.2" // https://github.com/apache/beam/blob/v2.49.0/sdks/java/extensions/avro/build.gradle
-val hadoopVersion =
-  "3.2.4" // https://github.com/apache/beam/blob/v2.49.0/sdks/java/io/hadoop-common/build.gradle
-val sparkVersion =
-  "3.4.1" // https://github.com/apache/beam/blob/v2.49.0/runners/spark/3/build.gradle
+// https://github.com/apache/beam/blob/v2.50.0/sdks/java/extensions/avro/build.gradle
+val avroVersion = "1.8.2" // do not ship newer version yet. Let user override
+// https://github.com/apache/beam/blob/v2.50.0/sdks/java/io/hadoop-common/build.gradle
+val hadoopVersion = "3.2.4"
+// https://github.com/apache/beam/blob/v2.50.0/runners/spark/3/build.gradle
+val sparkVersion = "3.4.1"
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.22.0/index.html
