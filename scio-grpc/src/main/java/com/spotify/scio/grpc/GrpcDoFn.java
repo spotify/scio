@@ -18,6 +18,7 @@ package com.spotify.scio.grpc;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
 import io.grpc.Channel;
@@ -46,7 +47,7 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       ChannelSupplier channelSupplier,
       SerializableFunction<Channel, ClientT> newClientFn,
       SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn,
-      Integer maxPendingRequests) {
+      int maxPendingRequests) {
     super(maxPendingRequests);
     this.channelSupplier = channelSupplier;
     this.newClientFn = newClientFn;
@@ -57,7 +58,7 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       ChannelSupplier channelSupplier,
       SerializableFunction<Channel, ClientT> newClientFn,
       SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn,
-      Integer maxPendingRequests,
+      int maxPendingRequests,
       CacheSupplier<RequestT, ResponseT> cacheSupplier) {
     super(maxPendingRequests, cacheSupplier);
     this.channelSupplier = channelSupplier;
@@ -69,7 +70,7 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
       ChannelSupplier channelSupplier,
       SerializableFunction<Channel, ClientT> newClientFn,
       SerializableBiFunction<ClientT, RequestT, ListenableFuture<ResponseT>> lookupFn,
-      Integer maxPendingRequests,
+      int maxPendingRequests,
       boolean deduplicate,
       CacheSupplier<RequestT, ResponseT> cacheSupplier) {
     super(maxPendingRequests, deduplicate, cacheSupplier);
@@ -146,6 +147,7 @@ public class GrpcDoFn<RequestT, ResponseT, ClientT extends AbstractStub<ClientT>
      *     prevents runner from timing out and retrying bundles.
      */
     public Builder<RequestT, ResponseT, ClientT> withMaxPendingRequests(int maxPendingRequests) {
+      Preconditions.checkArgument(maxPendingRequests > 0, "maxPendingRequests must be positive");
       this.maxPendingRequests = maxPendingRequests;
       return this;
     }

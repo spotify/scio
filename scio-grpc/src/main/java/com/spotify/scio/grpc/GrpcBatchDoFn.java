@@ -18,6 +18,7 @@ package com.spotify.scio.grpc;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.grpc.GrpcDoFn.ChannelSupplier;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
@@ -44,7 +45,6 @@ import org.apache.commons.lang3.tuple.Pair;
 public class GrpcBatchDoFn<
         Input, BatchRequest, BatchResponse, Output, Client extends AbstractFutureStub<Client>>
     extends GuavaAsyncBatchLookupDoFn<Input, BatchRequest, BatchResponse, Output, Client> {
-
   private final ChannelSupplier channelSupplier;
   private final SerializableFunction<Channel, Client> newClientFn;
 
@@ -54,12 +54,12 @@ public class GrpcBatchDoFn<
   public GrpcBatchDoFn(
       ChannelSupplier channelSupplier,
       SerializableFunction<Channel, Client> newClientFn,
-      Integer batchSize,
+      int batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
       SerializableFunction<Input, String> idExtractorFn,
       SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>> lookupFn,
-      Integer maxPendingRequests) {
+      int maxPendingRequests) {
     super(batchSize, batchRequestFn, batchResponseFn, idExtractorFn, maxPendingRequests);
     this.channelSupplier = channelSupplier;
     this.newClientFn = newClientFn;
@@ -69,12 +69,12 @@ public class GrpcBatchDoFn<
   public GrpcBatchDoFn(
       ChannelSupplier channelSupplier,
       SerializableFunction<Channel, Client> newClientFn,
-      Integer batchSize,
+      int batchSize,
       SerializableFunction<List<Input>, BatchRequest> batchRequestFn,
       SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn,
       SerializableFunction<Input, String> idExtractorFn,
       SerializableBiFunction<Client, BatchRequest, ListenableFuture<BatchResponse>> lookupFn,
-      Integer maxPendingRequests,
+      int maxPendingRequests,
       CacheSupplier<String, Output> cacheSupplier) {
     super(
         batchSize,
@@ -128,7 +128,7 @@ public class GrpcBatchDoFn<
     private SerializableFunction<List<Input>, BatchRequest> batchRequestFn;
     private SerializableFunction<BatchResponse, List<Pair<String, Output>>> batchResponseFn;
     private SerializableFunction<Input, String> idExtractorFn;
-    private Integer maxPendingRequests;
+    private int maxPendingRequests = GrpcDoFn.DEFAULT_MAX_PENDING_REQUESTS;
     private Integer batchSize;
     private CacheSupplier<String, Output> cacheSupplier =
         new BaseAsyncLookupDoFn.NoOpCacheSupplier<>();
@@ -231,7 +231,8 @@ public class GrpcBatchDoFn<
      * @return The updated {@link Builder} instance.
      */
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withMaxPendingRequests(
-        Integer maxPendingRequests) {
+        int maxPendingRequests) {
+      Preconditions.checkArgument(maxPendingRequests > 0, "maxPendingRequests must be positive");
       this.maxPendingRequests = maxPendingRequests;
       return this;
     }
@@ -239,14 +240,14 @@ public class GrpcBatchDoFn<
     /**
      * Sets the batch size for batching elements. The batch size determines the maximum number of
      * elements that can be batched into a single {@code <BatchRequest>}. Batches are created from
-     * the bundle elements, and we do not batch across bundles. If the batch size is set to a value
-     * less than 0, batches will be created with a single element in each.
+     * the bundle elements, and we do not batch across bundles.
      *
      * @param batchSize The batch size to set.
      * @return The updated {@link Builder} instance.
      */
     public Builder<Input, BatchRequest, BatchResponse, Output, ClientType> withBatchSize(
-        Integer batchSize) {
+        int batchSize) {
+      Preconditions.checkArgument(batchSize > 0, "batchSize must be positive");
       this.batchSize = batchSize;
       return this;
     }
@@ -273,7 +274,6 @@ public class GrpcBatchDoFn<
       requireNonNull(batchRequestFn, "batchRequestFn must not be null");
       requireNonNull(batchResponseFn, "batchResponseFn must not be null");
       requireNonNull(idExtractorFn, "idExtractorFn must not be null");
-      requireNonNull(maxPendingRequests, "maxPendingRequests must not be null");
       requireNonNull(batchSize, "batchSize must not be null");
       requireNonNull(cacheSupplier, "cacheSupplier must not be null");
 
