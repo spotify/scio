@@ -20,21 +20,19 @@ cd scio
 sbt publishLocal
 ```
 
-You can also specify sbt heap size with `-mem`, e.g. `sbt -mem 8192`. Use the `SBT_OPTS` environment variable for more fine grained settings.
+More info on cross-building [here](https://www.scala-sbt.org/1.x/docs/Cross-Build.html#Switching+Scala+version).
 
-```bash
-export SBT_OPTS="-Xmx8G -Xms8G -Xss1M -XX:MaxMetaspaceSize=1G -XX:+CMSClassUnloadingEnabled -XX:ReservedCodeCacheSize=128m"
-```
+You can also specify sbt heap size with `-mem`, e.g. `sbt -mem 8192`. Some sensible defaults are stored in `.sbtopts`.
 
 To ensure the project loads and builds successfully, run the following sbt command so that all custom tasks are executed
 
 ```bash
-sbt compile test:compile
+sbt compile Test/compile
 ```
 
 ## Running the Examples
 
-You can execute the examples locally from SBT. By default pipelines will be executed using the @javadoc[DirectRunner](org.apache.beam.runners.direct.DirectRunner) and local filesystem will be used for input and output. Take a look at the @github[examples](/scio-examples/src/main/scala/com/spotify/scio/examples) to find out more.
+You can execute the examples locally from SBT. By default, pipelines will be executed using the @javadoc[DirectRunner](org.apache.beam.runners.direct.DirectRunner) and local filesystem will be used for input and output. Take a look at the @github[examples](/scio-examples/src/main/scala/com/spotify/scio/examples) to find out more.
 
 ```
 neville@localhost scio $ sbt
@@ -65,7 +63,7 @@ neville@localhost scio $ sbt
 
 The Cloud Platform `project` refers to its name (not number). GCE availability `region` should be in the same region as the BigQuery datasets and GCS bucket.
 
-By default only `DirectRunner` is in the library dependencies list. Use `set beamRunners := "<runners>"` to specify additional runner dependencies as a comma separated list, i.e. "DataflowRunner,FlinkRunner".
+By default, only `DirectRunner` is in the library dependencies list. Use `set beamRunners := "<runners>"` to specify additional runner dependencies as a comma separated list, i.e. "DataflowRunner,FlinkRunner".
 
 ## SBT project setup
 
@@ -75,14 +73,15 @@ To create a new SBT project using Giter8 [scio-template](https://github.com/spot
 sbt new spotify/scio-template.g8
 ```
 
-Or add the following to your `build.sbt`. Replace the direct and Dataflow runner with ones you wish to use. The compiler plugin dependency is only needed for the type safe BigQuery API.
+Or add the following to your `build.sbt`. Replace the direct and Dataflow runner with ones you wish to use.
+The compiler plugin dependency is only needed for the type safe BigQuery API with scala 2.12.
 
 ```sbt
 libraryDependencies ++= Seq(
-  "com.spotify" %% "scio-core" % "0.6.1",
-  "com.spotify" %% "scio-test" % "0.6.1" % "test",
-  "org.apache.beam" % "beam-runners-direct-java" % "2.6.0",
-  "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % "2.6.0"
+  "com.spotify" %% "scio-core" % scioVersion,
+  "com.spotify" %% "scio-test" % scioVersion % Test,
+  "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
+  "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Runtime
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)

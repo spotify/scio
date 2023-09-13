@@ -4,43 +4,28 @@
 
 ### Code formatters
 
-We use [scalafmt](https://scalameta.org/scalafmt) and [sbt-java-formatter](https://github.com/sbt/sbt-java-formatter) to format code automatically and keep the code style consistent.
+We use [scalafmt](https://scalameta.org/scalafmt) and [sbt-java-formatter](https://github.com/sbt/sbt-java-formatter) to format code automatically and keep the code style consistent,
+and [sbt-header](https://github.com/sbt/sbt-header) to generate copyright file header.
+
+See `scalafmt` [configuration file](https://github.com/spotify/scio/blob/main/.scalafmt.conf).
 
 #### `Sbt` plugin
 
 Run the following command to format the entire codebase.
 
-`sbt scalafmt test:scalafmt scalafmtSbt it:scalafmt`
+`sbt scalafmtAll javafmtAll headerCreateAll`
 
 #### IntelliJ IDEA
 
 Most of us write Scala code in IntelliJ IDEA and it's wise to let the IDE do most of the work including managing imports and formatting code. To use `scalafmt` you need an additional plugin. Follow this [link](https://plugins.jetbrains.com/plugin/8236-scalafmt) to install it.
 
-We also want to avoid custom settings as much as possible to make on-boarding new developers easier. Hence we use IntelliJ IDEA's default settings with the following exceptions:
+We also want to avoid custom settings as much as possible to make on-boarding new developers easier. Hence, we use IntelliJ IDEA's default settings with the following exceptions:
 
 - Set _Code Style &rarr; Scala &rarr; Formatter &rarr; scalafmt_
-- Under _Copyright &rarr; Copyright Profiles_, add the following template.
-
-```
-  Copyright $today.year Spotify AB.
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing,
-  software distributed under the License is distributed on an
-  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-  KIND, either express or implied.  See the License for the
-  specific language governing permissions and limitations
-  under the License.
-```
 
 ### Scalafix
 
-[Scalafix](https://scalacenter.github.io/scalafix/) is a refactoring and linting tool that we rely on as well to keep our code tidy. Currently we use the following rules:
+[Scalafix](https://scalacenter.github.io/scalafix/) is a refactoring and linting tool that we rely on as well to keep our code tidy. Currently, we use the following rules:
 
 ```
 rules = [
@@ -49,9 +34,14 @@ rules = [
 ]
 ```
 
+Run the following command to let scalafix refactor your code.
+
+`sbt scalafixEnable scalafixAll`
+
 ### References
 
-We want to adhere to the styles of well known Scala projects and use the following documents as references when `scalafmt` needs a little bit of help. We follow the Databricks Scala Guide mainly with a few differences described in the next section.
+We want to adhere to the styles of well known Scala projects and use the following documents as references when `scalafmt` needs a little bit of help.
+We follow the Databricks Scala Guide mainly with a few differences described in the next section.
 
 - [Databricks Scala Guide](https://github.com/databricks/scala-style-guide)
 - The Official [Scala Style Guide](http://docs.scala-lang.org/style)
