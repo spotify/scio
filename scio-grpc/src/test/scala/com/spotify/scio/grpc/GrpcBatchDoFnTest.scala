@@ -100,7 +100,7 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
 
   override def afterAll(): Unit = server.shutdown()
 
-  "BatchGrpcDoFn" should "issue request and propagate response" in {
+  "GrpcBatchDoFn" should "issue request and propagate response" in {
 
     val input = (0 to 10).map { i =>
       ConcatRequestWithID
@@ -191,13 +191,16 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "propagate results if elements have the same id" in {
-    val input = (0 to 10).map { i =>
-      ConcatRequestWithID
-        .newBuilder()
-        .setRequestId(i.toString)
-        .setStringOne(i.toString)
-        .setStringTwo(i.toString)
-        .build()
+    // Forcing the bundles to be bigger than one by sending a lot of input 2*1000
+    val input = (1 to 2).flatMap { i =>
+      (1 to 1000).map { _ =>
+        ConcatRequestWithID
+          .newBuilder()
+          .setRequestId(i.toString)
+          .setStringOne(i.toString)
+          .setStringTwo(i.toString)
+          .build()
+      }
     }
 
     val expected: Seq[(ConcatRequestWithID, Try[ConcatResponseWithID])] = input.map { req =>
@@ -216,7 +219,7 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
         ](
           () => NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
           ConcatServiceGrpc.newFutureStub,
-          2,
+          50,
           concatBatchRequest,
           concatBatchResponse,
           idExtractor,
