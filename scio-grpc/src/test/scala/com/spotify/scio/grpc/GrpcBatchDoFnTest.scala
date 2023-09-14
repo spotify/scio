@@ -191,17 +191,15 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
   }
 
   it should "propagate results if elements have the same id" in {
-    // Forcing the bundles to be bigger than one by sending a lot of input 2*1000
-    val input = (1 to 2).flatMap { i =>
-      (1 to 1000).map { _ =>
-        ConcatRequestWithID
-          .newBuilder()
-          .setRequestId(i.toString)
-          .setStringOne(i.toString)
-          .setStringTwo(i.toString)
-          .build()
-      }
-    }
+    val input = for {
+      _ <- 0 to 5
+      i <- 0 to 10
+    } yield ConcatRequestWithID
+      .newBuilder()
+      .setRequestId(i.toString)
+      .setStringOne(i.toString)
+      .setStringTwo(i.toString)
+      .build()
 
     val expected: Seq[(ConcatRequestWithID, Try[ConcatResponseWithID])] = input.map { req =>
       val resp = concat(req)
@@ -209,8 +207,10 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
     }
 
     runWithContext { sc =>
+      // use flatMap to make sure all elements are in the same bundle
       val result = sc
-        .parallelize(input)
+        .parallelize(Seq(()))
+        .flatMap(_ => input)
         .grpcBatchLookup[
           BatchRequest,
           BatchResponse,
