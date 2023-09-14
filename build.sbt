@@ -1205,6 +1205,8 @@ lazy val `scio-repl`: Project = project
   .settings(
     // drop repl compatibility with java 8
     tpolecatDevModeOptions ~= { _.filterNot(_ == Scalac.release8) },
+    // do not fork when running otherwise system terminal cannot be created.
+    run / fork := false,
     libraryDependencies ++= Seq(
       // compile
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
