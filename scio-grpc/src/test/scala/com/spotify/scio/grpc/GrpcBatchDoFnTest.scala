@@ -194,7 +194,7 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
     val input = (0 to 10).map { i =>
       ConcatRequestWithID
         .newBuilder()
-        .setRequestId("1")
+        .setRequestId(i.toString)
         .setStringOne(i.toString)
         .setStringTwo(i.toString)
         .build()
