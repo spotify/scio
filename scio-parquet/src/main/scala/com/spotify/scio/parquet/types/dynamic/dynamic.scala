@@ -19,7 +19,7 @@ package com.spotify.scio.parquet.types
 import com.spotify.scio.parquet.types.dynamic.syntax.AllSyntax
 
 /**
- * Parquet avro package for dynamic destinations. Import All.
+ * Parquet type-safe package for dynamic destinations. Import All.
  *
  * {{{
  * import com.spotify.scio.parquet.types.dynamic._
