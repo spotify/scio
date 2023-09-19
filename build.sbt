@@ -1336,6 +1336,10 @@ lazy val `scio-smb`: Project = project
   .settings(beamRunnerSettings)
   .settings(
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
+    unusedCompileDependenciesFilter -= Seq(
+      // ParquetUtils calls functions defined in parent class from hadoop-mapreduce-client-core
+      moduleFilter("org.apache.hadoop", "hadoop-mapreduce-client-core")
+    ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
@@ -1365,7 +1369,7 @@ lazy val `scio-smb`: Project = project
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.avro" % "avro" % avroVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
-      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Test,
+      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
       "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll ("org.apache.avro" % "avro"),
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
