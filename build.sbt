@@ -948,6 +948,7 @@ lazy val `scio-grpc`: Project = project
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-stub" % grpcVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       // test
       "io.grpc" % "grpc-netty" % grpcVersion % Test
     )

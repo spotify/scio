@@ -44,7 +44,8 @@ public class FutureHandlers {
     @Override
     default void waitForFutures(Iterable<ListenableFuture<V>> futures)
         throws InterruptedException, ExecutionException {
-      // Futures#allAsList only works if all futures succeed
+      // use Future#successfulAsList instead of Futures#allAsList which only works if all
+      // futures succeed
       Futures.successfulAsList(futures).get();
     }
 

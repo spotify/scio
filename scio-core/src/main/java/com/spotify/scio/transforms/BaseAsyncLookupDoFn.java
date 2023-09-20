@@ -54,17 +54,17 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     implements FutureHandlers.Base<F, B> {
   private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncLookupDoFn.class);
 
-  private final CacheSupplier<A, B> cacheSupplier;
   private final boolean deduplicate;
+  private final CacheSupplier<A, B> cacheSupplier;
 
   // Data structures for handling async requests
   private final int maxPendingRequests;
   private final Semaphore semaphore;
   private final ConcurrentMap<UUID, F> futures = new ConcurrentHashMap<>();
   private final ConcurrentMap<A, F> inFlightRequests = new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
-  private long requestCount;
-  private long resultCount;
+  private final ConcurrentLinkedQueue<Pair<UUID, Result>> results = new ConcurrentLinkedQueue<>();
+  private long inputCount;
+  private long outputCount;
 
   /** Creates the client. */
   protected abstract C newClient();
@@ -117,9 +117,9 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
    */
   public BaseAsyncLookupDoFn(
       int maxPendingRequests, boolean deduplicate, CacheSupplier<A, B> cacheSupplier) {
-    this.cacheSupplier = cacheSupplier;
-    this.deduplicate = deduplicate;
     this.maxPendingRequests = maxPendingRequests;
+    this.deduplicate = deduplicate;
+    this.cacheSupplier = cacheSupplier;
     this.semaphore = new Semaphore(maxPendingRequests);
   }
 
@@ -141,8 +141,8 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     futures.clear();
     results.clear();
     inFlightRequests.clear();
-    requestCount = 0;
-    resultCount = 0;
+    inputCount = 0;
+    outputCount = 0;
     semaphore.drainPermits();
     semaphore.release(maxPendingRequests);
   }
@@ -154,21 +154,22 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
       @Timestamp Instant timestamp,
       OutputReceiver<KV<A, T>> out,
       BoundedWindow window) {
+    inputCount++;
     flush(r -> out.output(KV.of(r.input, r.output)));
     final C client = getResourceClient();
     final Cache<A, B> cache = getResourceCache();
 
     try {
-      final UUID uuid = UUID.randomUUID();
+      final UUID key = UUID.randomUUID();
       final B cached = cache.getIfPresent(input);
       final F inFlight = inFlightRequests.get(input);
       if (cached != null) {
         // found in cache
         out.output(KV.of(input, success(cached)));
+        outputCount++;
       } else if (inFlight != null) {
         // pending request for the same element
-        futures.put(uuid, handleOutput(inFlight, input, uuid, timestamp, window));
-        requestCount++;
+        futures.put(key, handleOutput(inFlight, input, key, timestamp, window));
       } else {
         // semaphore release is not performed on exception.
         // let beam retry the bundle. startBundle will reset the semaphore to the
@@ -179,8 +180,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
         handleCache(future, input, cache);
         // make sure semaphore are released when waiting for futures in finishBundle
         final F unlockedFuture = handleSemaphore(future);
-        futures.put(uuid, handleOutput(unlockedFuture, input, uuid, timestamp, window));
-        requestCount++;
+        futures.put(key, handleOutput(unlockedFuture, input, key, timestamp, window));
       }
     } catch (InterruptedException e) {
       LOG.error("Failed to acquire semaphore", e);
@@ -210,21 +210,23 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
 
     // Make sure all requests are processed
     Preconditions.checkState(
-        requestCount == resultCount,
-        "Expected requestCount == resultCount, but %s != %s",
-        requestCount,
-        resultCount);
+        inputCount == outputCount,
+        "Expected inputCount == outputCount, but %s != %s",
+        inputCount,
+        outputCount);
   }
 
   private F handleOutput(F future, A input, UUID key, Instant timestamp, BoundedWindow window) {
     return addCallback(
         future,
         output -> {
-          results.add(new Result(input, success(output), key, timestamp, window));
+          final Result result = new Result(input, success(output), timestamp, window);
+          results.add(Pair.of(key, result));
           return null;
         },
         throwable -> {
-          results.add(new Result(input, failure(throwable), key, timestamp, window));
+          final Result result = new Result(input, failure(throwable), timestamp, window);
+          results.add(Pair.of(key, result));
           return null;
         });
   }
@@ -260,11 +262,13 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
 
   // Flush pending errors and results
   private void flush(Consumer<Result> outputFn) {
-    Result r = results.poll();
+    Pair<UUID, Result> r = results.poll();
     while (r != null) {
-      outputFn.accept(r);
-      resultCount++;
-      futures.remove(r.futureUuid);
+      final UUID key = r.getKey();
+      final Result result = r.getValue();
+      outputFn.accept(result);
+      outputCount++;
+      futures.remove(key);
       r = results.poll();
     }
   }
@@ -272,14 +276,12 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
   private class Result {
     private A input;
     private T output;
-    private UUID futureUuid;
     private Instant timestamp;
     private BoundedWindow window;
 
-    Result(A input, T output, UUID futureUuid, Instant timestamp, BoundedWindow window) {
+    Result(A input, T output, Instant timestamp, BoundedWindow window) {
       this.input = input;
       this.output = output;
-      this.futureUuid = futureUuid;
       this.timestamp = timestamp;
       this.window = window;
     }
