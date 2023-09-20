@@ -91,6 +91,37 @@ trait ParquetAvroRead { self: ParquetRead =>
 
     readFiles(ReadSupportFactory.avro, new SerializableConfiguration(configuration))
   }
+
+  /**
+   * A ReadFiles implementation that reads Parquet file(s) into possibly incomplete Avro
+   * [[SpecificRecord]]s and directly transformed into desired type with the given parse function.
+   *
+   * @param parseFn
+   *   the function transforming the Avro [[SpecificRecord]]s into the desired type
+   * @param projection
+   *   an [[Schema]] used for Projection, made up of a subset of fields from the full Avro type `T`
+   * @param predicate
+   *   a Parquet [[FilterPredicate]] predicate
+   * @param conf
+   *   a Parquet [[Configuration]]
+   */
+  def parseAvroFiles[A <: SpecificRecord: ClassTag, T](
+    parseFn: A => T,
+    projection: Schema = null,
+    predicate: FilterPredicate = null,
+    conf: Configuration = null
+  ): PTransform[PCollection[ReadableFile], PCollection[T]] = {
+    val configuration = ParquetConfiguration.ofNullable(conf)
+
+    val recordClass = ScioUtil.classOf[A]
+    val schema = SpecificData.get().getSchema(recordClass)
+    AvroReadSupport.setAvroReadSchema(configuration, schema)
+
+    Option(projection).foreach(p => AvroReadSupport.setRequestedProjection(configuration, p))
+    Option(predicate).foreach(p => ParquetInputFormat.setFilterPredicate(configuration, p))
+
+    parseFiles(ReadSupportFactory.avro, new SerializableConfiguration(configuration), parseFn)
+  }
 }
 
 object ParquetAvroRead extends ParquetRead with ParquetAvroRead

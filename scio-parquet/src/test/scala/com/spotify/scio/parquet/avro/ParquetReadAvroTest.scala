@@ -31,12 +31,20 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 
 import java.io.File
 import java.nio.file.Files
+import scala.Long.unbox
 import scala.jdk.CollectionConverters._
+
+object ParquetReadAvroTest {
+  final case class TestParsedRecord(i: Int, l: Option[Long])
+}
 
 class ParquetReadAvroTest
     extends PipelineSpec
     with BeforeAndAfterAll
     with TableDrivenPropertyChecks {
+
+  import ParquetReadAvroTest._
+
   private val options = PipelineOptionsFactory.create()
   private val testDir = Files.createTempDirectory("scio-test").toFile
   // Multiple row-groups
@@ -61,9 +69,18 @@ class ParquetReadAvroTest
       .build
   }
 
-  private val predicate = Predicate[TestRecord](_.getIntField <= 300)
-  private val filteredRecords = avroRecords.filter(_.getIntField <= 300)
-  private val filteredProjectedRecords = projectedRecords.filter(_.getIntField <= 300)
+  private val predicate =
+    Predicate[TestRecord](_.getIntField <= 300)
+  private val parseFn = (r: TestRecord) =>
+    TestParsedRecord(r.getIntField, Option(r.getLongField).map(Long.unbox))
+  private val filteredRecords =
+    avroRecords.filter(_.getIntField <= 300)
+  private val filteredParsedRecords =
+    filteredRecords.map(r => TestParsedRecord(r.getIntField, Some(r.getLongField)))
+  private val filteredProjectedRecords =
+    projectedRecords.filter(_.getIntField <= 300)
+  private val filteredProjectedParsedRecords =
+    filteredProjectedRecords.map(r => TestParsedRecord(r.getIntField, None))
 
   override def beforeAll(): Unit = {
     val sc = ScioContext()
@@ -137,7 +154,7 @@ class ParquetReadAvroTest
       runWithRealContext(options) { sc =>
         val result = sc
           .parallelize(listFiles(path))
-          .readFiles[TestRecord](
+          .readFiles(
             ParquetRead.readAvroFiles[TestRecord](
               predicate = predicate
             )
@@ -164,6 +181,47 @@ class ParquetReadAvroTest
   it should "be serializable" in {
     SerializableUtils.ensureSerializable(
       ParquetRead.readAvroFiles[TestRecord](
+        projection,
+        predicate
+      )
+    )
+  }
+
+  "parseAvroFiles" should "work without a projection" in {
+    forAll(rowGroups) { path =>
+      runWithRealContext(options) { sc =>
+        val result = sc
+          .parallelize(listFiles(path))
+          .readFiles(
+            ParquetRead.parseAvroFiles[TestRecord, TestParsedRecord](
+              parseFn = parseFn,
+              predicate = predicate
+            )
+          )
+        result should containInAnyOrder(filteredParsedRecords)
+      }
+    }
+  }
+
+  it should "work with a projection on files with multiple row groups" in {
+    runWithRealContext(options) { sc =>
+      val result = sc
+        .parallelize(listFiles(testMultiDir))
+        .readFiles(
+          ParquetRead.parseAvroFiles[TestRecord, TestParsedRecord](
+            parseFn = parseFn,
+            projection,
+            predicate
+          )
+        )
+      result should containInAnyOrder(filteredProjectedParsedRecords)
+    }
+  }
+
+  it should "be serializable" in {
+    SerializableUtils.ensureSerializable(
+      ParquetRead.parseAvroFiles[TestRecord, TestParsedRecord](
+        parseFn,
         projection,
         predicate
       )

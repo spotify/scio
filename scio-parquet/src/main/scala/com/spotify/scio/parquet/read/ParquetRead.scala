@@ -18,6 +18,7 @@ package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.avro.ParquetAvroRead
+import com.spotify.scio.util.Functions
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.FileIO.ReadableFile
@@ -48,10 +49,21 @@ trait ParquetRead {
     readSupportFactory: ReadSupportFactory[T],
     conf: SerializableConfiguration
   ): PTransform[PCollection[ReadableFile], PCollection[T]] = {
-    val sdf = new ParquetReadFn[T](readSupportFactory, conf)
+    val sdf = ParquetReadFn(readSupportFactory, conf)
     val tfx: PTransform[PCollection[_ <: ReadableFile], PCollection[T]] = ParDo.of(sdf)
 
     tfx.asInstanceOf[PTransform[PCollection[ReadableFile], PCollection[T]]]
+  }
+
+  def parseFiles[T, U](
+    readSupportFactory: ReadSupportFactory[T],
+    conf: SerializableConfiguration,
+    parseFn: T => U
+  ): PTransform[PCollection[ReadableFile], PCollection[U]] = {
+    val sdf = ParquetReadFn(readSupportFactory, conf, parseFn)
+    val tfx: PTransform[PCollection[_ <: ReadableFile], PCollection[U]] = ParDo.of(sdf)
+
+    tfx.asInstanceOf[PTransform[PCollection[ReadableFile], PCollection[U]]]
   }
 
   /**
