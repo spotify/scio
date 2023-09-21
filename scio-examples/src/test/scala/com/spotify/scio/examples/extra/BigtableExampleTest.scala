@@ -17,6 +17,7 @@
 
 package com.spotify.scio.examples.extra
 
+import cats.Eq
 import com.google.cloud.bigtable.hbase.adapters.read.RowCell
 import com.spotify.scio.bigtable._
 import com.spotify.scio.io._
@@ -26,6 +27,7 @@ import org.apache.hadoop.hbase.client.{Mutation, Result}
 
 import java.nio.charset.StandardCharsets
 import java.util.Collections
+import scala.collection.immutable.Seq
 
 class BigtableExampleTest extends PipelineSpec {
   import BigtableExample._
@@ -38,10 +40,12 @@ class BigtableExampleTest extends PipelineSpec {
 
   val textIn: Seq[String] = Seq("a b c d e", "a b a b")
   val wordCount: Seq[(String, Long)] = Seq("a" -> 3L, "b" -> 3L, "c" -> 1L, "d" -> 1L, "e" -> 1L)
-  val expectedMutations: Seq[Mutation] =
-    wordCount.map { case (word, count) => BigtableExample.toPutMutation(word, count) }
 
   "BigtableWriteExample" should "work" in {
+    val expectedMutations: Seq[Mutation] = wordCount
+      .map { case (word, count) => BigtableExample.toPutMutation(word, count) }
+    implicit val eqMutation: Eq[Mutation] = Eq.by(_.toString)
+
     JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
@@ -51,21 +55,21 @@ class BigtableExampleTest extends PipelineSpec {
       .run()
   }
 
-  def toResult(key: String, value: Long): Result = {
-    val cell = new RowCell(
-      key.getBytes(StandardCharsets.UTF_8),
-      FAMILY_NAME,
-      COLUMN_QUALIFIER,
-      0L,
-      BigInt(value).toByteArray
-    )
-    Result.create(Collections.singletonList[Cell](cell))
-  }
-
-  val results: Seq[Result] = wordCount.map { case (word, count) => toResult(word, count) }
-  val expectedText: Seq[String] = wordCount.map { case (word, count) => s"$word:$count" }
-
   "BigtableReadExample" should "work" in {
+    def toResult(key: String, value: Long): Result = {
+      val cell = new RowCell(
+        key.getBytes(StandardCharsets.UTF_8),
+        FAMILY_NAME,
+        COLUMN_QUALIFIER,
+        0L,
+        BigInt(value).toByteArray
+      )
+      Result.create(Collections.singletonList[Cell](cell))
+    }
+
+    val results: Seq[Result] = wordCount.map { case (word, count) => toResult(word, count) }
+    val expectedText: Seq[String] = wordCount.map { case (word, count) => s"$word:$count" }
+
     JobTest[com.spotify.scio.examples.extra.BigtableReadExample.type]
       .args(bigtableOptions :+ "--output=out.txt": _*)
       .input(BigtableIO("my-project", "my-instance", "my-table"), results)
