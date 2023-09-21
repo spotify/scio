@@ -38,7 +38,7 @@ object BigtableExample {
       .addColumn(FAMILY_NAME, COLUMN_QUALIFIER, 0L, BigInt(value).toByteArray)
 
   // Convert a Bigtable `Result` from reading to a formatted key-value string
-  def fromRow(r: Result): String = {
+  def fromResult(r: Result): String = {
     val key = new String(r.getRow, StandardCharsets.UTF_8)
     val value = BigInt(r.getValue(FAMILY_NAME, COLUMN_QUALIFIER)).toLong
     s"$key:$value"
@@ -110,7 +110,7 @@ object BigtableReadExample {
     val btTableId = args("bigtableTableId")
 
     sc.bigtable(btProjectId, btInstanceId, btTableId)
-      .map(BigtableExample.fromRow)
+      .map(BigtableExample.fromResult)
       .saveAsTextFile(args("output"))
 
     sc.run()
