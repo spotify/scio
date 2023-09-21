@@ -110,6 +110,7 @@ val elasticsearch7Version = "7.17.9"
 val elasticsearch8Version = "8.9.1"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
+val hbaseVersion = "1.7.2"
 val httpAsyncClientVersion = "4.1.5"
 val hamcrestVersion = "2.2"
 val jakartaJsonVersion = "2.1.2"
@@ -233,6 +234,12 @@ lazy val java17Settings = sys.props("java.version") match {
     )
   case _ => Def.settings()
 }
+
+// test libs to exclude
+val testLibs: Seq[ExclusionRule] = Seq(
+  "junit" % "junit",
+  "org.hamcrest" % "hamcrest-core"
+)
 
 val commonSettings = formatSettings ++
   mimaSettings ++
@@ -733,7 +740,9 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-      "com.google.cloud.bigtable" % "bigtable-hbase-beam" % bigtableHbaseBeamVersion,
+      "com.google.cloud.bigtable" % "bigtable-hbase-beam" % bigtableHbaseBeamVersion excludeAll (testLibs: _*),
+      "com.google.cloud.bigtable" % "bigtable-hbase-1.x-shaded" % bigtableHbaseBeamVersion excludeAll (testLibs: _*),
+      "org.apache.hbase" % "hbase-shaded-client" % hbaseVersion excludeAll (testLibs: _*),
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
@@ -1276,6 +1285,12 @@ lazy val `scio-repl`: Project = project
         case s if s.endsWith(".proto") =>
           // arbitrary pick last conflicting proto file
           MergeStrategy.last
+        case PathList("dependencies.properties") =>
+          // arbitrary pick last dependencies property file
+          MergeStrategy.last
+        case PathList("THIRD-PARTY.txt") =>
+          // drop conflicting THIRD-PARTY.txt
+          MergeStrategy.discard
         case PathList("git.properties") =>
           // drop conflicting git properties
           MergeStrategy.discard
@@ -1285,11 +1300,26 @@ lazy val `scio-repl`: Project = project
         case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
           // drop conflicting kotlin compiler info
           MergeStrategy.discard
+        case PathList("META-INF", "native-image", "incremental.annotation.processors") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
         case PathList("META-INF", "io.netty.versions.properties") =>
           // merge conflicting netty property files
           MergeStrategy.filterDistinctLines
         case PathList("META-INF", "native-image", "native-image.properties") =>
           // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case PathList(
+              "META-INF",
+              "native-image",
+              "com.google.api",
+              "gax-grpc",
+              "native-image.properties"
+            ) =>
+          // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case PathList("mozilla", "public-suffix-list.txt") =>
+          // merge conflicting public-suffix-list files
           MergeStrategy.filterDistinctLines
         case s => old(s)
       }
