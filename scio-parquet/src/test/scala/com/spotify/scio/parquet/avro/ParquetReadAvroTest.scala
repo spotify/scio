@@ -31,7 +31,6 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 
 import java.io.File
 import java.nio.file.Files
-import scala.Long.unbox
 import scala.jdk.CollectionConverters._
 
 object ParquetReadAvroTest {

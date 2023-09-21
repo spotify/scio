@@ -18,7 +18,6 @@ package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.avro.ParquetAvroRead
-import com.spotify.scio.util.Functions
 import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.FileIO
 import org.apache.beam.sdk.io.FileIO.ReadableFile
