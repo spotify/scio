@@ -112,9 +112,14 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
   @Teardown
   override def teardown(): Unit = {
     Log.info(s"Tearing down predict DoFn $this")
-    val (running, m) = getResource().get(modelId)
-    if (running.decrementAndGet() == 0) {
-      m.close()
+    Option(getResource.get(modelId)) match {
+      case Some((running, m)) =>
+        if (running.decrementAndGet() == 0) {
+          getResource.remove(modelId)
+          m.close()
+        }
+      case _ =>
+        Log.warn("No model to close while tearing down predict DoFn")
     }
   }
 }
