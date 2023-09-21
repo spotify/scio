@@ -18,7 +18,6 @@
 package com.spotify.scio.bigtable.syntax
 
 import com.google.cloud.bigtable.beam.{CloudBigtableConfiguration, CloudBigtableTableConfiguration}
-import com.google.cloud.bigtable.config.BigtableOptions
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigtable.{BigtableRead, InstanceAdmin, TableAdmin}
 import com.spotify.scio.values.SCollection
@@ -30,7 +29,7 @@ import org.joda.time.Duration
 
 object ScioContextOps {
   private val DefaultSleepDuration = Duration.standardMinutes(20)
-  private val DefaultClusterNames: Set[String] = Set.empty
+  Set.empty
 }
 
 /** Enhanced version of [[ScioContext]] with Bigtable methods. */

@@ -31,8 +31,8 @@ class BigtableIOTest extends ScioIOSpec {
   val projectId = "project"
   val instanceId = "instance"
 
-  val family = "count".getBytes(StandardCharsets.UTF_8)
-  val qualifier = "int".getBytes(StandardCharsets.UTF_8)
+  val family: Array[Byte] = "count".getBytes(StandardCharsets.UTF_8)
+  val qualifier: Array[Byte] = "int".getBytes(StandardCharsets.UTF_8)
 
   "BigtableIO" should "work with input" in {
     val ts = Instant.now().toEpochMilli
