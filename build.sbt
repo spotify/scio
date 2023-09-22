@@ -199,7 +199,12 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
-  mimaBinaryIssueFilters := Seq.empty,
+  mimaBinaryIssueFilters := Seq(
+    // scio-tensorflow ConcurrentHashMap instead of ConcurrentMap (#5011)
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.PredictDoFn.createResource"
+    )
+  ),
   mimaPreviousArtifacts := previousVersion(version.value)
     .filter(_ => publishArtifact.value)
     .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
