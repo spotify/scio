@@ -76,7 +76,6 @@ val floggerVersion = "0.7.4"
 val gaxVersion = "2.32.0"
 val googleApiCommonVersion = "2.15.0"
 val googleAuthVersion = "1.19.0"
-val googleCloudBigTableVersion = "2.26.0"
 val googleCloudCoreVersion = "2.22.0"
 val googleCloudDatastoreVersion = "0.107.3"
 val googleCloudMonitoringVersion = "3.24.0"
@@ -609,7 +608,6 @@ lazy val `scio-test`: Project = project
       moduleFilter("junit", "junit")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
@@ -728,22 +726,18 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % bigQueryStorageBetaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
       "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-bigtable" % googleCloudBigTableVersion,
       "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.bigtable" % "bigtable-hbase-beam" % bigtableHbaseBeamVersion excludeAll (testLibs: _*),
       "com.google.cloud.bigtable" % "bigtable-hbase-1.x-shaded" % bigtableHbaseBeamVersion excludeAll (testLibs: _*),
       "org.apache.hbase" % "hbase-shaded-client" % hbaseVersion excludeAll (testLibs: _*),
-      "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -1160,7 +1154,6 @@ lazy val `scio-examples`: Project = project
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
@@ -1174,7 +1167,7 @@ lazy val `scio-examples`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
-      "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
+      // "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
@@ -1511,7 +1504,6 @@ lazy val site: Project = project
     ScalaUnidoc / unidoc / unidocAllClasspaths := (ScalaUnidoc / unidoc / unidocAllClasspaths).value
       .map { cp =>
         cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
-          .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
       },
     // mdoc
     // pre-compile md using mdoc
@@ -1584,8 +1576,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax-httpjson" % gaxVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,

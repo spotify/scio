@@ -374,27 +374,29 @@ val btTableId = ""
 ```
 
 ```scala mdoc:silent
+import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration
+import com.google.cloud.bigtable.hbase.BigtableOptionsFactory.{
+  BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING,
+  BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS
+}
 import com.spotify.scio.values._
 import com.spotify.scio.bigtable._
-import com.google.cloud.bigtable.config.{BigtableOptions, BulkOptions}
-import com.google.bigtable.v2.Mutation
-import com.google.protobuf.ByteString
+import org.apache.hadoop.hbase.client.Mutation
 
 def main(cmdlineArgs: Array[String]): Unit = {
   // ...
 
-  val data: SCollection[(ByteString, Iterable[Mutation])] = ???
+  val data: SCollection[Mutation] = ???
 
-  val btOptions =
-    BigtableOptions.builder()
-      .setProjectId(btProjectId)
-      .setInstanceId(btInstanceId)
-      .setBulkOptions(BulkOptions.builder()
-        .enableBulkMutationThrottling()
-        .setBulkMutationRpcTargetMs(10) // lower latency threshold, default is 100
-        .build())
+  val btConfig = new CloudBigtableTableConfiguration.Builder()
+      .withProjectId(btProjectId)
+      .withInstanceId(btInstanceId)
+      .withTableId(btTableId)
+      .withConfiguration(BIGTABLE_BUFFERED_MUTATOR_ENABLE_THROTTLING, "true")
+      // lower latency threshold, default is 100
+      .withConfiguration(BIGTABLE_BUFFERED_MUTATOR_THROTTLING_THRESHOLD_MILLIS, "10")
       .build()
-  data.saveAsBigtable(btOptions, btTableId)
+  data.saveAsBigtable(btConfig)
 
   // ...
 }
