@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import org.apache.beam.sdk.options._
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.testing.JobTest.BeamOptions
 import com.spotify.scio.values.SCollection
 
 /** Trait with utility methods for unit testing pipelines. */
@@ -40,6 +41,20 @@ trait PipelineTestUtils {
     val sc = ScioContext.forTest()
     fn(sc)
     sc.run()
+  }
+
+  /** Similar to JobTest[T] flow but less dependent on having a static main method */
+  def runWithMocks[T](
+    setupMocks: JobTest.Builder => Unit,
+    beamOptions: BeamOptions = BeamOptions(List())
+  )(fn: ScioContext => T): T = {
+    val jt: JobTest.Builder = JobTest("test")(beamOptions)
+    setupMocks(jt)
+    jt.setUp()
+    val sc = ScioContext.forTest(jt.testId)
+    val output = fn(sc)
+    jt.tearDown()
+    output
   }
 
   def runWithRealContext[T](
