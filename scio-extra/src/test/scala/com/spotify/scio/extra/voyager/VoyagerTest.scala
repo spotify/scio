@@ -19,9 +19,12 @@ package com.spotify.scio.extra.voyager
 
 import com.spotify.scio.{ScioContext, ScioResult}
 import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.testing.CoderAssertions.{notFallback, ValueShouldSyntax}
 import com.spotify.scio.testing.PipelineSpec
+import com.spotify.scio.util.RemoteFileUtil
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import com.spotify.voyager.jni.StringIndex
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 
 import java.io.File
 import java.nio.file.Files
@@ -91,4 +94,11 @@ class VoyagerTest extends PipelineSpec {
     Files.delete(names)
   }
 
+  "VoyagerUri" should "not use Kryo" in {
+    val localUri: VoyagerUri = LocalVoyagerUri("gs://this-that")
+    localUri coderShould notFallback()
+
+    val remoteUri: VoyagerUri = RemoteVoyagerUri("gs//this-that", PipelineOptionsFactory.create())
+    remoteUri coderShould notFallback()
+  }
 }

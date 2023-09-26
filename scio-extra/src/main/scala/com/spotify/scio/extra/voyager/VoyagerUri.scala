@@ -35,7 +35,7 @@ import scala.collection.mutable
  * files, it should be in the form '/<path>/'. The `path` specified represents the directory where
  * the `index.hnsw` and `names.json` are.
  */
-trait VoyagerUri extends Serializable {
+sealed trait VoyagerUri {
   def path: String
   private[voyager] def getReader(
     distanceMeasure: SpaceType,
@@ -49,17 +49,17 @@ trait VoyagerUri extends Serializable {
 private[voyager] object VoyagerUri {
   def apply(path: String, opts: PipelineOptions): VoyagerUri = {
     if (ScioUtil.isLocalUri(new URI(path))) {
-      new LocalVoyagerUri(path)
+      LocalVoyagerUri(path)
     } else {
-      new RemoteVoyagerUri(path, opts)
+      val rfu: RemoteFileUtil = RemoteFileUtil.create(opts)
+      RemoteVoyagerUri(path, rfu)
     }
   }
 
   def files: Seq[String] = Seq("index.hnsw", "names.json")
-  implicit val voyagerUriCoder: Coder[VoyagerUri] = Coder.kryo[VoyagerUri]
 }
 
-private class LocalVoyagerUri(val path: String) extends VoyagerUri {
+case class LocalVoyagerUri(path: String) extends VoyagerUri {
   override private[voyager] def getReader(
     distanceMeasure: SpaceType,
     storageType: StorageDataType,
@@ -80,18 +80,17 @@ private class LocalVoyagerUri(val path: String) extends VoyagerUri {
     VoyagerUri.files.exists(f => new File(path + "/" + f).exists())
 }
 
-private class RemoteVoyagerUri(
-  val path: String,
-  options: PipelineOptions
+case class RemoteVoyagerUri(
+  path: String,
+  remoteFileUtil: RemoteFileUtil
 ) extends VoyagerUri {
-  private[this] val rfu: RemoteFileUtil = RemoteFileUtil.create(options)
   override private[voyager] def getReader(
     distanceMeasure: SpaceType,
     storageType: StorageDataType,
     dim: Int
   ): VoyagerReader = {
-    val indexFileName: String = rfu.download(new URI(path + "/index.hnsw")).toString
-    val namesFileName: String = rfu.download(new URI(path + "/names.json")).toString
+    val indexFileName: String = remoteFileUtil.download(new URI(path + "/index.hnsw")).toString
+    val namesFileName: String = remoteFileUtil.download(new URI(path + "/names.json")).toString
     new VoyagerReader(indexFileName, namesFileName, distanceMeasure, storageType, dim)
   }
 
@@ -103,13 +102,18 @@ private class RemoteVoyagerUri(
 
     VoyagerUri.files.foreach { f =>
       val tf: Path = tempPath.resolve(f)
-      rfu.upload(Paths.get(tf.toString), new URI(path + "/" + f))
+      remoteFileUtil.upload(Paths.get(tf.toString), new URI(path + "/" + f))
       Files.delete(tf)
     }
   }
 
   override private[voyager] def exists: Boolean =
-    VoyagerUri.files.exists(f => rfu.remoteExists(new URI(path + "/" + f)))
+    VoyagerUri.files.exists(f => remoteFileUtil.remoteExists(new URI(path + "/" + f)))
+}
+
+object RemoteVoyagerUri {
+  def apply(path: String, options: PipelineOptions): RemoteVoyagerUri =
+    RemoteVoyagerUri(path, RemoteFileUtil.create(options))
 }
 
 private[voyager] class VoyagerWriter(
