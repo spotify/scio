@@ -150,7 +150,6 @@ package object voyager {
     ): SCollection[VoyagerUri] = {
       val uri: VoyagerUri = VoyagerUri(path, self.context.options)
       require(!uri.exists, s"Voyager URI ${uri.path} already exists")
-      logger.info(s"Voyager URI :${uri.path}")
       self.transform { in =>
         {
           in.groupBy(_ => ())
