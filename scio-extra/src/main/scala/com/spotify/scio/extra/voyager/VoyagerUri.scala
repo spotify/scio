@@ -95,14 +95,14 @@ case class RemoteVoyagerUri(
   }
 
   override private[voyager] def saveAndClose(w: VoyagerWriter): Unit = {
-    val tempPath: Path = Files.createTempDirectory("")
-    logger.info(s"temp path: $tempPath")
+    val tempPath: Path = Files.createTempDirectory("voyager-")
     w.save(tempPath.toString)
     w.close()
 
     VoyagerUri.files.foreach { f =>
       val tf: Path = tempPath.resolve(f)
       remoteFileUtil.upload(Paths.get(tf.toString), new URI(path + "/" + f))
+      logger.info(s"Uploaded Voyager $f file from $tempPath to $path/$f")
       Files.delete(tf)
     }
   }

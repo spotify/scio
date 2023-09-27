@@ -26,6 +26,7 @@ import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
+import java.nio.file.Paths
 import java.util.UUID
 import scala.collection.mutable
 
@@ -195,8 +196,8 @@ package object voyager {
     ): SCollection[VoyagerUri] = {
       val uuid: UUID = UUID.randomUUID()
       val tempLocation: String = self.context.options.getTempLocation
-      require(tempLocation != null, s"--tempLocation arg is required")
-      val path = s"$tempLocation/voyager-build-$uuid"
+      require(tempLocation != null, s"Voyager writes require --tempLocation to be set.")
+      val path = s"${tempLocation.stripSuffix("/")}/voyager-build-$uuid"
       this.asVoyager(path, distanceMeasure, storageDataType, dim, ef, m)
     }
 
