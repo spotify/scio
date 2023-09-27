@@ -19,9 +19,12 @@ package org.apache.beam.sdk.extensions.smb
 
 import java.io.File
 import java.util.UUID
+import com.google.common.base.CaseFormat
 import com.spotify.scio._
 import com.spotify.scio.smb._
 import com.spotify.scio.testing._
+import magnolify.shared.CaseMapper
+import magnolify.parquet._
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.io.AvroGeneratedUser
@@ -37,7 +40,7 @@ object ParquetEndToEndTest {
     "org.apache.beam.sdk.extensions.smb.avro",
     false,
     List(
-      new Schema.Field("user", Schema.create(Schema.Type.STRING), "", ""),
+      new Schema.Field("user_name", Schema.create(Schema.Type.STRING), "", ""),
       new Schema.Field("event", Schema.create(Schema.Type.STRING), "", ""),
       new Schema.Field("timestamp", Schema.create(Schema.Type.INT), "", 0)
     ).asJava
@@ -55,7 +58,7 @@ object ParquetEndToEndTest {
   )
 
   def avroEvent(x: Int): GenericRecord = new GenericRecordBuilder(eventSchema)
-    .set("user", s"user${x % 10 + 1}")
+    .set("user_name", s"user${x % 10 + 1}")
     .set("event", s"event$x")
     .set("timestamp", x)
     .build()
@@ -65,12 +68,15 @@ object ParquetEndToEndTest {
     .set("age", x)
     .build()
 
-  case class Event(user: String, event: String, timestamp: Int)
+  case class Event(userName: String, event: String, timestamp: Int)
   case class User(name: String, age: Int)
 
   object Event {
     def apply(x: Int): Event = Event(s"user${x % 10 + 1}", s"event$x", x)
   }
+
+  val toSnakeCase = CaseFormat.LOWER_CAMEL.converterTo(CaseFormat.LOWER_UNDERSCORE).convert _
+  implicit val parquetType: ParquetType[Event] = ParquetType[Event](CaseMapper(toSnakeCase))
 
   object User {
     def apply(x: Int): User = User(s"user$x", x)
@@ -98,7 +104,7 @@ class ParquetEndToEndTest extends PipelineSpec {
       .parallelize(avroEvents)
       .saveAsSortedBucket(
         ParquetAvroSortedBucketIO
-          .write(classOf[CharSequence], "user", eventSchema)
+          .write(classOf[CharSequence], "user_name", eventSchema)
           .to(eventsDir.toString)
           .withNumBuckets(1)
       )
@@ -112,6 +118,7 @@ class ParquetEndToEndTest extends PipelineSpec {
       )
     sc1.run()
 
+
     val sc2 = ScioContext()
     val actual = sc2
       .sortMergeJoin(
@@ -124,7 +131,7 @@ class ParquetEndToEndTest extends PipelineSpec {
           .from(usersDir.toString)
       )
     val userMap = users.groupBy(_.name).view.mapValues(_.head).toMap
-    val expected = events.groupBy(_.user).toSeq.flatMap { case (k, es) =>
+    val expected = events.groupBy(_.userName).toSeq.flatMap { case (k, es) =>
       es.map(e => (k, (e, userMap(k))))
     }
     actual should containInAnyOrder(expected)
@@ -143,7 +150,7 @@ class ParquetEndToEndTest extends PipelineSpec {
       .parallelize(events)
       .saveAsSortedBucket(
         ParquetTypeSortedBucketIO
-          .write[String, Event]("user")
+          .write[String, Event]("user_name")
           .to(eventsDir.toString)
           .withNumBuckets(1)
       )
