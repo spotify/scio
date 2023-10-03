@@ -17,7 +17,6 @@
 
 package com.spotify.scio.extra.voyager
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.voyager.jni.Index
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}

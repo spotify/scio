@@ -26,7 +26,6 @@ import org.apache.beam.sdk.transforms.{DoFn, View}
 import org.apache.beam.sdk.values.PCollectionView
 import org.slf4j.LoggerFactory
 
-import java.nio.file.Paths
 import java.util.UUID
 import scala.collection.mutable
 
