@@ -259,6 +259,7 @@ val commonSettings = formatSettings ++
     ),
     resolvers ++= Resolver.sonatypeOssRepos("public"),
     fork := true,
+    run / outputStrategy := Some(OutputStrategy.StdoutOutput),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / javaOptions ++= Seq(
       "-Xms512m",
