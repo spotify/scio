@@ -43,12 +43,14 @@ import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
+import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader}
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.{Example, Features}
 import org.tensorflow.metadata.v0.Schema
 
 import scala.jdk.CollectionConverters._
+import scala.util.chaining._
 
 final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = ParquetExampleIO.ReadParam
@@ -76,6 +78,10 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     Option(params.projection).foreach { projection =>
       TensorflowExampleParquetInputFormat.setRequestedProjection(job, projection)
       TensorflowExampleParquetInputFormat.setExampleReadSchema(job, projection)
+    }
+
+    Option(params.predicate).foreach { predicate =>
+      ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
     }
 
     val coder = CoderMaterializer.beam(sc, Coder[Example])
@@ -107,6 +113,10 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       TensorflowExampleParquetInputFormat.setExampleReadSchema(job, projection)
     }
 
+    Option(params.predicate).foreach { predicate =>
+      ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
+    }
+
     val source = HadoopFormatIO
       .read[JBoolean, Example]()
       // Hadoop input always emit key-value, and `Void` causes NPE in Beam coder
@@ -123,7 +133,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     TestDataManager
       .getInput(sc.testId.get)(ParquetExampleIO(path))
       .toSCollection(sc)
-      .map { case (example: Example) =>
+      .map { example =>
         projectionOpt match {
           case None => example
           case Some(projection) =>
@@ -203,6 +213,7 @@ object ParquetExampleIO {
 
   object ReadParam {
     val DefaultProjection: Schema = null
+    val DefaultPredicate: FilterPredicate = null
     val DefaultConfiguration: Configuration = null
     val DefaultSuffix: String = null
 
@@ -214,6 +225,7 @@ object ParquetExampleIO {
   }
   final case class ReadParam private (
     projection: Schema = ReadParam.DefaultProjection,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = ReadParam.DefaultSuffix
   )

@@ -26,6 +26,7 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.commons.io.FileUtils
+import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.metadata.{v0 => tfmd}
 import org.tensorflow.proto.example._
@@ -195,6 +196,11 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     .addFeature(tfmd.Feature.newBuilder().setName("float_required").setType(tfmd.FeatureType.FLOAT).build())
     .addFeature(tfmd.Feature.newBuilder().setName("bytes_required").setType(tfmd.FeatureType.BYTES).build())
     .build()
+
+  private val predicate = FilterApi.and(
+    FilterApi.ltEq(FilterApi.longColumn("int64_required"), java.lang.Long.valueOf(5L)),
+    FilterApi.gtEq(FilterApi.floatColumn("float_required"), java.lang.Float.valueOf(2.5f))
+  )
   // format: on
 
   private def projectFields(projection: tfmd.Schema): Example => Example = { (e: Example) =>
@@ -234,6 +240,22 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
       suffix = ".parquet"
     )
     data should containInAnyOrder(examples.map(projectFields(projection)))
+    sc.run()
+    ()
+  }
+
+  it should "read Examples with predicate" in {
+    val sc = ScioContext()
+    val data = sc.parquetExampleFile(
+      path = currentDir.getAbsolutePath,
+      predicate = predicate,
+      suffix = ".parquet"
+    )
+    val expected = examples.filter { e =>
+      e.getFeatures.getFeatureOrThrow("int64_required").getInt64List.getValue(0) <= 5L &&
+      e.getFeatures.getFeatureOrThrow("float_required").getFloatList.getValue(0) >= 2.5f
+    }
+    data should containInAnyOrder(expected)
     sc.run()
     ()
   }

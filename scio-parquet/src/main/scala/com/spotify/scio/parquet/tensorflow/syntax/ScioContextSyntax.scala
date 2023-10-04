@@ -22,6 +22,7 @@ import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.ReadParam
 import com.spotify.scio.values.SCollection
 import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.tensorflow.metadata.v0.Schema
 import org.tensorflow.proto.example.Example
 
@@ -32,11 +33,12 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def parquetExampleFile(
     path: String,
     projection: Schema = ReadParam.DefaultProjection,
+    predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = ReadParam.DefaultSuffix
   ): SCollection[Example] =
     self.read(ParquetExampleIO(path))(
-      ParquetExampleIO.ReadParam(projection, conf, suffix)
+      ParquetExampleIO.ReadParam(projection, predicate, conf, suffix)
     )
 }
 
