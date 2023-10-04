@@ -50,7 +50,6 @@ import org.tensorflow.proto.example.{Example, Features}
 import org.tensorflow.metadata.v0.Schema
 
 import scala.jdk.CollectionConverters._
-import scala.util.chaining._
 
 final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   override type ReadP = ParquetExampleIO.ReadParam
@@ -72,16 +71,15 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     conf: Configuration,
     params: ReadP
   ): SCollection[Example] = {
-    val job = Job.getInstance(conf)
     val filePattern = ScioUtil.filePattern(path, params.suffix)
 
     Option(params.projection).foreach { projection =>
-      TensorflowExampleParquetInputFormat.setRequestedProjection(job, projection)
-      TensorflowExampleParquetInputFormat.setExampleReadSchema(job, projection)
+      TensorflowExampleReadSupport.setRequestedProjection(conf, projection)
+      TensorflowExampleReadSupport.setExampleReadSchema(conf, projection)
     }
 
     Option(params.predicate).foreach { predicate =>
-      ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
+      ParquetInputFormat.setFilterPredicate(conf, predicate)
     }
 
     val coder = CoderMaterializer.beam(sc, Coder[Example])
