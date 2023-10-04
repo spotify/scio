@@ -1023,7 +1023,9 @@ lazy val `scio-parquet`: Project = project
     description := "Scio add-on for Parquet",
     unusedCompileDependenciesFilter -= Seq(
       // required by me.lyh:parquet-avro
-      moduleFilter("org.apache.avro", "avro-compiler")
+      moduleFilter("org.apache.avro", "avro-compiler"),
+      // replacing log4j compile time dependency
+      moduleFilter("org.slf4j", "log4j-over-slf4j")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
@@ -1050,9 +1052,8 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // runtime
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime, // log4j is excluded from hadoop
       // provided
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // test
@@ -1329,7 +1330,9 @@ lazy val `scio-smb`: Project = project
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
     unusedCompileDependenciesFilter -= Seq(
       // ParquetUtils calls functions defined in parent class from hadoop-mapreduce-client-core
-      moduleFilter("org.apache.hadoop", "hadoop-mapreduce-client-core")
+      moduleFilter("org.apache.hadoop", "hadoop-mapreduce-client-core"),
+      // replacing log4j compile time dependency
+      moduleFilter("org.slf4j", "log4j-over-slf4j")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
@@ -1355,6 +1358,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
@@ -1373,7 +1377,6 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "it,test",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "it,test", // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "it,test"
     ),
     javacOptions ++= {
