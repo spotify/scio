@@ -107,7 +107,7 @@ final class DynamicSpecificRecordSCollectionOps[T <: SpecificRecord](
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
  * methods.
  */
-final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val self: SCollection[T])
+final class DynamicGenericRecordSCollectionOps(private val self: SCollection[GenericRecord])
     extends AnyVal {
   import DynamicSCollectionOps.writeDynamic
 
@@ -122,7 +122,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
     tempDirectory: String = null,
     prefix: String = null
   )(
-    destinationFn: T => String
+    destinationFn: GenericRecord => String
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
@@ -132,10 +132,7 @@ final class DynamicGenericRecordSCollectionOps[T <: GenericRecord](private val s
       val nm = new JHashMap[String, AnyRef]()
       nm.putAll(metadata.asJava)
       val sink = BAvroIO
-        .sinkViaGenericRecords(
-          schema,
-          (element: T, _: Schema) => element
-        )
+        .sink[GenericRecord](schema)
         .withCodec(codec)
         .withMetadata(nm)
       val write =
@@ -257,9 +254,9 @@ trait SCollectionSyntax {
   ): DynamicSpecificRecordSCollectionOps[T] =
     new DynamicSpecificRecordSCollectionOps(sc)
 
-  implicit def dynamicGenericRecordSCollectionOps[T <: GenericRecord](
-    sc: SCollection[T]
-  ): DynamicGenericRecordSCollectionOps[T] =
+  implicit def dynamicGenericRecordSCollectionOps(
+    sc: SCollection[GenericRecord]
+  ): DynamicGenericRecordSCollectionOps =
     new DynamicGenericRecordSCollectionOps(sc)
 
   implicit def dynamicSCollectionOps[T](sc: SCollection[T]): DynamicSCollectionOps[T] =

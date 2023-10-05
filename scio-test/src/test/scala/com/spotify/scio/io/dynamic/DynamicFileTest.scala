@@ -128,7 +128,7 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
     sc1
       .parallelize(1 to 10)
       .map(newGenericRecord)
-      .saveAsDynamicAvroFile(dir.getAbsolutePath, schema = schema) { r =>
+      .saveAsDynamicAvroFile(path = dir.getAbsolutePath, schema = schema) { r =>
         partitionIntegers(r.get("int_field").asInstanceOf[Int])
       }
     sc1.run()
@@ -148,7 +148,7 @@ class DynamicFileTest extends PipelineSpec with TapSpec {
     sc1
       .parallelize(1 to 10)
       .map(newSpecificRecord)
-      .saveAsDynamicAvroFile(dir.getAbsolutePath)(r => partitionIntegers(r.getIntField))
+      .saveAsDynamicAvroFile(path = dir.getAbsolutePath)(r => partitionIntegers(r.getIntField))
     sc1.run()
     verifyOutput(dir, "even", "odd")
 
