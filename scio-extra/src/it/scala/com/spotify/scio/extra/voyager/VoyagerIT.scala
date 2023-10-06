@@ -20,7 +20,9 @@ import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.values.SideInput
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.io.FileSystems
+import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.MimeTypes
 
 import java.nio.ByteBuffer
@@ -30,62 +32,74 @@ class VoyagerIT extends PipelineSpec {
   val dim: Int = 2
   val storageType: StorageDataType = StorageDataType.E4M3
   val distanceMeasure: SpaceType = SpaceType.Cosine
+  val ef = 200
+  val m = 16L
 
-  val sideData: Seq[(String, Array[Float])] =
-    Seq(("1", Array(2.5f, 7.2f)), ("2", Array(1.2f, 2.2f)), ("3", Array(5.6f, 3.4f)))
+  val sideData: Seq[(String, Array[Float])] = Seq(
+    "1" -> Array(2.5f, 7.2f),
+    "2" -> Array(1.2f, 2.2f),
+    "3" -> Array(5.6f, 3.4f)
+  )
+
+  FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
+
   it should "support .asVoyagerSideInput using GCS tempLocation" in {
+    val tempLocation = ItUtils.gcpTempLocation("voyager-it")
     runWithContext { sc =>
-      FileSystems.setDefaultPipelineOptions(sc.options)
+      sc.options.setTempLocation(tempLocation)
+      val (indexes, vectors) = sideData.unzip
 
-      val tempLocation = ItUtils.gcpTempLocation("voyager-it")
+      val voyagerReader = sc
+        .parallelize(sideData)
+        .asVoyagerSideInput(distanceMeasure, storageType, dim)
 
-      try {
-        val p1 = sc.parallelize(sideData)
-        val p2: SideInput[VoyagerReader] =
-          sc.parallelize(sideData).asVoyagerSideInput(distanceMeasure, storageType, dim)
-        val s = p1
-          .withSideInputs(p2)
-          .flatMap { (xs, si) =>
-            si(p2).getNearest(xs._2, 1, 100)
-          }
-          .toSCollection
+      val result = sc
+        .parallelize(vectors)
+        .withSideInputs(voyagerReader)
+        .flatMap { case (vector, ctx) =>
+          ctx(voyagerReader).getNearest(vector, 1, 100).map(_.value)
+        }
+        .toSCollection
 
-        s should containInAnyOrder(sideData.map(_._1))
-      } finally {
-        val files = FileSystems
-          .`match`(s"$tempLocation")
-          .metadata()
-          .asScala
-          .map(_.resourceId())
-
-        FileSystems.delete(files.asJava)
-      }
+      result should containInAnyOrder(indexes)
     }
+
+    // check files uploaded by voyager
+    val files = FileSystems
+      .`match`(s"$tempLocation/voyager-*")
+      .metadata()
+      .asScala
+      .map(_.resourceId())
+
+    FileSystems.delete(files.asJava)
   }
 
-  it should "support .asVoyagerSideInput using GCS tempLocation" in {
-    runWithContext { sc =>
-      FileSystems.setDefaultPipelineOptions(sc.options)
+  it should "throw exception when Voyager file exists" in {
+    val path = ItUtils.gcpTempLocation("voyager-it")
+    val namePath = path + "/names.json"
+    val indexPath = path + "/index.hnsw"
+    val nameResourceId = FileSystems.matchNewResource(namePath, false)
+    val indexResourceId = FileSystems.matchNewResource(indexPath, false)
 
-      val tempLocation = ItUtils.gcpTempLocation("voyager-it")
-      val namePath = tempLocation + "/names.json"
-      val indexPath = tempLocation + "/index.hnsw"
-      val nameResourceId = FileSystems.matchNewResource(namePath, false)
-      val indexResourceId = FileSystems.matchNewResource(indexPath, false)
+    // write some data in the
+    val f1 = FileSystems.create(nameResourceId, MimeTypes.BINARY)
+    val f2 = FileSystems.create(indexResourceId, MimeTypes.BINARY)
+    try {
+      f1.write(ByteBuffer.wrap("test-data".getBytes()))
+      f2.write(ByteBuffer.wrap("test-data".getBytes()))
+    } finally {
+      f1.close()
+      f2.close()
+    }
 
-      try {
-        val f1 = FileSystems.create(nameResourceId, MimeTypes.BINARY)
-        val f2 = FileSystems.create(indexResourceId, MimeTypes.BINARY)
-        f1.write(ByteBuffer.wrap("test-data".getBytes()))
-        f1.close()
-        f2.write(ByteBuffer.wrap("test-data".getBytes()))
-        f2.close()
-        the[IllegalArgumentException] thrownBy {
-          sc.parallelize(sideData).asVoyager(distanceMeasure, storageType, dim)
-        } should have message s""
-      } finally {
-        FileSystems.delete(Seq(nameResourceId, indexResourceId).asJava)
+    val e = the[IllegalArgumentException] thrownBy {
+      runWithContext { sc =>
+        sc.parallelize(sideData).asVoyager(path, distanceMeasure, storageType, dim, 200L, 16)
       }
     }
+
+    e.getMessage shouldBe s"requirement failed: Voyager URI $path already exists"
+
+    FileSystems.delete(Seq(nameResourceId, indexResourceId).asJava)
   }
 }
