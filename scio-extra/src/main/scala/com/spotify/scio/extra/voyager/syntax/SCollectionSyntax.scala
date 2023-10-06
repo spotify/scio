@@ -1,0 +1,168 @@
+package com.spotify.scio.extra.voyager.syntax
+
+import com.spotify.scio.annotations.experimental
+import com.spotify.scio.extra.voyager.{VoyagerReader, VoyagerSideInput, VoyagerUri, VoyagerWriter}
+import com.spotify.scio.values.{SCollection, SideInput}
+import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
+import org.apache.beam.sdk.transforms.View
+
+import java.util.UUID
+
+class VoyagerSCollectionOps(@transient private val self: SCollection[VoyagerUri]) extends AnyVal {
+
+  /**
+   * Load the Voyager index stored at [[VoyagerUri]] in this
+   * [[com.spotify.scio.values.SCollection SCollection]].
+   *
+   * @param spaceType
+   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+   *   (inner product).
+   * @param storageType
+   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+   * @param dim
+   *   Number of dimensions in vectors.
+   * @return
+   *   SideInput[VoyagerReader]
+   */
+  @experimental
+  def asVoyagerSideInput(
+    spaceType: SpaceType,
+    storageType: StorageDataType,
+    dim: Int
+  ): SideInput[VoyagerReader] = {
+    val view = self.applyInternal(View.asSingleton())
+    new VoyagerSideInput(view, spaceType, storageType, dim)
+  }
+
+}
+
+class VoyagerPairSCollectionOps(
+  @transient private val self: SCollection[(String, Array[Float])]
+) extends AnyVal {
+
+  /**
+   * Write the key-value pairs of this SCollection as a Voyager index to a specified location using
+   * the parameters specified.
+   *
+   * @param path
+   *   The directory path to be used for the [[VoyagerUri]].
+   * @param spaceType
+   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+   *   (inner product).
+   * @param storageDataType
+   *   The storage data type of the vectors at rest. One of Float8, Float32 or E4M3.
+   * @param dim
+   *   Number of dimensions in vectors.
+   * @param ef
+   *   The size of the dynamic list of neighbors used during construction time. This parameter
+   *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
+   *   documentation https://github.com/nmslib/hnswlib.
+   * @param m
+   *   The number of outgoing connections in the graph.
+   * @return
+   *   A [[VoyagerUri]] representing where the index was written to.
+   */
+  @experimental
+  def asVoyager(
+    path: String,
+    spaceType: SpaceType,
+    storageDataType: StorageDataType,
+    dim: Int,
+    ef: Long,
+    m: Long
+  ): SCollection[VoyagerUri] = {
+    val uri = VoyagerUri(path, self.context.options)
+    require(!uri.exists, s"Voyager URI ${uri.path} already exists")
+    self.transform { in =>
+      {
+        in.groupBy(_ => ())
+          .map { case (_, xs) =>
+            val voyagerWriter: VoyagerWriter =
+              new VoyagerWriter(spaceType, storageDataType, dim, ef, m)
+
+            voyagerWriter.write(xs)
+            uri.saveAndClose(voyagerWriter)
+            uri
+          }
+      }
+    }
+  }
+
+  /**
+   * Write the key-value pairs of this SCollection as a Voyager index to a temporary location and
+   * building the index using the parameters specified.
+   *
+   * @param distanceMeasure
+   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+   *   (inner product).
+   * @param storageDataType
+   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+   * @param dim
+   *   Number of dimensions in vectors.
+   * @param ef
+   *   The size of the dynamic list of neighbors used during construction time. This parameter
+   *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
+   *   documentation https://github.com/nmslib/hnswlib.
+   * @param m
+   *   The number of outgoing connections in the graph.
+   * @return
+   *   A [[VoyagerUri]] representing where the index was written to.
+   */
+  @experimental
+  def asVoyager(
+    distanceMeasure: SpaceType,
+    storageDataType: StorageDataType,
+    dim: Int,
+    ef: Long = 200L,
+    m: Long = 16L
+  ): SCollection[VoyagerUri] = {
+    val uuid = UUID.randomUUID()
+    val tempLocation: String = self.context.options.getTempLocation
+    require(tempLocation != null, s"Voyager writes require --tempLocation to be set.")
+    val path = s"${tempLocation.stripSuffix("/")}/voyager-build-$uuid"
+    this.asVoyager(path, distanceMeasure, storageDataType, dim, ef, m)
+  }
+
+  /**
+   * Write the key-value pairs of this SCollection as a Voyager index to a temporary location,
+   * building the index using the parameters specified and then loading the reader into a side
+   * input.
+   *
+   * @param spaceType
+   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+   *   (inner product).
+   * @param storageType
+   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+   * @param dim
+   *   Number of dimensions in vectors.
+   * @param ef
+   *   The size of the dynamic list of neighbors used during construction time. This parameter
+   *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
+   *   documentation https://github.com/nmslib/hnswlib.
+   * @param m
+   *   The number of outgoing connections in the graph.
+   * @return
+   *   A SideInput with a [[VoyagerReader]]
+   */
+  @experimental
+  def asVoyagerSideInput(
+    spaceType: SpaceType,
+    storageType: StorageDataType,
+    dim: Int,
+    ef: Long = 200L,
+    m: Long = 16L
+  ): SideInput[VoyagerReader] =
+    new VoyagerSCollectionOps(asVoyager(spaceType, storageType, dim, ef, m))
+      .asVoyagerSideInput(spaceType, storageType, dim)
+}
+
+trait SCollectionSyntax {
+  implicit def voyagerSCollectionOps(coll: SCollection[VoyagerUri]): VoyagerSCollectionOps =
+    new VoyagerSCollectionOps(coll)
+
+  implicit def VoyagerPairSCollectionOps(
+    coll: SCollection[(String, Array[Float])]
+  ): VoyagerPairSCollectionOps =
+    new VoyagerPairSCollectionOps(coll)
+
+}

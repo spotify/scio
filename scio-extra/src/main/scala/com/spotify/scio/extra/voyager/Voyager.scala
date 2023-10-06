@@ -18,9 +18,13 @@
 package com.spotify.scio.extra.voyager
 
 import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
-import com.spotify.voyager.jni.Index
+import com.spotify.scio.values.SideInput
+import com.spotify.voyager.jni.{Index, StringIndex}
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.options.PipelineOptions
+import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.values.PCollectionView
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.File
 import java.net.URI
@@ -46,6 +50,7 @@ sealed trait VoyagerUri {
 }
 
 private[voyager] object VoyagerUri {
+
   def apply(path: String, opts: PipelineOptions): VoyagerUri = {
     if (ScioUtil.isLocalUri(new URI(path))) {
       LocalVoyagerUri(path)
@@ -83,6 +88,8 @@ case class RemoteVoyagerUri(
   path: String,
   remoteFileUtil: RemoteFileUtil
 ) extends VoyagerUri {
+  import RemoteVoyagerUri._
+
   override private[voyager] def getReader(
     distanceMeasure: SpaceType,
     storageType: StorageDataType,
@@ -111,6 +118,9 @@ case class RemoteVoyagerUri(
 }
 
 object RemoteVoyagerUri {
+
+  @transient private lazy val logger: Logger = LoggerFactory.getLogger(classOf[RemoteVoyagerUri])
+
   def apply(path: String, options: PipelineOptions): RemoteVoyagerUri =
     RemoteVoyagerUri(path, RemoteFileUtil.create(options))
 }
@@ -122,9 +132,11 @@ private[voyager] class VoyagerWriter(
   ef: Long = 200L,
   m: Long = 16L
 ) {
-  private[this] val namesOutput = mutable.ListBuffer.empty[String]
+  import VoyagerWriter._
 
-  private[this] val index: Index =
+  private val namesOutput = mutable.ListBuffer.empty[String]
+
+  private val index: Index =
     new Index(spaceType, dim, m, ef, RANDOM_SEED, CHUNK_SIZE, storageDataType)
 
   def write(vectors: Iterable[(String, Array[Float])]): Unit = {
@@ -162,4 +174,80 @@ private[voyager] class VoyagerWriter(
     ()
   }
 
+}
+
+private object VoyagerWriter {
+  val RANDOM_SEED: Long = 1L
+  val CHUNK_SIZE: Int = 32786 // 2^15
+}
+
+case class VoyagerResult(value: String, distance: Float)
+
+/**
+ * Voyager reader class for nearest neighbor lookups. Supports looking up neighbors for a vector and
+ * returning the string labels and distances associated.
+ *
+ * @param indexFileName
+ *   The path to the `index.hnsw` local or remote file.
+ * @param namesFileName
+ *   The path to the `names.json` local or remote file.
+ * @param spaceType
+ *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot (inner
+ *   product).
+ * @param storageDataType
+ *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+ * @param dim
+ *   Number of dimensions in vectors.
+ */
+class VoyagerReader private[voyager] (
+  indexFileName: String,
+  namesFileName: String,
+  spaceType: SpaceType,
+  storageDataType: StorageDataType,
+  dim: Int
+) {
+  require(dim > 0, "Vector dimension should be > 0")
+
+  private val index: StringIndex = StringIndex
+    .load(indexFileName, namesFileName, spaceType, dim, storageDataType)
+
+  /**
+   * Gets maxNumResults nearest neighbors for vector v using ef (where ef is the size of the dynamic
+   * list for the nearest neighbors during search).
+   */
+  def getNearest(v: Array[Float], maxNumResults: Int, ef: Int): Array[VoyagerResult] = {
+    val queryResults = index.query(v, maxNumResults, ef)
+    queryResults.getNames
+      .zip(queryResults.getDistances)
+      .map { case (name, distance) =>
+        VoyagerResult(name, distance)
+      }
+  }
+}
+
+/**
+ * Construction for a VoyagerSide input that leverages a synchronized map to ensure that the reader
+ * is only loaded once per [[VoyagerUri]].
+ */
+private[voyager] class VoyagerSideInput(
+  val view: PCollectionView[VoyagerUri],
+  distanceMeasure: SpaceType,
+  storageType: StorageDataType,
+  dim: Int
+) extends SideInput[VoyagerReader] {
+
+  import VoyagerSideInput._
+  override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {
+    val uri = context.sideInput(view)
+    VOYAGER_URI_MAP.synchronized {
+      if (!VOYAGER_URI_MAP.contains(uri)) {
+        VOYAGER_URI_MAP.put(uri, uri.getReader(distanceMeasure, storageType, dim))
+      }
+      VOYAGER_URI_MAP(uri)
+    }
+  }
+}
+
+private object VoyagerSideInput {
+  private val VOYAGER_URI_MAP: mutable.Map[VoyagerUri, VoyagerReader] = mutable.HashMap.empty
 }

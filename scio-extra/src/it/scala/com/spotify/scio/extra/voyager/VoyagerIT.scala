@@ -18,9 +18,7 @@ package com.spotify.scio.extra.voyager
 
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
-import com.spotify.scio.values.SideInput
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
-import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.util.MimeTypes
