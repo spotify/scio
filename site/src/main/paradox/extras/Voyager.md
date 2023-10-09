@@ -5,25 +5,26 @@ works in python and java.
 
 ## Write
 
-A keyed `SCollection` with `String` keys and `Array[Float]` vector values can be saved with @scaladoc[asVoyager](com.spotify.scio.extra.voyager.VoyagerPairSCollection#asVoyager(path:String,spaceType:com.spotify.voyager.jni.Index.SpaceType,storageDataType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int,ef:Long,m:Long)):
+A keyed `SCollection` with `String` keys and `Array[Float]` vector values can be saved with @scaladoc[asVoyager](com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps#asVoyager(uri:com.spotify.scio.extra.voyager.VoyagerUri,spaceType:com.spotify.voyager.jni.Index.SpaceType,storageDataType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int,ef:Long,m:Long):com.spotify.scio.values.SCollection[com.spotify.scio.extra.voyager.VoyagerUri]):
 
 ```scala
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.voyager._
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 
+val voyagerUri = VoyagerUri("gs://output-path")
 val dim: Int = ???
 val ef: Long = ???
 val m: Int = ???
 val storageType: StorageDataType = ???
 val spaceType: SpaceType = ???
 val itemVectors: SCollection[(String, Array[Float])] = ???
-itemVectors.asVoyager("gs://output-path", spaceType, storageType, dim, ef, m)
+itemVectors.asVoyager(voyagerUri, spaceType, storageType, dim, ef, m)
 ```
 
 ## Side Input
 
-A Voyager index can be read directly as a `SideInput` with @scaladoc[voyagerSideInput](com.spotify.scio.extra.voyager.VoyagerScioContext#voyagerSideInput(com.spotify.voyager.jni.Index.SpaceType,storageDataType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int)):
+A Voyager index can be read directly as a `SideInput` with @scaladoc[asVoyagerSideInput](com.spotify.scio.extra.voyager.syntax.VoyagerScioContextOps#voyagerSideInput(uri:com.spotify.scio.extra.voyager.VoyagerUri,spaceType:com.spotify.voyager.jni.Index.SpaceType,storageDataType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.voyager.VoyagerReader]):
 
 ```scala
 import com.spotify.scio._
@@ -33,14 +34,15 @@ import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 
 val sc: ScioContext = ???
 
+val voyagerUri = VoyagerUri("gs://output-path")
 val dim: Int = ???
 val storageType: StorageDataType = ???
 val spaceType: SpaceType = ???
 val itemVectors: SCollection[(String, Array[Float])] = ???
-val voyagerSI: SideInput[VoyagerReader] = sc.voyagerSideInput("gs://input-path", spaceType, storageType, dim)
+val voyagerSI: SideInput[VoyagerReader] = sc.voyagerSideInput(voyagerUri, spaceType, storageType, dim)
 ```
 
-Alternatively, an `SCollection` can be converted directly to a `SideInput` with @scaladoc[asVoyagerSideInput](com.spotify.scio.extra.voyager.VoyagerPairSCollection#asVoyagerSideInput(spaceType:com.spotify.voyager.jni.Index.SpaceType,storageDataType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int,ef:Long,m:Long)):
+Alternatively, an `SCollection` can be converted directly to a `SideInput` with @scaladoc[asVoyagerSideInput](com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps#asVoyagerSideInput(spaceType:com.spotify.voyager.jni.Index.SpaceType,storageType:com.spotify.voyager.jni.Index.StorageDataType,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.voyager.VoyagerReader]):
 ```scala
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.voyager._

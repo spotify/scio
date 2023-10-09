@@ -32,8 +32,8 @@ class VoyagerScioContextOps(private val self: ScioContext) extends AnyVal {
    * Creates a SideInput of [[VoyagerReader]] from an [[VoyagerUri]] base path. To be used with
    * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]
    *
-   * @param path
-   *   The directory path to be used for the [[VoyagerUri]].
+   * @param uri
+   *   The [[VoyagerUri]].
    * @param spaceType
    *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
    *   (inner product).
@@ -46,12 +46,11 @@ class VoyagerScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   @experimental
   def voyagerSideInput(
-    path: String,
+    uri: VoyagerUri,
     spaceType: SpaceType,
     storageDataType: StorageDataType,
     dim: Int
   ): SideInput[VoyagerReader] = {
-    val uri = VoyagerUri(path)
     val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
     new VoyagerSideInput(view, RemoteFileUtil.create(self.options), spaceType, storageDataType, dim)
   }
