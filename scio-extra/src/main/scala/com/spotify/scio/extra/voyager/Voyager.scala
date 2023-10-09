@@ -27,7 +27,7 @@ import org.apache.beam.sdk.values.PCollectionView
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
-import scala.collection.mutable
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Represents the base URI for a voyager index, either on a local or a remote file system. For
@@ -157,7 +157,7 @@ private[voyager] class VoyagerSideInput(
   dim: Int
 ) extends SideInput[VoyagerReader] {
 
-  @transient private lazy val readerCache: mutable.Map[VoyagerUri, VoyagerReader] = mutable.Map()
+  import VoyagerSideInput._
 
   private def createReader(uri: VoyagerUri): VoyagerReader = {
     val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
@@ -175,6 +175,14 @@ private[voyager] class VoyagerSideInput(
 
   override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {
     val uri = context.sideInput(view)
-    readerCache.getOrElseUpdate(uri, createReader(uri))
+    VoyagerReaderSharedCache.computeIfAbsent(uri, createReader)
   }
+}
+
+private object VoyagerSideInput {
+  // cache the VoyagerUri to VoyagerReader per JVM so workers with multiple
+  // voyager side-input steps load the index only once
+  @transient private lazy val VoyagerReaderSharedCache
+    : ConcurrentHashMap[VoyagerUri, VoyagerReader] =
+    new ConcurrentHashMap()
 }
