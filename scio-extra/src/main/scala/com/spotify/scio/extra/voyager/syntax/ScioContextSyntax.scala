@@ -20,6 +20,7 @@ package com.spotify.scio.extra.voyager.syntax
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.extra.voyager.{VoyagerReader, VoyagerSideInput, VoyagerUri}
+import com.spotify.scio.util.RemoteFileUtil
 import com.spotify.scio.values.SideInput
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.transforms.View
@@ -50,9 +51,9 @@ class VoyagerScioContextOps(private val self: ScioContext) extends AnyVal {
     storageDataType: StorageDataType,
     dim: Int
   ): SideInput[VoyagerReader] = {
-    val uri = VoyagerUri(path, self.options)
+    val uri = VoyagerUri(path)
     val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
-    new VoyagerSideInput(view, spaceType, storageDataType, dim)
+    new VoyagerSideInput(view, RemoteFileUtil.create(self.options), spaceType, storageDataType, dim)
   }
 }
 

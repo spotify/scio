@@ -45,7 +45,7 @@ class VoyagerIT extends PipelineSpec {
     val tempLocation = ItUtils.gcpTempLocation("voyager-it")
     runWithContext { sc =>
       sc.options.setTempLocation(tempLocation)
-      val (indexes, vectors) = sideData.unzip
+      val (names, vectors) = sideData.unzip
 
       val voyagerReader = sc
         .parallelize(sideData)
@@ -54,12 +54,13 @@ class VoyagerIT extends PipelineSpec {
       val result = sc
         .parallelize(vectors)
         .withSideInputs(voyagerReader)
-        .flatMap { case (vector, ctx) =>
-          ctx(voyagerReader).getNearest(vector, 1, 100).map(_.value)
+        .flatMap { case (v, ctx) =>
+          ctx(voyagerReader).getNearest(v, 1, 100)
         }
         .toSCollection
+        .map(_.name)
 
-      result should containInAnyOrder(indexes)
+      result should containInAnyOrder(names)
     }
 
     // check files uploaded by voyager
@@ -73,11 +74,11 @@ class VoyagerIT extends PipelineSpec {
   }
 
   it should "throw exception when Voyager file exists" in {
-    val path = ItUtils.gcpTempLocation("voyager-it")
-    val namePath = path + "/names.json"
-    val indexPath = path + "/index.hnsw"
-    val nameResourceId = FileSystems.matchNewResource(namePath, false)
-    val indexResourceId = FileSystems.matchNewResource(indexPath, false)
+    val uri = VoyagerUri(ItUtils.gcpTempLocation("voyager-it"))
+    val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
+    val nameUri = uri.value.resolve(VoyagerUri.NamesFile)
+    val indexResourceId = FileSystems.matchNewResource(indexUri.toString, false)
+    val nameResourceId = FileSystems.matchNewResource(nameUri.toString, false)
 
     // write some data in the
     val f1 = FileSystems.create(nameResourceId, MimeTypes.BINARY)
@@ -92,11 +93,11 @@ class VoyagerIT extends PipelineSpec {
 
     val e = the[IllegalArgumentException] thrownBy {
       runWithContext { sc =>
-        sc.parallelize(sideData).asVoyager(path, distanceMeasure, storageType, dim, 200L, 16)
+        sc.parallelize(sideData).asVoyager(uri, distanceMeasure, storageType, dim, 200L, 16)
       }
     }
 
-    e.getMessage shouldBe s"requirement failed: Voyager URI $path already exists"
+    e.getMessage shouldBe s"requirement failed: Voyager URI ${uri.value} already exists"
 
     FileSystems.delete(Seq(nameResourceId, indexResourceId).asJava)
   }

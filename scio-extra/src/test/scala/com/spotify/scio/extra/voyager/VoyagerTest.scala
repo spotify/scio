@@ -17,16 +17,11 @@
 
 package com.spotify.scio.extra.voyager
 
-import com.spotify.scio.{ScioContext, ScioResult}
-import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing.CoderAssertions.{notFallback, ValueShouldSyntax}
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.util.RemoteFileUtil
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import com.spotify.voyager.jni.StringIndex
-import org.apache.beam.sdk.options.PipelineOptionsFactory
 
-import java.io.File
 import java.nio.file.Files
 
 class VoyagerTest extends PipelineSpec {
@@ -39,19 +34,15 @@ class VoyagerTest extends PipelineSpec {
 
   "SCollection" should "support .asVoyager with specified local file" in {
     val tmpDir = Files.createTempDirectory("voyager-test")
-    val basePath = tmpDir.toString
-    val sc = ScioContext()
-    val p: ClosedTap[VoyagerUri] =
-      sc.parallelize(sideData)
-        .asVoyager(basePath, spaceType, storageDataType, dim, 200L, 16L)
-        .materialize
+    val uri = VoyagerUri(tmpDir.toUri)
 
-    val scioResult: ScioResult = sc.run().waitUntilFinish()
-    val path: String = scioResult.tap(p).value.next.path
+    runWithContext { sc =>
+      sc.parallelize(sideData).asVoyager(uri, spaceType, storageDataType, dim, 200L, 16L)
+    }
 
-    val index: StringIndex = StringIndex.load(
-      path + "/index.hnsw",
-      path + "/names.json",
+    val index = StringIndex.load(
+      tmpDir.resolve(VoyagerUri.IndexFile).toString,
+      tmpDir.resolve(VoyagerUri.NamesFile).toString,
       SpaceType.Cosine,
       dim,
       StorageDataType.E4M3
@@ -63,14 +54,11 @@ class VoyagerTest extends PipelineSpec {
       result.getDistances.length shouldEqual 2
       result.getNames should contain(data._1)
     }
-
-    for (file <- Seq("index.hnsw", "names.json")) {
-      new File(basePath + file).delete()
-    }
   }
 
   it should "throw exception when the Voyager files already exists" in {
     val tmpDir = Files.createTempDirectory("voyager-test")
+    val uri = VoyagerUri(tmpDir.toUri)
 
     val index = tmpDir.resolve("index.hnsw")
     val names = tmpDir.resolve("names.json")
@@ -78,27 +66,14 @@ class VoyagerTest extends PipelineSpec {
     Files.createFile(names)
 
     the[IllegalArgumentException] thrownBy {
-      runWithContext {
-        _.parallelize(sideData).asVoyager(
-          tmpDir.toString,
-          spaceType,
-          storageDataType,
-          dim,
-          200L,
-          16L
-        )
+      runWithContext { sc =>
+        sc.parallelize(sideData).asVoyager(uri, spaceType, storageDataType, dim, 200L, 16L)
       }
-    } should have message s"requirement failed: Voyager URI $tmpDir already exists"
-
-    Files.delete(index)
-    Files.delete(names)
+    } should have message s"requirement failed: Voyager URI ${uri.value} already exists"
   }
 
   "VoyagerUri" should "not use Kryo" in {
-    val localUri: VoyagerUri = LocalVoyagerUri("gs://this-that")
-    localUri coderShould notFallback()
-
-    val remoteUri: VoyagerUri = RemoteVoyagerUri("gs//this-that", PipelineOptionsFactory.create())
-    remoteUri coderShould notFallback()
+    val uri = VoyagerUri("gs://this-that")
+    uri coderShould notFallback()
   }
 }

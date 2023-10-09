@@ -19,10 +19,12 @@ package com.spotify.scio.extra.voyager.syntax
 
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.extra.voyager.{VoyagerReader, VoyagerSideInput, VoyagerUri, VoyagerWriter}
+import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.voyager.jni.Index.{SpaceType, StorageDataType}
 import org.apache.beam.sdk.transforms.View
 
+import java.nio.file.{Files, Paths}
 import java.util.UUID
 
 class VoyagerSCollectionOps(@transient private val self: SCollection[VoyagerUri]) extends AnyVal {
@@ -48,7 +50,13 @@ class VoyagerSCollectionOps(@transient private val self: SCollection[VoyagerUri]
     dim: Int
   ): SideInput[VoyagerReader] = {
     val view = self.applyInternal(View.asSingleton())
-    new VoyagerSideInput(view, spaceType, storageType, dim)
+    new VoyagerSideInput(
+      view,
+      RemoteFileUtil.create(self.context.options),
+      spaceType,
+      storageType,
+      dim
+    )
   }
 
 }
@@ -61,8 +69,8 @@ class VoyagerPairSCollectionOps(
    * Write the key-value pairs of this SCollection as a Voyager index to a specified location using
    * the parameters specified.
    *
-   * @param path
-   *   The directory path to be used for the [[VoyagerUri]].
+   * @param uri
+   *   The [[VoyagerUri]].
    * @param spaceType
    *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
    *   (inner product).
@@ -81,27 +89,43 @@ class VoyagerPairSCollectionOps(
    */
   @experimental
   def asVoyager(
-    path: String,
+    uri: VoyagerUri,
     spaceType: SpaceType,
     storageDataType: StorageDataType,
     dim: Int,
     ef: Long,
     m: Long
   ): SCollection[VoyagerUri] = {
-    val uri = VoyagerUri(path, self.context.options)
-    require(!uri.exists, s"Voyager URI ${uri.path} already exists")
-    self.transform { in =>
-      {
-        in.groupBy(_ => ())
-          .map { case (_, xs) =>
-            val voyagerWriter: VoyagerWriter =
-              new VoyagerWriter(spaceType, storageDataType, dim, ef, m)
+    implicit val remoteFileUtil: RemoteFileUtil = RemoteFileUtil.create(self.context.options)
+    require(!uri.exists, s"Voyager URI ${uri.value} already exists")
 
-            voyagerWriter.write(xs)
-            uri.saveAndClose(voyagerWriter)
-            uri
+    self.transform { in =>
+      in.reifyAsIterableInGlobalWindow
+        .map { xs =>
+          val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
+          val namesUri = uri.value.resolve(VoyagerUri.NamesFile)
+          val isLocal = ScioUtil.isLocalUri(uri.value)
+
+          val (localIndex, localNames) = if (isLocal) {
+            (Paths.get(indexUri), Paths.get(namesUri))
+          } else {
+            val tmpDir = Files.createTempDirectory("voyager-")
+            val tmpIndex = tmpDir.resolve(VoyagerUri.IndexFile)
+            val tmpNames = tmpDir.resolve(VoyagerUri.NamesFile)
+            (tmpIndex, tmpNames)
           }
-      }
+
+          val writer =
+            new VoyagerWriter(localIndex, localNames, spaceType, storageDataType, dim, ef, m)
+          writer.write(xs)
+
+          if (!isLocal) {
+            remoteFileUtil.upload(localIndex, indexUri)
+            remoteFileUtil.upload(localNames, namesUri)
+          }
+
+          uri
+        }
     }
   }
 
@@ -136,8 +160,8 @@ class VoyagerPairSCollectionOps(
     val uuid = UUID.randomUUID()
     val tempLocation: String = self.context.options.getTempLocation
     require(tempLocation != null, s"Voyager writes require --tempLocation to be set.")
-    val path = s"${tempLocation.stripSuffix("/")}/voyager-build-$uuid"
-    this.asVoyager(path, distanceMeasure, storageDataType, dim, ef, m)
+    val uri = VoyagerUri(s"${tempLocation.stripSuffix("/")}/voyager-build-$uuid")
+    asVoyager(uri, distanceMeasure, storageDataType, dim, ef, m)
   }
 
   /**
