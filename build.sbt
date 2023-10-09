@@ -896,7 +896,9 @@ lazy val `scio-extra`: Project = project
       "com.google.zetasketch" % "zetasketch" % zetasketchVersion,
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" % "annoy" % annoyVersion,
+      "com.spotify" % "voyager" % voyagerVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "io.circe" %% "circe-core" % circeVersion,
@@ -915,7 +917,6 @@ lazy val `scio-extra`: Project = project
       "org.scalanlp" %% "breeze" % breezeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
-      "com.spotify" % "voyager" % voyagerVersion,
       // test
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
