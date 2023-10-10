@@ -18,11 +18,12 @@
 package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
-import com.spotify.scio.ScioResult
+import com.spotify.scio.{ScioContext, ScioResult}
 import com.spotify.scio.io.{KeyedIO, ScioIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.runners.PTransformOverride
 import org.apache.beam.sdk.testing.TestStream
 import org.apache.beam.sdk.testing.TestStream.{ElementEvent, Event}
@@ -75,7 +76,7 @@ object JobTest {
   case class BeamOptions(opts: List[String])
 
   private case class BuilderState(
-    className: String,
+    job: Either[Class[_], ScioContext => Any],
     cmdlineArgs: Array[String] = Array(),
     input: Map[String, JobInputSource[_]] = Map.empty,
     output: Map[String, SCollection[_] => Any] = Map.empty,
@@ -100,7 +101,10 @@ object JobTest {
   class Builder(private var state: BuilderState) {
 
     /** Test ID for input and output wiring. */
-    val testId: String = TestUtil.newTestId(state.className)
+    val testId: String = state.job match {
+      case Left(clazz) => TestUtil.newTestId(clazz)
+      case Right(_)    => TestUtil.newTestId()
+    }
 
     private[testing] def wasRunInvoked: Boolean = state.wasRunInvoked
 
@@ -374,30 +378,45 @@ object JobTest {
       state = state.copy(wasRunInvoked = true)
       setUp()
 
-      try {
-        Class
-          .forName(state.className)
-          .getMethod("main", classOf[Array[String]])
-          .invoke(null, state.cmdlineArgs :+ s"--appName=$testId")
-      } catch {
-        // InvocationTargetException stacktrace is noisy and useless
-        case e: InvocationTargetException => throw e.getCause
-        case NonFatal(e)                  => throw e
+      state.job match {
+        case Left(clazz) =>
+          try {
+            clazz
+              .getMethod("main", classOf[Array[String]])
+              .invoke(null, state.cmdlineArgs :+ s"--appName=$testId")
+          } catch {
+            // InvocationTargetException stacktrace is noisy and useless
+            case e: InvocationTargetException => throw e.getCause
+            case NonFatal(e)                  => throw e
+          }
+        case Right(job) =>
+          val sc = ScioContext.forTest(testId)
+          job(sc)
+          sc.run()
       }
 
       tearDown()
     }
 
-    override def toString: String =
-      s"""|JobTest[${state.className}](
-          |\targs: ${state.cmdlineArgs.mkString(" ")}
-          |\tdistCache: ${state.distCaches}
-          |\tinputs: ${state.input.mkString(", ")}""".stripMargin
+    override def toString: String = {
+      val sb = new StringBuilder()
+      sb.append(s"JobTest[${state.job.fold(_.getName, _ => "_")}]")
+      sb.append("(\n")
+      if (state.cmdlineArgs.nonEmpty) sb.append(s"\targs: ${state.cmdlineArgs.mkString(" ")}\n")
+      if (state.distCaches.nonEmpty)
+        sb.append(s"\tdistCache: ${state.distCaches.keys.map(_.uri).mkString(" ")}\n")
+      if (state.input.nonEmpty) sb.append(s"\tinputs: ${state.input.keys.mkString(", ")}\n")
+      if (state.output.nonEmpty) sb.append(s"\toutputs: ${state.output.keys.mkString(", ")}\n")
+      if (state.transformOverrides.nonEmpty)
+        sb.append(s"\toutputs: ${state.transformOverrides.map(_.getMatcher).mkString(", ")}\n")
+      sb.append(")\n")
+      sb.result()
+    }
   }
 
   /** Create a new JobTest.Builder instance. */
   def apply(className: String)(implicit bo: BeamOptions): Builder =
-    new Builder(BuilderState(className))
+    new Builder(BuilderState(Left(Class.forName(className))))
       .args(bo.opts: _*)
 
   /** Create a new JobTest.Builder instance. */
@@ -405,4 +424,8 @@ object JobTest {
     val className = ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
     apply(className).args(bo.opts: _*)
   }
+
+  /** Create a new JobTest.Builder instance. */
+  def apply(job: ScioContext => Any)(implicit bo: BeamOptions): Builder =
+    new Builder(BuilderState(Right(job))).args(bo.opts: _*)
 }

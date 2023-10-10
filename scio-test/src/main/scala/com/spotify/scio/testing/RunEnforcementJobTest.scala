@@ -17,6 +17,7 @@
 
 package com.spotify.scio.testing
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.{JobTest => InnerJobTest}
 import org.scalactic.source.Position
 import org.scalatest.flatspec.AnyFlatSpec
@@ -44,6 +45,12 @@ trait RunEnforcementJobTest extends AnyFlatSpec { this: PipelineSpec =>
 
   def JobTest(className: String): InnerJobTest.Builder = {
     val jt = InnerJobTest(className)
+    tests += jt
+    jt
+  }
+
+  def jobTest(job: ScioContext => Any): InnerJobTest.Builder = {
+    val jt = InnerJobTest(job)
     tests += jt
     jt
   }

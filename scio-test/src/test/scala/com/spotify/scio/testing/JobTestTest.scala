@@ -39,11 +39,16 @@ import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.KV
 
 object ObjectFileJob {
+
+  def pipeline(sc: ScioContext, input: String, output: String): Unit = {
+    sc.objectFile[Int](input)
+      .map(_ * 10)
+      .saveAsObjectFile(output)
+  }
+
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.objectFile[Int](args("input"))
-      .map(_ * 10)
-      .saveAsObjectFile(args("output"))
+    pipeline(sc, args("input"), args("output"))
     sc.run()
     ()
   }
@@ -343,6 +348,13 @@ class JobTestTest extends PipelineSpec {
   it should "fail incorrect ObjectFileIO" in {
     an[AssertionError] should be thrownBy { testObjectFileJob(10, 20) }
     an[AssertionError] should be thrownBy { testObjectFileJob(10, 20, 30, 40) }
+  }
+
+  it should "execute anonymous job" in {
+    jobTest(ObjectFileJob.pipeline(_, "in.avro", "out.avro"))
+      .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
+      .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(10, 20, 30)))
+      .run()
   }
 
   def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit =
@@ -799,11 +811,12 @@ class JobTestTest extends PipelineSpec {
 
   private val runMissedMessage =
     """|- should work \*\*\* FAILED \*\*\*
-                                    |  Did you forget run\(\)\?
-                                    |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
-                                    |  	args: --input=in.avro --output=out.avro
-                                    |  	distCache: Map\(\)
-                                    |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+       |  Did you forget run\(\)\?
+       |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
+       |  \targs: --input=in.avro --output=out.avro
+       |  \tinputs: ObjectFileIO\(in.avro\)
+       |  \toutputs: ObjectFileIO\(out.avro\)
+       |  \) \(JobTestTest.scala:.*\)""".stripMargin
 
   it should "enforce run() on JobTest from class type" in {
     val stdOutMock = new MockedPrintStream
@@ -822,15 +835,12 @@ class JobTestTest extends PipelineSpec {
 
     val msg =
       """|- should work \*\*\* FAILED \*\*\*
-                 |  Did you forget run\(\)\?
-                 |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
-                 |  	args: --input=in.avro --output=out.avro
-                 |  	distCache: Map\(\)
-                 |  	inputs: ObjectFileIO\(in.avro\) -> List\(1, 2, 3\)
-                 |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
-                 |  	args: --input=in2.avro --output=out2.avro
-                 |  	distCache: Map\(\)
-                 |  	inputs: ObjectFileIO\(in2.avro\) -> List\(1, 2, 3\) \(JobTestTest.scala:.*\)""".stripMargin
+         |  Did you forget run\(\)\?
+         |  Missing run\(\): JobTest\[com.spotify.scio.testing.ObjectFileJob\]\(
+         |  \targs: --input=in.avro --output=out.avro
+         |  \tinputs: ObjectFileIO\(in.avro\)
+         |  \toutputs: ObjectFileIO\(out.avro\)
+         |  \)""".stripMargin
 
     stdOutMock.message.mkString("") should include regex msg
   }

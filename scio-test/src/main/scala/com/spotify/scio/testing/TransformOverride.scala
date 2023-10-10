@@ -46,6 +46,8 @@ class EqualNamePTransformMatcher(val name: String) extends PTransformMatcher {
   // beams retains the original Node name, so by default this matcher will match the replaced transform during validation. override this behavior.
   // see https://github.com/apache/beam/blob/master/sdks/java/core/src/main/java/org/apache/beam/sdk/runners/TransformHierarchy.java#L115
   override def matchesDuringValidation(application: AppliedPTransform[_, _, _]): Boolean = false
+
+  override def toString: String = s"EqualNamePTransformMatcher($name)"
 }
 
 object TransformOverride {

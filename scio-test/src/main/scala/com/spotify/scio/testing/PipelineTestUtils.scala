@@ -46,7 +46,7 @@ trait PipelineTestUtils {
   }
 
   def runWithRealContext(
-    options: PipelineOptions
+    options: PipelineOptions = PipelineOptionsFactory.create()
   )(fn: ScioContext => Any): ScioExecutionContext = {
     val sc = ScioContext(options)
     fn(sc)

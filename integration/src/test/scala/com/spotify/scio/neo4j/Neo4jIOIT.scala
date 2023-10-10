@@ -90,7 +90,6 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
 
   val americanPresident: Movie = Movie("American President", 1995)
 
-  val options: PipelineOptions = PipelineOptionsFactory.create()
   lazy val neo4jOptions: Neo4jOptions = Neo4jOptions(
     Neo4jConnectionOptions(container.boltUrl, container.username, container.password)
   )
@@ -107,7 +106,7 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
       Role(martin, Movie("American President", 1995), "A.J. MacInerney")
     )
 
-    runWithRealContext(options) { sc =>
+    runWithRealContext() { sc =>
       val resultQueryRoles = sc.neo4jCypher[Role](neo4jOptions, queryRoles)
       resultQueryRoles should containInAnyOrder(expectedRoles)
     }
@@ -132,7 +131,7 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
       Role(morgan, Movie("The Shawshank Redemption", 1994), "Ellis Boyd 'Red' Redding")
     )
 
-    runWithRealContext(options) { sc =>
+    runWithRealContext() { sc =>
       val resultQueryMovieYear = sc
         .parallelize(queryParams)
         .neo4jCypher[Role](neo4jOptions, queryRoles)
@@ -154,7 +153,7 @@ class Neo4jIOIT extends PipelineSpec with Eventually with ForAllTestContainer {
                           |  (c:Country {name: origin.country})
                           |CREATE (m)-[:ORIGIN]->(c)
                           |""".stripMargin
-    runWithRealContext(options) { sc =>
+    runWithRealContext() { sc =>
       sc
         .parallelize(movieOrigins)
         .saveAsNeo4j(neo4jOptions, insertOrigins)
