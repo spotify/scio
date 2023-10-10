@@ -157,7 +157,7 @@ class ParquetReadFn[T, R](
       granularity match {
         case File =>
           val tryClaim = tracker.tryClaim(tracker.currentRestriction().getFrom)
-          var pages = reader.readNextRowGroup()
+          var pages = reader.readNextFilteredRowGroup()
           // Must check tryClaim before reading so work isn't duplicated across workers
           while (tryClaim && pages != null) {
             val recordReader = columnIO.getRecordReader(
@@ -173,13 +173,13 @@ class ParquetReadFn[T, R](
               out,
               projectionFn
             )
-            pages = reader.readNextRowGroup()
+            pages = reader.readNextFilteredRowGroup()
           }
         case RowGroup =>
           var currentRowGroupIndex = tracker.currentRestriction.getFrom
           (0L until currentRowGroupIndex).foreach(_ => reader.skipNextRowGroup())
           while (tracker.tryClaim(currentRowGroupIndex)) {
-            val pages = reader.readNextRowGroup
+            val pages = reader.readNextFilteredRowGroup()
 
             val recordReader = columnIO.getRecordReader(
               pages,
