@@ -31,6 +31,7 @@ import org.apache.parquet.hadoop.api.InitContext
 import org.apache.parquet.hadoop.metadata.BlockMetaData
 import org.apache.parquet.io.{ColumnIOFactory, ParquetDecodingException, RecordReader}
 import org.apache.parquet.HadoopReadOptions
+import org.apache.parquet.column.page.PageReadStore
 import org.slf4j.LoggerFactory
 
 import java.util.{Set => JSet}
@@ -54,10 +55,25 @@ class ParquetReadFn[T, R](
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   private lazy val granularity =
-    conf.get().get(ParquetReadConfiguration.SplitGranularity) match {
+    conf.get().get(ParquetReadConfiguration.SplitGranularity, ParquetReadConfiguration.SplitGranularityFile) match {
       case ParquetReadConfiguration.SplitGranularityFile     => File
       case ParquetReadConfiguration.SplitGranularityRowGroup => RowGroup
-      case _                                                 => File
+      case s: String =>
+        logger.warn(
+          s"Found unsupported setting value $s for key ${ParquetReadConfiguration.SplitGranularity}. Defaulting to file-level granularity."
+        )
+        File
+    }
+
+  private lazy val readNextRowGroup: ParquetFileReader => PageReadStore =
+    conf.get().get(ParquetReadConfiguration.FilterGranularity, ParquetReadConfiguration.FilterGranularityRecord) match {
+      case ParquetReadConfiguration.FilterGranularityPage   => _.readNextFilteredRowGroup()
+      case ParquetReadConfiguration.FilterGranularityRecord => _.readNextRowGroup()
+      case s: String =>
+        logger.warn(
+          s"Found unsupported setting value $s for key ${ParquetReadConfiguration.FilterGranularity}. Defaulting to record-level filtering."
+        )
+        _.readNextRowGroup()
     }
 
   private def parquetFileReader(file: ReadableFile): ParquetFileReader = {
@@ -157,7 +173,7 @@ class ParquetReadFn[T, R](
       granularity match {
         case File =>
           val tryClaim = tracker.tryClaim(tracker.currentRestriction().getFrom)
-          var pages = reader.readNextFilteredRowGroup()
+          var pages = readNextRowGroup.apply(reader)
           // Must check tryClaim before reading so work isn't duplicated across workers
           while (tryClaim && pages != null) {
             val recordReader = columnIO.getRecordReader(
@@ -173,13 +189,13 @@ class ParquetReadFn[T, R](
               out,
               projectionFn
             )
-            pages = reader.readNextFilteredRowGroup()
+            pages = readNextRowGroup.apply(reader)
           }
         case RowGroup =>
           var currentRowGroupIndex = tracker.currentRestriction.getFrom
           (0L until currentRowGroupIndex).foreach(_ => reader.skipNextRowGroup())
           while (tracker.tryClaim(currentRowGroupIndex)) {
-            val pages = reader.readNextFilteredRowGroup()
+            val pages = readNextRowGroup.apply(reader)
 
             val recordReader = columnIO.getRecordReader(
               pages,
