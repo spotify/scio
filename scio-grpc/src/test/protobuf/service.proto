@@ -18,11 +18,31 @@ message ConcatResponse {
   string response = 1;
 }
 
+message ConcatRequestWithID {
+  string request_id = 1;
+  string string_one = 2;
+  string string_two = 3;
+}
+
+message ConcatResponseWithID {
+  string request_id= 1;
+  string response = 2;
+}
+
+message BatchRequest {
+  repeated ConcatRequestWithID requests = 1;
+}
+
+message BatchResponse {
+  repeated ConcatResponseWithID response = 1;
+}
+
 service ConcatService {
   rpc Concat(ConcatRequest) returns (ConcatResponse) {}
   rpc ConcatServerStreaming(ConcatRequest) returns (stream ConcatResponse) {}
   rpc ConcatClientStreaming(stream ConcatRequest) returns (ConcatResponse) {}
   rpc ConcatFullStreaming(stream ConcatRequest) returns (stream ConcatResponse) {}
+  rpc BatchConcat(BatchRequest) returns (BatchResponse) {}
 
   rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
 }

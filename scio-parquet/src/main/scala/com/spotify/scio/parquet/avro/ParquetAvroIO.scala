@@ -212,12 +212,7 @@ object ParquetAvroIO {
         }
       }
 
-      val useSplittableDoFn = jobConf.getBoolean(
-        ParquetReadConfiguration.UseSplittableDoFn,
-        ParquetReadConfiguration.UseSplittableDoFnDefault
-      )
-
-      if (useSplittableDoFn) {
+      if (ParquetReadConfiguration.getUseSplittableDoFn(jobConf, sc.options)) {
         readSplittableDoFn(sc, jobConf, path)
       } else {
         readLegacy(sc, jobConf, path)

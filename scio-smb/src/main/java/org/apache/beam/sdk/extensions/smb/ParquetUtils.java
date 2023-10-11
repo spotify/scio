@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Spotify AB.
+ * Copyright 2023 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.parquet;
+package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,8 +27,8 @@ import org.apache.parquet.hadoop.ParquetOutputFormat;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
-public class WriterUtils {
-  public static <T, SELF extends ParquetWriter.Builder<T, SELF>> ParquetWriter<T> build(
+class ParquetUtils {
+  static <T, SELF extends ParquetWriter.Builder<T, SELF>> ParquetWriter<T> buildWriter(
       ParquetWriter.Builder<T, SELF> builder, Configuration conf, CompressionCodecName compression)
       throws IOException {
     // https://github.com/apache/parquet-mr/tree/master/parquet-hadoop#class-parquetoutputformat
@@ -69,6 +69,7 @@ public class WriterUtils {
         .withMaxRowCountForPageSizeCheck(ParquetOutputFormat.getMaxRowCountForPageSizeCheck(conf))
         .withMinRowCountForPageSizeCheck(ParquetOutputFormat.getMinRowCountForPageSizeCheck(conf))
         .withValidation(ParquetOutputFormat.getValidation(conf))
+        .withRowGroupSize(rowGroupSize)
         .withRowGroupSize(rowGroupSize)
         .build();
   }

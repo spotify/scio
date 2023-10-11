@@ -151,23 +151,18 @@ trait AvroCoders {
       throw new RuntimeException(msg)
     }
 
+    // same as SpecificRecordDatumFactory in scio-avro
     val factory = new AvroDatumFactory(clazz) {
       override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
-        // create the datum writer using the schema api
-        // class API might be unsafe. See schemaForClass
-        val datumReader = new ReflectDatumReader[T](writer, reader, new ReflectData())
-        // for backward compat, add logical type support by default
-        AvroUtils.addLogicalTypeConversions(datumReader.getData)
-        datumReader
+        val data = new ReflectData(clazz.getClassLoader)
+        AvroUtils.addLogicalTypeConversions(data)
+        new ReflectDatumReader[T](writer, reader, data)
       }
 
       override def apply(writer: Schema): DatumWriter[T] = {
-        // create the datum writer using the schema api
-        // class API might be unsafe. See schemaForClass
-        val datumWriter = new ReflectDatumWriter[T](writer, new ReflectData())
-        // for backward compat, add logical type support by default
-        AvroUtils.addLogicalTypeConversions(datumWriter.getData)
-        datumWriter
+        val data = new ReflectData(clazz.getClassLoader)
+        AvroUtils.addLogicalTypeConversions(data)
+        new ReflectDatumWriter[T](writer, data)
       }
     }
 

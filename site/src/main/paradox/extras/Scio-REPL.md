@@ -39,7 +39,7 @@ scio>
 
 A @scaladoc[ScioContext](com.spotify.scio.ScioContext) is created on REPL startup as `sc` and a starting point to most operations. Use `tab` completion, history and other REPL goodies to play around.
 
-### Start from SBT console (Scala `2.11.x`+ only)
+### Start from SBT console
 
 ```
 $ git clone git@github.com:spotify/scio.git

@@ -27,9 +27,9 @@ import com.spotify.scio.values.SCollection
 import com.twitter.chill.ClosureCleaner
 import io.grpc.Channel
 import io.grpc.stub.{AbstractFutureStub, AbstractStub, StreamObserver}
+import org.apache.commons.lang3.tuple.Pair
 
 import java.lang.{Iterable => JIterable}
-
 import scala.util.Try
 import scala.jdk.CollectionConverters._
 
@@ -92,6 +92,61 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
       .mapValues(_.asScala.map(_.asScala))
   }
 
+  def grpcBatchLookup[
+    BatchRequest,
+    BatchResponse,
+    Response: Coder,
+    Client <: AbstractFutureStub[Client]
+  ](
+    channelSupplier: () => Channel,
+    clientFactory: Channel => Client,
+    batchSize: Int,
+    batchRequestFn: Seq[Request] => BatchRequest,
+    batchResponseFn: BatchResponse => Seq[(String, Response)],
+    idExtractorFn: Request => String,
+    maxPendingRequests: Int,
+    cacheSupplier: CacheSupplier[String, Response] = new NoOpCacheSupplier[String, Response]()
+  )(
+    f: Client => BatchRequest => ListenableFuture[BatchResponse]
+  ): SCollection[(Request, Try[Response])] = self.transform { in =>
+    import self.coder
+    val cleanedChannelSupplier = ClosureCleaner.clean(channelSupplier)
+    val serializableClientFactory = Functions.serializableFn(clientFactory)
+    val serializableLookupFn =
+      Functions.serializableBiFn[Client, BatchRequest, ListenableFuture[BatchResponse]] {
+        (client, request) => f(client)(request)
+      }
+
+    val serializableBatchRequestFn =
+      Functions.serializableFn[java.util.List[Request], BatchRequest] { inputs =>
+        batchRequestFn(inputs.asScala.toSeq)
+      }
+
+    val serializableBatchResponseFn =
+      Functions.serializableFn[BatchResponse, java.util.List[Pair[String, Response]]] {
+        batchResponse =>
+          batchResponseFn(batchResponse).map { case (input, output) =>
+            Pair.of(input, output)
+          }.asJava
+      }
+    val serializableIdExtractorFn = Functions.serializableFn(idExtractorFn)
+
+    in.parDo(
+      GrpcBatchDoFn
+        .newBuilder[Request, BatchRequest, BatchResponse, Response, Client]()
+        .withChannelSupplier(() => cleanedChannelSupplier())
+        .withNewClientFn(serializableClientFactory)
+        .withLookupFn(serializableLookupFn)
+        .withMaxPendingRequests(maxPendingRequests)
+        .withBatchSize(batchSize)
+        .withBatchRequestFn(serializableBatchRequestFn)
+        .withBatchResponseFn(serializableBatchResponseFn)
+        .withIdExtractorFn(serializableIdExtractorFn)
+        .withCacheSupplier(cacheSupplier)
+        .build()
+    ).map(kvToTuple _)
+      .mapValues(_.asScala)
+  }
 }
 
 trait SCollectionSyntax {

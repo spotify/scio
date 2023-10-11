@@ -10,7 +10,7 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -24,7 +24,7 @@ jobs:
   scalafix-rules:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -37,7 +37,7 @@ jobs:
   dependencies:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -49,7 +49,7 @@ jobs:
   mimaReport:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: cache SBT

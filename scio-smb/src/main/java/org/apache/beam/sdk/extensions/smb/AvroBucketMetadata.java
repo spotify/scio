@@ -138,27 +138,33 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
       path = AvroUtils.toKeyPath(keyField, getKeyClass(), value.getSchema());
       keyPath.compareAndSet(null, path);
     }
-    return extractKey(path, value);
+    return extractKey(getKeyClass(), path, value);
   }
 
   @Override
   public K2 extractKeySecondary(V value) {
     verifyNotNull(keyFieldSecondary);
+    verifyNotNull(getKeyClassSecondary());
     int[] path = keyPathSecondary.get();
     if (path == null) {
       path = AvroUtils.toKeyPath(keyFieldSecondary, getKeyClassSecondary(), value.getSchema());
       keyPathSecondary.compareAndSet(null, path);
     }
-    return extractKey(path, value);
+    return extractKey(getKeyClassSecondary(), path, value);
   }
 
-  private <K> K extractKey(int[] keyPath, V value) {
+  static <K> K extractKey(Class<K> keyClazz, int[] keyPath, IndexedRecord value) {
     IndexedRecord node = value;
     for (int i = 0; i < keyPath.length - 1; i++) {
       node = (IndexedRecord) node.get(keyPath[i]);
     }
+    Object keyObj = node.get(keyPath[keyPath.length - 1]);
+    // Always convert CharSequence to String, in case reader and writer disagree
+    if (keyClazz == CharSequence.class || keyClazz == String.class) {
+      keyObj = keyObj.toString();
+    }
     @SuppressWarnings("unchecked")
-    K key = (K) node.get(keyPath[keyPath.length - 1]);
+    K key = (K) keyObj;
     return key;
   }
 

@@ -31,6 +31,7 @@ import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumReader;
+import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.extensions.avro.io.AvroIO;
@@ -121,7 +122,16 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
                           }
                         })
                     .withCodec(codec.getCodec())
-            : AvroIO.sink(recordClass).withCodec(codec.getCodec());
+            : AvroIO.sink(recordClass)
+                .withCodec(codec.getCodec())
+                .withDatumWriterFactory(
+                    (writer) -> {
+                      // same as SpecificRecordDatumFactory in scio-avro
+                      ReflectData data = new ReflectData(recordClass.getClassLoader());
+                      org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
+                          .addLogicalTypeConversions(data);
+                      return new ReflectDatumWriter<>(writer, data);
+                    });
 
     if (metadata != null) {
       return sink.withMetadata(metadata);
@@ -193,10 +203,15 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     public void prepareRead(ReadableByteChannel channel) throws IOException {
       final Schema schema = schemaSupplier.get();
 
-      DatumReader<ValueT> datumReader =
-          recordClass == null
-              ? new GenericDatumReader<>(schema)
-              : new ReflectDatumReader<>(recordClass);
+      DatumReader<ValueT> datumReader;
+      if (recordClass == null) {
+        datumReader = new GenericDatumReader<>(schema);
+      } else {
+        // same as SpecificRecordDatumFactory in scio-avro
+        ReflectData data = new ReflectData(recordClass.getClassLoader());
+        org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils.addLogicalTypeConversions(data);
+        datumReader = new ReflectDatumReader<>(data);
+      }
 
       reader = new DataFileStream<>(Channels.newInputStream(channel), datumReader);
     }

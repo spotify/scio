@@ -100,21 +100,21 @@ val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.1.0"
 val caffeineVersion = "2.9.3"
-val cassandraDriverVersion = "3.11.4"
+val cassandraDriverVersion = "3.11.5"
 val cassandraVersion = "3.11.16"
 val catsVersion = "2.9.0"
 val chillVersion = "0.10.0"
-val circeVersion = "0.14.5"
+val circeVersion = "0.14.6"
 val commonsTextVersion = "1.10.0"
-val elasticsearch7Version = "7.17.9"
-val elasticsearch8Version = "8.9.1"
+val elasticsearch7Version = "7.17.13"
+val elasticsearch8Version = "8.10.2"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val hamcrestVersion = "2.2"
 val jakartaJsonVersion = "2.1.2"
 val javaLshVersion = "0.12"
-val jedisVersion = "4.4.3"
+val jedisVersion = "4.4.5"
 val jnaVersion = "5.13.0"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -122,7 +122,7 @@ val kantanCodecsVersion = "0.5.3"
 val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.3"
-val magnolifyVersion = "0.6.2"
+val magnolifyVersion = "0.6.3"
 val metricsVersion = "3.2.6"
 val neo4jDriverVersion = "4.4.12"
 val ndArrayVersion = "0.3.3"
@@ -133,11 +133,12 @@ val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
 val scalaCollectionCompatVersion = "2.11.0"
 val scalaMacrosVersion = "2.1.1"
-val scalatestVersion = "3.2.16"
+val scalatestVersion = "3.2.17"
 val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
-val testContainersVersion = "0.40.17"
+val testContainersVersion = "0.41.0"
+val voyagerVersion = "1.2.6"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -241,7 +242,7 @@ val commonSettings = formatSettings ++
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
-    scalaVersion := "2.13.11",
+    scalaVersion := "2.13.12",
     crossScalaVersions := Seq("2.12.18", scalaVersion.value),
     // this setting is not derived in sbt-tpolecat
     // https://github.com/typelevel/sbt-tpolecat/issues/36
@@ -254,13 +255,14 @@ val commonSettings = formatSettings ++
       "ch.qos.logback" % "logback-classic",
       "ch.qos.logback" % "logback-core",
       "ch.qos.reload4j" % "reload4j",
-      "io.dropwizard.metrics" % "metrics-logback",
-      "log4j" % "log4j",
       "org.slf4j" % "slf4j-log4j12",
-      "org.slf4j" % "slf4j-reload4j"
+      "org.slf4j" % "slf4j-reload4j",
+      "io.dropwizard.metrics" % "metrics-logback",
+      "log4j" % "log4j"
     ),
     resolvers ++= Resolver.sonatypeOssRepos("public"),
     fork := true,
+    run / outputStrategy := Some(OutputStrategy.StdoutOutput),
     Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / javaOptions ++= Seq(
       "-Xms512m",
@@ -631,7 +633,6 @@ lazy val `scio-test`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     ),
     Test / compileOrder := CompileOrder.JavaThenScala,
@@ -691,7 +692,6 @@ lazy val `scio-avro`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.typelevel" %% "cats-core" % catsVersion % "test"
     )
@@ -763,7 +763,6 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % "test,it",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it",
       "org.typelevel" %% "cats-core" % catsVersion % "test"
     )
@@ -790,18 +789,13 @@ lazy val `scio-cassandra3`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" %% "chill" % chillVersion,
-      "org.apache.cassandra" % "cassandra-all" % cassandraVersion excludeAll (
-        "org.slf4j" % "jcl-over-slf4j",
-        "org.slf4j" % "log4j-over-slf4j"
-      ),
+      "org.apache.cassandra" % "cassandra-all" % cassandraVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.slf4j" % "jcl-over-slf4j" % slf4jVersion % "test,it",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
   )
@@ -839,7 +833,6 @@ lazy val `scio-elasticsearch-common`: Project = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % "it",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % "it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     )
   )
@@ -905,6 +898,7 @@ lazy val `scio-extra`: Project = project
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" % "annoy" % annoyVersion,
+      "com.spotify" % "voyager" % voyagerVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "io.circe" %% "circe-core" % circeVersion,
@@ -927,7 +921,6 @@ lazy val `scio-extra`: Project = project
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % "test,it",
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % "test,it",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test,it",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "test,it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "test,it"
     ),
     Compile / sourceDirectories := (Compile / sourceDirectories).value
@@ -958,6 +951,7 @@ lazy val `scio-grpc`: Project = project
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-stub" % grpcVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       // test
       "io.grpc" % "grpc-netty" % grpcVersion % Test
     )
@@ -1006,7 +1000,6 @@ lazy val `scio-neo4j`: Project = project
       // test
       "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % "it",
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % "it",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "it",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "it"
     )
   )
@@ -1033,7 +1026,9 @@ lazy val `scio-parquet`: Project = project
     description := "Scio add-on for Parquet",
     unusedCompileDependenciesFilter -= Seq(
       // required by me.lyh:parquet-avro
-      moduleFilter("org.apache.avro", "avro-compiler")
+      moduleFilter("org.apache.avro", "avro-compiler"),
+      // replacing log4j compile time dependency
+      moduleFilter("org.slf4j", "log4j-over-slf4j")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
@@ -1059,11 +1054,11 @@ lazy val `scio-parquet`: Project = project
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // test
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
@@ -1108,7 +1103,6 @@ lazy val `scio-tensorflow`: Project = project
       "com.spotify" %% "featran-scio" % featranVersion % Test,
       "com.spotify" %% "featran-tensorflow" % featranVersion % Test,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
@@ -1181,7 +1175,7 @@ lazy val `scio-examples`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.13.1" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.14.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1215,6 +1209,8 @@ lazy val `scio-repl`: Project = project
   .settings(
     // drop repl compatibility with java 8
     tpolecatDevModeOptions ~= { _.filterNot(_ == Scalac.release8) },
+    // do not fork when running otherwise system terminal cannot be created.
+    run / fork := false,
     libraryDependencies ++= Seq(
       // compile
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
@@ -1231,7 +1227,6 @@ lazy val `scio-repl`: Project = project
       // runtime
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Runtime,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime
     ),
     libraryDependencies ++= {
@@ -1335,6 +1330,12 @@ lazy val `scio-smb`: Project = project
   .settings(beamRunnerSettings)
   .settings(
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
+    unusedCompileDependenciesFilter -= Seq(
+      // ParquetUtils calls functions defined in parent class from hadoop-mapreduce-client-core
+      moduleFilter("org.apache.hadoop", "hadoop-mapreduce-client-core"),
+      // replacing log4j compile time dependency
+      moduleFilter("org.slf4j", "log4j-over-slf4j")
+    ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
@@ -1359,11 +1360,13 @@ lazy val `scio-smb`: Project = project
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
+      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.avro" % "avro" % avroVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
+      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
       "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll ("org.apache.avro" % "avro"),
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
@@ -1376,7 +1379,6 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "it,test",
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % "it,test",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "it,test"
     ),
     javacOptions ++= {
@@ -1407,7 +1409,6 @@ lazy val `scio-redis`: Project = project
       "redis.clients" % "jedis" % jedisVersion,
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j" % "log4j-over-slf4j" % slf4jVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )

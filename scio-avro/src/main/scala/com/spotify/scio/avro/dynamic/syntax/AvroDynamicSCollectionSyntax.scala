@@ -109,10 +109,7 @@ final class DynamicGenericRecordSCollectionOps(private val self: SCollection[Gen
       val nm = new JHashMap[String, AnyRef]()
       nm.putAll(metadata.asJava)
       val sink = BAvroIO
-        .sinkViaGenericRecords(
-          schema,
-          (element: GenericRecord, _: Schema) => element
-        )
+        .sink[GenericRecord](schema)
         .withCodec(codec)
         .withMetadata(nm)
       val write =
