@@ -46,7 +46,7 @@ object ParquetReadConfiguration {
   val FilterGranularity = "scio.parquet.read.filterGranularity"
 
   // Use Parquet's readNextFilteredRowGroup() API, which applies filters to entire pages within each row group
-  val FilterGranularityPage = "rowGroup"
+  val FilterGranularityPage = "page"
 
   // Use Parquet's readNextRowGroup() API, which applies filters per-record within each page
   val FilterGranularityRecord = "record"
