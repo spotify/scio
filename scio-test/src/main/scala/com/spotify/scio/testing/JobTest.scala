@@ -23,7 +23,6 @@ import com.spotify.scio.io.{KeyedIO, ScioIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.runners.PTransformOverride
 import org.apache.beam.sdk.testing.TestStream
 import org.apache.beam.sdk.testing.TestStream.{ElementEvent, Event}
