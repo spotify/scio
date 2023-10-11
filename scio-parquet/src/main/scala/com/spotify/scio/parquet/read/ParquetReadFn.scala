@@ -55,7 +55,12 @@ class ParquetReadFn[T, R](
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   private lazy val granularity =
-    conf.get().get(ParquetReadConfiguration.SplitGranularity, ParquetReadConfiguration.SplitGranularityFile) match {
+    conf
+      .get()
+      .get(
+        ParquetReadConfiguration.SplitGranularity,
+        ParquetReadConfiguration.SplitGranularityFile
+      ) match {
       case ParquetReadConfiguration.SplitGranularityFile     => File
       case ParquetReadConfiguration.SplitGranularityRowGroup => RowGroup
       case s: String =>
@@ -66,7 +71,12 @@ class ParquetReadFn[T, R](
     }
 
   private lazy val readNextRowGroup: ParquetFileReader => PageReadStore =
-    conf.get().get(ParquetReadConfiguration.FilterGranularity, ParquetReadConfiguration.FilterGranularityRecord) match {
+    conf
+      .get()
+      .get(
+        ParquetReadConfiguration.FilterGranularity,
+        ParquetReadConfiguration.FilterGranularityRecord
+      ) match {
       case ParquetReadConfiguration.FilterGranularityPage   => _.readNextFilteredRowGroup()
       case ParquetReadConfiguration.FilterGranularityRecord => _.readNextRowGroup()
       case s: String =>
