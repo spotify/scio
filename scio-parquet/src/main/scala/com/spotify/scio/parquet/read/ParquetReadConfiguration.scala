@@ -42,6 +42,15 @@ object ParquetReadConfiguration {
   val UseSplittableDoFn = "scio.parquet.read.useSplittableDoFn"
   private[scio] val UseSplittableDoFnDefault = false
 
+  // Row Group API (note: this setting is only supported for SplittableDoFn-based reads)
+  val FilterGranularity = "scio.parquet.read.filterGranularity"
+
+  // Use Parquet's readNextFilteredRowGroup() API, which applies filters to entire pages within each row group
+  val FilterGranularityPage = "page"
+
+  // Use Parquet's readNextRowGroup() API, which applies filters per-record within each page
+  val FilterGranularityRecord = "record"
+
   private[scio] def getUseSplittableDoFn(conf: Configuration, opts: PipelineOptions): Boolean = {
     Option(conf.get(UseSplittableDoFn)) match {
       case Some(v) => v.toBoolean

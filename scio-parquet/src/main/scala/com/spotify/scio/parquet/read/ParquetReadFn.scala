@@ -31,15 +31,29 @@ import org.apache.parquet.hadoop.api.InitContext
 import org.apache.parquet.hadoop.metadata.BlockMetaData
 import org.apache.parquet.io.{ColumnIOFactory, ParquetDecodingException, RecordReader}
 import org.apache.parquet.HadoopReadOptions
+import org.apache.parquet.column.page.PageReadStore
 import org.slf4j.LoggerFactory
 
 import java.util.{Set => JSet}
 import scala.jdk.CollectionConverters._
 
 object ParquetReadFn {
-  sealed private trait Granularity
-  private case object File extends Granularity
-  private case object RowGroup extends Granularity
+  @transient
+  private lazy val logger = LoggerFactory.getLogger(classOf[ParquetReadFn[_, _]])
+
+  sealed private trait SplitGranularity
+  private object SplitGranularity {
+    case object File extends SplitGranularity
+    case object RowGroup extends SplitGranularity
+  }
+
+  sealed abstract private class FilterGranularity(
+    val readNextRowGroup: ParquetFileReader => PageReadStore
+  )
+  private object FilterGranularity {
+    case object Page extends FilterGranularity(_.readNextFilteredRowGroup())
+    case object Record extends FilterGranularity(_.readNextRowGroup())
+  }
 
   // Constants
   private val SplitLimit = 64000000L
@@ -51,26 +65,54 @@ class ParquetReadFn[T, R](
   conf: SerializableConfiguration,
   projectionFn: SerializableFunction[T, R]
 ) extends DoFn[ReadableFile, R] {
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  @transient
+  private lazy val options = HadoopReadOptions.builder(conf.get()).build()
 
-  private lazy val granularity =
-    conf.get().get(ParquetReadConfiguration.SplitGranularity) match {
-      case ParquetReadConfiguration.SplitGranularityFile     => File
-      case ParquetReadConfiguration.SplitGranularityRowGroup => RowGroup
-      case _                                                 => File
+  @transient
+  private lazy val splitGranularity =
+    conf
+      .get()
+      .get(
+        ParquetReadConfiguration.SplitGranularity,
+        ParquetReadConfiguration.SplitGranularityFile
+      ) match {
+      case ParquetReadConfiguration.SplitGranularityFile     => SplitGranularity.File
+      case ParquetReadConfiguration.SplitGranularityRowGroup => SplitGranularity.RowGroup
+      case other: String =>
+        logger.warn(
+          "Found unsupported setting value {} for key {}. Defaulting to file-level splitting.",
+          Array(other, ParquetReadConfiguration.SplitGranularity) // varargs fails with 2.12
+        )
+        SplitGranularity.File
     }
 
-  private def parquetFileReader(file: ReadableFile): ParquetFileReader = {
-    val options = HadoopReadOptions.builder(conf.get()).build
+  @transient
+  private lazy val filterGranularity =
+    conf
+      .get()
+      .get(
+        ParquetReadConfiguration.FilterGranularity,
+        ParquetReadConfiguration.FilterGranularityRecord
+      ) match {
+      case ParquetReadConfiguration.FilterGranularityPage   => FilterGranularity.Page
+      case ParquetReadConfiguration.FilterGranularityRecord => FilterGranularity.Record
+      case other: String =>
+        logger.warn(
+          "Found unsupported setting value {} for key {}. Defaulting to record-level filtering.",
+          Array(other, ParquetReadConfiguration.FilterGranularity) // varargs fails with 2.12
+        )
+        FilterGranularity.Record
+    }
+
+  private def parquetFileReader(file: ReadableFile): ParquetFileReader =
     ParquetFileReader.open(BeamInputFile.of(file.openSeekable), options)
-  }
 
   @GetRestrictionCoder def getRestrictionCoder = new OffsetRange.Coder
 
   @GetInitialRestriction
-  def getInitialRestriction(@Element file: ReadableFile): OffsetRange = granularity match {
-    case File => EntireFileRange
-    case RowGroup =>
+  def getInitialRestriction(@Element file: ReadableFile): OffsetRange = splitGranularity match {
+    case SplitGranularity.File => EntireFileRange
+    case SplitGranularity.RowGroup =>
       val reader = parquetFileReader(file)
       val rowGroups =
         try {
@@ -86,11 +128,9 @@ class ParquetReadFn[T, R](
 
   @GetSize
   def getSize(@Element file: ReadableFile, @Restriction restriction: OffsetRange): Double = {
-    granularity match {
-      case File => file.getMetadata.sizeBytes().toDouble
-      case RowGroup =>
-        val (_, size) = getRecordCountAndSize(file, restriction)
-        size
+    splitGranularity match {
+      case SplitGranularity.File     => file.getMetadata.sizeBytes().toDouble
+      case SplitGranularity.RowGroup => getRowGroupsSizeBytes(file, restriction).toDouble
     }
   }
 
@@ -100,9 +140,9 @@ class ParquetReadFn[T, R](
     output: DoFn.OutputReceiver[OffsetRange],
     @Element file: ReadableFile
   ): Unit = {
-    granularity match {
-      case File => output.output(EntireFileRange)
-      case RowGroup =>
+    splitGranularity match {
+      case SplitGranularity.File => output.output(EntireFileRange)
+      case SplitGranularity.RowGroup =>
         val reader = parquetFileReader(file)
         try {
           splitRowGroupsWithLimit(
@@ -125,14 +165,11 @@ class ParquetReadFn[T, R](
     logger.debug(
       "reading file from offset {} to {}",
       tracker.currentRestriction.getFrom,
-      if (granularity == File) "end" else tracker.currentRestriction().getTo
+      if (splitGranularity == SplitGranularity.File) "end" else tracker.currentRestriction().getTo
     )
-    val options = HadoopReadOptions.builder(conf.get()).build
-
-    val reader = ParquetFileReader.open(BeamInputFile.of(file.openSeekable), options)
+    val reader = parquetFileReader(file)
     try {
       val filter = options.getRecordFilter
-      val hadoopConf = options.asInstanceOf[HadoopReadOptions].getConf
       val parquetFileMetadata = reader.getFooter.getFileMetaData
       val fileSchema = parquetFileMetadata.getSchema
       val fileMetadata = parquetFileMetadata.getKeyValueMetaData
@@ -140,7 +177,7 @@ class ParquetReadFn[T, R](
 
       val readContext = readSupport.init(
         new InitContext(
-          hadoopConf,
+          conf.get(),
           fileMetadata.asScala.map { case (k, v) =>
             k -> (ImmutableSet.of(v): JSet[String])
           }.asJava,
@@ -151,13 +188,13 @@ class ParquetReadFn[T, R](
 
       val columnIOFactory = new ColumnIOFactory(parquetFileMetadata.getCreatedBy)
       val recordConverter =
-        readSupport.prepareForRead(hadoopConf, fileMetadata, fileSchema, readContext)
+        readSupport.prepareForRead(conf.get(), fileMetadata, fileSchema, readContext)
       val columnIO = columnIOFactory.getColumnIO(readContext.getRequestedSchema, fileSchema, true)
 
-      granularity match {
-        case File =>
+      splitGranularity match {
+        case SplitGranularity.File =>
           val tryClaim = tracker.tryClaim(tracker.currentRestriction().getFrom)
-          var pages = reader.readNextRowGroup()
+          var pages = filterGranularity.readNextRowGroup(reader)
           // Must check tryClaim before reading so work isn't duplicated across workers
           while (tryClaim && pages != null) {
             val recordReader = columnIO.getRecordReader(
@@ -173,13 +210,13 @@ class ParquetReadFn[T, R](
               out,
               projectionFn
             )
-            pages = reader.readNextRowGroup()
+            pages = filterGranularity.readNextRowGroup(reader)
           }
-        case RowGroup =>
+        case SplitGranularity.RowGroup =>
           var currentRowGroupIndex = tracker.currentRestriction.getFrom
           (0L until currentRowGroupIndex).foreach(_ => reader.skipNextRowGroup())
           while (tracker.tryClaim(currentRowGroupIndex)) {
-            val pages = reader.readNextRowGroup
+            val pages = filterGranularity.readNextRowGroup(reader)
 
             val recordReader = columnIO.getRecordReader(
               pages,
@@ -219,21 +256,19 @@ class ParquetReadFn[T, R](
     var currentRow = 0L
     while (currentRow < rowCount) {
       try {
-        val record = recordReader.read
+        val record = recordReader.read()
         if (record == null) {
           // it happens when a record is filtered out in this block
           logger.debug(
             "record is filtered out by reader in row group {} in file {}",
             rowGroupIndex,
-            file.toString
+            file
           )
         } else if (recordReader.shouldSkipCurrentRecord) {
           // this record is being filtered via the filter2 package
           logger.debug(
             "skipping record at {} in row group {} in file {}",
-            currentRow.toString,
-            rowGroupIndex.toString,
-            file.toString
+            Array(currentRow, rowGroupIndex, file) // varargs fails with 2.12
           )
 
         } else {
@@ -244,29 +279,24 @@ class ParquetReadFn[T, R](
       } catch {
         case e: RuntimeException =>
           throw new ParquetDecodingException(
-            s"Can not read value at $currentRow in row group" +
-              s" $rowGroupIndex in file $file",
+            s"Can not read value at $currentRow in row group $rowGroupIndex in file $file",
             e
           )
       }
     }
     logger.debug(
       "Finish processing {} rows from row group {} in file {}",
-      rowCount.toString,
-      rowGroupIndex.toString,
-      file.toString
+      Array(rowCount, rowGroupIndex, file) // varargs fails with 2.12
     )
   }
 
-  private def getRecordCountAndSize(file: ReadableFile, restriction: OffsetRange) = {
+  private def getRowGroupsSizeBytes(file: ReadableFile, restriction: OffsetRange): Long = {
     val reader = parquetFileReader(file)
-
     try {
       reader.getRowGroups.asScala
         .slice(restriction.getFrom.toInt, restriction.getTo.toInt)
-        .foldLeft((0.0, 0.0)) { case ((count, size), rowGroup) =>
-          (count + rowGroup.getRowCount, size + rowGroup.getTotalByteSize)
-        }
+        .map(_.getTotalByteSize)
+        .sum
     } finally {
       reader.close()
     }
@@ -279,17 +309,17 @@ class ParquetReadFn[T, R](
   ): Seq[OffsetRange] = {
     val (offsets, _, _) = rowGroups.zipWithIndex
       .slice(startGroup.toInt, endGroup.toInt)
-      .foldLeft((Seq.empty[OffsetRange], startGroup.toInt, 0.0)) {
+      .foldLeft((Seq.newBuilder[OffsetRange], startGroup.toInt, 0.0)) {
         case ((offsets, start, size), (rowGroup, end)) =>
           val currentSize = size + rowGroup.getTotalByteSize
 
           if (currentSize > SplitLimit || endGroup - 1 == end) {
-            (new OffsetRange(start, end + 1) +: offsets, end + 1, 0.0)
+            (offsets += new OffsetRange(start, end + 1), end + 1, 0.0)
           } else {
             (offsets, start, currentSize)
           }
       }
 
-    offsets.reverse
+    offsets.result()
   }
 }

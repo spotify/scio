@@ -204,6 +204,16 @@ lazy val mimaSettings = Def.settings(
     // scio-tensorflow ConcurrentHashMap instead of ConcurrentMap (#5011)
     ProblemFilters.exclude[DirectMissingMethodProblem](
       "com.spotify.scio.tensorflow.PredictDoFn.createResource"
+    ),
+    // scio-parquet filter granularity (#5025)
+    ProblemFilters.exclude[MissingClassProblem](
+      "com.spotify.scio.parquet.read.ParquetReadFn$File$"
+    ),
+    ProblemFilters.exclude[MissingClassProblem](
+      "com.spotify.scio.parquet.read.ParquetReadFn$Granularity"
+    ),
+    ProblemFilters.exclude[MissingClassProblem](
+      "com.spotify.scio.parquet.read.ParquetReadFn$RowGroup$"
     )
   ),
   mimaPreviousArtifacts := previousVersion(version.value)
