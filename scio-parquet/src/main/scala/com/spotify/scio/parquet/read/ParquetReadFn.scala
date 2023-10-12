@@ -258,7 +258,7 @@ class ParquetReadFn[T, R](
     var currentRow = 0L
     while (currentRow < rowCount) {
       try {
-        val record = recordReader.read
+        val record = recordReader.read()
         if (record == null) {
           // it happens when a record is filtered out in this block
           logger.debug(
@@ -270,8 +270,8 @@ class ParquetReadFn[T, R](
           // this record is being filtered via the filter2 package
           logger.debug(
             "skipping record at {} in row group {} in file {}",
-            currentRow.toString,
-            rowGroupIndex.toString,
+            currentRow,
+            rowGroupIndex,
             file.toString
           )
 
@@ -283,29 +283,26 @@ class ParquetReadFn[T, R](
       } catch {
         case e: RuntimeException =>
           throw new ParquetDecodingException(
-            s"Can not read value at $currentRow in row group" +
-              s" $rowGroupIndex in file $file",
+            s"Can not read value at $currentRow in row group $rowGroupIndex in file $file",
             e
           )
       }
     }
     logger.debug(
       "Finish processing {} rows from row group {} in file {}",
-      rowCount.toString,
-      rowGroupIndex.toString,
+      rowCount,
+      rowGroupIndex,
       file.toString
     )
   }
 
-  private def getRecordCountAndSize(file: ReadableFile, restriction: OffsetRange) = {
+  private def getRowGroupsSizeBytes(file: ReadableFile, restriction: OffsetRange): Long = {
     val reader = parquetFileReader(file)
-
     try {
       reader.getRowGroups.asScala
         .slice(restriction.getFrom.toInt, restriction.getTo.toInt)
-        .foldLeft((0.0, 0.0)) { case ((count, size), rowGroup) =>
-          (count + rowGroup.getRowCount, size + rowGroup.getTotalByteSize)
-        }
+        .map(_.getTotalByteSize)
+        .sum
     } finally {
       reader.close()
     }
@@ -318,17 +315,17 @@ class ParquetReadFn[T, R](
   ): Seq[OffsetRange] = {
     val (offsets, _, _) = rowGroups.zipWithIndex
       .slice(startGroup.toInt, endGroup.toInt)
-      .foldLeft((Seq.empty[OffsetRange], startGroup.toInt, 0.0)) {
+      .foldLeft((Seq.newBuilder[OffsetRange], startGroup.toInt, 0.0)) {
         case ((offsets, start, size), (rowGroup, end)) =>
           val currentSize = size + rowGroup.getTotalByteSize
 
           if (currentSize > SplitLimit || endGroup - 1 == end) {
-            (new OffsetRange(start, end + 1) +: offsets, end + 1, 0.0)
+            (offsets += new OffsetRange(start, end + 1), end + 1, 0.0)
           } else {
             (offsets, start, currentSize)
           }
       }
 
-    offsets.reverse
+    offsets.result()
   }
 }
