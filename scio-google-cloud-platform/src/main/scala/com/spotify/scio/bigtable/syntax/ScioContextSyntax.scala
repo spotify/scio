@@ -54,10 +54,22 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     projectId: String,
     instanceId: String,
     tableId: String,
+    keyRange: ByteKeyRange,
+    rowFilter: RowFilter,
+    maxBufferElementCount: Option[Int]
+  ): SCollection[Row] =
+    bigtable(projectId, instanceId, tableId, Seq(keyRange), rowFilter, maxBufferElementCount)
+
+  /** Get an SCollection for a Bigtable table. */
+  def bigtable(
+    projectId: String,
+    instanceId: String,
+    tableId: String,
     keyRanges: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRanges,
-    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter
+    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter,
+    maxBufferElementCount: Option[Int] = BigtableRead.ReadParam.DefaultMaxBufferElementCount
   ): SCollection[Row] = {
-    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter)
+    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter, maxBufferElementCount)
     self.read(BigtableRead(projectId, instanceId, tableId))(parameters)
   }
 
@@ -74,10 +86,32 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def bigtable(
     bigtableOptions: BigtableOptions,
     tableId: String,
+    keyRange: ByteKeyRange,
+    rowFilter: RowFilter,
+    maxBufferElementCount: Option[Int]
+  ): SCollection[Row] =
+    bigtable(bigtableOptions, tableId, Seq(keyRange), rowFilter, maxBufferElementCount)
+
+  /** Get an SCollection for a Bigtable table. */
+  def bigtable(
+    bigtableOptions: BigtableOptions,
+    tableId: String,
     keyRanges: Seq[ByteKeyRange],
     rowFilter: RowFilter
   ): SCollection[Row] = {
     val parameters = BigtableRead.ReadParam(keyRanges, rowFilter)
+    self.read(BigtableRead(bigtableOptions, tableId))(parameters)
+  }
+
+  /** Get an SCollection for a Bigtable table. */
+  def bigtable(
+    bigtableOptions: BigtableOptions,
+    tableId: String,
+    keyRanges: Seq[ByteKeyRange],
+    rowFilter: RowFilter,
+    maxBufferElementCount: Option[Int]
+  ): SCollection[Row] = {
+    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter, maxBufferElementCount)
     self.read(BigtableRead(bigtableOptions, tableId))(parameters)
   }
 
