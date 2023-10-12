@@ -18,8 +18,7 @@
 package com.spotify.scio.tensorflow
 
 import java.time.Duration
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap}
-import java.util.function.Function
+import java.util.concurrent.ConcurrentHashMap
 import com.spotify.zoltar.tf.{TensorFlowLoader, TensorFlowModel}
 import com.spotify.zoltar.Model
 import org.apache.beam.sdk.transforms.DoFn.{
@@ -40,15 +39,13 @@ import com.spotify.scio.transforms.DoFnWithResource
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.zoltar.Model.Id
 
-import java.util.concurrent.atomic.AtomicInteger
-
 sealed trait PredictDoFn[T, V, M <: Model[_]]
     extends DoFnWithResource[T, V, PredictDoFn.Resource[M]] {
   import PredictDoFn._
 
   def modelId: String
 
-  def loadModel: M
+  def loadModel(): M
 
   def model: M = getResource.get(modelId)._2
 
@@ -60,22 +57,20 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   def outputTensorNames: Seq[String]
 
-  override def createResource(): Resource[M] = new ConcurrentHashMap[String, (AtomicInteger, M)]()
+  override def createResource(): Resource[M] = new ConcurrentHashMap[String, (Int, M)]()
 
   override def getResourceType: DoFnWithResource.ResourceType = ResourceType.PER_CLASS
 
   @Setup
   override def setup(): Unit = {
     super.setup()
-    val (a, _) = getResource.computeIfAbsent(
+    getResource.compute(
       modelId,
-      new Function[String, (AtomicInteger, M)] {
-        override def apply(v1: String): (AtomicInteger, M) =
-          new AtomicInteger(0) -> loadModel
+      {
+        case (_, null)              => 1 -> loadModel()
+        case (_, (refCount, model)) => (refCount + 1) -> model
       }
     )
-    a.incrementAndGet()
-    ()
   }
 
   /** Process an element asynchronously. */
@@ -111,16 +106,25 @@ sealed trait PredictDoFn[T, V, M <: Model[_]]
 
   @Teardown
   override def teardown(): Unit = {
-    Log.info(s"Tearing down predict DoFn $this")
-    val (running, m) = getResource().get(modelId)
-    if (running.decrementAndGet() == 0) {
-      m.close()
-    }
+    Log.info("Tearing down predict DoFn {}", this)
+    getResource.compute(
+      modelId,
+      {
+        case (_, null) =>
+          Log.warn("No model to close while tearing down predict DoFn")
+          null
+        case (_, (1, model)) =>
+          model.close()
+          null
+        case (_, (refCount, model)) =>
+          (refCount - 1) -> model
+      }
+    )
   }
 }
 
 object PredictDoFn {
-  type Resource[M <: Model[_]] = ConcurrentMap[String, (AtomicInteger, M)]
+  type Resource[M <: Model[_]] = ConcurrentHashMap[String, (Int, M)]
 
   private val Log = LoggerFactory.getLogger(this.getClass)
 }
@@ -133,7 +137,7 @@ abstract private[tensorflow] class SavedBundlePredictDoFn[T, V](
   override def modelId: String =
     s"tf:$uri:$signatureName:${options.tags.asScala.mkString(":")}"
 
-  override def loadModel: TensorFlowModel =
+  override def loadModel(): TensorFlowModel =
     TensorFlowLoader
       .create(Id.create(modelId), uri, options, signatureName)
       .get(Duration.ofDays(Integer.MAX_VALUE))

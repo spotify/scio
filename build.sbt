@@ -138,6 +138,7 @@ val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val testContainersVersion = "0.41.0"
+val voyagerVersion = "1.2.6"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -199,7 +200,12 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
-  mimaBinaryIssueFilters := Seq.empty,
+  mimaBinaryIssueFilters := Seq(
+    // scio-tensorflow ConcurrentHashMap instead of ConcurrentMap (#5011)
+    ProblemFilters.exclude[DirectMissingMethodProblem](
+      "com.spotify.scio.tensorflow.PredictDoFn.createResource"
+    )
+  ),
   mimaPreviousArtifacts := previousVersion(version.value)
     .filter(_ => publishArtifact.value)
     .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
@@ -896,7 +902,9 @@ lazy val `scio-extra`: Project = project
       "com.google.zetasketch" % "zetasketch" % zetasketchVersion,
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
+      "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" % "annoy" % annoyVersion,
+      "com.spotify" % "voyager" % voyagerVersion,
       "com.spotify.sparkey" % "sparkey" % sparkeyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "io.circe" %% "circe-core" % circeVersion,

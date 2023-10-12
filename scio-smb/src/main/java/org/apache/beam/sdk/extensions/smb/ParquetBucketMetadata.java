@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.IndexedRecord;
@@ -44,17 +45,11 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String keyFieldSecondary;
 
-  // Parquet is a file format only. `V` can be Avro records, Scala case classes, etc.
-  private enum RecordType {
-    SCALA,
-    AVRO
-  }
+  @JsonIgnore
+  private final AtomicReference<Function<V, K1>> keyGettersPrimary = new AtomicReference<>();
 
-  @JsonIgnore private final AtomicReference<RecordType> recordType = new AtomicReference<>();
-  @JsonIgnore private final AtomicReference<int[]> keyPathPrimary = new AtomicReference<>();
-  @JsonIgnore private final AtomicReference<int[]> keyPathSecondary = new AtomicReference<>();
-  @JsonIgnore private final AtomicReference<Method[]> keyGettersPrimary = new AtomicReference<>();
-  @JsonIgnore private final AtomicReference<Method[]> keyGettersSecondary = new AtomicReference<>();
+  @JsonIgnore
+  private final AtomicReference<Function<V, K2>> keyGettersSecondary = new AtomicReference<>();
 
   @SuppressWarnings("unchecked")
   public ParquetBucketMetadata(
@@ -219,83 +214,56 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
 
   @Override
   public K1 extractKeyPrimary(V value) {
-    final Class<?> recordClass = value.getClass();
-    final Class<K1> keyClass = getKeyClass();
-    RecordType tpe = recordType.get();
-    if (tpe == null) {
-      tpe = getRecordType(value.getClass());
-      recordType.set(tpe);
+    Function<V, K1> getter = keyGettersPrimary.get();
+    if (getter == null) {
+      final Class<?> recordClass = value.getClass();
+      final Class<K1> keyClass = getKeyClass();
+      if (IndexedRecord.class.isAssignableFrom(recordClass)) {
+        final IndexedRecord record = (IndexedRecord) value;
+        final int[] path = AvroUtils.toKeyPath(keyField, keyClass, record.getSchema());
+        getter = (v) -> AvroBucketMetadata.extractKey(keyClass, path, (IndexedRecord) v);
+      } else if (scala.Product.class.isAssignableFrom(recordClass)) {
+        final Method[] methods = toKeyGetters(keyField, keyClass, recordClass);
+        getter = (v) -> extractKey(methods, v);
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported record class "
+                + recordClass.getName()
+                + ". Must be an Avro record or a Scala case class.");
+      }
+      keyGettersPrimary.compareAndSet(null, getter);
     }
-    switch (tpe) {
-      case AVRO:
-        int[] path = keyPathPrimary.get();
-        if (path == null) {
-          path = AvroUtils.toKeyPath(keyField, keyClass, ((IndexedRecord) value).getSchema());
-          keyPathPrimary.set(path);
-        }
-        return extractAvroKey(keyClass, path, value);
-      case SCALA:
-        Method[] getters = keyGettersPrimary.get();
-        if (getters == null) {
-          getters = toKeyGetters(keyField, keyClass, recordClass);
-          keyGettersPrimary.set(getters);
-        }
-        return extractScalaKey(getters, value);
-      default:
-        throw new IllegalStateException("Unexpected value: " + recordType);
-    }
+    return getter.apply(value);
   }
 
   @Override
   public K2 extractKeySecondary(V value) {
     verifyNotNull(keyFieldSecondary);
     verifyNotNull(getKeyClassSecondary());
-
-    final Class<?> recordClass = value.getClass();
-    final Class<K2> keyClass = getKeyClassSecondary();
-    RecordType tpe = recordType.get();
-    if (tpe == null) {
-      tpe = getRecordType(recordClass);
-      recordType.set(tpe);
+    Function<V, K2> getter = keyGettersSecondary.get();
+    if (getter == null) {
+      final Class<?> recordClass = value.getClass();
+      final Class<K2> keyClass = getKeyClassSecondary();
+      if (IndexedRecord.class.isAssignableFrom(recordClass)) {
+        final IndexedRecord record = (IndexedRecord) value;
+        final int[] path = AvroUtils.toKeyPath(keyField, keyClass, record.getSchema());
+        getter = (v) -> AvroBucketMetadata.extractKey(keyClass, path, (IndexedRecord) v);
+      } else if (scala.Product.class.isAssignableFrom(recordClass)) {
+        final Method[] methods = toKeyGetters(keyField, keyClass, recordClass);
+        getter = (v) -> extractKey(methods, v);
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported record class "
+                + recordClass.getName()
+                + ". Must be an Avro record or a Scala case class.");
+      }
+      keyGettersSecondary.compareAndSet(null, getter);
     }
-    switch (tpe) {
-      case AVRO:
-        int[] path = keyPathSecondary.get();
-        if (path == null) {
-          path =
-              AvroUtils.toKeyPath(keyFieldSecondary, keyClass, ((IndexedRecord) value).getSchema());
-          keyPathSecondary.set(path);
-        }
-        return extractAvroKey(keyClass, path, value);
-      case SCALA:
-        Method[] getters = keyGettersSecondary.get();
-        if (getters == null) {
-          getters = toKeyGetters(keyFieldSecondary, keyClass, recordClass);
-          keyGettersSecondary.set(getters);
-        }
-        return extractScalaKey(getters, value);
-      default:
-        throw new IllegalStateException("Unexpected value: " + recordType);
-    }
-  }
-
-  private <K> K extractAvroKey(Class<K> keyClazz, int[] keyPath, V value) {
-    IndexedRecord node = (IndexedRecord) value;
-    for (int i = 0; i < keyPath.length - 1; i++) {
-      node = (IndexedRecord) node.get(keyPath[i]);
-    }
-    Object keyObj = node.get(keyPath[keyPath.length - 1]);
-    // Always convert CharSequence to String, in case reader and writer disagree
-    if (keyClazz == CharSequence.class || keyClazz == String.class) {
-      keyObj = keyObj.toString();
-    }
-    @SuppressWarnings("unchecked")
-    K key = (K) keyObj;
-    return key;
+    return getter.apply(value);
   }
 
   // FIXME: what about `Option[T]`
-  private <K> K extractScalaKey(Method[] keyGetters, V value) {
+  static <K> K extractKey(Method[] keyGetters, Object value) {
     Object obj = value;
     for (Method getter : keyGetters) {
       try {
@@ -313,28 +281,16 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
   ////////////////////////////////////////////////////////////////////////////////
   // Logic for dealing with Avro records vs Scala case classes
   ////////////////////////////////////////////////////////////////////////////////
-
-  private static RecordType getRecordType(Class<?> recordClass) {
+  private static String validateKeyField(String keyField, Class<?> keyClass, Class<?> recordClass) {
     if (IndexedRecord.class.isAssignableFrom(recordClass)) {
-      return RecordType.AVRO;
+      return AvroUtils.validateKeyField(keyField, keyClass, recordClass);
     } else if (scala.Product.class.isAssignableFrom(recordClass)) {
-      return RecordType.SCALA;
+      return validateScalaKeyField(keyField, keyClass, recordClass);
     } else {
       throw new IllegalArgumentException(
           "Unsupported record class "
               + recordClass.getName()
               + ". Must be an Avro record or a Scala case class.");
-    }
-  }
-
-  private static String validateKeyField(String keyField, Class<?> keyClass, Class<?> recordClass) {
-    switch (getRecordType(recordClass)) {
-      case AVRO:
-        return AvroUtils.validateKeyField(keyField, keyClass, recordClass);
-      case SCALA:
-        return validateScalaKeyField(keyField, keyClass, recordClass);
-      default:
-        throw new IllegalStateException("Unexpected value: " + getRecordType(recordClass));
     }
   }
 
