@@ -81,8 +81,7 @@ class ParquetReadFn[T, R](
       case other: String =>
         logger.warn(
           "Found unsupported setting value {} for key {}. Defaulting to file-level splitting.",
-          other,
-          ParquetReadConfiguration.SplitGranularity
+          Array(other, ParquetReadConfiguration.SplitGranularity) // varargs fails with 2.12
         )
         SplitGranularity.File
     }
@@ -100,8 +99,7 @@ class ParquetReadFn[T, R](
       case other: String =>
         logger.warn(
           "Found unsupported setting value {} for key {}. Defaulting to record-level filtering.",
-          other,
-          ParquetReadConfiguration.FilterGranularity
+          Array(other, ParquetReadConfiguration.FilterGranularity) // varargs fails with 2.12
         )
         FilterGranularity.Record
     }
@@ -264,15 +262,13 @@ class ParquetReadFn[T, R](
           logger.debug(
             "record is filtered out by reader in row group {} in file {}",
             rowGroupIndex,
-            file.toString
+            file
           )
         } else if (recordReader.shouldSkipCurrentRecord) {
           // this record is being filtered via the filter2 package
           logger.debug(
             "skipping record at {} in row group {} in file {}",
-            currentRow,
-            rowGroupIndex,
-            file.toString
+            Array(currentRow, rowGroupIndex, file) // varargs fails with 2.12
           )
 
         } else {
@@ -290,9 +286,7 @@ class ParquetReadFn[T, R](
     }
     logger.debug(
       "Finish processing {} rows from row group {} in file {}",
-      rowCount,
-      rowGroupIndex,
-      file.toString
+      Array(rowCount, rowGroupIndex, file) // varargs fails with 2.12
     )
   }
 
