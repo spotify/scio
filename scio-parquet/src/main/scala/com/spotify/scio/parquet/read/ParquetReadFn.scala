@@ -41,7 +41,7 @@ object ParquetReadFn {
   @transient
   private lazy val logger = LoggerFactory.getLogger(classOf[ParquetReadFn[_, _]])
 
-  sealed abstract private class SplitGranularity
+  sealed private trait SplitGranularity
   private object SplitGranularity {
     case object File extends SplitGranularity
     case object RowGroup extends SplitGranularity
