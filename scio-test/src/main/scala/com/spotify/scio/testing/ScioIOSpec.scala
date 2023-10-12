@@ -117,13 +117,13 @@ trait ScioIOSpec extends PipelineSpec {
   ): Unit = {
     val testJob = (sc: ScioContext) => readFn(sc, in).saveAsTextFile("out")
 
-    jobTest(testJob)
+    JobTest(testJob)
       .input(ioFn(in), xs)
       .output(TextIO("out"))(_ should containInAnyOrder(xs.map(_.toString)))
       .run()
 
     the[IllegalArgumentException] thrownBy {
-      jobTest(testJob)
+      JobTest(testJob)
         .input(CustomIO[T](in), xs)
         .output(TextIO("out"))(_ should containInAnyOrder(xs.map(_.toString)))
         .run()
@@ -137,12 +137,12 @@ trait ScioIOSpec extends PipelineSpec {
   ): Unit = {
     val testJob = (sc: ScioContext) => writeFn(sc.parallelize(xs), out)
 
-    jobTest(testJob)
+    JobTest(testJob)
       .output(ioFn(out))(_ should containInAnyOrder(xs))
       .run()
 
     the[IllegalArgumentException] thrownBy {
-      jobTest(testJob)
+      JobTest(testJob)
         .output(CustomIO[T](out))(_ should containInAnyOrder(xs))
         .run()
     } should have message s"requirement failed: Missing test output: ${ioFn(out).testId}, available: [CustomIO($out)]"
@@ -156,20 +156,20 @@ trait ScioIOSpec extends PipelineSpec {
     writeFn: (SCollection[T], String) => ClosedTap[_]
   ): Unit = {
     val testJob = (sc: ScioContext) => writeFn(readFn(sc, in), out)
-    jobTest(testJob)
+    JobTest(testJob)
       .input(ioFn(in), xs)
       .output(ioFn(out))(_ should containInAnyOrder(xs))
       .run()
 
     the[IllegalArgumentException] thrownBy {
-      jobTest(testJob)
+      JobTest(testJob)
         .input(CustomIO[T](in), xs)
         .output(ioFn(out))(_ should containInAnyOrder(xs))
         .run()
     } should have message s"requirement failed: Missing test input: ${ioFn(in).testId}, available: [CustomIO($in)]"
 
     the[IllegalArgumentException] thrownBy {
-      jobTest(testJob)
+      JobTest(testJob)
         .input(ioFn(in), xs)
         .output(CustomIO[T](out))(_ should containInAnyOrder(xs))
         .run()

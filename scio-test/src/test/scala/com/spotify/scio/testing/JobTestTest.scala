@@ -351,7 +351,7 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "execute anonymous job" in {
-    jobTest(ObjectFileJob.pipeline(_, "in.avro", "out.avro"))
+    JobTest(ObjectFileJob.pipeline(_, "in.avro", "out.avro"))
       .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
       .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(10, 20, 30)))
       .run()

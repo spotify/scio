@@ -49,7 +49,7 @@ trait RunEnforcementJobTest extends AnyFlatSpec { this: PipelineSpec =>
     jt
   }
 
-  def jobTest(job: ScioContext => Any): InnerJobTest.Builder = {
+  def JobTest(job: ScioContext => Any): InnerJobTest.Builder = {
     val jt = InnerJobTest(job)
     tests += jt
     jt
