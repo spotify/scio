@@ -41,13 +41,15 @@ object ParquetReadFn {
   @transient
   private lazy val logger = LoggerFactory.getLogger(classOf[ParquetReadFn[_, _]])
 
-  private sealed abstract class SplitGranularity
+  sealed abstract private class SplitGranularity
   private object SplitGranularity {
     case object File extends SplitGranularity
     case object RowGroup extends SplitGranularity
   }
 
-  private sealed abstract class FilterGranularity(val readNextRowGroup: ParquetFileReader => PageReadStore)
+  sealed abstract private class FilterGranularity(
+    val readNextRowGroup: ParquetFileReader => PageReadStore
+  )
   private object FilterGranularity {
     case object Page extends FilterGranularity(_.readNextFilteredRowGroup())
     case object Record extends FilterGranularity(_.readNextRowGroup())
@@ -63,6 +65,9 @@ class ParquetReadFn[T, R](
   conf: SerializableConfiguration,
   projectionFn: SerializableFunction[T, R]
 ) extends DoFn[ReadableFile, R] {
+  @transient
+  private lazy val readOptions = HadoopReadOptions.builder(conf.get()).build()
+
   @transient
   private lazy val splitGranularity =
     conf
@@ -101,10 +106,8 @@ class ParquetReadFn[T, R](
         FilterGranularity.Record
     }
 
-  private def parquetFileReader(file: ReadableFile): ParquetFileReader = {
-    val options = HadoopReadOptions.builder(conf.get()).build
-    ParquetFileReader.open(BeamInputFile.of(file.openSeekable), options)
-  }
+  private def parquetFileReader(file: ReadableFile): ParquetFileReader =
+    ParquetFileReader.open(BeamInputFile.of(file.openSeekable), readOptions)
 
   @GetRestrictionCoder def getRestrictionCoder = new OffsetRange.Coder
 
@@ -166,12 +169,10 @@ class ParquetReadFn[T, R](
       tracker.currentRestriction.getFrom,
       if (splitGranularity == SplitGranularity.File) "end" else tracker.currentRestriction().getTo
     )
-    val options = HadoopReadOptions.builder(conf.get()).build
-
-    val reader = ParquetFileReader.open(BeamInputFile.of(file.openSeekable), options)
+    val reader = parquetFileReader(file)
     try {
-      val filter = options.getRecordFilter
-      val hadoopConf = options.asInstanceOf[HadoopReadOptions].getConf
+      val filter = readOptions.getRecordFilter
+      val hadoopConf = readOptions.asInstanceOf[HadoopReadOptions].getConf
       val parquetFileMetadata = reader.getFooter.getFileMetaData
       val fileSchema = parquetFileMetadata.getSchema
       val fileMetadata = parquetFileMetadata.getKeyValueMetaData
@@ -202,7 +203,7 @@ class ParquetReadFn[T, R](
             val recordReader = columnIO.getRecordReader(
               pages,
               recordConverter,
-              if (options.useRecordFilter) filter else FilterCompat.NOOP
+              if (readOptions.useRecordFilter) filter else FilterCompat.NOOP
             )
             readRowGroup(
               0,
@@ -223,7 +224,7 @@ class ParquetReadFn[T, R](
             val recordReader = columnIO.getRecordReader(
               pages,
               recordConverter,
-              if (options.useRecordFilter) filter else FilterCompat.NOOP
+              if (readOptions.useRecordFilter) filter else FilterCompat.NOOP
             )
             readRowGroup(
               currentRowGroupIndex,
