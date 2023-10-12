@@ -172,7 +172,6 @@ class ParquetReadFn[T, R](
     val reader = parquetFileReader(file)
     try {
       val filter = options.getRecordFilter
-      val hadoopConf = options.asInstanceOf[HadoopReadOptions].getConf
       val parquetFileMetadata = reader.getFooter.getFileMetaData
       val fileSchema = parquetFileMetadata.getSchema
       val fileMetadata = parquetFileMetadata.getKeyValueMetaData
@@ -180,7 +179,7 @@ class ParquetReadFn[T, R](
 
       val readContext = readSupport.init(
         new InitContext(
-          hadoopConf,
+          conf.get(),
           fileMetadata.asScala.map { case (k, v) =>
             k -> (ImmutableSet.of(v): JSet[String])
           }.asJava,
@@ -191,7 +190,7 @@ class ParquetReadFn[T, R](
 
       val columnIOFactory = new ColumnIOFactory(parquetFileMetadata.getCreatedBy)
       val recordConverter =
-        readSupport.prepareForRead(hadoopConf, fileMetadata, fileSchema, readContext)
+        readSupport.prepareForRead(conf.get(), fileMetadata, fileSchema, readContext)
       val columnIO = columnIOFactory.getColumnIO(readContext.getRequestedSchema, fileSchema, true)
 
       splitGranularity match {
