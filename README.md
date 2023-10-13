@@ -73,20 +73,21 @@ Example Scio pipelines and tests can be found under [scio-examples](https://gith
 
 Scio includes the following artifacts:
 
-- `scio-core`: core library
-- `scio-test`: test utilities, add to your project as a "test" dependency
 - `scio-avro`: add-on for Avro, can also be used standalone
-- `scio-google-cloud-platform`: add-on for Google Cloud IO's: BigQuery, Bigtable, Pub/Sub, Datastore, Spanner
 - `scio-cassandra*`: add-ons for Cassandra
+- `scio-core`: core library
 - `scio-elasticsearch*`: add-ons for Elasticsearch
 - `scio-extra`: extra utilities for working with collections, Breeze, etc., best effort support
+- `scio-google-cloud-platform`: add-on for Google Cloud IO's: BigQuery, Bigtable, Pub/Sub, Datastore, Spanner
+- `scio-grpc`: add-on for gRPC service calls
 - `scio-jdbc`: add-on for JDBC IO
 - `scio-neo4j`: add-on for Neo4J IO
 - `scio-parquet`: add-on for Parquet
-- `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
 - `scio-redis`: add-on for Redis
-- `scio-smb`: add-on for Sort Merge Bucket operations
 - `scio-repl`: extension of the Scala REPL with Scio specific operations
+- `scio-smb`: add-on for Sort Merge Bucket operations
+- `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
+- `scio-test`: test utilities, add to your project as a "test" dependency
 
 # License
 
