@@ -27,14 +27,28 @@ package com.spotify.scio.examples.complete
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.extra.csv._
+import kantan.csv.HeaderDecoder
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Duration, Instant}
 
-import scala.util.control.NonFatal
-
 object TrafficRoutes {
-  case class StationSpeed(stationId: String, avgSpeed: Double, timestamp: Long)
+  case class StationSpeed(
+    stationType: String,
+    stationId: String,
+    avgSpeed: Double,
+    timestamp: String
+  )
+
+  private val fmt = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
+  implicit val csvDecoderStationSpeed: HeaderDecoder[StationSpeed] = HeaderDecoder.decoder(
+    "Station Type",
+    "Station ID",
+    "Average Speed",
+    "Timestamp"
+  )(StationSpeed.apply)
+
   case class RouteInfo(route: String, avgSpeed: Double, slowdownEvent: Boolean)
 
   @BigQueryType.toTable
@@ -60,38 +74,26 @@ object TrafficRoutes {
 
     val sc = ScioContext(opts)
 
-    lazy val formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
-    sc.textFile(input)
-      .flatMap { s =>
-        val items = s.split(",")
-        try {
-          val stationType = items(4)
-          val stationId = items(1)
-          if (stationType == "ML" && sdStations.contains(stationId)) {
-            val avgSpeed = items(9).toDouble
-            val timestamp = new Instant(formatter.parseMillis(items(0)))
-            Seq((sdStations(stationId), StationSpeed(stationId, avgSpeed, timestamp.getMillis)))
-          } else {
-            Seq()
-          }
-        } catch {
-          case NonFatal(_) => Seq.empty
-        }
+    sc.csvFile[StationSpeed](input)
+      .flatMap { ss =>
+        for {
+          route <- sdStations.get(ss.stationId) if ss.stationType == "ML"
+        } yield route -> ss
       }
-      .timestampBy(kv => new Instant(kv._2.timestamp))
+      .timestampBy { case (_, ss) => new Instant(fmt.parseMillis(ss.timestamp)) }
       .withSlidingWindows(
         Duration.standardMinutes(windowDuration),
         Duration.standardMinutes(windowSlideEvery)
       )
       .groupByKey
-      .map { kv =>
+      .map { case (route, speeds) =>
         var speedSum = 0.0
         var speedCount = 0
         var speedups = 0
         var slowdowns = 0
         val prevSpeeds = scala.collection.mutable.Map[String, Double]()
 
-        kv._2.toList.sortBy(_.timestamp).foreach { i =>
+        speeds.toList.sortBy(_.timestamp).foreach { i =>
           speedSum += i.avgSpeed
           speedCount += 1
           prevSpeeds.get(i.stationId).foreach { s =>
@@ -105,7 +107,7 @@ object TrafficRoutes {
         }
         val speedAvg = speedSum / speedCount
         val slowdownEvent = slowdowns >= 2 * speedups
-        RouteInfo(kv._1, speedAvg, slowdownEvent)
+        RouteInfo(route, speedAvg, slowdownEvent)
       }
       .withTimestamp // explodes internal timestamp
       .map { case (r, ts) =>

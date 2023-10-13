@@ -36,11 +36,9 @@ import scala.jdk.CollectionConverters._
 object StreamingWordExtract {
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    opts.as(classOf[StreamingOptions]).setStreaming(true)
-    val exampleUtils = new ExampleUtils(opts)
-
-    val sc = ScioContext(opts)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.optionsAs[StreamingOptions].setStreaming(true)
+    val exampleUtils = new ExampleUtils(sc.options)
 
     val schema = new TableSchema()
       .setFields(List(new TableFieldSchema().setName("string_field").setType("STRING")).asJava)

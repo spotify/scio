@@ -32,16 +32,16 @@ import org.apache.beam.sdk.transforms.windowing.IntervalWindow
 import org.joda.time.{Duration, Instant}
 
 object TopWikipediaSessions {
+
+  val SamplingThreshold = 0.1
+
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    val samplingThreshold = 0.1
-
     val input = sc.tableRowJsonFile(args.getOrElse("input", ExampleData.EXPORTED_WIKI_TABLE))
-    computeTopSessions(input, samplingThreshold).saveAsTextFile(args("output"))
+    computeTopSessions(input, SamplingThreshold).saveAsTextFile(args("output"))
 
     sc.run()
-    ()
   }
 
   def computeTopSessions(
@@ -51,18 +51,15 @@ object TopWikipediaSessions {
     input
       // Extract fields from `TableRow` JSON
       .flatMap { row =>
-        val username = row.getString("contributor_username")
-        val timestamp = row.getLong("timestamp")
-        if (username == null) {
-          None
-        } else {
-          Some((username, timestamp))
-        }
+        for {
+          username <- Option(row.getString("contributor_username"))
+          timestamp <- Option(row.getLong("timestamp"))
+        } yield username -> timestamp
       }
       // Assign timestamp to each element
-      .timestampBy(kv => new Instant(kv._2 * 1000L))
+      .timestampBy { case (_, ts) => new Instant(ts * 1000L) }
       // Drop field now that elements are timestamped
-      .map(_._1)
+      .keys
       .sample(withReplacement = false, fraction = samplingThreshold)
       // Apply session windows on a per-key (username) bases
       .withSessionWindows(Duration.standardHours(1))
@@ -71,7 +68,11 @@ object TopWikipediaSessions {
       // Convert to a `WindowedSCollection` to expose window information
       .toWindowed
       // Concatenate window information to username
-      .map(wv => wv.copy((wv.value._1 + " : " + wv.window, wv.value._2)))
+      .map { wv =>
+        val window = wv.window
+        val (username, count) = wv.value
+        wv.copy(s"$username : $window" -> count)
+      }
       // End of windowed operation, convert back to a regular `SCollection`
       .toSCollection
       // Apply fixed windows
@@ -81,12 +82,10 @@ object TopWikipediaSessions {
       // Convert to a `WindowedSCollection` to expose window information
       .toWindowed
       .flatMap { wv =>
-        wv.value.map { kv =>
+        val start = wv.window.asInstanceOf[IntervalWindow].start()
+        wv.value.map { case (id, count) =>
           // Format output with username, count and window start timestamp
-          val o = kv._1 + " : " + kv._2 + " : " + wv.window
-            .asInstanceOf[IntervalWindow]
-            .start()
-          wv.copy(value = o)
+          wv.copy(value = s"$id : $count : $start")
         }
       }
       // End of windowed operation, convert back to a regular `SCollection`

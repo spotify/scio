@@ -56,25 +56,23 @@ object LeaderBoard {
   @BigQueryType.toTable
   case class UserScoreSums(user: String, total_score: Int, processing_time: String)
 
+  // Date formatter for full timestamp
+  private val fmt =
+    DateTimeFormat
+      .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+      .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
+
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val sc = ScioContext(opts)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.optionsAs[StreamingOptions].setStreaming(true)
     val exampleUtils = new ExampleUtils(sc.options)
 
-    // Date formatter for full timestamp
-    def fmt =
-      DateTimeFormat
-        .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-        .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
     // Duration in minutes over which to calculate team scores, defaults to 1 hour
-    val teamWindowDuration =
-      Duration.standardMinutes(args.long("teamWindowDuration", 60))
+    val teamWindowDuration = Duration.standardMinutes(args.long("teamWindowDuration", 60))
     // Data that comes in from our streaming pipeline after this duration isn't considered in our
     // processing. Measured in minutes, defaults to 2 hours
-    val allowedLateness =
-      Duration.standardMinutes(args.long("allowedLateness", 120))
+    val allowedLateness = Duration.standardMinutes(args.long("allowedLateness", 120))
 
     // Read in streaming data from PubSub and parse each row as `GameActionInfo` events
     val gameEvents = sc
@@ -88,10 +86,12 @@ object LeaderBoard {
       .toWindowed
       .map { wv =>
         // Convert from score tuple to `TeamScoreSums` case class with both tuple and windowing info
-        val start = fmt.print(wv.window.asInstanceOf[IntervalWindow].start())
+        val window = wv.window.asInstanceOf[IntervalWindow]
+        val (team, score) = wv.value
+        val start = fmt.print(window.start())
         val now = fmt.print(Instant.now())
         val timing = wv.pane.getTiming.toString
-        wv.copy(value = TeamScoreSums(wv.value._1, wv.value._2, start, now, timing))
+        wv.copy(value = TeamScoreSums(team, score, start, now, timing))
       }
       // Done with windowing information, convert back to regular `SCollection`
       .toSCollection
@@ -120,11 +120,11 @@ object LeaderBoard {
         )
       )
       // Change each event into a tuple of: user, and that user's score
-      .map(i => (i.user, i.score))
+      .map(i => i.user -> i.score)
       // Sum the scores by user
       .sumByKey
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
-      .map(kv => UserScoreSums(kv._1, kv._2, fmt.print(Instant.now())))
+      .map { case (user, score) => UserScoreSums(user, score, fmt.print(Instant.now())) }
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_user" suffix
       .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_user"))
 
@@ -171,7 +171,7 @@ object LeaderBoard {
         )
       )
       // Change each event into a tuple of: team user was on, and that user's score
-      .map(i => (i.team, i.score))
+      .map(i => i.team -> i.score)
       // Sum the scores across the defined window, using "team" as the key to sum by
       .sumByKey
 }

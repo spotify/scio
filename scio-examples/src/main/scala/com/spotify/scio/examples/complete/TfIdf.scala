@@ -68,7 +68,7 @@ object TfIdf {
             Source
               .fromInputStream(in)
               .getLines()
-              .map((uri, _))
+              .map(l => uri -> l)
           }
       // TODO: add splittable DoFn approach once available
       case m => throw new IllegalArgumentException(s"Unknown mode: $m")
@@ -81,7 +81,6 @@ object TfIdf {
       .saveAsTextFile(args("output"))
 
     sc.run()
-    ()
   }
 
   // Compute TF-IDF from an input collection of `(doc, line)`
@@ -97,7 +96,7 @@ object TfIdf {
       // Count `(doc, terms)` occurrences to get `((doc, term), term-freq)`
       .countByValue
       // Remap tuple to key on doc, i.e. `(doc, (term, term-freq))`
-      .map(t => (t._1._1, (t._1._2, t._2)))
+      .map { case ((doc, term), tf) => (doc, (term, tf)) }
 
     val wordToDf = uriToWords
       // Compute unique `(doc, term)` pairs

@@ -41,6 +41,8 @@ import scala.jdk.CollectionConverters._
 object AutoComplete {
   case class Tag(tag: String, count: Long)
 
+  implicit val TagOrdering: Ordering[Tag] = Ordering.by(_.count)
+
   @BigQueryType.toTable
   case class Record(pre: String, tags: List[Tag])
 
@@ -48,58 +50,61 @@ object AutoComplete {
     input: SCollection[String],
     candidatesPerPrefix: Int,
     recursive: Boolean
-  ): SCollection[(String, Iterable[(String, Long)])] = {
+  ): SCollection[(String, Iterable[Tag])] = {
     val candidates = input.countByValue
+      .map { case (word, count) => Tag(word, count) }
     if (recursive) {
-      SCollection.unionAll(computeTopRecursive(candidates, candidatesPerPrefix, 1))
+      val (large, small) = computeTopRecursive(candidates, candidatesPerPrefix, 1)
+      large ++ small
     } else {
       computeTopFlat(candidates, candidatesPerPrefix, 1)
     }
   }
 
   def computeTopFlat(
-    input: SCollection[(String, Long)],
+    input: SCollection[Tag],
     candidatesPerPrefix: Int,
     minPrefix: Int
-  ): SCollection[(String, Iterable[(String, Long)])] =
+  ): SCollection[(String, Iterable[Tag])] =
     input
       .flatMap(allPrefixes(minPrefix))
-      .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
+      .topByKey(candidatesPerPrefix)
 
   def computeTopRecursive(
-    input: SCollection[(String, Long)],
+    input: SCollection[Tag],
     candidatesPerPrefix: Int,
     minPrefix: Int
-  ): Seq[SCollection[(String, Iterable[(String, Long)])]] =
+  ): (SCollection[(String, Iterable[Tag])], SCollection[(String, Iterable[Tag])]) =
     if (minPrefix > 10) {
       computeTopFlat(input, candidatesPerPrefix, minPrefix)
-        .partition(2, t => if (t._1.length > minPrefix) 0 else 1)
+        .partition(t => t._1.length > minPrefix)
     } else {
-      val larger =
-        computeTopRecursive(input, candidatesPerPrefix, minPrefix + 1)
-      val small =
-        (larger(1).flatMap(_._2) ++ input.filter(_._1.length == minPrefix))
-          .flatMap(allPrefixes(minPrefix, minPrefix))
-          .topByKey(candidatesPerPrefix)(Ordering.by(_._2))
-      Seq(larger.head ++ larger(1), small)
+      val (recLarge, recSmall) = computeTopRecursive(input, candidatesPerPrefix, minPrefix + 1)
+      val large = recLarge ++ recSmall
+      val small = (recSmall.flatMap(_._2) ++ input.filter(_.tag.length == minPrefix))
+        .flatMap(allPrefixes(minPrefix, minPrefix))
+        .topByKey(candidatesPerPrefix)
+      (large, small)
     }
 
   def allPrefixes(
     minPrefix: Int,
     maxPrefix: Int = Int.MaxValue
-  ): ((String, Long)) => Iterable[(String, (String, Long))] = { case (word, count) =>
+  ): Tag => Iterable[(String, Tag)] = { tag =>
+    val word = tag.tag
+    val count = tag.count
     (minPrefix to Math.min(word.length, maxPrefix))
-      .map(i => (word.substring(0, i), (word, count)))
+      .map(i => (word.substring(0, i), Tag(word, count)))
   }
 
-  def makeEntity(kind: String, kv: (String, Iterable[(String, Long)])): Entity = {
-    val key = makeKey(kind, kv._1).build()
-    val candidates = kv._2.map { p =>
+  def makeEntity(kind: String, pre: String, tags: Iterable[Tag]): Entity = {
+    val key = makeKey(kind, pre).build()
+    val candidates = tags.map { p =>
       makeValue(
         Entity
           .newBuilder()
           .putAllProperties(
-            Map("tag" -> makeValue(p._1).build(), "count" -> makeValue(p._2).build()).asJava
+            Map("tag" -> makeValue(p.tag).build(), "count" -> makeValue(p.count).build()).asJava
           )
       ).build()
     }
@@ -112,17 +117,15 @@ object AutoComplete {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val exampleUtils = new ExampleUtils(opts)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val exampleUtils = new ExampleUtils(sc.options)
 
     // arguments
     val input = args("input")
     val isRecursive = args.boolean("recursive", true)
     val outputToBigqueryTable = args.boolean("outputToBigqueryTable", true)
     val outputToDatastore = args.boolean("outputToDatastore", false)
-    val isStreaming = opts.as(classOf[StreamingOptions]).isStreaming
-
-    val sc = ScioContext(opts)
+    val isStreaming = sc.optionsAs[StreamingOptions].isStreaming
 
     // initialize input
     val windowFn = if (isStreaming) {
@@ -144,14 +147,14 @@ object AutoComplete {
     // outputs
     if (outputToBigqueryTable) {
       tags
-        .map(kv => Record(kv._1, kv._2.map(p => Tag(p._1, p._2)).toList))
+        .map { case (pre, tags) => Record(pre, tags.toList) }
         .saveAsTypedBigQueryTable(Table.Spec(args("output")))
     }
     if (outputToDatastore) {
       val kind = args.getOrElse("kind", "autocomplete-demo")
       tags
-        .map(makeEntity(kind, _))
-        .saveAsDatastore(opts.as(classOf[GcpOptions]).getProject)
+        .map { case (pre, tags) => makeEntity(kind, pre, tags) }
+        .saveAsDatastore(sc.optionsAs[GcpOptions].getProject)
     }
 
     val result = sc.run()

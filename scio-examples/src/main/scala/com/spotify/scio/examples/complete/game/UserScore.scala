@@ -56,7 +56,7 @@ object UserScore {
       // Parse each line as `GameActionInfo` events, keep the ones that successfully parsed
       .flatMap(parseEvent)
       // Change each event into a tuple of: user, and that user's score
-      .map(i => (i.user, i.score))
+      .map(i => i.user -> i.score)
       // Sum the scores by user
       .sumByKey
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
@@ -66,6 +66,5 @@ object UserScore {
 
     // Execute the pipeline
     sc.run()
-    ()
   }
 }

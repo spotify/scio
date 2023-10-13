@@ -24,14 +24,15 @@
 // --output=[DATASET].traffic_max_lane_flow"`
 package com.spotify.scio.examples.complete
 
+import cats.implicits._
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.examples.common.ExampleData
-import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
+import com.spotify.scio.extra.csv._
+import kantan.csv.RowDecoder
+import org.apache.beam.examples.common.ExampleUtils
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{Duration, Instant}
-
-import scala.util.control.NonFatal
 
 object TrafficMaxLaneFlow {
   case class LaneInfo(
@@ -45,6 +46,38 @@ object TrafficMaxLaneFlow {
     avgSpeed: Double,
     totalFlow: Int
   )
+
+  private val SamplesOffset = 5
+  implicit val csvDecoderLaneInfo: RowDecoder[List[LaneInfo]] = RowDecoder.from { ss =>
+    for {
+      timestamp <- RowDecoder.decodeCell[String](ss, 0)
+      stationId <- RowDecoder.decodeCell[String](ss, 1)
+      freeway <- RowDecoder.decodeCell[String](ss, 2)
+      direction <- RowDecoder.decodeCell[String](ss, 3)
+      totalFlow <- RowDecoder.decodeCell[Int](ss, 7)
+      laneInfos <- (1 to 8)
+        .map { i =>
+          val offset = i * SamplesOffset
+          for {
+            laneFlow <- RowDecoder.decodeCell[Int](ss, offset + 6)
+            laneAvgOccupancy <- RowDecoder.decodeCell[Double](ss, offset + 7)
+            laneAvgSpeed <- RowDecoder.decodeCell[Double](ss, offset + 8)
+          } yield LaneInfo(
+            stationId,
+            "lane" + i,
+            direction,
+            freeway,
+            timestamp,
+            laneFlow,
+            laneAvgOccupancy,
+            laneAvgSpeed,
+            totalFlow
+          )
+        }
+        .toList
+        .sequence
+    } yield laneInfos
+  }
 
   @BigQueryType.toTable
   case class Record(
@@ -60,10 +93,12 @@ object TrafficMaxLaneFlow {
     window_timestamp: Instant
   )
 
+  val fmt = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
+
   def main(cmdlineArgs: Array[String]): Unit = {
     // set up example wiring
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val exampleUtils = new ExampleUtils(opts)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val exampleUtils = new ExampleUtils(sc.options)
     exampleUtils.setup()
 
     // arguments
@@ -71,44 +106,14 @@ object TrafficMaxLaneFlow {
     val windowDuration = args.long("windowDuration", 60)
     val windowSlideEvery = args.long("windowSlideEvery", 5)
 
-    val sc = ScioContext(opts)
-
-    lazy val formatter = DateTimeFormat.forPattern("MM/dd/yyyy HH:mm:ss")
-    sc.textFile(input)
-      .flatMap { s =>
-        val items = s.split(",")
-        try {
-          val (timestamp, stationId, freeway, direction) =
-            (items(0), items(1), items(2), items(3))
-          val totalFlow = items(7).toInt
-          (1 to 8).map { i =>
-            val laneFlow = items(6 + 5 * i).toInt
-            val laneAvgOccupancy = items(7 + 5 * i).toDouble
-            val laneAvgSpeed = items(8 + 5 * i).toDouble
-            (
-              stationId,
-              LaneInfo(
-                stationId,
-                "lane" + i,
-                direction,
-                freeway,
-                timestamp,
-                laneFlow,
-                laneAvgOccupancy,
-                laneAvgSpeed,
-                totalFlow
-              )
-            )
-          }
-        } catch {
-          case NonFatal(_) => Seq.empty
-        }
-      }
-      .timestampBy(v => new Instant(formatter.parseMillis(v._2.recordedTimestamp)))
+    sc.csvFile[List[LaneInfo]](input)
+      .flatten
+      .timestampBy(li => new Instant(fmt.parseMillis(li.recordedTimestamp)))
       .withSlidingWindows(
         Duration.standardMinutes(windowDuration),
         Duration.standardMinutes(windowSlideEvery)
       )
+      .keyBy(_.stationId)
       .maxByKey(Ordering.by(_.flow))
       .values
       .withTimestamp

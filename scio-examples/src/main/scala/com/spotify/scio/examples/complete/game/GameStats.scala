@@ -30,11 +30,10 @@
 package com.spotify.scio.examples.complete.game
 
 import java.util.TimeZone
-
 import com.spotify.scio._
 import com.spotify.scio.bigquery._
 import com.spotify.scio.pubsub._
-import com.spotify.scio.values.{SCollection, WindowOptions}
+import com.spotify.scio.values.{SCollection, WindowOptions, WindowedValue}
 import org.apache.beam.examples.common.{ExampleOptions, ExampleUtils}
 import org.apache.beam.sdk.options.StreamingOptions
 import org.apache.beam.sdk.transforms.windowing.{IntervalWindow, TimestampCombiner}
@@ -53,24 +52,25 @@ object GameStats {
   @BigQueryType.toTable
   case class AvgSessionLength(mean_duration: Double, window_start: String)
 
+  // Date formatter for full timestamp
+  private val fmt =
+    DateTimeFormat
+      .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+      .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
+
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
-    val (opts, args) = ScioContext.parseArguments[ExampleOptions](cmdlineArgs)
-    val sc = ScioContext(opts)
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.optionsAs[StreamingOptions].setStreaming(true)
     val exampleUtils = new ExampleUtils(sc.options)
 
-    // Date formatter for full timestamp
-    def fmt =
-      DateTimeFormat
-        .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-        .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
     // Duration in minutes for windowing of user and team score sums, defaults to 1 hour
-    val fixedWindowDuration = args.long("fixedWindowDuration", 60)
+    val fixedWindowDuration = Duration.standardMinutes(args.long("fixedWindowDuration", 60))
     // Duration in minutes for length of inactivity after which to start a session, defaults to 5m
-    val sessionGap = args.long("sessionGap", 5)
+    val sessionGap = Duration.standardMinutes(args.long("sessionGap", 5))
     // Duration in minutes for windowing of user activities, defaults to 30 min
-    val userActivityWindowDuration = args.long("userActivityWindowDuration", 30)
+    val userActivityWindowDuration =
+      Duration.standardMinutes(args.long("userActivityWindowDuration", 30))
 
     // Read streaming events from PubSub topic, using ms of events as their ID
     val rawEvents = sc
@@ -81,34 +81,35 @@ object GameStats {
       .flatMap(UserScore.parseEvent)
 
     // Change each event into a tuple of: user, and that user's score
-    val userEvents = rawEvents.map(i => (i.user, i.score))
+    val userEvents = rawEvents.map(i => i.user -> i.score)
     // Window user scores over a fixed length of time
-    val userScores =
-      userEvents.withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
+    val userScores = userEvents.withFixedWindows(fixedWindowDuration)
     // Calculate users with scores high enough to be anomalous, to remove from users later
     val spammyUsers = calculateSpammyUsers(userScores).asMapSideInput
 
     rawEvents
       // Window over a fixed length of time
-      .withFixedWindows(Duration.standardMinutes(fixedWindowDuration))
+      .withFixedWindows(fixedWindowDuration)
       // Convert to `SCollectionWithSideInput` to use side input at same time as `SCollection` entry
       .withSideInputs(spammyUsers)
       // Filter out spammy users from this list -- `s(spammyUsers)` accesses the side input
-      .filter { case (i, s) => !s(spammyUsers).contains(i.user) }
+      .filter { case (i, ctx) => !ctx(spammyUsers).contains(i.user) }
       // Done using the side input, convert back to regular `SCollection`
       .toSCollection
       // Change each event into a tuple of: team user was on, and that user's score
-      .map(i => (i.team, i.score))
+      .map(i => i.team -> i.score)
       // Sum the scores across the defined window, using "team" as the key to sum by
       .sumByKey
       // Convert to `WindowedSCollection` to get windowing information with values
       .toWindowed
-      .map { wv =>
+      .map { case wv =>
         // Convert windowed score to a `TeamScoreSums` object with windowing info as well as
         // team and score info
-        val start = fmt.print(wv.window.asInstanceOf[IntervalWindow].start())
+        val window = wv.window.asInstanceOf[IntervalWindow]
+        val (team, score) = wv.value
+        val start = fmt.print(window.start())
         val now = fmt.print(Instant.now())
-        wv.copy(value = TeamScoreSums(wv.value._1, wv.value._2, start, now))
+        wv.copy(value = TeamScoreSums(team, score, start, now))
       }
       // Done using windowing information, convert back to regular `SCollection`
       .toSCollection
@@ -118,7 +119,7 @@ object GameStats {
     userEvents
       // Window over a variable length of time - sessions end after sessionGap minutes no activity
       .withSessionWindows(
-        Duration.standardMinutes(sessionGap),
+        gapDuration = sessionGap,
         options = WindowOptions(timestampCombiner = TimestampCombiner.END_OF_WINDOW)
       )
       // Get all distinct users
@@ -133,7 +134,7 @@ object GameStats {
           .getMinutes
       }
       // Find the mean value for user session length durations in a fixed time window
-      .withFixedWindows(Duration.standardMinutes(userActivityWindowDuration))
+      .withFixedWindows(userActivityWindowDuration)
       .mean
       .withWindow[IntervalWindow]
       .map { case (mean, w) =>

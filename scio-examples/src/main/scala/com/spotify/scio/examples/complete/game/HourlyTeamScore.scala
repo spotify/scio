@@ -42,32 +42,28 @@ object HourlyTeamScore {
   @BigQueryType.toTable
   case class TeamScoreSums(user: String, total_score: Int, window_start: String)
 
+  // Date formatters for full timestamp and short timestamp
+  private val fmt =
+    DateTimeFormat
+      .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+      .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
+
+  private val minFmt = DateTimeFormat
+    .forPattern("yyyy-MM-dd-HH-mm")
+    .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
+
   def main(cmdlineArgs: Array[String]): Unit = {
     // Create `ScioContext` and `Args`
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    // Date formatters for full timestamp and short timestamp
-    def fmt =
-      DateTimeFormat
-        .forPattern("yyyy-MM-dd HH:mm:ss.SSS")
-        .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
-    val minFmt = DateTimeFormat
-      .forPattern("yyyy-MM-dd-HH-mm")
-      .withZone(DateTimeZone.forTimeZone(TimeZone.getTimeZone("PST")))
-
     // The earliest time a scoring event can be.
     // If not passed in it defaults to midnight on Jan 1 1970 (in PST)
-    val startMin =
-      new Instant(minFmt.parseMillis(args.getOrElse("startMin", "1970-01-01-00-00"))).getMillis
+    val startMin = minFmt.parseMillis(args.getOrElse("startMin", "1970-01-01-00-00"))
     // The latest time a scoring event can be.
     // If not passed in it defaults to midnight on Jan 1 2100 (in PST)
-    val stopMin =
-      new Instant(
-        minFmt
-          .parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))
-      ).getMillis
+    val stopMin = minFmt.parseMillis(args.getOrElse("stopMin", "2100-01-01-00-00"))
     // Minutes to group events by - defaults to 60 minutes if not passed in
-    val windowDuration = args.long("windowDuration", 60L)
+    val windowDuration = Duration.standardMinutes(args.long("windowDuration", 60L))
     // A text file containing data on events
     val input = args.getOrElse("input", ExampleData.GAMING)
 
@@ -79,9 +75,9 @@ object HourlyTeamScore {
       // Mark each event in the SCollection with the timestamp of the event
       .timestampBy(i => new Instant(i.timestamp))
       // Window by the number of minutes in the window duration
-      .withFixedWindows(Duration.standardMinutes(windowDuration))
+      .withFixedWindows(windowDuration)
       // Change each event into a tuple of: team user was on, and that user's score
-      .map(i => (i.team, i.score))
+      .map(i => i.team -> i.score)
       // Sum the scores across the defined window, using "team" as the key to sum by
       .sumByKey
       .withWindow[IntervalWindow]
@@ -95,6 +91,5 @@ object HourlyTeamScore {
 
     // Execute the pipeline
     sc.run()
-    ()
   }
 }
