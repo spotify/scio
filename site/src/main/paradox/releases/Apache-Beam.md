@@ -32,6 +32,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details**                                           |
 |:----------------:|:----------------:|:------------------------------------------------------|
+|      0.13.4      |      2.51.0      | This version will be deprecated on October 12, 2024.  |
 |      0.13.3      |      2.50.0      | This version will be deprecated on August 30, 2024.   |
 |      0.13.2      |      2.49.0      | This version will be deprecated on July 17, 2024.     |
 |      0.13.1      |      2.49.0      | This version will be deprecated on July 17, 2024.     |
@@ -44,12 +45,12 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 |      0.12.3      |      2.44.0      | This version will be deprecated on January 13, 2024.  |
 |      0.12.2      |      2.44.0      | This version will be deprecated on January 13, 2024.  |
 |      0.12.1      |      2.43.0      | This version will be deprecated on November 17, 2023. |
-|      0.12.0      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
-|     0.11.14      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
-|     0.11.13      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
-|     0.11.12      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
-|     0.11.11      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
-|     0.11.10      |      2.41.0      | This version will be deprecated on August 23rd, 2023. |
+|      0.12.0      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
+|     0.11.14      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
+|     0.11.13      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
+|     0.11.12      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
+|     0.11.11      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
+|     0.11.10      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
 |      0.11.9      |      2.39.0      | Deprecated on May 25, 2023.                           |
 |      0.11.6      |      2.38.0      | Deprecated on April 20, 2023.                         |
 |      0.11.5      |      2.36.0      | Deprecated on February 7, 2023.                       |
