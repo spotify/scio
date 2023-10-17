@@ -49,7 +49,8 @@ final case class VoyagerUri(value: URI) extends AnyVal {
 }
 
 object VoyagerUri {
-  def apply(value: String): VoyagerUri = new VoyagerUri(new URI(value))
+  def apply(value: String): VoyagerUri =
+    new VoyagerUri(URI.create(value.stripSuffix("/") + "/"))
 
   private[voyager] val IndexFile = "index.hnsw"
   private[voyager] val NamesFile = "names.json"
