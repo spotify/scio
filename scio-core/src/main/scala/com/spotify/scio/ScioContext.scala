@@ -511,6 +511,7 @@ class ScioContext private[scio] (
         tp
       }
     }
+
     _pipeline
   }
 
