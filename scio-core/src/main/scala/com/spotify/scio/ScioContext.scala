@@ -511,7 +511,6 @@ class ScioContext private[scio] (
         tp
       }
     }
-
     _pipeline
   }
 
@@ -713,7 +712,13 @@ class ScioContext private[scio] (
     applyInternal(
       name,
       new PTransform[PBegin, U]() {
-        override def expand(pBegin: PBegin): U = f(sc)
+        override def expand(pBegin: PBegin): U = {
+          assert(
+            _pipeline.equals(pBegin.getPipeline),
+            "transform() was invoked with a different Pipeline than the current ScioContext's Pipeline"
+          )
+          f(sc)
+        }
       }
     )
   }
