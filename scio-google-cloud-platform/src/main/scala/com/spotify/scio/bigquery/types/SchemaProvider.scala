@@ -46,10 +46,7 @@ private[types] object SchemaProvider {
           case t if isCaseClass(t) => toFields(t)
           case t                   => throw new RuntimeException(s"Unsupported type $t")
         }
-        val r = new TableSchema().setFields(fields.toList.asJava)
-        debug(s"SchemaProvider.schemaOf[${typeOf[T]}]:")
-        debug(r)
-        r
+        new TableSchema().setFields(fields.toList.asJava)
       }
     )
 
