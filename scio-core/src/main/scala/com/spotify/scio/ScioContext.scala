@@ -718,7 +718,7 @@ class ScioContext private[scio] (
             _pipeline.equals(pBegin.getPipeline),
             "transform() was invoked with a different Pipeline than the current ScioContext's Pipeline"
           )
-          f(sc)
+          f(ScioContext.this)
         }
       }
     )
