@@ -114,25 +114,13 @@ private object VoyagerWriter {
  *   The `index.hnsw` file.
  * @param namesFile
  *   The `names.json` file.
- * @param spaceType
- *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot (inner
- *   product).
- * @param storageDataType
- *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
- * @param dim
- *   Number of dimensions in vectors.
  */
 class VoyagerReader private[voyager] (
   indexFile: Path,
-  namesFile: Path,
-  spaceType: SpaceType,
-  storageDataType: StorageDataType,
-  dim: Int
+  namesFile: Path
 ) {
-  require(dim > 0, "Vector dimension should be > 0")
-
   @transient private lazy val index: StringIndex =
-    StringIndex.load(indexFile.toString, namesFile.toString, spaceType, dim, storageDataType)
+    StringIndex.load(indexFile.toString, namesFile.toString)
 
   /**
    * Gets maxNumResults nearest neighbors for vector v using ef (where ef is the size of the dynamic
@@ -152,10 +140,7 @@ class VoyagerReader private[voyager] (
  */
 private[voyager] class VoyagerSideInput(
   val view: PCollectionView[VoyagerUri],
-  remoteFileUtil: RemoteFileUtil,
-  distanceMeasure: SpaceType,
-  storageType: StorageDataType,
-  dim: Int
+  remoteFileUtil: RemoteFileUtil
 ) extends SideInput[VoyagerReader] {
 
   import VoyagerSideInput._
@@ -171,7 +156,7 @@ private[voyager] class VoyagerSideInput(
       val downloadedNames = remoteFileUtil.download(namesUri)
       (downloadedIndex, downloadedNames)
     }
-    new VoyagerReader(localIndex, localNames, distanceMeasure, storageType, dim)
+    new VoyagerReader(localIndex, localNames)
   }
 
   override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {

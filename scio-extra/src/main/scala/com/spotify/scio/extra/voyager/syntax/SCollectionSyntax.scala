@@ -33,30 +33,13 @@ class VoyagerSCollectionOps(@transient private val self: SCollection[VoyagerUri]
    * Load the Voyager index stored at [[VoyagerUri]] in this
    * [[com.spotify.scio.values.SCollection SCollection]].
    *
-   * @param spaceType
-   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
-   *   (inner product).
-   * @param storageType
-   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
-   * @param dim
-   *   Number of dimensions in vectors.
    * @return
    *   SideInput[VoyagerReader]
    */
   @experimental
-  def asVoyagerSideInput(
-    spaceType: SpaceType,
-    storageType: StorageDataType,
-    dim: Int
-  ): SideInput[VoyagerReader] = {
+  def asVoyagerSideInput(): SideInput[VoyagerReader] = {
     val view = self.applyInternal(View.asSingleton())
-    new VoyagerSideInput(
-      view,
-      RemoteFileUtil.create(self.context.options),
-      spaceType,
-      storageType,
-      dim
-    )
+    new VoyagerSideInput(view, RemoteFileUtil.create(self.context.options))
   }
 
 }
@@ -198,8 +181,7 @@ class VoyagerPairSCollectionOps(
     ef: Long = 200L,
     m: Long = 16L
   ): SideInput[VoyagerReader] =
-    new VoyagerSCollectionOps(asVoyager(spaceType, storageType, dim, ef, m))
-      .asVoyagerSideInput(spaceType, storageType, dim)
+    new VoyagerSCollectionOps(asVoyager(spaceType, storageType, dim, ef, m)).asVoyagerSideInput()
 }
 
 trait SCollectionSyntax {
