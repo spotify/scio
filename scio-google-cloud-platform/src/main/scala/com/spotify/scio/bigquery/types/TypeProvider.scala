@@ -253,8 +253,7 @@ private[types] object TypeProvider {
 
         c.abort(c.enclosingPosition, error)
     }
-    debug(s"TypeProvider.toTableImpl:")
-    debug(r)
+    debug(c)(s"TypeProvider.toTableImpl", r)
 
     if (shouldDumpClassesForPlugin) {
       dumpCodeForScalaPlugin(c)(Seq.empty, caseClassTree, name)
@@ -366,8 +365,7 @@ private[types] object TypeProvider {
         )
       case t => c.abort(c.enclosingPosition, s"Invalid annotation $t")
     }
-    debug(s"TypeProvider.schemaToType[$schema]:")
-    debug(r)
+    debug(c)(s"TypeProvider.schemaToType[$schema]:", r)
 
     if (shouldDumpClassesForPlugin) {
       dumpCodeForScalaPlugin(c)(records, caseClassTree, name)

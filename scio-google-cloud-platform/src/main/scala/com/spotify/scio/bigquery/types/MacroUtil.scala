@@ -18,14 +18,11 @@
 package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQuerySysProps
-import org.slf4j.LoggerFactory
 
 import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
 private[types] object MacroUtil {
-  private[this] val logger = LoggerFactory.getLogger(this.getClass)
-
   // Case class helpers for runtime reflection
 
   def isCaseClass(t: Type): Boolean =
@@ -68,9 +65,9 @@ private[types] object MacroUtil {
 
   // Debugging
 
-  @inline def debug(msg: Any): Unit =
+  @inline def debug(c: blackbox.Context)(h: String, t: c.Tree): Unit =
     if (BigQuerySysProps.Debug.value("false").toBoolean) {
-      logger.info(msg.toString)
+      c.echo(c.enclosingPosition, s"$h: $t")
     }
 
   // Namespace helpers
