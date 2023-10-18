@@ -708,15 +708,13 @@ class ScioContext private[scio] (
   private[scio] def transform_[U <: POutput](f: ScioContext => U): U =
     transform_(tfName)(f)
 
-  private[scio] def transform_[U <: POutput](name: String)(f: ScioContext => U): U = {
-    val sc: ScioContext = this
+  private[scio] def transform_[U <: POutput](name: String)(f: ScioContext => U): U =
     applyInternal(
       name,
       new PTransform[PBegin, U]() {
         override def expand(pBegin: PBegin): U = f(ScioContext.this)
       }
     )
-  }
 
   /**
    * Get an SCollection for a text file.
