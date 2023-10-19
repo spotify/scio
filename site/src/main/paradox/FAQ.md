@@ -71,7 +71,7 @@ Any Scala or Java unit testing frameworks can be used with Scio, but we provide 
 - @scaladoc[SCollectionMatchers](com.spotify.scio.testing.SCollectionMatchers) - ScalaTest matchers for `SCollection`
 - @scaladoc[PipelineSpec](com.spotify.scio.testing.PipelineSpec) - shortcut for ScalaTest `FlatSpec` with utilities and matchers
 
-The best place to find example useage of `JobTest` and `SCollectionMatchers` are their respective tests in @github[JobTestTest](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and @github[SCollectionMatchersTest](/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
+The best place to find example usage of `JobTest` and `SCollectionMatchers` are their respective tests in @github[JobTestTest](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and @github[SCollectionMatchersTest](/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
 For more examples see:
 
 - @github[scio-examples](/scio-examples/src/test/scala/com/spotify/scio/examples)
@@ -361,7 +361,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
 #### How do I reduce Datastore boilerplate?
 
-Datastore `Entity` class is actually generated from @github[Protobuf](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) which uses the builder pattern and very boilerplate heavy. You can use the [Magnolify](https://github.com/spotify/magnolify) library to seamlessly convert bewteen case classes and `Entity`s. See @extref[MagnolifyDatastoreExample.scala](example:MagnolifyDatastoreExample) for an example job and @github[MagnolifyDatastoreExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) for tests.
+Datastore `Entity` class is actually generated from @github[Protobuf](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) which uses the builder pattern and very boilerplate heavy. You can use the [Magnolify](https://github.com/spotify/magnolify) library to seamlessly convert between case classes and `Entity`s. See @extref[MagnolifyDatastoreExample.scala](example:MagnolifyDatastoreExample) for an example job and @github[MagnolifyDatastoreExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/extra/MagnolifyDatastoreExampleTest.scala) for tests.
 
 #### How do I throttle Bigtable writes?
 
