@@ -29,7 +29,7 @@ sc.run().waitUntilDone()
 
 Any `SCollection` of 2-tuples is considered a _keyed_ `SCollection` and the various @ref[joins](Joins.md) and `*ByKey` variants of other methods become available.
 The first item in the tuple is considered the key and the second item the value.
-The @scaladoc[keyBy](com.spotify.scio.values.SCollection#keyBy[K](f:T=%3EK)(implicitevidence$22:com.spotify.scio.coders.Coder[K]):com.spotify.scio.values.SCollection[(K,T)]) method creates a keyed `SCollection`, where the user-defined function extracts the key from the exising values:
+The @scaladoc[keyBy](com.spotify.scio.values.SCollection#keyBy[K](f:T=%3EK)(implicitevidence$22:com.spotify.scio.coders.Coder[K]):com.spotify.scio.values.SCollection[(K,T)]) method creates a keyed `SCollection`, where the user-defined function extracts the key from the existing values:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
