@@ -65,11 +65,7 @@ final case class VoyagerResult(name: String, distance: Float)
 class VoyagerWriter private[voyager] (
   indexFile: Path,
   namesFile: Path,
-  spaceType: SpaceType,
-  storageDataType: StorageDataType,
-  dim: Int,
-  ef: Long = 200L,
-  m: Long = 16L
+  indexSettings: VoyagerWriter.IndexSettings
 ) {
   import VoyagerWriter._
 
@@ -78,7 +74,15 @@ class VoyagerWriter private[voyager] (
     val namesOutputStream = Files.newOutputStream(namesFile)
 
     val names = List.newBuilder[String]
-    val index = new Index(spaceType, dim, m, ef, RandomSeed, ChunkSize.toLong, storageDataType)
+    val index = new Index(
+      indexSettings.space,
+      indexSettings.numDimensions,
+      indexSettings.indexM,
+      indexSettings.efConstruction,
+      indexSettings.randomSeed,
+      indexSettings.maxElements,
+      indexSettings.storageDataType
+    )
 
     vectors.zipWithIndex
       .map { case ((name, vector), idx) => (name, vector, idx.toLong) }
@@ -101,9 +105,27 @@ class VoyagerWriter private[voyager] (
   }
 }
 
-private object VoyagerWriter {
-  private val RandomSeed: Long = 1L
+private[voyager] object VoyagerWriter {
+
   private val ChunkSize: Int = 32786 // 2^15
+
+  // same default as voyager Index constructor
+  val DefaultIndexM: Long = 16L
+  val DefaultEfConstruction: Long = 200L
+  val DefaultRandomSeed: Long = 1L
+  val DefaultMaxElements: Long = 1L
+  val DefaultStorageDataType: StorageDataType = StorageDataType.Float32
+
+  final case class IndexSettings(
+    space: SpaceType,
+    numDimensions: Int,
+    indexM: Long = DefaultIndexM,
+    efConstruction: Long = DefaultEfConstruction,
+    randomSeed: Long = DefaultRandomSeed,
+    maxElements: Long = DefaultMaxElements,
+    storageDataType: StorageDataType = DefaultStorageDataType
+  )
+
 }
 
 /**
@@ -114,13 +136,29 @@ private object VoyagerWriter {
  *   The `index.hnsw` file.
  * @param namesFile
  *   The `names.json` file.
+ * @param indexSettings
+ *   The voyager index settings, either provided or read from the index v2 metadata
  */
 class VoyagerReader private[voyager] (
   indexFile: Path,
-  namesFile: Path
+  namesFile: Path,
+  indexSettings: VoyagerReader.IndexSettings
 ) {
-  @transient private lazy val index: StringIndex =
-    StringIndex.load(indexFile.toString, namesFile.toString)
+  @transient private lazy val index: StringIndex = indexSettings match {
+    case VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType) =>
+      StringIndex.load(
+        indexFile.toString,
+        namesFile.toString,
+        space,
+        numDimensions,
+        storageDataType
+      )
+    case VoyagerReader.MetadataSettings =>
+      StringIndex.load(
+        indexFile.toString,
+        namesFile.toString
+      )
+  }
 
   /**
    * Gets maxNumResults nearest neighbors for vector v using ef (where ef is the size of the dynamic
@@ -134,13 +172,25 @@ class VoyagerReader private[voyager] (
   }
 }
 
+private[voyager] object VoyagerReader {
+  sealed trait IndexSettings
+  final case class ProvidedSettings(
+    space: SpaceType,
+    numDimensions: Int,
+    storageDataType: StorageDataType
+  ) extends IndexSettings
+  case object MetadataSettings extends IndexSettings
+
+}
+
 /**
  * Construction for a VoyagerSide input that leverages a synchronized map to ensure that the reader
  * is only loaded once per [[VoyagerUri]].
  */
 private[voyager] class VoyagerSideInput(
-  val view: PCollectionView[VoyagerUri],
-  remoteFileUtil: RemoteFileUtil
+  indexSettings: VoyagerReader.IndexSettings,
+  remoteFileUtil: RemoteFileUtil,
+  override val view: PCollectionView[VoyagerUri]
 ) extends SideInput[VoyagerReader] {
 
   import VoyagerSideInput._
@@ -156,7 +206,7 @@ private[voyager] class VoyagerSideInput(
       val downloadedNames = remoteFileUtil.download(namesUri)
       (downloadedIndex, downloadedNames)
     }
-    new VoyagerReader(localIndex, localNames)
+    new VoyagerReader(localIndex, localNames, indexSettings)
   }
 
   override def get[I, O](context: DoFn[I, O]#ProcessContext): VoyagerReader = {

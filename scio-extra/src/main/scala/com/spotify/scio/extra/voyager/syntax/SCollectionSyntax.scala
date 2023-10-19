@@ -33,13 +33,40 @@ class VoyagerSCollectionOps(@transient private val self: SCollection[VoyagerUri]
    * Load the Voyager index stored at [[VoyagerUri]] in this
    * [[com.spotify.scio.values.SCollection SCollection]].
    *
+   * @param space
+   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
+   *   (inner product).
+   * @param numDimensions
+   *   Number of dimensions in vectors.
+   * @param storageDataType
+   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
+   * @return
+   *   SideInput[VoyagerReader]
+   */
+  @experimental
+  def asVoyagerSideInput(
+    space: SpaceType,
+    numDimensions: Int,
+    storageDataType: StorageDataType
+  ): SideInput[VoyagerReader] = {
+    val settings = VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType)
+    val remoteFileUtil = RemoteFileUtil.create(self.context.options)
+    val view = self.applyInternal(View.asSingleton())
+    new VoyagerSideInput(settings, remoteFileUtil, view)
+  }
+
+  /**
+   * Load the Voyager v2 index stored at [[VoyagerUri]] in this
+   * [[com.spotify.scio.values.SCollection SCollection]].
+   *
    * @return
    *   SideInput[VoyagerReader]
    */
   @experimental
   def asVoyagerSideInput(): SideInput[VoyagerReader] = {
+    val remoteFileUtil = RemoteFileUtil.create(self.context.options)
     val view = self.applyInternal(View.asSingleton())
-    new VoyagerSideInput(view, RemoteFileUtil.create(self.context.options))
+    new VoyagerSideInput(VoyagerReader.MetadataSettings, remoteFileUtil, view)
   }
 
 }
@@ -54,39 +81,42 @@ class VoyagerPairSCollectionOps(
    *
    * @param uri
    *   The [[VoyagerUri]].
-   * @param spaceType
-   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
-   *   (inner product).
+   * @param space
+   *   The space type to use when storing and comparing vectors.
+   * @param numDimensions
+   *   The number of dimensions per vector.
+   * @param indexM
+   *   Controls the degree of interconnectedness between vectors.
+   * @param efConstruction
+   *   Controls index quality, affecting the speed of addItem calls. Does not affect memory usage or
+   *   size of the index.
+   * @param randomSeed
+   *   A random seed to use when initializing the index's internal data structures.
    * @param storageDataType
-   *   The storage data type of the vectors at rest. One of Float8, Float32 or E4M3.
-   * @param dim
-   *   Number of dimensions in vectors.
-   * @param ef
-   *   The size of the dynamic list of neighbors used during construction time. This parameter
-   *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
-   *   documentation https://github.com/nmslib/hnswlib.
-   * @param m
-   *   The number of outgoing connections in the graph.
+   *   The datatype to use under-the-hood when storing vectors.
    * @return
    *   A [[VoyagerUri]] representing where the index was written to.
    */
   @experimental
   def asVoyager(
     uri: VoyagerUri,
-    spaceType: SpaceType,
-    storageDataType: StorageDataType,
-    dim: Int,
-    ef: Long,
-    m: Long
+    space: SpaceType,
+    numDimensions: Int,
+    indexM: Long,
+    efConstruction: Long,
+    randomSeed: Long,
+    storageDataType: StorageDataType
   ): SCollection[VoyagerUri] = {
     implicit val remoteFileUtil: RemoteFileUtil = RemoteFileUtil.create(self.context.options)
     require(!uri.exists, s"Voyager URI ${uri.value} already exists")
 
     self.transform { in =>
       val vectors = in.asIterableSideInput
+      val count = in.count.asSingletonSideInput
+
       self.context
-        .parallelize(Seq((): Unit))
-        .withSideInputs(vectors)
+        .parallelize[Unit](Seq(()))
+        .withSideInputs(vectors, count)
         .map { case (_, ctx) =>
           val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
           val namesUri = uri.value.resolve(VoyagerUri.NamesFile)
@@ -102,8 +132,17 @@ class VoyagerPairSCollectionOps(
           }
 
           val xs = ctx(vectors)
-          val writer =
-            new VoyagerWriter(localIndex, localNames, spaceType, storageDataType, dim, ef, m)
+          val maxElements = ctx(count)
+          val settings = VoyagerWriter.IndexSettings(
+            space,
+            numDimensions,
+            indexM,
+            efConstruction,
+            randomSeed,
+            maxElements,
+            storageDataType
+          )
+          val writer = new VoyagerWriter(localIndex, localNames, settings)
           writer.write(xs)
 
           if (!isLocal) {
@@ -121,35 +160,44 @@ class VoyagerPairSCollectionOps(
    * Write the key-value pairs of this SCollection as a Voyager index to a temporary location and
    * building the index using the parameters specified.
    *
-   * @param distanceMeasure
-   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
-   *   (inner product).
+   * @param space
+   *   The space type to use when storing and comparing vectors.
+   * @param numDimensions
+   *   The number of dimensions per vector.
+   * @param indexM
+   *   Controls the degree of interconnectedness between vectors.
+   * @param efConstruction
+   *   Controls index quality, affecting the speed of addItem calls. Does not affect memory usage or
+   *   size of the index.
+   * @param randomSeed
+   *   A random seed to use when initializing the index's internal data structures.
    * @param storageDataType
-   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
-   * @param dim
-   *   Number of dimensions in vectors.
-   * @param ef
-   *   The size of the dynamic list of neighbors used during construction time. This parameter
-   *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
-   *   documentation https://github.com/nmslib/hnswlib.
-   * @param m
-   *   The number of outgoing connections in the graph.
+   *   The datatype to use under-the-hood when storing vectors.
    * @return
    *   A [[VoyagerUri]] representing where the index was written to.
    */
   @experimental
   def asVoyager(
-    distanceMeasure: SpaceType,
-    storageDataType: StorageDataType,
-    dim: Int,
-    ef: Long = 200L,
-    m: Long = 16L
+    space: SpaceType,
+    numDimensions: Int,
+    indexM: Long = VoyagerWriter.DefaultIndexM,
+    efConstruction: Long = VoyagerWriter.DefaultEfConstruction,
+    randomSeed: Long = VoyagerWriter.DefaultRandomSeed,
+    storageDataType: StorageDataType = VoyagerWriter.DefaultStorageDataType
   ): SCollection[VoyagerUri] = {
     val uuid = UUID.randomUUID()
     val tempLocation: String = self.context.options.getTempLocation
     require(tempLocation != null, s"Voyager writes require --tempLocation to be set.")
     val uri = VoyagerUri(s"${tempLocation.stripSuffix("/")}/voyager-build-$uuid")
-    asVoyager(uri, distanceMeasure, storageDataType, dim, ef, m)
+    asVoyager(
+      uri,
+      space,
+      numDimensions,
+      indexM,
+      efConstruction,
+      randomSeed,
+      storageDataType
+    )
   }
 
   /**
@@ -157,31 +205,41 @@ class VoyagerPairSCollectionOps(
    * building the index using the parameters specified and then loading the reader into a side
    * input.
    *
-   * @param spaceType
-   *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
-   *   (inner product).
-   * @param storageType
-   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
-   * @param dim
-   *   Number of dimensions in vectors.
-   * @param ef
-   *   The size of the dynamic list of neighbors used during construction time. This parameter
-   *   controls query time/accuracy tradeoff. More information can be found in the hnswlib
-   *   documentation https://github.com/nmslib/hnswlib.
-   * @param m
-   *   The number of outgoing connections in the graph.
+   * @param space
+   *   The space type to use when storing and comparing vectors.
+   * @param numDimensions
+   *   The number of dimensions per vector.
+   * @param indexM
+   *   Controls the degree of interconnectedness between vectors.
+   * @param efConstruction
+   *   Controls index quality, affecting the speed of addItem calls. Does not affect memory usage or
+   *   size of the index.
+   * @param randomSeed
+   *   A random seed to use when initializing the index's internal data structures.
+   * @param storageDataType
+   *   The datatype to use under-the-hood when storing vectors.
    * @return
    *   A SideInput with a [[VoyagerReader]]
    */
   @experimental
   def asVoyagerSideInput(
-    spaceType: SpaceType,
-    storageType: StorageDataType,
-    dim: Int,
-    ef: Long = 200L,
-    m: Long = 16L
+    space: SpaceType,
+    numDimensions: Int,
+    indexM: Long = VoyagerWriter.DefaultIndexM,
+    efConstruction: Long = VoyagerWriter.DefaultEfConstruction,
+    randomSeed: Long = VoyagerWriter.DefaultRandomSeed,
+    storageDataType: StorageDataType = VoyagerWriter.DefaultStorageDataType
   ): SideInput[VoyagerReader] =
-    new VoyagerSCollectionOps(asVoyager(spaceType, storageType, dim, ef, m)).asVoyagerSideInput()
+    new VoyagerSCollectionOps(
+      asVoyager(
+        space,
+        numDimensions,
+        indexM,
+        efConstruction,
+        randomSeed,
+        storageDataType
+      )
+    ).asVoyagerSideInput()
 }
 
 trait SCollectionSyntax {
