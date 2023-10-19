@@ -72,8 +72,12 @@ class VoyagerTest extends PipelineSpec {
     } should have message s"requirement failed: Voyager URI ${uri.value} already exists"
   }
 
-  "VoyagerUri" should "not use Kryo" in {
-    val uri = VoyagerUri("gs://this-that")
+  "VoyagerUri" should "normalize uri as directory" in {
+    VoyagerUri("gs://this-that").value.toString shouldBe "gs://this-that/"
+  }
+
+  it should "not use Kryo" in {
+    val uri = VoyagerUri("gs://this-that/")
     uri coderShould notFallback()
   }
 }
