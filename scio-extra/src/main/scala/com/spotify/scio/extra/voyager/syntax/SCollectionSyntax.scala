@@ -100,12 +100,11 @@ class VoyagerPairSCollectionOps(
     require(!uri.exists, s"Voyager URI ${uri.value} already exists")
 
     self.transform { in =>
-      // Do not use reifyAsIterableInGlobalWindow
-      // as iterableCoder may materialize the full collection
+      val vectors = in.asIterableSideInput
       self.context
         .parallelize(Seq((): Unit))
-        .reifySideInputAsValues(in.asIterableSideInput)
-        .map { case (_, xs) =>
+        .withSideInputs(vectors)
+        .map { case (_, ctx) =>
           val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
           val namesUri = uri.value.resolve(VoyagerUri.NamesFile)
           val isLocal = ScioUtil.isLocalUri(uri.value)
@@ -119,6 +118,7 @@ class VoyagerPairSCollectionOps(
             (tmpIndex, tmpNames)
           }
 
+          val xs = ctx(vectors)
           val writer =
             new VoyagerWriter(localIndex, localNames, spaceType, storageDataType, dim, ef, m)
           writer.write(xs)
@@ -130,6 +130,7 @@ class VoyagerPairSCollectionOps(
 
           uri
         }
+        .toSCollection
     }
   }
 
