@@ -111,13 +111,11 @@ class VoyagerPairSCollectionOps(
     require(!uri.exists, s"Voyager URI ${uri.value} already exists")
 
     self.transform { in =>
-      val vectors = in.asIterableSideInput
       val count = in.count.asSingletonSideInput
-
-      self.context
-        .parallelize[Unit](Seq(()))
-        .withSideInputs(vectors, count)
-        .map { case (_, ctx) =>
+      in
+        .groupBy(_ => ()) // asIterableSideInput fails for large indexes
+        .withSideInputs(count)
+        .map { case ((_, xs), ctx) =>
           val indexUri = uri.value.resolve(VoyagerUri.IndexFile)
           val namesUri = uri.value.resolve(VoyagerUri.NamesFile)
           val isLocal = ScioUtil.isLocalUri(uri.value)
@@ -131,7 +129,6 @@ class VoyagerPairSCollectionOps(
             (tmpIndex, tmpNames)
           }
 
-          val xs = ctx(vectors)
           val maxElements = ctx(count)
           val settings = VoyagerWriter.IndexSettings(
             space,
