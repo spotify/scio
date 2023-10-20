@@ -47,7 +47,11 @@ class VoyagerIT extends PipelineSpec {
 
       val voyagerReader = sc
         .parallelize(sideData)
-        .asVoyagerSideInput(space, numDimensions, storageDataType = storageDataType)
+        .asVoyagerSideInput(
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
+        )
 
       val result = sc
         .parallelize(vectors)
@@ -93,13 +97,10 @@ class VoyagerIT extends PipelineSpec {
       runWithContext { sc =>
         sc.parallelize(sideData)
           .asVoyager(
-            uri,
-            space,
-            numDimensions,
-            VoyagerWriter.DefaultIndexM,
-            VoyagerWriter.DefaultEfConstruction,
-            VoyagerWriter.DefaultRandomSeed,
-            storageDataType
+            uri = uri,
+            space = space,
+            numDimensions = numDimensions,
+            storageDataType = storageDataType
           )
       }
     }

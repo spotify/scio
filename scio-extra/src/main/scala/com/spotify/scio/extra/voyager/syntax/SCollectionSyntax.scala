@@ -102,10 +102,10 @@ class VoyagerPairSCollectionOps(
     uri: VoyagerUri,
     space: SpaceType,
     numDimensions: Int,
-    indexM: Long,
-    efConstruction: Long,
-    randomSeed: Long,
-    storageDataType: StorageDataType
+    indexM: Long = VoyagerWriter.DefaultIndexM,
+    efConstruction: Long = VoyagerWriter.DefaultEfConstruction,
+    randomSeed: Long = VoyagerWriter.DefaultRandomSeed,
+    storageDataType: StorageDataType = VoyagerWriter.DefaultStorageDataType
   ): SCollection[VoyagerUri] = {
     implicit val remoteFileUtil: RemoteFileUtil = RemoteFileUtil.create(self.context.options)
     require(!uri.exists, s"Voyager URI ${uri.value} already exists")
@@ -156,31 +156,14 @@ class VoyagerPairSCollectionOps(
   /**
    * Write the key-value pairs of this SCollection as a Voyager index to a temporary location and
    * building the index using the parameters specified.
-   *
-   * @param space
-   *   The space type to use when storing and comparing vectors.
-   * @param numDimensions
-   *   The number of dimensions per vector.
-   * @param indexM
-   *   Controls the degree of interconnectedness between vectors.
-   * @param efConstruction
-   *   Controls index quality, affecting the speed of addItem calls. Does not affect memory usage or
-   *   size of the index.
-   * @param randomSeed
-   *   A random seed to use when initializing the index's internal data structures.
-   * @param storageDataType
-   *   The datatype to use under-the-hood when storing vectors.
-   * @return
-   *   A [[VoyagerUri]] representing where the index was written to.
    */
-  @experimental
-  def asVoyager(
+  private[voyager] def asVoyager(
     space: SpaceType,
     numDimensions: Int,
-    indexM: Long = VoyagerWriter.DefaultIndexM,
-    efConstruction: Long = VoyagerWriter.DefaultEfConstruction,
-    randomSeed: Long = VoyagerWriter.DefaultRandomSeed,
-    storageDataType: StorageDataType = VoyagerWriter.DefaultStorageDataType
+    indexM: Long,
+    efConstruction: Long,
+    randomSeed: Long,
+    storageDataType: StorageDataType
   ): SCollection[VoyagerUri] = {
     val uuid = UUID.randomUUID()
     val tempLocation: String = self.context.options.getTempLocation
@@ -226,17 +209,17 @@ class VoyagerPairSCollectionOps(
     efConstruction: Long = VoyagerWriter.DefaultEfConstruction,
     randomSeed: Long = VoyagerWriter.DefaultRandomSeed,
     storageDataType: StorageDataType = VoyagerWriter.DefaultStorageDataType
-  ): SideInput[VoyagerReader] =
-    new VoyagerSCollectionOps(
-      asVoyager(
-        space,
-        numDimensions,
-        indexM,
-        efConstruction,
-        randomSeed,
-        storageDataType
-      )
-    ).asVoyagerSideInput()
+  ): SideInput[VoyagerReader] = {
+    val voyagerUri = asVoyager(
+      space,
+      numDimensions,
+      indexM,
+      efConstruction,
+      randomSeed,
+      storageDataType
+    )
+    new VoyagerSCollectionOps(voyagerUri).asVoyagerSideInput()
+  }
 }
 
 trait SCollectionSyntax {

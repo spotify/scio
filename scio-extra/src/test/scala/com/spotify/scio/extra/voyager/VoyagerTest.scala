@@ -39,13 +39,10 @@ class VoyagerTest extends PipelineSpec {
     runWithContext { sc =>
       sc.parallelize(sideData)
         .asVoyager(
-          uri,
-          space,
-          numDimensions,
-          VoyagerWriter.DefaultIndexM,
-          VoyagerWriter.DefaultEfConstruction,
-          VoyagerWriter.DefaultRandomSeed,
-          storageDataType
+          uri = uri,
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
         )
     }
 
@@ -78,13 +75,10 @@ class VoyagerTest extends PipelineSpec {
       runWithContext { sc =>
         sc.parallelize(sideData)
           .asVoyager(
-            uri,
-            space,
-            numDimensions,
-            VoyagerWriter.DefaultIndexM,
-            VoyagerWriter.DefaultEfConstruction,
-            VoyagerWriter.DefaultRandomSeed,
-            storageDataType
+            uri = uri,
+            space = space,
+            numDimensions = numDimensions,
+            storageDataType = storageDataType
           )
       }
     } should have message s"requirement failed: Voyager URI ${uri.value} already exists"
