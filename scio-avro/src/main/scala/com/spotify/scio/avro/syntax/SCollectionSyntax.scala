@@ -20,17 +20,49 @@ package com.spotify.scio.avro.syntax
 import com.google.protobuf.Message
 import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.generic.GenericRecord
+import org.apache.beam.sdk.extensions.avro.io.AvroSource
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+
+final class AvroReadFilesSCollectionOps(private val self: SCollection[String]) extends AnyVal {
+  def readFilesAsAvroWithFilename[T <: SpecificRecord: Coder: ClassTag](
+    emptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+  ): SCollection[(String, T)] = {
+    val coder = CoderMaterializer.beam(self.context, Coder[T])
+    self.readFilesWithFilename[T](fn =>
+      AvroSource
+        .from(fn)
+        .withSchema[T](ScioUtil.classOf[T])
+        .withEmptyMatchTreatment(emptyMatchTreatment)
+        .withCoder(coder)
+    )
+  }
+
+  def readFilesAsGenericRecordWithFilename(
+    schema: Schema,
+    emptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+  ): SCollection[(String, GenericRecord)] = {
+    val coder = CoderMaterializer.beam(self.context, Coder.avroGenericRecordCoder(schema))
+    val schemaStr = schema.toString
+    self.readFilesWithFilename[GenericRecord](fn =>
+      AvroSource
+        .from(fn)
+        .withSchema(new Schema.Parser().parse(schemaStr))
+        .withEmptyMatchTreatment(emptyMatchTreatment)
+        .withCoder(coder)
+    )
+  }
+}
 
 final class GenericRecordSCollectionOps(private val self: SCollection[GenericRecord])
     extends AnyVal {
@@ -202,6 +234,10 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
 
 /** Enhanced with Avro methods. */
 trait SCollectionSyntax {
+  implicit def avroReadFilesSCollectionOps(
+    c: SCollection[String]
+  ): AvroReadFilesSCollectionOps = new AvroReadFilesSCollectionOps(c)
+
   implicit def avroGenericRecordSCollectionOps(
     c: SCollection[GenericRecord]
   ): GenericRecordSCollectionOps = new GenericRecordSCollectionOps(c)

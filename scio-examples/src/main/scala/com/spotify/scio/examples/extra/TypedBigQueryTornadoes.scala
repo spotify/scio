@@ -34,6 +34,10 @@ object TypedBigQueryTornadoes {
   @BigQueryType.fromQuery("SELECT tornado, month FROM [bigquery-public-data:samples.gsod]")
   class Row
 
+  @BigQueryType.fromQuery("SELECT tornado, month FROM [bigquery-public-data:samples.gsod] where " +
+    "month = %s", "12")
+  class RowMonths
+
   // Annotate output case class.
   // Note that the case class is already defined and will not be expanded. Only the companion
   // object will be generated to provide easy access to `TableSchema` and converter methods.

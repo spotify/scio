@@ -44,10 +44,11 @@ import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder}
 
 import java.nio.charset.StandardCharsets
+import java.util
 
 object SCollectionTest {
   // used to check local side effect in tap()
-  val elements: mutable.Buffer[Any] = mutable.Buffer.empty
+  val elements = java.util.Collections.synchronizedList(new util.ArrayList[Any]())
 }
 
 class SCollectionTest extends PipelineSpec {
@@ -872,7 +873,7 @@ class SCollectionTest extends PipelineSpec {
     val input = Seq(1, 2, 3)
     runWithContext { sc =>
       val original = sc.parallelize(input)
-      val tapped = original.tap(elements += _)
+      val tapped = original.tap(elements.add(_))
 
       // tap should not modify internal coder
       val originalCoder = original.internal.getCoder
@@ -935,18 +936,40 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "reify in Golbal Window as List" in {
+  it should "reify in Global Window as List" in {
     runWithContext { sc =>
       val coll = sc.parallelize(Seq(1)).reifyAsListInGlobalWindow
       coll should containInAnyOrder(Seq(Seq(1)))
     }
   }
 
-  it should "reify empty in Golbal Window as List" in {
+  it should "reify empty in Global Window as List" in {
     runWithContext { sc =>
       val coll = sc.empty[Int]().reifyAsListInGlobalWindow
       coll should containInAnyOrder(Seq(Seq.empty[Int]))
     }
   }
 
+  it should "read a text file with a filename" in {
+    val outputPath = Files.createTempDirectory("scio-output-")
+    outputPath.toFile.deleteOnExit()
+    val output = outputPath.toAbsolutePath.toString
+
+    val high = Files.createFile(outputPath.resolve("high.txt"))
+    val low = Files.createFile(outputPath.resolve("low.txt"))
+
+    Files.write(low, (0 to 49).mkString("\n").getBytes(StandardCharsets.UTF_8))
+    Files.write(high, (50 to 100).mkString("\n").getBytes(StandardCharsets.UTF_8))
+
+    val expected = (0 to 100).map { i =>
+      val fn = if (i >= 50) "/high.txt" else "/low.txt"
+      (fn, i.toString)
+    }
+
+    val sc = ScioContext()
+    sc.parallelize(Seq(s"$output/*.txt"))
+      .readFilesAsTextWithFilename()
+      .map { case (fn, l) => (fn.stripPrefix(output), l) } should containInAnyOrder(expected)
+    sc.run()
+  }
 }

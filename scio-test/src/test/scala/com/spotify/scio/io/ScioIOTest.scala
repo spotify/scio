@@ -351,6 +351,37 @@ class ScioIOTest extends ScioIOSpec {
     )(_.saveAsAvroFile(_, schema = schema))
   }
 
+  it should "read avro files with filename" in {
+    val out = new File(new File(CoreSysProps.TmpDir.value), "scio-test-" + UUID.randomUUID())
+    out.deleteOnExit()
+
+    val sc = ScioContext()
+    sc.parallelize((1 to 100).map(x => AvroUtils.newSpecificRecord(x)))
+      .saveAsAvroFile(out.getAbsolutePath, numShards=3)
+    sc.run().waitUntilDone()
+
+    val expected = List(
+      "part-00000-of-00003.avro",
+      "part-00001-of-00003.avro",
+      "part-00002-of-00003.avro"
+    )
+
+    // specific record
+    val sc2 = ScioContext()
+    sc2.parallelize(List(out.getAbsolutePath + "/*.avro"))
+      .readFilesAsAvroWithFilename[TestRecord]()
+      .map { case (fn, _) => fn.split('/').last }
+      .distinct should containInAnyOrder(expected)
+
+    // generic record
+    sc2.parallelize(List(out.getAbsolutePath + "/*.avro"))
+      .readFilesAsGenericRecordWithFilename(TestRecord.SCHEMA$)
+      .map { case (fn, _) => fn.split('/').last }
+      .distinct should containInAnyOrder(expected)
+
+    sc2.run().waitUntilDone()
+  }
+
   // covers AvroIO specific, generic, and typed records, ObjectFileIO, and ProtobufIO
   it should "write to the same filenames as previous scio versions when not using a filename policy" in {
     import org.apache.beam.sdk.extensions.avro.io.{AvroIO => BAvroIO}

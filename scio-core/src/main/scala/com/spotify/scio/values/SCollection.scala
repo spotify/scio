@@ -36,9 +36,9 @@ import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.avro.file.CodecFactory
-import org.apache.beam.sdk.coders.{Coder => BCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, KvCoder, StringUtf8Coder}
 import org.apache.beam.sdk.schemas.SchemaCoder
-import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.{Compression, FileBasedSource, ReadAllViaFileBasedSourceWithFilename}
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
@@ -57,6 +57,8 @@ import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 /** Convenience functions for creating SCollections. */
@@ -1454,6 +1456,38 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
               .apply(filesTransform)
         })
     }
+
+  def readFilesAsTextWithFilename(
+    emptyMatchTreatment: EmptyMatchTreatment = EmptyMatchTreatment.DISALLOW
+  )(implicit ev: T <:< String): SCollection[(String, String)] =
+    readFilesWithFilename[String](fn =>
+      new beam.TextSource(
+        StaticValueProvider.of(fn),
+        emptyMatchTreatment,
+        null
+      )
+    )
+
+  def readFilesWithFilename[A: Coder](
+    fn: String => FileBasedSource[A],
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO,
+    desiredBundleSizeBytes: Long = 64 * 1024 * 1024L // 64 MB
+  )(implicit ev: T <:< String): SCollection[(String, A)] = {
+    val coder = CoderMaterializer.beam(context, implicitly[Coder[A]])
+    readFiles(
+      new ReadAllViaFileBasedSourceWithFilename[A](
+        desiredBundleSizeBytes,
+        Functions.serializableFn(fn),
+        KvCoder.of(
+          StringUtf8Coder.of,
+          coder
+        )
+      ),
+      directoryTreatment,
+      compression
+    ).map(TupleFunctions.kvToTuple)
+  }
 
   /**
    * Pairs each element with the value of the provided [[SideInput]] in the element's window.
