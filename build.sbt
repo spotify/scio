@@ -205,8 +205,12 @@ lazy val mimaSettings = Def.settings(
     // Voyager API breakage
     ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager$extension"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager$extension0"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager$extension1"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyagerSideInput"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyagerSideInput$extension"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerScioContextOps.voyagerSideInput$extension"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps.asVoyagerSideInput$extension"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.VoyagerReader.this"),
     ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.VoyagerWriter.this"),
     ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager"),
