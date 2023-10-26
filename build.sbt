@@ -1546,6 +1546,8 @@ lazy val site: Project = project
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
   Seq(
+    // socco-ng has not been published for more recent scala versions
+    scalaVersion := "2.13.12",
     scalacOptions ++= Seq(
       "-P:socco:out:scio-examples/target/site",
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
