@@ -138,7 +138,7 @@ val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val testContainersVersion = "0.41.0"
-val voyagerVersion = "1.2.6"
+val voyagerVersion = "2.0.2"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -200,22 +200,27 @@ def previousVersion(currentVersion: String): Option[String] = {
 }
 
 lazy val mimaSettings = Def.settings(
+  //format: off
   mimaBinaryIssueFilters := Seq(
-    // scio-tensorflow ConcurrentHashMap instead of ConcurrentMap (#5011)
-    ProblemFilters.exclude[DirectMissingMethodProblem](
-      "com.spotify.scio.tensorflow.PredictDoFn.createResource"
-    ),
-    // scio-parquet filter granularity (#5025)
-    ProblemFilters.exclude[MissingClassProblem](
-      "com.spotify.scio.parquet.read.ParquetReadFn$File$"
-    ),
-    ProblemFilters.exclude[MissingClassProblem](
-      "com.spotify.scio.parquet.read.ParquetReadFn$Granularity"
-    ),
-    ProblemFilters.exclude[MissingClassProblem](
-      "com.spotify.scio.parquet.read.ParquetReadFn$RowGroup$"
-    )
+    // Voyager API breakage
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager$extension"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager$extension0"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager$extension1"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyagerSideInput"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyagerSideInput$extension"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerScioContextOps.voyagerSideInput$extension"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps.asVoyagerSideInput$extension"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.VoyagerReader.this"),
+    ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.extra.voyager.VoyagerWriter.this"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerPairSCollectionOps.asVoyager$extension"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerScioContextOps.voyagerSideInput"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerScioContextOps.voyagerSideInput$extension"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps.asVoyagerSideInput"),
+    ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.spotify.scio.extra.voyager.syntax.VoyagerSCollectionOps.asVoyagerSideInput$extension"),
   ),
+  // format: on
   mimaPreviousArtifacts := previousVersion(version.value)
     .filter(_ => publishArtifact.value)
     .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)

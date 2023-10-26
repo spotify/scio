@@ -33,26 +33,46 @@ class VoyagerScioContextOps(private val self: ScioContext) extends AnyVal {
    * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]
    *
    * @param uri
-   *   The [[VoyagerUri]].
-   * @param spaceType
+   *   The [[VoyagerUri]] base path to a voyager index.
+   * @param space
    *   The measurement for computing distance between entities. One of Euclidean, Cosine or Dot
    *   (inner product).
-   * @param storageDataType
-   *   The Storage type of the vectors at rest. One of Float8, Float32 or E4M3.
-   * @param dim
+   * @param numDimensions
    *   Number of dimensions in vectors.
+   * @param storageDataType
+   *   The datatype to use under-the-hood when storing vectors.
    * @return
    *   A [[SideInput]] of the [[VoyagerReader]] to be used for querying.
    */
   @experimental
   def voyagerSideInput(
     uri: VoyagerUri,
-    spaceType: SpaceType,
-    storageDataType: StorageDataType,
-    dim: Int
+    space: SpaceType,
+    numDimensions: Int,
+    storageDataType: StorageDataType
   ): SideInput[VoyagerReader] = {
+    val indexSettings = VoyagerReader.ProvidedSettings(space, numDimensions, storageDataType)
+    val remoteFileUtil = RemoteFileUtil.create(self.options)
     val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
-    new VoyagerSideInput(view, RemoteFileUtil.create(self.options), spaceType, storageDataType, dim)
+    new VoyagerSideInput(indexSettings, remoteFileUtil, view)
+  }
+
+  /**
+   * Creates a SideInput of [[VoyagerReader]] from an [[VoyagerUri]] base path. To be used with
+   * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]
+   *
+   * @param uri
+   *   The [[VoyagerUri]] base path to a voyager v2 index.
+   * @return
+   *   A [[SideInput]] of the [[VoyagerReader]] to be used for querying.
+   */
+  @experimental
+  def voyagerSideInput(
+    uri: VoyagerUri
+  ): SideInput[VoyagerReader] = {
+    val remoteFileUtil = RemoteFileUtil.create(self.options)
+    val view = self.parallelize(Seq(uri)).applyInternal(View.asSingleton())
+    new VoyagerSideInput(VoyagerReader.MetadataSettings, remoteFileUtil, view)
   }
 }
 

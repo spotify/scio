@@ -27,11 +27,9 @@ import java.nio.ByteBuffer
 import scala.jdk.CollectionConverters._
 
 class VoyagerIT extends PipelineSpec {
-  val dim: Int = 2
-  val storageType: StorageDataType = StorageDataType.E4M3
-  val distanceMeasure: SpaceType = SpaceType.Cosine
-  val ef = 200
-  val m = 16L
+  val space: SpaceType = SpaceType.Cosine
+  val numDimensions: Int = 2
+  val storageDataType: StorageDataType = StorageDataType.E4M3
 
   val sideData: Seq[(String, Array[Float])] = Seq(
     "1" -> Array(2.5f, 7.2f),
@@ -49,7 +47,11 @@ class VoyagerIT extends PipelineSpec {
 
       val voyagerReader = sc
         .parallelize(sideData)
-        .asVoyagerSideInput(distanceMeasure, storageType, dim)
+        .asVoyagerSideInput(
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
+        )
 
       val result = sc
         .parallelize(vectors)
@@ -93,7 +95,13 @@ class VoyagerIT extends PipelineSpec {
 
     val e = the[IllegalArgumentException] thrownBy {
       runWithContext { sc =>
-        sc.parallelize(sideData).asVoyager(uri, distanceMeasure, storageType, dim, 200L, 16)
+        sc.parallelize(sideData)
+          .asVoyager(
+            uri = uri,
+            space = space,
+            numDimensions = numDimensions,
+            storageDataType = storageDataType
+          )
       }
     }
 
