@@ -31,10 +31,10 @@ import scala.util.hashing.MurmurHash3
  * Xorshift RNGs. Journal of Statistical Software, Vol. 8, Issue 14.
  * @see
  *   <a href="http://www.jstatsoft.org/v08/i14/paper">Paper</a> This implementation is approximately
- *   3.5 times faster than {@link java.util.Random java.util.Random}, partly because of the
- *   algorithm, but also due to renouncing thread safety. JDK's implementation uses an AtomicLong
- *   seed, this class uses a regular Long. We can forgo thread safety since we use a new instance of
- *   the RNG for each thread.
+ *   3.5 times faster than [[java.util.Random]], partly because of the algorithm, but also due to
+ *   renouncing thread safety. JDK's implementation uses an AtomicLong seed, this class uses a
+ *   regular Long. We can forgo thread safety since we use a new instance of the RNG for each
+ *   thread.
  */
 private[random] class XORShiftRandom(init: Long) extends JavaRandom(init) {
   def this() = this(System.nanoTime)
