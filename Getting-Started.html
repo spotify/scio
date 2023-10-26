@@ -190,6 +190,7 @@ spotify/scio
     <li><a href="extras/Sparkey.html" class="page">Sparkey</a></li>
     <li><a href="extras/Scio-REPL.html" class="page">REPL</a></li>
     <li><a href="extras/Transforms.html" class="page">Transforms</a></li>
+    <li><a href="extras/Voyager.html" class="page">Voyager</a></li>
   </ul></li>
   <li><a href="dev/index.html" class="page">Development</a>
   <ul>
@@ -229,7 +230,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.3+0-467a53a4+20230901-1430*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-137c0542+20231026-1425*
 </label>
 </li>
 </ul>
@@ -272,14 +273,13 @@ cd scio
 # &#39;sbt ++$SCALA_VERSION publishLocal&#39; to build for a specific Scala version
 sbt publishLocal
 </code></pre>
-<p>You can also specify sbt heap size with <code>-mem</code>, e.g. <code>sbt -mem 8192</code>. Use the <code>SBT_OPTS</code> environment variable for more fine grained settings.</p>
-<pre class="prettyprint"><code class="language-bash">export SBT_OPTS=&quot;-Xmx8G -Xms8G -Xss1M -XX:MaxMetaspaceSize=1G -XX:+CMSClassUnloadingEnabled -XX:ReservedCodeCacheSize=128m&quot;
-</code></pre>
+<p>More info on cross-building <a href="https://www.scala-sbt.org/1.x/docs/Cross-Build.html#Switching+Scala+version">here</a>.</p>
+<p>You can also specify sbt heap size with <code>-mem</code>, e.g. <code>sbt -mem 8192</code>. Some sensible defaults are stored in <code>.sbtopts</code>.</p>
 <p>To ensure the project loads and builds successfully, run the following sbt command so that all custom tasks are executed</p>
-<pre class="prettyprint"><code class="language-bash">sbt compile test:compile
+<pre class="prettyprint"><code class="language-bash">sbt compile Test/compile
 </code></pre>
 <h2><a href="#running-the-examples" name="running-the-examples" class="anchor"><span class="anchor-link"></span></a>Running the Examples</h2>
-<p>You can execute the examples locally from SBT. By default pipelines will be executed using the <a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>DirectRunner</code></a> and local filesystem will be used for input and output. Take a look at the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples">examples</a> to find out more.</p>
+<p>You can execute the examples locally from SBT. By default, pipelines will be executed using the <a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>DirectRunner</code></a> and local filesystem will be used for input and output. Take a look at the <a href="https://github.com/spotify/scio/tree/master/scio-examples/src/main/scala/com/spotify/scio/examples">examples</a> to find out more.</p>
 <pre><code>neville@localhost scio $ sbt
 [info] ...
 &gt; project scio-examples
@@ -287,7 +287,7 @@ sbt publishLocal
 &gt; runMain com.spotify.scio.examples.WordCount --input=&lt;FILE PATTERN&gt; --output=&lt;DIRECTORY&gt;
 </code></pre><div class="callout note "><div class="callout-title">Note</div>
 <p>Unlike Hadoop, Scio or Dataflow input should be file patterns and not directories, i.e. <code>gs://bucket/path/part-*.txt</code> and not <code>gs://bucket/path</code>. Output on the other hand should be directories just like Hadoop, so <code>gs://bucket/path</code> will produce files like <code>gs://bucket/path/part-00000-of-00005.txt</code>.</p></div>
-<p>Use the <a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>DataflowRunner</code></a> to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.</p>
+<p>Use the <a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>DataflowRunner</code></a> to execute pipelines on Google Cloud Dataflow service using managed resources in the Google Cloud Platform.</p>
 <pre><code>neville@localhost scio $ sbt
 [info] ...
 &gt; project scio-examples
@@ -300,17 +300,17 @@ sbt publishLocal
 --input=&lt;FILE PATTERN&gt; --output=&lt;DIRECTORY&gt;
 </code></pre>
 <p>The Cloud Platform <code>project</code> refers to its name (not number). GCE availability <code>region</code> should be in the same region as the BigQuery datasets and GCS bucket.</p>
-<p>By default only <code>DirectRunner</code> is in the library dependencies list. Use <code>set beamRunners := &quot;&lt;runners&gt;&quot;</code> to specify additional runner dependencies as a comma separated list, i.e. &ldquo;DataflowRunner,FlinkRunner&rdquo;.</p>
+<p>By default, only <code>DirectRunner</code> is in the library dependencies list. Use <code>set beamRunners := &quot;&lt;runners&gt;&quot;</code> to specify additional runner dependencies as a comma separated list, i.e. &ldquo;DataflowRunner,FlinkRunner&rdquo;.</p>
 <h2><a href="#sbt-project-setup" name="sbt-project-setup" class="anchor"><span class="anchor-link"></span></a>SBT project setup</h2>
 <p>To create a new SBT project using Giter8 <a href="https://github.com/spotify/scio-template.g8">scio-template</a>, simply:</p>
 <pre><code>sbt new spotify/scio-template.g8
 </code></pre>
-<p>Or add the following to your <code>build.sbt</code>. Replace the direct and Dataflow runner with ones you wish to use. The compiler plugin dependency is only needed for the type safe BigQuery API.</p>
+<p>Or add the following to your <code>build.sbt</code>. Replace the direct and Dataflow runner with ones you wish to use. The compiler plugin dependency is only needed for the type safe BigQuery API with scala 2.12.</p>
 <pre class="prettyprint"><code class="language-sbt">libraryDependencies ++= Seq(
-  &quot;com.spotify&quot; %% &quot;scio-core&quot; % &quot;0.6.1&quot;,
-  &quot;com.spotify&quot; %% &quot;scio-test&quot; % &quot;0.6.1&quot; % &quot;test&quot;,
-  &quot;org.apache.beam&quot; % &quot;beam-runners-direct-java&quot; % &quot;2.6.0&quot;,
-  &quot;org.apache.beam&quot; % &quot;beam-runners-google-cloud-dataflow-java&quot; % &quot;2.6.0&quot;
+  &quot;com.spotify&quot; %% &quot;scio-core&quot; % scioVersion,
+  &quot;com.spotify&quot; %% &quot;scio-test&quot; % scioVersion % Test,
+  &quot;org.apache.beam&quot; % &quot;beam-runners-direct-java&quot; % beamVersion % Runtime,
+  &quot;org.apache.beam&quot; % &quot;beam-runners-google-cloud-dataflow-java&quot; % beamVersion % Runtime
 )
 
 addCompilerPlugin(&quot;org.scalamacros&quot; % &quot;paradise&quot; % &quot;2.1.1&quot; cross CrossVersion.full)
@@ -335,8 +335,8 @@ addCompilerPlugin(&quot;org.scalamacros&quot; % &quot;paradise&quot; % &quot;2.1
   <li><a href="https://cloud.google.com/dataflow/service/dataflow-service-desc">Service Optimization and Execution</a></li>
 </ul>
 <p>The defaults should work well for most cases but we sometimes tune the following parameters manually. - <code>--workerMachineType</code> - start with smaller types like <code>n1-standard-1</code> and go up if you run into memory problem. <code>n1-standard-4</code> works well for a lot of our memory hungry jobs. - <code>--maxNumWorkers</code> - avoid setting it to too high, i.e. 1000 or close to quota, since that reduces available instances for other jobs and more workers means more expensive shuffle. - <code>--diskSizeGb</code> - increase this if you run into disk space problem during shuffle, or alternatively optimize code by replacing <code>groupByKey</code> with <code>reduceByKey</code> or <code>sumByKey</code>. - <code>--workerDiskType</code> - specify SSD for jobs with really expensive shuffles. See a list of disk types <a href="https://cloud.google.com/compute/docs/reference/latest/diskTypes">here</a>. Also see this <a href="https://cloud.google.com/compute/docs/disks/performance">page</a> about persistent disk size and type. - <code>--network</code> - specify this if you use VPN to communicate with external services, e.g. HDFS on an on-premise cluster.</p>
-<p>More Dataflow pipeline specific options available can be found in <a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"><code>DataflowPipelineOptions</code></a> and super interfaces. Some more useful ones are from <a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineWorkerPoolOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions"><code>DataflowPipelineWorkerPoolOptions</code></a>.</p>
-<p><a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a> affects side input performance but needs an extra step to enable. See this <a href="FAQ.html#how-do-i-improve-side-input-performance-">FAQ item</a>.</p>
+<p>More Dataflow pipeline specific options available can be found in <a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineOptions"><code>DataflowPipelineOptions</code></a> and super interfaces. Some more useful ones are from <a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/runners/dataflow/options/DataflowPipelineWorkerPoolOptions.html" title="org.apache.beam.runners.dataflow.options.DataflowPipelineWorkerPoolOptions"><code>DataflowPipelineWorkerPoolOptions</code></a>.</p>
+<p><a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a> affects side input performance but needs an extra step to enable. See this <a href="FAQ.html#how-do-i-improve-side-input-performance-">FAQ item</a>.</p>
 <p>There are a few more experimental settings that might help specific scenarios: - <code>--experiments=shuffle_mode=service</code> - use external <a href="https://cloud.google.com/dataflow/service/dataflow-service-desc#cloud-dataflow-shuffle">shuffle service</a> instead of local disk - <code>--experiments=enable_custom_bigquery_sink</code> - new custom sink that works around certain limitations when writing to BigQuery - <code>--experiments=worker_region-&lt;REGION&gt;</code> - use specified Google Cloud region instead of zone for more flexible capacity</p>
 </div>
 <div>
@@ -346,7 +346,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.3+0-467a53a4+20230901-1430*
+0.0.0+1-137c0542+20231026-1425*
 </span>
 </div>
 </article>

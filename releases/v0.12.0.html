@@ -190,6 +190,7 @@ spotify/scio
     <li><a href="../extras/Sparkey.html" class="page">Sparkey</a></li>
     <li><a href="../extras/Scio-REPL.html" class="page">REPL</a></li>
     <li><a href="../extras/Transforms.html" class="page">Transforms</a></li>
+    <li><a href="../extras/Voyager.html" class="page">Voyager</a></li>
   </ul></li>
   <li><a href="../dev/index.html" class="page">Development</a>
   <ul>
@@ -227,7 +228,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.3+0-467a53a4+20230901-1430*
+<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-137c0542+20231026-1425*
 </label>
 </li>
 </ul>
@@ -268,7 +269,7 @@ data.saveAsAvroFile(&quot;/some-path&quot;, numShards = 2, shardNameTemplate = &
 part-000-of-002.avro
 part-001-of-002.avro
 </code></pre>
-<p>In contrast, <code>filenamePolicySupplier</code> gives you more fine-grained control by allowing you to specify a full <a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/sdk/io/FileBasedSink.FilenamePolicy.html" title="org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy"><code>FilenamePolicy</code></a> based on the supplied <code>path</code> and <code>suffix</code>:</p>
+<p>In contrast, <code>filenamePolicySupplier</code> gives you more fine-grained control by allowing you to specify a full <a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/sdk/io/FileBasedSink.FilenamePolicy.html" title="org.apache.beam.sdk.io.FileBasedSink.FilenamePolicy"><code>FilenamePolicy</code></a> based on the supplied <code>path</code> and <code>suffix</code>:</p>
 <pre class="prettyprint"><code class="language-scala">data.saveAsAvroFile(path, schema, filenamePolicySupplier =
   (path: String, suffix: String) =&gt; new FilenamePolicy {
     override def windowedFilename(shardNumber: Int, numShards: Int, window: BoundedWindow, paneInfo: PaneInfo, outputFileHints: FileBasedSink.OutputFileHints): ResourceId = ???
@@ -282,7 +283,7 @@ part-001-of-002.avro
   .batchByKey(batchSize = 100L)
 </code></pre>
 <h3><a href="#splittabledofn-based-parquet-reads" name="splittabledofn-based-parquet-reads" class="anchor"><span class="anchor-link"></span></a>SplittableDoFn-based Parquet reads</h3>
-<p>We&rsquo;ve introduced an opt-in new Parquet reads implementation, which implements Beam&rsquo;s <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, as an alternative to the default <a href="https://beam.apache.org/releases/javadoc/2.50.0/?org/apache/beam/sdk/io/BoundedSource.html" title="org.apache.beam.sdk.io.BoundedSource"><code>BoundedSource</code></a>-backed implementation. We&rsquo;ve observed greatly improved Dataflow metrics with this new implementation (total VCPU time, total memory time), when run with <strong>Dataflow Runner V1</strong> (the default), workers may not scale up as much, resulting in an overall slower wall time. Therefore, we recommend trying out the new Parquet read in conjunction with <a href="https://cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#dataflow-runner-v2"><strong>Dataflow Runner V2</strong></a>.</p>
+<p>We&rsquo;ve introduced an opt-in new Parquet reads implementation, which implements Beam&rsquo;s <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, as an alternative to the default <a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/sdk/io/BoundedSource.html" title="org.apache.beam.sdk.io.BoundedSource"><code>BoundedSource</code></a>-backed implementation. We&rsquo;ve observed greatly improved Dataflow metrics with this new implementation (total VCPU time, total memory time), when run with <strong>Dataflow Runner V1</strong> (the default), workers may not scale up as much, resulting in an overall slower wall time. Therefore, we recommend trying out the new Parquet read in conjunction with <a href="https://cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#dataflow-runner-v2"><strong>Dataflow Runner V2</strong></a>.</p>
 <p>You can opt in by adding an entry to your Parquet read&rsquo;s Configuration:</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.parquet._
 
@@ -388,7 +389,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.3+0-467a53a4+20230901-1430*
+0.0.0+1-137c0542+20231026-1425*
 </span>
 </div>
 </article>
