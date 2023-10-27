@@ -31,8 +31,7 @@ private[types] object ConverterProvider {
     import c.universe._
     val tpe = weakTypeOf[T]
     val r = fromAvroInternal(c)(tpe)
-    debug(s"ConverterProvider.fromAvroImpl[$tpe]:")
-    debug(r)
+    debug(c)(s"ConverterProvider.fromAvroImpl[$tpe]:", r)
     c.Expr[GenericRecord => T](r)
   }
 
@@ -40,8 +39,7 @@ private[types] object ConverterProvider {
     import c.universe._
     val tpe = weakTypeOf[T]
     val r = toAvroInternal(c)(tpe)
-    debug(s"ConverterProvider.toAvroInternal[$tpe]:")
-    debug(r)
+    debug(c)(s"ConverterProvider.toAvroInternal[$tpe]:", r)
     c.Expr[T => GenericRecord](r)
   }
 
@@ -49,8 +47,7 @@ private[types] object ConverterProvider {
     import c.universe._
     val tpe = weakTypeOf[T]
     val r = fromTableRowInternal(c)(tpe)
-    debug(s"ConverterProvider.fromTableRowImpl[$tpe]:")
-    debug(r)
+    debug(c)(s"ConverterProvider.fromTableRowImpl[$tpe]:", r)
     c.Expr[TableRow => T](r)
   }
 
@@ -58,8 +55,7 @@ private[types] object ConverterProvider {
     import c.universe._
     val tpe = weakTypeOf[T]
     val r = toTableRowInternal(c)(tpe)
-    debug(s"ConverterProvider.toTableRowImpl[$tpe]:")
-    debug(r)
+    debug(c)(s"ConverterProvider.toTableRowImpl[$tpe]:", r)
     c.Expr[T => TableRow](r)
   }
 

@@ -107,14 +107,14 @@ val chillVersion = "0.10.0"
 val circeVersion = "0.14.6"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.13"
-val elasticsearch8Version = "8.10.2"
+val elasticsearch8Version = "8.10.4"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val hamcrestVersion = "2.2"
-val jakartaJsonVersion = "2.1.2"
+val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
-val jedisVersion = "4.4.5"
+val jedisVersion = "4.4.6"
 val jnaVersion = "5.13.0"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -138,7 +138,7 @@ val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val testContainersVersion = "0.41.0"
-val voyagerVersion = "1.2.6"
+val voyagerVersion = "2.0.2"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -1175,7 +1175,7 @@ lazy val `scio-examples`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.14.0" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.14.1" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1524,12 +1524,14 @@ lazy val site: Project = project
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
   Seq(
+    // socco-ng has not been published for more recent scala versions
+    scalaVersion := "2.13.10",
     scalacOptions ++= Seq(
       "-P:socco:out:scio-examples/target/site",
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.9").cross(CrossVersion.full)),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.8").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {

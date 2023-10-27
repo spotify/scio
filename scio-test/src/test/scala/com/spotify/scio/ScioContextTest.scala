@@ -227,6 +227,20 @@ class ScioContextTest extends PipelineSpec {
     actualCommitedCounterValue shouldBe Some(0)
   }
 
+  it should "support wrapped root-level transforms" in {
+    val sc = ScioContext()
+    val scioCounter = ScioMetrics.counter(name = "all-map-ops-counter")
+    sc.initCounter(scioCounter)
+
+    sc.transform("Transform1")(_.parallelize(1 to 10).tap(_ => scioCounter.inc()))
+    sc.transform("Transform2")(_.parallelize(11 to 20).tap(_ => scioCounter.inc()))
+
+    sc.run()
+      .waitUntilDone()
+      .counter(scioCounter)
+      .committed shouldBe Some(20)
+  }
+
   "PipelineOptions" should "propagate" in {
     trait Options extends DataflowPipelineOptions {
       @Required

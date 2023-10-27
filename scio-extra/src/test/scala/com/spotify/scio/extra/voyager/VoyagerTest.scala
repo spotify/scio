@@ -25,9 +25,9 @@ import com.spotify.voyager.jni.StringIndex
 import java.nio.file.Files
 
 class VoyagerTest extends PipelineSpec {
-  val spaceType: SpaceType = SpaceType.Cosine
+  val space: SpaceType = SpaceType.Cosine
+  val numDimensions: Int = 2
   val storageDataType: StorageDataType = StorageDataType.E4M3
-  val dim: Int = 2
 
   val sideData: Seq[(String, Array[Float])] =
     Seq(("1", Array(2.5f, 7.2f)), ("2", Array(1.2f, 2.2f)), ("3", Array(5.6f, 3.4f)))
@@ -37,14 +37,20 @@ class VoyagerTest extends PipelineSpec {
     val uri = VoyagerUri(tmpDir.toUri)
 
     runWithContext { sc =>
-      sc.parallelize(sideData).asVoyager(uri, spaceType, storageDataType, dim, 200L, 16L)
+      sc.parallelize(sideData)
+        .asVoyager(
+          uri = uri,
+          space = space,
+          numDimensions = numDimensions,
+          storageDataType = storageDataType
+        )
     }
 
     val index = StringIndex.load(
       tmpDir.resolve(VoyagerUri.IndexFile).toString,
       tmpDir.resolve(VoyagerUri.NamesFile).toString,
       SpaceType.Cosine,
-      dim,
+      numDimensions,
       StorageDataType.E4M3
     )
 
@@ -67,13 +73,23 @@ class VoyagerTest extends PipelineSpec {
 
     the[IllegalArgumentException] thrownBy {
       runWithContext { sc =>
-        sc.parallelize(sideData).asVoyager(uri, spaceType, storageDataType, dim, 200L, 16L)
+        sc.parallelize(sideData)
+          .asVoyager(
+            uri = uri,
+            space = space,
+            numDimensions = numDimensions,
+            storageDataType = storageDataType
+          )
       }
     } should have message s"requirement failed: Voyager URI ${uri.value} already exists"
   }
 
-  "VoyagerUri" should "not use Kryo" in {
-    val uri = VoyagerUri("gs://this-that")
+  "VoyagerUri" should "normalize uri as directory" in {
+    VoyagerUri("gs://this-that").value.toString shouldBe "gs://this-that/"
+  }
+
+  it should "not use Kryo" in {
+    val uri = VoyagerUri("gs://this-that/")
     uri coderShould notFallback()
   }
 }

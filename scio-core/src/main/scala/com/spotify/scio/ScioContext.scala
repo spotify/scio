@@ -700,6 +700,22 @@ class ScioContext private[scio] (
   ): SCollection[U] =
     applyTransform(Option(name), root)
 
+  def transform[U](f: ScioContext => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
+
+  def transform[U](name: String)(f: ScioContext => SCollection[U]): SCollection[U] =
+    wrap(transform_(name)(f(_).internal))
+
+  private[scio] def transform_[U <: POutput](f: ScioContext => U): U =
+    transform_(tfName)(f)
+
+  private[scio] def transform_[U <: POutput](name: String)(f: ScioContext => U): U =
+    applyInternal(
+      name,
+      new PTransform[PBegin, U]() {
+        override def expand(pBegin: PBegin): U = f(ScioContext.this)
+      }
+    )
+
   /**
    * Get an SCollection for a text file.
    * @group input

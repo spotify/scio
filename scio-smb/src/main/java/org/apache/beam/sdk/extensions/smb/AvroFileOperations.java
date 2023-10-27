@@ -34,6 +34,7 @@ import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory;
 import org.apache.beam.sdk.extensions.avro.io.AvroIO;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
@@ -113,17 +114,9 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
             // https://github.com/spotify/scio/issues/2649
             // force GenericDatumWriter instead of ReflectDatumWriter
             ? (AvroIO.Sink<ValueT>)
-                AvroIO.sinkViaGenericRecords(
-                        getSchema(),
-                        new AvroIO.RecordFormatter<ValueT>() {
-                          @Override
-                          public GenericRecord formatRecord(ValueT element, Schema schema) {
-                            return (GenericRecord) element;
-                          }
-                        })
-                    .withCodec(codec.getCodec())
+                AvroIO.<GenericRecord>sink(getSchema())
+                    .withDatumWriterFactory(AvroDatumFactory.generic())
             : AvroIO.sink(recordClass)
-                .withCodec(codec.getCodec())
                 .withDatumWriterFactory(
                     (writer) -> {
                       // same as SpecificRecordDatumFactory in scio-avro
@@ -137,7 +130,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
       return sink.withMetadata(metadata);
     }
 
-    return sink;
+    return sink.withCodec(codec.getCodec());
   }
 
   @SuppressWarnings("unchecked")
@@ -210,7 +203,7 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
         // same as SpecificRecordDatumFactory in scio-avro
         ReflectData data = new ReflectData(recordClass.getClassLoader());
         org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils.addLogicalTypeConversions(data);
-        datumReader = new ReflectDatumReader<>(data);
+        datumReader = new ReflectDatumReader<>(schema, schema, data);
       }
 
       reader = new DataFileStream<>(Channels.newInputStream(channel), datumReader);
