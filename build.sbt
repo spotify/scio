@@ -37,7 +37,6 @@ val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
 val bigdataossVersion = "2.2.16"
-val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
 val commonsCompressVersion = "1.21"
 val commonsIoVersion = "2.13.0"
@@ -77,7 +76,6 @@ val floggerVersion = "0.7.4"
 val gaxVersion = "2.32.0"
 val googleApiCommonVersion = "2.15.0"
 val googleAuthVersion = "1.19.0"
-val googleCloudBigTableVersion = "2.26.0"
 val googleCloudCoreVersion = "2.22.0"
 val googleCloudDatastoreVersion = "0.107.3"
 val googleCloudMonitoringVersion = "3.24.0"
@@ -99,6 +97,7 @@ val algebraVersion = "2.9.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.1.0"
+val bigtableHbaseBeamVersion = "2.11.0"
 val caffeineVersion = "2.9.3"
 val cassandraDriverVersion = "3.11.5"
 val cassandraVersion = "3.11.16"
@@ -110,6 +109,7 @@ val elasticsearch7Version = "7.17.13"
 val elasticsearch8Version = "8.10.4"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
+val hbaseVersion = "1.7.2"
 val httpAsyncClientVersion = "4.1.5"
 val hamcrestVersion = "2.2"
 val jakartaJsonVersion = "2.1.3"
@@ -234,6 +234,12 @@ lazy val java17Settings = sys.props("java.version") match {
     )
   case _ => Def.settings()
 }
+
+// test libs to exclude
+val testLibs: Seq[ExclusionRule] = Seq(
+  "junit" % "junit",
+  "org.hamcrest" % "hamcrest-core"
+)
 
 val commonSettings = formatSettings ++
   mimaSettings ++
@@ -604,7 +610,6 @@ lazy val `scio-test`: Project = project
       moduleFilter("junit", "junit")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
@@ -721,21 +726,18 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % bigQueryStorageBetaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
       "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-bigtable" % googleCloudBigTableVersion,
       "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
-      "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
-      "com.google.guava" % "guava" % guavaVersion,
+      "com.google.cloud.bigtable" % "bigtable-hbase-beam" % bigtableHbaseBeamVersion excludeAll (testLibs: _*),
+      "com.google.cloud.bigtable" % "bigtable-hbase-1.x-shaded" % bigtableHbaseBeamVersion excludeAll (testLibs: _*),
+      "org.apache.hbase" % "hbase-shaded-client" % hbaseVersion excludeAll (testLibs: _*),
       "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
       "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
@@ -753,6 +755,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-hbase" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
@@ -1145,7 +1148,6 @@ lazy val `scio-examples`: Project = project
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % googleClientsVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
@@ -1159,7 +1161,7 @@ lazy val `scio-examples`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
-      "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
+      // "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
@@ -1271,6 +1273,12 @@ lazy val `scio-repl`: Project = project
         case s if s.endsWith(".proto") =>
           // arbitrary pick last conflicting proto file
           MergeStrategy.last
+        case PathList("dependencies.properties") =>
+          // arbitrary pick last dependencies property file
+          MergeStrategy.last
+        case PathList("THIRD-PARTY.txt") =>
+          // drop conflicting THIRD-PARTY.txt
+          MergeStrategy.discard
         case PathList("git.properties") =>
           // drop conflicting git properties
           MergeStrategy.discard
@@ -1280,11 +1288,26 @@ lazy val `scio-repl`: Project = project
         case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
           // drop conflicting kotlin compiler info
           MergeStrategy.discard
+        case PathList("META-INF", "native-image", "incremental.annotation.processors") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
         case PathList("META-INF", "io.netty.versions.properties") =>
           // merge conflicting netty property files
           MergeStrategy.filterDistinctLines
         case PathList("META-INF", "native-image", "native-image.properties") =>
           // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case PathList(
+              "META-INF",
+              "native-image",
+              "com.google.api",
+              "gax-grpc",
+              "native-image.properties"
+            ) =>
+          // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case PathList("mozilla", "public-suffix-list.txt") =>
+          // merge conflicting public-suffix-list files
           MergeStrategy.filterDistinctLines
         case s => old(s)
       }
@@ -1482,7 +1505,6 @@ lazy val site: Project = project
     ScalaUnidoc / unidoc / unidocAllClasspaths := (ScalaUnidoc / unidoc / unidocAllClasspaths).value
       .map { cp =>
         cp.filterNot(_.data.getCanonicalPath.matches(""".*guava-11\..*"""))
-          .filterNot(_.data.getCanonicalPath.matches(""".*bigtable-client-core-0\..*"""))
       },
     // mdoc
     // pre-compile md using mdoc
@@ -1557,8 +1579,6 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax-httpjson" % gaxVersion,
   "com.google.api-client" % "google-api-client" % googleClientsVersion,
   "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
   "com.google.api.grpc" % "proto-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,

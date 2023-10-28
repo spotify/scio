@@ -17,47 +17,27 @@
 
 package com.spotify.scio.bigtable.syntax
 
-import com.google.bigtable.v2._
-import com.google.cloud.bigtable.config.BigtableOptions
-import com.google.protobuf.ByteString
+import com.google.cloud.bigtable.beam.CloudBigtableTableConfiguration
+import com.spotify.scio.bigtable.BigtableWrite
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
-import org.joda.time.Duration
-
-import com.spotify.scio.bigtable.BigtableWrite
+import org.apache.hadoop.hbase.client.Mutation
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
  */
-final class SCollectionMutationOps[T <: Mutation](
-  private val self: SCollection[(ByteString, Iterable[T])]
-) {
+final class SCollectionMutationOps[T <: Mutation](private val self: SCollection[T]) {
 
   /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
   def saveAsBigtable(projectId: String, instanceId: String, tableId: String): ClosedTap[Nothing] =
-    self.write(BigtableWrite[T](projectId, instanceId, tableId))(BigtableWrite.Default)
+    self.write(BigtableWrite[T](projectId, instanceId, tableId))
 
   /** Save this SCollection as a Bigtable table. Note that elements must be of type `Mutation`. */
-  def saveAsBigtable(bigtableOptions: BigtableOptions, tableId: String): ClosedTap[Nothing] =
-    self.write(BigtableWrite[T](bigtableOptions, tableId))(BigtableWrite.Default)
-
-  /**
-   * Save this SCollection as a Bigtable table. This version supports batching. Note that elements
-   * must be of type `Mutation`.
-   */
-  def saveAsBigtable(
-    bigtableOptions: BigtableOptions,
-    tableId: String,
-    numOfShards: Int,
-    flushInterval: Duration = BigtableWrite.Bulk.DefaultFlushInterval
-  ): ClosedTap[Nothing] =
-    self.write(BigtableWrite[T](bigtableOptions, tableId))(
-      BigtableWrite.Bulk(numOfShards, flushInterval)
-    )
+  def saveAsBigtable(config: CloudBigtableTableConfiguration): ClosedTap[Nothing] =
+    self.write(BigtableWrite[T](config))
 }
 
 trait SCollectionSyntax {
-  implicit def bigtableMutationOps[T <: Mutation](
-    sc: SCollection[(ByteString, Iterable[T])]
-  ): SCollectionMutationOps[T] = new SCollectionMutationOps[T](sc)
+  implicit def bigtableMutationOps[T <: Mutation](sc: SCollection[T]): SCollectionMutationOps[T] =
+    new SCollectionMutationOps[T](sc)
 }

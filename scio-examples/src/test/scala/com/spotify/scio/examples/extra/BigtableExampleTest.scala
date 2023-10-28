@@ -17,11 +17,17 @@
 
 package com.spotify.scio.examples.extra
 
-import com.google.bigtable.v2.{Mutation, Row}
-import com.google.protobuf.ByteString
+import cats.Eq
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell
 import com.spotify.scio.bigtable._
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
+import org.apache.hadoop.hbase.Cell
+import org.apache.hadoop.hbase.client.{Mutation, Result}
+
+import java.nio.charset.StandardCharsets
+import java.util.Collections
+import scala.collection.immutable.Seq
 
 class BigtableExampleTest extends PipelineSpec {
   import BigtableExample._
@@ -33,37 +39,40 @@ class BigtableExampleTest extends PipelineSpec {
   )
 
   val textIn: Seq[String] = Seq("a b c d e", "a b a b")
-  val wordCount: Seq[(String, Long)] = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
-  val expectedMutations: Seq[(ByteString, Iterable[Mutation])] =
-    wordCount.map(kv => BigtableExample.toMutation(kv._1, kv._2))
+  val wordCount: Seq[(String, Long)] = Seq("a" -> 3L, "b" -> 3L, "c" -> 1L, "d" -> 1L, "e" -> 1L)
 
-  "BigtableV1WriteExample" should "work" in {
+  "BigtableWriteExample" should "work" in {
+    val expectedMutations: Seq[Mutation] = wordCount
+      .map { case (word, count) => BigtableExample.toPutMutation(word, count) }
+    implicit val eqMutation: Eq[Mutation] = Eq.by(_.toString)
+
     JobTest[com.spotify.scio.examples.extra.BigtableWriteExample.type]
       .args(bigtableOptions :+ "--input=in.txt": _*)
       .input(TextIO("in.txt"), textIn)
-      .output(
-        BigtableIO[(ByteString, Iterable[Mutation])]("my-project", "my-instance", "my-table")
-      ) {
+      .output(BigtableIO[Mutation]("my-project", "my-instance", "my-table")) {
         _ should containInAnyOrder(expectedMutations)
       }
       .run()
   }
 
-  def toRow(key: String, value: Long): Row =
-    Rows.newRow(
-      ByteString.copyFromUtf8(key),
-      FAMILY_NAME,
-      COLUMN_QUALIFIER,
-      ByteString.copyFromUtf8(value.toString)
-    )
-
-  val rowsIn: Seq[Row] = wordCount.map(kv => toRow(kv._1, kv._2))
-  val expectedText: Seq[String] = wordCount.map(kv => kv._1 + ": " + kv._2)
-
   "BigtableReadExample" should "work" in {
+    def toResult(key: String, value: Long): Result = {
+      val cell = new RowCell(
+        key.getBytes(StandardCharsets.UTF_8),
+        FAMILY_NAME,
+        COLUMN_QUALIFIER,
+        0L,
+        BigInt(value).toByteArray
+      )
+      Result.create(Collections.singletonList[Cell](cell))
+    }
+
+    val results: Seq[Result] = wordCount.map { case (word, count) => toResult(word, count) }
+    val expectedText: Seq[String] = wordCount.map { case (word, count) => s"$word:$count" }
+
     JobTest[com.spotify.scio.examples.extra.BigtableReadExample.type]
       .args(bigtableOptions :+ "--output=out.txt": _*)
-      .input(BigtableIO("my-project", "my-instance", "my-table"), rowsIn)
+      .input(BigtableIO("my-project", "my-instance", "my-table"), results)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expectedText))
       .run()
   }

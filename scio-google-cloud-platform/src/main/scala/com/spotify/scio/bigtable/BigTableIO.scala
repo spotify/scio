@@ -17,21 +17,21 @@
 
 package com.spotify.scio.bigtable
 
-import com.google.bigtable.v2._
-import com.google.cloud.bigtable.config.BigtableOptions
-import com.google.protobuf.ByteString
+import com.google.cloud.bigtable.beam.{
+  CloudBigtableIO,
+  CloudBigtableScanConfiguration,
+  CloudBigtableTableConfiguration
+}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TestIO}
+import com.spotify.scio.coders.CoderMaterializer
+import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.gcp.{bigtable => beam}
+import org.apache.beam.sdk.io.Read
 import org.apache.beam.sdk.io.range.ByteKeyRange
-import org.apache.beam.sdk.transforms.SerializableFunction
-import org.apache.beam.sdk.values.KV
-import org.joda.time.Duration
+import org.apache.hadoop.hbase.client.{Mutation, Result, Scan}
+import org.apache.hadoop.hbase.filter.Filter
 
-import scala.jdk.CollectionConverters._
-import com.spotify.scio.io.TapT
+import scala.util.chaining._
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -45,38 +45,30 @@ object BigtableIO {
     }
 }
 
-final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
-    extends BigtableIO[Row] {
+final case class BigtableRead(config: CloudBigtableTableConfiguration) extends BigtableIO[Result] {
   override type ReadP = BigtableRead.ReadParam
   override type WriteP = Nothing
 
   override def testId: String =
-    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
+    s"BigtableIO(${config.getProjectId}\t${config.getInstanceId}\t${config.getTableId})"
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
-    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
-    val opts = bigtableOptions // defeat closure
-    var read = beam.BigtableIO
-      .read()
-      .withProjectId(bigtableOptions.getProjectId)
-      .withInstanceId(bigtableOptions.getInstanceId)
-      .withTableId(tableId)
-      .withBigtableOptionsConfigurator(
-        new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
-          override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
-            opts.toBuilder
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Result] = {
+    val coder = CoderMaterializer.beam(sc, BigtableCoders.resultCoder)
+    val scan = new Scan()
+      .pipe(s =>
+        Option(params.keyRange).fold(s) { kr =>
+          s.withStartRow(kr.getStartKey.getBytes).withStopRow(kr.getEndKey.getBytes)
         }
       )
-    if (!params.keyRanges.isEmpty) {
-      read = read.withKeyRanges(params.keyRanges.asJava)
-    }
-    if (params.rowFilter != null) {
-      read = read.withRowFilter(params.rowFilter)
-    }
+      .pipe(s => Option(params.filter).fold(s)(s.setFilter))
+
+    val scanConfig = CloudBigtableScanConfiguration.fromConfig(config, scan)
+    val read = Read.from(CloudBigtableIO.read(scanConfig))
+
     sc.applyTransform(read).setCoder(coder)
   }
 
-  override protected def write(data: SCollection[Row], params: WriteP): Tap[Nothing] =
+  override protected def write(data: SCollection[Result], params: WriteP): Tap[Nothing] =
     throw new UnsupportedOperationException(
       "BigtableRead is read-only, use Mutation to write to Bigtable"
     )
@@ -87,75 +79,50 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 
 object BigtableRead {
   object ReadParam {
-    val DefaultKeyRanges: Seq[ByteKeyRange] = Seq.empty[ByteKeyRange]
-    val DefaultRowFilter: RowFilter = null
-
-    def apply(keyRange: ByteKeyRange) = new ReadParam(Seq(keyRange))
-
-    def apply(keyRange: ByteKeyRange, rowFilter: RowFilter): ReadParam =
-      new ReadParam(Seq(keyRange), rowFilter)
+    val DefaultKeyRange: ByteKeyRange = null
+    val DefaultFilter: Filter = null
   }
 
   final case class ReadParam private (
-    keyRanges: Seq[ByteKeyRange] = ReadParam.DefaultKeyRanges,
-    rowFilter: RowFilter = ReadParam.DefaultRowFilter
+    keyRange: ByteKeyRange = ReadParam.DefaultKeyRange,
+    filter: Filter = ReadParam.DefaultFilter
   )
 
   final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
+    val config = new CloudBigtableTableConfiguration.Builder()
+      .withProjectId(projectId)
+      .withInstanceId(instanceId)
+      .withTableId(tableId)
       .build
-    BigtableRead(bigtableOptions, tableId)
+    BigtableRead(config)
   }
 }
 
-final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, tableId: String)
-    extends BigtableIO[(ByteString, Iterable[T])] {
+final case class BigtableWrite[T <: Mutation](config: CloudBigtableTableConfiguration)
+    extends BigtableIO[T] {
   override type ReadP = Nothing
-  override type WriteP = BigtableWrite.WriteParam
+  override type WriteP = Unit
 
   override def testId: String =
-    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
+    s"BigtableIO(${config.getProjectId}\t${config.getInstanceId}\t${config.getTableId})"
 
   override protected def read(
     sc: ScioContext,
     params: ReadP
-  ): SCollection[(ByteString, Iterable[T])] =
+  ): SCollection[T] =
     throw new UnsupportedOperationException(
       "BigtableWrite is write-only, use Row to read from Bigtable"
     )
 
   override protected def write(
-    data: SCollection[(ByteString, Iterable[T])],
+    data: SCollection[T],
     params: WriteP
   ): Tap[Nothing] = {
-    val sink =
-      params match {
-        case BigtableWrite.Default =>
-          val opts = bigtableOptions // defeat closure
-          beam.BigtableIO
-            .write()
-            .withProjectId(bigtableOptions.getProjectId)
-            .withInstanceId(bigtableOptions.getInstanceId)
-            .withTableId(tableId)
-            .withBigtableOptionsConfigurator(
-              new SerializableFunction[BigtableOptions.Builder, BigtableOptions.Builder] {
-                override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
-                  opts.toBuilder
-              }
-            )
-        case BigtableWrite.Bulk(numOfShards, flushInterval) =>
-          new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
-      }
-    data.transform_("Bigtable write") { coll =>
-      coll
-        .map { case (key, value) =>
-          KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
-        }
-        .applyInternal(sink)
-    }
+    CloudBigtableIO.writeToTable(config)
+
+    data
+      .covary[Mutation]
+      .applyInternal("Bigtable write", CloudBigtableIO.writeToTable(config))
     EmptyTap
   }
 
@@ -164,28 +131,17 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
 }
 
 object BigtableWrite {
-  sealed trait WriteParam
-  object Default extends WriteParam
-
-  object Bulk {
-    private[bigtable] val DefaultFlushInterval = Duration.standardSeconds(1)
-  }
-
-  final case class Bulk private (
-    numOfShards: Int,
-    flushInterval: Duration = Bulk.DefaultFlushInterval
-  ) extends WriteParam
 
   final def apply[T <: Mutation](
     projectId: String,
     instanceId: String,
     tableId: String
   ): BigtableWrite[T] = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
+    val config = new CloudBigtableTableConfiguration.Builder()
+      .withProjectId(projectId)
+      .withInstanceId(instanceId)
+      .withTableId(tableId)
       .build
-    BigtableWrite[T](bigtableOptions, tableId)
+    BigtableWrite[T](config)
   }
 }

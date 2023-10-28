@@ -17,4 +17,6 @@
 
 package com.spotify.scio.bigtable.syntax
 
-trait AllSyntax extends SCollectionSyntax with ScioContextSyntax with RowSyntax
+import com.spotify.scio.bigtable.BigtableCoders
+
+trait AllSyntax extends SCollectionSyntax with ScioContextSyntax with BigtableCoders

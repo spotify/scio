@@ -17,31 +17,47 @@
 
 package com.spotify.scio.bigtable
 
-import com.google.bigtable.v2.Mutation.SetCell
-import com.google.bigtable.v2.{Mutation, Row}
-import com.google.protobuf.ByteString
+import cats.Eq
+import com.google.cloud.bigtable.hbase.adapters.read.RowCell
 import com.spotify.scio.testing._
+import org.apache.hadoop.hbase.Cell
+import org.apache.hadoop.hbase.client.{Mutation, Put, Result}
+
+import java.nio.charset.StandardCharsets
+import java.time.Instant
+import scala.jdk.CollectionConverters._
 
 class BigtableIOTest extends ScioIOSpec {
   val projectId = "project"
   val instanceId = "instance"
 
+  val family: Array[Byte] = "count".getBytes(StandardCharsets.UTF_8)
+  val qualifier: Array[Byte] = "int".getBytes(StandardCharsets.UTF_8)
+
   "BigtableIO" should "work with input" in {
-    val xs = (1 to 100).map { x =>
-      Row.newBuilder().setKey(ByteString.copyFromUtf8(x.toString)).build()
+    val ts = Instant.now().toEpochMilli
+    implicit val eqResult: Eq[Result] = Eq.by(_.toString)
+    val xs = (1 to 10).map { x =>
+      val cell = new RowCell(
+        x.toString.getBytes(StandardCharsets.UTF_8),
+        family,
+        qualifier,
+        ts,
+        BigInt(x).toByteArray
+      )
+      Result.create(List[Cell](cell).asJava)
     }
+
     testJobTestInput(xs)(BigtableIO(projectId, instanceId, _))(_.bigtable(projectId, instanceId, _))
   }
 
   it should "work with output" in {
-    val xs = (1 to 100).map { x =>
-      val k = ByteString.copyFromUtf8(x.toString)
-      val m = Mutation
-        .newBuilder()
-        .setSetCell(SetCell.newBuilder().setValue(ByteString.copyFromUtf8(x.toString)))
-        .build()
-      (k, Iterable(m))
+    implicit val eqResult: Eq[Mutation] = Eq.by(_.toString)
+    val xs: Seq[Mutation] = (1 to 10).map { x =>
+      new Put(x.toString.getBytes(StandardCharsets.UTF_8))
+        .addColumn(family, qualifier, BigInt(x).toByteArray)
     }
+
     testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
       _.saveAsBigtable(projectId, instanceId, _)
     )
