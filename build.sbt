@@ -1069,9 +1069,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll (
-        "org.apache.avro" % "avro"
-      ),
+      "org.apache.parquet" % "parquet-avro" % parquetVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
@@ -1389,7 +1387,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.avro" % "avro" % avroVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll ("org.apache.avro" % "avro"),
+      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided,
@@ -1648,6 +1646,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
   "io.perfmark" % "perfmark-api" % perfmarkVersion,
+  "org.apache.avro" % "avro" % avroVersion,
   "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
