@@ -1396,7 +1396,11 @@ lazy val `scio-smb`: Project = project
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // runtime
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion % Runtime,
-      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime,
+      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (
+        // replaced by io.dropwizard.metrics metrics-core
+        "com.codahale.metrics", "metrics-core"
+      ),
+      "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
@@ -1608,6 +1612,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "commons-codec" % "commons-codec" % commonsCodecVersion,
   "commons-io" % "commons-io" % commonsIoVersion,
   "io.dropwizard.metrics" % "metrics-core" % metricsVersion,
+  "io.dropwizard.metrics" % "metrics-jvm" % metricsVersion,
   "io.grpc" % "grpc-all" % grpcVersion,
   "io.grpc" % "grpc-alts" % grpcVersion,
   "io.grpc" % "grpc-api" % grpcVersion,
