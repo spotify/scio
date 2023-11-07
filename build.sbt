@@ -65,8 +65,8 @@ val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
 // beam tested versions
-val flinkVersion = "1.16.0" // https://github.com/apache/beam/blob/v2.52.0-RC1/runners/flink/1.16/build.gradle
-val sparkVersion = "3.4.1" // https://github.com/apache/beam/blob/v2.52.0-RC1/runners/spark/3/build.gradle
+val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
+val sparkVersion = "3.4.1" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.23.0/index.html
