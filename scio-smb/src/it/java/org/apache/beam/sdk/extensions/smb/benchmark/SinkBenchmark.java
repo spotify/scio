@@ -28,7 +28,7 @@ import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata;
 import org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink;
-import org.apache.beam.sdk.io.AvroGeneratedUser;
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.GenerateSequence;
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder;

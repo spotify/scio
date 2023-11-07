@@ -1414,6 +1414,7 @@ lazy val `scio-smb`: Project = project
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "it,test",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "it,test"
