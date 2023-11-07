@@ -46,7 +46,6 @@ val commonsIoVersion = "2.13.0"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
 val datastoreV1ProtoClientVersion = "2.17.1"
-val flinkVersion = "1.16.0"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
@@ -59,13 +58,15 @@ val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.87.Final"
 val slf4jVersion = "1.7.30"
-val sparkVersion = "3.2.2"
 val zetasketchVersion = "0.1.0"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20230812-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
+// beam tested versions
+val flinkVersion = "1.16.0" // https://github.com/apache/beam/blob/v2.52.0-RC1/runners/flink/1.16/build.gradle
+val sparkVersion = "3.4.1" // https://github.com/apache/beam/blob/v2.52.0-RC1/runners/spark/3/build.gradle
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.23.0/index.html
