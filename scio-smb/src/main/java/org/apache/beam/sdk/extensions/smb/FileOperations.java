@@ -74,7 +74,7 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
     diskBufferBytes.compareAndSet(null, diskBufferMb * 1024L * 1024L);
   }
 
-  protected FileOperations(Compression compression, String mimeType) {
+  public FileOperations(Compression compression, String mimeType) {
     this.compression = compression;
     this.mimeType = mimeType;
   }
