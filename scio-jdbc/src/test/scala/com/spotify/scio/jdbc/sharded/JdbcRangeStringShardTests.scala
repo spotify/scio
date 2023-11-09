@@ -154,4 +154,84 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       )
     )
   }
+
+  "hex sqlserver uuid upper shardable" must "partition a range of uuid strings in the upper case" in {
+    val shard = Shard.range[SqlServerUuidUpperString]
+    val queries = shard.partition(
+      Range(
+        SqlServerUuidUpperString("12C9CBA1-EAA5-4C3D-B099-896730EB6337"),
+        SqlServerUuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6338")
+      ),
+      3
+    )
+
+    queries must contain theSameElementsAs (
+      Seq(
+        RangeShardQuery(
+          Range(
+            SqlServerUuidUpperString("12C9CBA1-EAA5-4C3D-B099-896730EB6337"),
+            SqlServerUuidUpperString("621E21F7-3FFB-A192-05EE-896730EB6338")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidUpperString("621E21F7-3FFB-A192-05EE-896730EB6338"),
+            SqlServerUuidUpperString("B273764C-9550-F7E7-5B43-896730EB6338")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidUpperString("B273764C-9550-F7E7-5B43-896730EB6338"),
+            SqlServerUuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6338")
+          ),
+          upperBoundInclusive = true,
+          quoteValues = true
+        )
+      )
+    )
+  }
+
+  "hex sqlserver uuid lower shardable" must "partition a range of uuid strings in the upper case" in {
+    val shard = Shard.range[SqlServerUuidLowerString]
+    val queries = shard.partition(
+      Range(
+        SqlServerUuidLowerString("12c9cba1-eaa5-4c3d-b099-896730eb6337"),
+        SqlServerUuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6338")
+      ),
+      3
+    )
+
+    queries must contain theSameElementsAs (
+      Seq(
+        RangeShardQuery(
+          Range(
+            SqlServerUuidLowerString("12c9cba1-eaa5-4c3d-b099-896730eb6337"),
+            SqlServerUuidLowerString("621e21f7-3ffb-a192-05ee-896730eb6338")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidLowerString("621e21f7-3ffb-a192-05ee-896730eb6338"),
+            SqlServerUuidLowerString("b273764c-9550-f7e7-5b43-896730eb6338")
+          ),
+          upperBoundInclusive = false,
+          quoteValues = true
+        ),
+        RangeShardQuery(
+          Range(
+            SqlServerUuidLowerString("b273764c-9550-f7e7-5b43-896730eb6338"),
+            SqlServerUuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6338")
+          ),
+          upperBoundInclusive = true,
+          quoteValues = true
+        )
+      )
+    )
+  }
 }
