@@ -197,8 +197,9 @@ public abstract class BaseAsyncBatchLookupDoFn<
 
     // send remaining
     try {
-      /** @todo handle exception properly * */
-      createRequest();
+      if (!batch.isEmpty()) {
+        createRequest();
+      }
       if (!futures.isEmpty()) {
         // Block until all pending futures are complete
         waitForFutures(futures.values());
