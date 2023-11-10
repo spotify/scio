@@ -243,8 +243,8 @@ lazy val keepExistingHeader =
         .trim()
   })
 
-lazy val java17Settings = sys.props("java.version") match {
-  case v if v.startsWith("17.") =>
+lazy val javaSettings = sys.props("java.version") match {
+  case v if v.startsWith("17.") || v.startsWith("21.") =>
     Def.settings(
       javaOptions ++= Seq(
         "--add-opens",
@@ -258,7 +258,7 @@ lazy val java17Settings = sys.props("java.version") match {
 
 val commonSettings = formatSettings ++
   mimaSettings ++
-  java17Settings ++
+  javaSettings ++
   Def.settings(
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
