@@ -26,15 +26,7 @@ import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
@@ -692,6 +684,85 @@ public class SortedBucketSourceTest {
     Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read2));
   }
 
+  @Test
+  public void testMixedInputTypesInSource() throws Exception {
+    final AvroGeneratedUser avroRecord =
+        AvroGeneratedUser.newBuilder()
+            .setName("foo")
+            .setFavoriteColor("avro-color")
+            .setFavoriteNumber(1)
+            .build();
+    final AvroGeneratedUser parquetRecord =
+        AvroGeneratedUser.newBuilder()
+            .setName("foo")
+            .setFavoriteColor("parquet-color")
+            .setFavoriteNumber(2)
+            .build();
+
+    write(
+        lhsPolicy.forDestination(),
+        new AvroBucketMetadata<String, Void, AvroGeneratedUser>(
+            1,
+            1,
+            String.class,
+            "name",
+            null,
+            null,
+            BucketMetadata.HashType.MURMUR3_32,
+            "bucket-",
+            AvroGeneratedUser.class),
+        ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of(avroRecord)),
+        AvroFileOperations.of(AvroGeneratedUser.class));
+
+    write(
+        rhsPolicy.forDestination(),
+        new ParquetBucketMetadata<String, Void, AvroGeneratedUser>(
+            1,
+            1,
+            String.class,
+            "name",
+            null,
+            null,
+            BucketMetadata.HashType.MURMUR3_32,
+            "bucket-",
+            AvroGeneratedUser.class),
+        ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of(parquetRecord)),
+        ParquetAvroFileOperations.of(AvroGeneratedUser.class));
+
+    final PCollection<KV<String, CoGbkResult>> output =
+        pipeline.apply(
+            Read.from(
+                new SortedBucketPrimaryKeyedSource<>(
+                    String.class,
+                    ImmutableList.of(
+                        new PrimaryKeyedBucketedInput<>(
+                            new TupleTag<AvroGeneratedUser>(),
+                            ImmutableMap.of(
+                                TestUtils.fromFolder(lhsFolder).toString(),
+                                    KV.of(".avro", AvroFileOperations.of(AvroGeneratedUser.class)),
+                                TestUtils.fromFolder(rhsFolder).toString(),
+                                    KV.of(
+                                        ".parquet",
+                                        ParquetAvroFileOperations.of(AvroGeneratedUser.class))),
+                            null)),
+                    TargetParallelism.max(),
+                    "metrics-key")));
+
+    PAssert.thatMap(output)
+        .satisfies(
+            m -> {
+              Assert.assertEquals(1, m.keySet().size());
+              Assert.assertEquals(
+                  ImmutableList.of(avroRecord, parquetRecord),
+                  m.entrySet()
+                      .iterator()
+                      .next()
+                      .getValue()
+                      .getAll(new TupleTag<AvroGeneratedUser>()));
+              return null;
+            });
+  }
+
   @SuppressWarnings("unchecked")
   private static List<SortedBucketSource<String>> splitAndSort(
       SortedBucketSource<String> source, int desiredByteSize) throws Exception {
@@ -1094,6 +1165,15 @@ public class SortedBucketSourceTest {
       BucketMetadata<String, K2, String> metadata,
       Map<BucketShardId, List<String>> input)
       throws Exception {
+    write(fileAssignment, metadata, input, new TestFileOperations());
+  }
+
+  private static <K2, V> void write(
+      FileAssignment fileAssignment,
+      BucketMetadata<String, K2, V> metadata,
+      Map<BucketShardId, List<V>> input,
+      FileOperations<V> fileOperations)
+      throws Exception {
     // Write bucket metadata
     BucketMetadata.to(
         metadata,
@@ -1101,11 +1181,10 @@ public class SortedBucketSourceTest {
             FileSystems.create(fileAssignment.forMetadata(), "application/json")));
 
     // Write bucket files
-    final TestFileOperations fileOperations = new TestFileOperations();
-    for (Map.Entry<BucketShardId, List<String>> entry : input.entrySet()) {
-      Writer<String> writer =
+    for (Map.Entry<BucketShardId, List<V>> entry : input.entrySet()) {
+      Writer<V> writer =
           fileOperations.createWriter(fileAssignment.forBucket(entry.getKey(), metadata));
-      for (String s : entry.getValue()) {
+      for (V s : entry.getValue()) {
         writer.write(s);
       }
       writer.close();

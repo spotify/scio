@@ -30,6 +30,8 @@ import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.values.KV;
+import org.apache.curator.shaded.com.google.common.base.Functions;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -92,10 +94,21 @@ public class BucketMetadataUtilTest {
     }
 
     final SourceMetadata<String> sourceMetadata =
-        util.getPrimaryKeyedSourceMetadata(goodDirectories, ".txt");
+        util.getPrimaryKeyedSourceMetadata(
+            goodDirectories.stream()
+                .collect(
+                    Collectors.toMap(
+                        Functions.identity(), dir -> KV.of(".txt", new TestFileOperations()))));
     Assert.assertEquals(goodDirectories.size(), sourceMetadata.mapping.size());
     Assert.assertThrows(
-        IllegalStateException.class, () -> util.getPrimaryKeyedSourceMetadata(directories, ".txt"));
+        IllegalStateException.class,
+        () ->
+            util.getPrimaryKeyedSourceMetadata(
+                directories.stream()
+                    .collect(
+                        Collectors.toMap(
+                            Functions.identity(),
+                            dir -> KV.of(".txt", new TestFileOperations())))));
 
     folder.delete();
   }
@@ -147,7 +160,13 @@ public class BucketMetadataUtilTest {
     Assert.assertThrows(
         "Could not find SMB metadata for source directory " + missingMetadataDir,
         RuntimeException.class,
-        () -> util.getPrimaryKeyedSourceMetadata(directories, ".txt"));
+        () ->
+            util.getPrimaryKeyedSourceMetadata(
+                directories.stream()
+                    .collect(
+                        Collectors.toMap(
+                            Functions.identity(),
+                            dir -> KV.of(".txt", new TestFileOperations())))));
 
     folder.delete();
   }
