@@ -39,11 +39,11 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditio
 
 public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> {
 
-  @JsonProperty private final String keyField;
+  @JsonProperty final String keyField;
 
   @JsonProperty
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final String keyFieldSecondary;
+  final String keyFieldSecondary;
 
   @JsonIgnore
   private final AtomicReference<Function<V, K1>> keyGettersPrimary = new AtomicReference<>();
@@ -190,26 +190,46 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
 
   @Override
   public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
-    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
+    if (o == null) return false;
+    if (o instanceof AvroBucketMetadata<?, ?, ?>) {
+      AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
+      return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
+    } else if (o instanceof ParquetBucketMetadata<?, ?, ?>) {
+      ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
+      return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
+    } else {
+      return false;
+    }
   }
 
   @Override
   public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
+    if (o == null) return false;
+    String keyField;
+    String keyFieldSecondary;
+    if (o instanceof AvroBucketMetadata<?, ?, ?>) {
+      AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
+      keyField = that.keyField;
+      keyFieldSecondary = that.keyFieldSecondary;
+    } else if (o instanceof ParquetBucketMetadata<?, ?, ?>) {
+      ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
+      keyField = that.keyField;
+      keyFieldSecondary = that.keyFieldSecondary;
+    } else {
+      return false;
+    }
+
     boolean allSecondaryPresent =
         getKeyClassSecondary() != null
-            && that.getKeyClassSecondary() != null
-            && keyFieldSecondary != null
-            && that.keyFieldSecondary != null;
+            && o.getKeyClassSecondary() != null
+            && this.keyFieldSecondary != null
+            && keyFieldSecondary != null;
     // you messed up
     if (!allSecondaryPresent) return false;
-    return getKeyClass() == that.getKeyClass()
-        && getKeyClassSecondary() == that.getKeyClassSecondary()
-        && keyField.equals(that.keyField)
-        && keyFieldSecondary.equals(that.keyFieldSecondary);
+    return getKeyClass() == o.getKeyClass()
+        && getKeyClassSecondary() == o.getKeyClassSecondary()
+        && this.keyField.equals(keyField)
+        && this.keyFieldSecondary.equals(keyFieldSecondary);
   }
 
   @Override

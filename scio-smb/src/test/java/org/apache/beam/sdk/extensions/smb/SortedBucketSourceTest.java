@@ -23,6 +23,7 @@ import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSe
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
+import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -686,6 +687,15 @@ public class SortedBucketSourceTest {
 
   @Test
   public void testMixedInputTypesInSource() throws Exception {
+    final TemporaryFolder avroDir = new TemporaryFolder();
+    avroDir.create();
+    final TemporaryFolder parquetDir = new TemporaryFolder();
+    parquetDir.create();
+    final SMBFilenamePolicy avroPolicy =
+        new SMBFilenamePolicy(fromFolder(avroDir), "bucket", ".avro");
+    final SMBFilenamePolicy parquetPolicy =
+        new SMBFilenamePolicy(fromFolder(parquetDir), "bucket", ".parquet");
+
     final AvroGeneratedUser avroRecord =
         AvroGeneratedUser.newBuilder()
             .setName("foo")
@@ -700,7 +710,7 @@ public class SortedBucketSourceTest {
             .build();
 
     write(
-        lhsPolicy.forDestination(),
+        avroPolicy.forDestination(),
         new AvroBucketMetadata<String, Void, AvroGeneratedUser>(
             1,
             1,
@@ -709,13 +719,13 @@ public class SortedBucketSourceTest {
             null,
             null,
             BucketMetadata.HashType.MURMUR3_32,
-            "bucket-",
+            "bucket",
             AvroGeneratedUser.class),
         ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of(avroRecord)),
         AvroFileOperations.of(AvroGeneratedUser.class));
 
     write(
-        rhsPolicy.forDestination(),
+        parquetPolicy.forDestination(),
         new ParquetBucketMetadata<String, Void, AvroGeneratedUser>(
             1,
             1,
@@ -724,7 +734,7 @@ public class SortedBucketSourceTest {
             null,
             null,
             BucketMetadata.HashType.MURMUR3_32,
-            "bucket-",
+            "bucket",
             AvroGeneratedUser.class),
         ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of(parquetRecord)),
         ParquetAvroFileOperations.of(AvroGeneratedUser.class));
@@ -736,11 +746,11 @@ public class SortedBucketSourceTest {
                     String.class,
                     ImmutableList.of(
                         new PrimaryKeyedBucketedInput<>(
-                            new TupleTag<AvroGeneratedUser>(),
+                            new TupleTag<>("source-tag"),
                             ImmutableMap.of(
-                                TestUtils.fromFolder(lhsFolder).toString(),
+                                TestUtils.fromFolder(avroDir).toString(),
                                     KV.of(".avro", AvroFileOperations.of(AvroGeneratedUser.class)),
-                                TestUtils.fromFolder(rhsFolder).toString(),
+                                TestUtils.fromFolder(parquetDir).toString(),
                                     KV.of(
                                         ".parquet",
                                         ParquetAvroFileOperations.of(AvroGeneratedUser.class))),
@@ -753,14 +763,12 @@ public class SortedBucketSourceTest {
             m -> {
               Assert.assertEquals(1, m.keySet().size());
               Assert.assertEquals(
-                  ImmutableList.of(avroRecord, parquetRecord),
-                  m.entrySet()
-                      .iterator()
-                      .next()
-                      .getValue()
-                      .getAll(new TupleTag<AvroGeneratedUser>()));
+                  ImmutableSet.of(avroRecord, parquetRecord),
+                  Sets.newHashSet(m.get("foo").getAll("source-tag")));
               return null;
             });
+
+    pipeline.run();
   }
 
   @SuppressWarnings("unchecked")

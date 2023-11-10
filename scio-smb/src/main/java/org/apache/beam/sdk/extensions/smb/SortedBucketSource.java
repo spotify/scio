@@ -64,7 +64,6 @@ import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.sdk.values.TypeDescriptor;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -464,15 +463,6 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         TupleTag<V> tupleTag,
         Map<String, KV<String, FileOperations<V>>> directories,
         Predicate<V> predicate) {
-      final Set<TypeDescriptor<V>> coderTypes =
-          directories.values().stream()
-              .map(f -> f.getValue().getCoder().getEncodedTypeDescriptor())
-              .collect(Collectors.toSet());
-
-      Preconditions.checkArgument(
-          coderTypes.size() == 1,
-          "All FileOperations Coders must use the same encoding type; found: " + coderTypes);
-
       this.keying = keying;
       this.tupleTag = tupleTag;
       this.directories =
@@ -494,6 +484,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     public Coder<V> getCoder() {
+      // Todo what if two input directories use a different Coder for the same type?
       return directories.entrySet().iterator().next().getValue().getValue().getCoder();
     }
 
