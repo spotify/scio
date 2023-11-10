@@ -623,7 +623,6 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         fileOperations.put(
             ResourceIdCoder.of().decode(inStream), (FileOperations<V>) inStream.readObject());
       }
-      System.out.println("Read " + numDirectories + " dirs into " + fileOperations);
       this.filenameSuffix = inStream.readUTF();
       this.predicate = (Predicate<V>) inStream.readObject();
       this.keying = (Keying) inStream.readObject();
