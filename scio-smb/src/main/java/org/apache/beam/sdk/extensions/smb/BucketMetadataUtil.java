@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
-import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
@@ -69,7 +68,7 @@ public class BucketMetadataUtil {
     this.batchSize = batchSize;
   }
 
-  private <V> Map<ResourceId, BucketMetadata<?, ?, V>> fetchMetadata(List<String> directories) {
+  private <V> Map<ResourceId, BucketMetadata<?, ?, V>> fetchMetadata(List<ResourceId> directories) {
     final int total = directories.size();
     final Map<ResourceId, BucketMetadata<?, ?, V>> metadata = new ConcurrentHashMap<>();
     int start = 0;
@@ -77,7 +76,6 @@ public class BucketMetadataUtil {
       directories.stream()
           .skip(start)
           .limit(batchSize)
-          .map(dir -> FileSystems.matchNewResource(dir, true))
           .parallel()
           .forEach(dir -> metadata.put(dir, BucketMetadata.get(dir)));
       start += batchSize;
@@ -86,7 +84,7 @@ public class BucketMetadataUtil {
   }
 
   private <V> SourceMetadata<V> getSourceMetadata(
-      List<String> directories,
+      List<ResourceId> directories,
       String filenameSuffix,
       BiFunction<BucketMetadata<?, ?, V>, BucketMetadata<?, ?, V>, Boolean>
           compatibilityCompareFn) {
@@ -115,13 +113,13 @@ public class BucketMetadataUtil {
   }
 
   public <V> SourceMetadata<V> getPrimaryKeyedSourceMetadata(
-      List<String> directories, String filenameSuffix) {
+      List<ResourceId> directories, String filenameSuffix) {
     return getSourceMetadata(
         directories, filenameSuffix, BucketMetadata::isPartitionCompatibleForPrimaryKey);
   }
 
   public <V> SourceMetadata<V> getPrimaryAndSecondaryKeyedSourceMetadata(
-      List<String> directories, String filenameSuffix) {
+      List<ResourceId> directories, String filenameSuffix) {
     return getSourceMetadata(
         directories,
         filenameSuffix,

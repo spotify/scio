@@ -28,9 +28,11 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,15 +44,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -62,6 +63,7 @@ import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
 import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.TypeDescriptor;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,10 +195,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         keyTypeCoder(),
         CoGbkResult.CoGbkResultCoder.of(
             coGbkResultSchema(),
-            UnionCoder.of(
-                sources.stream()
-                    .map(i -> i.fileOperations.getCoder())
-                    .collect(Collectors.toList()))));
+            UnionCoder.of(sources.stream().map(i -> i.getCoder()).collect(Collectors.toList()))));
   }
 
   @Override
@@ -365,7 +364,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       if (sourceMetadata == null)
         sourceMetadata =
             BucketMetadataUtil.get()
-                .getPrimaryKeyedSourceMetadata(inputDirectories, filenameSuffix);
+                .getPrimaryKeyedSourceMetadata(
+                    new ArrayList<>(fileOperations.keySet()), filenameSuffix);
       return sourceMetadata;
     }
   }
@@ -390,7 +390,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       if (sourceMetadata == null)
         sourceMetadata =
             BucketMetadataUtil.get()
-                .getPrimaryAndSecondaryKeyedSourceMetadata(inputDirectories, filenameSuffix);
+                .getPrimaryAndSecondaryKeyedSourceMetadata(
+                    new ArrayList<>(fileOperations.keySet()), filenameSuffix);
       return sourceMetadata;
     }
   }
@@ -406,8 +407,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
     protected TupleTag<V> tupleTag;
     protected String filenameSuffix;
-    protected FileOperations<V> fileOperations;
-    protected List<String> inputDirectories;
+    protected Map<ResourceId, FileOperations<V>> fileOperations;
     protected Predicate<V> predicate;
     protected Keying keying;
     // lazy, internal checks depend on what kind of iteration is requested
@@ -434,11 +434,36 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         String filenameSuffix,
         FileOperations<V> fileOperations,
         Predicate<V> predicate) {
+      this(
+          keying,
+          tupleTag,
+          filenameSuffix,
+          inputDirectories.stream()
+              .collect(
+                  Collectors.toMap(
+                      dir -> FileSystems.matchNewResource(dir, true), dir -> fileOperations)),
+          predicate);
+    }
+
+    public BucketedInput(
+        Keying keying,
+        TupleTag<V> tupleTag,
+        String filenameSuffix,
+        Map<ResourceId, FileOperations<V>> fileOperations,
+        Predicate<V> predicate) {
+      final Set<TypeDescriptor<V>> coderTypes =
+          fileOperations.values().stream()
+              .map(f -> f.getCoder().getEncodedTypeDescriptor())
+              .collect(Collectors.toSet());
+
+      Preconditions.checkArgument(
+          coderTypes.size() == 1,
+          "All FileOperations Coders must use the same encoding type; found: " + coderTypes);
+
       this.keying = keying;
       this.tupleTag = tupleTag;
       this.filenameSuffix = filenameSuffix;
       this.fileOperations = fileOperations;
-      this.inputDirectories = inputDirectories;
       this.predicate = predicate;
     }
 
@@ -453,7 +478,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     public Coder<V> getCoder() {
-      return fileOperations.getCoder();
+      return fileOperations.entrySet().iterator().next().getValue().getCoder();
     }
 
     static CoGbkResultSchema schemaOf(List<BucketedInput<?>> sources) {
@@ -461,12 +486,10 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
           sources.stream().map(BucketedInput::getTupleTag).collect(Collectors.toList()));
     }
 
-    private static List<Metadata> sampleDirectory(String directory, String filepattern) {
+    private static List<Metadata> sampleDirectory(ResourceId directory, String filepattern) {
       try {
-        final ResourceId resourceId = FileSystems.matchNewResource(directory, true);
-
         return FileSystems.match(
-                resourceId.resolve(filepattern, StandardResolveOptions.RESOLVE_FILE).toString())
+                directory.resolve(filepattern, StandardResolveOptions.RESOLVE_FILE).toString())
             .metadata();
       } catch (FileNotFoundException e) {
         return Collections.emptyList();
@@ -476,7 +499,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     long getOrSampleByteSize() {
-      return inputDirectories
+      return fileOperations
+          .keySet()
           .parallelStream()
           .mapToLong(
               dir -> {
@@ -548,7 +572,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
                 try {
                   Iterator<KV<SortedBucketIO.ComparableKeyBytes, V>> iterator =
                       Iterators.transform(
-                          fileOperations.iterator(file), v -> KV.of(keyFn.apply(v), v));
+                          fileOperations.get(dir).iterator(file), v -> KV.of(keyFn.apply(v), v));
                   Iterator<KV<SortedBucketIO.ComparableKeyBytes, V>> out =
                       (bufferSize > 0) ? new BufferedIterator<>(iterator, bufferSize) : iterator;
                   iterators.add(out);
@@ -563,6 +587,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
     @Override
     public String toString() {
+      List<ResourceId> inputDirectories = new ArrayList<>(fileOperations.keySet());
       return String.format(
           "BucketedInput[tupleTag=%s, inputDirectories=[%s]]",
           tupleTag.getId(),
@@ -578,9 +603,12 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     @SuppressWarnings("unchecked")
     private void writeObject(ObjectOutputStream outStream) throws IOException {
       SerializableCoder.of(TupleTag.class).encode(tupleTag, outStream);
-      ListCoder.of(StringUtf8Coder.of()).encode(inputDirectories, outStream);
+      outStream.writeInt(fileOperations.size());
+      for (Map.Entry<ResourceId, FileOperations<V>> entry : fileOperations.entrySet()) {
+        ResourceIdCoder.of().encode(entry.getKey(), outStream);
+        outStream.writeObject(entry.getValue());
+      }
       outStream.writeUTF(filenameSuffix);
-      outStream.writeObject(fileOperations);
       outStream.writeObject(predicate);
       outStream.writeObject(keying);
       outStream.flush();
@@ -589,9 +617,14 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     @SuppressWarnings("unchecked")
     private void readObject(ObjectInputStream inStream) throws ClassNotFoundException, IOException {
       this.tupleTag = SerializableCoder.of(TupleTag.class).decode(inStream);
-      this.inputDirectories = ListCoder.of(StringUtf8Coder.of()).decode(inStream);
+      final int numDirectories = inStream.readInt();
+      this.fileOperations = new HashMap<>();
+      for (int i = 0; i < numDirectories; i++) {
+        fileOperations.put(
+            ResourceIdCoder.of().decode(inStream), (FileOperations<V>) inStream.readObject());
+      }
+      System.out.println("Read " + numDirectories + " dirs into " + fileOperations);
       this.filenameSuffix = inStream.readUTF();
-      this.fileOperations = (FileOperations<V>) inStream.readObject();
       this.predicate = (Predicate<V>) inStream.readObject();
       this.keying = (Keying) inStream.readObject();
     }

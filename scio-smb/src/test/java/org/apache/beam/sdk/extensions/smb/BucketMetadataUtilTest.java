@@ -72,8 +72,8 @@ public class BucketMetadataUtilTest {
 
   private void testIncompatibleMetadata(List<TestBucketMetadata> metadataList, int badIdx)
       throws Exception {
-    final List<String> directories = new ArrayList<>();
-    final List<String> goodDirectories = new ArrayList<>();
+    final List<ResourceId> directories = new ArrayList<>();
+    final List<ResourceId> goodDirectories = new ArrayList<>();
 
     // all but one metadata are source-compatible, the one at badIdx is incompatible
     for (int i = 0; i < metadataList.size(); i++) {
@@ -85,9 +85,9 @@ public class BucketMetadataUtilTest {
                   "application/json"));
 
       BucketMetadata.to(metadataList.get(i), outputStream);
-      directories.add(dest.getAbsolutePath());
+      directories.add(LocalResources.fromString(dest.getAbsolutePath(), true));
       if (i != badIdx) {
-        goodDirectories.add(dest.getAbsolutePath());
+        goodDirectories.add(LocalResources.fromString(dest.getAbsolutePath(), true));
       }
     }
 
@@ -122,13 +122,13 @@ public class BucketMetadataUtilTest {
 
   private void testMissingMetadata(List<Optional<TestBucketMetadata>> metadataList)
       throws Exception {
-    final List<String> directories = new ArrayList<>();
+    final List<ResourceId> directories = new ArrayList<>();
 
     // all but one metadata are compatible
     ResourceId missingMetadataDir = null;
     for (int i = 0; i < metadataList.size(); i++) {
       final File dest = folder.newFolder(String.valueOf(i));
-      directories.add(dest.getAbsolutePath());
+      directories.add(LocalResources.fromString(dest.getAbsolutePath(), true));
 
       if (!metadataList.get(i).isPresent()) {
         missingMetadataDir = LocalResources.fromFile(dest, true);
