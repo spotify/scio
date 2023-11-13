@@ -28,7 +28,7 @@ import _root_.io.github.davidgregory084.DevMode
 
 ThisBuild / turbo := true
 
-ThisBuild / resolvers += "apache.beam.newrelease" at "https://repository.apache.org/content/repositories/orgapachebeam-1359/"
+ThisBuild / resolvers += "apache.beam.newrelease" at "https://repository.apache.org/content/repositories/orgapachebeam-1362/"
 
 val beamVendorVersion = "0.1"
 val beamVersion = "2.52.0"
