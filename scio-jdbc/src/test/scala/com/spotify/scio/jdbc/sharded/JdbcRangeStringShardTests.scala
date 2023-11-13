@@ -159,8 +159,8 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
     val shard = Shard.range[SqlServerUuidUpperString]
     val queries = shard.partition(
       Range(
-        SqlServerUuidUpperString("12C9CBA1-EAA5-4C3D-B099-896730EB6337"),
-        SqlServerUuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6338")
+        SqlServerUuidUpperString("00000000-0000-0000-0000-000000000000"),
+        SqlServerUuidUpperString("00000000-0000-0000-0000-000000000001")
       ),
       3
     )
@@ -169,24 +169,24 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       Seq(
         RangeShardQuery(
           Range(
-            SqlServerUuidUpperString("12C9CBA1-EAA5-4C3D-B099-896730EB6337"),
-            SqlServerUuidUpperString("621E21F7-3FFB-A192-05EE-896730EB6338")
+            SqlServerUuidUpperString("00000000-0000-0000-0000-000000000000"),
+            SqlServerUuidUpperString("55555555-5555-5555-5555-000000000000")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            SqlServerUuidUpperString("621E21F7-3FFB-A192-05EE-896730EB6338"),
-            SqlServerUuidUpperString("B273764C-9550-F7E7-5B43-896730EB6338")
+            SqlServerUuidUpperString("55555555-5555-5555-5555-000000000000"),
+            SqlServerUuidUpperString("AAAAAAAA-AAAA-AAAA-AAAA-000000000000")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            SqlServerUuidUpperString("B273764C-9550-F7E7-5B43-896730EB6338"),
-            SqlServerUuidUpperString("02C9CBA1-EAA5-4C3D-B099-896730EB6338")
+            SqlServerUuidUpperString("AAAAAAAA-AAAA-AAAA-AAAA-000000000000"),
+            SqlServerUuidUpperString("00000000-0000-0000-0000-000000000001")
           ),
           upperBoundInclusive = true,
           quoteValues = true
@@ -199,8 +199,8 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
     val shard = Shard.range[SqlServerUuidLowerString]
     val queries = shard.partition(
       Range(
-        SqlServerUuidLowerString("12c9cba1-eaa5-4c3d-b099-896730eb6337"),
-        SqlServerUuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6338")
+        SqlServerUuidLowerString("00000000-0000-0000-0000-000000000001"),
+        SqlServerUuidLowerString("00000000-0000-0000-0000-100000000000")
       ),
       3
     )
@@ -209,24 +209,24 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       Seq(
         RangeShardQuery(
           Range(
-            SqlServerUuidLowerString("12c9cba1-eaa5-4c3d-b099-896730eb6337"),
-            SqlServerUuidLowerString("621e21f7-3ffb-a192-05ee-896730eb6338")
+            SqlServerUuidLowerString("00000000-0000-0000-0000-000000000000"),
+            SqlServerUuidLowerString("00000000-0000-0000-0000-055555555556")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            SqlServerUuidLowerString("621e21f7-3ffb-a192-05ee-896730eb6338"),
-            SqlServerUuidLowerString("b273764c-9550-f7e7-5b43-896730eb6338")
+            SqlServerUuidLowerString("00000000-0000-0000-0000-055555555556"),
+            SqlServerUuidLowerString("00000000-0000-0000-0000-0aaaaaaaaaab")
           ),
           upperBoundInclusive = false,
           quoteValues = true
         ),
         RangeShardQuery(
           Range(
-            SqlServerUuidLowerString("b273764c-9550-f7e7-5b43-896730eb6338"),
-            SqlServerUuidLowerString("02c9cba1-eaa5-4c3d-b099-896730eb6338")
+            SqlServerUuidLowerString("00000000-0000-0000-0000-0aaaaaaaaaab"),
+            SqlServerUuidLowerString("00000000-0000-0000-0000-100000000000")
           ),
           upperBoundInclusive = true,
           quoteValues = true

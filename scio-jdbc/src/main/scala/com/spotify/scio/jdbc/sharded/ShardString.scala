@@ -31,7 +31,6 @@ object ShardString {
   sealed trait HexString extends ShardString
   final case class HexUpperString(value: String) extends HexString
   final case class HexLowerString(value: String) extends HexString
-
   sealed trait UuidString extends HexString
   final case class UuidLowerString(value: String) extends UuidString
   final case class UuidUpperString(value: String) extends UuidString
@@ -68,21 +67,23 @@ object RangeShardStringCodec {
   implicit val hexLowerShardRangeStringCodec: RangeShardStringCodec[HexLowerString] =
     hexShardRangeStringCodec(str => HexLowerString(str.toLowerCase))
 
-  implicit def uuidShardRangeStringCodec[S <: UuidString](
+  private def hexToUuid(hex: String): String = Seq(
+    hex.substring(0, 8),
+    hex.substring(8, 12),
+    hex.substring(12, 16),
+    hex.substring(16, 20),
+    hex.substring(20, 32)
+  ).mkString("-")
+
+  private def uuidToHex(uuid: String): String = uuid.replaceAll("-", "")
+
+  def uuidShardRangeStringCodec[S <: UuidString](
     uuidStringBuilder: String => S
   ): RangeShardStringCodec[S] =
     new RangeShardStringCodec[S] {
-      def encode(bigInt: BigInt): S = lift(f"$bigInt%032x")
-      def decode(str: S): BigInt = BigInt(str.value.replaceAll("-", ""), 16)
-      def lift(str: String): S = uuidStringBuilder(
-        Seq(
-          str.substring(0, 8),
-          str.substring(8, 12),
-          str.substring(12, 16),
-          str.substring(16, 20),
-          str.substring(20)
-        ).mkString("-")
-      )
+      def encode(bigInt: BigInt): S = lift(hexToUuid(f"$bigInt%032x"))
+      def decode(str: S): BigInt = BigInt(uuidToHex(str.value), 16)
+      def lift(str: String): S = uuidStringBuilder(str)
     }
 
   implicit val uuidLowerShardRangeStringCodec: RangeShardStringCodec[UuidLowerString] =
@@ -91,83 +92,30 @@ object RangeShardStringCodec {
   implicit val uuidUpperShardRangeStringCodec: RangeShardStringCodec[UuidUpperString] =
     uuidShardRangeStringCodec(str => UuidUpperString(str.toUpperCase))
 
-  implicit val base64ShardRangeStringCodec: RangeShardStringCodec[Base64String] =
-    new RangeShardStringCodec[Base64String] {
-      def encode(bigInt: BigInt): Base64String =
-        lift(new String(Base64.encodeInteger(bigInt.bigInteger), StandardCharsets.UTF_8))
-      def decode(str: Base64String): BigInt =
-        Base64.decodeInteger(str.value.getBytes(StandardCharsets.UTF_8))
-      def lift(str: String): Base64String = Base64String(str)
-    }
 
-  implicit def sqlServerUuidShardRangeStringCodec[S <: SqlServerUuidString](
+  def sqlServerUuidShardRangeStringCodec[S <: SqlServerUuidString](
     uuidStringBuilder: String => S
   ): RangeShardStringCodec[S] =
     new RangeShardStringCodec[S] {
 
-      import java.util.UUID
-
       def encode(bigInt: BigInt): S = {
-        val bytes = Array.tabulate(16) { i =>
-          ((bigInt >> (i * 8)) & 0xff).toByte
-        }
-
-        val uuidBytes = Array(
-          bytes(0),
-          bytes(1),
-          bytes(2),
-          bytes(3),
-          bytes(4),
-          bytes(5),
-          bytes(6),
-          bytes(7),
-          bytes(9),
-          bytes(8),
-          bytes(15),
-          bytes(14),
-          bytes(13),
-          bytes(12),
-          bytes(11),
-          bytes(10)
-        )
-
-        val uuid = new UUID(
-          java.nio.ByteBuffer.wrap(uuidBytes, 0, 8).getLong,
-          java.nio.ByteBuffer.wrap(uuidBytes, 8, 8).getLong
-        )
-
-        lift(uuid.toString)
+        val bytes = f"$bigInt%032x".grouped(2).toList
+        val encoded = bytes.slice(12, 16).reverse ++
+          bytes.slice(10, 12).reverse ++
+          bytes.slice(8, 10).reverse ++
+          bytes.slice(6, 8) ++
+          bytes.slice(0, 6)
+        lift(hexToUuid(encoded.mkString))
       }
 
       def decode(str: S): BigInt = {
-        val formattedStr = str.value.replace("-", "")
-        val bytes =
-          formattedStr.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
-
-        val reversedBytes = Array(
-          bytes(0),
-          bytes(1),
-          bytes(2),
-          bytes(3),
-          bytes(4),
-          bytes(5),
-          bytes(6),
-          bytes(7),
-          bytes(9),
-          bytes(8),
-          bytes(15),
-          bytes(14),
-          bytes(13),
-          bytes(12),
-          bytes(11),
-          bytes(10)
-        )
-
-        val bigIntValue = reversedBytes.zipWithIndex.map { case (byte, index) =>
-          BigInt(byte & 0xff) << (index * 8)
-        }.sum
-
-        bigIntValue
+        val bytes = str.value.replace("-", "").grouped(2).toArray
+        val decoded = bytes.slice(10, 16) ++
+          bytes.slice(8, 10) ++
+          bytes.slice(6, 8).reverse ++
+          bytes.slice(4, 6).reverse ++
+          bytes.slice(0, 4).reverse
+        BigInt(decoded.mkString, 16)
       }
 
       def lift(str: String): S = uuidStringBuilder(str)
@@ -181,4 +129,14 @@ object RangeShardStringCodec {
     : RangeShardStringCodec[SqlServerUuidUpperString] =
     sqlServerUuidShardRangeStringCodec(str => SqlServerUuidUpperString(str.toUpperCase))
 
+  implicit val base64ShardRangeStringCodec: RangeShardStringCodec[Base64String] =
+    new RangeShardStringCodec[Base64String] {
+      def encode(bigInt: BigInt): Base64String =
+        lift(new String(Base64.encodeInteger(bigInt.bigInteger), StandardCharsets.UTF_8))
+
+      def decode(str: Base64String): BigInt =
+        Base64.decodeInteger(str.value.getBytes(StandardCharsets.UTF_8))
+
+      def lift(str: String): Base64String = Base64String(str)
+    }
 }
