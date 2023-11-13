@@ -43,10 +43,8 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPat
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
-import _root_.java.lang.{Iterable => JIterable}
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable
-import scala.collection.convert.JavaCollectionWrappers
 
 private object KryoRegistrarLoader {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
