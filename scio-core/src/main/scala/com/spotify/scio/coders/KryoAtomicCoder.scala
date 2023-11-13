@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
 import com.esotericsoftware.kryo.serializers.JavaSerializer
 import com.google.protobuf.{ByteString, Message}
 import com.spotify.scio.coders.instances.kryo._
+import com.spotify.scio.coders.instances.JavaCollectionWrappers
 import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
@@ -42,9 +43,10 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPat
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
+import _root_.java.lang.{Iterable => JIterable}
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable
-import scala.collection.compat.extra.Wrappers
+import scala.collection.convert.JavaCollectionWrappers
 
 private object KryoRegistrarLoader {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
@@ -98,17 +100,17 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     // Java Iterable/Collection are missing proper equality check, use custom CBF as a
     // workaround
     k.register(
-      classOf[Wrappers.JIterableWrapper[_]],
+      JavaCollectionWrappers.JIterableWrapperClass,
       new JTraversableSerializer[Any, Iterable[Any]]()(new JIterableWrapperCBF[Any])
     )
     k.register(
-      classOf[Wrappers.JCollectionWrapper[_]],
+      JavaCollectionWrappers.JCollectionWrapperClass,
       new JTraversableSerializer[Any, Iterable[Any]]()(new JCollectionWrapperCBF[Any])
     )
     // Wrapped Java collections may have immutable implementations, i.e. Guava, treat them
     // as regular Scala collections as a workaround
     k.register(
-      classOf[Wrappers.JListWrapper[_]],
+      JavaCollectionWrappers.JListWrapperClass,
       new JTraversableSerializer[Any, mutable.Buffer[Any]]
     )
 
@@ -183,7 +185,7 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
     value match {
       // (K, Iterable[V]) is the return type of `groupBy` or `groupByKey`. This could be very slow
       // when there're few keys with many values.
-      case (key, wrapper: Wrappers.JIterableWrapper[_]) =>
+      case (key, JavaCollectionWrappers.JIterableWrapper(underlying)) =>
         observer.update(kryoEncodedElementByteSize(key))
         // FIXME: handle ElementByteSizeObservableIterable[_, _]
         var count = 0
@@ -193,7 +195,7 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
         val warningThreshold = 10000 // 10s
         val abortThreshold = 60000 // 1min
         val start = System.currentTimeMillis()
-        val i = wrapper.underlying.iterator()
+        val i = underlying.iterator()
         while (i.hasNext && !aborted) {
           val size = kryoEncodedElementByteSize(i.next())
           observer.update(size)
@@ -203,17 +205,17 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
           if (elapsed > abortThreshold) {
             aborted = true
             logger.warn(
-              s"Aborting size estimation for ${wrapper.underlying.getClass}, " +
+              s"Aborting size estimation for ${underlying.getClass}, " +
                 s"elapsed: $elapsed ms, count: $count, bytes: $bytes"
             )
-            wrapper.underlying match {
+            underlying match {
               case c: _root_.java.util.Collection[_] =>
                 // extrapolate remaining bytes in the collection
                 val remaining =
                   (bytes.toDouble / count * (c.size - count)).toLong
                 observer.update(remaining)
                 logger.warn(
-                  s"Extrapolated size estimation for ${wrapper.underlying.getClass} " +
+                  s"Extrapolated size estimation for ${underlying.getClass} " +
                     s"count: ${c.size}, bytes: ${bytes + remaining}"
                 )
               case _ =>
@@ -222,7 +224,7 @@ final private[scio] class KryoAtomicCoder[T](private val options: KryoOptions)
           } else if (elapsed > warningThreshold && !warned) {
             warned = true
             logger.warn(
-              s"Slow size estimation for ${wrapper.underlying.getClass}, " +
+              s"Slow size estimation for ${underlying.getClass}, " +
                 s"elapsed: $elapsed ms, count: $count, bytes: $bytes"
             )
           }

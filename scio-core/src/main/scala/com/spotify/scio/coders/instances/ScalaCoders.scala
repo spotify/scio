@@ -19,8 +19,7 @@ package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
 import java.util.Collections
-
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, KryoAtomicCoder}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder => BIterableCoder, _}
 import org.apache.beam.sdk.util.CoderUtils
@@ -32,11 +31,33 @@ import scala.reflect.ClassTag
 import scala.collection.{mutable => m, BitSet, SortedSet}
 import scala.util.Try
 import scala.collection.compat._
-import scala.collection.compat.extra.Wrappers
 import scala.collection.AbstractIterable
 import scala.jdk.CollectionConverters._
-
 import java.util.{List => JList}
+import java.lang.{Iterable => JIterable}
+
+private[coders] object JavaCollectionWrappers {
+
+  // private classes
+  val JIterableWrapperClass: Class[_] =
+    Class.forName("scala.collection.convert.JavaCollectionWrappers.JIterableWrapper")
+  val JCollectionWrapperClass: Class[_] =
+    Class.forName("scala.collection.convert.JavaCollectionWrappers.JCollectionWrapper")
+  val JListWrapperClass: Class[_] =
+    Class.forName("scala.collection.convert.JavaCollectionWrappers.JListWrapper")
+
+  object JIterableWrapper {
+    def unapply(arg: Any): Option[JIterable[_]] = arg match {
+      case arg if arg.getClass == JListWrapperClass =>
+        val underlying = JListWrapperClass
+          .getField("underlying")
+          .get(arg)
+          .asInstanceOf[JIterable[_]]
+        Some(underlying)
+      case _ => None
+    }
+  }
+}
 
 private[coders] object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
@@ -69,11 +90,13 @@ abstract private[coders] class BaseSeqLikeCoder[M[_], T](val elemCoder: BCoder[T
   // delegate methods for byte size estimation
   override def isRegisterByteSizeObserverCheap(value: M[T]): Boolean = false
   override def registerByteSizeObserver(value: M[T], observer: ElementByteSizeObserver): Unit =
-    if (value.isInstanceOf[Wrappers.JIterableWrapper[_]]) {
-      val wrapper = value.asInstanceOf[Wrappers.JIterableWrapper[T]]
-      BIterableCoder.of(elemCoder).registerByteSizeObserver(wrapper.underlying, observer)
-    } else {
-      super.registerByteSizeObserver(value, observer)
+    value match {
+      case JavaCollectionWrappers.JIterableWrapper(underlying) =>
+        BIterableCoder
+          .of(elemCoder)
+          .registerByteSizeObserver(underlying.asInstanceOf[JIterable[T]], observer)
+      case _ =>
+        super.registerByteSizeObserver(value, observer)
     }
 }
 
