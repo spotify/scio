@@ -92,7 +92,6 @@ object RangeShardStringCodec {
   implicit val uuidUpperShardRangeStringCodec: RangeShardStringCodec[UuidUpperString] =
     uuidShardRangeStringCodec(str => UuidUpperString(str.toUpperCase))
 
-
   def sqlServerUuidShardRangeStringCodec[S <: SqlServerUuidString](
     uuidStringBuilder: String => S
   ): RangeShardStringCodec[S] =
