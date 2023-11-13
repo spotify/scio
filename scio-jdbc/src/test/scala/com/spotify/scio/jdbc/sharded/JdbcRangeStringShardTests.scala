@@ -209,7 +209,7 @@ class JdbcRangeStringShardTests extends AnyFlatSpec {
       Seq(
         RangeShardQuery(
           Range(
-            SqlServerUuidLowerString("00000000-0000-0000-0000-000000000000"),
+            SqlServerUuidLowerString("00000000-0000-0000-0000-000000000001"),
             SqlServerUuidLowerString("00000000-0000-0000-0000-055555555556")
           ),
           upperBoundInclusive = false,
