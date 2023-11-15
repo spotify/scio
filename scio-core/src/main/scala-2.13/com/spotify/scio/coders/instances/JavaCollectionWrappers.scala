@@ -21,11 +21,11 @@ private[coders] object JavaCollectionWrappers {
 
   // private classes
   val JIterableWrapperClass: Class[_] =
-    Class.forName("scala.collection.convert.JavaCollectionWrappers.JIterableWrapper")
+    Class.forName("scala.collection.convert.JavaCollectionWrappers$JIterableWrapper")
   val JCollectionWrapperClass: Class[_] =
-    Class.forName("scala.collection.convert.JavaCollectionWrappers.JCollectionWrapper")
+    Class.forName("scala.collection.convert.JavaCollectionWrappers$JCollectionWrapper")
   val JListWrapperClass: Class[_] =
-    Class.forName("scala.collection.convert.JavaCollectionWrappers.JListWrapper")
+    Class.forName("scala.collection.convert.JavaCollectionWrappers$JListWrapper")
 
   object JIterableWrapper {
     def unapply(arg: Any): Option[JIterable[_]] = arg match {
