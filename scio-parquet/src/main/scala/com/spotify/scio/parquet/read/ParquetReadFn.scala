@@ -39,7 +39,7 @@ import scala.jdk.CollectionConverters._
 
 object ParquetReadFn {
   @transient
-  private lazy val logger = LoggerFactory.getLogger(classOf[ParquetReadFn[_]])
+  private lazy val logger = LoggerFactory.getLogger(classOf[ParquetReadFn[_, _]])
 
   sealed private trait SplitGranularity
   private object SplitGranularity {
@@ -91,7 +91,7 @@ class ParquetReadFn[T, U] private (
         ParquetReadConfiguration.SplitGranularity,
         ParquetReadConfiguration.SplitGranularityFile
       ) match {
-      case ParquetReadConfiguration.SplitGranularityFile => SplitGranularity.File
+      case ParquetReadConfiguration.SplitGranularityFile     => SplitGranularity.File
       case ParquetReadConfiguration.SplitGranularityRowGroup => SplitGranularity.RowGroup
       case other: String =>
         logger.warn(
@@ -109,7 +109,7 @@ class ParquetReadFn[T, U] private (
         ParquetReadConfiguration.FilterGranularity,
         ParquetReadConfiguration.FilterGranularityRecord
       ) match {
-      case ParquetReadConfiguration.FilterGranularityPage => FilterGranularity.Page
+      case ParquetReadConfiguration.FilterGranularityPage   => FilterGranularity.Page
       case ParquetReadConfiguration.FilterGranularityRecord => FilterGranularity.Record
       case other: String =>
         logger.warn(

@@ -210,7 +210,7 @@ trait SCollectionSyntax {
     c: SCollection[T]
   ): ObjectFileSCollectionOps[T] = new ObjectFileSCollectionOps[T](c)
 
-  implicit def avroSpecificRecordSCollectionOps[T <: SpecificRecord: ClassTag](
+  implicit def avroSpecificRecordSCollectionOps[T <: SpecificRecord](
     c: SCollection[T]
   ): SpecificRecordSCollectionOps[T] = new SpecificRecordSCollectionOps[T](c)
 

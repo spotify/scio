@@ -98,7 +98,7 @@ class TestWriterUtils extends AnyFlatSpec with Matchers with BeforeAndAfterAll {
     assertColumn(
       columnEncodings(4),
       "account_status",
-      hasBloomFilter = true,
+      hasBloomFilter = false, // since parquet 1.13.0, no boom filter is written for dictionary
       Seq(Encoding.BIT_PACKED, Encoding.RLE, Encoding.PLAIN_DICTIONARY)
     )
   }
