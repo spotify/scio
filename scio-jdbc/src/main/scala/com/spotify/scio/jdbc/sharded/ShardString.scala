@@ -92,6 +92,9 @@ object RangeShardStringCodec {
   implicit val uuidUpperShardRangeStringCodec: RangeShardStringCodec[UuidUpperString] =
     uuidShardRangeStringCodec(str => UuidUpperString(str.toUpperCase))
 
+  // SQL Server guid uses own ordering
+  // see https://learn.microsoft.com/en-us/sql/connect/ado-net/sql/compare-guid-uniqueidentifier-values?view=sql-server-ver16
+  // more details in https://stackoverflow.com/questions/7810602/sql-server-guid-sort-algorithm-why
   def sqlServerUuidShardRangeStringCodec[S <: SqlServerUuidString](
     uuidStringBuilder: String => S
   ): RangeShardStringCodec[S] =
