@@ -397,6 +397,7 @@ lazy val jUnitSettings = Def.settings(
 lazy val itSettings = Defaults.itSettings ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  headerSettings(IntegrationTest) ++
   scalafixConfigSettings(IntegrationTest) ++
   inConfig(IntegrationTest)(
     Def.settings(
