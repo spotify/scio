@@ -19,7 +19,7 @@ package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
 import java.util.Collections
-import com.spotify.scio.coders.{Coder, KryoAtomicCoder}
+import com.spotify.scio.coders.Coder
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder => BIterableCoder, _}
 import org.apache.beam.sdk.util.CoderUtils
