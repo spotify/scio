@@ -983,9 +983,11 @@ lazy val `scio-jdbc`: Project = project
   .in(file("scio-jdbc"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % "test"
+    `scio-test` % "test,it"
   )
+  .configs(IntegrationTest)
   .settings(commonSettings)
+  .settings(itSettings)
   .settings(publishSettings)
   .settings(
     description := "Scio add-on for JDBC",
@@ -996,7 +998,10 @@ lazy val `scio-jdbc`: Project = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // test
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.0" % "it",
+      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.4.2.jre11" % "it"
     )
   )
 
