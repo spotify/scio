@@ -291,8 +291,15 @@ val commonSettings = formatSettings ++
       "-Dorg.slf4j.simpleLogger.defaultLogLevel=info",
       "-Dorg.slf4j.simpleLogger.logFile=scio.log"
     ) ++
-      sys.props.get("bigquery.project").map(project => s"-Dbigquery.project=$project") ++
-      sys.props.get("bigquery.secret").map(secret => s"-Dbigquery.secret=$secret"),
+      sys.props
+        .get("bigquery.project")
+        .map(project => s"-Dbigquery.project=$project") ++
+      sys.props
+        .get("bigquery.secret")
+        .map(secret => s"-Dbigquery.secret=$secret") ++
+      sys.props
+        .get("cloudsql.sqlserver.password")
+        .map(secret => s"-Dcloudsql.sqlserver.password=$secret"),
     Test / testOptions += Tests.Argument("-oD"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
