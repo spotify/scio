@@ -1,8 +1,9 @@
 name: release
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
-    tags: ["*"]
+      branches: [main]
+      tags: ["*"]
 jobs:
   publish:
     runs-on: ubuntu-latest

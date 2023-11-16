@@ -106,8 +106,8 @@ val catsVersion = "2.9.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.6"
 val commonsTextVersion = "1.10.0"
-val elasticsearch7Version = "7.17.13"
-val elasticsearch8Version = "8.10.4"
+val elasticsearch7Version = "7.17.14"
+val elasticsearch8Version = "8.11.1"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
@@ -123,7 +123,7 @@ val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.3"
 val magnolifyVersion = "0.6.4"
-val metricsVersion = "3.2.6"
+val metricsVersion = "4.2.22"
 val neo4jDriverVersion = "4.4.12"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
@@ -397,6 +397,7 @@ lazy val jUnitSettings = Def.settings(
 lazy val itSettings = Defaults.itSettings ++
   inConfig(IntegrationTest)(BloopDefaults.configSettings) ++
   inConfig(IntegrationTest)(scalafmtConfigSettings) ++
+  headerSettings(IntegrationTest) ++
   scalafixConfigSettings(IntegrationTest) ++
   inConfig(IntegrationTest)(
     Def.settings(
@@ -1200,7 +1201,7 @@ lazy val `scio-examples`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.14.1" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.15.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
