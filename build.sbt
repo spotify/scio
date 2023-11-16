@@ -106,8 +106,8 @@ val catsVersion = "2.9.0"
 val chillVersion = "0.10.0"
 val circeVersion = "0.14.6"
 val commonsTextVersion = "1.10.0"
-val elasticsearch7Version = "7.17.13"
-val elasticsearch8Version = "8.10.4"
+val elasticsearch7Version = "7.17.14"
+val elasticsearch8Version = "8.11.1"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
@@ -122,8 +122,8 @@ val kantanCodecsVersion = "0.5.3"
 val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.3"
-val magnolifyVersion = "0.6.3"
-val metricsVersion = "3.2.6"
+val magnolifyVersion = "0.6.4"
+val metricsVersion = "4.2.22"
 val neo4jDriverVersion = "4.4.12"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
@@ -1047,9 +1047,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll (
-        "org.apache.avro" % "avro"
-      ),
+      "org.apache.parquet" % "parquet-avro" % parquetVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
@@ -1165,7 +1163,7 @@ lazy val `scio-examples`: Project = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "com.mysql" % "mysql-connector-j" % "8.1.0",
+      "com.mysql" % "mysql-connector-j" % "8.2.0",
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -1175,7 +1173,7 @@ lazy val `scio-examples`: Project = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.14.1" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.15.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1367,14 +1365,18 @@ lazy val `scio-smb`: Project = project
       "org.apache.avro" % "avro" % avroVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll ("org.apache.avro" % "avro"),
+      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // runtime
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion % Runtime,
-      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime,
+      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (
+        // replaced by io.dropwizard.metrics metrics-core
+        "com.codahale.metrics", "metrics-core"
+      ),
+      "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
@@ -1586,6 +1588,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "commons-codec" % "commons-codec" % commonsCodecVersion,
   "commons-io" % "commons-io" % commonsIoVersion,
   "io.dropwizard.metrics" % "metrics-core" % metricsVersion,
+  "io.dropwizard.metrics" % "metrics-jvm" % metricsVersion,
   "io.grpc" % "grpc-all" % grpcVersion,
   "io.grpc" % "grpc-alts" % grpcVersion,
   "io.grpc" % "grpc-api" % grpcVersion,
@@ -1626,6 +1629,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
   "io.perfmark" % "perfmark-api" % perfmarkVersion,
+  "org.apache.avro" % "avro" % avroVersion,
   "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
   "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
