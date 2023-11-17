@@ -1,9 +1,5 @@
 name: populate-integration-test-data
 
-env:
-  GOOGLE_PROJECT_ID: data-integration-test
-  CLOUDSQL_SQLSERVER_PASSWORD:  ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
-
 on:
   workflow_dispatch # Manually triggered
 jobs:
@@ -26,6 +22,9 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
+        env:
+          GOOGLE_PROJECT_ID: data-integration-test
+          CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
       - name: Temporarily remove conflicting Scala classes # some IT test classes won't compile because they depend on macros based on test data that's missing
         run: find scio-google-cloud-platform/src/it/scala/com/spotify/scio/bigquery -type f ! -name 'PopulateTestData.scala' -delete
       - name: Populate BQ test data

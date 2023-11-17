@@ -1,9 +1,5 @@
 name: it-tests
 
-env:
-  GOOGLE_PROJECT_ID: data-integration-test
-  CLOUDSQL_SQLSERVER_PASSWORD:  ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
-
 on:
   push:
     branches:
@@ -26,6 +22,9 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
+        env:
+          GOOGLE_PROJECT_ID: data-integration-test
+          CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
       - run: sbt "IntegrationTest/test"
 
   build-docs:

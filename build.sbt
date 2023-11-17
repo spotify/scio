@@ -290,16 +290,13 @@ val commonSettings = formatSettings ++
       "-Dscio.ignoreVersionWarning=true",
       "-Dorg.slf4j.simpleLogger.defaultLogLevel=info",
       "-Dorg.slf4j.simpleLogger.logFile=scio.log"
-    ) ++
-      sys.props
-        .get("bigquery.project")
-        .map(project => s"-Dbigquery.project=$project") ++
-      sys.props
-        .get("bigquery.secret")
-        .map(secret => s"-Dbigquery.secret=$secret") ++
-      sys.props
-        .get("cloudsql.sqlserver.password")
-        .map(secret => s"-Dcloudsql.sqlserver.password=$secret"),
+    ) ++ Seq(
+      "bigquery.project",
+      "bigquery.secret",
+      "cloudsql.sqlserver.password"
+    ).flatMap { prop =>
+      sys.props.get(prop).map(value => s"-D$prop=$value")
+    },
     Test / testOptions += Tests.Argument("-oD"),
     testOptions ++= {
       if (sys.env.contains("SLOW")) {
