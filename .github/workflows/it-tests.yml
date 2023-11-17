@@ -2,6 +2,7 @@ name: it-tests
 
 env:
   GOOGLE_PROJECT_ID: data-integration-test
+  CLOUDSQL_SQLSERVER_PASSWORD:  ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
 
 on:
   push:

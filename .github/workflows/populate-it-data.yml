@@ -2,6 +2,7 @@ name: populate-integration-test-data
 
 env:
   GOOGLE_PROJECT_ID: data-integration-test
+  CLOUDSQL_SQLSERVER_PASSWORD:  ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
 
 on:
   workflow_dispatch # Manually triggered
@@ -31,3 +32,5 @@ jobs:
         run: sbt "scio-google-cloud-platform/IntegrationTest/runMain com.spotify.scio.bigquery.PopulateTestData"
       - name: Populate GCS test data
         run: sbt "scio-test/IntegrationTest/runMain com.spotify.scio.PopulateTestData"
+      - name: Populate SQL test data
+        run: sbt "scio-jdbc/IntegrationTest/runMain com.spotify.scio.jdbc.PopulateTestData"
