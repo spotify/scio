@@ -25,7 +25,7 @@ jobs:
         env:
           GOOGLE_PROJECT_ID: data-integration-test
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
-      - run: sbt "IntegrationTest/test"
+      - run: sbt IntegrationTest/test
 
   build-docs:
     name: Build documentation
@@ -45,5 +45,7 @@ jobs:
           java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh
+        env:
+          GOOGLE_PROJECT_ID: data-integration-test
       - name: Build documentation
         run: sbt site/makeSite
