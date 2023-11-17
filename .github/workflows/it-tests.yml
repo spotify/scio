@@ -13,6 +13,8 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -23,7 +25,6 @@ jobs:
       - name: set JVM opts
         run: scripts/gha_setup.sh
         env:
-          GOOGLE_PROJECT_ID: data-integration-test
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
       - run: sbt IntegrationTest/test
 
@@ -36,6 +37,8 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -45,7 +48,5 @@ jobs:
           java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh
-        env:
-          GOOGLE_PROJECT_ID: data-integration-test
       - name: Build documentation
         run: sbt site/makeSite

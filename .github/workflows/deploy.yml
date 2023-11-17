@@ -31,6 +31,8 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -40,8 +42,6 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
-        env:
-          GOOGLE_PROJECT_ID: data-integration-test
       - name: Build documentation
         run: sbt scio-examples/compile site/makeSite
         env:
