@@ -1,8 +1,5 @@
 name: publish-gh-site
 
-env:
-  GOOGLE_PROJECT_ID: data-integration-test
-
 on:
   workflow_dispatch # Manually triggered
 jobs:
@@ -24,6 +21,8 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
+        env:
+          GOOGLE_PROJECT_ID: data-integration-test
       - name: Build documentation
         run: sbt scio-examples/compile site/makeSite
         env:

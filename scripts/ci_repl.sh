@@ -6,7 +6,7 @@ echo "Running REPL integration tests for Scala $SCALA_VERSION"
 echo "Test scripts:"
 find ./scio-repl/src/it/resources -type f
 
-sbt -v $SBT_OPTS "++$SCALA_VERSION scio-repl/assembly"
+sbt -v "++$SCALA_VERSION scio-repl/assembly"
 
 REPL_JAR="./scio-repl/target/scala-${SCALA_VERSION%.*}/scio-repl.jar"
 
