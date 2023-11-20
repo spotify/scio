@@ -20,7 +20,7 @@
 
 // `sbt "runMain com.spotify.scio.examples.cookbook.BigQueryTornadoes
 // --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
-// --input=clouddataflow-readonly:samples.weather_stations
+// --input=apache-beam-testing:samples.weather_stations
 // --output=[DATASET].bigquery_tornadoes"`
 package com.spotify.scio.examples.cookbook
 

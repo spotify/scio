@@ -104,7 +104,7 @@ public class Snippets {
       Pipeline p, String writeProject, String writeDataset, String writeTable) {
     {
       // [START BigQueryTableSpec]
-      String tableSpec = "clouddataflow-readonly:samples.weather_stations";
+      String tableSpec = "apache-beam-testing:samples.weather_stations";
       // [END BigQueryTableSpec]
     }
 
@@ -118,14 +118,14 @@ public class Snippets {
       // [START BigQueryTableSpecObject]
       TableReference tableSpec =
           new TableReference()
-              .setProjectId("clouddataflow-readonly")
+              .setProjectId("apache-beam-testing")
               .setDatasetId("samples")
               .setTableId("weather_stations");
       // [END BigQueryTableSpecObject]
     }
 
     {
-      String tableSpec = "clouddataflow-readonly:samples.weather_stations";
+      String tableSpec = "apache-beam-testing:samples.weather_stations";
       // [START BigQueryReadTable]
       PCollection<Double> maxTemperatures =
           p.apply(BigQueryIO.readTableRows().from(tableSpec))
@@ -137,7 +137,7 @@ public class Snippets {
     }
 
     {
-      String tableSpec = "clouddataflow-readonly:samples.weather_stations";
+      String tableSpec = "apache-beam-testing:samples.weather_stations";
       // [START BigQueryReadFunction]
       PCollection<Double> maxTemperatures =
           p.apply(
@@ -155,7 +155,7 @@ public class Snippets {
               BigQueryIO.read(
                       (SchemaAndRecord elem) -> (Double) elem.getRecord().get("max_temperature"))
                   .fromQuery(
-                      "SELECT max_temperature FROM [clouddataflow-readonly:samples.weather_stations]")
+                      "SELECT max_temperature FROM [apache-beam-testing:samples.weather_stations]")
                   .withCoder(DoubleCoder.of()));
       // [END BigQueryReadQuery]
     }
@@ -167,7 +167,7 @@ public class Snippets {
               BigQueryIO.read(
                       (SchemaAndRecord elem) -> (Double) elem.getRecord().get("max_temperature"))
                   .fromQuery(
-                      "SELECT max_temperature FROM `clouddataflow-readonly.samples.weather_stations`")
+                      "SELECT max_temperature FROM `apache-beam-testing.samples.weather_stations`")
                   .usingStandardSql()
                   .withCoder(DoubleCoder.of()));
       // [END BigQueryReadQueryStdSQL]
@@ -193,7 +193,7 @@ public class Snippets {
     // [END BigQuerySchemaJson]
 
     {
-      String tableSpec = "clouddataflow-readonly:samples.weather_stations";
+      String tableSpec = "apache-beam-testing:samples.weather_stations";
       if (!writeProject.isEmpty() && !writeDataset.isEmpty() && !writeTable.isEmpty()) {
         tableSpec = writeProject + ":" + writeDataset + "." + writeTable;
       }
@@ -310,7 +310,7 @@ public class Snippets {
                       })
                   .fromQuery(
                       "SELECT year, month, day, max_temperature "
-                          + "FROM [clouddataflow-readonly:samples.weather_stations] "
+                          + "FROM [apache-beam-testing:samples.weather_stations] "
                           + "WHERE year BETWEEN 2007 AND 2009")
                   .withCoder(AvroCoder.of(WeatherData.class)));
 
@@ -368,7 +368,7 @@ public class Snippets {
               .withWriteDisposition(WriteDisposition.WRITE_TRUNCATE));
       // [END BigQueryWriteDynamicDestinations]
 
-      String tableSpec = "clouddataflow-readonly:samples.weather_stations";
+      String tableSpec = "apache-beam-testing:samples.weather_stations";
       if (!writeProject.isEmpty() && !writeDataset.isEmpty() && !writeTable.isEmpty()) {
         tableSpec = writeProject + ":" + writeDataset + "." + writeTable + "_partitioning";
       }
