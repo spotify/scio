@@ -1357,6 +1357,7 @@ lazy val `scio-smb`: Project = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(itSettings)
+  .settings(jUnitSettings)
   .settings(beamRunnerSettings)
   .settings(
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
