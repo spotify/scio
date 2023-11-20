@@ -228,7 +228,7 @@ def sc: ScioContext = ???
 ```
 
 ```scala mdoc:compile-only
-val tornadoes = sc.bigQuerySelect(Query("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]"))
+val tornadoes = sc.bigQuerySelect(Query("SELECT tornado, month FROM [apache-beam-testing:samples.weather_stations]"))
  
 val counts = tornadoes
     .flatMap(r => if (r.getBoolean("tornado")) Seq(r.getLong("month")) else Nil)
@@ -414,7 +414,7 @@ def bq: BigQuery = ???
 ```
 
 ```scala mdoc
-@BigQueryType.fromQuery("SELECT tornado, month FROM [clouddataflow-readonly:samples.weather_stations]") class Row
+@BigQueryType.fromQuery("SELECT tornado, month FROM [apache-beam-testing:samples.weather_stations]") class Row
 
 def tornadoes = bq.getTypedRows[Row]()
 
