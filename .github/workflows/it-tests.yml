@@ -25,6 +25,7 @@ jobs:
       - name: set JVM opts
         run: scripts/gha_setup.sh
         env:
+          BQ_READ_TIMEOUT: 30000
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
       - run: sbt IntegrationTest/test
 
@@ -48,5 +49,7 @@ jobs:
           java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh
+        env:
+          BQ_READ_TIMEOUT: 30000
       - name: Build documentation
         run: sbt site/makeSite
