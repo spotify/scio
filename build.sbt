@@ -28,13 +28,11 @@ import _root_.io.github.davidgregory084.DevMode
 
 ThisBuild / turbo := true
 
-ThisBuild / resolvers += "apache.beam.newrelease" at "https://repository.apache.org/content/repositories/orgapachebeam-1362/"
-
 val beamVendorVersion = "0.1"
 val beamVersion = "2.52.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.52.0-RC1/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.52.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
