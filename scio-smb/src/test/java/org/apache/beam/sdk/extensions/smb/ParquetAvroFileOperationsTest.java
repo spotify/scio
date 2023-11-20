@@ -181,12 +181,7 @@ public class ParquetAvroFileOperationsTest {
 
     final List<GenericRecord> expected =
         USER_RECORDS.stream()
-            .map(
-                r ->
-                    new GenericRecordBuilder(USER_SCHEMA)
-                        .set("name", r.get("name"))
-                        .set("age", 0)
-                        .build())
+            .map(r -> new GenericRecordBuilder(USER_SCHEMA).set("name", r.get("name")).build())
             .collect(Collectors.toList());
     final List<GenericRecord> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
