@@ -172,12 +172,21 @@ public class ParquetAvroFileOperationsTest {
             false,
             Lists.newArrayList(
                 new Schema.Field("name", Schema.create(Schema.Type.STRING), "", "")));
+
+    final Configuration configuration = new Configuration();
+    AvroReadSupport.setRequestedProjection(configuration, projection);
+
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(projection);
+        ParquetAvroFileOperations.of(USER_SCHEMA, CompressionCodecName.ZSTD, configuration);
 
     final List<GenericRecord> expected =
         USER_RECORDS.stream()
-            .map(r -> new GenericRecordBuilder(projection).set("name", r.get("name")).build())
+            .map(
+                r ->
+                    new GenericRecordBuilder(USER_SCHEMA)
+                        .set("name", r.get("name"))
+                        .set("age", 0)
+                        .build())
             .collect(Collectors.toList());
     final List<GenericRecord> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
