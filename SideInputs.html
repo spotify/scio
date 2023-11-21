@@ -229,7 +229,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.0.0+1-137c0542+20231026-1425*
+<i class="md-icon" title="Version">label_outline</i> 0.13.6+0-e8d386d2+20231121-1722*
 </label>
 </li>
 </ul>
@@ -315,7 +315,7 @@ elements
   }
 </code></pre>
 <h2><a href="#workercachemb-option" name="workercachemb-option" class="anchor"><span class="anchor-link"></span></a>workerCacheMb option</h2>
-<p>By default, Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.51.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Jobs with large side inputs may therefore be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job:</p>
+<p>By default, Dataflow workers allocate 100MB (see <a href="https://beam.apache.org/releases/javadoc/2.52.0/?org/apache/beam/runners/dataflow/options/DataflowWorkerHarnessOptions.html#getWorkerCacheMb--" title="org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions"><code>DataflowWorkerHarnessOptions#getWorkerCacheMb</code></a>) of memory for caching side inputs, and falls back to disk or network. Jobs with large side inputs may therefore be slow. To override this default, register <code>DataflowWorkerHarnessOptions</code> before parsing command line arguments and then pass <code>--workerCacheMb=N</code> when submitting the job:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.runners.dataflow.options.DataflowWorkerHarnessOptions
@@ -334,7 +334,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.0.0+1-137c0542+20231026-1425*
+0.13.6+0-e8d386d2+20231121-1722*
 </span>
 </div>
 </article>
