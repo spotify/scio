@@ -48,6 +48,7 @@ val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
 val hadoopVersion = "2.10.2"
+val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.14.1"
@@ -71,11 +72,12 @@ val sparkVersion = "3.4.1" // runners/spark/3/build.gradle
 val animalSnifferAnnotationsVersion = "1.23"
 val bigQueryStorageBetaVersion = "0.166.0"
 val bigQueryStorageVersion = "2.42.0"
-val checkerFrameworkVersion = "3.33.0"
+val checkerQualVersion = "3.33.0"
 val errorProneAnnotationsVersion = "2.18.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.7.4"
 val gaxVersion = "2.33.0"
+val googleApiClientVersion = "2.2.0"
 val googleApiCommonVersion = "2.16.0"
 val googleAuthVersion = "1.19.0"
 val googleCloudBigTableVersion = "2.27.2"
@@ -112,7 +114,6 @@ val elasticsearch8Version = "8.11.1"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
-val hamcrestVersion = "2.2"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
 val jedisVersion = "4.4.6"
@@ -250,17 +251,8 @@ val commonSettings = formatSettings ++
     inTask(doc)(TpolecatPlugin.projectSettings),
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
-    excludeDependencies ++= Seq(
-      "org.apache.beam" % "beam-sdks-java-io-kafka",
-      // logger implementation must be given by the runner lib
-      "ch.qos.logback" % "logback-classic",
-      "ch.qos.logback" % "logback-core",
-      "ch.qos.reload4j" % "reload4j",
-      "org.slf4j" % "slf4j-log4j12",
-      "org.slf4j" % "slf4j-reload4j",
-      "io.dropwizard.metrics" % "metrics-logback",
-      "log4j" % "log4j"
-    ),
+    excludeDependencies += Exclude.beamKafka,
+    excludeDependencies ++= Exclude.loggerImplementations,
     resolvers ++= Resolver.sonatypeOssRepos("public"),
     fork := true,
     run / outputStrategy := Some(OutputStrategy.StdoutOutput),
@@ -544,7 +536,7 @@ lazy val `scio-core`: Project = project
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
@@ -684,9 +676,7 @@ lazy val `scio-avro`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
-      "org.apache.avro" % "avro" % avroVersion excludeAll (
-        "com.thoughtworks.paranamer" % "paranamer"
-      ),
+      "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
@@ -727,7 +717,7 @@ lazy val `scio-google-cloud-platform`: Project = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % bigQueryStorageBetaVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
@@ -1062,7 +1052,7 @@ lazy val `scio-parquet`: Project = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll (Exclude.avro),
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
@@ -1230,9 +1220,7 @@ lazy val `scio-repl`: Project = project
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "org.apache.avro" % "avro" % avroVersion,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion excludeAll (
-        "com.google.cloud.bigdataoss" % "gcsio"
-      ),
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion excludeAll (Exclude.gcsio),
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
@@ -1384,7 +1372,7 @@ lazy val `scio-smb`: Project = project
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
-      "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
+      "org.checkerframework" % "checker-qual" % checkerQualVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
@@ -1393,17 +1381,14 @@ lazy val `scio-smb`: Project = project
       "org.apache.avro" % "avro" % avroVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll (Exclude.avro),
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // runtime
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion % Runtime,
-      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (
-        // replaced by io.dropwizard.metrics metrics-core
-        "com.codahale.metrics", "metrics-core"
-      ),
+      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
@@ -1661,7 +1646,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "org.apache.avro" % "avro" % avroVersion,
   "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-  "org.checkerframework" % "checker-qual" % checkerFrameworkVersion,
+  "org.checkerframework" % "checker-qual" % checkerQualVersion,
   "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
   "org.slf4j" % "slf4j-api" % slf4jVersion
 )
