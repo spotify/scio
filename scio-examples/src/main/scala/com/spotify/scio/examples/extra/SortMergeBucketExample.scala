@@ -242,9 +242,8 @@ object SortMergeBucketTransformExample {
       AvroSortedBucketIO
         .read(new TupleTag[Account]("account"), classOf[Account])
         .from(args("accounts"))
-    ).map {
-      case ((primaryKey, secondaryKey), elements) =>
-        // ...
+    ).map { case ((primaryKey, secondaryKey), elements) =>
+    // ...
     }
     // #SortMergeBucketExample_secondary_read
   }
