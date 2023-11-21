@@ -77,7 +77,7 @@ val errorProneAnnotationsVersion = "2.18.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.7.4"
 val gaxVersion = "2.33.0"
-val googleApiClientVersion = "2.2.0"
+val googleApiClientVersion = "2.2.0" // very strangely not in sync with googleClientsVersion
 val googleApiCommonVersion = "2.16.0"
 val googleAuthVersion = "1.19.0"
 val googleCloudBigTableVersion = "2.27.2"
@@ -1147,7 +1147,7 @@ lazy val `scio-examples`: Project = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.google.api-client" % "google-api-client" % googleClientsVersion,
+      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
@@ -1571,7 +1571,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax" % gaxVersion,
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax-httpjson" % gaxVersion,
-  "com.google.api-client" % "google-api-client" % googleClientsVersion,
+  "com.google.api-client" % "google-api-client" % googleApiClientVersion,
   "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
