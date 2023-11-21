@@ -29,10 +29,10 @@ import _root_.io.github.davidgregory084.DevMode
 ThisBuild / turbo := true
 
 val beamVendorVersion = "0.1"
-val beamVersion = "2.51.0"
+val beamVersion = "2.52.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.51.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.52.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -43,8 +43,7 @@ val commonsCompressVersion = "1.21"
 val commonsIoVersion = "2.13.0"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
-val datastoreV1ProtoClientVersion = "2.16.3"
-val flinkVersion = "1.16.0"
+val datastoreV1ProtoClientVersion = "2.17.1"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
@@ -57,36 +56,38 @@ val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.87.Final"
 val slf4jVersion = "1.7.30"
-val sparkVersion = "3.4.1"
 val zetasketchVersion = "0.1.0"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20230520-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20230812-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
+// beam tested versions
+val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
+val sparkVersion = "3.4.1" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.22.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.23.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val bigQueryStorageBetaVersion = "0.165.1"
-val bigQueryStorageVersion = "2.41.1"
+val bigQueryStorageBetaVersion = "0.166.0"
+val bigQueryStorageVersion = "2.42.0"
 val checkerFrameworkVersion = "3.33.0"
 val errorProneAnnotationsVersion = "2.18.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.7.4"
-val gaxVersion = "2.32.0"
-val googleApiCommonVersion = "2.15.0"
+val gaxVersion = "2.33.0"
+val googleApiCommonVersion = "2.16.0"
 val googleAuthVersion = "1.19.0"
-val googleCloudBigTableVersion = "2.26.0"
-val googleCloudCoreVersion = "2.22.0"
-val googleCloudDatastoreVersion = "0.107.3"
-val googleCloudMonitoringVersion = "3.24.0"
-val googleCloudPubSubVersion = "1.106.1"
-val googleCloudSpannerVersion = "6.45.0"
-val googleCloudStorageVersion = "2.26.0"
-val googleCommonsProtoVersion = "2.23.0"
+val googleCloudBigTableVersion = "2.27.2"
+val googleCloudCoreVersion = "2.23.0"
+val googleCloudDatastoreVersion = "0.108.1"
+val googleCloudMonitoringVersion = "3.25.0"
+val googleCloudPubSubVersion = "1.107.0"
+val googleCloudSpannerVersion = "6.47.0"
+val googleCloudStorageVersion = "2.27.0"
+val googleCommonsProtoVersion = "2.24.0"
 val googleHttpClientsVersion = "1.43.3"
-val googleIAMVersion = "1.18.0"
+val googleIAMVersion = "1.19.0"
 val grpcVersion = "1.56.1"
 val j2objcAnnotationsVersion = "2.8"
 val jsr305Version = "3.0.2"
@@ -240,8 +241,8 @@ lazy val keepExistingHeader =
         .trim()
   })
 
-lazy val java17Settings = sys.props("java.version") match {
-  case v if v.startsWith("17.") =>
+lazy val javaSettings = sys.props("java.version") match {
+  case v if v.startsWith("17.") || v.startsWith("21.") =>
     Def.settings(
       javaOptions ++= Seq(
         "--add-opens",
@@ -255,7 +256,7 @@ lazy val java17Settings = sys.props("java.version") match {
 
 val commonSettings = formatSettings ++
   mimaSettings ++
-  java17Settings ++
+  javaSettings ++
   Def.settings(
     organization := "com.spotify",
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
@@ -1283,6 +1284,18 @@ lazy val `scio-repl`: Project = project
               case None    => Left("Error merging beam avro classes")
             }
           }
+        case PathList("com", "google", "errorprone", _*) =>
+          // prefer original errorprone classes instead of the ones packaged by beam
+          CustomMergeStrategy("ErrorProne") { conflicts =>
+            import sbtassembly.Assembly._
+            conflicts.collectFirst {
+              case Library(ModuleCoordinate("com.google.errorprone", _, _), _, t, s) =>
+                JarEntry(t, s)
+            } match {
+              case Some(e) => Right(Vector(e))
+              case None    => Left("Error merging errorprone classes")
+            }
+          }
         case PathList("org", "checkerframework", _*) =>
           // prefer checker-qual classes packaged in checkerframework libs
           CustomMergeStrategy("CheckerQual") { conflicts =>
@@ -1412,6 +1425,7 @@ lazy val `scio-smb`: Project = project
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % "it,test" classifier "tests",
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % "it,test" classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % "it,test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "it,test",
       "org.slf4j" % "slf4j-simple" % slf4jVersion % "it,test"

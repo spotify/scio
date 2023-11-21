@@ -24,7 +24,7 @@ import com.spotify.scio.smb._
 import com.spotify.scio.testing._
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
-import org.apache.beam.sdk.io.AvroGeneratedUser
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.jdk.CollectionConverters._
@@ -211,7 +211,7 @@ class ParquetEndToEndTest extends PipelineSpec {
           .from(usersDir.toString)
       )
       .map(kv => (kv._1.toString, kv._2.toList))
-    val expected = users.map(u => (u.getName, List(u)))
+    val expected = users.map(u => (u.getName.toString, List(u)))
     actual should containInAnyOrder(expected)
   }
 }

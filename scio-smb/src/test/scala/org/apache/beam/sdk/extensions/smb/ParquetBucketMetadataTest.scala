@@ -20,7 +20,7 @@ package org.apache.beam.sdk.extensions.smb
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.coders.StringUtf8Coder
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
-import org.apache.beam.sdk.io.AvroGeneratedUser
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser
 import org.apache.beam.sdk.transforms.display.DisplayData
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
