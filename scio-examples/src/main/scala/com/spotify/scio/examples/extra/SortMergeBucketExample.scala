@@ -26,9 +26,10 @@
 // --inputL=[INPUT]--inputR=[INPUT] --output=[OUTPUT]"`
 package com.spotify.scio.examples.extra
 
-import com.spotify.scio.{ContextAndArgs, ScioContext}
+import com.spotify.scio.{Args, ContextAndArgs, ScioContext}
 import com.spotify.scio.avro.Account
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericData, GenericRecord}
@@ -114,6 +115,28 @@ object SortMergeBucketWriteExample {
       )
     // #SortMergeBucketExample_sink
     sc
+  }
+
+  def secondaryKeyExample(
+    args: Args,
+    in: SCollection[Account]
+  ): Unit = {
+    in
+      // #SortMergeBucketExample_sink_secondary
+      .saveAsSortedBucket(
+        AvroSortedBucketIO
+          .write[String, String, Account](
+            // primary key class and field
+            classOf[String],
+            "name",
+            // secondary key class and field
+            classOf[String],
+            "type",
+            classOf[Account]
+          )
+          .to(args("accounts"))
+      )
+    // #SortMergeBucketExample_sink_secondary
   }
 
   def main(cmdLineArgs: Array[String]): Unit = {
@@ -207,6 +230,23 @@ object SortMergeBucketTransformExample {
     }
     // #SortMergeBucketExample_transform
     sc
+  }
+
+  def secondaryReadExample(cmdLineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+
+    // #SortMergeBucketExample_secondary_read
+    sc.sortMergeGroupByKey(
+      classOf[String], // primary key class
+      classOf[String], // secondary key class
+      AvroSortedBucketIO
+        .read(new TupleTag[Account]("account"), classOf[Account])
+        .from(args("accounts"))
+    ).map {
+      case ((primaryKey, secondaryKey), elements) =>
+        // ...
+    }
+    // #SortMergeBucketExample_secondary_read
   }
 
   def main(cmdLineArgs: Array[String]): Unit = {
