@@ -71,7 +71,7 @@ _Since Scio 0.12.0_.
 
 A single key group may be very large and the implementation of SMB requires either handling the elements of the key group iteratively or loading the entire key group into memory.
 In the case where a secondary grouping or sorting is required, this can be prohibitive in terms of memory and/or wasteful when multiple downstream pipelines do the same grouping.
-For example, a SMB dataset might be keyed by `user_id` but all downstreams want to group by the tuple of `(user_id, artist_id)`.
+For example, a SMB dataset might be keyed by `user_id` but many downstreams want to group by the tuple of `(user_id, artist_id)`.
 
 Secondary SMB keys enable this use-case by sorting pipeline output by the hashed primary SMB key as described above, then additionally sorting the output for each key by the secondary SMB key.
 When key groups are read by a downstream pipeline it may read either the entire (primary) key group or the subset of elements belonging to the (primary key, secondary key) tuple.
