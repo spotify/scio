@@ -1,8 +1,5 @@
 name: it-tests
 
-env:
-  GOOGLE_PROJECT_ID: data-integration-test
-
 on:
   push:
     branches:
@@ -16,6 +13,8 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -25,7 +24,10 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
-      - run: sbt "IntegrationTest/test"
+        env:
+          BQ_READ_TIMEOUT: 30000
+          CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
+      - run: sbt IntegrationTest/test
 
   build-docs:
     name: Build documentation
@@ -36,6 +38,8 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -45,5 +49,7 @@ jobs:
           java-version: 11
       - name: Setup project
         run: scripts/gha_setup.sh
+        env:
+          BQ_READ_TIMEOUT: 30000
       - name: Build documentation
         run: sbt site/makeSite

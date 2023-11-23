@@ -1,10 +1,8 @@
 name: populate-integration-test-data
 
-env:
-  GOOGLE_PROJECT_ID: data-integration-test
-
 on:
   workflow_dispatch # Manually triggered
+
 jobs:
   populate-integration-test-data:
     runs-on: ubuntu-latest
@@ -13,9 +11,9 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: data-integration-test
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
@@ -25,9 +23,13 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
+        env:
+          CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
       - name: Temporarily remove conflicting Scala classes # some IT test classes won't compile because they depend on macros based on test data that's missing
         run: find scio-google-cloud-platform/src/it/scala/com/spotify/scio/bigquery -type f ! -name 'PopulateTestData.scala' -delete
       - name: Populate BQ test data
         run: sbt "scio-google-cloud-platform/IntegrationTest/runMain com.spotify.scio.bigquery.PopulateTestData"
       - name: Populate GCS test data
         run: sbt "scio-test/IntegrationTest/runMain com.spotify.scio.PopulateTestData"
+      - name: Populate SQL test data
+        run: sbt "scio-jdbc/IntegrationTest/runMain com.spotify.scio.jdbc.PopulateTestData"

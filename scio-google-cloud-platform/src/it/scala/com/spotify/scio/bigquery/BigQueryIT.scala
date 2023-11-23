@@ -243,7 +243,7 @@ class BigQueryIT extends AnyFlatSpec with Matchers with BeforeAndAfterEach with 
   // =======================================================================
 
   it should "fail insufficient sample data" in {
-    val t = "clouddataflow-readonly:samples.weather_stations"
+    val t = "apache-beam-testing:samples.weather_stations"
 
     the[IllegalArgumentException] thrownBy {
       val mbq = MockBigQuery()

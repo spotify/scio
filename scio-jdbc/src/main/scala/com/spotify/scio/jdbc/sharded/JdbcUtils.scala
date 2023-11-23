@@ -31,7 +31,7 @@ private[jdbc] object JdbcUtils {
     val connection = DriverManager.getConnection(
       connectionOptions.connectionUrl,
       connectionOptions.username,
-      connectionOptions.password.get
+      connectionOptions.password.orNull
     )
     connection.setAutoCommit(false)
     log.info("Created connection to [{}]", connectionOptions.connectionUrl)

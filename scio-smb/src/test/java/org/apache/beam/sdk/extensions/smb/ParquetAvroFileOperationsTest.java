@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.beam.sdk.io.AvroGeneratedUser;
+import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.fs.ResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -158,7 +158,7 @@ public class ParquetAvroFileOperationsTest {
   }
 
   @Test
-  public void testProjection() throws Exception {
+  public void testGenericProjection() throws Exception {
     final ResourceId file =
         fromFolder(output)
             .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
@@ -172,16 +172,73 @@ public class ParquetAvroFileOperationsTest {
             false,
             Lists.newArrayList(
                 new Schema.Field("name", Schema.create(Schema.Type.STRING), "", "")));
+
+    final Configuration configuration = new Configuration();
+    AvroReadSupport.setRequestedProjection(configuration, projection);
+
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(projection);
+        ParquetAvroFileOperations.of(USER_SCHEMA, CompressionCodecName.ZSTD, configuration);
 
     final List<GenericRecord> expected =
         USER_RECORDS.stream()
-            .map(r -> new GenericRecordBuilder(projection).set("name", r.get("name")).build())
+            .map(r -> new GenericRecordBuilder(USER_SCHEMA).set("name", r.get("name")).build())
             .collect(Collectors.toList());
     final List<GenericRecord> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
 
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSpecificProjection() throws Exception {
+    final Schema projection =
+        Schema.createRecord(
+            "AvroGeneratedUserProjection",
+            "",
+            "org.apache.beam.sdk.extensions.smb",
+            false,
+            Lists.newArrayList(
+                new Schema.Field("name", Schema.create(Schema.Type.STRING), "", "")));
+    final Configuration configuration = new Configuration();
+    AvroReadSupport.setRequestedProjection(configuration, projection);
+
+    final ParquetAvroFileOperations<AvroGeneratedUser> fileOperations =
+        ParquetAvroFileOperations.of(
+            AvroGeneratedUser.class, CompressionCodecName.UNCOMPRESSED, configuration);
+
+    final ResourceId file =
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+
+    final List<AvroGeneratedUser> records =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    AvroGeneratedUser.newBuilder()
+                        .setName(String.format("user%02d", i))
+                        .setFavoriteColor(String.format("color%02d", i))
+                        .setFavoriteNumber(i)
+                        .build())
+            .collect(Collectors.toList());
+    final FileOperations.Writer<AvroGeneratedUser> writer = fileOperations.createWriter(file);
+    for (AvroGeneratedUser record : records) {
+      writer.write(record);
+    }
+    writer.close();
+
+    final List<AvroGeneratedUser> actual = new ArrayList<>();
+    fileOperations.iterator(file).forEachRemaining(actual::add);
+
+    final List<AvroGeneratedUser> expected =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    AvroGeneratedUser.newBuilder()
+                        .setName(String.format("user%02d", i))
+                        .setFavoriteColor(null)
+                        .setFavoriteNumber(null)
+                        .build())
+            .collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
   }
 

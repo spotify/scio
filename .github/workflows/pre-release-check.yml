@@ -1,9 +1,5 @@
 name: pre-release-check
 
-env:
-  GOOGLE_PROJECT_ID: data-integration-test
-  SBT_OPTS: -DbeamRunners=DataflowRunner
-
 on:
   workflow_dispatch # Manually triggered
 jobs:
@@ -14,6 +10,8 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java setup
@@ -23,5 +21,7 @@ jobs:
           java-version: 11
       - name: set JVM opts
         run: scripts/gha_setup.sh
+        env:
+          BEAM_RUNNERS: DataflowRunner
       - name: Run Dataflow jobs
-        run: sbt ${{ env.SBT_OPTS }} "scio-examples/IntegrationTest/runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"
+        run: sbt "scio-examples/IntegrationTest/runMain com.spotify.scio.examples.RunPreReleaseIT --runId=${{ github.run_id }}"

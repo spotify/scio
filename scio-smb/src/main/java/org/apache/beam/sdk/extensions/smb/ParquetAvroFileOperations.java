@@ -173,7 +173,10 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
       final Schema schema = schemaSupplier.get();
       final Configuration configuration = conf.get();
       AvroReadSupport.setAvroReadSchema(configuration, schema);
-      AvroReadSupport.setRequestedProjection(configuration, schema);
+
+      if (configuration.get(AvroReadSupport.AVRO_REQUESTED_PROJECTION) == null) {
+        AvroReadSupport.setRequestedProjection(configuration, schema);
+      }
 
       ParquetReader.Builder<ValueT> builder =
           AvroParquetReader.<ValueT>builder(new ParquetInputFile(channel)).withConf(configuration);

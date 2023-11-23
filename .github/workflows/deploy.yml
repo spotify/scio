@@ -1,8 +1,5 @@
 name: deploy
 
-env:
-  GOOGLE_PROJECT_ID: data-integration-test
-
 on:
   push:
     tags: ["*"]
@@ -34,6 +31,8 @@ jobs:
       - uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
       - name: Cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
