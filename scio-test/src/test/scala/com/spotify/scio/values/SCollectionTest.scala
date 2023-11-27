@@ -44,10 +44,11 @@ import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder}
 
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.ConcurrentLinkedQueue
 
 object SCollectionTest {
   // used to check local side effect in tap()
-  val elements: mutable.Buffer[Any] = mutable.Buffer.empty
+  val elements = new ConcurrentLinkedQueue[Any]()
 }
 
 class SCollectionTest extends PipelineSpec {
@@ -872,7 +873,7 @@ class SCollectionTest extends PipelineSpec {
     val input = Seq(1, 2, 3)
     runWithContext { sc =>
       val original = sc.parallelize(input)
-      val tapped = original.tap(elements += _)
+      val tapped = original.tap(elements.add)
 
       // tap should not modify internal coder
       val originalCoder = original.internal.getCoder
