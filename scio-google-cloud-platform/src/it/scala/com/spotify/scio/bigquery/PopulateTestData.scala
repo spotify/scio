@@ -132,7 +132,6 @@ object PopulateTestData {
         log.info(s"Dataset $projectId:$datasetId exists.")
       case NonFatal(e) => e.printStackTrace()
     }
-    ()
   }
 
   private def populatePartitionedTables(bq: BigQuery, projectId: String): Unit = {
@@ -165,17 +164,13 @@ object PopulateTestData {
       s"Populated $projectId:samples_eu.shakespeare, $projectId:partition_a, " +
         s"$projectId:partition_b and $projectId:partition_c."
     )
-    ()
   }
 
   private def populateStorageTables(bq: BigQuery, projectId: String): Unit = {
     val required = (0 until 10).toList.map(newRequired)
     val optional = (0 until 10).toList.map(newOptional)
     val repeated = (0 until 10).toList.map(newRepeated)
-    val nested = (0 until 10).toList.map { i =>
-      val r = Record(i.toLong, s"s$i")
-      Nested(r, Some(r), List(r))
-    }
+    val nested = (0 until 10).toList.map(newNested)
 
     bq.writeTypedRows(s"$projectId:storage.required", required, WRITE_TRUNCATE)
     bq.writeTypedRows(s"$projectId:storage.optional", optional, WRITE_TRUNCATE)
@@ -184,7 +179,6 @@ object PopulateTestData {
     log.info(
       s"Populated $projectId:storage, $projectId:optional, $projectId:repeated, and $projectId:nested."
     )
-    ()
   }
 
   private def newRequired(i: Int): Required = {
@@ -195,8 +189,8 @@ object PopulateTestData {
       i.toLong,
       i.toDouble,
       BigDecimal(i),
-      s"s$i",
-      ByteString.copyFromUtf8(s"s$i"),
+      i.toString,
+      ByteString.copyFromUtf8(i.toString),
       t.plus(Duration.millis(i.toLong)),
       dt.toLocalDate.plusDays(i),
       dt.toLocalTime.plusMillis(i),
@@ -205,36 +199,75 @@ object PopulateTestData {
   }
 
   private def newOptional(i: Int): Optional = {
-    val t = new Instant(0)
-    val dt = t.toDateTime(DateTimeZone.UTC)
-    Optional(
-      Some(true),
-      Some(i.toLong),
-      Some(i.toDouble),
-      Some(BigDecimal(i)),
-      Some(s"s$i"),
-      Some(ByteString.copyFromUtf8(s"s$i")),
-      Some(t.plus(Duration.millis(i.toLong))),
-      Some(dt.toLocalDate.plusDays(i)),
-      Some(dt.toLocalTime.plusMillis(i)),
-      Some(dt.toLocalDateTime.plusMillis(i))
-    )
+    if (i == 0) {
+      Optional(
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None
+      )
+    } else {
+      val t = new Instant(0)
+      val dt = t.toDateTime(DateTimeZone.UTC)
+      Optional(
+        Some(true),
+        Some(i.toLong),
+        Some(i.toDouble),
+        Some(BigDecimal(i)),
+        Some(i.toString),
+        Some(ByteString.copyFromUtf8(i.toString)),
+        Some(t.plus(Duration.millis(i.toLong))),
+        Some(dt.toLocalDate.plusDays(i)),
+        Some(dt.toLocalTime.plusMillis(i)),
+        Some(dt.toLocalDateTime.plusMillis(i))
+      )
+    }
   }
 
   private def newRepeated(i: Int): Repeated = {
-    val t = new Instant(0)
-    val dt = t.toDateTime(DateTimeZone.UTC)
-    Repeated(
-      List(true),
-      List(i.toLong),
-      List(i.toDouble),
-      List(BigDecimal(i)),
-      List(s"s$i"),
-      List(ByteString.copyFromUtf8(s"s$i")),
-      List(t.plus(Duration.millis(i.toLong))),
-      List(dt.toLocalDate.plusDays(i)),
-      List(dt.toLocalTime.plusMillis(i)),
-      List(dt.toLocalDateTime.plusMillis(i))
-    )
+    if (i == 0) {
+      Repeated(
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        Nil
+      )
+    } else {
+      val t = new Instant(0)
+      val dt = t.toDateTime(DateTimeZone.UTC)
+      Repeated(
+        List(true),
+        List(i.toLong),
+        List(i.toDouble),
+        List(BigDecimal(i)),
+        List(i.toString),
+        List(ByteString.copyFromUtf8(i.toString)),
+        List(t.plus(Duration.millis(i.toLong))),
+        List(dt.toLocalDate.plusDays(i)),
+        List(dt.toLocalTime.plusMillis(i)),
+        List(dt.toLocalDateTime.plusMillis(i))
+      )
+    }
+  }
+
+  private def newNested(i: Int): Nested = {
+    val required = Record(i, i.toString)
+    if (i == 0) {
+      Nested(required, None, Nil)
+    } else {
+      Nested(required, Some(required), List(required))
+    }
   }
 }
