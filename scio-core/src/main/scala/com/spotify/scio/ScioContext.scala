@@ -563,7 +563,7 @@ class ScioContext private[scio] (
 
     if (_counters.nonEmpty) {
       val counters = _counters.toArray
-      this.parallelize(Seq(0)).withName("Initialize counters").map { _ =>
+      this.parallelize(Seq(0)).withName("Initialize counters").tap { _ =>
         counters.foreach(_.inc(0))
       }
     }
@@ -727,6 +727,24 @@ class ScioContext private[scio] (
     suffix: String = TextIO.ReadParam.DefaultSuffix
   ): SCollection[String] =
     this.read(TextIO(path))(TextIO.ReadParam(compression, emptyMatchTreatment, suffix))
+
+  /**
+   * Get an SCollection of `Array[Byte]` from a binary file.
+   *
+   * @param reader
+   *   An instance of `BinaryFileReader` for the specific binary format used by the input file.
+   * @group input
+   */
+  def binaryFile(
+    path: String,
+    reader: BinaryIO.BinaryFileReader,
+    compression: beam.Compression = BinaryIO.ReadParam.DefaultCompression,
+    emptyMatchTreatment: beam.fs.EmptyMatchTreatment = TextIO.ReadParam.DefaultEmptyMatchTreatment,
+    suffix: String = BinaryIO.ReadParam.DefaultSuffix
+  ): SCollection[Array[Byte]] =
+    this.read(BinaryIO(path))(
+      BinaryIO.ReadParam(reader, compression, emptyMatchTreatment, suffix)
+    )
 
   /**
    * Get an SCollection with a custom input transform. The transform should have a unique name.

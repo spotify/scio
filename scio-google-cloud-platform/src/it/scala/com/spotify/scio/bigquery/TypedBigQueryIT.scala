@@ -19,9 +19,9 @@ package com.spotify.scio.bigquery
 
 import com.google.protobuf.ByteString
 import com.spotify.scio._
+import com.spotify.scio.avro._
 import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
 import org.apache.avro.{LogicalTypes, Schema}
@@ -109,7 +109,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   it should "convert to avro format" in {
     val sc = ScioContext(options)
-    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    implicit val coder = avroGenericRecordCoder(Record.avroSchema)
     sc.typedBigQuery[Record](tableRowTable)
       .map(Record.toAvro)
       .map(Record.fromAvro) should containInAnyOrder(
@@ -128,7 +128,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   it should "read GenericRecord recors" in {
     val sc = ScioContext(options)
-    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    implicit val coder = avroGenericRecordCoder(Record.avroSchema)
     sc
       .bigQueryTable(tableRowTable, Format.GenericRecord)
       .map(Record.fromAvro) should containInAnyOrder(records)
@@ -137,7 +137,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   it should "write GenericRecord records" in {
     val sc = ScioContext(options)
-    implicit val coder = Coder.avroGenericRecordCoder(Record.avroSchema)
+    implicit val coder = avroGenericRecordCoder(Record.avroSchema)
     val schema =
       BigQueryUtil.parseSchema("""
         |{
@@ -188,7 +188,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         new Schema.Field("datetime", Schema.create(Schema.Type.STRING), "", "")
       ).asJava
     )
-    implicit val coder = Coder.avroGenericRecordCoder(schema)
+    implicit val coder = avroGenericRecordCoder(schema)
     val ltRecords: Seq[GenericRecord] =
       Seq(
         new GenericRecordBuilder(schema)

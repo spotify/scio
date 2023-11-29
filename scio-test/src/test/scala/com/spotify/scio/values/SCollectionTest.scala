@@ -320,7 +320,7 @@ class SCollectionTest extends PipelineSpec {
       val p = sc
         .parallelize(Seq(Seq(1, 2, 3, 4, 5))) // SCollection with 1 element to get a single bundle
         .flatten // flatten the elements in the bundle
-        .batchWeighted(2, identity[Int])
+        .batchWeighted(2, _.toLong)
         .map(_.size)
       p should containInAnyOrder(Seq(2, 1, 1, 1))
     }

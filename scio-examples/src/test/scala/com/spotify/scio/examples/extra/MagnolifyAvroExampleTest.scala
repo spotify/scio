@@ -36,6 +36,7 @@ class MagnolifyAvroExampleTest extends PipelineSpec {
   val textOut: Seq[String] = wordCount.map(kv => kv._1 + ": " + kv._2)
 
   "MagnolifyAvroWriteExample" should "work" in {
+    import MagnolifyAvroWriteExample.genericCoder
     JobTest[com.spotify.scio.examples.extra.MagnolifyAvroWriteExample.type]
       .args("--input=in.txt", "--output=wc.avro")
       .input(TextIO("in.txt"), textIn)
@@ -44,6 +45,7 @@ class MagnolifyAvroExampleTest extends PipelineSpec {
   }
 
   "MagnolifyAvroReadExample" should "work" in {
+    import MagnolifyAvroWriteExample.genericCoder
     JobTest[com.spotify.scio.examples.extra.MagnolifyAvroReadExample.type]
       .args("--input=wc.avro", "--output=out.txt")
       .input(AvroIO[GenericRecord]("wc.avro"), records)

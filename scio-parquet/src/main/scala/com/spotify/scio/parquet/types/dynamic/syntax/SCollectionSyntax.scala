@@ -16,7 +16,6 @@
 
 package com.spotify.scio.parquet.types.dynamic.syntax
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps.writeDynamic
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.parquet.ParquetConfiguration
@@ -26,8 +25,6 @@ import magnolify.parquet.ParquetType
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-
-import scala.reflect.ClassTag
 
 final class DynamicParquetTypeSCollectionOps[T](
   private val self: SCollection[T]
@@ -44,7 +41,7 @@ final class DynamicParquetTypeSCollectionOps[T](
     prefix: String = ParquetTypeIO.WriteParam.DefaultPrefix
   )(
     destinationFn: T => String
-  )(implicit ct: ClassTag[T], coder: Coder[T], pt: ParquetType[T]): ClosedTap[Nothing] = {
+  )(implicit pt: ParquetType[T]): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
         "Typed parquet file with dynamic destinations cannot be used in a test context"

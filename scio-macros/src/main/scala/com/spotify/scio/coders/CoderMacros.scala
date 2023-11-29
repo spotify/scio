@@ -40,7 +40,7 @@ private[coders] object CoderMacros {
         """.stripMargin
     )
 
-  @nowarn("msg=parameter value lp in method issueFallbackWarning is never used")
+  @nowarn("msg=parameter lp in method issueFallbackWarning is never used")
   def issueFallbackWarning[T: c.WeakTypeTag](
     c: whitebox.Context
   )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {

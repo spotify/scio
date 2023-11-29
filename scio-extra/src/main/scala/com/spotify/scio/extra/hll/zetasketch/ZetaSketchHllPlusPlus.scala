@@ -17,7 +17,7 @@
 
 package com.spotify.scio.extra.hll.zetasketch
 
-import com.spotify.scio.coders.{BeamCoders, Coder}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.estimators.ApproxDistinctCounter
 import com.spotify.scio.util.TupleFunctions.klToTuple
 import com.spotify.scio.values.SCollection
@@ -61,8 +61,7 @@ case class ZetaSketchHllPlusPlus[T](p: Int = HllCount.DEFAULT_PRECISION)(implici
    * estimated distinct count per each unique key.
    */
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
-    implicit val (keyCoder, _): (Coder[K], Coder[T]) =
-      BeamCoders.getTupleCoders(in)
+    implicit val keyCoder: Coder[K] = in.keyCoder
     in.toKV
       .applyTransform(
         zs.init(p)

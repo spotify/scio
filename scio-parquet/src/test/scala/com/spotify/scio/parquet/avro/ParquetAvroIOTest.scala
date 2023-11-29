@@ -19,7 +19,6 @@ package com.spotify.scio.parquet.avro
 
 import java.io.File
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec, TextIO}
 import com.spotify.scio.parquet.ParquetConfiguration
@@ -188,7 +187,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     implicit val coder = {
       GenericData.get().addLogicalTypeConversion(new TimeConversions.TimestampConversion)
       GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion)
-      Coder.avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
+      avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
     }
 
     val sc1 = ScioContext()
@@ -279,7 +278,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   it should "read/write generic records" in withTempDir { dir =>
     val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
     val sc1 = ScioContext()
-    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+    implicit val coder = avroGenericRecordCoder(AvroUtils.schema)
     sc1
       .parallelize(genericRecords)
       .saveAsParquetAvroFile(dir.getAbsolutePath, numShards = 1, schema = AvroUtils.schema)
@@ -303,7 +302,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     val genericRecords = (0 until 10).map(AvroUtils.newGenericRecord)
     val options = PipelineOptionsFactory.fromArgs("--streaming=true").create()
     val sc1 = ScioContext(options)
-    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+    implicit val coder = avroGenericRecordCoder(AvroUtils.schema)
     sc1
       .parallelize(genericRecords)
       // Explicit optional arguments `Duration.Zero` and `WindowOptions()` as a workaround for the
@@ -364,7 +363,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   it should "write generic records to dynamic destinations" in withTempDir { dir =>
     val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
     val sc = ScioContext()
-    implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+    implicit val coder = avroGenericRecordCoder(AvroUtils.schema)
     sc.parallelize(genericRecords)
       .saveAsParquetAvroFile(
         dir.getAbsolutePath,
@@ -393,7 +392,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   it should "throw exception when filename functions not correctly defined for dynamic destinations" in withTempDir {
     dir =>
       val genericRecords = (1 to 100).map(AvroUtils.newGenericRecord)
-      implicit val coder = Coder.avroGenericRecordCoder(AvroUtils.schema)
+      implicit val coder = avroGenericRecordCoder(AvroUtils.schema)
 
       an[NotImplementedError] should be thrownBy {
         val sc = ScioContext()

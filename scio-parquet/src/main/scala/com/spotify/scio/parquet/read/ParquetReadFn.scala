@@ -120,7 +120,7 @@ class ParquetReadFn[T, R](
         } finally {
           reader.close()
         }
-      new OffsetRange(0, rowGroups)
+      new OffsetRange(0L, rowGroups.toLong)
   }
 
   @NewTracker def newTracker(@Restriction restriction: OffsetRange) =
@@ -309,12 +309,13 @@ class ParquetReadFn[T, R](
   ): Seq[OffsetRange] = {
     val (offsets, _, _) = rowGroups.zipWithIndex
       .slice(startGroup.toInt, endGroup.toInt)
-      .foldLeft((Seq.newBuilder[OffsetRange], startGroup.toInt, 0.0)) {
+      .foldLeft((Seq.newBuilder[OffsetRange], startGroup, 0L)) {
         case ((offsets, start, size), (rowGroup, end)) =>
           val currentSize = size + rowGroup.getTotalByteSize
+          val next = end.toLong + 1
 
           if (currentSize > SplitLimit || endGroup - 1 == end) {
-            (offsets += new OffsetRange(start, end + 1), end + 1, 0.0)
+            (offsets += new OffsetRange(start, next), next, 0)
           } else {
             (offsets, start, currentSize)
           }

@@ -217,7 +217,6 @@ sealed trait CoderGrammar {
 object Coder
     extends CoderGrammar
     with TupleCoders
-    with AvroCoders
     with ProtobufCoders
     with AlgebirdCoders
     with GuavaCoders

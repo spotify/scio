@@ -35,6 +35,6 @@ package object types {
    *                 @doc("user age") age: Int)
    * }}}
    */
-  @nowarn("msg=parameter value value in class doc is never used")
+  @nowarn("msg=parameter value in class doc is never used")
   class doc(value: String) extends StaticAnnotation
 }

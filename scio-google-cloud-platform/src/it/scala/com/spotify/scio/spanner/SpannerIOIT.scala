@@ -37,7 +37,7 @@ object SpannerIOIT {
   private val config: SpannerConfig = SpannerConfig
     .create()
     .withProjectId(projectId)
-    .withDatabaseId(s"io_it_${Random.nextInt}")
+    .withDatabaseId(s"io_it_${Random.nextInt()}")
     .withInstanceId("spanner-it")
 
   private lazy val adminClient = Spanner.adminClient(projectId)

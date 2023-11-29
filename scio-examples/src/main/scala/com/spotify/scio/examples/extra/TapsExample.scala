@@ -38,7 +38,7 @@ object TapsExample {
       t2 <- taps.textFile("macbeth.txt")
     } yield {
       // execution logic when both taps are available
-      val (sc, args) = ContextAndArgs(cmdlineArgs)
+      val (sc, _) = ContextAndArgs(cmdlineArgs)
       val out = (t1.open(sc) ++ t2.open(sc))
         .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
         .countByValue

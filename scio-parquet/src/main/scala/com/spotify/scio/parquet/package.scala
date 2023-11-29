@@ -24,7 +24,7 @@ import java.nio.channels.{Channels, WritableByteChannel}
 
 package object parquet {
   class ParquetOutputStream(outputStream: OutputStream) extends PositionOutputStream {
-    private var position = 0
+    private var position = 0L
     override def getPos: Long = position
     override def write(b: Int): Unit = {
       position += 1

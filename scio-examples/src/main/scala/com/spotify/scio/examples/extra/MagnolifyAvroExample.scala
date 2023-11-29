@@ -22,9 +22,11 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.examples.common.ExampleData
+import com.spotify.scio.examples.extra.MagnolifyAvroExample.wordCountType
+import org.apache.avro.generic.GenericRecord
 
 object MagnolifyAvroExample {
   // limit import scope to avoid polluting namespace
@@ -44,11 +46,14 @@ object MagnolifyAvroExample {
 // --input=gs://apache-beam-samples/shakespeare/kinglear.txt
 // --output=gs://[BUCKET]/[PATH]/wordcount-avro"`
 object MagnolifyAvroWriteExample {
+
+  implicit val genericCoder: Coder[GenericRecord] =
+    avroGenericRecordCoder(wordCountType.schema)
+
   def main(cmdlineArgs: Array[String]): Unit = {
     import MagnolifyAvroExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    implicit def genericCoder = Coder.avroGenericRecordCoder(wordCountType.schema)
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue

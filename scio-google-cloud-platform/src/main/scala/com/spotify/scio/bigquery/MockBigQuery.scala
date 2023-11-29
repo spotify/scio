@@ -26,7 +26,6 @@ import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 
 import scala.collection.mutable
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 /** Companion object for [[MockBigQuery]]. */
@@ -116,7 +115,7 @@ class MockBigQuery private (private val bq: BigQuery) {
   /**
    * Get result of a live query against BigQuery service, substituting mocked tables with test data.
    */
-  def typedQueryResult[T <: HasAnnotation: ClassTag: TypeTag](
+  def typedQueryResult[T <: HasAnnotation: TypeTag](
     sqlQuery: String,
     flattenResults: Boolean = false
   ): Seq[T] = {
@@ -171,7 +170,7 @@ class MockTable(
   }
 
   /** Populate the table with mock data. */
-  def withTypedData[T <: HasAnnotation: ClassTag: TypeTag](rows: Seq[T]): Unit = {
+  def withTypedData[T <: HasAnnotation: TypeTag](rows: Seq[T]): Unit = {
     val bqt = BigQueryType[T]
     withData(rows.map(bqt.toTableRow))
   }

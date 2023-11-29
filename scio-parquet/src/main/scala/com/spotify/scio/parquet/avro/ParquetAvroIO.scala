@@ -54,7 +54,7 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
+import scala.reflect.{classTag, ClassTag}
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ParquetAvroIO.ReadParam[_, T]
@@ -71,10 +71,9 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[T] = {
     type AvroType = params.avroClass.type
-
     // The projection function is not part of the test input, so it must be applied directly
     TestDataManager
-      .getInput(sc.testId.get)(ParquetAvroIO[AvroType](path))
+      .getInput(sc.testId.get)(ParquetAvroIO[AvroType](path)(classTag, null))
       .toSCollection(sc)
       .map(params.projectionFn.asInstanceOf[AvroType => T])
   }

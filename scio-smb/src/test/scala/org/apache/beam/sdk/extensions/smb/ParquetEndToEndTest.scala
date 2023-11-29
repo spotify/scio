@@ -20,6 +20,8 @@ package org.apache.beam.sdk.extensions.smb
 import java.io.File
 import java.util.UUID
 import com.spotify.scio._
+import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.smb._
 import com.spotify.scio.testing._
 import org.apache.avro.Schema
@@ -78,6 +80,10 @@ object ParquetEndToEndTest {
 
   val avroEvents: Seq[GenericRecord] = (1 to 100).map(avroEvent)
   val avroUsers: Seq[GenericRecord] = (1 to 15).map(avroUser)
+
+  val avroEventCoder: Coder[GenericRecord] = avroGenericRecordCoder(eventSchema)
+  val avroUserCoder: Coder[GenericRecord] = avroGenericRecordCoder(userSchema)
+
   val events: Seq[Event] = (1 to 100).map(Event(_))
   val users: Seq[User] = (1 to 15).map(User(_))
 }
@@ -95,7 +101,7 @@ class ParquetEndToEndTest extends PipelineSpec {
     // Write one with keyClass = CharSequence and one with String
     // Downstream should be able to handle the difference
     sc1
-      .parallelize(avroEvents)
+      .parallelize(avroEvents)(avroEventCoder)
       .saveAsSortedBucket(
         ParquetAvroSortedBucketIO
           .write(classOf[CharSequence], "user", eventSchema)
@@ -103,7 +109,7 @@ class ParquetEndToEndTest extends PipelineSpec {
           .withNumBuckets(1)
       )
     sc1
-      .parallelize(avroUsers)
+      .parallelize(avroUsers)(avroUserCoder)
       .saveAsSortedBucket(
         ParquetAvroSortedBucketIO
           .write(classOf[String], "name", userSchema)
@@ -167,11 +173,12 @@ class ParquetEndToEndTest extends PipelineSpec {
         ParquetAvroSortedBucketIO
           .read(new TupleTag[GenericRecord]("rhs"), userSchema)
           .from(usersDir.toString)
-      )
+      )(Coder[String], avroEventCoder, avroUserCoder)
     val userMap = avroUsers.groupBy(_.get("name").toString).view.mapValues(_.head).toMap
     val expected = avroEvents.groupBy(_.get("user").toString).toSeq.flatMap { case (k, es) =>
       es.map(e => (k, (e, userMap(k))))
     }
+    implicit val c: Coder[(String, (GenericRecord, GenericRecord))] = actual.coder
     actual should containInAnyOrder(expected)
     sc2.run()
 
@@ -201,6 +208,9 @@ class ParquetEndToEndTest extends PipelineSpec {
           .withNumBuckets(1)
       )
     sc1.run()
+
+    implicit val keyCoder: Coder[CharSequence] =
+      Coder.xmap(Coder.stringCoder)(identity, _.toString)
 
     val sc2 = ScioContext()
     val actual = sc2

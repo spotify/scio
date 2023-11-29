@@ -43,7 +43,7 @@ object RunPreReleaseIT {
     val runId = args("runId")
 
     try {
-      val jobs = List(parquet(runId), avro(runId), smb(runId), bigquery(runId))
+      val jobs = List(parquet(runId), avro(runId), smb(runId), bigquery())
       Await.result(Future.sequence(jobs), 1.hour)
     } catch {
       case t: Throwable =>
@@ -139,7 +139,7 @@ object RunPreReleaseIT {
     }
   }
 
-  private def bigquery(runId: String): Future[Unit] = {
+  private def bigquery(): Future[Unit] = {
     import com.spotify.scio.examples.extra.{TypedBigQueryTornadoes, TypedStorageBigQueryTornadoes}
     log.info("Starting BigQuery tests... ")
     val jobs = List(

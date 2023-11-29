@@ -20,11 +20,11 @@ package com.spotify.scio.util
 import java.io.File
 import java.nio.channels.Channels
 import java.nio.file.Files
-
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.proto.Track.TrackPB
+import com.spotify.scio.protobuf.util.ProtobufUtil
 import org.apache.avro.file.DataFileStream
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.beam.sdk.io.{FileSystems, LocalResources}

@@ -339,7 +339,7 @@ object Numeric {
       s"max allowed precision is $MaxNumericPrecision"
     )
 
-    BigDecimal(scaled.toString, new MathContext(MaxNumericPrecision))
+    scaled.round(new MathContext(MaxNumericPrecision))
   }
 
   // For BigQueryType macros only, do not use directly

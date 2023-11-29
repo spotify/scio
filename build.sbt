@@ -154,6 +154,7 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     ScalacOptions.privateWarnDeadCode,
     ScalacOptions.privateWarnValueDiscard,
     ScalacOptions.warnDeadCode,
+    ScalacOptions.warnNonUnitStatement,
     ScalacOptions.warnValueDiscard
   )
 
@@ -165,7 +166,6 @@ ThisBuild / tpolecatDevModeOptions ~= { opts =>
     Scalac.privateBackendParallelism,
     Scalac.privateWarnMacrosOption,
     Scalac.release8,
-    Scalac.targetOption,
     Scalac.warnConfOption,
     Scalac.warnMacrosOption
   )
@@ -203,12 +203,14 @@ def previousVersion(currentVersion: String): Option[String] = {
 
 lazy val mimaSettings = Def.settings(
   //format: off
-  mimaBinaryIssueFilters := Seq(),
+  mimaBinaryIssueFilters := Seq.empty,
   // format: on
-  mimaPreviousArtifacts := previousVersion(version.value)
-    .filter(_ => publishArtifact.value)
-    .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
-    .toSet
+  // TODO enable back after 0.14
+  mimaPreviousArtifacts := Set.empty
+//  mimaPreviousArtifacts := previousVersion(version.value)
+//    .filter(_ => publishArtifact.value)
+//    .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
+//    .toSet
 )
 
 lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
@@ -553,11 +555,8 @@ lazy val `scio-core`: Project = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % grpcVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
-      "org.apache.avro" % "avro" % avroVersion, // TODO remove from core
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
@@ -676,6 +675,7 @@ lazy val `scio-avro`: Project = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
+      "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
@@ -699,7 +699,7 @@ lazy val `scio-google-cloud-platform`: Project = project
   .in(file("scio-google-cloud-platform"))
   .dependsOn(
     `scio-core` % "compile;it->it",
-    `scio-avro` % "test",
+    `scio-avro`,
     `scio-test` % "test->test;it"
   )
   .configs(IntegrationTest)
@@ -713,7 +713,6 @@ lazy val `scio-google-cloud-platform`: Project = project
     description := "Scio add-on for Google Cloud Platform",
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
@@ -1036,7 +1035,6 @@ lazy val `scio-parquet`: Project = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
       "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
       "com.google.protobuf" % "protobuf-java" % protobufVersion,

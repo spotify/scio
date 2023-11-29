@@ -83,7 +83,7 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 trait SCollectionSyntax {
   implicit def parquetAvroSCollectionOps[T](c: SCollection[T]): SCollectionOps[T] =
     new SCollectionOps[T](c)
-  implicit def parquetAvroSCollection[T: ClassTag: Coder](
+  implicit def parquetAvroSCollection[T: Coder](
     self: ParquetAvroFile[T]
   ): SCollectionOps[T] =
     new SCollectionOps[T](self.toSCollection)

@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package com.spotify.scio.coders.instances
+package com.spotify.scio.coders.avro
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.ScioUtil
@@ -113,6 +113,15 @@ private object SpecificFixedCoder {
   }
 }
 
+object AvroCoders {
+  // Try to get the schema with SpecificData.getSchema
+  // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
+  // Otherwise create a default instance and call getSchema
+  private def schemaForClass[T <: SpecificRecord](clazz: Class[T]): Try[Schema] =
+    Try(SpecificData.get().getSchema(clazz))
+      .orElse(Try(clazz.getDeclaredConstructor().newInstance().getSchema))
+}
+
 trait AvroCoders {
 
   /**
@@ -131,16 +140,9 @@ trait AvroCoders {
   def avroGenericRecordCoder: Coder[GenericRecord] =
     Coder.beam(new SlowGenericRecordCoder)
 
-  // Try to get the schema with SpecificData.getSchema
-  // This relies on private SCHEMA$ field that may not be defined on custom SpecificRecord instance
-  // Otherwise create a default instance and call getSchema
-  private def schemaForClass[T <: SpecificRecord](clazz: Class[T]): Try[Schema] =
-    Try(SpecificData.get().getSchema(clazz))
-      .orElse(Try(clazz.getDeclaredConstructor().newInstance().getSchema))
-
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val clazz = ScioUtil.classOf[T]
-    val schema = schemaForClass(clazz).getOrElse {
+    val schema = AvroCoders.schemaForClass(clazz).getOrElse {
       val msg =
         "Failed to create a coder for SpecificRecord because it is impossible to retrieve an " +
           s"Avro schema by instantiating $clazz. Use only a concrete type implementing " +

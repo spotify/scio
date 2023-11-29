@@ -15,13 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio.schemas.instances
+package com.spotify.scio.avro.schemas.instances
 
 import com.spotify.scio.schemas.{RawRecord, Schema}
-import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
-import org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
+import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.extensions.avro.schemas.AvroRecordSchema
+import org.apache.beam.sdk.extensions.avro.schemas.utils.AvroUtils
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.values.{Row, TypeDescriptor}

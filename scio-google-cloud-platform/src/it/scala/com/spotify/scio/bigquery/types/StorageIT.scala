@@ -66,12 +66,12 @@ class StorageIT extends AnyFlatSpec with Matchers {
     val expected = (0 until 10).map { i =>
       Optional(
         Some(true),
-        Some(i),
-        Some(i),
+        Some(i.toLong),
+        Some(i.toDouble),
         Some(BigDecimal(i)),
         Some(s"s$i"),
         Some(ByteString.copyFromUtf8(s"s$i")),
-        Some(t.plus(Duration.millis(i))),
+        Some(t.plus(Duration.millis(i.toLong))),
         Some(dt.toLocalDate.plusDays(i)),
         Some(dt.toLocalTime.plusMillis(i)),
         Some(dt.toLocalDateTime.plusMillis(i))

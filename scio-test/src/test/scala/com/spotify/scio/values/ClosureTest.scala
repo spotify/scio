@@ -134,7 +134,7 @@ class NotSerializableObj {
 
 class NestedClosuresNotSerializable {
   val irrelevantInt: Int = 1
-  @nowarn("msg=parameter value name in method closure is never used")
+  @nowarn("msg=parameter name in method closure is never used")
   def closure(name: String)(body: => Int => Int): Int => Int = body
   def getMapFn: Int => Int = closure("one") {
     @nowarn("msg=local method x in method getMapFn is never used")

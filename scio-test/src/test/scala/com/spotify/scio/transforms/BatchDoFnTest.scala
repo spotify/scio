@@ -116,8 +116,8 @@ class BatchDoFnTest extends AnyFlatSpec with Matchers {
   }
 
   it should "flush the biggest buffer when too many concurrent windows are opened" in {
-    val maxLiveWindows = 5
-    val batchFn = new BatchDoFn[Int](10, _.toLong, maxLiveWindows)
+    val maxLiveWindows = 5L
+    val batchFn = new BatchDoFn[Int](10, _.toLong, maxLiveWindows.toInt)
     batchFn.setup()
     val windows = (0L until maxLiveWindows)
       .map(Instant.ofEpochSecond)

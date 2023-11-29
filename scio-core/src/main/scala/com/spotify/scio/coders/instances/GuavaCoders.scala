@@ -22,7 +22,7 @@ import com.spotify.scio.coders.Coder
 import com.google.common.{hash => g}
 import org.apache.beam.sdk.coders.CustomCoder
 
-class GuavaBloomFilterCoder[T](implicit val funnel: g.Funnel[T])
+class GuavaBloomFilterCoder[T](implicit val funnel: g.Funnel[_ >: T])
     extends CustomCoder[g.BloomFilter[T]] {
   override def encode(value: BloomFilter[T], outStream: OutputStream): Unit =
     value.writeTo(outStream)
@@ -32,6 +32,6 @@ class GuavaBloomFilterCoder[T](implicit val funnel: g.Funnel[T])
 }
 
 trait GuavaCoders {
-  implicit def guavaBFCoder[T](implicit x: g.Funnel[T]): Coder[g.BloomFilter[T]] =
+  implicit def guavaBFCoder[T](implicit x: g.Funnel[_ >: T]): Coder[g.BloomFilter[T]] =
     Coder.beam(new GuavaBloomFilterCoder[T])
 }

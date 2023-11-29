@@ -23,6 +23,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{Functions, JMapWrapper, ScioUtil}
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
 import com.spotify.scio.io._
 import com.spotify.scio.pubsub.coders._
 import org.apache.avro.specific.SpecificRecord
@@ -99,21 +100,21 @@ object PubsubIO {
   ): PubsubIO[T] =
     MessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def pubsub[T <: beam.PubsubMessage: ClassTag](
+  def pubsub[T <: beam.PubsubMessage](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     PubSubMessagePubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def coder[T: Coder: ClassTag](
+  def coder[T: Coder](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
   ): PubsubIO[T] =
     FallbackPubsubIOWithoutAttributes[T](name, idAttribute, timestampAttribute)
 
-  def withAttributes[T: ClassTag: Coder](
+  def withAttributes[T: Coder](
     name: String,
     idAttribute: String = null,
     timestampAttribute: String = null
@@ -209,7 +210,7 @@ final private case class AvroPubsubIOWithoutAttributes[T <: SpecificRecord: Clas
   private[this] val cls = ScioUtil.classOf[T]
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
-    val coder = CoderMaterializer.beam(sc, Coder.avroSpecificRecordCoder[T])
+    val coder = CoderMaterializer.beam(sc, avroSpecificRecordCoder[T])
     val t = setup(beam.PubsubIO.readAvros(cls), params)
     sc.applyTransform(t).setCoder(coder)
   }
@@ -290,7 +291,7 @@ final private case class FallbackPubsubIOWithoutAttributes[T: Coder](
   }
 }
 
-final private case class PubsubIOWithAttributes[T: ClassTag: Coder](
+final private case class PubsubIOWithAttributes[T: Coder](
   name: String,
   idAttribute: String,
   timestampAttribute: String
