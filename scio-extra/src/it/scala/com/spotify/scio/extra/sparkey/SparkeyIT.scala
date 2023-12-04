@@ -17,14 +17,15 @@
 
 package com.spotify.scio.extra.sparkey
 
-import java.nio.ByteBuffer
-
+import com.spotify.scio.extra.sparkey.instances.SparkeyWriter
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.testing.util.ItUtils
+import com.spotify.scio.util.RemoteFileUtil
 import com.spotify.sparkey.CompressionType
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.util.MimeTypes
 
+import java.nio.ByteBuffer
 import scala.jdk.CollectionConverters._
 
 class SparkeyIT extends PipelineSpec {
@@ -35,6 +36,8 @@ class SparkeyIT extends PipelineSpec {
     runWithContext { sc =>
       FileSystems.setDefaultPipelineOptions(sc.options)
       val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+      sc.options.setTempLocation(tempLocation)
+
       try {
         val p1 = sc.parallelize(Seq(1))
         val p2 = sc.parallelize(sideData).asSparkeySideInput
@@ -55,11 +58,14 @@ class SparkeyIT extends PipelineSpec {
     runWithContext { sc =>
       FileSystems.setDefaultPipelineOptions(sc.options)
       val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+      sc.options.setTempLocation(tempLocation)
+
       val basePath = tempLocation + "/sparkey"
       val resourceId = FileSystems.matchNewResource(basePath + ".spl", false)
       // Create a sparkey KV file
-      val uri = SparkeyUri(basePath, sc.options)
-      val writer = new SparkeyWriter(uri, CompressionType.NONE, 0, -1)
+      val uri = SparkeyUri(basePath)
+      val remoteFileUtil = RemoteFileUtil.create(sc.options)
+      val writer = new SparkeyWriter(uri, remoteFileUtil, CompressionType.NONE, 0, -1)
       (1 to 100000000).foreach(x => writer.put(x.toString, x.toString))
       writer.close()
 
@@ -77,6 +83,8 @@ class SparkeyIT extends PipelineSpec {
     runWithContext { sc =>
       FileSystems.setDefaultPipelineOptions(sc.options)
       val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+      sc.options.setTempLocation(tempLocation)
+
       val basePath = tempLocation + "/sparkey"
       val resourceId = FileSystems.matchNewResource(basePath + ".spi", false)
       try {
@@ -96,13 +104,16 @@ class SparkeyIT extends PipelineSpec {
   it should "create files for empty data" in {
     runWithContext { sc =>
       FileSystems.setDefaultPipelineOptions(sc.options)
+      val remoteFileUtil = RemoteFileUtil.create(sc.options)
       val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+      sc.options.setTempLocation(tempLocation)
+
       val basePath = tempLocation + "/sparkey-empty"
       try {
         val sparkeyExists = sc
           .parallelize(Seq[(String, String)]())
           .asSparkey(basePath)
-          .map(_.exists)
+          .map(_.exists(remoteFileUtil))
         sparkeyExists should containSingleValue(true)
       } finally {
         val files = FileSystems
