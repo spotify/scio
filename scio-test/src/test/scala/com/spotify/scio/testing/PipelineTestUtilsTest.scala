@@ -64,6 +64,7 @@ class PipelineTestUtilsTest
   }
 
   "runWithOverride" should "override named transforms from the pipeline" in {
+    // #PipelineTestUtilsTest_example_run_with_overrides
     runWithOverrides(
       TransformOverride.of("multiply", (v: Int) => v * v),
       TransformOverride.ofIter("append", (v: Int) => Seq(v + "c", v + "d"))
@@ -77,6 +78,7 @@ class PipelineTestUtilsTest
 
       result should containInAnyOrder(Seq("1c", "1d", "4c", "4d", "9c", "9d"))
     }
+    // #PipelineTestUtilsTest_example_run_with_overrides
   }
 
   it should "override named transforms if type signature are compatible" in {

@@ -127,6 +127,10 @@ Can be overridden with static mock data:
 
 @@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_example_source_mock }
 
+It is alo possible to override a named `PTransform` during partial pipeline testing with `runWithOverrides`.
+
+@@snip [PipelineTestUtilsTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/PipelineTestUtilsTest.scala) { #PipelineTestUtilsTest_example_run_with_overrides }
+
 Due to type erasure it is possible to provide the incorrect types for the transform and the error will not be caught until runtime.
 
 If you've specified the incorrect input type, scio will attempt to detect the error and throw an `IllegalArgumentException`,
