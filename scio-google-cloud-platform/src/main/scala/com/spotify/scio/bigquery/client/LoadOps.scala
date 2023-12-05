@@ -49,7 +49,8 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
     skipLeadingRows: Int = 0,
     fieldDelimiter: Option[String] = None,
     ignoreUnknownValues: Boolean = false,
-    encoding: Option[String] = None
+    encoding: Option[String] = None,
+    location: Option[String] = None
   ): Try[TableReference] =
     execute(
       sources = sources,
@@ -66,7 +67,8 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
       skipLeadingRows = Some(skipLeadingRows),
       fieldDelimiter = fieldDelimiter,
       ignoreUnknownValues = Some(ignoreUnknownValues),
-      encoding = encoding
+      encoding = encoding,
+      location = location
     )
 
   def json(
@@ -78,7 +80,8 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
     autodetect: Boolean = false,
     maxBadRecords: Int = 0,
     ignoreUnknownValues: Boolean = false,
-    encoding: Option[String] = None
+    encoding: Option[String] = None,
+    location: Option[String] = None
   ): Try[TableReference] =
     execute(
       sources = sources,
@@ -90,7 +93,8 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
       autodetect = Some(autodetect),
       maxBadRecords = maxBadRecords,
       ignoreUnknownValues = Some(ignoreUnknownValues),
-      encoding = encoding
+      encoding = encoding,
+      location = location
     )
 
   def avro(
@@ -100,7 +104,8 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
     writeDisposition: WriteDisposition = WRITE_APPEND,
     schema: Option[TableSchema] = None,
     maxBadRecords: Int = 0,
-    encoding: Option[String] = None
+    encoding: Option[String] = None,
+    location: Option[String] = None
   ): Try[TableReference] =
     execute(
       sources = sources,
@@ -110,7 +115,8 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
       writeDisposition = writeDisposition,
       schema = schema,
       maxBadRecords = maxBadRecords,
-      encoding = encoding
+      encoding = encoding,
+      location = location
     )
 
   @nowarn("msg=private default argument in class LoadOps is never used")
@@ -129,7 +135,8 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
     skipLeadingRows: Option[Int] = None,
     fieldDelimiter: Option[String] = None,
     ignoreUnknownValues: Option[Boolean] = None,
-    encoding: Option[String] = None
+    encoding: Option[String] = None,
+    location: Option[String] = None
   ): Try[TableReference] = Try {
     val tableRef = bq.BigQueryHelpers.parseTableSpec(destinationTable)
 
@@ -155,7 +162,10 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
       .setLoad(jobConfigLoad)
 
     val fullJobId = BigQueryUtil.generateJobId(client.project)
-    val jobReference = new JobReference().setProjectId(client.project).setJobId(fullJobId)
+    val jobReference = new JobReference()
+      .setProjectId(client.project)
+      .setJobId(fullJobId)
+      .setLocation(location.orNull)
     val job = new Job().setConfiguration(jobConfig).setJobReference(jobReference)
 
     Logger.info(s"Loading data into $destinationTable from ${sources.mkString(", ")}")
