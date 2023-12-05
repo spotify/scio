@@ -22,7 +22,7 @@ import java.sql.{Connection, DriverManager}
 import com.spotify.scio.jdbc.JdbcConnectionOptions
 import org.slf4j.LoggerFactory
 
-private[jdbc] object JdbcUtils {
+private[scio] object JdbcUtils {
 
   private val IndexInfoTableNameField = "COLUMN_NAME"
   private val log = LoggerFactory.getLogger(this.getClass)

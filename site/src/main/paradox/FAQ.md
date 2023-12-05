@@ -242,7 +242,7 @@ Also see these [slides](http://www.lyh.me/slides/for-yield.html) and this [blog 
 
 #### How do I unit test BigQuery queries?
 
-BigQuery doesn't provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at @github[BigQueryIT.scala](/scio-bigquery/src/it/scala/com/spotify/scio/bigquery/BigQueryIT.scala). `MockBigQuery` will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.
+BigQuery doesn't provide a way to unit test query logic locally, but we can query the service directly in an integration test. Take a look at @github[BigQueryIT.scala](/integration/src/test/scala/com/spotify/scio/bigquery/BigQueryIT.scala). `MockBigQuery` will create temporary tables on the service, feed them with mock data, and substitute table references in your query string with the mocked ones.
 
 #### How do I stream to a partitioned BigQuery table?
 
