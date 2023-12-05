@@ -30,7 +30,7 @@ Define `bigquery.project` as a system property. The value can by anything since 
 sbt -Dbigquery.project=dummy-project test
 ```
 
-Tasks within the 'it' (integration testing) configuration `IntegrationTest/{compile,test}` currently require access to datasets hosted in an internal Spotify project.
+Tasks in the 'integration' module `integration/{compile,test}` currently require access to datasets hosted in an internal Spotify project.
 External users must authenticate against their own GCP project, through the steps outlined in @ref[Getting Started](../Getting-Started.md).
 
 ## IntelliJ IDEA
