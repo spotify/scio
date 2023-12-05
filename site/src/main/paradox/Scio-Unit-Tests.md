@@ -59,6 +59,17 @@ The data variable hold the test data and `sc.parallelize` will transform the inp
 
 @@snip [TriggerExampleTest.scala](/scio-examples/src/test/scala/com/spotify/scio/examples/cookbook/TriggerExampleTest.scala) { #TriggerExampleTest_example }
 
+When your pipeline section contains input and/or output, you can also create an anonymous `JobTest` to inject the test data.
+
+If we have the following pipeline section:
+
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_io_pipeline_section }
+
+It can be tested with:
+
+@@snip [JobTestTest.scala](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) { #JobTestTest_anonymous_job_test }
+
+
 ### Test for pipeline with windowing
 We will use the LeaderBoardTest to explain how to test Windowing in Scio. The full example code is found @github[here](/scio-examples/src/test/scala/com/spotify/scio/examples/complete/game/LeaderBoardTest.scala). LeaderBoardTest also extends `PipelineSpec`. The function under test is the @github[LeaderBoard.calculateTeamScores](/scio-examples/src/main/scala/com/spotify/scio/examples/complete/game/LeaderBoard.scala#L131).  This function calculates teams scores within a fixed window with the following the window options:
 

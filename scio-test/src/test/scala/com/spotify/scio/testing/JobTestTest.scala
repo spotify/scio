@@ -40,11 +40,13 @@ import org.apache.beam.sdk.values.KV
 
 object ObjectFileJob {
 
+  // #JobTestTest_io_pipeline_section
   def pipeline(sc: ScioContext, input: String, output: String): Unit = {
     sc.objectFile[Int](input)
       .map(_ * 10)
       .saveAsObjectFile(output)
   }
+  // #JobTestTest_io_pipeline_section
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -351,10 +353,13 @@ class JobTestTest extends PipelineSpec {
   }
 
   it should "execute anonymous job" in {
-    JobTest(ObjectFileJob.pipeline(_, "in.avro", "out.avro"))
+    import ObjectFileJob.pipeline
+    // #JobTestTest_anonymous_job_test
+    JobTest(pipeline(_, "in.avro", "out.avro"))
       .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
       .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(10, 20, 30)))
       .run()
+    // #JobTestTest_anonymous_job_test
   }
 
   def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit =
