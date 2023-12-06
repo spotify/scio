@@ -33,10 +33,10 @@ object JavaOptions {
   ): JavaOption = new JavaOption(s"-X$name", arguments, isSupported)
 
   def minHeapSize(size: String): JavaOption =
-    extra("ms", List(size))
+    extra(s"ms$size")
 
   def maxHeapSize(size: String): JavaOption =
-    extra("mx", List(size))
+    extra(s"mx$size")
 
   def advanced(
     name: String,

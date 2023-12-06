@@ -324,7 +324,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           name = Some("Setup GitHub Action")
         ),
         WorkflowStep.Sbt(
-          List("examples/compile", "site/makeSite"),
+          List("scio-examples/compile", "site/makeSite"),
           env = Map("SOCCO" -> "true"),
           name = Some("Generate site")
         ),

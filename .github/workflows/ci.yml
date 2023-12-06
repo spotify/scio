@@ -412,7 +412,7 @@ jobs:
       - name: Generate site
         env:
           SOCCO: true
-        run: sbt '++ ${{ matrix.scala }}' examples/compile site/makeSite
+        run: sbt '++ ${{ matrix.scala }}' scio-examples/compile site/makeSite
 
       - name: Publish site
         if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
