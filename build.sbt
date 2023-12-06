@@ -404,7 +404,8 @@ val commonSettings = Def.settings(
   },
   unusedCompileDependenciesFilter -= Seq(
     moduleFilter("org.scala-lang", "scala-reflect"),
-    moduleFilter("org.scala-lang.modules", "scala-collection-compat")
+    moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
+    moduleFilter("org.typelevel", "scalac-compat-annotation")
   ).reduce(_ | _),
   coverageExcludedPackages := (Seq(
     "com\\.spotify\\.scio\\.examples\\..*",
