@@ -15,13 +15,13 @@
  * under the License.
  */
 
-import sbt._
-import Keys._
+import sbt.*
+import Keys.*
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
-import sbtassembly.AssemblyPlugin.autoImport._
+import sbtassembly.AssemblyPlugin.autoImport.*
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
-
 import de.heikoseeberger.sbtheader.CommentCreator
+import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
 val beamVendorVersion = "0.1"
 val beamVersion = "2.52.0"
@@ -217,6 +217,9 @@ val scala213 = "2.13.12"
 val scala212 = "2.12.18"
 val scalaDefault = scala213
 
+// java target
+ThisBuild / tlJdkRelease := Some(8)
+
 // github actions
 val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")
@@ -254,7 +257,7 @@ ThisBuild / githubWorkflowPublishPreamble := Seq(
 )
 ThisBuild / githubWorkflowPublishPostamble := Seq(
   WorkflowStep.Use(
-    UseRef.Public("softprops", "action-gh-release" , "v1"),
+    UseRef.Public("softprops", "action-gh-release", "v1"),
     Map(
       "files" -> "scio-repl/target/scala-2.13/scio-repl.jar",
       "draft" -> "true"
@@ -361,115 +364,60 @@ lazy val keepExistingHeader =
         )
         .trim()
   })
-ThisBuild / headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB"))
-ThisBuild / headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader)
 
-//ThisBuild / tpolecatDefaultOptionsMode := DevMode
-//ThisBuild / tpolecatDevModeOptions ~= { opts =>
-//  val excludes = Set(
-//    ScalacOptions.lintPackageObjectClasses,
-//    ScalacOptions.privateWarnDeadCode,
-//    ScalacOptions.privateWarnValueDiscard,
-//    ScalacOptions.warnDeadCode,
-//    ScalacOptions.warnNonUnitStatement,
-//    ScalacOptions.warnValueDiscard
-//  )
-//
-//  val extras = Set(
-//    Scalac.delambdafyInlineOption,
-//    Scalac.macroAnnotationsOption,
-//    Scalac.macroSettingsOption,
-//    Scalac.maxClassfileName,
-//    Scalac.privateBackendParallelism,
-//    Scalac.privateWarnMacrosOption,
-//    Scalac.release8,
-//    Scalac.warnConfOption,
-//    Scalac.warnMacrosOption
-//  )
-//
-//  opts.filterNot(excludes).union(extras)
-//}
-//
-//ThisBuild / doc / tpolecatDevModeOptions ++= Set(
-//  Scalac.docNoJavaCommentOption
-//)
-
-// scalafix
-ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
-val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
-Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
-Global / excludeLint += sonatypeProfileName
-Global / excludeLint += site / Paradox / sourceManaged
-
-lazy val javaSettings = sys.props("java.version") match {
-  case v if v.startsWith("17.") || v.startsWith("21.") =>
-    Def.settings(
-      javaOptions ++= Seq(
-        "--add-opens",
-        "java.base/java.util=ALL-UNNAMED",
-        "--add-opens",
-        "java.base/java.lang.invoke=ALL-UNNAMED"
-      )
+val commonSettings = Def.settings(
+  headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
+  headerMappings := headerMappings.value ++ Map(
+    HeaderFileType.scala -> keepExistingHeader,
+    HeaderFileType.java -> keepExistingHeader
+  ),
+  scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
+  scalacOptions ~= { opts =>
+    val exclude = Set(
+      "-Wdead-code", // too many false positives
+      "-Wvalue-discard", // too many warnings
+      "-Xsource:3" // not ready for scala 3 yet
     )
-  case _ => Def.settings()
-}
-
-val commonSettings = javaSettings ++
-  Def.settings(
-//    organization := "com.spotify",
-//    scalaVersion := "2.13.12",
-//    crossScalaVersions := Seq("2.12.18", scalaVersion.value),
-//    // this setting is not derived in sbt-tpolecat
-//    // https://github.com/typelevel/sbt-tpolecat/issues/36
-//    inTask(doc)(TpolecatPlugin.projectSettings),
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
-    Compile / doc / javacOptions := Seq("-source", "1.8"),
-    excludeDependencies += Exclude.beamKafka,
-    excludeDependencies ++= Exclude.loggerImplementations,
-    resolvers ++= Resolver.sonatypeOssRepos("public"),
-    fork := true,
-    run / outputStrategy := Some(OutputStrategy.StdoutOutput),
-    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-    Test / javaOptions ++= Seq(
-      "-Xms512m",
-      "-Xmx2G",
-      "-XX:+UseParallelGC",
-      "-Dfile.encoding=UTF8",
-      "-Dscio.ignoreVersionWarning=true",
-      "-Dorg.slf4j.simpleLogger.defaultLogLevel=info",
-      "-Dorg.slf4j.simpleLogger.logFile=scio.log"
-    ) ++ Seq(
-      "bigquery.project",
-      "bigquery.secret",
-      "cloudsql.sqlserver.password"
-    ).flatMap { prop =>
-      sys.props.get(prop).map(value => s"-D$prop=$value")
-    },
-    Test / testOptions += Tests.Argument("-oD"),
-    testOptions ++= {
-      if (sys.env.contains("SLOW")) {
-        Nil
-      } else {
-        Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
-      }
-    },
-    unusedCompileDependenciesFilter -= Seq(
-      moduleFilter("org.scala-lang", "scala-reflect"),
-      moduleFilter("org.scala-lang.modules", "scala-collection-compat")
-    ).reduce(_ | _),
-    coverageExcludedPackages := (Seq(
-      "com\\.spotify\\.scio\\.examples\\..*",
-      "com\\.spotify\\.scio\\.repl\\..*",
-      "com\\.spotify\\.scio\\.util\\.MultiJoin",
-      "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
-    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
-    coverageHighlighting := true
-  )
-
-//lazy val publishSettings = Def.settings(
-//  // Release settings
-//  sonatypeProfileName := "com.spotify"
-//)
+    opts.filterNot(exclude.contains)
+  },
+  Compile / doc / scalacOptions ++= ScalacOptions.tokensForVersion(
+    scalaVersion.value,
+    Set(ScalacOptions.docNoJavaCommentOption)
+  ),
+  javacOptions ~= { opts =>
+    val exclude = Set(
+      "-Xlint:all" // too many warnings
+    )
+    opts.filterNot(exclude.contains)
+  },
+  javaOptions := JavaOptions.defaults(javaMajorVersion),
+  excludeDependencies += Exclude.beamKafka,
+  excludeDependencies ++= Exclude.loggerImplementations,
+  resolvers ++= Resolver.sonatypeOssRepos("public"),
+  fork := true,
+  run / outputStrategy := Some(OutputStrategy.StdoutOutput),
+  Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+  Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
+  Test / testOptions += Tests.Argument("-oD"),
+  testOptions ++= {
+    if (sys.env.contains("SLOW")) {
+      Nil
+    } else {
+      Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
+    }
+  },
+  unusedCompileDependenciesFilter -= Seq(
+    moduleFilter("org.scala-lang", "scala-reflect"),
+    moduleFilter("org.scala-lang.modules", "scala-collection-compat")
+  ).reduce(_ | _),
+  coverageExcludedPackages := (Seq(
+    "com\\.spotify\\.scio\\.examples\\..*",
+    "com\\.spotify\\.scio\\.repl\\..*",
+    "com\\.spotify\\.scio\\.util\\.MultiJoin",
+    "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
+  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
+  coverageHighlighting := true
+)
 
 // for modules containing java jUnit 4 tests
 lazy val jUnitSettings = Def.settings(
@@ -492,8 +440,10 @@ lazy val macroSettings = Def.settings(
       case _ => Nil
     }
   },
-  // see MacroSettings.scala
-  scalacOptions += "-Xmacro-settings:cache-implicit-schemas=true"
+  scalacOptions ++= ScalacOptions.tokensForVersion(
+    scalaVersion.value,
+    Set(ScalacOptions.macroCacheImplicitSchemas(true))
+  )
 )
 
 lazy val directRunnerDependencies = Seq(
@@ -1562,7 +1512,7 @@ lazy val site = project
     mdocIn := (paradox / sourceDirectory).value,
     mdocExtraArguments ++= Seq("--no-link-hygiene"),
     // paradox
-    paradox / sourceManaged := mdocOut.value,
+    Compile / paradox / sourceManaged := mdocOut.value,
     paradoxProperties ++= Map(
       "extref.example.base_url" -> "https://spotify.github.io/scio/examples/%s.scala.html",
       "github.base_url" -> "https://github.com/spotify/scio",

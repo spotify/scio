@@ -18,4 +18,7 @@ addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.5.1")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.9")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.6")
 
-libraryDependencies += "org.apache.avro" % "avro-compiler" % "1.8.2"
+libraryDependencies ++= Seq(
+  "org.apache.avro" % "avro-compiler" % "1.8.2",
+  "org.typelevel" %% "scalac-options" % "0.1.3"
+)
