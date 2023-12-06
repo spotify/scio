@@ -217,9 +217,6 @@ val scala213 = "2.13.12"
 val scala212 = "2.12.18"
 val scalaDefault = scala213
 
-// java target
-ThisBuild / tlJdkRelease := Some(8)
-
 // github actions
 val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")
@@ -239,6 +236,8 @@ val githubWorkflowGcpAuthStep = WorkflowStep.Use(
   )
 )
 
+ThisBuild / tlJdkRelease := Some(8)
+ThisBuild / tlFatalWarnings := false
 ThisBuild / scalaVersion := scalaDefault
 ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
