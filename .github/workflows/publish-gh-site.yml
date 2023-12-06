@@ -35,11 +35,12 @@ jobs:
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
 
-      - env:
+      - name: gcloud auth
+        uses: google-github-actions/auth@v2
+        with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           export_environment_variables: true
           create_credentials_file: true
-        uses: google-github-actions/auth@v2
 
       - name: Setup GitHub Action
         run: scripts/gha_setup.sh
@@ -47,7 +48,7 @@ jobs:
       - name: Generate site
         env:
           SOCCO: true
-        run: sbt '++ ${{ matrix.scala }}' examples/compile site/makeSite
+        run: sbt '++ ${{ matrix.scala }}' scio-examples/compile site/makeSite
 
       - name: Publish site
         env:
