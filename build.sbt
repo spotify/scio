@@ -229,11 +229,12 @@ val primaryAxisCond = Seq(
 
 val githubWorkflowGcpAuthStep = WorkflowStep.Use(
   UseRef.Public("google-github-actions", "auth", "v2"),
-  env = Map(
+  Map(
     "credentials_json" -> "${{ secrets.GCP_CREDENTIALS }}",
     "export_environment_variables" -> "true",
     "create_credentials_file" -> "true"
-  )
+  ),
+  name = Some("gcloud auth")
 )
 
 ThisBuild / tlJdkRelease := Some(8)
