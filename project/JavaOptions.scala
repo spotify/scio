@@ -76,7 +76,7 @@ object JavaOptions {
       Set(
         minHeapSize("512m"),
         maxHeapSize("2G"),
-        advanced("UseParallelGC"),
+        advanced("+UseParallelGC"),
         property("scio.ignoreVersionWarning", "true"),
         property("org.slf4j.simpleLogger.defaultLogLevel", "info"),
         property("org.slf4j.simpleLogger.logFile", "scio.log")
