@@ -20,13 +20,8 @@ import Keys._
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 import sbtassembly.AssemblyPlugin.autoImport._
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
-import com.typesafe.tools.mima.core._
-import org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings
-import bloop.integrations.sbt.BloopDefaults
-import de.heikoseeberger.sbtheader.CommentCreator
-import _root_.io.github.davidgregory084.DevMode
 
-ThisBuild / turbo := true
+import de.heikoseeberger.sbtheader.CommentCreator
 
 val beamVendorVersion = "0.1"
 val beamVersion = "2.52.0"
@@ -147,74 +142,215 @@ val scalatestplusVersion = s"$scalatestVersion.0"
 
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
-ThisBuild / tpolecatDefaultOptionsMode := DevMode
-ThisBuild / tpolecatDevModeOptions ~= { opts =>
-  val excludes = Set(
-    ScalacOptions.lintPackageObjectClasses,
-    ScalacOptions.privateWarnDeadCode,
-    ScalacOptions.privateWarnValueDiscard,
-    ScalacOptions.warnDeadCode,
-    ScalacOptions.warnNonUnitStatement,
-    ScalacOptions.warnValueDiscard
+// project
+ThisBuild / tlBaseVersion := "0.14"
+ThisBuild / tlSonatypeUseLegacyHost := true
+ThisBuild / organization := "com.spotify"
+ThisBuild / organizationName := "Spotify AB"
+ThisBuild / startYear := Some(2016)
+ThisBuild / licenses := Seq(License.Apache2)
+ThisBuild / developers := List(
+  Developer(
+    id = "sinisa_lyh",
+    name = "Neville Li",
+    email = "neville.lyh@gmail.com",
+    url = url("https://twitter.com/sinisa_lyh")
+  ),
+  Developer(
+    id = "ravwojdyla",
+    name = "Rafal Wojdyla",
+    email = "ravwojdyla@gmail.com",
+    url = url("https://twitter.com/ravwojdyla")
+  ),
+  Developer(
+    id = "andrewsmartin",
+    name = "Andrew Martin",
+    email = "andrewsmartin.mg@gmail.com",
+    url = url("https://twitter.com/andrew_martin92")
+  ),
+  Developer(
+    id = "fallonfofallon",
+    name = "Fallon Chen",
+    email = "fallon@spotify.com",
+    url = url("https://twitter.com/fallonfofallon")
+  ),
+  Developer(
+    id = "regadas",
+    name = "Filipe Regadas",
+    email = "filiperegadas@gmail.com",
+    url = url("https://twitter.com/regadas")
+  ),
+  Developer(
+    id = "jto",
+    name = "Julien Tournay",
+    email = "julient@spotify.com",
+    url = url("https://twitter.com/skaalf")
+  ),
+  Developer(
+    id = "clairemcginty",
+    name = "Claire McGinty",
+    email = "clairem@spotify.com",
+    url = url("http://github.com/clairemcginty")
+  ),
+  Developer(
+    id = "syodage",
+    name = "Shameera Rathnayaka",
+    email = "shameerayodage@gmail.com",
+    url = url("http://github.com/syodage")
+  ),
+  Developer(
+    id = "kellen",
+    name = "Kellen Dye",
+    email = "dye.kellen@gmail.com",
+    url = url("http://github.com/kellen")
+  ),
+  Developer(
+    id = "farzad-sedghi",
+    name = "farzad sedghi",
+    email = "farzadsedghi2@gmail.com",
+    url = url("http://github.com/farzad-sedghi")
   )
-
-  val extras = Set(
-    Scalac.delambdafyInlineOption,
-    Scalac.macroAnnotationsOption,
-    Scalac.macroSettingsOption,
-    Scalac.maxClassfileName,
-    Scalac.privateBackendParallelism,
-    Scalac.privateWarnMacrosOption,
-    Scalac.release8,
-    Scalac.warnConfOption,
-    Scalac.warnMacrosOption
-  )
-
-  opts.filterNot(excludes).union(extras)
-}
-
-ThisBuild / doc / tpolecatDevModeOptions ++= Set(
-  Scalac.docNoJavaCommentOption
 )
 
-ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
-val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
-Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
-Global / excludeLint += sonatypeProfileName
-Global / excludeLint += site / Paradox / sourceManaged
+// scala versions
+val scala213 = "2.13.12"
+val scala212 = "2.12.18"
+val scalaDefault = scala213
 
-def previousVersion(currentVersion: String): Option[String] = {
-  val Version =
-    """(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?<preRelease>-.*)?(?<build>\+.*)?""".r
-  currentVersion match {
-    case Version(x, y, z, null, null) if z != "0" =>
-      // patch release
-      Some(s"$x.$y.${z.toInt - 1}")
-    case Version(x, y, z, null, _) =>
-      // post release build
-      Some(s"$x.$y.$z")
-    case Version(x, y, z, _, _) if z != "0" =>
-      // patch pre-release
-      Some(s"$x.$y.${z.toInt - 1}")
-    case _ =>
-      None
-  }
-}
+// github actions
+val java21 = JavaSpec.corretto("21")
+val java17 = JavaSpec.corretto("17")
+val java11 = JavaSpec.corretto("11")
+val javaDefault = java11
+val primaryAxisCond = Seq(
+  s"matrix.scala == '${CrossVersion.binaryScalaVersion(scalaDefault)}'",
+  s"matrix.java == '${javaDefault.render}'"
+).mkString(" && ")
 
-lazy val mimaSettings = Def.settings(
-  //format: off
-  mimaBinaryIssueFilters := Seq.empty,
-  // format: on
-  // TODO enable back after 0.14
-  mimaPreviousArtifacts := Set.empty
-//  mimaPreviousArtifacts := previousVersion(version.value)
-//    .filter(_ => publishArtifact.value)
-//    .map(organization.value % s"${normalizedName.value}_${scalaBinaryVersion.value}" % _)
-//    .toSet
+val githubWorkflowGcpAuthStep = WorkflowStep.Use(
+  UseRef.Public("google-github-actions", "auth", "v2"),
+  env = Map(
+    "credentials_json" -> "${{ secrets.GCP_CREDENTIALS }}",
+    "export_environment_variables" -> "true",
+    "create_credentials_file" -> "true"
+  )
 )
 
-lazy val formatSettings = Def.settings(scalafmtOnCompile := false, javafmtOnCompile := false)
+ThisBuild / scalaVersion := scalaDefault
+ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
+ThisBuild / githubWorkflowTargetBranches := Seq("main")
+ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
+ThisBuild / githubWorkflowBuildPostamble := Seq(
+  WorkflowStep.Sbt(
+    List("undeclaredCompileDependenciesTest", "unusedCompileDependenciesTest"),
+    name = Some("Check dependencies")
+  )
+)
+ThisBuild / githubWorkflowPublishPreamble := Seq(
+  WorkflowStep.Sbt(
+    List("scio-repl/assembly"),
+    name = Some("Package repl")
+  )
+)
+ThisBuild / githubWorkflowPublishPostamble := Seq(
+  WorkflowStep.Use(
+    UseRef.Public("softprops", "action-gh-release" , "v1"),
+    Map(
+      "files" -> "scio-repl/target/scala-2.13/scio-repl.jar",
+      "draft" -> "true"
+    ),
+    name = Some("Upload Repl")
+  )
+)
+ThisBuild / githubWorkflowAddedJobs ++= Seq(
+  WorkflowJob(
+    "coverage",
+    "Test Coverage",
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
+      List(
+        WorkflowStep.Sbt(
+          List("coverage", "test", "coverageAggregate"),
+          name = Some("Test coverage")
+        ),
+        WorkflowStep.Run(
+          List("bash <(curl -s https://codecov.io/bash)"),
+          name = Some("Upload coverage report")
+        )
+      ),
+    scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
+    javas = List(javaDefault)
+  ),
+  WorkflowJob(
+    "it-test",
+    "Integration Test",
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
+      List(
+        githubWorkflowGcpAuthStep,
+        WorkflowStep.Run(
+          List("scripts/gha_setup.sh"),
+          env = Map(
+            "BQ_READ_TIMEOUT" -> "30000",
+            "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}"
+          ),
+          name = Some("Setup GitHub Action")
+        ),
+        WorkflowStep.Sbt(
+          List("integration/headerCheckAll", "integration/scalafmtCheckAll"),
+          name = Some("Check headers and formatting")
+        ),
+        WorkflowStep.Sbt(
+          List("integration/test"),
+          name = Some("Test")
+        )
+      ),
+    cond = Some("github.event_name != 'pull_request' && github.ref == 'refs/heads/main'"),
+    scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
+    javas = List(javaDefault)
+  ),
+  WorkflowJob(
+    "site",
+    "Generate Site",
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
+      List(
+        githubWorkflowGcpAuthStep,
+        WorkflowStep.Run(
+          List("scripts/gha_setup.sh"),
+          name = Some("Setup GitHub Action")
+        ),
+        WorkflowStep.Sbt(
+          List("examples/compile", "site/makeSite"),
+          env = Map("SOCCO" -> "true"),
+          name = Some("Generate site")
+        ),
+        WorkflowStep.Use(
+          UseRef.Public("peaceiris", "actions-gh-pages", "v3.9.3"),
+          env = Map(
+            "github_token" -> "${{ secrets.GITHUB_TOKEN }}",
+            "publish_dir" -> {
+              val path = (ThisBuild / baseDirectory).value.toPath.toAbsolutePath
+                .relativize((site / target).value.toPath)
+              // os-independent path rendering ...
+              (0 until path.getNameCount).map(path.getName).mkString("/")
+            },
+            "keep_files" -> "true"
+          ),
+          name = Some("Publish site"),
+          cond =
+            Some("github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')")
+        )
+      ),
+    scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
+    javas = List(javaDefault)
+  )
+)
 
+// mima
+ThisBuild / mimaBinaryIssueFilters ++= Seq()
+
+// headers
 lazy val currentYear = java.time.LocalDate.now().getYear
 lazy val keepExistingHeader =
   HeaderCommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
@@ -225,6 +361,45 @@ lazy val keepExistingHeader =
         )
         .trim()
   })
+ThisBuild / headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB"))
+ThisBuild / headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader)
+
+//ThisBuild / tpolecatDefaultOptionsMode := DevMode
+//ThisBuild / tpolecatDevModeOptions ~= { opts =>
+//  val excludes = Set(
+//    ScalacOptions.lintPackageObjectClasses,
+//    ScalacOptions.privateWarnDeadCode,
+//    ScalacOptions.privateWarnValueDiscard,
+//    ScalacOptions.warnDeadCode,
+//    ScalacOptions.warnNonUnitStatement,
+//    ScalacOptions.warnValueDiscard
+//  )
+//
+//  val extras = Set(
+//    Scalac.delambdafyInlineOption,
+//    Scalac.macroAnnotationsOption,
+//    Scalac.macroSettingsOption,
+//    Scalac.maxClassfileName,
+//    Scalac.privateBackendParallelism,
+//    Scalac.privateWarnMacrosOption,
+//    Scalac.release8,
+//    Scalac.warnConfOption,
+//    Scalac.warnMacrosOption
+//  )
+//
+//  opts.filterNot(excludes).union(extras)
+//}
+//
+//ThisBuild / doc / tpolecatDevModeOptions ++= Set(
+//  Scalac.docNoJavaCommentOption
+//)
+
+// scalafix
+ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value)
+val excludeLint = SettingKey[Set[Def.KeyedInitialize[_]]]("excludeLintKeys")
+Global / excludeLint := (Global / excludeLint).?.value.getOrElse(Set.empty)
+Global / excludeLint += sonatypeProfileName
+Global / excludeLint += site / Paradox / sourceManaged
 
 lazy val javaSettings = sys.props("java.version") match {
   case v if v.startsWith("17.") || v.startsWith("21.") =>
@@ -239,18 +414,14 @@ lazy val javaSettings = sys.props("java.version") match {
   case _ => Def.settings()
 }
 
-val commonSettings = formatSettings ++
-  mimaSettings ++
-  javaSettings ++
+val commonSettings = javaSettings ++
   Def.settings(
-    organization := "com.spotify",
-    headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
-    headerMappings := headerMappings.value + (HeaderFileType.scala -> keepExistingHeader, HeaderFileType.java -> keepExistingHeader),
-    scalaVersion := "2.13.12",
-    crossScalaVersions := Seq("2.12.18", scalaVersion.value),
-    // this setting is not derived in sbt-tpolecat
-    // https://github.com/typelevel/sbt-tpolecat/issues/36
-    inTask(doc)(TpolecatPlugin.projectSettings),
+//    organization := "com.spotify",
+//    scalaVersion := "2.13.12",
+//    crossScalaVersions := Seq("2.12.18", scalaVersion.value),
+//    // this setting is not derived in sbt-tpolecat
+//    // https://github.com/typelevel/sbt-tpolecat/issues/36
+//    inTask(doc)(TpolecatPlugin.projectSettings),
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     Compile / doc / javacOptions := Seq("-source", "1.8"),
     excludeDependencies += Exclude.beamKafka,
@@ -292,80 +463,13 @@ val commonSettings = formatSettings ++
       "com\\.spotify\\.scio\\.util\\.MultiJoin",
       "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
     ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
-    coverageHighlighting := true,
-    licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-    homepage := Some(url("https://github.com/spotify/scio")),
-    scmInfo := Some(
-      ScmInfo(url("https://github.com/spotify/scio"), "scm:git:git@github.com:spotify/scio.git")
-    ),
-    developers := List(
-      Developer(
-        id = "sinisa_lyh",
-        name = "Neville Li",
-        email = "neville.lyh@gmail.com",
-        url = url("https://twitter.com/sinisa_lyh")
-      ),
-      Developer(
-        id = "ravwojdyla",
-        name = "Rafal Wojdyla",
-        email = "ravwojdyla@gmail.com",
-        url = url("https://twitter.com/ravwojdyla")
-      ),
-      Developer(
-        id = "andrewsmartin",
-        name = "Andrew Martin",
-        email = "andrewsmartin.mg@gmail.com",
-        url = url("https://twitter.com/andrew_martin92")
-      ),
-      Developer(
-        id = "fallonfofallon",
-        name = "Fallon Chen",
-        email = "fallon@spotify.com",
-        url = url("https://twitter.com/fallonfofallon")
-      ),
-      Developer(
-        id = "regadas",
-        name = "Filipe Regadas",
-        email = "filiperegadas@gmail.com",
-        url = url("https://twitter.com/regadas")
-      ),
-      Developer(
-        id = "jto",
-        name = "Julien Tournay",
-        email = "julient@spotify.com",
-        url = url("https://twitter.com/skaalf")
-      ),
-      Developer(
-        id = "clairemcginty",
-        name = "Claire McGinty",
-        email = "clairem@spotify.com",
-        url = url("http://github.com/clairemcginty")
-      ),
-      Developer(
-        id = "syodage",
-        name = "Shameera Rathnayaka",
-        email = "shameerayodage@gmail.com",
-        url = url("http://github.com/syodage")
-      ),
-      Developer(
-        id = "kellen",
-        name = "Kellen Dye",
-        email = "dye.kellen@gmail.com",
-        url = url("http://github.com/kellen")
-      ),
-      Developer(
-        id = "farzad-sedghi",
-        name = "farzad sedghi",
-        email = "farzadsedghi2@gmail.com",
-        url = url("http://github.com/farzad-sedghi")
-      )
-    )
+    coverageHighlighting := true
   )
 
-lazy val publishSettings = Def.settings(
-  // Release settings
-  sonatypeProfileName := "com.spotify"
-)
+//lazy val publishSettings = Def.settings(
+//  // Release settings
+//  sonatypeProfileName := "com.spotify"
+//)
 
 // for modules containing java jUnit 4 tests
 lazy val jUnitSettings = Def.settings(
@@ -464,11 +568,11 @@ def splitTests(tests: Seq[TestDefinition], filter: Seq[String], forkOptions: For
   }
 }
 
-lazy val root: Project = Project("scio", file("."))
+lazy val scio = project
+  .in(file("."))
+  .enablePlugins(NoPublishPlugin)
   .settings(commonSettings)
   .settings(
-    publish / skip := true,
-    mimaPreviousArtifacts := Set.empty,
     assembly / aggregate := false
   )
   .aggregate(
@@ -494,12 +598,11 @@ lazy val root: Project = Project("scio", file("."))
     `scio-test`
   )
 
-lazy val `scio-core`: Project = project
+lazy val `scio-core` = project
   .in(file("scio-core"))
   .enablePlugins(BuildInfoPlugin)
   .dependsOn(`scio-macros`)
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
@@ -555,14 +658,13 @@ lazy val `scio-core`: Project = project
     buildInfoPackage := "com.spotify.scio"
   )
 
-lazy val `scio-test`: Project = project
+lazy val `scio-test` = project
   .in(file("scio-test"))
   .dependsOn(
     `scio-core` % "compile",
     `scio-avro` % "compile->test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(protobufSettings)
@@ -618,10 +720,9 @@ lazy val `scio-test`: Project = project
     )
   )
 
-lazy val `scio-macros`: Project = project
+lazy val `scio-macros` = project
   .in(file("scio-macros"))
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio macros",
@@ -632,13 +733,12 @@ lazy val `scio-macros`: Project = project
     )
   )
 
-lazy val `scio-avro`: Project = project
+lazy val `scio-avro` = project
   .in(file("scio-avro"))
   .dependsOn(
     `scio-core`
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio add-on for working with Avro",
@@ -667,7 +767,7 @@ lazy val `scio-avro`: Project = project
     )
   )
 
-lazy val `scio-google-cloud-platform`: Project = project
+lazy val `scio-google-cloud-platform` = project
   .in(file("scio-google-cloud-platform"))
   .dependsOn(
     `scio-core`,
@@ -675,7 +775,6 @@ lazy val `scio-google-cloud-platform`: Project = project
     `scio-test` % "test->test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(macroSettings)
   .settings(jUnitSettings)
   .settings(beamRunnerSettings)
@@ -736,14 +835,13 @@ lazy val `scio-google-cloud-platform`: Project = project
     )
   )
 
-lazy val `scio-cassandra3`: Project = project
+lazy val `scio-cassandra3` = project
   .in(file("scio-cassandra/cassandra3"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     description := "Scio add-on for Apache Cassandra 3.x",
     libraryDependencies ++= Seq(
@@ -766,14 +864,13 @@ lazy val `scio-cassandra3`: Project = project
     )
   )
 
-lazy val `scio-elasticsearch-common`: Project = project
+lazy val `scio-elasticsearch-common` = project
   .in(file("scio-elasticsearch/common"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     libraryDependencies ++= Seq(
@@ -797,13 +894,12 @@ lazy val `scio-elasticsearch-common`: Project = project
     )
   )
 
-lazy val `scio-elasticsearch7`: Project = project
+lazy val `scio-elasticsearch7` = project
   .in(file("scio-elasticsearch/es7"))
   .dependsOn(
     `scio-elasticsearch-common`
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     unusedCompileDependenciesFilter -= moduleFilter("co.elastic.clients", "elasticsearch-java"),
@@ -812,13 +908,12 @@ lazy val `scio-elasticsearch7`: Project = project
     )
   )
 
-lazy val `scio-elasticsearch8`: Project = project
+lazy val `scio-elasticsearch8` = project
   .in(file("scio-elasticsearch/es8"))
   .dependsOn(
     `scio-elasticsearch-common`
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     description := "Scio add-on for writing to Elasticsearch",
     unusedCompileDependenciesFilter -= moduleFilter("co.elastic.clients", "elasticsearch-java"),
@@ -827,7 +922,7 @@ lazy val `scio-elasticsearch8`: Project = project
     )
   )
 
-lazy val `scio-extra`: Project = project
+lazy val `scio-extra` = project
   .in(file("scio-extra"))
   .dependsOn(
     `scio-core` % "compile->compile;provided->provided",
@@ -837,7 +932,6 @@ lazy val `scio-extra`: Project = project
     `scio-macros`
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
@@ -883,14 +977,13 @@ lazy val `scio-extra`: Project = project
     compileOrder := CompileOrder.JavaThenScala
   )
 
-lazy val `scio-grpc`: Project = project
+lazy val `scio-grpc` = project
   .in(file("scio-grpc"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(protobufSettings)
   .settings(
     description := "Scio add-on for gRPC",
@@ -909,14 +1002,13 @@ lazy val `scio-grpc`: Project = project
     )
   )
 
-lazy val `scio-jdbc`: Project = project
+lazy val `scio-jdbc` = project
   .in(file("scio-jdbc"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     description := "Scio add-on for JDBC",
     libraryDependencies ++= Seq(
@@ -930,14 +1022,13 @@ lazy val `scio-jdbc`: Project = project
     )
   )
 
-lazy val `scio-neo4j`: Project = project
+lazy val `scio-neo4j` = project
   .in(file("scio-neo4j"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     description := "Scio add-on for Neo4J",
     libraryDependencies ++= Seq(
@@ -952,7 +1043,7 @@ lazy val `scio-neo4j`: Project = project
 
 val ensureSourceManaged = taskKey[Unit]("ensureSourceManaged")
 
-lazy val `scio-parquet`: Project = project
+lazy val `scio-parquet` = project
   .in(file("scio-parquet"))
   .dependsOn(
     `scio-core`,
@@ -960,7 +1051,6 @@ lazy val `scio-parquet`: Project = project
     `scio-test` % "test->test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     // change annotation processor output directory so IntelliJ can pick them up
     ensureSourceManaged := IO.createDirectory(sourceManaged.value / "main"),
@@ -1007,7 +1097,7 @@ lazy val `scio-parquet`: Project = project
     )
   )
 
-lazy val `scio-tensorflow`: Project = project
+lazy val `scio-tensorflow` = project
   .in(file("scio-tensorflow"))
   .dependsOn(
     `scio-avro`,
@@ -1015,7 +1105,6 @@ lazy val `scio-tensorflow`: Project = project
     `scio-test` % "test->test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(protobufSettings)
   .settings(
     description := "Scio add-on for TensorFlow",
@@ -1050,8 +1139,9 @@ lazy val `scio-tensorflow`: Project = project
     )
   )
 
-lazy val `scio-examples`: Project = project
+lazy val `scio-examples` = project
   .in(file("scio-examples"))
+  .enablePlugins(NoPublishPlugin)
   .disablePlugins(ScalafixPlugin)
   .dependsOn(
     `scio-core`,
@@ -1072,12 +1162,10 @@ lazy val `scio-examples`: Project = project
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
-    publish / skip := true,
-    mimaPreviousArtifacts := Set.empty,
-    tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnUnusedLocals,
-      ScalacOptions.privateWarnUnusedLocals
-    ),
+//    tpolecatExcludeOptions ++= Set(
+//      ScalacOptions.warnUnusedLocals,
+//      ScalacOptions.privateWarnUnusedLocals
+//    ),
     undeclaredCompileDependenciesFilter := NothingFilter,
     unusedCompileDependenciesFilter -= moduleFilter("mysql", "mysql-connector-java"),
     libraryDependencies ++= Seq(
@@ -1140,7 +1228,7 @@ lazy val `scio-examples`: Project = project
     )
   )
 
-lazy val `scio-repl`: Project = project
+lazy val `scio-repl` = project
   .in(file("scio-repl"))
   .dependsOn(
     `scio-core`,
@@ -1148,11 +1236,10 @@ lazy val `scio-repl`: Project = project
     `scio-extra`
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(macroSettings)
   .settings(
     // drop repl compatibility with java 8
-    tpolecatDevModeOptions ~= { _.filterNot(_ == Scalac.release8) },
+    // tpolecatDevModeOptions ~= { _.filterNot(_ == Scalac.release8) },
     // do not fork when running otherwise system terminal cannot be created.
     run / fork := false,
     libraryDependencies ++= Seq(
@@ -1245,7 +1332,7 @@ lazy val `scio-repl`: Project = project
     }
   )
 
-lazy val `scio-jmh`: Project = project
+lazy val `scio-jmh` = project
   .in(file("scio-jmh"))
   .enablePlugins(JmhPlugin)
   .dependsOn(
@@ -1270,14 +1357,13 @@ lazy val `scio-jmh`: Project = project
     mimaPreviousArtifacts := Set.empty
   )
 
-lazy val `scio-smb`: Project = project
+lazy val `scio-smb` = project
   .in(file("scio-smb"))
   .dependsOn(
     `scio-core`,
     `scio-test` % Test
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(jUnitSettings)
   .settings(beamRunnerSettings)
   .settings(
@@ -1342,14 +1428,13 @@ lazy val `scio-smb`: Project = project
     compileOrder := CompileOrder.JavaThenScala
   )
 
-lazy val `scio-redis`: Project = project
+lazy val `scio-redis` = project
   .in(file("scio-redis"))
   .dependsOn(
     `scio-core`,
     `scio-test` % "test"
   )
   .settings(commonSettings)
-  .settings(publishSettings)
   .settings(
     description := "Scio integration with Redis",
     libraryDependencies ++= Seq(
@@ -1366,7 +1451,7 @@ lazy val `scio-redis`: Project = project
     )
   )
 
-lazy val integration: Project = project
+lazy val integration = project
   .in(file("integration"))
   .dependsOn(
     `scio-core` % "test->provided,test",
@@ -1404,7 +1489,7 @@ lazy val integration: Project = project
 // =======================================================================
 // Site settings
 // =======================================================================
-lazy val site: Project = project
+lazy val site = project
   .in(file("site"))
   .enablePlugins(
     ParadoxSitePlugin,
@@ -1512,8 +1597,6 @@ lazy val site: Project = project
 lazy val soccoIndex = taskKey[File]("Generates examples/index.html")
 lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
   Seq(
-    // socco-ng has not been published for more recent scala versions
-    scalaVersion := "2.13.10",
     scalacOptions ++= Seq(
       "-P:socco:out:scio-examples/target/site",
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"

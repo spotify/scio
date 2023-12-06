@@ -2,6 +2,7 @@ name: pre-release-check
 
 on:
   workflow_dispatch # Manually triggered
+
 jobs:
   test-dataflow:
     runs-on: ubuntu-latest
