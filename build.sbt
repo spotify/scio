@@ -403,6 +403,7 @@ val commonSettings = Def.settings(
     }
   },
   unusedCompileDependenciesFilter -= Seq(
+    moduleFilter("com.chuusai", "shapeless"),
     moduleFilter("org.scala-lang", "scala-reflect"),
     moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
     moduleFilter("org.typelevel", "scalac-compat-annotation")
@@ -768,6 +769,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
       "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
@@ -884,6 +886,7 @@ lazy val `scio-extra` = project
   .settings(
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(
+      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.zetasketch" % "zetasketch" % zetasketchVersion,
@@ -937,6 +940,7 @@ lazy val `scio-grpc` = project
     unusedCompileDependenciesFilter -= moduleFilter("com.google.protobuf", "protobuf-java"),
     libraryDependencies ++= Seq(
       // compile
+      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.guava" % "failureaccess" % failureAccessVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
@@ -944,6 +948,7 @@ lazy val `scio-grpc` = project
       "io.grpc" % "grpc-stub" % grpcVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       // test
       "io.grpc" % "grpc-netty" % grpcVersion % Test
     )
@@ -965,6 +970,7 @@ lazy val `scio-jdbc` = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion
     )
   )
@@ -1323,6 +1329,7 @@ lazy val `scio-smb` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
+      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
@@ -1386,6 +1393,7 @@ lazy val `scio-redis` = project
     description := "Scio integration with Redis",
     libraryDependencies ++= Seq(
       // compile
+      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
