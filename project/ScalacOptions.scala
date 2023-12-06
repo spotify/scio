@@ -67,6 +67,7 @@ object ScalacOptions {
     "-no-java-comments",
     _.isBetween(V2_12_0, V2_13_0)
   )
+
   def tokensForVersion(
     scalaVersion: String,
     proposedScalacOptions: Set[ScalacOption]
@@ -86,8 +87,7 @@ object ScalacOptions {
       privateBackendParallelism(cpuParallelism),
       privateWarnMacrosOption,
       warnMacrosOption,
-      warnConfOption,
-      docNoJavaCommentOption
+      warnConfOption
     )
   )
 }
