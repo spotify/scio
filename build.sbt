@@ -380,10 +380,6 @@ val commonSettings = Def.settings(
     )
     opts.filterNot(exclude.contains)
   },
-  Compile / doc / scalacOptions ++= ScalacOptions.tokensForVersion(
-    scalaVersion.value,
-    Set(ScalacOptions.docNoJavaCommentOption)
-  ),
   javacOptions ~= { opts =>
     val exclude = Set(
       "-Xlint:all" // too many warnings

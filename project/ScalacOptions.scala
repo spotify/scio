@@ -62,12 +62,6 @@ object ScalacOptions {
     _.isBetween(V2_13_2, V3_0_0)
   )
 
-  // Doc
-  val docNoJavaCommentOption = other(
-    "-no-java-comments",
-    _.isBetween(V2_12_0, V2_13_0)
-  )
-
   def tokensForVersion(
     scalaVersion: String,
     proposedScalacOptions: Set[ScalacOption]
