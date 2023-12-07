@@ -21,6 +21,8 @@ import java.io.File
 import java.nio.file.Files
 import com.spotify.scio.avro.{Account, AvroIO, GenericRecordTap, SpecificRecordTap}
 import com.spotify.scio.io.{TextIO, TextTap}
+import com.spotify.scio.parquet.avro.{ParquetAvroIO, ParquetAvroTap}
+import org.apache.avro.generic.GenericRecord
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -45,16 +47,17 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      GenericRecordTap(
-        path = userDir.getAbsolutePath,
-        schema = SortMergeBucketExample.UserDataSchema,
-        params = AvroIO.ReadParam(".avro")
-      ).value.size shouldBe 500
+      ParquetAvroIO[GenericRecord](
+        path = userDir.getAbsolutePath
+      )
+        .tap(ParquetAvroIO.ReadParam[GenericRecord](ParquetAvroIO.WriteParam()))
+        .value.size shouldBe 500
 
-      SpecificRecordTap[Account](
-        path = accountDir.getAbsolutePath,
-        params = AvroIO.ReadParam(".avro")
-      ).value.size shouldBe 500
+      ParquetAvroIO[Account](
+        path = accountDir.getAbsolutePath
+      )
+        .tap(ParquetAvroIO.ReadParam[Account](ParquetAvroIO.WriteParam()))
+        .value.size shouldBe 500
 
       SortMergeBucketJoinExample.main(
         Array(
@@ -87,10 +90,11 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      SpecificRecordTap[Account](
-        joinOutputDir.getAbsolutePath,
-        AvroIO.ReadParam(".avro")
-      ).value
+      ParquetAvroIO[Account](
+        path = joinOutputDir.getAbsolutePath
+      )
+        .tap(ParquetAvroIO.ReadParam[Account](ParquetAvroIO.WriteParam()))
+        .value
         .map(account => (account.getId, account.getType.toString))
         .toList should contain theSameElementsAs (0 until 500).map((_, "combinedAmount"))
       ()

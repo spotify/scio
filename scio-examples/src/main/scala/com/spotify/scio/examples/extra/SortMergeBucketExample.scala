@@ -30,10 +30,9 @@ import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.avro.Account
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Schema
-import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
-import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, TargetParallelism}
+import org.apache.beam.sdk.extensions.smb.{ParquetAvroSortedBucketIO, TargetParallelism}
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.util.Random
@@ -78,11 +77,10 @@ object SortMergeBucketWriteExample {
     sc.parallelize(0 until 500)
       .map(i => SortMergeBucketExample.user(i.toString, i % 100))
       .saveAsSortedBucket(
-        AvroSortedBucketIO
+        ParquetAvroSortedBucketIO
           .write(classOf[String], "userId", SortMergeBucketExample.UserDataSchema)
           .to(args("users"))
           .withTempDirectory(sc.options.getTempLocation)
-          .withCodec(CodecFactory.snappyCodec())
           .withHashType(HashType.MURMUR3_32)
           .withFilenamePrefix("example-prefix")
           .withNumBuckets(2)
@@ -101,12 +99,11 @@ object SortMergeBucketWriteExample {
           .build()
       }
       .saveAsSortedBucket(
-        AvroSortedBucketIO
+        ParquetAvroSortedBucketIO
           .write[String, Account](classOf[String], "name", classOf[Account])
           .to(args("accounts"))
           .withSorterMemoryMb(128)
           .withTempDirectory(sc.options.getTempLocation)
-          .withCodec(CodecFactory.snappyCodec())
           .withHashType(HashType.MURMUR3_32)
           .withFilenamePrefix("part") // Default is "bucket"
           .withNumBuckets(1)
@@ -124,10 +121,13 @@ object SortMergeBucketWriteExample {
 
 object SortMergeBucketJoinExample {
   import com.spotify.scio.smb._
+  import magnolify.parquet._
 
   implicit val coder: Coder[GenericRecord] =
     Coder.avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
+  case class Projection(userId: Option[String], age: Int)
+  val parquetType = ParquetType[Projection]
   case class UserAccountData(userId: String, age: Int, balance: Double) {
     override def toString: String = s"$userId\t$age\t$balance"
   }
@@ -143,13 +143,13 @@ object SortMergeBucketJoinExample {
     // #SortMergeBucketExample_join
     sc.sortMergeJoin(
       classOf[String],
-      AvroSortedBucketIO
-        .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
+      ParquetAvroSortedBucketIO
+        .read(new TupleTag[GenericRecord]("lhs"), parquetType.avroSchema)
         // 1. Only 1 user per user ID
         // 2. Out of key intersection 250-499, only 100 (300-349, 400-499) with age < 50
         .withPredicate((xs, x) => xs.size() == 0 && x.get("age").asInstanceOf[Int] < 50)
         .from(args("users")),
-      AvroSortedBucketIO
+      ParquetAvroSortedBucketIO
         .read(new TupleTag[Account]("rhs"), classOf[Account])
         .from(args("accounts")),
       TargetParallelism.max()
@@ -175,10 +175,10 @@ object SortMergeBucketTransformExample {
 
     // #SortMergeBucketExample_transform
     val (readLhs, readRhs) = (
-      AvroSortedBucketIO
+      ParquetAvroSortedBucketIO
         .read(new TupleTag[GenericRecord]("lhs"), SortMergeBucketExample.UserDataSchema)
         .from(args("users")),
-      AvroSortedBucketIO
+      ParquetAvroSortedBucketIO
         .read(new TupleTag[Account]("rhs"), classOf[Account])
         .from(args("accounts"))
     )
@@ -189,7 +189,7 @@ object SortMergeBucketTransformExample {
       readRhs,
       TargetParallelism.auto()
     ).to(
-      AvroSortedBucketIO
+      ParquetAvroSortedBucketIO
         .transformOutput(classOf[String], "name", classOf[Account])
         .to(args("output"))
     ).via { case (key, (users, accounts), outputCollector) =>
