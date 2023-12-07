@@ -128,6 +128,7 @@ object SortMergeBucketJoinExample {
 
   case class Projection(userId: Option[String], age: Int)
   val parquetType = ParquetType[Projection]
+
   case class UserAccountData(userId: String, age: Int, balance: Double) {
     override def toString: String = s"$userId\t$age\t$balance"
   }

@@ -47,17 +47,15 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      ParquetAvroIO[GenericRecord](
-        path = userDir.getAbsolutePath
-      )
-        .tap(ParquetAvroIO.ReadParam[GenericRecord](ParquetAvroIO.WriteParam()))
-        .value.size shouldBe 500
+      ParquetAvroTap(
+        path = userDir.getAbsolutePath,
+        ParquetAvroIO.ReadParam[GenericRecord](ParquetAvroIO.WriteParam())
+      ).value.size shouldBe 500
 
-      ParquetAvroIO[Account](
-        path = accountDir.getAbsolutePath
-      )
-        .tap(ParquetAvroIO.ReadParam[Account](ParquetAvroIO.WriteParam()))
-        .value.size shouldBe 500
+      ParquetAvroTap(
+        path = accountDir.getAbsolutePath,
+        ParquetAvroIO.ReadParam[Account](ParquetAvroIO.WriteParam())
+      ).value.size shouldBe 500
 
       SortMergeBucketJoinExample.main(
         Array(
@@ -90,11 +88,10 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
         )
       )
 
-      ParquetAvroIO[Account](
-        path = joinOutputDir.getAbsolutePath
-      )
-        .tap(ParquetAvroIO.ReadParam[Account](ParquetAvroIO.WriteParam()))
-        .value
+      ParquetAvroTap(
+        path = joinOutputDir.getAbsolutePath,
+        ParquetAvroIO.ReadParam[Account](ParquetAvroIO.WriteParam())
+      ).value
         .map(account => (account.getId, account.getType.toString))
         .toList should contain theSameElementsAs (0 until 500).map((_, "combinedAmount"))
       ()
