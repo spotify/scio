@@ -18,8 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.testing.PipelineSpec
-
-import scala.annotation.{nowarn, unused}
+import org.typelevel.scalaccompat.annotation.unused
 
 class ClosureTest extends PipelineSpec {
   "SCollection" should "support lambda" in {
