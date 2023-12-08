@@ -373,18 +373,20 @@ val commonSettings = Def.settings(
   ),
   scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
   scalacOptions := {
-    val exclude = ScalacOptions.tokensForVersion(
-      scalaVersion.value,
-      Set(
-        // too many false positives
-        ScalacOptions.privateWarnDeadCode,
-        ScalacOptions.warnDeadCode,
-        // too many warnings
-        ScalacOptions.warnValueDiscard,
-        // not ready for scala 3 yet
-        ScalacOptions.source3
+    val exclude = ScalacOptions
+      .tokensForVersion(
+        scalaVersion.value,
+        Set(
+          // too many false positives
+          ScalacOptions.privateWarnDeadCode,
+          ScalacOptions.warnDeadCode,
+          // too many warnings
+          ScalacOptions.warnValueDiscard,
+          // not ready for scala 3 yet
+          ScalacOptions.source3
+        )
       )
-    ).toSet
+      .toSet
     scalacOptions.value.filterNot(exclude.contains)
   },
   javacOptions := {
