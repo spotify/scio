@@ -20,7 +20,7 @@ import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 class CollectFnWithResource[T, U, R] private[transforms] (
   resource: => R,

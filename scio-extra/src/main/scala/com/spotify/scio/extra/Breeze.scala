@@ -21,7 +21,7 @@ import breeze.linalg.operators.OpAdd
 import breeze.linalg.support.CanCopy
 import com.twitter.algebird.Semigroup
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 /**
  * Utilities for Breeze.

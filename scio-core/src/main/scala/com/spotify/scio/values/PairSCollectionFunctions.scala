@@ -34,7 +34,7 @@ import org.apache.beam.sdk.values.{KV, PCollection}
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 private object PairSCollectionFunctions {
   private val logger = LoggerFactory.getLogger(this.getClass)

@@ -50,7 +50,7 @@ import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try

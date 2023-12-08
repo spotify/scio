@@ -21,7 +21,7 @@ import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
 import org.joda.time.Instant
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 import scala.collection.mutable.{Buffer => MBuffer}
 
 class RandomSamplerTest extends PipelineSpec {

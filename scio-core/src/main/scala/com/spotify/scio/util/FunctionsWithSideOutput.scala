@@ -22,7 +22,7 @@ import com.spotify.scio.values.SideOutputContext
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import com.twitter.chill.ClosureCleaner
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 private[scio] object FunctionsWithSideOutput {
   trait SideOutputFn[T, U] extends NamedDoFn[T, U] {

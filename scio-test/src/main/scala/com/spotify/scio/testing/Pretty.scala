@@ -26,7 +26,7 @@ import pprint.PPrinter
 import com.google.api.client.json.GenericJson
 import org.apache.beam.sdk.extensions.gcp.util.Transport
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 @registerSysProps
 object PrettySysProps {
