@@ -372,19 +372,27 @@ val commonSettings = Def.settings(
     HeaderFileType.java -> keepExistingHeader
   ),
   scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
-  scalacOptions ~= { opts =>
-    val exclude = Set(
-      "-Wdead-code", // too many false positives
-      "-Wvalue-discard", // too many warnings
-      "-Xsource:3" // not ready for scala 3 yet
-    )
-    opts.filterNot(exclude.contains)
+  scalacOptions := {
+    val exclude = ScalacOptions.tokensForVersion(
+      scalaVersion.value,
+      Set(
+        // too many false positives
+        ScalacOptions.privateWarnDeadCode,
+        ScalacOptions.warnDeadCode,
+        // too many warnings
+        ScalacOptions.warnValueDiscard,
+        // not ready for scala 3 yet
+        ScalacOptions.source3
+      )
+    ).toSet
+    scalacOptions.value.filterNot(exclude.contains)
   },
-  javacOptions ~= { opts =>
+  javacOptions := {
     val exclude = Set(
-      "-Xlint:all" // too many warnings
+      // too many warnings
+      "-Xlint:all"
     )
-    opts.filterNot(exclude.contains)
+    javacOptions.value.filterNot(exclude.contains)
   },
   javaOptions := JavaOptions.defaults(javaMajorVersion),
   excludeDependencies += Exclude.beamKafka,
@@ -1105,10 +1113,15 @@ lazy val `scio-examples` = project
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
-//    tpolecatExcludeOptions ++= Set(
-//      ScalacOptions.warnUnusedLocals,
-//      ScalacOptions.privateWarnUnusedLocals
-//    ),
+    scalacOptions := {
+      val exclude = ScalacOptions
+        .tokensForVersion(
+          scalaVersion.value,
+          Set(ScalacOptions.warnUnused, ScalacOptions.privateWarnUnused)
+        )
+        .toSet
+      scalacOptions.value.filterNot(exclude.contains)
+    },
     undeclaredCompileDependenciesFilter := NothingFilter,
     unusedCompileDependenciesFilter -= moduleFilter("mysql", "mysql-connector-java"),
     libraryDependencies ++= Seq(
@@ -1161,7 +1174,6 @@ lazy val `scio-examples` = project
         "RunPreReleaseIT.scala"
       }
     },
-    run / fork := true,
     Compile / doc / sources := List(),
     Test / testGrouping := splitTests(
       (Test / definedTests).value,
@@ -1181,9 +1193,11 @@ lazy val `scio-repl` = project
   .settings(macroSettings)
   .settings(
     // drop repl compatibility with java 8
-    // tpolecatDevModeOptions ~= { _.filterNot(_ == Scalac.release8) },
-    // do not fork when running otherwise system terminal cannot be created.
-    run / fork := false,
+    tlJdkRelease := Some(11),
+    unusedCompileDependenciesFilter -= Seq(
+      moduleFilter("org.scala-lang", "scala-compiler"),
+      moduleFilter("org.scalamacros", "paradise")
+    ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,

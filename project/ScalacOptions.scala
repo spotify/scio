@@ -41,7 +41,7 @@ object ScalacOptions {
     _.isBetween(V2_12_0, V2_13_0)
   )
 
-  private val cpuParallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
+  val source3 = org.typelevel.scalacoptions.ScalacOptions.source3
 
   // Warn
   val privateWarnMacrosOption = privateWarnOption(
@@ -52,15 +52,21 @@ object ScalacOptions {
     "macros:after",
     _.isBetween(V2_13_0, V3_0_0)
   )
-  // silence all scala library deprecation warnings in 2.13
-  // since we still support 2.12
-  // unused-imports origin will be supported in next 2.13.9
-  // https://github.com/scala/scala/pull/9939
+
   val warnConfOption = warnOption(
+    // silence all scala library deprecation warnings in 2.13
+    // since we still support 2.12
     "conf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
+      // silence unused-imports from scala.collection.compat
       ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s",
     _.isBetween(V2_13_2, V3_0_0)
   )
+
+  val privateWarnDeadCode = org.typelevel.scalacoptions.ScalacOptions.privateWarnDeadCode
+  val warnDeadCode = org.typelevel.scalacoptions.ScalacOptions.warnDeadCode
+  val warnValueDiscard = org.typelevel.scalacoptions.ScalacOptions.warnValueDiscard
+  val privateWarnUnused = org.typelevel.scalacoptions.ScalacOptions.privateWarnUnused
+  val warnUnused = warnOption("unused", _.isBetween(V2_13_0, V3_0_0))
 
   def tokensForVersion(
     scalaVersion: String,
@@ -71,6 +77,7 @@ object ScalacOptions {
       .tokensForVersion(ScalaVersion(major, minor, patch), proposedScalacOptions)
   }
 
+  private val cpuParallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
   def defaults(scalaVersion: String): Seq[String] = tokensForVersion(
     scalaVersion,
     Set(
