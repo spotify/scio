@@ -402,6 +402,11 @@ val commonSettings = Def.settings(
       Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
     }
   },
+  // libs to help with cross-build
+  libraryDependencies ++= Seq(
+    "com.chuusai" %% "shapeless" % shapelessVersion,
+    "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
+  ),
   unusedCompileDependenciesFilter -= Seq(
     moduleFilter("com.chuusai", "shapeless"),
     moduleFilter("org.scala-lang", "scala-reflect"),
@@ -562,7 +567,6 @@ lazy val `scio-core` = project
     unusedCompileDependenciesFilter -= moduleFilter("com.google.auto.service", "auto-service"),
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
@@ -591,7 +595,6 @@ lazy val `scio-core` = project
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
       // provided
@@ -643,7 +646,6 @@ lazy val `scio-test` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.scalactic" %% "scalactic" % scalatestVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
@@ -676,7 +678,6 @@ lazy val `scio-macros` = project
     description := "Scio macros",
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion
     )
   )
@@ -701,7 +702,6 @@ lazy val `scio-avro` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
@@ -769,7 +769,6 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
       "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
@@ -805,7 +804,6 @@ lazy val `scio-cassandra3` = project
       "org.apache.cassandra" % "cassandra-all" % cassandraVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
@@ -832,7 +830,6 @@ lazy val `scio-elasticsearch-common` = project
       "org.apache.httpcomponents" % "httpasyncclient" % httpAsyncClientVersion,
       "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
       "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version % Provided,
@@ -886,7 +883,6 @@ lazy val `scio-extra` = project
   .settings(
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.google.zetasketch" % "zetasketch" % zetasketchVersion,
@@ -909,7 +905,6 @@ lazy val `scio-extra` = project
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-zetasketch" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.scalanlp" %% "breeze" % breezeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
@@ -940,7 +935,6 @@ lazy val `scio-grpc` = project
     unusedCompileDependenciesFilter -= moduleFilter("com.google.protobuf", "protobuf-java"),
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.google.guava" % "failureaccess" % failureAccessVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
@@ -948,7 +942,6 @@ lazy val `scio-grpc` = project
       "io.grpc" % "grpc-stub" % grpcVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       // test
       "io.grpc" % "grpc-netty" % grpcVersion % Test
     )
@@ -970,7 +963,6 @@ lazy val `scio-jdbc` = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion
     )
   )
@@ -1040,7 +1032,6 @@ lazy val `scio-parquet` = project
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
@@ -1079,7 +1070,6 @@ lazy val `scio-tensorflow` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.tensorflow" % "ndarray" % ndArrayVersion,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
@@ -1153,7 +1143,6 @@ lazy val `scio-examples` = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
@@ -1204,7 +1193,6 @@ lazy val `scio-repl` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion excludeAll (Exclude.gcsio),
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
@@ -1303,7 +1291,6 @@ lazy val `scio-jmh` = project
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       // test
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion % Test,
       "org.slf4j" % "slf4j-nop" % slf4jVersion % Test
     ),
     publish / skip := true,
@@ -1329,7 +1316,6 @@ lazy val `scio-smb` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
@@ -1351,7 +1337,6 @@ lazy val `scio-smb` = project
       "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.checkerframework" % "checker-qual" % checkerQualVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
@@ -1393,12 +1378,10 @@ lazy val `scio-redis` = project
     description := "Scio integration with Redis",
     libraryDependencies ++= Seq(
       // compile
-      "com.chuusai" %% "shapeless" % shapelessVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-redis" % beamVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion,
       "redis.clients" % "jedis" % jedisVersion,
       // test
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
