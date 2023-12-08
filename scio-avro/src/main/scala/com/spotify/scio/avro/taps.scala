@@ -28,6 +28,7 @@ import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
+import org.typelevel.scalaccompat.annotation.unused
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -101,7 +102,7 @@ final case class AvroTaps(self: Taps) {
 
   /** Get a `Future[Tap[T]]` of a Protobuf file. */
   def protobufFile[T: Coder](path: String, params: ProtobufIO.ReadParam = ProtobufIO.ReadParam())(
-    implicit ev: T <:< Message
+    implicit @unused ev: T <:< Message
   ): Future[Tap[T]] =
     self.mkTap(
       s"Protobuf: $path",

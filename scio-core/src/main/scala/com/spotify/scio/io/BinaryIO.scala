@@ -35,6 +35,7 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.util.MimeTypes
 import org.apache.commons.compress.compressors.CompressorStreamFactory
+import org.typelevel.scalaccompat.annotation.unused
 
 import scala.jdk.CollectionConverters._
 import scala.util.Try
@@ -266,7 +267,7 @@ object BinaryIO {
     def readRecord(state: State, is: InputStream): (State, Array[Byte])
 
     /** Read any footer and perform any required validation after the last record is read. */
-    def end(state: State, is: InputStream): Unit = ()
+    def end(@unused state: State, @unused is: InputStream): Unit = ()
   }
 
   final private[scio] class BinarySingleFileSource(

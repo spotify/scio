@@ -57,15 +57,16 @@ object ScalacOptions {
     // silence all scala library deprecation warnings in 2.13
     // since we still support 2.12
     "conf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
-      // silence unused-imports from scala.collection.compat
-      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s",
+      // silence unused-imports compat
+      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s" +
+      ",cat=unused-imports&origin=kantan\\.codecs\\.compat\\..*:s",
     _.isBetween(V2_13_2, V3_0_0)
   )
 
   val privateWarnDeadCode = org.typelevel.scalacoptions.ScalacOptions.privateWarnDeadCode
   val warnDeadCode = org.typelevel.scalacoptions.ScalacOptions.warnDeadCode
   val warnValueDiscard = org.typelevel.scalacoptions.ScalacOptions.warnValueDiscard
-  val privateWarnUnused = org.typelevel.scalacoptions.ScalacOptions.privateWarnUnused
+  val privateWarnUnused = privateWarnOption("_,-nowarn,-privates", _.isBetween(V2_12_0, V2_13_0))
   val warnUnused = warnOption("unused", _.isBetween(V2_13_0, V3_0_0))
 
   def tokensForVersion(

@@ -56,6 +56,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.typelevel.scalaccompat.annotation.unused
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -279,7 +280,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def covary[U >: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
 
   /** lifts this [[SCollection]] to the specified type */
-  def covary_[U](implicit ev: T <:< U): SCollection[U] = this.asInstanceOf[SCollection[U]]
+  def covary_[U](implicit @unused ev: T <:< U): SCollection[U] = this.asInstanceOf[SCollection[U]]
 
   /** lifts this [[SCollection]] to the specified type */
   def contravary[U <: T]: SCollection[U] = this.asInstanceOf[SCollection[U]]
