@@ -31,9 +31,9 @@ import com.spotify.scio.parquet.tensorflow._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.ParquetConfiguration
-import me.lyh.parquet.tensorflow.{Schema => ExampleSchema}
 import org.apache.avro.generic.GenericRecord
 import org.tensorflow.proto.example.{BytesList, Example, Feature, Features, FloatList}
+import org.tensorflow.metadata.{v0 => tfmd}
 
 object ParquetExample {
 
@@ -154,38 +154,40 @@ object ParquetExample {
       )
 
   private[extra] def toExample(account: Account): Example = {
+    val amount = Feature
+      .newBuilder()
+      .setFloatList(FloatList.newBuilder().addValue(account.getAmount.toFloat))
+      .build()
+    val `type` = Feature
+      .newBuilder()
+      .setBytesList(
+        BytesList.newBuilder().addValue(ByteString.copyFromUtf8(account.getType.toString))
+      )
+      .build()
     val features = Features
       .newBuilder()
-      .putFeature(
-        "amount",
-        Feature
-          .newBuilder()
-          .setFloatList(FloatList.newBuilder().addValue(account.getAmount.toFloat))
-          .build()
-      )
-      .putFeature(
-        "type",
-        Feature
-          .newBuilder()
-          .setBytesList(
-            BytesList.newBuilder().addValue(ByteString.copyFromUtf8(account.getType.toString))
-          )
-          .build()
-      )
-
+      .putFeature("amount", amount)
+      .putFeature("type", `type`)
+      .build()
     Example.newBuilder().setFeatures(features).build()
   }
 
-  private def exampleIn(sc: ScioContext, args: Args): ClosedTap[String] =
-    sc.parquetExampleFile(args("input"), projection = Seq("amount"))
+  private def exampleIn(sc: ScioContext, args: Args): ClosedTap[String] = {
+    val projection = tfmd.Schema
+      .newBuilder()
+      .addFeature(tfmd.Feature.newBuilder().setName("amount").setType(tfmd.FeatureType.FLOAT))
+      .build()
+
+    sc.parquetExampleFile(args("input"), projection)
       .saveAsTextFile(args("output"))
+  }
 
   private def exampleOut(sc: ScioContext, args: Args): ClosedTap[Example] = {
-    val schema = ExampleSchema
+    val schema = tfmd.Schema
       .newBuilder()
-      .required("amount", ExampleSchema.Type.FLOAT)
-      .required("type", ExampleSchema.Type.BYTES)
-      .named("Example")
+      .addFeature(tfmd.Feature.newBuilder().setName("amount").setType(tfmd.FeatureType.FLOAT))
+      .addFeature(tfmd.Feature.newBuilder().setName("type").setType(tfmd.FeatureType.BYTES))
+      .build()
 
     sc.parallelize(fakeData.map(toExample))
       .saveAsParquetExampleFile(args("output"), schema)

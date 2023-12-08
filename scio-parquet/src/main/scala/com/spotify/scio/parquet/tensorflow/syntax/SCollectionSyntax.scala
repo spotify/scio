@@ -22,10 +22,10 @@ import com.spotify.scio.parquet.tensorflow.ParquetExampleIO
 import com.spotify.scio.parquet.tensorflow.ParquetExampleIO.WriteParam
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
-import me.lyh.parquet.tensorflow.Schema
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.Example
+import org.tensorflow.metadata.v0.Schema
 
 /** Enhanced version of [[SCollection]] with Parquet [[Example]] methods. */
 final class SCollectionOps(private val self: SCollection[Example]) extends AnyVal {

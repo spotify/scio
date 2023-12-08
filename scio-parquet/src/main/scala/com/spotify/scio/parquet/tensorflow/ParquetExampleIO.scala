@@ -17,6 +17,12 @@
 
 package com.spotify.scio.parquet.tensorflow
 
+import com.spotify.parquet.tensorflow.{
+  TensorflowExampleParquetInputFormat,
+  TensorflowExampleParquetReader,
+  TensorflowExampleReadSupport
+}
+
 import java.lang.{Boolean => JBoolean}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -28,12 +34,6 @@ import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
-import me.lyh.parquet.tensorflow.{
-  ExampleParquetInputFormat,
-  ExampleParquetReader,
-  ExampleReadSupport,
-  Schema
-}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.io._
@@ -44,9 +44,10 @@ import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.hadoop.ParquetInputFormat
+import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader}
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.{Example, Features}
+import org.tensorflow.metadata.v0.Schema
 
 import scala.jdk.CollectionConverters._
 
@@ -70,12 +71,11 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     conf: Configuration,
     params: ReadP
   ): SCollection[Example] = {
-    val job = Job.getInstance(conf)
     val filePattern = ScioUtil.filePattern(path, params.suffix)
 
     Option(params.projection).foreach { projection =>
-      ExampleParquetInputFormat.setFields(job, projection.asJava)
-      conf.set(ExampleParquetInputFormat.FIELDS_KEY, String.join(",", projection: _*))
+      TensorflowExampleReadSupport.setRequestedProjection(conf, projection)
+      TensorflowExampleReadSupport.setExampleReadSchema(conf, projection)
     }
 
     Option(params.predicate).foreach { predicate =>
@@ -101,16 +101,18 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
   ): SCollection[Example] = {
     val job = Job.getInstance(conf)
     GcsConnectorUtil.setInputPaths(sc, job, path)
-    job.setInputFormatClass(classOf[ExampleParquetInputFormat])
+    job.setInputFormatClass(classOf[TensorflowExampleParquetInputFormat])
     job.getConfiguration.setClass("key.class", classOf[Void], classOf[Void])
     job.getConfiguration.setClass("value.class", classOf[Example], classOf[Example])
 
-    ParquetInputFormat.setReadSupportClass(job, classOf[ExampleReadSupport])
-    if (params.projection != null) {
-      ExampleParquetInputFormat.setFields(job, params.projection.asJava)
+    ParquetInputFormat.setReadSupportClass(job, classOf[TensorflowExampleReadSupport])
+    Option(params.projection).foreach { projection =>
+      TensorflowExampleParquetInputFormat.setRequestedProjection(job, projection)
+      TensorflowExampleParquetInputFormat.setExampleReadSchema(job, projection)
     }
-    if (params.predicate != null) {
-      ParquetInputFormat.setFilterPredicate(job.getConfiguration, params.predicate)
+
+    Option(params.predicate).foreach { predicate =>
+      ParquetInputFormat.setFilterPredicate(job.getConfiguration, predicate)
     }
 
     val source = HadoopFormatIO
@@ -129,12 +131,13 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     TestDataManager
       .getInput(sc.testId.get)(ParquetExampleIO(path))
       .toSCollection(sc)
-      .map { case (example: Example) =>
+      .map { example =>
         projectionOpt match {
           case None => example
           case Some(projection) =>
+            val featureNames = projection.getFeatureList.asScala.map(_.getName).toSet
             val projectedFeatures = example.getFeatures.getFeatureMap.asScala.filter {
-              case (k, _) => projection.contains(k)
+              case (k, _) => featureNames.contains(k)
             }.asJava
 
             example.toBuilder
@@ -207,7 +210,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
 object ParquetExampleIO {
 
   object ReadParam {
-    val DefaultProjection: Seq[String] = null
+    val DefaultProjection: Schema = null
     val DefaultPredicate: FilterPredicate = null
     val DefaultConfiguration: Configuration = null
     val DefaultSuffix: String = null
@@ -219,7 +222,7 @@ object ParquetExampleIO {
       )
   }
   final case class ReadParam private (
-    projection: Seq[String] = ReadParam.DefaultProjection,
+    projection: Schema = ReadParam.DefaultProjection,
     predicate: FilterPredicate = ReadParam.DefaultPredicate,
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = ReadParam.DefaultSuffix
@@ -255,7 +258,7 @@ final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadPa
     val filePattern = ScioUtil.filePattern(path, params.suffix)
     val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
-      val reader = ExampleParquetReader
+      val reader: ParquetReader[Example] = TensorflowExampleParquetReader
         .builder(BeamInputFile.of(metadata.resourceId()))
         .withConf(Option(params.conf).getOrElse(new Configuration()))
         .build()
