@@ -834,7 +834,7 @@ lazy val `scio-elasticsearch8`: Project = project
 lazy val `scio-extra`: Project = project
   .in(file("scio-extra"))
   .dependsOn(
-    `scio-core` % "compile->compile;provided->provided",
+    `scio-core` % "compile;provided->provided",
     `scio-test` % "test->test",
     `scio-avro`,
     `scio-google-cloud-platform`,
@@ -961,7 +961,7 @@ lazy val `scio-parquet`: Project = project
   .dependsOn(
     `scio-core`,
     `scio-avro`,
-    `scio-tensorflow` % "provided->compile",
+    `scio-tensorflow` % "provided",
     `scio-test` % "test->test"
   )
   .settings(commonSettings)
