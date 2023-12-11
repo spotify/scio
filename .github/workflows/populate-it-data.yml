@@ -13,7 +13,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           export_environment_variables: true
           create_credentials_file: true
-      - uses: google-github-actions/setup-gcloud@v1
+      - uses: google-github-actions/setup-gcloud@v2
       - name: cache SBT
         uses: coursier/cache-action@v6
       - name: Java 11 setup
