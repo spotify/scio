@@ -64,8 +64,8 @@ private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
   val s: MSet[String] =
     java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
 
-  def apply[T](io: ScioIO[T]): JobInputSource[T] = {
-    val key = io.testId
+  def apply[T](io: ScioIO[T]): JobInputSource[T] = apply(io.testId)
+  def apply[T](key: String): JobInputSource[T] = {
     require(
       m.contains(key),
       s"Missing test input: $key, available: ${m.keys.mkString("[", ", ", "]")}"
@@ -85,10 +85,9 @@ private[scio] class TestInput(val m: Map[String, JobInputSource[_]]) {
 private[scio] class TestOutput(val m: Map[String, SCollection[_] => Any]) {
   val s: MSet[String] =
     java.util.concurrent.ConcurrentHashMap.newKeySet[String]().asScala
-
-  def apply[T](io: ScioIO[T]): SCollection[T] => Any = {
+  def apply[T](io: ScioIO[T]): SCollection[T] => Any = apply(io.testId)
+  def apply[T](key: String): SCollection[T] => Any = {
     // TODO: support Materialize outputs, maybe Materialized[T]?
-    val key = io.testId
     require(
       m.contains(key),
       s"Missing test output: $key, available: ${m.keys.mkString("[", ", ", "]")}"

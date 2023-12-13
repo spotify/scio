@@ -21,6 +21,9 @@ import org.apache.beam.sdk.options._
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.runners.PTransformOverride
+
+import scala.jdk.CollectionConverters._
 
 /** Trait with utility methods for unit testing pipelines. */
 trait PipelineTestUtils {
@@ -36,15 +39,15 @@ trait PipelineTestUtils {
    * }
    * }}}
    */
-  def runWithContext[T](fn: ScioContext => T): ScioExecutionContext = {
+  def runWithContext(fn: ScioContext => Any): ScioExecutionContext = {
     val sc = ScioContext.forTest()
     fn(sc)
     sc.run()
   }
 
-  def runWithRealContext[T](
-    options: PipelineOptions
-  )(fn: ScioContext => T): ScioExecutionContext = {
+  def runWithRealContext(
+    options: PipelineOptions = PipelineOptionsFactory.create()
+  )(fn: ScioContext => Any): ScioExecutionContext = {
     val sc = ScioContext(options)
     fn(sc)
     sc.run()
@@ -154,6 +157,31 @@ trait PipelineTestUtils {
     runWithLocalOutput { sc =>
       fn(sc.parallelize(data1), sc.parallelize(data2), sc.parallelize(data3), sc.parallelize(data4))
     }._2
+
+  /**
+   * Test pipeline components with a [[ScioContext]] and replace transforms with the provided
+   * override.
+   *
+   * @param fn
+   *   code that tests the components and verifies the result
+   *
+   * {{{
+   * runWithOverrides(TransformOverride.of("operation", (v: Int) => v.toString)) { sc =>
+   *   val result = sc.parallelize(Seq(1, 2, 3))
+   *     .withName("operation")
+   *     .map(operationFn)
+   *   result should contain theSameElementAs("1", "2", "3")
+   * }
+   * }}}
+   */
+  def runWithOverrides(
+    overrides: PTransformOverride*
+  )(fn: ScioContext => Any): ScioExecutionContext = {
+    val sc = ScioContext.forTest()
+    fn(sc)
+    sc.pipeline.replaceAll(overrides.toList.asJava)
+    sc.run()
+  }
 
   /**
    * Test pipeline components with a [[ScioContext]] and materialized resulting collection.

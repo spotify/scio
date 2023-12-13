@@ -18,17 +18,20 @@
 package com.spotify.scio.testing
 
 import java.lang.reflect.InvocationTargetException
-import com.spotify.scio.ScioResult
-import com.spotify.scio.io.ScioIO
+import com.spotify.scio.{ScioContext, ScioResult}
+import com.spotify.scio.io.{KeyedIO, ScioIO}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import org.apache.beam.sdk.runners.PTransformOverride
 import org.apache.beam.sdk.testing.TestStream
+import org.apache.beam.sdk.testing.TestStream.{ElementEvent, Event}
+import org.apache.beam.sdk.values.TimestampedValue
 import org.apache.beam.sdk.{metrics => beam}
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
+import scala.jdk.CollectionConverters._
 
 /**
  * Set up a Scio job for end-to-end unit testing. To be used in a
@@ -72,7 +75,7 @@ object JobTest {
   case class BeamOptions(opts: List[String])
 
   private case class BuilderState(
-    className: String,
+    job: Either[Class[_], ScioContext => Any],
     cmdlineArgs: Array[String] = Array(),
     input: Map[String, JobInputSource[_]] = Map.empty,
     output: Map[String, SCollection[_] => Any] = Map.empty,
@@ -97,7 +100,10 @@ object JobTest {
   class Builder(private var state: BuilderState) {
 
     /** Test ID for input and output wiring. */
-    val testId: String = TestUtil.newTestId(state.className)
+    val testId: String = state.job match {
+      case Left(clazz) => TestUtil.newTestId(clazz)
+      case Right(_)    => TestUtil.newTestId()
+    }
 
     private[testing] def wasRunInvoked: Boolean = state.wasRunInvoked
 
@@ -109,20 +115,47 @@ object JobTest {
 
     /**
      * Feed an input in the form of a raw `Iterable[T]` to the pipeline being tested. Note that
-     * `TestIO[T]` must match the one used inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")`
+     * `ScioIO[T]` must match the one used inside the pipeline, e.g. `AvroIO[MyRecord]("in.avro")`
      * with `sc.avroFile[MyRecord]("in.avro")`.
      */
-    def input[T: Coder](io: ScioIO[T], value: Iterable[T]): Builder =
-      input(io, IterableInputSource(value))
+    def input[T: Coder](io: ScioIO[T], value: Iterable[T]): Builder = {
+      val source = io match {
+        case kio: KeyedIO[T @unchecked] =>
+          implicit val keyCoder: Coder[kio.KeyT] = kio.keyCoder
+          IterableInputSource(value.map(x => kio.keyBy(x) -> x))
+        case _ =>
+          IterableInputSource(value)
+      }
+      input(io, source)
+    }
 
     /**
      * Feed an input in the form of a `PTransform[PBegin, PCollection[T]]` to the pipeline being
-     * tested. Note that `PTransform` inputs may not be supported for all `TestIO[T]` types.
+     * tested. Note that `PTransform` inputs may not be supported for all `ScioIO[T]` types.
      */
-    def inputStream[T](io: ScioIO[T], stream: TestStream[T]): Builder =
-      input(io, TestStreamInputSource(stream))
+    def inputStream[T: Coder](io: ScioIO[T], stream: TestStream[T]): Builder = {
+      val source = io match {
+        case kio: KeyedIO[T @unchecked] =>
+          implicit val keyCoder: Coder[kio.KeyT] = kio.keyCoder
+          val bCoder = CoderMaterializer.beamWithDefault(Coder[(kio.KeyT, T)])
+          val kvEvents = stream.getEvents.asScala.map {
+            case elemEvent: ElementEvent[T @unchecked] =>
+              val values = elemEvent.getElements.asScala.map { e =>
+                val value = e.getValue
+                val ts = e.getTimestamp
+                TimestampedValue.of[(kio.KeyT, T)](kio.keyBy(value) -> value, ts)
+              }
+              ElementEvent.add(values.asJava)
+            case e => e.asInstanceOf[Event[(kio.KeyT, T)]]
+          }
+          TestStreamInputSource(TestStream.fromRawEvents(bCoder, kvEvents.asJava))
+        case _ =>
+          TestStreamInputSource(stream)
+      }
+      input(io, source)
+    }
 
-    private def input[T](io: ScioIO[T], value: JobInputSource[T]): Builder = {
+    private def input(io: ScioIO[_], value: JobInputSource[_]): Builder = {
       require(!state.input.contains(io.testId), "Duplicate test input: " + io.testId)
       state = state.copy(input = state.input + (io.testId -> value))
       this
@@ -344,30 +377,45 @@ object JobTest {
       state = state.copy(wasRunInvoked = true)
       setUp()
 
-      try {
-        Class
-          .forName(state.className)
-          .getMethod("main", classOf[Array[String]])
-          .invoke(null, state.cmdlineArgs :+ s"--appName=$testId")
-      } catch {
-        // InvocationTargetException stacktrace is noisy and useless
-        case e: InvocationTargetException => throw e.getCause
-        case NonFatal(e)                  => throw e
+      state.job match {
+        case Left(clazz) =>
+          try {
+            clazz
+              .getMethod("main", classOf[Array[String]])
+              .invoke(null, state.cmdlineArgs :+ s"--appName=$testId")
+          } catch {
+            // InvocationTargetException stacktrace is noisy and useless
+            case e: InvocationTargetException => throw e.getCause
+            case NonFatal(e)                  => throw e
+          }
+        case Right(job) =>
+          val sc = ScioContext.forTest(testId)
+          job(sc)
+          sc.run()
       }
 
       tearDown()
     }
 
-    override def toString: String =
-      s"""|JobTest[${state.className}](
-          |\targs: ${state.cmdlineArgs.mkString(" ")}
-          |\tdistCache: ${state.distCaches}
-          |\tinputs: ${state.input.mkString(", ")}""".stripMargin
+    override def toString: String = {
+      val sb = new StringBuilder()
+      sb.append(s"JobTest[${state.job.fold(_.getName, _ => "_")}]")
+      sb.append("(\n")
+      if (state.cmdlineArgs.nonEmpty) sb.append(s"\targs: ${state.cmdlineArgs.mkString(" ")}\n")
+      if (state.distCaches.nonEmpty)
+        sb.append(s"\tdistCache: ${state.distCaches.keys.map(_.uri).mkString(" ")}\n")
+      if (state.input.nonEmpty) sb.append(s"\tinputs: ${state.input.keys.mkString(", ")}\n")
+      if (state.output.nonEmpty) sb.append(s"\toutputs: ${state.output.keys.mkString(", ")}\n")
+      if (state.transformOverrides.nonEmpty)
+        sb.append(s"\toutputs: ${state.transformOverrides.map(_.getMatcher).mkString(", ")}\n")
+      sb.append(")\n")
+      sb.result()
+    }
   }
 
   /** Create a new JobTest.Builder instance. */
   def apply(className: String)(implicit bo: BeamOptions): Builder =
-    new Builder(BuilderState(className))
+    new Builder(BuilderState(Left(Class.forName(className))))
       .args(bo.opts: _*)
 
   /** Create a new JobTest.Builder instance. */
@@ -375,4 +423,8 @@ object JobTest {
     val className = ScioUtil.classOf[T].getName.replaceAll("\\$$", "")
     apply(className).args(bo.opts: _*)
   }
+
+  /** Create a new JobTest.Builder instance. */
+  def apply(job: ScioContext => Any)(implicit bo: BeamOptions): Builder =
+    new Builder(BuilderState(Right(job))).args(bo.opts: _*)
 }

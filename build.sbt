@@ -1285,7 +1285,7 @@ lazy val `scio-smb`: Project = project
   .in(file("scio-smb"))
   .dependsOn(
     `scio-core`,
-    `scio-test` % Test
+    `scio-test` % "test->test"
   )
   .settings(commonSettings)
   .settings(publishSettings)
