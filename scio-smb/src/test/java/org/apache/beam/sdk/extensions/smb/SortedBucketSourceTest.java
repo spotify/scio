@@ -786,8 +786,6 @@ public class SortedBucketSourceTest {
     PAssert.thatMap(output)
         .satisfies(
             m -> {
-              Set<AvroGeneratedUser> actual = Sets.newHashSet(m.get("foo").getAll("source-tag"));
-              Set<AvroGeneratedUser> expected = ImmutableSet.of(avroRecord, parquetRecord);
               Assert.assertEquals(1, m.keySet().size());
               Assert.assertEquals(
                   ImmutableSet.of(avroRecord, parquetRecord),
