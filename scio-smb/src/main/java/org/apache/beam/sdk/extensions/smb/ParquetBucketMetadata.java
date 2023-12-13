@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -36,14 +38,15 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 
 public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> {
 
-  @JsonProperty final String keyField;
+  @JsonProperty private final String keyField;
 
   @JsonProperty
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  final String keyFieldSecondary;
+  private final String keyFieldSecondary;
 
   @JsonIgnore
   private final AtomicReference<Function<V, K1>> keyGettersPrimary = new AtomicReference<>();
@@ -189,47 +192,18 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
-    if (o == null) return false;
-    if (o instanceof AvroBucketMetadata<?, ?, ?>) {
-      AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
-      return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
-    } else if (o instanceof ParquetBucketMetadata<?, ?, ?>) {
-      ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
-      return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
-    } else {
-      return false;
-    }
+  public int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
-    if (o == null) return false;
-    String keyField;
-    String keyFieldSecondary;
-    if (o instanceof AvroBucketMetadata<?, ?, ?>) {
-      AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
-      keyField = that.keyField;
-      keyFieldSecondary = that.keyFieldSecondary;
-    } else if (o instanceof ParquetBucketMetadata<?, ?, ?>) {
-      ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
-      keyField = that.keyField;
-      keyFieldSecondary = that.keyFieldSecondary;
-    } else {
-      return false;
-    }
+  public int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
+  }
 
-    boolean allSecondaryPresent =
-        getKeyClassSecondary() != null
-            && o.getKeyClassSecondary() != null
-            && this.keyFieldSecondary != null
-            && keyFieldSecondary != null;
-    // you messed up
-    if (!allSecondaryPresent) return false;
-    return getKeyClass() == o.getKeyClass()
-        && getKeyClassSecondary() == o.getKeyClassSecondary()
-        && this.keyField.equals(keyField)
-        && this.keyFieldSecondary.equals(keyFieldSecondary);
+  @Override
+  public Set<Class<? extends BucketMetadata>> compatibleMetadataTypes() {
+    return ImmutableSet.of(AvroBucketMetadata.class);
   }
 
   @Override

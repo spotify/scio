@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -34,17 +36,18 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 
 /**
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for Avro {@link IndexedRecord} records.
  */
 public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketMetadata<K1, K2, V> {
 
-  @JsonProperty final String keyField;
+  @JsonProperty private final String keyField;
 
   @JsonProperty
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  final String keyFieldSecondary;
+  private final String keyFieldSecondary;
 
   @JsonIgnore private final AtomicReference<int[]> keyPath = new AtomicReference<>();
   @JsonIgnore private final AtomicReference<int[]> keyPathSecondary = new AtomicReference<>();
@@ -132,6 +135,21 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
   }
 
   @Override
+  public int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, getKeyClass());
+  }
+
+  @Override
+  public int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
+  }
+
+  @Override
+  public Set<Class<? extends BucketMetadata>> compatibleMetadataTypes() {
+    return ImmutableSet.of(ParquetBucketMetadata.class);
+  }
+
+  @Override
   public K1 extractKeyPrimary(V value) {
     int[] path = keyPath.get();
     if (path == null) {
@@ -174,49 +192,5 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
     builder.add(DisplayData.item("keyFieldPrimary", keyField));
     if (keyFieldSecondary != null)
       builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
-  }
-
-  @Override
-  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
-    if (o == null) return false;
-    if (o instanceof AvroBucketMetadata<?, ?, ?>) {
-      AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
-      return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
-    } else if (o instanceof ParquetBucketMetadata<?, ?, ?>) {
-      ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
-      return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
-    } else {
-      return false;
-    }
-  }
-
-  @Override
-  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
-    if (o == null) return false;
-    String keyField;
-    String keyFieldSecondary;
-    if (o instanceof AvroBucketMetadata<?, ?, ?>) {
-      AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
-      keyField = that.keyField;
-      keyFieldSecondary = that.keyFieldSecondary;
-    } else if (o instanceof ParquetBucketMetadata<?, ?, ?>) {
-      ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
-      keyField = that.keyField;
-      keyFieldSecondary = that.keyFieldSecondary;
-    } else {
-      return false;
-    }
-
-    boolean allSecondaryPresent =
-        getKeyClassSecondary() != null
-            && o.getKeyClassSecondary() != null
-            && this.keyFieldSecondary != null
-            && keyFieldSecondary != null;
-    // you messed up
-    if (!allSecondaryPresent) return false;
-    return getKeyClass() == o.getKeyClass()
-        && getKeyClassSecondary() == o.getKeyClassSecondary()
-        && this.keyField.equals(keyField)
-        && this.keyFieldSecondary.equals(keyFieldSecondary);
   }
 }

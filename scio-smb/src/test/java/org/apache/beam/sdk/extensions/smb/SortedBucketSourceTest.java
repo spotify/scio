@@ -27,7 +27,15 @@ import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
@@ -37,6 +45,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.coders.KvCoder;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
@@ -53,6 +64,8 @@ import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
+import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
+import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
@@ -739,28 +752,42 @@ public class SortedBucketSourceTest {
         ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of(parquetRecord)),
         ParquetAvroFileOperations.of(AvroGeneratedUser.class));
 
+    final TupleTag<AvroGeneratedUser> tupleTag = new TupleTag<>("source-tag");
     final PCollection<KV<String, CoGbkResult>> output =
-        pipeline.apply(
-            Read.from(
-                new SortedBucketPrimaryKeyedSource<>(
-                    String.class,
-                    ImmutableList.of(
-                        new PrimaryKeyedBucketedInput<>(
-                            new TupleTag<>("source-tag"),
-                            ImmutableMap.of(
-                                TestUtils.fromFolder(avroDir).toString(),
-                                    KV.of(".avro", AvroFileOperations.of(AvroGeneratedUser.class)),
-                                TestUtils.fromFolder(parquetDir).toString(),
-                                    KV.of(
-                                        ".parquet",
-                                        ParquetAvroFileOperations.of(AvroGeneratedUser.class))),
-                            null)),
-                    TargetParallelism.max(),
-                    "metrics-key")));
+        pipeline
+            .apply(
+                Read.from(
+                    new SortedBucketPrimaryKeyedSource<>(
+                        String.class,
+                        ImmutableList.of(
+                            new PrimaryKeyedBucketedInput<>(
+                                tupleTag,
+                                ImmutableMap.of(
+                                    TestUtils.fromFolder(avroDir).toString(),
+                                        KV.of(
+                                            ".avro",
+                                            AvroFileOperations.of(AvroGeneratedUser.class)),
+                                    TestUtils.fromFolder(parquetDir).toString(),
+                                        KV.of(
+                                            ".parquet",
+                                            ParquetAvroFileOperations.of(AvroGeneratedUser.class))),
+                                null)),
+                        TargetParallelism.max(),
+                        "metrics-key")))
+            .setCoder(
+                KvCoder.of(
+                    StringUtf8Coder.of(),
+                    CoGbkResult.CoGbkResultCoder.of(
+                        CoGbkResultSchema.of(ImmutableList.of(tupleTag)),
+                        // Set reflect coder to map Utf8s to Strings
+                        UnionCoder.of(
+                            ImmutableList.of(AvroCoder.reflect(AvroGeneratedUser.class))))));
 
     PAssert.thatMap(output)
         .satisfies(
             m -> {
+              Set<AvroGeneratedUser> actual = Sets.newHashSet(m.get("foo").getAll("source-tag"));
+              Set<AvroGeneratedUser> expected = ImmutableSet.of(avroRecord, parquetRecord);
               Assert.assertEquals(1, m.keySet().size());
               Assert.assertEquals(
                   ImmutableSet.of(avroRecord, parquetRecord),

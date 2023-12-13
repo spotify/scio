@@ -75,13 +75,13 @@ public class BucketMetadataTest {
               }
 
               @Override
-              public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata other) {
-                return false;
+              public int hashPrimaryKeyMetadata() {
+                return -1;
               }
 
               @Override
-              public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata other) {
-                return false;
+              public int hashSecondaryKeyMetadata() {
+                return -1;
               }
             });
   }

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.api.services.bigquery.model.TableRow;
-import java.util.Arrays;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -148,32 +148,12 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryKey(final BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    JsonBucketMetadata<?, ?> that = (JsonBucketMetadata<?, ?>) o;
-    return getKeyClass() == that.getKeyClass()
-        && keyField.equals(that.keyField)
-        && Arrays.equals(keyPath, that.keyPath);
+  public int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(final BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    JsonBucketMetadata<?, ?> that = (JsonBucketMetadata<?, ?>) o;
-    boolean allSecondaryPresent =
-        getKeyClassSecondary() != null
-            && that.getKeyClassSecondary() != null
-            && keyFieldSecondary != null
-            && that.keyFieldSecondary != null
-            && keyPathSecondary != null
-            && that.keyPathSecondary != null;
-    // you messed up
-    if (!allSecondaryPresent) return false;
-    return getKeyClass() == that.getKeyClass()
-        && getKeyClassSecondary() == that.getKeyClassSecondary()
-        && keyField.equals(that.keyField)
-        && keyFieldSecondary.equals(that.keyFieldSecondary)
-        && Arrays.equals(keyPath, that.keyPath)
-        && Arrays.equals(keyPathSecondary, that.keyPathSecondary);
+  public int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
   }
 }

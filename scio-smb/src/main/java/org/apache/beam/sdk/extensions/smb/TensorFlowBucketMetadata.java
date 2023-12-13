@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.protobuf.ByteString;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
@@ -158,26 +159,12 @@ public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Exa
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    TensorFlowBucketMetadata<?, ?> that = (TensorFlowBucketMetadata<?, ?>) o;
-    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
+  public int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    TensorFlowBucketMetadata<?, ?> that = (TensorFlowBucketMetadata<?, ?>) o;
-    boolean allSecondaryPresent =
-        getKeyClassSecondary() != null
-            && that.getKeyClassSecondary() != null
-            && keyFieldSecondary != null
-            && that.keyFieldSecondary != null;
-    // you messed up
-    if (!allSecondaryPresent) return false;
-    return getKeyClass() == that.getKeyClass()
-        && getKeyClassSecondary() == that.getKeyClassSecondary()
-        && keyField.equals(that.keyField)
-        && keyFieldSecondary.equals(that.keyFieldSecondary);
+  public int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
   }
 }

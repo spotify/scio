@@ -79,20 +79,6 @@ public class TestBucketMetadataWithSecondary extends BucketMetadata<String, Stri
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryKey(final BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    TestBucketMetadataWithSecondary that = (TestBucketMetadataWithSecondary) o;
-    return keyIndex.equals(that.keyIndex);
-  }
-
-  @Override
-  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(final BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    TestBucketMetadataWithSecondary that = (TestBucketMetadataWithSecondary) o;
-    return keyIndex.equals(that.keyIndex) && keyIndexSecondary.equals(that.keyIndexSecondary);
-  }
-
-  @Override
   public String extractKeyPrimary(final String value) {
     try {
       return value.substring(keyIndex, keyIndex + 1);
@@ -108,5 +94,15 @@ public class TestBucketMetadataWithSecondary extends BucketMetadata<String, Stri
     } catch (StringIndexOutOfBoundsException e) {
       return null;
     }
+  }
+
+  @Override
+  public int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyIndex);
+  }
+
+  @Override
+  public int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyIndexSecondary);
   }
 }

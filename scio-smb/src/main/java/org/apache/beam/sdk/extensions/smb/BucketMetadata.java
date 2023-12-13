@@ -290,13 +290,46 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput
-  public abstract boolean isPartitionCompatibleForPrimaryKey(BucketMetadata other);
+  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata other) {
+    return isIntraPartitionCompatibleWith(other, false);
+  }
 
-  public abstract boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata other);
+  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata other) {
+    return isIntraPartitionCompatibleWith(other, true);
+  }
+
+  private <MetadataT extends BucketMetadata> boolean isIntraPartitionCompatibleWith(
+      MetadataT other, boolean checkSecondaryKeys) {
+    if (other == null) {
+      return false;
+    }
+    final Class<? extends BucketMetadata> otherClass = other.getClass();
+    final Set<Class<? extends BucketMetadata>> compatibleTypes = compatibleMetadataTypes();
+
+    if (compatibleTypes.isEmpty() && other.getClass() != this.getClass()) {
+      return false;
+    } else if (this.getKeyClass() != other.getKeyClass()
+        && !(compatibleTypes.contains(otherClass)
+            && (other.compatibleMetadataTypes().contains(this.getClass())))) {
+      return false;
+    }
+
+    return (this.hashPrimaryKeyMetadata() == other.hashPrimaryKeyMetadata()
+        && (!checkSecondaryKeys
+            || this.hashSecondaryKeyMetadata() == other.hashSecondaryKeyMetadata()));
+  }
+
+  public Set<Class<? extends BucketMetadata>> compatibleMetadataTypes() {
+    return new HashSet<>();
+  }
 
   public abstract K1 extractKeyPrimary(V value);
 
   public abstract K2 extractKeySecondary(V value);
+
+  public abstract int hashPrimaryKeyMetadata();
+
+  public abstract int hashSecondaryKeyMetadata();
 
   public SortedBucketIO.ComparableKeyBytes primaryComparableKeyBytes(V value) {
     return new SortedBucketIO.ComparableKeyBytes(getKeyBytesPrimary(value), null);
