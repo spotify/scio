@@ -59,7 +59,7 @@ public class ParquetAvroFileOperationsTest {
       Schema.createRecord(
           "User",
           "",
-          "org.apache.beam.sdk.extensions.smb.avro",
+          "org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperationsTest$",
           false,
           Lists.newArrayList(
               new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""),
@@ -75,6 +75,12 @@ public class ParquetAvroFileOperationsTest {
                       .build())
           .collect(Collectors.toList());
 
+  // Class has no no-arg constructor
+  static class User {
+    User(String str) {
+    }
+  }
+  
   @Test
   public void testGenericRecord() throws Exception {
     final ResourceId file =
@@ -86,6 +92,17 @@ public class ParquetAvroFileOperationsTest {
         ParquetAvroFileOperations.of(USER_SCHEMA);
 
     final List<GenericRecord> actual = new ArrayList<>();
+    /*
+      Reads will now fail with:
+      
+      Caused by: java.lang.RuntimeException: java.lang.NoSuchMethodException: org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperationsTest$User.<init>()
+	at org.apache.avro.specific.SpecificData.newInstance(SpecificData.java:353)
+	at org.apache.avro.specific.SpecificData.newRecord(SpecificData.java:369)
+	at org.apache.parquet.avro.AvroRecordConverter.start(AvroRecordConverter.java:407)
+	at org.apache.parquet.io.RecordReaderImplementation.read(RecordReaderImplementation.java:392)
+	at org.apache.parquet.hadoop.InternalParquetRecordReader.nextKeyValue(InternalParquetRecordReader.java:234)
+	... 37 more
+    */
     fileOperations.iterator(file).forEachRemaining(actual::add);
 
     Assert.assertEquals(USER_RECORDS, actual);
