@@ -23,6 +23,7 @@ import org.apache.beam.sdk.coders.{AtomicCoder, CustomCoder, StringUtf8Coder}
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.typelevel.scalaccompat.annotation.unused
 
 import java.io.{InputStream, NotSerializableException, ObjectOutputStream, OutputStream}
 
@@ -43,7 +44,7 @@ class CoderAssertionsTest extends AnyFlatSpec with Matchers {
   // A coder that can't be serialized
   private def notSerializableCoder: Coder[Foo] =
     Coder.beam(new CustomCoder[Foo] {
-      private def writeObject(oos: ObjectOutputStream): Unit =
+      private def writeObject(@unused oos: ObjectOutputStream): Unit =
         throw new NotSerializableException()
       override def encode(value: Foo, outStream: OutputStream): Unit = ???
       override def decode(inStream: InputStream): Foo = ???

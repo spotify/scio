@@ -2,35 +2,57 @@ name: publish-gh-site
 
 on:
   workflow_dispatch # Manually triggered
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
-  publish-docs:
-    name: Publish documentation
-    runs-on: ubuntu-latest
+  # copy of site in ci
+  site:
+    name: Generate Site
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        scala: [2.13]
+        java: [corretto@11]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout tag
+      - name: Checkout current branch (full)
         uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
+        if: matrix.java == 'corretto@11'
+        uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: gcloud auth
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           export_environment_variables: true
           create_credentials_file: true
-      - name: Cache SBT
-        uses: coursier/cache-action@v6
-      - name: Java 11 setup
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-      - name: set JVM opts
+
+      - name: Setup GitHub Action
         run: scripts/gha_setup.sh
-      - name: Build documentation
-        run: sbt scio-examples/compile site/makeSite
+
+      - name: Generate site
         env:
           SOCCO: true
-          _JAVA_OPTIONS: "-Xmx1500m"
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4.5.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-pages
-          folder: site/target/site
+        run: sbt '++ ${{ matrix.scala }}' scio-examples/compile site/makeSite
+
+      - name: Publish site
+        env:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site/target
+          keep_files: true
+        uses: peaceiris/actions-gh-pages@v3.9.3

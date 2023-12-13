@@ -22,7 +22,7 @@ import com.google.common.io.ByteStreams
 import com.google.common.{hash => g}
 import com.spotify.scio.coders.Coder
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 /**
  * A mutable, scalable wrapper around a Guava [[com.google.common.hash.BloomFilter BloomFilter]].

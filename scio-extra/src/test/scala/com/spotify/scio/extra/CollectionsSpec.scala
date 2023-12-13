@@ -21,7 +21,7 @@ import com.spotify.scio.extra.Collections._
 import org.scalacheck._
 import org.scalatest._
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 class CollectionsSpec extends PropertySpec {
   val posInts: Gen[Int] = Gen.posNum[Int]

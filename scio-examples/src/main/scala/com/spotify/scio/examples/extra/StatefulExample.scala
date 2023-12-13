@@ -28,17 +28,15 @@ import org.apache.beam.sdk.state.{StateSpecs, ValueState}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, StateId}
 import org.apache.beam.sdk.values.KV
-
-import scala.annotation.nowarn
+import org.typelevel.scalaccompat.annotation.unused
 
 object StatefulExample {
   // States are persisted on a per-key-and-window basis
   type DoFnT = DoFn[KV[String, Int], KV[String, (Int, Int)]]
 
-  @nowarn("msg=private val count in class StatefulDoFn is never used")
   class StatefulDoFn extends DoFnT {
     // Declare mutable state
-    @StateId("count") private val count = StateSpecs.value[JInt]()
+    @StateId("count") @unused private val count = StateSpecs.value[JInt]()
 
     @ProcessElement
     def processElement(

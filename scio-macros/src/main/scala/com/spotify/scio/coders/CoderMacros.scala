@@ -18,8 +18,8 @@
 package com.spotify.scio.coders
 
 import com.spotify.scio.{FeatureFlag, MacroSettings, MagnoliaMacros}
+import org.typelevel.scalaccompat.annotation.unused
 
-import scala.annotation.nowarn
 import scala.reflect.macros._
 
 private[coders] object CoderMacros {
@@ -40,10 +40,9 @@ private[coders] object CoderMacros {
         """.stripMargin
     )
 
-  @nowarn("msg=parameter lp in method issueFallbackWarning is never used")
   def issueFallbackWarning[T: c.WeakTypeTag](
     c: whitebox.Context
-  )(lp: c.Expr[shapeless.LowPriority]): c.Tree = {
+  )(@unused lp: c.Expr[shapeless.LowPriority]): c.Tree = {
     import c.universe._
 
     val show = MacroSettings.showCoderFallback(c) == FeatureFlag.Enable

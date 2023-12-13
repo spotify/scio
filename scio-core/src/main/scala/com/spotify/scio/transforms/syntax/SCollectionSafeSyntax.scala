@@ -24,7 +24,7 @@ import org.apache.beam.sdk.transforms.DoFn.{Element, MultiOutputReceiver, Proces
 import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 trait SCollectionSafeSyntax {
 

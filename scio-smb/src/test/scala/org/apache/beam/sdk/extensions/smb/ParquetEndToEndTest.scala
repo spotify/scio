@@ -30,7 +30,7 @@ import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser
 import org.apache.beam.sdk.values.TupleTag
 
 import scala.jdk.CollectionConverters._
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 object ParquetEndToEndTest {
   val eventSchema: Schema = Schema.createRecord(

@@ -28,7 +28,7 @@ import java.io._
 import java.nio.channels.Channels
 import java.nio.charset.StandardCharsets
 import java.util.Collections
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 

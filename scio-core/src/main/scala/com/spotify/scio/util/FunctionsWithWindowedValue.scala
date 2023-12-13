@@ -24,7 +24,7 @@ import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, PaneInfo}
 import com.twitter.chill.ClosureCleaner
 import org.joda.time.Instant
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 private[scio] object FunctionsWithWindowedValue {
   def filterFn[T, U](f: WindowedValue[T] => Boolean): DoFn[T, T] =

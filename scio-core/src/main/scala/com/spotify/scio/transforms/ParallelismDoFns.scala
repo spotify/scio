@@ -20,7 +20,7 @@ import com.spotify.scio.util.ParallelLimitedFn
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 class ParallelCollectFn[T, U](parallelism: Int)(pfn: PartialFunction[T, U])
     extends ParallelLimitedFn[T, U](parallelism) {

@@ -24,7 +24,7 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.collection.mutable
 import scala.collection.SortedSet
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 trait ScalaInstances {
   implicit val stringSchema: Type[String] =

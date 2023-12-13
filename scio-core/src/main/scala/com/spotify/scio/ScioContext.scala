@@ -626,7 +626,7 @@ class ScioContext private[scio] (
               BuildInfo.version,
               BuildInfo.scalaVersion,
               sc.optionsAs[ApplicationNameOptions].getAppName,
-              state.toString,
+              this.state.toString,
               getBeamMetrics
             )
 

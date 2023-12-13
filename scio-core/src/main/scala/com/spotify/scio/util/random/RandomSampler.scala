@@ -23,8 +23,7 @@ import java.util.{Random => JRandom}
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, StartBundle}
 import org.apache.commons.math3.distribution.{IntegerDistribution, PoissonDistribution}
-
-import scala.annotation.nowarn
+import org.typelevel.scalaccompat.annotation.unused
 
 private[scio] object RandomSampler {
 
@@ -133,9 +132,8 @@ abstract private[scio] class RandomValueSampler[K, V, R](val fractions: Map[K, D
   protected var seed: Long = -1
 
   // TODO: is it necessary to setSeed for each instance like Spark does?
-  @nowarn("msg=parameter c in method startBundle is never used")
   @StartBundle
-  def startBundle(c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
+  def startBundle(@unused c: DoFn[(K, V), (K, V)]#StartBundleContext): Unit =
     rngs = fractions.iterator.map { case (k, v) =>
       (k, init(v))
     }.toMap

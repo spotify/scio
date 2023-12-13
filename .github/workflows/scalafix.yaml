@@ -1,0 +1,40 @@
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scalafix/**'
+
+  push:
+    branches: [main]
+    paths:
+      - 'scalafix/**'
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  scalafix:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
+        uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: sbt update
+        if: steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt scalafix/update
+
+      - name: Test
+        run: sbt scalafix/test
+        working-directory: scalafix

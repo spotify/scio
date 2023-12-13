@@ -23,7 +23,7 @@ import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
 import com.twitter.chill.ClosureCleaner
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 private[scio] object FunctionsWithSideInput {
   trait SideInputDoFn[T, U] extends NamedDoFn[T, U] {

@@ -14,58 +14,82 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import sbt._
+object ScalacOptions {
 
-import sbt.librarymanagement.{SemanticSelector, VersionNumber}
-import java.lang.Runtime
-import _root_.io.github.davidgregory084.ScalacOption
-import _root_.io.github.davidgregory084.ScalaVersion._
-import _root_.io.github.davidgregory084.TpolecatPlugin.autoImport.ScalacOptions
-
-object Scalac {
+  import org.typelevel.scalacoptions.ScalacOption
+  import org.typelevel.scalacoptions.ScalaVersion
+  import org.typelevel.scalacoptions.ScalaVersion._
+  import org.typelevel.scalacoptions.ScalacOptions._
 
   // Set the strategy used for translating lambdas into JVM code to "inline"
-  val delambdafyInlineOption = ScalacOptions.privateOption("delambdafy:inline")
+  val delambdafyInlineOption = privateOption("delambdafy:inline")
 
-  val macroAnnotationsOption = ScalacOptions.privateOption(
+  val macroAnnotationsOption = privateOption(
     "macro-annotations",
     _.isBetween(V2_13_0, V3_0_0)
   )
 
-  val macroSettingsOption = ScalacOptions.advancedOption("macro-settings:show-coder-fallback=true")
+  def macroShowCoderFallback(enabled: Boolean) =
+    advancedOption(s"macro-settings:show-coder-fallback=$enabled")
 
-  val maxClassfileName = ScalacOptions.advancedOption(
+  def macroCacheImplicitSchemas(enabled: Boolean) =
+    advancedOption(s"macro-settings:cache-implicit-schemas=$enabled")
+  def maxClassfileName(limit: Int) = advancedOption(
     "max-classfile-name",
-    List("100"),
+    List(limit.toString),
     _.isBetween(V2_12_0, V2_13_0)
   )
 
-  private val parallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
-  val privateBackendParallelism = ScalacOptions.privateBackendParallelism(parallelism)
-
-  val release8 = ScalacOptions.release("8")
+  val source3 = org.typelevel.scalacoptions.ScalacOptions.source3
 
   // Warn
-  val privateWarnMacrosOption = ScalacOptions.privateWarnOption(
+  val privateWarnMacrosOption = privateWarnOption(
     "macros:after",
     _.isBetween(V2_12_0, V2_13_0)
   )
-  val warnMacrosOption = ScalacOptions.warnOption(
+  val warnMacrosOption = warnOption(
     "macros:after",
     _.isBetween(V2_13_0, V3_0_0)
   )
-  // silence all scala library deprecation warnings in 2.13
-  // since we still support 2.12
-  // unused-imports origin will be supported in next 2.13.9
-  // https://github.com/scala/scala/pull/9939
-  val warnConfOption = ScalacOptions.warnOption(
+
+  val warnConfOption = warnOption(
+    // silence all scala library deprecation warnings in 2.13
+    // since we still support 2.12
     "conf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
-      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s",
+      // silence unused-imports compat
+      ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s" +
+      ",cat=unused-imports&origin=kantan\\.codecs\\.compat\\..*:s",
     _.isBetween(V2_13_2, V3_0_0)
   )
 
-  // Doc
-  val docNoJavaCommentOption = ScalacOptions.other(
-    "-no-java-comments",
-    _.isBetween(V2_12_0, V2_13_0)
+  val privateWarnDeadCode = org.typelevel.scalacoptions.ScalacOptions.privateWarnDeadCode
+  val warnDeadCode = org.typelevel.scalacoptions.ScalacOptions.warnDeadCode
+  val warnValueDiscard = org.typelevel.scalacoptions.ScalacOptions.warnValueDiscard
+  val privateWarnUnused = privateWarnOption("_,-nowarn,-privates", _.isBetween(V2_12_0, V2_13_0))
+  val warnUnused = warnOption("unused", _.isBetween(V2_13_0, V3_0_0))
+
+  def tokensForVersion(
+    scalaVersion: String,
+    proposedScalacOptions: Set[ScalacOption]
+  ): Seq[String] = {
+    val Seq(major, minor, patch) = VersionNumber(scalaVersion).numbers
+    org.typelevel.scalacoptions.ScalacOptions
+      .tokensForVersion(ScalaVersion(major, minor, patch), proposedScalacOptions)
+  }
+
+  private val cpuParallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
+  def defaults(scalaVersion: String): Seq[String] = tokensForVersion(
+    scalaVersion,
+    Set(
+      delambdafyInlineOption,
+      macroAnnotationsOption,
+      macroShowCoderFallback(true),
+      maxClassfileName(100),
+      privateBackendParallelism(cpuParallelism),
+      privateWarnMacrosOption,
+      warnMacrosOption,
+      warnConfOption
+    )
   )
 }

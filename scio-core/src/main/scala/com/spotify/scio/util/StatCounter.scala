@@ -21,7 +21,7 @@ package com.spotify.scio.util
 
 import com.spotify.scio.coders.Coder
 
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 /**
  * A class for tracking the statistics of a set of numbers (count, mean and variance) in a

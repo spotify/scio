@@ -38,7 +38,7 @@ import org.apache.beam.sdk.transforms.{
 }
 
 import scala.jdk.CollectionConverters._
-import scala.collection.compat._ // scalafix:ok
+import scala.collection.compat._
 
 private[scio] object Functions {
   private[this] val BufferSize = 20
