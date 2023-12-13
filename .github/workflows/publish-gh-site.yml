@@ -1,4 +1,4 @@
-name: publish-gh-site
+name: Publish GitHub Site
 
 on:
   workflow_dispatch # Manually triggered

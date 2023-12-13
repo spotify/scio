@@ -1,4 +1,4 @@
-name: pre-release-check
+name: Pre Release Check
 
 on:
   workflow_dispatch # Manually triggered
