@@ -160,7 +160,7 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
     }
     Object keyObj = node.get(keyPath[keyPath.length - 1]);
     // Always convert CharSequence to String, in case reader and writer disagree
-    if (keyClazz == CharSequence.class || keyClazz == String.class) {
+    if (keyObj != null && (keyClazz == CharSequence.class || keyClazz == String.class)) {
       keyObj = keyObj.toString();
     }
     @SuppressWarnings("unchecked")
