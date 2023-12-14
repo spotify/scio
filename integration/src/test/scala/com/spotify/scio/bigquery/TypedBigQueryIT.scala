@@ -24,7 +24,7 @@ import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
-import org.apache.avro.{LogicalTypes, Schema}
+import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
@@ -166,28 +166,17 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   it should "write GenericRecord records with logical types" in {
     val sc = ScioContext(options)
-    import scala.jdk.CollectionConverters._
-    val schema: Schema = Schema.createRecord(
-      "Record",
-      "",
-      "com.spotify.scio.bigquery",
-      false,
-      List(
-        new Schema.Field(
-          "date",
-          LogicalTypes.date().addToSchema(Schema.create(Schema.Type.INT)),
-          "",
-          0
-        ),
-        new Schema.Field(
-          "time",
-          LogicalTypes.timeMicros().addToSchema(Schema.create(Schema.Type.LONG)),
-          "",
-          0L
-        ),
-        new Schema.Field("datetime", Schema.create(Schema.Type.STRING), "", "")
-      ).asJava
-    )
+    // format: off
+    val schema: Schema = SchemaBuilder
+      .record("Record")
+      .namespace("com.spotify.scio.bigquery")
+      .fields()
+      .name("date").`type`(LogicalTypes.date().addToSchema(Schema.create(Schema.Type.INT))).withDefault(0)
+      .name("time").`type`(LogicalTypes.timeMicros().addToSchema(Schema.create(Schema.Type.LONG))).withDefault(0L)
+      .name("datetime").`type`().stringType().stringDefault("")
+      .endRecord()
+    // format: on
+
     implicit val coder = avroGenericRecordCoder(schema)
     val ltRecords: Seq[GenericRecord] =
       Seq(

@@ -32,7 +32,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType
 import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, TargetParallelism}
 import org.apache.beam.sdk.values.TupleTag
@@ -58,13 +58,10 @@ object SortMergeBucketExample {
       |""".stripMargin
   )
 
-  def user(id: String, age: Int): GenericRecord = {
-    val gr = new GenericData.Record(UserDataSchema)
-    gr.put("userId", id)
-    gr.put("age", age)
-
-    gr
-  }
+  def user(id: String, age: Int): GenericRecord = new GenericRecordBuilder(UserDataSchema)
+    .set("userId", id)
+    .set("age", age)
+    .build()
 }
 
 object SortMergeBucketWriteExample {

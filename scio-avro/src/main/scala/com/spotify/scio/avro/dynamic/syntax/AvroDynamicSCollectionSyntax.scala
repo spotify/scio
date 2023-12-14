@@ -19,7 +19,7 @@ package com.spotify.scio.avro.dynamic.syntax
 
 import com.google.protobuf.Message
 import com.spotify.scio.avro.AvroIO
-import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{AvroBytesUtil, Coder}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps
 import com.spotify.scio.protobuf.util.ProtobufUtil
@@ -142,22 +142,19 @@ final class DynamicProtobufSCollectionOps[T <: Message](private val self: SColle
     tempDirectory: String = AvroIO.WriteParam.DefaultTempDirectory,
     prefix: String = AvroIO.WriteParam.DefaultPrefix
   )(destinationFn: T => String)(implicit ct: ClassTag[T]): ClosedTap[Nothing] = {
-    val protoCoder = Coder.protoMessageCoder[T]
-    val elemCoder = CoderMaterializer.beam(self.context, protoCoder)
-    val avroSchema = AvroBytesUtil.schema
-    val nm = new JHashMap[String, AnyRef]()
-    nm.putAll((metadata ++ ProtobufUtil.schemaMetadataOf(ct)).asJava)
-
     if (self.context.isTest) {
       throw new NotImplementedError(
         "Protobuf file with dynamic destinations cannot be used in a test context"
       )
     } else {
+      implicit val protoCoder: Coder[T] = Coder.protoMessageCoder[T]
+      val nm = new JHashMap[String, AnyRef]()
+      nm.putAll((metadata ++ ProtobufUtil.schemaMetadataOf(ct)).asJava)
+
       val sink = BAvroIO
-        .sinkViaGenericRecords(
-          avroSchema,
-          (element: T, _: Schema) => AvroBytesUtil.encode(elemCoder, element)
-        )
+        .sink(AvroBytesUtil.schema)
+        .asInstanceOf[BAvroIO.Sink[T]]
+        .withDatumWriterFactory(AvroBytesUtil.datumWriterFactory)
         .withCodec(codec)
         .withMetadata(nm)
       val write = writeDynamic(

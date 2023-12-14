@@ -24,7 +24,7 @@ import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.smb._
 import com.spotify.scio.testing._
-import org.apache.avro.Schema
+import org.apache.avro.{Schema, SchemaBuilder}
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser
 import org.apache.beam.sdk.values.TupleTag
@@ -33,28 +33,22 @@ import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 
 object ParquetEndToEndTest {
-  val eventSchema: Schema = Schema.createRecord(
-    "Event",
-    "",
-    "org.apache.beam.sdk.extensions.smb.avro",
-    false,
-    List(
-      new Schema.Field("user", Schema.create(Schema.Type.STRING), "", ""),
-      new Schema.Field("event", Schema.create(Schema.Type.STRING), "", ""),
-      new Schema.Field("timestamp", Schema.create(Schema.Type.INT), "", 0)
-    ).asJava
-  )
+  val eventSchema: Schema = SchemaBuilder
+    .record("Event")
+    .namespace("org.apache.beam.sdk.extensions.smb.avro")
+    .fields()
+    .requiredString("user")
+    .requiredString("event")
+    .requiredInt("timestamp")
+    .endRecord()
 
-  val userSchema: Schema = Schema.createRecord(
-    "User",
-    "",
-    "org.apache.beam.sdk.extensions.smb.avro",
-    false,
-    List(
-      new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""),
-      new Schema.Field("age", Schema.create(Schema.Type.INT), "", 0)
-    ).asJava
-  )
+  val userSchema: Schema = SchemaBuilder
+    .record("User")
+    .namespace("org.apache.beam.sdk.extensions.smb.avro")
+    .fields()
+    .requiredString("name")
+    .requiredInt("age")
+    .endRecord()
 
   def avroEvent(x: Int): GenericRecord = new GenericRecordBuilder(eventSchema)
     .set("user", s"user${x % 10 + 1}")

@@ -26,7 +26,7 @@ import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
 import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.commons.compress.compressors.CompressorStreamFactory
@@ -115,10 +115,10 @@ class TapTest extends TapSpec {
 
     val tap = runWithFileFuture {
       _.parallelize(Seq("a", "b", "c"))
-        .map { s =>
-          val record: GenericRecord = new GenericData.Record(AvroBytesUtil.schema)
-          record.put("bytes", ByteBuffer.wrap(s.getBytes))
-          record
+        .map[GenericRecord] { s =>
+          new GenericRecordBuilder(AvroBytesUtil.schema)
+            .set("bytes", ByteBuffer.wrap(s.getBytes))
+            .build()
         }
         .saveAsAvroFile(dir.getAbsolutePath, schema = AvroBytesUtil.schema)
     }

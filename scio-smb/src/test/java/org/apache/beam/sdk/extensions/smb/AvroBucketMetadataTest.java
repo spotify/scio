@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -38,7 +39,6 @@ import org.apache.beam.sdk.coders.VarIntCoder;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.transforms.display.DisplayData;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,42 +47,43 @@ import org.junit.Test;
 public class AvroBucketMetadataTest {
 
   static final Schema LOCATION_SCHEMA =
-      Schema.createRecord(
-          "Location",
-          "",
-          "org.apache.beam.sdk.extensions.smb.avro",
-          false,
-          Lists.newArrayList(
-              new Schema.Field("countryId", Schema.create(Type.BYTES), "", ""),
-              new Schema.Field(
-                  "postalCode",
-                  Schema.createUnion(Schema.create(Type.NULL), Schema.create(Type.BYTES)),
-                  "",
-                  ""),
-              new Schema.Field(
-                  "prevCountries",
-                  Schema.createArray(Schema.create(Schema.Type.STRING)),
-                  "",
-                  Collections.<String>emptyList())));
-
-  static final Schema LOCATION_UNION_SCHEMA =
-      Schema.createUnion(Schema.create(Type.NULL), LOCATION_SCHEMA);
-
+      SchemaBuilder.record("Location")
+          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          .fields()
+          .requiredBytes("countryId")
+          .optionalBytes("postalCode")
+          .name("prevCountries")
+          .type()
+          .array()
+          .items()
+          .stringType()
+          .arrayDefault(Collections.emptyList())
+          .endRecord();
   static final Schema RECORD_SCHEMA =
-      Schema.createRecord(
-          "Record",
-          "",
-          "org.apache.beam.sdk.extensions.smb.avro",
-          false,
-          Lists.newArrayList(
-              new Schema.Field("id", Schema.create(Schema.Type.LONG), "", 0L),
-              new Schema.Field("location", LOCATION_SCHEMA, "", Collections.emptyList()),
-              new Schema.Field("locationUnion", LOCATION_UNION_SCHEMA, "", Collections.emptyList()),
-              new Schema.Field(
-                  "suffix",
-                  Schema.createEnum("Suffix", "", "", Lists.newArrayList("Jr", "Sr", "None")),
-                  "",
-                  "None")));
+      SchemaBuilder.record("Record")
+          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          .fields()
+          .name("id")
+          .type()
+          .longType()
+          .longDefault(0L)
+          .name("location")
+          .type(LOCATION_SCHEMA)
+          .noDefault()
+          .name("locationUnion")
+          .type()
+          .unionOf()
+          .nullType()
+          .and()
+          .type(LOCATION_SCHEMA)
+          .endUnion()
+          .noDefault()
+          .name("suffix")
+          .type()
+          .enumeration("Suffix")
+          .symbols("Jr", "Sr", "None")
+          .enumDefault("None")
+          .endRecord();
 
   @Test
   public void testGenericRecord() throws Exception {
@@ -480,12 +481,12 @@ public class AvroBucketMetadataTest {
   private static Schema createUnionRecordOfTypes(Schema.Type... types) {
     final List<Schema> typeSchemas = new ArrayList<>();
     Arrays.asList(types).forEach(t -> typeSchemas.add(Schema.create(t)));
-    return Schema.createRecord(
-        "Record",
-        "",
-        "org.apache.beam.sdk.extensions.smb.avro",
-        false,
-        Lists.newArrayList(
-            new Schema.Field("unionField", Schema.createUnion(typeSchemas), "", "")));
+    return SchemaBuilder.record("Record")
+        .namespace("org.apache.beam.sdk.extensions.smb.avro")
+        .fields()
+        .name("unionField")
+        .type(Schema.createUnion(typeSchemas))
+        .noDefault()
+        .endRecord();
   }
 }

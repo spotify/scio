@@ -20,7 +20,7 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.avro.AvroIO
 import com.spotify.scio.io._
 import com.spotify.scio.testing._
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 
 class MagnolifyAvroExampleTest extends PipelineSpec {
   import MagnolifyAvroExample._
@@ -28,10 +28,10 @@ class MagnolifyAvroExampleTest extends PipelineSpec {
   val textIn: Seq[String] = Seq("a b c d e", "a b a b")
   val wordCount: Seq[(String, Long)] = Seq(("a", 3L), ("b", 3L), ("c", 1L), ("d", 1L), ("e", 1L))
   val records: Seq[GenericRecord] = wordCount.map { kv =>
-    val r = new GenericData.Record(wordCountType.schema)
-    r.put("word", kv._1)
-    r.put("count", kv._2)
-    r
+    new GenericRecordBuilder(wordCountType.schema)
+      .set("word", kv._1)
+      .set("count", kv._2)
+      .build()
   }
   val textOut: Seq[String] = wordCount.map(kv => kv._1 + ": " + kv._2)
 

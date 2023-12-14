@@ -31,8 +31,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.file.CodecFactory;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.ListCoder;
@@ -114,19 +114,19 @@ public class MixedSourcesEndToEndTest {
   }
 
   private static GenericRecord GR(String firstname, String lastname, int age) {
-    GenericData.Record result = new GenericData.Record(GR_USER_SCHEMA);
-    result.put(
-        "firstname",
-        Optional.ofNullable(firstname)
-            .map(n -> ByteBuffer.wrap(ByteString.copyFromUtf8(n).toByteArray()))
-            .orElse(null));
-    result.put(
-        "lastname",
-        Optional.ofNullable(lastname)
-            .map(n -> ByteBuffer.wrap(ByteString.copyFromUtf8(n).toByteArray()))
-            .orElse(null));
-    result.put("age", age);
-    return result;
+    return new GenericRecordBuilder(GR_USER_SCHEMA)
+        .set(
+            "firstname",
+            Optional.ofNullable(firstname)
+                .map(n -> ByteBuffer.wrap(ByteString.copyFromUtf8(n).toByteArray()))
+                .orElse(null))
+        .set(
+            "lastname",
+            Optional.ofNullable(lastname)
+                .map(n -> ByteBuffer.wrap(ByteString.copyFromUtf8(n).toByteArray()))
+                .orElse(null))
+        .set("age", age)
+        .build();
   }
 
   private static TableRow Json(String firstname, String lastname, String country) {

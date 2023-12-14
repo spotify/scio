@@ -26,7 +26,7 @@ import com.spotify.scio.util.MultiJoin
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Field
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, SortedBucketIO, TargetParallelism}
 import org.apache.beam.sdk.values.TupleTag
 import org.apache.commons.io.FileUtils
@@ -213,10 +213,10 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
     val outputPaths = (0 until numSources).map { n =>
       val data = (0 to Random.nextInt(100)).map { i =>
-        val gr: GenericRecord = new GenericData.Record(schema)
-        gr.put("key", i)
-        gr.put("value", s"v$i")
-        gr
+        new GenericRecordBuilder(schema)
+          .set("key", i)
+          .set("value", s"v$i")
+          .build()
       }
 
       val outputPath = new File(tempFolder, s"source$n")

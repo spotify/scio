@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
@@ -44,7 +44,6 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableMap;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -56,14 +55,12 @@ public class AvroFileOperationsTest {
   @Rule public final TemporaryFolder output = new TemporaryFolder();
 
   private static final Schema USER_SCHEMA =
-      Schema.createRecord(
-          "User",
-          "",
-          "org.apache.beam.sdk.extensions.smb.avro",
-          false,
-          Lists.newArrayList(
-              new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""),
-              new Schema.Field("age", Schema.create(Schema.Type.INT), "", 0)));
+      SchemaBuilder.record("User")
+          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          .fields()
+          .requiredString("name")
+          .requiredInt("age")
+          .endRecord();
 
   private static final Map<String, Object> TEST_METADATA = ImmutableMap.of("foo", "bar");
 
@@ -149,19 +146,16 @@ public class AvroFileOperationsTest {
   @Test
   public void testMap2649() throws Exception {
     final Schema schema =
-        Schema.createRecord(
-            "Record",
-            "",
-            "org.apache.beam.sdk.extensions.smb.avro",
-            false,
-            Lists.newArrayList(
-                new Schema.Field(
-                    "map",
-                    Schema.createUnion(
-                        Schema.create(Schema.Type.NULL),
-                        Schema.createMap(Schema.create(Schema.Type.STRING))),
-                    "",
-                    JsonProperties.NULL_VALUE)));
+        SchemaBuilder.record("Record")
+            .namespace("org.apache.beam.sdk.extensions.smb.avro")
+            .fields()
+            .name("map")
+            .type()
+            .optional()
+            .map()
+            .values()
+            .stringType()
+            .endRecord();
 
     final AvroFileOperations<GenericRecord> fileOperations = AvroFileOperations.of(schema);
     final ResourceId file =
