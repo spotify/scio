@@ -1,6 +1,6 @@
 # Scio
 
-[![Build Status](https://github.com/spotify/scio/actions/workflows/tests.yml/badge.svg)](https://github.com/spotify/scio/actions/workflows/tests.yml)
+[![Continuous Integration](https://github.com/spotify/scio/actions/workflows/ci.yml/badge.svg)](https://github.com/spotify/scio/actions/workflows/ci.yml)
 [![codecov.io](https://codecov.io/github/spotify/scio/coverage.svg?branch=master)](https://codecov.io/github/spotify/scio?branch=master)
 [![GitHub license](https://img.shields.io/github/license/spotify/scio.svg)](./LICENSE)
 [![Maven Central](https://img.shields.io/maven-central/v/com.spotify/scio-core_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify/scio-core_2.12)
