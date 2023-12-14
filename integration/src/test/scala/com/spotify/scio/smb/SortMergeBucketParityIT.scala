@@ -221,7 +221,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
       val outputPath = new File(tempFolder, s"source$n")
 
-      sc.parallelize(data)
+      sc.parallelize[GenericRecord](data)
         .saveAsSortedBucket(
           AvroSortedBucketIO
             .write(classOf[Integer], "key", schema)
