@@ -180,14 +180,8 @@ object ParquetAvroIO {
       // org.apache.beam.sdk.extensions.avro.coders.AvroCoder
       if (!isSpecific) {
         jobConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
+        jobConf.setGenericDataSupplierByDefault()
 
-        if (jobConf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
-          jobConf.setClass(
-            AvroReadSupport.AVRO_DATA_SUPPLIER,
-            classOf[GenericDataSupplier],
-            classOf[AvroDataSupplier]
-          )
-        }
       }
 
       if (ParquetReadConfiguration.getUseSplittableDoFn(jobConf, sc.options)) {
@@ -200,10 +194,7 @@ object ParquetAvroIO {
     private def readSplittableDoFn(sc: ScioContext, conf: Configuration, path: String)(implicit
       coder: Coder[T]
     ): SCollection[T] = {
-      AvroReadSupport.setAvroReadSchema(conf, readSchema)
-      if (projection != null) {
-        AvroReadSupport.setRequestedProjection(conf, projection)
-      }
+      conf.setReadSchemas(this)
       if (predicate != null) {
         ParquetInputFormat.setFilterPredicate(conf, predicate)
       }
@@ -284,31 +275,4 @@ object ParquetAvroIO {
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory
   )
-}
-
-final case class ParquetAvroTap[A, T: ClassTag: Coder](
-  path: String,
-  params: ParquetAvroIO.ReadParam[A, T]
-) extends Tap[T] {
-  override def value: Iterator[T] = {
-    val filePattern = ScioUtil.filePattern(path, params.suffix)
-    val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
-    xs.iterator.flatMap { metadata =>
-      val reader = AvroParquetReader
-        .builder[A](BeamInputFile.of(metadata.resourceId()))
-        .withConf(ParquetConfiguration.ofNullable(params.conf))
-        .build()
-      new Iterator[T] {
-        private var current: A = reader.read()
-        override def hasNext: Boolean = current != null
-        override def next(): T = {
-          val r = params.projectionFn(current)
-          current = reader.read()
-          r
-        }
-      }
-    }
-  }
-  override def open(sc: ScioContext): SCollection[T] =
-    sc.read(ParquetAvroIO[T](path))(params)
 }

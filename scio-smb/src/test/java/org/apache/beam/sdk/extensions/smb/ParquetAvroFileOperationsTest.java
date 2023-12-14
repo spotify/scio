@@ -55,7 +55,8 @@ public class ParquetAvroFileOperationsTest {
 
   private static final Schema USER_SCHEMA =
       SchemaBuilder.record("User")
-          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          // intentionally set this namespace for testGenericRecord
+          .namespace("org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperationsTest$")
           .fields()
           .name("name")
           .type()
@@ -77,8 +78,30 @@ public class ParquetAvroFileOperationsTest {
                       .build())
           .collect(Collectors.toList());
 
+  // Intentionally avoid no-arg ctor to verify this class is not attempted to instantiate
+  static class User {
+    User(String str) {
+    }
+  }
+
   @Test
   public void testGenericRecord() throws Exception {
+    final ResourceId file =
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+    writeFile(file);
+
+    final ParquetAvroFileOperations<GenericRecord> fileOperations =
+        ParquetAvroFileOperations.of(USER_SCHEMA);
+
+    final List<GenericRecord> actual = new ArrayList<>();
+    fileOperations.iterator(file).forEachRemaining(actual::add);
+
+    Assert.assertEquals(USER_RECORDS, actual);
+  }
+
+  @Test
+  public void testDataSupplierIsSetForGenericRecord() throws Exception {
     final ResourceId file =
         fromFolder(output)
             .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);

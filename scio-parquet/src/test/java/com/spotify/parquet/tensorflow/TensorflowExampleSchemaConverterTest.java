@@ -36,7 +36,13 @@ import org.tensorflow.metadata.v0.Schema;
 import org.tensorflow.metadata.v0.ValueCount;
 import org.tensorflow.metadata.v0.ValueCountList;
 
+class TestRecordProjection {
+  public TestRecordProjection(String s) {
+  }
+}
+
 public class TensorflowExampleSchemaConverterTest {
+
   @Test
   public void testTensorflowTypeConversion() {
     Schema tfSchema =

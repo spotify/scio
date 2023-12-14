@@ -40,6 +40,7 @@ import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.avro.AvroWriteSupport;
+import org.apache.parquet.avro.GenericDataSupplier;
 import org.apache.parquet.avro.SpecificDataSupplier;
 import org.apache.parquet.filter2.compat.FilterCompat;
 import org.apache.parquet.filter2.predicate.FilterPredicate;

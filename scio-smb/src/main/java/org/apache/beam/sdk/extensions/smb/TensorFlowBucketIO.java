@@ -170,13 +170,18 @@ public class TensorFlowBucketIO {
     }
 
     @Override
+    FileOperations<Example> getFileOperations() {
+      return TensorFlowFileOperations.of(getCompression());
+    }
+
+    @Override
     public BucketedInput<Example> toBucketedInput(final SortedBucketSource.Keying keying) {
       return BucketedInput.of(
           keying,
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          TensorFlowFileOperations.of(getCompression()),
+          getFileOperations(),
           getPredicate());
     }
   }

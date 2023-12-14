@@ -247,21 +247,24 @@ public class AvroSortedBucketIO {
       return toBuilder().setPredicate(predicate).build();
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    FileOperations<T> getFileOperations() {
+      return getRecordClass() == null
+             ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema())
+             : (AvroFileOperations<T>)
+                 AvroFileOperations.of((Class<SpecificRecord>) getRecordClass());
+    }
+
     @Override
     public SortedBucketSource.BucketedInput<T> toBucketedInput(
         final SortedBucketSource.Keying keying) {
-      @SuppressWarnings("unchecked")
-      final AvroFileOperations<T> fileOperations =
-          getRecordClass() == null
-              ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema())
-              : (AvroFileOperations<T>)
-                  AvroFileOperations.of((Class<SpecificRecord>) getRecordClass());
       return SortedBucketSource.BucketedInput.of(
           keying,
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          fileOperations,
+          getFileOperations(),
           getPredicate());
     }
   }

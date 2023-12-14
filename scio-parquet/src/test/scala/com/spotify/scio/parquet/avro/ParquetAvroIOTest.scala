@@ -283,6 +283,30 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     sc2.run()
   }
 
+  class TestRecordProjection private (str: String) {}
+
+  "tap" should "use projection schema and GenericDataSupplier" in {
+    val schema = new Schema.Parser().parse(
+      """
+        |{
+        |"type":"record",
+        |"name":"TestRecordProjection",
+        |"namespace":"com.spotify.scio.parquet.avro.ParquetAvroIOTest$",
+        |"fields":[{"name":"int_field","type":["null", "int"]}]}
+        |""".stripMargin
+    )
+
+    implicit val coder = avroGenericRecordCoder(schema)
+
+    ParquetAvroTap(
+      s"${testDir.toPath}",
+      ParquetAvroIO.ReadParam(identity[GenericRecord], schema, suffix = "*.parquet")
+    ).value.foreach { gr =>
+      gr.get("int_field") should not be null
+      gr.get("string_field") should be(null)
+    }
+  }
+
   it should "write windowed generic records to dynamic destinations" in withTempDir { dir =>
     // This test follows the same pattern as com.spotify.scio.io.dynamic.DynamicFileTest
     val genericRecords = (0 until 10).map(AvroUtils.newGenericRecord)

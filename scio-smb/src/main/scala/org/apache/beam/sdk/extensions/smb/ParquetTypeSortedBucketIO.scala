@@ -90,16 +90,18 @@ object ParquetTypeSortedBucketIO {
     override def toBucketedInput(
       keying: SortedBucketSource.Keying
     ): SortedBucketSource.BucketedInput[T] = {
-      val fileOperations = ParquetTypeFileOperations[T](filterPredicate, configuration)
       BucketedInput.of(
         keying,
         getTupleTag,
         inputDirectories.asJava,
         filenameSuffix,
-        fileOperations,
+        getFileOperations,
         predicate
       )
     }
+
+    override def getFileOperations: FileOperations[T] =
+      ParquetTypeFileOperations[T](filterPredicate, configuration)
   }
 
   case class Write[K1: ClassTag, K2: ClassTag, T: ClassTag: Coder: ParquetType](

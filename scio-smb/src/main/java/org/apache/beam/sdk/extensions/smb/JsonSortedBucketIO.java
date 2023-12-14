@@ -156,6 +156,10 @@ public class JsonSortedBucketIO {
       return toBuilder().setPredicate(predicate).build();
     }
 
+    FileOperations<TableRow> getFileOperations() {
+      return JsonFileOperations.of(getCompression());
+    }
+
     @Override
     public BucketedInput<TableRow> toBucketedInput(final SortedBucketSource.Keying keying) {
       return BucketedInput.of(
@@ -163,7 +167,7 @@ public class JsonSortedBucketIO {
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          JsonFileOperations.of(getCompression()),
+          getFileOperations(),
           getPredicate());
     }
   }
