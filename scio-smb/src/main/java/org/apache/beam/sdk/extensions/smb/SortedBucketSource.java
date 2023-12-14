@@ -442,6 +442,16 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
           tupleTag, inputDirectories, filenameSuffix, fileOperations, predicate);
     }
 
+    public static <V> BucketedInput<V> of(
+        Keying keying,
+        TupleTag<V> tupleTag,
+        Map<String, KV<String, FileOperations<V>>> directories,
+        Predicate<V> predicate) {
+      if (keying == Keying.PRIMARY)
+        return new PrimaryKeyedBucketedInput<>(tupleTag, directories, predicate);
+      return new PrimaryAndSecondaryKeyedBucktedInput<>(tupleTag, directories, predicate);
+    }
+
     public BucketedInput(
         Keying keying,
         TupleTag<V> tupleTag,
