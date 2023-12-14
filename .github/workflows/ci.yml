@@ -46,7 +46,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
@@ -59,7 +59,7 @@ jobs:
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 17
@@ -72,7 +72,7 @@ jobs:
       - name: Setup Java (corretto@21)
         id: setup-java-corretto-21
         if: matrix.java == 'corretto@21'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 21
@@ -136,7 +136,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
@@ -149,7 +149,7 @@ jobs:
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 17
@@ -162,7 +162,7 @@ jobs:
       - name: Setup Java (corretto@21)
         id: setup-java-corretto-21
         if: matrix.java == 'corretto@21'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 21
@@ -225,7 +225,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
@@ -238,7 +238,7 @@ jobs:
       - name: Setup Java (corretto@17)
         id: setup-java-corretto-17
         if: matrix.java == 'corretto@17'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 17
@@ -251,7 +251,7 @@ jobs:
       - name: Setup Java (corretto@21)
         id: setup-java-corretto-21
         if: matrix.java == 'corretto@21'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 21
@@ -281,7 +281,7 @@ jobs:
       - name: Setup Java (temurin@11)
         id: setup-java-temurin-11
         if: matrix.java == 'temurin@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 11
@@ -309,7 +309,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
@@ -343,7 +343,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
@@ -389,7 +389,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11

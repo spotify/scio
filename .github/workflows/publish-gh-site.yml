@@ -25,7 +25,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
