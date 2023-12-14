@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
@@ -35,7 +36,6 @@ import org.apache.beam.sdk.io.fs.ResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.avro.AvroDataSupplier;
 import org.apache.parquet.avro.AvroReadSupport;
@@ -56,14 +56,12 @@ public class ParquetAvroFileOperationsTest {
   @Rule public final TemporaryFolder output = new TemporaryFolder();
 
   private static final Schema USER_SCHEMA =
-      Schema.createRecord(
-          "User",
-          "",
-          "org.apache.beam.sdk.extensions.smb.avro",
-          false,
-          Lists.newArrayList(
-              new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""),
-              new Schema.Field("age", Schema.create(Schema.Type.INT), "", 0)));
+      SchemaBuilder.record("User")
+          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          .fields()
+          .requiredString("name")
+          .requiredInt("age")
+          .endRecord();
 
   private static final List<GenericRecord> USER_RECORDS =
       IntStream.range(0, 10)
@@ -165,13 +163,11 @@ public class ParquetAvroFileOperationsTest {
     writeFile(file);
 
     final Schema projection =
-        Schema.createRecord(
-            "UserProjection",
-            "",
-            "org.apache.beam.sdk.extensions.smb.avro",
-            false,
-            Lists.newArrayList(
-                new Schema.Field("name", Schema.create(Schema.Type.STRING), "", "")));
+        SchemaBuilder.record("UserProjection")
+            .namespace("org.apache.beam.sdk.extensions.smb.avro")
+            .fields()
+            .requiredString("name")
+            .endRecord();
 
     final Configuration configuration = new Configuration();
     AvroReadSupport.setRequestedProjection(configuration, projection);
@@ -192,13 +188,12 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testSpecificProjection() throws Exception {
     final Schema projection =
-        Schema.createRecord(
-            "AvroGeneratedUserProjection",
-            "",
-            "org.apache.beam.sdk.extensions.smb",
-            false,
-            Lists.newArrayList(
-                new Schema.Field("name", Schema.create(Schema.Type.STRING), "", "")));
+        SchemaBuilder.record("AvroGeneratedUserProjection")
+            .namespace("org.apache.beam.sdk.extensions.smb")
+            .fields()
+            .requiredString("name")
+            .endRecord();
+
     final Configuration configuration = new Configuration();
     AvroReadSupport.setRequestedProjection(configuration, projection);
 

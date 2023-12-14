@@ -17,7 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
@@ -25,7 +25,6 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.filter2.predicate.FilterApi;
@@ -42,9 +41,10 @@ public class ParquetAvroSortedBucketIOTest {
     final Configuration conf = new Configuration();
     AvroReadSupport.setRequestedProjection(
         conf,
-        Schema.createRecord(
-            Lists.newArrayList(
-                new Schema.Field("name", Schema.create(Schema.Type.STRING), "", ""))));
+        SchemaBuilder.record("Record")
+            .fields()
+            .requiredString("name")
+            .endRecord());
 
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
