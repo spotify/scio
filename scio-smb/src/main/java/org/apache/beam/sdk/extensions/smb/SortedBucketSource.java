@@ -485,7 +485,6 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     public Coder<V> getCoder() {
-      // Todo what if two input directories use a different Coder for the same type?
       return directories.entrySet().iterator().next().getValue().getValue().getCoder();
     }
 

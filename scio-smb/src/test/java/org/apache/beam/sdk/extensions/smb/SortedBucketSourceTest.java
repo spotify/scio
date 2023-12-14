@@ -45,9 +45,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.PipelineResult;
-import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
-import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
@@ -64,8 +61,6 @@ import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
-import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
-import org.apache.beam.sdk.transforms.join.UnionCoder;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
@@ -754,34 +749,23 @@ public class SortedBucketSourceTest {
 
     final TupleTag<AvroGeneratedUser> tupleTag = new TupleTag<>("source-tag");
     final PCollection<KV<String, CoGbkResult>> output =
-        pipeline
-            .apply(
-                Read.from(
-                    new SortedBucketPrimaryKeyedSource<>(
-                        String.class,
-                        ImmutableList.of(
-                            new PrimaryKeyedBucketedInput<>(
-                                tupleTag,
-                                ImmutableMap.of(
-                                    TestUtils.fromFolder(avroDir).toString(),
-                                        KV.of(
-                                            ".avro",
-                                            AvroFileOperations.of(AvroGeneratedUser.class)),
-                                    TestUtils.fromFolder(parquetDir).toString(),
-                                        KV.of(
-                                            ".parquet",
-                                            ParquetAvroFileOperations.of(AvroGeneratedUser.class))),
-                                null)),
-                        TargetParallelism.max(),
-                        "metrics-key")))
-            .setCoder(
-                KvCoder.of(
-                    StringUtf8Coder.of(),
-                    CoGbkResult.CoGbkResultCoder.of(
-                        CoGbkResultSchema.of(ImmutableList.of(tupleTag)),
-                        // Set reflect coder to map Utf8s to Strings
-                        UnionCoder.of(
-                            ImmutableList.of(AvroCoder.reflect(AvroGeneratedUser.class))))));
+        pipeline.apply(
+            Read.from(
+                new SortedBucketPrimaryKeyedSource<>(
+                    String.class,
+                    ImmutableList.of(
+                        new PrimaryKeyedBucketedInput<>(
+                            tupleTag,
+                            ImmutableMap.of(
+                                TestUtils.fromFolder(avroDir).toString(),
+                                    KV.of(".avro", AvroFileOperations.of(AvroGeneratedUser.class)),
+                                TestUtils.fromFolder(parquetDir).toString(),
+                                    KV.of(
+                                        ".parquet",
+                                        ParquetAvroFileOperations.of(AvroGeneratedUser.class))),
+                            null)),
+                    TargetParallelism.max(),
+                    "metrics-key")));
 
     PAssert.thatMap(output)
         .satisfies(

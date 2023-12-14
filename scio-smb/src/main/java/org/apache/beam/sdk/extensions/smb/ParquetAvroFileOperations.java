@@ -52,6 +52,8 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
  */
 public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   static final CompressionCodecName DEFAULT_COMPRESSION = CompressionCodecName.ZSTD;
+
+  private final Class<ValueT> recordClass;
   private final SerializableSchemaSupplier schemaSupplier;
   private final CompressionCodecName compression;
   private final SerializableConfiguration conf;
@@ -59,11 +61,13 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   private ParquetAvroFileOperations(
       Schema schema,
+      Class<ValueT> recordClass,
       CompressionCodecName compression,
       Configuration conf,
       FilterPredicate predicate) {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY);
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
+    this.recordClass = recordClass;
     this.compression = compression;
     this.conf = new SerializableConfiguration(conf);
     this.predicate = predicate;
@@ -80,7 +84,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
       Schema schema, CompressionCodecName compression, Configuration conf) {
-    return new ParquetAvroFileOperations<>(schema, compression, conf, null);
+    return new ParquetAvroFileOperations<>(schema, null, compression, conf, null);
   }
 
   public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
@@ -90,7 +94,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
       Schema schema, FilterPredicate predicate, Configuration conf) {
-    return new ParquetAvroFileOperations<>(schema, DEFAULT_COMPRESSION, conf, predicate);
+    return new ParquetAvroFileOperations<>(schema, null, DEFAULT_COMPRESSION, conf, predicate);
   }
 
   public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(Class<V> recordClass) {
@@ -106,7 +110,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
       Class<V> recordClass, CompressionCodecName compression, Configuration conf) {
     // Use reflection to get SR schema
     final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
-    return new ParquetAvroFileOperations<>(schema, compression, conf, null);
+    return new ParquetAvroFileOperations<>(schema, recordClass, compression, conf, null);
   }
 
   public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
@@ -118,7 +122,8 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
       Class<V> recordClass, FilterPredicate predicate, Configuration conf) {
     // Use reflection to get SR schema
     final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
-    return new ParquetAvroFileOperations<>(schema, DEFAULT_COMPRESSION, conf, predicate);
+    return new ParquetAvroFileOperations<>(
+        schema, recordClass, DEFAULT_COMPRESSION, conf, predicate);
   }
 
   @Override
@@ -141,7 +146,9 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   @SuppressWarnings("unchecked")
   @Override
   public Coder<ValueT> getCoder() {
-    return (AvroCoder<ValueT>) AvroCoder.of(getSchema());
+    return recordClass == null
+        ? (AvroCoder<ValueT>) AvroCoder.of(getSchema())
+        : AvroCoder.of(recordClass, true);
   }
 
   Schema getSchema() {
