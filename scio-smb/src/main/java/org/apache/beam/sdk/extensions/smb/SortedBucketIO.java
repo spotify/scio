@@ -493,6 +493,9 @@ public class SortedBucketIO {
 
   /** Represents a single sorted-bucket source written using {@link SortedBucketSink}. */
   public abstract static class Read<V> implements Serializable {
+    @Nullable
+    abstract ImmutableList<String> getInputDirectories();
+
     public abstract TupleTag<V> getTupleTag();
 
     protected abstract BucketedInput<V> toBucketedInput(SortedBucketSource.Keying keying);
