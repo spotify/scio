@@ -1,4 +1,4 @@
-name: populate-integration-test-data
+name: Populate Integration Test Data
 
 on:
   workflow_dispatch # Manually triggered
