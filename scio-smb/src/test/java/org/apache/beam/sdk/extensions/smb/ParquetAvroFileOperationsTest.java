@@ -59,8 +59,14 @@ public class ParquetAvroFileOperationsTest {
       SchemaBuilder.record("User")
           .namespace("org.apache.beam.sdk.extensions.smb.avro")
           .fields()
-          .requiredString("name")
-          .requiredInt("age")
+          .name("name")
+          .type()
+          .stringType()
+          .stringDefault("")
+          .name("age")
+          .type()
+          .intType()
+          .intDefault(0)
           .endRecord();
 
   private static final List<GenericRecord> USER_RECORDS =
