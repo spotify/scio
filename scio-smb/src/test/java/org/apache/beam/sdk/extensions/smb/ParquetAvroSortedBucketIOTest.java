@@ -40,11 +40,7 @@ public class ParquetAvroSortedBucketIOTest {
   public void testReadSerializable() {
     final Configuration conf = new Configuration();
     AvroReadSupport.setRequestedProjection(
-        conf,
-        SchemaBuilder.record("Record")
-            .fields()
-            .requiredString("name")
-            .endRecord());
+        conf, SchemaBuilder.record("Record").fields().requiredString("name").endRecord());
 
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
