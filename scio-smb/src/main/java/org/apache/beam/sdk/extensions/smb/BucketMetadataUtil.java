@@ -69,7 +69,7 @@ public class BucketMetadataUtil {
     this.batchSize = batchSize;
   }
 
-  private <V> Map<ResourceId, BucketMetadata<?, ?, V>> fetchMetadata(Set<ResourceId> directories) {
+  private <V> Map<ResourceId, BucketMetadata<?, ?, V>> fetchMetadata(List<ResourceId> directories) {
     final int total = directories.size();
     final Map<ResourceId, BucketMetadata<?, ?, V>> metadata = new ConcurrentHashMap<>();
     int start = 0;
@@ -89,7 +89,7 @@ public class BucketMetadataUtil {
       BiFunction<BucketMetadata<?, ?, V>, BucketMetadata<?, ?, V>, Boolean>
           compatibilityCompareFn) {
     final Map<ResourceId, BucketMetadata<?, ?, V>> bucketMetadatas =
-        fetchMetadata(directories.keySet());
+        fetchMetadata(new ArrayList<>(directories.keySet()));
     Preconditions.checkState(!bucketMetadatas.isEmpty(), "Failed to find metadata");
 
     Map<ResourceId, SourceMetadataValue<V>> mapping = new HashMap<>();
