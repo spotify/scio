@@ -431,29 +431,7 @@ val commonSettings = Def.settings(
     "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
   ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
   coverageHighlighting := true
-) ++ Seq(Compile, Test)
-  .flatMap { c =>
-    // temp fix for https://github.com/typelevel/sbt-typelevel/pull/672
-    inConfig(c) {
-      packageSrc / mappings := Defaults.packageSrcMappings.value ++ {
-        val bases = managedSourceDirectories.value
-        managedSources.value.map { file =>
-          bases
-            .map(b => file.relativeTo(b))
-            .collectFirst { case Some(relative) => file -> relative.getPath }
-            .getOrElse {
-              throw new RuntimeException(
-                s"""|Expected managed sources in:
-                    |${bases.mkString("\n")}
-                    |But found them here:
-                    |$file
-                    |""".stripMargin
-              )
-            }
-        }
-      }
-    }
-  }
+)
 
 // for modules containing java jUnit 4 tests
 lazy val jUnitSettings = Def.settings(
