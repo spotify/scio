@@ -155,7 +155,7 @@ def testCoGroup(out):
 \t\treads: SortedBucketIO.Read[_]*
 \t): SCollection[KV[K, CoGbkResult]] = {
 \t\tval testInput = TestDataManager.getInput(self.testId.get)
-\t\tval read :: rs = reads.asInstanceOf[Seq[SortedBucketIO.Read[Any]]].toList
+\t\tval read :: rs = reads.asInstanceOf[Seq[SortedBucketIO.Read[Any]]].toList: @nowarn
 \t\tval test = testInput[(K, Any)](SortedBucketIOUtil.testId(read)).toSCollection(self)
 \t\tval keyed = rs
 \t\t\t.foldLeft(KeyedPCollectionTuple.of(read.getTupleTag, test.toKV.internal)) { (kpt, r) =>
@@ -196,6 +196,7 @@ import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketIOUtil, T
 import org.apache.beam.sdk.transforms.join.{CoGbkResult, CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.values.KV
 import com.spotify.scio.smb.SortMergeTransform
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 final class SMBMultiJoin(private val self: ScioContext) {'''.lstrip('\n'), file=out)

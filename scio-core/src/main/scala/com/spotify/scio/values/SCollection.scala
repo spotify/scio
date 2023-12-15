@@ -56,7 +56,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.typelevel.scalaccompat.annotation.unused
+import org.typelevel.scalaccompat.annotation.{nowarn, unused}
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -366,7 +366,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group collection
    */
   def partition(p: T => Boolean): (SCollection[T], SCollection[T]) = {
-    val Seq(left, right) = partition(2, t => if (p(t)) 0 else 1)
+    val Seq(left, right) = partition(2, t => if (p(t)) 0 else 1): @nowarn
     (left, right)
   }
 

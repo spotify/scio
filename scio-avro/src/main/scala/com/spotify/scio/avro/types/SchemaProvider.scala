@@ -24,6 +24,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.avro.types.MacroUtil._
 import org.apache.avro.{JsonProperties, Schema}
 import org.apache.avro.Schema.Field
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe
@@ -102,8 +103,8 @@ private[types] object SchemaProvider {
     t.typeSymbol.annotations
       .find(_.tree.tpe.toString == tpe)
       .map { a =>
-        val q"new $_($v)" = a.tree
-        val Literal(Constant(s)) = v
+        val q"new $_($v)" = a.tree: @nowarn
+        val Literal(Constant(s)) = v: @nowarn
         s.toString
       }
   }
@@ -114,8 +115,8 @@ private[types] object SchemaProvider {
       _.annotations
         .find(_.tree.tpe.toString == tpe)
         .map { a =>
-          val q"new $_($v)" = a.tree
-          val Literal(Constant(s)) = v
+          val q"new $_($v)" = a.tree: @nowarn
+          val Literal(Constant(s)) = v: @nowarn
           s.toString
         }
     }

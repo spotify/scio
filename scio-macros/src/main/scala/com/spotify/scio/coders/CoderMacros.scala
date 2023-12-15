@@ -18,7 +18,7 @@
 package com.spotify.scio.coders
 
 import com.spotify.scio.{FeatureFlag, MacroSettings, MagnoliaMacros}
-import org.typelevel.scalaccompat.annotation.unused
+import org.typelevel.scalaccompat.annotation.{nowarn, unused}
 
 import scala.reflect.macros._
 
@@ -48,7 +48,7 @@ private[coders] object CoderMacros {
     val show = MacroSettings.showCoderFallback(c) == FeatureFlag.Enable
 
     val wtt = weakTypeOf[T]
-    val TypeRef(_, sym, args) = wtt
+    val TypeRef(_, sym, args) = wtt: @nowarn
 
     val typeName = sym.name
     val params = args.headOption

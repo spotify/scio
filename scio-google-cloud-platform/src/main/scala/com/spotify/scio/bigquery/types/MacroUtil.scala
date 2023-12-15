@@ -19,6 +19,7 @@ package com.spotify.scio.bigquery.types
 
 import com.spotify.scio.bigquery.BigQuerySysProps
 
+import scala.annotation.nowarn
 import scala.reflect.macros._
 import scala.reflect.runtime.universe._
 
@@ -52,7 +53,7 @@ private[types] object MacroUtil {
       fields
         .filter { s =>
           try {
-            val AnnotatedType(a, _) = s.asMethod.returnType
+            val AnnotatedType(a, _) = s.asMethod.returnType: @nowarn
             a.exists(_.tree.tpe == typeOf[BigQueryTag])
           } catch {
             case _: MatchError => false
