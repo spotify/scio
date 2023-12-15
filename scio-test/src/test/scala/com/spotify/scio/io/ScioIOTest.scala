@@ -34,6 +34,7 @@ import org.apache.beam.sdk.util.CoderUtils
 import org.apache.beam.sdk.values.PCollection.IsBounded
 import org.apache.commons.io.FileUtils
 import org.joda.time.{Duration, Instant}
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import java.io.File
 import java.util.UUID
@@ -515,7 +516,13 @@ class ScioIOTest extends ScioIOSpec {
 
     val tmpDir = Files.createTempDirectory("binary-io-")
     val sc = ScioContext()
-    val xs = in.map(CoderUtils.encodeToByteArray(bac, _, BCoder.Context.NESTED))
+    val xs = in.map(
+      CoderUtils.encodeToByteArray(
+        bac,
+        _,
+        BCoder.Context.NESTED: @nowarn("cat=deprecation")
+      )
+    )
     sc.parallelize(xs).saveAsBinaryFile(tmpDir.toString)
     sc.run()
 

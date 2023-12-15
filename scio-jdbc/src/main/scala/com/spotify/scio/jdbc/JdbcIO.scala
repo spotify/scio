@@ -25,6 +25,7 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.jdbc.JdbcIO.{PreparedStatementSetter, StatementPreparator}
 import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
 import org.joda.time.Duration
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 import javax.sql.DataSource
@@ -148,7 +149,7 @@ final case class JdbcSelect[T: Coder](opts: JdbcConnectionOptions, query: String
         } else {
           r
         }
-      }
+      }: @nowarn("cat=deprecation")
 
     sc.applyTransform(params.configOverride(transform))
   }

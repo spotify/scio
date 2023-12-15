@@ -811,8 +811,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "not serialize any magnolia internals after materialization" in {
-    class ObjectOutputStreamInspector
-        extends ObjectOutputStream(NullOutputStream.NULL_OUTPUT_STREAM) {
+    class ObjectOutputStreamInspector extends ObjectOutputStream(NullOutputStream.INSTANCE) {
       private val classes = Set.newBuilder[String]
 
       override def writeClassDescriptor(desc: ObjectStreamClass): Unit = {

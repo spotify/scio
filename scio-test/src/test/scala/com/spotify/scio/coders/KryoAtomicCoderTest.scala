@@ -35,6 +35,7 @@ import org.joda.time.Instant
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.testing.CoderProperties
+import org.typelevel.scalaccompat.annotation.nowarn
 
 case class RecordA(name: String, value: Int)
 case class RecordB(name: String, value: Int)
@@ -186,10 +187,14 @@ class KryoAtomicCoderTest extends PipelineSpec {
     val c = cf()
     val s: Seq[String] = (1 to 10).map(_.toString)
     // Check that registerByteSizeObserver() and encode() are consistent
-    CoderProperties.testByteCount(c, BCoder.Context.OUTER, Array[Object](s))
     CoderProperties.testByteCount(
       c,
-      BCoder.Context.OUTER,
+      BCoder.Context.OUTER: @nowarn("cat=deprecation"),
+      Array[Object](s)
+    )
+    CoderProperties.testByteCount(
+      c,
+      BCoder.Context.OUTER: @nowarn("cat=deprecation"),
       Array[Object](s.map(x => (x, s.asJava)))
     )
   }
