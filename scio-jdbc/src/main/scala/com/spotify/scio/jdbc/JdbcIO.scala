@@ -22,9 +22,14 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io._
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.io.jdbc.JdbcIO.{PreparedStatementSetter, StatementPreparator}
+import org.apache.beam.sdk.io.jdbc.JdbcIO.{
+  PreparedStatementSetter,
+  ReadWithPartitions,
+  StatementPreparator
+}
 import org.apache.beam.sdk.io.jdbc.{JdbcIO => BJdbcIO}
-import org.joda.time.Duration
+import org.apache.beam.sdk.values.{TypeDescriptor, TypeDescriptors}
+import org.joda.time.{DateTime, Duration}
 
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 import javax.sql.DataSource
@@ -154,7 +159,100 @@ final case class JdbcSelect[T: Coder](opts: JdbcConnectionOptions, query: String
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
-    throw new UnsupportedOperationException("jdbc.Select is read-only")
+    throw new UnsupportedOperationException("JdbcSelect is read-only")
+
+  override def tap(params: ReadP): Tap[Nothing] =
+    EmptyTap
+}
+
+object JdbcPartitionedRead {
+
+  object PartitionColumn {
+
+    // Supported types from JdbcUtil.PRESET_HELPERS
+    def long(
+      name: String,
+      upperBound: Option[Long] = None,
+      lowerBound: Option[Long] = None
+    ): PartitionColumn[java.lang.Long] = new PartitionColumn(
+      TypeDescriptors.longs(),
+      name,
+      upperBound.map(Long.box),
+      lowerBound.map(Long.box)
+    )
+
+    def dateTime(
+      name: String,
+      upperBound: Option[DateTime] = None,
+      lowerBound: Option[DateTime] = None
+    ): PartitionColumn[DateTime] = new PartitionColumn(
+      TypeDescriptor.of(classOf[DateTime]),
+      name,
+      upperBound,
+      lowerBound
+    )
+  }
+
+  case class PartitionColumn[T] private (
+    typeDescriptor: TypeDescriptor[T],
+    name: String,
+    upperBound: Option[T],
+    lowerBound: Option[T]
+  )
+
+  object ReadParam {
+    val DefaultNumPartitions: Int = 200
+    val DefaultDataSourceProviderFn: () => DataSource = null
+    def defaultConfigOverride[S, T]: ReadWithPartitions[S, T] => ReadWithPartitions[S, T] = identity
+  }
+
+  final case class ReadParam[T, S](
+    partitionColumn: JdbcPartitionedRead.PartitionColumn[S],
+    rowMapper: ResultSet => T,
+    numPartitions: Int = ReadParam.DefaultNumPartitions,
+    dataSourceProviderFn: () => DataSource = ReadParam.DefaultDataSourceProviderFn,
+    configOverride: ReadWithPartitions[T, S] => ReadWithPartitions[T, S] =
+      ReadParam.defaultConfigOverride[T, S]
+  )
+}
+
+final case class JdbcPartitionedRead[T: Coder, S](
+  opts: JdbcConnectionOptions,
+  table: String
+) extends JdbcIO[T] {
+  override type ReadP = JdbcPartitionedRead.ReadParam[T, S]
+  override type WriteP = Nothing
+  override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
+  override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(opts, table)})"
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val coder = CoderMaterializer.beam(sc, Coder[T])
+    val transform = BJdbcIO
+      .readWithPartitions[T, S](params.partitionColumn.typeDescriptor)
+      .withPartitionColumn(params.partitionColumn.name)
+      .pipe(r => params.partitionColumn.lowerBound.fold(r)(r.withLowerBound))
+      .pipe(r => params.partitionColumn.upperBound.fold(r)(r.withUpperBound))
+      .pipe { r =>
+        if (params.numPartitions != JdbcPartitionedRead.ReadParam.DefaultNumPartitions) {
+          r.withNumPartitions(params.numPartitions)
+        } else {
+          r
+        }
+      }
+      .withCoder(coder)
+      .withDataSourceConfiguration(JdbcIO.dataSourceConfiguration(opts))
+      .withTable(table)
+      .withRowMapper(params.rowMapper(_))
+      .pipe { r =>
+        Option(params.dataSourceProviderFn)
+          .map(fn => Functions.serializableFn[Void, DataSource](_ => fn()))
+          .fold(r)(r.withDataSourceProviderFn)
+      }
+
+    sc.applyTransform(params.configOverride(transform))
+  }
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
+    throw new UnsupportedOperationException("JdbcPartitionRead is read-only")
 
   override def tap(params: ReadP): Tap[Nothing] =
     EmptyTap
@@ -168,7 +266,7 @@ final case class JdbcWrite[T](opts: JdbcConnectionOptions, statement: String) ex
   override def testId: String = s"JdbcIO(${JdbcIO.jdbcIoId(opts, statement)})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    throw new UnsupportedOperationException("jdbc.Write is write-only")
+    throw new UnsupportedOperationException("JdbcWrite is write-only")
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] = {
     val transform = BJdbcIO
