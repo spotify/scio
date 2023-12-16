@@ -169,7 +169,7 @@ object ParquetAvroIO {
     suffix: String = null
   ) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
-    val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
+    val isSpecific: Boolean = classIsSpecificRecord[A]
     val readSchema: Schema =
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
@@ -180,8 +180,7 @@ object ParquetAvroIO {
       // org.apache.beam.sdk.extensions.avro.coders.AvroCoder
       if (!isSpecific) {
         jobConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        jobConf.setGenericDataSupplierByDefault()
-
+        jobConf.setDefaultGenericDataSupplier()
       }
 
       if (ParquetReadConfiguration.getUseSplittableDoFn(jobConf, sc.options)) {

@@ -38,7 +38,9 @@ final case class ParquetAvroTap[A, T: ClassTag: Coder](
     val conf = ParquetConfiguration
       .ofNullable(params.conf)
     conf.setReadSchemas(params)
-    conf.setGenericDataSupplierByDefault()
+    if (!classIsSpecificRecord[T]) {
+      conf.setDefaultGenericDataSupplier()
+    }
 
     val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>

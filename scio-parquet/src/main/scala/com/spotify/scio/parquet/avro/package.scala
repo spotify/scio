@@ -18,8 +18,12 @@
 package com.spotify.scio.parquet
 
 import com.spotify.scio.parquet.avro.syntax.Syntax
+import com.spotify.scio.util.ScioUtil
+import org.apache.avro.specific.SpecificRecord
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, GenericDataSupplier}
+
+import scala.reflect.ClassTag
 
 /**
  * Main package for Parquet Avro APIs. Import all.
@@ -36,6 +40,11 @@ package object avro extends Syntax {
   /** Alias for `me.lyh.parquet.avro.Predicate`. */
   val Predicate = me.lyh.parquet.avro.Predicate
 
+  def classIsSpecificRecord[T: ClassTag]: Boolean = {
+    val avroClass: Class[T] = ScioUtil.classOf[T]
+    classOf[SpecificRecord] isAssignableFrom avroClass
+  }
+
   implicit class ConfigurationSyntax(conf: Configuration) {
 
     def setReadSchemas[A, T](params: ParquetAvroIO.ReadParam[A, T]): Unit = {
@@ -45,7 +54,7 @@ package object avro extends Syntax {
       }
     }
 
-    def setGenericDataSupplierByDefault(): Unit = {
+    def setDefaultGenericDataSupplier(): Unit = {
       if (conf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
         conf.setClass(
           AvroReadSupport.AVRO_DATA_SUPPLIER,
