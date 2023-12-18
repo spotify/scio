@@ -37,9 +37,9 @@ final case class ParquetAvroTap[A, T: ClassTag: Coder](
     val filePattern = ScioUtil.filePattern(path, params.suffix)
     val conf = ParquetConfiguration
       .ofNullable(params.conf)
-    conf.setReadSchemas(params)
-    if (!classIsSpecificRecord[T]) {
-      conf.setDefaultGenericDataSupplier()
+    params.setReadSchemas(params)
+    if (!params.isSpecific) {
+      params.setDefaultGenericDataSupplier()
     }
 
     val xs = FileSystems.`match`(filePattern).metadata().asScala.toList

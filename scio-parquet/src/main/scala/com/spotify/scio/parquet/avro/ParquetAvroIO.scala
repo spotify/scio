@@ -169,7 +169,7 @@ object ParquetAvroIO {
     suffix: String = null
   ) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
-    val isSpecific: Boolean = classIsSpecificRecord[A]
+    val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom ScioUtil.classOf[T]
     val readSchema: Schema =
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
@@ -180,7 +180,7 @@ object ParquetAvroIO {
       // org.apache.beam.sdk.extensions.avro.coders.AvroCoder
       if (!isSpecific) {
         jobConf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        jobConf.setDefaultGenericDataSupplier()
+        setDefaultGenericDataSupplier()
       }
 
       if (ParquetReadConfiguration.getUseSplittableDoFn(jobConf, sc.options)) {
@@ -190,10 +190,27 @@ object ParquetAvroIO {
       }
     }
 
+    def setReadSchemas[A, T](params: ParquetAvroIO.ReadParam[A, T]): Unit = {
+      AvroReadSupport.setAvroReadSchema(conf, params.readSchema)
+      if (params.projection != null) {
+        AvroReadSupport.setRequestedProjection(conf, params.projection)
+      }
+    }
+
+    def setDefaultGenericDataSupplier(): Unit = {
+      if (conf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
+        conf.setClass(
+          AvroReadSupport.AVRO_DATA_SUPPLIER,
+          classOf[GenericDataSupplier],
+          classOf[AvroDataSupplier]
+        )
+      }
+    }
+
     private def readSplittableDoFn(sc: ScioContext, conf: Configuration, path: String)(implicit
       coder: Coder[T]
     ): SCollection[T] = {
-      conf.setReadSchemas(this)
+      setReadSchemas(this)
       if (predicate != null) {
         ParquetInputFormat.setFilterPredicate(conf, predicate)
       }

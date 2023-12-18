@@ -80,7 +80,6 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
   "ParquetAvroIO" should "work with specific records" in {
-
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
     testTap(xs)(_.saveAsParquetAvroFile(_))(".parquet")
     testJobTest(xs)(ParquetAvroIO(_))(
