@@ -159,12 +159,12 @@ public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Exa
   }
 
   @Override
-  public int hashPrimaryKeyMetadata() {
+  int hashPrimaryKeyMetadata() {
     return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public int hashSecondaryKeyMetadata() {
+  int hashSecondaryKeyMetadata() {
     return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
   }
 }

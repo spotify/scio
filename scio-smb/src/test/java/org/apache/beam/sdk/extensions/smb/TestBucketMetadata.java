@@ -99,12 +99,12 @@ class TestBucketMetadata extends BucketMetadata<String, Void, String> {
   }
 
   @Override
-  public int hashPrimaryKeyMetadata() {
+  int hashPrimaryKeyMetadata() {
     return Objects.hash(getClass(), keyIndex);
   }
 
   @Override
-  public int hashSecondaryKeyMetadata() {
+  int hashSecondaryKeyMetadata() {
     throw new IllegalArgumentException();
   }
 }

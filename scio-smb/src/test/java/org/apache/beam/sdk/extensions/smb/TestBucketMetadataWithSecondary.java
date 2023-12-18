@@ -97,12 +97,12 @@ public class TestBucketMetadataWithSecondary extends BucketMetadata<String, Stri
   }
 
   @Override
-  public int hashPrimaryKeyMetadata() {
+  int hashPrimaryKeyMetadata() {
     return Objects.hash(keyIndex);
   }
 
   @Override
-  public int hashSecondaryKeyMetadata() {
+  int hashSecondaryKeyMetadata() {
     return Objects.hash(keyIndexSecondary);
   }
 }

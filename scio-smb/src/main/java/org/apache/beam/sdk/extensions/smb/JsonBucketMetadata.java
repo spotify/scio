@@ -148,12 +148,12 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
   }
 
   @Override
-  public int hashPrimaryKeyMetadata() {
+  int hashPrimaryKeyMetadata() {
     return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public int hashSecondaryKeyMetadata() {
+  int hashSecondaryKeyMetadata() {
     return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
   }
 }

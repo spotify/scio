@@ -495,7 +495,9 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     public Coder<V> getCoder() {
-      return directories.entrySet().iterator().next().getValue().getValue().getCoder();
+      final KV<String, FileOperations<V>> sampledSource =
+          directories.entrySet().iterator().next().getValue();
+      return sampledSource.getValue().getCoder();
     }
 
     static CoGbkResultSchema schemaOf(List<BucketedInput<?>> sources) {
@@ -523,13 +525,13 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
               entry -> {
                 // Take at most 10 buckets from the directory to sample
                 // Check for single-shard filenames template first, then multi-shard
+                final String filenameSuffix = entry.getValue().getKey();
                 List<Metadata> sampledFiles =
-                    sampleDirectory(entry.getKey(), "*-0000?-of-?????" + entry.getValue().getKey());
+                    sampleDirectory(entry.getKey(), "*-0000?-of-?????" + filenameSuffix);
                 if (sampledFiles.isEmpty()) {
                   sampledFiles =
                       sampleDirectory(
-                          entry.getKey(),
-                          "*-0000?-of-*-shard-00000-of-?????" + entry.getValue().getKey());
+                          entry.getKey(), "*-0000?-of-*-shard-00000-of-?????" + filenameSuffix);
                 }
 
                 int numBuckets = 0;

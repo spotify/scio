@@ -192,12 +192,12 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
   }
 
   @Override
-  public int hashPrimaryKeyMetadata() {
+  int hashPrimaryKeyMetadata() {
     return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public int hashSecondaryKeyMetadata() {
+  int hashSecondaryKeyMetadata() {
     return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
   }
 

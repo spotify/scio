@@ -75,12 +75,12 @@ public class BucketMetadataTest {
               }
 
               @Override
-              public int hashPrimaryKeyMetadata() {
+              int hashPrimaryKeyMetadata() {
                 return -1;
               }
 
               @Override
-              public int hashSecondaryKeyMetadata() {
+              int hashSecondaryKeyMetadata() {
                 return -1;
               }
             });

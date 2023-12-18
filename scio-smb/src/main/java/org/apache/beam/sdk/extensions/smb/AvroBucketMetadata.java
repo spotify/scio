@@ -135,12 +135,12 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
   }
 
   @Override
-  public int hashPrimaryKeyMetadata() {
+  int hashPrimaryKeyMetadata() {
     return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public int hashSecondaryKeyMetadata() {
+  int hashSecondaryKeyMetadata() {
     return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
   }
 

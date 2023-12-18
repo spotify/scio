@@ -327,9 +327,9 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   public abstract K2 extractKeySecondary(V value);
 
-  public abstract int hashPrimaryKeyMetadata();
+  abstract int hashPrimaryKeyMetadata();
 
-  public abstract int hashSecondaryKeyMetadata();
+  abstract int hashSecondaryKeyMetadata();
 
   public SortedBucketIO.ComparableKeyBytes primaryComparableKeyBytes(V value) {
     return new SortedBucketIO.ComparableKeyBytes(getKeyBytesPrimary(value), null);
