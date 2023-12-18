@@ -169,7 +169,7 @@ object ParquetAvroIO {
     suffix: String = null
   ) {
     val avroClass: Class[A] = ScioUtil.classOf[A]
-    val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom ScioUtil.classOf[T]
+    val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
     val readSchema: Schema =
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
