@@ -18,6 +18,10 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -32,6 +36,8 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.coders.CoderException;
+import org.apache.beam.sdk.coders.CustomCoder;
 import org.apache.beam.sdk.io.Compression;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.FileIO.ReadableFile;
@@ -247,6 +253,26 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
               : compression);
     } catch (IOException e) {
       throw new RuntimeException(String.format("Exception opening bucket file %s", resourceId), e);
+    }
+  }
+
+  static class FileOperationsCoder<T> extends CustomCoder<FileOperations<T>> {
+    @Override
+    public void encode(FileOperations<T> value, OutputStream outStream)
+        throws CoderException, IOException {
+      final ObjectOutputStream oos = new ObjectOutputStream(outStream);
+      oos.writeObject(value);
+      oos.flush();
+    }
+
+    @Override
+    public FileOperations<T> decode(InputStream inStream) throws CoderException, IOException {
+      final ObjectInputStream ois = new ObjectInputStream(inStream);
+      try {
+        return (FileOperations<T>) ois.readObject();
+      } catch (ClassNotFoundException e) {
+        throw new CoderException(e);
+      }
     }
   }
 }

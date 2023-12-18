@@ -45,8 +45,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.ListCoder;
+import org.apache.beam.sdk.coders.MapCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.coders.VarIntCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
@@ -629,30 +631,32 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       outStream.writeObject(predicate);
       outStream.writeObject(keying);
 
-      long numDistinctFileSuffixes =
-          directories.values().stream().map(KV::getKey).distinct().count();
-      long numDistinctFileOperations =
-          directories.values().stream().map(kv -> kv.getValue().getClass()).distinct().count();
+      // Map distinct FileOperations/FileSuffixes to indices in a map, for efficient encoding of
+      // large BucketedInputs
+      final Map<KV<String, String>, Integer> fileOperationsMetadata = new HashMap<>();
+      final Map<Integer, KV<String, FileOperations<V>>> fileOperationsEncoding = new HashMap<>();
+      final Map<ResourceId, Integer> directoriesEncoding = new HashMap<>();
+      int i = 0;
 
-      // If all partitions use the same file operations type, don't keep re-encoding it
-      if (numDistinctFileSuffixes == 1 && numDistinctFileOperations == 1) {
-        outStream.writeBoolean(true);
-
-        ListCoder.of(ResourceIdCoder.of()).encode(new ArrayList<>(directories.keySet()), outStream);
-        KV<String, FileOperations<V>> singleton = directories.values().iterator().next();
-        outStream.writeUTF(singleton.getKey());
-        outStream.writeObject(singleton.getValue());
-      } else {
-        outStream.writeBoolean(false);
-        outStream.writeInt(directories.size());
-
-        for (Map.Entry<ResourceId, KV<String, FileOperations<V>>> entry : directories.entrySet()) {
-          ResourceIdCoder.of().encode(entry.getKey(), outStream);
-          outStream.writeUTF(entry.getValue().getKey());
-          outStream.writeObject(entry.getValue().getValue());
+      for (Map.Entry<ResourceId, KV<String, FileOperations<V>>> entry : directories.entrySet()) {
+        final KV<String, FileOperations<V>> fileOps = entry.getValue();
+        final KV<String, String> metadataKey =
+            KV.of(fileOps.getKey(), fileOps.getValue().getClass().getName());
+        if (!fileOperationsMetadata.containsKey(metadataKey)) {
+          fileOperationsMetadata.put(metadataKey, i);
+          fileOperationsEncoding.put(i, KV.of(fileOps.getKey(), fileOps.getValue()));
+          i++;
         }
+        directoriesEncoding.put(entry.getKey(), fileOperationsMetadata.get(metadataKey));
       }
-      outStream.flush();
+
+      final Coder<FileOperations<V>> fileOperationsCoder =
+          new FileOperations.FileOperationsCoder<>();
+
+      MapCoder.of(VarIntCoder.of(), KvCoder.of(StringUtf8Coder.of(), fileOperationsCoder))
+          .encode(fileOperationsEncoding, outStream);
+
+      MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of()).encode(directoriesEncoding, outStream);
     }
 
     @SuppressWarnings("unchecked")
@@ -661,25 +665,22 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       this.predicate = (Predicate<V>) inStream.readObject();
       this.keying = (Keying) inStream.readObject();
 
-      final boolean partitionsHaveSameFileType = inStream.readBoolean();
-      if (partitionsHaveSameFileType) {
-        final List<ResourceId> dirs = ListCoder.of(ResourceIdCoder.of()).decode(inStream);
-        final String filenameSuffix = inStream.readUTF();
-        final FileOperations<V> fileOperations = (FileOperations<V>) inStream.readObject();
-        this.directories =
-            dirs.stream()
-                .collect(
-                    Collectors.toMap(
-                        Functions.identity(), dir -> KV.of(filenameSuffix, fileOperations)));
-      } else {
-        final int numDirectories = inStream.readInt();
-        this.directories = new HashMap<>();
-        for (int i = 0; i < numDirectories; i++) {
-          directories.put(
-              ResourceIdCoder.of().decode(inStream),
-              KV.of(inStream.readUTF(), (FileOperations<V>) inStream.readObject()));
-        }
-      }
+      final Coder<FileOperations<V>> fileOperationsCoder =
+          new FileOperations.FileOperationsCoder<>();
+
+      final Map<Integer, KV<String, FileOperations<V>>> fileOperationsEncoding =
+          MapCoder.of(VarIntCoder.of(), KvCoder.of(StringUtf8Coder.of(), fileOperationsCoder))
+              .decode(inStream);
+
+      final Map<ResourceId, Integer> directoriesEncoding =
+          MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of()).decode(inStream);
+
+      this.directories =
+          directoriesEncoding.entrySet().stream()
+              .collect(
+                  Collectors.toMap(
+                      Map.Entry::getKey,
+                      dirAndIndex -> fileOperationsEncoding.get(dirAndIndex.getValue())));
     }
   }
 
