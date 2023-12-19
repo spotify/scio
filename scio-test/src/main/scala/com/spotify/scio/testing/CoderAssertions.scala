@@ -26,6 +26,7 @@ import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 import org.scalactic.Equality
 import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers._
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.reflect.ClassTag
 
@@ -160,7 +161,7 @@ object CoderAssertions {
       val arr = Array(ctx.actualValue.get)
       noException should be thrownBy CoderProperties.testByteCount(
         ctx.beamCoder,
-        BCoder.Context.OUTER,
+        BCoder.Context.OUTER: @nowarn("cat=deprecation"),
         arr
       )
     }

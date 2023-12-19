@@ -20,6 +20,7 @@ package com.spotify.scio.coders
 import java.io.{InputStream, OutputStream}
 import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import java.util.{List => JList}
 
@@ -38,12 +39,16 @@ sealed abstract private[scio] class WrappedCoder[T] extends CustomCoder[T] {
 
   override def encode(value: T, os: OutputStream): Unit =
     bcoder.encode(value, os)
-  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
-    bcoder.encode(value, os, context)
+  override def encode(
+    value: T,
+    os: OutputStream,
+    @nowarn("cat=deprecation") context: BCoder.Context
+  ): Unit =
+    bcoder.encode(value, os, context): @nowarn("cat=deprecation")
   override def decode(is: InputStream): T =
     bcoder.decode(is)
-  override def decode(is: InputStream, context: BCoder.Context): T =
-    bcoder.decode(is, context)
+  override def decode(is: InputStream, @nowarn("cat=deprecation") context: BCoder.Context): T =
+    bcoder.decode(is, context): @nowarn("cat=deprecation")
   override def verifyDeterministic(): Unit =
     bcoder.verifyDeterministic()
   override def consistentWithEquals(): Boolean =
@@ -110,12 +115,16 @@ final private[scio] class MaterializedCoder[T](
   override def encode(value: T, os: OutputStream): Unit =
     catching(super.encode(value, os))
 
-  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
+  override def encode(
+    value: T,
+    os: OutputStream,
+    @nowarn("cat=deprecation") context: BCoder.Context
+  ): Unit =
     catching(super.encode(value, os, context))
 
   override def decode(is: InputStream): T =
     catching(super.decode(is))
 
-  override def decode(is: InputStream, context: BCoder.Context): T =
+  override def decode(is: InputStream, @nowarn("cat=deprecation") context: BCoder.Context): T =
     catching(super.decode(is, context))
 }

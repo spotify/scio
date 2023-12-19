@@ -21,6 +21,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.util.TupleFunctions._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{transforms => beam}
+import org.typelevel.scalaccompat.annotation.nowarn
 
 /**
  * Approximate distinct element counter for type `T`, e.g. HyperLogLog or HyperLogLog++. This has
@@ -57,13 +58,13 @@ case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCo
 
   override def estimateDistinctCount(in: SCollection[T]): SCollection[Long] =
     in.applyTransform(beam.ApproximateUnique.globally(sampleSize))
-      .asInstanceOf[SCollection[Long]]
+      .asInstanceOf[SCollection[Long]]: @nowarn("cat=deprecation")
 
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
     implicit val keyCoder: Coder[K] = in.keyCoder
     in.toKV
       .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))
-      .map(klToTuple)
+      .map(klToTuple): @nowarn("cat=deprecation")
   }
 }
 
@@ -80,13 +81,13 @@ case class ApproximateUniqueCounterByError[T](maximumEstimationError: Double = 0
 
   override def estimateDistinctCount(in: SCollection[T]): SCollection[Long] =
     in.applyTransform(beam.ApproximateUnique.globally(maximumEstimationError))
-      .asInstanceOf[SCollection[Long]]
+      .asInstanceOf[SCollection[Long]]: @nowarn("cat=deprecation")
 
   override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
     implicit val keyCoder: Coder[K] = in.keyCoder
     in.toKV
       .applyTransform(beam.ApproximateUnique.perKey[K, T](maximumEstimationError))
-      .map(klToTuple)
+      .map(klToTuple): @nowarn("cat=deprecation")
   }
 
 }

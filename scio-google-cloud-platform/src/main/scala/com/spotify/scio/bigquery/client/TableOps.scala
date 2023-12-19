@@ -28,11 +28,10 @@ import com.spotify.scio.bigquery.{BigQuerySysProps, StorageUtil, Table => STable
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{BinaryDecoder, DecoderFactory}
-import org.apache.beam.sdk.extensions.gcp.options.GcsOptions
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryAvroUtilsWrapper, BigQueryOptions}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.options.{ExecutorOptions, PipelineOptionsFactory}
 import org.joda.time.Instant
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -278,7 +277,7 @@ final private[client] class TableOps(client: Client) {
     try {
       f(new bq.BigQueryServicesWrapper(options))
     } finally {
-      Option(options.as(classOf[GcsOptions]).getExecutorService)
+      Option(options.as(classOf[ExecutorOptions]).getScheduledExecutorService)
         .foreach(_.shutdown())
     }
   }

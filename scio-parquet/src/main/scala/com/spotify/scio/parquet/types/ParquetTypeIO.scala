@@ -40,6 +40,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
@@ -112,7 +113,12 @@ final case class ParquetTypeIO[T: ClassTag: Coder: ParquetType](
         CoderMaterializer.beam(sc, Coder[T])
       )
       .withConfiguration(job.getConfiguration)
-      .withSkipValueClone(job.getConfiguration.getBoolean(ParquetReadConfiguration.SkipClone, true))
+      .withSkipValueClone(
+        job.getConfiguration.getBoolean(
+          ParquetReadConfiguration.SkipClone: @nowarn("cat=deprecation"),
+          true
+        )
+      )
     sc.applyTransform(source).map(_.getValue)
   }
 

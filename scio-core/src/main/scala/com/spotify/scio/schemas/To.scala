@@ -17,14 +17,15 @@
 
 package com.spotify.scio.schemas
 
-import com.spotify.scio.values._
 import com.spotify.scio.coders._
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.sdk.values._
+import com.spotify.scio.values._
 import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
+import org.apache.beam.sdk.values._
+import org.typelevel.scalaccompat.annotation.nowarn
 
-import scala.jdk.CollectionConverters._
 import scala.annotation.tailrec
+import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializable {
@@ -225,9 +226,10 @@ object ToMacro {
   def safeImpl[I: c.WeakTypeTag, O: c.WeakTypeTag](
     c: blackbox.Context
   )(iSchema: c.Expr[Schema[I]], oSchema: c.Expr[Schema[O]]): c.Expr[To[I, O]] = {
+    @nowarn("cat=deprecation")
     val h = new { val ctx: c.type = c } with SchemaMacroHelpers
-    import h._
     import c.universe._
+    import h._
 
     val tpeI = weakTypeOf[I]
     val tpeO = weakTypeOf[O]

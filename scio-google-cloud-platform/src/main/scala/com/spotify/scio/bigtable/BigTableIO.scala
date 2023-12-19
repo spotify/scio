@@ -32,6 +32,7 @@ import org.joda.time.Duration
 
 import scala.jdk.CollectionConverters._
 import com.spotify.scio.io.TapT
+import org.typelevel.scalaccompat.annotation.nowarn
 
 sealed trait BigtableIO[T] extends ScioIO[T] {
   final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
@@ -66,7 +67,7 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
           override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
             opts.toBuilder
         }
-      )
+      ): @nowarn("cat=deprecation")
     if (!params.keyRanges.isEmpty) {
       read = read.withKeyRanges(params.keyRanges.asJava)
     }
@@ -145,7 +146,7 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
                 override def apply(input: BigtableOptions.Builder): BigtableOptions.Builder =
                   opts.toBuilder
               }
-            )
+            ): @nowarn("cat=deprecation")
         case BigtableWrite.Bulk(numOfShards, flushInterval) =>
           new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
       }

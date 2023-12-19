@@ -21,6 +21,7 @@ import java.io.{InputStream, OutputStream}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, CustomCoder, StructuredCoder}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import java.util.{List => JList, Objects}
 import scala.jdk.CollectionConverters._
@@ -266,14 +267,18 @@ final private[scio] class TransformCoder[T, U](
   override def encode(value: T, os: OutputStream): Unit =
     bcoder.encode(to(value), os)
 
-  override def encode(value: T, os: OutputStream, context: BCoder.Context): Unit =
-    bcoder.encode(to(value), os, context)
+  override def encode(
+    value: T,
+    os: OutputStream,
+    @nowarn("cat=deprecation") context: BCoder.Context
+  ): Unit =
+    bcoder.encode(to(value), os, context): @nowarn("cat=deprecation")
 
   override def decode(is: InputStream): T =
     from(bcoder.decode(is))
 
-  override def decode(is: InputStream, context: BCoder.Context): T =
-    from(bcoder.decode(is, context))
+  override def decode(is: InputStream, @nowarn("cat=deprecation") context: BCoder.Context): T =
+    from(bcoder.decode(is, context)): @nowarn("cat=deprecation")
 
   override def verifyDeterministic(): Unit =
     bcoder.verifyDeterministic()

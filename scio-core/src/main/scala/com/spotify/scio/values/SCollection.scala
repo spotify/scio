@@ -56,7 +56,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.typelevel.scalaccompat.annotation.unused
+import org.typelevel.scalaccompat.annotation.{nowarn, unused}
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -1346,7 +1346,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.applyTransform(
       WithTimestamps
         .of(Functions.serializableFn(f))
-        .withAllowedTimestampSkew(allowedTimestampSkew)
+        .withAllowedTimestampSkew(allowedTimestampSkew): @nowarn("cat=deprecation")
     )
 
   // =======================================================================
@@ -1559,7 +1559,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
             arrCoder,
             CoderUtils.encodeToByteArray(elemCoder, e),
             // encode record length
-            BCoder.Context.NESTED
+            BCoder.Context.NESTED: @nowarn("cat=deprecation")
           )
         }
         .saveAsBinaryFile(path)
