@@ -531,12 +531,13 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
                 // Take at most 10 buckets from the directory to sample
                 // Check for single-shard filenames template first, then multi-shard
                 final String filenameSuffix = entry.getValue().getKey();
+                final ResourceId directory = entry.getKey();
                 List<Metadata> sampledFiles =
-                    sampleDirectory(entry.getKey(), "*-0000?-of-?????" + filenameSuffix);
+                    sampleDirectory(directory, "*-0000?-of-?????" + filenameSuffix);
                 if (sampledFiles.isEmpty()) {
                   sampledFiles =
                       sampleDirectory(
-                          entry.getKey(), "*-0000?-of-*-shard-00000-of-?????" + filenameSuffix);
+                          directory, "*-0000?-of-*-shard-00000-of-?????" + filenameSuffix);
                 }
 
                 int numBuckets = 0;
@@ -559,7 +560,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
                 }
                 if (numBuckets == 0) {
                   throw new IllegalArgumentException(
-                      "Directory " + entry.getKey() + " has no bucket files");
+                      "Directory " + directory + " has no bucket files");
                 }
                 if (seenBuckets.size() < numBuckets) {
                   return (long) (sampledBytes * (numBuckets / (seenBuckets.size() * 1.0)));
