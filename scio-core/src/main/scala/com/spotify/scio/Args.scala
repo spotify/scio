@@ -18,6 +18,7 @@
 package com.spotify.scio
 
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Splitter
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
@@ -42,7 +43,7 @@ object Args {
 
     val propertyMap = properties
       .map { s =>
-        val Array(k, v) = s.split("=", 2)
+        val Array(k, v) = s.split("=", 2): @nowarn
         (k, Splitter.onPattern(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)").split(v).asScala)
       }
       .groupBy(_._1)

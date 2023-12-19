@@ -25,6 +25,7 @@ import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketIOUtil, T
 import org.apache.beam.sdk.transforms.join.{CoGbkResult, CoGroupByKey, KeyedPCollectionTuple}
 import org.apache.beam.sdk.values.KV
 import com.spotify.scio.smb.SortMergeTransform
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
 final class SMBMultiJoin(private val self: ScioContext) {
@@ -2070,7 +2071,7 @@ final class SMBMultiJoin(private val self: ScioContext) {
 		reads: SortedBucketIO.Read[_]*
 	): SCollection[KV[K, CoGbkResult]] = {
 		val testInput = TestDataManager.getInput(self.testId.get)
-		val read :: rs = reads.asInstanceOf[Seq[SortedBucketIO.Read[Any]]].toList
+		val read :: rs = reads.asInstanceOf[Seq[SortedBucketIO.Read[Any]]].toList: @nowarn
 		val test = testInput[(K, Any)](SortedBucketIOUtil.testId(read)).toSCollection(self)
 		val keyed = rs
 			.foldLeft(KeyedPCollectionTuple.of(read.getTupleTag, test.toKV.internal)) { (kpt, r) =>

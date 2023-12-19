@@ -366,7 +366,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group collection
    */
   def partition(p: T => Boolean): (SCollection[T], SCollection[T]) = {
-    val Seq(left, right) = partition(2, t => if (p(t)) 0 else 1)
+    val Seq(left, right) = partition(2, t => if (p(t)) 0 else 1): @nowarn
     (left, right)
   }
 

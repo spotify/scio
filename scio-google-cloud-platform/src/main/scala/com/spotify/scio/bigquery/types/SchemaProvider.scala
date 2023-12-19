@@ -28,6 +28,7 @@ import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import com.spotify.scio.util.Cache
+import org.typelevel.scalaccompat.annotation.nowarn
 
 private[types] object SchemaProvider {
   private[this] val AvroSchemaCache = Cache.concurrentHashMap[String, Schema]
@@ -120,8 +121,8 @@ private[types] object SchemaProvider {
       _.annotations
         .find(_.tree.tpe.toString == tpe)
         .map { a =>
-          val q"new $_($v)" = a.tree
-          val Literal(Constant(s)) = v
+          val q"new $_($v)" = a.tree: @nowarn
+          val Literal(Constant(s)) = v: @nowarn
           s.toString
         }
     }

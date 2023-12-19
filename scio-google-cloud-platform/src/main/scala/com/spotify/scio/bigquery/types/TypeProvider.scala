@@ -36,8 +36,8 @@ import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
 import org.slf4j.LoggerFactory
+import org.typelevel.scalaccompat.annotation.nowarn
 
-import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable.{Buffer => MBuffer, Map => MMap}
 import scala.reflect.macros._
@@ -53,7 +53,7 @@ private[types] object TypeProvider {
       case Nil => c.abort(c.enclosingPosition, "Missing table specification")
       case l   => l
     }
-    val (table: String, _) :: _ = args
+    val (table: String, _) :: _ = args: @nowarn
     val tableSpec =
       BigQueryPartitionUtil.latestTable(bigquery, formatString(args.map(_._1)))
     val schema = bigquery.tables.schema(tableSpec)
@@ -79,10 +79,11 @@ private[types] object TypeProvider {
   }
 
   def schemaImpl(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
-    val (schemaString: String, _) :: _ = extractArgs(c) match {
+    val args = extractArgs(c) match {
       case Nil => c.abort(c.enclosingPosition, "Missing schema")
       case l   => l
     }
+    val (schemaString: String, _) :: _ = args: @nowarn
     val schema = BigQueryUtil.parseSchema(schemaString)
     schemaToType(c)(schema, annottees, Nil, Nil)
   }
@@ -124,7 +125,7 @@ private[types] object TypeProvider {
       case Nil => c.abort(c.enclosingPosition, "Missing query")
       case l   => l
     }
-    val (queryFormat: String, _) :: queryArgs = extractedArgs
+    val (queryFormat: String, _) :: queryArgs = extractedArgs: @nowarn
     val query = BigQueryPartitionUtil.latestQuery(bigquery, formatString(extractedArgs.map(_._1)))
     val schema = bigquery.query.schema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")
@@ -478,7 +479,7 @@ private[types] object TypeProvider {
 
     if (originalCompanion.isDefined) {
       val q"$mods object $cName extends { ..$_ } with ..$parents { $_ => ..$body }" =
-        originalCompanion.get
+        originalCompanion.get: @nowarn
       // need to filter out Object, otherwise get duplicate Object error
       // also can't get a FQN of scala.AnyRef which gets erased to java.lang.Object, can't find a
       // sane way to =:= scala.AnyRef
