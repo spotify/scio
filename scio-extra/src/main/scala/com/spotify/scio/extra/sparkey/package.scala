@@ -114,5 +114,9 @@ package object sparkey extends syntax.AllSyntax with SparkeyReaderInstances with
   type SparkeySetSCollection[T] = syntax.SparkeySetSCollectionOps[T]
   @deprecated("Use syntax.SparkeySCollectionOps instead", "0.14.0")
   type SparkeySCollection = syntax.SparkeySCollectionOps
+  @deprecated("Use syntax.PairLargeHashSCollectionFunctions instead", "0.14.0")
+  type PairLargeHashSCollectionFunctions[K, V] = syntax.PairLargeHashSCollectionFunctions[K, V]
+  @deprecated("Use syntax.LargeHashSCollectionFunctions instead", "0.14.0")
+  type LargeHashSCollectionFunctions[T] = syntax.LargeHashSCollectionFunctions[T]
 
 }

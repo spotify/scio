@@ -15,10 +15,9 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.sparkey
+package com.spotify.scio.extra.sparkey.syntax
 
 import com.spotify.scio.extra.sparkey.instances.SparkeySet
-import com.spotify.scio.extra.sparkey.syntax.SCollectionSyntax
 import com.spotify.scio.values.{SCollection, SideInput}
 
 /** Extra functions available on SCollections for Sparkey hash-based filtering. */

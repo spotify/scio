@@ -19,10 +19,8 @@ package com.spotify.scio.extra.sparkey.syntax
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.{
-  LargeHashSCollectionFunctions,
   LargeMapSideInput,
   LargeSetSideInput,
-  PairLargeHashSCollectionFunctions,
   Sparkey,
   SparkeySideInput,
   SparkeyUri,

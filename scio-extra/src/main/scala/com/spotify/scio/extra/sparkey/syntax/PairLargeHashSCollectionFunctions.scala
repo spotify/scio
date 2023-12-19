@@ -15,11 +15,10 @@
  * under the License.
  */
 
-package com.spotify.scio.extra.sparkey
+package com.spotify.scio.extra.sparkey.syntax
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.instances.{SparkeyMap, SparkeySet}
-import com.spotify.scio.extra.sparkey.syntax.SCollectionSyntax
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.CompressionType
 
