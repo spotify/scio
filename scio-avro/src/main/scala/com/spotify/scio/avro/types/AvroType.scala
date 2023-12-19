@@ -19,6 +19,7 @@ package com.spotify.scio.avro.types
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.typelevel.scalaccompat.annotation.unused
 
 import scala.annotation.{compileTimeOnly, nowarn, StaticAnnotation}
 import scala.reflect.runtime.universe._
@@ -242,6 +243,22 @@ object AvroType {
   /** Create a new AvroType instance. */
   def apply[T: TypeTag]: AvroType[T] = new AvroType[T]
 }
+
+/**
+ * Case class and argument annotation to get Avro field and record docs.
+ *
+ * To be used with case class fields annotated with [[AvroType.toSchema]], For example:
+ *
+ * Example:
+ *
+ * {{{
+ * AvroType.toSchema
+ * @doc("User Record")
+ * case class User(@doc("user name") name: String,
+ *                 @doc("user age") age: Int)
+ * }}}
+ */
+class doc(@unused value: String) extends StaticAnnotation
 
 /**
  * Type class for case class `T` annotated for Avro IO.

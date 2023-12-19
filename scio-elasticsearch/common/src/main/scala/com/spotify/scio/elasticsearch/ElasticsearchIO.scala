@@ -18,18 +18,26 @@
 package com.spotify.scio.elasticsearch
 
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
+import co.elastic.clients.json.{JsonpMapper, SimpleJsonpMapper}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.elasticsearch.ElasticsearchIO.Write.BulkExecutionException
 import org.apache.beam.sdk.io.{elasticsearch => beam}
 import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.http.HttpHost
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.joda.time.Duration
 
 import java.lang.{Iterable => JIterable}
 import scala.jdk.CollectionConverters._
 import scala.util.chaining._
+
+final case class ElasticsearchOptions(
+  nodes: Seq[HttpHost],
+  usernameAndPassword: Option[(String, String)] = None,
+  mapperFactory: () => JsonpMapper = () => new SimpleJsonpMapper()
+)
 
 final case class ElasticsearchIO[T](esOptions: ElasticsearchOptions) extends ScioIO[T] {
   override type ReadP = Nothing

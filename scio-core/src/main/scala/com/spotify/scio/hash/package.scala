@@ -17,8 +17,6 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.values.{SCollection, SideInput}
-
 /**
  * Main package for hash APIs. Import all.
  *
@@ -26,166 +24,11 @@ import com.spotify.scio.values.{SCollection, SideInput}
  * import com.spotify.scio.hash._
  * }}}
  */
-package object hash {
-  implicit class ApproxFilterIterable[T](private val self: Iterable[T]) extends AnyVal {
+package object hash extends syntax.AllSyntax {
 
-    /**
-     * Creates an [[ApproxFilter]] from this [[Iterable]] with the collection size as
-     * `expectedInsertions` and default `fpp` of 0.03.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * @param c
-     *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
-     */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C)(implicit hash: c.Hash[T]): c.Filter[T] =
-      c.create(self)
+  @deprecated("Use syntax.ApproxFilterIterableOps instead", "0.14.0")
+  type ApproxFilterIterable[T] = syntax.ApproxFilterIterableOps[T]
+  @deprecated("Use syntax.ApproxFilterSCollectionOps instead", "0.14.0")
+  type ApproxFilterSCollection[T] = syntax.ApproxFilterSCollectionOps[T]
 
-    /**
-     * Creates an [[ApproxFilter]] from this [[Iterable]] with the expected number of insertions and
-     * default `fpp` of 0.03.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * @param c
-     *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
-     */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(implicit
-      hash: c.Hash[T]
-    ): c.Filter[T] =
-      c.create(self, expectedInsertions)
-
-    /**
-     * Creates an [[ApproxFilter]] from this [[Iterable]] with the expected number of insertions and
-     * expected false positive probability.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * @param c
-     *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
-     */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(
-      implicit hash: c.Hash[T]
-    ): c.Filter[T] =
-      c.create(self, expectedInsertions, fpp)
-  }
-
-  implicit class ApproxFilterSCollection[T](private val self: SCollection[T]) extends AnyVal {
-
-    /**
-     * Creates an [[ApproxFilter]] from this [[SCollection]] with the collection size as
-     * `expectedInsertions` and default `fpp` of 0.03.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * @param c
-     *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
-     */
-    def asApproxFilter[C <: ApproxFilterCompanion](
-      c: C
-    )(implicit hash: c.Hash[T]): SCollection[c.Filter[T]] =
-      c.create(self)
-
-    /**
-     * Creates an [[ApproxFilter]] from this [[SCollection]] with the expected number of insertions
-     * and default `fpp` of 0.03.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * @param c
-     *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
-     */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long)(implicit
-      hash: c.Hash[T]
-    ): SCollection[c.Filter[T]] =
-      c.create(self, expectedInsertions)
-
-    /**
-     * Creates an [[ApproxFilter]] from this [[SCollection]] with the expected number of insertions
-     * and expected false positive probability.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * @param c
-     *   companion object of the [[ApproxFilter]] implementation, e.g. [[BloomFilter]].
-     */
-    def asApproxFilter[C <: ApproxFilterCompanion](c: C, expectedInsertions: Long, fpp: Double)(
-      implicit hash: c.Hash[T]
-    ): SCollection[c.Filter[T]] =
-      c.create(self, expectedInsertions, fpp)
-
-    /**
-     * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the collection size as
-     * `expectedInsertions` and false positive probability of 0.03.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
-     * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
-     * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
-     * Dataflow.
-     */
-    def asApproxFilterSideInput[C <: ApproxFilterCompanion](
-      c: C
-    )(implicit
-      hash: c.Hash[T]
-    ): SideInput[c.Filter[T]] =
-      c.createSideInput(self)
-
-    /**
-     * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of
-     * insertions and expected false positive probability.
-     *
-     * The `expectedInsertions` should be approximately the number of unique elements in the
-     * SCollection.
-     *
-     * The default false positive probability is 0.03
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
-     * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
-     * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
-     * Dataflow.
-     */
-    def asApproxFilterSideInput[C <: ApproxFilterCompanion](
-      c: C,
-      expectedInsertions: Long
-    )(implicit
-      hash: c.Hash[T]
-    ): SideInput[c.Filter[T]] =
-      c.createSideInput(self, expectedInsertions)
-
-    /**
-     * Creates a `SideInput[ApproxFilter]` from an [[SCollection]] with the expected number of
-     * insertions and expected false positive probability.
-     *
-     * The `expectedInsertions` should be approximately the number of unique elements in the
-     * SCollection.
-     *
-     * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified,
-     * will result in its saturation, and a sharp deterioration of its false positive probability.
-     *
-     * Since this results in one filter as a [[SideInput]] care should be taken that the size of the
-     * filter does not exceed the runner recommended max size of Side Inputs (100 MB for Dataflow)
-     * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
-     * Dataflow.
-     */
-    def asApproxFilterSideInput[C <: ApproxFilterCompanion](
-      c: C,
-      expectedInsertions: Long,
-      fpp: Double
-    )(implicit
-      hash: c.Hash[T]
-    ): SideInput[c.Filter[T]] =
-      c.createSideInput(self, expectedInsertions, fpp)
-  }
 }

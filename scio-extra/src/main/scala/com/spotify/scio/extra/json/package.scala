@@ -17,17 +17,7 @@
 
 package com.spotify.scio.extra
 
-import com.spotify.scio.ScioContext
-import com.spotify.scio.annotations.experimental
-import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.values.SCollection
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.extra.json.JsonIO.ReadParam
-import com.spotify.scio.util.FilenamePolicySupplier
-import io.circe.Printer
 import io.circe.generic.AutoDerivation
-import org.apache.beam.sdk.io.Compression
-import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 
 /**
  * Main package for JSON APIs. Import all.
@@ -48,56 +38,12 @@ import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
  *   .saveAsJsonFile("output")
  * }}}
  */
-package object json extends AutoDerivation {
+package object json extends syntax.AllSyntax with AutoDerivation {
   type Encoder[T] = io.circe.Encoder[T]
   type Decoder[T] = io.circe.Decoder[T]
 
-  /** A wrapper for `io.circe.Error` that also retains the original input string. */
-  final case class DecodeError(error: io.circe.Error, input: String)
-
-  /** Enhanced version of [[ScioContext]] with JSON methods. */
-  implicit final class JsonScioContext(private val self: ScioContext) extends AnyVal {
-    @experimental
-    def jsonFile[T: Decoder: Coder](
-      path: String,
-      compression: Compression = JsonIO.ReadParam.DefaultCompression,
-      emptyMatchTreatment: EmptyMatchTreatment = ReadParam.DefaultEmptyMatchTreatment,
-      suffix: String = JsonIO.ReadParam.DefaultSuffix
-    ): SCollection[T] = {
-      implicit val encoder: Encoder[T] = new Encoder[T] {
-        final override def apply(a: T): io.circe.Json = ???
-      }
-      self.read(JsonIO[T](path))(JsonIO.ReadParam(compression, emptyMatchTreatment, suffix))
-    }
-  }
-
-  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with JSON methods. */
-  implicit final class JsonSCollection[T: Encoder: Decoder: Coder](private val self: SCollection[T])
-      extends Serializable {
-    @experimental
-    def saveAsJsonFile(
-      path: String,
-      suffix: String = JsonIO.WriteParam.DefaultSuffix,
-      numShards: Int = JsonIO.WriteParam.DefaultNumShards,
-      compression: Compression = JsonIO.WriteParam.DefaultCompression,
-      printer: Printer = JsonIO.WriteParam.DefaultPrinter,
-      shardNameTemplate: String = JsonIO.WriteParam.DefaultShardNameTemplate,
-      tempDirectory: String = JsonIO.WriteParam.DefaultTempDirectory,
-      filenamePolicySupplier: FilenamePolicySupplier =
-        JsonIO.WriteParam.DefaultFilenamePolicySupplier,
-      prefix: String = JsonIO.WriteParam.DefaultPrefix
-    ): ClosedTap[T] =
-      self.write(JsonIO[T](path))(
-        JsonIO.WriteParam(
-          suffix,
-          numShards,
-          compression,
-          printer,
-          filenamePolicySupplier,
-          prefix,
-          shardNameTemplate,
-          tempDirectory
-        )
-      )
-  }
+  @deprecated("Use syntax.JsonScioContextOps instead", "0.14.0")
+  type JsonScioContext = syntax.JsonScioContextOps
+  @deprecated("Use syntax.JsonSCollectionOps instead", "0.14.0")
+  type JsonSCollection[T] = syntax.JsonSCollectionOps[T]
 }

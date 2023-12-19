@@ -22,6 +22,16 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap}
 import com.spotify.scio.io.TapT
 
+case class CassandraOptions(
+  keyspace: String,
+  table: String,
+  cql: String,
+  seedNodeHost: String,
+  seedNodePort: Int = -1,
+  username: String = null,
+  password: String = null
+)
+
 final case class CassandraIO[T](opts: CassandraOptions) extends ScioIO[T] {
   override type ReadP = Nothing
   override type WriteP = CassandraIO.WriteParam[T]

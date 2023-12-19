@@ -20,6 +20,7 @@ package com.spotify.scio.bigquery.types
 import com.google.api.services.bigquery.model.{TableRow, TableSchema}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.typelevel.scalaccompat.annotation.unused
 
 import scala.annotation.{compileTimeOnly, nowarn, StaticAnnotation}
 import scala.reflect.runtime.universe._
@@ -390,6 +391,29 @@ object BigQueryType {
   /** Create a new BigQueryType instance. */
   @inline final def apply[T: TypeTag]: BigQueryType[T] = new BigQueryType[T]
 }
+
+/**
+ * Case class field annotation for BigQuery field description.
+ *
+ * To be used with case class fields annotated with [[BigQueryType.toTable]], For example:
+ *
+ * {{{
+ * @BigQueryType.toTable
+ * case class User(@description("user name") name: String,
+ *                 @description("user age") age: Int)
+ * }}}
+ */
+final class description(@unused value: String) extends StaticAnnotation with Serializable
+
+/**
+ * Case class to serve as raw type for Geography instances to distinguish them from Strings.
+ *
+ * See also https://cloud.google.com/bigquery/docs/gis-data
+ *
+ * @param wkt
+ *   Well Known Text formatted string that BigQuery displays for Geography
+ */
+final case class Geography(wkt: String)
 
 /**
  * Type class for case class `T` annotated for BigQuery IO.

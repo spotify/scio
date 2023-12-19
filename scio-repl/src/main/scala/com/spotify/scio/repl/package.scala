@@ -17,19 +17,4 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.values.SCollection
-
-package object repl {
-  implicit class ReplSCollection[T](private val self: SCollection[T]) extends AnyVal {
-
-    /** Convenience method to close the current [[ScioContext]] and collect elements. */
-    def runAndCollect(): Iterator[T] = {
-      val closedTap = self.materialize
-      self.context
-        .run()
-        .waitUntilDone()
-        .tap(closedTap)
-        .value
-    }
-  }
-}
+package object repl extends syntax.SCollectionSyntax

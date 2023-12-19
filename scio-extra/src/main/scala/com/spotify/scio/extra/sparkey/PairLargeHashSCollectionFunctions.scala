@@ -19,6 +19,7 @@ package com.spotify.scio.extra.sparkey
 
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.sparkey.instances.{SparkeyMap, SparkeySet}
+import com.spotify.scio.extra.sparkey.syntax.SCollectionSyntax
 import com.spotify.scio.values.{SCollection, SideInput}
 import com.spotify.sparkey.CompressionType
 
@@ -34,10 +35,11 @@ import com.spotify.sparkey.CompressionType
  * @groupname join
  * Join Operations
  */
-class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
-
-  implicit private val keyCoder: Coder[K] = self.keyCoder
-  implicit private val valueCoder: Coder[V] = self.valueCoder
+class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)])
+    extends AnyVal {
+  import SCollectionSyntax._
+  implicit private def keyCoder: Coder[K] = self.keyCoder
+  implicit private def valueCoder: Coder[V] = self.valueCoder
 
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be <<10x
