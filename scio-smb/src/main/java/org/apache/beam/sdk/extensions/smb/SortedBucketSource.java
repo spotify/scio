@@ -378,7 +378,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
     public SourceMetadata<V> getSourceMetadata() {
       if (sourceMetadata == null)
-        sourceMetadata = BucketMetadataUtil.get().getPrimaryKeyedSourceMetadata(directories);
+        sourceMetadata = BucketMetadataUtil.get().getPrimaryKeyedSourceMetadata(inputs);
       return sourceMetadata;
     }
   }
@@ -408,8 +408,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
     public SourceMetadata<V> getSourceMetadata() {
       if (sourceMetadata == null)
-        sourceMetadata =
-            BucketMetadataUtil.get().getPrimaryAndSecondaryKeyedSourceMetadata(directories);
+        sourceMetadata = BucketMetadataUtil.get().getPrimaryAndSecondaryKeyedSourceMetadata(inputs);
       return sourceMetadata;
     }
   }
@@ -424,7 +423,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     private static final Pattern BUCKET_PATTERN = Pattern.compile("(\\d+)-of-(\\d+)");
 
     protected TupleTag<V> tupleTag;
-    protected Map<ResourceId, KV<String, FileOperations<V>>> directories;
+    protected Map<ResourceId, KV<String, FileOperations<V>>> inputs;
     protected Predicate<V> predicate;
     protected Keying keying;
     // lazy, internal checks depend on what kind of iteration is requested
@@ -478,7 +477,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         Predicate<V> predicate) {
       this.keying = keying;
       this.tupleTag = tupleTag;
-      this.directories =
+      this.inputs =
           directories.entrySet().stream()
               .collect(
                   Collectors.toMap(
@@ -496,9 +495,13 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       return predicate;
     }
 
+    public Map<ResourceId, KV<String, FileOperations<V>>> getInputs() {
+      return inputs;
+    }
+
     public Coder<V> getCoder() {
       final KV<String, FileOperations<V>> sampledSource =
-          directories.entrySet().iterator().next().getValue();
+          inputs.entrySet().iterator().next().getValue();
       return sampledSource.getValue().getCoder();
     }
 
@@ -520,7 +523,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     }
 
     long getOrSampleByteSize() {
-      return directories
+      return inputs
           .entrySet()
           .parallelStream()
           .mapToLong(
@@ -596,8 +599,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
                 try {
                   Iterator<KV<SortedBucketIO.ComparableKeyBytes, V>> iterator =
                       Iterators.transform(
-                          directories.get(dir).getValue().iterator(file),
-                          v -> KV.of(keyFn.apply(v), v));
+                          inputs.get(dir).getValue().iterator(file), v -> KV.of(keyFn.apply(v), v));
                   Iterator<KV<SortedBucketIO.ComparableKeyBytes, V>> out =
                       (bufferSize > 0) ? new BufferedIterator<>(iterator, bufferSize) : iterator;
                   iterators.add(out);
@@ -612,7 +614,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
 
     @Override
     public String toString() {
-      List<ResourceId> inputDirectories = new ArrayList<>(directories.keySet());
+      List<ResourceId> inputDirectories = new ArrayList<>(inputs.keySet());
       return String.format(
           "BucketedInput[tupleTag=%s, inputDirectories=[%s]]",
           tupleTag.getId(),
@@ -638,7 +640,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       final Map<ResourceId, Integer> directoriesEncoding = new HashMap<>();
       int i = 0;
 
-      for (Map.Entry<ResourceId, KV<String, FileOperations<V>>> entry : directories.entrySet()) {
+      for (Map.Entry<ResourceId, KV<String, FileOperations<V>>> entry : inputs.entrySet()) {
         final KV<String, FileOperations<V>> fileOps = entry.getValue();
         final KV<String, String> metadataKey =
             KV.of(fileOps.getKey(), fileOps.getValue().getClass().getName());
@@ -675,7 +677,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       final Map<ResourceId, Integer> directoriesEncoding =
           MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of()).decode(inStream);
 
-      this.directories =
+      this.inputs =
           directoriesEncoding.entrySet().stream()
               .collect(
                   Collectors.toMap(

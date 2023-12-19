@@ -81,13 +81,13 @@ object ParquetTypeSortedBucketIO {
     def withConfiguration(configuration: Configuration): Read[T] =
       this.copy(configuration = configuration)
 
-    override def getInputDirectories: ImmutableList[String] =
+    def getInputDirectories: ImmutableList[String] =
       ImmutableList.copyOf(inputDirectories.asJava: java.lang.Iterable[String])
     def getFilenameSuffix: String = filenameSuffix
 
     override def getTupleTag: TupleTag[T] = tupleTag
 
-    override protected def toBucketedInput(
+    override def toBucketedInput(
       keying: SortedBucketSource.Keying
     ): SortedBucketSource.BucketedInput[T] = {
       val fileOperations = ParquetTypeFileOperations[T](filterPredicate, configuration)

@@ -23,7 +23,16 @@ import scala.jdk.CollectionConverters._
 
 object SortedBucketIOUtil {
   def testId(read: beam.SortedBucketIO.Read[_]): String =
-    scio.SortedBucketIO.testId(read.getInputDirectories.asScala.toSeq: _*)
+    scio.SortedBucketIO.testId(
+      read
+        .toBucketedInput(SortedBucketSource.Keying.PRIMARY)
+        .getInputs
+        .asScala
+        .toSeq
+        .map { case (rId, _) =>
+          s"${rId.getCurrentDirectory}${Option(rId.getFilename).getOrElse("")}"
+        }: _*
+    )
 
   def testId(write: beam.SortedBucketIO.Write[_, _, _]): String =
     scio.SortedBucketIO.testId(write.getOutputDirectory.toString)
