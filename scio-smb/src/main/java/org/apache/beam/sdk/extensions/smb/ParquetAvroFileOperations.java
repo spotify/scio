@@ -148,7 +148,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   public Coder<ValueT> getCoder() {
     return recordClass == null
         ? (AvroCoder<ValueT>) AvroCoder.of(getSchema())
-        : AvroCoder.of(recordClass, true);
+        : AvroCoder.reflect(recordClass);
   }
 
   Schema getSchema() {
