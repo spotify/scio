@@ -23,7 +23,6 @@ import org.apache.avro.SchemaBuilder
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class SchemaUtilTest extends AnyFlatSpec with Matchers {
   "toPrettyString()" should "support primitive types" in {
     SchemaUtil.toPrettyString1(parseSchema(s"${basicFields()}")) shouldBe
