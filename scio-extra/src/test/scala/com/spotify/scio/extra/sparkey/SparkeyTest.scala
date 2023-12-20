@@ -64,11 +64,12 @@ object SparkeyJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     def flattenSparkey(r: SparkeyReader): Iterator[(String, String)] =
-      r.iterator().asScala.map { e => e.getKeyAsString -> e.getValueAsString }
+      r.iterator().asScala.map(e => e.getKeyAsString -> e.getValueAsString)
 
     // read sparkey input
     val si = sc.sparkeySideInput(args("input"))
-    val kvs = sc.parallelize(List(1))
+    val kvs = sc
+      .parallelize(List(1))
       .withSideInputs(si)
       .flatMap { case (_, ctx) => flattenSparkey(ctx(si)) }
       .toSCollection

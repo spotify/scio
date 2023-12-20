@@ -47,7 +47,8 @@ case class MockStringSparkeyReader(data: Map[String, String]) extends MockSparke
   }.asJava
 }
 
-case class MockByteArrayEntry(k: Array[Byte], v: Array[Byte]) extends MockEntry[Array[Byte], Array[Byte]] {
+case class MockByteArrayEntry(k: Array[Byte], v: Array[Byte])
+    extends MockEntry[Array[Byte], Array[Byte]] {
   override def getKey: Array[Byte] = k
   override def getKeyAsString: String = new String(k, StandardCharsets.UTF_8)
   override def getValue: Array[Byte] = v
