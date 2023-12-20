@@ -136,7 +136,7 @@ package object sparkey extends SparkeyReaderInstances {
         val view: PCollectionView[SparkeyUri] = self
           .parallelize(paths)
           .applyInternal(View.asSingleton())
-        new SparkeyUriSideInput(view, mapFn)
+        new SparkeySideInput(view, mapFn)
       }
     }
 
@@ -500,7 +500,7 @@ package object sparkey extends SparkeyReaderInstances {
      */
     @experimental
     def asSparkeySideInput: SideInput[SparkeyReader] =
-      new SparkeyUriSideInput(self.applyInternal(View.asSingleton()), identity)
+      new SparkeySideInput(self.applyInternal(View.asSingleton()), identity)
 
     /**
      * Convert this SCollection to a SideInput of `SparkeyReader`, to be used with
@@ -512,7 +512,7 @@ package object sparkey extends SparkeyReaderInstances {
     def asTypedSparkeySideInput[T](cache: Cache[String, T])(
       decoder: Array[Byte] => T
     ): SideInput[TypedSparkeyReader[T]] = {
-      new SparkeyUriSideInput(
+      new SparkeySideInput(
         self.applyInternal(View.asSingleton()),
         reader => new TypedSparkeyReader[T](reader, decoder, cache)
       )
@@ -526,7 +526,7 @@ package object sparkey extends SparkeyReaderInstances {
      */
     @experimental
     def asTypedSparkeySideInput[T](decoder: Array[Byte] => T): SideInput[TypedSparkeyReader[T]] =
-      new SparkeyUriSideInput(
+      new SparkeySideInput(
         self.applyInternal(View.asSingleton()),
         reader => new TypedSparkeyReader[T](reader, decoder, Cache.noOp)
       )
@@ -539,7 +539,7 @@ package object sparkey extends SparkeyReaderInstances {
     def asCachedStringSparkeySideInput(
       cache: Cache[String, String]
     ): SideInput[CachedStringSparkeyReader] =
-      new SparkeyUriSideInput(
+      new SparkeySideInput(
         self.applyInternal(View.asSingleton()),
         reader => new CachedStringSparkeyReader(reader, cache)
       )
@@ -564,7 +564,7 @@ package object sparkey extends SparkeyReaderInstances {
       mapFn(context.sideInput(view))
   }
 
-  private class SparkeyUriSideInput[T](
+  private class SparkeySideInput[T](
     val view: PCollectionView[SparkeyUri],
     mapFn: SparkeyReader => T
   ) extends SideInput[T] {
