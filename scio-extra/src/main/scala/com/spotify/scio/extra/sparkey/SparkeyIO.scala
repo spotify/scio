@@ -29,10 +29,10 @@ case class SparkeyIOOutput[K, V](path: String) extends TestIO[(K, V)] {
 object SparkeyIO {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  private[sparkey] val DefaultNumShards: Short = 1
-  private[sparkey] val DefaultSideInputNumShards: Short = 64
-  private[sparkey] val DefaultCompressionType: CompressionType = CompressionType.NONE
-  private[sparkey] val DefaultCompressionBlockSize: Int = 0
+  val DefaultNumShards: Short = 1
+  val DefaultSideInputNumShards: Short = 64
+  val DefaultCompressionType: CompressionType = CompressionType.NONE
+  val DefaultCompressionBlockSize: Int = 0
 
   def output[K, V](path: String): SparkeyIOOutput[K, V] = SparkeyIOOutput[K, V](path)
 

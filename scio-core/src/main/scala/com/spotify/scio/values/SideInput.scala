@@ -130,7 +130,7 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
 
 @deprecated(since = "0.14.0")
 private[values] class DelegatingSideInput[A, B](val si: SideInput[A], val mapper: A => B)
-  extends SideInput[B] {
+    extends SideInput[B] {
 
   // Only update the cached value (and re-run the mapper) if the underlying SI does the same.
   override protected[values] def updateCacheOnGlobalWindow: Boolean = si.updateCacheOnGlobalWindow
