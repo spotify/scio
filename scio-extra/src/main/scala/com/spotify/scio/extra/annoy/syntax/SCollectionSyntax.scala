@@ -17,7 +17,6 @@
 package com.spotify.scio.extra.annoy.syntax
 
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.extra.annoy.Annoy.logger
 import com.spotify.scio.extra.annoy.{
   AnnoyMetric,
   AnnoyReader,
@@ -27,6 +26,7 @@ import com.spotify.scio.extra.annoy.{
 }
 import com.spotify.scio.values.{SCollection, SideInput}
 import org.apache.beam.sdk.transforms.View
+import org.slf4j.LoggerFactory
 
 import java.util.UUID
 
@@ -52,6 +52,8 @@ class AnnoySCollectionOps(@transient private val self: SCollection[AnnoyUri]) ex
 
 class AnnoyPairSCollectionOps(@transient private val self: SCollection[(Int, Array[Float])])
     extends AnyVal {
+
+  import SCollectionSyntax.logger
 
   /**
    * Write the key-value pairs of this SCollection as an Annoy file to a specific location, building
@@ -149,4 +151,8 @@ trait SCollectionSyntax {
     self: SCollection[(Int, Array[Float])]
   ): AnnoyPairSCollectionOps =
     new AnnoyPairSCollectionOps(self)
+}
+
+object SCollectionSyntax extends SCollectionSyntax {
+  @transient private[annoy] lazy val logger = LoggerFactory.getLogger(this.getClass)
 }

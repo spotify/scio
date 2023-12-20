@@ -21,7 +21,6 @@ import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.{
   LargeMapSideInput,
   LargeSetSideInput,
-  Sparkey,
   SparkeySideInput,
   SparkeyUri,
   SparkeyWritable
@@ -35,6 +34,7 @@ import org.apache.beam.sdk.io.fs.MoveOptions.StandardMoveOptions
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, ResourceId}
 import org.apache.beam.sdk.transforms.View
 import org.apache.beam.sdk.util.CoderUtils
+import org.slf4j.LoggerFactory
 
 import java.lang.Math.floorMod
 import java.util.UUID
@@ -45,7 +45,6 @@ import scala.jdk.CollectionConverters._
 class SparkeyPairSCollectionOps[K, V](@transient private val self: SCollection[(K, V)])
     extends AnyVal {
   import SCollectionSyntax._
-  import Sparkey.logger
   import self.coder
 
   // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
@@ -506,6 +505,8 @@ trait SCollectionSyntax {
 }
 
 object SCollectionSyntax extends SCollectionSyntax {
+  @transient private[sparkey] lazy val logger = LoggerFactory.getLogger(this.getClass)
+
   private[sparkey] val DefaultNumShards: Short = 1
   private[sparkey] val DefaultSideInputNumShards: Short = 64
   private[sparkey] val DefaultCompressionType: CompressionType = CompressionType.NONE

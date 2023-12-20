@@ -19,13 +19,8 @@ package com.spotify.scio.extra.annoy
 import com.spotify.scio.values.SideInput
 import org.apache.beam.sdk.transforms.DoFn
 import org.apache.beam.sdk.values.PCollectionView
-import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
-
-object Annoy {
-  @transient private[annoy] lazy val logger = LoggerFactory.getLogger(this.getClass)
-}
 
 sealed abstract class AnnoyMetric
 case object Angular extends AnnoyMetric

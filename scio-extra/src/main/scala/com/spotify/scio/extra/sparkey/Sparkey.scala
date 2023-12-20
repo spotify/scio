@@ -27,10 +27,6 @@ import org.slf4j.LoggerFactory
 
 import scala.util.hashing.MurmurHash3
 
-object Sparkey {
-  @transient private[sparkey] lazy val logger = LoggerFactory.getLogger(this.getClass)
-}
-
 private[sparkey] class SparkeySideInput(val view: PCollectionView[SparkeyUri])
     extends SideInput[SparkeyReader] {
   override def updateCacheOnGlobalWindow: Boolean = false

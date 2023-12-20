@@ -34,8 +34,8 @@ import com.spotify.sparkey.CompressionType
  * @groupname join
  * Join Operations
  */
-class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)])
-    extends AnyVal {
+// TODO extends AnyVal when dropping 2.12
+class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
   import SCollectionSyntax._
   implicit private def keyCoder: Coder[K] = self.keyCoder
   implicit private def valueCoder: Coder[V] = self.valueCoder
