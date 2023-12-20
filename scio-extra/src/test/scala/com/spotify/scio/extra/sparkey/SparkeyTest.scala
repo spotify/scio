@@ -19,6 +19,7 @@ package com.spotify.scio.extra.sparkey
 
 import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.spotify.scio._
+import com.spotify.scio.extra.sparkey.instances.MockStringSparkeyReader
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.sparkey._
@@ -57,6 +58,36 @@ object TestCache {
     TestCache[K, V](scala.util.Random.nextString(5))
 }
 
+object SparkeyJob {
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+
+    def flattenSparkey(r: SparkeyReader): Iterator[(String, String)] =
+      r.iterator().asScala.map { e => e.getKeyAsString -> e.getValueAsString }
+
+    // read sparkey input
+    val si = sc.sparkeySideInput(args("input"))
+    val kvs = sc.parallelize(List(1))
+      .withSideInputs(si)
+      .flatMap { case (_, ctx) => flattenSparkey(ctx(si)) }
+      .toSCollection
+    // save sparkey output
+    kvs.saveAsSparkey(args("output1"))
+
+    // use interim sparkey that is unmocked with a temp location
+    val si2 = kvs.asSparkeySideInput
+    sc.parallelize(List(1))
+      .withSideInputs(si2)
+      .flatMap { case (_, ctx) => flattenSparkey(ctx(si2)) }
+      .toSCollection
+      .saveAsSparkey(args("output2"))
+
+    sc.run()
+    ()
+  }
+}
+
 class SparkeyTest extends PipelineSpec {
   /* We're using keys longer than a single character here to trigger edge-case behaviour
    * in MurmurHash3, which is used by ShardedSparkeyReader.
@@ -67,6 +98,16 @@ class SparkeyTest extends PipelineSpec {
   val sideData: Seq[(String, String)] = Seq(("ab", "1"), ("bc", "2"), ("cd", "3"))
   val bigSideData: IndexedSeq[(String, String)] =
     (0 until 100).map(i => (('a' + i).toString, i.toString))
+
+  "JobTest" should "support mocking sparkey" in {
+    val input = Map("a" -> "b", "c" -> "d")
+    JobTest[SparkeyJob.type]
+      .args("--input=foo", "--output1=bar", "--output2=baz")
+      .input(SparkeyIO("foo"), Seq(MockStringSparkeyReader(input)))
+      .output(SparkeyIO.output[String, String]("bar"))(_ should containInAnyOrder(input))
+      .output(SparkeyIO.output[String, String]("baz"))(_ should containInAnyOrder(input))
+      .run()
+  }
 
   "SCollection" should "support .asSparkey with temporary local file" in {
     val sc = ScioContext()
@@ -182,7 +223,9 @@ class SparkeyTest extends PipelineSpec {
   it should "support .asSparkey with specified local file" in {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val basePath = tmpDir.resolve("sparkey").toString
-    runWithContext(sc => sc.parallelize(sideData).asSparkey(basePath))
+    val sc = ScioContext()
+    sc.parallelize(sideData).asSparkey(basePath)
+    sc.run()
     val reader = Sparkey.open(new File(basePath + ".spi"))
     reader.toMap shouldBe sideData.toMap
     for (ext <- Seq(".spi", ".spl")) {
@@ -194,7 +237,9 @@ class SparkeyTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val basePath = tmpDir.resolve("new-sharded")
     Files.createDirectory(basePath)
-    runWithContext(sc => sc.parallelize(bigSideData).asSparkey(basePath.toString, numShards = 2))
+    val sc = ScioContext()
+    sc.parallelize(bigSideData).asSparkey(basePath.toString, numShards = 2)
+    sc.run()
 
     val allSparkeyFiles = FileSystems
       .`match`(s"$basePath/part-*")
@@ -220,9 +265,9 @@ class SparkeyTest extends PipelineSpec {
     Files.createFile(index.toPath)
 
     the[IllegalArgumentException] thrownBy {
-      runWithContext {
-        _.parallelize(sideData).asSparkey(basePath)
-      }
+      val sc = ScioContext()
+      sc.parallelize(sideData).asSparkey(basePath)
+      sc.run()
     } should have message s"requirement failed: Sparkey URI $basePath already exists"
 
     index.delete()
@@ -232,7 +277,9 @@ class SparkeyTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("sparkey-test-")
     val sideDataBytes = sideData.map(kv => (kv._1.getBytes, kv._2.getBytes))
     val basePath = s"$tmpDir/my-sparkey-file"
-    runWithContext(sc => sc.parallelize(sideDataBytes).asSparkey(basePath))
+    val sc = ScioContext()
+    sc.parallelize(sideDataBytes).asSparkey(basePath)
+    sc.run()
     val reader = Sparkey.open(new File(basePath + ".spi"))
     sideDataBytes.foreach(kv => Arrays.equals(reader.getAsByteArray(kv._1), kv._2) shouldBe true)
     for (ext <- Seq(".spi", ".spl")) {
