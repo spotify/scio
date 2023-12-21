@@ -21,7 +21,9 @@ import java.io.File
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec, TextIO}
-import com.spotify.scio.parquet.ParquetConfiguration
+import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
+import com.spotify.scio.parquet.avro.syntax.ParquetAvroFile
+import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
@@ -33,11 +35,18 @@ import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
-import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
+import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.avro.{
+  AvroDataSupplier,
+  AvroParquetReader,
+  AvroReadSupport,
+  AvroWriteSupport
+}
 import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
 
-import java.lang
+import java.{lang, util}
 import java.nio.file.Files
 
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
@@ -79,90 +88,122 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
 
   override protected def afterAll(): Unit = FileUtils.deleteDirectory(testDir)
 
-  "ParquetAvroIO" should "work with specific records" in {
+  private def createConfig(splittable: Boolean): Configuration = {
+    val c = ParquetConfiguration.empty()
+    c.set(ParquetReadConfiguration.UseSplittableDoFn, splittable.toString)
+    c
+  }
+
+  private val readConfigs =
+    Table(
+      ("config", "description"),
+      (() => createConfig(false), "legacy read"),
+      (() => createConfig(true), "splittable"),
+      (() => ParquetAvroIO.ReadParam.DefaultConfiguration, "default")
+    )
+
+  it should "work with specific records" in {
     val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
-    testTap(xs)(_.saveAsParquetAvroFile(_))(".parquet")
-    testJobTest(xs)(ParquetAvroIO(_))(
-      _.parquetAvroFile[TestRecord](_).map(identity)
-    )(_.saveAsParquetAvroFile(_))
+
+    forAllCases(readConfigs) { case (c, _) =>
+      testTap(xs)(_.saveAsParquetAvroFile(_))(".parquet")
+      testJobTest(xs)(ParquetAvroIO(_))(
+        _.parquetAvroFile[TestRecord](_, conf = c()).map(identity)
+      )(_.saveAsParquetAvroFile(_))
+    }
   }
 
   it should "read specific records with projection" in {
-    val sc = ScioContext()
-    val projection = Projection[TestRecord](_.getIntField)
-    val data = sc.parquetAvroFile[TestRecord](
-      path = testDir.getAbsolutePath,
-      projection = projection,
-      suffix = ".parquet"
-    )
-    data.map(_.getIntField.toInt) should containInAnyOrder(1 to 10)
-    data.map(identity) should forAll[TestRecord] { r =>
-      r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
-      r.getBooleanField == null && r.getStringField == null && r.getArrayField
-        .size() == 0
+    forAllCases(readConfigs) { case (c, x) =>
+      val sc = ScioContext()
+      val projection = Projection[TestRecord](_.getIntField)
+      val data = sc.parquetAvroFile[TestRecord](
+        path = testDir.getAbsolutePath,
+        projection = projection,
+        suffix = ".parquet",
+        conf = c()
+      )
+
+      data.map(_.getIntField.toInt).debug() should containInAnyOrder(1 to 10)
+      data.map(identity) should forAll[TestRecord] { r =>
+        r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
+        r.getBooleanField == null && r.getStringField == null && r.getArrayField
+          .size() == 0
+      }
+      sc.run()
     }
-    sc.run()
   }
 
   it should "read specific records with predicate" in {
-    val sc = ScioContext()
-    val predicate = Predicate[TestRecord](_.getIntField <= 5)
-    val data = sc.parquetAvroFile[TestRecord](
-      path = testDir.getAbsolutePath,
-      predicate = predicate,
-      suffix = ".parquet"
-    )
-    val expected = specificRecords.filter(_.getIntField <= 5)
-    data.map(identity) should containInAnyOrder(expected)
-    sc.run()
+    forAllCases(readConfigs) { case (c, _) =>
+      val sc = ScioContext()
+      val predicate = Predicate[TestRecord](_.getIntField <= 5)
+      val data = sc.parquetAvroFile[TestRecord](
+        path = testDir.getAbsolutePath,
+        predicate = predicate,
+        suffix = ".parquet",
+        conf = c()
+      )
+      val expected = specificRecords.filter(_.getIntField <= 5)
+      data.map(identity) should containInAnyOrder(expected)
+      sc.run()
+    }
   }
 
   it should "read specific records with projection and predicate" in {
-    val sc = ScioContext()
-    val projection = Projection[TestRecord](_.getIntField)
-    val predicate = Predicate[TestRecord](_.getIntField <= 5)
-    val data = sc.parquetAvroFile[TestRecord](
-      path = testDir.getAbsolutePath,
-      projection = projection,
-      predicate = predicate,
-      suffix = ".parquet"
-    )
-    data.map(_.getIntField.toInt) should containInAnyOrder(1 to 5)
-    data.map(identity) should forAll[TestRecord] { r =>
-      r.getLongField == null &&
-      r.getFloatField == null &&
-      r.getDoubleField == null &&
-      r.getBooleanField == null &&
-      r.getStringField == null &&
-      r.getArrayField.size() == 0
+    forAllCases(readConfigs) { case (c, _) =>
+      val sc = ScioContext()
+      val projection = Projection[TestRecord](_.getIntField)
+      val predicate = Predicate[TestRecord](_.getIntField <= 5)
+      val data = sc.parquetAvroFile[TestRecord](
+        path = testDir.getAbsolutePath,
+        projection = projection,
+        predicate = predicate,
+        suffix = ".parquet",
+        conf = c()
+      )
+      data.map(_.getIntField.toInt) should containInAnyOrder(1 to 5)
+      data.map(identity) should forAll[TestRecord] { r =>
+        r.getLongField == null &&
+        r.getFloatField == null &&
+        r.getDoubleField == null &&
+        r.getBooleanField == null &&
+        r.getStringField == null &&
+        r.getArrayField.size() == 0
+      }
+      sc.run()
     }
-    sc.run()
   }
 
   it should "write and read SpecificRecords with default logical types" in withTempDir { dir =>
-    val records = (1 to 10).map(_ =>
-      TestLogicalTypes
-        .newBuilder()
-        .setTimestamp(DateTime.now())
-        .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
-        .build()
-    )
-
-    val sc1 = ScioContext()
-    sc1
-      .parallelize(records)
-      .saveAsParquetAvroFile(path = dir.getAbsolutePath)
-    sc1.run()
-
-    val sc2 = ScioContext()
-    sc2
-      .parquetAvroFile[TestLogicalTypes](
-        path = dir.getAbsolutePath,
-        suffix = ".parquet"
+    forAllCases(readConfigs) { case (readConf, testCase) =>
+      val records = (1 to 10).map(_ =>
+        TestLogicalTypes
+          .newBuilder()
+          .setTimestamp(DateTime.now())
+          .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+          .build()
       )
-      .map(identity) should containInAnyOrder(records)
 
-    sc2.run()
+      val sc1 = ScioContext()
+      sc1
+        .parallelize(records)
+        .saveAsParquetAvroFile(path = dir.getAbsolutePath + "/" + testCase)
+      sc1.run()
+
+      val sc2 = ScioContext()
+      sc2
+        .parquetAvroFile[TestLogicalTypes](
+          path = dir.getAbsolutePath,
+          path = dir.getAbsolutePath + "/" + testCase,
+          conf = readConf(),
+          suffix = ".parquet"
+        )
+        .map(identity)
+        .debug() should containInAnyOrder(records)
+
+      sc2.run()
+    }
   }
 
   it should "write and read GenericRecords with default logical types" in withTempDir { dir =>
@@ -395,7 +436,9 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       AvroUtils.schema,
       null
     )
+
     val tap = ParquetAvroTap(files.head.getAbsolutePath, params)
+
     tap.value.toList should contain theSameElementsAs genericRecords
   }
 

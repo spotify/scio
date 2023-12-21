@@ -35,18 +35,13 @@ final case class ParquetAvroTap[A, T: ClassTag: Coder](
 ) extends Tap[T] {
   override def value: Iterator[T] = {
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    val conf = ParquetConfiguration
-      .ofNullable(params.conf)
-    params.setReadSchemas(params)
-    if (!params.isSpecific) {
-      params.setDefaultGenericDataSupplier()
-    }
+    params.setupConfig()
 
     val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
       val reader = AvroParquetReader
         .builder[A](BeamInputFile.of(metadata.resourceId()))
-        .withConf(conf)
+        .withConf(params.conf)
         .build()
       new Iterator[T] {
         private var current: A = reader.read()
