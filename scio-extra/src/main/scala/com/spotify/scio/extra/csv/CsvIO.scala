@@ -17,27 +17,29 @@
 
 package com.spotify.scio.extra.csv
 
-import java.io.{Reader, Writer}
-import java.nio.channels.{Channels, WritableByteChannel}
-import java.nio.charset.StandardCharsets
+import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
-import com.spotify.scio.ScioContext
-import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
+
 import kantan.csv._
 import kantan.codecs.compat._
 import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine
 import kantan.csv.ops._
-import org.apache.beam.sdk.{io => beam}
-import org.apache.beam.sdk.io.{Compression, FileIO}
-import org.apache.beam.sdk.io.FileIO.ReadableFile
+import kantan.csv.{CsvConfiguration, HeaderCodec, HeaderDecoder, HeaderEncoder}
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
-import org.apache.beam.sdk.transforms.{DoFn, PTransform, ParDo}
+import org.apache.beam.sdk.io.FileIO.ReadableFile
+import org.apache.beam.sdk.io.{Compression, FileIO}
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
+import org.apache.beam.sdk.transforms.{DoFn, PTransform, ParDo}
 import org.apache.beam.sdk.values.PCollection
+import org.apache.beam.sdk.{io => beam}
+
+import java.io.Reader
+import java.nio.channels.Channels
+import java.nio.charset.StandardCharsets
 
 /**
  * This package uses a CSV mapper called [[https://nrinaudo.github.io/kantan.csv/ Kantan]].
@@ -62,7 +64,7 @@ import org.apache.beam.sdk.values.PCollection
  * {{{
  *   case class User(name: String, age: Int)
  *   implicit val decoder = RowDecoder.ordered { (name: String, age: Int) => User(name, age) }
- *   val csvConfiguration = CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfig.withoutHeader)
+ *   val csvConfiguration = CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfiguration.withoutHeader)
  *   val users: SCollection[User] = scioContext.csvFile(path, csvConfiguration)
  * }}}
  *
@@ -194,7 +196,7 @@ object CsvIO {
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withCompression(params.compression)
-      .via(new CsvSink(params.csvConfiguration))
+      .via(new com.spotify.scio.extra.csv.CsvSink(params.csvConfiguration))
 
   private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) = {
     val filePattern = ScioUtil.filePattern(path, params.suffix)
@@ -238,24 +240,4 @@ object CsvIO {
         .foreach(out.output)
     }
   }
-
-  final private class CsvSink[T: HeaderEncoder](csvConfig: CsvConfiguration)
-      extends FileIO.Sink[T] {
-    var csvWriter: CsvWriter[T] = _
-    var byteChannelWriter: Writer = _
-
-    override def open(channel: WritableByteChannel): Unit = {
-      byteChannelWriter = Channels.newWriter(channel, StandardCharsets.UTF_8.name())
-      csvWriter = byteChannelWriter.asCsvWriter[T](csvConfig)
-    }
-
-    override def write(element: T): Unit = {
-      csvWriter.write(element)
-      ()
-    }
-
-    override def flush(): Unit =
-      byteChannelWriter.flush()
-  }
-
 }
