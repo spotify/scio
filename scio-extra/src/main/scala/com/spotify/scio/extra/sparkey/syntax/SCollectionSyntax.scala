@@ -43,13 +43,12 @@ import scala.jdk.CollectionConverters._
 
 /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
 class SparkeyPairSCollectionOps[K, V](@transient private val self: SCollection[(K, V)])
-    extends AnyVal {
+    extends Serializable {
   import SCollectionSyntax._
-  import self.coder
 
   // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
-  implicit private def keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
-  implicit private def valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
+  implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
+  implicit private lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
   private def writeToSparkey(
     uri: SparkeyUri,

@@ -34,11 +34,12 @@ import com.spotify.sparkey.CompressionType
  * @groupname join
  * Join Operations
  */
-// TODO extends AnyVal when dropping 2.12
-class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, V)]) {
+class PairLargeHashSCollectionFunctions[K, V](@transient private val self: SCollection[(K, V)]) {
   import SCollectionSyntax._
-  implicit private def keyCoder: Coder[K] = self.keyCoder
-  implicit private def valueCoder: Coder[V] = self.valueCoder
+
+  // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
+  implicit private lazy val keyCoder: Coder[K] = self.keyCoder
+  implicit private lazy val valueCoder: Coder[V] = self.valueCoder
 
   /**
    * Perform an inner join by replicating `rhs` to all workers. The right side should be <<10x
