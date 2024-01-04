@@ -142,17 +142,13 @@ public class BigtableBulkWriter
 
     @FinishBundle
     public void finishBundle() throws Exception {
-      bigtableWriter.flush();
-      checkForFailures(failures);
-      LOG.debug("Wrote {} records", recordsWritten);
-    }
-
-    @Teardown
-    public void tearDown() throws Exception {
       if (bigtableWriter != null) {
+        // close the writer and wait for all writes to complete
         bigtableWriter.close();
         bigtableWriter = null;
       }
+      checkForFailures(failures);
+      LOG.debug("Wrote {} records", recordsWritten);
     }
 
     @Override
