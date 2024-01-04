@@ -282,7 +282,7 @@ val parquetConf: Configuration = {
 ### Common Configuration Options
 
 - `parquet.block.size` - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB, although you'll have to weigh the tradeoffs: a larger block size means fewer seek operations on blob storage, at the cost of having to load a larger row group into memory.
-- `fs.gs.inputstream.fadvise` - Parquet relies heavily on random seeks so this GCS connector setting should be set to `RANDOM`. See this [blog post](https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more) for more.
+- `fs.gs.inputstream.fadvise` - "Fadvise allows applications to provide a hint to the Linux kernel with the intended I/O access pattern, indicating how it intends to read a file, whether for sequential scans or random seeks." According to this [blog post](https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more) "traditional MapReduce jobs" are ideal use cases for setting this config to `SEQUENTIAL`, and Scio jobs fit in this category.
 
 Here are some other recommended settings.
 
