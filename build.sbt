@@ -1046,6 +1046,9 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
+      // runtime
+      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
+      "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
@@ -1323,10 +1326,10 @@ lazy val `scio-smb` = project
   .in(file("scio-smb"))
   .dependsOn(
     `scio-core`,
-    `scio-avro` % Provided,
-    `scio-google-cloud-platform` % Provided,
-    `scio-parquet` % Provided,
-    `scio-tensorflow` % Provided,
+    `scio-avro` % "provided",
+    `scio-google-cloud-platform` % "provided",
+    `scio-parquet` % "provided",
+    `scio-tensorflow` % "provided",
     `scio-test` % "test->test"
   )
   .settings(commonSettings)
@@ -1335,8 +1338,6 @@ lazy val `scio-smb` = project
   .settings(
     description := "Sort Merge Bucket source/sink implementations for Apache Beam",
     unusedCompileDependenciesFilter -= Seq(
-      // ParquetUtils calls functions defined in parent class from hadoop-mapreduce-client-core
-      moduleFilter("org.apache.hadoop", "hadoop-mapreduce-client-core"),
       // replacing log4j compile time dependency
       moduleFilter("org.slf4j", "log4j-over-slf4j")
     ).reduce(_ | _),
@@ -1363,22 +1364,17 @@ lazy val `scio-smb` = project
       // provided
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion % Provided, // scio-gcp
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
-      "org.apache.avro" % "avro" % avroVersion % Provided,  // scio-avro
+      "org.apache.avro" % "avro" % avroVersion % Provided, // scio-avro
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Provided, // scio-avro
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion % Provided, // scio-tensorflow
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Provided, // scio-gcp
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion % Provided, // scio-parquet
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided, // scio-parquet
-      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
       "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll (Exclude.avro), // scio-parquet
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided, // scio-parquet
-      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,  // scio-tensorflow
-      // runtime
-      "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion % Runtime,
-      "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
-      "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided, // scio-tensorflow
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Test classifier "tests",
