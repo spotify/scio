@@ -168,7 +168,7 @@ object SparkeyIO {
             }
 
           // rename source files to dest files
-          logger.info(s"Copying ${items.size} files.")
+          logger.info(s"Copying ${items.size} files from temp to final GCS destination.")
           // per FileBasedSink.java#783 ignore errors as files may have previously been deleted
           FileSystems.rename(
             srcPaths.asJava,
