@@ -64,9 +64,6 @@ trait JavaCoders extends JavaBeanCoders {
   implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[java.lang.Iterable[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.IterableCoder.of(bc)))
 
-  @deprecated("Use jListCoder", since = "0.12.1")
-  def jlistCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] = jListCoder
-
   implicit def jListCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
     Coder.transform(c)(bc => Coder.beam(bcoders.ListCoder.of(bc)))
 

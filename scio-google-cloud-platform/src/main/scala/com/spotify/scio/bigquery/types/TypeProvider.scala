@@ -130,9 +130,6 @@ private[types] object TypeProvider {
     val schema = bigquery.query.schema(query)
     val traits = List(tq"${p(c, SType)}.HasQuery")
 
-    val queryDef =
-      q"override def query: _root_.java.lang.String = $queryFormat"
-
     val queryRawDef =
       q"override def queryRaw: _root_.java.lang.String = $queryFormat"
 
@@ -158,14 +155,13 @@ private[types] object TypeProvider {
           List(q"""
             implicit def bqQuery: ${p(c, SType)}.Query[$cName] =
               new ${p(c, SType)}.Query[$cName]{
-                $queryDef
                 $queryRawDef
               }
           """)
         case _ =>
           Nil
       }
-    val overrides = queryFnDef ::: queryDef :: queryRawDef :: qa
+    val overrides = queryFnDef ::: queryRawDef :: qa
 
     schemaToType(c)(schema, annottees, traits, overrides)
   }
