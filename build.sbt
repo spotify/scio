@@ -23,7 +23,8 @@ import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
 import de.heikoseeberger.sbtheader.CommentCreator
 import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
-ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/orgapachebeam-1365/"
+// To test release candidates, find the beam repo and add it as a resolver
+// ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
 val beamVersion = "2.53.0"
 
