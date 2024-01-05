@@ -637,7 +637,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       // Map distinct FileOperations/FileSuffixes to indices in a map, for efficient encoding of
       // large BucketedInputs
       final Map<KV<String, String>, Integer> fileOperationsMetadata = new HashMap<>();
-      final Map<Integer, KV<String, FileOperations<V>>> fileOperationsEncoding = new HashMap<>();
+      final Map<Integer, KV<String, FileOperations>> fileOperationsEncoding = new HashMap<>();
       final Map<ResourceId, Integer> directoriesEncoding = new HashMap<>();
       int i = 0;
 
@@ -653,8 +653,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         directoriesEncoding.put(entry.getKey(), fileOperationsMetadata.get(metadataKey));
       }
 
-      final Coder<FileOperations<V>> fileOperationsCoder =
-          new FileOperations.FileOperationsCoder<>();
+      final SerializableCoder<FileOperations> fileOperationsCoder =
+          SerializableCoder.of(FileOperations.class);
 
       MapCoder.of(VarIntCoder.of(), KvCoder.of(StringUtf8Coder.of(), fileOperationsCoder))
           .encode(fileOperationsEncoding, outStream);
@@ -668,11 +668,10 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       this.predicate = (Predicate<V>) inStream.readObject();
       this.keying = (Keying) inStream.readObject();
 
-      final Coder<FileOperations<V>> fileOperationsCoder =
-          new FileOperations.FileOperationsCoder<>();
-
-      final Map<Integer, KV<String, FileOperations<V>>> fileOperationsEncoding =
-          MapCoder.of(VarIntCoder.of(), KvCoder.of(StringUtf8Coder.of(), fileOperationsCoder))
+      final Map<Integer, KV<String, FileOperations>> fileOperationsEncoding =
+          MapCoder.of(
+                  VarIntCoder.of(),
+                  KvCoder.of(StringUtf8Coder.of(), SerializableCoder.of(FileOperations.class)))
               .decode(inStream);
 
       final Map<ResourceId, Integer> directoriesEncoding =
@@ -683,7 +682,13 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
               .collect(
                   Collectors.toMap(
                       Map.Entry::getKey,
-                      dirAndIndex -> fileOperationsEncoding.get(dirAndIndex.getValue())));
+                      dirAndIndex -> {
+                        final String dir =
+                            fileOperationsEncoding.get(dirAndIndex.getValue()).getKey();
+                        final FileOperations<V> fileOps =
+                            fileOperationsEncoding.get(dirAndIndex.getValue()).getValue();
+                        return KV.of(dir, fileOps);
+                      }));
     }
   }
 
