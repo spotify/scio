@@ -79,6 +79,10 @@ object SparkeyIO {
     compressionType: CompressionType,
     compressionBlockSize: Int
   ): SCollection[SparkeyUri] = {
+    require(
+      !baseUri.isSharded,
+      s"path to which sparkey will be saved must not include a `*` wildcard."
+    )
     require(numShards > 0, s"numShards must be greater than 0, found $numShards")
     if (compressionType != CompressionType.NONE) {
       require(
@@ -91,7 +95,9 @@ object SparkeyIO {
     val tempLocation = data.context.options.getTempLocation
 
     // verify that we're not writing to a previously-used output dir
-    baseUri.verifyEmpty(rfu)
+    List(baseUri, SparkeyUri(s"${baseUri.path}/*")).foreach { uri =>
+      require(!uri.exists(rfu), s"Sparkey URI ${uri.path} already exists")
+    }
     // root destination to which all _interim_ results are written,
     // deleted upon successful completion of the write
     val tempPath = s"$tempLocation/sparkey-temp-${UUID.randomUUID}"

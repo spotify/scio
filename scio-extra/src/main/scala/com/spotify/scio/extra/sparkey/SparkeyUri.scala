@@ -63,15 +63,6 @@ case class SparkeyUri(path: String) {
     s"$basePath/part-*"
   }
 
-  private[sparkey] def verifyEmpty(rfu: RemoteFileUtil): Unit = {
-    // FIXME leaving this logic as-is for now, but it is subtly wrong, though not in a way that
-    //  would break anything
-    // verify that we're not writing to a previously-used output dir
-    List(SparkeyUri(path), SparkeyUri(s"$path/*")).foreach { uri =>
-      require(!uri.exists(rfu), s"Sparkey URI ${uri.path} already exists")
-    }
-  }
-
   private[sparkey] def sparkeyUriForShard(shard: Short, numShards: Short): SparkeyUri =
     SparkeyUri(f"$basePath/part-$shard%05d-of-$numShards%05d")
 
