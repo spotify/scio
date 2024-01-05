@@ -653,10 +653,9 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         directoriesEncoding.put(entry.getKey(), fileOperationsMetadata.get(metadataKey));
       }
 
-      final SerializableCoder<FileOperations> fileOperationsCoder =
-          SerializableCoder.of(FileOperations.class);
-
-      MapCoder.of(VarIntCoder.of(), KvCoder.of(StringUtf8Coder.of(), fileOperationsCoder))
+      MapCoder.of(
+              VarIntCoder.of(),
+              KvCoder.of(StringUtf8Coder.of(), SerializableCoder.of(FileOperations.class)))
           .encode(fileOperationsEncoding, outStream);
 
       MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of()).encode(directoriesEncoding, outStream);
