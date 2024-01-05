@@ -42,7 +42,6 @@ val datastoreV1ProtoClientVersion = "2.17.1"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
-val hadoopVersion = "2.10.2"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
@@ -60,6 +59,7 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
 // beam tested versions
 val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
+val hadoopVersion = "3.2.4" // io/parquet/build.gradle
 val sparkVersion = "3.4.1" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
