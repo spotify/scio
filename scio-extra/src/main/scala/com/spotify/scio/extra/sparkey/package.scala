@@ -400,20 +400,6 @@ package object sparkey extends SparkeyReaderInstances {
      * will be used to cache reads from the resulting [[SparkeyReader]].
      */
     @experimental
-    @deprecated("Use asLargeMapSideInput if no cache is required.", since = "0.10.1")
-    def asTypedSparkeySideInput[T](decoder: Array[Byte] => T)(implicit
-      w: SparkeyWritable[K, V]
-    ): SideInput[TypedSparkeyReader[T]] =
-      self.asSparkey.asTypedSparkeySideInput[T](decoder)
-
-    /**
-     * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a
-     * `SparkeyReader`, to be used with
-     * [[com.spotify.scio.values.SCollection.withSideInputs SCollection.withSideInputs]]. It is
-     * required that each key of the input be associated with a single value. The provided [[Cache]]
-     * will be used to cache reads from the resulting [[SparkeyReader]].
-     */
-    @experimental
     def asTypedSparkeySideInput[T](
       cache: Cache[String, T],
       numShards: Short = DefaultSideInputNumShards,
