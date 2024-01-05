@@ -429,6 +429,15 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     // lazy, internal checks depend on what kind of iteration is requested
     protected transient SourceMetadata<V> sourceMetadata = null; // lazy
 
+    // Used to efficiently serialize BucketedInput instances
+    private static Coder<Map<ResourceId, Integer>> directoriesEncodingCoder =
+        MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of());
+
+    private static Coder<Map<Integer, KV<String, FileOperations>>> fileOperationsEncodingCoder =
+        MapCoder.of(
+            VarIntCoder.of(),
+            KvCoder.of(StringUtf8Coder.of(), SerializableCoder.of(FileOperations.class)));
+
     public static <V> BucketedInput<V> of(
         Keying keying,
         TupleTag<V> tupleTag,
@@ -653,12 +662,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
         directoriesEncoding.put(entry.getKey(), fileOperationsMetadata.get(metadataKey));
       }
 
-      MapCoder.of(
-              VarIntCoder.of(),
-              KvCoder.of(StringUtf8Coder.of(), SerializableCoder.of(FileOperations.class)))
-          .encode(fileOperationsEncoding, outStream);
-
-      MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of()).encode(directoriesEncoding, outStream);
+      fileOperationsEncodingCoder.encode(fileOperationsEncoding, outStream);
+      directoriesEncodingCoder.encode(directoriesEncoding, outStream);
     }
 
     @SuppressWarnings("unchecked")
@@ -668,13 +673,9 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
       this.keying = (Keying) inStream.readObject();
 
       final Map<Integer, KV<String, FileOperations>> fileOperationsEncoding =
-          MapCoder.of(
-                  VarIntCoder.of(),
-                  KvCoder.of(StringUtf8Coder.of(), SerializableCoder.of(FileOperations.class)))
-              .decode(inStream);
-
+          fileOperationsEncodingCoder.decode(inStream);
       final Map<ResourceId, Integer> directoriesEncoding =
-          MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of()).decode(inStream);
+          directoriesEncodingCoder.decode(inStream);
 
       this.inputs =
           directoriesEncoding.entrySet().stream()
