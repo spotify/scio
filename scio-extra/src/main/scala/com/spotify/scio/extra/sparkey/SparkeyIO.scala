@@ -33,25 +33,21 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
-/** Special version of [[com.spotify.scio.io.ScioIO]] for use with sparkey read methods. */
-case class SparkeyIO(path: String) extends TestIO[SparkeyReader] {
-  override val tapT: TapT.Aux[SparkeyReader, SparkeyReader] = TapOf[SparkeyReader]
-}
-
-/** Special version of [[com.spotify.scio.io.ScioIO]] for use with sparkey write methods. */
-case class SparkeyIOOutput[K, V](path: String) extends TestIO[(K, V)] {
-  override val tapT: TapT.Aux[(K, V), (K, V)] = TapOf[(K, V)]
+/** Special version of [[com.spotify.scio.io.ScioIO]] for use with sparkey methods. */
+case class SparkeyTestIO[T] private (path: String) extends TestIO[T] {
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
 }
 
 object SparkeyIO {
-  private val logger = LoggerFactory.getLogger(this.getClass)
+  @transient private lazy val logger = LoggerFactory.getLogger(this.getClass)
 
   val DefaultNumShards: Short = 1
   val DefaultSideInputNumShards: Short = 64
   val DefaultCompressionType: CompressionType = CompressionType.NONE
   val DefaultCompressionBlockSize: Int = 0
 
-  def output[K, V](path: String): SparkeyIOOutput[K, V] = SparkeyIOOutput[K, V](path)
+  def apply(path: String): SparkeyTestIO[SparkeyReader] = SparkeyTestIO[SparkeyReader](path)
+  def output[K, V](path: String): SparkeyTestIO[(K, V)] = SparkeyTestIO[(K, V)](path)
 
   private def writeToSparkey[K, V](
     uri: SparkeyUri,

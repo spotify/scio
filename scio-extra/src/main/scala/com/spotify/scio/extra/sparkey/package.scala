@@ -43,31 +43,13 @@ import scala.util.hashing.MurmurHash3
  * To save an `SCollection[(String, String)]` to a Sparkey fileset:
  * {{{
  * val s = sc.parallelize(Seq("a" -> "one", "b" -> "two"))
+ * s.saveAsSparkey("gs://<bucket>/<path>/<sparkey-prefix>")
  *
- * // temporary location
- * val s1: SCollection[SparkeyUri] = s.asSparkey
- *
- * // specific location
- * val s1: SCollection[SparkeyUri] = s.asSparkey("gs://<bucket>/<path>/<sparkey-prefix>")
+ * // with multiple shards, sharded by MurmurHash3 of the key
+ * s.saveAsSparkey("gs://<bucket>/<path>/<sparkey-dir>", numShards=2)
  * }}}
  *
- * // with multiple shards, sharded by MurmurHash3 of the key val s1: SCollection[SparkeyUri] =
- * s.asSparkey("gs://<bucket>/<path>/<sparkey-dir>", numShards=2) }}}
- *
- * The result `SCollection[SparkeyUri]` can be converted to a side input:
- * {{{
- * val s: SCollection[SparkeyUri] = sc.parallelize(Seq("a" -> "one", "b" -> "two")).asSparkey
- * val side: SideInput[SparkeyReader] = s.asSparkeySideInput
- * }}}
- *
- * These two steps can be done with a syntactic sugar:
- * {{{
- * val side: SideInput[SparkeyReader] = sc
- *   .parallelize(Seq("a" -> "one", "b" -> "two"))
- *   .asSparkeySideInput
- * }}}
- *
- * An existing Sparkey file can also be converted to a side input directly:
+ * A previously-saved sparkey can be loaded as a side input:
  * {{{
  * sc.sparkeySideInput("gs://<bucket>/<path>/<sparkey-prefix>")
  * }}}
@@ -75,6 +57,13 @@ import scala.util.hashing.MurmurHash3
  * A sharded collection of Sparkey files can also be used as a side input by specifying a glob path:
  * {{{
  * sc.sparkeySideInput("gs://<bucket>/<path>/<sparkey-dir>/part-*")
+ * }}}
+ *
+ * When the sparkey is needed only temporarily, the save step can be elided:
+ * {{{
+ * val side: SideInput[SparkeyReader] = sc
+ *   .parallelize(Seq("a" -> "one", "b" -> "two"))
+ *   .asSparkeySideInput
  * }}}
  *
  * `SparkeyReader` can be used like a lookup table in a side input operation:
@@ -223,6 +212,7 @@ package object sparkey extends SparkeyReaderInstances {
       ClosedTap[Nothing](EmptyTap)
     }
 
+    // TODO for 0.15: make private, remove deprecation
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
      *
@@ -265,6 +255,7 @@ package object sparkey extends SparkeyReaderInstances {
       )
     }
 
+    // TODO for 0.15: make private, remove deprecation
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a temporary location.
      *

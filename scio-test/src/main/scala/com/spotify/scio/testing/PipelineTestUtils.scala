@@ -201,4 +201,23 @@ trait PipelineTestUtils {
     val result: ScioResult = sc.run().waitUntilFinish() // block non-test runner
     (result, result.tap(f).value.toSeq)
   }
+
+  /**
+   * Test pipeline components with a [[ScioContext]] and materialized resulting collections.
+   *
+   * @param fn
+   *   transform to be tested
+   * @return
+   *   a tuple containing the [[ScioResult]] and the materialized results of the SCollections
+   *   returned by fn as [[scala.collection.Seq Seq]]s
+   */
+  def runWithLocalOutput[T, U](
+    fn: ScioContext => (SCollection[T], SCollection[U])
+  ): (ScioResult, Seq[T], Seq[U]) = {
+    val sc = ScioContext()
+    val (t, u) = fn(sc)
+    val (tMat, uMat) = (t.materialize, u.materialize)
+    val result: ScioResult = sc.run().waitUntilFinish() // block non-test runner
+    (result, result.tap(tMat).value.toSeq, result.tap(uMat).value.toSeq)
+  }
 }
