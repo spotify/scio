@@ -775,7 +775,6 @@ lazy val `scio-google-cloud-platform` = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
-      "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
