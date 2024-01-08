@@ -1415,14 +1415,14 @@ lazy val `scio-redis` = project
 lazy val integration = project
   .in(file("integration"))
   .dependsOn(
-    `scio-core` % "test->provided,test",
+    `scio-core` % "compile",
     `scio-avro` % "test->test",
     `scio-test` % "test->test",
     `scio-cassandra3` % "test->test",
     `scio-elasticsearch8` % "test->test",
     `scio-extra` % "test->test",
-    `scio-google-cloud-platform` % "test->test",
-    `scio-jdbc` % "test->test",
+    `scio-google-cloud-platform` % "compile;test->test",
+    `scio-jdbc` % "compile;test->test",
     `scio-neo4j` % "test->test",
     `scio-smb` % "test->provided,test"
   )
@@ -1433,17 +1433,31 @@ lazy val integration = project
     publish / skip := true,
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
+      // compile
+      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
+      "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
+      "com.google.guava" % "guava" % guavaVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.4.2.jre11",
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // runtime
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.0" % Runtime,
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
       "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % Test,
       "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % Test,
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % Test,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % Test,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.0" % Test,
-      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.4.2.jre11" % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test,
-      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test
     )
   )
 
