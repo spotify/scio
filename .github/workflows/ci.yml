@@ -83,7 +83,7 @@ jobs:
         run: sbt +update
 
       - name: gcloud auth
-        if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -112,7 +112,7 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}' undeclaredCompileDependenciesTest unusedCompileDependenciesTest
 
       - name: Build integration
-        if: matrix.java == 'corretto@11' && matrix.scala == '2.13' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: matrix.java == 'corretto@11' && matrix.scala == '2.13' && (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
         run: sbt '++ ${{ matrix.scala }}' integration/Test/compile
 
       - name: Make target directories
@@ -366,7 +366,7 @@ jobs:
         run: sbt +update
 
       - name: gcloud auth
-        if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -384,6 +384,7 @@ jobs:
 
   site:
     name: Generate Site
+    if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -408,6 +409,17 @@ jobs:
       - name: sbt update
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
+
+      - name: gcloud auth
+        if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
+      - name: Setup GitHub Action
+        run: scripts/gha_setup.sh
 
       - name: Generate site
         env:

@@ -228,8 +228,7 @@ val condPrimaryJava = s"matrix.java == '${javaDefault.render}'"
 val condIsMain = "github.ref == 'refs/heads/main'"
 val condIsTag = "startsWith(github.ref, 'refs/tags/v')"
 val condSkipPR = "github.event_name != 'pull_request'"
-val condSkipForkPR =
-  s"($condSkipPR || github.event.pull_request.head.repo.full_name == github.repository)"
+val condSkipForkPR = s"($condSkipPR || !github.event.pull_request.head.repo.fork)"
 
 val githubWorkflowGcpAuthStep = WorkflowStep.Use(
   UseRef.Public("google-github-actions", "auth", "v2"),
