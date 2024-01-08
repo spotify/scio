@@ -193,14 +193,16 @@ class SmbIOTest extends PipelineSpec {
   }
 
   "SortedBucketTap" should "work with SMB writes" in {
-    val tempFolder = Files.createTempDirectory("smb-tap")
+    val tempFolder = Files.createTempDirectory("smb-tap").toFile
+    tempFolder.deleteOnExit()
+
     val sc = ScioContext()
     val tap = sc
       .parallelize(accountsIterable)
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write(classOf[String], "name", classOf[Account])
-          .to(tempFolder.toFile.getAbsolutePath)
+          .to(tempFolder.getAbsolutePath)
           .withNumBuckets(4)
           .withNumShards(2)
           .withFilenamePrefix("custom-prefix")
@@ -211,7 +213,9 @@ class SmbIOTest extends PipelineSpec {
   }
 
   it should "work with pre-keyed SMB writes" in {
-    val tempFolder = Files.createTempDirectory("smb-tap")
+    val tempFolder = Files.createTempDirectory("smb-pre-keyed-tap").toFile
+    tempFolder.deleteOnExit()
+
     val sc = ScioContext()
     val tap = sc
       .parallelize(accountsIterable)
@@ -219,7 +223,7 @@ class SmbIOTest extends PipelineSpec {
       .saveAsPreKeyedSortedBucket(
         AvroSortedBucketIO
           .write(classOf[String], "name", classOf[Account])
-          .to(tempFolder.toFile.getAbsolutePath)
+          .to(tempFolder.getAbsolutePath)
           .withNumBuckets(4)
           .withNumShards(2)
           .withFilenamePrefix("custom-prefix")
@@ -231,14 +235,15 @@ class SmbIOTest extends PipelineSpec {
 
   it should "work with SMB transforms" in {
     // Write out SMB data to transform
-    val tempFolder1 = Files.createTempDirectory("smb-transform-1")
+    val tempFolder1 = Files.createTempDirectory("smb-transform-1").toFile
+    tempFolder1.deleteOnExit()
     val sc1 = ScioContext()
     sc1
       .parallelize(accountsIterable)
       .saveAsSortedBucket(
         AvroSortedBucketIO
           .write(classOf[Integer], "id", classOf[Account])
-          .to(tempFolder1.toFile.getAbsolutePath)
+          .to(tempFolder1.getAbsolutePath)
           .withNumBuckets(4)
           .withNumShards(2)
           .withFilenamePrefix("custom-prefix")
@@ -246,7 +251,8 @@ class SmbIOTest extends PipelineSpec {
     sc1.run()
 
     // Transform written data
-    val tempFolder2 = Files.createTempDirectory("smb-transform-2")
+    val tempFolder2 = Files.createTempDirectory("smb-transform-2").toFile
+    tempFolder2.deleteOnExit()
     val sc2 = ScioContext()
 
     val tap = sc2
@@ -254,12 +260,12 @@ class SmbIOTest extends PipelineSpec {
         classOf[Integer],
         AvroSortedBucketIO
           .read(new TupleTag[Account]("rhs"), classOf[Account])
-          .from(tempFolder1.toFile.getAbsolutePath)
+          .from(tempFolder1.getAbsolutePath)
       )
       .to(
         AvroSortedBucketIO
           .transformOutput(classOf[Integer], "id", classOf[Account])
-          .to(tempFolder2.toFile.getAbsolutePath)
+          .to(tempFolder2.getAbsolutePath)
       )
       .via { case (id, accounts, outputCollector) =>
         outputCollector.accept(
