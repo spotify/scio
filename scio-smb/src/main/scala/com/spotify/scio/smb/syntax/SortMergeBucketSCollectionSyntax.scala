@@ -19,12 +19,15 @@ package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.io.{ClosedTap, EmptyTap, TapOf}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values._
 import org.apache.beam.sdk.coders.KvCoder
-import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketIOUtil}
-import org.apache.beam.sdk.values.KV
+import org.apache.beam.sdk.extensions.smb.{BucketShardId, SortedBucketIO, SortedBucketIOUtil}
+import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.values.{KV, PCollection, TupleTag}
+
+import scala.jdk.CollectionConverters._
 
 trait SortMergeBucketSCollectionSyntax {
   implicit def toSortMergeBucketKeyedSCollection[K, V](
@@ -49,16 +52,30 @@ final class SortedBucketSCollection[T](private val self: SCollection[T]) {
    *   contains information about key function, bucket and shard size, etc.
    */
   @experimental
-  def saveAsSortedBucket(write: SortedBucketIO.Write[_, _, T]): ClosedTap[Nothing] = {
+  def saveAsSortedBucket(
+    write: SortedBucketIO.Write[_, _, T]
+  )(implicit coder: Coder[T]): ClosedTap[T] = {
     if (self.context.isTest) {
-      val testOutput = TestDataManager.getOutput(self.context.testId.get)
-      testOutput[T](SortedBucketIOUtil.testId(write))(self)
+      TestDataManager.getOutput(self.context.testId.get)(SortedBucketIOUtil.testId(write))
+      ClosedTap(TapOf[T].saveForTest(self))
     } else {
-      self.applyInternal(write)
-    }
+      val writeResult = self.applyInternal(write).expand()
 
-    // @Todo: Implement taps for metadata/bucket elements
-    ClosedTap[Nothing](EmptyTap)
+      val bucketFiles = self.context
+        .wrap(
+          writeResult
+            .get(new TupleTag("WrittenFiles"))
+            .asInstanceOf[PCollection[KV[BucketShardId, ResourceId]]]
+        )
+        .materialize
+
+      val fileOps = write.getFileOperations
+
+      ClosedTap(
+        bucketFiles.underlying
+          .flatMap(kv => fileOps.iterator(kv.getValue).asScala)
+      )
+    }
   }
 }
 

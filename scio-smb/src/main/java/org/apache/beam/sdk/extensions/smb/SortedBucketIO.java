@@ -600,7 +600,7 @@ public class SortedBucketIO {
 
     abstract int getSorterMemoryMb();
 
-    abstract FileOperations<V> getFileOperations();
+    public abstract FileOperations<V> getFileOperations();
 
     abstract BucketMetadata<K1, K2, V> getBucketMetadata();
 

@@ -390,7 +390,7 @@ public class ParquetAvroSortedBucketIO {
     }
 
     @Override
-    FileOperations<T> getFileOperations() {
+    public FileOperations<T> getFileOperations() {
       return getRecordClass() == null
           ? ParquetAvroFileOperations.of(getSchema(), getCompression(), getConfiguration())
           : ParquetAvroFileOperations.of(getRecordClass(), getCompression(), getConfiguration());

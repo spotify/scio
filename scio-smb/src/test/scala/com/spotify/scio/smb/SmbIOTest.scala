@@ -16,12 +16,13 @@
 
 package com.spotify.scio.smb
 
-import com.spotify.scio.avro.{Account, Address, User}
+import com.spotify.scio.avro.{Account, AccountStatus, Address, User}
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.{Args, ContextAndArgs}
+import com.spotify.scio.{Args, ContextAndArgs, ScioContext}
 import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.values.{KV, TupleTag}
 
+import java.nio.file.Files
 import java.util.Collections
 import scala.jdk.CollectionConverters._
 
@@ -179,4 +180,33 @@ class SmbIOTest extends PipelineSpec {
       .run()
   }
 
+  "SortedBucketTap" should "work SMB writes" in {
+    val accounts = (1 to 100)
+      .map { i =>
+        Account
+          .newBuilder()
+          .setId(i)
+          .setName(i.toString)
+          .setType(i.toString)
+          .setAccountStatus(AccountStatus.Active)
+          .setAmount(i.toDouble)
+          .build()
+      }
+
+    val tempFolder = Files.createTempDirectory("smb-tap")
+    val sc = ScioContext()
+    val tap = sc
+      .parallelize(accounts)
+      .saveAsSortedBucket(
+        AvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(tempFolder.toFile.getAbsolutePath)
+          .withNumBuckets(4)
+          .withNumShards(2)
+          .withFilenamePrefix("custom-prefix")
+      )
+
+    val result = sc.run().waitUntilDone()
+    tap.get(result).value.toSeq should contain theSameElementsAs accounts
+  }
 }
