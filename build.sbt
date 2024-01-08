@@ -334,6 +334,11 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
+        githubWorkflowGcpAuthStep,
+        WorkflowStep.Run(
+          List("scripts/gha_setup.sh"),
+          name = Some("Setup GitHub Action")
+        ),
         WorkflowStep.Sbt(
           List("scio-examples/compile", "site/makeSite"),
           env = Map("SOCCO" -> "true"),
@@ -355,6 +360,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           cond = Some(Seq(condSkipPR, condIsTag).mkString(" && "))
         )
       ),
+    cond = Some(condSkipForkPR),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
   )
