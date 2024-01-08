@@ -79,16 +79,6 @@ public class SmbPublicAPITest {
     }
 
     @Override
-    public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata other) {
-      return true;
-    }
-
-    @Override
-    public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata other) {
-      return false;
-    }
-
-    @Override
     public String extractKeyPrimary(final String value) {
       return null;
     }
@@ -96,6 +86,16 @@ public class SmbPublicAPITest {
     @Override
     public Void extractKeySecondary(final String value) {
       return null;
+    }
+
+    @Override
+    int hashPrimaryKeyMetadata() {
+      return 0;
+    }
+
+    @Override
+    int hashSecondaryKeyMetadata() {
+      return 0;
     }
   }
 
