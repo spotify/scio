@@ -117,7 +117,7 @@ object SmbTransformJob extends SmbJob {
 
 }
 
-class SortedBucketIOTest extends PipelineSpec {
+class SmbIOTest extends PipelineSpec {
   private val accountA =
     new Account(1, "typeA", "nameA", 12.5, null)
   private val accountB =
@@ -129,7 +129,7 @@ class SortedBucketIOTest extends PipelineSpec {
   private val joinedUserAccounts =
     User.newBuilder(user).setAccounts(List(accountA, accountB).asJava).build()
 
-  "SortedBucketIO" should "be able to mock sortMergeTransform input and saveAsSortedBucket output" in {
+  "SmbIO" should "be able to mock sortMergeTransform input and saveAsSortedBucket output" in {
     JobTest[SmbJoinSaveJob.type]
       .args(
         "--users=gs://users",
