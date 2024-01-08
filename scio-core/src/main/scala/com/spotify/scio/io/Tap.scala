@@ -57,7 +57,7 @@ trait Tap[T] extends Serializable { self =>
 
   def flatMap[U: Coder](f: T => IterableOnce[U]): Tap[U] = new Tap[U] {
 
-    /** Parent of this Tap before [[map]]. */
+    /** Parent of this Tap before [[flatMap]]. */
     override val parent: Option[Tap[_]] = Option(self)
 
     /** Read data set into memory. */
