@@ -41,9 +41,9 @@ private[scio] object VersionUtil {
 
   /**
    * example versions: version = "0.10.0-beta1+42-828dca9a-SNAPSHOT" version = "0.10.0-beta1"
-   * version = "0.10.0-SNAPSHOT"
+   * version = "0.10.0-SNAPSHOT" version = "0.10-e135ed2-SNAPSHOT"
    */
-  private[this] val Pattern = """v?(\d+)\.(\d+).(\d+)((-\w+)?(\+\d+-\w+(\+\d+-\d+)?(-\w+)?)?)?""".r
+  private[this] val Pattern = """^(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:-(.+))?$""".r
   private[this] val Logger = LoggerFactory.getLogger(this.getClass)
 
   private[this] val MessagePattern: (String, String) => String = (version, url) => s"""
@@ -69,16 +69,20 @@ private[scio] object VersionUtil {
       .execute()
       .parseAs(classOf[java.util.List[java.util.Map[String, AnyRef]]])
     response.asScala
-      .filter(node => !node.get("prerelease").asInstanceOf[Boolean])
-      .find(node => !node.get("draft").asInstanceOf[Boolean])
-      .map(latestNode => latestNode.get("tag_name").asInstanceOf[String])
+      .filterNot(_.get("prerelease").asInstanceOf[Boolean])
+      .filterNot(_.get("draft").asInstanceOf[Boolean])
+      .map(_.get("tag_name").asInstanceOf[String])
+      .collectFirst { case tag if tag.head == 'v' => tag.tail }
   }.toOption.flatten
 
   private def parseVersion(version: String): SemVer = {
     val m = Pattern.findFirstMatchIn(version).get
-    // higher value for no "-SNAPSHOT"
-    val snapshot = if (!m.group(4).isEmpty()) m.group(4).toUpperCase else "\uffff"
-    SemVer(m.group(1).toInt, m.group(2).toInt, m.group(3).toInt, snapshot)
+    // use max value for pre-release if not defined
+    val preRelease = Option(m.group(4)).getOrElse(new String(Array(Char.MaxValue)))
+    val major = m.group(1).toInt
+    val minor = m.group(2).toInt
+    val tiny = Option(m.group(3)).map(_.toInt).getOrElse(0)
+    SemVer(major, minor, tiny, preRelease)
   }
 
   private[scio] def ignoreVersionCheck: Boolean =
