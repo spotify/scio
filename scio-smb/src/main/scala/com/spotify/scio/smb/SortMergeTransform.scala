@@ -18,7 +18,7 @@ package com.spotify.scio.smb
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{ClosedTap, EmptyTap}
+import com.spotify.scio.io.{ClosedTap, EmptyTap, TapOf}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.{SCollection, SideInput, SideInputContext}
 import org.apache.beam.sdk.extensions.smb.{SortedBucketIOUtil, SortedBucketTransform}
@@ -82,10 +82,10 @@ object SortMergeTransform {
      */
     def via(
       transformFn: (KeyType, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
-    ): ClosedTap[Nothing]
+    ): ClosedTap[W]
   }
 
-  private[smb] class WriteBuilderImpl[KeyType, R, W](
+  private[smb] class WriteBuilderImpl[KeyType, R, W: Coder](
     @transient private val sc: ScioContext,
     transform: AbsCoGbkTransform[KeyType, W],
     fromResult: CoGbkResult => R
@@ -97,7 +97,7 @@ object SortMergeTransform {
 
     override def via(
       transformFn: (KeyType, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
-    ): ClosedTap[Nothing] = {
+    ): ClosedTap[W] = {
       val fn = new SortedBucketTransform.TransformFn[KeyType, W]() {
         override def writeTransform(
           keyGroup: KV[KeyType, CoGbkResult],
@@ -112,8 +112,9 @@ object SortMergeTransform {
 
       val t = transform.via(fn)
       val tfName = sc.tfName(Some("sortMergeTransform"))
-      sc.applyInternal(tfName, t)
-      ClosedTap[Nothing](EmptyTap)
+      val writeResult = sc.applyInternal(tfName, t)
+
+      ClosedTap(SmbIO.tap(t.getFileOperations, writeResult).apply(sc))
     }
   }
 
@@ -130,11 +131,10 @@ object SortMergeTransform {
 
     override def via(
       transformFn: (KeyType, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
-    ): ClosedTap[Nothing] = {
+    ): ClosedTap[W] = {
       val data = read.parDo(new ViaTransform(transformFn))
-      val testOutput = TestDataManager.getOutput(sc.testId.get)
-      testOutput(SortedBucketIOUtil.testId(output))(data)
-      ClosedTap[Nothing](EmptyTap)
+      TestDataManager.getOutput(sc.testId.get)(SortedBucketIOUtil.testId(output))
+      ClosedTap(TapOf[W].saveForTest(data))
     }
   }
 
@@ -159,10 +159,10 @@ object SortMergeTransform {
         SideInputContext[_],
         SortedBucketTransform.SerializableConsumer[W]
       ) => Unit
-    ): ClosedTap[Nothing]
+    ): ClosedTap[W]
   }
 
-  private[smb] class WithSideInputsWriteBuilderImpl[KeyType, R, W](
+  private[smb] class WithSideInputsWriteBuilderImpl[KeyType, R, W: Coder](
     @transient private val sc: ScioContext,
     transform: AbsCoGbkTransform[KeyType, W],
     toR: CoGbkResult => R,
@@ -175,7 +175,7 @@ object SortMergeTransform {
         SideInputContext[_],
         SortedBucketTransform.SerializableConsumer[W]
       ) => Unit
-    ): ClosedTap[Nothing] = {
+    ): ClosedTap[W] = {
       val sideViews: java.lang.Iterable[PCollectionView[_]] = sides.map(_.view).asJava
 
       val fn = new SortedBucketTransform.TransformFnWithSideInputContext[KeyType, W]() {
@@ -197,7 +197,9 @@ object SortMergeTransform {
       }
       val t = transform.via(fn, sideViews)
       sc.applyInternal(t)
-      ClosedTap[Nothing](EmptyTap)
+
+      val writeResult = sc.applyInternal(t)
+      ClosedTap(SmbIO.tap(t.getFileOperations, writeResult).apply(sc))
     }
   }
 
@@ -213,11 +215,10 @@ object SortMergeTransform {
         SideInputContext[_],
         SortedBucketTransform.SerializableConsumer[W]
       ) => Unit
-    ): ClosedTap[Nothing] = {
+    ): ClosedTap[W] = {
       val data = read.parDo(new ViaTransformWithSideOutput(transformFn))
-      val testOutput = TestDataManager.getOutput(sc.testId.get)
-      testOutput(SortedBucketIOUtil.testId(output))(data)
-      ClosedTap[Nothing](EmptyTap)
+      TestDataManager.getOutput(sc.testId.get)(SortedBucketIOUtil.testId(output))
+      ClosedTap(TapOf[W].saveForTest(data))
     }
   }
 

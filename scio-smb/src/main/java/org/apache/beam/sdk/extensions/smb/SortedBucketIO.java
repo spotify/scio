@@ -334,6 +334,10 @@ public class SortedBucketIO {
       return FileSystems.matchNewResource(tempLocationOpt, true);
     }
 
+    public FileOperations<V> getFileOperations() {
+      return fileOperations;
+    }
+
     @Override
     public WriteResult expand(PBegin input) {
       Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
