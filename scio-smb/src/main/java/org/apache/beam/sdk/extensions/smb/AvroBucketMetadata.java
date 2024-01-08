@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -34,6 +36,7 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 
 /**
  * {@link org.apache.beam.sdk.extensions.smb.BucketMetadata} for Avro {@link IndexedRecord} records.
@@ -132,6 +135,21 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
   }
 
   @Override
+  int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, getKeyClass());
+  }
+
+  @Override
+  int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
+  }
+
+  @Override
+  public Set<Class<? extends BucketMetadata>> compatibleMetadataTypes() {
+    return ImmutableSet.of(ParquetBucketMetadata.class);
+  }
+
+  @Override
   public K1 extractKeyPrimary(V value) {
     int[] path = keyPath.get();
     if (path == null) {
@@ -174,29 +192,5 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
     builder.add(DisplayData.item("keyFieldPrimary", keyField));
     if (keyFieldSecondary != null)
       builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
-  }
-
-  @Override
-  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
-    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
-  }
-
-  @Override
-  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    AvroBucketMetadata<?, ?, ?> that = (AvroBucketMetadata<?, ?, ?>) o;
-    boolean allSecondaryPresent =
-        getKeyClassSecondary() != null
-            && that.getKeyClassSecondary() != null
-            && keyFieldSecondary != null
-            && that.keyFieldSecondary != null;
-    // you messed up
-    if (!allSecondaryPresent) return false;
-    return getKeyClass() == that.getKeyClass()
-        && getKeyClassSecondary() == that.getKeyClassSecondary()
-        && keyField.equals(that.keyField)
-        && keyFieldSecondary.equals(that.keyFieldSecondary);
   }
 }

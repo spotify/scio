@@ -23,6 +23,7 @@ import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryAndSe
 import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyedBucketedInput;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
+import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -43,6 +44,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
@@ -59,6 +62,8 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.NeedsRunner;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
+import org.apache.beam.sdk.transforms.SerializableFunction;
+import org.apache.beam.sdk.transforms.SerializableFunctions;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
@@ -692,6 +697,113 @@ public class SortedBucketSourceTest {
     Assert.assertThrows(IllegalArgumentException.class, () -> sb.and(read2));
   }
 
+  @Test
+  public void testMixedSpecificAvroInputTypesInSource() throws Exception {
+    testBucketedInputOfPartitions(
+        AvroFileOperations.of(AvroGeneratedUser.class),
+        SerializableFunctions.identity(),
+        ParquetAvroFileOperations.of(AvroGeneratedUser.class),
+        SerializableFunctions.identity());
+  }
+
+  @Test
+  public void testMixedGenericAvroInputTypesInSource() throws Exception {
+    testBucketedInputOfPartitions(
+        AvroFileOperations.of(AvroGeneratedUser.getClassSchema()),
+        SortedBucketSourceTest::toAvroUserGenericRecord,
+        ParquetAvroFileOperations.of(AvroGeneratedUser.getClassSchema()),
+        SortedBucketSourceTest::toAvroUserGenericRecord);
+  }
+
+  private <RecordT extends IndexedRecord> void testBucketedInputOfPartitions(
+      FileOperations<RecordT> avroFileOp,
+      SerializableFunction<AvroGeneratedUser, RecordT> avroToT,
+      FileOperations<RecordT> parquetFileOp,
+      SerializableFunction<AvroGeneratedUser, RecordT> parquetToT)
+      throws Exception {
+    final TemporaryFolder avroDir = new TemporaryFolder();
+    avroDir.create();
+    final TemporaryFolder parquetDir = new TemporaryFolder();
+    parquetDir.create();
+    final SMBFilenamePolicy avroPolicy =
+        new SMBFilenamePolicy(fromFolder(avroDir), "bucket", ".avro");
+    final SMBFilenamePolicy parquetPolicy =
+        new SMBFilenamePolicy(fromFolder(parquetDir), "bucket", ".parquet");
+
+    final AvroGeneratedUser avroRecord =
+        AvroGeneratedUser.newBuilder()
+            .setName("foo")
+            .setFavoriteColor("avro-color")
+            .setFavoriteNumber(1)
+            .build();
+    final AvroGeneratedUser parquetRecord =
+        AvroGeneratedUser.newBuilder()
+            .setName("foo")
+            .setFavoriteColor("parquet-color")
+            .setFavoriteNumber(2)
+            .build();
+
+    write(
+        avroPolicy.forDestination(),
+        new AvroBucketMetadata<String, Void, RecordT>(
+            1,
+            1,
+            String.class,
+            "name",
+            null,
+            null,
+            BucketMetadata.HashType.MURMUR3_32,
+            "bucket",
+            (Class<RecordT>) AvroGeneratedUser.class),
+        ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of((RecordT) avroRecord)),
+        avroFileOp);
+
+    write(
+        parquetPolicy.forDestination(),
+        new ParquetBucketMetadata<String, Void, RecordT>(
+            1,
+            1,
+            String.class,
+            "name",
+            null,
+            null,
+            BucketMetadata.HashType.MURMUR3_32,
+            "bucket",
+            (Class<RecordT>) AvroGeneratedUser.class),
+        ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of((RecordT) parquetRecord)),
+        parquetFileOp);
+
+    final TupleTag<RecordT> tupleTag = new TupleTag<>("source-tag");
+    final PCollection<KV<String, CoGbkResult>> output =
+        pipeline.apply(
+            Read.from(
+                new SortedBucketPrimaryKeyedSource<>(
+                    String.class,
+                    ImmutableList.of(
+                        new PrimaryKeyedBucketedInput<>(
+                            tupleTag,
+                            ImmutableMap.of(
+                                TestUtils.fromFolder(avroDir).toString(),
+                                    KV.of(".avro", avroFileOp),
+                                TestUtils.fromFolder(parquetDir).toString(),
+                                    KV.of(".parquet", parquetFileOp)),
+                            null)),
+                    TargetParallelism.max(),
+                    "metrics-key")));
+
+    PAssert.thatMap(output)
+        .satisfies(
+            m -> {
+              Assert.assertEquals(1, m.keySet().size());
+              Assert.assertEquals(
+                  ImmutableSet.of(avroToT.apply(avroRecord), avroToT.apply(parquetRecord)),
+                  Sets.newHashSet(m.get("foo").getAll("source-tag")));
+              return null;
+            });
+
+    pipeline.run();
+  }
+
   @SuppressWarnings("unchecked")
   private static List<SortedBucketSource<String>> splitAndSort(
       SortedBucketSource<String> source, int desiredByteSize) throws Exception {
@@ -1094,6 +1206,15 @@ public class SortedBucketSourceTest {
       BucketMetadata<String, K2, String> metadata,
       Map<BucketShardId, List<String>> input)
       throws Exception {
+    write(fileAssignment, metadata, input, new TestFileOperations());
+  }
+
+  private static <K2, V> void write(
+      FileAssignment fileAssignment,
+      BucketMetadata<String, K2, V> metadata,
+      Map<BucketShardId, List<V>> input,
+      FileOperations<V> fileOperations)
+      throws Exception {
     // Write bucket metadata
     BucketMetadata.to(
         metadata,
@@ -1101,11 +1222,10 @@ public class SortedBucketSourceTest {
             FileSystems.create(fileAssignment.forMetadata(), "application/json")));
 
     // Write bucket files
-    final TestFileOperations fileOperations = new TestFileOperations();
-    for (Map.Entry<BucketShardId, List<String>> entry : input.entrySet()) {
-      Writer<String> writer =
+    for (Map.Entry<BucketShardId, List<V>> entry : input.entrySet()) {
+      Writer<V> writer =
           fileOperations.createWriter(fileAssignment.forBucket(entry.getKey(), metadata));
-      for (String s : entry.getValue()) {
+      for (V s : entry.getValue()) {
         writer.write(s);
       }
       writer.close();
@@ -1167,5 +1287,13 @@ public class SortedBucketSourceTest {
                     MetricResult::getCommitted));
 
     Assert.assertEquals(expectedDistributions, actualDistributions);
+  }
+
+  private static GenericRecord toAvroUserGenericRecord(AvroGeneratedUser user) {
+    return new GenericRecordBuilder(AvroGeneratedUser.getClassSchema())
+        .set("name", user.getName())
+        .set("favorite_number", user.getFavoriteNumber())
+        .set("favorite_color", user.getFavoriteColor())
+        .build();
   }
 }

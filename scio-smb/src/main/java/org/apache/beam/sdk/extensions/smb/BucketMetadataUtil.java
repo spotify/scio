@@ -23,8 +23,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
-import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 
@@ -69,7 +69,7 @@ public class BucketMetadataUtil {
     this.batchSize = batchSize;
   }
 
-  private <V> Map<ResourceId, BucketMetadata<?, ?, V>> fetchMetadata(List<String> directories) {
+  private <V> Map<ResourceId, BucketMetadata<?, ?, V>> fetchMetadata(List<ResourceId> directories) {
     final int total = directories.size();
     final Map<ResourceId, BucketMetadata<?, ?, V>> metadata = new ConcurrentHashMap<>();
     int start = 0;
@@ -77,7 +77,6 @@ public class BucketMetadataUtil {
       directories.stream()
           .skip(start)
           .limit(batchSize)
-          .map(dir -> FileSystems.matchNewResource(dir, true))
           .parallel()
           .forEach(dir -> metadata.put(dir, BucketMetadata.get(dir)));
       start += batchSize;
@@ -86,11 +85,11 @@ public class BucketMetadataUtil {
   }
 
   private <V> SourceMetadata<V> getSourceMetadata(
-      List<String> directories,
-      String filenameSuffix,
+      Map<ResourceId, KV<String, FileOperations<V>>> directories,
       BiFunction<BucketMetadata<?, ?, V>, BucketMetadata<?, ?, V>, Boolean>
           compatibilityCompareFn) {
-    final Map<ResourceId, BucketMetadata<?, ?, V>> bucketMetadatas = fetchMetadata(directories);
+    final Map<ResourceId, BucketMetadata<?, ?, V>> bucketMetadatas =
+        fetchMetadata(new ArrayList<>(directories.keySet()));
     Preconditions.checkState(!bucketMetadatas.isEmpty(), "Failed to find metadata");
 
     Map<ResourceId, SourceMetadataValue<V>> mapping = new HashMap<>();
@@ -107,7 +106,8 @@ public class BucketMetadataUtil {
               metadata,
               first.getValue());
           final FileAssignment fileAssignment =
-              new SMBFilenamePolicy(dir, metadata.getFilenamePrefix(), filenameSuffix)
+              new SMBFilenamePolicy(
+                      dir, metadata.getFilenamePrefix(), directories.get(dir).getKey())
                   .forDestination();
           mapping.put(dir, new SourceMetadataValue<>(metadata, fileAssignment));
         });
@@ -115,16 +115,13 @@ public class BucketMetadataUtil {
   }
 
   public <V> SourceMetadata<V> getPrimaryKeyedSourceMetadata(
-      List<String> directories, String filenameSuffix) {
-    return getSourceMetadata(
-        directories, filenameSuffix, BucketMetadata::isPartitionCompatibleForPrimaryKey);
+      Map<ResourceId, KV<String, FileOperations<V>>> directories) {
+    return getSourceMetadata(directories, BucketMetadata::isPartitionCompatibleForPrimaryKey);
   }
 
   public <V> SourceMetadata<V> getPrimaryAndSecondaryKeyedSourceMetadata(
-      List<String> directories, String filenameSuffix) {
+      Map<ResourceId, KV<String, FileOperations<V>>> directories) {
     return getSourceMetadata(
-        directories,
-        filenameSuffix,
-        BucketMetadata::isPartitionCompatibleForPrimaryAndSecondaryKey);
+        directories, BucketMetadata::isPartitionCompatibleForPrimaryAndSecondaryKey);
   }
 }

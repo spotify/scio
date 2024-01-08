@@ -30,6 +30,8 @@ import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.LocalResources;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.values.KV;
+import org.apache.curator.shaded.com.google.common.base.Functions;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -72,8 +74,8 @@ public class BucketMetadataUtilTest {
 
   private void testIncompatibleMetadata(List<TestBucketMetadata> metadataList, int badIdx)
       throws Exception {
-    final List<String> directories = new ArrayList<>();
-    final List<String> goodDirectories = new ArrayList<>();
+    final List<ResourceId> directories = new ArrayList<>();
+    final List<ResourceId> goodDirectories = new ArrayList<>();
 
     // all but one metadata are source-compatible, the one at badIdx is incompatible
     for (int i = 0; i < metadataList.size(); i++) {
@@ -85,17 +87,28 @@ public class BucketMetadataUtilTest {
                   "application/json"));
 
       BucketMetadata.to(metadataList.get(i), outputStream);
-      directories.add(dest.getAbsolutePath());
+      directories.add(LocalResources.fromString(dest.getAbsolutePath(), true));
       if (i != badIdx) {
-        goodDirectories.add(dest.getAbsolutePath());
+        goodDirectories.add(LocalResources.fromString(dest.getAbsolutePath(), true));
       }
     }
 
     final SourceMetadata<String> sourceMetadata =
-        util.getPrimaryKeyedSourceMetadata(goodDirectories, ".txt");
+        util.getPrimaryKeyedSourceMetadata(
+            goodDirectories.stream()
+                .collect(
+                    Collectors.toMap(
+                        Functions.identity(), dir -> KV.of(".txt", new TestFileOperations()))));
     Assert.assertEquals(goodDirectories.size(), sourceMetadata.mapping.size());
     Assert.assertThrows(
-        IllegalStateException.class, () -> util.getPrimaryKeyedSourceMetadata(directories, ".txt"));
+        IllegalStateException.class,
+        () ->
+            util.getPrimaryKeyedSourceMetadata(
+                directories.stream()
+                    .collect(
+                        Collectors.toMap(
+                            Functions.identity(),
+                            dir -> KV.of(".txt", new TestFileOperations())))));
 
     folder.delete();
   }
@@ -122,13 +135,13 @@ public class BucketMetadataUtilTest {
 
   private void testMissingMetadata(List<Optional<TestBucketMetadata>> metadataList)
       throws Exception {
-    final List<String> directories = new ArrayList<>();
+    final List<ResourceId> directories = new ArrayList<>();
 
     // all but one metadata are compatible
     ResourceId missingMetadataDir = null;
     for (int i = 0; i < metadataList.size(); i++) {
       final File dest = folder.newFolder(String.valueOf(i));
-      directories.add(dest.getAbsolutePath());
+      directories.add(LocalResources.fromString(dest.getAbsolutePath(), true));
 
       if (!metadataList.get(i).isPresent()) {
         missingMetadataDir = LocalResources.fromFile(dest, true);
@@ -147,7 +160,13 @@ public class BucketMetadataUtilTest {
     Assert.assertThrows(
         "Could not find SMB metadata for source directory " + missingMetadataDir,
         RuntimeException.class,
-        () -> util.getPrimaryKeyedSourceMetadata(directories, ".txt"));
+        () ->
+            util.getPrimaryKeyedSourceMetadata(
+                directories.stream()
+                    .collect(
+                        Collectors.toMap(
+                            Functions.identity(),
+                            dir -> KV.of(".txt", new TestFileOperations())))));
 
     folder.delete();
   }

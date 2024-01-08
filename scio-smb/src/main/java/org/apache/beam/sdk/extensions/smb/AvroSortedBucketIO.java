@@ -36,6 +36,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.NewBucketMetadat
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
 
 /** API for reading and writing Avro sorted-bucket files. */
 public class AvroSortedBucketIO {
@@ -192,6 +193,11 @@ public class AvroSortedBucketIO {
   @AutoValue
   public abstract static class Read<T extends IndexedRecord> extends SortedBucketIO.Read<T> {
     @Nullable
+    abstract ImmutableList<String> getInputDirectories();
+
+    abstract String getFilenameSuffix();
+
+    @Nullable
     abstract Schema getSchema();
 
     @Nullable
@@ -242,7 +248,7 @@ public class AvroSortedBucketIO {
     }
 
     @Override
-    protected SortedBucketSource.BucketedInput<T> toBucketedInput(
+    public SortedBucketSource.BucketedInput<T> toBucketedInput(
         final SortedBucketSource.Keying keying) {
       @SuppressWarnings("unchecked")
       final AvroFileOperations<T> fileOperations =

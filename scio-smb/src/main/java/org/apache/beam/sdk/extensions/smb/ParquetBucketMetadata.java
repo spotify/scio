@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -36,6 +38,7 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet;
 
 public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> {
 
@@ -189,27 +192,18 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
-    return getKeyClass() == that.getKeyClass() && keyField.equals(that.keyField);
+  int hashPrimaryKeyMetadata() {
+    return Objects.hash(keyField, getKeyClass());
   }
 
   @Override
-  public boolean isPartitionCompatibleForPrimaryAndSecondaryKey(BucketMetadata o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    ParquetBucketMetadata<?, ?, ?> that = (ParquetBucketMetadata<?, ?, ?>) o;
-    boolean allSecondaryPresent =
-        getKeyClassSecondary() != null
-            && that.getKeyClassSecondary() != null
-            && keyFieldSecondary != null
-            && that.keyFieldSecondary != null;
-    // you messed up
-    if (!allSecondaryPresent) return false;
-    return getKeyClass() == that.getKeyClass()
-        && getKeyClassSecondary() == that.getKeyClassSecondary()
-        && keyField.equals(that.keyField)
-        && keyFieldSecondary.equals(that.keyFieldSecondary);
+  int hashSecondaryKeyMetadata() {
+    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
+  }
+
+  @Override
+  public Set<Class<? extends BucketMetadata>> compatibleMetadataTypes() {
+    return ImmutableSet.of(AvroBucketMetadata.class);
   }
 
   @Override
