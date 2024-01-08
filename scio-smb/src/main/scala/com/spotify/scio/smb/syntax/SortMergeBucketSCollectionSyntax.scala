@@ -20,6 +20,7 @@ package com.spotify.scio.smb.syntax
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, EmptyTap, TapOf}
+import com.spotify.scio.smb.SmbIO
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values._
 import org.apache.beam.sdk.coders.KvCoder
@@ -54,27 +55,17 @@ final class SortedBucketSCollection[T](private val self: SCollection[T]) {
   @experimental
   def saveAsSortedBucket(
     write: SortedBucketIO.Write[_, _, T]
-  )(implicit coder: Coder[T]): ClosedTap[T] = {
+  ): ClosedTap[T] = {
+    val beamValueCoder = self.internal.getCoder
+    implicit val valueCoder: Coder[T] = Coder.beam(beamValueCoder)
+
     if (self.context.isTest) {
       TestDataManager.getOutput(self.context.testId.get)(SortedBucketIOUtil.testId(write))
       ClosedTap(TapOf[T].saveForTest(self))
     } else {
-      val writeResult = self.applyInternal(write).expand()
+      val writeResult = self.applyInternal(write)
 
-      val bucketFiles = self.context
-        .wrap(
-          writeResult
-            .get(new TupleTag("WrittenFiles"))
-            .asInstanceOf[PCollection[KV[BucketShardId, ResourceId]]]
-        )
-        .materialize
-
-      val fileOps = write.getFileOperations
-
-      ClosedTap(
-        bucketFiles.underlying
-          .flatMap(kv => fileOps.iterator(kv.getValue).asScala)
-      )
+      ClosedTap(SmbIO.tap(write.getFileOperations, writeResult).apply(self.context))
     }
   }
 }
@@ -99,17 +90,18 @@ final class SortedBucketPairSCollection[K, V](private val self: SCollection[KV[K
   def saveAsPreKeyedSortedBucket(
     write: SortedBucketIO.Write[K, Void, V],
     verifyKeyExtraction: Boolean = true
-  ): ClosedTap[Nothing] = {
+  ): ClosedTap[V] = {
     val beamValueCoder = self.internal.getCoder.asInstanceOf[KvCoder[K, V]].getValueCoder
-    if (self.context.isTest) {
-      implicit val valueCoder: Coder[V] = Coder.beam(beamValueCoder)
-      val testOutput = TestDataManager.getOutput(self.context.testId.get)
-      testOutput(SortedBucketIOUtil.testId(write))(self.map(_.getValue))
-    } else {
-      self.applyInternal(write.onKeyedCollection(beamValueCoder, verifyKeyExtraction))
-    }
+    implicit val valueCoder: Coder[V] = Coder.beam(beamValueCoder)
 
-    // @Todo: Implement taps for metadata/bucket elements
-    ClosedTap[Nothing](EmptyTap)
+    if (self.context.isTest) {
+      TestDataManager.getOutput(self.context.testId.get)(SortedBucketIOUtil.testId(write))
+      ClosedTap(TapOf[V].saveForTest(self.map(_.getValue)))
+    } else {
+      val writeResult =
+        self.applyInternal(write.onKeyedCollection(beamValueCoder, verifyKeyExtraction))
+
+      ClosedTap(SmbIO.tap(write.getFileOperations, writeResult).apply(self.context))
+    }
   }
 }

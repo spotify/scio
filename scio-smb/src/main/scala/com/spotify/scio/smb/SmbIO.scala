@@ -16,9 +16,16 @@
 
 package com.spotify.scio.smb
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{KeyedIO, TapOf, TapT, TestIO}
+import com.spotify.scio.io.{ClosedTap, KeyedIO, Tap, TapOf, TapT, TestIO}
 import com.spotify.scio.util.ScioUtil
+import org.apache.beam.sdk.extensions.smb.{BucketShardId, FileOperations}
+import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult
+import org.apache.beam.sdk.io.fs.ResourceId
+import org.apache.beam.sdk.values.{KV, PCollection, TupleTag}
+
+import scala.jdk.CollectionConverters._
 
 final class SmbIO[K, T](path: String, override val keyBy: T => K)(implicit
   override val keyCoder: Coder[K]
@@ -37,4 +44,21 @@ object SmbIO {
     val normalizedPaths = paths.map(p => ScioUtil.strippedPath(p) + "/").mkString(",")
     s"SortedBucketIO($normalizedPaths)"
   }
+
+  private[scio] def tap[T: Coder](
+    fileOperations: FileOperations[T],
+    writeResult: WriteResult
+  ): ScioContext => Tap[T] =
+    (sc: ScioContext) => {
+      val bucketFiles = sc
+        .wrap(
+          writeResult
+            .expand()
+            .get(new TupleTag("WrittenFiles"))
+            .asInstanceOf[PCollection[KV[BucketShardId, ResourceId]]]
+        )
+        .materialize
+
+      bucketFiles.underlying.flatMap(kv => fileOperations.iterator(kv.getValue).asScala)
+    }
 }

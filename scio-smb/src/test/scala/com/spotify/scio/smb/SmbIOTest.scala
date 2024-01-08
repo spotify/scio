@@ -209,4 +209,35 @@ class SmbIOTest extends PipelineSpec {
     val result = sc.run().waitUntilDone()
     tap.get(result).value.toSeq should contain theSameElementsAs accounts
   }
+
+  it should "work with pre-keyed SMB writes" in {
+    val accounts = (1 to 100)
+      .map { i =>
+        Account
+          .newBuilder()
+          .setId(i)
+          .setName(i.toString)
+          .setType(i.toString)
+          .setAccountStatus(AccountStatus.Active)
+          .setAmount(i.toDouble)
+          .build()
+      }
+
+    val tempFolder = Files.createTempDirectory("smb-tap")
+    val sc = ScioContext()
+    val tap = sc
+      .parallelize(accounts)
+      .map(t => KV.of(t.getName.toString, t))
+      .saveAsPreKeyedSortedBucket(
+        AvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(tempFolder.toFile.getAbsolutePath)
+          .withNumBuckets(4)
+          .withNumShards(2)
+          .withFilenamePrefix("custom-prefix")
+      )
+
+    val result = sc.run().waitUntilDone()
+    tap.get(result).value.toSeq should contain theSameElementsAs accounts
+  }
 }
