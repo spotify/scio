@@ -23,7 +23,7 @@ import scala.jdk.CollectionConverters._
 
 object SortedBucketIOUtil {
   def testId(read: beam.SortedBucketIO.Read[_]): String =
-    scio.SortedBucketIO.testId(
+    scio.SmbIO.testId(
       read
         .toBucketedInput(SortedBucketSource.Keying.PRIMARY)
         .getInputs
@@ -35,8 +35,8 @@ object SortedBucketIOUtil {
     )
 
   def testId(write: beam.SortedBucketIO.Write[_, _, _]): String =
-    scio.SortedBucketIO.testId(write.getOutputDirectory.toString)
+    scio.SmbIO.testId(write.getOutputDirectory.toString)
 
   def testId(write: beam.SortedBucketIO.TransformOutput[_, _, _]): String =
-    scio.SortedBucketIO.testId(write.getOutputDirectory.toString)
+    scio.SmbIO.testId(write.getOutputDirectory.toString)
 }

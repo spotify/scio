@@ -136,9 +136,9 @@ class SortedBucketIOTest extends PipelineSpec {
         "--accounts=gs://accounts",
         "--output=gs://output"
       )
-      .input(SortedBucketIO[Integer, User]("gs://users", _.getId), Seq(user))
-      .input(SortedBucketIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
-      .output(SortedBucketIO[Integer, User]("gs://output", _.getId))(
+      .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
+      .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+      .output(SmbIO[Integer, User]("gs://output", _.getId))(
         _ should containInAnyOrder(
           Seq(
             User.newBuilder(user).setAccounts(Collections.singletonList(accountA)).build(),
@@ -156,9 +156,9 @@ class SortedBucketIOTest extends PipelineSpec {
         "--accounts=gs://accounts",
         "--output=gs://output"
       )
-      .input(SortedBucketIO[Integer, User]("gs://users", _.getId), Seq(user))
-      .input(SortedBucketIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
-      .output(SortedBucketIO[Integer, User]("gs://output", _.getId))(
+      .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
+      .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+      .output(SmbIO[Integer, User]("gs://output", _.getId))(
         _ should containInAnyOrder(Seq(joinedUserAccounts))
       )
       .run()
@@ -171,9 +171,9 @@ class SortedBucketIOTest extends PipelineSpec {
         "--accounts=gs://accounts",
         "--output=gs://output"
       )
-      .input(SortedBucketIO[Integer, User]("gs://users", _.getId), Seq(user))
-      .input(SortedBucketIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
-      .output(SortedBucketIO[Integer, User]("gs://output", _.getId))(
+      .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
+      .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+      .output(SmbIO[Integer, User]("gs://output", _.getId))(
         _ should containInAnyOrder(Seq(joinedUserAccounts))
       )
       .run()
