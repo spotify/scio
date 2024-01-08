@@ -20,18 +20,18 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{KeyedIO, TapOf, TapT, TestIO}
 import com.spotify.scio.util.ScioUtil
 
-final class SortedBucketIO[K, T](path: String, override val keyBy: T => K)(implicit
+final class SmbIO[K, T](path: String, override val keyBy: T => K)(implicit
   override val keyCoder: Coder[K]
 ) extends TestIO[T]
     with KeyedIO[T] {
   override type KeyT = K
   override val tapT: TapT.Aux[T, T] = TapOf[T]
-  override def testId: String = SortedBucketIO.testId(path)
+  override def testId: String = SmbIO.testId(path)
 }
 
-object SortedBucketIO {
-  def apply[K: Coder, T](path: String, keyBy: T => K): SortedBucketIO[K, T] =
-    new SortedBucketIO[K, T](path, keyBy)
+object SmbIO {
+  def apply[K: Coder, T](path: String, keyBy: T => K): SmbIO[K, T] =
+    new SmbIO[K, T](path, keyBy)
 
   def testId(paths: String*): String = {
     val normalizedPaths = paths.map(p => ScioUtil.strippedPath(p) + "/").mkString(",")
