@@ -31,7 +31,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.jdk.CollectionConverters._
 
-// scio-test/it:runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
+// integration/runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
 class BigQueryStorageIT extends AnyFlatSpec with Matchers {
   import BigQueryStorageIT._
 

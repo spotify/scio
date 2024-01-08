@@ -25,9 +25,9 @@ jobs:
         run: scripts/gha_setup.sh
         env:
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
-      - name: Temporarily remove conflicting Scala classes # some IT test classes won't compile because they depend on macros based on test data that's missing
-        run: find integration/src/test/scala/com/spotify/scio/bigquery -type f ! -name 'PopulateTestData.scala' -delete
-      - name: Populate BQ test data
-        run: sbt "integration/Test/runMain com.spotify.scio.bigquery.PopulateTestData"
       - name: Populate GCS test data
-        run: sbt "integration/Test/runMain com.spotify.scio.PopulateTestData"
+        run: sbt "integration/runMain com.spotify.scio.PopulateTestData"
+      - name: Populate BQ test data
+        run: sbt "integration/runMain com.spotify.scio.bigquery.PopulateTestData"
+      - name: Populate SQL test data
+        run: sbt "integration/runMain com.spotify.scio.jdbc.PopulateTestData"

@@ -31,7 +31,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.jdk.CollectionConverters._
 import scala.util.Success
 
-// scio-test/it:runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
+// integration/runMain com.spotify.scio.PopulateTestData to re-populate data for integration tests
 class BigQueryClientIT extends AnyFlatSpec with Matchers {
   private[this] val bq = BigQuery.defaultInstance()
 
