@@ -82,12 +82,20 @@ jobs:
         if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: gcloud auth
+        if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
       - name: Check headers and formatting
         if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
+        run: sbt '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck integration/headerCheckAll integration/scalafmtCheckAll
 
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' test
@@ -102,6 +110,10 @@ jobs:
 
       - name: Check dependencies
         run: sbt '++ ${{ matrix.scala }}' undeclaredCompileDependenciesTest unusedCompileDependenciesTest
+
+      - name: Build integration
+        if: matrix.java == 'corretto@11' && matrix.scala == '2.13' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        run: sbt '++ ${{ matrix.scala }}' integration/Test/compile
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
@@ -354,6 +366,7 @@ jobs:
         run: sbt +update
 
       - name: gcloud auth
+        if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -365,9 +378,6 @@ jobs:
           BQ_READ_TIMEOUT: 30000
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
         run: scripts/gha_setup.sh
-
-      - name: Check headers and formatting
-        run: sbt '++ ${{ matrix.scala }}' integration/headerCheckAll integration/scalafmtCheckAll
 
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' integration/test
@@ -398,16 +408,6 @@ jobs:
       - name: sbt update
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
-
-      - name: gcloud auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-          export_environment_variables: true
-          create_credentials_file: true
-
-      - name: Setup GitHub Action
-        run: scripts/gha_setup.sh
 
       - name: Generate site
         env:

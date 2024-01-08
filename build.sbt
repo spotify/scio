@@ -223,10 +223,13 @@ val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")
 val java11 = JavaSpec.corretto("11")
 val javaDefault = java11
-val primaryAxisCond = Seq(
-  s"matrix.scala == '${CrossVersion.binaryScalaVersion(scalaDefault)}'",
-  s"matrix.java == '${javaDefault.render}'"
-).mkString(" && ")
+val condPrimaryScala = s"matrix.scala == '${CrossVersion.binaryScalaVersion(scalaDefault)}'"
+val condPrimaryJava = s"matrix.java == '${javaDefault.render}'"
+val condIsMain = "github.ref == 'refs/heads/main'"
+val condIsTag = "startsWith(github.ref, 'refs/tags/v')"
+val condSkipPR = "github.event_name != 'pull_request'"
+val condSkipForkPR =
+  s"($condSkipPR || github.event.pull_request.head.repo.full_name == github.repository)"
 
 val githubWorkflowGcpAuthStep = WorkflowStep.Use(
   UseRef.Public("google-github-actions", "auth", "v2"),
@@ -235,6 +238,7 @@ val githubWorkflowGcpAuthStep = WorkflowStep.Use(
     "export_environment_variables" -> "true",
     "create_credentials_file" -> "true"
   ),
+  cond = Some(condSkipForkPR),
   name = Some("gcloud auth")
 )
 
@@ -244,10 +248,25 @@ ThisBuild / scalaVersion := scalaDefault
 ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
 ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
+ThisBuild / githubWorkflowBuildPreamble := Seq(githubWorkflowGcpAuthStep)
+ThisBuild / githubWorkflowBuild ~= {
+  _.map {
+    case w: WorkflowStep.Sbt if w.name.contains("Check headers and formatting") =>
+      w.copy(commands =
+        w.commands ++ List("integration/headerCheckAll", "integration/scalafmtCheckAll")
+      )
+    case w => w
+  }
+}
 ThisBuild / githubWorkflowBuildPostamble := Seq(
   WorkflowStep.Sbt(
     List("undeclaredCompileDependenciesTest", "unusedCompileDependenciesTest"),
     name = Some("Check dependencies")
+  ),
+  WorkflowStep.Sbt(
+    List("integration/Test/compile"),
+    cond = Some(Seq(condPrimaryJava, condPrimaryScala, condSkipForkPR).mkString(" && ")),
+    name = Some("Build integration")
   )
 )
 ThisBuild / githubWorkflowPublishPreamble := Seq(
@@ -301,15 +320,11 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           name = Some("Setup GitHub Action")
         ),
         WorkflowStep.Sbt(
-          List("integration/headerCheckAll", "integration/scalafmtCheckAll"),
-          name = Some("Check headers and formatting")
-        ),
-        WorkflowStep.Sbt(
           List("integration/test"),
           name = Some("Test")
         )
       ),
-    cond = Some("github.event_name != 'pull_request' && github.ref == 'refs/heads/main'"),
+    cond = Some(Seq(condSkipPR, condIsMain).mkString(" && ")),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
   ),
@@ -319,11 +334,6 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
-        githubWorkflowGcpAuthStep,
-        WorkflowStep.Run(
-          List("scripts/gha_setup.sh"),
-          name = Some("Setup GitHub Action")
-        ),
         WorkflowStep.Sbt(
           List("scio-examples/compile", "site/makeSite"),
           env = Map("SOCCO" -> "true"),
@@ -342,8 +352,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
             "keep_files" -> "true"
           ),
           name = Some("Publish site"),
-          cond =
-            Some("github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')")
+          cond = Some(Seq(condSkipPR, condIsTag).mkString(" && "))
         )
       ),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
