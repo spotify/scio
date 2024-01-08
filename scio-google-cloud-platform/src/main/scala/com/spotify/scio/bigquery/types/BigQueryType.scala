@@ -423,8 +423,13 @@ class BigQueryType[T: TypeTag] {
     Try(getField("rowRestriction").asInstanceOf[Option[String]]).toOption.flatten
 
   /** Query from the annotation. */
+  @deprecated("use queryRaw instead", "0.14.0")
   def query: Option[String] =
-    Try(getField("query").asInstanceOf[String]).toOption
+    Try(getField("queryRaw").asInstanceOf[String]).toOption
+
+  /** Query from the annotation. */
+  def queryRaw: Option[String] =
+    Try(getField("queryRaw").asInstanceOf[String]).toOption
 
   /** Table description from the annotation. */
   def tableDescription: Option[String] =

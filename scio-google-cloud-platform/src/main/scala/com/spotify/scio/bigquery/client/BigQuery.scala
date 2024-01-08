@@ -91,7 +91,7 @@ final class BigQuery private (val client: Client) {
       if (bqt.isTable) {
         tables.rows(STable.Spec(bqt.table.get))
       } else if (bqt.isQuery) {
-        query.rows(bqt.query.get)
+        query.rows(bqt.queryRaw.get)
       } else {
         throw new IllegalArgumentException("Missing table or query field in companion object")
       }

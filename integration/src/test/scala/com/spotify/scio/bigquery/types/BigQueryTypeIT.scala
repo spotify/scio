@@ -106,7 +106,7 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     val bqt = BigQueryType[LegacyT]
     bqt.isQuery shouldBe true
     bqt.isTable shouldBe false
-    bqt.query shouldBe Some(legacyQuery)
+    bqt.queryRaw shouldBe Some(legacyQuery)
     bqt.table shouldBe None
     val fields = bqt.schema.getFields.asScala
     fields.size shouldBe 2
@@ -119,7 +119,7 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     val bqt = BigQueryType[SqlT]
     bqt.isQuery shouldBe true
     bqt.isTable shouldBe false
-    bqt.query shouldBe Some(sqlQuery)
+    bqt.queryRaw shouldBe Some(sqlQuery)
     bqt.table shouldBe None
     val fields = bqt.schema.getFields.asScala
     fields.size shouldBe 2
@@ -145,11 +145,11 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
   }
 
   it should "work with legacy syntax with $LATEST" in {
-    BigQueryType[LegacyLatestT].query shouldBe Some(legacyLatestQuery)
+    BigQueryType[LegacyLatestT].queryRaw shouldBe Some(legacyLatestQuery)
   }
 
   it should "work with SQL syntax with $LATEST" in {
-    BigQueryType[SqlLatestT].query shouldBe Some(sqlLatestQuery)
+    BigQueryType[SqlLatestT].queryRaw shouldBe Some(sqlLatestQuery)
   }
 
   it should "have query fn" in {
@@ -242,7 +242,7 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     val bqt = BigQueryType[ToTableT]
     bqt.isQuery shouldBe false
     bqt.isTable shouldBe false
-    bqt.query shouldBe None
+    bqt.queryRaw shouldBe None
     bqt.table shouldBe None
     val fields = bqt.schema.getFields.asScala
     fields.size shouldBe 2

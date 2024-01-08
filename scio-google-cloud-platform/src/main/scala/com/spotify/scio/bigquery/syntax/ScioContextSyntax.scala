@@ -149,7 +149,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] = {
     val bqt = BigQueryType[T]
     if (bqt.isQuery) {
-      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.query.get)))
+      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.queryRaw.get)))
     } else {
       val table = Table.Spec(bqt.table.get)
       val rr = bqt.rowRestriction
