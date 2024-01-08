@@ -122,7 +122,7 @@ final case class BigQueryTaps(self: Taps) {
         case null if bqt.isTable =>
           bigQueryTable(bqt.table.get)
         case null if bqt.isQuery =>
-          bigQuerySelect(bqt.query.get)
+          bigQuerySelect(bqt.queryRaw.get)
         case null =>
           throw new IllegalArgumentException(s"Missing table or query field in companion object")
         case _ if table.isDefined =>

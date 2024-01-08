@@ -796,7 +796,7 @@ object BigQueryTyped {
         val table = STable.Spec(bqt.table.get)
         ScioIO.ro[T](Table[T](table))
       case None if bqt.isQuery =>
-        val query = Query(bqt.query.get)
+        val query = Query(bqt.queryRaw.get)
         Select[T](query)
       case Some(s: STable) =>
         ScioIO.ro(Table[T](s))
