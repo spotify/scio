@@ -31,9 +31,12 @@ import scala.collection.mutable
 import scala.util.Try
 
 private[scio] object VersionUtil {
+
+  private val oderSemVer: Ordering[SemVer] =
+    Ordering.by(v => (v.major, v.minor, v.rev, v.suffix.toUpperCase()))
+
   case class SemVer(major: Int, minor: Int, rev: Int, suffix: String) extends Ordered[SemVer] {
-    def compare(that: SemVer): Int =
-      Ordering[(Int, Int, Int, String)].compare(SemVer.unapply(this).get, SemVer.unapply(that).get)
+    def compare(that: SemVer): Int = oderSemVer.compare(this, that)
   }
 
   private[this] val Timeout = 3000
@@ -122,7 +125,7 @@ private[scio] object VersionUtil {
     } else {
       val buffer = mutable.Buffer.empty[String]
       val v1 = parseVersion(current)
-      if (v1.suffix.contains("-SNAPSHOT")) {
+      if (v1.suffix.contains("SNAPSHOT")) {
         buffer.append(s"Using a SNAPSHOT version of Scio: $current")
       }
       latestOverride.orElse(latest).foreach { v =>
