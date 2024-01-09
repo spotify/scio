@@ -218,6 +218,12 @@ val scala213 = "2.13.12"
 val scala212 = "2.12.18"
 val scalaDefault = scala213
 
+// compiler settings
+ThisBuild / tlJdkRelease := Some(8)
+ThisBuild / tlFatalWarnings := false
+ThisBuild / scalaVersion := scalaDefault
+ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
+
 // github actions
 val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")
@@ -240,32 +246,22 @@ val githubWorkflowGcpAuthStep = WorkflowStep.Use(
   cond = Some(condSkipForkPR),
   name = Some("gcloud auth")
 )
+val githubWorkflowSetupStep = WorkflowStep.Run(
+  List("scripts/gha_setup.sh"),
+  name = Some("Setup GitHub Action")
+)
 
-ThisBuild / tlJdkRelease := Some(8)
-ThisBuild / tlFatalWarnings := false
-ThisBuild / scalaVersion := scalaDefault
-ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
+val skipUnauthorizedGcpGithubWorkflow = Def.setting {
+  githubIsWorkflowBuild.value && sys.props.get("bigquery.project").isEmpty
+}
+
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
 ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
-ThisBuild / githubWorkflowBuildPreamble := Seq(githubWorkflowGcpAuthStep)
-ThisBuild / githubWorkflowBuild ~= {
-  _.map {
-    case w: WorkflowStep.Sbt if w.name.contains("Check headers and formatting") =>
-      w.copy(commands =
-        w.commands ++ List("integration/headerCheckAll", "integration/scalafmtCheckAll")
-      )
-    case w => w
-  }
-}
+ThisBuild / githubWorkflowBuildPreamble := Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
 ThisBuild / githubWorkflowBuildPostamble := Seq(
   WorkflowStep.Sbt(
     List("undeclaredCompileDependenciesTest", "unusedCompileDependenciesTest"),
     name = Some("Check dependencies")
-  ),
-  WorkflowStep.Sbt(
-    List("integration/Test/compile"),
-    cond = Some(Seq(condPrimaryJava, condPrimaryScala, condSkipForkPR).mkString(" && ")),
-    name = Some("Build integration")
   )
 )
 ThisBuild / githubWorkflowPublishPreamble := Seq(
@@ -288,8 +284,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   WorkflowJob(
     "coverage",
     "Test Coverage",
-    WorkflowStep.CheckoutFull ::
-      WorkflowStep.SetupJava(List(javaDefault)) :::
+    githubWorkflowJobSetup.value.toList :::
       List(
         WorkflowStep.Sbt(
           List("coverage", "test", "coverageAggregate"),
@@ -306,23 +301,22 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   WorkflowJob(
     "it-test",
     "Integration Test",
-    WorkflowStep.CheckoutFull ::
-      WorkflowStep.SetupJava(List(javaDefault)) :::
+    githubWorkflowJobSetup.value.toList :::
+      githubWorkflowGeneratedDownloadSteps.value.toList :::
       List(
         githubWorkflowGcpAuthStep,
-        WorkflowStep.Run(
-          List("scripts/gha_setup.sh"),
-          env = Map(
+        githubWorkflowSetupStep.copy(env =
+          Map(
             "BQ_READ_TIMEOUT" -> "30000",
             "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}"
-          ),
-          name = Some("Setup GitHub Action")
+          )
         ),
         WorkflowStep.Sbt(
-          List("integration/test"),
+          List("set integration/test/skip := false", "integration/test"),
           name = Some("Test")
         )
       ),
+    needs = List("build"),
     cond = Some(Seq(condSkipPR, condIsMain).mkString(" && ")),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
@@ -330,8 +324,8 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   WorkflowJob(
     "site",
     "Generate Site",
-    WorkflowStep.CheckoutFull ::
-      WorkflowStep.SetupJava(List(javaDefault)) :::
+    githubWorkflowJobSetup.value.toList :::
+      githubWorkflowGeneratedDownloadSteps.value.toList :::
       List(
         githubWorkflowGcpAuthStep,
         WorkflowStep.Run(
@@ -359,6 +353,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           cond = Some(Seq(condSkipPR, condIsTag).mkString(" && "))
         )
       ),
+    needs = List("build"),
     cond = Some(condSkipForkPR),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
@@ -557,6 +552,7 @@ lazy val scio = project
     assembly / aggregate := false
   )
   .aggregate(
+    `integration`,
     `scio-avro`,
     `scio-cassandra3`,
     `scio-core`,
@@ -1136,6 +1132,8 @@ lazy val `scio-examples` = project
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
+    compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
+    test / skip := skipUnauthorizedGcpGithubWorkflow.value,
     scalacOptions := {
       val exclude = ScalacOptions
         .tokensForVersion(
@@ -1444,7 +1442,20 @@ lazy val integration = project
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
+    compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
+    test / skip := true,
     publish / skip := true,
+    // sbt does not support skip for test
+    Test / test := {
+      if ((Test / test / skip).value) {
+        streams.value.log.warn(
+          "integration/test are skipped.\n" +
+            "Run 'set integration/test/skip := false' to run them"
+        )
+      } else {
+        (Test / test).value
+      }
+    },
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // compile

@@ -90,12 +90,15 @@ jobs:
           export_environment_variables: true
           create_credentials_file: true
 
+      - name: Setup GitHub Action
+        run: scripts/gha_setup.sh
+
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
       - name: Check headers and formatting
         if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck integration/headerCheckAll integration/scalafmtCheckAll
+        run: sbt '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' test
@@ -110,10 +113,6 @@ jobs:
 
       - name: Check dependencies
         run: sbt '++ ${{ matrix.scala }}' undeclaredCompileDependenciesTest unusedCompileDependenciesTest
-
-      - name: Build integration
-        if: matrix.java == 'corretto@11' && matrix.scala == '2.13' && (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
-        run: sbt '++ ${{ matrix.scala }}' integration/Test/compile
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
@@ -331,6 +330,32 @@ jobs:
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Setup Java (corretto@21)
+        id: setup-java-corretto-21
+        if: matrix.java == 'corretto@21'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 21
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Test coverage
         run: sbt '++ ${{ matrix.scala }}' coverage test coverageAggregate
 
@@ -339,6 +364,7 @@ jobs:
 
   it-test:
     name: Integration Test
+    needs: [build]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
@@ -365,6 +391,52 @@ jobs:
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Setup Java (corretto@21)
+        id: setup-java-corretto-21
+        if: matrix.java == 'corretto@21'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 21
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Download target directories (2.13)
+        uses: actions/download-artifact@v3
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.13
+
+      - name: Inflate target directories (2.13)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Download target directories (2.12)
+        uses: actions/download-artifact@v3
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.12
+
+      - name: Inflate target directories (2.12)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
       - name: gcloud auth
         if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
         uses: google-github-actions/auth@v2
@@ -380,10 +452,11 @@ jobs:
         run: scripts/gha_setup.sh
 
       - name: Test
-        run: sbt '++ ${{ matrix.scala }}' integration/test
+        run: 'sbt ''++ ${{ matrix.scala }}'' ''set integration/test/skip := false'' integration/test'
 
   site:
     name: Generate Site
+    needs: [build]
     if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
     strategy:
       matrix:
@@ -409,6 +482,52 @@ jobs:
       - name: sbt update
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
+
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Setup Java (corretto@21)
+        id: setup-java-corretto-21
+        if: matrix.java == 'corretto@21'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 21
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Download target directories (2.13)
+        uses: actions/download-artifact@v3
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.13
+
+      - name: Inflate target directories (2.13)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Download target directories (2.12)
+        uses: actions/download-artifact@v3
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.12
+
+      - name: Inflate target directories (2.12)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
 
       - name: gcloud auth
         if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
