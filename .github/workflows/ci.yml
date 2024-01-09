@@ -547,8 +547,8 @@ jobs:
 
       - name: Publish site
         if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
-        env:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: site/target
-          keep_files: true
         uses: peaceiris/actions-gh-pages@v3.9.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site/target/site
+          keep_files: true

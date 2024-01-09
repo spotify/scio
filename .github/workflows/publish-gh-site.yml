@@ -10,6 +10,8 @@ jobs:
   # copy of site in ci
   site:
     name: Generate Site
+    # needs: [build]
+    # if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -25,7 +27,7 @@ jobs:
       - name: Setup Java (corretto@11)
         id: setup-java-corretto-11
         if: matrix.java == 'corretto@11'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
@@ -35,7 +37,54 @@ jobs:
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Setup Java (corretto@17)
+        id: setup-java-corretto-17
+        if: matrix.java == 'corretto@17'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@17' && steps.setup-java-corretto-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Setup Java (corretto@21)
+        id: setup-java-corretto-21
+        if: matrix.java == 'corretto@21'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 21
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Download target directories (2.13)
+        uses: actions/download-artifact@v3
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.13
+
+      - name: Inflate target directories (2.13)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
+      - name: Download target directories (2.12)
+        uses: actions/download-artifact@v3
+        with:
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.12
+
+      - name: Inflate target directories (2.12)
+        run: |
+          tar xf targets.tar
+          rm targets.tar
+
       - name: gcloud auth
+        # if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -51,8 +100,10 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}' scio-examples/compile site/makeSite
 
       - name: Publish site
-        env:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: site/target
-          keep_files: true
+        # if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
         uses: peaceiris/actions-gh-pages@v3.9.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site/target/site
+          keep_files: true
+

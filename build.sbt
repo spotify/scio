@@ -339,11 +339,11 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
         ),
         WorkflowStep.Use(
           UseRef.Public("peaceiris", "actions-gh-pages", "v3.9.3"),
-          env = Map(
+          params = Map(
             "github_token" -> "${{ secrets.GITHUB_TOKEN }}",
             "publish_dir" -> {
               val path = (ThisBuild / baseDirectory).value.toPath.toAbsolutePath
-                .relativize((site / target).value.toPath)
+                .relativize((site / makeSite / target).value.toPath)
               // os-independent path rendering ...
               (0 until path.getNameCount).map(path.getName).mkString("/")
             },
