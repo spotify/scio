@@ -55,7 +55,7 @@ trait Tap[T] extends Serializable { self =>
     override def open(sc: ScioContext): SCollection[U] = self.open(sc).map(f)
   }
 
-  def flatMap[U: Coder](f: T => IterableOnce[U]): Tap[U] = new Tap[U] {
+  def flatMap[U: Coder](f: T => TraversableOnce[U]): Tap[U] = new Tap[U] {
 
     /** Parent of this Tap before [[flatMap]]. */
     override val parent: Option[Tap[_]] = Option(self)
