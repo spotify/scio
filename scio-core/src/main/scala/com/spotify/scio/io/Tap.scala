@@ -91,7 +91,7 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
     if (storage.isDone()) {
       val filePattern = ScioUtil.filePattern(path, BinaryIO.ReadParam.DefaultSuffix)
       BinaryIO
-        .openInputStreamsFor(filePattern)
+        .openInputStreamsFor(filePattern, tryDecompress = false)
         .flatMap { is =>
           new Iterator[T] {
             private val reader = MaterializeTap.MaterializeReader
