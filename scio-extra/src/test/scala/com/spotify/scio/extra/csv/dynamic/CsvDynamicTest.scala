@@ -39,7 +39,7 @@ case class TypedRecord(
 
 object TypedRecord {
 
-  val cscHeaderCodec: HeaderCodec[TypedRecord] = HeaderCodec.caseCodec(
+  val csvHeaderCodec: HeaderCodec[TypedRecord] = HeaderCodec.caseCodec(
     "int",
     "long",
     "float",
@@ -85,7 +85,7 @@ class CsvDynamicTest extends PipelineSpec {
   }
 
   it should "write with headers" in {
-    implicit val codec: HeaderCodec[TypedRecord] = TypedRecord.cscHeaderCodec
+    implicit val codec: HeaderCodec[TypedRecord] = TypedRecord.csvHeaderCodec
 
     val input =
       Random.shuffle(
@@ -106,7 +106,7 @@ class CsvDynamicTest extends PipelineSpec {
   }
 
   it should "write skipping headers" in {
-    implicit val encoder: HeaderEncoder[TypedRecord] = TypedRecord.cscHeaderCodec
+    implicit val encoder: HeaderEncoder[TypedRecord] = TypedRecord.csvHeaderCodec
     implicit val decoder: RowDecoder[TypedRecord] = TypedRecord.csvRowCodec
 
     val writeConfig =
