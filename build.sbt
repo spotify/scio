@@ -236,6 +236,10 @@ val condIsTag = "startsWith(github.ref, 'refs/tags/v')"
 val condSkipPR = "github.event_name != 'pull_request'"
 val condSkipForkPR = s"($condSkipPR || !github.event.pull_request.head.repo.fork)"
 
+val githubWorkflowCheckStep = WorkflowStep.Sbt(
+  List("githubWorkflowCheck"),
+  name = Some("Check that workflows are up to date")
+)
 val githubWorkflowGcpAuthStep = WorkflowStep.Use(
   UseRef.Public("google-github-actions", "auth", "v2"),
   Map(
@@ -284,8 +288,10 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   WorkflowJob(
     "coverage",
     "Test Coverage",
-    githubWorkflowJobSetup.value.toList :::
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
+        githubWorkflowCheckStep,
         WorkflowStep.Sbt(
           List("coverage", "test", "coverageAggregate"),
           name = Some("Test coverage")
@@ -304,6 +310,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
+        githubWorkflowCheckStep,
         githubWorkflowGcpAuthStep,
         githubWorkflowSetupStep.copy(env =
           Map(
@@ -326,6 +333,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
+        githubWorkflowCheckStep,
         githubWorkflowGcpAuthStep,
         WorkflowStep.Run(
           List("scripts/gha_setup.sh"),
