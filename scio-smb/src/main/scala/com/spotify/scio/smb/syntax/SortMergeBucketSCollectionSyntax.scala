@@ -56,8 +56,7 @@ final class SortedBucketSCollection[T](private val self: SCollection[T]) {
   def saveAsSortedBucket(
     write: SortedBucketIO.Write[_, _, T]
   ): ClosedTap[T] = {
-    val beamValueCoder = self.internal.getCoder
-    implicit val valueCoder: Coder[T] = Coder.beam(beamValueCoder)
+    import self.coder
 
     if (self.context.isTest) {
       TestDataManager.getOutput(self.context.testId.get)(SortedBucketIOUtil.testId(write))
@@ -91,7 +90,7 @@ final class SortedBucketPairSCollection[K, V](private val self: SCollection[KV[K
     write: SortedBucketIO.Write[K, Void, V],
     verifyKeyExtraction: Boolean = true
   ): ClosedTap[V] = {
-    val beamValueCoder = self.internal.getCoder.asInstanceOf[KvCoder[K, V]].getValueCoder
+    val beamValueCoder = self.coder.asInstanceOf[KvCoder[K, V]].getValueCoder
     implicit val valueCoder: Coder[V] = Coder.beam(beamValueCoder)
 
     if (self.context.isTest) {
