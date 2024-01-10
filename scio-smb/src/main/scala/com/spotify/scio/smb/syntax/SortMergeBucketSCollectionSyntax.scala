@@ -90,7 +90,7 @@ final class SortedBucketPairSCollection[K, V](private val self: SCollection[KV[K
     write: SortedBucketIO.Write[K, Void, V],
     verifyKeyExtraction: Boolean = true
   ): ClosedTap[V] = {
-    val beamValueCoder = self.coder.asInstanceOf[KvCoder[K, V]].getValueCoder
+    val beamValueCoder = self.internal.getCoder.asInstanceOf[KvCoder[K, V]].getValueCoder
     implicit val valueCoder: Coder[V] = Coder.beam(beamValueCoder)
 
     if (self.context.isTest) {
