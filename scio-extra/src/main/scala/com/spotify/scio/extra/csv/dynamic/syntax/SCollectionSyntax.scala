@@ -17,7 +17,6 @@
 package com.spotify.scio.extra.csv.dynamic.syntax
 
 import com.spotify.scio.annotations.experimental
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.extra.csv.{CsvIO, CsvSink}
 import com.spotify.scio.io.dynamic.syntax.DynamicSCollectionOps.writeDynamic
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
@@ -41,7 +40,7 @@ final class DynamicCsvSCollectionOps[T](
     csvConfig: CsvConfiguration = CsvIO.WriteParam.DefaultCsvConfig
   )(
     destinationFn: T => String
-  )(implicit coder: Coder[T], enc: HeaderEncoder[T]): ClosedTap[Nothing] = {
+  )(implicit enc: HeaderEncoder[T]): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
         "CSV file with dynamic destinations cannot be used in a test context"

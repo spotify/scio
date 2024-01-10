@@ -18,9 +18,11 @@ package com.spotify.scio.extra.csv.dynamic
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.extra.csv._
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.values.SCollection
+import kantan.csv._
 import org.apache.commons.io.FileUtils
 
 import java.nio.file.{Files, Path}
@@ -28,14 +30,28 @@ import scala.jdk.CollectionConverters._
 import scala.util.Random
 
 case class TypedRecord(
-  int: Int,
-  long: Long,
-  float: Float,
-  bool: Boolean,
-  string: String
+  int: Int = 0,
+  long: Long = 0L,
+  float: Float = 0f,
+  bool: Boolean = false,
+  string: String = ""
 )
 
-trait CsvDynamicTest extends PipelineSpec {
+object TypedRecord {
+
+  val cscHeaderCodec: HeaderCodec[TypedRecord] = HeaderCodec.caseCodec(
+    "int",
+    "long",
+    "float",
+    "bool",
+    "string"
+  )(TypedRecord.apply)(TypedRecord.unapply)
+
+  val csvRowCodec: RowCodec[TypedRecord] =
+    RowCodec.caseCodec(0, 1, 2, 3, 4)(TypedRecord.apply)(TypedRecord.unapply)
+}
+
+class CsvDynamicTest extends PipelineSpec {
   val aNames: Seq[String] = Seq("Anna", "Alice", "Albrecht", "Amy", "Arlo", "Agnes")
   val bNames: Seq[String] = Seq("Bob", "Barbara", "Barry", "Betty", "Brody", "Bard")
 
@@ -45,17 +61,15 @@ trait CsvDynamicTest extends PipelineSpec {
     read: (ScioContext, Path) => (SCollection[String], SCollection[String])
   ): Unit = {
     val tmpDir = Files.createTempDirectory("csv-dynamic-io-")
-    val sc = ScioContext()
-    save(sc.parallelize(input), tmpDir)
-    sc.run()
+    runWithRealContext()(sc => save(sc.parallelize(input), tmpDir))
     verifyOutput(tmpDir, "0", "1")
 
-    val sc2 = ScioContext()
-    val (lines0, lines1) = read(sc2, tmpDir)
+    runWithRealContext() { sc =>
+      val (lines0, lines1) = read(sc, tmpDir)
+      lines0 should containInAnyOrder(aNames)
+      lines1 should containInAnyOrder(bNames)
+    }
 
-    lines0 should containInAnyOrder(aNames)
-    lines1 should containInAnyOrder(bNames)
-    sc2.run()
     FileUtils.deleteDirectory(tmpDir.toFile)
   }
 
@@ -69,33 +83,15 @@ trait CsvDynamicTest extends PipelineSpec {
       .toSet
     actual shouldBe expected.map(p.resolve).toSet
   }
-}
-
-class TypedCsvDynamicTest extends CsvDynamicTest {
-  import kantan.csv._
-  import com.spotify.scio.extra.csv._
 
   it should "write with headers" in {
-    implicit val encoder: HeaderEncoder[TypedRecord] =
-      HeaderEncoder.caseEncoder(
-        "int",
-        "long",
-        "float",
-        "bool",
-        "string"
-      )(TypedRecord.unapply)
-    implicit val decoder: HeaderDecoder[TypedRecord] = HeaderDecoder.decoder(
-      "int",
-      "long",
-      "float",
-      "bool",
-      "string"
-    )(TypedRecord.apply)
+    implicit val codec: HeaderCodec[TypedRecord] = TypedRecord.cscHeaderCodec
 
-    def typedRec(int: Int, name: String): TypedRecord =
-      TypedRecord(int, 0L, 0f, false, name)
-    val input: Seq[TypedRecord] =
-      Random.shuffle(aNames.map(n => typedRec(0, n)) ++ bNames.map(n => typedRec(1, n)))
+    val input =
+      Random.shuffle(
+        aNames.map(n => TypedRecord(int = 0, string = n)) ++
+          bNames.map(n => TypedRecord(int = 1, string = n))
+      )
 
     dynamicTest[TypedRecord](
       input,
@@ -109,28 +105,20 @@ class TypedCsvDynamicTest extends CsvDynamicTest {
     )
   }
 
-  it should "write without headers" in {
-    implicit val encoder: HeaderEncoder[TypedRecord] =
-      HeaderEncoder.caseEncoder(
-        "int",
-        "long",
-        "float",
-        "bool",
-        "string"
-      )(TypedRecord.unapply)
-    implicit val decoder: RowDecoder[TypedRecord] = RowDecoder.ordered {
-      (int: Int, long: Long, float: Float, bool: Boolean, string: String) =>
-        TypedRecord(int, long, float, bool, string)
-    }
+  it should "write skipping headers" in {
+    implicit val encoder: HeaderEncoder[TypedRecord] = TypedRecord.cscHeaderCodec
+    implicit val decoder: RowDecoder[TypedRecord] = TypedRecord.csvRowCodec
+
     val writeConfig =
       CsvIO.WriteParam.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
     val readConfig =
       CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfiguration.withoutHeader)
 
-    def typedRec(int: Int, name: String): TypedRecord =
-      TypedRecord(int, 0L, 0f, false, name)
     val input: Seq[TypedRecord] =
-      Random.shuffle(aNames.map(n => typedRec(0, n)) ++ bNames.map(n => typedRec(1, n)))
+      Random.shuffle(
+        aNames.map(n => TypedRecord(int = 0, string = n)) ++
+          bNames.map(n => TypedRecord(int = 1, string = n))
+      )
 
     dynamicTest[TypedRecord](
       input,
@@ -146,31 +134,22 @@ class TypedCsvDynamicTest extends CsvDynamicTest {
     )
   }
 
-  it should "write with a row encoder" in {
-    implicit val encoder: RowEncoder[TypedRecord] =
-      RowEncoder.encoder(0, 1, 2, 3, 4)((t: TypedRecord) =>
-        (t.int, t.long, t.float, t.bool, t.string)
-      )
-    implicit val decoder: RowDecoder[TypedRecord] = RowDecoder.ordered {
-      (int: Int, long: Long, float: Float, bool: Boolean, string: String) =>
-        TypedRecord(int, long, float, bool, string)
-    }
-    val writeConfig =
-      CsvIO.WriteParam.DefaultCsvConfig.copy(header = CsvConfiguration.Header.None)
+  it should "write without headers" in {
+    // defaultHeaderEncoder requires only a RowCodec and skips header
+    implicit val codec: RowCodec[TypedRecord] = TypedRecord.csvRowCodec
+
+    val input = Random.shuffle(
+      aNames.map(n => TypedRecord(int = 0, string = n)) ++
+        bNames.map(n => TypedRecord(int = 1, string = n))
+    )
+
     val readConfig =
       CsvIO.ReadParam(csvConfiguration = CsvIO.DefaultCsvConfiguration.withoutHeader)
-
-    def typedRec(int: Int, name: String): TypedRecord =
-      TypedRecord(int, 0L, 0f, false, name)
-    val input: Seq[TypedRecord] =
-      Random.shuffle(aNames.map(n => typedRec(0, n)) ++ bNames.map(n => typedRec(1, n)))
 
     dynamicTest[TypedRecord](
       input,
       (scoll, tmpDir) =>
-        scoll.saveAsDynamicCsvFile(tmpDir.toAbsolutePath.toString, csvConfig = writeConfig)(t =>
-          s"${t.int}"
-        ),
+        scoll.saveAsDynamicCsvFile(tmpDir.toAbsolutePath.toString)(t => s"${t.int}"),
       (sc2, tmpDir) => {
         val lines0 = sc2.csvFile(s"$tmpDir/0/*.csv", readConfig).map(_.string)
         val lines1 = sc2.csvFile(s"$tmpDir/1/*.csv", readConfig).map(_.string)

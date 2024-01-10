@@ -23,7 +23,7 @@ import com.spotify.scio.io._
 import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
 
-import kantan.csv._
+import kantan.csv.{CsvSink => _, _}
 import kantan.codecs.compat._
 import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine
@@ -196,7 +196,7 @@ object CsvIO {
       .withSuffix(params.suffix)
       .withNumShards(params.numShards)
       .withCompression(params.compression)
-      .via(new com.spotify.scio.extra.csv.CsvSink(params.csvConfiguration))
+      .via(new CsvSink(params.csvConfiguration))
 
   private def read[T: HeaderDecoder: Coder](sc: ScioContext, path: String, params: ReadParam) = {
     val filePattern = ScioUtil.filePattern(path, params.suffix)
