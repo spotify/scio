@@ -1140,6 +1140,10 @@ lazy val `scio-examples` = project
   .settings(
     compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
     test / skip := skipUnauthorizedGcpGithubWorkflow.value,
+    // sbt does not support skip for test
+    Test / test := {
+      if ((Test / test / skip).value) () else (Test / test).value
+    },
     scalacOptions := {
       val exclude = ScalacOptions
         .tokensForVersion(
