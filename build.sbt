@@ -301,8 +301,8 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   WorkflowJob(
     "it-test",
     "Integration Test",
-    githubWorkflowJobSetup.value.toList :::
-      githubWorkflowGeneratedDownloadSteps.value.toList :::
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
         githubWorkflowGcpAuthStep,
         githubWorkflowSetupStep.copy(env =
@@ -316,7 +316,6 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           name = Some("Test")
         )
       ),
-    needs = List("build"),
     cond = Some(Seq(condSkipPR, condIsMain).mkString(" && ")),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
@@ -324,8 +323,8 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   WorkflowJob(
     "site",
     "Generate Site",
-    githubWorkflowJobSetup.value.toList :::
-      githubWorkflowGeneratedDownloadSteps.value.toList :::
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
         githubWorkflowGcpAuthStep,
         WorkflowStep.Run(
@@ -353,7 +352,6 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           cond = Some(Seq(condSkipPR, condIsTag).mkString(" && "))
         )
       ),
-    needs = List("build"),
     cond = Some(condSkipForkPR),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
