@@ -370,7 +370,7 @@ public class AvroSortedBucketIO {
 
     @SuppressWarnings("unchecked")
     @Override
-    FileOperations<T> getFileOperations() {
+    public FileOperations<T> getFileOperations() {
       return getRecordClass() == null
           ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema(), getCodec())
           : (AvroFileOperations<T>)

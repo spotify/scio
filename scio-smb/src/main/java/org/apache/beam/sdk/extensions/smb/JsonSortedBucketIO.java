@@ -278,7 +278,7 @@ public class JsonSortedBucketIO {
     }
 
     @Override
-    FileOperations<TableRow> getFileOperations() {
+    public FileOperations<TableRow> getFileOperations() {
       return JsonFileOperations.of(getCompression());
     }
 

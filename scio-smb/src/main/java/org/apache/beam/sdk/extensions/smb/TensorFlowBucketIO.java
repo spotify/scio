@@ -294,7 +294,7 @@ public class TensorFlowBucketIO {
     }
 
     @Override
-    FileOperations<Example> getFileOperations() {
+    public FileOperations<Example> getFileOperations() {
       return TensorFlowFileOperations.of(getCompression());
     }
 

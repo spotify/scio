@@ -334,6 +334,10 @@ public class SortedBucketIO {
       return FileSystems.matchNewResource(tempLocationOpt, true);
     }
 
+    public FileOperations<V> getFileOperations() {
+      return fileOperations;
+    }
+
     @Override
     public WriteResult expand(PBegin input) {
       Preconditions.checkNotNull(outputDirectory, "outputDirectory is not set");
@@ -600,7 +604,7 @@ public class SortedBucketIO {
 
     abstract int getSorterMemoryMb();
 
-    abstract FileOperations<V> getFileOperations();
+    public abstract FileOperations<V> getFileOperations();
 
     abstract BucketMetadata<K1, K2, V> getBucketMetadata();
 

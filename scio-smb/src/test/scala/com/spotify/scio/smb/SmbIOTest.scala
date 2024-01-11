@@ -16,12 +16,13 @@
 
 package com.spotify.scio.smb
 
-import com.spotify.scio.avro.{Account, Address, User}
+import com.spotify.scio.avro.{Account, AccountStatus, Address, User}
 import com.spotify.scio.testing.PipelineSpec
-import com.spotify.scio.{Args, ContextAndArgs}
-import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
+import com.spotify.scio.{Args, ContextAndArgs, ScioContext}
+import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, TargetParallelism}
 import org.apache.beam.sdk.values.{KV, TupleTag}
 
+import java.nio.file.Files
 import java.util.Collections
 import scala.jdk.CollectionConverters._
 
@@ -129,6 +130,18 @@ class SmbIOTest extends PipelineSpec {
   private val joinedUserAccounts =
     User.newBuilder(user).setAccounts(List(accountA, accountB).asJava).build()
 
+  private val accountsIterable = (1 to 100)
+    .map { i =>
+      Account
+        .newBuilder()
+        .setId(i % 10)
+        .setName(i.toString)
+        .setType(i.toString)
+        .setAccountStatus(AccountStatus.Active)
+        .setAmount(i.toDouble)
+        .build()
+    }
+
   "SmbIO" should "be able to mock sortMergeTransform input and saveAsSortedBucket output" in {
     JobTest[SmbJoinSaveJob.type]
       .args(
@@ -179,4 +192,106 @@ class SmbIOTest extends PipelineSpec {
       .run()
   }
 
+  "SortedBucketTap" should "work with SMB writes" in {
+    val tempFolder = Files.createTempDirectory("smb-tap").toFile
+    tempFolder.deleteOnExit()
+
+    val sc = ScioContext()
+    val tap = sc
+      .parallelize(accountsIterable)
+      .saveAsSortedBucket(
+        AvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(tempFolder.getAbsolutePath)
+          .withNumBuckets(4)
+          .withNumShards(2)
+          .withFilenamePrefix("custom-prefix")
+      )
+
+    val result = sc.run().waitUntilDone()
+    tap.get(result).value.toSeq should contain theSameElementsAs accountsIterable
+  }
+
+  it should "work with pre-keyed SMB writes" in {
+    val tempFolder = Files.createTempDirectory("smb-pre-keyed-tap").toFile
+    tempFolder.deleteOnExit()
+
+    val sc = ScioContext()
+    val tap = sc
+      .parallelize(accountsIterable)
+      .map(t => KV.of(t.getName.toString, t))
+      .saveAsPreKeyedSortedBucket(
+        AvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(tempFolder.getAbsolutePath)
+          .withNumBuckets(4)
+          .withNumShards(2)
+          .withFilenamePrefix("custom-prefix")
+      )
+
+    val result = sc.run().waitUntilDone()
+    tap.get(result).value.toSeq should contain theSameElementsAs accountsIterable
+  }
+
+  it should "work with SMB transforms" in {
+    // Write out SMB data to transform
+    val tempFolder1 = Files.createTempDirectory("smb-transform-1").toFile
+    tempFolder1.deleteOnExit()
+    val sc1 = ScioContext()
+    sc1
+      .parallelize(accountsIterable)
+      .saveAsSortedBucket(
+        AvroSortedBucketIO
+          .write(classOf[Integer], "id", classOf[Account])
+          .to(tempFolder1.getAbsolutePath)
+          .withNumBuckets(4)
+          .withNumShards(2)
+          .withFilenamePrefix("custom-prefix")
+      )
+    sc1.run()
+
+    // Transform written data
+    val tempFolder2 = Files.createTempDirectory("smb-transform-2").toFile
+    tempFolder2.deleteOnExit()
+    val sc2 = ScioContext()
+
+    val tap = sc2
+      .sortMergeTransform(
+        classOf[Integer],
+        AvroSortedBucketIO
+          .read(new TupleTag[Account]("rhs"), classOf[Account])
+          .from(tempFolder1.getAbsolutePath)
+      )
+      .to(
+        AvroSortedBucketIO
+          .transformOutput(classOf[Integer], "id", classOf[Account])
+          .to(tempFolder2.getAbsolutePath)
+      )
+      .via { case (id, accounts, outputCollector) =>
+        outputCollector.accept(
+          Account
+            .newBuilder()
+            .setId(id)
+            .setName(id.toString)
+            .setType(id.toString)
+            .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
+            .setAccountStatus(AccountStatus.Active)
+            .build()
+        )
+      }
+
+    val result = sc2.run().waitUntilDone()
+    tap.get(result).value.toSeq should contain theSameElementsAs (accountsIterable
+      .groupBy(_.getId % 10)
+      .map { case (id, accounts) =>
+        Account
+          .newBuilder()
+          .setId(id)
+          .setName(id.toString)
+          .setType(id.toString)
+          .setAmount(accounts.foldLeft(0.0)(_ + _.getAmount))
+          .setAccountStatus(AccountStatus.Active)
+          .build()
+      })
+  }
 }

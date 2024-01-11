@@ -250,6 +250,16 @@ class TapTest extends TapSpec {
     t.parent.get.isInstanceOf[Tap[_]] shouldBe true
   }
 
+  it should "keep parent after Tap.flatMap" in withTempDir { dir =>
+    val t = runWithFileFuture {
+      _.parallelize(Seq("12", "34", "56"))
+        .saveAsTextFile(dir.getAbsolutePath)
+    }.flatMap(_.split("").map(_.toInt))
+    verifyTap(t, Set(1, 2, 3, 4, 5, 6))
+    t.isInstanceOf[Tap[Int]] shouldBe true
+    t.parent.get.isInstanceOf[TextTap] shouldBe true
+  }
+
   it should "support waitForResult" in {
     val sc = ScioContext()
     val f = sc.parallelize(1 to 10).materialize
