@@ -19,14 +19,7 @@ package com.spotify.scio.examples.extra
 
 import java.io.File
 import java.nio.file.Files
-import com.spotify.scio.avro.{
-  Account,
-  AvroIO,
-  GenericRecordDatumFactory,
-  GenericRecordTap,
-  SpecificRecordDatumFactory,
-  SpecificRecordTap
-}
+import com.spotify.scio.avro.{Account, AvroIO, GenericRecordTap, SpecificRecordTap}
 import com.spotify.scio.io.{TextIO, TextTap}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
@@ -55,13 +48,11 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
       GenericRecordTap(
         path = userDir.getAbsolutePath,
         schema = SortMergeBucketExample.UserDataSchema,
-        datumFactory = GenericRecordDatumFactory,
         params = AvroIO.ReadParam(".avro")
       ).value.size shouldBe 500
 
       SpecificRecordTap[Account](
         path = accountDir.getAbsolutePath,
-        datumFactory = new SpecificRecordDatumFactory(classOf[Account]),
         params = AvroIO.ReadParam(".avro")
       ).value.size shouldBe 500
 
@@ -97,9 +88,8 @@ class SortMergeBucketExampleTest extends AnyFlatSpec with Matchers {
       )
 
       SpecificRecordTap[Account](
-        path = joinOutputDir.getAbsolutePath,
-        datumFactory = new SpecificRecordDatumFactory(classOf[Account]),
-        params = AvroIO.ReadParam(".avro")
+        joinOutputDir.getAbsolutePath,
+        AvroIO.ReadParam(".avro")
       ).value
         .map(account => (account.getId, account.getType.toString))
         .toList should contain theSameElementsAs (0 until 500).map((_, "combinedAmount"))

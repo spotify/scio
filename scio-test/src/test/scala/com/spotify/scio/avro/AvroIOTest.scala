@@ -1,13 +1,17 @@
 package com.spotify.scio.avro
 
-import com.spotify.scio.io.ScioIOTest
-import com.spotify.scio.avro._
-import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec}
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest}
 import com.spotify.scio.proto.Track.TrackPB
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.data.TimeConversions
+import org.apache.avro.generic._
+import org.apache.avro.io.{DatumReader, DatumWriter}
+import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
+import org.joda.time.LocalDate
 
 import java.io.File
 
@@ -45,8 +49,8 @@ class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
 }
 
 class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[AvroIOTest.AvroRecord] {
-  import ScioIOTest._
   import AvroIOTest._
+  import ScioIOTest._
 
   override def suffix: String = ".obj.avro"
   override def save(
@@ -103,18 +107,11 @@ class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
 }
 
 class AvroIOTest extends ScioIOSpec {
-  import ScioIOTest._
   import AvroIOTest._
   def relativeFiles(dir: File): Seq[String] =
     listFiles(dir).map(_.toPath.relativize(dir.toPath)).sorted.map(_.toString)
 
-  "AvroIO" should "work with SpecificRecord" in {
-    val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
-    testTap(xs)(_.saveAsAvroFile(_))(".avro")
-    testJobTest(xs)(AvroIO[TestRecord](_))(_.avroFile(_))(_.saveAsAvroFile(_))
-  }
-
-  it should "work with GenericRecord" in {
+  "GenericAvroIO" should "work with GenericRecord" in {
     import AvroUtils.schema
     implicit val coder = avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
@@ -122,21 +119,62 @@ class AvroIOTest extends ScioIOSpec {
     testJobTest(xs)(AvroIO(_))(_.avroFile(_, schema))(_.saveAsAvroFile(_, schema = schema))
   }
 
-  it should "work with typed Avro" in {
-    val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
-    val io = (s: String) => AvroIO[AvroRecord](s)
-    testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
-    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
+  "SpecificAvroIO" should "work with SpecificRecord" in {
+    val xs = (1 to 100).map(AvroUtils.newSpecificRecord)
+    testTap(xs)(_.saveAsAvroFile(_))(".avro")
+    testJobTest(xs)(AvroIO[TestRecord](_))(_.avroFile(_))(_.saveAsAvroFile(_))
   }
 
-  it should "work with GenericRecord and a parseFn" in {
+  "ParseAvroIO" should "work with GenericRecord and a parseFn" in {
     import AvroUtils.schema
-    implicit val coder = avroGenericRecordCoder(schema)
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
     val xs = (1 to 100).map(AvroUtils.newGenericRecord)
     // No test for saveAsAvroFile because parseFn is only for input
     testJobTest(xs)(AvroIO(_))(
       _.parseAvroFile[GenericRecord](_)(identity)
     )(_.saveAsAvroFile(_, schema = schema))
+  }
+
+  it should "work with GenericRecord with logical-type" in {
+    val schema = SchemaBuilder
+      .builder()
+      .record("LogicalTypeTestRecord")
+      .fields()
+      .name("date")
+      .`type`(LogicalTypes.date().addToSchema(Schema.create(Schema.Type.INT)))
+      .withDefault(0)
+      .endRecord()
+
+    val datumFactory = new AvroDatumFactory.GenericDatumFactory {
+      override def apply(writer: Schema): DatumWriter[GenericRecord] = {
+        val data = new GenericData()
+        data.addLogicalTypeConversion(new TimeConversions.DateConversion)
+        new GenericDatumWriter[GenericRecord](writer, data)
+      }
+
+      override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] = {
+        val data = new GenericData()
+        data.addLogicalTypeConversion(new TimeConversions.DateConversion)
+        new GenericDatumReader[GenericRecord](writer, reader, data)
+      }
+    }
+
+    implicit val coder: Coder[GenericRecord] = avroCoder(datumFactory, schema)
+    val xs = (1 to 100)
+      .map(i => new LocalDate(i.toLong)) // use LocalDate instead of int to test logical-type
+      .map[GenericRecord](d => new GenericRecordBuilder(schema).set("date", d).build())
+
+    // No test for saveAsAvroFile because parseFn is only for input
+    testJobTest(xs)(AvroIO(_))(
+      _.parseAvroFile[GenericRecord](_, datumFactory = datumFactory)(identity)
+    )(_.saveAsAvroFile(_, schema = schema, datumFactory = datumFactory))
+  }
+
+  "TypedAvroIO" should "work with typed Avro" in {
+    val xs = (1 to 100).map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList))
+    val io = (s: String) => AvroIO[AvroRecord](s)
+    testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
+    testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
   }
 
   "ObjectFileIO" should "work" in {

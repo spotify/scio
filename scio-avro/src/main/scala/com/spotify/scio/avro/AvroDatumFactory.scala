@@ -18,8 +18,8 @@ package com.spotify.scio.avro
 
 import org.apache.avro.{Conversion, Schema}
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
-import org.apache.avro.io.DatumReader
-import org.apache.avro.specific.{SpecificDatumReader, SpecificRecord}
+import org.apache.avro.io.{DatumReader, DatumWriter}
+import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
 /**
@@ -61,9 +61,23 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
       case cls                                 => cls
     }
   }
+
+  @transient private lazy val avroVersion = runtimeAvroVersion()
+
+  override def apply(writer: Schema): DatumWriter[T] = {
+    val datumWriter = new SpecificDatumWriter[T]()
+    // avro 1.8 generated code does not add conversions to the data
+    if (avroVersion.exists(_.startsWith("1.8"))) {
+      val data = datumWriter.getData
+      val conversions = specificRecordConversions(recordType)
+      conversions.foreach(data.addLogicalTypeConversion)
+    }
+    datumWriter.setSchema(writer)
+    datumWriter
+  }
+
   override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
     val datumReader = new ScioSpecificDatumReader()
-    val avroVersion = runtimeAvroVersion()
     // avro 1.8 generated code does not add conversions to the data
     if (avroVersion.exists(_.startsWith("1.8"))) {
       val data = datumReader.getData

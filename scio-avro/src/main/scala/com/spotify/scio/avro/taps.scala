@@ -61,7 +61,8 @@ final case class SpecificRecordTap[T <: SpecificRecord: ClassTag](
   @transient private lazy val schema: Schema = SpecificData.get().getSchema(recordClass)
 
   override def value: Iterator[T] = {
-    val datumFactory = Option(params.datumFactory).getOrElse(new SpecificRecordDatumFactory[T](recordClass))
+    val datumFactory =
+      Option(params.datumFactory).getOrElse(new SpecificRecordDatumFactory[T](recordClass))
     AvroFileStorage(path, params.suffix).avroFile[T](datumFactory(schema, schema))
   }
 

@@ -25,7 +25,8 @@ import org.apache.avro.generic.GenericRecord
 
 import scala.reflect.runtime.universe._
 
-final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String) extends ScioIO[T] {
+final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String)
+    extends ScioIO[T] {
   override type ReadP = AvroTypedIO.ReadParam
   override type WriteP = AvroTypedIO.WriteParam
   override val tapT: TapT.Aux[T, T] = TapOf[T]

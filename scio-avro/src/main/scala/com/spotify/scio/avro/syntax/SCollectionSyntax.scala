@@ -87,7 +87,7 @@ final class ObjectFileSCollectionOps[T](private val self: SCollection[T]) extend
     tempDirectory: String = ObjectFileIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
       ObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = ObjectFileIO.WriteParam.DefaultPrefix,
+    prefix: String = ObjectFileIO.WriteParam.DefaultPrefix
   )(implicit coder: Coder[T]): ClosedTap[T] = {
     val param = ObjectFileIO.WriteParam[GenericRecord](
       numShards,
@@ -191,7 +191,7 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
     tempDirectory: String = ProtobufIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
       ProtobufIO.WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = ProtobufIO.WriteParam.DefaultPrefix,
+    prefix: String = ProtobufIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T]): ClosedTap[T] = {
     val param = ProtobufIO.WriteParam[GenericRecord](
       numShards,
