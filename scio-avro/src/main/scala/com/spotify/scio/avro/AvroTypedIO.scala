@@ -22,14 +22,10 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
 import scala.reflect.runtime.universe._
 
-final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](
-  path: String,
-  datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordDatumFactory
-) extends ScioIO[T] {
+final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String) extends ScioIO[T] {
   override type ReadP = AvroTypedIO.ReadParam
   override type WriteP = AvroTypedIO.WriteParam
   override val tapT: TapT.Aux[T, T] = TapOf[T]
@@ -37,13 +33,15 @@ final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](
   override def testId: String = s"AvroIO($path)"
 
   private val avroT = AvroType[T]
-  private lazy val underlying: GenericRecordIO = GenericRecordIO(path, avroT.schema, datumFactory)
+  private lazy val schema = avroT.schema
+  private lazy val underlying: GenericRecordIO = GenericRecordIO(path, schema)
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
     sc.read(underlying)(params).map(avroT.fromGenericRecord)
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    import underlying.coder
+    val datumFactory = Option(params.datumFactory).getOrElse(GenericRecordDatumFactory)
+    implicit val coder: Coder[GenericRecord] = avroCoder(datumFactory, schema)
     data.map(avroT.toGenericRecord).write(underlying)(params)
     tap(AvroIO.ReadParam(params))
   }

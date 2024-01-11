@@ -21,20 +21,15 @@ import com.spotify.scio.coders.{AvroBytesUtil, Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
-final case class ObjectFileIO[T: Coder](
-  path: String,
-  datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordDatumFactory
-) extends ScioIO[T] {
+final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
   override type ReadP = ObjectFileIO.ReadParam
   override type WriteP = ObjectFileIO.WriteParam
   override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override def testId: String = s"ObjectFileIO($path)"
 
-  private lazy val underlying: GenericRecordIO =
-    GenericRecordIO(path, AvroBytesUtil.schema, datumFactory)
+  private lazy val underlying: GenericRecordIO = GenericRecordIO(path, AvroBytesUtil.schema)
 
   /**
    * Get an SCollection for an object file using default serialization.

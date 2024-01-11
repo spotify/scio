@@ -18,26 +18,20 @@ package com.spotify.scio.avro
 
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.protobuf.util.ProtobufUtil
 import com.spotify.scio.values.SCollection
-import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
 import scala.reflect.ClassTag
 
-final case class ProtobufIO[T <: Message: ClassTag: Coder](
-  path: String,
-  datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordDatumFactory
-) extends ScioIO[T] {
+final case class ProtobufIO[T <: Message: ClassTag](path: String) extends ScioIO[T] {
   override type ReadP = ProtobufIO.ReadParam
   override type WriteP = ProtobufIO.WriteParam
   override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   override def testId: String = s"ProtobufIO($path)"
 
-  private lazy val underlying: ObjectFileIO[T] = ObjectFileIO(path, datumFactory)
+  private lazy val underlying: ObjectFileIO[T] = ObjectFileIO(path)
 
   /**
    * Get an SCollection for a Protobuf file.

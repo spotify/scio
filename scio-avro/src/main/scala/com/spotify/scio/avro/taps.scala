@@ -29,7 +29,6 @@ import com.twitter.chill.Externalizer
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.{SpecificData, SpecificRecord}
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -39,38 +38,41 @@ import scala.reflect.runtime.universe._
 final case class GenericRecordTap(
   path: String,
   @transient private val schema: Schema,
-  datumFactory: AvroDatumFactory[GenericRecord],
-  params: AvroIO.ReadParam
+  params: GenericRecordIO.ReadParam
 ) extends Tap[GenericRecord] {
   private lazy val s = Externalizer(schema)
 
-  override def value: Iterator[GenericRecord] =
+  override def value: Iterator[GenericRecord] = {
+    val datumFactory = Option(params.datumFactory).getOrElse(GenericRecordDatumFactory)
     AvroFileStorage(path, params.suffix).avroFile(datumFactory(s.get, s.get))
+  }
 
   override def open(sc: ScioContext): SCollection[GenericRecord] =
-    sc.read(GenericRecordIO(path, s.get, datumFactory))(params)
+    sc.read(GenericRecordIO(path, s.get))(params)
 }
 
 /** Tap for [[org.apache.avro.specific.SpecificRecord SpecificRecord]] Avro files. */
 final case class SpecificRecordTap[T <: SpecificRecord: ClassTag](
   path: String,
-  datumFactory: AvroDatumFactory[T],
-  params: AvroIO.ReadParam
+  params: SpecificRecordIO.ReadParam[T]
 ) extends Tap[T] {
 
-  @transient private lazy val schema: Schema = SpecificData.get().getSchema(ScioUtil.classOf[T])
+  @transient private lazy val recordClass: Class[T] = ScioUtil.classOf[T]
+  @transient private lazy val schema: Schema = SpecificData.get().getSchema(recordClass)
 
-  override def value: Iterator[T] =
+  override def value: Iterator[T] = {
+    val datumFactory = Option(params.datumFactory).getOrElse(new SpecificRecordDatumFactory[T](recordClass))
     AvroFileStorage(path, params.suffix).avroFile[T](datumFactory(schema, schema))
+  }
 
   override def open(sc: ScioContext): SCollection[T] =
-    sc.read(SpecificRecordIO[T](path, datumFactory))(params)
+    sc.read(SpecificRecordIO[T](path))(params)
 }
 
 object ObjectFileTap {
   def apply[T: Coder](path: String, params: ObjectFileIO.ReadParam): Tap[T] = {
     val objectCoder = CoderMaterializer.beamWithDefault(Coder[T])
-    GenericRecordTap(path, AvroBytesUtil.schema, GenericRecordDatumFactory, params)
+    GenericRecordTap(path, AvroBytesUtil.schema, params)
       .map(record => AvroBytesUtil.decode(objectCoder, record))
   }
 }
@@ -117,12 +119,12 @@ final case class AvroTaps(self: Taps) {
   def avroFile(
     path: String,
     schema: Schema,
-    params: AvroIO.ReadParam
+    params: GenericRecordIO.ReadParam
   ): Future[Tap[GenericRecord]] =
     self.mkTap(
       s"Avro: $path",
       () => self.isPathDone(path, params.suffix),
-      () => GenericRecordTap(path, schema, GenericRecordDatumFactory, params)
+      () => GenericRecordTap(path, schema, params)
     )
 
   /**
@@ -130,7 +132,7 @@ final case class AvroTaps(self: Taps) {
    * file.
    */
   def avroFile[T <: SpecificRecord: ClassTag](path: String): Future[Tap[T]] =
-    avroFile[T](path, SpecificRecordIO.ReadParam())
+    avroFile[T](path, SpecificRecordIO.ReadParam[T]())
 
   // overloaded API. We can't use default params
   /**
@@ -139,12 +141,12 @@ final case class AvroTaps(self: Taps) {
    */
   def avroFile[T <: SpecificRecord: ClassTag](
     path: String,
-    params: AvroIO.ReadParam
+    params: SpecificRecordIO.ReadParam[T]
   ): Future[Tap[T]] =
     self.mkTap(
       s"Avro: $path",
       () => self.isPathDone(path, params.suffix),
-      () => SpecificRecordTap[T](path, SpecificRecordIO.defaultDatumFactory, params)
+      () => SpecificRecordTap[T](path, params)
     )
 
   /** Get a `Future[Tap[T]]` for typed Avro source. */

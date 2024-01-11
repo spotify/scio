@@ -26,27 +26,33 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.avro.specific.{SpecificData, SpecificRecord}
-import org.apache.beam.sdk.extensions.avro.io.{AvroDatumFactory, AvroIO => BAvroIO}
+import org.apache.beam.sdk.extensions.avro.io.{
+  AvroDatumFactory,
+  AvroIO => BAvroIO,
+  AvroSink,
+  AvroSource
+}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import scala.util.chaining._
 
 sealed trait AvroIO[T <: IndexedRecord] extends ScioIO[T] {
-  override type ReadP = AvroIO.ReadParam
-  override type WriteP = AvroIO.WriteParam
+  override type ReadP = AvroIO.ReadParam[T]
+  override type WriteP = AvroIO.WriteParam[T]
   final override val tapT: TapT.Aux[T, T] = TapOf[T]
 
   def path: String
   def schema: Schema
 
-  protected def datumFactory: AvroDatumFactory[T]
+  protected def defaultDatumFactory: AvroDatumFactory[T]
   protected def baseRead: BAvroIO.Read[T]
   protected def baseWrite: BAvroIO.Write[T]
 
-  implicit lazy val coder: Coder[T] = avroCoder(datumFactory, schema)
   override def testId: String = s"AvroIO($path)"
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
+    val datumFactory = Option(params.datumFactory).getOrElse(defaultDatumFactory)
+    val coder = avroCoder(datumFactory, schema)
     val bCoder = CoderMaterializer.beam(sc, coder)
     val filePattern = ScioUtil.filePattern(path, params.suffix)
     val t = baseRead
@@ -66,7 +72,7 @@ sealed trait AvroIO[T <: IndexedRecord] extends ScioIO[T] {
       shardNameTemplate = params.shardNameTemplate,
       isWindowed = isWindowed
     )(ScioUtil.strippedPath(path), params.suffix)
-
+    val datumFactory = Option(params.datumFactory).getOrElse(defaultDatumFactory)
     val t = baseWrite
       .to(fp)
       .withTempDirectory(tempDirectory)
@@ -90,12 +96,15 @@ object AvroIO {
     }
   object ReadParam {
     val DefaultSuffix: String = null
-    private[scio] def apply(params: WriteParam): ReadParam =
-      new ReadParam(params.suffix)
+    val DefaultDatumFactory: Null = null
+
+    private[scio] def apply[T](params: WriteParam[T]): ReadParam[T] =
+      new ReadParam(params.suffix, params.datumFactory)
   }
 
-  final case class ReadParam private (
-    suffix: String = ReadParam.DefaultSuffix
+  final case class ReadParam[T] private (
+    suffix: String = ReadParam.DefaultSuffix,
+    datumFactory: AvroDatumFactory[T] = ReadParam.DefaultDatumFactory
   )
 
   object WriteParam {
@@ -109,9 +118,10 @@ object AvroIO {
     val DefaultPrefix: String = null
     val DefaultShardNameTemplate: String = null
     val DefaultTempDirectory: String = null
+    val DefaultDatumFactory: Null = null
   }
 
-  final case class WriteParam private (
+  final case class WriteParam[T] private (
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     codec: CodecFactory = WriteParam.DefaultCodec,
@@ -119,53 +129,48 @@ object AvroIO {
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    datumFactory: AvroDatumFactory[T] = WriteParam.DefaultDatumFactory
   )
 }
 
-final case class GenericRecordIO(
-  path: String,
-  schema: Schema,
-  datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordDatumFactory
-) extends AvroIO[GenericRecord] {
+final case class GenericRecordIO(path: String, schema: Schema) extends AvroIO[GenericRecord] {
   override protected def baseRead: BAvroIO.Read[GenericRecord] =
     BAvroIO.readGenericRecords(schema)
   override protected def baseWrite: BAvroIO.Write[GenericRecord] =
     BAvroIO.writeGenericRecords(schema)
   override def tap(read: ReadP): Tap[GenericRecord] =
-    GenericRecordTap(path, schema, datumFactory, read)
+    GenericRecordTap(path, schema, read)
+  override protected def defaultDatumFactory: AvroDatumFactory[GenericRecord] =
+    GenericRecordDatumFactory
 }
 
 object GenericRecordIO {
-  type ReadParam = AvroIO.ReadParam
+  type ReadParam = AvroIO.ReadParam[GenericRecord]
   val ReadParam = AvroIO.ReadParam
-  type WriteParam = AvroIO.WriteParam
+  type WriteParam = AvroIO.WriteParam[GenericRecord]
   val WriteParam = AvroIO.WriteParam
 }
 
-final case class SpecificRecordIO[T <: SpecificRecord: ClassTag](
-  path: String,
-  datumFactory: AvroDatumFactory[T]
-) extends AvroIO[T] {
+final case class SpecificRecordIO[T <: SpecificRecord: ClassTag](path: String) extends AvroIO[T] {
 
   private val recordClass: Class[T] = ScioUtil.classOf[T]
   override def schema: Schema = SpecificData.get().getSchema(recordClass)
   override def baseRead: BAvroIO.Read[T] = BAvroIO.read(recordClass)
   override def baseWrite: BAvroIO.Write[T] = BAvroIO.write(recordClass)
-  override def tap(read: ReadP): Tap[T] = SpecificRecordTap(path, datumFactory, read)
+  override def tap(read: ReadP): Tap[T] = SpecificRecordTap(path, read)
+
+  override protected val defaultDatumFactory: AvroDatumFactory[T] = new SpecificRecordDatumFactory(
+    recordClass
+  )
 }
 
 object SpecificRecordIO {
-  private[scio] def defaultDatumFactory[T <: SpecificRecord: ClassTag]: AvroDatumFactory[T] =
-    new SpecificRecordDatumFactory[T](ScioUtil.classOf[T])
 
-  type ReadParam = AvroIO.ReadParam
+  type ReadParam[T <: SpecificRecord] = AvroIO.ReadParam[T]
   val ReadParam = AvroIO.ReadParam
-  type WriteParam = AvroIO.WriteParam
+  type WriteParam[T <: SpecificRecord] = AvroIO.WriteParam[T]
   val WriteParam = AvroIO.WriteParam
-
-  def apply[T <: SpecificRecord: ClassTag](path: String): SpecificRecordIO[T] =
-    SpecificRecordIO[T](path, defaultDatumFactory)
 }
 
 /**
