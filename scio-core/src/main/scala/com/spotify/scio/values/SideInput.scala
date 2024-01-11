@@ -52,6 +52,7 @@ trait SideInput[T] extends Serializable {
   /**
    * Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput.
    */
+  @deprecated(since = "0.14.0")
   def map[B](f: T => B): SideInput[B] = new DelegatingSideInput[T, B](this, f)
 
   private[scio] val view: PCollectionView[_]
@@ -127,6 +128,7 @@ private[values] class MultiMapSideInput[K, V](val view: PCollectionView[JMap[K, 
     JMapWrapper.ofMultiMap(context.sideInput(view))
 }
 
+@deprecated(since = "0.14.0")
 private[values] class DelegatingSideInput[A, B](val si: SideInput[A], val mapper: A => B)
     extends SideInput[B] {
 

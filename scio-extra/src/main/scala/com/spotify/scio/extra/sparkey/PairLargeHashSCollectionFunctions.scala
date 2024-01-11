@@ -47,9 +47,9 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    */
   def largeHashJoin[W](
     rhs: SCollection[(K, W)],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, (V, W))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
     largeHashJoin(rhs.asLargeMultiMapSideInput(numShards, compressionType, compressionBlockSize))
@@ -97,9 +97,9 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    */
   def largeHashLeftOuterJoin[W](
     rhs: SCollection[(K, W)],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, (V, Option[W]))] = {
     implicit val wCoder: Coder[W] = rhs.valueCoder
     largeHashLeftOuterJoin(
@@ -141,9 +141,9 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    */
   def largeHashFullOuterJoin[W](
     rhs: SCollection[(K, W)],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, (Option[V], Option[W]))] = {
     implicit val wCoder = rhs.valueCoder
     largeHashFullOuterJoin(
@@ -206,9 +206,9 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    */
   def largeHashIntersectByKey(
     rhs: SCollection[K],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
     largeHashIntersectByKey(
       rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)
@@ -238,9 +238,9 @@ class PairLargeHashSCollectionFunctions[K, V](private val self: SCollection[(K, 
    */
   def largeHashSubtractByKey(
     rhs: SCollection[K],
-    numShards: Short = DefaultSideInputNumShards,
-    compressionType: CompressionType = DefaultCompressionType,
-    compressionBlockSize: Int = DefaultCompressionBlockSize
+    numShards: Short = SparkeyIO.DefaultSideInputNumShards,
+    compressionType: CompressionType = SparkeyIO.DefaultCompressionType,
+    compressionBlockSize: Int = SparkeyIO.DefaultCompressionBlockSize
   ): SCollection[(K, V)] =
     largeHashSubtractByKey(
       rhs.asLargeSetSideInput(numShards, compressionType, compressionBlockSize)

@@ -29,7 +29,6 @@ import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser
 import org.apache.beam.sdk.values.TupleTag
 
-import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 
 object ParquetEndToEndTest {
