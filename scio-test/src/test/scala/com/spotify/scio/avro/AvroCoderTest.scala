@@ -17,10 +17,12 @@
 
 package com.spotify.scio.avro
 
-import com.spotify.scio.coders.{Avro, Coder, FixedSpecificDataExample}
+import com.spotify.scio.coders.{Avro, Coder, CoderMaterializer, FixedSpecificDataExample}
 import com.spotify.scio.testing.CoderAssertions._
+import org.apache.avro.AvroRuntimeException
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.util.CoderUtils
 import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -31,25 +33,28 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
     Avro.user coderShould notFallback()
   }
 
+  it should "use String when decoding CharSequence in Avro's SpecificRecord" in {
+    val c = Coder[com.spotify.scio.avro.User]
+    val bc = CoderMaterializer.beamWithDefault(c)
+    val bytes = CoderUtils.encodeToByteArray(bc, Avro.user)
+    val decoded = CoderUtils.decodeFromByteArray(bc, bytes)
+    decoded.getFirstName shouldBe a[String]
+  }
+
   it should "support not Avro's SpecificRecord if a concrete type is not provided" in {
     val caught = intercept[RuntimeException] {
       Avro.user.asInstanceOf[SpecificRecord] coderShould notFallback()
     }
-
-    caught.getMessage should startWith(
-      "Failed to create a coder for SpecificRecord because it is impossible to retrieve an Avro"
-    )
-  }
-
-  it should "support avrohugger generated SpecificRecord" in {
-    Avro.scalaSpecificAvro coderShould notFallback()
+    val cause = caught.getCause.getCause
+    cause shouldBe a[AvroRuntimeException]
+    cause.getMessage shouldBe "Not a Specific class: interface org.apache.avro.specific.SpecificRecord"
   }
 
   it should "support Avro's GenericRecord" in {
     val schema = Avro.user.getSchema
     val record: GenericRecord = Avro.user
 
-    implicit val c: Coder[GenericRecord] = avroGenericRecordCoder(schema)
+    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
     implicit val eq: Equality[GenericRecord] =
       (a: GenericRecord, b: Any) => a.toString === b.toString
 
