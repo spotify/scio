@@ -1244,7 +1244,9 @@ lazy val `scio-repl` = project
                 JarEntry(t, s)
             } match {
               case Some(e) => Right(Vector(e))
-              case None    => Left("Error merging beam avro classes")
+              case None =>
+                val conflictList = conflicts.mkString("\t", "\n", "\n")
+                Left("Error merging beam avro classes:\n" + conflictList)
             }
           }
         case PathList("com", "google", "errorprone", _*) =>
@@ -1256,19 +1258,28 @@ lazy val `scio-repl` = project
                 JarEntry(t, s)
             } match {
               case Some(e) => Right(Vector(e))
-              case None    => Left("Error merging errorprone classes")
+              case None =>
+                val conflictList = conflicts.mkString("\t", "\n", "\n")
+                Left("Error merging errorprone classes:\n" + conflictList)
             }
           }
-        case PathList("org", "checkerframework", _*) =>
-          // prefer checker-qual classes packaged in checkerframework libs
-          CustomMergeStrategy("CheckerQual") { conflicts =>
-            import sbtassembly.Assembly._
-            conflicts.collectFirst {
-              case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
-                JarEntry(t, s)
-            } match {
-              case Some(e) => Right(Vector(e))
-              case None    => Left("Error merging checker-qual classes")
+        case PathList("org", "checkerframework", tail @ _*) =>
+          if (tail.last == "SignedPositiveFromUnsigned.class") {
+            // this class has been dropped in original checkerframework libs
+            MergeStrategy.discard
+          } else {
+            // prefer checker-qual classes packaged in checkerframework libs
+            CustomMergeStrategy("CheckerQual") { conflicts =>
+              import sbtassembly.Assembly._
+              conflicts.collectFirst {
+                case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
+                  JarEntry(t, s)
+              } match {
+                case Some(e) => Right(Vector(e))
+                case None =>
+                  val conflictList = conflicts.mkString("\t", "\n", "\n")
+                  Left("Error merging checker-qual classes:\n" + conflictList)
+              }
             }
           }
         case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>
