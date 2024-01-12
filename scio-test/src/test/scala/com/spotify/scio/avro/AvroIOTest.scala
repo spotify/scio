@@ -176,9 +176,9 @@ class AvroIOTest extends ScioIOSpec {
     }
 
     implicit val coder: Coder[GenericRecord] = avroCoder(datumFactory, schema)
-    val xs = (1 to 100)
+    val xs: Seq[GenericRecord] = (1 to 100)
       .map(i => new LocalDate(i.toLong)) // use LocalDate instead of int to test logical-type
-      .map[GenericRecord](d => new GenericRecordBuilder(schema).set("date", d).build())
+      .map(d => new GenericRecordBuilder(schema).set("date", d).build())
 
     // No test for saveAsAvroFile because parseFn is only for input
     testJobTest(xs)(AvroIO(_))(
