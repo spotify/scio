@@ -33,96 +33,93 @@ class SparkeyIT extends PipelineSpec {
   val sideData: Seq[(String, String)] = Seq(("a", "1"), ("b", "2"), ("c", "3"))
 
   "SCollection" should "support .asSparkeySideInput using GCS tempLocation" in {
-    runWithContext { sc =>
-      FileSystems.setDefaultPipelineOptions(sc.options)
-      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
-      sc.options.setTempLocation(tempLocation)
+    val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+    try {
+      runWithRealContext() { sc =>
+        FileSystems.setDefaultPipelineOptions(sc.options)
+        sc.options.setTempLocation(tempLocation)
 
-      try {
         val p1 = sc.parallelize(Seq(1))
         val p2 = sc.parallelize(sideData).asSparkeySideInput
         val s = p1.withSideInputs(p2).flatMap((_, si) => si(p2).map(_._2)).toSCollection
         s should containInAnyOrder(Seq("1", "2", "3"))
-      } finally {
-        val files = FileSystems
-          .`match`(tempLocation + "/sparkey-*")
-          .metadata()
-          .asScala
-          .map(_.resourceId())
-        FileSystems.delete(files.asJava)
       }
+    } finally {
+      val files = FileSystems
+        .`match`(tempLocation + "/sparkey-*")
+        .metadata()
+        .asScala
+        .map(_.resourceId())
+      FileSystems.delete(files.asJava)
     }
   }
 
   ignore should "support repeatedly opening sparkey SideInput (#1269)" in {
-    runWithContext { sc =>
-      FileSystems.setDefaultPipelineOptions(sc.options)
-      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
-      sc.options.setTempLocation(tempLocation)
+    val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+    val basePath = tempLocation + "/sparkey"
+    val resourceId = FileSystems.matchNewResource(basePath + ".spl", false)
+    try {
+      runWithRealContext() { sc =>
+        FileSystems.setDefaultPipelineOptions(sc.options)
+        sc.options.setTempLocation(tempLocation)
 
-      val basePath = tempLocation + "/sparkey"
-      val resourceId = FileSystems.matchNewResource(basePath + ".spl", false)
-      // Create a sparkey KV file
-      val uri = SparkeyUri(basePath)
-      val remoteFileUtil = RemoteFileUtil.create(sc.options)
-      val writer = new SparkeyWriter(uri, remoteFileUtil, CompressionType.NONE, 0, -1)
-      (1 to 100000000).foreach(x => writer.put(x.toString, x.toString))
-      writer.close()
+        // Create a sparkey KV file
+        val uri = SparkeyUri(basePath)
+        val remoteFileUtil = RemoteFileUtil.create(sc.options)
+        val writer = new SparkeyWriter(uri, remoteFileUtil, CompressionType.NONE, 0, -1)
+        (1 to 100000000).foreach(x => writer.put(x.toString, x.toString))
+        writer.close()
 
-      try {
         val p1 = sc.parallelize(1 to 10)
         val p2 = new SparkeyScioContext(sc).sparkeySideInput(basePath)
         p1.withSideInputs(p2).map((x, si) => si(p2).get(x.toString)).toSCollection
-      } finally {
-        FileSystems.delete(Seq(resourceId).asJava)
       }
+    } finally {
+      FileSystems.delete(Seq(resourceId).asJava)
     }
   }
 
   it should "throw exception when Sparkey file exists" in {
-    runWithContext { sc =>
-      FileSystems.setDefaultPipelineOptions(sc.options)
-      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
-      sc.options.setTempLocation(tempLocation)
-
-      val basePath = tempLocation + "/sparkey"
-      val resourceId = FileSystems.matchNewResource(basePath + ".spi", false)
-      try {
-        val f = FileSystems.create(resourceId, MimeTypes.BINARY)
-        f.write(ByteBuffer.wrap("test-data".getBytes))
-        f.close()
-
-        the[IllegalArgumentException] thrownBy {
-          sc.parallelize(sideData).asSparkey(basePath)
-        } should have message s"requirement failed: Sparkey URI $basePath already exists"
-      } finally {
-        FileSystems.delete(Seq(resourceId).asJava)
-      }
+    val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+    val basePath = tempLocation + "/sparkey"
+    val resourceId = FileSystems.matchNewResource(basePath + ".spi", false)
+    try {
+      val f = FileSystems.create(resourceId, MimeTypes.BINARY)
+      f.write(ByteBuffer.wrap("test-data".getBytes))
+      f.close()
+      the[IllegalArgumentException] thrownBy {
+        runWithRealContext() { sc =>
+          FileSystems.setDefaultPipelineOptions(sc.options)
+          sc.options.setTempLocation(tempLocation)
+          sc.parallelize(sideData).saveAsSparkey(basePath)
+        }
+      } should have message s"requirement failed: Sparkey URI $basePath already exists"
+    } finally {
+      FileSystems.delete(Seq(resourceId).asJava)
     }
   }
 
   it should "create files for empty data" in {
-    runWithContext { sc =>
-      FileSystems.setDefaultPipelineOptions(sc.options)
-      val remoteFileUtil = RemoteFileUtil.create(sc.options)
-      val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
-      sc.options.setTempLocation(tempLocation)
-
-      val basePath = tempLocation + "/sparkey-empty"
-      try {
+    val tempLocation = ItUtils.gcpTempLocation("sparkey-it")
+    val basePath = tempLocation + "/sparkey-empty"
+    try {
+      runWithRealContext() { sc =>
+        FileSystems.setDefaultPipelineOptions(sc.options)
+        val remoteFileUtil = RemoteFileUtil.create(sc.options)
+        sc.options.setTempLocation(tempLocation)
         val sparkeyExists = sc
           .parallelize(Seq[(String, String)]())
           .asSparkey(basePath)
           .map(_.exists(remoteFileUtil))
         sparkeyExists should containSingleValue(true)
-      } finally {
-        val files = FileSystems
-          .`match`(tempLocation + "/sparkey-empty*")
-          .metadata()
-          .asScala
-          .map(_.resourceId())
-        FileSystems.delete(files.asJava)
       }
+    } finally {
+      val files = FileSystems
+        .`match`(tempLocation + "/sparkey-empty*")
+        .metadata()
+        .asScala
+        .map(_.resourceId())
+      FileSystems.delete(files.asJava)
     }
   }
 }
