@@ -20,5 +20,5 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.6")
 
 libraryDependencies ++= Seq(
   "org.apache.avro" % "avro-compiler" % "1.8.2",
-  "org.typelevel" %% "scalac-options" % "0.1.3"
+  "org.typelevel" %% "scalac-options" % "0.1.4"
 )
