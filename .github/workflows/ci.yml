@@ -82,6 +82,17 @@ jobs:
         if: matrix.java == 'corretto@21' && steps.setup-java-corretto-21.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: gcloud auth
+        if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          export_environment_variables: true
+          create_credentials_file: true
+
+      - name: Setup GitHub Action
+        run: scripts/gha_setup.sh
+
       - name: Check that workflows are up to date
         run: sbt githubWorkflowCheck
 
@@ -319,6 +330,9 @@ jobs:
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Check that workflows are up to date
+        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
+
       - name: Test coverage
         run: sbt '++ ${{ matrix.scala }}' coverage test coverageAggregate
 
@@ -353,7 +367,11 @@ jobs:
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Check that workflows are up to date
+        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
+
       - name: gcloud auth
+        if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -366,14 +384,12 @@ jobs:
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
         run: scripts/gha_setup.sh
 
-      - name: Check headers and formatting
-        run: sbt '++ ${{ matrix.scala }}' integration/headerCheckAll integration/scalafmtCheckAll
-
       - name: Test
-        run: sbt '++ ${{ matrix.scala }}' integration/test
+        run: 'sbt ''++ ${{ matrix.scala }}'' ''set integration/test/skip := false'' integration/test'
 
   site:
     name: Generate Site
+    if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -399,7 +415,11 @@ jobs:
         if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Check that workflows are up to date
+        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
+
       - name: gcloud auth
+        if: (github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
@@ -416,8 +436,8 @@ jobs:
 
       - name: Publish site
         if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
-        env:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: site/target
-          keep_files: true
         uses: peaceiris/actions-gh-pages@v3.9.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site/target/site
+          keep_files: true

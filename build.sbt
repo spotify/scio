@@ -220,16 +220,28 @@ val scala213 = "2.13.12"
 val scala212 = "2.12.18"
 val scalaDefault = scala213
 
+// compiler settings
+ThisBuild / tlJdkRelease := Some(8)
+ThisBuild / tlFatalWarnings := false
+ThisBuild / scalaVersion := scalaDefault
+ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
+
 // github actions
 val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")
 val java11 = JavaSpec.corretto("11")
 val javaDefault = java11
-val primaryAxisCond = Seq(
-  s"matrix.scala == '${CrossVersion.binaryScalaVersion(scalaDefault)}'",
-  s"matrix.java == '${javaDefault.render}'"
-).mkString(" && ")
+val condPrimaryScala = s"matrix.scala == '${CrossVersion.binaryScalaVersion(scalaDefault)}'"
+val condPrimaryJava = s"matrix.java == '${javaDefault.render}'"
+val condIsMain = "github.ref == 'refs/heads/main'"
+val condIsTag = "startsWith(github.ref, 'refs/tags/v')"
+val condSkipPR = "github.event_name != 'pull_request'"
+val condSkipForkPR = s"($condSkipPR || !github.event.pull_request.head.repo.fork)"
 
+val githubWorkflowCheckStep = WorkflowStep.Sbt(
+  List("githubWorkflowCheck"),
+  name = Some("Check that workflows are up to date")
+)
 val githubWorkflowGcpAuthStep = WorkflowStep.Use(
   UseRef.Public("google-github-actions", "auth", "v2"),
   Map(
@@ -237,15 +249,21 @@ val githubWorkflowGcpAuthStep = WorkflowStep.Use(
     "export_environment_variables" -> "true",
     "create_credentials_file" -> "true"
   ),
+  cond = Some(condSkipForkPR),
   name = Some("gcloud auth")
 )
+val githubWorkflowSetupStep = WorkflowStep.Run(
+  List("scripts/gha_setup.sh"),
+  name = Some("Setup GitHub Action")
+)
 
-ThisBuild / tlJdkRelease := Some(8)
-ThisBuild / tlFatalWarnings := false
-ThisBuild / scalaVersion := scalaDefault
-ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
+val skipUnauthorizedGcpGithubWorkflow = Def.setting {
+  githubIsWorkflowBuild.value && sys.props.get("bigquery.project").isEmpty
+}
+
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
 ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
+ThisBuild / githubWorkflowBuildPreamble := Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
 ThisBuild / githubWorkflowBuildPostamble := Seq(
   WorkflowStep.Sbt(
     List("undeclaredCompileDependenciesTest", "unusedCompileDependenciesTest"),
@@ -275,6 +293,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
+        githubWorkflowCheckStep,
         WorkflowStep.Sbt(
           List("coverage", "test", "coverageAggregate"),
           name = Some("Test coverage")
@@ -293,25 +312,20 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
+        githubWorkflowCheckStep,
         githubWorkflowGcpAuthStep,
-        WorkflowStep.Run(
-          List("scripts/gha_setup.sh"),
-          env = Map(
+        githubWorkflowSetupStep.copy(env =
+          Map(
             "BQ_READ_TIMEOUT" -> "30000",
             "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}"
-          ),
-          name = Some("Setup GitHub Action")
+          )
         ),
         WorkflowStep.Sbt(
-          List("integration/headerCheckAll", "integration/scalafmtCheckAll"),
-          name = Some("Check headers and formatting")
-        ),
-        WorkflowStep.Sbt(
-          List("integration/test"),
+          List("set integration/test/skip := false", "integration/test"),
           name = Some("Test")
         )
       ),
-    cond = Some("github.event_name != 'pull_request' && github.ref == 'refs/heads/main'"),
+    cond = Some(Seq(condSkipPR, condIsMain).mkString(" && ")),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
   ),
@@ -321,6 +335,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
+        githubWorkflowCheckStep,
         githubWorkflowGcpAuthStep,
         WorkflowStep.Run(
           List("scripts/gha_setup.sh"),
@@ -333,21 +348,21 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
         ),
         WorkflowStep.Use(
           UseRef.Public("peaceiris", "actions-gh-pages", "v3.9.3"),
-          env = Map(
+          params = Map(
             "github_token" -> "${{ secrets.GITHUB_TOKEN }}",
             "publish_dir" -> {
               val path = (ThisBuild / baseDirectory).value.toPath.toAbsolutePath
-                .relativize((site / target).value.toPath)
+                .relativize((site / makeSite / target).value.toPath)
               // os-independent path rendering ...
               (0 until path.getNameCount).map(path.getName).mkString("/")
             },
             "keep_files" -> "true"
           ),
           name = Some("Publish site"),
-          cond =
-            Some("github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')")
+          cond = Some(Seq(condSkipPR, condIsTag).mkString(" && "))
         )
       ),
+    cond = Some(condSkipForkPR),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
   )
@@ -545,6 +560,7 @@ lazy val scio = project
     assembly / aggregate := false
   )
   .aggregate(
+    `integration`,
     `scio-avro`,
     `scio-cassandra3`,
     `scio-core`,
@@ -1123,6 +1139,12 @@ lazy val `scio-examples` = project
   .settings(beamRunnerSettings)
   .settings(macroSettings)
   .settings(
+    compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
+    test / skip := skipUnauthorizedGcpGithubWorkflow.value,
+    // sbt does not support skip for test
+    Test / test := {
+      if ((Test / test / skip).value) () else (Test / test).value
+    },
     scalacOptions := {
       val exclude = ScalacOptions
         .tokensForVersion(
@@ -1442,7 +1464,20 @@ lazy val integration = project
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
+    compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
+    test / skip := true,
     publish / skip := true,
+    // sbt does not support skip for test
+    Test / test := {
+      if ((Test / test / skip).value) {
+        streams.value.log.warn(
+          "integration/test are skipped.\n" +
+            "Run 'set integration/test/skip := false' to run them"
+        )
+      } else {
+        (Test / test).value
+      }
+    },
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // compile
