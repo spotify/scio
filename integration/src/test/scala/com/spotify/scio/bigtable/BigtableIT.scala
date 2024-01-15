@@ -36,9 +36,10 @@ object BigtableIT {
   val clusterId = "scio-bigtable-it-cluster"
   val zoneId = "us-central1-f"
   val tableId = "scio-bigtable-it-counts"
-  val uuid: String = UUID.randomUUID().toString.substring(0, 8)
-  val testData: Seq[(String, Long)] =
-    Seq((s"$uuid-key1", 1L), (s"$uuid-key2", 2L), (s"$uuid-key3", 3L))
+
+  def testId(): String = UUID.randomUUID().toString.substring(0, 8)
+  def testData(id: String): Seq[(String, Long)] =
+    Seq((s"$id-key1", 1L), (s"$id-key2", 2L), (s"$id-key3", 3L))
 
   val bigtableOptions: BigtableOptions = BigtableOptions
     .builder()
@@ -89,44 +90,86 @@ class BigtableIT extends PipelineSpec {
     bt.getClusterNodeCount(clusterId, zoneId) shouldBe 3
   }
 
-  "BigtableIO" should "work" in {
+  "BigtableIO" should "work in default mode" in {
     TableAdmin.ensureTables(bigtableOptions, Map(tableId -> List(FAMILY_NAME)))
+    val id = testId()
+    val data = testData(id)
     try {
       // Write rows to table
-      val sc1 = ScioContext()
-      sc1
-        .parallelize(testData.map(kv => toWriteMutation(kv._1, kv._2)))
-        .saveAsBigtable(projectId, instanceId, tableId)
-      sc1.run().waitUntilFinish()
+      runWithRealContext() { sc =>
+        sc
+          .parallelize(data.map(kv => toWriteMutation(kv._1, kv._2)))
+          .saveAsBigtable(projectId, instanceId, tableId)
+      }.waitUntilFinish()
 
       // Read rows back
-      val sc2 = ScioContext()
       // Filter rows in case there are other keys in the table
       val rowFilter = RowFilter
         .newBuilder()
-        .setRowKeyRegexFilter(ByteString.copyFromUtf8(s"$uuid-.*"))
+        .setRowKeyRegexFilter(ByteString.copyFromUtf8(s"$id-.*"))
         .build()
-      sc2
-        .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
-        .map(fromRow) should containInAnyOrder(testData)
-      sc2.run().waitUntilFinish()
+      runWithRealContext() { sc =>
+        sc
+          .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
+          .map(fromRow) should containInAnyOrder(data)
+      }.waitUntilFinish()
     } catch {
       case e: Throwable => throw e
     } finally {
       // Delete rows afterwards
-      val sc = ScioContext()
-      sc.parallelize(testData.map(kv => toDeleteMutation(kv._1)))
-        .saveAsBigtable(projectId, instanceId, tableId)
-      sc.run().waitUntilFinish()
-      ()
+      runWithRealContext() { sc =>
+        sc.parallelize(data.map(kv => toDeleteMutation(kv._1)))
+          .saveAsBigtable(projectId, instanceId, tableId)
+      }
     }
   }
 
+  it should "work in bulk mode" in {
+    TableAdmin.ensureTables(bigtableOptions, Map(tableId -> List(FAMILY_NAME)))
+    val options = BigtableOptions
+      .builder()
+      .setProjectId(projectId)
+      .setInstanceId(instanceId)
+      .build()
+    val id = testId()
+    val data = testData(id)
+
+    try {
+      // Write rows to table with batch
+      runWithRealContext() { sc =>
+        sc
+          .parallelize(data.map(kv => toWriteMutation(kv._1, kv._2)))
+          .saveAsBigtable(options, tableId, 1)
+      }.waitUntilFinish()
+
+      // Read rows back
+      // Filter rows in case there are other keys in the table
+      val rowFilter = RowFilter
+        .newBuilder()
+        .setRowKeyRegexFilter(ByteString.copyFromUtf8(s"$id-.*"))
+        .build()
+      runWithRealContext() { sc =>
+        sc
+          .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
+          .map(fromRow) should containInAnyOrder(data)
+      }.waitUntilFinish()
+    } catch {
+      case e: Throwable => throw e
+    } finally {
+      // Delete rows afterwards
+      runWithRealContext() { sc =>
+        sc.parallelize(data.map(kv => toDeleteMutation(kv._1)))
+          .saveAsBigtable(projectId, instanceId, tableId)
+      }
+    }.waitUntilFinish()
+  }
+
   "TableAdmin" should "work" in {
+    val id = testId()
     val tables = Map(
-      s"scio-bigtable-empty-table-$uuid" -> List(),
-      s"scio-bigtable-one-cf-table-$uuid" -> List("colfam1"),
-      s"scio-bigtable-two-cf-table-$uuid" -> List("colfam1", "colfam2")
+      s"scio-bigtable-empty-table-$id" -> List(),
+      s"scio-bigtable-one-cf-table-$id" -> List("colfam1"),
+      s"scio-bigtable-two-cf-table-$id" -> List("colfam1", "colfam2")
     )
     val channel = ChannelPoolCreator.createPool(bigtableOptions)
     val executorService = BigtableSessionSharedThreadPools.getInstance().getRetryExecutor
