@@ -62,12 +62,10 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
     }
   }
 
-  @transient private lazy val avroVersion = runtimeAvroVersion()
-
   override def apply(writer: Schema): DatumWriter[T] = {
     val datumWriter = new SpecificDatumWriter[T]()
     // avro 1.8 generated code does not add conversions to the data
-    if (avroVersion.exists(_.startsWith("1.8."))) {
+    if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       val data = datumWriter.getData
       val conversions = specificRecordConversions(recordType)
       conversions.foreach(data.addLogicalTypeConversion)
@@ -79,7 +77,7 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
   override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
     val datumReader = new ScioSpecificDatumReader()
     // avro 1.8 generated code does not add conversions to the data
-    if (avroVersion.exists(_.startsWith("1.8"))) {
+    if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       val data = datumReader.getData
       val conversions = specificRecordConversions(recordType)
       conversions.foreach(data.addLogicalTypeConversion)
@@ -92,7 +90,8 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
 }
 
 private[scio] object SpecificRecordDatumFactory {
-  private def runtimeAvroVersion(): Option[String] =
+
+  @transient private lazy val runtimeAvroVersion: Option[String] =
     Option(classOf[Schema].getPackage.getImplementationVersion)
 
   private def specificRecordConversions[T <: SpecificRecord](
