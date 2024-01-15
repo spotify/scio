@@ -155,13 +155,14 @@ class BigtableIT extends PipelineSpec {
       }.waitUntilFinish()
     } catch {
       case e: Throwable => throw e
-    } finally {
-      // Delete rows afterwards
-      runWithRealContext() { sc =>
-        sc.parallelize(data.map(kv => toDeleteMutation(kv._1)))
-          .saveAsBigtable(projectId, instanceId, tableId)
-      }
-    }.waitUntilFinish()
+    } finally
+      {
+        // Delete rows afterwards
+        runWithRealContext() { sc =>
+          sc.parallelize(data.map(kv => toDeleteMutation(kv._1)))
+            .saveAsBigtable(projectId, instanceId, tableId)
+        }
+      }.waitUntilFinish()
   }
 
   "TableAdmin" should "work" in {
