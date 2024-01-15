@@ -56,7 +56,8 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
     val table = bq.tables.createTemporary(location = "EU").getTableReference
     val tableRef = bq.load.json(sources, table.asTableSpec, schema = Some(schema))
     tableRef.map { ref =>
-      val insertQuery = s"insert into `${ref.asTableSpec}` values (1603, 'alien', 9000, 'alien')"
+      val insertQuery = s"""insert into `${ref.asTableSpec}`
+                           |values (1603, 'alien', 9000, 'alien')""".stripMargin
       bq.query.run(
         insertQuery,
         createDisposition = null,
