@@ -25,8 +25,10 @@ import com.spotify.sparkey.extra.ThreadLocalSparkeyReader
 import com.spotify.sparkey.SparkeyReader
 import org.apache.beam.sdk.io.FileSystems
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult, ResourceId}
+import org.apache.beam.sdk.options.PipelineOptions
 
 import java.nio.file.Path
+import java.util.UUID
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
@@ -34,6 +36,13 @@ case class InvalidNumShardsException(str: String) extends RuntimeException(str)
 
 object SparkeyUri {
   def extensions: Seq[String] = Seq(".spi", ".spl")
+
+  def baseUri(optPath: Option[String], opts: PipelineOptions): SparkeyUri = {
+    val tempLocation = opts.getTempLocation
+    // the final destination for sparkey files. A temp dir if not permanently persisted.
+    val basePath = optPath.getOrElse(s"$tempLocation/sparkey-${UUID.randomUUID}")
+    SparkeyUri(basePath)
+  }
 }
 
 /**
@@ -45,7 +54,7 @@ object SparkeyUri {
  */
 case class SparkeyUri(path: String) {
   private[sparkey] val isLocal = ScioUtil.isLocalUri(new URI(path))
-  private val isSharded = path.endsWith("*")
+  private[sparkey] val isSharded = path.endsWith("*")
   private[sparkey] val basePath =
     if (!isSharded) path else path.split("/").dropRight(1).mkString("/")
 

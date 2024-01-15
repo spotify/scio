@@ -115,11 +115,9 @@ public class BigtableBulkWriter
 
     @StartBundle
     public void startBundle(StartBundleContext c) throws IOException {
-      if (bigtableWriter == null) {
-        bigtableWriter =
-            new BigtableServiceHelper(bigtableOptions, c.getPipelineOptions())
-                .openForWriting(tableName);
-      }
+      bigtableWriter =
+          new BigtableServiceHelper(bigtableOptions, c.getPipelineOptions())
+              .openForWriting(tableName);
       recordsWritten = 0;
     }
 
@@ -142,17 +140,10 @@ public class BigtableBulkWriter
 
     @FinishBundle
     public void finishBundle() throws Exception {
-      bigtableWriter.flush();
+      // close the writer and wait for all writes to complete
+      bigtableWriter.close();
       checkForFailures(failures);
       LOG.debug("Wrote {} records", recordsWritten);
-    }
-
-    @Teardown
-    public void tearDown() throws Exception {
-      if (bigtableWriter != null) {
-        bigtableWriter.close();
-        bigtableWriter = null;
-      }
     }
 
     @Override

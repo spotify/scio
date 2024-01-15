@@ -19,12 +19,9 @@ package com.spotify.scio.avro.types
 
 import com.spotify.scio.avro.types.Schemas._
 import com.spotify.scio.avro.types.Schemas.FieldMode._
-import org.apache.avro.{Schema, SchemaBuilder}
-import org.apache.beam.model.pipeline.v1.SchemaApi.SchemaOrBuilder
+import org.apache.avro.SchemaBuilder
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.jdk.CollectionConverters._
 
 class SchemaUtilTest extends AnyFlatSpec with Matchers {
   "toPrettyString()" should "support primitive types" in {

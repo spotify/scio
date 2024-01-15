@@ -23,11 +23,13 @@ import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
 import de.heikoseeberger.sbtheader.CommentCreator
 import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
+// To test release candidates, find the beam repo and add it as a resolver
+// ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.52.0"
+val beamVersion = "2.53.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.52.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.53.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val avroVersion = "1.8.2"
@@ -56,41 +58,41 @@ val zetasketchVersion = "0.1.0"
 val googleApiServicesBigQueryVersion = s"v2-rev20230812-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20230617-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20231202-$googleClientsVersion"
 // beam tested versions
 val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
 val hadoopVersion = "3.2.4" // io/parquet/build.gradle
-val sparkVersion = "3.4.1" // runners/spark/3/build.gradle
+val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.23.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.28.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val bigQueryStorageBetaVersion = "0.166.0"
-val bigQueryStorageVersion = "2.42.0"
-val checkerQualVersion = "3.33.0"
-val errorProneAnnotationsVersion = "2.18.0"
+val bigQueryStorageBetaVersion = "0.171.0"
+val bigQueryStorageVersion = "2.47.0"
+val checkerQualVersion = "3.40.0"
+val errorProneAnnotationsVersion = "2.23.0"
 val failureAccessVersion = "1.0.1"
-val floggerVersion = "0.7.4"
-val gaxVersion = "2.33.0"
+val floggerVersion = "0.8"
+val gaxVersion = "2.38.0"
 val googleApiClientVersion = "2.2.0" // very strangely not in sync with googleClientsVersion
-val googleApiCommonVersion = "2.16.0"
-val googleAuthVersion = "1.19.0"
-val googleCloudBigTableVersion = "2.27.2"
-val googleCloudCoreVersion = "2.23.0"
-val googleCloudDatastoreVersion = "0.108.1"
-val googleCloudMonitoringVersion = "3.25.0"
-val googleCloudPubSubVersion = "1.107.0"
-val googleCloudSpannerVersion = "6.47.0"
-val googleCloudStorageVersion = "2.27.0"
-val googleCommonsProtoVersion = "2.24.0"
+val googleApiCommonVersion = "2.21.0"
+val googleAuthVersion = "1.20.0"
+val googleCloudBigTableVersion = "2.30.0"
+val googleCloudCoreVersion = "2.28.0"
+val googleCloudDatastoreVersion = "0.108.6"
+val googleCloudMonitoringVersion = "3.32.0"
+val googleCloudPubSubVersion = "1.107.13"
+val googleCloudSpannerVersion = "6.55.0"
+val googleCloudStorageVersion = "2.30.1"
+val googleCommonsProtoVersion = "2.29.0"
 val googleHttpClientsVersion = "1.43.3"
-val googleIAMVersion = "1.19.0"
-val grpcVersion = "1.56.1"
+val googleIAMVersion = "1.24.0"
+val grpcVersion = "1.59.1"
 val j2objcAnnotationsVersion = "2.8"
 val jsr305Version = "3.0.2"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.26.0"
-val protobufVersion = "3.23.2"
+val protobufVersion = "3.25.1"
 
 val algebirdVersion = "0.13.10"
 val algebraVersion = "2.10.0"
@@ -105,14 +107,14 @@ val chillVersion = "0.10.0"
 val circeVersion = "0.14.6"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.14"
-val elasticsearch8Version = "8.11.2"
+val elasticsearch8Version = "8.11.4"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
 val jedisVersion = "5.1.0"
-val jnaVersion = "5.13.0"
+val jnaVersion = "5.14.0"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
 val kantanCodecsVersion = "0.5.3"
@@ -121,7 +123,7 @@ val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.3"
 val magnolifyVersion = "0.6.4"
 val metricsVersion = "4.2.23"
-val neo4jDriverVersion = "4.4.12"
+val neo4jDriverVersion = "4.4.13"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.12.3"
@@ -789,7 +791,6 @@ lazy val `scio-google-cloud-platform` = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % grpcVersion,
       "io.grpc" % "grpc-auth" % grpcVersion,
-      "io.grpc" % "grpc-core" % grpcVersion,
       "io.grpc" % "grpc-netty" % grpcVersion,
       "io.grpc" % "grpc-stub" % grpcVersion,
       "io.netty" % "netty-handler" % nettyVersion,
@@ -1190,7 +1191,7 @@ lazy val `scio-examples` = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.15.0" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.15.1" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1265,7 +1266,9 @@ lazy val `scio-repl` = project
                 JarEntry(t, s)
             } match {
               case Some(e) => Right(Vector(e))
-              case None    => Left("Error merging beam avro classes")
+              case None =>
+                val conflictList = conflicts.mkString("\t", "\n", "\n")
+                Left("Error merging beam avro classes:\n" + conflictList)
             }
           }
         case PathList("com", "google", "errorprone", _*) =>
@@ -1277,19 +1280,28 @@ lazy val `scio-repl` = project
                 JarEntry(t, s)
             } match {
               case Some(e) => Right(Vector(e))
-              case None    => Left("Error merging errorprone classes")
+              case None =>
+                val conflictList = conflicts.mkString("\t", "\n", "\n")
+                Left("Error merging errorprone classes:\n" + conflictList)
             }
           }
-        case PathList("org", "checkerframework", _*) =>
-          // prefer checker-qual classes packaged in checkerframework libs
-          CustomMergeStrategy("CheckerQual") { conflicts =>
-            import sbtassembly.Assembly._
-            conflicts.collectFirst {
-              case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
-                JarEntry(t, s)
-            } match {
-              case Some(e) => Right(Vector(e))
-              case None    => Left("Error merging checker-qual classes")
+        case PathList("org", "checkerframework", tail @ _*) =>
+          if (tail.last == "SignedPositiveFromUnsigned.class") {
+            // this class has been dropped in original checkerframework libs
+            MergeStrategy.discard
+          } else {
+            // prefer checker-qual classes packaged in checkerframework libs
+            CustomMergeStrategy("CheckerQual") { conflicts =>
+              import sbtassembly.Assembly._
+              conflicts.collectFirst {
+                case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
+                  JarEntry(t, s)
+              } match {
+                case Some(e) => Right(Vector(e))
+                case None =>
+                  val conflictList = conflicts.mkString("\t", "\n", "\n")
+                  Left("Error merging checker-qual classes:\n" + conflictList)
+              }
             }
           }
         case PathList("dev", "ludovic", "netlib", "InstanceBuilder.class") =>

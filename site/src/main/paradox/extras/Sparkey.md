@@ -38,14 +38,14 @@ See also @ref[Large Hash Joins](../Joins.md#large-hash-join), which do the same 
 
 ## Writing
 
-If a sparkey can be reused by multiple pipelines, it can be saved permanently with @scaladoc[asSparkey](com.spotify.scio.extra.sparkey.SparkeyPairSCollection#asSparkey(implicitw:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.values.SCollection[com.spotify.scio.extra.sparkey.SparkeyUri])
+If a sparkey can be reused by multiple pipelines, it can be saved permanently with @scaladoc[saveAsSparkey](com.spotify.scio.extra.sparkey.SparkeyPairSCollection#saveAsSparkey(path:String,maxMemoryUsage:Long,numShards:Short,compressionType:com.spotify.sparkey.CompressionType,compressionBlockSize:Int)(implicitwritable:com.spotify.scio.extra.sparkey.package.SparkeyWritable[K,V]):com.spotify.scio.io.ClosedTap[Nothing])
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.extra.sparkey._
 
 val elements: SCollection[(String, String)] = ???
-elements.asSparkey("gs://output-path")
+elements.saveAsSparkey("gs://output-path")
 ```
 
 ## Reading

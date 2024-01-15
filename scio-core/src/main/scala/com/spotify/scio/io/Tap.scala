@@ -54,6 +54,18 @@ trait Tap[T] extends Serializable { self =>
     /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
     override def open(sc: ScioContext): SCollection[U] = self.open(sc).map(f)
   }
+
+  def flatMap[U: Coder](f: T => TraversableOnce[U]): Tap[U] = new Tap[U] {
+
+    /** Parent of this Tap before [[flatMap]]. */
+    override val parent: Option[Tap[_]] = Option(self)
+
+    /** Read data set into memory. */
+    override def value: Iterator[U] = self.value.flatMap(f)
+
+    /** Open data set as an [[com.spotify.scio.values.SCollection SCollection]]. */
+    override def open(sc: ScioContext): SCollection[U] = self.open(sc).flatMap(f)
+  }
 }
 
 case object EmptyTap extends Tap[Nothing] {
