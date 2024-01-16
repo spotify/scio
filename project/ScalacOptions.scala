@@ -78,7 +78,6 @@ object ScalacOptions {
       .tokensForVersion(ScalaVersion(major, minor, patch), proposedScalacOptions)
   }
 
-  private val cpuParallelism = math.min(java.lang.Runtime.getRuntime.availableProcessors(), 16)
   def defaults(scalaVersion: String): Seq[String] = tokensForVersion(
     scalaVersion,
     Set(
@@ -86,7 +85,6 @@ object ScalacOptions {
       macroAnnotationsOption,
       macroShowCoderFallback(true),
       maxClassfileName(100),
-      privateBackendParallelism(cpuParallelism),
       privateWarnMacrosOption,
       warnMacrosOption,
       warnConfOption
