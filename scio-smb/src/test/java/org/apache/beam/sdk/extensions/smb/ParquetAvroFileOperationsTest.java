@@ -175,7 +175,9 @@ public class ParquetAvroFileOperationsTest {
             .endRecord();
 
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(USER_SCHEMA).withProjection(projection);
+        ParquetAvroFileOperations.of(USER_SCHEMA)
+            .withCompression(CompressionCodecName.ZSTD)
+            .withProjection(projection);
 
     final List<GenericRecord> expected =
         USER_RECORDS.stream()
