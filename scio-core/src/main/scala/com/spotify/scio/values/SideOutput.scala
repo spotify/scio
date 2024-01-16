@@ -58,7 +58,7 @@ class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessCo
 }
 
 /** Encapsulate output of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
-class SideOutputCollections private[values] (
+class SideOutputCollections private[scio] (
   private val tuple: PCollectionTuple,
   private val context: ScioContext
 ) {

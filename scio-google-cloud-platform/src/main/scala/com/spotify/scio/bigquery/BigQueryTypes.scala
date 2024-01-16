@@ -17,24 +17,21 @@
 
 package com.spotify.scio.bigquery
 
-import java.math.MathContext
-import java.nio.ByteBuffer
-
 import com.google.api.services.bigquery.model.{
   Clustering => GClustering,
   TableReference => GTableReference,
   TableRow => GTableRow,
   TimePartitioning => GTimePartitioning
 }
-import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.values.SCollection
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
-import org.apache.beam.sdk.io.gcp.bigquery.{BigQueryHelpers, BigQueryInsertError, WriteResult}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.joda.time._
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 
+import java.math.MathContext
+import java.nio.ByteBuffer
 import scala.jdk.CollectionConverters._
 
 sealed trait Source
@@ -121,25 +118,6 @@ object Table {
     def latest(bq: BigQuery): Spec =
       Spec(BigQueryPartitionUtil.latestTable(bq, spec))
     def latest(): Spec = latest(BigQuery.defaultInstance())
-  }
-}
-
-sealed trait ExtendedErrorInfo[Info] {
-  private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[Info]
-}
-
-object ExtendedErrorInfo {
-  final case object Enabled extends ExtendedErrorInfo[BigQueryInsertError] {
-    override private[scio] def coll(
-      sc: ScioContext,
-      wr: WriteResult
-    ): SCollection[BigQueryInsertError] =
-      sc.wrap(wr.getFailedInsertsWithErr())
-  }
-
-  final case object Disabled extends ExtendedErrorInfo[TableRow] {
-    override private[scio] def coll(sc: ScioContext, wr: WriteResult): SCollection[TableRow] =
-      sc.wrap(wr.getFailedInserts())
   }
 }
 

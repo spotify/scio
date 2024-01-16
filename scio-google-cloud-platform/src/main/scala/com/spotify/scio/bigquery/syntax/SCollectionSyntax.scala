@@ -19,8 +19,8 @@ package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
+import com.spotify.scio.bigquery.BigQueryTypedTable.{Format, WriteParam => TypedTableWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
-import com.spotify.scio.bigquery.BigQueryTypedTable.{WriteParam => TypedTableWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{
   coders,
@@ -35,20 +35,19 @@ import com.spotify.scio.bigquery.{
 }
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
+import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   CreateDisposition,
   Method,
   WriteDisposition
 }
-
-import scala.reflect.runtime.universe._
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
-import com.spotify.scio.util.FilenamePolicySupplier
-import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
 import org.joda.time.Duration
+
+import scala.reflect.runtime.universe._
 
 /** Enhanced version of [[SCollection]] with BigQuery methods. */
 final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[T]) extends AnyVal {
@@ -70,8 +69,9 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     sharding: Sharding = TypedTableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy =
       TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
+    extendedErrorInfo: Boolean = TypedTableWriteParam.DefaultExtendedErrorInfo,
     configOverride: TypedTableWriteParam.ConfigOverride[TableRow] =
-      TableWriteParam.defaultConfigOverride
+      TableWriteParam.DefaultConfigOverride
   ): ClosedTap[TableRow] = {
     val param = TypedTableWriteParam(
       method,
@@ -84,6 +84,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
+      extendedErrorInfo,
       configOverride
     )
 
@@ -144,8 +145,9 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     sharding: Sharding = TypedTableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy =
       TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
+    extendedErrorInfo: Boolean = TypedTableWriteParam.DefaultExtendedErrorInfo,
     configOverride: TypedTableWriteParam.ConfigOverride[GenericRecord] =
-      TypedTableWriteParam.defaultConfigOverride[GenericRecord]
+      TypedTableWriteParam.DefaultConfigOverride
   ): ClosedTap[GenericRecord] = {
     val param = TypedTableWriteParam(
       method,
@@ -158,6 +160,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
+      extendedErrorInfo,
       configOverride
     )
     self
@@ -214,7 +217,8 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     triggeringFrequency: Duration = TableWriteParam.DefaultTriggeringFrequency,
     sharding: Sharding = TableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy,
-    configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.defaultConfigOverride
+    extendedErrorInfo: Boolean = TableWriteParam.DefaultExtendedErrorInfo,
+    configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.DefaultConfigOverride
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
     val param = TableWriteParam[T](
       method,
@@ -225,6 +229,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
+      extendedErrorInfo,
       configOverride
     )
     self.write(BigQueryTyped.Table[T](table))(param)

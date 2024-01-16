@@ -18,21 +18,20 @@
 package com.spotify.scio.bigquery.dynamic.syntax
 
 import com.google.api.services.bigquery.model.TableSchema
+import com.spotify.scio.bigquery.dynamic._
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.TableRow
-import com.spotify.scio.bigquery.ExtendedErrorInfo._
-import com.spotify.scio.bigquery.dynamic._
+import com.spotify.scio.bigquery.{BigQueryIO, TableRow}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.util.Functions
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.bigquery.{DynamicDestinations, TableDestination}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-import org.apache.beam.sdk.values.ValueInSingleWindow
-import com.spotify.scio.bigquery.ExtendedErrorInfo
+import org.apache.beam.sdk.values.{PCollection, PCollectionTuple, ValueInSingleWindow}
 
 import scala.reflect.runtime.universe._
+import scala.util.chaining._
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
@@ -48,57 +47,42 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
     destinations: DynamicDestinations[T, _],
     formatFn: T => TableRow,
     writeDisposition: WriteDisposition,
-    createDisposition: CreateDisposition
-  ): ClosedTap[Nothing] =
-    saveAsBigQuery(
-      destinations,
-      formatFn,
-      writeDisposition,
-      createDisposition,
-      ExtendedErrorInfo.Disabled
-    )(_ => ())
-
-  /**
-   * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
-   * [[org.apache.beam.sdk.io.gcp.bigquery.DynamicDestinations DynamicDestinations]].
-   */
-  def saveAsBigQuery[Info](
-    destinations: DynamicDestinations[T, _],
-    formatFn: T => TableRow,
-    writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
-    extendedErrorInfo: ExtendedErrorInfo[Info]
-  )(
-    insertErrorTransform: SCollection[Info] => Unit
+    extendedErrorInfo: Boolean = false
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
         "BigQuery with dynamic destinations cannot be used in a test context"
       )
-    } else {
-      var transform = beam.BigQueryIO
-        .write()
-        .to(destinations)
-        .withFormatFunction(Functions.serializableFn(formatFn))
-
-      if (createDisposition != null) {
-        transform = transform.withCreateDisposition(createDisposition)
-      }
-      if (writeDisposition != null) {
-        transform = transform.withWriteDisposition(writeDisposition)
-      }
-
-      transform = extendedErrorInfo match {
-        case Disabled => transform
-        case Enabled  => transform.withExtendedErrorInfo()
-      }
-
-      val wr = self.applyInternal(transform)
-
-      insertErrorTransform(extendedErrorInfo.coll(self.context, wr))
     }
 
-    ClosedTap[Nothing](EmptyTap)
+    val t = beam.BigQueryIO
+      .write()
+      .to(destinations)
+      .withFormatFunction(Functions.serializableFn(formatFn))
+      .pipe(w => Option(createDisposition).fold(w)(w.withCreateDisposition))
+      .pipe(w => Option(writeDisposition).fold(w)(w.withWriteDisposition))
+      .pipe(w => if (extendedErrorInfo) w.withExtendedErrorInfo() else w)
+
+    val wr = self.applyInternal(t)
+
+    var tuple = PCollectionTuple.empty(self.context.pipeline)
+    if (self.internal.isBounded == PCollection.IsBounded.BOUNDED) {
+      // batch, method is FILE_LOADS
+      tuple = tuple.and(BigQueryIO.SuccessfulTableLoads.tupleTag, wr.getSuccessfulTableLoads)
+    } else {
+      // streaming, method is  STREAMING_INSERTS
+      tuple = tuple.and(BigQueryIO.SuccessfulInserts.tupleTag, wr.getSuccessfulInserts)
+    }
+
+    if (extendedErrorInfo) {
+      tuple = tuple.and(BigQueryIO.FailedInsertsWithErr.tupleTag, wr.getFailedInsertsWithErr)
+    } else {
+      tuple = tuple.and(BigQueryIO.FailedInserts.tupleTag, wr.getFailedInserts)
+    }
+
+    val sides = new SideOutputCollections(tuple, self.context)
+    ClosedTap[Nothing](EmptyTap, Some(sides))
   }
 }
 
@@ -116,13 +100,15 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
   def saveAsBigQuery(
     schema: TableSchema,
     writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null
+    createDisposition: CreateDisposition = null,
+    extendedErrorInfo: Boolean = false
   )(tableFn: ValueInSingleWindow[T] => TableDestination): ClosedTap[Nothing] =
     new DynamicBigQueryOps(self).saveAsBigQuery(
       DynamicDestinationsUtil.tableFn(tableFn, schema),
       identity,
       writeDisposition,
-      createDisposition
+      createDisposition,
+      extendedErrorInfo
     )
 }
 
@@ -140,7 +126,8 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
    */
   def saveAsTypedBigQuery(
     writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null
+    createDisposition: CreateDisposition = null,
+    extendedErrorInfo: Boolean = false
   )(
     tableFn: ValueInSingleWindow[T] => TableDestination
   )(implicit tt: TypeTag[T]): ClosedTap[Nothing] = {
@@ -151,7 +138,8 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
       destinations,
       bqt.toTableRow,
       writeDisposition,
-      createDisposition
+      createDisposition,
+      extendedErrorInfo
     )
   }
 }
