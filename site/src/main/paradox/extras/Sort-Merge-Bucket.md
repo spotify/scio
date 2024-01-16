@@ -55,15 +55,15 @@ Two sources can be joined by opening file readers on corresponding buckets of ea
 
 SMB writes are supported for multiple formats:
 
-* Avro (GenericRecord and SpecificRecord) when also depending on `scio-avro`.
-    * @javadoc[AvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO)
-* JSON
-    * @javadoc[JsonSortedBucketIO](org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO)
-* Parquet when also depending on  `scio-parquet`
-    * @javadoc[ParquetAvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO)
-    * @javadoc[ParquetTypesSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetTypesSortedBucketIO)
-* Tensorflow when also depending on `scio-tensorflow`
-    * @javadoc[TensorFlowBucketIO](org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO)
+- Avro (GenericRecord and SpecificRecord) when also depending on `scio-avro`.
+    - @javadoc[AvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO)
+- JSON
+    - @javadoc[JsonSortedBucketIO](org.apache.beam.sdk.extensions.smb.JsonSortedBucketIO)
+- Parquet when also depending on  `scio-parquet`
+    - @javadoc[ParquetAvroSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetAvroSortedBucketIO)
+    - @javadoc[ParquetTypesSortedBucketIO](org.apache.beam.sdk.extensions.smb.ParquetTypesSortedBucketIO)
+- Tensorflow when also depending on `scio-tensorflow`
+    - @javadoc[TensorFlowBucketIO](org.apache.beam.sdk.extensions.smb.TensorFlowBucketIO)
 
 ## Secondary keys
 
