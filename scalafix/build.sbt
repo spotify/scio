@@ -61,7 +61,8 @@ def scio(version: String): List[ModuleID] = {
     "scio-parquet",
     "scio-test",
     "scio-jdbc",
-    "scio-tensorflow"
+    "scio-tensorflow",
+    "scio-smb"
   ) ++ (VersionNumber(version).numbers match {
     case Seq(0, minor, _) if minor < 10 =>
       List(
