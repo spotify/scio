@@ -20,15 +20,16 @@ package com.spotify.scio.io
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.avro._
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.proto.SimpleV2.{SimplePB => SimplePBV2}
 import com.spotify.scio.proto.SimpleV3.{SimplePB => SimplePBV3}
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
+import org.apache.beam.sdk.coders.ByteArrayCoder
 import org.apache.beam.sdk.io.Compression
-import org.apache.beam.sdk.util.SerializableUtils
+import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.{FileUtils, IOUtils}
 
@@ -272,5 +273,24 @@ class TapTest extends TapSpec {
     val f = sc.parallelize(1 to 10).materialize
     val scioResult = sc.run().waitUntilDone()
     scioResult.tap(f).value.toSet shouldBe (1 to 10).toSet
+  }
+
+  it should "materialize elements whose encoding matches a compression algorithm's" in {
+    val element = (1, 0, s"/var/folders/g_/${"a" * 100}", false)
+    val coder = CoderMaterializer.beamWithDefault(Coder[(Int, Int, String, Boolean)])
+    val encoded = CoderUtils.encodeToByteArray(
+      ByteArrayCoder.of(),
+      CoderUtils.encodeToByteArray(coder, element),
+      org.apache.beam.sdk.coders.Coder.Context.NESTED
+    )
+
+    // Assert that the encoding coincidentally matches the Deflate compression signature
+    CompressorStreamFactory.detect(
+      new BufferedInputStream(new ByteArrayInputStream(encoded))
+    ) shouldBe CompressorStreamFactory.DEFLATE
+
+    // Assert that we can still materialize it in a tap
+    val (_, tapped) = runWithLocalOutput(_.parallelize(Seq(element)))
+    tapped should contain only element
   }
 }

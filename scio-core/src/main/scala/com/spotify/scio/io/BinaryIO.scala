@@ -141,15 +141,23 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
 object BinaryIO {
 
-  private[scio] def openInputStreamsFor(pattern: String): Iterator[InputStream] = {
-    val factory = new CompressorStreamFactory()
+  private[scio] def openInputStreamsFor(
+    pattern: String,
+    tryDecompress: Boolean = true
+  ): Iterator[InputStream] = {
+    lazy val factory = new CompressorStreamFactory()
 
     def wrapInputStream(in: InputStream) = {
       val buffered = new BufferedInputStream(in)
       Try(factory.createCompressorInputStream(buffered)).getOrElse(buffered)
     }
 
-    listFiles(pattern).map(getObjectInputStream).map(wrapInputStream).iterator
+    val inputStreams = listFiles(pattern).map(getObjectInputStream)
+    if (tryDecompress) {
+      inputStreams.map(wrapInputStream).iterator
+    } else {
+      inputStreams.iterator
+    }
   }
 
   private def listFiles(pattern: String): Seq[Metadata] =
