@@ -280,9 +280,6 @@ class TapTest extends TapSpec {
     ) shouldBe CompressorStreamFactory.DEFLATE
 
     // Assert that we can still materialize it in a tap
-    val sc = ScioContext()
-    val f = sc.parallelize(Seq(element)).materialize
-    val scioResult = sc.run().waitUntilDone()
-    scioResult.tap(f).value.toSet shouldBe Set(element)
+    runWithLocalOutput(_.parallelize(Seq(element))) should contain only element
   }
 }
