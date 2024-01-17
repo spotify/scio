@@ -22,8 +22,9 @@ import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWritePa
 import com.spotify.scio.bigquery.BigQueryTypedTable.{Format, WriteParam => TypedTableWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
+import com.spotify.scio.bigquery.coders
 import com.spotify.scio.bigquery.{
-  coders,
+  BigQueryIO,
   BigQueryTyped,
   BigQueryTypedTable,
   Clustering,
@@ -55,6 +56,20 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
   /**
    * Save this SCollection as a BigQuery table. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
+   *
+   * @return
+   *   a [[ClosedTap]] containing some side output(s) depending on the given parameters
+   *   - [[BigQueryIO.SuccessfulTableLoads]] if `method` is [[Method.FILE_LOADS]].
+   *   - [[BigQueryIO.SuccessfulInserts]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `successfulInsertsPropagation` is `true`.
+   *   - [[BigQueryIO.SuccessfulStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
+   *   - [[BigQueryIO.FailedInserts]] if `method` is [[Method.FILE_LOADS]] or
+   *     [[Method.STREAMING_INSERTS]].
+   *   - [[BigQueryIO.FailedInsertsWithErr]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `extendedErrorInfo` is `true`.
+   *   - [[BigQueryIO.FailedStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
    */
   def saveAsBigQueryTable(
     table: Table,
@@ -98,6 +113,20 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
   /**
    * Save this SCollection as a BigQuery TableRow JSON text file. Note that elements must be of type
    * [[com.google.api.services.bigquery.model.TableRow TableRow]].
+   *
+   * @return
+   *   a [[ClosedTap]] containing some side output(s) depending on the given parameters
+   *   - [[BigQueryIO.SuccessfulTableLoads]] if `method` is [[Method.FILE_LOADS]].
+   *   - [[BigQueryIO.SuccessfulInserts]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `successfulInsertsPropagation` is `true`.
+   *   - [[BigQueryIO.SuccessfulStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
+   *   - [[BigQueryIO.FailedInserts]] if `method` is [[Method.FILE_LOADS]] or
+   *     [[Method.STREAMING_INSERTS]].
+   *   - [[BigQueryIO.FailedInsertsWithErr]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `extendedErrorInfo` is `true`.
+   *   - [[BigQueryIO.FailedStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
    */
   def saveAsTableRowJsonFile(
     path: String,
@@ -133,6 +162,20 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
   /**
    * Save this SCollection as a BigQuery table using Avro writing function. Note that elements must
    * be of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   *
+   * @return
+   *   a [[ClosedTap]] containing some side output(s) depending on the given parameters
+   *   - [[BigQueryIO.SuccessfulTableLoads]] if `method` is [[Method.FILE_LOADS]].
+   *   - [[BigQueryIO.SuccessfulInserts]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `successfulInsertsPropagation` is `true`.
+   *   - [[BigQueryIO.SuccessfulStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
+   *   - [[BigQueryIO.FailedInserts]] if `method` is [[Method.FILE_LOADS]] or
+   *     [[Method.STREAMING_INSERTS]].
+   *   - [[BigQueryIO.FailedInsertsWithErr]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `extendedErrorInfo` is `true`.
+   *   - [[BigQueryIO.FailedStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
    */
   def saveAsBigQueryTable(
     table: Table,
@@ -210,6 +253,20 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    *   .sample(withReplacement = false, fraction = 0.1)
    *   .saveAsTypedBigQueryTable(Table.Spec("myproject:samples.gsod"))
    * }}}
+   *
+   * *
+   * @return
+   *   a [[ClosedTap]] containing some side output(s) depending on the given parameters
+   *   - [[BigQueryIO.SuccessfulTableLoads]] if `method` is [[Method.FILE_LOADS]].
+   *   - [[BigQueryIO.SuccessfulInserts]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `successfulInsertsPropagation` is `true`.
+   *   - [[BigQueryIO.SuccessfulStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
+   *   - [[BigQueryIO.FailedInserts]] if `method` is [[Method.STREAMING_INSERTS]].
+   *   - [[BigQueryIO.FailedInsertsWithErr]] if `method` is [[Method.STREAMING_INSERTS]] and
+   *     `extendedErrorInfo` is `true`.
+   *   - [[BigQueryIO.FailedStorageApiInserts]] if `method` id [[Method.STORAGE_WRITE_API]] or
+   *     [[Method.STORAGE_API_AT_LEAST_ONCE]].
    */
   def saveAsTypedBigQueryTable(
     table: Table,
