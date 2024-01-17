@@ -46,7 +46,8 @@ object BigQueryTornadoes {
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
-    sc.bigQueryTable(table)
+    val resultTap = sc
+      .bigQueryTable(table)
       // Extract months with tornadoes
       .flatMap(r => if (r.getBoolean("tornado")) Some(r.getLong("month")) else None)
       // Count occurrences of each unique month to get `(Long, Long)`
@@ -56,8 +57,19 @@ object BigQueryTornadoes {
       // Save result as a BigQuery table
       .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
+    // Access the loaded tables
+    resultTap
+      .output(BigQueryIO.SuccessfulTableLoads)
+      .map(_.getTableSpec)
+      .debug(prefix = "Loaded table: ")
+
+    // Access the failed records
+    resultTap
+      .output(BigQueryIO.FailedInserts)
+      .count
+      .debug(prefix = "Failed inserts: ")
+
     // Execute the pipeline
     sc.run()
-    ()
   }
 }

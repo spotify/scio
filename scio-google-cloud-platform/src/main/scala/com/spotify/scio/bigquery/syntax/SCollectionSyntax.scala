@@ -69,6 +69,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
     sharding: Sharding = TypedTableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy =
       TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
+    successfulInsertsPropagation: Boolean = TableWriteParam.DefaultSuccessfulInsertsPropagation,
     extendedErrorInfo: Boolean = TypedTableWriteParam.DefaultExtendedErrorInfo,
     configOverride: TypedTableWriteParam.ConfigOverride[TableRow] =
       TableWriteParam.DefaultConfigOverride
@@ -84,6 +85,7 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
+      successfulInsertsPropagation,
       extendedErrorInfo,
       configOverride
     )
@@ -145,6 +147,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
     sharding: Sharding = TypedTableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy =
       TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
+    successfulInsertsPropagation: Boolean = TableWriteParam.DefaultSuccessfulInsertsPropagation,
     extendedErrorInfo: Boolean = TypedTableWriteParam.DefaultExtendedErrorInfo,
     configOverride: TypedTableWriteParam.ConfigOverride[GenericRecord] =
       TypedTableWriteParam.DefaultConfigOverride
@@ -160,6 +163,7 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
+      successfulInsertsPropagation,
       extendedErrorInfo,
       configOverride
     )
@@ -217,6 +221,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
     triggeringFrequency: Duration = TableWriteParam.DefaultTriggeringFrequency,
     sharding: Sharding = TableWriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy,
+    successfulInsertsPropagation: Boolean = TableWriteParam.DefaultSuccessfulInsertsPropagation,
     extendedErrorInfo: Boolean = TableWriteParam.DefaultExtendedErrorInfo,
     configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.DefaultConfigOverride
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
@@ -229,6 +234,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
+      successfulInsertsPropagation,
       extendedErrorInfo,
       configOverride
     )

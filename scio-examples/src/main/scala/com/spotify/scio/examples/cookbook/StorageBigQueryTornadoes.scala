@@ -27,6 +27,7 @@ import com.spotify.scio.bigquery._
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.examples.common.ExampleData
 import com.google.api.services.bigquery.model.{TableFieldSchema, TableSchema}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.Method
 
 import scala.jdk.CollectionConverters._
 
@@ -45,20 +46,40 @@ object StorageBigQueryTornadoes {
 
     // Open a BigQuery table as a `SCollection[TableRow]`
     val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
-    sc.bigQueryStorage(
-      table,
-      selectedFields = List("tornado", "month"),
-      rowRestriction = "tornado = true"
-    ).map(_.getLong("month"))
+    val resultTap = sc
+      .bigQueryStorage(
+        table,
+        selectedFields = List("tornado", "month"),
+        rowRestriction = "tornado = true"
+      )
+      .map(_.getLong("month"))
       // Count occurrences of each unique month to get `(Long, Long)`
       .countByValue
       // Map `(Long, Long)` tuples into result `TableRow`s
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(
+        table = Table.Spec(args("output")),
+        schema = schema,
+        writeDisposition = WRITE_TRUNCATE,
+        createDisposition = CREATE_IF_NEEDED,
+        method = Method.STORAGE_WRITE_API,
+        successfulInsertsPropagation = true
+      )
+
+    // Access the inserted records
+    resultTap
+      .output(BigQueryIO.SuccessfulStorageApiInserts)
+      .count
+      .debug(prefix = "Successful inserts: ")
+
+    // Access the failed records
+    resultTap
+      .output(BigQueryIO.FailedStorageApiInserts)
+      .count
+      .debug(prefix = "Failed inserts: ")
 
     // Execute the pipeline
     sc.run()
-    ()
   }
 }

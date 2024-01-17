@@ -21,14 +21,18 @@ import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.bigquery.dynamic._
 import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{BigQueryIO, TableRow}
+import com.spotify.scio.bigquery.{TableRow, Writes}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.util.Functions
-import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
+  CreateDisposition,
+  Method,
+  WriteDisposition
+}
 import org.apache.beam.sdk.io.gcp.bigquery.{DynamicDestinations, TableDestination}
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-import org.apache.beam.sdk.values.{PCollection, PCollectionTuple, ValueInSingleWindow}
+import org.apache.beam.sdk.values.ValueInSingleWindow
 
 import scala.reflect.runtime.universe._
 import scala.util.chaining._
@@ -48,6 +52,7 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
     formatFn: T => TableRow,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
+    successfulInsertsPropagation: Boolean = false,
     extendedErrorInfo: Boolean = false
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
@@ -56,33 +61,20 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
       )
     }
 
+    val method = Method.DEFAULT
     val t = beam.BigQueryIO
       .write()
       .to(destinations)
       .withFormatFunction(Functions.serializableFn(formatFn))
       .pipe(w => Option(createDisposition).fold(w)(w.withCreateDisposition))
       .pipe(w => Option(writeDisposition).fold(w)(w.withWriteDisposition))
+      .pipe(w => Writes.withSuccessfulInsertsPropagation(method, w)(successfulInsertsPropagation))
       .pipe(w => if (extendedErrorInfo) w.withExtendedErrorInfo() else w)
 
     val wr = self.applyInternal(t)
-
-    var tuple = PCollectionTuple.empty(self.context.pipeline)
-    if (self.internal.isBounded == PCollection.IsBounded.BOUNDED) {
-      // batch, method is FILE_LOADS
-      tuple = tuple.and(BigQueryIO.SuccessfulTableLoads.tupleTag, wr.getSuccessfulTableLoads)
-    } else {
-      // streaming, method is  STREAMING_INSERTS
-      tuple = tuple.and(BigQueryIO.SuccessfulInserts.tupleTag, wr.getSuccessfulInserts)
-    }
-
-    if (extendedErrorInfo) {
-      tuple = tuple.and(BigQueryIO.FailedInsertsWithErr.tupleTag, wr.getFailedInsertsWithErr)
-    } else {
-      tuple = tuple.and(BigQueryIO.FailedInserts.tupleTag, wr.getFailedInserts)
-    }
-
-    val sides = new SideOutputCollections(tuple, self.context)
-    ClosedTap[Nothing](EmptyTap, Some(sides))
+    val outputs =
+      Writes.sideOutputs(self, method, successfulInsertsPropagation, extendedErrorInfo, wr)
+    ClosedTap[Nothing](EmptyTap, Some(outputs))
   }
 }
 

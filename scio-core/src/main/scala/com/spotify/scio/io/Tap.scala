@@ -160,7 +160,7 @@ object MaterializeTap {
 
 final case class ClosedTap[T] private (
   private[scio] val underlying: Tap[T],
-  private[scio] val sides: Option[SideOutputCollections] = None
+  private[scio] val outputs: Option[SideOutputCollections] = None
 ) {
 
   /**
@@ -170,5 +170,5 @@ final case class ClosedTap[T] private (
    *   ScioContext.run
    */
   def get(result: ScioResult): Tap[T] = result.tap(this)
-  def output[U](sideOutput: SideOutput[U]): SCollection[U] = sides.get(sideOutput)
+  def output[U](sideOutput: SideOutput[U]): SCollection[U] = outputs.get(sideOutput)
 }
