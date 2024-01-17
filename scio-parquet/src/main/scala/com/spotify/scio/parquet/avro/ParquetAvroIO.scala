@@ -119,16 +119,6 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     val isAssignable = classOf[SpecificRecord].isAssignableFrom(cls)
     val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else params.schema
     val conf = ParquetConfiguration.ofNullable(params.conf)
-    if (
-      conf.get(AvroWriteSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
-        writerSchema
-      )
-    ) {
-      ParquetAvroIO.log.warn(
-        s"Detected a logical type in schema `$writerSchema`, but Configuration key `${AvroWriteSupport.AVRO_DATA_SUPPLIER}`" +
-          s"was not set to a logical type supplier. See https://spotify.github.io/scio/io/Parquet.html#logical-types for more information."
-      )
-    }
 
     data.applyInternal(
       parquetOut(
@@ -185,18 +175,6 @@ object ParquetAvroIO {
 
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
       val jobConf = ParquetConfiguration.ofNullable(conf)
-
-      if (
-        jobConf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO
-          .containsLogicalType(
-            readSchema
-          )
-      ) {
-        log.warn(
-          s"Detected a logical type in schema `$readSchema`, but Configuration key `${AvroReadSupport.AVRO_DATA_SUPPLIER}`" +
-            s"was not set to a logical type supplier. See https://spotify.github.io/scio/io/Parquet.html#logical-types for more information."
-        )
-      }
 
       // Needed to make GenericRecord read by parquet-avro work with Beam's
       // org.apache.beam.sdk.extensions.avro.coders.AvroCoder
@@ -281,16 +259,6 @@ object ParquetAvroIO {
 
       sc.applyTransform(transform).map(_.getValue)
     }
-  }
-
-  private[avro] def containsLogicalType(s: Schema): Boolean = {
-    s.getLogicalType != null || (s.getType match {
-      case Schema.Type.RECORD => s.getFields.asScala.exists(f => containsLogicalType(f.schema()))
-      case Schema.Type.ARRAY  => containsLogicalType(s.getElementType)
-      case Schema.Type.UNION  => s.getTypes.asScala.exists(t => containsLogicalType(t))
-      case Schema.Type.MAP    => containsLogicalType(s.getValueType)
-      case _                  => false
-    })
   }
 
   object WriteParam {
