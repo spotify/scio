@@ -280,6 +280,7 @@ class TapTest extends TapSpec {
     ) shouldBe CompressorStreamFactory.DEFLATE
 
     // Assert that we can still materialize it in a tap
-    runWithLocalOutput(_.parallelize(Seq(element))) should contain only element
+    val (_, tapped) = runWithLocalOutput(_.parallelize(Seq(element)))
+    tapped should contain only element
   }
 }
