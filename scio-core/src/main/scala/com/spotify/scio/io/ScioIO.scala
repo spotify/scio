@@ -20,7 +20,7 @@ package com.spotify.scio.io
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.TestDataManager
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, SideOutputCollections}
 
 import scala.annotation.unused
 
@@ -93,8 +93,10 @@ trait ScioIO[T] {
    * Write `data` out according to write configuration provided in `params`, or if this is a test
    * write to TestDataManager, returning the Tap type
    */
-  private[scio] def writeWithContext(data: SCollection[T], params: WriteP): ClosedTap[tapT.T] =
-    ClosedTap(if (data.context.isTest) writeTest(data, params) else write(data, params))
+  private[scio] def writeWithContext(data: SCollection[T], params: WriteP): ClosedTap[tapT.T] = {
+    val tap = if (data.context.isTest) writeTest(data, params) else write(data, params)
+    ClosedTap(tap)
+  }
 
   /**
    * Write `data` out according to write configuration provided in `params`, returning the Tap type.
@@ -165,6 +167,33 @@ trait KeyedIO[T] { self: ScioIO[T] =>
   type KeyT
   def keyBy: T => KeyT
   def keyCoder: Coder[KeyT]
+}
+
+trait WriteResultIO[T] { self: ScioIO[T] =>
+  override private[scio] def writeWithContext(
+    data: SCollection[T],
+    params: WriteP
+  ): ClosedTap[tapT.T] = {
+    if (data.context.isTest) {
+      val tap = writeTest(data, params)
+      // TODO: add possibility to fill this for testing
+      val output = SideOutputCollections.empty(data.context)
+      ClosedTap(tap, Some(output))
+    } else {
+      val (tap, outputs) = writeWithResult(data, params)
+      ClosedTap(tap, Some(outputs))
+    }
+  }
+
+  final override def write(data: SCollection[T], params: self.WriteP): Tap[self.tapT.T] =
+    throw new UnsupportedOperationException(
+      "WriteResultIO cannot be used with #write. Use #writeWithResult instead"
+    )
+
+  protected def writeWithResult(
+    data: SCollection[T],
+    params: self.WriteP
+  ): (Tap[self.tapT.T], SideOutputCollections)
 }
 
 /**

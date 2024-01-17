@@ -45,7 +45,8 @@ object TypedBigQueryTornadoes {
 
     // Get input from BigQuery and convert elements from `TableRow` to `Row`.
     // SELECT query from the original annotation is used by default.
-    sc.typedBigQuery[Row]()
+    val resultTap = sc
+      .typedBigQuery[Row]()
       .flatMap(r => if (r.tornado.getOrElse(false)) Seq(r.month) else Nil)
       .countByValue
       .map(kv => Result(kv._1, kv._2))
@@ -55,6 +56,18 @@ object TypedBigQueryTornadoes {
         writeDisposition = WRITE_TRUNCATE,
         createDisposition = CREATE_IF_NEEDED
       )
+
+    // Access the loaded tables
+    resultTap
+      .output(BigQueryIO.SuccessfulTableLoads)
+      .map(_.getTableSpec)
+      .debug(prefix = "Loaded table: ")
+
+    // Access the failed records
+    resultTap
+      .output(BigQueryIO.FailedInserts)
+      .count
+      .debug(prefix = "Failed inserts: ")
 
     sc
   }

@@ -25,6 +25,7 @@ package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigquery._
 import com.spotify.scio.{ContextAndArgs, ScioContext}
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.Method
 
 object TypedStorageBigQueryTornadoes {
   // Annotate input class with schema inferred.
@@ -49,16 +50,32 @@ object TypedStorageBigQueryTornadoes {
 
     // Get input from BigQuery and convert elements from `TableRow` to `Row`.
     // SELECT query from the original annotation is used by default.
-    sc.typedBigQuery[Row]()
+    val resultTap = sc
+      .typedBigQuery[Row]()
       .map(_.month)
       .countByValue
       .map(kv => Result(kv._1, kv._2))
       // Convert elements from Result to TableRow and save output to BigQuery.
       .saveAsTypedBigQueryTable(
         Table.Spec(args("output")),
+        method = Method.STORAGE_WRITE_API,
         writeDisposition = WRITE_TRUNCATE,
-        createDisposition = CREATE_IF_NEEDED
+        createDisposition = CREATE_IF_NEEDED,
+        successfulInsertsPropagation = true
       )
+
+    // Access the inserted records
+    resultTap
+      .output(BigQueryIO.SuccessfulStorageApiInserts)
+      .count
+      .debug(prefix = "Successful inserts: ")
+
+    // Access the failed records
+    resultTap
+      .output(BigQueryIO.FailedStorageApiInserts)
+      .count
+      .debug(prefix = "Failed inserts: ")
+
     sc
   }
 

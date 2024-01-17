@@ -20,7 +20,7 @@ package com.spotify.scio.io
 import java.util.UUID
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.util.ScioUtil
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
 import com.spotify.scio.{ScioContext, ScioResult}
 import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
@@ -158,7 +158,10 @@ object MaterializeTap {
   }
 }
 
-final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {
+final case class ClosedTap[T] private (
+  private[scio] val underlying: Tap[T],
+  private[scio] val outputs: Option[SideOutputCollections] = None
+) {
 
   /**
    * Get access to the underlying Tap. The ScioContext has to be ran before. An instance of
@@ -167,4 +170,5 @@ final case class ClosedTap[T] private (private[scio] val underlying: Tap[T]) {
    *   ScioContext.run
    */
   def get(result: ScioResult): Tap[T] = result.tap(this)
+  def output[U](sideOutput: SideOutput[U]): SCollection[U] = outputs.get(sideOutput)
 }

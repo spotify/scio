@@ -17,17 +17,14 @@
 
 package com.spotify.scio.bigquery
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function
 import com.google.api.services.bigquery.model.TableSchema
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigquery.ExtendedErrorInfo._
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.coders._
-import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT, TestIO, TextIO}
+import com.spotify.scio.io._
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
 import com.twitter.chill.ClosureCleaner
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
@@ -38,17 +35,14 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   Method => WriteMethod,
   WriteDisposition
 }
-import org.apache.beam.sdk.io.gcp.bigquery.{
-  BigQueryAvroUtilsWrapper,
-  BigQueryUtils,
-  InsertRetryPolicy,
-  SchemaAndRecord,
-  WriteResult
-}
+import org.apache.beam.sdk.io.gcp.bigquery._
 import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.transforms.SerializableFunction
+import org.apache.beam.sdk.values.{PCollection, PCollectionTuple}
 import org.joda.time.Duration
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function
 import scala.jdk.CollectionConverters._
 import scala.reflect.runtime.universe._
 import scala.util.chaining._
@@ -103,15 +97,96 @@ private object Reads {
 }
 
 private[bigquery] object Writes {
+  def resolveMethod(
+    method: WriteMethod,
+    options: BigQueryOptions,
+    isBounded: PCollection.IsBounded
+  ): WriteMethod = (method, isBounded) match {
+    case (WriteMethod.DEFAULT, _)
+        if options.getUseStorageWriteApi && options.getUseStorageWriteApiAtLeastOnce =>
+      WriteMethod.STORAGE_API_AT_LEAST_ONCE
+    case (WriteMethod.DEFAULT, _) if options.getUseStorageWriteApi =>
+      WriteMethod.STORAGE_WRITE_API
+    case (WriteMethod.DEFAULT, PCollection.IsBounded.BOUNDED) =>
+      WriteMethod.FILE_LOADS
+    case (WriteMethod.DEFAULT, PCollection.IsBounded.UNBOUNDED) =>
+      WriteMethod.STREAMING_INSERTS
+    case _ =>
+      method
+  }
 
-  trait WriteParam[T, Info] {
+  def withSharding[T](method: WriteMethod, w: beam.BigQueryIO.Write[T])(
+    sharding: Sharding
+  ): beam.BigQueryIO.Write[T] = {
+    import WriteMethod._
+    (sharding, method) match {
+      case (Sharding.Auto, _) =>
+        w.withAutoSharding()
+      case (Sharding.Manual(numShards), FILE_LOADS) =>
+        w.withNumFileShards(numShards)
+      case (Sharding.Manual(numShards), STORAGE_WRITE_API | STORAGE_API_AT_LEAST_ONCE) =>
+        w.withNumStorageWriteApiStreams(numShards)
+      case _ =>
+        w
+    }
+  }
+
+  def withSuccessfulInsertsPropagation[T](method: WriteMethod, w: beam.BigQueryIO.Write[T])(
+    successfulInsertsPropagation: Boolean
+  ): beam.BigQueryIO.Write[T] = {
+    import WriteMethod._
+    method match {
+      case STREAMING_INSERTS =>
+        w.withSuccessfulInsertsPropagation(successfulInsertsPropagation)
+      case STORAGE_WRITE_API | STORAGE_API_AT_LEAST_ONCE =>
+        w.withPropagateSuccessfulStorageApiWrites(successfulInsertsPropagation)
+      case _ =>
+        w
+    }
+  }
+
+  def sideOutputs(
+    data: SCollection[_],
+    method: WriteMethod,
+    successfulInsertsPropagation: Boolean,
+    extendedErrorInfo: Boolean,
+    result: WriteResult
+  ): SideOutputCollections = {
+    import WriteMethod._
+    val sc = data.context
+    var tuple = PCollectionTuple.empty(sc.pipeline)
+    // success side output
+    method match {
+      case FILE_LOADS =>
+        tuple = tuple.and(BigQueryIO.SuccessfulTableLoads.tupleTag, result.getSuccessfulTableLoads)
+      case STREAMING_INSERTS if successfulInsertsPropagation =>
+        tuple = tuple.and(BigQueryIO.SuccessfulInserts.tupleTag, result.getSuccessfulInserts)
+      case STORAGE_WRITE_API | STORAGE_API_AT_LEAST_ONCE if successfulInsertsPropagation =>
+        tuple = tuple.and(
+          BigQueryIO.SuccessfulStorageApiInserts.tupleTag,
+          result.getSuccessfulStorageApiInserts
+        )
+      case _ =>
+        ()
+    }
+    // failure side output
+    method match {
+      case STREAMING_INSERTS if extendedErrorInfo =>
+        tuple = tuple.and(BigQueryIO.FailedInsertsWithErr.tupleTag, result.getFailedInsertsWithErr)
+      case FILE_LOADS | STREAMING_INSERTS =>
+        tuple = tuple.and(BigQueryIO.FailedInserts.tupleTag, result.getFailedInserts)
+      case STORAGE_WRITE_API | STORAGE_API_AT_LEAST_ONCE =>
+        tuple =
+          tuple.and(BigQueryIO.FailedStorageApiInserts.tupleTag, result.getFailedStorageApiInserts)
+      case _ =>
+        ()
+    }
+
+    SideOutputCollections(tuple, sc)
+  }
+
+  trait WriteParam[T] {
     def configOverride: beam.BigQueryIO.Write[T] => beam.BigQueryIO.Write[T]
-
-    def extendedErrorInfo: ExtendedErrorInfo[Info]
-    def insertErrorTransform: SCollection[Info] => Unit
-
-    def handleErrors(sc: ScioContext, wr: WriteResult): Unit =
-      insertErrorTransform(extendedErrorInfo.coll(sc, wr))
   }
 
   trait WriteParamDefaults {
@@ -128,13 +203,9 @@ private[bigquery] object Writes {
     val DefaultTriggeringFrequency: Duration = null
     val DefaultSharding: Sharding = null
     val DefaultFailedInsertRetryPolicy: InsertRetryPolicy = null
-    val DefaultExtendedErrorInfo: ExtendedErrorInfo[TableRow] = ExtendedErrorInfo.Disabled
-    def defaultConfigOverride[T]: ConfigOverride[T] = identity
-    def defaultInsertErrorTransform[T]: SCollection[T] => Unit = { sc =>
-      // A NoOp on the failed inserts, so that we don't have DropInputs (UnconsumedReads)
-      // in the pipeline graph.
-      sc.withName("DropFailedInserts").map(_ => ())
-    }
+    val DefaultSuccessfulInsertsPropagation: Boolean = false
+    val DefaultExtendedErrorInfo: Boolean = false
+    val DefaultConfigOverride: Null = null
   }
 }
 
@@ -143,6 +214,23 @@ sealed trait BigQueryIO[T] extends ScioIO[T] {
 }
 
 object BigQueryIO {
+  implicit lazy val coderTableDestination: Coder[TableDestination] = Coder.kryo
+
+  lazy val SuccessfulTableLoads: SideOutput[TableDestination] = SideOutput()
+  lazy val SuccessfulInserts: SideOutput[TableRow] = SideOutput()
+  lazy val SuccessfulStorageApiInserts: SideOutput[TableRow] = SideOutput()
+
+  implicit lazy val coderBigQueryInsertError: Coder[BigQueryInsertError] = Coder.kryo
+  implicit lazy val coderBigQueryStorageApiInsertError: Coder[BigQueryStorageApiInsertError] =
+    Coder.kryo
+
+  lazy val FailedInserts: SideOutput[TableRow] = SideOutput()
+  lazy val FailedInsertsWithErr: SideOutput[BigQueryInsertError] = SideOutput()
+  lazy val FailedStorageApiInserts: SideOutput[BigQueryStorageApiInsertError] = SideOutput()
+
+  private[bigquery] val storageWriteMethod =
+    Set(WriteMethod.STORAGE_WRITE_API, WriteMethod.STORAGE_API_AT_LEAST_ONCE)
+
   @inline final def apply[T](id: String): BigQueryIO[T] =
     new BigQueryIO[T] with TestIO[T] {
       override def testId: String = s"BigQueryIO($id)"
@@ -244,7 +332,7 @@ object BigQueryTypedTable {
     case object TableRow extends Format[TableRow]
   }
 
-  final case class WriteParam[T, Info] private (
+  final case class WriteParam[T] private (
     method: WriteMethod,
     schema: TableSchema,
     writeDisposition: WriteDisposition,
@@ -255,10 +343,10 @@ object BigQueryTypedTable {
     triggeringFrequency: Duration,
     sharding: Sharding,
     failedInsertRetryPolicy: InsertRetryPolicy,
-    configOverride: WriteParam.ConfigOverride[T],
-    extendedErrorInfo: ExtendedErrorInfo[Info],
-    insertErrorTransform: SCollection[Info] => Unit
-  ) extends Writes.WriteParam[T, Info]
+    successfulInsertsPropagation: Boolean,
+    extendedErrorInfo: Boolean,
+    configOverride: WriteParam.ConfigOverride[T]
+  ) extends Writes.WriteParam[T]
 
   object WriteParam extends Writes.WriteParamDefaults {
     @inline final def apply[T](
@@ -272,8 +360,10 @@ object BigQueryTypedTable {
       triggeringFrequency: Duration = DefaultTriggeringFrequency,
       sharding: Sharding = DefaultSharding,
       failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy,
-      configOverride: ConfigOverride[T] = defaultConfigOverride
-    ): WriteParam[T, TableRow] = new WriteParam(
+      successfulInsertsPropagation: Boolean = DefaultSuccessfulInsertsPropagation,
+      extendedErrorInfo: Boolean = DefaultExtendedErrorInfo,
+      configOverride: ConfigOverride[T] = DefaultConfigOverride
+    ): WriteParam[T] = new WriteParam(
       method,
       schema,
       writeDisposition,
@@ -284,9 +374,9 @@ object BigQueryTypedTable {
       triggeringFrequency,
       sharding,
       failedInsertRetryPolicy,
-      configOverride,
-      DefaultExtendedErrorInfo,
-      defaultInsertErrorTransform
+      successfulInsertsPropagation,
+      extendedErrorInfo,
+      configOverride
     )
   }
 
@@ -365,9 +455,10 @@ final case class BigQueryTypedTable[T: Coder](
   writer: beam.BigQueryIO.Write[T],
   table: Table,
   fn: (GenericRecord, TableSchema) => T
-) extends BigQueryIO[T] {
+) extends BigQueryIO[T]
+    with WriteResultIO[T] {
   override type ReadP = Unit
-  override type WriteP = BigQueryTypedTable.WriteParam[T, _]
+  override type WriteP = BigQueryTypedTable.WriteParam[T]
 
   override def testId: String = s"BigQueryIO(${table.spec})"
 
@@ -377,7 +468,16 @@ final case class BigQueryTypedTable[T: Coder](
     sc.applyTransform(s"Read BQ table ${table.spec}", io)
   }
 
-  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+  override protected def writeWithResult(
+    data: SCollection[T],
+    params: WriteP
+  ): (Tap[T], SideOutputCollections) = {
+    val method = Writes.resolveMethod(
+      params.method,
+      data.context.optionsAs[BigQueryOptions],
+      data.internal.isBounded
+    )
+
     val transform = writer
       .to(table.ref)
       .withMethod(params.method)
@@ -388,25 +488,24 @@ final case class BigQueryTypedTable[T: Coder](
       .pipe(w => Option(params.timePartitioning).map(_.asJava).fold(w)(w.withTimePartitioning))
       .pipe(w => Option(params.clustering).map(_.asJava).fold(w)(w.withClustering))
       .pipe(w => Option(params.triggeringFrequency).fold(w)(w.withTriggeringFrequency))
+      .pipe(w => Option(params.sharding).fold(w)(Writes.withSharding(method, w)))
       .pipe(w =>
-        Option(params.sharding).fold(w) {
-          case Sharding.Auto =>
-            w.withAutoSharding()
-          case Sharding.Manual(numShards) =>
-            // Depending on method, sharding uses a different API
-            // for FILE_LOADS
-            w.withNumFileShards(numShards)
-            // for STORAGE_WRITE_API & STORAGE_API_AT_LEAST_ONCE
-            w.withNumStorageWriteApiStreams(numShards)
-          // For STREAMING_INSERTS, manual sharding must be set through NumStreamingKeys pipeline option
-        }
+        Writes.withSuccessfulInsertsPropagation(method, w)(params.successfulInsertsPropagation)
       )
+      .pipe(w => if (params.extendedErrorInfo) w.withExtendedErrorInfo() else w)
       .pipe(w => Option(params.failedInsertRetryPolicy).fold(w)(w.withFailedInsertRetryPolicy))
-      .pipe(params.configOverride)
-      .pipe(w => if (params.extendedErrorInfo == Disabled) w else w.withExtendedErrorInfo())
+      .pipe(w => Option(params.configOverride).fold(w)(_(w)))
 
-    params.handleErrors(data.context, data.applyInternal(transform))
-    tap(())
+    val wr = data.applyInternal(transform)
+    val outputs = Writes.sideOutputs(
+      data,
+      method,
+      params.successfulInsertsPropagation,
+      params.extendedErrorInfo,
+      wr
+    )
+
+    (tap(()), outputs)
   }
 
   override def tap(read: ReadP): Tap[T] = BigQueryTypedTap(table, fn)
@@ -633,9 +732,11 @@ object BigQueryTyped {
   }
 
   /** Get a typed SCollection for a BigQuery table. */
-  final case class Table[T <: HasAnnotation: TypeTag: Coder](table: STable) extends BigQueryIO[T] {
+  final case class Table[T <: HasAnnotation: TypeTag: Coder](table: STable)
+      extends BigQueryIO[T]
+      with WriteResultIO[T] {
     override type ReadP = Unit
-    override type WriteP = Table.WriteParam[T, _]
+    override type WriteP = Table.WriteParam[T]
 
     private val underlying = BigQueryTypedTable[T](
       (i: SchemaAndRecord) => BigQueryType[T].fromAvro(i.getRecord),
@@ -649,11 +750,17 @@ object BigQueryTyped {
     override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
       sc.read(underlying)
 
-    override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-      data
+    override protected def writeWithResult(
+      data: SCollection[T],
+      params: WriteP
+    ): (Tap[T], SideOutputCollections) = {
+      val outputs = data
         .withName(s"${data.tfName}$$Write")
         .write(underlying)(params)
-      tap(())
+        .outputs
+        .get
+
+      (tap(()), outputs)
     }
 
     override def tap(read: ReadP): Tap[T] =
@@ -661,7 +768,7 @@ object BigQueryTyped {
   }
 
   object Table {
-    final case class WriteParam[T, Info] private (
+    final case class WriteParam[T] private (
       method: WriteMethod,
       writeDisposition: WriteDisposition,
       createDisposition: CreateDisposition,
@@ -670,10 +777,10 @@ object BigQueryTyped {
       triggeringFrequency: Duration,
       sharding: Sharding,
       failedInsertRetryPolicy: InsertRetryPolicy,
-      configOverride: WriteParam.ConfigOverride[T],
-      extendedErrorInfo: ExtendedErrorInfo[Info],
-      insertErrorTransform: SCollection[Info] => Unit
-    ) extends Writes.WriteParam[T, Info]
+      successfulInsertsPropagation: Boolean,
+      extendedErrorInfo: Boolean,
+      configOverride: WriteParam.ConfigOverride[T]
+    ) extends Writes.WriteParam[T]
 
     object WriteParam extends Writes.WriteParamDefaults {
 
@@ -686,8 +793,10 @@ object BigQueryTyped {
         triggeringFrequency: Duration = DefaultTriggeringFrequency,
         sharding: Sharding = DefaultSharding,
         failedInsertRetryPolicy: InsertRetryPolicy = DefaultFailedInsertRetryPolicy,
-        configOverride: ConfigOverride[T]
-      ): WriteParam[T, TableRow] = new WriteParam(
+        successfulInsertsPropagation: Boolean = DefaultSuccessfulInsertsPropagation,
+        extendedErrorInfo: Boolean = DefaultExtendedErrorInfo,
+        configOverride: ConfigOverride[T] = DefaultConfigOverride
+      ): WriteParam[T] = new WriteParam(
         method,
         writeDisposition,
         createDisposition,
@@ -696,14 +805,14 @@ object BigQueryTyped {
         triggeringFrequency,
         sharding,
         failedInsertRetryPolicy,
-        configOverride,
-        DefaultExtendedErrorInfo,
-        defaultInsertErrorTransform
+        successfulInsertsPropagation,
+        extendedErrorInfo,
+        configOverride
       )
 
       implicit private[Table] def typedTableWriteParam[T: TypeTag, Info](
-        params: Table.WriteParam[T, Info]
-      ): BigQueryTypedTable.WriteParam[T, Info] =
+        params: Table.WriteParam[T]
+      ): BigQueryTypedTable.WriteParam[T] =
         BigQueryTypedTable.WriteParam(
           params.method,
           BigQueryType[T].schema,
@@ -715,9 +824,9 @@ object BigQueryTyped {
           params.triggeringFrequency,
           params.sharding,
           params.failedInsertRetryPolicy,
-          params.configOverride,
+          params.successfulInsertsPropagation,
           params.extendedErrorInfo,
-          params.insertErrorTransform
+          params.configOverride
         )
     }
 
