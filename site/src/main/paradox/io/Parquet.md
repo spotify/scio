@@ -114,11 +114,13 @@ def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output", schema
 
 ### Logical Types
 
-If your Avro schema contains a logical type, you'll need to supply an additional Configuration parameter for your reads and writes.
+As of **Scio 0.14.0** and above, Scio supports logical types in parquet-avro out of the box.
+
+If you're on an earlier version of Scio and your Avro schema contains a logical type, you'll need to supply an additional Configuration parameter for your reads and writes.
 
 If you're using the default version of Avro (1.8), you can use Scio's pre-built logical type conversions:
 
-```scala mdoc:compile-only
+```scala mdoc:fail:silent
 import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.parquet.avro._

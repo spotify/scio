@@ -149,10 +149,11 @@ mySchema
 
 SMB supports Parquet reads and writes in both Avro and case class formats.
 
-If you're using Parquet-Avro and your schema contains a _logical type_, you'll have to opt in to a logical type _supplier_
-in your Parquet `Configuration` parameter:
+As of **Scio 0.14.0** and above, Scio supports logical types in parquet-avro out of the box.
 
-```scala mdoc:reset
+Earlier versions of Scio require you to manually supply a _logical type supplier_ in your Parquet `Configuration` parameter:
+
+```scala mdoc:fail:silent
 import org.apache.avro.specific.SpecificRecordBase
 
 import org.apache.beam.sdk.extensions.smb.{AvroLogicalTypeSupplier, ParquetAvroSortedBucketIO}
