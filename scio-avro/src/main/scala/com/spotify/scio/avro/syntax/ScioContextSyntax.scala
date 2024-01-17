@@ -108,8 +108,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
       GenericRecordParseIO.ReadParam.DefaultDatumFactory
   )(
     parseFn: GenericRecord => T
-  ): SCollection[T] =
-    self.read(GenericRecordParseIO[T](path, parseFn))(GenericRecordParseIO.ReadParam(suffix))
+  ): SCollection[T] = {
+    val param = GenericRecordParseIO.ReadParam(suffix, datumFactory)
+    self.read(GenericRecordParseIO[T](path, parseFn))(param)
+  }
 
   /**
    * Get an SCollection of type [[org.apache.avro.specific.SpecificRecord SpecificRecord]] for an

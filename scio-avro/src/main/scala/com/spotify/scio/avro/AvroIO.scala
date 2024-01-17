@@ -26,12 +26,7 @@ import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.avro.specific.{SpecificData, SpecificRecord}
-import org.apache.beam.sdk.extensions.avro.io.{
-  AvroDatumFactory,
-  AvroIO => BAvroIO,
-  AvroSink,
-  AvroSource
-}
+import org.apache.beam.sdk.extensions.avro.io.{AvroDatumFactory, AvroIO => BAvroIO}
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
