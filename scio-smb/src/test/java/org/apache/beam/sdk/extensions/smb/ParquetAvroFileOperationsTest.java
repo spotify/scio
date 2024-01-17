@@ -37,9 +37,7 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.parquet.avro.AvroDataSupplier;
 import org.apache.parquet.avro.AvroReadSupport;
-import org.apache.parquet.avro.AvroWriteSupport;
 import org.apache.parquet.filter2.predicate.FilterApi;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
@@ -128,10 +126,6 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testLogicalTypes() throws Exception {
     final Configuration conf = new Configuration();
-    conf.setClass(
-        AvroWriteSupport.AVRO_DATA_SUPPLIER, AvroLogicalTypeSupplier.class, AvroDataSupplier.class);
-    conf.setClass(
-        AvroReadSupport.AVRO_DATA_SUPPLIER, AvroLogicalTypeSupplier.class, AvroDataSupplier.class);
 
     final ParquetAvroFileOperations<TestLogicalTypes> fileOperations =
         ParquetAvroFileOperations.of(TestLogicalTypes.class).withConfiguration(conf);
