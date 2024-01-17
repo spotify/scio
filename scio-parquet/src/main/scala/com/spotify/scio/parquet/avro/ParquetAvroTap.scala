@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Spotify AB.
+ * Copyright 2024 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ final case class ParquetAvroTap[A, T: ClassTag: Coder](
     xs.iterator.flatMap { metadata =>
       val reader = AvroParquetReader
         .builder[A](BeamInputFile.of(metadata.resourceId()))
-        .withConf(params.conf)
+        .withConf(params.confOrDefault)
         .build()
       new Iterator[T] {
         private var current: A = reader.read()

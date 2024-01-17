@@ -114,7 +114,11 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
   }
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
-    val writerSchema = params.setupConfigAndGetSchema[T]()
+    val avroClass = ScioUtil.classOf[T]
+    val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
+    val writerSchema = if (isSpecific) ReflectData.get().getSchema(avroClass) else params.schema
+
+    val conf = Option(params.conf).getOrElse(ParquetConfiguration.empty())
 
     data.applyInternal(
       parquetOut(
@@ -123,7 +127,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         params.suffix,
         params.numShards,
         params.compression,
-        params.conf,
+        conf,
         params.filenamePolicySupplier,
         params.prefix,
         params.shardNameTemplate,
@@ -145,7 +149,7 @@ object ParquetAvroIO {
   object ReadParam {
     val DefaultProjection: Schema = null
     val DefaultPredicate: FilterPredicate = null
-    def DefaultConfiguration: Configuration = ParquetConfiguration.empty()
+    val DefaultConfiguration: Configuration = null
     val DefaultSuffix: String = null
 
     private[scio] def apply[T: ClassTag](params: WriteParam): ReadParam[T, T] =
@@ -164,13 +168,14 @@ object ParquetAvroIO {
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = null
   ) {
+    lazy val confOrDefault = Option(conf).getOrElse(ParquetConfiguration.empty())
     val avroClass: Class[A] = ScioUtil.classOf[A]
     val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
     val readSchema: Schema =
       if (isSpecific) ReflectData.get().getSchema(avroClass) else projection
 
     def read(sc: ScioContext, path: String)(implicit coder: Coder[T]): SCollection[T] = {
-      if (ParquetReadConfiguration.getUseSplittableDoFn(conf, sc.options)) {
+      if (ParquetReadConfiguration.getUseSplittableDoFn(confOrDefault, sc.options)) {
         readSplittableDoFn(sc, path)
       } else {
         readLegacy(sc, path)
@@ -178,33 +183,21 @@ object ParquetAvroIO {
     }
 
     def setupConfig(): Unit = {
-      if (
-        conf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO
-          .containsLogicalType(
-            readSchema
-          )
-      ) {
-        log.warn(
-          s"Detected a logical type in schema `$readSchema`, but Configuration key `${AvroReadSupport.AVRO_DATA_SUPPLIER}`" +
-            s"was not set to a logical type supplier. See https://spotify.github.io/scio/io/Parquet.html#logical-types for more information."
-        )
-      }
-
-      AvroReadSupport.setAvroReadSchema(conf, readSchema)
+      AvroReadSupport.setAvroReadSchema(confOrDefault, readSchema)
       if (projection != null) {
-        AvroReadSupport.setRequestedProjection(conf, projection)
+        AvroReadSupport.setRequestedProjection(confOrDefault, projection)
       }
 
       if (predicate != null) {
-        ParquetInputFormat.setFilterPredicate(conf, predicate)
+        ParquetInputFormat.setFilterPredicate(confOrDefault, predicate)
       }
 
       // Needed to make GenericRecord read by parquet-avro work with Beam's
       // org.apache.beam.sdk.extensions.avro.coders.AvroCoder
       if (!isSpecific) {
-        conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
-        if (conf.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
-          conf.setClass(
+        confOrDefault.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false)
+        if (confOrDefault.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
+          confOrDefault.setClass(
             AvroReadSupport.AVRO_DATA_SUPPLIER,
             classOf[GenericDataSupplier],
             classOf[AvroDataSupplier]
@@ -223,11 +216,9 @@ object ParquetAvroIO {
       sc.applyTransform(
         ParquetRead.read[A, T](
           ReadSupportFactory.avro,
-          new SerializableConfiguration(conf),
+          new SerializableConfiguration(confOrDefault),
           filePattern,
-          Functions.serializableFn { x =>
-            cleanedProjectionFn(x)
-          }
+          Functions.serializableFn(cleanedProjectionFn)
         )
       ).setCoder(bCoder)
     }
@@ -235,7 +226,7 @@ object ParquetAvroIO {
     private def readLegacy(sc: ScioContext, path: String)(implicit
       coder: Coder[T]
     ): SCollection[T] = {
-      val job = Job.getInstance(conf)
+      val job = Job.getInstance(confOrDefault)
       val filePattern = ScioUtil.filePattern(path, suffix)
       GcsConnectorUtil.setInputPaths(sc, job, filePattern)
       job.setInputFormatClass(classOf[AvroParquetInputFormat[T]])
@@ -270,7 +261,7 @@ object ParquetAvroIO {
     val DefaultNumShards: Int = 0
     val DefaultSuffix: String = ".parquet"
     val DefaultCompression: CompressionCodecName = CompressionCodecName.ZSTD
-    def DefaultConfiguration: Configuration = ParquetConfiguration.empty()
+    val DefaultConfiguration: Configuration = null
     val DefaultFilenamePolicySupplier: FilenamePolicySupplier = null
     val DefaultPrefix: String = null
     val DefaultShardNameTemplate: String = null
@@ -287,25 +278,5 @@ object ParquetAvroIO {
     prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory
-  ) {
-
-    private[avro] def setupConfigAndGetSchema[T: ClassTag](): Schema = {
-      val avroClass = ScioUtil.classOf[T]
-      val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
-      val writerSchema = if (isSpecific) ReflectData.get().getSchema(avroClass) else schema
-
-      if (
-        conf.get(AvroWriteSupport.AVRO_DATA_SUPPLIER) == null && ParquetAvroIO.containsLogicalType(
-          writerSchema
-        )
-      ) {
-        ParquetAvroIO.log.warn(
-          s"Detected a logical type in schema `$writerSchema`, but Configuration key `${AvroWriteSupport.AVRO_DATA_SUPPLIER}`" +
-            s"was not set to a logical type supplier. See https://spotify.github.io/scio/io/Parquet.html#logical-types for more information."
-        )
-      }
-
-      writerSchema
-    }
-  }
+  )
 }
