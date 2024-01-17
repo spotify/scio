@@ -219,6 +219,9 @@ public class ParquetAvroSortedBucketIO {
 
     abstract Configuration getConfiguration();
 
+    @Nullable
+    abstract Schema getProjection();
+
     abstract Builder<T> toBuilder();
 
     @AutoValue.Builder
@@ -240,6 +243,8 @@ public class ParquetAvroSortedBucketIO {
       abstract Builder<T> setPredicate(Predicate<T> predicate);
 
       abstract Builder<T> setConfiguration(Configuration configuration);
+
+      abstract Builder<T> setProjection(Schema projection);
 
       abstract Read<T> build();
     }
@@ -274,14 +279,23 @@ public class ParquetAvroSortedBucketIO {
       return toBuilder().setConfiguration(configuration).build();
     }
 
+    public Read<T> withProjection(Schema projection) {
+      return toBuilder().setProjection(projection).build();
+    }
+
     @Override
     public BucketedInput<T> toBucketedInput(final SortedBucketSource.Keying keying) {
-      final Schema schema =
+      ParquetAvroFileOperations<T> fileOperations =
           getRecordClass() == null
-              ? getSchema()
-              : new ReflectData(getRecordClass().getClassLoader()).getSchema(getRecordClass());
-      final ParquetAvroFileOperations<T> fileOperations =
-          ParquetAvroFileOperations.of(schema, getFilterPredicate(), getConfiguration());
+              ? (ParquetAvroFileOperations<T>) ParquetAvroFileOperations.of(getSchema())
+              : ParquetAvroFileOperations.of(getRecordClass());
+
+      fileOperations =
+          fileOperations
+              .withFilterPredicate(getFilterPredicate())
+              .withProjection(getProjection())
+              .withConfiguration(getConfiguration());
+
       return BucketedInput.of(
           keying,
           getTupleTag(),
@@ -392,8 +406,13 @@ public class ParquetAvroSortedBucketIO {
     @Override
     public FileOperations<T> getFileOperations() {
       return getRecordClass() == null
-          ? ParquetAvroFileOperations.of(getSchema(), getCompression(), getConfiguration())
-          : ParquetAvroFileOperations.of(getRecordClass(), getCompression(), getConfiguration());
+          ? (FileOperations<T>)
+              ParquetAvroFileOperations.of(getSchema())
+                  .withCompression(getCompression())
+                  .withConfiguration(getConfiguration())
+          : ParquetAvroFileOperations.of(getRecordClass())
+              .withCompression(getCompression())
+              .withConfiguration(getConfiguration());
     }
 
     @Override
@@ -538,11 +557,12 @@ public class ParquetAvroSortedBucketIO {
     @SuppressWarnings("unchecked")
     @Override
     FileOperations<T> getFileOperations() {
-      final Schema schema =
+      ParquetAvroFileOperations<T> fileOperations =
           getRecordClass() == null
-              ? getSchema()
-              : new ReflectData(getRecordClass().getClassLoader()).getSchema(getRecordClass());
-      return ParquetAvroFileOperations.of(schema, getCompression(), getConfiguration());
+              ? (ParquetAvroFileOperations<T>) ParquetAvroFileOperations.of(getSchema())
+              : ParquetAvroFileOperations.of(getRecordClass());
+
+      return fileOperations.withConfiguration(getConfiguration());
     }
 
     @Override

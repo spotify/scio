@@ -17,6 +17,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
+import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
@@ -26,7 +27,6 @@ import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.filter2.predicate.FilterApi;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -39,8 +39,8 @@ public class ParquetAvroSortedBucketIOTest {
   @Test
   public void testReadSerializable() {
     final Configuration conf = new Configuration();
-    AvroReadSupport.setRequestedProjection(
-        conf, SchemaBuilder.record("Record").fields().requiredString("name").endRecord());
+    final Schema projection =
+        SchemaBuilder.record("Record").fields().requiredString("name").endRecord();
 
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
@@ -48,7 +48,8 @@ public class ParquetAvroSortedBucketIOTest {
                 ParquetAvroSortedBucketIO.read(new TupleTag<>("input"), AvroGeneratedUser.class)
                     .from(folder.toString())
                     .withConfiguration(conf)
-                    .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("test"), 5))));
+                    .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("test"), 5))
+                    .withProjection(projection)));
 
     SerializableUtils.ensureSerializable(
         SortedBucketIO.read(String.class)
@@ -57,7 +58,8 @@ public class ParquetAvroSortedBucketIOTest {
                         new TupleTag<>("input"), AvroGeneratedUser.getClassSchema())
                     .from(folder.toString())
                     .withConfiguration(conf)
-                    .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("test"), 5))));
+                    .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("test"), 5))
+                    .withProjection(projection)));
   }
 
   @Test

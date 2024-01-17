@@ -98,7 +98,7 @@ public class ParquetAvroFileOperationsTest {
   @Test
   public void testSpecificRecord() throws Exception {
     final ParquetAvroFileOperations<AvroGeneratedUser> fileOperations =
-        ParquetAvroFileOperations.of(AvroGeneratedUser.getClassSchema());
+        ParquetAvroFileOperations.of(AvroGeneratedUser.class);
     final ResourceId file =
         fromFolder(output)
             .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
@@ -134,8 +134,7 @@ public class ParquetAvroFileOperationsTest {
         AvroReadSupport.AVRO_DATA_SUPPLIER, AvroLogicalTypeSupplier.class, AvroDataSupplier.class);
 
     final ParquetAvroFileOperations<TestLogicalTypes> fileOperations =
-        ParquetAvroFileOperations.of(
-            TestLogicalTypes.getClassSchema(), CompressionCodecName.UNCOMPRESSED, conf);
+        ParquetAvroFileOperations.of(TestLogicalTypes.class).withConfiguration(conf);
     final ResourceId file =
         fromFolder(output)
             .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
@@ -175,11 +174,10 @@ public class ParquetAvroFileOperationsTest {
             .requiredString("name")
             .endRecord();
 
-    final Configuration configuration = new Configuration();
-    AvroReadSupport.setRequestedProjection(configuration, projection);
-
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(USER_SCHEMA, CompressionCodecName.ZSTD, configuration);
+        ParquetAvroFileOperations.of(USER_SCHEMA)
+            .withCompression(CompressionCodecName.ZSTD)
+            .withProjection(projection);
 
     final List<GenericRecord> expected =
         USER_RECORDS.stream()
@@ -200,12 +198,8 @@ public class ParquetAvroFileOperationsTest {
             .requiredString("name")
             .endRecord();
 
-    final Configuration configuration = new Configuration();
-    AvroReadSupport.setRequestedProjection(configuration, projection);
-
     final ParquetAvroFileOperations<AvroGeneratedUser> fileOperations =
-        ParquetAvroFileOperations.of(
-            AvroGeneratedUser.class, CompressionCodecName.UNCOMPRESSED, configuration);
+        ParquetAvroFileOperations.of(AvroGeneratedUser.class).withProjection(projection);
 
     final ResourceId file =
         fromFolder(output)
@@ -253,7 +247,7 @@ public class ParquetAvroFileOperationsTest {
     final FilterPredicate predicate = FilterApi.ltEq(FilterApi.intColumn("age"), 5);
 
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(USER_SCHEMA, predicate);
+        ParquetAvroFileOperations.of(USER_SCHEMA).withFilterPredicate(predicate);
 
     final List<GenericRecord> expected =
         USER_RECORDS.stream().filter(r -> (int) r.get("age") <= 5).collect(Collectors.toList());
@@ -281,7 +275,7 @@ public class ParquetAvroFileOperationsTest {
 
   private void writeFile(ResourceId file) throws IOException {
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(USER_SCHEMA, CompressionCodecName.ZSTD);
+        ParquetAvroFileOperations.of(USER_SCHEMA).withCompression(CompressionCodecName.ZSTD);
     final FileOperations.Writer<GenericRecord> writer = fileOperations.createWriter(file);
     for (GenericRecord record : USER_RECORDS) {
       writer.write(record);

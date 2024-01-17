@@ -22,6 +22,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.NoSuchElementException;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.beam.sdk.coders.Coder;
@@ -55,75 +56,48 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   private final Class<ValueT> recordClass;
   private final SerializableSchemaSupplier schemaSupplier;
-  private final CompressionCodecName compression;
-  private final SerializableConfiguration conf;
-  private final FilterPredicate predicate;
 
-  private ParquetAvroFileOperations(
-      Schema schema,
-      Class<ValueT> recordClass,
-      CompressionCodecName compression,
-      Configuration conf,
-      FilterPredicate predicate) {
+  private SerializableSchemaSupplier projectionSupplier;
+  private CompressionCodecName compression;
+  private SerializableConfiguration conf;
+  private FilterPredicate predicate;
+
+  private ParquetAvroFileOperations(Schema schema, Class<ValueT> recordClass) {
     super(Compression.UNCOMPRESSED, MimeTypes.BINARY);
     this.schemaSupplier = new SerializableSchemaSupplier(schema);
     this.recordClass = recordClass;
-    this.compression = compression;
-    this.conf = new SerializableConfiguration(conf);
-    this.predicate = predicate;
+    this.compression = DEFAULT_COMPRESSION;
+    this.conf = new SerializableConfiguration(new Configuration());
   }
 
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(Schema schema) {
-    return of(schema, DEFAULT_COMPRESSION);
-  }
-
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Schema schema, CompressionCodecName compression) {
-    return of(schema, compression, new Configuration());
-  }
-
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Schema schema, CompressionCodecName compression, Configuration conf) {
-    return new ParquetAvroFileOperations<>(schema, null, compression, conf, null);
-  }
-
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Schema schema, FilterPredicate predicate) {
-    return of(schema, predicate, new Configuration());
-  }
-
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Schema schema, FilterPredicate predicate, Configuration conf) {
-    return new ParquetAvroFileOperations<>(schema, null, DEFAULT_COMPRESSION, conf, predicate);
+  public static ParquetAvroFileOperations<GenericRecord> of(Schema schema) {
+    return new ParquetAvroFileOperations(schema, null);
   }
 
   public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(Class<V> recordClass) {
-    return of(recordClass, DEFAULT_COMPRESSION);
+    return new ParquetAvroFileOperations(
+        new ReflectData(recordClass.getClassLoader()).getSchema(recordClass), recordClass);
   }
 
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Class<V> recordClass, CompressionCodecName compression) {
-    return of(recordClass, compression, new Configuration());
+  public ParquetAvroFileOperations<ValueT> withConfiguration(Configuration configuration) {
+    this.conf = new SerializableConfiguration(configuration);
+    return this;
   }
 
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Class<V> recordClass, CompressionCodecName compression, Configuration conf) {
-    // Use reflection to get SR schema
-    final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
-    return new ParquetAvroFileOperations<>(schema, recordClass, compression, conf, null);
+  public ParquetAvroFileOperations<ValueT> withCompression(CompressionCodecName compression) {
+    this.compression = compression;
+    return this;
   }
 
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Class<V> recordClass, FilterPredicate predicate) {
-    return of(recordClass, predicate, new Configuration());
+  public ParquetAvroFileOperations<ValueT> withFilterPredicate(FilterPredicate filterPredicate) {
+    this.predicate = filterPredicate;
+    return this;
   }
 
-  public static <V extends IndexedRecord> ParquetAvroFileOperations<V> of(
-      Class<V> recordClass, FilterPredicate predicate, Configuration conf) {
-    // Use reflection to get SR schema
-    final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
-    return new ParquetAvroFileOperations<>(
-        schema, recordClass, DEFAULT_COMPRESSION, conf, predicate);
+  public ParquetAvroFileOperations<ValueT> withProjection(Schema projection) {
+    this.projectionSupplier =
+        (projection != null) ? new SerializableSchemaSupplier(projection) : null;
+    return this;
   }
 
   @Override
@@ -135,7 +109,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   @Override
   protected Reader<ValueT> createReader() {
-    return new ParquetAvroReader<>(schemaSupplier, conf, predicate);
+    return new ParquetAvroReader<>(schemaSupplier, projectionSupplier, conf, predicate);
   }
 
   @Override
@@ -160,29 +134,33 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
   ////////////////////////////////////////
 
   private static class ParquetAvroReader<ValueT> extends FileOperations.Reader<ValueT> {
-    private final SerializableSchemaSupplier schemaSupplier;
+    private final SerializableSchemaSupplier readSchemaSupplier;
+
+    private final SerializableSchemaSupplier projectionSchemaSupplier;
     private final SerializableConfiguration conf;
     private final FilterPredicate predicate;
     private transient ParquetReader<ValueT> reader;
     private transient ValueT current;
 
     private ParquetAvroReader(
-        SerializableSchemaSupplier schemaSupplier,
+        SerializableSchemaSupplier readSchemaSupplier,
+        SerializableSchemaSupplier projectionSchemaSupplier,
         SerializableConfiguration conf,
         FilterPredicate predicate) {
-      this.schemaSupplier = schemaSupplier;
+      this.readSchemaSupplier = readSchemaSupplier;
+      this.projectionSchemaSupplier = projectionSchemaSupplier;
       this.conf = conf;
       this.predicate = predicate;
     }
 
     @Override
     public void prepareRead(ReadableByteChannel channel) throws IOException {
-      final Schema schema = schemaSupplier.get();
+      final Schema readSchema = readSchemaSupplier.get();
       final Configuration configuration = conf.get();
-      AvroReadSupport.setAvroReadSchema(configuration, schema);
+      AvroReadSupport.setAvroReadSchema(configuration, readSchema);
 
-      if (configuration.get(AvroReadSupport.AVRO_REQUESTED_PROJECTION) == null) {
-        AvroReadSupport.setRequestedProjection(configuration, schema);
+      if (projectionSchemaSupplier != null) {
+        AvroReadSupport.setRequestedProjection(configuration, projectionSchemaSupplier.get());
       }
 
       ParquetReader.Builder<ValueT> builder =
