@@ -58,13 +58,32 @@ class SideOutputContext[T] private[scio] (val context: DoFn[T, AnyRef]#ProcessCo
 }
 
 /** Encapsulate output of one or more [[SideOutput]]s in an [[SCollectionWithSideOutput]]. */
-class SideOutputCollections private[scio] (
-  private val tuple: PCollectionTuple,
-  private val context: ScioContext
-) {
+sealed trait SideOutputCollections {
 
   /** Extract the [[SCollection]] of a given [[SideOutput]]. */
-  def apply[T](sideOutput: SideOutput[T]): SCollection[T] = context.wrap {
-    tuple.get(sideOutput.tupleTag)
+  def apply[T](sideOutput: SideOutput[T]): SCollection[T]
+}
+
+object SideOutputCollections {
+
+  private class SideOutputCollectionsImpl(
+    tuple: PCollectionTuple,
+    context: ScioContext
+  ) extends SideOutputCollections {
+    override def apply[T](sideOutput: SideOutput[T]): SCollection[T] = context.wrap {
+      tuple.get(sideOutput.tupleTag)
+    }
   }
+
+  private class TestOutputCollections(context: ScioContext) extends SideOutputCollections {
+    override def apply[T](sideOutput: SideOutput[T]): SCollection[T] =
+      context.empty()(sideOutput.coder)
+  }
+
+  private[scio] def apply(tuple: PCollectionTuple, context: ScioContext): SideOutputCollections =
+    new SideOutputCollectionsImpl(tuple, context)
+
+  private[scio] def empty(context: ScioContext): SideOutputCollections =
+    new TestOutputCollections(context)
+
 }

@@ -63,7 +63,7 @@ class SCollectionWithSideOutput[T] private[values] (
         .setCoder(CoderMaterializer.beam(context, s.coder.asInstanceOf[Coder[Any]]))
     }
 
-    (context.wrap(main), new SideOutputCollections(tuple, context))
+    (context.wrap(main), SideOutputCollections(tuple, context))
   }
 
   /**

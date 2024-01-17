@@ -174,9 +174,15 @@ trait WriteResultIO[T] { self: ScioIO[T] =>
     data: SCollection[T],
     params: WriteP
   ): ClosedTap[tapT.T] = {
-    val (tap, outputs) =
-      if (data.context.isTest) writeWithResult(data, params) else writeWithResult(data, params)
-    ClosedTap(tap, Some(outputs))
+    if (data.context.isTest) {
+      val tap = writeTest(data, params)
+      // TODO: add possibility to fill this for testing
+      val output = SideOutputCollections.empty(data.context)
+      ClosedTap(tap, Some(output))
+    } else {
+      val (tap, outputs) = writeWithResult(data, params)
+      ClosedTap(tap, Some(outputs))
+    }
   }
 
   final override def write(data: SCollection[T], params: self.WriteP): Tap[self.tapT.T] =

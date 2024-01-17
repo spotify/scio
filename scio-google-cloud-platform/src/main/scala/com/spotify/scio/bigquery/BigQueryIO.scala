@@ -182,7 +182,7 @@ private[bigquery] object Writes {
         ()
     }
 
-    new SideOutputCollections(tuple, sc)
+    SideOutputCollections(tuple, sc)
   }
 
   trait WriteParam[T] {
