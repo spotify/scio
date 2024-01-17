@@ -294,6 +294,7 @@ public class ParquetAvroSortedBucketIO {
         getPredicate());
     }
 
+    @Override
     FileOperations<T> getFileOperations() {
       ParquetAvroFileOperations<T> fileOperations =
           getRecordClass() == null
