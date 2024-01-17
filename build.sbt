@@ -32,7 +32,6 @@ val beamVersion = "2.53.0"
 // https://github.com/apache/beam/blob/v2.53.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = "1.8.2"
 val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
@@ -60,6 +59,7 @@ val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20231202-$googleClientsVersion"
 // beam tested versions
+val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
 val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
 val hadoopVersion = "3.2.4" // io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
