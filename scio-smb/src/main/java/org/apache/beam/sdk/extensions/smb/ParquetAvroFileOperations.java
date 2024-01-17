@@ -104,7 +104,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   @Override
   protected Reader<ValueT> createReader() {
-    return new ParquetAvroReader<>(schemaSupplier, projectionSupplier, conf, predicate);
+    return new ParquetAvroReader<>(schemaSupplier, projectionSupplier, conf, predicate, recordClass);
   }
 
   @Override
@@ -134,6 +134,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
     private final SerializableSchemaSupplier projectionSchemaSupplier;
     private final SerializableConfiguration conf;
     private final FilterPredicate predicate;
+    private final Class<ValueT> recordClass;
     private transient ParquetReader<ValueT> reader;
     private transient ValueT current;
 
@@ -141,11 +142,13 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
         SerializableSchemaSupplier readSchemaSupplier,
         SerializableSchemaSupplier projectionSchemaSupplier,
         SerializableConfiguration conf,
-        FilterPredicate predicate) {
+        FilterPredicate predicate,
+        Class<ValueT> recordClass) {
       this.readSchemaSupplier = readSchemaSupplier;
       this.projectionSchemaSupplier = projectionSchemaSupplier;
       this.conf = conf;
       this.predicate = predicate;
+      this.recordClass = recordClass;
     }
 
     @Override
@@ -156,6 +159,14 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
       if (projectionSchemaSupplier != null) {
         AvroReadSupport.setRequestedProjection(configuration, projectionSchemaSupplier.get());
+      }
+
+      if (recordClass == null && configuration.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
+        configuration.setClass(
+            AvroReadSupport.AVRO_DATA_SUPPLIER,
+            GenericDataSupplier.class,
+            AvroDataSupplier.class
+        );
       }
 
       ParquetReader.Builder<ValueT> builder =

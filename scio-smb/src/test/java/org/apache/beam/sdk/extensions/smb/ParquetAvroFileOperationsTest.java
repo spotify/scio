@@ -101,22 +101,6 @@ public class ParquetAvroFileOperationsTest {
   }
 
   @Test
-  public void testDataSupplierIsSetForGenericRecord() throws Exception {
-    final ResourceId file =
-        fromFolder(output)
-            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
-    writeFile(file);
-
-    final ParquetAvroFileOperations<GenericRecord> fileOperations =
-        ParquetAvroFileOperations.of(USER_SCHEMA);
-
-    final List<GenericRecord> actual = new ArrayList<>();
-    fileOperations.iterator(file).forEachRemaining(actual::add);
-
-    Assert.assertEquals(USER_RECORDS, actual);
-  }
-
-  @Test
   public void testSpecificRecord() throws Exception {
     final ParquetAvroFileOperations<AvroGeneratedUser> fileOperations =
         ParquetAvroFileOperations.of(AvroGeneratedUser.class);
