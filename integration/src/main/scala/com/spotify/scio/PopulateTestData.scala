@@ -36,7 +36,7 @@ object PopulateTestData {
   def populate(bucket: String): Unit = {
     FileSystems.setDefaultPipelineOptions(PipelineOptionsFactory.create())
 
-    val root = Paths.get("src/test/resources")
+    val root = Paths.get("src/main/resources")
     Files
       .walk(root)
       .collect(Collectors.toList[Path])

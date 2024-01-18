@@ -7,27 +7,40 @@ jobs:
   populate-integration-test-data:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: sbt update
+        if: steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: gcloud auth
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           export_environment_variables: true
           create_credentials_file: true
-      - uses: google-github-actions/setup-gcloud@v1
-      - name: cache SBT
-        uses: coursier/cache-action@v6
-      - name: Java 11 setup
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-      - name: set JVM opts
+
+      - name: Setup GitHub Action
         run: scripts/gha_setup.sh
         env:
           CLOUDSQL_SQLSERVER_PASSWORD: ${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}
+
       - name: Populate GCS test data
-        run: sbt "integration/runMain com.spotify.scio.PopulateTestData"
+        run: sbt integration/runMain com.spotify.scio.PopulateTestData
+
       - name: Populate BQ test data
-        run: sbt "integration/runMain com.spotify.scio.bigquery.PopulateTestData"
+        run: sbt integration/runMain com.spotify.scio.bigquery.PopulateTestData
+
       - name: Populate SQL test data
-        run: sbt "integration/runMain com.spotify.scio.jdbc.PopulateTestData"
+        run: sbt integration/runMain com.spotify.scio.jdbc.PopulateTestData
