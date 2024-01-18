@@ -18,7 +18,7 @@ package com.spotify.scio.smb
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{ClosedTap, KeyedIO, Tap, TapOf, TapT, TestIO}
+import com.spotify.scio.io.{KeyedIO, Tap, TapOf, TapT, TestIO}
 import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.extensions.smb.{BucketShardId, FileOperations}
 import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult

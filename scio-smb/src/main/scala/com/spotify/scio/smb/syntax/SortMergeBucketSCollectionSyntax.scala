@@ -19,16 +19,13 @@ package com.spotify.scio.smb.syntax
 
 import com.spotify.scio.annotations.experimental
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{ClosedTap, EmptyTap, TapOf}
+import com.spotify.scio.io.{ClosedTap, TapOf}
 import com.spotify.scio.smb.SmbIO
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values._
 import org.apache.beam.sdk.coders.KvCoder
-import org.apache.beam.sdk.extensions.smb.{BucketShardId, SortedBucketIO, SortedBucketIOUtil}
-import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.values.{KV, PCollection, TupleTag}
-
-import scala.jdk.CollectionConverters._
+import org.apache.beam.sdk.extensions.smb.{SortedBucketIO, SortedBucketIOUtil}
+import org.apache.beam.sdk.values.KV
 
 trait SortMergeBucketSCollectionSyntax {
   implicit def toSortMergeBucketKeyedSCollection[K, V](

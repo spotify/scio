@@ -106,8 +106,6 @@ object SparkeyIO {
     logger.info(s"Saving as Sparkey with $numShards shards: ${baseUri.path}")
 
     implicit val coder: Coder[(K, V)] = BeamCoders.getCoder(data)
-    implicit val keyCoder: Coder[K] = BeamCoders.getKeyCoder(data)
-    implicit val valueCoder: Coder[V] = BeamCoders.getValueCoder(data)
 
     def resourcesForPattern(pattern: String): mutable.Buffer[ResourceId] =
       FileSystems

@@ -59,7 +59,10 @@ object ScalacOptions {
     "conf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
       // silence unused-imports compat
       ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s" +
-      ",cat=unused-imports&origin=kantan\\.codecs\\.compat\\..*:s",
+      ",cat=unused-imports&origin=kantan\\.codecs\\.compat\\..*:s" +
+      ",cat=unused-imports&origin=com\\.spotify\\.scio\\.repl\\.compat\\..*:s" +
+      // until we can set fatalWarningOptions, handle those as errors
+      ",cat=unused:e",
     _.isBetween(V2_13_2, V3_0_0)
   )
 

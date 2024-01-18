@@ -39,6 +39,7 @@ import org.apache.parquet.avro._
 import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
+import org.typelevel.scalaccompat.annotation.unused
 
 import java.lang
 import java.nio.file.Files
@@ -108,7 +109,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "read specific records with projection" in {
-    forAllCases(readConfigs) { case (c, x) =>
+    forAllCases(readConfigs) { case (c, _) =>
       val sc = ScioContext()
       val projection = Projection[TestRecord](_.getIntField)
       val data = sc.parquetAvroFile[TestRecord](
@@ -332,7 +333,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     }
   }
 
-  class TestRecordProjection private (str: String) {}
+  class TestRecordProjection(@unused str: String)
 
   "tap" should "use projection schema and GenericDataSupplier" in {
     val schema = new Schema.Parser().parse(

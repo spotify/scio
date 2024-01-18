@@ -1580,6 +1580,7 @@ lazy val site = project
       },
     // mdoc
     // pre-compile md using mdoc
+    Compile / scalacOptions ~= { _.filterNot(_.startsWith("-Wconf")) },
     mdocIn := (paradox / sourceDirectory).value,
     mdocExtraArguments ++= Seq("--no-link-hygiene"),
     // paradox

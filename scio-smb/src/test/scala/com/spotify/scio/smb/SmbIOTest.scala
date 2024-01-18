@@ -19,7 +19,7 @@ package com.spotify.scio.smb
 import com.spotify.scio.avro.{Account, AccountStatus, Address, User}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.{Args, ContextAndArgs, ScioContext}
-import org.apache.beam.sdk.extensions.smb.{AvroSortedBucketIO, TargetParallelism}
+import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.values.{KV, TupleTag}
 
 import java.nio.file.Files

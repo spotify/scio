@@ -527,7 +527,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
    * @group per_key
    */
   @experimental
-  def sortMergeTransform[K: Coder, R: Coder](
+  def sortMergeTransform[K, R](
     keyClass: Class[K],
     read: SortedBucketIO.Read[R],
     targetParallelism: TargetParallelism
@@ -547,7 +547,7 @@ final class SortedBucketScioContext(@transient private val self: ScioContext) ex
 
   /** `targetParallelism` defaults to `TargetParallelism.auto()` */
   @experimental
-  def sortMergeTransform[K: Coder, R: Coder](
+  def sortMergeTransform[K, R](
     keyClass: Class[K],
     read: SortedBucketIO.Read[R]
   ): SortMergeTransform.ReadBuilder[K, K, Void, Iterable[R]] =

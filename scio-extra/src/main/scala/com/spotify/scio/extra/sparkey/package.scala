@@ -172,7 +172,6 @@ package object sparkey extends SparkeyReaderInstances {
       extends Serializable {
 
     // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
-    implicit private lazy val coder: Coder[(K, V)] = BeamCoders.getCoder(self)
     implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
     implicit private lazy val valueCoder: Coder[V] = BeamCoders.getValueCoder(self)
 
