@@ -21,14 +21,17 @@ import java.util.UUID
 
 private[scio] object TestUtil {
 
-  def newTestId(clazz: Class[_]): String = {
-    val className = clazz.getSimpleName
-    val uuid = UUID.randomUUID().toString.replaceAll("-", "")
-    s"JobTest-$className-$uuid"
+  def newTestId(): String = newTestId(None)
+  def newTestId(clazz: Class[_]): String = newTestId(clazz.getSimpleName)
+  def newTestId(name: String): String = {
+    require(name.nonEmpty && !name.contains('-'), s"Invalid test name $name")
+    newTestId(Some(name))
   }
-  def newTestId(): String = {
-    val uuid = UUID.randomUUID().toString.replaceAll("-", "")
-    s"JobTest-$uuid"
+
+  private def newTestId(suffix: Option[String]): String = {
+    val id = UUID.randomUUID().toString.replaceAll("-", "")
+    val parts = Seq("JobTest") ++ suffix ++ Seq(id)
+    parts.mkString("-")
   }
 
   def isTestId(appName: String): Boolean =
