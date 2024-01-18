@@ -99,7 +99,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     )(ScioUtil.strippedPath(path), suffix)
     val dynamicDestinations = DynamicFileDestinations
       .constant(fp, SerializableFunctions.identity[T])
-    val job = Job.getInstance(ParquetConfiguration.ofNullable(conf))
+    val job = Job.getInstance(conf)
     if (isLocalRunner) GcsConnectorUtil.setCredentials(job)
 
     val sink = new ParquetAvroFileBasedSink[T](
@@ -118,8 +118,6 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
     val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
     val writerSchema = if (isSpecific) ReflectData.get().getSchema(avroClass) else params.schema
 
-    val conf = Option(params.conf).getOrElse(ParquetConfiguration.empty())
-
     data.applyInternal(
       parquetOut(
         path,
@@ -127,7 +125,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
         params.suffix,
         params.numShards,
         params.compression,
-        conf,
+        ParquetConfiguration.ofNullable(params.conf),
         params.filenamePolicySupplier,
         params.prefix,
         params.shardNameTemplate,
@@ -144,8 +142,6 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 }
 
 object ParquetAvroIO {
-  private lazy val log = LoggerFactory.getLogger(getClass)
-
   object ReadParam {
     val DefaultProjection: Schema = null
     val DefaultPredicate: FilterPredicate = null
@@ -168,7 +164,7 @@ object ParquetAvroIO {
     conf: Configuration = ReadParam.DefaultConfiguration,
     suffix: String = null
   ) {
-    lazy val confOrDefault = Option(conf).getOrElse(ParquetConfiguration.empty())
+    lazy val confOrDefault = ParquetConfiguration.ofNullable(conf)
     val avroClass: Class[A] = ScioUtil.classOf[A]
     val isSpecific: Boolean = classOf[SpecificRecord] isAssignableFrom avroClass
     val readSchema: Schema =
