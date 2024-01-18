@@ -499,6 +499,8 @@ public class SortedBucketIO {
   public abstract static class Read<V> implements Serializable {
     public abstract TupleTag<V> getTupleTag();
 
+    abstract FileOperations<V> getFileOperations();    
+
     public abstract BucketedInput<V> toBucketedInput(SortedBucketSource.Keying keying);
   }
 

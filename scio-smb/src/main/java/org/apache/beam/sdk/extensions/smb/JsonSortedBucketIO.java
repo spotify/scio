@@ -157,13 +157,18 @@ public class JsonSortedBucketIO {
     }
 
     @Override
+    FileOperations<TableRow> getFileOperations() {
+      return JsonFileOperations.of(getCompression());
+    }
+
+    @Override
     public BucketedInput<TableRow> toBucketedInput(final SortedBucketSource.Keying keying) {
       return BucketedInput.of(
           keying,
           getTupleTag(),
           getInputDirectories(),
           getFilenameSuffix(),
-          JsonFileOperations.of(getCompression()),
+          getFileOperations(),
           getPredicate());
     }
   }

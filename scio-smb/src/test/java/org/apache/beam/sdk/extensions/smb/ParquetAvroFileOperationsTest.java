@@ -55,7 +55,8 @@ public class ParquetAvroFileOperationsTest {
 
   private static final Schema USER_SCHEMA =
       SchemaBuilder.record("User")
-          .namespace("org.apache.beam.sdk.extensions.smb.avro")
+          // intentionally set this namespace for testGenericRecord
+          .namespace("org.apache.beam.sdk.extensions.smb.ParquetAvroFileOperationsTest$")
           .fields()
           .name("name")
           .type()
@@ -76,6 +77,12 @@ public class ParquetAvroFileOperationsTest {
                       .set("age", i)
                       .build())
           .collect(Collectors.toList());
+
+  // Intentionally avoid no-arg ctor to verify this class is not attempted to instantiate
+  static class User {
+    User(String str) {
+    }
+  }
 
   @Test
   public void testGenericRecord() throws Exception {
