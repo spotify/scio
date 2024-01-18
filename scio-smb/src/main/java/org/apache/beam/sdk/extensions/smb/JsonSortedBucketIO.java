@@ -156,7 +156,6 @@ public class JsonSortedBucketIO {
       return toBuilder().setPredicate(predicate).build();
     }
 
-    @Override
     FileOperations<TableRow> getFileOperations() {
       return JsonFileOperations.of(getCompression());
     }

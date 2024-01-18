@@ -248,12 +248,10 @@ public class AvroSortedBucketIO {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     FileOperations<T> getFileOperations() {
       return getRecordClass() == null
-             ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema())
-             : (AvroFileOperations<T>)
-                 AvroFileOperations.of((Class<SpecificRecord>) getRecordClass());
+          ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema())
+          : (AvroFileOperations<T>) AvroFileOperations.of((Class<SpecificRecord>) getRecordClass());
     }
 
     @Override
