@@ -110,14 +110,6 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
     return schemaSupplier.get();
   }
 
-  AvroDatumFactory<ValueT> getDatumFactory() {
-    return datumFactory;
-  }
-
-  Class<ValueT> getRecordClass() {
-    return datumFactory.getType();
-  }
-
   private static class SerializableSchemaString implements Serializable {
     private final String schema;
 
