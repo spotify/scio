@@ -522,7 +522,7 @@ import com.spotify.scio.bigquery._
 def main(cmdlineArgs: Array[String]): Unit = {
   val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-  val data: SCollection[Tornado] = sc.typedBigQuery[Tornado]
+  val data: SCollection[Tornado] = sc.typedBigQuery[Tornado]()
   // ...
 }
 ```

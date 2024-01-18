@@ -164,7 +164,7 @@ import com.spotify.scio.values.SCollection
 
 case class A(count: Long, total: Long)
 object A {
-  def apply(i: Int): A = A(1L, i)
+  def apply(i: Int): A = A(1L, i.toLong)
   def mergeValue(a: A, i: Int): A = A(a.count + 1L, a.total + i)
   def mergeCombiners(a: A, b: A) = A(a.count + b.count, a.total + b.total)
 }
@@ -189,7 +189,6 @@ Fully-automatic derivation can be very concise but relies on some implicit magic
 import com.spotify.scio.values.SCollection
 import com.twitter.algebird._
 import magnolify.cats.auto._
-import cats._
 
 case class A(count: Long, total: Long)
 
@@ -206,7 +205,7 @@ case class A(count: Long, total: Long)
 object A {
   import magnolify.cats.semiauto._
   import cats._
-  implicit val aMonoid: cats.Monoid[A] = MonoidDerivation[A]
+  implicit val aMonoid: Monoid[A] = MonoidDerivation[A]
 }
 ```
 
@@ -296,7 +295,6 @@ val elements: SCollection[String] = sc.customInput("ReadText", textRead)
 @scaladoc[saveAsCustomOutput](com.spotify.scio.values.SCollection#saveAsCustomOutput[O%3C:org.apache.beam.sdk.values.POutput](name:String,transform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[T],O]):com.spotify.scio.io.ClosedTap[Nothing]) supports writing to a Beam sink; any transform of type `PTransform[PCollection[T], PDone]`:
 
 ```scala mdoc:compile-only
-import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.values.{PDone, PCollection}
@@ -311,10 +309,9 @@ elements.saveAsCustomOutput("WriteText", textWrite)
 Finally, @scaladoc[applyTransform](com.spotify.scio.values.SCollection#applyTransform[U](transform:org.apache.beam.sdk.transforms.PTransform[_%3E:org.apache.beam.sdk.values.PCollection[T],org.apache.beam.sdk.values.PCollection[U]])(implicitevidence$2:com.spotify.scio.coders.Coder[U]):com.spotify.scio.values.SCollection[U]) supports using any Beam transform of type `PTransform[PCollection[T], PCollection[U]]`:
 
 ```scala mdoc:compile-only
-import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.transforms.{PTransform, Sum}
-import org.apache.beam.sdk.values.{PDone, PCollection}
+import org.apache.beam.sdk.values.PCollection
 import java.lang
 
 val elements: SCollection[Double] = ???
@@ -378,7 +375,6 @@ In cases where some transform performs better on a group of items, elements can 
 There are also keyed variants of each of these: @scaladoc[`batchByKey`](com.spotify.scio.values.PairSCollectionFunctions#batchByKey(batchSize:Long,maxBufferingDuration:org.joda.time.Duration):com.spotify.scio.values.SCollection[(K,Iterable[V])]), @scaladoc[`batchByteSizedByKey`](com.spotify.scio.values.PairSCollectionFunctions#batchByteSizedByKey(batchByteSize:Long,maxBufferingDuration:org.joda.time.Duration):com.spotify.scio.values.SCollection[(K,Iterable[V])]), and @scaladoc[`batchWeightedByKey`](com.spotify.scio.values.PairSCollectionFunctions#batchWeightedByKey(weight:Long,cost:V=%3ELong,maxBufferingDuration:org.joda.time.Duration):com.spotify.scio.values.SCollection[(K,Iterable[V])]).
 
 ```scala mdoc:compile-only
-import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 
 val elements: SCollection[String] = ???
