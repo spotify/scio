@@ -382,7 +382,9 @@ public class AvroSortedBucketIO {
     @SuppressWarnings("unchecked")
     @Override
     public FileOperations<T> getFileOperations() {
-      return AvroFileOperations.of(getDatumFactory(), getSchema()).withCodec(getCodec());
+      return AvroFileOperations.of(getDatumFactory(), getSchema())
+          .withCodec(getCodec())
+          .withMetadata(getMetadata());
     }
 
     @SuppressWarnings("unchecked")
