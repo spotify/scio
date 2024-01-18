@@ -247,7 +247,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
       .read(new TupleTag[GenericRecord](path.getAbsolutePath), schema)
       .from(path.getAbsolutePath)
 
-  private def compareResults[T: Coder](
+  private def compareResults[T](
     smbOp: ScioContext => SCollection[T]
   )(baselineOp: ScioContext => SCollection[T]): Assertion = {
     val sc = ScioContext()

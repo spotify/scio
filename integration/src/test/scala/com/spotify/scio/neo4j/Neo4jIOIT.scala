@@ -18,7 +18,6 @@ package com.spotify.scio.neo4j
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, Neo4jContainer}
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.neo4j.driver.{AuthTokens, Driver, GraphDatabase}
 import org.scalatest.concurrent.Eventually
 import org.testcontainers.utility.DockerImageName

@@ -90,7 +90,7 @@ object ScalacOptions {
       maxClassfileName(100),
       privateWarnMacrosOption,
       warnMacrosOption,
-      warnConfOption,
+      warnConfOption
     )
   )
 }

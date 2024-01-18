@@ -23,7 +23,6 @@ import com.spotify.scio.io._
 import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
 
-import kantan.csv.{CsvSink => _, _}
 import kantan.codecs.compat._
 import kantan.csv.CsvConfiguration.{Header, QuotePolicy}
 import kantan.csv.engine.ReaderEngine

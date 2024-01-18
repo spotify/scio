@@ -23,17 +23,7 @@ import com.spotify.scio.bigquery.BigQueryTypedTable.{Format, WriteParam => Typed
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.coders
-import com.spotify.scio.bigquery.{
-  BigQueryIO,
-  BigQueryTyped,
-  BigQueryTypedTable,
-  Clustering,
-  Sharding,
-  Table,
-  TableRow,
-  TableRowJsonIO,
-  TimePartitioning
-}
+import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
 import com.spotify.scio.util.FilenamePolicySupplier

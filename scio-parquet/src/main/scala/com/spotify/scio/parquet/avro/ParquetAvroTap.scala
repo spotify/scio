@@ -20,7 +20,7 @@ package com.spotify.scio.parquet.avro
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
-import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
+import com.spotify.scio.parquet.BeamInputFile
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io._

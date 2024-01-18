@@ -18,7 +18,7 @@ package com.spotify.scio.smb
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{ClosedTap, EmptyTap, TapOf}
+import com.spotify.scio.io.{ClosedTap, TapOf}
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.values.{SCollection, SideInput, SideInputContext}
 import org.apache.beam.sdk.extensions.smb.{SortedBucketIOUtil, SortedBucketTransform}

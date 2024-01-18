@@ -44,15 +44,12 @@ import org.apache.parquet.avro.{
   AvroDataSupplier,
   AvroParquetInputFormat,
   AvroReadSupport,
-  AvroWriteSupport,
   GenericDataSupplier
 }
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
-import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
 import scala.reflect.{classTag, ClassTag}
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
