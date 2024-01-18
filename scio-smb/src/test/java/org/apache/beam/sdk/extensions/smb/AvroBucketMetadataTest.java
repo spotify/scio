@@ -198,7 +198,7 @@ public class AvroBucketMetadataTest {
             "favorite_number",
             HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
-            AvroGeneratedUser.class);
+            AvroGeneratedUser.getClassSchema());
     final AvroBucketMetadata<Integer, String, AvroGeneratedUser> metadata2 =
         new AvroBucketMetadata<>(
             1,
@@ -209,7 +209,7 @@ public class AvroBucketMetadataTest {
             "favorite_color",
             HashType.MURMUR3_32,
             SortedBucketIO.DEFAULT_FILENAME_PREFIX,
-            AvroGeneratedUser.class);
+            AvroGeneratedUser.getClassSchema());
 
     Assert.assertEquals("green", metadata1.extractKeyPrimary(user));
     Assert.assertEquals((Integer) 50, metadata1.extractKeySecondary(user));

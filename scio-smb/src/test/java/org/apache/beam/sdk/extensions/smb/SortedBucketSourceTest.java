@@ -24,6 +24,8 @@ import static org.apache.beam.sdk.extensions.smb.SortedBucketSource.PrimaryKeyed
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 
 import com.google.common.collect.ImmutableSet;
+import com.spotify.scio.avro.GenericRecordDatumFactory$;
+import com.spotify.scio.avro.SpecificRecordDatumFactory;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -47,6 +49,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.FileOperations.Writer;
 import org.apache.beam.sdk.extensions.smb.SMBFilenamePolicy.FileAssignment;
@@ -699,8 +702,10 @@ public class SortedBucketSourceTest {
 
   @Test
   public void testMixedSpecificAvroInputTypesInSource() throws Exception {
+    AvroDatumFactory<AvroGeneratedUser> datumFactory =
+        new SpecificRecordDatumFactory<>(AvroGeneratedUser.class);
     testBucketedInputOfPartitions(
-        AvroFileOperations.of(AvroGeneratedUser.class),
+        AvroFileOperations.of(datumFactory, AvroGeneratedUser.getClassSchema()),
         SerializableFunctions.identity(),
         ParquetAvroFileOperations.of(AvroGeneratedUser.class),
         SerializableFunctions.identity());
@@ -708,8 +713,9 @@ public class SortedBucketSourceTest {
 
   @Test
   public void testMixedGenericAvroInputTypesInSource() throws Exception {
+    AvroDatumFactory<GenericRecord> datumFactory = GenericRecordDatumFactory$.INSTANCE;
     testBucketedInputOfPartitions(
-        AvroFileOperations.of(AvroGeneratedUser.getClassSchema()),
+        AvroFileOperations.of(datumFactory, AvroGeneratedUser.getClassSchema()),
         SortedBucketSourceTest::toAvroUserGenericRecord,
         ParquetAvroFileOperations.of(AvroGeneratedUser.getClassSchema()),
         SortedBucketSourceTest::toAvroUserGenericRecord);
@@ -754,7 +760,7 @@ public class SortedBucketSourceTest {
             null,
             BucketMetadata.HashType.MURMUR3_32,
             "bucket",
-            (Class<RecordT>) AvroGeneratedUser.class),
+            AvroGeneratedUser.getClassSchema()),
         ImmutableMap.of(BucketShardId.of(0, 0), ImmutableList.of((RecordT) avroRecord)),
         avroFileOp);
 

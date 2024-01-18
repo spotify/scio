@@ -18,6 +18,8 @@
 package org.apache.beam.sdk.extensions.smb;
 
 import com.google.auto.value.AutoValue;
+import com.spotify.scio.avro.GenericRecordDatumFactory$;
+import com.spotify.scio.avro.SpecificRecordDatumFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +28,11 @@ import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
+import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory;
 import org.apache.beam.sdk.extensions.smb.AvroFileOperations.SerializableSchemaSupplier;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.extensions.smb.SortedBucketSource.Predicate;
@@ -56,6 +60,7 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<GenericRecord>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
+        .setDatumFactory(GenericRecordDatumFactory$.INSTANCE)
         .setSchema(schema)
         .build();
   }
@@ -66,7 +71,8 @@ public class AvroSortedBucketIO {
     return new AutoValue_AvroSortedBucketIO_Read.Builder<T>()
         .setTupleTag(tupleTag)
         .setFilenameSuffix(DEFAULT_SUFFIX)
-        .setRecordClass(recordClass)
+        .setDatumFactory(new com.spotify.scio.avro.SpecificRecordDatumFactory<>(recordClass))
+        .setSchema(new SpecificData(recordClass.getClassLoader()).getSchema(recordClass))
         .build();
   }
 
@@ -75,6 +81,7 @@ public class AvroSortedBucketIO {
       Class<K1> keyClassPrimary, String keyFieldPrimary, Schema schema) {
     return AvroSortedBucketIO.<K1, Void, GenericRecord>newBuilder(
             keyClassPrimary, keyFieldPrimary, null, null)
+        .setDatumFactory(GenericRecordDatumFactory$.INSTANCE)
         .setSchema(schema)
         .build();
   }
@@ -88,6 +95,7 @@ public class AvroSortedBucketIO {
       Schema schema) {
     return AvroSortedBucketIO.<K1, K2, GenericRecord>newBuilder(
             keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
+        .setDatumFactory(GenericRecordDatumFactory$.INSTANCE)
         .setSchema(schema)
         .build();
   }
@@ -96,7 +104,8 @@ public class AvroSortedBucketIO {
   public static <K1, T extends SpecificRecord> Write<K1, Void, T> write(
       Class<K1> keyClassPrimary, String keyFieldPrimary, Class<T> recordClass) {
     return AvroSortedBucketIO.<K1, Void, T>newBuilder(keyClassPrimary, keyFieldPrimary, null, null)
-        .setRecordClass(recordClass)
+        .setDatumFactory(new SpecificRecordDatumFactory<>(recordClass))
+        .setSchema(new SpecificData(recordClass.getClassLoader()).getSchema(recordClass))
         .build();
   }
 
@@ -109,7 +118,8 @@ public class AvroSortedBucketIO {
       Class<T> recordClass) {
     return AvroSortedBucketIO.<K1, K2, T>newBuilder(
             keyClassPrimary, keyFieldPrimary, keyClassSecondary, keyFieldSecondary)
-        .setRecordClass(recordClass)
+        .setDatumFactory(new SpecificRecordDatumFactory<>(recordClass))
+        .setSchema(new SpecificData(recordClass.getClassLoader()).getSchema(recordClass))
         .build();
   }
 
@@ -155,6 +165,7 @@ public class AvroSortedBucketIO {
         .setKeyClassSecondary(keyClassSecondary)
         .setKeyFieldPrimary(keyFieldPrimary)
         .setKeyFieldSecondary(keyFieldSecondary)
+        .setDatumFactory(GenericRecordDatumFactory$.INSTANCE)
         .setSchema(schema)
         .build();
   }
@@ -181,7 +192,8 @@ public class AvroSortedBucketIO {
         .setKeyClassSecondary(keyClassSecondary)
         .setKeyFieldPrimary(keyFieldPrimary)
         .setKeyFieldSecondary(keyFieldSecondary)
-        .setRecordClass(recordClass)
+        .setDatumFactory(new SpecificRecordDatumFactory<>(recordClass))
+        .setSchema(new SpecificData(recordClass.getClassLoader()).getSchema(recordClass))
         .build();
   }
 
@@ -201,7 +213,7 @@ public class AvroSortedBucketIO {
     abstract Schema getSchema();
 
     @Nullable
-    abstract Class<T> getRecordClass();
+    abstract AvroDatumFactory<T> getDatumFactory();
 
     @Nullable
     abstract Predicate<T> getPredicate();
@@ -220,7 +232,7 @@ public class AvroSortedBucketIO {
 
       abstract Builder<T> setSchema(Schema schema);
 
-      abstract Builder<T> setRecordClass(Class<T> recordClass);
+      abstract Builder<T> setDatumFactory(AvroDatumFactory<T> datumFactory);
 
       abstract Builder<T> setPredicate(Predicate<T> predicate);
 
@@ -249,9 +261,7 @@ public class AvroSortedBucketIO {
 
     @SuppressWarnings("unchecked")
     FileOperations<T> getFileOperations() {
-      return getRecordClass() == null
-          ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema())
-          : (AvroFileOperations<T>) AvroFileOperations.of((Class<SpecificRecord>) getRecordClass());
+      return AvroFileOperations.of(getDatumFactory(), getSchema());
     }
 
     @Override
@@ -285,7 +295,7 @@ public class AvroSortedBucketIO {
     abstract Schema getSchema();
 
     @Nullable
-    abstract Class<T> getRecordClass();
+    abstract AvroDatumFactory<T> getDatumFactory();
 
     abstract CodecFactory getCodec();
 
@@ -322,7 +332,7 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K1, K2, T> setSchema(Schema schema);
 
-      abstract Builder<K1, K2, T> setRecordClass(Class<T> recordClass);
+      abstract Builder<K1, K2, T> setDatumFactory(AvroDatumFactory<T> datumFactory);
 
       abstract Builder<K1, K2, T> setCodec(CodecFactory codec);
 
@@ -372,38 +382,23 @@ public class AvroSortedBucketIO {
     @SuppressWarnings("unchecked")
     @Override
     public FileOperations<T> getFileOperations() {
-      return getRecordClass() == null
-          ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema(), getCodec())
-          : (AvroFileOperations<T>)
-              AvroFileOperations.of((Class<SpecificRecord>) getRecordClass(), getCodec());
+      return AvroFileOperations.of(getDatumFactory(), getSchema()).withCodec(getCodec());
     }
 
     @SuppressWarnings("unchecked")
     @Override
     BucketMetadata<K1, K2, T> getBucketMetadata() {
       try {
-        return getRecordClass() == null
-            ? new AvroBucketMetadata<K1, K2, T>(
-                getNumBuckets(),
-                getNumShards(),
-                getKeyClassPrimary(),
-                getKeyFieldPrimary(),
-                getKeyClassSecondary(),
-                getKeyFieldSecondary(),
-                getHashType(),
-                getFilenamePrefix(),
-                getSchema())
-            : (AvroBucketMetadata<K1, K2, T>)
-                new AvroBucketMetadata<K1, K2, T>(
-                    getNumBuckets(),
-                    getNumShards(),
-                    getKeyClassPrimary(),
-                    getKeyFieldPrimary(),
-                    getKeyClassSecondary(),
-                    getKeyFieldSecondary(),
-                    getHashType(),
-                    getFilenamePrefix(),
-                    getRecordClass());
+        return new AvroBucketMetadata<>(
+            getNumBuckets(),
+            getNumShards(),
+            getKeyClassPrimary(),
+            getKeyFieldPrimary(),
+            getKeyClassSecondary(),
+            getKeyFieldSecondary(),
+            getHashType(),
+            getFilenamePrefix(),
+            getSchema());
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
@@ -453,7 +448,7 @@ public class AvroSortedBucketIO {
     abstract Schema getSchema();
 
     @Nullable
-    abstract Class<T> getRecordClass();
+    abstract AvroDatumFactory<T> getDatumFactory();
 
     abstract CodecFactory getCodec();
 
@@ -480,7 +475,7 @@ public class AvroSortedBucketIO {
 
       abstract Builder<K1, K2, T> setSchema(Schema schema);
 
-      abstract Builder<K1, K2, T> setRecordClass(Class<T> recordClass);
+      abstract Builder<K1, K2, T> setDatumFactory(AvroDatumFactory<T> datumFactory);
 
       abstract Builder<K1, K2, T> setCodec(CodecFactory codec);
 
@@ -519,10 +514,7 @@ public class AvroSortedBucketIO {
     @SuppressWarnings("unchecked")
     @Override
     FileOperations<T> getFileOperations() {
-      return getRecordClass() == null
-          ? (AvroFileOperations<T>) AvroFileOperations.of(getSchema(), getCodec())
-          : (AvroFileOperations<T>)
-              AvroFileOperations.of((Class<SpecificRecord>) getRecordClass(), getCodec());
+      return AvroFileOperations.of(getDatumFactory(), getSchema()).withCodec(getCodec());
     }
 
     @Override
@@ -532,46 +524,24 @@ public class AvroSortedBucketIO {
       final Class<K1> keyClassPrimary = getKeyClassPrimary();
       final Class<K2> keyClassSecondary = getKeyClassSecondary();
       final String filenamePrefix = getFilenamePrefix();
-      final Class<T> recordClass = getRecordClass();
+      final SerializableSchemaSupplier schemaSupplier = new SerializableSchemaSupplier(getSchema());
 
-      if (recordClass == null) {
-        final SerializableSchemaSupplier schemaSupplier =
-            new SerializableSchemaSupplier(getSchema());
-
-        return (numBuckets, numShards, hashType) -> {
-          try {
-            return new AvroBucketMetadata<>(
-                numBuckets,
-                numShards,
-                keyClassPrimary,
-                keyFieldPrimary,
-                keyClassSecondary,
-                keyFieldSecondary,
-                hashType,
-                filenamePrefix,
-                schemaSupplier.get());
-          } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
-            throw new IllegalStateException(e);
-          }
-        };
-      } else {
-        return (numBuckets, numShards, hashType) -> {
-          try {
-            return new AvroBucketMetadata<>(
-                numBuckets,
-                numShards,
-                keyClassPrimary,
-                keyFieldPrimary,
-                keyClassSecondary,
-                keyFieldSecondary,
-                hashType,
-                filenamePrefix,
-                recordClass);
-          } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
-            throw new IllegalStateException(e);
-          }
-        };
-      }
+      return (numBuckets, numShards, hashType) -> {
+        try {
+          return new AvroBucketMetadata<>(
+              numBuckets,
+              numShards,
+              keyClassPrimary,
+              keyFieldPrimary,
+              keyClassSecondary,
+              keyFieldSecondary,
+              hashType,
+              filenamePrefix,
+              schemaSupplier.get());
+        } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
+          throw new IllegalStateException(e);
+        }
+      };
     }
   }
 }

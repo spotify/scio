@@ -61,31 +61,6 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
       String keyFieldSecondary,
       HashType hashType,
       String filenamePrefix,
-      Class<V> recordClass)
-      throws CannotProvideCoderException, NonDeterministicException {
-    this(
-        BucketMetadata.CURRENT_VERSION,
-        numBuckets,
-        numShards,
-        keyClassPrimary,
-        AvroUtils.validateKeyField(keyField, keyClassPrimary, recordClass),
-        keyClassSecondary,
-        keyFieldSecondary == null
-            ? null
-            : AvroUtils.validateKeyField(keyFieldSecondary, keyClassSecondary, recordClass),
-        hashType,
-        filenamePrefix);
-  }
-
-  public AvroBucketMetadata(
-      int numBuckets,
-      int numShards,
-      Class<K1> keyClassPrimary,
-      String keyField,
-      Class<K2> keyClassSecondary,
-      String keyFieldSecondary,
-      HashType hashType,
-      String filenamePrefix,
       Schema schema)
       throws CannotProvideCoderException, NonDeterministicException {
     this(

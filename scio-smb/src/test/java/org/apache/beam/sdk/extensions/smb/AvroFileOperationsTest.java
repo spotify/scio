@@ -20,6 +20,8 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
+import com.spotify.scio.avro.GenericRecordDatumFactory$;
+import com.spotify.scio.avro.SpecificRecordDatumFactory;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,7 +69,9 @@ public class AvroFileOperationsTest {
   @Test
   public void testGenericRecord() throws Exception {
     final AvroFileOperations<GenericRecord> fileOperations =
-        AvroFileOperations.of(USER_SCHEMA, CodecFactory.snappyCodec(), TEST_METADATA);
+        AvroFileOperations.of(GenericRecordDatumFactory$.INSTANCE, USER_SCHEMA)
+            .withCodec(CodecFactory.snappyCodec())
+            .withMetadata(TEST_METADATA);
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 
@@ -96,8 +100,11 @@ public class AvroFileOperationsTest {
 
   @Test
   public void testSpecificRecord() throws Exception {
+    final Schema schema = AvroGeneratedUser.getClassSchema();
     final AvroFileOperations<AvroGeneratedUser> fileOperations =
-        AvroFileOperations.of(AvroGeneratedUser.class, CodecFactory.snappyCodec(), TEST_METADATA);
+        AvroFileOperations.of(new SpecificRecordDatumFactory<>(AvroGeneratedUser.class), schema)
+            .withCodec(CodecFactory.snappyCodec())
+            .withMetadata(TEST_METADATA);
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 
@@ -128,7 +135,9 @@ public class AvroFileOperationsTest {
   @Test
   public void testDisplayData() {
     final AvroFileOperations<AvroGeneratedUser> fileOperations =
-        AvroFileOperations.of(AvroGeneratedUser.class);
+        AvroFileOperations.of(
+            new SpecificRecordDatumFactory<>(AvroGeneratedUser.class),
+            AvroGeneratedUser.getClassSchema());
 
     final DisplayData displayData = DisplayData.from(fileOperations);
     MatcherAssert.assertThat(
@@ -157,7 +166,8 @@ public class AvroFileOperationsTest {
             .stringType()
             .endRecord();
 
-    final AvroFileOperations<GenericRecord> fileOperations = AvroFileOperations.of(schema);
+    final AvroFileOperations<GenericRecord> fileOperations =
+        AvroFileOperations.of(GenericRecordDatumFactory$.INSTANCE, schema);
     final ResourceId file =
         fromFolder(output).resolve("map2649.avro", StandardResolveOptions.RESOLVE_FILE);
 

@@ -27,7 +27,7 @@ import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.specific.SpecificData;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.ByteArrayCoder;
 import org.apache.beam.sdk.coders.Coder;
@@ -88,7 +88,7 @@ class AvroUtils {
   }
 
   public static String validateKeyField(String keyField, Class<?> keyClass, Class<?> recordClass) {
-    final Schema schema = new ReflectData(recordClass.getClassLoader()).getSchema(recordClass);
+    final Schema schema = new SpecificData(recordClass.getClassLoader()).getSchema(recordClass);
     toKeyPath(keyField, keyClass, schema);
     return keyField;
   }
