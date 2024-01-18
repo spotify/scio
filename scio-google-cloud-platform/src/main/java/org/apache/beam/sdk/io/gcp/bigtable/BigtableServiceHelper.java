@@ -25,7 +25,8 @@ import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider;
 
 /** Wrap {@link BigtableServiceImpl} and expose package private methods. */
 public class BigtableServiceHelper extends BigtableServiceImpl {
-  private static final BigtableConfig EMPTY_CONFIG = BigtableConfig.builder().setValidate(true).build();
+  private static final BigtableConfig EMPTY_CONFIG =
+      BigtableConfig.builder().setValidate(true).build();
 
   public BigtableServiceHelper(BigtableOptions bigtableOptions, PipelineOptions pipelineOptions)
       throws IOException {
