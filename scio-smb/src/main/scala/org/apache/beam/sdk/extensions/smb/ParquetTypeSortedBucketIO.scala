@@ -100,7 +100,7 @@ object ParquetTypeSortedBucketIO {
       )
     }
 
-    override def getFileOperations: FileOperations[T] =
+    def getFileOperations: FileOperations[T] =
       ParquetTypeFileOperations[T](filterPredicate, configuration)
   }
 

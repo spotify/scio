@@ -104,7 +104,8 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   @Override
   protected Reader<ValueT> createReader() {
-    return new ParquetAvroReader<>(schemaSupplier, projectionSupplier, conf, predicate, recordClass);
+    return new ParquetAvroReader<>(
+        schemaSupplier, projectionSupplier, conf, predicate, recordClass);
   }
 
   @Override
@@ -163,10 +164,7 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
       if (recordClass == null && configuration.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
         configuration.setClass(
-            AvroReadSupport.AVRO_DATA_SUPPLIER,
-            GenericDataSupplier.class,
-            AvroDataSupplier.class
-        );
+            AvroReadSupport.AVRO_DATA_SUPPLIER, GenericDataSupplier.class, AvroDataSupplier.class);
       }
 
       ParquetReader.Builder<ValueT> builder =

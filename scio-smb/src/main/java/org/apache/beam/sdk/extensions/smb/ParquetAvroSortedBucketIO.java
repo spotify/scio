@@ -286,15 +286,14 @@ public class ParquetAvroSortedBucketIO {
     @Override
     public BucketedInput<T> toBucketedInput(final SortedBucketSource.Keying keying) {
       return BucketedInput.of(
-        keying,
-        getTupleTag(),
-        getInputDirectories(),
-        getFilenameSuffix(),
-        getFileOperations(),
-        getPredicate());
+          keying,
+          getTupleTag(),
+          getInputDirectories(),
+          getFilenameSuffix(),
+          getFileOperations(),
+          getPredicate());
     }
 
-    @Override
     FileOperations<T> getFileOperations() {
       ParquetAvroFileOperations<T> fileOperations =
           getRecordClass() == null
@@ -302,9 +301,9 @@ public class ParquetAvroSortedBucketIO {
               : ParquetAvroFileOperations.of(getRecordClass());
 
       return fileOperations
-              .withFilterPredicate(getFilterPredicate())
-              .withProjection(getProjection())
-              .withConfiguration(getConfiguration());
+          .withFilterPredicate(getFilterPredicate())
+          .withProjection(getProjection())
+          .withConfiguration(getConfiguration());
     }
   }
 
@@ -564,9 +563,7 @@ public class ParquetAvroSortedBucketIO {
               ? (ParquetAvroFileOperations<T>) ParquetAvroFileOperations.of(getSchema())
               : ParquetAvroFileOperations.of(getRecordClass());
 
-      return fileOperations
-          .withConfiguration(getConfiguration())
-          .withCompression(getCompression());
+      return fileOperations.withConfiguration(getConfiguration()).withCompression(getCompression());
     }
 
     @Override

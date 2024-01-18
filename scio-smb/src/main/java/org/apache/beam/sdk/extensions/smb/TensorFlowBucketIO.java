@@ -169,12 +169,10 @@ public class TensorFlowBucketIO {
       return toBuilder().setPredicate(predicate).build();
     }
 
-    @Override
     FileOperations<Example> getFileOperations() {
       return TensorFlowFileOperations.of(getCompression());
     }
 
-    @Override
     public BucketedInput<Example> toBucketedInput(final SortedBucketSource.Keying keying) {
       return BucketedInput.of(
           keying,
