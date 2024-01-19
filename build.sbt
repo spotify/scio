@@ -383,6 +383,17 @@ lazy val keepExistingHeader =
         .trim()
   })
 
+// sbt does not support skip for all tasks
+lazy val testSkipped = Def.task {
+  if ((Test / test / skip).value) () else (Test / test).value
+}
+lazy val undeclaredCompileDependenciesTestSkipped = Def.task {
+  if ((Compile / compile / skip).value) () else undeclaredCompileDependenciesTest.value
+}
+lazy val unusedCompileDependenciesTestSkipped = Def.task {
+  if ((Compile / compile / skip).value) () else unusedCompileDependenciesTest.value
+}
+
 val commonSettings = Def.settings(
   headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
   headerMappings := headerMappings.value ++ Map(
@@ -1143,10 +1154,9 @@ lazy val `scio-examples` = project
   .settings(
     compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
     test / skip := skipUnauthorizedGcpGithubWorkflow.value,
-    // sbt does not support skip for test
-    Test / test := {
-      if ((Test / test / skip).value) () else (Test / test).value
-    },
+    Test / test := testSkipped.value,
+    undeclaredCompileDependenciesTest := undeclaredCompileDependenciesTestSkipped.value,
+    unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     scalacOptions := {
       val exclude = ScalacOptions
         .tokensForVersion(
@@ -1463,20 +1473,22 @@ lazy val integration = project
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
+    publish / skip := true,
+    // disable compile / test when unauthorized
     compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
     test / skip := true,
-    publish / skip := true,
-    // sbt does not support skip for test
     Test / test := {
+      val logger = streams.value.log
       if ((Test / test / skip).value) {
-        streams.value.log.warn(
+        logger.warn(
           "integration/test are skipped.\n" +
             "Run 'set integration/test/skip := false' to run them"
         )
-      } else {
-        (Test / test).value
       }
+      testSkipped.value
     },
+    undeclaredCompileDependenciesTest := undeclaredCompileDependenciesTestSkipped.value,
+    unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // compile
