@@ -17,6 +17,8 @@
 
 package com.spotify.scio.bigquery
 
+import org.typelevel.scalaccompat.annotation.nowarn
+
 import scala.annotation.StaticAnnotation
 package object types {
 
@@ -31,7 +33,8 @@ package object types {
    *                 @description("user age") age: Int)
    * }}}
    */
-  final class description(val value: String) extends StaticAnnotation with Serializable
+  @nowarn
+  final class description(value: String) extends StaticAnnotation with Serializable
 
   /**
    * Case class to serve as raw type for Geography instances to distinguish them from Strings.

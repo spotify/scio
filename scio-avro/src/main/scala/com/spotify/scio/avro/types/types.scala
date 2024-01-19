@@ -17,7 +17,7 @@
 
 package com.spotify.scio.avro
 
-import org.typelevel.scalaccompat.annotation.unused
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.annotation.StaticAnnotation
 package object types {
@@ -36,5 +36,6 @@ package object types {
    *                 @doc("user age") age: Int)
    * }}}
    */
-  class doc(@unused value: String) extends StaticAnnotation
+  @nowarn
+  class doc(value: String) extends StaticAnnotation
 }
