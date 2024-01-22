@@ -415,11 +415,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   static String serializeHashType(HashType hashType) {
-    try {
-      return objectMapper.writeValueAsString(hashType).replaceAll("\"", "");
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("Failed to serialize " + hashType + " to String", e);
-    }
+    return objectMapper.convertValue(hashType, String.class);
   }
 
   public static <K1, K2, V> BucketMetadata<K1, K2, V> from(String src) throws IOException {
