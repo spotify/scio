@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Joiner;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Joiner;
 import org.apache.commons.io.IOUtils;
 
 class ProcessUtil {

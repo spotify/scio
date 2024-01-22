@@ -20,7 +20,7 @@ package org.apache.beam.sdk.extensions.smb;
 import java.io.Serializable;
 import java.util.List;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

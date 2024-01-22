@@ -20,8 +20,8 @@ package com.spotify.scio.transforms
 import java.nio.file.Files
 
 import com.spotify.scio.testing._
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Charsets
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{Files => GFiles}
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.{Files => GFiles}
 
 class PipeDoFnTest extends PipelineSpec {
   private val input = Seq("a", "b", "c")
