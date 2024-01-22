@@ -49,6 +49,8 @@ import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.HashFunction;
 import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Suppliers;
 
 /**
  * Represents metadata in a JSON-serializable format to be stored alongside sorted-bucket files in a
@@ -101,7 +103,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonProperty private final String filenamePrefix;
 
-  @JsonIgnore private final HashFunction hashFunction;
+  @JsonIgnore private final Supplier<HashFunction> hashFunction;
 
   @JsonIgnore private final Coder<K1> keyCoder;
 
@@ -162,7 +164,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     this.keyClass = keyClass;
     this.keyClassSecondary = keyClassSecondary;
     this.hashType = hashType;
-    this.hashFunction = HashType.valueOf(hashType).create();
+    this.hashFunction = Suppliers.memoize(new HashFunctionSupplier(hashType));
     this.keyCoder = getKeyCoder(keyClass);
     this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
@@ -362,11 +364,11 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   int getBucketId(byte[] keyBytes) {
-    return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % numBuckets;
+    return Math.abs(hashFunction.get().hashBytes(keyBytes).asInt()) % numBuckets;
   }
 
   int rehashBucket(byte[] keyBytes, int newNumBuckets) {
-    return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % newNumBuckets;
+    return Math.abs(hashFunction.get().hashBytes(keyBytes).asInt()) % newNumBuckets;
   }
 
   ////////////////////////////////////////
@@ -386,6 +388,19 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   ////////////////////////////////////////
   // Serialization
   ////////////////////////////////////////
+
+  private static class HashFunctionSupplier implements Supplier<HashFunction>, Serializable {
+    private final String hashType;
+
+    private HashFunctionSupplier(String hashType) {
+      this.hashType = hashType;
+    }
+
+    @Override
+    public HashFunction get() {
+      return HashType.valueOf(hashType).create();
+    }
+  }
 
   @JsonIgnore private static ObjectMapper objectMapper = getObjectMapper();
 

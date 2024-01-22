@@ -204,6 +204,45 @@ public class BucketMetadataTest {
   }
 
   @Test
+  public void testDoesntFailOnUnknownHashType() throws Exception {
+    final int futureVersion = BucketMetadata.CURRENT_VERSION + 1;
+    final String serializedAvro =
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.AvroBucketMetadata\",\"version\":"
+            + futureVersion
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+    final String serializedJson =
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.JsonBucketMetadata\",\"version\":"
+            + futureVersion
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+    final String serializedPq =
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.ParquetBucketMetadata\",\"version\":"
+            + futureVersion
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+    final String serializedTf =
+        "{\"type\":\"org.apache.beam.sdk.extensions.smb.TensorFlowBucketMetadata\",\"version\":"
+            + futureVersion
+            + ",\"numBuckets\":2,\"numShards\":1,\"keyClass\":\"java.lang.String\",\"hashType\":\"SOME_HASH_TYPE\",\"keyField\":\"user_id\", \"extra_field\":\"foo\"}";
+
+    // Assert that no exception is thrown decoding.
+    final JsonBucketMetadata jsonBucketMetadata =
+        (JsonBucketMetadata) BucketMetadata.from(serializedJson);
+    final AvroBucketMetadata avroBucketMetadata =
+        (AvroBucketMetadata) BucketMetadata.from(serializedAvro);
+    final ParquetBucketMetadata pqBucketMetadata =
+        (ParquetBucketMetadata) BucketMetadata.from(serializedPq);
+    final TensorFlowBucketMetadata tfBucketMetadata =
+        (TensorFlowBucketMetadata) BucketMetadata.from(serializedTf);
+
+    // Assert compatibility
+    Assert.assertTrue(avroBucketMetadata.isCompatibleWith(jsonBucketMetadata));
+    Assert.assertTrue(avroBucketMetadata.isCompatibleWith(pqBucketMetadata));
+    Assert.assertTrue(avroBucketMetadata.isCompatibleWith(tfBucketMetadata));
+    Assert.assertTrue(jsonBucketMetadata.isCompatibleWith(pqBucketMetadata));
+    Assert.assertTrue(jsonBucketMetadata.isCompatibleWith(tfBucketMetadata));
+    Assert.assertTrue(pqBucketMetadata.isCompatibleWith(tfBucketMetadata));
+  }
+
+  @Test
   public void testNullKeyEncoding() throws Exception {
     final TestBucketMetadata m =
         new TestBucketMetadata(0, 1, 1, HashType.MURMUR3_32, DEFAULT_FILENAME_PREFIX);
