@@ -90,8 +90,8 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   protected FileIO.Sink<ValueT> createSink() {
     final AvroIO.Sink<ValueT> sink =
         ((AvroIO.Sink<ValueT>) AvroIO.sink(getSchema()))
-                .withDatumWriterFactory(datumFactory)
-                .withCodec(codec.getCodec());
+            .withDatumWriterFactory(datumFactory)
+            .withCodec(codec.getCodec());
 
     if (metadata != null) {
       return sink.withMetadata(metadata);

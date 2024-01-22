@@ -79,15 +79,15 @@ public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Exa
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     this(
-            version,
-            numBuckets,
-            numShards,
-            keyClassPrimary,
-            keyField,
-            keyClassSecondary,
-            keyFieldSecondary,
-            BucketMetadata.serializeHashType(hashType),
-            filenamePrefix);
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyField,
+        keyClassSecondary,
+        keyFieldSecondary,
+        BucketMetadata.serializeHashType(hashType),
+        filenamePrefix);
   }
 
   @JsonCreator

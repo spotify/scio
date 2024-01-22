@@ -34,7 +34,6 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.util.*;
-
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -126,14 +125,22 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   public BucketMetadata(
-          int version,
-          int numBuckets,
-          int numShards,
-          Class<K1> keyClass,
-          Class<K2> keyClassSecondary,
-          HashType hashType,
-          String filenamePrefix) throws CannotProvideCoderException, NonDeterministicException {
-    this(version, numBuckets, numShards, keyClass, keyClassSecondary, serializeHashType(hashType), filenamePrefix);
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClass,
+      Class<K2> keyClassSecondary,
+      HashType hashType,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        version,
+        numBuckets,
+        numShards,
+        keyClass,
+        keyClassSecondary,
+        serializeHashType(hashType),
+        filenamePrefix);
   }
 
   public BucketMetadata(

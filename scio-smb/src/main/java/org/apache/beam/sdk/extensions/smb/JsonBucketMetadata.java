@@ -70,26 +70,26 @@ public class JsonBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, TableRow>
   }
 
   public JsonBucketMetadata(
-          int version,
-          int numBuckets,
-          int numShards,
-          Class<K1> keyClassPrimary,
-          String keyField,
-          Class<K2> keyClassSecondary,
-          String keyFieldSecondary,
-          HashType hashType,
-          String filenamePrefix)
-          throws CannotProvideCoderException, NonDeterministicException {
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
     this(
-            version,
-            numBuckets,
-            numShards,
-            keyClassPrimary,
-            keyField,
-            keyClassSecondary,
-            keyFieldSecondary,
-            BucketMetadata.serializeHashType(hashType),
-            filenamePrefix);
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyField,
+        keyClassSecondary,
+        keyFieldSecondary,
+        BucketMetadata.serializeHashType(hashType),
+        filenamePrefix);
   }
 
   @JsonCreator
