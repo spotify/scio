@@ -114,7 +114,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   @JsonIgnore private final Coder<K2> keyCoderSecondary;
 
   public BucketMetadata(
-      int version, int numBuckets, int numShards, Class<K1> keyClass, String hashType)
+      int version, int numBuckets, int numShards, Class<K1> keyClass, HashType hashType)
       throws CannotProvideCoderException, NonDeterministicException {
     this(version, numBuckets, numShards, keyClass, null, hashType, null);
   }
