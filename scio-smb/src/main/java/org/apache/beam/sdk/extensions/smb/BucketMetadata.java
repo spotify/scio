@@ -33,10 +33,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.channels.Channels;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -100,7 +98,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final Class<K2> keyClassSecondary;
 
-  @JsonProperty private final HashType hashType;
+  @JsonProperty private final String hashType;
 
   @JsonProperty private final String filenamePrefix;
 
@@ -111,7 +109,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   @JsonIgnore private final Coder<K2> keyCoderSecondary;
 
   public BucketMetadata(
-      int version, int numBuckets, int numShards, Class<K1> keyClass, HashType hashType)
+      int version, int numBuckets, int numShards, Class<K1> keyClass, String hashType)
       throws CannotProvideCoderException, NonDeterministicException {
     this(version, numBuckets, numShards, keyClass, null, hashType, null);
   }
@@ -128,12 +126,23 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   public BucketMetadata(
+          int version,
+          int numBuckets,
+          int numShards,
+          Class<K1> keyClass,
+          Class<K2> keyClassSecondary,
+          HashType hashType,
+          String filenamePrefix) throws CannotProvideCoderException, NonDeterministicException {
+    this(version, numBuckets, numShards, keyClass, keyClassSecondary, serializeHashType(hashType), filenamePrefix);
+  }
+
+  public BucketMetadata(
       int version,
       int numBuckets,
       int numShards,
       Class<K1> keyClass,
       Class<K2> keyClassSecondary,
-      HashType hashType,
+      String hashType,
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     Preconditions.checkArgument(
@@ -146,7 +155,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     this.keyClass = keyClass;
     this.keyClassSecondary = keyClassSecondary;
     this.hashType = hashType;
-    this.hashFunction = hashType.create();
+    this.hashFunction = HashType.valueOf(hashType).create();
     this.keyCoder = getKeyCoder(keyClass);
     this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
@@ -217,7 +226,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     return other != null
         // version 1 is backwards compatible with version 0
         && (this.version <= 1 && other.version <= 1)
-        && this.hashType == other.hashType
+        && Objects.equals(this.hashType, other.hashType)
         // This check should be redundant since power of two is checked in BucketMetadata
         // constructor, but it's cheap to double-check.
         && (Math.max(numBuckets, other.numBuckets) % Math.min(numBuckets, other.numBuckets) == 0);
@@ -256,7 +265,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   public HashType getHashType() {
-    return hashType;
+    return HashType.valueOf(hashType);
   }
 
   public String getFilenamePrefix() {
@@ -377,6 +386,14 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     return objectMapper;
+  }
+
+  static String serializeHashType(HashType hashType) {
+    try {
+      return objectMapper.writeValueAsString(hashType).replaceAll("\"", "");
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Failed to serialize " + hashType + " to String", e);
+    }
   }
 
   public static <K1, K2, V> BucketMetadata<K1, K2, V> from(String src) throws IOException {

@@ -90,7 +90,7 @@ public class TensorFlowBucketMetadataTest {
                 1,
                 1,
                 ByteString.class,
-                "bytes",
+                "bytes", null, null,
                 HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKeyPrimary(example));
@@ -101,7 +101,7 @@ public class TensorFlowBucketMetadataTest {
                 1,
                 1,
                 String.class,
-                "bytes",
+                "bytes", null, null,
                 HashType.MURMUR3_32,
                 SortedBucketIO.DEFAULT_FILENAME_PREFIX)
             .extractKeyPrimary(example));
@@ -126,7 +126,7 @@ public class TensorFlowBucketMetadataTest {
                     1,
                     1,
                     Float.class,
-                    "float",
+                    "float", null, null,
                     HashType.MURMUR3_32,
                     SortedBucketIO.DEFAULT_FILENAME_PREFIX)
                 .extractKeyPrimary(example));
@@ -139,6 +139,7 @@ public class TensorFlowBucketMetadataTest {
                     1,
                     Integer.class,
                     "bytes",
+                    null, null,
                     HashType.MURMUR3_32,
                     SortedBucketIO.DEFAULT_FILENAME_PREFIX)
                 .extractKeyPrimary(example));
@@ -218,7 +219,7 @@ public class TensorFlowBucketMetadataTest {
             SortedBucketIO.DEFAULT_FILENAME_PREFIX);
     final TensorFlowBucketMetadata<String, Void> metadata5 =
         new TensorFlowBucketMetadata<>(
-            4, 1, String.class, "bar", HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+            4, 1, String.class, "bar", null, null, HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryKey(metadata2));
     Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata2));
@@ -238,7 +239,7 @@ public class TensorFlowBucketMetadataTest {
       throws CannotProvideCoderException, Coder.NonDeterministicException, IOException {
     final TensorFlowBucketMetadata<String, Void> metadata =
         new TensorFlowBucketMetadata<>(
-            4, 1, String.class, "bar", HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
+            4, 1, String.class, "bar", null, null, HashType.MURMUR3_32, SortedBucketIO.DEFAULT_FILENAME_PREFIX);
 
     final ByteArrayOutputStream os = new ByteArrayOutputStream();
     BucketMetadata.to(metadata, os);
