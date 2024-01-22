@@ -33,7 +33,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.channels.Channels;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
@@ -145,7 +149,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
         filenamePrefix);
   }
 
-  public BucketMetadata(
+  BucketMetadata(
       int version,
       int numBuckets,
       int numShards,
