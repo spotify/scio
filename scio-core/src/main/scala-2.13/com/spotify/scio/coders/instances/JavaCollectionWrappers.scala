@@ -29,8 +29,8 @@ private[coders] object JavaCollectionWrappers {
 
   object JIterableWrapper {
     def unapply(arg: Any): Option[JIterable[_]] = arg match {
-      case arg if arg.getClass == JListWrapperClass =>
-        val underlying = JListWrapperClass
+      case arg if arg.getClass == JIterableWrapperClass =>
+        val underlying = JIterableWrapperClass
           .getField("underlying")
           .get(arg)
           .asInstanceOf[JIterable[_]]
