@@ -31,7 +31,7 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.smb.BucketMetadata
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.{FileSystems, LocalResources}
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier
 
 import java.nio.channels.Channels
 import java.util.UUID
@@ -77,6 +77,7 @@ class SortMergeBucketExampleTest extends PipelineSpec {
     // Inspect metadata on real written files
     def getMetadataPath(smbDir: File): ResourceId =
       LocalResources.fromFile(smbDir.toPath.resolve("metadata.json").toFile, false)
+
     BucketMetadata
       .from(Channels.newInputStream(FileSystems.open(getMetadataPath(userDir))))
       .getNumBuckets shouldBe 2

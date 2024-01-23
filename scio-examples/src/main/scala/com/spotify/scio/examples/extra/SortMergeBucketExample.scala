@@ -177,8 +177,10 @@ object SortMergeBucketJoinExample {
             .endRecord
         )
         // Filter at the Parquet IO level to users under 50
+        // Filtering at the IO level whenever possible, as it reduces total bytes read
         .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("age"), Int.box(50)))
-        // Filter at the SMB Cogrouping level to a single record per uesr
+        // Filter at the SMB Cogrouping level to a single record per user
+        // Filter at the Cogroup level if your filter depends on the materializing key group
         .withPredicate((xs, _) => xs.size() == 0)
         .from(args("users")),
       ParquetTypeSortedBucketIO
@@ -204,6 +206,7 @@ object SortMergeBucketJoinExample {
 object SortMergeBucketTransformExample {
   import com.spotify.scio.smb._
 
+  // ParquetTypeSortedBucketIO supports case class projections for reading and writing
   case class AccountProjection(id: Int, amount: Double)
   case class CombinedAccount(id: Int, age: Int, totalValue: Double)
 
@@ -217,6 +220,7 @@ object SortMergeBucketTransformExample {
       classOf[Integer],
       ParquetAvroSortedBucketIO
         .read(new TupleTag[GenericRecord](), SortMergeBucketExample.UserDataSchema)
+        // Filter at the Parquet IO level to users under 50
         .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("age"), Int.box(50)))
         .from(args("users")),
       ParquetTypeSortedBucketIO
