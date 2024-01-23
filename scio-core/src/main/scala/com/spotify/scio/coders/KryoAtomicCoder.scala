@@ -35,11 +35,11 @@ import org.apache.beam.sdk.coders.{AtomicCoder, CoderException => BCoderExceptio
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.VarInt
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.{
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.{
   ByteStreams,
   CountingOutputStream
 }
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.reflect.ClassPath
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.reflect.ClassPath
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 

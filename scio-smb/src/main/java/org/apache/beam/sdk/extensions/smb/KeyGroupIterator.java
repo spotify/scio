@@ -24,9 +24,9 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.ComparableKeyBytes;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterators;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.PeekingIterator;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterators;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.PeekingIterator;
 
 // FIXME: current limitation: must exhaust Iterator<ValueT> before starting the next key group
 class KeyGroupIterator<V> implements Iterator<KV<ComparableKeyBytes, Iterator<V>>> {

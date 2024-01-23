@@ -18,7 +18,7 @@
 
 package org.apache.beam.sdk.extensions.smb;
 
-import static org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions.checkState;
+import static org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions.checkState;
 
 import com.spotify.scio.smb.annotations.PatchedFromBeam;
 import java.io.IOException;
@@ -27,8 +27,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import javax.annotation.Nullable;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.HashFunction;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.hash.Hashing;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashFunction;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
 
 /**
  * Codec for TFRecords file format. See

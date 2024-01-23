@@ -23,7 +23,7 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.generic.GenericData.EnumSymbol
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.BaseEncoding
 import org.joda.time.{DateTime, LocalDate, LocalTime}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

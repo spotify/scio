@@ -37,7 +37,7 @@ import org.apache.beam.sdk.io.PatchedSerializableAvroCodecFactory;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier;
 
 /** {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Avro files. */
 public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {

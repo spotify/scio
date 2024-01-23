@@ -17,7 +17,7 @@
 
 package com.spotify.scio
 
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Splitter
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Splitter
 import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.jdk.CollectionConverters._
