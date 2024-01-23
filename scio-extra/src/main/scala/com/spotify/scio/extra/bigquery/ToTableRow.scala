@@ -26,7 +26,7 @@ import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData.EnumSymbol
 import org.apache.avro.generic.{GenericFixed, IndexedRecord}
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.BaseEncoding
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.BaseEncoding
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate, LocalTime}
 

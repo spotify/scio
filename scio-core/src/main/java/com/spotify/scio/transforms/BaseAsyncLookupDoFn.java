@@ -33,7 +33,7 @@ import javax.annotation.CheckForNull;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.values.KV;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
