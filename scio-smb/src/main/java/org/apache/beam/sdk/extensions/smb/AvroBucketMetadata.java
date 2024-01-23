@@ -77,6 +77,29 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
         filenamePrefix);
   }
 
+  AvroBucketMetadata(
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyField,
+        keyClassSecondary,
+        keyFieldSecondary,
+        BucketMetadata.serializeHashType(hashType),
+        filenamePrefix);
+  }
+
   @JsonCreator
   AvroBucketMetadata(
       @JsonProperty("version") int version,
@@ -86,7 +109,7 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
       @JsonProperty("keyField") String keyField,
       @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
       @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
-      @JsonProperty("hashType") HashType hashType,
+      @JsonProperty("hashType") String hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     super(

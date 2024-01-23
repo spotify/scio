@@ -36,6 +36,7 @@ import java.nio.channels.Channels;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.beam.sdk.coders.AtomicCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -52,6 +53,8 @@ import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashFunction;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Suppliers;
 
 /**
  * Represents metadata in a JSON-serializable format to be stored alongside sorted-bucket files in a
@@ -100,11 +103,11 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final Class<K2> keyClassSecondary;
 
-  @JsonProperty private final HashType hashType;
+  @JsonProperty private final String hashType;
 
   @JsonProperty private final String filenamePrefix;
 
-  @JsonIgnore private final HashFunction hashFunction;
+  @JsonIgnore private final Supplier<HashFunction> hashFunction;
 
   @JsonIgnore private final Coder<K1> keyCoder;
 
@@ -136,6 +139,25 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       HashType hashType,
       String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        version,
+        numBuckets,
+        numShards,
+        keyClass,
+        keyClassSecondary,
+        serializeHashType(hashType),
+        filenamePrefix);
+  }
+
+  BucketMetadata(
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClass,
+      Class<K2> keyClassSecondary,
+      String hashType,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
     Preconditions.checkArgument(
         numBuckets > 0 && ((numBuckets & (numBuckets - 1)) == 0),
         "numBuckets must be a power of 2");
@@ -146,7 +168,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     this.keyClass = keyClass;
     this.keyClassSecondary = keyClassSecondary;
     this.hashType = hashType;
-    this.hashFunction = hashType.create();
+    this.hashFunction = Suppliers.memoize(new HashFunctionSupplier(hashType));
     this.keyCoder = getKeyCoder(keyClass);
     this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
@@ -217,7 +239,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     return other != null
         // version 1 is backwards compatible with version 0
         && (this.version <= 1 && other.version <= 1)
-        && this.hashType == other.hashType
+        && Objects.equals(this.hashType, other.hashType)
         // This check should be redundant since power of two is checked in BucketMetadata
         // constructor, but it's cheap to double-check.
         && (Math.max(numBuckets, other.numBuckets) % Math.min(numBuckets, other.numBuckets) == 0);
@@ -256,7 +278,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   public HashType getHashType() {
-    return hashType;
+    return HashType.valueOf(hashType);
   }
 
   public String getFilenamePrefix() {
@@ -346,11 +368,11 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   int getBucketId(byte[] keyBytes) {
-    return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % numBuckets;
+    return Math.abs(hashFunction.get().hashBytes(keyBytes).asInt()) % numBuckets;
   }
 
   int rehashBucket(byte[] keyBytes, int newNumBuckets) {
-    return Math.abs(hashFunction.hashBytes(keyBytes).asInt()) % newNumBuckets;
+    return Math.abs(hashFunction.get().hashBytes(keyBytes).asInt()) % newNumBuckets;
   }
 
   ////////////////////////////////////////
@@ -371,12 +393,29 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   // Serialization
   ////////////////////////////////////////
 
+  private static class HashFunctionSupplier implements Supplier<HashFunction>, Serializable {
+    private final String hashType;
+
+    private HashFunctionSupplier(String hashType) {
+      this.hashType = hashType;
+    }
+
+    @Override
+    public HashFunction get() {
+      return HashType.valueOf(hashType).create();
+    }
+  }
+
   @JsonIgnore private static ObjectMapper objectMapper = getObjectMapper();
 
   private static ObjectMapper getObjectMapper() {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     return objectMapper;
+  }
+
+  static String serializeHashType(HashType hashType) {
+    return objectMapper.convertValue(hashType, String.class);
   }
 
   public static <K1, K2, V> BucketMetadata<K1, K2, V> from(String src) throws IOException {
