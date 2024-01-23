@@ -355,7 +355,7 @@ class SmbJobTest extends PipelineSpec {
         val smbInput: Seq[Account] = ???
         
         JobTest[SmbJob.type]
-              .args("--input=gs://input", "--output=gs://output", "--transformInput=gs://tfxInput")
+              .args("--input=gs://input", "--output=gs://output")
              
               // Mock .sortMergeGroupByKey
               .input(SmbIO[Int, Account]("gs://input", _.getId), smbInput)
@@ -371,7 +371,7 @@ class SmbJobTest extends PipelineSpec {
 
 SMB Transforms can be mocked by combing input and output `SmbIO`s:
 
-```scala mdoc compile:only
+```scala mdoc:compile-only
 // Scio job
 object SmbTransformJob {
     def main(cmdLineArgs: Array[String]): Unit = {
