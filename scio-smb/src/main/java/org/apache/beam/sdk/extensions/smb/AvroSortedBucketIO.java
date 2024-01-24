@@ -345,6 +345,11 @@ public class AvroSortedBucketIO {
       abstract Write<K1, K2, T> build();
     }
 
+    /** Specifies the avro {@link AvroDatumFactory} for writing. */
+    public Write<K1, K2, T> withDatumFactory(AvroDatumFactory<T> datumFactory) {
+      return toBuilder().setDatumFactory(datumFactory).build();
+    }
+
     /** Specifies the number of buckets for partitioning. */
     public Write<K1, K2, T> withNumBuckets(int numBuckets) {
       return toBuilder().setNumBuckets(numBuckets).build();
