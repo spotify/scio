@@ -18,7 +18,6 @@
 package com.spotify.scio.bigtable;
 
 import com.google.cloud.bigtable.config.BigtableOptions;
-import com.google.cloud.bigtable.config.CallOptionsConfig;
 import com.google.cloud.bigtable.grpc.BigtableSession;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
@@ -103,9 +102,7 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
 
   @Override
   public Duration getTimeout() {
-    CallOptionsConfig callOptions = options.getCallOptionsConfig();
-    int ms = Math.max(callOptions.getMutateRpcTimeoutMs(), callOptions.getReadStreamRpcTimeoutMs());
-    return Duration.ofMillis(ms);
+    return Duration.ofMillis(options.getCallOptionsConfig().getMutateRpcTimeoutMs());
   }
 
   protected BigtableSession newClient() {
