@@ -193,6 +193,11 @@ object SortMergeBucketTransformExample {
   def pipeline(cmdLineArgs: Array[String]): ScioContext = {
     val (sc, args) = ContextAndArgs(cmdLineArgs)
 
+    implicit val coderUserData: Coder[GenericRecord] =
+      avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+    implicit val coderAccount: Coder[Account] =
+      avroSpecificRecordCoder
+
     // #SortMergeBucketExample_transform
     val (readLhs, readRhs) = (
       AvroSortedBucketIO

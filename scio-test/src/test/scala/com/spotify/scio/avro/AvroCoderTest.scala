@@ -62,6 +62,7 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "provide a fallback for GenericRecord if no safe coder is available" in {
+    import com.spotify.scio.coders.kryo.{fallback => f}
     val record: GenericRecord = Avro.user
     record coderShould fallback()
   }

@@ -18,7 +18,7 @@
 package com.spotify.scio.coders.avro
 
 import com.spotify.scio.avro.{GenericRecordDatumFactory, SpecificRecordDatumFactory}
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.util.ScioUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericRecord, IndexedRecord}
@@ -113,7 +113,7 @@ private object SpecificFixedCoder {
   }
 }
 
-trait AvroCoders {
+trait AvroCoders extends CoderGrammar {
 
   /**
    * Create a Coder for Avro GenericRecord given the schema of the GenericRecord.
@@ -128,7 +128,7 @@ trait AvroCoders {
 
   // XXX: similar to GenericAvroSerializer
   def avroGenericRecordCoder: Coder[GenericRecord] =
-    Coder.beam(new SlowGenericRecordCoder)
+    beam(new SlowGenericRecordCoder)
 
   implicit def avroSpecificRecordCoder[T <: SpecificRecord: ClassTag]: Coder[T] = {
     val recordClass = ScioUtil.classOf[T]
@@ -138,8 +138,10 @@ trait AvroCoders {
   }
 
   def avroCoder[T <: IndexedRecord](factory: AvroDatumFactory[T], schema: Schema): Coder[T] =
-    Coder.beam(AvroCoder.of(factory, schema))
+    beam(AvroCoder.of(factory, schema))
 
   implicit def avroSpecificFixedCoder[T <: SpecificFixed: ClassTag]: Coder[T] =
     SpecificFixedCoder[T]
 }
+
+private[coders] object AvroCoders extends AvroCoders

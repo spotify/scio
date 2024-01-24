@@ -18,18 +18,20 @@
 package com.spotify.scio.coders.instances
 
 import com.google.protobuf.{ByteString, Message}
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderGrammar}
+import com.spotify.scio.util.ScioUtil
 import org.apache.beam.sdk.extensions.protobuf.{ByteStringCoder, ProtoCoder}
 
-import scala.reflect.{classTag, ClassTag}
+import scala.reflect.ClassTag
 
 //
 // Protobuf Coders
 //
-trait ProtobufCoders {
-  implicit def bytestringCoder: Coder[ByteString] =
-    Coder.beam(ByteStringCoder.of())
-
+trait ProtobufCoders extends CoderGrammar {
+  implicit lazy val bytestringCoder: Coder[ByteString] =
+    beam(ByteStringCoder.of())
   implicit def protoMessageCoder[T <: Message: ClassTag]: Coder[T] =
-    Coder.beam(ProtoCoder.of(classTag[T].runtimeClass.asInstanceOf[Class[T]]))
+    beam(ProtoCoder.of(ScioUtil.classOf[T]))
 }
+
+private[coders] object ProtobufCoders extends ProtobufCoders
