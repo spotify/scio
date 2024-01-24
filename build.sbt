@@ -32,6 +32,7 @@ val beamVersion = "2.53.0"
 // https://github.com/apache/beam/blob/v2.53.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
+val airliftVersion = "2.2"
 val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
@@ -1386,6 +1387,7 @@ lazy val `scio-smb` = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+      "io.airlift" % "slice" % airliftVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
