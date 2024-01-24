@@ -18,10 +18,7 @@
 package com.spotify.scio.transforms;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.joda.time.Instant;
@@ -57,7 +54,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
         Thread.currentThread().interrupt();
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
-      } catch (ExecutionException e) {
+      } catch (ExecutionException | TimeoutException e) {
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
       }

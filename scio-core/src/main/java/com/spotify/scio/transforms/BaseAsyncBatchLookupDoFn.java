@@ -26,11 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -208,7 +204,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
       Thread.currentThread().interrupt();
       LOG.error("Failed to process futures", e);
       throw new RuntimeException("Failed to process futures", e);
-    } catch (ExecutionException e) {
+    } catch (ExecutionException | TimeoutException e) {
       LOG.error("Failed to process futures", e);
       throw new RuntimeException("Failed to process futures", e);
     }

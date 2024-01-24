@@ -22,11 +22,7 @@ import com.google.common.cache.Cache;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.annotation.CheckForNull;
@@ -201,7 +197,7 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
         Thread.currentThread().interrupt();
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
-      } catch (ExecutionException e) {
+      } catch (ExecutionException | TimeoutException e) {
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
       }
