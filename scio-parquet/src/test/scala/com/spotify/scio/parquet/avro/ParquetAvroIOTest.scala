@@ -119,7 +119,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         conf = c()
       )
 
-      data.map(_.getIntField.toInt).debug() should containInAnyOrder(1 to 10)
+      data.map(_.getIntField.toInt) should containInAnyOrder(1 to 10)
       data.map(identity) should forAll[TestRecord] { r =>
         r.getLongField == null && r.getFloatField == null && r.getDoubleField == null &&
         r.getBooleanField == null && r.getStringField == null && r.getArrayField
@@ -194,8 +194,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
           conf = readConf(),
           suffix = ".parquet"
         )
-        .map(identity)
-        .debug() should containInAnyOrder(records)
+        .map(identity) should containInAnyOrder(records)
 
       sc2.run()
     }
