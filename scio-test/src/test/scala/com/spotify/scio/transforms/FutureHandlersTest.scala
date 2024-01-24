@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.{ListenableFuture, SettableFuture}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.{Duration => JDuration}
 import java.util.concurrent.CompletableFuture
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -27,8 +28,12 @@ import scala.concurrent._
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
-class GuavaFutureHandler extends FutureHandlers.Guava[String]
-class JavaFutureHandler extends FutureHandlers.Java[String]
+class GuavaFutureHandler extends FutureHandlers.Guava[String] {
+  override def getTimeout: JDuration = JDuration.ofMillis(500)
+}
+class JavaFutureHandler extends FutureHandlers.Java[String] {
+  override def getTimeout: JDuration = JDuration.ofMillis(500)
+}
 
 class FutureHandlersTest extends AnyFlatSpec with Matchers {
 
@@ -37,6 +42,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     create: () => I,
     complete: I => String => Unit,
     fail: I => Throwable => Unit,
+    cancel: I => Unit,
     access: F => String
   ): Unit = {
     it should "block until all futures complete" in {
@@ -106,6 +112,25 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
       an[Exception] shouldBe thrownBy(access(chainedFuture))
     }
 
+    it should "should execute onFailure if cancelled" in {
+      val f = create()
+      var result: Try[String] = null
+      val chainedFuture = handler.addCallback(
+        f,
+        { value =>
+          result = Success(value)
+          null
+        },
+        { e =>
+          result = Failure(e)
+          null
+        }
+      )
+      cancel(f)
+      result shouldBe a[Failure[_]]
+      an[Exception] shouldBe thrownBy(access(chainedFuture))
+    }
+
     it should "should execute onSuccess and propagate callback exception" in {
       val f = create()
       var result: Try[String] = null
@@ -154,6 +179,26 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
       }
       cause.getSuppressed.headOption.map(_.getMessage) shouldBe expectedSuppressed
     }
+
+    it should "wait for futures to complete" in {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val successFuture = create()
+      val failureFuture = create()
+      val cancelFuture = create()
+      Future {
+        Thread.sleep(100)
+        complete(successFuture)("success")
+        fail(failureFuture)(new Exception("failure"))
+        cancel(cancelFuture)
+      }
+      handler.waitForFutures(Iterable[F](successFuture, failureFuture, cancelFuture).asJava)
+    }
+
+    it should "throw a timeout exception " in {
+      val f = create()
+      a[TimeoutException] shouldBe thrownBy(handler.waitForFutures(Iterable[F](f).asJava))
+    }
+
   }
 
   "Guava handler" should behave like futureHandler[
@@ -164,6 +209,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     SettableFuture.create[String],
     _.set,
     _.setException,
+    _.cancel(true),
     _.get()
   )
 
@@ -175,6 +221,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     () => new CompletableFuture[String](),
     _.complete,
     _.completeExceptionally,
+    _.cancel(true),
     _.get()
   )
 }
