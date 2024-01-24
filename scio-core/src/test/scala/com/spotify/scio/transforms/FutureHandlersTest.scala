@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.{ListenableFuture, SettableFuture}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.{Duration => JDuration}
 import java.util.concurrent.{CompletableFuture, Executor, RejectedExecutionException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -27,9 +28,12 @@ import scala.concurrent._
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
-class GuavaFutureHandler extends FutureHandlers.Guava[String]
-
-class JavaFutureHandler extends FutureHandlers.Java[String]
+class GuavaFutureHandler extends FutureHandlers.Guava[String] {
+  override def getTimeout: JDuration = JDuration.ofMillis(500)
+}
+class JavaFutureHandler extends FutureHandlers.Java[String] {
+  override def getTimeout: JDuration = JDuration.ofMillis(500)
+}
 
 class RejectFutureHandler extends FutureHandlers.Guava[String] {
   override def getCallbackExecutor: Executor = _ => throw new RejectedExecutionException("Rejected")
@@ -185,6 +189,26 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
       }
       cause.getSuppressed.headOption.map(_.getMessage) shouldBe expectedSuppressed
     }
+
+    it should "wait for futures to complete" in {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val successFuture = create()
+      val failureFuture = create()
+      val cancelFuture = create()
+      Future {
+        Thread.sleep(100)
+        complete(successFuture)("success")
+        fail(failureFuture)(new Exception("failure"))
+        cancel(cancelFuture)
+      }
+      handler.waitForFutures(Iterable[F](successFuture, failureFuture, cancelFuture).asJava)
+    }
+
+    it should "throw a timeout exception " in {
+      val f = create()
+      a[TimeoutException] shouldBe thrownBy(handler.waitForFutures(Iterable[F](f).asJava))
+    }
+
   }
 
   "Guava handler" should behave like futureHandler[
@@ -192,7 +216,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     SettableFuture[String]
   ](
     new GuavaFutureHandler,
-    SettableFuture.create[String],
+    () => SettableFuture.create[String](),
     _.set,
     _.setException,
     _.cancel(true),

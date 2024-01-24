@@ -18,7 +18,14 @@
 package com.spotify.scio.transforms;
 
 import com.google.common.util.concurrent.*;
-import java.util.concurrent.*;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -33,7 +40,13 @@ public class FutureHandlers {
    * @param <V> value type.
    */
   public interface Base<F, V> {
-    void waitForFutures(Iterable<F> futures) throws InterruptedException, ExecutionException;
+
+    default Duration getTimeout() {
+      return null;
+    }
+
+    void waitForFutures(Iterable<F> futures)
+        throws InterruptedException, ExecutionException, TimeoutException;
 
     F addCallback(F future, Function<V, Void> onSuccess, Function<Throwable, Void> onFailure);
   }
@@ -53,10 +66,16 @@ public class FutureHandlers {
 
     @Override
     default void waitForFutures(Iterable<ListenableFuture<V>> futures)
-        throws InterruptedException, ExecutionException {
+        throws InterruptedException, ExecutionException, TimeoutException {
       // use Future#successfulAsList instead of Futures#allAsList which only works if all
       // futures succeed
-      Futures.successfulAsList(futures).get();
+      ListenableFuture<?> f = Futures.successfulAsList(futures);
+      Duration timeout = getTimeout();
+      if (timeout != null) {
+        f.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+      } else {
+        f.get();
+      }
     }
 
     @Override
@@ -116,10 +135,16 @@ public class FutureHandlers {
   public interface Java<V> extends Base<CompletableFuture<V>, V> {
     @Override
     default void waitForFutures(Iterable<CompletableFuture<V>> futures)
-        throws InterruptedException, ExecutionException {
+        throws InterruptedException, ExecutionException, TimeoutException {
       CompletableFuture[] array =
           StreamSupport.stream(futures.spliterator(), false).toArray(CompletableFuture[]::new);
-      CompletableFuture.allOf(array).exceptionally(t -> null).get();
+      CompletableFuture<?> f = CompletableFuture.allOf(array).exceptionally(t -> null);
+      Duration timeout = getTimeout();
+      if (timeout != null) {
+        f.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+      } else {
+        f.get();
+      }
     }
 
     @Override

@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
 import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
 import java.io.IOException;
+import java.time.Duration;
 import org.apache.beam.sdk.transforms.DoFn;
 
 /**
@@ -97,6 +98,11 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
   public ResourceType getResourceType() {
     // BigtableSession is backed by a gRPC thread safe client
     return ResourceType.PER_INSTANCE;
+  }
+
+  @Override
+  public Duration getTimeout() {
+    return Duration.ofMillis(options.getCallOptionsConfig().getMutateRpcTimeoutMs());
   }
 
   protected BigtableSession newClient() {
