@@ -63,6 +63,7 @@ def result =  sc.map(fn).saveAsAvroFile("gs://path-to-data/lake/output")
 
 ```scala mdoc:compile-only
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 
 import org.apache.avro.generic.GenericRecord
@@ -71,9 +72,10 @@ import org.apache.avro.Schema
 case class Foo(x: Int, s: String)
 val sc: SCollection[Foo] = ???
 
-def yourAvroSchema: Schema = ???
+lazy val yourAvroSchema: Schema = ???
+implicit lazy val coder: Coder[GenericRecord] = avroGenericRecordCoder(yourAvroSchema)
 
-// convert to avro SpecificRecord
+// convert to avro GenericRecord
 def fn(f: Foo): GenericRecord = ???
 
 // writing Avro generic records requires additional argument `schema`

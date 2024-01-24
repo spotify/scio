@@ -133,16 +133,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[BitSetCoder] and
       beFullyCompliant()
 
-    Right(1) coderShould roundtrip() and
-      beOfType[Ref[_]] and
-      materializeTo[RefCoder[_]] and
-      beFullyCompliant()
-
-    Left(1) coderShould roundtrip() and
-      beOfType[Ref[_]] and
-      materializeTo[RefCoder[_]] and
-      beFullyCompliant()
-
     mut.Set(s: _*) coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[MutableSetCoder[_]] and
@@ -155,13 +145,20 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Scala option" in {
-    None coderShould roundtrip() and
-      beOfType[CoderTransform[_, _]] and
-      materializeTo[OptionCoder[_]] and
+    Option(1) coderShould roundtrip() and
+      beOfType[Disjunction[_, _]] and
+      materializeTo[DisjunctionCoder[_, _]] and
       beFullyCompliant()
 
-    Option(1) coderShould roundtrip() and materializeTo[OptionCoder[_]]
-    Some(1) coderShould roundtrip() and materializeTo[OptionCoder[_]]
+    Some(1) coderShould roundtrip() and
+      beOfType[Ref[_]] and
+      materializeTo[RefCoder[_]] and
+      beFullyCompliant()
+
+    None coderShould roundtrip() and
+      beOfType[Singleton[_]] and
+      materializeTo[SingletonCoder[_]] and
+      beFullyCompliant()
   }
 
   it should "not support inner case classes" in {
@@ -526,10 +523,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support classes with private constructors" in {
+    import com.spotify.scio.coders.kryo.{fallback => f}
     PrivateClass(42L) coderShould fallback() and materializeTo[KryoAtomicCoder[_]]
   }
 
   it should "support classes that contain classes with private constructors" in {
+    import com.spotify.scio.coders.kryo._
     UsesPrivateClass(PrivateClass(1L)) coderShould notFallback()
   }
 

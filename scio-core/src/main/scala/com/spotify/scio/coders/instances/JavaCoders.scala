@@ -21,9 +21,8 @@ import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
 import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, Period}
 import java.util.UUID
-
 import com.spotify.scio.IsJavaBean
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.ScioUtil
@@ -33,7 +32,7 @@ import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.beam.sdk.{coders => bcoders}
 
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 private[coders] object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
@@ -46,35 +45,35 @@ private[coders] object VoidCoder extends AtomicCoder[Void] {
 //
 // Java Coders
 //
-trait JavaCoders extends JavaBeanCoders {
-  implicit def voidCoder: Coder[Void] = Coder.beam[Void](VoidCoder)
+trait JavaCoders extends CoderGrammar with JavaBeanCoders {
+  implicit lazy val voidCoder: Coder[Void] = beam[Void](VoidCoder)
 
-  implicit def uuidCoder: Coder[UUID] =
-    Coder.xmap(Coder[(Long, Long)])(
+  implicit lazy val uuidCoder: Coder[UUID] =
+    xmap(Coder[(Long, Long)])(
       { case (msb, lsb) => new UUID(msb, lsb) },
       uuid => (uuid.getMostSignificantBits, uuid.getLeastSignificantBits)
     )
 
-  implicit def uriCoder: Coder[java.net.URI] =
-    Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => new java.net.URI(s), _.toString)
+  implicit lazy val uriCoder: Coder[java.net.URI] =
+    xmap(beam(StringUtf8Coder.of()))(s => new java.net.URI(s), _.toString)
 
-  implicit def pathCoder: Coder[java.nio.file.Path] =
-    Coder.xmap(Coder.beam(StringUtf8Coder.of()))(s => java.nio.file.Paths.get(s), _.toString)
+  implicit lazy val pathCoder: Coder[java.nio.file.Path] =
+    xmap(beam(StringUtf8Coder.of()))(s => java.nio.file.Paths.get(s), _.toString)
 
   implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[java.lang.Iterable[T]] =
-    Coder.transform(c)(bc => Coder.beam(bcoders.IterableCoder.of(bc)))
+    transform(c)(bc => beam(bcoders.IterableCoder.of(bc)))
 
   implicit def jListCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
-    Coder.transform(c)(bc => Coder.beam(bcoders.ListCoder.of(bc)))
+    transform(c)(bc => beam(bcoders.ListCoder.of(bc)))
 
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
-    Coder.xmap(jListCoder[T])(new java.util.ArrayList(_), identity)
+    xmap(jListCoder[T])(new java.util.ArrayList(_), identity)
 
   implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
-    Coder.transform(ck)(bk => Coder.transform(cv)(bv => Coder.beam(bcoders.MapCoder.of(bk, bv))))
+    transform(ck)(bk => transform(cv)(bv => beam(bcoders.MapCoder.of(bk, bv))))
 
-  implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
-    Coder.xmap(c)(
+  implicit def jTryCoder[A](implicit c: Coder[A]): Coder[BaseAsyncLookupDoFn.Try[A]] =
+    xmap(ScalaCoders.tryCoder[A])(
       {
         case Success(value)     => new BaseAsyncLookupDoFn.Try(value)
         case Failure(exception) => new BaseAsyncLookupDoFn.Try[A](exception)
@@ -82,87 +81,83 @@ trait JavaCoders extends JavaBeanCoders {
       t => if (t.isSuccess) Success(t.get()) else Failure(t.getException)
     )
 
-  implicit def jBitSetCoder: Coder[java.util.BitSet] = Coder.beam(BitSetCoder.of())
+  implicit lazy val jBitSetCoder: Coder[java.util.BitSet] = beam(BitSetCoder.of())
 
   private def fromScalaCoder[J <: java.lang.Number, S <: AnyVal](coder: Coder[S]): Coder[J] =
     coder.asInstanceOf[Coder[J]]
 
-  implicit val jShortCoder: Coder[java.lang.Short] = fromScalaCoder(Coder.shortCoder)
-  implicit val jByteCoder: Coder[java.lang.Byte] = fromScalaCoder(Coder.byteCoder)
-  implicit val jIntegerCoder: Coder[java.lang.Integer] = fromScalaCoder(Coder.intCoder)
-  implicit val jLongCoder: Coder[java.lang.Long] = fromScalaCoder(Coder.longCoder)
-  implicit val jFloatCoder: Coder[java.lang.Float] = fromScalaCoder(Coder.floatCoder)
-  implicit val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(Coder.doubleCoder)
+  implicit lazy val jShortCoder: Coder[java.lang.Short] = fromScalaCoder(ScalaCoders.shortCoder)
+  implicit lazy val jByteCoder: Coder[java.lang.Byte] = fromScalaCoder(ScalaCoders.byteCoder)
+  implicit lazy val jIntegerCoder: Coder[java.lang.Integer] = fromScalaCoder(ScalaCoders.intCoder)
+  implicit lazy val jLongCoder: Coder[java.lang.Long] = fromScalaCoder(ScalaCoders.longCoder)
+  implicit lazy val jFloatCoder: Coder[java.lang.Float] = fromScalaCoder(ScalaCoders.floatCoder)
+  implicit lazy val jDoubleCoder: Coder[java.lang.Double] = fromScalaCoder(ScalaCoders.doubleCoder)
+  implicit lazy val jBooleanCoder: Coder[java.lang.Boolean] = beam(BooleanCoder.of())
+  implicit lazy val jBigIntegerCoder: Coder[BigInteger] = beam(BigIntegerCoder.of())
+  implicit lazy val jBigDecimalCoder: Coder[BigDecimal] = beam(BigDecimalCoder.of())
+  implicit lazy val serializableCoder: Coder[Serializable] = kryo[Serializable]
 
-  implicit val jBooleanCoder: Coder[java.lang.Boolean] = Coder.beam(BooleanCoder.of())
-
-  implicit def jBigIntegerCoder: Coder[BigInteger] = Coder.beam(BigIntegerCoder.of())
-
-  implicit def jBigDecimalCoder: Coder[BigDecimal] = Coder.beam(BigDecimalCoder.of())
-
-  implicit def serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
-
-  implicit def jInstantCoder: Coder[Instant] =
-    Coder.xmap(Coder[(Long, Int)])(
+  implicit lazy val jInstantCoder: Coder[Instant] =
+    xmap(Coder[(Long, Int)])(
       { case (epochSeconds, nanoAdjustment) =>
         Instant.ofEpochSecond(epochSeconds, nanoAdjustment.toLong)
       },
       instant => (instant.getEpochSecond, instant.getNano)
     )
 
-  implicit def jLocalDateCoder: Coder[LocalDate] =
-    Coder.xmap(Coder[(Int, Int, Int)])(
+  implicit lazy val jLocalDateCoder: Coder[LocalDate] =
+    xmap(Coder[(Int, Int, Int)])(
       { case (year, month, day) => LocalDate.of(year, month, day) },
       localDate => (localDate.getYear, localDate.getMonthValue, localDate.getDayOfMonth)
     )
 
-  implicit def jLocalTimeCoder: Coder[LocalTime] =
-    Coder.xmap(Coder[(Int, Int, Int, Int)])(
+  implicit lazy val jLocalTimeCoder: Coder[LocalTime] =
+    xmap(Coder[(Int, Int, Int, Int)])(
       { case (hour, minute, second, nanoOfSecond) =>
         LocalTime.of(hour, minute, second, nanoOfSecond)
       },
       localTime => (localTime.getHour, localTime.getMinute, localTime.getSecond, localTime.getNano)
     )
 
-  implicit def jLocalDateTimeCoder: Coder[LocalDateTime] =
-    Coder.xmap(Coder[(LocalDate, LocalTime)])(
+  implicit lazy val jLocalDateTimeCoder: Coder[LocalDateTime] =
+    xmap(Coder[(LocalDate, LocalTime)])(
       { case (localDate, localTime) => LocalDateTime.of(localDate, localTime) },
       localDateTime => (localDateTime.toLocalDate, localDateTime.toLocalTime)
     )
 
-  implicit def jDurationCoder: Coder[Duration] =
-    Coder.xmap(Coder[(Long, Int)])(
+  implicit lazy val jDurationCoder: Coder[Duration] =
+    xmap(Coder[(Long, Int)])(
       { case (seconds, nanoAdjustment) => Duration.ofSeconds(seconds, nanoAdjustment.toLong) },
       duration => (duration.getSeconds, duration.getNano)
     )
 
-  implicit def jPeriodCoder: Coder[Period] =
-    Coder.xmap(Coder[(Int, Int, Int)])(
+  implicit lazy val jPeriodCoder: Coder[Period] =
+    xmap(Coder[(Int, Int, Int)])(
       { case (years, months, days) => Period.of(years, months, days) },
       period => (period.getYears, period.getMonths, period.getDays)
     )
 
-  implicit def jSqlTimestamp: Coder[java.sql.Timestamp] =
-    Coder.xmap(jInstantCoder)(java.sql.Timestamp.from, _.toInstant())
+  implicit lazy val jSqlTimestamp: Coder[java.sql.Timestamp] =
+    xmap(jInstantCoder)(java.sql.Timestamp.from, _.toInstant())
 
-  implicit def jSqlDate: Coder[java.sql.Date] =
-    Coder.xmap(jLocalDateCoder)(java.sql.Date.valueOf, _.toLocalDate())
+  implicit lazy val jSqlDate: Coder[java.sql.Date] =
+    xmap(jLocalDateCoder)(java.sql.Date.valueOf, _.toLocalDate())
 
-  implicit def jSqlTime: Coder[java.sql.Time] =
-    Coder.xmap(jLocalTimeCoder)(java.sql.Time.valueOf, _.toLocalTime())
+  implicit lazy val jSqlTime: Coder[java.sql.Time] =
+    xmap(jLocalTimeCoder)(java.sql.Time.valueOf, _.toLocalTime())
 
   implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] =
-    Coder.xmap(Coder[String])(
+    xmap(Coder[String])(
       value => java.lang.Enum.valueOf(ScioUtil.classOf[E], value),
       _.name
     )
 }
 
-trait JavaBeanCoders {
-  implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = {
+trait JavaBeanCoders extends CoderGrammar {
+  def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = {
     val rec = Schema.javaBeanSchema[T]
     val td = TypeDescriptor.of(ScioUtil.classOf[T])
-    Coder.beam(SchemaCoder.of(rec.schema, td, rec.toRow, rec.fromRow))
+    beam(SchemaCoder.of(rec.schema, td, rec.toRow, rec.fromRow))
   }
 }
 

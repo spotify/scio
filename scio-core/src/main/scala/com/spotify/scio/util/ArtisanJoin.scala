@@ -136,7 +136,7 @@ private[scio] object ArtisanJoin {
   ): SCollection[(KEY, (A, Option[B]))] =
     joinImpl(name, a, b)(identity, toOptions)(
       a.valueCoder,
-      Coder.optionCoder[B, Option](b.valueCoder)
+      Coder.optionCoder(b.valueCoder)
     )
 
   def right[KEY, A, B](
@@ -145,7 +145,7 @@ private[scio] object ArtisanJoin {
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Option[A], B))] =
     joinImpl(name, a, b)(toOptions, identity)(
-      Coder.optionCoder[A, Option](a.valueCoder),
+      Coder.optionCoder(a.valueCoder),
       b.valueCoder
     )
 
@@ -155,8 +155,8 @@ private[scio] object ArtisanJoin {
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Option[A], Option[B]))] =
     joinImpl(name, a, b)(toOptions, toOptions)(
-      Coder.optionCoder[A, Option](a.valueCoder),
-      Coder.optionCoder[B, Option](b.valueCoder)
+      Coder.optionCoder(a.valueCoder),
+      Coder.optionCoder(b.valueCoder)
     )
 
   private val emptyList = java.util.Collections.singletonList(Option.empty)

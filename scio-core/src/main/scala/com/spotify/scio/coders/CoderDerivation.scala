@@ -17,12 +17,13 @@
 
 package com.spotify.scio.coders
 
+import com.spotify.scio.MagnoliaMacros
 import com.twitter.chill.ClosureCleaner
 import magnolia1._
 
 import scala.reflect.ClassTag
 
-object LowPriorityCoderDerivation {
+private object CoderDerivation {
 
   private object ProductIndexedSeqLike {
     def apply(p: Product): ProductIndexedSeqLike = new ProductIndexedSeqLike(p)
@@ -101,9 +102,9 @@ object LowPriorityCoderDerivation {
 
 }
 
-trait LowPriorityCoderDerivation {
+trait CoderDerivation extends CoderGrammar {
 
-  import LowPriorityCoderDerivation._
+  import CoderDerivation._
 
   type Typeclass[T] = Coder[T]
 
@@ -113,21 +114,21 @@ trait LowPriorityCoderDerivation {
 
     if (ctx.isValueClass) {
       val p = ctx.parameters.head
-      Coder.xmap(p.typeclass.asInstanceOf[Coder[Any]])(
+      xmap(p.typeclass.asInstanceOf[Coder[Any]])(
         closureFunction(constructor)(c => v => c.rawConstruct(Seq(v))),
         p.dereference
       )
     } else if (ctx.isObject) {
-      Coder.singleton(typeName, closureSupplier(constructor)(_.rawConstruct(Seq.empty)))
+      singleton(typeName, closureSupplier(constructor)(_.rawConstruct(Seq.empty)))
     } else {
-      Coder.ref(typeName) {
+      ref(typeName) {
         val cs = Array.ofDim[(String, Coder[Any])](ctx.parameters.length)
 
         ctx.parameters.foreach { p =>
           cs.update(p.index, p.label -> p.typeclass.asInstanceOf[Coder[Any]])
         }
 
-        Coder.record[T](typeName, cs)(
+        record[T](typeName, cs)(
           closureFunction(constructor)(_.rawConstruct),
           v => ProductIndexedSeqLike(v.asInstanceOf[Product])
         )
@@ -144,11 +145,11 @@ trait LowPriorityCoderDerivation {
     if (sealedTrait.subtypes.length <= 2) {
       val booleanId: Int => Boolean = _ != 0
       val cs = coders.map { case (key, v) => (booleanId(key), v) }
-      Coder.disjunction[T, Boolean](typeName, cs)(
+      disjunction[T, Boolean](typeName, cs)(
         closureFunction(identifier)(_.id).andThen(booleanId)
       )
     } else {
-      Coder.disjunction[T, Int](typeName, coders)(closureFunction(identifier)(_.id))
+      disjunction[T, Int](typeName, coders)(closureFunction(identifier)(_.id))
     }
   }
 
@@ -156,12 +157,9 @@ trait LowPriorityCoderDerivation {
    * Derive a Coder for a type T given implicit coders of all parameters in the constructor of type
    * T is in scope. For sealed trait, implicit coders of parameters of the constructors of all
    * sub-types should be in scope.
-   *
-   * In case of a missing [[shapeless.LowPriority]] implicit error when calling this method as
-   * [[Coder.gen[Type]] ], it means that Scio is unable to derive a BeamCoder for some parameter [P]
-   * in the constructor of Type. This happens when no implicit Coder instance for type P is in
-   * scope. This is fixed by placing an implicit Coder of type P in scope, using [[Coder.kryo[P]] ]
-   * or defining the Coder manually (see also [[Coder.xmap]])
    */
-  implicit def gen[T]: Coder[T] = macro CoderMacros.wrappedCoder[T]
+  def gen[T]: Coder[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
+
+@deprecated("Use CoderDerivation instead", "0.14.0")
+trait LowPriorityCoderDerivation extends CoderDerivation

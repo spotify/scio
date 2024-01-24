@@ -20,7 +20,7 @@ package com.spotify.scio.coders.instances
 import com.google.api.client.json.GenericJson
 import com.google.api.client.json.JsonObjectParser
 import com.google.api.client.json.gson.GsonFactory
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.util.ScioUtil
 
 import java.io.StringReader
@@ -39,28 +39,28 @@ import org.apache.beam.sdk.values.{KV, Row}
 
 import scala.reflect.ClassTag
 
-trait BeamTypeCoders {
+trait BeamTypeCoders extends CoderGrammar {
   import BeamTypeCoders._
 
-  implicit def intervalWindowCoder: Coder[IntervalWindow] = Coder.beam(IntervalWindow.getCoder)
+  implicit lazy val intervalWindowCoder: Coder[IntervalWindow] = beam(IntervalWindow.getCoder)
 
-  implicit def globalWindowCoder: Coder[GlobalWindow] = Coder.beam(GlobalWindow.Coder.INSTANCE)
+  implicit lazy val globalWindowCoder: Coder[GlobalWindow] = beam(GlobalWindow.Coder.INSTANCE)
 
-  implicit def boundedWindowCoder: Coder[BoundedWindow] = Coder.kryo[BoundedWindow]
+  implicit lazy val boundedWindowCoder: Coder[BoundedWindow] = kryo[BoundedWindow]
 
-  implicit def paneInfoCoder: Coder[PaneInfo] = Coder.beam(PaneInfo.PaneInfoCoder.of())
+  implicit lazy val paneInfoCoder: Coder[PaneInfo] = beam(PaneInfo.PaneInfoCoder.of())
 
-  def row(schema: BSchema): Coder[Row] = Coder.beam(RowCoder.of(schema))
+  def row(schema: BSchema): Coder[Row] = beam(RowCoder.of(schema))
 
-  implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = Coder.kv(Coder[K], Coder[V])
+  implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = kv(Coder[K], Coder[V])
 
-  implicit def readableFileCoder: Coder[ReadableFile] = Coder.beam(ReadableFileCoder.of())
+  implicit lazy val readableFileCoder: Coder[ReadableFile] = beam(ReadableFileCoder.of())
 
-  implicit def matchResultMetadataCoder: Coder[MatchResult.Metadata] =
-    Coder.beam(MetadataCoderV2.of())
+  implicit lazy val matchResultMetadataCoder: Coder[MatchResult.Metadata] =
+    beam(MetadataCoderV2.of())
 
   implicit def genericJsonCoder[T <: GenericJson: ClassTag]: Coder[T] =
-    Coder.xmap(Coder[String])(
+    xmap(Coder[String])(
       str => DefaultJsonObjectParser.parseAndClose(new StringReader(str), ScioUtil.classOf[T]),
       DefaultJsonObjectParser.getJsonFactory().toString(_)
     )

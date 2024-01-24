@@ -60,6 +60,7 @@ class CoderAssertionsTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support fallback" in {
+    import com.spotify.scio.coders.kryo.{fallback => f}
     val str = "boom"
     val cs: java.lang.CharSequence = str
     cs coderShould fallback()
@@ -70,6 +71,7 @@ class CoderAssertionsTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support notFallback" in {
+    import com.spotify.scio.coders.kryo.{fallback => f}
     val str = "boom"
     str coderShould notFallback()
 

@@ -17,13 +17,12 @@
 package com.spotify.scio.coders.instances
 
 import java.io.{InputStream, OutputStream}
-import com.google.common.hash.BloomFilter
-import com.spotify.scio.coders.Coder
-import com.google.common.{hash => g}
+import com.google.common.hash.{BloomFilter, Funnel}
+import com.spotify.scio.coders.{Coder, CoderGrammar}
 import org.apache.beam.sdk.coders.CustomCoder
 
-class GuavaBloomFilterCoder[T](implicit val funnel: g.Funnel[_ >: T])
-    extends CustomCoder[g.BloomFilter[T]] {
+class GuavaBloomFilterCoder[T](implicit val funnel: Funnel[_ >: T])
+    extends CustomCoder[BloomFilter[T]] {
   override def encode(value: BloomFilter[T], outStream: OutputStream): Unit =
     value.writeTo(outStream)
   override def decode(inStream: InputStream): BloomFilter[T] =
@@ -31,7 +30,9 @@ class GuavaBloomFilterCoder[T](implicit val funnel: g.Funnel[_ >: T])
   override def verifyDeterministic(): Unit = {}
 }
 
-trait GuavaCoders {
-  implicit def guavaBFCoder[T](implicit x: g.Funnel[_ >: T]): Coder[g.BloomFilter[T]] =
-    Coder.beam(new GuavaBloomFilterCoder[T])
+trait GuavaCoders extends CoderGrammar {
+  implicit def guavaBFCoder[T](implicit x: Funnel[_ >: T]): Coder[BloomFilter[T]] =
+    beam(new GuavaBloomFilterCoder[T])
 }
+
+private[coders] object GuavaCoders extends GuavaCoders

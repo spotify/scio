@@ -17,19 +17,14 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.IsJavaBean
+import com.spotify.scio.{IsJavaBean, MagnoliaMacros}
 import com.spotify.scio.coders.instances._
-import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.values.KV
+import org.typelevel.scalaccompat.annotation.unused
 
-import java.util.{List => JList}
 import scala.annotation.implicitNotFound
-import scala.collection.compat._
-import scala.collection.{mutable => m, BitSet, SortedSet}
 import scala.reflect.ClassTag
-import scala.util.Try
-import java.util.UUID
 
 @implicitNotFound(
   """
@@ -151,7 +146,7 @@ final case class AggregateCoder[T] private (coder: Coder[T]) extends Coder[java.
  *
  *   - To explicitly use kryo Coder use [[Coder.kryo]]
  */
-sealed trait CoderGrammar {
+private[coders] trait CoderGrammar {
 
   /** Create a ScioCoder from a Beam Coder */
   def raw[T](beam: BCoder[T]): Coder[T] =
@@ -215,93 +210,26 @@ sealed trait CoderGrammar {
 }
 
 object Coder
-    extends CoderGrammar
+    extends ScalaCoders
     with TupleCoders
+    with JavaCoders
+    with JodaCoders
+    with BeamTypeCoders
     with ProtobufCoders
     with AlgebirdCoders
     with GuavaCoders
-    with JodaCoders
-    with BeamTypeCoders
+    with CoderDerivation
     with LowPriorityCoders {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 
-  implicit val charCoder: Coder[Char] = ScalaCoders.charCoder
-  implicit val byteCoder: Coder[Byte] = ScalaCoders.byteCoder
-  implicit val stringCoder: Coder[String] = ScalaCoders.stringCoder
-  implicit val shortCoder: Coder[Short] = ScalaCoders.shortCoder
-  implicit val intCoder: Coder[Int] = ScalaCoders.intCoder
-  implicit val longCoder: Coder[Long] = ScalaCoders.longCoder
-  implicit val floatCoder: Coder[Float] = ScalaCoders.floatCoder
-  implicit val doubleCoder: Coder[Double] = ScalaCoders.doubleCoder
-  implicit val booleanCoder: Coder[Boolean] = ScalaCoders.booleanCoder
-  implicit val unitCoder: Coder[Unit] = ScalaCoders.unitCoder
-  implicit val nothingCoder: Coder[Nothing] = ScalaCoders.nothingCoder
-  implicit val bigIntCoder: Coder[BigInt] = ScalaCoders.bigIntCoder
-  implicit val bigDecimalCoder: Coder[BigDecimal] = ScalaCoders.bigDecimalCoder
-  implicit def tryCoder[A: Coder]: Coder[Try[A]] = ScalaCoders.tryCoder
-  implicit def eitherCoder[A: Coder, B: Coder]: Coder[Either[A, B]] = ScalaCoders.eitherCoder
-  implicit def optionCoder[T: Coder, S[_] <: Option[_]]: Coder[S[T]] = ScalaCoders.optionCoder
-  implicit val noneCoder: Coder[None.type] = ScalaCoders.noneCoder
-  implicit val bitSetCoder: Coder[BitSet] = ScalaCoders.bitSetCoder
-  implicit def seqCoder[T: Coder]: Coder[Seq[T]] = ScalaCoders.seqCoder
-  implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] = ScalaCoders.iterableCoder
-  implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] = ScalaCoders.throwableCoder
-  implicit def listCoder[T: Coder]: Coder[List[T]] = ScalaCoders.listCoder
-  implicit def iterableOnceCoder[T: Coder]: Coder[IterableOnce[T]] =
-    ScalaCoders.iterableOnceCoder
-  implicit def setCoder[T: Coder]: Coder[Set[T]] = ScalaCoders.setCoder
-  implicit def mutableSetCoder[T: Coder]: Coder[m.Set[T]] = ScalaCoders.mutableSetCoder
-  implicit def vectorCoder[T: Coder]: Coder[Vector[T]] = ScalaCoders.vectorCoder
-  implicit def arrayBufferCoder[T: Coder]: Coder[m.ArrayBuffer[T]] = ScalaCoders.arrayBufferCoder
-  implicit def bufferCoder[T: Coder]: Coder[m.Buffer[T]] = ScalaCoders.bufferCoder
-  implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] = ScalaCoders.listBufferCoder
-  implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] = ScalaCoders.arrayCoder
-  implicit val arrayByteCoder: Coder[Array[Byte]] = ScalaCoders.arrayByteCoder
-  implicit def wrappedArrayCoder[T: Coder: ClassTag](implicit
-    wrap: Array[T] => m.WrappedArray[T]
-  ): Coder[m.WrappedArray[T]] = ScalaCoders.wrappedArrayCoder
-  implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] = ScalaCoders.mutableMapCoder
-  implicit def mapCoder[K: Coder, V: Coder]: Coder[Map[K, V]] = ScalaCoders.mapCoder
-  implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] = ScalaCoders.sortedSetCoder
-
-  implicit val voidCoder: Coder[Void] = JavaCoders.voidCoder
-  implicit val uuidCoder: Coder[UUID] = JavaCoders.uuidCoder
-  implicit val uriCoder: Coder[java.net.URI] = JavaCoders.uriCoder
-  implicit val pathCoder: Coder[java.nio.file.Path] = JavaCoders.pathCoder
-  implicit def jIterableCoder[T: Coder]: Coder[java.lang.Iterable[T]] = JavaCoders.jIterableCoder
-  implicit def jListCoder[T: Coder]: Coder[JList[T]] = JavaCoders.jListCoder
-  implicit def jArrayListCoder[T: Coder]: Coder[java.util.ArrayList[T]] = JavaCoders.jArrayListCoder
-  implicit def jMapCoder[K: Coder, V: Coder]: Coder[java.util.Map[K, V]] = JavaCoders.jMapCoder
-  implicit def jTryCoder[A](implicit c: Coder[Try[A]]): Coder[BaseAsyncLookupDoFn.Try[A]] =
-    JavaCoders.jTryCoder
-  implicit val jBitSetCoder: Coder[java.util.BitSet] = JavaCoders.jBitSetCoder
-  implicit val jShortCoder: Coder[java.lang.Short] = JavaCoders.jShortCoder
-  implicit val jByteCoder: Coder[java.lang.Byte] = JavaCoders.jByteCoder
-  implicit val jIntegerCoder: Coder[java.lang.Integer] = JavaCoders.jIntegerCoder
-  implicit val jLongCoder: Coder[java.lang.Long] = JavaCoders.jLongCoder
-  implicit val jFloatCoder: Coder[java.lang.Float] = JavaCoders.jFloatCoder
-  implicit val jDoubleCoder: Coder[java.lang.Double] = JavaCoders.jDoubleCoder
-  implicit val jBooleanCoder: Coder[java.lang.Boolean] = JavaCoders.jBooleanCoder
-  implicit val jBigIntegerCoder: Coder[java.math.BigInteger] = JavaCoders.jBigIntegerCoder
-  implicit val jBigDecimalCoder: Coder[java.math.BigDecimal] = JavaCoders.jBigDecimalCoder
-  implicit val serializableCoder: Coder[Serializable] = Coder.kryo[Serializable]
-  implicit val jInstantCoder: Coder[java.time.Instant] = JavaCoders.jInstantCoder
-  implicit val jLocalDateCoder: Coder[java.time.LocalDate] = JavaCoders.jLocalDateCoder
-  implicit val jLocalTimeCoder: Coder[java.time.LocalTime] = JavaCoders.jLocalTimeCoder
-  implicit val jLocalDateTimeCoder: Coder[java.time.LocalDateTime] = JavaCoders.jLocalDateTimeCoder
-  implicit val jDurationCoder: Coder[java.time.Duration] = JavaCoders.jDurationCoder
-  implicit val jPeriodCoder: Coder[java.time.Period] = JavaCoders.jPeriodCoder
-  implicit val jSqlTimestamp: Coder[java.sql.Timestamp] = JavaCoders.jSqlTimestamp
-  implicit val jSqDate: Coder[java.sql.Date] = JavaCoders.jSqlDate
-  implicit val jSqlTime: Coder[java.sql.Time] = JavaCoders.jSqlTime
-  implicit def coderJEnum[E <: java.lang.Enum[E]: ClassTag]: Coder[E] = JavaCoders.coderJEnum
-
-  def fallback[T](implicit lp: shapeless.LowPriority): Coder[T] =
+  @deprecated("Use Coder.kryo[T] instead", "0.14.0")
+  def fallback[T](@unused lp: shapeless.LowPriority): Coder[T] =
     macro CoderMacros.issueFallbackWarning[T]
 }
 
-trait LowPriorityCoders extends LowPriorityCoderDerivation {
-  implicit def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
+trait LowPriorityCoders { self: CoderDerivation with JavaBeanCoders =>
+  implicit override def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
+  implicit override def gen[T]: Coder[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
 
 private[coders] object CoderStackTrace {
