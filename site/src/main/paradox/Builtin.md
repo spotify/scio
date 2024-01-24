@@ -9,6 +9,7 @@ Scio is a thin wrapper on top of Beam offering idiomatic Scala APIs. Check out t
 - @scaladoc[ScioResult](com.spotify.scio.ScioResult) wraps Beam's @javadoc[PipelineResult](org.apache.beam.sdk.PipelineResult)
 
 See dedicated sections on:
+
 - @ref[IO](io/index.md)
 - @ref[Joins](Joins.md)
 - @ref[Side Inputs](SideInputs.md)
