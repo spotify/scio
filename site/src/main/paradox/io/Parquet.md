@@ -103,11 +103,14 @@ def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output")
 Writing Avro generic records requires additional argument `schema`:
 ```scala mdoc:reset:silent
 import com.spotify.scio.values._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.avro._
 import com.spotify.scio.parquet.avro._
 import org.apache.avro.generic.GenericRecord
 
 def input: SCollection[GenericRecord] = ???
-def yourAvroSchema: org.apache.avro.Schema = ???
+lazy val yourAvroSchema: org.apache.avro.Schema = ???
+implicit lazy val coder: Coder[GenericRecord] = avroGenericRecordCoder(yourAvroSchema)
 
 def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output", schema = yourAvroSchema)
 ```
