@@ -85,6 +85,12 @@ class AsyncLookupDoFnTest extends PipelineSpec {
     output.max should be < n
   }
 
+  it should "close client" in {
+    runWithContext(_.parallelize(Seq(1, 10, 100)).parDo(new ClosableAsyncLookupDoFn))
+    ClosableResourceCounters.clientsOpened.get() should be > 0
+    ClosableResourceCounters.allResourcesClosed shouldBe true
+  }
+
   "GuavaAsyncLookupDoFn" should "work" in {
     testDoFn(new GuavaLookupDoFn)(_.get())
   }
@@ -266,6 +272,12 @@ class CallbackFailingScalaLookupDoFn extends ScalaAsyncLookupDoFn[Int, String, A
       ),
       onFailure
     )
+}
+
+private class ClosableAsyncLookupDoFn extends ScalaAsyncDoFn[Int, String, CloseableResource] {
+  override def getResourceType: ResourceType = ResourceType.PER_CLASS
+  override def processElement(input: Int): Future[String] = Future.successful(input.toString)
+  override def createResource(): CloseableResource = new CloseableResource {}
 }
 
 // Here we need a custom supplier because guava cache only supports object

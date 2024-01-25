@@ -126,6 +126,14 @@ public abstract class BaseAsyncBatchLookupDoFn<
     return Pair.of(newClient(), cacheSupplier.get());
   }
 
+  @Override
+  public void closeResource(Pair<ClientType, Cache<String, Output>> resource) throws Exception {
+    final ClientType client = resource.getLeft();
+    if (client instanceof AutoCloseable) {
+      ((AutoCloseable) client).close();
+    }
+  }
+
   public ClientType getResourceClient() {
     return getResource().getLeft();
   }

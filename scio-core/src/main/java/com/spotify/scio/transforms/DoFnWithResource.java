@@ -102,6 +102,17 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
    */
   public abstract ResourceT createResource();
 
+  /**
+   * Close resource.
+   *
+   * <p>Default implementation closes {@link AutoCloseable} resource.
+   */
+  public void closeResource(ResourceT resource) throws Exception {
+    if (resource instanceof AutoCloseable) {
+      ((AutoCloseable) resource).close();
+    }
+  }
+
   protected DoFnWithResource() {
     this.instanceId = this.getClass().getName() + "-" + UUID.randomUUID().toString();
   }
@@ -140,15 +151,12 @@ public abstract class DoFnWithResource<InputT, OutputT, ResourceT> extends DoFn<
       Pair<AtomicInteger, Object> resourcePair = resources.get(resourceId);
       AtomicInteger resourceUsers = resourcePair.getLeft();
       ResourceT resource = (ResourceT) resourcePair.getRight();
-      if (resource instanceof AutoCloseable) {
-        AutoCloseable closeable = (AutoCloseable) resource;
-        int currentUsers = resourceUsers.decrementAndGet();
-        LOG.debug("Tearing down resource {} with current users {}", resourceId, currentUsers);
-        if (currentUsers == 0) {
-          LOG.debug("Closing resource {}", resourceId);
-          closeable.close();
-          resources.remove(resourceId);
-        }
+      int currentUsers = resourceUsers.decrementAndGet();
+      LOG.debug("Tearing down resource {} with current users {}", resourceId, currentUsers);
+      if (currentUsers == 0) {
+        LOG.debug("Closing resource {}", resourceId);
+        closeResource(resource);
+        resources.remove(resourceId);
       }
     } catch (Exception ex) {
       LOG.warn("Failed to close resource {}", resourceId, ex);

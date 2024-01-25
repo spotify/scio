@@ -19,16 +19,16 @@ package com.spotify.scio.transforms
 
 import java.util.concurrent.{Callable, CompletableFuture, Executors, ThreadPoolExecutor}
 import java.util.function.Supplier
-
 import com.google.common.util.concurrent.{ListenableFuture, MoreExecutors}
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.testing._
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
+import org.scalatest.BeforeAndAfter
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AsyncDoFnTest extends PipelineSpec {
+class AsyncDoFnTest extends PipelineSpec with BeforeAndAfter {
   private val inputs = Seq(1, 10, 100).map(n => 1 to n)
 
   private def testDoFn(doFn: DoFn[Int, String], inputs: Seq[Seq[Int]]): Unit =
@@ -56,6 +56,16 @@ class AsyncDoFnTest extends PipelineSpec {
     errorMessages(e) should contain("Failed to process futures")
     errorMessages(e) should contain("requirement failed: input must be >= 0")
     ()
+  }
+
+  before {
+    ClosableResourceCounters.resetCounters()
+  }
+
+  "BaseAsyncDoFn" should "close client" in {
+    runWithContext(_.parallelize(Seq(1, 10, 100)).parDo(new ClosableAsyncDoFn))
+    ClosableResourceCounters.clientsOpened.get() should be > 0
+    ClosableResourceCounters.allResourcesClosed shouldBe true
   }
 
   "GuavaAsyncDoFn" should "work" in {
@@ -142,4 +152,10 @@ private class ScalaDoFn(val numThreads: Int) extends ScalaAsyncDoFn[Int, String,
   override def createResource(): ScalaClient = new ScalaClient(numThreads)
   override def processElement(input: Int): Future[String] =
     getResource.request(input)
+}
+private class ClosableAsyncDoFn extends ScalaAsyncDoFn[Int, String, CloseableResource] {
+  override def getResourceType: ResourceType = ResourceType.PER_CLASS
+  override def createResource(): CloseableResource = new CloseableResource {}
+  override def processElement(input: Int): Future[String] =
+    Future.successful(input.toString)
 }
