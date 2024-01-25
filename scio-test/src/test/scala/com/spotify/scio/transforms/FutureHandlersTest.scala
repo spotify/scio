@@ -16,12 +16,12 @@
 
 package com.spotify.scio.transforms
 
-import com.google.common.util.concurrent.{ListenableFuture, SettableFuture}
+import com.google.common.util.concurrent.{ListenableFuture, MoreExecutors, SettableFuture}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.time.{Duration => JDuration}
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.{CompletableFuture, Executor}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent._
@@ -29,6 +29,7 @@ import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 class GuavaFutureHandler extends FutureHandlers.Guava[String] {
+  override def getCallbackExecutor: Executor = MoreExecutors.directExecutor()
   override def getTimeout: JDuration = JDuration.ofMillis(500)
 }
 class JavaFutureHandler extends FutureHandlers.Java[String] {

@@ -18,6 +18,8 @@
 package com.spotify.scio.transforms;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import org.apache.beam.sdk.transforms.DoFn;
 
 /**
@@ -26,4 +28,14 @@ import org.apache.beam.sdk.transforms.DoFn;
  */
 public abstract class GuavaAsyncDoFn<InputT, OutputT, ResourceT>
     extends BaseAsyncDoFn<InputT, OutputT, ResourceT, ListenableFuture<OutputT>>
-    implements FutureHandlers.Guava<OutputT> {}
+    implements FutureHandlers.Guava<OutputT> {
+  private transient Executor executor;
+
+  @Override
+  public Executor getCallbackExecutor() {
+    if (executor == null) {
+      executor = Executors.newSingleThreadExecutor();
+    }
+    return executor;
+  }
+}

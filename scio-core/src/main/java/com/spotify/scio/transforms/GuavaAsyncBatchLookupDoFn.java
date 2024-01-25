@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.Try;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -41,6 +43,8 @@ public abstract class GuavaAsyncBatchLookupDoFn<
         ListenableFuture<BatchResponse>,
         Try<Output>>
     implements FutureHandlers.Guava<BatchResponse> {
+
+  private transient Executor executor;
 
   public GuavaAsyncBatchLookupDoFn(
       int batchSize,
@@ -65,6 +69,14 @@ public abstract class GuavaAsyncBatchLookupDoFn<
         idExtractorFn,
         maxPendingRequests,
         cacheSupplier);
+  }
+
+  @Override
+  public Executor getCallbackExecutor() {
+    if (executor == null) {
+      executor = Executors.newSingleThreadExecutor();
+    }
+    return executor;
   }
 
   @Override

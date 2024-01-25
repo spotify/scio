@@ -18,6 +18,8 @@
 package com.spotify.scio.transforms;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import org.apache.beam.sdk.transforms.DoFn;
 
 /**
@@ -31,6 +33,8 @@ import org.apache.beam.sdk.transforms.DoFn;
 public abstract class GuavaAsyncLookupDoFn<A, B, C>
     extends BaseAsyncLookupDoFn<A, B, C, ListenableFuture<B>, BaseAsyncLookupDoFn.Try<B>>
     implements FutureHandlers.Guava<B> {
+
+  private transient Executor executor;
 
   /** Create a {@link GuavaAsyncLookupDoFn} instance. */
   public GuavaAsyncLookupDoFn() {
@@ -73,6 +77,14 @@ public abstract class GuavaAsyncLookupDoFn<A, B, C>
       boolean deduplicate,
       BaseAsyncLookupDoFn.CacheSupplier<A, B> cacheSupplier) {
     super(maxPendingRequests, deduplicate, cacheSupplier);
+  }
+
+  @Override
+  public Executor getCallbackExecutor() {
+    if (executor == null) {
+      executor = Executors.newSingleThreadExecutor();
+    }
+    return executor;
   }
 
   @Override
