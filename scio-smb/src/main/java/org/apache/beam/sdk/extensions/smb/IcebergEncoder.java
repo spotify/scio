@@ -26,10 +26,10 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
     }
 
     private byte[] encode(long value) {
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putLong(value);
-        return buffer.array();
+        return ByteBuffer.allocate(Long.BYTES)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .putLong(value)
+            .array();
     }
 
     private byte[] encode(String value) {
@@ -37,11 +37,11 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
     }
 
     private byte[] encode(UUID value) {
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
-        buffer.order(ByteOrder.BIG_ENDIAN);
-        buffer.putLong(value.getMostSignificantBits());
-        buffer.putLong(value.getLeastSignificantBits());
-        return buffer.array();
+        return ByteBuffer.allocate(Long.BYTES * 2)
+            .order(ByteOrder.BIG_ENDIAN)
+            .putLong(value.getMostSignificantBits())
+            .putLong(value.getLeastSignificantBits())
+            .array();
     }
 
     private byte[] encode(LocalDate value) {
@@ -76,6 +76,9 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
         if (value instanceof Long) {
             return encode((long) value);
         }
+        if (value instanceof BigDecimal) {
+            return encode((BigDecimal) value);
+        }
         if (value instanceof CharSequence) {
             return encode((String) value);
         }
@@ -99,9 +102,6 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
         }
         if (value instanceof Instant) {
             return encode((Instant) value);
-        }
-        if (value instanceof BigDecimal) {
-            return encode((BigDecimal) value);
         }
 
         throw new UnsupportedOperationException("Unsupported type: " + value.getClass());
