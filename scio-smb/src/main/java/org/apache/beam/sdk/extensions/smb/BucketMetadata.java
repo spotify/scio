@@ -295,7 +295,6 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     public abstract Encoder encoder();
   }
 
-
   boolean isCompatibleWith(BucketMetadata other) {
     return other != null
         // version 1 is backwards compatible with version 0
