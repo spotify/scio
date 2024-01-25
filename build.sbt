@@ -1387,7 +1387,6 @@ lazy val `scio-smb` = project
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
-      "io.airlift" % "slice" % airliftVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
