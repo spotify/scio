@@ -114,7 +114,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonIgnore private final Coder<K1> keyCoder;
 
-  @JsonIgnore private final Supplier<Encoder> keyEncoder;
+  @JsonIgnore private final Supplier<Encoder<K1>> primaryKeyEncoder;
+  @JsonIgnore private final Supplier<Encoder<K2>> secondaryKeyEncoder;
 
   @JsonIgnore private final Coder<K2> keyCoderSecondary;
 
@@ -175,7 +176,9 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     this.hashType = hashType;
     this.hashFunction = Suppliers.memoize(new HashFunctionSupplier(hashType));
     this.bucketIdFn = Suppliers.memoize(BucketIdFnSupplier.create(hashType));
-    this.keyEncoder = Suppliers.memoize(EncoderSupplier.create(hashType));
+    this.primaryKeyEncoder = Suppliers.memoize(EncoderSupplier.create(hashType, keyClass));
+    this.secondaryKeyEncoder =
+        Suppliers.memoize(EncoderSupplier.create(hashType, keyClassSecondary));
     this.keyCoder = getKeyCoder(keyClass);
     this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
@@ -236,26 +239,23 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     }
   }
 
-  public interface Encoder extends Serializable {
-    <T> byte[] encode(T value, Coder<T> coder);
+  public interface Encoder<T> extends Serializable {
+    byte[] encode(T value, Coder<T> coder);
 
-    static Encoder defaultEncoder() {
-      return new Encoder() {
-        @Override
-        public <T> byte[] encode(T value, Coder<T> coder) {
-          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          try {
-            coder.encode(value, baos);
-          } catch (Exception e) {
-            throw new RuntimeException("Could not encode key " + value, e);
-          }
-          return baos.toByteArray();
+    static <T> Encoder<T> defaultEncoder() {
+      return (value, coder) -> {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+          coder.encode(value, baos);
+        } catch (Exception e) {
+          throw new RuntimeException("Could not encode key " + value, e);
         }
+        return baos.toByteArray();
       };
     }
 
-    static Encoder icebergEncoder() {
-      return new IcebergEncoder();
+    static <T> Encoder<T> icebergEncoder(Class<T> klass) {
+      return IcebergEncoder.create(klass);
     }
   }
 
@@ -285,8 +285,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       }
 
       @Override
-      public Encoder encoder() {
-        return Encoder.icebergEncoder();
+      public <T> Encoder<T> encoder(Class<T> klass) {
+        return Encoder.icebergEncoder(klass);
       }
     };
 
@@ -296,7 +296,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       return BucketIdFn.defaultFn();
     }
 
-    public Encoder encoder() {
+    public <T> Encoder<T> encoder(Class<T> klass) {
       return Encoder.defaultEncoder();
     }
   }
@@ -358,17 +358,21 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   byte[] encodeKeyBytesPrimary(K1 key) {
-    return encodeKeyBytes(key, keyCoder);
+    if (key == null) {
+      return null;
+    }
+
+    return primaryKeyEncoder.get().encode(key, keyCoder);
   }
 
   byte[] getKeyBytesSecondary(V value) {
     verifyNotNull(keyCoderSecondary);
-    return encodeKeyBytes(extractKeySecondary(value), keyCoderSecondary);
-  }
+    K2 key = extractKeySecondary(value);
+    if (key == null) {
+      return null;
+    }
 
-  <K> byte[] encodeKeyBytes(K key, Coder<K> coder) {
-    if (key == null) return null;
-    return keyEncoder.get().encode(key, coder);
+    return secondaryKeyEncoder.get().encode(key, keyCoderSecondary);
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput
@@ -474,9 +478,9 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   @FunctionalInterface
-  interface EncoderSupplier extends Supplier<Encoder>, Serializable {
-    static EncoderSupplier create(String hashType) {
-      return () -> HashType.valueOf(hashType).encoder();
+  interface EncoderSupplier<T> extends Supplier<Encoder<T>>, Serializable {
+    static <T> EncoderSupplier<T> create(String hashType, Class<T> klass) {
+      return () -> HashType.valueOf(hashType).encoder(klass);
     }
   }
 

@@ -30,25 +30,26 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-import org.apache.beam.sdk.coders.Coder;
 
-public final class IcebergEncoder implements BucketMetadata.Encoder {
+public final class IcebergEncoder<T> {
 
   private static final OffsetDateTime EPOCH = Instant.ofEpochSecond(0).atOffset(ZoneOffset.UTC);
 
-  private byte[] encode(int value) {
+  private IcebergEncoder() {}
+
+  private static byte[] encode(int value) {
     return encode((long) value);
   }
 
-  private byte[] encode(long value) {
+  private static byte[] encode(long value) {
     return ByteBuffer.allocate(Long.BYTES).order(ByteOrder.LITTLE_ENDIAN).putLong(value).array();
   }
 
-  private byte[] encode(String value) {
+  private static byte[] encode(String value) {
     return value.getBytes(StandardCharsets.UTF_8);
   }
 
-  private byte[] encode(UUID value) {
+  private static byte[] encode(UUID value) {
     return ByteBuffer.allocate(Long.BYTES * 2)
         .order(ByteOrder.BIG_ENDIAN)
         .putLong(value.getMostSignificantBits())
@@ -56,66 +57,65 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
         .array();
   }
 
-  private byte[] encode(LocalDate value) {
+  private static byte[] encode(LocalDate value) {
     return encode(value.toEpochDay());
   }
 
-  private byte[] encode(LocalTime value) {
+  private static byte[] encode(LocalTime value) {
     return encode(value.toNanoOfDay() / 1000);
   }
 
-  private byte[] encode(LocalDateTime value) {
+  private static byte[] encode(LocalDateTime value) {
     return encode(value.atOffset(ZoneOffset.UTC).toInstant());
   }
 
-  private byte[] encode(ZonedDateTime value) {
+  private static byte[] encode(ZonedDateTime value) {
     return encode(value.toInstant());
   }
 
-  private byte[] encode(Instant value) {
+  private static byte[] encode(Instant value) {
     return encode(ChronoUnit.MICROS.between(EPOCH, value.atOffset(ZoneOffset.UTC)));
   }
 
-  private byte[] encode(BigDecimal value) {
+  private static byte[] encode(BigDecimal value) {
     return value.unscaledValue().toByteArray();
   }
 
-  @Override
-  public <T> byte[] encode(T value, Coder<T> coder) {
-    if (value instanceof Integer) {
-      return encode((Integer) value);
+  public static <T> BucketMetadata.Encoder<T> create(Class<T> klass) {
+    if (klass.equals(Integer.class)) {
+      return (value, coder) -> encode((Integer) value);
     }
-    if (value instanceof Long) {
-      return encode((long) value);
+    if (klass.equals(Long.class)) {
+      return (value, coder) -> encode((long) value);
     }
-    if (value instanceof BigDecimal) {
-      return encode((BigDecimal) value);
+    if (klass.equals(BigDecimal.class)) {
+      return (value, coder) -> encode((BigDecimal) value);
     }
-    if (value instanceof CharSequence) {
-      return encode((String) value);
+    if (klass.equals(CharSequence.class) || klass.equals(String.class)) {
+      return (value, coder) -> encode((String) value);
     }
-    if (value instanceof UUID) {
-      return encode((UUID) value);
+    if (klass.equals(UUID.class)) {
+      return (value, coder) -> encode((UUID) value);
     }
-    if (value instanceof byte[]) {
-      return (byte[]) value;
+    if (klass.equals(byte[].class)) {
+      return (value, coder) -> (byte[]) value;
     }
-    if (value instanceof LocalDate) {
-      return encode((LocalDate) value);
+    if (klass.equals(LocalDate.class)) {
+      return (value, coder) -> encode((LocalDate) value);
     }
-    if (value instanceof LocalTime) {
-      return encode((LocalTime) value);
+    if (klass.equals(LocalTime.class)) {
+      return (value, coder) -> encode((LocalTime) value);
     }
-    if (value instanceof LocalDateTime) {
-      return encode((LocalDateTime) value);
+    if (klass.equals(LocalDateTime.class)) {
+      return (value, coder) -> encode((LocalDateTime) value);
     }
-    if (value instanceof ZonedDateTime) {
-      return encode((ZonedDateTime) value);
+    if (klass.equals(ZonedDateTime.class)) {
+      return (value, coder) -> encode((ZonedDateTime) value);
     }
-    if (value instanceof Instant) {
-      return encode((Instant) value);
+    if (klass.equals(Instant.class)) {
+      return (value, coder) -> encode((Instant) value);
     }
 
-    throw new UnsupportedOperationException("Unsupported type: " + value.getClass());
+    throw new UnsupportedOperationException("Unsupported type: " + klass);
   }
 }

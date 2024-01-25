@@ -270,7 +270,7 @@ public class SortedBucketSink<K1, K2, V> extends PTransform<PCollection<V>, Writ
 
     static <K1> BucketShardId getBucketShardId(
         K1 key, BucketMetadata<K1, ?, ?> metadata, int shardId) {
-      final byte[] keyBytes = metadata.encodeKeyBytes(key, metadata.getKeyCoder());
+      final byte[] keyBytes = metadata.encodeKeyBytesPrimary(key);
       return (keyBytes != null)
           ? BucketShardId.of(metadata.getBucketId(keyBytes), shardId)
           : BucketShardId.ofNullKey();
