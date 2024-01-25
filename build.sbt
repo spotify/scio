@@ -108,7 +108,7 @@ val chillVersion = "0.10.0"
 val circeVersion = "0.14.6"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.14"
-val elasticsearch8Version = "8.11.4"
+val elasticsearch8Version = "8.12.0"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
@@ -123,7 +123,7 @@ val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.8"
 val magnolifyVersion = "0.7.0"
-val metricsVersion = "4.2.23"
+val metricsVersion = "4.2.24"
 val neo4jDriverVersion = "4.4.13"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
@@ -384,6 +384,17 @@ lazy val keepExistingHeader =
         .trim()
   })
 
+// sbt does not support skip for all tasks
+lazy val testSkipped = Def.task {
+  if ((Test / test / skip).value) () else (Test / test).value
+}
+lazy val undeclaredCompileDependenciesTestSkipped = Def.task {
+  if ((Compile / compile / skip).value) () else undeclaredCompileDependenciesTest.value
+}
+lazy val unusedCompileDependenciesTestSkipped = Def.task {
+  if ((Compile / compile / skip).value) () else unusedCompileDependenciesTest.value
+}
+
 val commonSettings = Def.settings(
   headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
   headerMappings := headerMappings.value ++ Map(
@@ -624,7 +635,7 @@ lazy val `scio-core` = project
       "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.apache.commons" % "commons-math3" % commonsMath3Version,
@@ -734,7 +745,7 @@ lazy val `scio-avro` = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
@@ -800,7 +811,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
       "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
@@ -858,7 +869,7 @@ lazy val `scio-elasticsearch-common` = project
       "jakarta.json" % "jakarta.json-api" % jakartaJsonVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.httpcomponents" % "httpasyncclient" % httpAsyncClientVersion,
       "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
@@ -936,7 +947,7 @@ lazy val `scio-extra` = project
       "org.apache.beam" % "beam-sdks-java-extensions-sketching" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-zetasketch" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.scalanlp" %% "breeze" % breezeVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.typelevel" %% "algebra" % algebraVersion,
@@ -1053,7 +1064,7 @@ lazy val `scio-parquet` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
       "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll (Exclude.avro),
@@ -1094,7 +1105,7 @@ lazy val `scio-tensorflow` = project
       "com.spotify" % "zoltar-core" % zoltarVersion,
       "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.tensorflow" % "ndarray" % ndArrayVersion,
@@ -1144,10 +1155,9 @@ lazy val `scio-examples` = project
   .settings(
     compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
     test / skip := skipUnauthorizedGcpGithubWorkflow.value,
-    // sbt does not support skip for test
-    Test / test := {
-      if ((Test / test / skip).value) () else (Test / test).value
-    },
+    Test / test := testSkipped.value,
+    undeclaredCompileDependenciesTest := undeclaredCompileDependenciesTestSkipped.value,
+    unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     scalacOptions := {
       val exclude = ScalacOptions
         .tokensForVersion(
@@ -1185,7 +1195,7 @@ lazy val `scio-examples` = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "com.mysql" % "mysql-connector-j" % "8.2.0",
+      "com.mysql" % "mysql-connector-j" % "8.3.0",
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
@@ -1194,7 +1204,7 @@ lazy val `scio-examples` = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.15.1" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.15.2" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1391,7 +1401,7 @@ lazy val `scio-smb` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       // #3260 work around for sorter memory limit until we patch upstream
       // "org.apache.beam" % "beam-sdks-java-extensions-sorter" % beamVersion,
-      "org.apache.beam" % "beam-vendor-guava-26_0-jre" % beamVendorVersion,
+      "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.checkerframework" % "checker-qual" % checkerQualVersion,
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
@@ -1464,20 +1474,22 @@ lazy val integration = project
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
+    publish / skip := true,
+    // disable compile / test when unauthorized
     compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
     test / skip := true,
-    publish / skip := true,
-    // sbt does not support skip for test
     Test / test := {
+      val logger = streams.value.log
       if ((Test / test / skip).value) {
-        streams.value.log.warn(
+        logger.warn(
           "integration/test are skipped.\n" +
             "Run 'set integration/test/skip := false' to run them"
         )
-      } else {
-        (Test / test).value
       }
+      testSkipped.value
     },
+    undeclaredCompileDependenciesTest := undeclaredCompileDependenciesTestSkipped.value,
+    unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // compile
@@ -1493,7 +1505,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.0" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.2" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test

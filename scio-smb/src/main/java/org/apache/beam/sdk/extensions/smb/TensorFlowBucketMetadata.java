@@ -29,7 +29,7 @@ import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Preconditions;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.tensorflow.proto.example.BytesList;
 import org.tensorflow.proto.example.Example;
 import org.tensorflow.proto.example.Feature;
@@ -44,26 +44,6 @@ public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Exa
   @JsonProperty
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String keyFieldSecondary;
-
-  public TensorFlowBucketMetadata(
-      int numBuckets,
-      int numShards,
-      Class<K1> keyClassPrimary,
-      String keyField,
-      HashType hashType,
-      String filenamePrefix)
-      throws CannotProvideCoderException, NonDeterministicException {
-    this(
-        BucketMetadata.CURRENT_VERSION,
-        numBuckets,
-        numShards,
-        keyClassPrimary,
-        keyField,
-        null,
-        null,
-        hashType,
-        filenamePrefix);
-  }
 
   public TensorFlowBucketMetadata(
       int numBuckets,
@@ -87,6 +67,29 @@ public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Exa
         filenamePrefix);
   }
 
+  public TensorFlowBucketMetadata(
+      int version,
+      int numBuckets,
+      int numShards,
+      Class<K1> keyClassPrimary,
+      String keyField,
+      Class<K2> keyClassSecondary,
+      String keyFieldSecondary,
+      HashType hashType,
+      String filenamePrefix)
+      throws CannotProvideCoderException, NonDeterministicException {
+    this(
+        version,
+        numBuckets,
+        numShards,
+        keyClassPrimary,
+        keyField,
+        keyClassSecondary,
+        keyFieldSecondary,
+        BucketMetadata.serializeHashType(hashType),
+        filenamePrefix);
+  }
+
   @JsonCreator
   TensorFlowBucketMetadata(
       @JsonProperty("version") int version,
@@ -96,7 +99,7 @@ public class TensorFlowBucketMetadata<K1, K2> extends BucketMetadata<K1, K2, Exa
       @JsonProperty("keyField") String keyField,
       @Nullable @JsonProperty("keyClassSecondary") Class<K2> keyClassSecondary,
       @Nullable @JsonProperty("keyFieldSecondary") String keyFieldSecondary,
-      @JsonProperty("hashType") HashType hashType,
+      @JsonProperty("hashType") String hashType,
       @JsonProperty(value = "filenamePrefix", required = false) String filenamePrefix)
       throws CannotProvideCoderException, NonDeterministicException {
     super(

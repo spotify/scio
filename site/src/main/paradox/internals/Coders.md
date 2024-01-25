@@ -170,14 +170,17 @@ Coder[Top]
 #### No `Coder[Foo]` is available and the compiler can not derive one
 
 Sometimes, no `Coder` instance can be found, and it's impossible to automatically derive one.
-In that case, Scio will fallback to a `Kryo` coder for that specific type. Note that **it might negatively impact the performance of your job**.
+In that case, Scio can fallback to a `Kryo` coder for that type by importing `com.spotify.scio.coders.kryo._`.
+Note that **it might negatively impact the performance of your job**.
 
-If the scalac flag `-Xmacro-settings:show-coder-fallback=true` is set, a warning message will be displayed **at compile time**. This message should help you fix the warning.
+If the scalac flag `-Xmacro-settings:show-coder-fallback=true` is set, a warning message will be displayed **at compile time**.
+This message should help you keep track where the implicit kryo coder are used.
 
 While compiling the following example with `-Xmacro-settings:show-coder-fallback=true`
 
 ```scala mdoc:reset
 import com.spotify.scio.coders._
+import com.spotify.scio.coders.kryo._
 val localeCoder = Coder[java.util.Locale]
 ```
 
@@ -220,7 +223,8 @@ In this example, the compiler could not find a proper instance of `Coder[Locale]
 Note that this message is not limited to direct invocation of fallback. For example, if you declare a case class that uses `Locale` internally, the compiler will show the same warning:
 
 ```scala mdoc:reset
-import com.spotify.scio.coders._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.kryo._
 case class Demo2(i: Int, s: String, xs: List[java.util.Locale])
 val demoCoder = Coder[Demo2]
 ```
@@ -262,8 +266,7 @@ It is possible for the user to define their own `Coder` implementation. Scio pro
 ```scala mdoc
 import com.spotify.scio.coders._
 import org.apache.beam.sdk.coders.DoubleCoder
-implicit def doubleCoder =
-  Coder.beam(DoubleCoder.of())
+implicit def doubleCoder = Coder.beam(DoubleCoder.of())
 ```
 - **`Coder.transform`**: Create a Coder for a type `B` by transforming the Beam implementation for a type `A`. Usually useful for `Coder` that depend on another `Coder`:
 ```scala mdoc

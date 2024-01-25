@@ -18,7 +18,7 @@
 package com.spotify.scio.avro
 
 import com.spotify.scio._
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.io.Files
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.Files
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

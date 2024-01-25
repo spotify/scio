@@ -24,7 +24,7 @@ import org.apache.beam.sdk.io.range.OffsetRange
 import org.apache.beam.sdk.transforms.DoFn._
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.transforms.splittabledofn.{OffsetRangeTracker, RestrictionTracker}
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableSet
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableSet
 import org.apache.parquet.filter2.compat.FilterCompat
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.api.InitContext

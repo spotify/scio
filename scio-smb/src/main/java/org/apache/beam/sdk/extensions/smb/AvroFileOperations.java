@@ -37,7 +37,7 @@ import org.apache.beam.sdk.io.PatchedSerializableAvroCodecFactory;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.base.Supplier;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier;
 
 /** {@link org.apache.beam.sdk.extensions.smb.FileOperations} implementation for Avro files. */
 public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
@@ -90,8 +90,8 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
   protected FileIO.Sink<ValueT> createSink() {
     final AvroIO.Sink<ValueT> sink =
         ((AvroIO.Sink<ValueT>) AvroIO.sink(getSchema()))
-                .withDatumWriterFactory(datumFactory)
-                .withCodec(codec.getCodec());
+            .withDatumWriterFactory(datumFactory)
+            .withCodec(codec.getCodec());
 
     if (metadata != null) {
       return sink.withMetadata(metadata);

@@ -18,8 +18,7 @@
 package com.spotify.scio.coders.instances
 
 import java.io.{DataInputStream, DataOutputStream, InputStream, OutputStream}
-
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderGrammar}
 import org.apache.beam.sdk.coders.{AtomicCoder, InstantCoder}
 import org.joda.time.chrono.ISOChronology
 import org.joda.time.{
@@ -32,17 +31,17 @@ import org.joda.time.{
   LocalTime
 }
 
-trait JodaCoders {
-  implicit def instantCoder: Coder[org.joda.time.Instant] = Coder.beam(InstantCoder.of())
-  implicit def jodaDateTimeCoder: Coder[DateTime] = Coder.beam(new JodaDateTimeCoder)
-  implicit def jodaLocalDateTimeCoder: Coder[LocalDateTime] = Coder.beam(new JodaLocalDateTimeCoder)
-  implicit def jodaLocalDateCoder: Coder[LocalDate] = Coder.beam(new JodaLocalDateCoder)
-  implicit def jodaLocalTimeCoder: Coder[LocalTime] = Coder.beam(new JodaLocalTimeCoder)
-  implicit def jodaDurationCoder: Coder[Duration] =
-    Coder.xmap(Coder[Long])(Duration.millis, _.getMillis)
+trait JodaCoders extends CoderGrammar {
+  implicit lazy val instantCoder: Coder[org.joda.time.Instant] = beam(InstantCoder.of())
+  implicit lazy val jodaDateTimeCoder: Coder[DateTime] = beam(new JodaDateTimeCoder)
+  implicit lazy val jodaLocalDateTimeCoder: Coder[LocalDateTime] = beam(new JodaLocalDateTimeCoder)
+  implicit lazy val jodaLocalDateCoder: Coder[LocalDate] = beam(new JodaLocalDateCoder)
+  implicit lazy val jodaLocalTimeCoder: Coder[LocalTime] = beam(new JodaLocalTimeCoder)
+  implicit lazy val jodaDurationCoder: Coder[Duration] =
+    xmap(Coder[Long])(Duration.millis, _.getMillis)
 }
 
-object JodaCoders {
+private[coders] object JodaCoders extends JodaCoders {
   def checkChronology(chronology: Chronology): Unit =
     if (chronology != null && chronology != ISOChronology.getInstanceUTC) {
       throw new IllegalArgumentException(s"Unsupported chronology: $chronology")

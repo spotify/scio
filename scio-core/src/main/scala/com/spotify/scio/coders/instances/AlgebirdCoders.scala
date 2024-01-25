@@ -17,18 +17,27 @@
 
 package com.spotify.scio.coders.instances
 
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.twitter.algebird.{BF, Batched, CMS, Moments, TopCMS, TopK}
 
-trait AlgebirdCoders {
-  implicit def cmsCoder[K]: Coder[CMS[K]] = Coder.kryo
-  implicit def topCmsCoder[K]: Coder[TopCMS[K]] = Coder.kryo
-  implicit def bfCoder[K]: Coder[BF[K]] = Coder.kryo
-  implicit def topKCoder[K]: Coder[TopK[K]] = Coder.kryo
-  implicit def batchedCoder[U]: Coder[Batched[U]] = Coder.kryo
-  implicit def momentsCoder[U]: Coder[Moments] =
-    Coder.xmap(Coder[(Double, Double, Double, Double, Double)])(
+trait AlgebirdCoders extends CoderGrammar {
+  private lazy val kryoCmsCoder: Coder[CMS[_]] = kryo
+  private lazy val kryoTopCmsCoder: Coder[TopCMS[_]] = kryo
+  private lazy val kryoBfCoder: Coder[BF[_]] = kryo
+  private lazy val kryoTopKCoder: Coder[TopK[_]] = kryo
+  private lazy val kryoBatchedCoder: Coder[Batched[_]] = kryo
+
+  implicit def cmsCoder[T]: Coder[CMS[T]] = kryoCmsCoder.asInstanceOf[Coder[CMS[T]]]
+  implicit def topCmsCoder[T]: Coder[TopCMS[T]] = kryoTopCmsCoder.asInstanceOf[Coder[TopCMS[T]]]
+  implicit def bfCoder[T]: Coder[BF[T]] = kryoBfCoder.asInstanceOf[Coder[BF[T]]]
+  implicit def topKCoder[T]: Coder[TopK[T]] = kryoTopKCoder.asInstanceOf[Coder[TopK[T]]]
+  implicit def batchedCoder[T]: Coder[Batched[T]] = kryoBatchedCoder.asInstanceOf[Coder[Batched[T]]]
+
+  implicit lazy val momentsCoder: Coder[Moments] =
+    xmap(Coder[(Double, Double, Double, Double, Double)])(
       { case (m0D, m1, m2, m3, m4) => new Moments(m0D, m1, m2, m3, m4) },
       m => (m.m0D, m.m1, m.m2, m.m3, m.m4)
     )
 }
+
+private[coders] object AlgebirdCoders extends AlgebirdCoders

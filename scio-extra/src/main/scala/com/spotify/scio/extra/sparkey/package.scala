@@ -19,6 +19,7 @@ package com.spotify.scio.extra
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.annotations.experimental
+import com.spotify.scio.coders.extra.sparkey.SparkeyCoders
 import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
 import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
@@ -107,7 +108,7 @@ import scala.util.hashing.MurmurHash3
  *   .toSCollection
  * }}}
  */
-package object sparkey extends SparkeyReaderInstances {
+package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
 
   /** Enhanced version of [[ScioContext]] with Sparkey methods. */
   implicit class SparkeyScioContext(private val self: ScioContext) extends AnyVal {

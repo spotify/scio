@@ -17,24 +17,20 @@
 
 package com.spotify.scio.coders.instances
 
-import java.io.{InputStream, OutputStream}
-import java.util.Collections
-import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.{Coder, CoderDerivation, CoderGrammar}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder => BIterableCoder, _}
-import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.util.{BufferedElementCountingOutputStream, CoderUtils, VarInt}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
-import org.apache.beam.sdk.util.BufferedElementCountingOutputStream
-import org.apache.beam.sdk.util.VarInt
 
-import scala.reflect.ClassTag
-import scala.collection.{mutable => m, BitSet, SortedSet}
-import scala.util.Try
-import scala.collection.compat._
-import scala.collection.AbstractIterable
-import scala.jdk.CollectionConverters._
-import java.util.{List => JList}
+import java.io.{InputStream, OutputStream}
 import java.lang.{Iterable => JIterable}
+import java.util.{Collections, List => JList}
+import scala.collection.compat._
+import scala.collection.{mutable => m, AbstractIterable, BitSet, SortedSet}
+import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 private[coders] object UnitCoder extends AtomicCoder[Unit] {
   override def encode(value: Unit, os: OutputStream): Unit = ()
@@ -145,6 +141,8 @@ abstract private class BufferedSeqLikeCoder[M[_], T](bc: BCoder[T])(implicit
   override def toString: String = s"BufferedSeqLikeCoder($bc)"
 }
 
+// keep this for binary compatibility
+@deprecated("Use Coder.gen[Option[T]] instead", "0.14.0")
 private[coders] class OptionCoder[T](bc: BCoder[T]) extends StructuredCoder[Option[T]] {
   private[this] val bcoder = BooleanCoder.of()
 
@@ -429,107 +427,104 @@ private[coders] object SDoubleCoder extends BCoder[Double] {
   override def toString: String = "DoubleCoder"
 }
 
-trait ScalaCoders {
-  implicit def charCoder: Coder[Char] =
-    Coder.xmap(Coder.beam(ByteCoder.of()))(_.toChar, _.toByte)
-  implicit def byteCoder: Coder[Byte] =
-    Coder.beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
-  implicit def stringCoder: Coder[String] =
-    Coder.beam(StringUtf8Coder.of())
-  implicit def shortCoder: Coder[Short] =
-    Coder.beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
-  implicit def intCoder: Coder[Int] =
-    Coder.beam(VarIntCoder.of().asInstanceOf[BCoder[Int]])
-  implicit def longCoder: Coder[Long] =
-    Coder.beam(BigEndianLongCoder.of().asInstanceOf[BCoder[Long]])
-  implicit def floatCoder: Coder[Float] = Coder.beam(SFloatCoder)
-  implicit def doubleCoder: Coder[Double] = Coder.beam(SDoubleCoder)
-
-  implicit def booleanCoder: Coder[Boolean] =
-    Coder.beam(BooleanCoder.of().asInstanceOf[BCoder[Boolean]])
-  implicit def unitCoder: Coder[Unit] = Coder.beam[Unit](UnitCoder)
-  implicit def nothingCoder: Coder[Nothing] = Coder.beam[Nothing](NothingCoder)
-
-  implicit def bigIntCoder: Coder[BigInt] =
-    Coder.xmap(Coder.beam(BigIntegerCoder.of()))(BigInt.apply, _.bigInteger)
-
-  implicit def bigDecimalCoder: Coder[BigDecimal] =
-    Coder.xmap(Coder.beam(BigDecimalCoder.of()))(BigDecimal.apply, _.bigDecimal)
-
-  implicit def tryCoder[A: Coder]: Coder[Try[A]] =
-    Coder.gen[Try[A]]
-
-  implicit def eitherCoder[A: Coder, B: Coder]: Coder[Either[A, B]] =
-    Coder.gen[Either[A, B]]
-
-  implicit def optionCoder[T, S[_] <: Option[_]](implicit c: Coder[T]): Coder[S[T]] =
-    Coder
-      .transform(c)(bc => Coder.beam(new OptionCoder[T](bc)))
-      .asInstanceOf[Coder[S[T]]]
-
-  implicit def noneCoder: Coder[None.type] =
-    optionCoder[Nothing, Option](nothingCoder).asInstanceOf[Coder[None.type]]
-
-  implicit def bitSetCoder: Coder[BitSet] = Coder.beam(new BitSetCoder)
-
+trait ScalaCoders extends CoderGrammar with CoderDerivation {
+  implicit lazy val charCoder: Coder[Char] =
+    xmap(beam(ByteCoder.of()))(_.toChar, _.toByte)
+  implicit lazy val byteCoder: Coder[Byte] =
+    beam(ByteCoder.of().asInstanceOf[BCoder[Byte]])
+  implicit lazy val stringCoder: Coder[String] =
+    beam(StringUtf8Coder.of())
+  implicit lazy val shortCoder: Coder[Short] =
+    beam(BigEndianShortCoder.of().asInstanceOf[BCoder[Short]])
+  implicit lazy val intCoder: Coder[Int] =
+    beam(VarIntCoder.of().asInstanceOf[BCoder[Int]])
+  implicit lazy val longCoder: Coder[Long] =
+    beam(BigEndianLongCoder.of().asInstanceOf[BCoder[Long]])
+  implicit lazy val floatCoder: Coder[Float] = beam(SFloatCoder)
+  implicit lazy val doubleCoder: Coder[Double] = beam(SDoubleCoder)
+  implicit lazy val booleanCoder: Coder[Boolean] = beam(
+    BooleanCoder.of().asInstanceOf[BCoder[Boolean]]
+  )
+  implicit lazy val unitCoder: Coder[Unit] = beam[Unit](UnitCoder)
+  implicit lazy val nothingCoder: Coder[Nothing] = beam[Nothing](NothingCoder)
+  implicit lazy val bigIntCoder: Coder[BigInt] =
+    xmap(beam(BigIntegerCoder.of()))(BigInt.apply, _.bigInteger)
+  implicit lazy val bigDecimalCoder: Coder[BigDecimal] =
+    xmap(beam(BigDecimalCoder.of()))(BigDecimal.apply, _.bigDecimal)
+  implicit lazy val bitSetCoder: Coder[BitSet] = beam(new BitSetCoder)
+  implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] = kryo[T]
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new SeqCoder[T](bc)))
+    transform(Coder[T])(bc => beam(new SeqCoder[T](bc)))
 
   // TODO: proper chunking implementation
   implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new IterableCoder[T](bc)))
-
-  implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] =
-    Coder.kryo[T]
+    transform(Coder[T])(bc => beam(new IterableCoder[T](bc)))
 
   // specialized coder. Since `::` is a case class, Magnolia would derive an incorrect one...
   implicit def listCoder[T: Coder]: Coder[List[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new ListCoder[T](bc)))
-
+    transform(Coder[T])(bc => beam(new ListCoder[T](bc)))
   implicit def iterableOnceCoder[T: Coder]: Coder[IterableOnce[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new IterableOnceCoder[T](bc)))
-
+    transform(Coder[T])(bc => beam(new IterableOnceCoder[T](bc)))
   implicit def setCoder[T: Coder]: Coder[Set[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new SetCoder[T](bc)))
+    transform(Coder[T])(bc => beam(new SetCoder[T](bc)))
 
   implicit def mutableSetCoder[T: Coder]: Coder[m.Set[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new MutableSetCoder[T](bc)))
+    transform(Coder[T])(bc => beam(new MutableSetCoder[T](bc)))
 
   implicit def vectorCoder[T: Coder]: Coder[Vector[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new VectorCoder[T](bc)))
+    transform(Coder[T])(bc => beam(new VectorCoder[T](bc)))
 
   implicit def arrayBufferCoder[T: Coder]: Coder[m.ArrayBuffer[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new ArrayBufferCoder[T](bc)))
+    transform(Coder[T])(bc => beam(new ArrayBufferCoder[T](bc)))
 
   implicit def bufferCoder[T: Coder]: Coder[m.Buffer[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new BufferCoder[T](bc)))
+    transform(Coder[T])(bc => beam(new BufferCoder[T](bc)))
 
   implicit def listBufferCoder[T: Coder]: Coder[m.ListBuffer[T]] =
-    Coder.xmap(bufferCoder[T])(x => m.ListBuffer(x.toSeq: _*), identity)
+    xmap(bufferCoder[T])(x => m.ListBuffer(x.toSeq: _*), identity)
 
   implicit def arrayCoder[T: Coder: ClassTag]: Coder[Array[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new ArrayCoder[T](bc)))
+    transform(Coder[T])(bc => beam(new ArrayCoder[T](bc)))
 
   implicit def arrayByteCoder: Coder[Array[Byte]] =
-    Coder.beam(ByteArrayCoder.of())
+    beam(ByteArrayCoder.of())
 
   implicit def wrappedArrayCoder[T: Coder: ClassTag](implicit
     wrap: Array[T] => m.WrappedArray[T]
   ): Coder[m.WrappedArray[T]] =
-    Coder.xmap(Coder[Array[T]])(wrap, _.toArray)
+    xmap(Coder[Array[T]])(wrap, _.toArray)
 
   implicit def mutableMapCoder[K: Coder, V: Coder]: Coder[m.Map[K, V]] =
-    Coder.transform(Coder[K]) { kc =>
-      Coder.transform(Coder[V])(vc => Coder.beam(new MutableMapCoder[K, V](kc, vc)))
+    transform(Coder[K]) { kc =>
+      transform(Coder[V])(vc => beam(new MutableMapCoder[K, V](kc, vc)))
     }
 
   implicit def mapCoder[K: Coder, V: Coder]: Coder[Map[K, V]] =
-    Coder.transform(Coder[K]) { kc =>
-      Coder.transform(Coder[V])(vc => Coder.beam(new MapCoder[K, V](kc, vc)))
+    transform(Coder[K]) { kc =>
+      transform(Coder[V])(vc => beam(new MapCoder[K, V](kc, vc)))
     }
 
   implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] =
-    Coder.transform(Coder[T])(bc => Coder.beam(new SortedSetCoder[T](bc)))
-}
+    transform(Coder[T])(bc => beam(new SortedSetCoder[T](bc)))
 
+  // cache common scala types to avoid macro expansions
+  implicit def tryCoder[T: Coder]: Coder[Try[T]] =
+    gen[Try[T]]
+  implicit def successCoder[T: Coder]: Coder[Success[T]] =
+    gen[Success[T]]
+  implicit def failureCoder[T]: Coder[Failure[T]] =
+    gen[Failure[T]]
+  implicit def eitherCoder[A: Coder, B: Coder]: Coder[Either[A, B]] =
+    gen[Either[A, B]]
+  implicit def leftCoder[A: Coder, B]: Coder[Left[A, B]] =
+    gen[Left[A, B]]
+  implicit def rightCoder[A, B: Coder]: Coder[Right[A, B]] =
+    gen[Right[A, B]]
+  implicit def optionCoder[T: Coder]: Coder[Option[T]] =
+    gen[Option[T]]
+  implicit def someCoder[T: Coder]: Coder[Some[T]] =
+    gen[Some[T]]
+  implicit lazy val noneCoder: Coder[None.type] =
+    gen[None.type]
+}
 private[coders] object ScalaCoders extends ScalaCoders
