@@ -35,7 +35,6 @@ import org.apache.beam.sdk.coders.Coder;
 public final class IcebergEncoder implements BucketMetadata.Encoder {
 
   private static final OffsetDateTime EPOCH = Instant.ofEpochSecond(0).atOffset(ZoneOffset.UTC);
-  private static final LocalDate EPOCH_DAY = EPOCH.toLocalDate();
 
   private byte[] encode(int value) {
     return encode((long) value);
@@ -58,7 +57,7 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
   }
 
   private byte[] encode(LocalDate value) {
-    return encode(ChronoUnit.DAYS.between(EPOCH_DAY, value));
+    return encode(value.toEpochDay());
   }
 
   private byte[] encode(LocalTime value) {
