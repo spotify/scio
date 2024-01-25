@@ -42,7 +42,8 @@ public class IcebergHashTypeTest {
     BucketMetadata.KeyEncoder<BigDecimal> decimalKeyEncoder = hashType.encoder(BigDecimal.class);
     BucketMetadata.KeyEncoder<LocalDate> dateKeyEncoder = hashType.encoder(LocalDate.class);
     BucketMetadata.KeyEncoder<LocalTime> timeKeyEncoder = hashType.encoder(LocalTime.class);
-    BucketMetadata.KeyEncoder<LocalDateTime> dateTimeKeyEncoder = hashType.encoder(LocalDateTime.class);
+    BucketMetadata.KeyEncoder<LocalDateTime> dateTimeKeyEncoder =
+        hashType.encoder(LocalDateTime.class);
     BucketMetadata.KeyEncoder<ZonedDateTime> zonedDateTimeKeyEncoder =
         hashType.encoder(ZonedDateTime.class);
     BucketMetadata.KeyEncoder<Instant> instantKeyEncoder = hashType.encoder(Instant.class);
@@ -53,9 +54,11 @@ public class IcebergHashTypeTest {
     assertEquals(2017239379, hasher.hashBytes(integerKeyEncoder.encode(34, null)).asInt());
     assertEquals(2017239379, hasher.hashBytes(longKeyEncoder.encode(34L, null)).asInt());
     assertEquals(
-        -500754589, hasher.hashBytes(decimalKeyEncoder.encode(new BigDecimal("14.20"), null)).asInt());
+        -500754589,
+        hasher.hashBytes(decimalKeyEncoder.encode(new BigDecimal("14.20"), null)).asInt());
     assertEquals(
-        -653330422, hasher.hashBytes(dateKeyEncoder.encode(LocalDate.of(2017, 11, 16), null)).asInt());
+        -653330422,
+        hasher.hashBytes(dateKeyEncoder.encode(LocalDate.of(2017, 11, 16), null)).asInt());
     assertEquals(
         -662762989, hasher.hashBytes(timeKeyEncoder.encode(LocalTime.of(22, 31, 8), null)).asInt());
     assertEquals(
@@ -93,10 +96,12 @@ public class IcebergHashTypeTest {
         1488055340,
         hasher
             .hashBytes(
-                uuidKeyEncoder.encode(UUID.fromString("f79c3e09-677c-4bbd-a479-3f349cb785e7"), null))
+                uuidKeyEncoder.encode(
+                    UUID.fromString("f79c3e09-677c-4bbd-a479-3f349cb785e7"), null))
             .asInt());
     assertEquals(
-        -188683207, hasher.hashBytes(bytesKeyEncoder.encode(new byte[] {0, 1, 2, 3}, null)).asInt());
+        -188683207,
+        hasher.hashBytes(bytesKeyEncoder.encode(new byte[] {0, 1, 2, 3}, null)).asInt());
   }
 
   @Test
