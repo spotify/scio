@@ -249,6 +249,11 @@ public class AvroSortedBucketIO {
       return toBuilder().setInputDirectories(inputDirectories).build();
     }
 
+    /** Specifies the avro {@link AvroDatumFactory} for reading. */
+    public Read<T> withDatumFactory(AvroDatumFactory<T> datumFactory) {
+      return toBuilder().setDatumFactory(datumFactory).build();
+    }
+
     /** Specifies the input filename suffix. */
     public Read<T> withSuffix(String filenameSuffix) {
       return toBuilder().setFilenameSuffix(filenameSuffix).build();
@@ -345,6 +350,13 @@ public class AvroSortedBucketIO {
       abstract Write<K1, K2, T> build();
     }
 
+    /** Writes to the given output directory. */
+    public Write<K1, K2, T> to(String outputDirectory) {
+      return toBuilder()
+          .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
+          .build();
+    }
+
     /** Specifies the avro {@link AvroDatumFactory} for writing. */
     public Write<K1, K2, T> withDatumFactory(AvroDatumFactory<T> datumFactory) {
       return toBuilder().setDatumFactory(datumFactory).build();
@@ -370,18 +382,36 @@ public class AvroSortedBucketIO {
       return toBuilder().setMetadata(metadata).build();
     }
 
-    /** Writes to the given output directory. */
-    public Write<K1, K2, T> to(String outputDirectory) {
-      return toBuilder()
-          .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
-          .build();
-    }
-
     /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
     public Write<K1, K2, T> withTempDirectory(String tempDirectory) {
       return toBuilder()
           .setTempDirectory(FileSystems.matchNewResource(tempDirectory, true))
           .build();
+    }
+
+    /** Specifies the output filename suffix. */
+    public Write<K1, K2, T> withSuffix(String filenameSuffix) {
+      return toBuilder().setFilenameSuffix(filenameSuffix).build();
+    }
+
+    /** Specifies the output filename prefix (i.e. "bucket" or "part"). */
+    public Write<K1, K2, T> withFilenamePrefix(String filenamePrefix) {
+      return toBuilder().setFilenamePrefix(filenamePrefix).build();
+    }
+
+    /** Specifies the sorter memory in MB. */
+    public Write<K1, K2, T> withSorterMemoryMb(int sorterMemoryMb) {
+      return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
+    }
+
+    /** Specifies the size of an optional key-to-hash cache in the ExtractKeys transform. */
+    public Write<K1, K2, T> withKeyCacheOfSize(int keyCacheSize) {
+      return toBuilder().setKeyCacheSize(keyCacheSize).build();
+    }
+
+    /** Specifies the output file {@link CodecFactory}. */
+    public Write<K1, K2, T> withCodec(CodecFactory codec) {
+      return toBuilder().setCodec(codec).build();
     }
 
     @SuppressWarnings("unchecked")
@@ -409,31 +439,6 @@ public class AvroSortedBucketIO {
       } catch (CannotProvideCoderException | Coder.NonDeterministicException e) {
         throw new IllegalStateException(e);
       }
-    }
-
-    /** Specifies the output filename suffix. */
-    public Write<K1, K2, T> withSuffix(String filenameSuffix) {
-      return toBuilder().setFilenameSuffix(filenameSuffix).build();
-    }
-
-    /** Specifies the output filename prefix (i.e. "bucket" or "part"). */
-    public Write<K1, K2, T> withFilenamePrefix(String filenamePrefix) {
-      return toBuilder().setFilenamePrefix(filenamePrefix).build();
-    }
-
-    /** Specifies the sorter memory in MB. */
-    public Write<K1, K2, T> withSorterMemoryMb(int sorterMemoryMb) {
-      return toBuilder().setSorterMemoryMb(sorterMemoryMb).build();
-    }
-
-    /** Specifies the size of an optional key-to-hash cache in the ExtractKeys transform. */
-    public Write<K1, K2, T> withKeyCacheOfSize(int keyCacheSize) {
-      return toBuilder().setKeyCacheSize(keyCacheSize).build();
-    }
-
-    /** Specifies the output file {@link CodecFactory}. */
-    public Write<K1, K2, T> withCodec(CodecFactory codec) {
-      return toBuilder().setCodec(codec).build();
     }
   }
 
@@ -494,6 +499,11 @@ public class AvroSortedBucketIO {
       return toBuilder()
           .setOutputDirectory(FileSystems.matchNewResource(outputDirectory, true))
           .build();
+    }
+
+    /** Specifies the avro {@link AvroDatumFactory} for reading and writing. */
+    public TransformOutput<K1, K2, T> withDatumFactory(AvroDatumFactory<T> datumFactory) {
+      return toBuilder().setDatumFactory(datumFactory).build();
     }
 
     /** Specifies the temporary directory for writing. Defaults to --tempLocation if not set. */
