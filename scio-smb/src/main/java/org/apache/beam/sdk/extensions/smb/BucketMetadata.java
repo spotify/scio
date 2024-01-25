@@ -266,31 +266,11 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       public HashFunction create() {
         return Hashing.murmur3_32();
       }
-
-      @Override
-      public BucketIdFn bucketIdFn() {
-        return BucketIdFn.defaultFn();
-      }
-
-      @Override
-      public Encoder encoder() {
-        return Encoder.defaultEncoder();
-      }
     },
     MURMUR3_128 {
       @Override
       public HashFunction create() {
         return Hashing.murmur3_128();
-      }
-
-      @Override
-      public BucketIdFn bucketIdFn() {
-        return BucketIdFn.defaultFn();
-      }
-
-      @Override
-      public Encoder encoder() {
-        return Encoder.defaultEncoder();
       }
     },
     ICEBERG {
@@ -312,9 +292,13 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
     public abstract HashFunction create();
 
-    public abstract BucketIdFn bucketIdFn();
+    public BucketIdFn bucketIdFn() {
+      return BucketIdFn.defaultFn();
+    }
 
-    public abstract Encoder encoder();
+    public Encoder encoder() {
+      return Encoder.defaultEncoder();
+    }
   }
 
   boolean isCompatibleWith(BucketMetadata other) {
