@@ -114,8 +114,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonIgnore private final Coder<K1> keyCoder;
 
-  @JsonIgnore private final Supplier<Encoder<K1>> primaryKeyEncoder;
-  @JsonIgnore private final Supplier<Encoder<K2>> secondaryKeyEncoder;
+  @JsonIgnore private final Supplier<KeyEncoder<K1>> primaryKeyEncoder;
+  @JsonIgnore private final Supplier<KeyEncoder<K2>> secondaryKeyEncoder;
 
   @JsonIgnore private final Coder<K2> keyCoderSecondary;
 
@@ -239,10 +239,10 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     }
   }
 
-  public interface Encoder<T> extends Serializable {
+  public interface KeyEncoder<T> extends Serializable {
     byte[] encode(T value, Coder<T> coder);
 
-    static <T> Encoder<T> defaultEncoder() {
+    static <T> KeyEncoder<T> defaultEncoder() {
       return (value, coder) -> {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
@@ -254,7 +254,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       };
     }
 
-    static <T> Encoder<T> icebergEncoder(Class<T> klass) {
+    static <T> KeyEncoder<T> icebergEncoder(Class<T> klass) {
       return IcebergEncoder.create(klass);
     }
   }
@@ -285,8 +285,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       }
 
       @Override
-      public <T> Encoder<T> encoder(Class<T> klass) {
-        return Encoder.icebergEncoder(klass);
+      public <T> KeyEncoder<T> encoder(Class<T> klass) {
+        return KeyEncoder.icebergEncoder(klass);
       }
     };
 
@@ -296,8 +296,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       return BucketIdFn.defaultFn();
     }
 
-    public <T> Encoder<T> encoder(Class<T> klass) {
-      return Encoder.defaultEncoder();
+    public <T> KeyEncoder<T> encoder(Class<T> klass) {
+      return KeyEncoder.defaultEncoder();
     }
   }
 
@@ -478,7 +478,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   @FunctionalInterface
-  interface EncoderSupplier<T> extends Supplier<Encoder<T>>, Serializable {
+  interface EncoderSupplier<T> extends Supplier<KeyEncoder<T>>, Serializable {
     static <T> EncoderSupplier<T> create(String hashType, Class<T> klass) {
       return () -> HashType.valueOf(hashType).encoder(klass);
     }

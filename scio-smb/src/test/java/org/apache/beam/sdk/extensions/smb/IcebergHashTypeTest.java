@@ -37,39 +37,39 @@ public class IcebergHashTypeTest {
     // https://iceberg.apache.org/spec/#appendix-b-32-bit-hash-requirements
     BucketMetadata.HashType hashType = BucketMetadata.HashType.ICEBERG;
     HashFunction hasher = hashType.create();
-    BucketMetadata.Encoder<Integer> integerEncoder = hashType.encoder(Integer.class);
-    BucketMetadata.Encoder<Long> longEncoder = hashType.encoder(Long.class);
-    BucketMetadata.Encoder<BigDecimal> decimalEncoder = hashType.encoder(BigDecimal.class);
-    BucketMetadata.Encoder<LocalDate> dateEncoder = hashType.encoder(LocalDate.class);
-    BucketMetadata.Encoder<LocalTime> timeEncoder = hashType.encoder(LocalTime.class);
-    BucketMetadata.Encoder<LocalDateTime> dateTimeEncoder = hashType.encoder(LocalDateTime.class);
-    BucketMetadata.Encoder<ZonedDateTime> zonedDateTimeEncoder =
+    BucketMetadata.KeyEncoder<Integer> integerKeyEncoder = hashType.encoder(Integer.class);
+    BucketMetadata.KeyEncoder<Long> longKeyEncoder = hashType.encoder(Long.class);
+    BucketMetadata.KeyEncoder<BigDecimal> decimalKeyEncoder = hashType.encoder(BigDecimal.class);
+    BucketMetadata.KeyEncoder<LocalDate> dateKeyEncoder = hashType.encoder(LocalDate.class);
+    BucketMetadata.KeyEncoder<LocalTime> timeKeyEncoder = hashType.encoder(LocalTime.class);
+    BucketMetadata.KeyEncoder<LocalDateTime> dateTimeKeyEncoder = hashType.encoder(LocalDateTime.class);
+    BucketMetadata.KeyEncoder<ZonedDateTime> zonedDateTimeKeyEncoder =
         hashType.encoder(ZonedDateTime.class);
-    BucketMetadata.Encoder<Instant> instantEncoder = hashType.encoder(Instant.class);
-    BucketMetadata.Encoder<String> stringEncoder = hashType.encoder(String.class);
-    BucketMetadata.Encoder<UUID> uuidEncoder = hashType.encoder(UUID.class);
-    BucketMetadata.Encoder<byte[]> bytesEncoder = hashType.encoder(byte[].class);
+    BucketMetadata.KeyEncoder<Instant> instantKeyEncoder = hashType.encoder(Instant.class);
+    BucketMetadata.KeyEncoder<String> stringKeyEncoder = hashType.encoder(String.class);
+    BucketMetadata.KeyEncoder<UUID> uuidKeyEncoder = hashType.encoder(UUID.class);
+    BucketMetadata.KeyEncoder<byte[]> bytesKeyEncoder = hashType.encoder(byte[].class);
 
-    assertEquals(2017239379, hasher.hashBytes(integerEncoder.encode(34, null)).asInt());
-    assertEquals(2017239379, hasher.hashBytes(longEncoder.encode(34L, null)).asInt());
+    assertEquals(2017239379, hasher.hashBytes(integerKeyEncoder.encode(34, null)).asInt());
+    assertEquals(2017239379, hasher.hashBytes(longKeyEncoder.encode(34L, null)).asInt());
     assertEquals(
-        -500754589, hasher.hashBytes(decimalEncoder.encode(new BigDecimal("14.20"), null)).asInt());
+        -500754589, hasher.hashBytes(decimalKeyEncoder.encode(new BigDecimal("14.20"), null)).asInt());
     assertEquals(
-        -653330422, hasher.hashBytes(dateEncoder.encode(LocalDate.of(2017, 11, 16), null)).asInt());
+        -653330422, hasher.hashBytes(dateKeyEncoder.encode(LocalDate.of(2017, 11, 16), null)).asInt());
     assertEquals(
-        -662762989, hasher.hashBytes(timeEncoder.encode(LocalTime.of(22, 31, 8), null)).asInt());
+        -662762989, hasher.hashBytes(timeKeyEncoder.encode(LocalTime.of(22, 31, 8), null)).asInt());
     assertEquals(
         -2047944441,
         hasher
             .hashBytes(
-                dateTimeEncoder.encode(
+                dateTimeKeyEncoder.encode(
                     LocalDateTime.of(LocalDate.of(2017, 11, 16), LocalTime.of(22, 31, 8)), null))
             .asInt());
     assertEquals(
         -2047944441,
         hasher
             .hashBytes(
-                zonedDateTimeEncoder.encode(
+                zonedDateTimeKeyEncoder.encode(
                     ZonedDateTime.of(
                         LocalDate.of(2017, 11, 16),
                         LocalTime.of(14, 31, 8),
@@ -80,7 +80,7 @@ public class IcebergHashTypeTest {
         -2047944441,
         hasher
             .hashBytes(
-                instantEncoder.encode(
+                instantKeyEncoder.encode(
                     ZonedDateTime.of(
                             LocalDate.of(2017, 11, 16),
                             LocalTime.of(14, 31, 8),
@@ -88,15 +88,15 @@ public class IcebergHashTypeTest {
                         .toInstant(),
                     null))
             .asInt());
-    assertEquals(1210000089, hasher.hashBytes(stringEncoder.encode("iceberg", null)).asInt());
+    assertEquals(1210000089, hasher.hashBytes(stringKeyEncoder.encode("iceberg", null)).asInt());
     assertEquals(
         1488055340,
         hasher
             .hashBytes(
-                uuidEncoder.encode(UUID.fromString("f79c3e09-677c-4bbd-a479-3f349cb785e7"), null))
+                uuidKeyEncoder.encode(UUID.fromString("f79c3e09-677c-4bbd-a479-3f349cb785e7"), null))
             .asInt());
     assertEquals(
-        -188683207, hasher.hashBytes(bytesEncoder.encode(new byte[] {0, 1, 2, 3}, null)).asInt());
+        -188683207, hasher.hashBytes(bytesKeyEncoder.encode(new byte[] {0, 1, 2, 3}, null)).asInt());
   }
 
   @Test

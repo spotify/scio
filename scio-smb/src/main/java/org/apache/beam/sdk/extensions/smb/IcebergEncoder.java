@@ -81,7 +81,7 @@ public final class IcebergEncoder<T> {
     return value.unscaledValue().toByteArray();
   }
 
-  public static <T> BucketMetadata.Encoder<T> create(Class<T> klass) {
+  public static <T> BucketMetadata.KeyEncoder<T> create(Class<T> klass) {
     if (klass.equals(Integer.class)) {
       return (value, coder) -> encode((Integer) value);
     }
