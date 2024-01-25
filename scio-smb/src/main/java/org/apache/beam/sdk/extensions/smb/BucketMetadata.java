@@ -202,7 +202,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     builder.add(DisplayData.item("filenamePrefix", filenamePrefix));
   }
 
-  interface BucketIdFn extends Serializable {
+  public interface BucketIdFn extends Serializable {
     int apply(HashCode hashCode, int numBuckets);
 
     static BucketIdFn defaultFn() {
@@ -214,7 +214,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     }
   }
 
-  interface Encoder extends Serializable {
+  public interface Encoder extends Serializable {
     <T> byte[] encode(T value, Coder<T> coder);
 
     static Encoder defaultEncoder() {
