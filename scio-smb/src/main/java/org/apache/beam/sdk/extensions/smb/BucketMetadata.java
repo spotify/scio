@@ -51,10 +51,11 @@ import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.transforms.display.DisplayData.Builder;
 import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
-import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashFunction;
-import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Suppliers;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashCode;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashFunction;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
 
 /**
  * Represents metadata in a JSON-serializable format to be stored alongside sorted-bucket files in a
@@ -109,11 +110,11 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonIgnore private final Supplier<HashFunction> hashFunction;
 
-  @JsonIgnore private final BucketIdFn bucketIdFn;
+  @JsonIgnore private final Supplier<BucketIdFn> bucketIdFn;
 
   @JsonIgnore private final Coder<K1> keyCoder;
 
-  @JsonIgnore private final Encoder keyEncoder;
+  @JsonIgnore private final Supplier<Encoder> keyEncoder;
 
   @JsonIgnore private final Coder<K2> keyCoderSecondary;
 
@@ -173,8 +174,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     this.keyClassSecondary = keyClassSecondary;
     this.hashType = hashType;
     this.hashFunction = Suppliers.memoize(new HashFunctionSupplier(hashType));
-    this.bucketIdFn = hashType.bucketIdFn();
-    this.keyEncoder = hashType.encoder();
+    this.bucketIdFn = Suppliers.memoize(BucketIdFnSupplier.create(hashType));
+    this.keyEncoder = Suppliers.memoize(EncoderSupplier.create(hashType));
     this.keyCoder = getKeyCoder(keyClass);
     this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
@@ -295,7 +296,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     ICEBERG {
       @Override
       public HashFunction create() {
-        return Hashing.murmur3_32();
+        return Hashing.murmur3_32_fixed();
       }
 
       @Override
@@ -383,7 +384,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   <K> byte[] encodeKeyBytes(K key, Coder<K> coder) {
     if (key == null) return null;
-    return keyEncoder.encode(key, coder);
+    return keyEncoder.get().encode(key, coder);
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput
@@ -443,11 +444,11 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   int getBucketId(byte[] keyBytes) {
-    return bucketIdFn.apply(hashFunction.hashBytes(keyBytes), numBuckets);
+    return bucketIdFn.get().apply(hashFunction.get().hashBytes(keyBytes), numBuckets);
   }
 
   int rehashBucket(byte[] keyBytes, int newNumBuckets) {
-    return bucketIdFn.apply(hashFunction.hashBytes(keyBytes), newNumBuckets);
+    return bucketIdFn.get().apply(hashFunction.get().hashBytes(keyBytes), newNumBuckets);
   }
 
   ////////////////////////////////////////
@@ -478,6 +479,20 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     @Override
     public HashFunction get() {
       return HashType.valueOf(hashType).create();
+    }
+  }
+
+  @FunctionalInterface
+  interface BucketIdFnSupplier extends Supplier<BucketIdFn>, Serializable {
+    static BucketIdFnSupplier create(String hashType) {
+      return () -> HashType.valueOf(hashType).bucketIdFn();
+    }
+  }
+
+  @FunctionalInterface
+  interface EncoderSupplier extends Supplier<Encoder>, Serializable {
+    static EncoderSupplier create(String hashType) {
+      return () -> HashType.valueOf(hashType).encoder();
     }
   }
 
