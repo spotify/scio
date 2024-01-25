@@ -32,7 +32,6 @@ val beamVersion = "2.53.0"
 // https://github.com/apache/beam/blob/v2.53.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val airliftVersion = "2.2"
 val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.15"
