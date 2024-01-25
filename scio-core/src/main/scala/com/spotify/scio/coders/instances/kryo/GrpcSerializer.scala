@@ -27,7 +27,7 @@ import io.grpc.{Metadata, Status, StatusRuntimeException}
 
 private[coders] class StatusSerializer extends KSerializer[Status] {
   override def write(kryo: Kryo, output: Output, status: Status): Unit = {
-    output.writeInt(status.getCode().value())
+    output.writeInt(status.getCode.value())
     output.writeString(status.getDescription)
     kryo.writeClassAndObject(output, status.getCause)
   }
@@ -89,7 +89,7 @@ private[coders] class GaxApiExceptionSerializer extends KSerializer[ApiException
     `type`: Class[ApiException]
   ): ApiException = {
     val message = kryo.readObject(input, classOf[String])
-    val cause = kryo.readClassAndObject(input)
+    val cause = kryo.readClassAndObject(input).asInstanceOf[Throwable]
     val codeClass = kryo.readClass(input).getType
     val code = if (codeClass == classOf[GrpcStatusCode]) {
       val status = kryo.readObject(input, classOf[Status], statusSer)
@@ -105,7 +105,7 @@ private[coders] class GaxApiExceptionSerializer extends KSerializer[ApiException
 
     ApiExceptionFactory.createException(
       message,
-      cause.asInstanceOf[Throwable],
+      cause,
       code,
       retryable
     )
