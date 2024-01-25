@@ -17,6 +17,9 @@
 package com.spotify.scio.coders.instances
 
 import java.lang.{Iterable => JIterable}
+
+import scala.util.chaining._
+
 private[coders] object JavaCollectionWrappers {
 
   // private classes
@@ -28,13 +31,14 @@ private[coders] object JavaCollectionWrappers {
     Class.forName("scala.collection.convert.JavaCollectionWrappers$JListWrapper")
 
   object JIterableWrapper {
+
+    private lazy val underlyingField = JIterableWrapperClass
+      .getDeclaredField("underlying")
+      .tap(_.setAccessible(true))
+
     def unapply(arg: Any): Option[JIterable[_]] = arg match {
       case arg if arg.getClass == JIterableWrapperClass =>
-        val underlying = JIterableWrapperClass
-          .getField("underlying")
-          .get(arg)
-          .asInstanceOf[JIterable[_]]
-        Some(underlying)
+        Some(underlyingField.get(arg).asInstanceOf[JIterable[_]])
       case _ => None
     }
   }
