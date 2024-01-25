@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class IcebergHashTypeTest {
     @Test
@@ -32,18 +33,17 @@ public class IcebergHashTypeTest {
         assertEquals(1210000089, hasher.hashBytes(encoder.encode("iceberg", null)).asInt());
         assertEquals(1488055340, hasher.hashBytes(encoder.encode(UUID.fromString("f79c3e09-677c-4bbd-a479-3f349cb785e7"), null)).asInt());
         assertEquals(-188683207, hasher.hashBytes(encoder.encode(new byte[]{0, 1, 2, 3}, null)).asInt());
+    }
 
-        // types below are not currently valid for bucketing
-        assertEquals(1392991556, hasher.hashBytes(encoder.encode(true, null)).asInt());
-        assertEquals(1669671676, hasher.hashBytes(encoder.encode(false, null)).asInt());
-        assertEquals(-142385009, hasher.hashBytes(encoder.encode(1F, null)).asInt());
-        assertEquals(1669671676, hasher.hashBytes(encoder.encode(0F, null)).asInt());
-        assertEquals(1669671676, hasher.hashBytes(encoder.encode(-0F, null)).asInt());
-        assertEquals(-142385009, hasher.hashBytes(encoder.encode(1D, null)).asInt());
-        assertEquals(1669671676, hasher.hashBytes(encoder.encode(0D, null)).asInt());
-        assertEquals(1669671676, hasher.hashBytes(encoder.encode(-0D, null)).asInt());
-        // Double NaN has a canonical representation, so it should hash to the same value as this particular long value
-        assertEquals(hasher.hashBytes(encoder.encode(0x7ff8000000000000L, null)).asInt(), hasher.hashBytes(encoder.encode(Double.NaN, null)).asInt());
+    @Test
+    public void shouldThrowOnEncodingUnsupportedTypes() {
+        // https://iceberg.apache.org/spec/#appendix-b-32-bit-hash-requirements
+        BucketMetadata.HashType hashType = BucketMetadata.HashType.ICEBERG;
+        BucketMetadata.Encoder encoder = hashType.encoder();
+
+        assertThrows(UnsupportedOperationException.class, () -> encoder.encode(true, null));
+        assertThrows(UnsupportedOperationException.class, () -> encoder.encode(1F, null));
+        assertThrows(UnsupportedOperationException.class, () -> encoder.encode(1D, null));
     }
 
 }

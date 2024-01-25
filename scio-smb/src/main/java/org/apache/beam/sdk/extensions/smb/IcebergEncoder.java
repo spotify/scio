@@ -45,7 +45,7 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
     }
 
     private byte[] encode(LocalDate value) {
-        return encode(ChronoUnit.DAYS.between(EPOCH_DAY, (LocalDate) value));
+        return encode(ChronoUnit.DAYS.between(EPOCH_DAY, value));
     }
 
     private byte[] encode(LocalTime value) {
@@ -66,19 +66,6 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
 
     private byte[] encode(BigDecimal value) {
         return value.unscaledValue().toByteArray();
-    }
-
-    private byte[] encode(boolean value) {
-        return encode((value) ? 1 : 0);
-    }
-
-    private byte[] encode(float value) {
-        return encode((double) value);
-    }
-
-    private byte[] encode(double value) {
-        double canonizedValue = value == -0D ? 0D : value;
-        return encode(Double.doubleToLongBits(canonizedValue));
     }
 
     @Override
@@ -115,17 +102,6 @@ public final class IcebergEncoder implements BucketMetadata.Encoder {
         }
         if (value instanceof BigDecimal) {
             return encode((BigDecimal) value);
-        }
-
-        // types below are not currently valid for bucketing but with a defined hash function
-        if (value instanceof Boolean) {
-            return encode((Boolean) value);
-        }
-        if (value instanceof Float) {
-            return encode((Float) value);
-        }
-        if (value instanceof Double) {
-            return encode((Double) value);
         }
 
         throw new UnsupportedOperationException("Unsupported type: " + value.getClass());
