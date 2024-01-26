@@ -115,6 +115,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   @JsonIgnore private final Coder<K1> keyCoder;
 
   @JsonIgnore private final Supplier<KeyEncoder<K1>> primaryKeyEncoder;
+
   @JsonIgnore private final Supplier<KeyEncoder<K2>> secondaryKeyEncoder;
 
   @JsonIgnore private final Coder<K2> keyCoderSecondary;
@@ -246,13 +247,13 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
     static <T> KeyEncoder<T> defaultKeyEncoder(Coder<T> coder) {
       return value -> {
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
+          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
           coder.encode(value, baos);
+          return baos.toByteArray();
         } catch (Exception e) {
           throw new RuntimeException("Could not encode key " + value, e);
         }
-        return baos.toByteArray();
       };
     }
 
