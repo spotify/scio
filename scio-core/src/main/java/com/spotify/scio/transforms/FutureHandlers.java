@@ -18,8 +18,7 @@
 package com.spotify.scio.transforms;
 
 import com.google.common.util.concurrent.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -41,6 +40,17 @@ public class FutureHandlers {
 
   /** A {@link Base} implementation for Guava {@link ListenableFuture}. */
   public interface Guava<V> extends Base<ListenableFuture<V>, V> {
+
+    /**
+     * Executor used for callbacks. Default is {@link ForkJoinPool#commonPool()}. Consider
+     * overriding this method if callbacks are blocking.
+     *
+     * @return Executor for callbacks.
+     */
+    default Executor getCallbackExecutor() {
+      return ForkJoinPool.commonPool();
+    }
+
     @Override
     default void waitForFutures(Iterable<ListenableFuture<V>> futures)
         throws InterruptedException, ExecutionException {
@@ -57,6 +67,15 @@ public class FutureHandlers {
       // Futures#transform doesn't allow onFailure callback while Futures#addCallback doesn't
       // guarantee that callbacks are called before ListenableFuture#get() unblocks
       SettableFuture<V> f = SettableFuture.create();
+      // if executor rejects the callback, we have to fail the future
+      Executor rejectPropagationExecutor =
+          command -> {
+            try {
+              getCallbackExecutor().execute(command);
+            } catch (RejectedExecutionException e) {
+              f.setException(e);
+            }
+          };
       Futures.addCallback(
           future,
           new FutureCallback<V>() {
@@ -87,7 +106,7 @@ public class FutureHandlers {
               }
             }
           },
-          MoreExecutors.directExecutor());
+          rejectPropagationExecutor);
 
       return f;
     }

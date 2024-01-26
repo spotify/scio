@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.{ListenableFuture, SettableFuture}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.{CompletableFuture, Executor, RejectedExecutionException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent._
@@ -28,7 +28,12 @@ import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 class GuavaFutureHandler extends FutureHandlers.Guava[String]
+
 class JavaFutureHandler extends FutureHandlers.Java[String]
+
+class RejectFutureHandler extends FutureHandlers.Guava[String] {
+  override def getCallbackExecutor: Executor = _ => throw new RejectedExecutionException("Rejected")
+}
 
 class FutureHandlersTest extends AnyFlatSpec with Matchers {
 
@@ -37,6 +42,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     create: () => I,
     complete: I => String => Unit,
     fail: I => Throwable => Unit,
+    cancel: I => Unit,
     access: F => String
   ): Unit = {
     it should "block until all futures complete" in {
@@ -61,7 +67,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
 
       fail(f1)(new Exception("f1 failed"))
       backgroundTask.isCompleted shouldBe false
-      complete(f2)("f2 done")
+      cancel(f2)
       noException shouldBe thrownBy {
         Await.result(backgroundTask, 1.second)
       }
@@ -82,6 +88,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
         }
       )
       complete(f)("success")
+      handler.waitForFutures(List(chainedFuture).asJava)
       result shouldBe Success("success")
       access(chainedFuture) shouldBe "success"
     }
@@ -102,7 +109,28 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
       )
       val e = new Exception("failed")
       fail(f)(e)
+      handler.waitForFutures(List(chainedFuture).asJava)
       result shouldBe Failure(e)
+      an[Exception] shouldBe thrownBy(access(chainedFuture))
+    }
+
+    it should "should execute onFailure if cancelled" in {
+      val f = create()
+      var result: Try[String] = null
+      val chainedFuture = handler.addCallback(
+        f,
+        { value =>
+          result = Success(value)
+          null
+        },
+        { e =>
+          result = Failure(e)
+          null
+        }
+      )
+      cancel(f)
+      handler.waitForFutures(List(chainedFuture).asJava)
+      result shouldBe a[Failure[_]]
       an[Exception] shouldBe thrownBy(access(chainedFuture))
     }
 
@@ -121,6 +149,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
         }
       )
       complete(f)("success")
+      handler.waitForFutures(List(chainedFuture).asJava)
       result shouldBe Success("success")
       an[Exception] shouldBe thrownBy(access(chainedFuture))
     }
@@ -141,6 +170,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
       )
       val e = new Exception("failure")
       fail(f)(e)
+      handler.waitForFutures(List(chainedFuture).asJava)
       result shouldBe Failure(e)
       val ee = the[ExecutionException] thrownBy (access(chainedFuture))
       val cause = ee.getCause
@@ -164,8 +194,30 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     SettableFuture.create[String],
     _.set,
     _.setException,
+    _.cancel(true),
     _.get()
   )
+
+  it should "complete the returned future with failure if callback is rejected" in {
+    val handler = new RejectFutureHandler
+    val f = SettableFuture.create[String]()
+    var result: Try[String] = null
+    val chainedFuture = handler.addCallback(
+      f,
+      { value =>
+        result = Success(value)
+        null
+      },
+      { e =>
+        result = Failure(e)
+        null
+      }
+    )
+    f.set("success")
+    handler.waitForFutures(List(chainedFuture).asJava)
+    result shouldBe null // callback is not executed
+    an[Exception] shouldBe thrownBy(chainedFuture.get())
+  }
 
   "Java handler" should behave like futureHandler[
     CompletableFuture[String],
@@ -175,6 +227,7 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     () => new CompletableFuture[String](),
     _.complete,
     _.completeExceptionally,
+    _.cancel(true),
     _.get()
   )
 }
