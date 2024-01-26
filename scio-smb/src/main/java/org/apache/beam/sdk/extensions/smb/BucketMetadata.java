@@ -176,14 +176,16 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     this.hashType = hashType;
     this.hashFunction = Suppliers.memoize(new HashFunctionSupplier(hashType));
     this.bucketIdFn = Suppliers.memoize(BucketIdFnSupplier.create(hashType));
-    this.primaryKeyEncoder = Suppliers.memoize(EncoderSupplier.create(hashType, keyClass));
-    this.secondaryKeyEncoder =
-        Suppliers.memoize(EncoderSupplier.create(hashType, keyClassSecondary));
     this.keyCoder = getKeyCoder(keyClass);
     this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
     this.filenamePrefix =
         filenamePrefix != null ? filenamePrefix : SortedBucketIO.DEFAULT_FILENAME_PREFIX;
+    this.primaryKeyEncoder = Suppliers.memoize(KeyEncoderSupplier.create(hashType, keyCoder));
+    this.secondaryKeyEncoder =
+        keyClassSecondary == null
+            ? null
+            : Suppliers.memoize(KeyEncoderSupplier.create(hashType, keyCoderSecondary));
   }
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -240,10 +242,10 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   public interface KeyEncoder<T> extends Serializable {
-    byte[] encode(T value, Coder<T> coder);
+    byte[] encode(T value);
 
-    static <T> KeyEncoder<T> defaultEncoder() {
-      return (value, coder) -> {
+    static <T> KeyEncoder<T> defaultKeyEncoder(Coder<T> coder) {
+      return value -> {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
           coder.encode(value, baos);
@@ -254,8 +256,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       };
     }
 
-    static <T> KeyEncoder<T> icebergEncoder(Class<T> klass) {
-      return IcebergEncoder.create(klass);
+    static <T> KeyEncoder<T> icebergKeyEncoder(Coder<T> coder) {
+      return IcebergEncoder.create(coder.getEncodedTypeDescriptor().getRawType());
     }
   }
 
@@ -285,8 +287,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       }
 
       @Override
-      public <T> KeyEncoder<T> encoder(Class<T> klass) {
-        return KeyEncoder.icebergEncoder(klass);
+      public <T> KeyEncoder<T> keyEncoder(Coder<T> coder) {
+        return KeyEncoder.icebergKeyEncoder(coder);
       }
     };
 
@@ -296,8 +298,8 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       return BucketIdFn.defaultFn();
     }
 
-    public <T> KeyEncoder<T> encoder(Class<T> klass) {
-      return KeyEncoder.defaultEncoder();
+    public <T> KeyEncoder<T> keyEncoder(Coder<T> coder) {
+      return KeyEncoder.defaultKeyEncoder(coder);
     }
   }
 
@@ -362,7 +364,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       return null;
     }
 
-    return primaryKeyEncoder.get().encode(key, keyCoder);
+    return primaryKeyEncoder.get().encode(key);
   }
 
   byte[] getKeyBytesSecondary(V value) {
@@ -372,7 +374,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       return null;
     }
 
-    return secondaryKeyEncoder.get().encode(key, keyCoderSecondary);
+    return secondaryKeyEncoder.get().encode(key);
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput
@@ -478,9 +480,9 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   @FunctionalInterface
-  interface EncoderSupplier<T> extends Supplier<KeyEncoder<T>>, Serializable {
-    static <T> EncoderSupplier<T> create(String hashType, Class<T> klass) {
-      return () -> HashType.valueOf(hashType).encoder(klass);
+  interface KeyEncoderSupplier<T> extends Supplier<KeyEncoder<T>>, Serializable {
+    static <T> KeyEncoderSupplier<T> create(String hashType, Coder<T> coder) {
+      return () -> HashType.valueOf(hashType).keyEncoder(coder);
     }
   }
 

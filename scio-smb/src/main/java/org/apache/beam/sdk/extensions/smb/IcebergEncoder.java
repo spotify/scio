@@ -81,39 +81,39 @@ public final class IcebergEncoder {
     return value.unscaledValue().toByteArray();
   }
 
-  public static <T> BucketMetadata.KeyEncoder<T> create(Class<T> klass) {
-    if (klass.equals(Integer.class)) {
-      return (value, coder) -> encode((Integer) value);
+  public static <T> BucketMetadata.KeyEncoder<T> create(Class<? super T> klass) {
+    if (klass.isAssignableFrom(Integer.class)) {
+      return value -> encode((Integer) value);
     }
-    if (klass.equals(Long.class)) {
-      return (value, coder) -> encode((long) value);
+    if (klass.isAssignableFrom(Long.class)) {
+      return value -> encode((long) value);
     }
-    if (klass.equals(BigDecimal.class)) {
-      return (value, coder) -> encode((BigDecimal) value);
+    if (klass.isAssignableFrom(BigDecimal.class)) {
+      return value -> encode((BigDecimal) value);
     }
-    if (klass.equals(CharSequence.class) || klass.equals(String.class)) {
-      return (value, coder) -> encode((String) value);
+    if (klass.isAssignableFrom(String.class)) {
+      return value -> encode((String) value);
     }
-    if (klass.equals(UUID.class)) {
-      return (value, coder) -> encode((UUID) value);
+    if (klass.isAssignableFrom(UUID.class)) {
+      return value -> encode((UUID) value);
     }
-    if (klass.equals(byte[].class)) {
-      return (value, coder) -> (byte[]) value;
+    if (klass.isAssignableFrom(byte[].class)) {
+      return value -> (byte[]) value;
     }
-    if (klass.equals(LocalDate.class)) {
-      return (value, coder) -> encode((LocalDate) value);
+    if (klass.isAssignableFrom(LocalDate.class)) {
+      return value -> encode((LocalDate) value);
     }
-    if (klass.equals(LocalTime.class)) {
-      return (value, coder) -> encode((LocalTime) value);
+    if (klass.isAssignableFrom(LocalTime.class)) {
+      return value -> encode((LocalTime) value);
     }
-    if (klass.equals(LocalDateTime.class)) {
-      return (value, coder) -> encode((LocalDateTime) value);
+    if (klass.isAssignableFrom(LocalDateTime.class)) {
+      return value -> encode((LocalDateTime) value);
     }
-    if (klass.equals(ZonedDateTime.class)) {
-      return (value, coder) -> encode((ZonedDateTime) value);
+    if (klass.isAssignableFrom(ZonedDateTime.class)) {
+      return value -> encode((ZonedDateTime) value);
     }
-    if (klass.equals(Instant.class)) {
-      return (value, coder) -> encode((Instant) value);
+    if (klass.isAssignableFrom(Instant.class)) {
+      return value -> encode((Instant) value);
     }
 
     throw new UnsupportedOperationException("Unsupported type: " + klass);

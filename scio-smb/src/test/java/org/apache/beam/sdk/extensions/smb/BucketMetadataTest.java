@@ -284,11 +284,11 @@ public class BucketMetadataTest {
             3, numBuckets, numShards, HashType.ICEBERG, DEFAULT_FILENAME_PREFIX);
 
     HashType hashType = HashType.ICEBERG;
-    BucketMetadata.KeyEncoder<String> encoder = hashType.encoder(String.class);
+    BucketMetadata.KeyEncoder<String> encoder = hashType.keyEncoder(StringUtf8Coder.of());
     String key = "iceberg";
-    byte[] expected = encoder.encode(key, null);
+    byte[] expected = encoder.encode(key);
     Assert.assertArrayEquals(expected, metadata.encodeKeyBytesPrimary(key));
-    byte[] expectedSecondary = encoder.encode("c", null);
+    byte[] expectedSecondary = encoder.encode("c");
     Assert.assertArrayEquals(expectedSecondary, metadata.getKeyBytesSecondary(key));
 
     HashCode hashCode = hashType.create().hashBytes(expected);
