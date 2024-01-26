@@ -128,6 +128,14 @@ public abstract class BaseAsyncLookupDoFn<A, B, C, F, T>
     return Pair.of(newClient(), cacheSupplier.get());
   }
 
+  @Override
+  public void closeResource(Pair<C, Cache<A, B>> resource) throws Exception {
+    final C client = resource.getLeft();
+    if (client instanceof AutoCloseable) {
+      ((AutoCloseable) client).close();
+    }
+  }
+
   public C getResourceClient() {
     return getResource().getLeft();
   }

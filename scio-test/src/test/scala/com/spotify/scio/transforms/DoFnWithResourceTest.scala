@@ -17,20 +17,16 @@
 
 package com.spotify.scio.transforms
 
-import java.util.UUID
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
-import com.spotify.scio.transforms.TestCloseableResource.{clientsOpen, clientsOpened}
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.scalatest.BeforeAndAfter
 
-import java.util.concurrent.atomic.AtomicInteger
-
 class DoFnWithResourceTest extends PipelineSpec with BeforeAndAfter {
 
   before {
-    TestCloseableResource.resetCounters()
+    ClosableResourceCounters.resetCounters()
   }
 
   private def cloneAndProcess(doFn: DoFnWithResource[String, String, TestResource]) = {
@@ -115,9 +111,8 @@ class DoFnWithResourceTest extends PipelineSpec with BeforeAndAfter {
       "C"
     )
 
-    TestCloseableResource.clientsOpened.get() should equal(1)
-
-    TestCloseableResource.allResourcesClosed should be(true)
+    ClosableResourceCounters.clientsOpened.get() should equal(1)
+    ClosableResourceCounters.allResourcesClosed should be(true)
   }
 
   it should "support per instance closeable resources" in {
@@ -130,8 +125,8 @@ class DoFnWithResourceTest extends PipelineSpec with BeforeAndAfter {
       "C"
     )
 
-    TestCloseableResource.clientsOpened.get() should equal(2)
-    TestCloseableResource.allResourcesClosed should be(true)
+    ClosableResourceCounters.clientsOpened.get() should equal(2)
+    ClosableResourceCounters.allResourcesClosed should be(true)
   }
 
   it should "support per core closeable resources" in {
@@ -144,47 +139,24 @@ class DoFnWithResourceTest extends PipelineSpec with BeforeAndAfter {
       "C"
     )
 
-    TestCloseableResource.clientsOpened.get() should be >= 2
-    TestCloseableResource.allResourcesClosed should be(true)
+    ClosableResourceCounters.clientsOpened.get() should be >= 2
+    ClosableResourceCounters.allResourcesClosed should be(true)
   }
 }
 
-private case class TestResource(id: String) {
+private class TestResource {
   def processElement(input: String): String = input.toUpperCase
 }
 
-private object TestCloseableResource {
-  val clientsOpen = new AtomicInteger(0)
-  val clientsOpened = new AtomicInteger(0)
-
-  def resetCounters(): Unit = {
-    clientsOpen.set(0)
-    clientsOpened.set(0)
-  }
-
-  def allResourcesClosed: Boolean = clientsOpen.get() == 0
-}
-
-private case class TestCloseableResource() extends AutoCloseable {
-
-  clientsOpened.incrementAndGet()
-  clientsOpen.incrementAndGet()
-
+private class TestCloseableResource extends CloseableResource {
   def processElement(input: String): String = {
-    if (TestCloseableResource.allResourcesClosed) {
-      throw new Exception("Called when it was closed")
-    } else {
-      input.toUpperCase
-    }
+    ensureOpen()
+    input.toUpperCase
   }
-
-  override def close(): Unit =
-    clientsOpen.decrementAndGet()
 }
 
 abstract private class BaseDoFn extends DoFnWithResource[String, String, TestResource] {
-  override def createResource(): TestResource =
-    TestResource(UUID.randomUUID().toString)
+  override def createResource(): TestResource = new TestResource
   @ProcessElement
   def processElement(@Element element: String, out: OutputReceiver[String]): Unit =
     out.output(getResource.processElement(element))
@@ -208,7 +180,7 @@ private class DoFnWithPerCoreResource extends BaseDoFn {
 abstract private class BaseDoFnCloseable
     extends DoFnWithResource[String, String, TestCloseableResource] {
   override def createResource(): TestCloseableResource =
-    TestCloseableResource()
+    new TestCloseableResource()
   @ProcessElement
   def processElement(@Element element: String, out: OutputReceiver[String]): Unit =
     out.output(getResource.processElement(element))
