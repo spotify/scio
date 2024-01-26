@@ -17,9 +17,9 @@
 
 package com.spotify.scio.coders.instances.kryo
 
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.google.api.gax.grpc.GrpcStatusCode
+import com.google.api.gax.rpc.{ApiException, ApiExceptionFactory}
 import io.grpc.{Metadata, Status, StatusRuntimeException}
-import org.apache.beam.sdk.util.CoderUtils
 import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -64,34 +64,45 @@ object GrpcSerializerTest {
       })
     case _ => false
   }
+
+  implicit val eqGaxApiException: Equality[ApiException] = {
+    case (a: ApiException, b: ApiException) =>
+      // a.getCause == b.getCause &&
+      a.getMessage == b.getMessage &&
+      a.getStatusCode == b.getStatusCode
+      a.isRetryable == b.isRetryable
+    case _ => false
+  }
+
 }
 
 class GrpcSerializerTest extends AnyFlatSpec with Matchers {
 
   import GrpcSerializerTest._
+  import com.spotify.scio.testing.CoderAssertions._
 
   "StatusRuntimeException" should "roundtrip with nullable fields present" in {
     val metadata = new Metadata()
     metadata.put(Metadata.Key.of[String]("k", Metadata.ASCII_STRING_MARSHALLER), "v")
-
-    roundtrip(
-      new StatusRuntimeException(
-        Status.OK.withCause(new RuntimeException("bar")).withDescription("bar"),
-        metadata
-      )
+    val statusRuntimeException = new StatusRuntimeException(
+      Status.OK.withCause(new RuntimeException("bar")).withDescription("bar"),
+      metadata
     )
+
+    statusRuntimeException coderShould roundtrip()
   }
 
   it should "roundtrip with nullable fields absent" in {
-    roundtrip(new StatusRuntimeException(Status.OK))
+    val statusRuntimeException = new StatusRuntimeException(Status.OK)
+    statusRuntimeException coderShould roundtrip()
   }
 
-  private def roundtrip(t: StatusRuntimeException): Unit = {
-    val kryoBCoder = CoderMaterializer.beamWithDefault(Coder[StatusRuntimeException])
-
-    val bytes = CoderUtils.encodeToByteArray(kryoBCoder, t)
-    val copy = CoderUtils.decodeFromByteArray(kryoBCoder, bytes)
-
-    t shouldEqual copy
+  "Gax API exception" should "roundtrip" in {
+    val cause = new StatusRuntimeException(Status.NOT_FOUND)
+    ApiExceptionFactory.createException(
+      cause,
+      GrpcStatusCode.of(Status.NOT_FOUND.getCode),
+      false
+    ) coderShould roundtrip()
   }
 }

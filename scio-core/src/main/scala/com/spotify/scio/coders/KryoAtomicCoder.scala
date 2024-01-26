@@ -122,6 +122,7 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     k.forClass(new KVSerializer)
     k.forClass[io.grpc.Status](new StatusSerializer)
     k.forSubclass[io.grpc.StatusRuntimeException](new StatusRuntimeExceptionSerializer)
+    k.forSubclass[com.google.api.gax.rpc.ApiException](new GaxApiExceptionSerializer)
     k.addDefaultSerializer(classOf[Throwable], new JavaSerializer)
     ()
   }

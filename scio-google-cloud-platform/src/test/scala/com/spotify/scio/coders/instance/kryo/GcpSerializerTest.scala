@@ -16,14 +16,18 @@
 
 package com.spotify.scio.coders.instance.kryo
 
+import com.google.api.gax.grpc.GrpcStatusCode
+import com.google.api.gax.rpc.InternalException
+import com.google.cloud.bigtable.data.v2.models.MutateRowsException
 import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException
-import com.spotify.scio.coders.instances.kryo.GrpcSerializerTest.eqStatusRuntimeException
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.coders.instances.kryo.GrpcSerializerTest._
+import io.grpc.Status.Code
 import io.grpc.{Metadata, Status, StatusRuntimeException}
-import org.apache.beam.sdk.util.CoderUtils
 import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import scala.jdk.CollectionConverters._
 
 object GcpSerializerTest {
 
@@ -40,29 +44,42 @@ object GcpSerializerTest {
     case _ => false
   }
 
+  implicit val eqMutateRowsException: Equality[MutateRowsException] = {
+    case (a: MutateRowsException, b: MutateRowsException) =>
+      // a.getCause == b.getCause &&
+      a.getStatusCode == b.getStatusCode &&
+      a.isRetryable == b.isRetryable &&
+      a.getFailedMutations.size() == b.getFailedMutations.size() &&
+      a.getFailedMutations.asScala.zip(b.getFailedMutations.asScala).forall { case (x, y) =>
+        x.getIndex == y.getIndex &&
+        eqGaxApiException.areEqual(x.getError, y.getError)
+      }
+    case _ =>
+      false
+  }
+
 }
 
 class GcpSerializerTest extends AnyFlatSpec with Matchers {
 
   import GcpSerializerTest._
+  import com.spotify.scio.testing.CoderAssertions._
 
-  "GcpSerializer" should "roundtrip" in {
+  "BigtableRetriesExhaustedException" should "roundtrip" in {
     val metadata = new Metadata()
     metadata.put(Metadata.Key.of[String]("k", Metadata.ASCII_STRING_MARSHALLER), "v")
     val cause = new StatusRuntimeException(
       Status.OK.withCause(new RuntimeException("bar")).withDescription("bar"),
       metadata
     )
-    roundtrip(new BigtableRetriesExhaustedException("Error", cause))
+    new BigtableRetriesExhaustedException("Error", cause) coderShould roundtrip()
   }
 
-  private def roundtrip(t: BigtableRetriesExhaustedException): Unit = {
-    val kryoBCoder = CoderMaterializer.beamWithDefault(Coder[BigtableRetriesExhaustedException])
-
-    val bytes = CoderUtils.encodeToByteArray(kryoBCoder, t)
-    val copy = CoderUtils.decodeFromByteArray(kryoBCoder, bytes)
-
-    t shouldEqual copy
+  "MutateRowsExceptionSerializer" should "roundtrip" in {
+    val cause = new StatusRuntimeException(Status.OK)
+    val apiException = new InternalException(cause, GrpcStatusCode.of(Code.OK), false)
+    val failedMutations = List(MutateRowsException.FailedMutation.create(1, apiException))
+    new MutateRowsException(cause, failedMutations.asJava, false) coderShould roundtrip()
   }
 
 }
