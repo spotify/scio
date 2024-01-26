@@ -131,7 +131,8 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
       cancel(f)
       handler.waitForFutures(List(chainedFuture).asJava)
       result shouldBe a[Failure[_]]
-      an[Exception] shouldBe thrownBy(access(chainedFuture))
+      val e = the[ExecutionException] thrownBy (access(chainedFuture))
+      e.getCause shouldBe a[CancellationException]
     }
 
     it should "should execute onSuccess and propagate callback exception" in {
@@ -216,7 +217,8 @@ class FutureHandlersTest extends AnyFlatSpec with Matchers {
     f.set("success")
     handler.waitForFutures(List(chainedFuture).asJava)
     result shouldBe null // callback is not executed
-    an[Exception] shouldBe thrownBy(chainedFuture.get())
+    val e = the[ExecutionException] thrownBy (chainedFuture.get())
+    e.getCause shouldBe a[RejectedExecutionException]
   }
 
   "Java handler" should behave like futureHandler[
