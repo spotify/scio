@@ -222,7 +222,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     MURMUR3_32 {
       @Override
       public HashFunction create() {
-        return Hashing.murmur3_32();
+        return Hashing.murmur3_32_fixed();
       }
     },
     MURMUR3_128 {
