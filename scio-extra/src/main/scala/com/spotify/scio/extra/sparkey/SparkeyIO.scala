@@ -19,7 +19,6 @@ package com.spotify.scio.extra.sparkey
 
 import java.lang.Math.floorMod
 import java.util.UUID
-import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.extra.sparkey.instances._
 import com.spotify.scio.io.{TapOf, TapT, TestIO}
 import com.spotify.scio.util.RemoteFileUtil
@@ -90,9 +89,10 @@ object SparkeyIO {
         s"Compression block size must be > 0 for $compressionType"
       )
     }
+    val sc = data.context
     val isUnsharded = numShards == 1
-    val rfu = RemoteFileUtil.create(data.context.options)
-    val tempLocation = data.context.options.getTempLocation
+    val rfu = RemoteFileUtil.create(sc.options)
+    val tempLocation = sc.options.getTempLocation
 
     // verify that we're not writing to a previously-used output dir
     List(baseUri, SparkeyUri(s"${baseUri.path}/*")).foreach { uri =>
@@ -104,8 +104,6 @@ object SparkeyIO {
 
     val outputUri = if (isUnsharded) baseUri else SparkeyUri(s"${baseUri.path}/*")
     logger.info(s"Saving as Sparkey with $numShards shards: ${baseUri.path}")
-
-    implicit val coder: Coder[(K, V)] = BeamCoders.getCoder(data)
 
     def resourcesForPattern(pattern: String): mutable.Buffer[ResourceId] =
       FileSystems
@@ -119,22 +117,15 @@ object SparkeyIO {
       val shards = collection
         .groupBy { case (k, _) => floorMod(writable.shardHash(k), numShards.toInt).toShort }
 
-      // gather shards that actually have values
-      val shardsWithKeys = shards.keys.asSetSingletonSideInput
-      // fill in missing shards
-      val missingShards = shards.context
-        .parallelize((0 until numShards.toInt).map(_.toShort))
-        .withSideInputs(shardsWithKeys)
-        .flatMap { case (shard, ctx) =>
-          val shardExists = ctx(shardsWithKeys).contains(shard)
-          if (shardExists) None else Some(shard -> Iterable.empty[(K, V)])
-        }
-        .toSCollection
+      // all shards
+      val allShards = sc
+        .parallelize(0 until numShards.toInt)
+        .map(_.toShort -> ())
 
       // write files to temporary locations
       val tempShardUris = shards
-        .union(missingShards)
-        .map { case (shard, xs) =>
+        .rightOuterJoin(allShards)
+        .map { case (shard, (xs, _)) =>
           // use a temp uri so that if a bundle fails retries will not fail
           val tempUri = SparkeyUri(s"$tempPath/${UUID.randomUUID}")
           // perform the write to the temp uri
@@ -144,7 +135,7 @@ object SparkeyIO {
             maxMemoryUsage,
             compressionType,
             compressionBlockSize,
-            xs,
+            xs.getOrElse(Iterable.empty),
             writable
           )
         }
