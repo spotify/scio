@@ -53,6 +53,7 @@ import org.apache.beam.sdk.transforms.display.HasDisplayData;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Supplier;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Suppliers;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashCode;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashFunction;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
 
@@ -109,7 +110,13 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
   @JsonIgnore private final Supplier<HashFunction> hashFunction;
 
+  @JsonIgnore private final Supplier<BucketIdFn> bucketIdFn;
+
   @JsonIgnore private final Coder<K1> keyCoder;
+
+  @JsonIgnore private final Supplier<KeyEncoder<K1>> primaryKeyEncoder;
+
+  @JsonIgnore private final Supplier<KeyEncoder<K2>> secondaryKeyEncoder;
 
   @JsonIgnore private final Coder<K2> keyCoderSecondary;
 
@@ -169,11 +176,17 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     this.keyClassSecondary = keyClassSecondary;
     this.hashType = hashType;
     this.hashFunction = Suppliers.memoize(new HashFunctionSupplier(hashType));
+    this.bucketIdFn = Suppliers.memoize(BucketIdFnSupplier.create(hashType));
     this.keyCoder = getKeyCoder(keyClass);
     this.keyCoderSecondary = keyClassSecondary == null ? null : getKeyCoder(keyClassSecondary);
     this.version = version;
     this.filenamePrefix =
         filenamePrefix != null ? filenamePrefix : SortedBucketIO.DEFAULT_FILENAME_PREFIX;
+    this.primaryKeyEncoder = Suppliers.memoize(KeyEncoderSupplier.create(hashType, keyCoder));
+    this.secondaryKeyEncoder =
+        keyClassSecondary == null
+            ? null
+            : Suppliers.memoize(KeyEncoderSupplier.create(hashType, keyCoderSecondary));
   }
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -217,6 +230,38 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     builder.add(DisplayData.item("filenamePrefix", filenamePrefix));
   }
 
+  public interface BucketIdFn extends Serializable {
+    int apply(HashCode hashCode, int numBuckets);
+
+    static BucketIdFn defaultFn() {
+      return (hashCode, numBuckets) -> Math.abs(hashCode.asInt()) % numBuckets;
+    }
+
+    static BucketIdFn icebergFn() {
+      return (hashCode, numBuckets) -> (hashCode.asInt() & Integer.MAX_VALUE) % numBuckets;
+    }
+  }
+
+  public interface KeyEncoder<T> extends Serializable {
+    byte[] encode(T value);
+
+    static <T> KeyEncoder<T> defaultKeyEncoder(Coder<T> coder) {
+      return value -> {
+        try {
+          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+          coder.encode(value, baos);
+          return baos.toByteArray();
+        } catch (Exception e) {
+          throw new RuntimeException("Could not encode key " + value, e);
+        }
+      };
+    }
+
+    static <T> KeyEncoder<T> icebergKeyEncoder(Coder<T> coder) {
+      return IcebergEncoder.create(coder.getEncodedTypeDescriptor().getRawType());
+    }
+  }
+
   /** Enumerated hashing schemes available for an SMB write. */
   public enum HashType {
     MURMUR3_32 {
@@ -230,9 +275,33 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
       public HashFunction create() {
         return Hashing.murmur3_128();
       }
+    },
+    ICEBERG {
+      @Override
+      public HashFunction create() {
+        return Hashing.murmur3_32_fixed();
+      }
+
+      @Override
+      public BucketIdFn bucketIdFn() {
+        return BucketIdFn.icebergFn();
+      }
+
+      @Override
+      public <T> KeyEncoder<T> keyEncoder(Coder<T> coder) {
+        return KeyEncoder.icebergKeyEncoder(coder);
+      }
     };
 
     public abstract HashFunction create();
+
+    public BucketIdFn bucketIdFn() {
+      return BucketIdFn.defaultFn();
+    }
+
+    public <T> KeyEncoder<T> keyEncoder(Coder<T> coder) {
+      return KeyEncoder.defaultKeyEncoder(coder);
+    }
   }
 
   boolean isCompatibleWith(BucketMetadata other) {
@@ -292,23 +361,21 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   byte[] encodeKeyBytesPrimary(K1 key) {
-    return encodeKeyBytes(key, keyCoder);
+    if (key == null) {
+      return null;
+    }
+
+    return primaryKeyEncoder.get().encode(key);
   }
 
   byte[] getKeyBytesSecondary(V value) {
     verifyNotNull(keyCoderSecondary);
-    return encodeKeyBytes(extractKeySecondary(value), keyCoderSecondary);
-  }
-
-  <K> byte[] encodeKeyBytes(K key, Coder<K> coder) {
-    if (key == null) return null;
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try {
-      coder.encode(key, baos);
-    } catch (Exception e) {
-      throw new RuntimeException("Could not encode key " + key, e);
+    K2 key = extractKeySecondary(value);
+    if (key == null) {
+      return null;
     }
-    return baos.toByteArray();
+
+    return secondaryKeyEncoder.get().encode(key);
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput
@@ -368,11 +435,11 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
   }
 
   int getBucketId(byte[] keyBytes) {
-    return Math.abs(hashFunction.get().hashBytes(keyBytes).asInt()) % numBuckets;
+    return bucketIdFn.get().apply(hashFunction.get().hashBytes(keyBytes), numBuckets);
   }
 
   int rehashBucket(byte[] keyBytes, int newNumBuckets) {
-    return Math.abs(hashFunction.get().hashBytes(keyBytes).asInt()) % newNumBuckets;
+    return bucketIdFn.get().apply(hashFunction.get().hashBytes(keyBytes), newNumBuckets);
   }
 
   ////////////////////////////////////////
@@ -403,6 +470,20 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     @Override
     public HashFunction get() {
       return HashType.valueOf(hashType).create();
+    }
+  }
+
+  @FunctionalInterface
+  interface BucketIdFnSupplier extends Supplier<BucketIdFn>, Serializable {
+    static BucketIdFnSupplier create(String hashType) {
+      return () -> HashType.valueOf(hashType).bucketIdFn();
+    }
+  }
+
+  @FunctionalInterface
+  interface KeyEncoderSupplier<T> extends Supplier<KeyEncoder<T>>, Serializable {
+    static <T> KeyEncoderSupplier<T> create(String hashType, Coder<T> coder) {
+      return () -> HashType.valueOf(hashType).keyEncoder(coder);
     }
   }
 

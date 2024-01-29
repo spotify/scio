@@ -27,6 +27,7 @@ import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.avro.io.AvroGeneratedUser;
 import org.apache.beam.sdk.extensions.smb.BucketMetadata.HashType;
 import org.apache.beam.sdk.transforms.display.DisplayData;
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.HashCode;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
@@ -272,5 +273,27 @@ public class BucketMetadataTest {
     MatcherAssert.assertThat(displayData, hasDisplayItem("keyCoderPrimary", StringUtf8Coder.class));
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("keyCoderSecondary", StringUtf8Coder.class));
+  }
+
+  @Test
+  public void testIcebergHashType() throws Exception {
+    int numBuckets = 2;
+    int numShards = 1;
+    TestBucketMetadataWithSecondary metadata =
+        new TestBucketMetadataWithSecondary(
+            3, numBuckets, numShards, HashType.ICEBERG, DEFAULT_FILENAME_PREFIX);
+
+    HashType hashType = HashType.ICEBERG;
+    BucketMetadata.KeyEncoder<String> encoder = hashType.keyEncoder(StringUtf8Coder.of());
+    String key = "iceberg";
+    byte[] expected = encoder.encode(key);
+    Assert.assertArrayEquals(expected, metadata.encodeKeyBytesPrimary(key));
+    byte[] expectedSecondary = encoder.encode("c");
+    Assert.assertArrayEquals(expectedSecondary, metadata.getKeyBytesSecondary(key));
+
+    HashCode hashCode = hashType.create().hashBytes(expected);
+    int expectedBucket = hashType.bucketIdFn().apply(hashCode, numBuckets);
+    Assert.assertEquals(expectedBucket, metadata.getBucketId(expected));
+    Assert.assertEquals(numShards, metadata.getNumShards());
   }
 }
