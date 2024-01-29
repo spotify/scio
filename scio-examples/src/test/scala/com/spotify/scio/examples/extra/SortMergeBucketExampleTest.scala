@@ -21,7 +21,8 @@ import com.spotify.scio.ContextAndArgs
 
 import java.io.File
 import java.nio.file.Files
-import com.spotify.scio.avro.Account
+import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.examples.extra.SortMergeBucketJoinExample.AccountProjection
 import com.spotify.scio.examples.extra.SortMergeBucketTransformExample.CombinedAccount
 import com.spotify.scio.io.TextIO
@@ -87,6 +88,9 @@ class SortMergeBucketExampleTest extends PipelineSpec {
   }
 
   "SortMergeBucketJoinExample" should "work with JobTest" in {
+    implicit val coder: Coder[GenericRecord] =
+      avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+
     val userInput = (0 until 200)
       .map(i => SortMergeBucketExample.user(i, i % 100))
     val accountInput = (25 until 225)
@@ -140,6 +144,9 @@ class SortMergeBucketExampleTest extends PipelineSpec {
   }
 
   "SortMergeBucketTransformExample" should "work with JobTest" in {
+    implicit val coder: Coder[GenericRecord] =
+      avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
+
     val userInput = (0 until 100)
       .map(i => SortMergeBucketExample.user(i, i % 100))
     val accountInput = (100 until 300)
