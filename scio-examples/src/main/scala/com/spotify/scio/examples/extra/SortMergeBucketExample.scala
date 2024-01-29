@@ -78,6 +78,12 @@ object SortMergeBucketWriteExample {
   implicit val coder: Coder[GenericRecord] =
     avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
+  def pipeline(cmdLineArgs: Array[String]): ScioContext = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+    pipeline(sc, args)
+    sc
+  }
+
   def pipeline(sc: ScioContext, args: Args): (ClosedTap[GenericRecord], ClosedTap[Account]) = {
     val userWriteTap = sc
       .parallelize(0 until 500)
@@ -147,8 +153,7 @@ object SortMergeBucketWriteExample {
   }
 
   def main(cmdLineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdLineArgs)
-    pipeline(sc, args)
+    val sc = pipeline(cmdLineArgs)
     sc.run().waitUntilDone()
     ()
   }
@@ -161,6 +166,12 @@ object SortMergeBucketJoinExample {
     avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
   case class AccountProjection(id: Int, amount: Double)
+
+  def pipeline(cmdLineArgs: Array[String]): ScioContext = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+    pipeline(sc, args)
+    sc
+  }
 
   def pipeline(sc: ScioContext, args: Args): ClosedTap[String] = {
     // #SortMergeBucketExample_join
@@ -196,8 +207,7 @@ object SortMergeBucketJoinExample {
   }
 
   def main(cmdLineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdLineArgs)
-    pipeline(sc, args)
+    val sc = pipeline(cmdLineArgs)
     sc.run().waitUntilDone()
     ()
   }
@@ -209,6 +219,12 @@ object SortMergeBucketTransformExample {
   // ParquetTypeSortedBucketIO supports case class projections for reading and writing
   case class AccountProjection(id: Int, amount: Double)
   case class CombinedAccount(id: Int, age: Int, totalValue: Double)
+
+  def pipeline(cmdLineArgs: Array[String]): ScioContext = {
+    val (sc, args) = ContextAndArgs(cmdLineArgs)
+    pipeline(sc, args)
+    sc
+  }
 
   def pipeline(sc: ScioContext, args: Args): ClosedTap[CombinedAccount] = {
     implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(
@@ -259,8 +275,7 @@ object SortMergeBucketTransformExample {
   }
 
   def main(cmdLineArgs: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(cmdLineArgs)
-    pipeline(sc, args)
+    val sc = pipeline(cmdLineArgs)
     sc.run().waitUntilDone()
     ()
   }
