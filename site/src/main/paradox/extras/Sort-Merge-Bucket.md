@@ -459,7 +459,8 @@ class SmbLocalFilesTest extends PipelineSpec {
         val dir = Files.createTempDirectory("smb").toString
         
         // Test write
-        runWithContext { sc =>
+        {
+            val sc = ScioContext()
             val tap = SmbRealFilesJob.write(sc, dir)
             val scioResult = sc.run().waitUntilDone()
         
@@ -471,7 +472,8 @@ class SmbLocalFilesTest extends PipelineSpec {
         }
         
         // Test read in separate ScioContext
-        runWithContext { sc =>
+        {
+            val sc = ScioContext()
             val tap = SmbRealFilesJob.read(sc, dir).materialize
             val scioResult = sc.run().waitUntilDone()
         
