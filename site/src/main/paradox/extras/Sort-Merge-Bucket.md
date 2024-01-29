@@ -333,7 +333,7 @@ object SmbJob {
         
         // Write
         val writeData: SCollection[Account] = ???
-        val write = writeData.saveAsSortedBucket(
+        writeData.saveAsSortedBucket(
             ParquetAvroSortedBucketIO
               .write(classOf[Integer], "id", classOf[Account])
               .to(args("output"))
@@ -369,7 +369,7 @@ class SmbJobTest extends PipelineSpec {
 }
 ```
 
-SMB Transforms can be mocked by combing input and output `SmbIO`s:
+SMB Transforms can be mocked by combining input and output `SmbIO`s:
 
 ```scala mdoc:compile-only
 // Scio job
