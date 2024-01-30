@@ -37,7 +37,6 @@ import com.google.cloud.storage.{Storage, StorageOptions}
 import com.spotify.scio.bigquery.{Table => STable}
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.client.BigQueryConfig.ImpersonationInfo
-import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQuerySysProps, BigQueryType, CREATE_IF_NEEDED, WRITE_EMPTY}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
