@@ -20,7 +20,6 @@ package com.spotify.scio.bigquery.client
 import com.google.api.services.bigquery.model._
 import com.google.cloud.storage.{BlobId, BlobInfo, Storage}
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQueryType, BigQueryUtil, CREATE_IF_NEEDED, WRITE_APPEND}
 import org.apache.avro.file.DataFileWriter
