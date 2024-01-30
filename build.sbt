@@ -83,7 +83,7 @@ val googleCloudDatastoreVersion = "0.108.6"
 val googleCloudMonitoringVersion = "3.32.0"
 val googleCloudPubSubVersion = "1.107.13"
 val googleCloudSpannerVersion = "6.55.0"
-val googleCloudStorageVersion = "2.30.1"
+val googleCloudStorageVersion = "2.26.0"
 val googleCommonsProtoVersion = "2.29.0"
 val googleHttpClientsVersion = "1.43.3"
 val googleIAMVersion = "1.24.0"
@@ -814,9 +814,10 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion,
       // test
-      "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % Test,
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
