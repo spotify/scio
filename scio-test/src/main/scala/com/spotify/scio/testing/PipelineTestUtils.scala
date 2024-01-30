@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import org.apache.beam.sdk.options._
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.{ClosedTap, Tap}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.runners.PTransformOverride
 
@@ -51,6 +52,14 @@ trait PipelineTestUtils {
     val sc = ScioContext(options)
     fn(sc)
     sc.run()
+  }
+
+  def tapWithRealContext[T](
+    options: PipelineOptions = PipelineOptionsFactory.create()
+  )(fn: ScioContext => ClosedTap[T]): Tap[T] = {
+    val sc = ScioContext(options)
+    val tap = fn(sc)
+    tap.get(sc.run().waitUntilDone())
   }
 
   /**
