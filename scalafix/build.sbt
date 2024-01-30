@@ -1,9 +1,8 @@
-import sbt.librarymanagement.VersionNumber.SemVer
-
 lazy val V = _root_.scalafix.sbt.BuildInfo
 
 inThisBuild(
   List(
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     organization := "com.spotify",
     scalaVersion := V.scala212,
     scalacOptions ++= List("-Yrangepos"),

@@ -7,5 +7,6 @@ import com.spotify.scio.coders.Coder
 import org.apache.avro.generic.GenericRecord
 
 object FixAvroCoder8 {
-  val c = Coder[GenericRecord]
+  implicit val c = Coder.avroGenericRecordCoder
+  val r = Coder[GenericRecord]
 }
