@@ -18,15 +18,23 @@
 package com.spotify.scio.bigquery.client
 
 import com.google.api.services.bigquery.model._
+import com.google.cloud.storage.{BlobId, BlobInfo, Storage}
 import com.spotify.scio.bigquery.client.BigQuery.Client
-import com.spotify.scio.bigquery.{BigQueryUtil, CREATE_IF_NEEDED, WRITE_APPEND}
+import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
+import com.spotify.scio.bigquery.{BigQueryType, BigQueryUtil, CREATE_IF_NEEDED, WRITE_APPEND}
+import org.apache.avro.file.DataFileWriter
+import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
 import org.apache.beam.sdk.io.gcp.{bigquery => bq}
+import org.apache.commons.lang3.RandomStringUtils
 import org.slf4j.LoggerFactory
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.Try
+import scala.reflect.runtime.universe.TypeTag
 
 private[client] object LoadOps {
   private val Logger = LoggerFactory.getLogger(this.getClass)
@@ -118,6 +126,56 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
       encoding = encoding,
       location = location
     )
+
+  /**
+   * Upload List of rows to Cloud Storage as Avro file and load to BigQuery table. Note that element
+   * type `T` must be annotated with [[BigQueryType]].
+   */
+  def uploadTypedRows[T <: HasAnnotation: TypeTag](
+    tableSpec: String,
+    rows: List[T],
+    tempLocation: String,
+    writeDisposition: WriteDisposition = WriteDisposition.WRITE_APPEND,
+    createDisposition: CreateDisposition = CreateDisposition.CREATE_IF_NEEDED
+  ): Try[TableReference] = {
+    val bqt = BigQueryType[T]
+
+    Try {
+      val out = new ByteArrayOutputStream()
+      val datumWriter = new GenericDatumWriter[GenericRecord]()
+      val dataFileWriter = new DataFileWriter[GenericRecord](datumWriter)
+      try {
+        dataFileWriter.create(bqt.avroSchema, out)
+        rows.foreach { row =>
+          dataFileWriter.append(bqt.toAvro(row))
+        }
+      } finally {
+        dataFileWriter.close()
+      }
+
+      val blobId =
+        BlobId.fromGsUtilUri(
+          s"${tempLocation.stripSuffix("/")}/upload_${RandomStringUtils.randomAlphanumeric(10)}.avro"
+        )
+      val blobInfo = BlobInfo.newBuilder(blobId).build
+      client.blobStorage.createFrom(
+        blobInfo,
+        new ByteArrayInputStream(out.toByteArray),
+        Storage.BlobWriteOption.doesNotExist(),
+        Storage.BlobWriteOption.crc32cMatch()
+      )
+
+      blobId
+    }.flatMap { blobId =>
+      avro(
+        List(blobId.toGsUtilUri),
+        tableSpec,
+        schema = Some(bqt.schema),
+        createDisposition = createDisposition,
+        writeDisposition = writeDisposition
+      )
+    }
+  }
 
   @nowarn("msg=private default argument in class LoadOps is never used")
   private def execute(

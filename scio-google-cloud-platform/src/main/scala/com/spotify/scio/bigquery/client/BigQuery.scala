@@ -33,11 +33,16 @@ import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.{GoogleCredentials, ImpersonatedCredentials}
 import com.google.cloud.bigquery.storage.v1beta1.{BigQueryStorageClient, BigQueryStorageSettings}
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
+import com.google.cloud.storage.{BlobId, BlobInfo, Storage, StorageOptions}
 import com.spotify.scio.bigquery.{Table => STable}
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.client.BigQueryConfig.ImpersonationInfo
+import com.spotify.scio.bigquery.types.BigQueryType
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
 import com.spotify.scio.bigquery.{BigQuerySysProps, BigQueryType, CREATE_IF_NEEDED, WRITE_EMPTY}
+import org.apache.avro.file.DataFileWriter
+import org.apache.avro.generic.{GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.DatumWriter
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions.DefaultProjectFactory
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryHelpers
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{CreateDisposition, WriteDisposition}
@@ -331,5 +336,8 @@ object BigQuery {
         .build()
       BigQueryStorageClient.create(settings)
     }
+
+    lazy val blobStorage: Storage =
+      StorageOptions.newBuilder.setProjectId(project).setCredentials(_credentials).build.getService
   }
 }
