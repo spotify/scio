@@ -324,7 +324,10 @@ public class SortedBucketTransformTest {
         result,
         ImmutableMap.of(
             "SortedBucketTransform-KeyGroupSize", DistributionResult.create(9, 7, 1, 2)),
-        ImmutableMap.of("SortedBucketTransform-RecordsWritten", 2L));
+        ImmutableMap.of(
+            "SortedBucketTransform-RecordsWritten", 2L,
+            "SortedBucketTransform-PredicateFilteredRecordsCount_lhs", 0L,
+            "SortedBucketTransform-PredicateFilteredRecordsCount_rhs", 2L));
   }
 
   private static KV<TestBucketMetadata, Map<BucketShardId, List<String>>> readAllFrom(
