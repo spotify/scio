@@ -366,7 +366,7 @@ public class SortedBucketSourceTest {
         result,
         ImmutableMap.of(),
         ImmutableMap.of(
-            "SortedBucketSource-PredicateFilteredRecordsCount", filteredRecords.getValue()));
+            "SortedBucketSource-PredicateFilteredRecordsCount_GBK", filteredRecords.getValue()));
   }
 
   static final List<Map<BucketShardId, List<String>>> partitionedInputsMixedBucketsLHS,
@@ -1051,8 +1051,10 @@ public class SortedBucketSourceTest {
                 keyGroupCounts.values().stream().min(Integer::compareTo).get(),
                 keyGroupCounts.values().stream().max(Integer::compareTo).get())),
         ImmutableMap.of(
-            "SortedBucketSource-PredicateFilteredRecordsCount",
-            lhs.expectedFilteredRecords + rhs.expectedFilteredRecords));
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + lhs.tag.getId(),
+            lhs.expectedFilteredRecords,
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + rhs.tag.getId(),
+            rhs.expectedFilteredRecords));
   }
 
   private Map<BucketShardId, List<String>> mergePartitions(
@@ -1149,8 +1151,10 @@ public class SortedBucketSourceTest {
         result,
         ImmutableMap.of(),
         ImmutableMap.of(
-            "SortedBucketSource-PredicateFilteredRecordsCount",
-            lhs.expectedFilteredRecords + rhs.expectedFilteredRecords));
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + lhs.tag.getId(),
+            lhs.expectedFilteredRecords,
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + rhs.tag.getId(),
+            rhs.expectedFilteredRecords));
   }
 
   private void testPartitionedSecondary(
