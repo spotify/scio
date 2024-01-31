@@ -126,7 +126,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
     final Distribution keyGroupSize = Metrics.distribution(getName(), getName() + "-KeyGroupSize");
     final Counter recordsWritten = Metrics.counter(getName(), getName() + "-RecordsWritten");
-    final Counter predicateFilteredRecordsCount = Metrics.counter(getName(), getName() + "-PredicateFilteredRecordsCount");
+    final Counter predicateFilteredRecordsCount =
+        Metrics.counter(getName(), getName() + "-PredicateFilteredRecordsCount");
     if (transformFn != null) {
       this.doFn =
           ParDo.of(

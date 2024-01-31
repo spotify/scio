@@ -157,7 +157,9 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     this.metricsKey = metricsKey == null ? getDefaultMetricsKey() : metricsKey;
     this.keyGroupSize =
         Metrics.distribution(SortedBucketSource.class, this.metricsKey + "-KeyGroupSize");
-    this.predicateFilteredRecordsCount = Metrics.counter(SortedBucketSource.class, this.metricsKey + "-PredicateFilteredRecordsCount");
+    this.predicateFilteredRecordsCount =
+        Metrics.counter(
+            SortedBucketSource.class, this.metricsKey + "-PredicateFilteredRecordsCount");
     this.estimatedSizeBytes = estimatedSizeBytes;
   }
 

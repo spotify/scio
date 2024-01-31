@@ -363,11 +363,10 @@ public class SortedBucketSourceTest {
     final PipelineResult result = pipeline.run();
 
     verifyMetrics(
-            result,
-            ImmutableMap.of(),
-            ImmutableMap.of(
-                    "SortedBucketSource-PredicateFilteredRecordsCount", filteredRecords.getValue()
-            ));
+        result,
+        ImmutableMap.of(),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount", filteredRecords.getValue()));
   }
 
   static final List<Map<BucketShardId, List<String>>> partitionedInputsMixedBucketsLHS,
@@ -410,10 +409,10 @@ public class SortedBucketSourceTest {
   @Category(NeedsRunner.class)
   public void testMultiSourcesWithPredicate() throws Exception {
     testPartitionedPrimary(
-            partitionedInputsMixedBucketsLHS,
-            partitionedInputsMixedBucketsRHS,
-            TargetParallelism.min(),
-            (vs, v) -> v.startsWith("x") || v.endsWith("1"));
+        partitionedInputsMixedBucketsLHS,
+        partitionedInputsMixedBucketsRHS,
+        TargetParallelism.min(),
+        (vs, v) -> v.startsWith("x") || v.endsWith("1"));
   }
 
   @Test
@@ -451,7 +450,7 @@ public class SortedBucketSourceTest {
         partitionedInputsUniformBucketsLHS,
         partitionedInputsUniformBucketsRHS,
         TargetParallelism.min(),
-            null);
+        null);
   }
 
   @Test
@@ -578,7 +577,8 @@ public class SortedBucketSourceTest {
     testPartitionedPrimary(
         partitionedInputsMixedBucketsMaxParallelismLHS,
         partitionedInputsMixedBucketsMaxParallelismRHS,
-        TargetParallelism.max(), null);
+        TargetParallelism.max(),
+        null);
   }
 
   @Test
@@ -614,7 +614,7 @@ public class SortedBucketSourceTest {
         partitionedInputsMixedBucketsCustomParallelismLHS,
         partitionedInputsMixedBucketsCustomParallelismRHS,
         TargetParallelism.of(2),
-            null);
+        null);
   }
 
   @SuppressWarnings("unchecked")
@@ -1041,7 +1041,6 @@ public class SortedBucketSourceTest {
             .collect(Collectors.toMap(keyFn, str -> 1, Integer::sum));
 
     final long elementsRead = keyGroupCounts.values().stream().reduce(0, Integer::sum);
-    System.out.println("checking metrics!");
     verifyMetrics(
         result,
         ImmutableMap.of(
@@ -1051,7 +1050,9 @@ public class SortedBucketSourceTest {
                 keyGroupCounts.keySet().size(),
                 keyGroupCounts.values().stream().min(Integer::compareTo).get(),
                 keyGroupCounts.values().stream().max(Integer::compareTo).get())),
-            ImmutableMap.of("SortedBucketSource-PredicateFilteredRecordsCount", lhs.expectedFilteredRecords + rhs.expectedFilteredRecords));
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount",
+            lhs.expectedFilteredRecords + rhs.expectedFilteredRecords));
   }
 
   private Map<BucketShardId, List<String>> mergePartitions(
@@ -1098,8 +1099,7 @@ public class SortedBucketSourceTest {
       List<Map<BucketShardId, List<String>>> lhsInputs,
       List<Map<BucketShardId, List<String>>> rhsInputs,
       TargetParallelism targetParallelism,
-      Predicate<String> predicate
-  )
+      Predicate<String> predicate)
       throws Exception {
     final TestFileOperations fileOperations = new TestFileOperations();
 
@@ -1146,11 +1146,11 @@ public class SortedBucketSourceTest {
     final PipelineResult result = pipeline.run();
 
     verifyMetrics(
-            result,
-            ImmutableMap.of(),
-            ImmutableMap.of(
-                    "SortedBucketSource-PredicateFilteredRecordsCount", lhs.expectedFilteredRecords + rhs.expectedFilteredRecords
-            ));
+        result,
+        ImmutableMap.of(),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount",
+            lhs.expectedFilteredRecords + rhs.expectedFilteredRecords));
   }
 
   private void testPartitionedSecondary(
@@ -1301,11 +1301,11 @@ public class SortedBucketSourceTest {
       for (Map.Entry<KeyType, List<String>> e : input.entrySet()) {
         List<String> value = new ArrayList<>();
         for (String v : e.getValue()) {
-            if (predicate.apply(value, v)) {
-              value.add(v);
-            } else {
-              filteredRecords++;
-            }
+          if (predicate.apply(value, v)) {
+            value.add(v);
+          } else {
+            filteredRecords++;
+          }
         }
         filtered.put(e.getKey(), value);
       }
@@ -1330,10 +1330,9 @@ public class SortedBucketSourceTest {
                     metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
                     MetricResult::getCommitted));
     expectedDistributions
-            .entrySet()
-            .forEach(
-                    dist ->
-                            Assert.assertEquals(dist.getValue(), actualDistributions.get(dist.getKey())));
+        .entrySet()
+        .forEach(
+            dist -> Assert.assertEquals(dist.getValue(), actualDistributions.get(dist.getKey())));
 
     final Map<String, Long> actualCounters =
         ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
@@ -1346,7 +1345,8 @@ public class SortedBucketSourceTest {
         .entrySet()
         .forEach(
             counter ->
-                Assert.assertEquals(counter.getValue(), actualCounters.getOrDefault(counter.getKey(), 0L)));
+                Assert.assertEquals(
+                    counter.getValue(), actualCounters.getOrDefault(counter.getKey(), 0L)));
   }
 
   private static GenericRecord toAvroUserGenericRecord(AvroGeneratedUser user) {
