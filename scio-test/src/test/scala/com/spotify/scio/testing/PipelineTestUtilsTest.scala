@@ -49,10 +49,9 @@ class PipelineTestUtilsTest
     } should have message msg
   }
 
-  "tapWithRealContext" should "work" in {
-    tapWithRealContext()(
-      _.parallelize(1 to 10).materialize
-    ).value.toSeq should contain theSameElementsAs (1 to 10)
+  "runWithOutput" should "work" in {
+    val (_, tap) = runWithOutput(_.parallelize(1 to 10).materialize)
+    tap.value.toSeq should contain theSameElementsAs (1 to 10)
   }
 
   "runWithData" should "take the input and materialize the output" in {
