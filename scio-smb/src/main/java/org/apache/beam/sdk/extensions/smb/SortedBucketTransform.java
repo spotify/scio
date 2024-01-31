@@ -126,6 +126,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
     final Distribution keyGroupSize = Metrics.distribution(getName(), getName() + "-KeyGroupSize");
     final Counter recordsWritten = Metrics.counter(getName(), getName() + "-RecordsWritten");
+    final Counter predicateFilteredRecordsCount = Metrics.counter(getName(), getName() + "-PredicateFilteredRecordsCount");
     if (transformFn != null) {
       this.doFn =
           ParDo.of(
@@ -137,6 +138,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                   fileOperations,
                   transformFn,
                   keyGroupSize,
+                  predicateFilteredRecordsCount,
                   recordsWritten));
     } else {
       this.doFn =
@@ -149,6 +151,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                       fileOperations,
                       sideInputTransformFn,
                       keyGroupSize,
+                      predicateFilteredRecordsCount,
                       recordsWritten))
               .withSideInputs(sides);
     }
@@ -416,6 +419,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     protected final List<SortedBucketSource.BucketedInput<?>> sources;
     protected final Distribution keyGroupSize;
     protected final Counter recordsWritten;
+    protected final Counter predicateFilteredRecordsCount;
     private final Function<SortedBucketIO.ComparableKeyBytes, FinalKeyT> keyFn;
     private final Comparator<SortedBucketIO.ComparableKeyBytes> keyComparator;
 
@@ -426,11 +430,13 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         Distribution keyGroupSize,
-        Counter recordsWritten) {
+        Counter recordsWritten,
+        Counter predicateFilteredRecordsCount) {
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
       this.sources = sources;
       this.keyGroupSize = keyGroupSize;
+      this.predicateFilteredRecordsCount = predicateFilteredRecordsCount;
       this.keyFn = keyFn;
       this.keyComparator = keyComparator;
       this.recordsWritten = recordsWritten;
@@ -481,6 +487,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               someArbitraryBucketMetadata,
               keyComparator,
               keyGroupSize,
+              predicateFilteredRecordsCount,
               false,
               bucketId,
               effectiveParallelism,
@@ -524,6 +531,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         FileOperations<FinalValueT> fileOperations,
         TransformFn<FinalKeyT, FinalValueT> transformFn,
         Distribution keyGroupSize,
+        Counter predicateFilteredRecordsCount,
         Counter recordsWritten) {
       super(
           sources,
@@ -532,6 +540,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           fileAssignment,
           fileOperations,
           keyGroupSize,
+          predicateFilteredRecordsCount,
           recordsWritten);
       this.transformFn = transformFn;
     }
@@ -558,6 +567,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         FileOperations<FinalValueT> fileOperations,
         TransformFnWithSideInputContext<FinalKeyT, FinalValueT> transformFn,
         Distribution keyGroupSize,
+        Counter predicateFilteredRecordsCount,
         Counter recordsWritten) {
       super(
           sources,
@@ -566,6 +576,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
           fileAssignment,
           fileOperations,
           keyGroupSize,
+          predicateFilteredRecordsCount,
           recordsWritten);
       this.transformFn = transformFn;
     }

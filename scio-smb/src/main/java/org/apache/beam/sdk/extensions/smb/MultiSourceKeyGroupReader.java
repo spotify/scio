@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.ComparableKeyBytes;
+import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Distribution;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
@@ -56,6 +57,8 @@ public class MultiSourceKeyGroupReader<KeyType> {
 
   private int runningKeyGroupSize = 0;
   private final Distribution keyGroupSize;
+
+  private final Counter predicateFilteredRecordsCount;
   private final boolean materializeKeyGroup;
   private final Comparator<ComparableKeyBytes> keyComparator;
 
@@ -70,12 +73,14 @@ public class MultiSourceKeyGroupReader<KeyType> {
       BucketMetadata<?, ?, ?> someArbitraryBucketMetadata,
       Comparator<ComparableKeyBytes> keyComparator,
       Distribution keyGroupSize,
+      Counter predicateFilteredRecordsCount,
       boolean materializeKeyGroup,
       int bucketId,
       int effectiveParallelism,
       PipelineOptions options) {
     this.keyFn = keyFn;
     this.keyGroupSize = keyGroupSize;
+    this.predicateFilteredRecordsCount = predicateFilteredRecordsCount;
     this.materializeKeyGroup = materializeKeyGroup;
     this.keyComparator = keyComparator;
     this.resultSchema = resultSchema;
@@ -191,6 +196,8 @@ public class MultiSourceKeyGroupReader<KeyType> {
                     if ((predicate).apply(values, v)) {
                       values.add(v);
                       runningKeyGroupSize++;
+                    } else {
+                      predicateFilteredRecordsCount.inc();
                     }
                   });
               KeyGroupOutputSize sz =
