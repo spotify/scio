@@ -1025,7 +1025,8 @@ public class SortedBucketSourceTest {
                 elementsRead,
                 keyGroupCounts.keySet().size(),
                 keyGroupCounts.values().stream().min(Integer::compareTo).get(),
-                keyGroupCounts.values().stream().max(Integer::compareTo).get())));
+                keyGroupCounts.values().stream().max(Integer::compareTo).get())),
+        ImmutableMap.of());
   }
 
   private Map<BucketShardId, List<String>> mergePartitions(
@@ -1284,15 +1285,29 @@ public class SortedBucketSourceTest {
   }
 
   static void verifyMetrics(
-      PipelineResult result, Map<String, DistributionResult> expectedDistributions) {
+      PipelineResult result,
+      Map<String, DistributionResult> expectedDistributions,
+      Map<String, Long> expectedCounters) {
     final Map<String, DistributionResult> actualDistributions =
         ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
             .collect(
                 Collectors.toMap(
                     metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
                     MetricResult::getCommitted));
-
     Assert.assertEquals(expectedDistributions, actualDistributions);
+
+    final Map<String, Long> actualCounters =
+        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
+            .collect(
+                Collectors.toMap(
+                    metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
+                    MetricResult::getCommitted));
+
+    expectedCounters
+        .entrySet()
+        .forEach(
+            counter ->
+                Assert.assertEquals(counter.getValue(), actualCounters.get(counter.getKey())));
   }
 
   private static GenericRecord toAvroUserGenericRecord(AvroGeneratedUser user) {
