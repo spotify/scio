@@ -431,8 +431,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         Distribution keyGroupSize,
-        Counter recordsWritten,
-        Counter predicateFilteredRecordsCount) {
+        Counter predicateFilteredRecordsCount,
+        Counter recordsWritten) {
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
       this.sources = sources;
