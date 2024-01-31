@@ -70,7 +70,8 @@ def scio(version: String): List[ModuleID] = {
     case _ =>
       List(
         "scio-google-cloud-platform", // replaced scio-bigquery
-        "scio-extra" // new in 0.10
+        "scio-extra", // new in 0.10
+        "scio-smb"
       )
   })
 

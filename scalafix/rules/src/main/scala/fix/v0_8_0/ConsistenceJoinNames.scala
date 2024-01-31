@@ -65,7 +65,6 @@ final class ConsistenceJoinNames extends SemanticRule("ConsistenceJoinNames") {
         val updatedArgs = renameNamedArgs(args)
         Patch.replaceTree(t, q"$qual.$updatedFn(..$updatedArgs)".syntax)
       case t @ q"$qual.$fn(..$args)" =>
-        println(fn.symbol)
         Patch.empty
     }
   }.asPatch
