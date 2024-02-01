@@ -459,30 +459,20 @@ class SmbLocalFilesTest extends PipelineSpec {
         val dir = Files.createTempDirectory("smb").toString
         
         // Test write
-        {
-            val sc = ScioContext()
-            val tap = SmbRealFilesJob.write(sc, dir)
-            val scioResult = sc.run().waitUntilDone()
-        
-            // Tap output
-            val writtenData: Iterator[Account] = tap.get(scioResult).value
-            
-            // Assert on actual written output
-            writtenData should have size 100
+        val (_, writtenData) = runWithOutput { sc =>
+            SmbRealFilesJob.write(sc, dir)
         }
+
+        // Assert on actual written output
+        writtenData.value should have size 100
         
         // Test read in separate ScioContext
-        {
-            val sc = ScioContext()
-            val tap = SmbRealFilesJob.read(sc, dir).materialize
-            val scioResult = sc.run().waitUntilDone()
-        
-            // Tap sortMergeGroupByKey result
-            val gbkData: Iterator[(Integer, Iterable[Account])] = tap.get(scioResult).value
-            
-            // Assert on actual read result
-            gbkData should have size 50
+        val (_, groupedData) = runWithLocalOutput { sc =>
+            SmbRealFilesJob.read(sc, dir)
         }
+
+        // Assert on actual read result
+        groupedData should have size 50
     }
 }
 ```
