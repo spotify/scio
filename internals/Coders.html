@@ -218,8 +218,6 @@ spotify/scio
   <li><a href="../internals/Coders.html#coder-typeclass" class="header">Coder Typeclass</a>
   <ul>
     <li><a href="../internals/Coders.html#coder-in-apache-beam" class="header"><code>Coder</code> in Apache Beam</a></li>
-    <li><a href="../internals/Coders.html#scio-0-6-x-and-below" class="header">Scio <code>0.6.x</code> and below</a></li>
-    <li><a href="../internals/Coders.html#scio-0-7-0-and-above" class="header">Scio <code>0.7.0</code> and above</a></li>
     <li><a href="../internals/Coders.html#compiler-flags-and-warnings" class="header">Compiler flags and warnings</a></li>
     <li><a href="../internals/Coders.html#how-to-build-a-custom-coder" class="header">How to build a custom Coder</a></li>
     <li><a href="../internals/Coders.html#null-values-support" class="header">Null values support</a></li>
@@ -232,7 +230,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.6+0-e8d386d2+20231121-1722*
+<i class="md-icon" title="Version">label_outline</i> 0.14-e4a5a12-20240201T100930Z*
 </label>
 </li>
 </ul>
@@ -248,8 +246,6 @@ spotify/scio
   <li><a href="../internals/Coders.html#coder-typeclass" class="header">Coder Typeclass</a>
   <ul>
     <li><a href="../internals/Coders.html#coder-in-apache-beam" class="header"><code>Coder</code> in Apache Beam</a></li>
-    <li><a href="../internals/Coders.html#scio-0-6-x-and-below" class="header">Scio <code>0.6.x</code> and below</a></li>
-    <li><a href="../internals/Coders.html#scio-0-7-0-and-above" class="header">Scio <code>0.7.0</code> and above</a></li>
     <li><a href="../internals/Coders.html#compiler-flags-and-warnings" class="header">Compiler flags and warnings</a></li>
     <li><a href="../internals/Coders.html#how-to-build-a-custom-coder" class="header">How to build a custom Coder</a></li>
     <li><a href="../internals/Coders.html#null-values-support" class="header">Null values support</a></li>
@@ -312,30 +308,21 @@ val sc = ScioContext.forTest()
     .groupByKey
 sc.run()
 </code></pre>
-<h2><a href="#scio-0-6-x-and-below" name="scio-0-6-x-and-below" class="anchor"><span class="anchor-link"></span></a>Scio <code>0.6.x</code> and below</h2>
-<p>In Scio <code>0.6.x</code> and below, Scio would delegate this serialization process to <a href="https://github.com/EsotericSoftware/kryo">Kryo</a>. Kryo&rsquo;s job is to automagically &ldquo;generate&rdquo; the serialization logic for any type. The benefit is you don&rsquo;t really have to care about serialization most of the time when writing pipelines with Scio. Using Beam, you would need to explicitly set the coder every time you use a <code>PTtransform</code>.</p>
-<p>While it saves a lot of work, it also has a few drawbacks:</p>
-<ul>
-  <li><code>Kryo</code> coders can be really inefficient. Especially if you forget to <a href="../FAQ.html#how-do-i-use-custom-kryo-serializers-">register your classes using a custom <code>KryoRegistrar</code></a>.</li>
-  <li>The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see <a href="../FAQ.html#what-kryo-tuning-options-are-there-">kryoRegistrationRequired=true</a>).</li>
-  <li>Kryo coders are very dynamic and it can be hard to know exactly which coder is used for a given class.</li>
-  <li>Kryo coders do not always play well with Beam, and sometime can cause weird runtime exceptions. For example, Beam may sometimes throw an <code>IllegalMutationException</code> because of the default Kryo coder implementation.</li>
-</ul>
-<h2><a href="#scio-0-7-0-and-above" name="scio-0-7-0-and-above" class="anchor"><span class="anchor-link"></span></a>Scio <code>0.7.0</code> and above</h2>
-<p>In Scio <code>0.7.0</code> and above, the Scala compiler will try to find the correct instance of <code>Coder</code> at compile time. In most cases, the compiler should be able to either directly find a proper <code>Coder</code> implementation, or derive one automatically.</p>
 <h3><a href="#scio-coder-vs-beam-coder" name="scio-coder-vs-beam-coder" class="anchor"><span class="anchor-link"></span></a>Scio <code>Coder</code> vs Beam <code>Coder</code></h3>
 <p>Both Scio and Beam define a class called <code>Coder</code>. For the most part when writing a job, you will be interacting with <code>com.spotify.scio.coders.Coder</code>.</p>
 <p>Scio <code>Coder</code> and its implementations simply form an <a href="https://en.wikipedia.org/wiki/Algebraic_data_type">ADT</a> where each implementation is a building block that covers one of the possible cases:</p>
 <ul>
   <li><code>Beam</code>: a simple wrapper around a Beam Coder</li>
+  <li><code>Singleton</code>: A coder for a static object. It is for example used to serialize <code>Unit</code>.</li>
   <li><code>Disjunction</code>: Represent a Coder that makes a choice between different possible implementations. It is for example used to serialize ADTs and <code>Either</code></li>
   <li><code>Record</code>: A Coder for record-like structures like case classes and tuples.</li>
-  <li><code>Transform</code>: A Coder implemented by &ldquo;transforming&rdquo; another Coder.</li>
+  <li><code>Transform</code>: A Coder implemented by &ldquo;transforming&rdquo; the encoded/decoded value of another Coder.</li>
+  <li><code>CoderTransform</code>: A Coder implemented by &ldquo;transforming&rdquo; a Beam Coder to a new Coder.</li>
   <li><code>Fallback</code>: A default <code>Coder</code>. Used when there is no better option.</li>
 </ul>
-<p>There is also a &ldquo;special&rdquo; coder called <code>KVCoder</code>. It is a specific coder for Key-Value pairs. Internally Beam treats <a href="https://beam.apache.org/releases/javadoc/2.52.0/?org/apache/beam/sdk/values/KV.html" title="org.apache.beam.sdk.values.KV"><code>KV</code></a> differently from other types so Scio needs to do the same.</p>
-<p>It is important to note that <strong>Scio&rsquo;s coders are only representations</strong> of those cases but <strong>do not actually implement any serialization logic</strong>. Before the job starts, those coders will be <em>materialized</em>, meaning they will be converted to instances of <a href="https://beam.apache.org/releases/javadoc/2.52.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>org.apache.beam.sdk.coders.Coder</code></a>. Thanks to this technique, Scio can dynamically change the behavior of coders depending on the execution context. For example coders may handle nullable values differently depending on options passed to the job.</p>
-<p><a href="https://beam.apache.org/releases/javadoc/2.52.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>org.apache.beam.sdk.coders.Coder</code></a> instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of <code>org.apache.beam.sdk.coders.Coder[T]</code> defines two methods:</p>
+<p>There is also a &ldquo;special&rdquo; coder called <code>KVCoder</code>. It is a specific coder for Key-Value pairs. Internally Beam treats <a href="https://beam.apache.org/releases/javadoc/2.53.0/?org/apache/beam/sdk/values/KV.html" title="org.apache.beam.sdk.values.KV"><code>KV</code></a> differently from other types so Scio needs to do the same.</p>
+<p>It is important to note that <strong>Scio&rsquo;s coders are only representations</strong> of those cases but <strong>do not actually implement any serialization logic</strong>. Before the job starts, those coders will be <em>materialized</em>, meaning they will be converted to instances of <a href="https://beam.apache.org/releases/javadoc/2.53.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>org.apache.beam.sdk.coders.Coder</code></a>. Thanks to this technique, Scio can dynamically change the behavior of coders depending on the execution context. For example coders may handle nullable values differently depending on options passed to the job.</p>
+<p><a href="https://beam.apache.org/releases/javadoc/2.53.0/?org/apache/beam/sdk/coders/Coder.html" title="org.apache.beam.sdk.coders.Coder"><code>org.apache.beam.sdk.coders.Coder</code></a> instances on the other hand are the actual implementations of serialization and deserialization logic. Among other thing, each instance of <code>org.apache.beam.sdk.coders.Coder[T]</code> defines two methods:</p>
 <pre class="prettyprint"><code class="language-scala">class ExampleCoder extends org.apache.beam.sdk.coders.Coder[Example] {
   def decode(inStream: InputStream): Example = ???
   def encode(value: Example, outStream: OutputStream): Unit = ???
@@ -370,10 +357,11 @@ final case class TB(anDouble: Double) extends Top
 Coder[Top]
 </code></pre>
 <h4><a href="#no-coder-foo-is-available-and-the-compiler-can-not-derive-one" name="no-coder-foo-is-available-and-the-compiler-can-not-derive-one" class="anchor"><span class="anchor-link"></span></a>No <code>Coder[Foo]</code> is available and the compiler can not derive one</h4>
-<p>Sometimes, no <code>Coder</code> instance can be found, and it&rsquo;s impossible to automatically derive one. In that case, Scio will fallback to a <code>Kryo</code> coder for that specific type. Note that <strong>it might negatively impact the performance of your job</strong>.</p>
-<p>If the scalac flag <code>-Xmacro-settings:show-coder-fallback=true</code> is set, a warning message will be displayed <strong>at compile time</strong>. This message should help you fix the warning.</p>
+<p>Sometimes, no <code>Coder</code> instance can be found, and it&rsquo;s impossible to automatically derive one. In that case, Scio can fallback to a <code>Kryo</code> coder for that type by importing <code>com.spotify.scio.coders.kryo._</code>. Note that <strong>it might negatively impact the performance of your job</strong>.</p>
+<p>If the scalac flag <code>-Xmacro-settings:show-coder-fallback=true</code> is set, a warning message will be displayed <strong>at compile time</strong>. This message should help you keep track where the implicit kryo coder are used.</p>
 <p>While compiling the following example with <code>-Xmacro-settings:show-coder-fallback=true</code></p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.coders._
+import com.spotify.scio.coders.kryo._
 val localeCoder = Coder[java.util.Locale]
 </code></pre>
 <p>Scalac will output:</p>
@@ -409,7 +397,8 @@ using Kryo fallback instead.
 </code></pre>
 <p>In this example, the compiler could not find a proper instance of <code>Coder[Locale]</code>, and suggest you implement one yourself.</p>
 <p>Note that this message is not limited to direct invocation of fallback. For example, if you declare a case class that uses <code>Locale</code> internally, the compiler will show the same warning:</p>
-<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.coders._
+<pre class="prettyprint"><code class="language-scala mdoc:reset">import com.spotify.scio.coders.Coder
+import com.spotify.scio.coders.kryo._
 case class Demo2(i: Int, s: String, xs: List[java.util.Locale])
 val demoCoder = Coder[Demo2]
 </code></pre>
@@ -438,8 +427,7 @@ val demoCoder = Coder[Demo2]
   <p><strong><code>Coder.beam</code></strong>: Create a Scio <code>Coder</code> that simply wraps a Beam implementation. For example:</p>
   <pre class="prettyprint"><code class="language-scala mdoc">import com.spotify.scio.coders._
 import org.apache.beam.sdk.coders.DoubleCoder
-implicit def doubleCoder =
-  Coder.beam(DoubleCoder.of())
+implicit def doubleCoder = Coder.beam(DoubleCoder.of())
 </code></pre></li>
   <li>
   <p><strong><code>Coder.transform</code></strong>: Create a Coder for a type <code>B</code> by transforming the Beam implementation for a type <code>A</code>. Usually useful for <code>Coder</code> that depend on another <code>Coder</code>:</p>
@@ -488,7 +476,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.6+0-e8d386d2+20231121-1722*
+0.14-e4a5a12-20240201T100930Z*
 </span>
 </div>
 </article>

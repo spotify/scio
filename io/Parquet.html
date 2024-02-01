@@ -229,7 +229,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.6+0-e8d386d2+20231121-1722*
+<i class="md-icon" title="Version">label_outline</i> 0.14-e4a5a12-20240201T100930Z*
 </label>
 </li>
 </ul>
@@ -342,18 +342,22 @@ def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quo
 </code></pre>
 <p>Writing Avro generic records requires additional argument <code>schema</code>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:reset:silent">import com.spotify.scio.values._
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.avro._
 import com.spotify.scio.parquet.avro._
 import org.apache.avro.generic.GenericRecord
 
 def input: SCollection[GenericRecord] = ???
-def yourAvroSchema: org.apache.avro.Schema = ???
+lazy val yourAvroSchema: org.apache.avro.Schema = ???
+implicit lazy val coder: Coder[GenericRecord] = avroGenericRecordCoder(yourAvroSchema)
 
 def result = input.saveAsParquetAvroFile(&quot;gs://path-to-data/lake/output&quot;, schema = yourAvroSchema)
 </code></pre>
 <h3><a href="#logical-types" name="logical-types" class="anchor"><span class="anchor-link"></span></a>Logical Types</h3>
-<p>If your Avro schema contains a logical type, you&rsquo;ll need to supply an additional Configuration parameter for your reads and writes.</p>
+<p>As of <strong>Scio 0.14.0</strong> and above, Scio supports logical types in parquet-avro out of the box.</p>
+<p>If you&rsquo;re on an earlier version of Scio and your Avro schema contains a logical type, you&rsquo;ll need to supply an additional Configuration parameter for your reads and writes.</p>
 <p>If you&rsquo;re using the default version of Avro (1.8), you can use Scio&rsquo;s pre-built logical type conversions:</p>
-<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio._
+<pre class="prettyprint"><code class="language-scala mdoc:fail:silent">import com.spotify.scio._
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.parquet.avro._
 import com.spotify.scio.avro.TestRecord
@@ -478,7 +482,7 @@ val parquetConf: Configuration = {
 <h3><a href="#common-configuration-options" name="common-configuration-options" class="anchor"><span class="anchor-link"></span></a>Common Configuration Options</h3>
 <ul>
   <li><code>parquet.block.size</code> - This determines block size for HDFS and row group size. 1 GiB is recommended over the default 128 MiB, although you&rsquo;ll have to weigh the tradeoffs: a larger block size means fewer seek operations on blob storage, at the cost of having to load a larger row group into memory.</li>
-  <li><code>fs.gs.inputstream.fadvise</code> - Parquet relies heavily on random seeks so this GCS connector setting should be set to <code>RANDOM</code>. See this <a href="https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more">blog post</a> for more.</li>
+  <li><code>fs.gs.inputstream.fadvise</code> - &ldquo;Fadvise allows applications to provide a hint to the Linux kernel with the intended I/O access pattern, indicating how it intends to read a file, whether for sequential scans or random seeks.&rdquo; According to this <a href="https://cloud.google.com/blog/products/data-analytics/new-release-of-cloud-storage-connector-for-hadoop-improving-performance-throughput-and-more">blog post</a> &ldquo;traditional MapReduce jobs&rdquo; are ideal use cases for setting this config to <code>SEQUENTIAL</code>, and Scio jobs fit in this category.</li>
 </ul>
 <p>Here are some other recommended settings.</p>
 <ul>
@@ -496,7 +500,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.6+0-e8d386d2+20231121-1722*
+0.14-e4a5a12-20240201T100930Z*
 </span>
 </div>
 </article>

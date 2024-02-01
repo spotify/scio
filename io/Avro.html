@@ -229,7 +229,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.13.6+0-e8d386d2+20231121-1722*
+<i class="md-icon" title="Version">label_outline</i> 0.14-e4a5a12-20240201T100930Z*
 </label>
 </li>
 </ul>
@@ -307,6 +307,7 @@ def result =  sc.map(fn).saveAsAvroFile(&quot;gs://path-to-data/lake/output&quot
 </code></pre>
 <h3><a href="#write-generic-records" name="write-generic-records" class="anchor"><span class="anchor-link"></span></a>Write Generic records</h3>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.values.SCollection
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.avro._
 
 import org.apache.avro.generic.GenericRecord
@@ -315,9 +316,10 @@ import org.apache.avro.Schema
 case class Foo(x: Int, s: String)
 val sc: SCollection[Foo] = ???
 
-def yourAvroSchema: Schema = ???
+lazy val yourAvroSchema: Schema = ???
+implicit lazy val coder: Coder[GenericRecord] = avroGenericRecordCoder(yourAvroSchema)
 
-// convert to avro SpecificRecord
+// convert to avro GenericRecord
 def fn(f: Foo): GenericRecord = ???
 
 // writing Avro generic records requires additional argument `schema`
@@ -345,7 +347,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.13.6+0-e8d386d2+20231121-1722*
+0.14-e4a5a12-20240201T100930Z*
 </span>
 </div>
 </article>
