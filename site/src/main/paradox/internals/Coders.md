@@ -76,21 +76,6 @@ val grouped =
 sc.run()
 ```
 
-## Scio `0.6.x` and below
-
-In Scio `0.6.x` and below, Scio would delegate this serialization process to [Kryo](https://github.com/EsotericSoftware/kryo). Kryo's job is to automagically "generate" the serialization logic for any type. The benefit is you don't really have to care about serialization most of the time when writing pipelines with Scio. Using Beam, you would need to explicitly set the coder every time you use a `PTtransform`.
-
-While it saves a lot of work, it also has a few drawbacks:
-
-- `Kryo` coders can be really inefficient. Especially if you forget to @ref:[register your classes using a custom `KryoRegistrar`](../FAQ.md#how-do-i-use-custom-kryo-serializers-).
-- The only way to be sure Kryo coders are correctly registered is to write tests and run them with a specific option: (see @ref:[kryoRegistrationRequired=true](../FAQ.md#what-kryo-tuning-options-are-there-)).
-- Kryo coders are very dynamic and it can be hard to know exactly which coder is used for a given class.
-- Kryo coders do not always play well with Beam, and sometime can cause weird runtime exceptions. For example, Beam may sometimes throw an `IllegalMutationException` because of the default Kryo coder implementation.
-
-## Scio `0.7.0` and above
-
-In Scio `0.7.0` and above, the Scala compiler will try to find the correct instance of `Coder` at compile time. In most cases, the compiler should be able to either directly find a proper `Coder` implementation, or derive one automatically.
-
 ### Scio `Coder` vs Beam `Coder`
 
 Both Scio and Beam define a class called `Coder`. For the most part when writing a job, you will be interacting with `com.spotify.scio.coders.Coder`.
@@ -98,9 +83,11 @@ Both Scio and Beam define a class called `Coder`. For the most part when writing
 Scio `Coder` and its implementations simply form an [ADT](https://en.wikipedia.org/wiki/Algebraic_data_type) where each implementation is a building block that covers one of the possible cases:
 
 - `Beam`: a simple wrapper around a Beam Coder
+- `Singleton`: A coder for a static object. It is for example used to serialize `Unit`.
 - `Disjunction`: Represent a Coder that makes a choice between different possible implementations. It is for example used to serialize ADTs and `Either`
 - `Record`: A Coder for record-like structures like case classes and tuples.
-- `Transform`: A Coder implemented by "transforming" another Coder.
+- `Transform`: A Coder implemented by "transforming" the encoded/decoded value of another Coder.
+- `CoderTransform`: A Coder implemented by "transforming" a Beam Coder to a new Coder.
 - `Fallback`: A default `Coder`. Used when there is no better option.
 
 There is also a "special" coder called `KVCoder`. It is a specific coder for Key-Value pairs. Internally Beam treats @javadoc[KV](org.apache.beam.sdk.values.KV) differently from other types so Scio needs to do the same.
