@@ -263,20 +263,20 @@ val skipUnauthorizedGcpGithubWorkflow = Def.setting {
 
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
 ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
-ThisBuild / githubWorkflowBuildPreamble := Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
-ThisBuild / githubWorkflowBuildPostamble := Seq(
+ThisBuild / githubWorkflowBuildPreamble ++= Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
+ThisBuild / githubWorkflowBuildPostamble ++= Seq(
   WorkflowStep.Sbt(
     List("undeclaredCompileDependenciesTest", "unusedCompileDependenciesTest"),
     name = Some("Check dependencies")
   )
 )
-ThisBuild / githubWorkflowPublishPreamble := Seq(
+ThisBuild / githubWorkflowPublishPreamble ++= Seq(
   WorkflowStep.Sbt(
     List("scio-repl/assembly"),
     name = Some("Package repl")
   )
 )
-ThisBuild / githubWorkflowPublishPostamble := Seq(
+ThisBuild / githubWorkflowPublishPostamble ++= Seq(
   WorkflowStep.Use(
     UseRef.Public("softprops", "action-gh-release", "v1"),
     Map(
