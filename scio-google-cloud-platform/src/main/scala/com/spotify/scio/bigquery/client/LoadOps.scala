@@ -166,13 +166,17 @@ final private[client] class LoadOps(client: Client, jobService: JobOps) {
 
       blobId
     }.flatMap { blobId =>
-      avro(
-        List(blobId.toGsUtilUri),
-        tableSpec,
-        schema = Some(bqt.schema),
-        createDisposition = createDisposition,
-        writeDisposition = writeDisposition
-      )
+      try {
+        avro(
+          List(blobId.toGsUtilUri),
+          tableSpec,
+          schema = Some(bqt.schema),
+          createDisposition = createDisposition,
+          writeDisposition = writeDisposition
+        )
+      } finally {
+        client.blobStorage.delete(blobId)
+      }
     }
   }
 
