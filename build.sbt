@@ -123,6 +123,7 @@ val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.8"
 val magnolifyVersion = "0.7.0"
 val metricsVersion = "4.2.25"
+val munitVersion = "0.7.29"
 val neo4jDriverVersion = "4.4.13"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
@@ -824,7 +825,8 @@ lazy val `scio-google-cloud-platform` = project
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
-      "org.typelevel" %% "cats-core" % catsVersion % Test
+      "org.typelevel" %% "cats-core" % catsVersion % Test,
+      "org.scalameta" %% "munit" % munitVersion % Test
     )
   )
 
