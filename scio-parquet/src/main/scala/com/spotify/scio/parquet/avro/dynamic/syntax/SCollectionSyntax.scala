@@ -23,22 +23,62 @@ import com.spotify.scio.parquet.avro.{ParquetAvroIO, ParquetAvroSink}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.avro.reflect.ReflectData
-import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.{SpecificData, SpecificRecord}
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
 import scala.reflect.ClassTag
 
-final class DynamicParquetAvroSCollectionOps[T](
+final class DynamicAvroGenericSCollectionOps(
+  private val self: SCollection[GenericRecord]
+) extends AnyVal {
+
+  /** Save this SCollection of Avro records as a Parquet files written to dynamic destinations. */
+  def saveAsDynamicParquetAvroFile(
+    path: String,
+    schema: Schema,
+    numShards: Int = ParquetAvroIO.WriteParam.DefaultNumShards,
+    suffix: String = ParquetAvroIO.WriteParam.DefaultSuffix,
+    compression: CompressionCodecName = ParquetAvroIO.WriteParam.DefaultCompression,
+    conf: Configuration = ParquetAvroIO.WriteParam.DefaultConfiguration,
+    tempDirectory: String = ParquetAvroIO.WriteParam.DefaultTempDirectory,
+    prefix: String = ParquetAvroIO.WriteParam.DefaultPrefix
+  )(
+    destinationFn: GenericRecord => String
+  ): ClosedTap[Nothing] = {
+    if (self.context.isTest) {
+      throw new NotImplementedError(
+        "Parquet avro file with dynamic destinations cannot be used in a test context"
+      )
+    } else {
+      val sink = new ParquetAvroSink[GenericRecord](
+        schema,
+        compression,
+        new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
+      )
+      val write = writeDynamic(
+        path = path,
+        destinationFn = destinationFn,
+        numShards = numShards,
+        prefix = prefix,
+        suffix = suffix,
+        tempDirectory = tempDirectory
+      ).via(sink)
+      self.applyInternal(write)
+    }
+    ClosedTap[Nothing](EmptyTap)
+  }
+}
+
+final class DynamicParquetAvroSpecificSCollectionOps[T <: SpecificRecord](
   private val self: SCollection[T]
 ) extends AnyVal {
 
   /** Save this SCollection of Avro records as a Parquet files written to dynamic destinations. */
   def saveAsDynamicParquetAvroFile(
     path: String,
-    schema: Schema = ParquetAvroIO.WriteParam.DefaultSchema,
     numShards: Int = ParquetAvroIO.WriteParam.DefaultNumShards,
     suffix: String = ParquetAvroIO.WriteParam.DefaultSuffix,
     compression: CompressionCodecName = ParquetAvroIO.WriteParam.DefaultCompression,
@@ -54,12 +94,10 @@ final class DynamicParquetAvroSCollectionOps[T](
       )
     } else {
       val cls = ScioUtil.classOf[T]
-      val isAssignable = classOf[SpecificRecord].isAssignableFrom(cls)
-      val writerSchema = if (isAssignable) ReflectData.get().getSchema(cls) else schema
-      if (writerSchema == null) throw new IllegalArgumentException("Schema must not be null")
+      val schema = SpecificData.get().getSchema(cls)
       val sink =
         new ParquetAvroSink[T](
-          writerSchema,
+          schema,
           compression,
           new SerializableConfiguration(ParquetConfiguration.ofNullable(conf))
         )
@@ -78,8 +116,11 @@ final class DynamicParquetAvroSCollectionOps[T](
 }
 
 trait SCollectionSyntax {
-  implicit def dynamicParquetAvroSCollectionOps[T](
+  implicit def dynamicParquetAvroGenericSCollectionOps(
+    sc: SCollection[GenericRecord]
+  ): DynamicAvroGenericSCollectionOps = new DynamicAvroGenericSCollectionOps(sc)
+
+  implicit def dynamicParquetAvroSpecificSCollectionOps[T <: SpecificRecord](
     sc: SCollection[T]
-  ): DynamicParquetAvroSCollectionOps[T] =
-    new DynamicParquetAvroSCollectionOps(sc)
+  ): DynamicParquetAvroSpecificSCollectionOps[T] = new DynamicParquetAvroSpecificSCollectionOps(sc)
 }

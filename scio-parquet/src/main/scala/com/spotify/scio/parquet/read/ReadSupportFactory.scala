@@ -32,7 +32,7 @@ object ReadSupportFactory {
   }
 
   def avro[T]: ReadSupportFactory[T] = new ReadSupportFactory[T] {
-    def readSupport: ReadSupport[T] = new AvroReadSupport()
+    def readSupport: ReadSupport[T] = new AvroReadSupport
   }
 
   def example: ReadSupportFactory[Example] = new ReadSupportFactory[Example] {

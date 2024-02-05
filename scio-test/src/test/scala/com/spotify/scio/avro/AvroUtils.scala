@@ -20,6 +20,7 @@ package com.spotify.scio.avro
 import org.apache.avro.generic.{GenericRecord, GenericRecordBuilder}
 import org.apache.avro.{Schema, SchemaBuilder}
 
+import java.util.Collections
 import scala.jdk.CollectionConverters._
 
 object AvroUtils {
@@ -38,7 +39,7 @@ object AvroUtils {
     .array()
     .items()
     .stringType()
-    .noDefault()
+    .arrayDefault(Collections.emptyList[CharSequence]())
     .endRecord()
 
   def newGenericRecord(i: Int): GenericRecord =

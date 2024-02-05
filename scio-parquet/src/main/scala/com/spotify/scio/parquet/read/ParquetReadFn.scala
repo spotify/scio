@@ -17,7 +17,7 @@
 package com.spotify.scio.parquet.read
 
 import com.spotify.scio.parquet.BeamInputFile
-import com.spotify.scio.parquet.read.ParquetReadFn._
+import com.spotify.scio.util.Functions
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.range.OffsetRange
@@ -58,13 +58,28 @@ object ParquetReadFn {
   // Constants
   private val SplitLimit = 64000000L
   private val EntireFileRange = new OffsetRange(0, 1)
+
+  def apply[T, U](
+    readSupportFactory: ReadSupportFactory[T],
+    conf: SerializableConfiguration,
+    parseFn: T => U
+  ): ParquetReadFn[T, U] =
+    new ParquetReadFn(readSupportFactory, conf, Functions.serializableFn(parseFn))
+
+  def apply[T](
+    readSupportFactory: ReadSupportFactory[T],
+    conf: SerializableConfiguration
+  ): ParquetReadFn[T, T] =
+    new ParquetReadFn(readSupportFactory, conf, Functions.serializableFn(identity))
 }
 
-class ParquetReadFn[T, R](
+class ParquetReadFn[T, U] private (
   readSupportFactory: ReadSupportFactory[T],
   conf: SerializableConfiguration,
-  projectionFn: SerializableFunction[T, R]
-) extends DoFn[ReadableFile, R] {
+  parseFn: SerializableFunction[T, U]
+) extends DoFn[ReadableFile, U] {
+  import ParquetReadFn._
+
   @transient
   private lazy val options = HadoopReadOptions.builder(conf.get()).build()
 
@@ -160,7 +175,7 @@ class ParquetReadFn[T, R](
   def processElement(
     @Element file: ReadableFile,
     tracker: RestrictionTracker[OffsetRange, Long],
-    out: DoFn.OutputReceiver[R]
+    out: DoFn.OutputReceiver[U]
   ): Unit = {
     logger.debug(
       "reading file from offset {} to {}",
@@ -207,8 +222,8 @@ class ParquetReadFn[T, R](
               pages.getRowCount,
               file,
               recordReader,
-              out,
-              projectionFn
+              parseFn,
+              out
             )
             pages = filterGranularity.readNextRowGroup(reader)
           }
@@ -228,8 +243,8 @@ class ParquetReadFn[T, R](
               pages.getRowCount,
               file,
               recordReader,
-              out,
-              projectionFn
+              parseFn,
+              out
             )
 
             currentRowGroupIndex += 1
@@ -245,8 +260,8 @@ class ParquetReadFn[T, R](
     rowCount: Long,
     file: ReadableFile,
     recordReader: RecordReader[T],
-    outputReceiver: DoFn.OutputReceiver[R],
-    projectionFn: SerializableFunction[T, R]
+    parseFn: SerializableFunction[T, U],
+    outputReceiver: DoFn.OutputReceiver[U]
   ): Unit = {
     logger.debug(
       "row group {} read in memory. row count = {}",
@@ -272,7 +287,7 @@ class ParquetReadFn[T, R](
           )
 
         } else {
-          outputReceiver.output(projectionFn(record))
+          outputReceiver.output(parseFn(record))
         }
 
         currentRow += 1

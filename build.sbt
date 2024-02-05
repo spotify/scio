@@ -1035,8 +1035,8 @@ lazy val `scio-parquet` = project
   .in(file("scio-parquet"))
   .dependsOn(
     `scio-core`,
+    `scio-avro` % "provided",
     `scio-tensorflow` % "provided",
-    `scio-avro` % Test,
     `scio-test` % "test->test"
   )
   .settings(commonSettings)
