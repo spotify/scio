@@ -25,7 +25,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -376,6 +378,20 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     }
 
     return secondaryKeyEncoder.get().encode(key);
+  }
+
+  static <KeyT1, Key2T, ValueT> BucketMetadata<KeyT1, Key2T, ValueT> copyWithNewHashType(
+      BucketMetadata<KeyT1, Key2T, ValueT> oldMetadata, HashType hashType) {
+    JsonNode metadataJson = objectMapper.valueToTree(oldMetadata);
+    ((ObjectNode) metadataJson).put("hashType", serializeHashType(hashType));
+
+    try {
+      return objectMapper.treeToValue(
+          metadataJson, (Class<BucketMetadata<KeyT1, Key2T, ValueT>>) oldMetadata.getClass());
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(
+          "Failed to convert metadata " + oldMetadata + " to new hash type " + hashType, e);
+    }
   }
 
   // Checks for complete equality between BucketMetadatas originating from the same BucketedInput

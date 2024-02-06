@@ -103,11 +103,12 @@ public final class SMBFilenamePolicy implements Serializable {
       this.filenameSuffix = filenameSuffix;
       this.doTimestampFiles = doTimestampFiles;
 
-      bucketOnlyTemplate = filenamePrefix + "-%s%s";
-      bucketShardTemplate = filenamePrefix + "-%s-shard-%05d-of-%05d%s";
+      bucketOnlyTemplate = filenamePrefix + "-%s%s%s";
+      bucketShardTemplate = filenamePrefix + "-%s-shard-%05d-of-%05d%s%s";
     }
 
-    ResourceId forBucket(BucketShardId id, int maxNumBuckets, int maxNumShards) {
+    ResourceId forBucket(
+        BucketShardId id, String templateSuffix, int maxNumBuckets, int maxNumShards) {
       Preconditions.checkArgument(
           id.getBucketId() < maxNumBuckets,
           "Can't assign a filename for bucketShardId %s: max number of buckets is %s",
@@ -128,15 +129,33 @@ public final class SMBFilenamePolicy implements Serializable {
       final String timestamp = doTimestampFiles ? Instant.now().toString(TEMPFILE_TIMESTAMP) : "";
       String filename =
           maxNumShards == 1 || id.isNullKeyBucket()
-              ? String.format(bucketOnlyTemplate, bucketName, filenameSuffix)
+              ? String.format(bucketOnlyTemplate, bucketName, templateSuffix, filenameSuffix)
               : String.format(
-                  bucketShardTemplate, bucketName, id.getShardId(), maxNumShards, filenameSuffix);
+                  bucketShardTemplate,
+                  bucketName,
+                  id.getShardId(),
+                  maxNumShards,
+                  templateSuffix,
+                  filenameSuffix);
 
       return directory.resolve(timestamp + filename, StandardResolveOptions.RESOLVE_FILE);
     }
 
+    ResourceId forBucket(BucketShardId id, int maxNumBuckets, int maxNumShards) {
+      return forBucket(id, "", maxNumBuckets, maxNumShards);
+    }
+
     public ResourceId forBucket(BucketShardId id, BucketMetadata<?, ?, ?> metadata) {
       return forBucket(id, metadata.getNumBuckets(), metadata.getNumShards());
+    }
+
+    public ResourceId forRehashedTmpBucket(
+        int oldBucketId, BucketShardId newBucketShardId, BucketMetadata<?, ?, ?> metadata) {
+      return forBucket(
+          newBucketShardId,
+          "_" + String.valueOf(oldBucketId),
+          metadata.getNumBuckets(),
+          metadata.getNumShards());
     }
 
     public ResourceId forMetadata() {
