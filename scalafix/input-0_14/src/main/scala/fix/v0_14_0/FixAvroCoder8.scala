@@ -9,4 +9,6 @@ import org.apache.avro.generic.GenericRecord
 object FixAvroCoder8 {
   implicit val c = Coder.avroGenericRecordCoder
   val r = Coder[GenericRecord]
+  val x = 1
+  val y: Int = 2
 }

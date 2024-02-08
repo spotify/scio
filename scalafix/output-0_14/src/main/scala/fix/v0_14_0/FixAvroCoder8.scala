@@ -8,4 +8,6 @@ import com.spotify.scio.avro._
 object FixAvroCoder8 {
   implicit val c = avroGenericRecordCoder
   val r = Coder[GenericRecord]
+  val x = 1
+  val y: Int = 2
 }
