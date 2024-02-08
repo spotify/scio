@@ -13,15 +13,12 @@ object FixLogicalTypeSupplier {
 
   val JavaClassMatcher: SymbolMatcher = SymbolMatcher.normalized("java/lang/Class")
 
+  val OptionMatcher: SymbolMatcher = SymbolMatcher.normalized("scala/Some", "scala/Option")
+
   private val ParquetAvroPrefix = "com/spotify/scio/parquet/avro"
   val LogicalTypeSupplierMatcher: SymbolMatcher = SymbolMatcher.normalized(
     s"$ParquetAvroPrefix/LogicalTypeSupplier",
     "org/apache/beam/sdk/extensions/smb/AvroLogicalTypeSupplier"
-  )
-
-  private val ParquetAvroMatcher = SymbolMatcher.normalized(
-    s"$ParquetAvroPrefix/syntax/ScioContextOps#parquetAvroFile",
-    s"$ParquetAvroPrefix/syntax/SCollectionOps#saveAsParquetAvroFile"
   )
 }
 
@@ -65,9 +62,9 @@ class FixLogicalTypeSupplier extends SemanticRule("FixLogicalTypeSupplier") {
         filterArgs(Some(lhs), false, confArgs)
       case q"$fn(..$confArgs)" if ParquetConfigurationMatcher.matches(fn.symbol) =>
         filterArgs(None, false, confArgs)
-      case q"$lhs = Some($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) =>
+      case q"$lhs = $maybeOpt($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
         filterArgs(Some(lhs), true, confArgs)
-      case q"Some($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) =>
+      case q"$maybeOpt($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
         filterArgs(None, true, confArgs)
       case a =>
         Some(a)
