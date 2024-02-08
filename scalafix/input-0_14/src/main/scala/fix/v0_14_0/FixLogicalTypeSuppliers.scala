@@ -71,4 +71,22 @@ object FixLogicalTypeSuppliers {
   conf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
   conf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[LogicalTypeSupplier])
   conf.setClass("someClass", classOf[String], classOf[CharSequence])
+
+  implicit class WrappedSCollection(val sc: ScioContext) extends AnyVal {
+    def customMethod[T](input: String, conf: Option[Configuration] = None): SCollection[T] = ???
+  }
+
+  sc.customMethod[String](
+    "input",
+    conf = Some(ParquetConfiguration.of(
+      AvroReadSupport.AVRO_DATA_SUPPLIER -> (classOf[LogicalTypeSupplier])
+    ))
+  )
+
+  sc.customMethod[String](
+    "input",
+    Some(ParquetConfiguration.of(
+      AvroReadSupport.AVRO_DATA_SUPPLIER -> (classOf[LogicalTypeSupplier])
+    ))
+  )
 }
