@@ -280,6 +280,7 @@ private[types] object TypeProvider {
         case "FLOAT" | "FLOAT64" => (tq"_root_.scala.Double", Nil)
         case "STRING"            => (tq"_root_.java.lang.String", Nil)
         case "NUMERIC"           => (tq"_root_.scala.BigDecimal", Nil)
+        case "BIGNUMERIC"        => (tq"_root_.scala.BigDecimal", Nil)
         case "BYTES"             => (tq"_root_.com.google.protobuf.ByteString", Nil)
         case "TIMESTAMP"         => (tq"_root_.org.joda.time.Instant", Nil)
         case "DATE"              => (tq"_root_.org.joda.time.LocalDate", Nil)

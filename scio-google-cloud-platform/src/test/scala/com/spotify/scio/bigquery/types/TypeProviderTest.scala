@@ -18,6 +18,7 @@
 package com.spotify.scio.bigquery.types
 
 import com.google.api.services.bigquery.model.TableRow
+import munit.Assertions.compileErrors
 import org.apache.beam.sdk.util.SerializableUtils
 import org.joda.time.Instant
 import org.scalatest.Assertion
@@ -66,6 +67,22 @@ object TypeProviderTest {
     """.stripMargin
   )
   class RecordWithDescription
+
+  @BigQueryType.fromSchema(
+    """
+      |{
+      |  "fields": [
+      |    {
+      |      "mode": "REQUIRED", "name": "f1", "type": "NUMERIC"
+      |    },
+      |    {
+      |      "mode": "REQUIRED", "name": "f2", "type": "BIGNUMERIC"
+      |    }
+      |  ]
+      |}
+    """.stripMargin
+  )
+  class RecordWithNumerics
 }
 
 // TODO: mock BigQueryClient for fromTable and fromQuery
@@ -103,6 +120,15 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
 
   it should "infer the same avro schema" in {
     BigQueryType[RecordWithDescription].avroSchema shouldBe RecordWithDescription.avroSchema
+  }
+
+  it should "infer types for Numerics" in {
+    BigQueryType[RecordWithNumerics].avroSchema shouldBe RecordWithNumerics.avroSchema
+
+    compileErrors("new RecordWithNumerics(BigDecimal.apply(42), BigDecimal.apply(43))") shouldBe ""
+    val error = compileErrors("new RecordWithNumerics(true, false)").replace(" ", "")
+    error should include("found:Boolean(true)")
+    error should include("required:BigDecimal")
   }
 
   "BigQueryTag" should "be a serializable annotation" in {
