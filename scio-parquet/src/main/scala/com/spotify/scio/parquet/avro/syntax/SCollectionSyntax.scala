@@ -24,6 +24,7 @@ import com.spotify.scio.parquet.avro.ParquetAvroIO
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
+import org.apache.avro.generic.IndexedRecord
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
@@ -33,7 +34,7 @@ import scala.reflect.ClassTag
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Parquet Avro
  * methods.
  */
-class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+class SCollectionOps[T <: IndexedRecord](private val self: SCollection[T]) extends AnyVal {
 
   /**
    * Save this SCollection of Avro records as a Parquet file.
@@ -81,9 +82,9 @@ class SCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 }
 
 trait SCollectionSyntax {
-  implicit def parquetAvroSCollectionOps[T](c: SCollection[T]): SCollectionOps[T] =
+  implicit def parquetAvroSCollectionOps[T <: IndexedRecord](c: SCollection[T]): SCollectionOps[T] =
     new SCollectionOps[T](c)
-  implicit def parquetAvroSCollection[T: Coder](
+  implicit def parquetAvroSCollection[T <: IndexedRecord: Coder](
     self: ParquetAvroFile[T]
   ): SCollectionOps[T] =
     new SCollectionOps[T](self.toSCollection)
