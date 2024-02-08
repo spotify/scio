@@ -25,14 +25,16 @@ object FixAvroCoder {
   def hasParentClass(sym: Symbol, parentMatcher: SymbolMatcher)(implicit
     sd: SemanticDocument
   ): Boolean = {
-    sym.info.get.signature match {
-      case ClassSignature(_, parents, _, _) =>
-        parents
-          .collect {
-            case TypeRef(_, p, _) if parentMatcher.matches(p) => true
-          }
-          .foldLeft(false)(_ || _)
-      case _ => false
+    sym.info.exists { i =>
+      i.signature match {
+        case ClassSignature(_, parents, _, _) =>
+          parents
+            .collect {
+              case TypeRef(_, p, _) if parentMatcher.matches(p) => true
+            }
+            .foldLeft(false)(_ || _)
+        case _ => false
+      }
     }
   }
 
@@ -48,12 +50,16 @@ object FixAvroCoder {
     matcher: SymbolMatcher
   )(implicit doc: SemanticDocument): List[Symbol] = {
     // get the type of the declaration ...
-    t.symbol.info.get.signature match {
-      // ... and if it matches, collect all of its type parameters
-      case MethodSignature(_, _, TypeRef(_, symbol, typeArgs)) if matcher.matches(symbol) =>
-        typeArgs.collect { case TypeRef(_, param, _) => param }
-      case _ => List.empty
-    }
+    t.symbol.info
+      .map { i =>
+        i.signature match {
+          // ... and if it matches, collect all of its type parameters
+          case MethodSignature(_, _, TypeRef(_, symbol, typeArgs)) if matcher.matches(symbol) =>
+            typeArgs.collect { case TypeRef(_, param, _) => param }
+          case _ => List.empty
+        }
+      }
+      .getOrElse(List.empty)
   }
 
   /**
@@ -75,28 +81,33 @@ object FixAvroCoder {
   )(implicit
     doc: SemanticDocument
   ): List[Symbol] = {
-    expr.symbol.info.get.signature match {
-      case MethodSignature(typeParams, parameterLists, _) =>
-        // find only the types for which the context bound type is required
-        val contextBoundTypeParameters = parameterLists.flatten
-          .map(_.signature)
-          .collect {
-            case ValueSignature(TypeRef(_, symbol, args)) if contextBoundMatcher.matches(symbol) =>
-              args.collect { case TypeRef(_, schemaSymbol, _) => schemaSymbol }
-          }
-          .flatten
+    expr.symbol.info
+      .map { i =>
+        i.signature match {
+          case MethodSignature(typeParams, parameterLists, _) =>
+            // find only the types for which the context bound type is required
+            val contextBoundTypeParameters = parameterLists.flatten
+              .map(_.signature)
+              .collect {
+                case ValueSignature(TypeRef(_, symbol, args))
+                    if contextBoundMatcher.matches(symbol) =>
+                  args.collect { case TypeRef(_, schemaSymbol, _) => schemaSymbol }
+              }
+              .flatten
 
-        // join the actual params with the positional type params
-        // and filter for the ones for which the context bound is required
-        tpesnel
-          .zip(typeParams)
-          .collect {
-            case (tpe, tParam) if contextBoundTypeParameters.contains(tParam.symbol) =>
-              tpe.symbol
-          }
-          .toList
-      case _ => List.empty
-    }
+            // join the actual params with the positional type params
+            // and filter for the ones for which the context bound is required
+            tpesnel
+              .zip(typeParams)
+              .collect {
+                case (tpe, tParam) if contextBoundTypeParameters.contains(tParam.symbol) =>
+                  tpe.symbol
+              }
+              .toList
+          case _ => List.empty
+        }
+      }
+      .getOrElse(List.empty)
   }
 
   def isAvroType(sym: Symbol)(implicit sd: SemanticDocument): Boolean =
