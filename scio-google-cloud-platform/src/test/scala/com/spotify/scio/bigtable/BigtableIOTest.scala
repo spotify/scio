@@ -22,6 +22,9 @@ import com.google.bigtable.v2.{Mutation, Row}
 import com.google.protobuf.ByteString
 import com.spotify.scio.testing._
 
+// must be defined outside the test class or test job will hang
+case class Foo(i: Int, s: String)
+
 class BigtableIOTest extends ScioIOSpec {
   val projectId = "project"
   val instanceId = "instance"
@@ -48,31 +51,18 @@ class BigtableIOTest extends ScioIOSpec {
   }
 
   it should "work with typed input" in {
-    import magnolify.bigtable._
-    case class MyClass(i: Int, s: String)
-    implicit val bigtableType: BigtableType[MyClass] = BigtableType[MyClass]
-
-    val xs = (1 to 100).map(x => MyClass(x, x.toString))
-    testJobTestInput(xs) { tableId =>
-      BigtableIO[MyClass](projectId, instanceId, tableId)
-    } { case (sc, tableId) =>
-      sc.typedBigtable[MyClass](projectId, instanceId, tableId, "foo")
-    }
+    val xs = (1 to 100).map(x => Foo(x, x.toString))
+    testJobTestInput(xs)(BigtableIO[Foo](projectId, instanceId, _))(
+      _.typedBigtable[Foo](projectId, instanceId, _, "foo")
+    )
   }
 
   it should "work with typed output" in {
-    import magnolify.bigtable._
-    case class MyClass(i: Int, s: String)
-    implicit val bigtableType: BigtableType[MyClass] = BigtableType[MyClass]
-
     val xs = (1 to 100).map { x =>
-      val k = ByteString.copyFromUtf8(x.toString)
-      val m = MyClass(x, x.toString)
-      (k, Iterable(m))
+      (ByteString.copyFromUtf8(x.toString), Iterable(Foo(x, x.toString)))
     }
     testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
       _.saveAsBigtable(projectId, instanceId, _, "foo")
     )
   }
-
 }

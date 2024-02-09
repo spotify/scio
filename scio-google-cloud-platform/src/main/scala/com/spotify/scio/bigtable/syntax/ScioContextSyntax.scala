@@ -39,9 +39,56 @@ object ScioContextOps {
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   import ScioContextOps._
 
+  private def btOpts(projectId: String, instanceId: String): BigtableOptions =
+    BigtableOptions.builder().setProjectId(projectId).setInstanceId(instanceId).build
+
   def typedBigtable[T: BigtableType: Coder](
     projectId: String,
     instanceId: String,
+    tableId: String,
+    columnFamily: String
+  ): SCollection[T] =
+    typedBigtable(btOpts(projectId, instanceId), tableId, columnFamily)
+
+  def typedBigtable[T: BigtableType: Coder](
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    columnFamily: String,
+    keyRanges: Seq[ByteKeyRange]
+  ): SCollection[T] =
+    typedBigtable(btOpts(projectId, instanceId), tableId, columnFamily, keyRanges)
+
+  def typedBigtable[T: BigtableType: Coder](
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    columnFamily: String,
+    keyRanges: Seq[ByteKeyRange],
+    rowFilter: RowFilter
+  ): SCollection[T] =
+    typedBigtable(btOpts(projectId, instanceId), tableId, columnFamily, keyRanges, rowFilter)
+
+  def typedBigtable[T: BigtableType: Coder](
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    columnFamily: String,
+    keyRanges: Seq[ByteKeyRange],
+    rowFilter: RowFilter,
+    maxBufferElementCount: Option[Int]
+  ): SCollection[T] =
+    typedBigtable(
+      btOpts(projectId, instanceId),
+      tableId,
+      columnFamily,
+      keyRanges,
+      rowFilter,
+      maxBufferElementCount
+    )
+
+  def typedBigtable[T: BigtableType: Coder](
+    bigtableOptions: BigtableOptions,
     tableId: String,
     columnFamily: String,
     keyRanges: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRanges,
@@ -50,7 +97,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   ): SCollection[T] = {
     val params =
       BigtableTypedRead.ReadParam(columnFamily, keyRanges, rowFilter, maxBufferElementCount)
-    self.read(BigtableTypedRead[T](projectId, instanceId, tableId))(params)
+    self.read(BigtableTypedRead[T](bigtableOptions, tableId))(params)
   }
 
   /** Get an SCollection for a Bigtable table. */
@@ -61,7 +108,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     keyRange: ByteKeyRange,
     rowFilter: RowFilter
   ): SCollection[Row] =
-    bigtable(projectId, instanceId, tableId, Seq(keyRange), rowFilter)
+    bigtable(btOpts(projectId, instanceId), tableId, Seq(keyRange), rowFilter)
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(
@@ -72,20 +119,32 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     rowFilter: RowFilter,
     maxBufferElementCount: Option[Int]
   ): SCollection[Row] =
-    bigtable(projectId, instanceId, tableId, Seq(keyRange), rowFilter, maxBufferElementCount)
+    bigtable(
+      btOpts(projectId, instanceId),
+      tableId,
+      Seq(keyRange),
+      rowFilter,
+      maxBufferElementCount
+    )
+
+  /** Get an SCollection for a Bigtable table. */
+  def bigtable(
+                projectId: String,
+                instanceId: String,
+                tableId: String,
+              ): SCollection[Row] =
+    bigtable(btOpts(projectId, instanceId), tableId)
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(
     projectId: String,
     instanceId: String,
     tableId: String,
-    keyRanges: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRanges,
-    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter,
-    maxBufferElementCount: Option[Int] = BigtableRead.ReadParam.DefaultMaxBufferElementCount
-  ): SCollection[Row] = {
-    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter, maxBufferElementCount)
-    self.read(BigtableRead(projectId, instanceId, tableId))(parameters)
-  }
+    keyRanges: Seq[ByteKeyRange],
+    rowFilter: RowFilter,
+    maxBufferElementCount: Option[Int]
+  ): SCollection[Row] =
+    bigtable(btOpts(projectId, instanceId), tableId, keyRanges, rowFilter, maxBufferElementCount)
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(
@@ -110,20 +169,9 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   def bigtable(
     bigtableOptions: BigtableOptions,
     tableId: String,
-    keyRanges: Seq[ByteKeyRange],
-    rowFilter: RowFilter
-  ): SCollection[Row] = {
-    val parameters = BigtableRead.ReadParam(keyRanges, rowFilter)
-    self.read(BigtableRead(bigtableOptions, tableId))(parameters)
-  }
-
-  /** Get an SCollection for a Bigtable table. */
-  def bigtable(
-    bigtableOptions: BigtableOptions,
-    tableId: String,
-    keyRanges: Seq[ByteKeyRange],
-    rowFilter: RowFilter,
-    maxBufferElementCount: Option[Int]
+    keyRanges: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRanges,
+    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter,
+    maxBufferElementCount: Option[Int] = BigtableRead.ReadParam.DefaultMaxBufferElementCount
   ): SCollection[Row] = {
     val parameters = BigtableRead.ReadParam(keyRanges, rowFilter, maxBufferElementCount)
     self.read(BigtableRead(bigtableOptions, tableId))(parameters)

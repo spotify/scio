@@ -94,22 +94,13 @@ object BigtableRead {
     maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
   )
 
-  final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build
-    BigtableRead(bigtableOptions, tableId)
-  }
-
   private[scio] def read(
     bigtableOptions: BigtableOptions,
     tableId: String,
     maxBufferElementCount: Option[Int],
     keyRanges: Seq[ByteKeyRange],
     rowFilter: RowFilter
-  ) = {
+  ): beam.BigtableIO.Read = {
     val opts = bigtableOptions // defeat closure
     beam.BigtableIO
       .read()
@@ -137,7 +128,6 @@ final case class BigtableTypedRead[T: BigtableType: Coder](
     sc: ScioContext,
     params: ReadP
   ): SCollection[T] = {
-    val bigtableType: BigtableType[T] = implicitly
     val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
     val read = BigtableRead.read(
       bigtableOptions,
@@ -146,6 +136,8 @@ final case class BigtableTypedRead[T: BigtableType: Coder](
       params.keyRanges,
       params.rowFilter
     )
+
+    val bigtableType: BigtableType[T] = implicitly
     val cf = params.columnFamily
     sc.transform(
       _.applyTransform(read)
@@ -176,19 +168,6 @@ object BigtableTypedRead {
     rowFilter: RowFilter = ReadParam.DefaultRowFilter,
     maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
   )
-
-  def apply[T: BigtableType: Coder](
-    projectId: String,
-    instanceId: String,
-    tableId: String
-  ): BigtableTypedRead[T] = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build
-    BigtableTypedRead[T](bigtableOptions, tableId)
-  }
 }
 
 final case class BigtableTypedWrite[T: BigtableType](
