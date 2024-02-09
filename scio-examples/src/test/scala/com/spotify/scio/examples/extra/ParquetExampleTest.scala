@@ -46,7 +46,8 @@ class ParquetExampleTest extends PipelineSpec {
 
   "ParquetExample" should "work for SpecificRecord input" in {
     val expected = ParquetExample.fakeData
-      .map(x => AccountProjection(x.getId, Some(x.getName.toString)))
+      // set default value on field outside projection
+      .map(x => Account.newBuilder(x).setAccountStatus(null).build())
       .map(_.toString)
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
@@ -79,8 +80,7 @@ class ParquetExampleTest extends PipelineSpec {
   }
 
   it should "work for typed output" in {
-    val expected = ParquetExample.fakeData
-      .map(a => AccountFull(a.getId, a.getType.toString, Some(a.getName.toString), a.getAmount))
+    val expected = ParquetExample.fakeData.map(ParquetExample.toScalaFull)
 
     JobTest[com.spotify.scio.examples.extra.ParquetExample.type]
       .args("--output=out.parquet", "--method=typedOut")
