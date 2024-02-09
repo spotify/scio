@@ -31,6 +31,8 @@ import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam._
 import com.spotify.scio.parquet.read.ParquetReadConfiguration
 import com.spotify.scio.parquet.{GcsConnectorUtil, ParquetConfiguration}
 import com.spotify.scio.testing.TestDataManager
+import com.spotify.scio.transforms._
+import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
@@ -55,6 +57,7 @@ import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
 sealed trait ParquetAvroIO[T <: IndexedRecord] extends ScioIO[T] {
+  import ParquetAvroIO._
 
   override type ReadP = ParquetAvroIO.ReadParam[T]
   override type WriteP = ParquetAvroIO.WriteParam[T]
@@ -141,36 +144,29 @@ sealed trait ParquetAvroIO[T <: IndexedRecord] extends ScioIO[T] {
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[T] = {
     val datumFactory = Option(params.datumFactory).getOrElse(defaultDatumFactory)
     implicit val coder: Coder[T] = avroCoder(datumFactory, schema)
-    // SpecificData.getForClass is only available for 1.9+
-    val recordClass = datumFactory.getType
-    val data = if (classOf[SpecificRecordBase].isAssignableFrom(recordClass)) {
-      val classModelField = recordClass.getDeclaredField("MODEL$")
-      classModelField.setAccessible(true)
-      classModelField.get(null).asInstanceOf[SpecificData]
-    } else {
-      SpecificData.get()
-    }
+
     // The projection function is not part of the test input, so it must be applied directly
     val projectedFields = Option(params.projection).map(_.getFields.asScala.map(_.name()).toSet)
     TestDataManager
       .getInput(sc.testId.get)(this)
       .toSCollection(sc)
-      .map { record =>
-        projectedFields match {
-          case None             => record
-          case Some(projection) =>
-            // beam forbids mutations. Create a new record
-            val copy = data.deepCopy(record.getSchema, record)
-            record.getSchema.getFields.asScala
-              .foldLeft(copy) { (c, f) =>
-                val names = Set(f.name()) ++ f.aliases().asScala.toSet
-                if (projection.intersect(names).isEmpty) {
-                  // field is not part of the projection. user default value
-                  c.put(f.pos(), data.getDefaultValue(f))
+      .mapWithResource(dataForClass(datumFactory.getType), ResourceType.PER_INSTANCE) {
+        case (data, record) =>
+          projectedFields match {
+            case None             => record
+            case Some(projection) =>
+              // beam forbids mutations. Create a new record
+              val copy = data.deepCopy(record.getSchema, record)
+              record.getSchema.getFields.asScala
+                .foldLeft(copy) { (c, f) =>
+                  val names = Set(f.name()) ++ f.aliases().asScala.toSet
+                  if (projection.intersect(names).isEmpty) {
+                    // field is not part of the projection. user default value
+                    c.put(f.pos(), data.getDefaultValue(f))
+                  }
+                  c
                 }
-                c
-              }
-        }
+          }
       }
   }
 
@@ -234,6 +230,17 @@ sealed trait ParquetAvroIO[T <: IndexedRecord] extends ScioIO[T] {
 }
 
 object ParquetAvroIO {
+
+  // SpecificData.getForClass is only available for 1.9+
+  private def dataForClass[T](recordClass: Class[T]) = {
+    if (classOf[SpecificRecordBase].isAssignableFrom(recordClass)) {
+      val classModelField = recordClass.getDeclaredField("MODEL$")
+      classModelField.setAccessible(true)
+      classModelField.get(null).asInstanceOf[SpecificData]
+    } else {
+      SpecificData.get()
+    }
+  }
 
   private class Identity[T](cls: Class[T])
       extends SimpleFunction[T, T](SerializableFunctions.identity[T]) {
