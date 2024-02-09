@@ -23,8 +23,8 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
-
-import com.spotify.scio.bigtable.BigtableWrite
+import com.spotify.scio.bigtable.{BigtableTypedWrite, BigtableWrite}
+import magnolify.bigtable.BigtableType
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
@@ -56,8 +56,50 @@ final class SCollectionMutationOps[T <: Mutation](
     )
 }
 
+final class BigtableTypedOps[T: BigtableType](
+  private val self: SCollection[(ByteString, Iterable[T])]
+) {
+  def saveAsBigtable(
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    columnFamily: String
+  ): ClosedTap[Nothing] = {
+    val params = BigtableTypedWrite.WriteParam[T](columnFamily)
+    self.write(BigtableTypedWrite[T](projectId, instanceId, tableId))(params)
+  }
+
+  def saveAsBigtable(
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    columnFamily: String,
+    timestamp: Long
+  ): ClosedTap[Nothing] = {
+    val params = BigtableTypedWrite.WriteParam[T](columnFamily, timestamp)
+    self.write(BigtableTypedWrite[T](projectId, instanceId, tableId))(params)
+  }
+
+  def saveAsBigtable(
+    bigtableOptions: BigtableOptions,
+    tableId: String,
+    columnFamily: String,
+    timestamp: Long = BigtableTypedWrite.WriteParam.DefaultTimestamp,
+    numOfShards: Int,
+    flushInterval: Duration = BigtableTypedWrite.WriteParam.DefaultFlushInterval
+  ): ClosedTap[Nothing] = {
+    val params =
+      BigtableTypedWrite.WriteParam[T](columnFamily, timestamp, Some(numOfShards), flushInterval)
+    self.write(BigtableTypedWrite[T](bigtableOptions, tableId))(params)
+  }
+}
+
 trait SCollectionSyntax {
   implicit def bigtableMutationOps[T <: Mutation](
     sc: SCollection[(ByteString, Iterable[T])]
   ): SCollectionMutationOps[T] = new SCollectionMutationOps[T](sc)
+
+  implicit def bigtableTypedOps[T: BigtableType](
+    sc: SCollection[(ByteString, Iterable[T])]
+  ): BigtableTypedOps[T] = new BigtableTypedOps[T](sc)
 }

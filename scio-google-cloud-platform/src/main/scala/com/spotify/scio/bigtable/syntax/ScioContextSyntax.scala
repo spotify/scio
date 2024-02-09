@@ -21,10 +21,10 @@ import com.google.bigtable.admin.v2.GcRule
 import com.google.bigtable.v2._
 import com.google.cloud.bigtable.config.BigtableOptions
 import com.spotify.scio.ScioContext
-import com.spotify.scio.bigtable.BigtableRead
-import com.spotify.scio.bigtable.BigtableUtil
-import com.spotify.scio.bigtable.TableAdmin
+import com.spotify.scio.bigtable.{BigtableRead, BigtableTypedRead, BigtableUtil, TableAdmin}
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
+import magnolify.bigtable.BigtableType
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.joda.time.Duration
 
@@ -38,6 +38,20 @@ object ScioContextOps {
 /** Enhanced version of [[ScioContext]] with Bigtable methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
   import ScioContextOps._
+
+  def typedBigtable[T: BigtableType: Coder](
+    projectId: String,
+    instanceId: String,
+    tableId: String,
+    columnFamily: String,
+    keyRanges: Seq[ByteKeyRange] = BigtableRead.ReadParam.DefaultKeyRanges,
+    rowFilter: RowFilter = BigtableRead.ReadParam.DefaultRowFilter,
+    maxBufferElementCount: Option[Int] = BigtableRead.ReadParam.DefaultMaxBufferElementCount
+  ): SCollection[T] = {
+    val params =
+      BigtableTypedRead.ReadParam(columnFamily, keyRanges, rowFilter, maxBufferElementCount)
+    self.read(BigtableTypedRead[T](projectId, instanceId, tableId))(params)
+  }
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(

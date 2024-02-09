@@ -46,4 +46,18 @@ class BigtableIOTest extends ScioIOSpec {
       _.saveAsBigtable(projectId, instanceId, _)
     )
   }
+
+  it should "work with typed input" in {
+    import magnolify.bigtable._
+    case class MyClass(i: Int, s: String)
+    implicit val bigtableType = BigtableType[MyClass]
+
+    val xs = (1 to 100).map(x => MyClass(x, x.toString))
+    testJobTestInput(xs) { tableId =>
+      BigtableIO[MyClass](projectId, instanceId, tableId)
+    } { case (sc, tableId) =>
+      sc.typedBigtable[MyClass](projectId, instanceId, tableId, "foo")
+    }
+  }
+
 }
