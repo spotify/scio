@@ -149,7 +149,6 @@ final case class BigtableTypedRead[T: BigtableType: Coder](
     sc.transform(
       _.applyTransform(read)
         .setCoder(coder)
-        .debug(prefix="GRAR")
         .map(row => bigtableType(row, params.columnFamily))
     )
   }
