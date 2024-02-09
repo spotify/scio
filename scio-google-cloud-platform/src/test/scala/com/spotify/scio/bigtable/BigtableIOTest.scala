@@ -50,7 +50,7 @@ class BigtableIOTest extends ScioIOSpec {
   it should "work with typed input" in {
     import magnolify.bigtable._
     case class MyClass(i: Int, s: String)
-    implicit val bigtableType = BigtableType[MyClass]
+    implicit val bigtableType: BigtableType[MyClass] = BigtableType[MyClass]
 
     val xs = (1 to 100).map(x => MyClass(x, x.toString))
     testJobTestInput(xs) { tableId =>
@@ -58,6 +58,21 @@ class BigtableIOTest extends ScioIOSpec {
     } { case (sc, tableId) =>
       sc.typedBigtable[MyClass](projectId, instanceId, tableId, "foo")
     }
+  }
+
+  it should "work with typed output" in {
+    import magnolify.bigtable._
+    case class MyClass(i: Int, s: String)
+    implicit val bigtableType: BigtableType[MyClass] = BigtableType[MyClass]
+
+    val xs = (1 to 100).map { x =>
+      val k = ByteString.copyFromUtf8(x.toString)
+      val m = MyClass(x, x.toString)
+      (k, Iterable(m))
+    }
+    testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
+      _.saveAsBigtable(projectId, instanceId, _, "foo")
+    )
   }
 
 }

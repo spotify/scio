@@ -146,10 +146,11 @@ final case class BigtableTypedRead[T: BigtableType: Coder](
       params.keyRanges,
       params.rowFilter
     )
+    val cf = params.columnFamily
     sc.transform(
       _.applyTransform(read)
         .setCoder(coder)
-        .map(row => bigtableType(row, params.columnFamily))
+        .map(row => bigtableType(row, cf))
     )
   }
 
@@ -222,11 +223,13 @@ final case class BigtableTypedWrite[T: BigtableType](
           Option(params.flushInterval).getOrElse(BigtableWrite.Bulk.DefaultFlushInterval)
         )
     }
+    val cf = params.columnFamily
+    val ts = params.timestamp
     data.transform_("Bigtable write") { coll =>
       coll
         .map { case (key, iter) =>
           val mutations = iter
-            .flatMap(t => bigtableType.apply(t, params.columnFamily, params.timestamp))
+            .flatMap(t => bigtableType.apply(t, cf, ts))
             .asJava
             .asInstanceOf[java.lang.Iterable[Mutation]]
           KV.of(key, mutations)
