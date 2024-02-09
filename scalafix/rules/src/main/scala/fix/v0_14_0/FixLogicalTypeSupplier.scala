@@ -13,15 +13,12 @@ object FixLogicalTypeSupplier {
 
   val JavaClassMatcher: SymbolMatcher = SymbolMatcher.normalized("java/lang/Class")
 
+  val OptionMatcher: SymbolMatcher = SymbolMatcher.normalized("scala/Some", "scala/Option")
+
   private val ParquetAvroPrefix = "com/spotify/scio/parquet/avro"
   val LogicalTypeSupplierMatcher: SymbolMatcher = SymbolMatcher.normalized(
     s"$ParquetAvroPrefix/LogicalTypeSupplier",
     "org/apache/beam/sdk/extensions/smb/AvroLogicalTypeSupplier"
-  )
-
-  private val ParquetAvroMatcher = SymbolMatcher.normalized(
-    s"$ParquetAvroPrefix/syntax/ScioContextOps#parquetAvroFile",
-    s"$ParquetAvroPrefix/syntax/SCollectionOps#saveAsParquetAvroFile"
   )
 }
 
@@ -49,23 +46,51 @@ class FixLogicalTypeSupplier extends SemanticRule("FixLogicalTypeSupplier") {
   }
 
   private def updateIOArgs(fnArgs: List[Term])(implicit doc: SemanticDocument): List[Term] = {
+    def filterArgs(lhsOpt: Option[Term], rhsOption: Boolean, confArgs: List[Term]): Option[Term] = {
+      val filtered = parquetConfigurationArgs(confArgs)
+      (lhsOpt, rhsOption, filtered.isEmpty) match {
+        case (_, _, true) => None
+        case (Some(lhs), true, false) => Some(q"$lhs = Some(ParquetConfiguration.of(..$filtered))")
+        case (Some(lhs), false, false) => Some(q"$lhs = ParquetConfiguration.of(..$filtered)")
+        case (None, true, false) => Some(q"Some(ParquetConfiguration.of(..$filtered))")
+        case (None, false, false) => Some(q"ParquetConfiguration.of(..$filtered)")
+      }
+    }
+
     fnArgs.flatMap {
       case q"$lhs = $fn(..$confArgs)" if ParquetConfigurationMatcher.matches(fn.symbol) =>
-        val filtered = parquetConfigurationArgs(confArgs)
-        if (filtered.isEmpty) None else Some(q"$lhs = ParquetConfiguration.of(..$filtered)")
+        filterArgs(Some(lhs), false, confArgs)
       case q"$fn(..$confArgs)" if ParquetConfigurationMatcher.matches(fn.symbol) =>
-        val filtered = parquetConfigurationArgs(confArgs)
-        if (filtered.isEmpty) None else Some(q"ParquetConfiguration.of(..$filtered)")
+        filterArgs(None, false, confArgs)
+      case q"$lhs = $maybeOpt($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
+        filterArgs(Some(lhs), true, confArgs)
+      case q"$maybeOpt($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
+        filterArgs(None, true, confArgs)
       case a =>
         Some(a)
     }
   }
 
+  private def containsConfArg(args: Seq[Term])(implicit doc: SemanticDocument): Boolean = {
+    def isParquetConf(term: Term): Boolean = ParquetConfigurationMatcher.matches(term.symbol)
+
+    args.exists {
+      case q"$_ = $fn(..$args)" if isParquetConf(fn) => true
+      case q"$fn(..$args)" if isParquetConf(fn) => true
+      case q"$_ = Some($fn(..$args))" if isParquetConf(fn) => true
+      case q"Some($fn(..$args))" if isParquetConf(fn) => true
+      case _ => false
+    }
+  }
+
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case method @ q"$fn(..$args)" if ParquetAvroMatcher.matches(fn.symbol) =>
+      case method @ q"$coll.$fn(..$args)" if containsConfArg(args) =>
         val newArgs = updateIOArgs(args)
-        Patch.replaceTree(method, q"$fn(..$newArgs)".syntax)
+        Patch.replaceTree(method, q"$coll.$fn(..$newArgs)".syntax)
+      case method @ q"$coll.$fn[$exprs](..$args)" if containsConfArg(args) =>
+        val newArgs = updateIOArgs(args)
+        Patch.replaceTree(method, q"$coll.$fn[$exprs](..$newArgs)".syntax)
       case method @ q"$_.$fn($_, $theClass, $xface)" if SetClassMatcher.matches(fn.symbol) =>
         if (isLogicalTypeSupplier(theClass) || isLogicalTypeSupplier(xface)) {
           Patch.removeTokens(method.tokens)

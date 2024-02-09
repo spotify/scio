@@ -33,4 +33,12 @@ object FixLogicalTypeSuppliers {
   
   
   conf.setClass("someClass", classOf[String], classOf[CharSequence])
+
+  implicit class WrappedSCollection(val sc: ScioContext) extends AnyVal {
+    def customMethod[T](input: String, conf: Option[Configuration] = None): SCollection[T] = ???
+  }
+
+  sc.customMethod[String]("input")
+
+  sc.customMethod[String]("input")
 }
