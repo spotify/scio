@@ -21,5 +21,17 @@
           }
         }
     ]
+},
+{
+    "type": "record",
+    "name": "AvroGeneratedUserProjection",
+    "namespace": "com.spotify.scio.smb",
+    "doc": "Record for testing trimmed projections",
+    "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+    ]
 }
 ]

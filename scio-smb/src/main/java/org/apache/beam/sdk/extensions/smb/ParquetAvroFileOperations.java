@@ -160,6 +160,8 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
       if (projectionSchemaSupplier != null) {
         AvroReadSupport.setRequestedProjection(configuration, projectionSchemaSupplier.get());
+      } else {
+        AvroReadSupport.setRequestedProjection(configuration, readSchema);
       }
 
       if (recordClass == null && configuration.get(AvroReadSupport.AVRO_DATA_SUPPLIER) == null) {
