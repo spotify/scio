@@ -31,7 +31,9 @@ import org.apache.beam.sdk.io.{
 import org.apache.beam.sdk.{io => beam}
 import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.TapT
+import com.spotify.scio.tensorflow.TFExampleIO.ReadParam
 import com.spotify.scio.util.FilenamePolicySupplier
+import magnolify.tensorflow.ExampleType
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
@@ -92,6 +94,59 @@ object TFRecordIO {
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory
   )
+}
+
+object TFExampleTypedIO {
+  type ReadParam = TFRecordIO.ReadParam
+  val ReadParam = TFRecordIO.ReadParam
+  type WriteParam = TFRecordIO.WriteParam
+  val WriteParam = TFRecordIO.WriteParam
+}
+
+final case class TFExampleTypedIO[T: ExampleType: Coder](path: String) extends ScioIO[T] {
+  override type WriteP = TFExampleTypedIO.WriteParam
+  override type ReadP = TFExampleTypedIO.ReadParam
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
+
+  override def testId: String = s"TFExampleTypedIO($path)"
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    val exampleType: ExampleType[T] = implicitly
+    data.transform_ { scoll =>
+      scoll
+        .map(t => exampleType(t).toByteArray)
+        .applyInternal(
+          TFRecordMethods.tfWrite(
+            path,
+            params.suffix,
+            params.numShards,
+            params.compression,
+            params.filenamePolicySupplier,
+            params.prefix,
+            params.shardNameTemplate,
+            ScioUtil.isWindowed(data),
+            ScioUtil.tempDirOrDefault(params.tempDirectory, data.context)
+          )
+        )
+    }
+    tap(TFExampleIO.ReadParam(params))
+  }
+
+  override def tap(params: ReadP): Tap[T] = {
+    val exampleType: ExampleType[T] = implicitly
+    TFRecordMethods
+      .tap(path, params)
+      .map { bytes => exampleType(Example.parseFrom(bytes)) }
+  }
+
+  override protected def read(sc: ScioContext, params: ReadParam): SCollection[T] = {
+    val exampleType: ExampleType[T] = implicitly
+    sc.transform { ctx =>
+      TFRecordMethods
+        .read(ctx, path, params)
+        .map { bytes => exampleType(Example.parseFrom(bytes)) }
+    }
+  }
 }
 
 final case class TFExampleIO(path: String) extends ScioIO[Example] {
@@ -162,7 +217,7 @@ private object TFRecordMethods {
     )
   }
 
-  private def tfWrite(
+  private[scio] def tfWrite(
     path: String,
     suffix: String,
     numShards: Int,
