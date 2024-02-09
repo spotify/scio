@@ -42,7 +42,7 @@ object SmbIO {
 
   def testId(paths: String*): String = {
     val normalizedPaths = paths.map(p => ScioUtil.strippedPath(p) + "/").mkString(",")
-    s"SortedBucketIO($normalizedPaths)"
+    s"SmbIO($normalizedPaths)"
   }
 
   private[scio] def tap[T: Coder](
