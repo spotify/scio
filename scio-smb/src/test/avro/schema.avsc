@@ -33,7 +33,8 @@
           "type": "string"
         },
         {
-          "name": "optionalFieldWithDefault", /* Not present in original AvroGeneratedUser schema */
+          "name": "optionalFieldWithDefault",
+          "doc": "Not present in original AvroGeneratedUser schema",
           "type": [ "null", "string" ],
           "default": null
         }
