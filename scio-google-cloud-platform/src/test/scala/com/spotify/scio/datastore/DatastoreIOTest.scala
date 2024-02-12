@@ -34,7 +34,20 @@ object DatastoreJob {
   }
 }
 
+object TypedDatastoreJob {
+  case class MyEntity(int: Long)
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.datastore(args("input"), null, null)
+      .saveAsDatastore(args("output"))
+    sc.run()
+    ()
+  }
+}
+
 class DatastoreIOTest extends PipelineSpec with ScioIOSpec {
+  import TypedDatastoreJob.MyEntity
 
   "DatastoreIO" should "work" in {
     val xs = (1L to 100L).map { x =>
@@ -57,7 +70,8 @@ class DatastoreIOTest extends PipelineSpec with ScioIOSpec {
     JobTest[DatastoreJob.type]
       .args("--input=store.in", "--output=store.out")
       .input(DatastoreIO("store.in"), (1L to 3L).map(newEntity))
-      .output(DatastoreIO("store.out"))(coll => coll should containInAnyOrder(xs))
+      // TODO add scalafix for existing DatastoreIO in tests -> DatastoreIO[Entity]
+      .output(DatastoreIO[Entity]("store.out"))(coll => coll should containInAnyOrder(xs))
       .run()
 
   it should "pass correct DatastoreJob" in {
@@ -70,6 +84,33 @@ class DatastoreIOTest extends PipelineSpec with ScioIOSpec {
     }
     an[AssertionError] should be thrownBy {
       testDatastore((1L to 4L).map(newEntity))
+    }
+  }
+
+  it should "work with typed data" in {
+    val xs = (1L to 100L).map(x => MyEntity(x))
+    testJobTest(xs)(DatastoreIO(_))(_.typedDatastore[MyEntity](_, null))(_.saveAsDatastore(_))
+  }
+
+  def testTypedDatastore(xs: Seq[MyEntity]): Unit = {
+    val in = (1L to 3L).map(MyEntity)
+    JobTest[TypedDatastoreJob.type]
+      .args("--input=store.in", "--output=store.out")
+      .input(DatastoreIO[MyEntity]("store.in"), in)
+      .output(DatastoreIO[MyEntity]("store.out"))(coll => coll should containInAnyOrder(xs))
+      .run()
+  }
+
+  it should "pass correct TypedDatastoreJob" in {
+    testTypedDatastore((1L to 3L).map(MyEntity))
+  }
+
+  it should "fail incorrect TypedDatastoreJob" in {
+    an[AssertionError] should be thrownBy {
+      testTypedDatastore((1L to 2L).map(MyEntity))
+    }
+    an[AssertionError] should be thrownBy {
+      testTypedDatastore((1L to 4L).map(MyEntity))
     }
   }
 

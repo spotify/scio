@@ -129,10 +129,10 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /** Get an SCollection for a Bigtable table. */
   def bigtable(
-                projectId: String,
-                instanceId: String,
-                tableId: String,
-              ): SCollection[Row] =
+    projectId: String,
+    instanceId: String,
+    tableId: String
+  ): SCollection[Row] =
     bigtable(btOpts(projectId, instanceId), tableId)
 
   /** Get an SCollection for a Bigtable table. */
