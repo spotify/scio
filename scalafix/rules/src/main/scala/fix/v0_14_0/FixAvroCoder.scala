@@ -23,7 +23,7 @@ object FixAvroCoder {
 
   val JobTestBuilderMatcher: SymbolMatcher = SymbolMatcher.normalized(
     "com/spotify/scio/testing/JobTest.Builder#input().",
-    "com/spotify/scio/testing/JobTest.Builder#output()."
+    "com/spotify/scio/testing/JobTest.Builder#inputStream()."
   )
 
   /** @return true if `sym` is a class whose parents include a type matching `parentMatcher` */
