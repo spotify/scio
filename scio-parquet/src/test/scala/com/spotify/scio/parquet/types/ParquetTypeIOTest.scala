@@ -125,7 +125,22 @@ class ParquetTypeIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     data should containInAnyOrder(expected)
     sc.run()
   }
+
+  it should "read case classes where the projection contains an optional field not present in writer schema" in {
+    val sc = ScioContext()
+    val data = sc.typedParquetFile[HasNewDefaultReaderField](
+      path = testDir.getAbsolutePath,
+      predicate = predicate,
+      suffix = ".parquet"
+    )
+    val expected = records
+      .filter(t => t.i <= 5 || t.o.exists(_ >= 95))
+      .map(t => HasNewDefaultReaderField(t.i, None))
+    data should containInAnyOrder(expected)
+    sc.run()
+  }
 }
 
 case class Wide(i: Int, s: String, o: Option[Int], r: List[Int])
 case class Narrow(i: Int, r: List[Int])
+case class HasNewDefaultReaderField(i: Int, newField: Option[Int])
