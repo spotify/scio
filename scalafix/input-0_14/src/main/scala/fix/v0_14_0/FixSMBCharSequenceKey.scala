@@ -30,4 +30,9 @@ object FixSMBCharSequenceKey {
   SMBMultiJoin(sc).sortMergeCoGroup(classOf[CharSequence], read, read, read, read, read, TargetParallelism.max())
 
   SMBMultiJoin(sc).sortMergeTransform(classOf[CharSequence], read, read, read, read, read, TargetParallelism.max())
+
+  // Should not be changed
+  sc.sortMergeJoin(classOf[Integer], read, read)
+
+  SMBMultiJoin(sc).sortMergeCoGroup(classOf[Integer], read, read, read, read, read, TargetParallelism.max())
 }
