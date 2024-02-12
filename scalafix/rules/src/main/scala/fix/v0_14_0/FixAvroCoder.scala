@@ -21,6 +21,11 @@ object FixAvroCoder {
     "org/apache/avro/generic/GenericRecord"
   )
 
+  val JobTestBuilderMatcher: SymbolMatcher = SymbolMatcher.normalized(
+    "com/spotify/scio/testing/JobTest.Builder#input().",
+    "com/spotify/scio/testing/JobTest.Builder#output()."
+  )
+
   /** @return true if `sym` is a class whose parents include a type matching `parentMatcher` */
   def hasParentClass(sym: Symbol, parentMatcher: SymbolMatcher)(implicit
     sd: SemanticDocument
@@ -128,6 +133,19 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
           // Coder[T] is a variable type where T is an avro type
           findMatchingValTypeParams(t, CoderMatcher)
             .exists(isAvroType)
+        case q"$jobTestBuilder(..$args)" if JobTestBuilderMatcher.matches(jobTestBuilder) =>
+          args.headOption match {
+            case Some(q"$io[$tpe](..$args)") =>
+              tpe.symbol.info.map(_.signature) match {
+                case Some(ClassSignature(_, parents, _, _)) =>
+                  parents.exists {
+                    case TypeRef(_, s, _) if AvroMatcher.matches(s) => true
+                    case _ => false
+                  }
+                case _ => false
+              }
+            case _ => false
+          }
       }
       .foldLeft(false)(_ || _)
     val avroValuePatch = if (usesAvroCoders) Patch.addGlobalImport(avroImport) else Patch.empty
@@ -140,6 +158,8 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
               importee"avroSpecificFixedCoder") =>
             Patch.removeImportee(i) + Patch.addGlobalImport(avroImport)
         }.asPatch
+      case importer"com.spotify.scio.avro.{..$imps}" =>
+        imps.map(i => Patch.removeImportee(i) + Patch.addGlobalImport(avroImport)).asPatch
       case t @ q"$obj.$fn" if AvroCoderMatcher.matches(fn.symbol) =>
         // fix direct usage of Coder.avro*
         Patch.replaceTree(t, q"$fn".syntax) + Patch.addGlobalImport(avroImport)
