@@ -738,6 +738,10 @@ lazy val `scio-avro` = project
   .settings(macroSettings)
   .settings(
     description := "Scio add-on for working with Avro",
+    unusedCompileDependenciesFilter -= Seq(
+      // transitively require for parquet-avro projection macros
+      moduleFilter("org.apache.avro", "avro-compiler")
+    ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
@@ -746,6 +750,7 @@ lazy val `scio-avro` = project
       "com.twitter" % "chill-java" % chillVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.avro" % "avro-compiler" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
@@ -1050,7 +1055,7 @@ lazy val `scio-parquet` = project
     javacOptions ++= Seq("-s", (sourceManaged.value / "main").toString),
     description := "Scio add-on for Parquet",
     unusedCompileDependenciesFilter -= Seq(
-      // required by me.lyh:parquet-avro
+      // required by me.lyh:parquet-avro macros
       moduleFilter("org.apache.avro", "avro-compiler"),
       // replacing log4j compile time dependency
       moduleFilter("org.slf4j", "log4j-over-slf4j")
@@ -1061,10 +1066,7 @@ lazy val `scio-parquet` = project
       "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
-      "com.twitter" %% "chill" % chillVersion,
       "me.lyh" %% "parquet-avro" % parquetExtraVersion,
-      "org.apache.avro" % "avro" % avroVersion,
-      "org.apache.avro" % "avro-compiler" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-hadoop-format" % beamVersion,
@@ -1078,6 +1080,9 @@ lazy val `scio-parquet` = project
       "org.slf4j" % "log4j-over-slf4j" % slf4jVersion, // log4j is excluded from hadoop
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // provided
+      "org.apache.avro" % "avro" % avroVersion % Provided,
+      "org.apache.avro" % "avro-compiler" % avroVersion % Provided,
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Provided,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
