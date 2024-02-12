@@ -25,11 +25,12 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
+ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/orgapachebeam-1368/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.53.0"
+val beamVersion = "2.54.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.53.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.54.0-RC2/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -52,42 +53,42 @@ val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.87.Final"
 val slf4jVersion = "1.7.30"
-val zetasketchVersion = "0.1.0"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20230812-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20240113-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20231202-$googleClientsVersion"
 // beam tested versions
+val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
 val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
-val hadoopVersion = "3.2.4" // io/parquet/build.gradle
+val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.28.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.30.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val bigQueryStorageBetaVersion = "0.171.0"
-val bigQueryStorageVersion = "2.47.0"
+val bigQueryStorageBetaVersion = "0.172.0"
+val bigQueryStorageVersion = "3.0.0"
 val checkerQualVersion = "3.40.0"
 val errorProneAnnotationsVersion = "2.23.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.8"
-val gaxVersion = "2.38.0"
+val gaxVersion = "2.39.0"
 val googleApiClientVersion = "2.2.0" // very strangely not in sync with googleClientsVersion
-val googleApiCommonVersion = "2.21.0"
-val googleAuthVersion = "1.20.0"
-val googleCloudBigTableVersion = "2.30.0"
-val googleCloudCoreVersion = "2.28.0"
-val googleCloudDatastoreVersion = "0.108.6"
-val googleCloudMonitoringVersion = "3.32.0"
-val googleCloudPubSubVersion = "1.107.13"
-val googleCloudSpannerVersion = "6.55.0"
-val googleCloudStorageVersion = "2.30.1"
-val googleCommonsProtoVersion = "2.29.0"
-val googleHttpClientsVersion = "1.43.3"
-val googleIAMVersion = "1.24.0"
-val grpcVersion = "1.59.1"
+val googleApiCommonVersion = "2.22.0"
+val googleAuthVersion = "1.21.0"
+val googleCloudBigTableVersion = "2.31.0"
+val googleCloudCoreVersion = "2.29.0"
+val googleCloudDatastoreVersion = "0.109.0"
+val googleCloudMonitoringVersion = "3.34.0"
+val googleCloudPubSubVersion = "1.108.0"
+val googleCloudSpannerVersion = "6.56.0"
+val googleCloudStorageVersion = "2.31.0"
+val googleCommonProtoVersion = "2.30.0"
+val googleHttpClientVersion = "1.43.3"
+val googleIAMVersion = "1.25.0"
+val grpcVersion = "1.60.0"
 val j2objcAnnotationsVersion = "2.8"
 val jsr305Version = "3.0.2"
 val opencensusVersion = "0.31.1"
@@ -623,8 +624,8 @@ lazy val `scio-core` = project
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
+      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.twitter" % "chill-java" % chillVersion,
@@ -681,7 +682,7 @@ lazy val `scio-test` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
@@ -798,8 +799,8 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
       "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
+      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
@@ -1188,7 +1189,7 @@ lazy val `scio-examples` = project
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
@@ -1500,7 +1501,7 @@ lazy val integration = project
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.microsoft.sqlserver" % "mssql-jdbc" % "12.4.2.jre11",
       "joda-time" % "joda-time" % jodaTimeVersion,
@@ -1666,11 +1667,11 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax-httpjson" % gaxVersion,
   "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-  "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
+  "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonProtoVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
-  "com.google.api.grpc" % "proto-google-common-protos" % googleCommonsProtoVersion,
+  "com.google.api.grpc" % "proto-google-common-protos" % googleCommonProtoVersion,
   "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,
   "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
@@ -1686,10 +1687,10 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.flogger" % "flogger-system-backend" % floggerVersion,
   "com.google.flogger" % "google-extensions" % floggerVersion,
   "com.google.guava" % "guava" % guavaVersion,
-  "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-  "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
-  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
-  "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientsVersion,
+  "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
+  "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
+  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientVersion,
+  "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientVersion,
   "com.google.j2objc" % "j2objc-annotations" % j2objcAnnotationsVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
