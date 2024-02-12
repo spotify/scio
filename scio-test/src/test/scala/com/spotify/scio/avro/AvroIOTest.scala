@@ -59,7 +59,7 @@ class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
     _.map(AvroUtils.newSpecificRecord).saveAsAvroFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }
@@ -89,7 +89,7 @@ class ObjectIOFileNamePolicyTest extends FileNamePolicySpec[AvroIOTest.AvroRecor
     _.map(x => AvroRecord(x, x.toString, (1 to x).map(_.toString).toList)).saveAsObjectFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }
@@ -117,7 +117,7 @@ class ProtobufIOFileNamePolicyTest extends FileNamePolicySpec[TrackPB] {
     _.map(x => TrackPB.newBuilder().setTrackId(x.toString).build()).saveAsProtobufFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }
@@ -202,6 +202,14 @@ class AvroIOTest extends ScioIOSpec {
   }
 
   "ProtobufIO" should "work" in {
+    val xs =
+      (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
+    val suffix = ".protobuf.avro"
+    testTap(xs)(_.saveAsProtobufFile(_))(suffix)
+    testJobTest(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(_.saveAsProtobufFile(_))
+  }
+
+  "TypedProtobufIO" should "work" in {
     val xs =
       (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
     val suffix = ".protobuf.avro"

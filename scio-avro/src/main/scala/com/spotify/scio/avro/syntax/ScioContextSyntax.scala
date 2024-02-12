@@ -24,6 +24,7 @@ import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
+import magnolify.protobuf.ProtobufType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
@@ -175,9 +176,19 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def protobufFile[T <: Message: ClassTag](
     path: String,
-    suffix: String = ProtobufIO.ReadParam.DefaultSuffix
+    suffix: String = ProtobufObjectFileIO.ReadParam.DefaultSuffix
   ): SCollection[T] =
-    self.read(ProtobufIO[T](path))(ProtobufIO.ReadParam(suffix))
+    self.read(ProtobufObjectFileIO[T](path))(ProtobufObjectFileIO.ReadParam(suffix))
+
+  /**
+   * Read back protobuf messages serialized to `Array[Byte]` and stored in Avro files then map them
+   * automatically to type `T` via the implicit [[magnolify.protobuf.ProtobufType]]
+   */
+  def typedProtobufFile[T: Coder, U <: Message: ClassTag](
+    path: String,
+    suffix: String = ProtobufObjectFileIO.ReadParam.DefaultSuffix
+  )(implicit pt: ProtobufType[T, U]) =
+    self.read(TypedProtobufObjectFileIO[T, U](path, pt))(ProtobufObjectFileIO.ReadParam(suffix))
 }
 
 /** Enhanced with Avro methods. */

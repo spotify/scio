@@ -24,6 +24,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
+import magnolify.protobuf.ProtobufType
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecord
@@ -183,17 +184,17 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
    */
   def saveAsProtobufFile(
     path: String,
-    numShards: Int = ProtobufIO.WriteParam.DefaultNumShards,
-    suffix: String = ProtobufIO.WriteParam.DefaultSuffixProtobuf,
-    codec: CodecFactory = ProtobufIO.WriteParam.DefaultCodec,
-    metadata: Map[String, AnyRef] = ProtobufIO.WriteParam.DefaultMetadata,
-    shardNameTemplate: String = ProtobufIO.WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = ProtobufIO.WriteParam.DefaultTempDirectory,
+    numShards: Int = ProtobufObjectFileIO.WriteParam.DefaultNumShards,
+    suffix: String = ProtobufObjectFileIO.WriteParam.DefaultSuffixProtobuf,
+    codec: CodecFactory = ProtobufObjectFileIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = ProtobufObjectFileIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = ProtobufObjectFileIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = ProtobufObjectFileIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
-      ProtobufIO.WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = ProtobufIO.WriteParam.DefaultPrefix
+      ProtobufObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = ProtobufObjectFileIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T]): ClosedTap[T] = {
-    val param = ProtobufIO.WriteParam[GenericRecord](
+    val param = ProtobufObjectFileIO.WriteParam[GenericRecord](
       numShards,
       suffix,
       codec,
@@ -203,7 +204,42 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
       shardNameTemplate,
       tempDirectory
     )
-    self.write(ProtobufIO[T](path))(param)
+    self.write(ProtobufObjectFileIO[T](path))(param)
+  }
+}
+
+final class TypedProtobufSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+
+  /**
+   * Save this SCollection as a Protobuf file.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
+   */
+  def saveAsProtobufFile[U <: Message](
+    path: String,
+    numShards: Int = TypedProtobufObjectFileIO.WriteParam.DefaultNumShards,
+    suffix: String = TypedProtobufObjectFileIO.WriteParam.DefaultSuffixProtobuf,
+    codec: CodecFactory = TypedProtobufObjectFileIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = TypedProtobufObjectFileIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = TypedProtobufObjectFileIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = TypedProtobufObjectFileIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      TypedProtobufObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TypedProtobufObjectFileIO.WriteParam.DefaultPrefix
+  )(implicit ct: ClassTag[U], pt: ProtobufType[T, U]): ClosedTap[T] = {
+    implicit val tCoder: Coder[T] = self.coder
+    val param = TypedProtobufObjectFileIO.WriteParam[GenericRecord](
+      numShards,
+      suffix,
+      codec,
+      metadata,
+      filenamePolicySupplier,
+      prefix,
+      shardNameTemplate,
+      tempDirectory
+    )
+    self.write(TypedProtobufObjectFileIO[T, U](path, pt))(param)
   }
 }
 
