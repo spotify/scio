@@ -147,7 +147,7 @@ val scalatestplusVersion = s"$scalatestVersion.0"
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
 // project
-ThisBuild / tlBaseVersion := "0.14"
+ThisBuild / tlBaseVersion := "0.15"
 ThisBuild / tlSonatypeUseLegacyHost := true
 ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
