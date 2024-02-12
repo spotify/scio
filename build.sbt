@@ -136,7 +136,7 @@ lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
 // project
-ThisBuild / tlBaseVersion := "0.14"
+ThisBuild / tlBaseVersion := "0.15"
 ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
 ThisBuild / startYear := Some(2016)
@@ -382,120 +382,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 
 // mima
-ThisBuild / mimaBinaryIssueFilters ++= Seq(
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.testing.TransformOverride.ofSource"
-  ),
-  ProblemFilters.exclude[ReversedMissingMethodProblem](
-    "com.spotify.scio.options.ScioOptions.setZstdDictionary"
-  ),
-  ProblemFilters.exclude[ReversedMissingMethodProblem](
-    "com.spotify.scio.options.ScioOptions.getZstdDictionary"
-  ),
-  // removal of private classes
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.coders.instances.kryo.GaxApiExceptionSerializer"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.coders.instances.kryo.StatusRuntimeExceptionSerializer"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer"
-  ),
-  // added new Cache.get method
-  ProblemFilters.exclude[ReversedMissingMethodProblem](
-    "com.spotify.scio.util.Cache.get"
-  ),
-  // added SortedMapCoder
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.coders.instances.MutableMapCoder.*"
-  ),
-  ProblemFilters.exclude[DirectAbstractMethodProblem](
-    "org.apache.beam.sdk.coders.Coder.verifyDeterministic"
-  ),
-  ProblemFilters.exclude[DirectAbstractMethodProblem](
-    "org.apache.beam.sdk.coders.Coder.getCoderArguments"
-  ),
-  // added BQ Json object
-  ProblemFilters.exclude[MissingTypesProblem](
-    "com.spotify.scio.bigquery.types.package$Json$"
-  ),
-  // tf-metadata upgrade
-  ProblemFilters.exclude[Problem](
-    "org.tensorflow.metadata.v0.*"
-  ),
-  // relax type hierarchy for batch stream
-  ProblemFilters.exclude[IncompatibleMethTypeProblem](
-    "com.spotify.scio.grpc.GrpcBatchDoFn.asyncLookup"
-  ),
-  // added TableRow syntax
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.*"
-  ),
-  // narrow return type from Map to TableRow
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRecord$extension"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRecord"
-  ),
-  // narrow return type from Seq to List
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRepeated$extension"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.syntax.TableRowOps.getRepeated"
-  ),
-  // BQ api v1 update
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.BigQueryStorageTap.*"
-  ),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem](
-    "com.spotify.scio.bigquery.BigQueryStorageTap.*"
-  ),
-  ProblemFilters.exclude[IncompatibleMethTypeProblem](
-    "com.spotify.scio.bigquery.BigQueryTaps.*"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.StorageUtil.tableReadOptions"
-  ),
-  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn"),
-  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn$"),
-  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.SavedBundlePredictDoFn"),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.tensorflow.SavedBundlePredictDoFn$"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps"
-  ),
-  ProblemFilters.exclude[MissingClassProblem](
-    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps$"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.tensorflow.syntax.SCollectionSyntax.tensorFlowPredictSCollectionOps"
-  ),
-  // dropped custom BigQueryAvroUtilsWrapper
-  ProblemFilters.exclude[MissingClassProblem](
-    "org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper"
-  ),
-  // Changes in avro SlowGenericRecordCoder
-  ProblemFilters.exclude[Problem](
-    "com.spotify.scio.coders.avro.SlowGenericRecordCoder*"
-  ),
-  // tablerow json fix
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.bigquery.types.package#Json.apply"
-  ),
-  ProblemFilters.exclude[IncompatibleResultTypeProblem](
-    "com.spotify.scio.bigquery.types.package#Json.parse"
-  )
-)
+ThisBuild / mimaBinaryIssueFilters ++= Seq()
 
 // headers
 lazy val currentYear = java.time.LocalDate.now().getYear
@@ -892,10 +779,7 @@ lazy val `scio-test` = project
   )
   .settings(commonSettings)
   .settings(
-    description := "Scio helpers for ScalaTest",
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
+    description := "Scio helpers for ScalaTest"
   )
 
 lazy val `scio-test-core` = project
@@ -927,9 +811,6 @@ lazy val `scio-test-core` = project
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-google-cloud-platform` = project
@@ -951,9 +832,6 @@ lazy val `scio-test-google-cloud-platform` = project
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-parquet` = project
@@ -968,9 +846,6 @@ lazy val `scio-test-parquet` = project
   .settings(commonSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4),
     libraryDependencies ++= Seq(
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -1378,7 +1253,6 @@ lazy val `scio-snowflake` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-snowflake" % beamVersion
     ),
-    tlMimaPreviousVersions := Set.empty // TODO: remove once released
   )
 
 val tensorFlowMetadataSourcesDir =
