@@ -17,14 +17,15 @@
 
 package com.spotify.scio.parquet.avro.syntax
 
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.parquet.avro.ParquetAvroIO.WriteParam
-import com.spotify.scio.parquet.avro.ParquetAvroIO
+import com.spotify.scio.parquet.avro.{ParquetGenericRecordIO, ParquetSpecificRecordIO}
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
-import org.apache.avro.generic.IndexedRecord
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
@@ -34,14 +35,15 @@ import scala.reflect.ClassTag
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Parquet Avro
  * methods.
  */
-class SCollectionOps[T <: IndexedRecord](private val self: SCollection[T]) extends AnyVal {
+class ParquetAvroGenericSCollectionOps(private val self: SCollection[GenericRecord])
+    extends AnyVal {
 
   /**
    * Save this SCollection of Avro records as a Parquet file.
    * @param path
    *   output location of the write operation
    * @param schema
-   *   must be not null if `T` is of type [[org.apache.avro.generic.GenericRecord GenericRecord]].
+   *   the avro schema
    * @param numShards
    *   number of shards per output directory
    * @param suffix
@@ -56,7 +58,7 @@ class SCollectionOps[T <: IndexedRecord](private val self: SCollection[T]) exten
    */
   def saveAsParquetAvroFile(
     path: String,
-    schema: Schema = WriteParam.DefaultSchema,
+    schema: Schema,
     numShards: Int = WriteParam.DefaultNumShards,
     suffix: String = WriteParam.DefaultSuffix,
     compression: CompressionCodecName = WriteParam.DefaultCompression,
@@ -64,10 +66,10 @@ class SCollectionOps[T <: IndexedRecord](private val self: SCollection[T]) exten
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
     tempDirectory: String = WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = WriteParam.DefaultPrefix
-  )(implicit ct: ClassTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = WriteParam(
-      schema = schema,
+    prefix: String = WriteParam.DefaultPrefix,
+    datumFactory: AvroDatumFactory[GenericRecord] = WriteParam.DefaultDatumFactory
+  ): ClosedTap[GenericRecord] = {
+    val param = ParquetGenericRecordIO.WriteParam(
       numShards = numShards,
       suffix = suffix,
       compression = compression,
@@ -75,17 +77,67 @@ class SCollectionOps[T <: IndexedRecord](private val self: SCollection[T]) exten
       filenamePolicySupplier = filenamePolicySupplier,
       prefix = prefix,
       shardNameTemplate = shardNameTemplate,
-      tempDirectory = tempDirectory
+      tempDirectory = tempDirectory,
+      datumFactory = datumFactory
     )
-    self.write(ParquetAvroIO[T](path))(param)
+    self.write(ParquetGenericRecordIO(path, schema))(param)
+  }
+}
+
+class ParquetAvroSpecificSCollectionOps[T <: SpecificRecord](private val self: SCollection[T])
+    extends AnyVal {
+
+  /**
+   * Save this SCollection of Avro records as a Parquet file.
+   * @param path
+   *   output location of the write operation
+   * @param numShards
+   *   number of shards per output directory
+   * @param suffix
+   *   defaults to .parquet
+   * @param compression
+   *   defaults to snappy
+   * @param conf
+   * @param shardNameTemplate
+   * @param tempDirectory
+   * @param filenamePolicySupplier
+   * @param prefix
+   */
+  def saveAsParquetAvroFile(
+    path: String,
+    numShards: Int = WriteParam.DefaultNumShards,
+    suffix: String = WriteParam.DefaultSuffix,
+    compression: CompressionCodecName = WriteParam.DefaultCompression,
+    conf: Configuration = WriteParam.DefaultConfiguration,
+    shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = WriteParam.DefaultPrefix,
+    datumFactory: AvroDatumFactory[T] = WriteParam.DefaultDatumFactory
+  )(implicit ct: ClassTag[T]): ClosedTap[T] = {
+    val param = ParquetSpecificRecordIO.WriteParam(
+      numShards = numShards,
+      suffix = suffix,
+      compression = compression,
+      conf = conf,
+      filenamePolicySupplier = filenamePolicySupplier,
+      prefix = prefix,
+      shardNameTemplate = shardNameTemplate,
+      tempDirectory = tempDirectory,
+      datumFactory = datumFactory
+    )
+    self.write(ParquetSpecificRecordIO[T](path))(param)
   }
 }
 
 trait SCollectionSyntax {
-  implicit def parquetAvroSCollectionOps[T <: IndexedRecord](c: SCollection[T]): SCollectionOps[T] =
-    new SCollectionOps[T](c)
-  implicit def parquetAvroSCollection[T <: IndexedRecord: Coder](
-    self: ParquetAvroFile[T]
-  ): SCollectionOps[T] =
-    new SCollectionOps[T](self.toSCollection)
+  implicit def parquetAvroGenericSCollectionOps(
+    c: SCollection[GenericRecord]
+  ): ParquetAvroGenericSCollectionOps =
+    new ParquetAvroGenericSCollectionOps(c)
+
+  implicit def parquetAvroSpecificSCollectionOps[T <: SpecificRecord](
+    c: SCollection[T]
+  ): ParquetAvroSpecificSCollectionOps[T] =
+    new ParquetAvroSpecificSCollectionOps(c)
 }

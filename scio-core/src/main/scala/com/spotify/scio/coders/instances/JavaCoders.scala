@@ -37,7 +37,7 @@ import scala.util.{Failure, Success}
 private[coders] object VoidCoder extends AtomicCoder[Void] {
   override def encode(value: Void, outStream: OutputStream): Unit = ()
 
-  override def decode(inStream: InputStream): Void = ???
+  override def decode(inStream: InputStream): Void = null
 
   override def structuralValue(value: Void): AnyRef = AnyRef
 }

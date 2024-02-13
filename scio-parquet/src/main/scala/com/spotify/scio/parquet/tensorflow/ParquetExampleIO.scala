@@ -44,7 +44,7 @@ import org.apache.beam.sdk.transforms.SimpleFunction
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader}
+import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.tensorflow.proto.example.{Example, Features}
 import org.tensorflow.metadata.v0.Schema
@@ -88,8 +88,7 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       ParquetRead.read(
         ReadSupportFactory.example,
         new SerializableConfiguration(conf),
-        filePattern,
-        identity[Example]
+        filePattern
       )
     ).setCoder(coder)
   }
@@ -258,7 +257,7 @@ final case class ParquetExampleTap(path: String, params: ParquetExampleIO.ReadPa
     val filePattern = ScioUtil.filePattern(path, params.suffix)
     val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
     xs.iterator.flatMap { metadata =>
-      val reader: ParquetReader[Example] = TensorflowExampleParquetReader
+      val reader = TensorflowExampleParquetReader
         .builder(BeamInputFile.of(metadata.resourceId()))
         .withConf(Option(params.conf).getOrElse(new Configuration()))
         .build()

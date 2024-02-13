@@ -18,42 +18,67 @@
 package com.spotify.scio.parquet.avro
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.Tap
-import com.spotify.scio.parquet.BeamInputFile
+import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.values.SCollection
+import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
+import org.apache.avro.specific.{SpecificData, SpecificRecord}
 import org.apache.beam.sdk.io._
-import org.apache.parquet.avro.AvroParquetReader
+import org.apache.parquet.avro.{AvroParquetReader, AvroReadSupport}
+import org.apache.parquet.hadoop.ParquetInputFormat
 
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
-final case class ParquetAvroTap[A, T: ClassTag: Coder](
-  path: String,
-  params: ParquetAvroIO.ReadParam[A, T]
-) extends Tap[T] {
+sealed trait ParquetAvroTap[T <: IndexedRecord] extends Tap[T] {
+  def path: String
+  def schema: Schema
+  def params: ParquetAvroIO.ReadParam[T]
+
   override def value: Iterator[T] = {
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    params.setupConfig()
-
     val xs = FileSystems.`match`(filePattern).metadata().asScala.toList
+    val conf = ParquetConfiguration.ofNullable(params.conf)
+    Option(params.projection).foreach(AvroReadSupport.setRequestedProjection(conf, _))
+    Option(params.predicate).foreach(ParquetInputFormat.setFilterPredicate(conf, _))
+
     xs.iterator.flatMap { metadata =>
       val reader = AvroParquetReader
-        .builder[A](BeamInputFile.of(metadata.resourceId()))
-        .withConf(params.confOrDefault)
+        .builder[T](BeamInputFile.of(metadata.resourceId()))
+        .withConf(conf)
         .build()
+
       new Iterator[T] {
-        private var current: A = reader.read()
+        private var current: T = reader.read()
+
         override def hasNext: Boolean = current != null
+
         override def next(): T = {
-          val r = params.projectionFn(current)
+          val prev = current
           current = reader.read()
-          r
+          prev
         }
       }
     }
   }
+}
+
+final case class ParquetGenericRecordTap(
+  path: String,
+  schema: Schema,
+  params: ParquetGenericRecordIO.ReadParam = ParquetGenericRecordIO.ReadParam()
+) extends ParquetAvroTap[GenericRecord] {
+  override def open(sc: ScioContext): SCollection[GenericRecord] =
+    sc.read(ParquetGenericRecordIO(path, schema))(params)
+}
+
+final case class ParquetSpecificRecordTap[T <: SpecificRecord: ClassTag](
+  path: String,
+  params: ParquetSpecificRecordIO.ReadParam[T] = ParquetSpecificRecordIO.ReadParam[T]()
+) extends ParquetAvroTap[T] {
+  override def schema: Schema = SpecificData.get().getSchema(ScioUtil.classOf[T])
   override def open(sc: ScioContext): SCollection[T] =
-    sc.read(ParquetAvroIO[T](path))(params)
+    sc.read(ParquetSpecificRecordIO[T](path))(params)
 }
