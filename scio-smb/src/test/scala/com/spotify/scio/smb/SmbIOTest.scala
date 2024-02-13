@@ -118,6 +118,29 @@ object SmbTransformJob extends SmbJob {
 
 }
 
+object SmbTransformWithSideInputsJob extends SmbJob {
+
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val side = sc.parallelize(List(7)).asSingletonSideInput
+
+    sc.sortMergeTransform(
+      keyClass,
+      avroUsers(args),
+      avroAccounts(args)
+    ).to(avroTransformOutput(args))
+      .withSideInputs(side)
+      .via { case (_, (users, accounts), ctx, outputCollector) =>
+        val user = setUserAccounts(users, accounts)
+        user.setId(ctx(side))
+        outputCollector.accept(user)
+      }
+
+    sc.run().waitUntilDone()
+  }
+
+}
+
 class SmbIOTest extends PipelineSpec {
   private val accountA =
     new Account(1, "typeA", "nameA", 12.5, null)
@@ -188,6 +211,23 @@ class SmbIOTest extends PipelineSpec {
       .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
       .output(SmbIO[Integer, User]("gs://output", _.getId))(
         _ should containInAnyOrder(Seq(joinedUserAccounts))
+      )
+      .run()
+  }
+
+  it should "be able to mock sortMergeTransform with side inputs" in {
+    JobTest[SmbTransformWithSideInputsJob.type]
+      .args(
+        "--users=gs://users",
+        "--accounts=gs://accounts",
+        "--output=gs://output"
+      )
+      .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
+      .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+      .output(SmbIO[Integer, User]("gs://output", _.getId))(
+        _ should containInAnyOrder(
+          Seq(User.newBuilder(user).setAccounts(List(accountA, accountB).asJava).setId(7).build())
+        )
       )
       .run()
   }
