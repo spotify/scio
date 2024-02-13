@@ -19,11 +19,12 @@ object ParquetJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     // Macros for generating column projections and row predicates
+    // Fields left out from projection must have default value
     val projection = Projection[TestRecord](_.getIntField, _.getLongField, _.getBooleanField)
     val predicate = Predicate[TestRecord](x => x.getIntField > 0 && x.getBooleanField)
 
     sc.parquetAvroFile[TestRecord]("input.parquet", projection, predicate)
-      // Map out projected fields right after reading
+      // Map out projected fields after reading
       .map(r => (r.getIntField, r.getStringField, r.getBooleanField))
 
     sc.run()
@@ -32,34 +33,8 @@ object ParquetJob {
 }
 ```
 
-Note that the result `TestRecord`s are not complete Avro objects. Only the projected columns (`intField`, `stringField`, `booleanField`) are present while the rest are null. These objects may fail serialization and it's recommended that you map them out to tuples or case classes right after reading.
+Note that `predicate` logic is only applied when reading actual Parquet files but not in `JobTest`. Make sure the mocked input respects the predicate.
 
-Also note that `predicate` logic is only applied when reading actual Parquet files but not in `JobTest`. To retain the filter behavior while using mock input, it's recommend that you do the following.
-
-```scala
-import com.spotify.scio._
-import com.spotify.scio.parquet.avro._
-import com.spotify.scio.avro.TestRecord
-
-object ParquetJob {
-  def main(cmdlineArgs: Array[String]): Unit = {
-
-    val (sc, args) = ContextAndArgs(cmdlineArgs)
-
-    val projection = Projection[TestRecord](_.getIntField, _.getLongField, _.getBooleanField)
-    // Build both native filter function and Parquet FilterPredicate
-    // case class Predicates[T](native: T => Boolean, parquet: FilterPredicate)
-    val predicate = Predicate.build[TestRecord](x => x.getIntField > 0 && x.getBooleanField)
-
-    sc.parquetAvroFile[TestRecord]("input.parquet", projection, predicate.parquet)
-      // filter natively with the same logic in case of mock input in `JobTest`
-      .filter(predicate.native)
-
-    sc.run()
-    ()
-  }
-}
-```
 
 You can also read Avro generic records by specifying a reader schema.
 
@@ -74,8 +49,8 @@ object ParquetJob {
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    sc.parquetAvroFile[GenericRecord]("input.parquet", TestRecord.getClassSchema)
-      // Map out projected fields into something type safe
+    sc.parquetAvroGenericRecordFile("input.parquet", TestRecord.getClassSchema)
+      // Map out fields into something type safe
       .map(r => (r.get("int_field").asInstanceOf[Int], r.get("string_field").toString))
 
     sc.run()
