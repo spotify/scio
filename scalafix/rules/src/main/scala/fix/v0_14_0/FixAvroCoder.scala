@@ -159,7 +159,12 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
             Patch.removeImportee(i) + Patch.addGlobalImport(avroImport)
         }.asPatch
       case importer"com.spotify.scio.avro.{..$imps}" =>
-        imps.map(i => Patch.removeImportee(i) + Patch.addGlobalImport(avroImport)).asPatch
+        imps
+          .filterNot {
+            case importee"_" => true
+            case _ => false
+          }
+          .map(i => Patch.removeImportee(i) + Patch.addGlobalImport(avroImport)).asPatch
       case t @ q"$obj.$fn" if AvroCoderMatcher.matches(fn.symbol) =>
         // fix direct usage of Coder.avro*
         Patch.replaceTree(t, q"$fn".syntax) + Patch.addGlobalImport(avroImport)
