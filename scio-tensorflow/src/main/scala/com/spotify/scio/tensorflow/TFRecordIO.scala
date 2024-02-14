@@ -136,7 +136,7 @@ final case class TFExampleTypedIO[T: ExampleType: Coder](path: String) extends S
     val exampleType: ExampleType[T] = implicitly
     TFRecordMethods
       .tap(path, params)
-      .map { bytes => exampleType(Example.parseFrom(bytes)) }
+      .map(bytes => exampleType(Example.parseFrom(bytes)))
   }
 
   override protected def read(sc: ScioContext, params: ReadParam): SCollection[T] = {
@@ -144,7 +144,7 @@ final case class TFExampleTypedIO[T: ExampleType: Coder](path: String) extends S
     sc.transform { ctx =>
       TFRecordMethods
         .read(ctx, path, params)
-        .map { bytes => exampleType(Example.parseFrom(bytes)) }
+        .map(bytes => exampleType(Example.parseFrom(bytes)))
     }
   }
 }

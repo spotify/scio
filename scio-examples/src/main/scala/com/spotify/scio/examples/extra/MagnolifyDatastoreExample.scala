@@ -22,19 +22,14 @@
 // convert between case classes and Datastore `Entity` types.
 package com.spotify.scio.examples.extra
 
-import com.google.datastore.v1.client.DatastoreHelper.makeKey
 import com.google.datastore.v1.Query
 import com.spotify.scio._
 import com.spotify.scio.datastore._
 import com.spotify.scio.examples.common.ExampleData
-import magnolify.datastore._
 
 object MagnolifyDatastoreExample {
-  val kind = "magnolify"
   // Define case class representation of Datastore entities
   case class WordCount(word: String, count: Long)
-  // `DatastoreType` provides mapping between case classes and Datatore entities
-  val wordCountType: EntityType[WordCount] = EntityType[WordCount]
 }
 
 // ## Magnolify Datastore Write Example
@@ -54,14 +49,7 @@ object MagnolifyDatastoreWriteExample {
     sc.textFile(args.getOrElse("input", ExampleData.KING_LEAR))
       .flatMap(_.split("[^a-zA-Z']+").filter(_.nonEmpty))
       .countByValue
-      .map { t =>
-        // Convert case class to `Entity.Builder`
-        wordCountType
-          .to(WordCount.tupled(t))
-          // Set entity key
-          .setKey(makeKey(kind, t._1))
-          .build()
-      }
+      .map { case (word, count) => WordCount(word, count) }
       .saveAsDatastore(args("output"))
     sc.run()
     ()
@@ -82,9 +70,7 @@ object MagnolifyDatastoreReadExample {
     import MagnolifyDatastoreExample._
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.datastore(args("input"), Query.getDefaultInstance)
-      // Convert `Entity` to case class
-      .map(e => wordCountType(e))
+    sc.typedDatastore[WordCount](args("input"), Query.getDefaultInstance)
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
     sc.run()

@@ -22,7 +22,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT, TestIO}
 import com.spotify.scio.protobuf.util.ProtobufUtil
 import com.spotify.scio.values.SCollection
-import magnolify.protobuf.ProtobufType
+import _root_.magnolify.protobuf.ProtobufType
 
 import scala.reflect.ClassTag
 

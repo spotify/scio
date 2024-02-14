@@ -18,7 +18,6 @@
 package com.spotify.scio.avro.types
 
 import java.nio.file.Files
-
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import org.apache.commons.io.FileUtils

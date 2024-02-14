@@ -31,17 +31,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Input must be Records are read back as
-   * Tensorflow [[org.tensorflow.proto.example.Example]]s then mapped to the user type `T` with
-   * the implicit [[magnolify.tensorflow.ExampleType]]
+   * Tensorflow [[org.tensorflow.proto.example.Example]]s then mapped to the user type `T` with the
+   * implicit [[magnolify.tensorflow.ExampleType]]
    *
    * @group input
    */
-  def typedTfRecordFile[T : ExampleType : Coder](
-                       path: String,
-                       compression: Compression = Compression.AUTO
-                       ): SCollection[T] = {
+  def typedTfRecordFile[T: ExampleType: Coder](
+    path: String,
+    compression: Compression = Compression.AUTO
+  ): SCollection[T] =
     self.read(TFExampleTypedIO(path))(TFExampleTypedIO.ReadParam(compression))
-  }
 
   /**
    * Get an SCollection for a TensorFlow TFRecord file. Note that TFRecord files are not splittable.

@@ -24,7 +24,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
-import magnolify.protobuf.ProtobufType
+import _root_.magnolify.protobuf.ProtobufType
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
 import org.apache.avro.specific.SpecificRecord
@@ -208,7 +208,8 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
   }
 }
 
-final class TypedProtobufSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
+final class TypedMagnolifyProtobufSCollectionOps[T](private val self: SCollection[T])
+    extends AnyVal {
 
   /**
    * Save this SCollection as a Protobuf file.
@@ -264,4 +265,9 @@ trait SCollectionSyntax {
   implicit def avroProtobufSCollectionOps[T <: Message](
     c: SCollection[T]
   ): ProtobufSCollectionOps[T] = new ProtobufSCollectionOps[T](c)
+
+  implicit def typedAvroProtobufSCollectionOps[T](
+    c: SCollection[T]
+  ): TypedMagnolifyProtobufSCollectionOps[T] = new TypedMagnolifyProtobufSCollectionOps[T](c)
+
 }

@@ -34,6 +34,7 @@ import java.io.File
 object AvroIOTest {
   @AvroType.toSchema
   case class AvroRecord(i: Int, s: String, r: List[String])
+  case class Track(trackId: String)
 }
 
 class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
@@ -210,11 +211,11 @@ class AvroIOTest extends ScioIOSpec {
   }
 
   "TypedProtobufIO" should "work" in {
-    val xs =
-      (1 to 100).map(x => TrackPB.newBuilder().setTrackId(x.toString).build())
+    val xs = (1 to 100).map(x => Track(x.toString))
     val suffix = ".protobuf.avro"
-    testTap(xs)(_.saveAsProtobufFile(_))(suffix)
-    testJobTest(xs)(ProtobufIO(_))(_.protobufFile[TrackPB](_))(_.saveAsProtobufFile(_))
+    testTap(xs)(_.saveAsProtobufFile[TrackPB](_))(suffix)
+    testJobTest(xs)(ProtobufIO(_))(_.typedProtobufFile[Track, TrackPB](_))(
+      _.saveAsProtobufFile[TrackPB](_)
+    )
   }
-
 }

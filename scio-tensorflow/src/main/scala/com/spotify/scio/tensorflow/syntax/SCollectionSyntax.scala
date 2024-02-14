@@ -146,10 +146,11 @@ object PredictSCollectionOps {
 }
 
 final class TypedExampleSCollectionOps[T: ExampleType](private val self: SCollection[T]) {
+
   /**
-   * Converts this collection of `T` into Tensorflow [[org.tensorflow.proto.example.Example]]s
-   * with the provided [[magnolify.tensorflow.ExampleType]], then saves these as a TensorFlow
-   * TFRecord file.
+   * Converts this collection of `T` into Tensorflow [[org.tensorflow.proto.example.Example]]s with
+   * the provided [[magnolify.tensorflow.ExampleType]], then saves these as a TensorFlow TFRecord
+   * file.
    */
   def saveAsTfRecordFile(
     path: String,
