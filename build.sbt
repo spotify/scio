@@ -67,8 +67,6 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.30.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val bigQueryStorageBetaVersion = "0.172.0"
-val bigQueryStorageVersion = "3.0.0"
 val checkerQualVersion = "3.40.0"
 val errorProneAnnotationsVersion = "2.23.0"
 val failureAccessVersion = "1.0.1"
@@ -77,16 +75,19 @@ val gaxVersion = "2.39.0"
 val googleApiClientVersion = "2.2.0" // very strangely not in sync with googleClientsVersion
 val googleApiCommonVersion = "2.22.0"
 val googleAuthVersion = "1.21.0"
+val googleCloudBigQueryStorageVersion = "3.0.0"
 val googleCloudBigTableVersion = "2.31.0"
 val googleCloudCoreVersion = "2.29.0"
-val googleCloudDatastoreVersion = "0.109.0"
 val googleCloudMonitoringVersion = "3.34.0"
-val googleCloudPubSubVersion = "1.108.0"
+val googleCloudProtoBigQueryStorageBetaVersion = "0.172.0"
+val googleCloudProtoBigTableVersion = googleCloudBigTableVersion
+val googleCloudProtoDatastoreVersion = "0.109.0"
+val googleCloudProtoPubSubVersion = "1.108.0"
 val googleCloudSpannerVersion = "6.56.0"
 val googleCloudStorageVersion = "2.31.0"
-val googleCommonProtoVersion = "2.30.0"
 val googleHttpClientVersion = "1.43.3"
-val googleIAMVersion = "1.25.0"
+val googleProtoCommonVersion = "2.30.0"
+val googleProtoIAMVersion = "1.25.0"
 val grpcVersion = "1.60.0"
 val j2objcAnnotationsVersion = "2.8"
 val jsr305Version = "3.0.2"
@@ -680,7 +681,7 @@ lazy val `scio-test` = project
       moduleFilter("junit", "junit")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
@@ -781,16 +782,16 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % bigQueryStorageBetaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
-      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
+      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudProtoPubSubVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % googleCloudProtoBigQueryStorageBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudProtoBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
+      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % googleCloudProtoPubSubVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
-      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
+      "com.google.cloud" % "google-cloud-bigquerystorage" % googleCloudBigQueryStorageVersion,
       "com.google.cloud" % "google-cloud-bigtable" % googleCloudBigTableVersion,
       "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
@@ -1179,8 +1180,8 @@ lazy val `scio-examples` = project
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
@@ -1666,12 +1667,12 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax-httpjson" % gaxVersion,
   "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-  "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonProtoVersion,
+  "com.google.api.grpc" % "grpc-google-common-protos" % googleProtoCommonVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
-  "com.google.api.grpc" % "proto-google-common-protos" % googleCommonProtoVersion,
-  "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,
+  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
+  "com.google.api.grpc" % "proto-google-common-protos" % googleProtoCommonVersion,
+  "com.google.api.grpc" % "proto-google-iam-v1" % googleProtoIAMVersion,
   "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
