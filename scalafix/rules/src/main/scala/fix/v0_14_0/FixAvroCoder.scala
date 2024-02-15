@@ -26,10 +26,6 @@ object FixAvroCoder {
     "com/spotify/scio/testing/JobTest.Builder#inputStream()."
   )
 
-  val SmbTransformMatcher: SymbolMatcher = SymbolMatcher.normalized(
-    "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeTransform"
-  )
-
   val AvroSmbReadMatchers: SymbolMatcher = SymbolMatcher.normalized(
     "org/apache/beam/sdk/extensions/smb/AvroSortedBucketIO#Read#",
     "org/apache/beam/sdk/extensions/smb/ParquetAvroSortedBucketIO#Read#"
