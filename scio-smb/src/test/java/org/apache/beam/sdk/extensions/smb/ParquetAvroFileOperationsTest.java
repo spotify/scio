@@ -20,6 +20,7 @@ package org.apache.beam.sdk.extensions.smb;
 import static org.apache.beam.sdk.extensions.smb.TestUtils.fromFolder;
 import static org.apache.beam.sdk.transforms.display.DisplayDataMatchers.hasDisplayItem;
 
+import com.spotify.scio.smb.AvroGeneratedUserProjection;
 import com.spotify.scio.smb.TestLogicalTypes;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -189,7 +190,7 @@ public class ParquetAvroFileOperationsTest {
   }
 
   @Test
-  public void testSpecificProjection() throws Exception {
+  public void testSpecificRecordWithProjection() throws Exception {
     final Schema projection =
         SchemaBuilder.record("AvroGeneratedUserProjection")
             .namespace("org.apache.beam.sdk.extensions.smb")
@@ -231,6 +232,47 @@ public class ParquetAvroFileOperationsTest {
                         .setName(String.format("user%02d", i))
                         .setFavoriteColor(null)
                         .setFavoriteNumber(null)
+                        .build())
+            .collect(Collectors.toList());
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testProjectedSpecificRecord() throws Exception {
+    final ResourceId file =
+        fromFolder(output)
+            .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
+
+    // Write records using full AvroGeneratedUser schema
+    final List<AvroGeneratedUser> records =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    AvroGeneratedUser.newBuilder()
+                        .setName(String.format("user%02d", i))
+                        .setFavoriteColor(String.format("color%02d", i))
+                        .setFavoriteNumber(i)
+                        .build())
+            .collect(Collectors.toList());
+    final FileOperations.Writer<AvroGeneratedUser> writer =
+        ParquetAvroFileOperations.of(AvroGeneratedUser.class).createWriter(file);
+    for (AvroGeneratedUser record : records) {
+      writer.write(record);
+    }
+    writer.close();
+
+    // Read records using generated AvroGeneratedUserProjection class
+    final List<AvroGeneratedUserProjection> actual = new ArrayList<>();
+    ParquetAvroFileOperations.of(AvroGeneratedUserProjection.class)
+        .iterator(file)
+        .forEachRemaining(actual::add);
+
+    final List<AvroGeneratedUserProjection> expected =
+        IntStream.range(0, 10)
+            .mapToObj(
+                i ->
+                    AvroGeneratedUserProjection.newBuilder()
+                        .setName(String.format("user%02d", i))
                         .build())
             .collect(Collectors.toList());
     Assert.assertEquals(expected, actual);
