@@ -23,7 +23,8 @@ import com.google.protobuf.ByteString
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import org.joda.time.Duration
-import com.spotify.scio.bigtable.{BigtableTypedWrite, BigtableWrite}
+import com.spotify.scio.bigtable.{BigtableTypedIO, BigtableWrite}
+import com.spotify.scio.coders.Coder
 import magnolify.bigtable.BigtableType
 
 /**
@@ -56,17 +57,21 @@ final class SCollectionMutationOps[T <: Mutation](
     )
 }
 
-final class BigtableTypedOps[T: BigtableType](
-  private val self: SCollection[(ByteString, Iterable[T])]
+final class BigtableTypedOps[K: Coder, T: BigtableType: Coder](
+  private val self: SCollection[(K, T)]
 ) {
+  private def btOpts(projectId: String, instanceId: String): BigtableOptions =
+    BigtableOptions.builder().setProjectId(projectId).setInstanceId(instanceId).build
+
   def saveAsBigtable(
     projectId: String,
     instanceId: String,
     tableId: String,
-    columnFamily: String
+    columnFamily: String,
+    keyFn: K => ByteString
   ): ClosedTap[Nothing] = {
-    val params = BigtableTypedWrite.WriteParam[T](columnFamily)
-    self.write(BigtableTypedWrite[T](projectId, instanceId, tableId))(params)
+    val params = BigtableTypedIO.WriteParam[K](columnFamily, keyFn)
+    self.write(BigtableTypedIO[K, T](btOpts(projectId, instanceId), tableId))(params)
   }
 
   def saveAsBigtable(
@@ -74,23 +79,26 @@ final class BigtableTypedOps[T: BigtableType](
     instanceId: String,
     tableId: String,
     columnFamily: String,
+    keyFn: K => ByteString,
     timestamp: Long
   ): ClosedTap[Nothing] = {
-    val params = BigtableTypedWrite.WriteParam[T](columnFamily, timestamp)
-    self.write(BigtableTypedWrite[T](projectId, instanceId, tableId))(params)
+    val params = BigtableTypedIO.WriteParam[K](columnFamily, keyFn, timestamp)
+    self.write(BigtableTypedIO[K, T](btOpts(projectId, instanceId), tableId))(params)
   }
 
   def saveAsBigtable(
     bigtableOptions: BigtableOptions,
     tableId: String,
     columnFamily: String,
-    timestamp: Long = BigtableTypedWrite.WriteParam.DefaultTimestamp,
+    keyFn: K => ByteString,
+    timestamp: Long = BigtableTypedIO.WriteParam.DefaultTimestamp,
     numOfShards: Int,
-    flushInterval: Duration = BigtableTypedWrite.WriteParam.DefaultFlushInterval
+    flushInterval: Duration = BigtableTypedIO.WriteParam.DefaultFlushInterval
   ): ClosedTap[Nothing] = {
     val params =
-      BigtableTypedWrite.WriteParam[T](columnFamily, timestamp, Some(numOfShards), flushInterval)
-    self.write(BigtableTypedWrite[T](bigtableOptions, tableId))(params)
+      BigtableTypedIO
+        .WriteParam[K](columnFamily, keyFn, timestamp, Some(numOfShards), flushInterval)
+    self.write(BigtableTypedIO[K, T](bigtableOptions, tableId))(params)
   }
 }
 
@@ -99,7 +107,7 @@ trait SCollectionSyntax {
     sc: SCollection[(ByteString, Iterable[T])]
   ): SCollectionMutationOps[T] = new SCollectionMutationOps[T](sc)
 
-  implicit def bigtableTypedOps[T: BigtableType](
-    sc: SCollection[(ByteString, Iterable[T])]
-  ): BigtableTypedOps[T] = new BigtableTypedOps[T](sc)
+  implicit def bigtableTypedOps[K: Coder, T: BigtableType: Coder](
+    sc: SCollection[(K, T)]
+  ): BigtableTypedOps[K, T] = new BigtableTypedOps[K, T](sc)
 }

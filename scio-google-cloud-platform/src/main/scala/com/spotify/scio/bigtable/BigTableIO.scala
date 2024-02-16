@@ -114,12 +114,12 @@ object BigtableRead {
   }
 }
 
-final case class BigtableTypedRead[T: BigtableType: Coder](
+final case class BigtableTypedIO[K: Coder, T: BigtableType: Coder](
   bigtableOptions: BigtableOptions,
   tableId: String
-) extends BigtableIO[T] {
-  override type ReadP = BigtableTypedRead.ReadParam
-  override type WriteP = Nothing
+) extends BigtableIO[(K, T)] {
+  override type ReadP = BigtableTypedIO.ReadParam[K]
+  override type WriteP = BigtableTypedIO.WriteParam[K]
 
   override def testId: String =
     s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
@@ -127,7 +127,7 @@ final case class BigtableTypedRead[T: BigtableType: Coder](
   override protected def read(
     sc: ScioContext,
     params: ReadP
-  ): SCollection[T] = {
+  ): SCollection[(K, T)] = {
     val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
     val read = BigtableRead.read(
       bigtableOptions,
@@ -139,58 +139,16 @@ final case class BigtableTypedRead[T: BigtableType: Coder](
 
     val bigtableType: BigtableType[T] = implicitly
     val cf = params.columnFamily
+    val keyFn = params.keyFn
     sc.transform(
       _.applyTransform(read)
         .setCoder(coder)
-        .map(row => bigtableType(row, cf))
-    )
-  }
-
-  override protected def write(data: SCollection[T], params: WriteP): Tap[Nothing] =
-    throw new UnsupportedOperationException(
-      "BigtableTypedRead is read-only, use BigtableTypedWrite or Mutation to write to Bigtable"
-    )
-
-  override def tap(params: ReadP): Tap[Nothing] =
-    throw new NotImplementedError("Bigtable tap not implemented")
-}
-
-object BigtableTypedRead {
-  object ReadParam {
-    val DefaultKeyRanges: Seq[ByteKeyRange] = Seq.empty[ByteKeyRange]
-    val DefaultRowFilter: RowFilter = null
-    val DefaultMaxBufferElementCount: Option[Int] = None
-  }
-
-  final case class ReadParam private (
-    columnFamily: String,
-    keyRanges: Seq[ByteKeyRange] = ReadParam.DefaultKeyRanges,
-    rowFilter: RowFilter = ReadParam.DefaultRowFilter,
-    maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
-  )
-}
-
-final case class BigtableTypedWrite[T: BigtableType](
-  bigtableOptions: BigtableOptions,
-  tableId: String
-) extends BigtableIO[(ByteString, Iterable[T])] {
-  override type ReadP = Nothing
-  override type WriteP = BigtableTypedWrite.WriteParam[T]
-
-  override def testId: String =
-    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
-
-  override protected def read(
-    sc: ScioContext,
-    params: ReadP
-  ): SCollection[(ByteString, Iterable[T])] = {
-    throw new UnsupportedOperationException(
-      "BigtableTypedWrite is write-only, use Row to read from Bigtable"
+        .map(row => keyFn(row.getKey) -> bigtableType(row, cf))
     )
   }
 
   override protected def write(
-    data: SCollection[(ByteString, Iterable[T])],
+    data: SCollection[(K, T)],
     params: WriteP
   ): Tap[Nothing] = {
     val bigtableType: BigtableType[T] = implicitly
@@ -204,48 +162,51 @@ final case class BigtableTypedWrite[T: BigtableType](
     }
     val cf = params.columnFamily
     val ts = params.timestamp
+    val keyFn = params.keyFn
     data.transform_("Bigtable write") { coll =>
       coll
-        .map { case (key, iter) =>
-          val mutations = iter
-            .flatMap(t => bigtableType.apply(t, cf, ts))
-            .asJava
+        .map { case (key, t) =>
+          val mutations = Iterable(bigtableType.apply(t, cf, ts)).asJava
             .asInstanceOf[java.lang.Iterable[Mutation]]
-          KV.of(key, mutations)
+          KV.of(keyFn(key), mutations)
         }
         .applyInternal(BigtableWrite.sink(tableId, bigtableOptions, btParams))
     }
     EmptyTap
   }
 
-  override def tap(params: ReadP): Tap[Nothing] = EmptyTap
+  override def tap(params: ReadP): Tap[Nothing] =
+    throw new NotImplementedError("Bigtable tap not implemented")
 }
 
-object BigtableTypedWrite {
+object BigtableTypedIO {
+  object ReadParam {
+    val DefaultKeyRanges: Seq[ByteKeyRange] = Seq.empty[ByteKeyRange]
+    val DefaultRowFilter: RowFilter = null
+    val DefaultMaxBufferElementCount: Option[Int] = None
+  }
+
+  final case class ReadParam[K] private (
+    columnFamily: String,
+    keyFn: ByteString => K,
+    keyRanges: Seq[ByteKeyRange] = ReadParam.DefaultKeyRanges,
+    rowFilter: RowFilter = ReadParam.DefaultRowFilter,
+    maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
+  )
+
   object WriteParam {
     val DefaultTimestamp: Long = 0L
     val DefaultNumOfShards: Option[Int] = None
     val DefaultFlushInterval: Duration = null
   }
-  final case class WriteParam[T] private (
+
+  final case class WriteParam[K] private (
     columnFamily: String,
+    keyFn: K => ByteString,
     timestamp: Long = WriteParam.DefaultTimestamp,
     numOfShards: Option[Int] = WriteParam.DefaultNumOfShards,
     flushInterval: Duration = WriteParam.DefaultFlushInterval
   )
-
-  def apply[T: BigtableType](
-    projectId: String,
-    instanceId: String,
-    tableId: String
-  ): BigtableTypedWrite[T] = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build
-    BigtableTypedWrite[T](bigtableOptions, tableId)
-  }
 }
 
 final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, tableId: String)

@@ -28,6 +28,7 @@ case class Foo(i: Int, s: String)
 class BigtableIOTest extends ScioIOSpec {
   val projectId = "project"
   val instanceId = "instance"
+  val columnFamily = "columnFamily"
 
   "BigtableIO" should "work with input" in {
     val xs = (1 to 100).map { x =>
@@ -51,18 +52,22 @@ class BigtableIOTest extends ScioIOSpec {
   }
 
   it should "work with typed input" in {
-    val xs = (1 to 100).map(x => Foo(x, x.toString))
-    testJobTestInput(xs)(BigtableIO[Foo](projectId, instanceId, _))(
-      _.typedBigtable[Foo](projectId, instanceId, _, "foo")
+    val xs = (1 to 100).map(x => x.toString -> Foo(x, x.toString))
+    testJobTestInput(xs)(BigtableIO[(String, Foo)](projectId, instanceId, _))(
+      _.typedBigtable[String, Foo](
+        projectId,
+        instanceId,
+        _,
+        columnFamily,
+        (bs: ByteString) => bs.toStringUtf8
+      )
     )
   }
 
   it should "work with typed output" in {
-    val xs = (1 to 100).map { x =>
-      (ByteString.copyFromUtf8(x.toString), Iterable(Foo(x, x.toString)))
-    }
+    val xs = (1 to 100).map(x => (x.toString, Foo(x, x.toString)))
     testJobTestOutput(xs)(BigtableIO(projectId, instanceId, _))(
-      _.saveAsBigtable(projectId, instanceId, _, "foo")
+      _.saveAsBigtable(projectId, instanceId, _, columnFamily, ByteString.copyFromUtf8 _)
     )
   }
 }
