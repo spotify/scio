@@ -20,6 +20,7 @@ package com.spotify.scio.testing
 import org.apache.beam.sdk.options._
 import com.spotify.scio._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.{ClosedTap, Tap}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.runners.PTransformOverride
 
@@ -184,6 +185,22 @@ trait PipelineTestUtils {
   }
 
   /**
+   * Test pipeline components with a [[ScioContext]] and access to the output's tap.
+   *
+   * @param fn
+   *   transform to be tested
+   * @return
+   *   a tuple containing the [[ScioResult]] and the [[Tap]] to read back data written by the tested
+   *   pipeline
+   */
+  def runWithOutput[T](fn: ScioContext => ClosedTap[T]): (ScioResult, Tap[T]) = {
+    val sc = ScioContext()
+    val tap = fn(sc)
+    val result = sc.run().waitUntilFinish() // block non-test runner
+    (result, result.tap(tap))
+  }
+
+  /**
    * Test pipeline components with a [[ScioContext]] and materialized resulting collection.
    *
    * The result [[com.spotify.scio.values.SCollection SCollection]] from `fn` is extracted and to be
@@ -196,10 +213,8 @@ trait PipelineTestUtils {
    *   [[scala.collection.Seq Seq]]
    */
   def runWithLocalOutput[U](fn: ScioContext => SCollection[U]): (ScioResult, Seq[U]) = {
-    val sc = ScioContext()
-    val f = fn(sc).materialize
-    val result: ScioResult = sc.run().waitUntilFinish() // block non-test runner
-    (result, result.tap(f).value.toSeq)
+    val (result, tap) = runWithOutput(fn.andThen(_.materialize))
+    (result, tap.value.toSeq)
   }
 
   /**
@@ -217,7 +232,7 @@ trait PipelineTestUtils {
     val sc = ScioContext()
     val (t, u) = fn(sc)
     val (tMat, uMat) = (t.materialize, u.materialize)
-    val result: ScioResult = sc.run().waitUntilFinish() // block non-test runner
+    val result = sc.run().waitUntilFinish() // block non-test runner
     (result, result.tap(tMat).value.toSeq, result.tap(uMat).value.toSeq)
   }
 }

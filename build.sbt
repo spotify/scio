@@ -123,6 +123,7 @@ val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.8"
 val magnolifyVersion = "0.7.0"
 val metricsVersion = "4.2.25"
+val munitVersion = "0.7.29"
 val neo4jDriverVersion = "4.4.13"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
@@ -137,7 +138,7 @@ val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.14.0"
-val testContainersVersion = "0.41.0"
+val testContainersVersion = "0.41.2"
 val voyagerVersion = "2.0.2"
 val zoltarVersion = "0.6.0"
 // dependent versions
@@ -263,20 +264,20 @@ val skipUnauthorizedGcpGithubWorkflow = Def.setting {
 
 ThisBuild / githubWorkflowTargetBranches := Seq("main")
 ThisBuild / githubWorkflowJavaVersions := Seq(javaDefault, java17, java21) // default MUST be head
-ThisBuild / githubWorkflowBuildPreamble := Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
-ThisBuild / githubWorkflowBuildPostamble := Seq(
+ThisBuild / githubWorkflowBuildPreamble ++= Seq(githubWorkflowGcpAuthStep, githubWorkflowSetupStep)
+ThisBuild / githubWorkflowBuildPostamble ++= Seq(
   WorkflowStep.Sbt(
     List("undeclaredCompileDependenciesTest", "unusedCompileDependenciesTest"),
     name = Some("Check dependencies")
   )
 )
-ThisBuild / githubWorkflowPublishPreamble := Seq(
+ThisBuild / githubWorkflowPublishPreamble ++= Seq(
   WorkflowStep.Sbt(
     List("scio-repl/assembly"),
     name = Some("Package repl")
   )
 )
-ThisBuild / githubWorkflowPublishPostamble := Seq(
+ThisBuild / githubWorkflowPublishPostamble ++= Seq(
   WorkflowStep.Use(
     UseRef.Public("softprops", "action-gh-release", "v1"),
     Map(
@@ -830,7 +831,8 @@ lazy val `scio-google-cloud-platform` = project
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
-      "org.typelevel" %% "cats-core" % catsVersion % Test
+      "org.typelevel" %% "cats-core" % catsVersion % Test,
+      "org.scalameta" %% "munit" % munitVersion % Test
     )
   )
 

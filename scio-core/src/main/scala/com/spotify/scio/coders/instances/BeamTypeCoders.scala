@@ -26,7 +26,7 @@ import com.spotify.scio.util.ScioUtil
 import java.io.StringReader
 import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.io.FileIO.ReadableFile
-import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2}
+import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2, ResourceId, ResourceIdCoder}
 import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
 import org.apache.beam.sdk.transforms.windowing.{
@@ -55,6 +55,8 @@ trait BeamTypeCoders extends CoderGrammar {
   implicit def beamKVCoder[K: Coder, V: Coder]: Coder[KV[K, V]] = kv(Coder[K], Coder[V])
 
   implicit lazy val readableFileCoder: Coder[ReadableFile] = beam(ReadableFileCoder.of())
+
+  implicit lazy val resourceIdCoder: Coder[ResourceId] = beam(ResourceIdCoder.of())
 
   implicit lazy val matchResultMetadataCoder: Coder[MatchResult.Metadata] =
     beam(MetadataCoderV2.of())

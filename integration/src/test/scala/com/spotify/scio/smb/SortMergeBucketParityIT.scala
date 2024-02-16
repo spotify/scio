@@ -21,7 +21,9 @@ import java.nio.file.Files
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.smb.util.SMBMultiJoin
+import com.spotify.scio.testing.PipelineTestUtils
 import com.spotify.scio.util.MultiJoin
 import com.spotify.scio.values.SCollection
 import org.apache.avro.Schema
@@ -39,24 +41,14 @@ import scala.jdk.CollectionConverters._
 import scala.util.Random
 
 /** Asserts that SMB join/cogroup operations have parity with the vanilla Scio join/cogroup. */
-class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
-  private val schema = Schema.createRecord(
-    "User",
-    "",
-    "com.spotify.scio.smb",
-    false,
-    List(
-      new Field("key", Schema.create(Schema.Type.INT), "", -1),
-      new Field("value", Schema.create(Schema.Type.STRING), "", "")
-    ).asJava
-  )
+class SortMergeBucketParityIT extends AnyFlatSpec with Matchers with PipelineTestUtils {
+
+  import SortMergeBucketParityIT._
 
   private val keyFn: GenericRecord => Integer = _.get("key").toString.toInt
 
-  implicit private val coder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
-
   "sortMergeCoGroup" should "have parity with a 2-way CoGroup" in withNumSources(2) { inputs =>
-    compareResults(
+    compareReads(
       _.sortMergeCoGroup(
         classOf[Integer],
         mkRead(inputs(0)),
@@ -75,7 +67,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
   it should "have parity with a 2-way CoGroup across multiple input partitions" in
     withNumSources(4) { inputs =>
-      compareResults(
+      compareReads(
         _.sortMergeCoGroup(
           classOf[Integer],
           AvroSortedBucketIO
@@ -107,7 +99,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
     }
 
   it should "have parity with a 3-way CoGroup" in withNumSources(3) { inputs =>
-    compareResults(
+    compareReads(
       _.sortMergeCoGroup(
         classOf[Integer],
         mkRead(inputs(0)),
@@ -127,7 +119,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
   }
 
   it should "have parity with a 4-way CoGroup" in withNumSources(4) { inputs =>
-    compareResults(
+    compareReads(
       _.sortMergeCoGroup(
         classOf[Integer],
         mkRead(inputs(0)),
@@ -149,13 +141,13 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
   }
 
   "sortMergeGroupByKey" should "have parity with Scio's groupBy" in withNumSources(1) { inputs =>
-    compareResults(
+    compareReads(
       _.sortMergeGroupByKey(classOf[Integer], mkRead(inputs(0)))
     )(sc => sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro").groupBy(keyFn))
   }
 
   "sortMergeJoin" should "have parity with a 2-way Join" in withNumSources(2) { inputs =>
-    compareResults(
+    compareReads(
       _.sortMergeJoin(
         classOf[Integer],
         mkRead(inputs(0)),
@@ -173,7 +165,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
   }
 
   "SMBMultiJoin" should "have parity with a 5-way CoGroup" in withNumSources(5) { inputs =>
-    compareResults(
+    compareReads(
       SMBMultiJoin(_)
         .sortMergeCoGroup(
           classOf[Integer],
@@ -203,9 +195,114 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
     }
   }
 
+  "sortMergeTransform" should "have parity with a 2-way CoGroup + Write" in withNumSources(2) {
+    inputs =>
+      val outputDir = Files.createTempDirectory("smb-parity-2").toFile
+
+      compareTaps(
+        _.sortMergeTransform(
+          classOf[Integer],
+          mkRead(inputs(0)),
+          mkRead(inputs(1)),
+          TargetParallelism.auto()
+        ).to(
+          AvroSortedBucketIO
+            .transformOutput(classOf[Integer], "key", schema)
+            .to(outputDir.toPath.resolve("smb").toString)
+        ).via { case (key, (lhs, rhs), outputCollector) =>
+          (lhs ++ rhs).foreach { r =>
+            outputCollector.accept(mkRecord(key, s"${r.get("value")}-transformed"))
+          }
+        }
+      ) { sc =>
+        val (avroA, avroB) = (
+          sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+          sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro")
+        )
+
+        avroA
+          .keyBy(keyFn)
+          .cogroup(avroB.keyBy(keyFn))
+          .flatMap { case (key, (lhs, rhs)) =>
+            (lhs ++ rhs).map(r => mkRecord(key, s"${r.get("value")}-transformed"))
+          }
+          .saveAsAvroFile(outputDir.toPath.resolve("baseline").toString, schema = schema)
+      }
+  }
+
+  it should "have parity with a 3-way CoGroup + Write" in withNumSources(3) { inputs =>
+    val outputDir = Files.createTempDirectory("smb-parity-3").toFile
+
+    compareTaps(
+      _.sortMergeTransform(
+        classOf[Integer],
+        mkRead(inputs(0)),
+        mkRead(inputs(1)),
+        mkRead(inputs(2)),
+        TargetParallelism.auto()
+      ).to(
+        AvroSortedBucketIO
+          .transformOutput(classOf[Integer], "key", schema)
+          .to(outputDir.toPath.resolve("smb").toString)
+      ).via { case (key, (a, b, c), outputCollector) =>
+        (a ++ b ++ c).foreach { r =>
+          outputCollector.accept(mkRecord(key, s"${r.get("value")}-transformed"))
+        }
+      }
+    ) { sc =>
+      val (avroA, avroB, avroC) = (
+        sc.avroFile(inputs(0).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(1).getAbsolutePath, schema, ".avro"),
+        sc.avroFile(inputs(2).getAbsolutePath, schema, ".avro")
+      )
+
+      avroA
+        .keyBy(keyFn)
+        .cogroup(avroB.keyBy(keyFn), avroC.keyBy(keyFn))
+        .flatMap { case (key, (a, b, c)) =>
+          (a ++ b ++ c).map(r => mkRecord(key, s"${r.get("value")}-transformed"))
+        }
+        .saveAsAvroFile(outputDir.toPath.resolve("baseline").toString, schema = schema)
+    }
+  }
+
+  private def compareReads[T](
+    smbOp: ScioContext => SCollection[T]
+  )(baselineOp: ScioContext => SCollection[T]): Assertion =
+    compareTaps(sc => smbOp(sc).materialize)(sc => baselineOp(sc).materialize)
+
+  private def compareTaps[T](
+    smbOp: ScioContext => ClosedTap[T]
+  )(baselineOp: ScioContext => ClosedTap[T]): Assertion = {
+    val (_, smbTap) = runWithOutput(smbOp(_))
+    val (_, baselineTap) = runWithOutput(baselineOp(_))
+
+    smbTap.value.toSeq should contain theSameElementsAs baselineTap.value.toSeq
+  }
+}
+
+object SortMergeBucketParityIT {
+  val schema = Schema.createRecord(
+    "User",
+    "",
+    "com.spotify.scio.smb",
+    false,
+    List(
+      new Field("key", Schema.create(Schema.Type.INT), "", -1),
+      new Field("value", Schema.create(Schema.Type.STRING), "", "")
+    ).asJava
+  )
+
+  implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(schema)
+
+  def mkRecord(key: Int, value: String): GenericRecord = new GenericRecordBuilder(schema)
+    .set("key", key)
+    .set("value", s"v$value")
+    .build()
+
   // Write randomly generated Avro records in SMB fashion to `numSources` destinations
   // in the local file system
-  private def withNumSources(numSources: Int)(
+  def withNumSources(numSources: Int)(
     testFn: Map[Int, File] => Any
   ): Unit = {
     val tempFolder = Files.createTempDirectory("smb").toFile
@@ -213,10 +310,7 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
 
     val outputPaths = (0 until numSources).map { n =>
       val data = (0 to Random.nextInt(100)).map { i =>
-        new GenericRecordBuilder(schema)
-          .set("key", i)
-          .set("value", s"v$i")
-          .build()
+        mkRecord(i, i.toString)
       }
 
       val outputPath = new File(tempFolder, s"source$n")
@@ -242,23 +336,8 @@ class SortMergeBucketParityIT extends AnyFlatSpec with Matchers {
     }
   }
 
-  private def mkRead(path: File): SortedBucketIO.Read[GenericRecord] =
+  def mkRead(path: File): SortedBucketIO.Read[GenericRecord] =
     AvroSortedBucketIO
       .read(new TupleTag[GenericRecord](path.getAbsolutePath), schema)
       .from(path.getAbsolutePath)
-
-  private def compareResults[T](
-    smbOp: ScioContext => SCollection[T]
-  )(baselineOp: ScioContext => SCollection[T]): Assertion = {
-    val sc = ScioContext()
-    val smbTap = smbOp(sc).materialize
-    val baselineTap = baselineOp(sc).materialize
-
-    val closedContext = sc.run().waitUntilDone()
-
-    val smbResults = closedContext.tap(smbTap).value.toSeq
-    val baselineResults = closedContext.tap(baselineTap).value.toSeq
-
-    smbResults should contain theSameElementsAs baselineResults
-  }
 }

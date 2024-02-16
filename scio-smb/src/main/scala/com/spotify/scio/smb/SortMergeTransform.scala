@@ -28,7 +28,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketIO.{
   Transformable
 }
 import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.{BucketItem, MergedBucket}
-import org.apache.beam.sdk.transforms.DoFn
+import org.apache.beam.sdk.transforms.{DoFn, ParDo}
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement}
 import org.apache.beam.sdk.transforms.join.CoGbkResult
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
@@ -127,7 +127,7 @@ object SortMergeTransform {
     override def withSideInputs(
       sides: SideInput[_]*
     ): WithSideInputsWriteBuilder[KeyType, R, W] =
-      new WithSideInputsWriteBuilderTest(sc, read, output)
+      new WithSideInputsWriteBuilderTest(sc, read, output, sides)
 
     override def via(
       transformFn: (KeyType, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
@@ -206,7 +206,8 @@ object SortMergeTransform {
   private[smb] class WithSideInputsWriteBuilderTest[KeyType, K1, K2, R, W: Coder](
     @transient private val sc: ScioContext,
     read: => SCollection[(KeyType, R)],
-    output: TransformOutput[K1, K2, W]
+    output: TransformOutput[K1, K2, W],
+    sides: Seq[SideInput[_]]
   ) extends WithSideInputsWriteBuilder[KeyType, R, W] {
     override def via(
       transformFn: (
@@ -216,7 +217,11 @@ object SortMergeTransform {
         SortedBucketTransform.SerializableConsumer[W]
       ) => Unit
     ): ClosedTap[W] = {
-      val data = read.parDo(new ViaTransformWithSideOutput(transformFn))
+      val data = read.applyTransform(
+        ParDo
+          .of(new ViaTransformWithSideOutput(transformFn))
+          .withSideInputs(sides.map(_.view).asJava)
+      )
       TestDataManager.getOutput(sc.testId.get)(SortedBucketIOUtil.testId(output))
       ClosedTap(TapOf[W].saveForTest(data))
     }

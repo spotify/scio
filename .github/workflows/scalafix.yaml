@@ -35,7 +35,8 @@ jobs:
 
       - name: sbt update
         if: steps.setup-java-corretto-11.outputs.cache-hit == 'false'
-        run: sbt scalafix/update
+        run: sbt update
+        working-directory: scalafix
 
       - name: Test
         run: sbt test

@@ -178,7 +178,7 @@ object SortMergeBucketJoinExample {
     sc.sortMergeJoin(
       classOf[Integer],
       ParquetAvroSortedBucketIO
-        .read(new TupleTag[GenericRecord](), SortMergeBucketExample.UserDataSchema)
+        .read(new TupleTag[GenericRecord]("users"), SortMergeBucketExample.UserDataSchema)
         .withProjection(
           SchemaBuilder
             .record("UserProjection")
@@ -195,7 +195,7 @@ object SortMergeBucketJoinExample {
         .withPredicate((xs, _) => xs.size() == 0)
         .from(args("users")),
       ParquetTypeSortedBucketIO
-        .read(new TupleTag[AccountProjection]())
+        .read(new TupleTag[AccountProjection]("accounts"))
         .from(args("accounts")),
       TargetParallelism.max()
     ).map { case (_, (userData, account)) =>
@@ -235,12 +235,12 @@ object SortMergeBucketTransformExample {
     sc.sortMergeTransform(
       classOf[Integer],
       ParquetAvroSortedBucketIO
-        .read(new TupleTag[GenericRecord](), SortMergeBucketExample.UserDataSchema)
+        .read(new TupleTag[GenericRecord]("users"), SortMergeBucketExample.UserDataSchema)
         // Filter at the Parquet IO level to users under 50
         .withFilterPredicate(FilterApi.lt(FilterApi.intColumn("age"), Int.box(50)))
         .from(args("users")),
       ParquetTypeSortedBucketIO
-        .read(new TupleTag[AccountProjection]())
+        .read(new TupleTag[AccountProjection]("accounts"))
         .from(args("accounts")),
       TargetParallelism.auto()
     ).to(

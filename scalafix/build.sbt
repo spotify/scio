@@ -1,9 +1,8 @@
-import sbt.librarymanagement.VersionNumber.SemVer
-
 lazy val V = _root_.scalafix.sbt.BuildInfo
 
 inThisBuild(
   List(
+    resolvers ++= Resolver.sonatypeOssRepos("snapshots"),
     organization := "com.spotify",
     scalaVersion := V.scala212,
     scalacOptions ++= List("-Yrangepos"),
@@ -71,7 +70,8 @@ def scio(version: String): List[ModuleID] = {
     case _ =>
       List(
         "scio-google-cloud-platform", // replaced scio-bigquery
-        "scio-extra" // new in 0.10
+        "scio-extra", // new in 0.10
+        "scio-smb"
       )
   })
 

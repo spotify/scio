@@ -79,10 +79,18 @@ object StorageUtil {
         schema.getLogicalType match {
           case null => "BYTES"
           case t if t.getName == "decimal" =>
-            assert(schema.getObjectProp("precision").asInstanceOf[Int] == 38)
-            assert(schema.getObjectProp("scale").asInstanceOf[Int] == 9)
-            "NUMERIC"
-          case t => s"Unsupported logical type: $t"
+            val precision = schema.getObjectProp("precision").asInstanceOf[Int]
+            val scale = schema.getObjectProp("scale").asInstanceOf[Int]
+            (precision, scale) match {
+              case (38, 9)  => "NUMERIC"
+              case (77, 38) => "BIGNUMERIC"
+              case _ =>
+                throw new IllegalStateException(
+                  s"Unsupported decimal precision and scale: ($precision, $scale)"
+                )
+            }
+          case t =>
+            throw new IllegalStateException(s"Unsupported logical type: $t")
         }
       case Type.INT =>
         schema.getLogicalType match {

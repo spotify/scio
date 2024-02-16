@@ -20,11 +20,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.extensions.smb.SortedBucketIO.ComparableKeyBytes;
+import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Distribution;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.join.CoGbkResult;
 import org.apache.beam.sdk.transforms.join.CoGbkResultSchema;
@@ -56,6 +59,8 @@ public class MultiSourceKeyGroupReader<KeyType> {
 
   private int runningKeyGroupSize = 0;
   private final Distribution keyGroupSize;
+
+  private final Map<TupleTag<?>, Counter> predicateFilteredRecordsCounts;
   private final boolean materializeKeyGroup;
   private final Comparator<ComparableKeyBytes> keyComparator;
 
@@ -69,13 +74,24 @@ public class MultiSourceKeyGroupReader<KeyType> {
       CoGbkResultSchema resultSchema,
       BucketMetadata<?, ?, ?> someArbitraryBucketMetadata,
       Comparator<ComparableKeyBytes> keyComparator,
-      Distribution keyGroupSize,
+      String metricsPrefix,
       boolean materializeKeyGroup,
       int bucketId,
       int effectiveParallelism,
       PipelineOptions options) {
     this.keyFn = keyFn;
-    this.keyGroupSize = keyGroupSize;
+    this.keyGroupSize = Metrics.distribution(metricsPrefix, metricsPrefix + "-KeyGroupSize");
+    this.predicateFilteredRecordsCounts =
+        sources.stream()
+            .collect(
+                Collectors.toMap(
+                    src -> src.tupleTag,
+                    src ->
+                        Metrics.counter(
+                            metricsPrefix,
+                            metricsPrefix
+                                + "-PredicateFilteredRecordsCount_"
+                                + src.tupleTag.getId())));
     this.materializeKeyGroup = materializeKeyGroup;
     this.keyComparator = keyComparator;
     this.resultSchema = resultSchema;
@@ -191,6 +207,8 @@ public class MultiSourceKeyGroupReader<KeyType> {
                     if ((predicate).apply(values, v)) {
                       values.add(v);
                       runningKeyGroupSize++;
+                    } else {
+                      predicateFilteredRecordsCounts.get(src.tupleTag).inc();
                     }
                   });
               KeyGroupOutputSize sz =

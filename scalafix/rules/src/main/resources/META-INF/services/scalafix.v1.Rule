@@ -18,4 +18,7 @@ fix.v0_13_0.FixTaps
 fix.v0_14_0.FixAvroSchemasPackage
 fix.v0_14_0.FixAvroCoder
 fix.v0_14_0.FixDynamicAvro
+fix.v0_14_0.FixGenericAvro
+fix.v0_14_0.FixLogicalTypeSupplier
+fix.v0_14_0.FixSMBCharSequenceKey
 

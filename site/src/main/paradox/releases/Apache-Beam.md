@@ -16,6 +16,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio** | **SDK Dependency** | **Description**                                                                                                                     |
 |:--------:|:------------------:|:------------------------------------------------------------------------------------------------------------------------------------|
+|  0.14.x  | Apache Beam 2.x.x  | avro removed from scio-core, explicit kryo coder fallback, official tensorflow metadata, hadoop 3 and parquet 1.13                  |
 |  0.13.x  | Apache Beam 2.x.x  | scio-elasticsearch6 removed. scio-elasticsearch7 migrated to new client. File based ScioIO param changes.                           |
 |  0.12.x  | Apache Beam 2.x.x  | com.spotify.scio.extra.bigquery, com.spotify.scio.pubsub removed. scio-elasticsearch6 deprecated.                                   |
 |  0.11.x  | Apache Beam 2.x.x  | scio-sql and case-app removed, com.spotify.scio.extra.bigquery deprecated, shaded Beam Avro coder, `tensorflow-core-platform` 0.3.3 |
@@ -32,6 +33,7 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 
 | **Scio Version** | **Beam Version** | **Details**                                           |
 |:----------------:|:----------------:|:------------------------------------------------------|
+|      0.14.0      |      2.53.0      | This version will be deprecated on January 4, 2025.   |
 |      0.13.6      |      2.52.0      | This version will be deprecated on November 17, 2024. |
 |      0.13.5      |      2.51.0      | This version will be deprecated on October 12, 2024.  |
 |      0.13.4      |      2.51.0      | This version will be deprecated on October 12, 2024.  |
@@ -43,24 +45,11 @@ Also check out the [SDK Version Support Status](https://cloud.google.com/dataflo
 |      0.12.7      |      2.46.0      | This version will be deprecated on March 10, 2024.    |
 |      0.12.6      |      2.46.0      | This version will be deprecated on March 10, 2024.    |
 |      0.12.5      |      2.45.0      | This version will be deprecated on February 15, 2024. |
-|      0.12.4      |      2.44.0      | This version will be deprecated on January 13, 2024.  |
-|      0.12.3      |      2.44.0      | This version will be deprecated on January 13, 2024.  |
-|      0.12.2      |      2.44.0      | This version will be deprecated on January 13, 2024.  |
+|      0.12.4      |      2.44.0      | Deprecated on January 13, 2024.                       |
+|      0.12.3      |      2.44.0      | Deprecated on January 13, 2024.                       |
+|      0.12.2      |      2.44.0      | Deprecated on January 13, 2024.                       |
 |      0.12.1      |      2.43.0      | Deprecated on November 17, 2023.                      |
 |      0.12.0      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
-|     0.11.14      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
-|     0.11.13      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
-|     0.11.12      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
-|     0.11.11      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
-|     0.11.10      |      2.41.0      | Deprecated on August 23rd, 2023.                      |
-|      0.11.9      |      2.39.0      | Deprecated on May 25, 2023.                           |
-|      0.11.6      |      2.38.0      | Deprecated on April 20, 2023.                         |
-|      0.11.5      |      2.36.0      | Deprecated on February 7, 2023.                       |
-|      0.11.4      |      2.35.0      | Deprecated on December 29, 2022.                      |
-|      0.11.3      |      2.35.0      | Deprecated on December 29, 2022.                      |
-|      0.11.2      |      2.34.0      | Deprecated on November 11, 2022.                      |
-|      0.11.1      |      2.33.0      | Deprecated on October 7, 2022.                        |
-|      0.11.0      |      2.32.0      | Deprecated on August 25, 2022.                        |
 
 ## Beam dependencies
 

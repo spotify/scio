@@ -20,8 +20,8 @@ package com.spotify.scio.coders.instances
 import com.spotify.scio.coders.{Coder, CoderDerivation, CoderGrammar}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
 import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder => BIterableCoder, _}
-import org.apache.beam.sdk.util.{BufferedElementCountingOutputStream, CoderUtils, VarInt}
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
+import org.apache.beam.sdk.util.{BufferedElementCountingOutputStream, CoderUtils, VarInt}
 
 import java.io.{InputStream, OutputStream}
 import java.lang.{Iterable => JIterable}
@@ -29,7 +29,7 @@ import java.util.{Collections, List => JList}
 import scala.collection.compat._
 import scala.collection.{mutable => m, AbstractIterable, BitSet, SortedSet}
 import scala.jdk.CollectionConverters._
-import scala.reflect.ClassTag
+import scala.reflect.{classTag, ClassTag}
 import scala.util.{Failure, Success, Try}
 
 private[coders] object UnitCoder extends AtomicCoder[Unit] {
@@ -452,6 +452,14 @@ trait ScalaCoders extends CoderGrammar with CoderDerivation {
   implicit lazy val bigDecimalCoder: Coder[BigDecimal] =
     xmap(beam(BigDecimalCoder.of()))(BigDecimal.apply, _.bigDecimal)
   implicit lazy val bitSetCoder: Coder[BitSet] = beam(new BitSetCoder)
+
+  implicit def enumerationCoder[E <: Enumeration: ClassTag]: Coder[E#Value] = {
+    import scala.reflect.runtime.{currentMirror => m}
+    val sym = m.moduleSymbol(classTag[E].runtimeClass)
+    val e = m.reflectModule(sym).instance.asInstanceOf[E]
+    xmap(Coder[Int])(e.apply, _.id)
+  }
+
   implicit def throwableCoder[T <: Throwable: ClassTag]: Coder[T] = kryo[T]
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
     transform(Coder[T])(bc => beam(new SeqCoder[T](bc)))

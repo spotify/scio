@@ -381,8 +381,8 @@ object ParquetRead {
     val avroClass = ScioUtil.classOf[T]
     val readSchema = ReflectData.get().getSchema(avroClass)
     AvroReadSupport.setAvroReadSchema(configuration, readSchema)
+    AvroReadSupport.setRequestedProjection(configuration, Option(projection).getOrElse(readSchema))
 
-    Option(projection).foreach(p => AvroReadSupport.setRequestedProjection(configuration, p))
     Option(predicate).foreach(p => ParquetInputFormat.setFilterPredicate(configuration, p))
 
     val cleanedFn = Functions.serializableFn(ClosureCleaner.clean(projectionFn))

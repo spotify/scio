@@ -56,8 +56,6 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.fs.ResourceIdCoder;
-import org.apache.beam.sdk.metrics.Distribution;
-import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -112,7 +110,6 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
   protected final int effectiveParallelism;
   protected final int bucketOffsetId;
   protected SourceSpec sourceSpec;
-  protected final Distribution keyGroupSize;
   protected Long estimatedSizeBytes;
   protected final String metricsKey;
 
@@ -153,8 +150,6 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     this.bucketOffsetId = bucketOffsetId;
     this.effectiveParallelism = effectiveParallelism;
     this.metricsKey = metricsKey == null ? getDefaultMetricsKey() : metricsKey;
-    this.keyGroupSize =
-        Metrics.distribution(SortedBucketSource.class, this.metricsKey + "-KeyGroupSize");
     this.estimatedSizeBytes = estimatedSizeBytes;
   }
 
@@ -284,7 +279,7 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
             coGbkResultSchema(),
             someArbitraryBucketMetadata,
             comparator(),
-            keyGroupSize,
+            metricsKey,
             true,
             bucketOffsetId,
             effectiveParallelism,

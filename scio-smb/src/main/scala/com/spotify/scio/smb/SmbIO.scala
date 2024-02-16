@@ -41,8 +41,8 @@ object SmbIO {
     new SmbIO[K, T](path, keyBy)
 
   def testId(paths: String*): String = {
-    val normalizedPaths = paths.map(p => ScioUtil.strippedPath(p) + "/").mkString(",")
-    s"SortedBucketIO($normalizedPaths)"
+    val normalizedPaths = paths.map(p => ScioUtil.strippedPath(p) + "/").sorted.mkString(",")
+    s"SmbIO($normalizedPaths)"
   }
 
   private[scio] def tap[T: Coder](

@@ -144,6 +144,13 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       beFullyCompliantNotConsistentWithEquals()
   }
 
+  it should "support Scala enumerations" in {
+    ScalaColor.Red coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[beam.VarIntCoder] and
+      beFullyCompliant()
+  }
+
   it should "support Scala option" in {
     Option(1) coderShould roundtrip() and
       beOfType[Disjunction[_, _]] and
@@ -850,6 +857,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   object InnerObject {
     case class InnerCaseClass(str: String)
   }
+}
+
+// enumeration
+object ScalaColor extends Enumeration {
+  val Red, Green, Blue = Value
 }
 
 // record

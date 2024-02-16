@@ -45,7 +45,7 @@ import org.apache.beam.sdk.extensions.smb.SortedBucketSink.WriteResult;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.fs.ResourceId;
-import org.apache.beam.sdk.metrics.Distribution;
+import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.schemas.transforms.Group;
@@ -123,7 +123,6 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
             filenamePolicy.forDestination(),
             sourceSpec.hashType);
 
-    final Distribution dist = Metrics.distribution(getName(), getName() + "-KeyGroupSize");
     if (transformFn != null) {
       this.doFn =
           ParDo.of(
@@ -134,7 +133,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                   fileAssignment,
                   fileOperations,
                   transformFn,
-                  dist));
+                  getName()));
     } else {
       this.doFn =
           ParDo.of(
@@ -145,7 +144,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
                       fileAssignment,
                       fileOperations,
                       sideInputTransformFn,
-                      dist))
+                      getName()))
               .withSideInputs(sides);
     }
   }
@@ -249,9 +248,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
 
   private static class OutputCollector<ValueT> implements SerializableConsumer<ValueT> {
     private final Writer<ValueT> writer;
+    private final Counter recordsWritten;
 
-    OutputCollector(Writer<ValueT> writer) {
+    OutputCollector(Writer<ValueT> writer, Counter recordsWritten) {
       this.writer = writer;
+      this.recordsWritten = recordsWritten;
     }
 
     void onComplete() {
@@ -266,6 +267,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     public void accept(ValueT t) {
       try {
         writer.write(t);
+        recordsWritten.inc();
       } catch (IOException e) {
         throw new RuntimeException("Write of element " + t + " failed: ", e);
       }
@@ -407,7 +409,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
     protected final SMBFilenamePolicy.FileAssignment fileAssignment;
     protected final FileOperations<FinalValueT> fileOperations;
     protected final List<SortedBucketSource.BucketedInput<?>> sources;
-    protected final Distribution keyGroupSize;
+    protected final String metricsPrefix;
     private final Function<SortedBucketIO.ComparableKeyBytes, FinalKeyT> keyFn;
     private final Comparator<SortedBucketIO.ComparableKeyBytes> keyComparator;
 
@@ -417,11 +419,11 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         Comparator<SortedBucketIO.ComparableKeyBytes> keyComparator,
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
-        Distribution keyGroupSize) {
+        String metricsPrefix) {
       this.fileAssignment = fileAssignment;
       this.fileOperations = fileOperations;
       this.sources = sources;
-      this.keyGroupSize = keyGroupSize;
+      this.metricsPrefix = metricsPrefix;
       this.keyFn = keyFn;
       this.keyComparator = keyComparator;
     }
@@ -454,8 +456,10 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
       ResourceId dst =
           fileAssignment.forBucket(BucketShardId.of(bucketId, 0), effectiveParallelism, 1);
       OutputCollector<FinalValueT> outputCollector;
+      final Counter recordsWritten =
+          Metrics.counter(metricsPrefix, metricsPrefix + "-RecordsWritten");
       try {
-        outputCollector = new OutputCollector<>(fileOperations.createWriter(dst));
+        outputCollector = new OutputCollector<>(fileOperations.createWriter(dst), recordsWritten);
       } catch (IOException err) {
         throw new RuntimeException("Failed to create file writer for transformed output", err);
       }
@@ -470,7 +474,7 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
               coGbkResultSchema(),
               someArbitraryBucketMetadata,
               keyComparator,
-              keyGroupSize,
+              metricsPrefix,
               false,
               bucketId,
               effectiveParallelism,
@@ -513,8 +517,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         TransformFn<FinalKeyT, FinalValueT> transformFn,
-        Distribution keyGroupSize) {
-      super(sources, keyFn, keyComparator, fileAssignment, fileOperations, keyGroupSize);
+        String metricsPrefix) {
+      super(sources, keyFn, keyComparator, fileAssignment, fileOperations, metricsPrefix);
       this.transformFn = transformFn;
     }
 
@@ -539,8 +543,8 @@ public class SortedBucketTransform<FinalKeyT, FinalValueT> extends PTransform<PB
         SMBFilenamePolicy.FileAssignment fileAssignment,
         FileOperations<FinalValueT> fileOperations,
         TransformFnWithSideInputContext<FinalKeyT, FinalValueT> transformFn,
-        Distribution keyGroupSize) {
-      super(sources, keyFn, keyComparator, fileAssignment, fileOperations, keyGroupSize);
+        String metricsPrefix) {
+      super(sources, keyFn, keyComparator, fileAssignment, fileOperations, metricsPrefix);
       this.transformFn = transformFn;
     }
 

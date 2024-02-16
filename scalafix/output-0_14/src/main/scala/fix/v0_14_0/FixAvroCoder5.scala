@@ -6,6 +6,9 @@ import org.apache.avro.generic.GenericRecord
 import com.spotify.scio.avro._
 
 object FixAvroCoder5 {
+
+  implicit val c = avroGenericRecordCoder
+
   def foo[T : Coder]() = ???
-  val c = foo[GenericRecord]
+  val r = foo[GenericRecord]
 }

@@ -49,6 +49,11 @@ class PipelineTestUtilsTest
     } should have message msg
   }
 
+  "runWithOutput" should "work" in {
+    val (_, tap) = runWithOutput(_.parallelize(1 to 10).materialize)
+    tap.value.toSeq should contain theSameElementsAs (1 to 10)
+  }
+
   "runWithData" should "take the input and materialize the output" in {
     val output = runWithData(Seq(1, 2, 3))(_.map(_ * 2))
     output should contain theSameElementsAs Seq(2, 4, 6)

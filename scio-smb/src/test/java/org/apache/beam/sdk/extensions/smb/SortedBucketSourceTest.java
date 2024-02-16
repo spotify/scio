@@ -343,7 +343,7 @@ public class SortedBucketSourceTest {
     write(lhsPolicy.forDestination(), metadata, singleSourceGbkInput);
     PCollection<KV<KeyType, CoGbkResult>> output =
         pipeline.apply("SingleSourceGbk-" + UUID.randomUUID(), Read.from(src));
-    final Map<KeyType, List<String>> expected =
+    final KV<Map<KeyType, List<String>>, Long> filteredRecords =
         filter(groupByKey(singleSourceGbkInput, keyFn), predicate);
     PAssert.thatMap(output)
         .satisfies(
@@ -356,11 +356,17 @@ public class SortedBucketSourceTest {
                         .collect(Collectors.toList());
                 actual.put(kv.getKey(), v);
               }
-              Assert.assertEquals(expected, actual);
+              Assert.assertEquals(filteredRecords.getKey(), actual);
               return null;
             });
 
-    pipeline.run();
+    final PipelineResult result = pipeline.run();
+
+    verifyMetrics(
+        result,
+        ImmutableMap.of(),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount_GBK", filteredRecords.getValue()));
   }
 
   static final List<Map<BucketShardId, List<String>>> partitionedInputsMixedBucketsLHS,
@@ -395,7 +401,18 @@ public class SortedBucketSourceTest {
     testPartitionedPrimary(
         partitionedInputsMixedBucketsLHS,
         partitionedInputsMixedBucketsRHS,
-        TargetParallelism.min());
+        TargetParallelism.min(),
+        null);
+  }
+
+  @Test
+  @Category(NeedsRunner.class)
+  public void testMultiSourcesWithPredicate() throws Exception {
+    testPartitionedPrimary(
+        partitionedInputsMixedBucketsLHS,
+        partitionedInputsMixedBucketsRHS,
+        TargetParallelism.min(),
+        (vs, v) -> v.startsWith("x") || v.endsWith("1"));
   }
 
   @Test
@@ -432,7 +449,8 @@ public class SortedBucketSourceTest {
     testPartitionedPrimary(
         partitionedInputsUniformBucketsLHS,
         partitionedInputsUniformBucketsRHS,
-        TargetParallelism.min());
+        TargetParallelism.min(),
+        null);
   }
 
   @Test
@@ -523,7 +541,8 @@ public class SortedBucketSourceTest {
     testPartitionedPrimary(
         partitionedInputsMixedBucketsAutoParallelismLHS,
         partitionedInputsMixedBucketsAutoParallelismRHS,
-        TargetParallelism.auto());
+        TargetParallelism.auto(),
+        null);
   }
 
   @Test
@@ -558,7 +577,8 @@ public class SortedBucketSourceTest {
     testPartitionedPrimary(
         partitionedInputsMixedBucketsMaxParallelismLHS,
         partitionedInputsMixedBucketsMaxParallelismRHS,
-        TargetParallelism.max());
+        TargetParallelism.max(),
+        null);
   }
 
   @Test
@@ -593,7 +613,8 @@ public class SortedBucketSourceTest {
     testPartitionedPrimary(
         partitionedInputsMixedBucketsCustomParallelismLHS,
         partitionedInputsMixedBucketsCustomParallelismRHS,
-        TargetParallelism.of(2));
+        TargetParallelism.of(2),
+        null);
   }
 
   @SuppressWarnings("unchecked")
@@ -863,7 +884,9 @@ public class SortedBucketSourceTest {
     Map<BucketShardId, List<String>> input;
     BucketMetadata<String, K2, String> metadata;
     BucketedInput<?> bucketedInput;
-    Map<KeyType, List<String>> expected;
+    Map<KeyType, List<String>> expectedOutput;
+
+    Long expectedFilteredRecords;
     Function<String, KeyType> keyFn;
 
     public TestInput(
@@ -872,12 +895,13 @@ public class SortedBucketSourceTest {
         BucketMetadata<String, K2, String> metadata,
         Function<String, KeyType> keyFn,
         BucketedInput<?> bucketedInput,
-        Map<KeyType, List<String>> expected) {
+        KV<Map<KeyType, List<String>>, Long> expected) {
       this.tag = tag;
       this.input = input;
       this.metadata = metadata;
       this.bucketedInput = bucketedInput;
-      this.expected = expected;
+      this.expectedOutput = expected.getKey();
+      this.expectedFilteredRecords = expected.getValue();
       this.keyFn = keyFn;
     }
   }
@@ -1005,7 +1029,7 @@ public class SortedBucketSourceTest {
       throws Exception {
     write(lhsPolicy.forDestination(), lhs.metadata, lhs.input);
     write(rhsPolicy.forDestination(), rhs.metadata, rhs.input);
-    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expected, rhs.expected, src);
+    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expectedOutput, rhs.expectedOutput, src);
 
     final PipelineResult result = pipeline.run();
     // Verify Metrics
@@ -1025,7 +1049,12 @@ public class SortedBucketSourceTest {
                 elementsRead,
                 keyGroupCounts.keySet().size(),
                 keyGroupCounts.values().stream().min(Integer::compareTo).get(),
-                keyGroupCounts.values().stream().max(Integer::compareTo).get())));
+                keyGroupCounts.values().stream().max(Integer::compareTo).get())),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + lhs.tag.getId(),
+            lhs.expectedFilteredRecords,
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + rhs.tag.getId(),
+            rhs.expectedFilteredRecords));
   }
 
   private Map<BucketShardId, List<String>> mergePartitions(
@@ -1071,7 +1100,8 @@ public class SortedBucketSourceTest {
   private void testPartitionedPrimary(
       List<Map<BucketShardId, List<String>>> lhsInputs,
       List<Map<BucketShardId, List<String>>> rhsInputs,
-      TargetParallelism targetParallelism)
+      TargetParallelism targetParallelism,
+      Predicate<String> predicate)
       throws Exception {
     final TestFileOperations fileOperations = new TestFileOperations();
 
@@ -1086,7 +1116,7 @@ public class SortedBucketSourceTest {
         testInputPrimary(
             "LHS",
             allLhsValues,
-            null,
+            predicate,
             fileOperations,
             LHS_FILENAME_PREFIX,
             lhsDests.stream().map(ResourceId::toString).collect(Collectors.toList()));
@@ -1102,7 +1132,7 @@ public class SortedBucketSourceTest {
         testInputPrimary(
             "RHS",
             allRhsValues,
-            null,
+            predicate,
             fileOperations,
             RHS_FILENAME_PREFIX,
             rhsDests.stream().map(ResourceId::toString).collect(Collectors.toList()));
@@ -1114,8 +1144,17 @@ public class SortedBucketSourceTest {
             targetParallelism,
             null);
 
-    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expected, rhs.expected, src);
-    pipeline.run();
+    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expectedOutput, rhs.expectedOutput, src);
+    final PipelineResult result = pipeline.run();
+
+    verifyMetrics(
+        result,
+        ImmutableMap.of(),
+        ImmutableMap.of(
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + lhs.tag.getId(),
+            lhs.expectedFilteredRecords,
+            "SortedBucketSource-PredicateFilteredRecordsCount_" + rhs.tag.getId(),
+            rhs.expectedFilteredRecords));
   }
 
   private void testPartitionedSecondary(
@@ -1165,7 +1204,7 @@ public class SortedBucketSourceTest {
             targetParallelism,
             null);
 
-    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expected, rhs.expected, src);
+    checkJoin(pipeline, lhs.tag, rhs.tag, lhs.expectedOutput, rhs.expectedOutput, src);
     pipeline.run();
   }
 
@@ -1256,21 +1295,22 @@ public class SortedBucketSourceTest {
                     Stream.concat(l.stream(), r.stream()).sorted().collect(Collectors.toList())));
   }
 
-  private static <KeyType> Map<KeyType, List<String>> filter(
+  private static <KeyType> KV<Map<KeyType, List<String>>, Long> filter(
       Map<KeyType, List<String>> input, Predicate<String> predicate) {
+    long filteredRecords = 0;
     if (predicate == null) {
-      return input;
+      return KV.of(input, filteredRecords);
     } else {
       Map<KeyType, List<String>> filtered = new HashMap<>();
       for (Map.Entry<KeyType, List<String>> e : input.entrySet()) {
         List<String> value = new ArrayList<>();
-        e.getValue()
-            .forEach(
-                v -> {
-                  if (predicate.apply(value, v)) {
-                    value.add(v);
-                  }
-                });
+        for (String v : e.getValue()) {
+          if (predicate.apply(value, v)) {
+            value.add(v);
+          } else {
+            filteredRecords++;
+          }
+        }
         filtered.put(e.getKey(), value);
       }
       // if predicate removes all values, remove key group
@@ -1279,20 +1319,38 @@ public class SortedBucketSourceTest {
               .filter(k -> filtered.get(k).isEmpty())
               .collect(Collectors.toList());
       toRemove.forEach(filtered::remove);
-      return filtered;
+      return KV.of(filtered, filteredRecords);
     }
   }
 
   static void verifyMetrics(
-      PipelineResult result, Map<String, DistributionResult> expectedDistributions) {
+      PipelineResult result,
+      Map<String, DistributionResult> expectedDistributions,
+      Map<String, Long> expectedCounters) {
     final Map<String, DistributionResult> actualDistributions =
         ImmutableList.copyOf(result.metrics().allMetrics().getDistributions().iterator()).stream()
             .collect(
                 Collectors.toMap(
                     metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
                     MetricResult::getCommitted));
+    expectedDistributions
+        .entrySet()
+        .forEach(
+            dist -> Assert.assertEquals(dist.getValue(), actualDistributions.get(dist.getKey())));
 
-    Assert.assertEquals(expectedDistributions, actualDistributions);
+    final Map<String, Long> actualCounters =
+        ImmutableList.copyOf(result.metrics().allMetrics().getCounters().iterator()).stream()
+            .collect(
+                Collectors.toMap(
+                    metric -> metric.getName().getName().replaceAll("\\{\\d+}", ""),
+                    MetricResult::getCommitted));
+
+    expectedCounters
+        .entrySet()
+        .forEach(
+            counter ->
+                Assert.assertEquals(
+                    counter.getValue(), actualCounters.getOrDefault(counter.getKey(), 0L)));
   }
 
   private static GenericRecord toAvroUserGenericRecord(AvroGeneratedUser user) {
