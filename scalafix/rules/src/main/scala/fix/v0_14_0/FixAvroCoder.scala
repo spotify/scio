@@ -26,6 +26,18 @@ object FixAvroCoder {
     "com/spotify/scio/testing/JobTest.Builder#inputStream()."
   )
 
+  val AvroSmbReadMatchers: SymbolMatcher = SymbolMatcher.normalized(
+    "org/apache/beam/sdk/extensions/smb/AvroSortedBucketIO#Read#",
+    "org/apache/beam/sdk/extensions/smb/ParquetAvroSortedBucketIO#Read#"
+  )
+
+  val SmbReadMatchers = SymbolMatcher.normalized(
+    "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeJoin().",
+    "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeCoGroup().",
+    "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeGroupByKey().",
+    "com/spotify/scio/smb/util/SMBMultiJoin#sortMergeCoGroup().",
+  )
+
   /** @return true if `sym` is a class whose parents include a type matching `parentMatcher` */
   def hasParentClass(sym: Symbol, parentMatcher: SymbolMatcher)(implicit
     sd: SemanticDocument
@@ -135,15 +147,17 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
             .exists(isAvroType)
         case q"$jobTestBuilder(..$args)" if JobTestBuilderMatcher.matches(jobTestBuilder) =>
           args.headOption match {
-            case Some(q"$io[$tpe](..$args)") =>
-              tpe.symbol.info.map(_.signature) match {
-                case Some(ClassSignature(_, parents, _, _)) =>
-                  parents.exists {
-                    case TypeRef(_, s, _) if AvroMatcher.matches(s) => true
-                    case _ => false
-                  }
+            case Some(q"$io[$tpe](..$args)") if isAvroType(tpe.symbol) => true
+            case _ => false
+          }
+        case q"$expr(..$args)" if SmbReadMatchers.matches(expr) =>
+          args.tail.map(_.symbol.info.map(_.signature)).exists {
+            case Some(MethodSignature(_, _, TypeRef(_, readSymbol, List(TypeRef(_, avroSymbol, _)))))
+              if AvroSmbReadMatchers.matches(readSymbol) && isAvroType(avroSymbol) => true
+            case Some(MethodSignature(parents, _, _)) if parents.map(_.signature).exists {
+                case TypeSignature(_, _, TypeRef(_, s, _)) if AvroMatcher.matches(s) => true
                 case _ => false
-              }
+              } => true
             case _ => false
           }
       }
