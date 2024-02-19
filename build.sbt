@@ -16,6 +16,7 @@
  */
 
 import sbt.*
+import sbt.util.CacheImplicits.*
 import Keys.*
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 import sbtassembly.AssemblyPlugin.autoImport.*
@@ -1087,6 +1088,10 @@ lazy val `scio-parquet` = project
     )
   )
 
+val tensorFlowMetadataSourcesDir =
+  settingKey[File]("Directory containing TensorFlow metadata proto files")
+val tensorFlowMetadata = taskKey[Seq[File]]("Retrieve TensorFlow metadata proto files")
+
 lazy val `scio-tensorflow` = project
   .in(file("scio-tensorflow"))
   .dependsOn(
@@ -1121,14 +1126,34 @@ lazy val `scio-tensorflow` = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
-    Compile / PB.protoSources += target.value / s"metadata-$tensorFlowMetadataVersion",
+    Compile / tensorFlowMetadataSourcesDir := target.value / s"metadata-$tensorFlowMetadataVersion",
+    Compile / PB.protoSources += (Compile / tensorFlowMetadataSourcesDir).value,
+    Compile / tensorFlowMetadata := {
+      def work(tensorFlowMetadataVersion: String) = {
+        val tfMetadata = url(
+          s"https://github.com/tensorflow/metadata/archive/refs/tags/v$tensorFlowMetadataVersion.zip"
+        )
+        IO.unzipURL(tfMetadata, target.value, "*.proto").toSeq
+      }
+
+      val cacheStoreFactory = streams.value.cacheStoreFactory
+      val root = (Compile / tensorFlowMetadataSourcesDir).value
+      val tracker =
+        Tracked.inputChanged(cacheStoreFactory.make("input")) { (versionChanged, version: String) =>
+          val cached = Tracked.outputChanged(cacheStoreFactory.make("output")) {
+            (outputChanged: Boolean, files: Seq[HashFileInfo]) =>
+              if (versionChanged || outputChanged) work(version)
+              else files.map(_.file)
+          }
+          cached(() => (root ** "*.proto").get().map(FileInfo.hash(_)))
+        }
+
+      tracker(tensorFlowMetadataVersion)
+    },
     Compile / PB.unpackDependencies := {
-      val tfMetadata = new URL(
-        s"https://github.com/tensorflow/metadata/archive/refs/tags/v$tensorFlowMetadataVersion.zip"
-      )
-      val protoFiles = IO.unzipURL(tfMetadata, target.value, "*.proto")
-      val root = target.value / s"metadata-$tensorFlowMetadataVersion"
-      val metadataDep = ProtocPlugin.UnpackedDependency(protoFiles.toSeq, Seq.empty)
+      val protoFiles = (Compile / tensorFlowMetadata).value
+      val root = (Compile / tensorFlowMetadataSourcesDir).value
+      val metadataDep = ProtocPlugin.UnpackedDependency(protoFiles, Seq.empty)
       val deps = (Compile / PB.unpackDependencies).value
       new ProtocPlugin.UnpackedDependencies(deps.mappedFiles ++ Map(root -> metadataDep))
     }
