@@ -59,7 +59,7 @@ case class MockStringEntry(k: String, v: String) extends MockEntry[String, Strin
 }
 
 case class MockStringSparkeyReader(data: Map[String, String]) extends MockSparkeyReader {
-  override def getAsString(key: String): String = data(key)
+  override def getAsString(key: String): String = data.getOrElse(key, null)
   override def iterator(): java.util.Iterator[Entry] = data.iterator
     .map[Entry] { case (k, v) => MockStringEntry(k, v) }
     .asJava
