@@ -33,8 +33,10 @@ import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.commons.io.output.NullOutputStream
 import org.scalatest.Assertion
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.typelevel.scalaccompat.annotation.nowarn
 
 import scala.collection.{mutable => mut}
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
@@ -370,6 +372,19 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     (123, "hello", ta, tb, List(("bar", 1, "foo"))) coderShould notFallback()
   }
 
+  it should "give informative error when derivation fails" in {
+    // scalatest does not give the compiler error message with 'shouldNot compile'
+    // invert the test and get the message from the thrown exception
+    try {
+      "Coder.gen[NotDerivableClass]" should compile: @nowarn
+    } catch {
+      case e: TestFailedException =>
+        e.getMessage should include(
+          "in parameter 't' of product type com.spotify.scio.coders.NotDerivableClass"
+        )
+    }
+  }
+
   // FIXME: TableRowJsonCoder cannot be tested in scio-test because of circular dependency on scio-google-cloud-platform
   it should "support all the already supported types" in {
     import java.math.{BigInteger, BigDecimal => jBigDecimal}
@@ -678,7 +693,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val ok = SampleField("foo", RecordType(List(SampleField("bar", IntegerType))))
     val nok = SampleField("foo", RecordType(List(SampleField(null, IntegerType))))
 
-    implicit lazy val c: Coder[SampleField] = Coder.gen[SampleField]
+    // recursive type need to use the implicit derivation
+    implicit lazy val c: Coder[SampleField] = Coder.genImplicit[SampleField]
     ok coderShould roundtrip()
     val caught = intercept[beam.CoderException] {
       nok coderShould roundtrip()
@@ -926,6 +942,10 @@ object PrivateClass {
   def apply(l: Long): PrivateClass = new PrivateClass(l)
 }
 case class UsesPrivateClass(privateClass: PrivateClass)
+
+// non derivable
+trait NotDerivableTrait
+case class NotDerivableClass(s: String, t: NotDerivableTrait)
 
 // avro
 object Avro {

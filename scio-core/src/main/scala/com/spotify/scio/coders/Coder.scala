@@ -228,8 +228,8 @@ object Coder
 }
 
 trait LowPriorityCoders { self: CoderDerivation with JavaBeanCoders =>
-  implicit override def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
-  implicit override def gen[T]: Coder[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
+  implicit def javaBeanCoderImplicit[T: IsJavaBean: ClassTag]: Coder[T] = javaBeanCoder
+  implicit def genImplicit[T]: Coder[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
 
 private[coders] object CoderStackTrace {
