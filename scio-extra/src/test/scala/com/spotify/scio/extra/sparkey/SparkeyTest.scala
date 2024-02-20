@@ -119,15 +119,17 @@ class SparkeyTest extends PipelineSpec {
     JobTest { sc =>
       val si = sc.sparkeySideInput("input")
       sc
-        .parallelize(List("foo", "bar"))
+        .parallelize(List("foo", "bar", "baz"))
         .withSideInputs(si)
-        .map { case (input, ctx) => new String(ctx(si).getAsByteArray(input.getBytes)) }
+        .map { case (input, ctx) =>
+          Option(ctx(si).getAsByteArray(input.getBytes)).map(new String(_)).getOrElse("NULLKEY")
+        }
         .toSCollection
         .saveAsTextFile("output")
     }
       .args("--input=input", "--output=bar")
       .input(SparkeyIO("input"), Seq(MockByteArraySparkeyReader(input)))
-      .output(TextIO("output"))(_ should containInAnyOrder(Seq("bar", "baz")))
+      .output(TextIO("output"))(_ should containInAnyOrder(Seq("bar", "baz", "NULLKEY")))
       .run()
   }
 
