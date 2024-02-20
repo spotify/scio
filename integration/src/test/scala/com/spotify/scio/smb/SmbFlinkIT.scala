@@ -3,8 +3,14 @@ package com.spotify.scio.smb
 import com.spotify.scio._
 import com.spotify.scio.avro._
 import com.spotify.scio.testing.PipelineTestUtils
-import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
+import org.apache.beam.sdk.coders.VarIntCoder
+import org.apache.beam.sdk.extensions.smb.SortedBucketIO.ComparableKeyBytes
+import org.apache.beam.sdk.extensions.smb.SortedBucketSource.BucketedInput
+import org.apache.beam.sdk.extensions.smb.SortedBucketTransform.TransformFn
+import org.apache.beam.sdk.extensions.smb.{AvroBucketMetadata, AvroFileOperations, AvroSortedBucketIO, BucketMetadata, SortedBucketIO, SortedBucketSource, SortedBucketTransform, TargetParallelism}
+import org.apache.beam.sdk.io.LocalResources
 import org.apache.beam.sdk.values.TupleTag
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -24,64 +30,72 @@ object SmbFlinkIT {
   }
 }
 
-class SmbFlinkIT extends AnyFlatSpec with Matchers with PipelineTestUtils {
+class SmbFlinkIT extends AnyFlatSpec with Matchers with PipelineTestUtils with BeforeAndAfterAll {
   import SmbFlinkIT._
 
-  "SMB writes and reads" should "work end to end with Avro types on Flink runner" in {
-    val tempFolder = Files.createTempDirectory("smb").toFile
-    tempFolder.deleteOnExit()
+  val tempFolder = Files.createTempDirectory("smb").toFile
+  tempFolder.deleteOnExit()
 
-    val tempDir = new File(tempFolder, "tmp").getAbsolutePath
-    val writeOutput = new File(tempFolder, "writeOutput").getAbsolutePath
+  val writeOutput = new File(tempFolder, "writeOutput").getAbsolutePath
+  val tempDir = new File(tempFolder, "tmp").getAbsolutePath
 
-    // Write
-    {
-      val (sc, _) = ContextAndArgs(Array("--runner=FlinkRunner", "--parallelism=1"))
-      sc.parallelize(1 to 100)
-        .map(account)
-        .saveAsSortedBucket(
-          AvroSortedBucketIO
-            .write(classOf[Integer], "id", classOf[Account])
-            .to(writeOutput)
-            .withTempDirectory(tempDir)
-            .withNumBuckets(2)
-            .withNumShards(1)
-        )
-      sc.run()
-    }
-    // Read
-    {
-      val (sc, _) = ContextAndArgs(Array("--runner=FlinkRunner", "--parallelism=1"))
-      sc.sortMergeGroupByKey(
-        classOf[Integer],
+  override def beforeAll(): Unit = {
+    val (sc, _) = ContextAndArgs(Array())
+    sc.parallelize(1 to 100)
+      .map(account)
+      .saveAsSortedBucket(
         AvroSortedBucketIO
-          .read(new TupleTag[Account], classOf[Account])
-          .from(writeOutput)
-      ).map(identity)
-      sc.run()
-    }
-
-    // Transform
-    val tfxOutput = new File(tempFolder, "tfxOutput").getAbsolutePath
-
-    {
-      val (sc, _) = ContextAndArgs(Array("--runner=FlinkRunner", "--parallelism=1"))
-
-      sc.sortMergeTransform(
-        classOf[Integer],
-        AvroSortedBucketIO
-          .read(new TupleTag[Account], classOf[Account])
-          .from(writeOutput)
-      ).to(
-        AvroSortedBucketIO
-          .transformOutput(classOf[Integer], "id", classOf[Account])
+          .write(classOf[Integer], "id", classOf[Account])
+          .to(writeOutput)
           .withTempDirectory(tempDir)
-          .to(tfxOutput)
-      ).via { case (_, accounts, consumer) =>
-        accounts.foreach(consumer.accept)
-      }
+          .withNumBuckets(2)
+          .withNumShards(1)
+      )
+    sc.run()
+  }
 
-      sc.run()
+  "AvroFileOperations" should "be serializable via Flink" in {
+    import org.apache.flink.configuration.{Configuration => FlinkConfiguration}
+    import org.apache.flink.util.InstantiationUtil
+    import scala.jdk.CollectionConverters._
+
+    val conf = new FlinkConfiguration()
+    val tfxOutput = new File(tempFolder, "tfxOuptut").getAbsolutePath
+
+    val transformFn: TransformFn[Integer, Account] = {
+      case (keyGroup, outputConsumer) =>
+        keyGroup.getValue.getAll(new TupleTag[Account]("account")).forEach(outputConsumer.accept(_))
+    }
+
+    val bucketedInputs: java.util.List[BucketedInput[_]] = List(AvroSortedBucketIO
+      .read(new TupleTag[Account]("account"), classOf[Account])
+      .from(writeOutput)
+      .toBucketedInput(SortedBucketSource.Keying.PRIMARY)).asJava.asInstanceOf[java.util.List[BucketedInput[_]]]
+
+    val sourceInputFormat =
+      new SortedBucketTransform[Integer, Account](
+        bucketedInputs,
+        ComparableKeyBytes.keyFnPrimary(VarIntCoder.of()),
+        new SortedBucketIO.PrimaryKeyComparator(),
+        TargetParallelism.max(),
+        transformFn,
+        null,
+        LocalResources.fromString(tfxOutput, true),
+        LocalResources.fromString(tempDir, true),
+        null,
+        (numBuckets: Int, numShards: Int, hashType: BucketMetadata.HashType) => new AvroBucketMetadata(
+          numBuckets, numShards, classOf[Integer], "id", null, null, hashType, "bucket", Account.getClassSchema
+        ),
+        AvroFileOperations.of(new SpecificRecordDatumFactory(classOf[Account]), Account.getClassSchema),
+        ".avro",
+        "bucket-"
+      )
+
+    InstantiationUtil.writeObjectToConfig(sourceInputFormat, conf, "someKey")
+
+    noException should be thrownBy {
+      val roundTrip: SortedBucketTransform[Integer, Account] = InstantiationUtil.readObjectFromConfig(conf, "someKey", this.getClass.getClassLoader)
+      roundTrip.getName should equal("SortedBucketTransform")
     }
   }
 }
