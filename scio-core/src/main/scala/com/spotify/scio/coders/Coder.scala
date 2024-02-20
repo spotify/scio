@@ -21,7 +21,6 @@ import com.spotify.scio.{IsJavaBean, MagnoliaMacros}
 import com.spotify.scio.coders.instances._
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.values.KV
-import org.typelevel.scalaccompat.annotation.unused
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
@@ -222,14 +221,11 @@ object Coder
     with LowPriorityCoders {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 
-  @deprecated("Use Coder.kryo[T] instead", "0.14.0")
-  def fallback[T](@unused lp: shapeless.LowPriority): Coder[T] =
-    macro CoderMacros.issueFallbackWarning[T]
 }
 
 trait LowPriorityCoders { self: CoderDerivation with JavaBeanCoders =>
-  implicit def javaBeanCoderImplicit[T: IsJavaBean: ClassTag]: Coder[T] = javaBeanCoder
-  implicit def genImplicit[T]: Coder[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
+  implicit override def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
+  implicit override def gen[T]: Coder[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
 }
 
 private[coders] object CoderStackTrace {

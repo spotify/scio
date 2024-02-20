@@ -693,8 +693,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val ok = SampleField("foo", RecordType(List(SampleField("bar", IntegerType))))
     val nok = SampleField("foo", RecordType(List(SampleField(null, IntegerType))))
 
-    // recursive type need to use the implicit derivation
-    implicit lazy val c: Coder[SampleField] = Coder.genImplicit[SampleField]
+    implicit lazy val c: Coder[SampleField] = Coder.gen[SampleField]
     ok coderShould roundtrip()
     val caught = intercept[beam.CoderException] {
       nok coderShould roundtrip()
