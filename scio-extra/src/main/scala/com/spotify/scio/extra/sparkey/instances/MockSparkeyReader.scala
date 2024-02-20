@@ -21,6 +21,7 @@ import com.spotify.sparkey.SparkeyReader.Entry
 import com.spotify.sparkey.{IndexHeader, LogHeader, SparkeyReader}
 
 import java.io.InputStream
+import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters._
 
@@ -74,7 +75,10 @@ case class MockByteArrayEntry(k: Array[Byte], v: Array[Byte])
 
 case class MockByteArraySparkeyReader(data: Map[Array[Byte], Array[Byte]])
     extends MockSparkeyReader {
-  override def getAsByteArray(key: Array[Byte]): Array[Byte] = data(key)
+  private lazy val internal = data.map { case (k, v) => (ByteBuffer.wrap(k), v) }
+
+  override def getAsByteArray(key: Array[Byte]): Array[Byte] =
+    internal.getOrElse(ByteBuffer.wrap(key), null)
   override def iterator(): java.util.Iterator[Entry] = data.iterator
     .map[Entry] { case (k, v) => MockByteArrayEntry(k, v) }
     .asJava
