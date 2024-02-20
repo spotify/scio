@@ -23,7 +23,7 @@ import magnolia1._
 
 import scala.reflect.ClassTag
 
-private object CoderDerivation {
+private[coders] object CoderDerivation extends CoderDerivation {
 
   private object ProductIndexedSeqLike {
     def apply(p: Product): ProductIndexedSeqLike = new ProductIndexedSeqLike(p)
