@@ -79,7 +79,7 @@ class GcpSerializerTest extends AnyFlatSpec with Matchers {
     val cause = new StatusRuntimeException(Status.OK)
     val apiException = new InternalException(cause, GrpcStatusCode.of(Code.OK), false)
     val failedMutations = List(MutateRowsException.FailedMutation.create(1, apiException))
-    new MutateRowsException(cause, failedMutations.asJava, false) coderShould roundtrip()
+    MutateRowsException.create(cause, failedMutations.asJava, false) coderShould roundtrip()
   }
 
 }
