@@ -35,7 +35,7 @@ object FixAvroCoder {
     "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeJoin().",
     "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeCoGroup().",
     "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeGroupByKey().",
-    "com/spotify/scio/smb/util/SMBMultiJoin#sortMergeCoGroup().",
+    "com/spotify/scio/smb/util/SMBMultiJoin#sortMergeCoGroup()."
   )
 
   /** @return true if `sym` is a class whose parents include a type matching `parentMatcher` */
@@ -148,16 +148,19 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
         case q"$jobTestBuilder(..$args)" if JobTestBuilderMatcher.matches(jobTestBuilder) =>
           args.headOption match {
             case Some(q"$io[$tpe](..$args)") if isAvroType(tpe.symbol) => true
-            case _ => false
+            case _                                                     => false
           }
         case q"$expr(..$args)" if SmbReadMatchers.matches(expr) =>
           args.tail.map(_.symbol.info.map(_.signature)).exists {
-            case Some(MethodSignature(_, _, TypeRef(_, readSymbol, List(TypeRef(_, avroSymbol, _)))))
-              if AvroSmbReadMatchers.matches(readSymbol) && isAvroType(avroSymbol) => true
+            case Some(
+                  MethodSignature(_, _, TypeRef(_, readSymbol, List(TypeRef(_, avroSymbol, _))))
+                ) if AvroSmbReadMatchers.matches(readSymbol) && isAvroType(avroSymbol) =>
+              true
             case Some(MethodSignature(parents, _, _)) if parents.map(_.signature).exists {
-                case TypeSignature(_, _, TypeRef(_, s, _)) if AvroMatcher.matches(s) => true
-                case _ => false
-              } => true
+                  case TypeSignature(_, _, TypeRef(_, s, _)) if AvroMatcher.matches(s) => true
+                  case _                                                               => false
+                } =>
+              true
             case _ => false
           }
       }
@@ -176,9 +179,10 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
         imps
           .filterNot {
             case importee"_" => true
-            case _ => false
+            case _           => false
           }
-          .map(i => Patch.removeImportee(i) + Patch.addGlobalImport(avroImport)).asPatch
+          .map(i => Patch.removeImportee(i) + Patch.addGlobalImport(avroImport))
+          .asPatch
       case t @ q"$obj.$fn" if AvroCoderMatcher.matches(fn.symbol) =>
         // fix direct usage of Coder.avro*
         Patch.replaceTree(t, q"$fn".syntax) + Patch.addGlobalImport(avroImport)
