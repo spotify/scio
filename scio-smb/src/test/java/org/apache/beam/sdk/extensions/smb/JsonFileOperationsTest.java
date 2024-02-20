@@ -30,6 +30,7 @@ import org.apache.beam.sdk.io.fs.ResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.MimeTypes;
+import org.apache.beam.sdk.util.SerializableUtils;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -52,6 +53,8 @@ public class JsonFileOperationsTest {
 
   private void test(Compression compression) throws Exception {
     final JsonFileOperations fileOperations = JsonFileOperations.of(compression);
+    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
+
     final ResourceId file =
         fromFolder(output).resolve("file.json", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
 

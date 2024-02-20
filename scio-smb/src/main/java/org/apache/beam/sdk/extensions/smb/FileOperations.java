@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -139,6 +140,18 @@ public abstract class FileOperations<V> implements Serializable, HasDisplayData 
     builder.add(DisplayData.item("FileOperations", getClass()));
     builder.add(DisplayData.item("compression", compression.toString()));
     builder.add(DisplayData.item("mimeType", mimeType));
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getClass().getName(), compression, mimeType);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj.getClass() == getClass()
+        && this.compression == ((FileOperations<?>) obj).compression
+        && this.mimeType.equals(((FileOperations<?>) obj).mimeType);
   }
 
   /** Per-element file reader. */
