@@ -1548,7 +1548,13 @@ lazy val integration = project
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test
-    )
+    ),
+    libraryDependencies ++= {
+      val fv = VersionNumber(flinkVersion)
+      val flinkMajorMinor = fv.cascadingVersions(1)
+      Seq(
+        "org.apache.beam" % s"beam-runners-flink-${flinkMajorMinor}" % beamVersion)
+    }
   )
 
 // =======================================================================
