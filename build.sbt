@@ -433,6 +433,7 @@ val commonSettings = Def.settings(
   resolvers ++= Resolver.sonatypeOssRepos("public"),
   fork := true,
   run / outputStrategy := Some(OutputStrategy.StdoutOutput),
+  run / javaOptions ++= JavaOptions.runDefaults(javaMajorVersion),
   Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
   Test / testOptions += Tests.Argument("-oD"),
