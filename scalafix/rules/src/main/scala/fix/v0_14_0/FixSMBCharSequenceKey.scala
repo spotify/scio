@@ -12,7 +12,7 @@ object FixSMBCharSequenceKey {
     "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeGroupByKey().",
     "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeTransform().",
     "com/spotify/scio/smb/util/SMBMultiJoin#sortMergeCoGroup().",
-    "com/spotify/scio/smb/util/SMBMultiJoin#sortMergeTransform().",
+    "com/spotify/scio/smb/util/SMBMultiJoin#sortMergeTransform()."
   )
 
   val CharSequenceClassMatcher: SymbolMatcher = SymbolMatcher.normalized(
@@ -24,7 +24,7 @@ class FixSMBCharSequenceKey extends SemanticRule("FixSMBCharSequenceKey") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case t@q"$fn(..$args)" if SmbReadMatchers.matches(fn) =>
+      case t @ q"$fn(..$args)" if SmbReadMatchers.matches(fn) =>
         val argsFiltered = args.map {
           case q"classOf[$tpe]" if CharSequenceClassMatcher.matches(tpe) =>
             q"classOf[String]"
