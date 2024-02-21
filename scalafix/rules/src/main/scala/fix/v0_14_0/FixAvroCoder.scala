@@ -134,7 +134,7 @@ object FixAvroCoder {
   def isAvroType(sym: Symbol)(implicit sd: SemanticDocument): Boolean =
     AvroMatcher.matches(sym) || hasParentClass(sym, AvroMatcher)
 
-  def hasAvroTypeSignature(tree: Tree, checkLiftedType: Boolean)(implicit doc: SemanticDocument): Boolean = {
+  def hasAvroTypeSignature(tree: Tree, checkLiftedType: Boolean)(implicit doc: SemanticDocument): Boolean =
     tree.symbol.info.map(_.signature).exists {
       case MethodSignature(_, _, TypeRef(_, returnType, _)) if !checkLiftedType && isAvroType(returnType) =>
         true
@@ -143,7 +143,24 @@ object FixAvroCoder {
       case _ =>
         false
     }
-  }
+
+  def methodHasAvroCoderTypeBound(expr: Term)(implicit doc: SemanticDocument): Boolean =
+    expr.symbol.info.map(_.signature) match {
+      case Some(MethodSignature(_, parameterLists, _)) =>
+        parameterLists.flatten.exists { p =>
+          p.symbol.info.map(_.signature).exists {
+            case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _)))) if CoderMatcher.matches(symbol) =>
+              coderT.info.map(_.signature).exists {
+                case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) if AvroMatcher.matches(maybeAvroType) =>
+                  true
+                case _ =>
+                  false
+              }
+            case _ => false
+          }
+        }
+      case _ => false
+    }
 }
 
 class FixAvroCoder extends SemanticRule("FixAvroCoder") {
@@ -185,6 +202,7 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
               true
             case _ => false
           }
+        case q"$fn(..$args)" if methodHasAvroCoderTypeBound(fn) => true
       }
       .foldLeft(false)(_ || _)
     val avroValuePatch = if (usesAvroCoders) Patch.addGlobalImport(avroImport) else Patch.empty
