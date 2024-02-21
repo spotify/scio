@@ -1311,8 +1311,8 @@ lazy val `scio-repl` = project
             } match {
               case Some(e) => Right(Vector(e))
               case None =>
-                val conflictList = conflicts.mkString("\t", "\n", "\n")
-                Left("Error merging beam avro classes:\n" + conflictList)
+                val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
+                Left("Error merging beam avro classes:" + conflictList)
             }
           }
         case PathList("com", "google", "errorprone", _*) =>
@@ -1325,26 +1325,25 @@ lazy val `scio-repl` = project
             } match {
               case Some(e) => Right(Vector(e))
               case None =>
-                val conflictList = conflicts.mkString("\t", "\n", "\n")
-                Left("Error merging errorprone classes:\n" + conflictList)
+                val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
+                Left("Error merging errorprone classes:" + conflictList)
             }
           }
-        case PathList("org", "checkerframework", tail @ _*) =>
-          if (tail.last == "SignedPositiveFromUnsigned.class") {
-            // this class has been dropped in original checkerframework libs
-            MergeStrategy.discard
-          } else {
-            // prefer checker-qual classes packaged in checkerframework libs
-            CustomMergeStrategy("CheckerQual") { conflicts =>
-              import sbtassembly.Assembly._
+        case PathList("com", "squareup", _*) =>
+          // prefer jvm jar in case of conflict
+          CustomMergeStrategy("SquareUp") { conflicts =>
+            import sbtassembly.Assembly._
+            if (conflicts.size == 1) {
+              Right(conflicts.map(conflict => JarEntry(conflict.target, conflict.stream)))
+            } else {
               conflicts.collectFirst {
-                case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
+                case Library(ModuleCoordinate(_, jar, _), _, t, s) if jar.endsWith("-jvm") =>
                   JarEntry(t, s)
               } match {
                 case Some(e) => Right(Vector(e))
                 case None =>
-                  val conflictList = conflicts.mkString("\t", "\n", "\n")
-                  Left("Error merging checker-qual classes:\n" + conflictList)
+                  val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
+                  Left("Error merging squareup classes:" + conflictList)
               }
             }
           }
@@ -1362,6 +1361,15 @@ lazy val `scio-repl` = project
           MergeStrategy.discard
         case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
           // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("META-INF", "kotlin-project-structure-metadata.json") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("META-INF", tail @ _*) if tail.last.endsWith(".kotlin_module") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("commonMain", _*) =>
+          // drop conflicting squareup linkdata
           MergeStrategy.discard
         case PathList("META-INF", "io.netty.versions.properties") =>
           // merge conflicting netty property files
