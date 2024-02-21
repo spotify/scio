@@ -314,32 +314,32 @@ class ParquetReadFnTest extends PipelineSpec with BeforeAndAfterAll {
     )
   }
 
-  "ParquetReadConfiguration" should "default to using splittableDoFn only if RunnerV2 experiment is enabled" in {
-    // Default to true if RunnerV2 is set and user hasn't configured SDF explicitly
+  "ParquetReadConfiguration" should "default to using splittableDoFn" in {
+    // Default to false if RunnerV2 is disabled and user hasn't configured SDF explicitly
     ParquetReadConfiguration.getUseSplittableDoFn(
       ParquetConfiguration.empty(),
-      PipelineOptionsFactory.fromArgs("--experiments=use_runner_v2,another_experiment").create()
-    ) shouldBe true
-
-    // Default to false if RunnerV2 is not set
-    ParquetReadConfiguration.getUseSplittableDoFn(
-      ParquetConfiguration.empty(),
-      PipelineOptionsFactory.fromArgs("--experiments=another_experiment").create()
-    ) shouldBe false
-
-    ParquetReadConfiguration.getUseSplittableDoFn(
-      ParquetConfiguration.empty(),
-      PipelineOptionsFactory.fromArgs().create()
+      PipelineOptionsFactory.fromArgs("--experiments=disable_runner_v2,another_experiment").create()
     ) shouldBe false
 
     // Respect user's configuration, if set
     ParquetReadConfiguration.getUseSplittableDoFn(
-      ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false),
-      PipelineOptionsFactory.fromArgs("--experiments=use_runner_v2").create()
-    ) shouldBe false
+      ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> true),
+      PipelineOptionsFactory.fromArgs("--experiments=disabled_runner_v2").create()
+    ) shouldBe true
 
     ParquetReadConfiguration.getUseSplittableDoFn(
-      ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> true),
+      ParquetConfiguration.of(ParquetReadConfiguration.UseSplittableDoFn -> false),
+      PipelineOptionsFactory.fromArgs().create()
+    ) shouldBe false
+
+    // Default to true if RunnerV2 is not disabled
+    ParquetReadConfiguration.getUseSplittableDoFn(
+      ParquetConfiguration.empty(),
+      PipelineOptionsFactory.fromArgs("--experiments=another_experiment").create()
+    ) shouldBe true
+
+    ParquetReadConfiguration.getUseSplittableDoFn(
+      ParquetConfiguration.empty(),
       PipelineOptionsFactory.fromArgs().create()
     ) shouldBe true
   }
