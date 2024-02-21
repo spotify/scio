@@ -17,6 +17,7 @@ object FixAvroCoder {
   )
   val AvroMatcher: SymbolMatcher = SymbolMatcher.normalized(
     "org/apache/avro/specific/SpecificRecord",
+    "org/apache/avro/specific/SpecificRecordBase",
     "org/apache/avro/specific/SpecificFixed",
     "org/apache/avro/generic/GenericRecord"
   )
