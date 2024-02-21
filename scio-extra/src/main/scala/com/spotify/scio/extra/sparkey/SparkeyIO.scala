@@ -33,7 +33,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 /** Special version of [[com.spotify.scio.io.ScioIO]] for use with sparkey methods. */
-case class SparkeyTestIO[T] private (path: String) extends TestIO[T] {
+private[sparkey] case class SparkeyTestIO[T](path: String) extends TestIO[T] {
   override val tapT: TapT.Aux[T, T] = TapOf[T]
 }
 
