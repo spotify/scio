@@ -30,7 +30,10 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
+import scala.jdk.CollectionConverters._
+
 import java.nio.channels.{ReadableByteChannel, WritableByteChannel}
+import java.util.Objects
 
 object ParquetTypeFileOperations {
 
@@ -91,6 +94,23 @@ case class ParquetTypeFileOperations[T](
   override protected def createSink(): FileIO.Sink[T] = ParquetTypeSink(compression, conf)
 
   override def getCoder: BCoder[T] = CoderMaterializer.beamWithDefault(coder)
+
+  override def hashCode(): Int = Objects.hash(compression.name(), conf.get(), predicate)
+
+  override def equals(obj: Any): Boolean = obj match {
+    case ParquetTypeFileOperations(compressionThat, confThat, predicateThat) =>
+      this.compression.name() == compressionThat.name() && this.predicate == predicateThat &&
+      conf
+        .get()
+        .iterator()
+        .asScala
+        .map(e => (e.getKey, e.getValue))
+        .toMap
+        .equals(
+          confThat.get().iterator().asScala.map(e => (e.getKey, e.getValue)).toMap
+        )
+    case _ => false
+  }
 }
 
 private case class ParquetTypeReader[T](
