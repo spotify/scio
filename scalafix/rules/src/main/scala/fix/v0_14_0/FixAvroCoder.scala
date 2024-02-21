@@ -147,17 +147,15 @@ object FixAvroCoder {
   def methodHasAvroCoderTypeBound(expr: Term)(implicit doc: SemanticDocument): Boolean =
     expr.symbol.info.map(_.signature) match {
       case Some(MethodSignature(_, parameterLists, _)) =>
-        parameterLists.flatten.exists { p =>
-          p.symbol.info.map(_.signature).exists {
-            case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _)))) if CoderMatcher.matches(symbol) =>
-              coderT.info.map(_.signature).exists {
-                case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) if AvroMatcher.matches(maybeAvroType) =>
-                  true
-                case _ =>
-                  false
-              }
-            case _ => false
-          }
+        parameterLists.flatten.flatMap(_.symbol.info.map(_.signature)).exists {
+          case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _)))) if CoderMatcher.matches(symbol) =>
+            coderT.info.map(_.signature).exists {
+              case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) if AvroMatcher.matches(maybeAvroType) =>
+                true
+              case _ =>
+                false
+            }
+          case _ => false
         }
       case _ => false
     }
