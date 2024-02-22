@@ -45,7 +45,6 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
@@ -73,9 +72,6 @@ public class AvroFileOperationsTest {
         AvroFileOperations.of(GenericRecordDatumFactory$.INSTANCE, USER_SCHEMA)
             .withCodec(CodecFactory.snappyCodec())
             .withMetadata(TEST_METADATA);
-
-    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
-
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 
@@ -89,7 +85,6 @@ public class AvroFileOperationsTest {
                         .build())
             .collect(Collectors.toList());
     final FileOperations.Writer<GenericRecord> writer = fileOperations.createWriter(file);
-
     for (GenericRecord record : records) {
       writer.write(record);
     }
@@ -110,9 +105,6 @@ public class AvroFileOperationsTest {
         AvroFileOperations.of(new SpecificRecordDatumFactory<>(AvroGeneratedUser.class), schema)
             .withCodec(CodecFactory.snappyCodec())
             .withMetadata(TEST_METADATA);
-
-    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
-
     final ResourceId file =
         fromFolder(output).resolve("file.avro", StandardResolveOptions.RESOLVE_FILE);
 

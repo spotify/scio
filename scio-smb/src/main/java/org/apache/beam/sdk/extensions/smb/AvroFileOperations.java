@@ -22,7 +22,6 @@ import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Map;
-import java.util.Objects;
 import org.apache.avro.Schema;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileStream;
@@ -109,25 +108,6 @@ public class AvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   Schema getSchema() {
     return schemaSupplier.get();
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(getSchema(), codec.getCodec(), metadata, datumFactory);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof AvroFileOperations)) {
-      return false;
-    }
-    final AvroFileOperations<ValueT> that = (AvroFileOperations<ValueT>) obj;
-    return that.getSchema().equals(this.getSchema())
-        && that.codec.getCodec().toString().equals(this.codec.getCodec().toString())
-        && ((that.metadata == null && this.metadata == null)
-            || (this.metadata.equals(that.metadata)))
-        && that.datumFactory.equals(this.datumFactory);
   }
 
   private static class SerializableSchemaString implements Serializable {

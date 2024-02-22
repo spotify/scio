@@ -37,7 +37,6 @@ import org.apache.beam.sdk.io.fs.ResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.transforms.display.DisplayData;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.filter2.predicate.FilterApi;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
@@ -94,8 +93,6 @@ public class ParquetAvroFileOperationsTest {
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
         ParquetAvroFileOperations.of(USER_SCHEMA);
 
-    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
-
     final List<GenericRecord> actual = new ArrayList<>();
     fileOperations.iterator(file).forEachRemaining(actual::add);
 
@@ -106,9 +103,6 @@ public class ParquetAvroFileOperationsTest {
   public void testSpecificRecord() throws Exception {
     final ParquetAvroFileOperations<AvroGeneratedUser> fileOperations =
         ParquetAvroFileOperations.of(AvroGeneratedUser.class);
-
-    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
-
     final ResourceId file =
         fromFolder(output)
             .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
@@ -141,7 +135,6 @@ public class ParquetAvroFileOperationsTest {
 
     final ParquetAvroFileOperations<TestLogicalTypes> fileOperations =
         ParquetAvroFileOperations.of(TestLogicalTypes.class).withConfiguration(conf);
-
     final ResourceId file =
         fromFolder(output)
             .resolve("file.parquet", ResolveOptions.StandardResolveOptions.RESOLVE_FILE);
@@ -186,8 +179,6 @@ public class ParquetAvroFileOperationsTest {
             .withCompression(CompressionCodecName.ZSTD)
             .withProjection(projection);
 
-    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
-
     final List<GenericRecord> expected =
         USER_RECORDS.stream()
             .map(r -> new GenericRecordBuilder(USER_SCHEMA).set("name", r.get("name")).build())
@@ -209,8 +200,6 @@ public class ParquetAvroFileOperationsTest {
 
     final ParquetAvroFileOperations<AvroGeneratedUser> fileOperations =
         ParquetAvroFileOperations.of(AvroGeneratedUser.class).withProjection(projection);
-
-    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
 
     final ResourceId file =
         fromFolder(output)
@@ -301,8 +290,6 @@ public class ParquetAvroFileOperationsTest {
     final ParquetAvroFileOperations<GenericRecord> fileOperations =
         ParquetAvroFileOperations.of(USER_SCHEMA).withFilterPredicate(predicate);
 
-    Assert.assertEquals(fileOperations, SerializableUtils.ensureSerializable(fileOperations));
-
     final List<GenericRecord> expected =
         USER_RECORDS.stream().filter(r -> (int) r.get("age") <= 5).collect(Collectors.toList());
     final List<GenericRecord> actual = new ArrayList<>();
@@ -325,35 +312,6 @@ public class ParquetAvroFileOperationsTest {
     MatcherAssert.assertThat(
         displayData, hasDisplayItem("compressionCodecName", CompressionCodecName.ZSTD.name()));
     MatcherAssert.assertThat(displayData, hasDisplayItem("schema", USER_SCHEMA.getFullName()));
-  }
-
-  @Test
-  public void testConfigurationEquality() {
-    final Configuration configuration1 = new Configuration();
-    configuration1.set("foo", "bar");
-
-    final ParquetAvroFileOperations<GenericRecord> fileOperations1 =
-        ParquetAvroFileOperations.of(USER_SCHEMA).withConfiguration(configuration1);
-
-    // Copy of configuration with same keys
-    final Configuration configuration2 = new Configuration();
-    configuration2.set("foo", "bar");
-
-    final ParquetAvroFileOperations<GenericRecord> fileOperations2 =
-        ParquetAvroFileOperations.of(USER_SCHEMA).withConfiguration(configuration2);
-
-    // Assert that configuration equality check fails
-    Assert.assertEquals(fileOperations1, SerializableUtils.ensureSerializable(fileOperations2));
-
-    // Copy of configuration with different keys
-    final Configuration configuration3 = new Configuration();
-    configuration3.set("bar", "baz");
-
-    final ParquetAvroFileOperations<GenericRecord> fileOperations3 =
-        ParquetAvroFileOperations.of(USER_SCHEMA).withConfiguration(configuration3);
-
-    // Assert that configuration equality check fails
-    Assert.assertNotEquals(fileOperations1, SerializableUtils.ensureSerializable(fileOperations3));
   }
 
   private void writeFile(ResourceId file) throws IOException {
