@@ -181,6 +181,7 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
             case q"$seqLike($elem)" if seqLike.symbol.value.startsWith("scala/collection/") &&
               (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
               true
+            case _ => false
           }
         case q"$expr(..$args)" if SmbReadMatchers.matches(expr) =>
           args.tail.map(_.symbol.info.map(_.signature)).exists {
