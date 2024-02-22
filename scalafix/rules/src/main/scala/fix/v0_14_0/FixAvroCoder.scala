@@ -17,6 +17,7 @@ object FixAvroCoder {
   )
   val AvroMatcher: SymbolMatcher = SymbolMatcher.normalized(
     "org/apache/avro/specific/SpecificRecord",
+    "org/apache/avro/specific/SpecificRecordBase",
     "org/apache/avro/specific/SpecificFixed",
     "org/apache/avro/generic/GenericRecord"
   )
@@ -36,6 +37,10 @@ object FixAvroCoder {
     "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeCoGroup().",
     "com/spotify/scio/smb/syntax/SortedBucketScioContext#sortMergeGroupByKey().",
     "com/spotify/scio/smb/util/SMBMultiJoin#sortMergeCoGroup()."
+  )
+
+  val ParallelizeMatcher = SymbolMatcher.normalized(
+    "com/spotify/scio/ScioContext#parallelize()."
   )
 
   /** @return true if `sym` is a class whose parents include a type matching `parentMatcher` */
@@ -129,6 +134,26 @@ object FixAvroCoder {
 
   def isAvroType(sym: Symbol)(implicit sd: SemanticDocument): Boolean =
     AvroMatcher.matches(sym) || hasParentClass(sym, AvroMatcher)
+
+  def hasAvroTypeSignature(tree: Tree, checkLiftedType: Boolean)(implicit doc: SemanticDocument): Boolean =
+    tree.symbol.info.map(_.signature).exists {
+      case MethodSignature(_, _, TypeRef(_, returnType, _)) if !checkLiftedType && isAvroType(returnType) =>
+        true
+      case MethodSignature(_, _, TypeRef(_, _, List(TypeRef(_, returnType, _)))) if checkLiftedType && isAvroType(returnType) =>
+        true
+      case _ =>
+        false
+    }
+
+  def methodHasAvroCoderTypeBound(expr: Term)(implicit doc: SemanticDocument): Boolean =
+    expr.symbol.info.map(_.signature)
+      .toList
+      .collect { case MethodSignature(_, parameterLists, _) => parameterLists }
+      .flatMap(_.flatten)
+      .flatMap(_.symbol.info.map(_.signature).toList)
+      .collect { case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _)))) if CoderMatcher.matches(symbol) => coderT }
+      .flatMap(_.info.map(_.signature).toList)
+      .exists { case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) => AvroMatcher.matches(maybeAvroType) }
 }
 
 class FixAvroCoder extends SemanticRule("FixAvroCoder") {
@@ -145,10 +170,17 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
           // Coder[T] is a variable type where T is an avro type
           findMatchingValTypeParams(t, CoderMatcher)
             .exists(isAvroType)
-        case q"$jobTestBuilder(..$args)" if JobTestBuilderMatcher.matches(jobTestBuilder) =>
+        case q"$fn(..$args)" if JobTestBuilderMatcher.matches(fn) =>
           args.headOption match {
             case Some(q"$io[$tpe](..$args)") if isAvroType(tpe.symbol) => true
             case _                                                     => false
+          }
+        case q"$fn(..$args)" if ParallelizeMatcher.matches(fn) =>
+          args.headOption exists {
+            case expr if hasAvroTypeSignature(expr, true) => true
+            case q"$seqLike($elem)" if seqLike.symbol.value.startsWith("scala/collection/") &&
+              (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
+              true
           }
         case q"$expr(..$args)" if SmbReadMatchers.matches(expr) =>
           args.tail.map(_.symbol.info.map(_.signature)).exists {
@@ -163,6 +195,7 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
               true
             case _ => false
           }
+        case q"$fn(..$args)" if methodHasAvroCoderTypeBound(fn) => true
       }
       .foldLeft(false)(_ || _)
     val avroValuePatch = if (usesAvroCoders) Patch.addGlobalImport(avroImport) else Patch.empty
