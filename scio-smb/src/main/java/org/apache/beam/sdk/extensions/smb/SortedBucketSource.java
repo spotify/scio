@@ -43,17 +43,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.MapCoder;
-import org.apache.beam.sdk.coders.SerializableCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
-import org.apache.beam.sdk.coders.VarIntCoder;
 import org.apache.beam.sdk.extensions.smb.BucketMetadataUtil.SourceMetadata;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
-import org.apache.beam.sdk.io.fs.ResourceIdCoder;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.display.DisplayData;
@@ -422,17 +417,8 @@ public abstract class SortedBucketSource<KeyType> extends BoundedSource<KV<KeyTy
     protected transient SourceMetadata<V> sourceMetadata = null; // lazy
 
     private transient Map<ResourceId, KV<String, FileOperations<V>>> inputs;
-    private final Map<Integer, KV<String, FileOperations>> fileOperationsEncoding;
+    private final Map<Integer, KV<String, FileOperations<V>>> fileOperationsEncoding;
     private final Map<ResourceId, Integer> directoriesEncoding;
-
-    // Used to efficiently serialize BucketedInput instances
-    private static Coder<Map<ResourceId, Integer>> directoriesEncodingCoder =
-        MapCoder.of(ResourceIdCoder.of(), VarIntCoder.of());
-
-    private static Coder<Map<Integer, KV<String, FileOperations>>> fileOperationsEncodingCoder =
-        MapCoder.of(
-            VarIntCoder.of(),
-            KvCoder.of(StringUtf8Coder.of(), SerializableCoder.of(FileOperations.class)));
 
     public static <V> BucketedInput<V> of(
         Keying keying,
