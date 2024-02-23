@@ -23,8 +23,6 @@ import com.spotify.scio.CoreSysProps
 import org.apache.beam.sdk.io.LocalResources
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions
 import org.apache.beam.sdk.io.fs.ResourceId
-import org.apache.beam.sdk.util.SerializableUtils
-import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.scalatest.flatspec.AnyFlatSpec
@@ -52,8 +50,6 @@ class ParquetTypeFileOperationsTest extends AnyFlatSpec with Matchers {
     writeFile(file)
 
     val fileOps = ParquetTypeFileOperations[User]()
-    SerializableUtils.ensureSerializable(fileOps) should equal(fileOps)
-
     val actual = fileOps.iterator(file).asScala.toSeq
 
     actual shouldBe users
@@ -68,7 +64,6 @@ class ParquetTypeFileOperationsTest extends AnyFlatSpec with Matchers {
     writeFile(file)
 
     val fileOps = ParquetTypeFileOperations[Username]()
-    SerializableUtils.ensureSerializable(fileOps) should equal(fileOps)
     val actual = fileOps.iterator(file).asScala.toSeq
 
     actual shouldBe users.map(u => Username(u.name))
@@ -84,31 +79,10 @@ class ParquetTypeFileOperationsTest extends AnyFlatSpec with Matchers {
 
     val predicate = FilterApi.ltEq(FilterApi.intColumn("age"), java.lang.Integer.valueOf(5))
     val fileOps = ParquetTypeFileOperations[User](predicate)
-    SerializableUtils.ensureSerializable(fileOps) should equal(fileOps)
     val actual = fileOps.iterator(file).asScala.toSeq
 
     actual shouldBe users.filter(_.age <= 5)
     tmpDir.delete()
-  }
-
-  it should "compare Configuration values in equals() check" in {
-    val conf1 = new Configuration()
-    conf1.set("foo", "bar")
-    val fileOps1 = ParquetTypeFileOperations[User](CompressionCodecName.UNCOMPRESSED, conf1)
-
-    val conf2 = new Configuration()
-    conf2.set("foo", "bar")
-    val fileOps2 = ParquetTypeFileOperations[User](CompressionCodecName.UNCOMPRESSED, conf2)
-
-    // FileOperations with equal Configuration maps should be equal
-    SerializableUtils.ensureSerializable(fileOps2) should equal(fileOps1)
-
-    val conf3 = new Configuration()
-    conf3.set("bar", "baz")
-    val fileOps3 = ParquetTypeFileOperations[User](CompressionCodecName.UNCOMPRESSED, conf3)
-
-    // FileOperations with different Configuration maps should not be equal
-    SerializableUtils.ensureSerializable(fileOps3) shouldNot equal(fileOps1)
   }
 
   private def writeFile(file: ResourceId): Unit = {

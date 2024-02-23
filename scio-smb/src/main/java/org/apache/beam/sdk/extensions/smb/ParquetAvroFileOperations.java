@@ -20,11 +20,7 @@ package org.apache.beam.sdk.extensions.smb;
 import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
@@ -127,37 +123,6 @@ public class ParquetAvroFileOperations<ValueT> extends FileOperations<ValueT> {
 
   Schema getSchema() {
     return schemaSupplier.get();
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        getSchema(),
-        compression,
-        conf.get(),
-        projectionSupplier != null ? projectionSupplier.get() : null,
-        predicate);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof ParquetAvroFileOperations)) {
-      return false;
-    }
-    final ParquetAvroFileOperations<ValueT> that = (ParquetAvroFileOperations<ValueT>) obj;
-
-    return that.getSchema().equals(this.getSchema())
-        && that.compression.name().equals(this.compression.name())
-        && ((that.projectionSupplier == null && this.projectionSupplier == null)
-            || (this.projectionSupplier.get().equals(that.projectionSupplier.get())))
-        && ((that.predicate == null && this.predicate == null)
-            || (that.predicate.equals(this.predicate)))
-        && StreamSupport.stream(that.conf.get().spliterator(), false)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-            .equals(
-                StreamSupport.stream(this.conf.get().spliterator(), false)
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
   }
 
   ////////////////////////////////////////
