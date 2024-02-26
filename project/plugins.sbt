@@ -15,7 +15,7 @@ addSbtPlugin("com.github.sbt" % "sbt-site" % "1.5.0")
 addSbtPlugin("com.github.sbt" % "sbt-site-paradox" % "1.5.0")
 addSbtPlugin("com.github.sbt" % "sbt-paradox-material-theme" % "0.7.0")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.5.2")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.10")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.11")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 
 libraryDependencies ++= Seq(
