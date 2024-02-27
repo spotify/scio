@@ -203,13 +203,13 @@ class SmbIOTest extends PipelineSpec {
   it should "be able to mock sortMergeTransform" in {
     JobTest[SmbTransformJob.type]
       .args(
-        "--users=gs://users",
-        "--accounts=gs://accounts",
-        "--output=gs://output"
+        "--users=/users",
+        "--accounts=/accounts",
+        "--output=/output"
       )
-      .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
-      .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
-      .output(SmbIO[Integer, User]("gs://output", _.getId))(
+      .input(SmbIO[Integer, User]("/users", _.getId), Seq(user))
+      .input(SmbIO[Integer, Account]("/accounts", _.getId), Seq(accountA, accountB))
+      .output(SmbIO[Integer, User]("/output", _.getId))(
         _ should containInAnyOrder(Seq(joinedUserAccounts))
       )
       .run()
@@ -218,13 +218,13 @@ class SmbIOTest extends PipelineSpec {
   it should "be able to mock sortMergeTransform with side inputs" in {
     JobTest[SmbTransformWithSideInputsJob.type]
       .args(
-        "--users=gs://users",
-        "--accounts=gs://accounts",
-        "--output=gs://output"
+        "--users=/users",
+        "--accounts=/accounts",
+        "--output=/output"
       )
-      .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
-      .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
-      .output(SmbIO[Integer, User]("gs://output", _.getId))(
+      .input(SmbIO[Integer, User]("/users", _.getId), Seq(user))
+      .input(SmbIO[Integer, Account]("/accounts", _.getId), Seq(accountA, accountB))
+      .output(SmbIO[Integer, User]("/output", _.getId))(
         _ should containInAnyOrder(
           Seq(User.newBuilder(user).setAccounts(List(accountA, accountB).asJava).setId(7).build())
         )
