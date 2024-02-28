@@ -40,7 +40,7 @@ class VersionUtilTest extends AnyFlatSpec with Matchers {
       "Using a SNAPSHOT version of Scio: 0.1.0-SNAPSHOT",
       s"""
        | $YELLOW>$BOLD A newer version of Scio is available: 0.1.0-SNAPSHOT -> 0.1.0$RESET
-       | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.$RESET
+       | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.
        |""".stripMargin
     )
   }
@@ -49,7 +49,7 @@ class VersionUtilTest extends AnyFlatSpec with Matchers {
     VersionUtil.checkVersion(oldVer, Some(newVer), ignore = false) shouldBe Seq(
       s"""
         | $YELLOW>$BOLD A newer version of Scio is available: $oldVer -> $newVer$RESET
-        | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.$RESET
+        | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.
         |""".stripMargin
     )
 
@@ -70,5 +70,22 @@ class VersionUtilTest extends AnyFlatSpec with Matchers {
         verifyNewVersion(versions(i), versions(j))
       }
     }
+  }
+
+  it should "point to migration guide when there are breaking changes" in {
+    // checks the migration page is up for 0.14.0
+    val current = "0.13.6"
+    val latest = "0.14.0"
+    VersionUtil.checkVersion(current, Some(latest)) shouldBe Seq(
+      s"""
+         | $YELLOW>$BOLD A newer version of Scio is available: $current -> $latest$RESET
+         | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.
+         |""".stripMargin,
+      s"""
+         | $YELLOW>$BOLD Scio 0.14 introduced some breaking changes in the API.$RESET
+         | $YELLOW>$RESET Follow the migration guide to upgrade: https://spotify.github.io/scio/releases/migrations/v0.14.0-Migration-Guide.html.
+         | $YELLOW>$RESET Scio provides automatic migration rules (See migration guide).
+         |""".stripMargin
+    )
   }
 }
