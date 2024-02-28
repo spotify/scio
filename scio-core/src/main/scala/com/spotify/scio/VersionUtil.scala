@@ -125,7 +125,7 @@ private[scio] object VersionUtil {
           if (
             latestVersion.copy(rev = 0, suffix = "") > currentVersion.copy(rev = 0, suffix = "")
           ) {
-            migrationMessage(latestVersion).foreach(buffer.append)
+            migrationMessage(latestVersion).foreach(buffer.append(_))
           }
         }
       }
