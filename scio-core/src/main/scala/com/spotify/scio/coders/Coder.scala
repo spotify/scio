@@ -34,24 +34,25 @@ Cannot find an implicit Coder instance for type:
   This can happen for a few reasons, but the most common case is that a data
   member somewhere within this type doesn't have an implicit Coder instance in scope.
 
-  Here are some debugging hints:
-    - For Option types, ensure that a Coder instance is in scope for the non-Option version.
-    - For List and Seq types, ensure that a Coder instance is in scope for a single element.
+  Here are some hints:
+    - For module specific types, you may need to explicitly import the coders, eg avro:
+        import com.spotify.scio.avro._
+    - For collections, ensure that a Coder instance is in scope for the element type.
     - For generic methods, you may need to add an implicit parameter so that
         def foo[T](coll: SCollection[SomeClass], param: String): SCollection[T]
 
       may become:
         def foo[T](coll: SCollection[SomeClass],
                    param: String)(implicit c: Coder[T]): SCollection[T]
-                                                ^
+                                  ^
       Alternatively, you can use a context bound instead of an implicit parameter:
         def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]
-                    ^
-      read more here: https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide#add-missing-context-bounds
+                 ^
+    - For sealed traits and case classes, you can identify the missing member's coder in the REPL:
+        scala> com.spotify.scio.coders.Coder.gen[Foo]
 
-    - You can check that an instance exists for Coder in the REPL or in your code:
-        scala> com.spotify.scio.coders.Coder[Foo]
-      And find the missing instance and construct it as needed.
+          error: magnolia: could not find Coder.Typeclass for type Bar
+            in parameter 'xxx' of product type Foo
 """
 )
 sealed trait Coder[T] extends Serializable
