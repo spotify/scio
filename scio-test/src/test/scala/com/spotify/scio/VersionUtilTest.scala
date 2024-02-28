@@ -76,7 +76,7 @@ class VersionUtilTest extends AnyFlatSpec with Matchers {
     // checks the migration page is up for 0.14.0
     val current = "0.13.6"
     val latest = "0.14.1"
-    VersionUtil.checkVersion(current, Some(latest)) shouldBe Seq(
+    VersionUtil.checkVersion(current, Some(latest), ignore = false) shouldBe Seq(
       s"""
          | $YELLOW>$BOLD A newer version of Scio is available: $current -> $latest$RESET
          | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.
