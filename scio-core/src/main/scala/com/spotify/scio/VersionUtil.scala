@@ -92,9 +92,9 @@ private[scio] object VersionUtil {
     sys.props.get("scio.ignoreVersionWarning").exists(_.trim == "true")
 
   private def migrationMessage(latest: SemVer): Option[String] = {
-    val SemVer(major, minor, _, _) = latest
+    val SemVer(major, minor, rev, _) = latest
     val shortVersion = s"$major.$minor"
-    val fullVersion = s"v$major.$minor.0"
+    val fullVersion = s"v$major.$minor.$rev"
 
     val url =
       s"https://spotify.github.io/scio/releases/migrations/$fullVersion-Migration-Guide.html"
@@ -121,11 +121,12 @@ private[scio] object VersionUtil {
         val latestVersion = parseVersion(v)
         if (latestVersion > currentVersion) {
           buffer.append(NewerVersionPattern(current, v))
-          // breaking upgrade
-          if (
-            latestVersion.copy(rev = 0, suffix = "") > currentVersion.copy(rev = 0, suffix = "")
-          ) {
-            migrationMessage(latestVersion).foreach(buffer.append(_))
+          // check breaking upgrade by comparing base versions
+          val latestBaseVersion = latestVersion.copy(rev = 0, suffix = "")
+          val currentBaseVersion = currentVersion.copy(rev = 0, suffix = "")
+          if (latestBaseVersion > currentBaseVersion) {
+            // keep application for 2.12
+            migrationMessage(latestBaseVersion).foreach(buffer.append(_))
           }
         }
       }
