@@ -75,7 +75,7 @@ class VersionUtilTest extends AnyFlatSpec with Matchers {
   it should "point to migration guide when there are breaking changes" in {
     // checks the migration page is up for 0.14.0
     val current = "0.13.6"
-    val latest = "0.14.0"
+    val latest = "0.14.1"
     VersionUtil.checkVersion(current, Some(latest)) shouldBe Seq(
       s"""
          | $YELLOW>$BOLD A newer version of Scio is available: $current -> $latest$RESET

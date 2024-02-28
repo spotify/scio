@@ -92,11 +92,12 @@ private[scio] object VersionUtil {
     sys.props.get("scio.ignoreVersionWarning").exists(_.trim == "true")
 
   private def migrationMessage(latest: SemVer): Option[String] = {
-    val SemVer(major, minor, rev, _) = latest
+    val SemVer(major, minor, _, _) = latest
     val shortVersion = s"$major.$minor"
-    val fullVersion = s"v$major.$minor.$rev"
+    val fullVersion = s"v$major.$minor.0"
 
-    val url = s"https://spotify.github.io/scio/releases/migrations/$fullVersion-Migration-Guide.html"
+    val url =
+      s"https://spotify.github.io/scio/releases/migrations/$fullVersion-Migration-Guide.html"
     Try(requestFactory.buildGetRequest(new GenericUrl(url)).execute())
       .filter(_.getStatusCode == 200)
       .map(_ => MessagePattern(shortVersion, url))
