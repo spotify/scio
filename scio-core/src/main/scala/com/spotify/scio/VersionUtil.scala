@@ -53,22 +53,22 @@ private[scio] object VersionUtil {
        | $YELLOW>$BOLD Scio $version introduced some breaking changes in the API.$RESET
        | $YELLOW>$RESET Follow the migration guide to upgrade: $url.
        | $YELLOW>$RESET Scio provides automatic migration rules (See migration guide).
-      """.stripMargin
+       |""".stripMargin
   private[this] val NewerVersionPattern: (String, String) => String = (current, v) => s"""
       | $YELLOW>$BOLD A newer version of Scio is available: $current -> $v$RESET
-      | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.$RESET
+      | $YELLOW>$RESET Use `-Dscio.ignoreVersionWarning=true` to disable this check.
       |""".stripMargin
 
+  private lazy val requestFactory = new NetHttpTransport()
+    .createRequestFactory { (request: HttpRequest) =>
+      request.setConnectTimeout(Timeout)
+      request.setReadTimeout(Timeout)
+    }
+
   private lazy val latest: Option[String] = Try {
-    val transport = new NetHttpTransport()
-    val response = transport
-      .createRequestFactory { (request: HttpRequest) =>
-        request.setConnectTimeout(Timeout)
-        request.setReadTimeout(Timeout)
-        request.setParser(new JsonObjectParser(GsonFactory.getDefaultInstance))
-        ()
-      }
+    val response = requestFactory
       .buildGetRequest(new GenericUrl(Url))
+      .setParser(new JsonObjectParser(GsonFactory.getDefaultInstance))
       .execute()
       .parseAs(classOf[java.util.List[java.util.Map[String, AnyRef]]])
     response.asScala
@@ -91,28 +91,17 @@ private[scio] object VersionUtil {
   private[scio] def ignoreVersionCheck: Boolean =
     sys.props.get("scio.ignoreVersionWarning").exists(_.trim == "true")
 
-  private def messages(current: SemVer, latest: SemVer): Option[String] = (current, latest) match {
-    case (SemVer(0, minor, _, _), SemVer(0, 7, _, _)) if minor < 7 =>
-      Some(
-        MessagePattern("0.7", "https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide")
-      )
-    case (SemVer(0, minor, _, _), SemVer(0, 8, _, _)) if minor < 8 =>
-      Some(
-        MessagePattern("0.8", "https://spotify.github.io/scio/migrations/v0.8.0-Migration-Guide")
-      )
-    case (SemVer(0, minor, _, _), SemVer(0, 9, _, _)) if minor < 9 =>
-      Some(
-        MessagePattern("0.9", "https://spotify.github.io/scio/migrations/v0.9.0-Migration-Guide")
-      )
-    case (SemVer(0, minor, _, _), SemVer(0, 10, _, _)) if minor < 10 =>
-      Some(
-        MessagePattern("0.10", "https://spotify.github.io/scio/migrations/v0.10.0-Migration-Guide")
-      )
-    case (SemVer(0, minor, _, _), SemVer(0, 12, _, _)) if minor < 12 =>
-      Some(
-        MessagePattern("0.12", "https://spotify.github.io/scio/migrations/v0.12.0-Migration-Guide")
-      )
-    case _ => None
+  private def migrationMessage(latest: SemVer): Option[String] = {
+    val SemVer(major, minor, rev, _) = latest
+    val shortVersion = s"$major.$minor"
+    val fullVersion = s"v$major.$minor.$rev"
+
+    val url =
+      s"https://spotify.github.io/scio/releases/migrations/$fullVersion-Migration-Guide.html"
+    Try(requestFactory.buildGetRequest(new GenericUrl(url)).execute())
+      .filter(_.getStatusCode == 200)
+      .map(_ => MessagePattern(shortVersion, url))
+      .toOption
   }
 
   def checkVersion(
@@ -124,15 +113,21 @@ private[scio] object VersionUtil {
       Nil
     } else {
       val buffer = mutable.Buffer.empty[String]
-      val v1 = parseVersion(current)
-      if (v1.suffix.contains("SNAPSHOT")) {
+      val currentVersion = parseVersion(current)
+      if (currentVersion.suffix.contains("SNAPSHOT")) {
         buffer.append(s"Using a SNAPSHOT version of Scio: $current")
       }
       latestOverride.orElse(latest).foreach { v =>
-        val v2 = parseVersion(v)
-        if (v2 > v1) {
+        val latestVersion = parseVersion(v)
+        if (latestVersion > currentVersion) {
           buffer.append(NewerVersionPattern(current, v))
-          messages(v1, v2).foreach(buffer.append(_))
+          // check breaking upgrade by comparing base versions
+          val latestBaseVersion = latestVersion.copy(rev = 0, suffix = "")
+          val currentBaseVersion = currentVersion.copy(rev = 0, suffix = "")
+          if (latestBaseVersion > currentBaseVersion) {
+            // keep application for 2.12
+            migrationMessage(latestBaseVersion).foreach(buffer.append(_))
+          }
         }
       }
       buffer.toSeq
