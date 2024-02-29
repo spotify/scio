@@ -231,7 +231,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.0-47-9a41d8e-20240227T152512Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.1-5-a658edb-20240229T134655Z*
 </label>
 </li>
 </ul>
@@ -269,7 +269,7 @@ spotify/scio
 ...
 </code></pre>
 <p>If the type is or contains an Avro class (either <code>GenericRecord</code> or a <code>SpecificRecord</code> implementation), you can import the <code>com.spotify.scio.avro._</code> package to get the implicit avro coders back in scope. This is likely to happen if you are using any <code>readAsAvro..</code> API or <code>AvroSortedBucketIO</code> from <code>scio-smb</code>. See <a href="#avro-removed-from-core">avro removed from core</a> for more details.</p>
-<p>If the type relied on a fallback coder, we advise you to create a custom coder. See <a href="../../internals/Coders.md/#how-to-build-a-custom-coder">coders</a> for more details. If you want to use kryo implicit fallback coders as before, this requires now to import <code>com.spotify.scio.coders.kryo._</code> explicitly.</p>
+<p>If the type relied on a fallback coder, we advise you to create a custom coder. See <a href="../../internals/Coders.html#how-to-build-a-custom-coder">coders</a> for more details. If you want to use kryo implicit fallback coders as before, this requires now to import <code>com.spotify.scio.coders.kryo._</code> explicitly.</p>
 <h2><a href="#avro-removed-from-core" name="avro-removed-from-core" class="anchor"><span class="anchor-link"></span></a>Avro removed from core</h2>
 <p>Avro coders are now a part of the <code>com.spotify.scio.avro</code> package.</p>
 <pre class="prettyprint"><code class="language-scala">import com.spotify.scio.avro._
@@ -299,7 +299,7 @@ spotify/scio
 <p>The parquet-tensorflow API has been migrated from custom <a href="https://github.com/nevillelyh/parquet-extra"><code>parquet-extra</code></a> to the official <a href="https://github.com/tensorflow/metadata">metadata</a> API.</p>
 <p><code>schema</code> and <code>projection</code> are now of type <code>org.tensorflow.metadata.v0.Schema</code>.</p>
 <h2><a href="#scio-smb-provided-implementations" name="scio-smb-provided-implementations" class="anchor"><span class="anchor-link"></span></a>scio-smb provided implementations</h2>
-<p>When using <code>scio-smb</code>, you also need to depend on the scio module that provides the file format implementation you want to use. See <a href="../../extras/Sort-Merge-Bucket.md/#what-kind-of-data-can-i-write-using-smb-">Sort-Merge-Bucket</a> for more details.</p>
+<p>When using <code>scio-smb</code>, you also need to depend on the scio module that provides the file format implementation you want to use. See <a href="../../extras/Sort-Merge-Bucket.html#what-kind-of-data-can-i-write-using-smb-">Sort-Merge-Bucket</a> for more details.</p>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/releases/migrations/v0.14.0-Migration-Guide.md" title="Edit this page" class="md-source-file md-edit">
@@ -308,7 +308,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.0-47-9a41d8e-20240227T152512Z*
+0.14.1-5-a658edb-20240229T134655Z*
 </span>
 </div>
 </article>
