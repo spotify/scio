@@ -33,7 +33,7 @@ class MagnolifyBigtableExampleTest extends PipelineSpec {
 
   "MagnolifyBigtableReadExample" should "work" in {
     JobTest[MagnolifyBigtableReadExample.type]
-      .args(bigtableOptions :+ "--output=out.txt" : _*)
+      .args(bigtableOptions :+ "--output=out.txt": _*)
       .input(BigtableIO[(String, WordCount)](project, instance, table), expected)
       .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(expectedText))
       .run()
