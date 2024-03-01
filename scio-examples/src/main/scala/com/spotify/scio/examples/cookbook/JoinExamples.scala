@@ -215,7 +215,7 @@ object SparseJoinExamples {
     import JoinUtil._
 
     // Import macro-generated encoders that implement Funnel to back guava Bloom filters
-    import magnolify.guava.auto._
+    import _root_.magnolify.guava.auto._
 
     // Extract both sides as `SCollection[(String, String)]`s
     val eventsInfo =
