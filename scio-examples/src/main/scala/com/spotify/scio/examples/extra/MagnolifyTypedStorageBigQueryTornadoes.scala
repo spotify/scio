@@ -37,9 +37,9 @@ object MagnolifyTypedStorageBigQueryTornadoes {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
     val resultTap = sc
-    // Get input from BigQuery and convert elements from `TableRow` to `Row` with the
-    // implicitly-available `TableRowType[Row]`
-    .typedBigQueryStorageMagnolify[Row](
+      // Get input from BigQuery and convert elements from `TableRow` to `Row` with the
+      // implicitly-available `TableRowType[Row]`
+      .typedBigQueryStorageMagnolify[Row](
         Table.Spec(table),
         selectedFields = List("tornado", "month"),
         rowRestriction = "tornado = true"
