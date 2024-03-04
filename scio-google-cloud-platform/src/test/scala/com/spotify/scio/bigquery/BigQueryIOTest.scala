@@ -194,9 +194,9 @@ final class BigQueryIOTest extends ScioIOSpec {
   }
 
   {
-    import com.spotify.scio.bigquery.magnolify._
+    import com.spotify.scio.bigquery.typed._
     // unsafe implicits must be explicitly imported for TableRowType[MagnolifyRecord] to be derived
-    import _root_.magnolify.bigquery.unsafe._
+    import magnolify.bigquery.unsafe._
 
     "MagnolifyBigQuerySelect" should "work" in {
       val xs = (1 to 100).map(x => MagnolifyRecord(x, x.toString))

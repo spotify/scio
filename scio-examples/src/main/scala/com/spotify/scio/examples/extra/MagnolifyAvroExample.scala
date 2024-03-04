@@ -22,7 +22,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.avro.magnolify._
+import com.spotify.scio.avro.typed._
 import com.spotify.scio.examples.common.ExampleData
 
 object MagnolifyAvroExample {

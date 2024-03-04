@@ -21,7 +21,7 @@ import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.values.SCollection
-import _root_.magnolify.avro.{AvroType => MagnolifyAvroType}
+import magnolify.avro.{AvroType => MagnolifyAvroType}
 import org.apache.avro.generic.GenericRecord
 
 import scala.reflect.runtime.universe._
