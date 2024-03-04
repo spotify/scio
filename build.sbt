@@ -744,6 +744,7 @@ lazy val `scio-avro` = project
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-protobuf" % magnolifyVersion,
+      "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
