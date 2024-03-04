@@ -18,4 +18,3 @@
 package com.spotify.scio.avro.syntax
 
 trait Syntax extends ScioContextSyntax with SCollectionSyntax
-trait MagnolifySyntax extends MagnolifyAvroScioContextSyntax with MagnolifyAvroSCollectionSyntax

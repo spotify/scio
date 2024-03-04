@@ -91,7 +91,7 @@ final case class TypedProtobufObjectFileIO[T: Coder, U <: Message: ClassTag](
    * block file format.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(underlying)(params).map(u => pt.from(u))
+    sc.transform(_.read(underlying)(params).map(u => pt.from(u)))
 
   /**
    * Save this SCollection as a Protobuf file.

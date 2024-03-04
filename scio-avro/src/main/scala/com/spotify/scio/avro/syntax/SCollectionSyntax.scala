@@ -24,6 +24,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
+import magnolify.avro.{AvroType => MagnolifyAvroType}
 import magnolify.protobuf.ProtobufType
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
@@ -244,6 +245,38 @@ final class TypedMagnolifyProtobufSCollectionOps[T](private val self: SCollectio
   }
 }
 
+final class TypedMagnolifyAvroSCollectionOps[T: MagnolifyAvroType](
+  private val self: SCollection[T]
+) {
+
+  def saveAsAvroFile(
+    path: String,
+    numShards: Int = AvroTypedIO.WriteParam.DefaultNumShards,
+    suffix: String = AvroTypedIO.WriteParam.DefaultSuffix,
+    codec: CodecFactory = AvroTypedIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = AvroTypedIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = AvroTypedIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = AvroTypedIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      AvroTypedIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = AvroTypedIO.WriteParam.DefaultPrefix,
+    datumFactory: AvroDatumFactory[GenericRecord] = AvroTypedIO.WriteParam.DefaultDatumFactory
+  )(implicit coder: Coder[T]): ClosedTap[T] = {
+    val param = AvroMagnolifyTyped.WriteParam(
+      numShards,
+      suffix,
+      codec,
+      metadata,
+      filenamePolicySupplier,
+      prefix,
+      shardNameTemplate,
+      tempDirectory,
+      datumFactory
+    )
+    self.write(AvroMagnolifyTyped[T](path))(param)
+  }
+}
+
 /** Enhanced with Avro methods. */
 trait SCollectionSyntax {
   implicit def avroGenericRecordSCollectionOps(
@@ -270,4 +303,7 @@ trait SCollectionSyntax {
     c: SCollection[T]
   ): TypedMagnolifyProtobufSCollectionOps[T] = new TypedMagnolifyProtobufSCollectionOps[T](c)
 
+  implicit def typedMagnolifyAvroSCollectionOps[T: MagnolifyAvroType](
+    c: SCollection[T]
+  ): TypedMagnolifyAvroSCollectionOps[T] = new TypedMagnolifyAvroSCollectionOps(c)
 }

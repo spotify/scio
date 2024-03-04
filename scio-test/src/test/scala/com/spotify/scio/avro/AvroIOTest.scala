@@ -35,6 +35,8 @@ object AvroIOTest {
   @AvroType.toSchema
   case class AvroRecord(i: Int, s: String, r: List[String])
   case class Track(trackId: String)
+
+  case class Record(i: Int, s: String, r: List[String])
 }
 
 class AvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
@@ -192,6 +194,12 @@ class AvroIOTest extends ScioIOSpec {
     val io = (s: String) => AvroIO[AvroRecord](s)
     testTap(xs)(_.saveAsTypedAvroFile(_))(".avro")
     testJobTest(xs)(io)(_.typedAvroFile[AvroRecord](_))(_.saveAsTypedAvroFile(_))
+  }
+
+  it should "work with typed Avro with magnolify AvroType" in {
+    val xs = (1 to 100).map(x => Record(x, x.toString, (1 to x).map(_.toString).toList))
+    testTap(xs)(_.saveAsAvroFile(_))(".avro")
+    testJobTest(xs)(AvroIO[Record])(_.typedAvroFileMagnolify[Record](_))(_.saveAsAvroFile(_))
   }
 
   "ObjectFileIO" should "work" in {

@@ -39,7 +39,7 @@ final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](path: Strin
   private lazy val underlying: GenericRecordIO = GenericRecordIO(path, schema)
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(underlying)(params).map(avroT.fromGenericRecord)
+    sc.transform(_.read(underlying)(params).map(avroT.fromGenericRecord))
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val datumFactory = Option(params.datumFactory).getOrElse(GenericRecordDatumFactory)

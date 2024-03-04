@@ -25,6 +25,7 @@ import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 import magnolify.protobuf.ProtobufType
+import magnolify.avro.{AvroType => MagnolifyAvroType}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
@@ -167,6 +168,16 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     suffix: String = AvroTypedIO.ReadParam.DefaultSuffix
   ): SCollection[T] =
     self.read(AvroTypedIO[T](path))(AvroTypedIO.ReadParam(suffix))
+
+  /**
+   * Read avro data from `path` as `GenericRecord` and convert to `T` via the implicitly-available
+   * `magnolify.avro.AvroType[T]`
+   */
+  def typedAvroFileMagnolify[T: MagnolifyAvroType: Coder](
+    path: String,
+    suffix: String = AvroMagnolifyTyped.ReadParam.DefaultSuffix
+  ): SCollection[T] =
+    self.read(AvroMagnolifyTyped[T](path))(AvroMagnolifyTyped.ReadParam(suffix))
 
   /**
    * Get an SCollection for a Protobuf file.
