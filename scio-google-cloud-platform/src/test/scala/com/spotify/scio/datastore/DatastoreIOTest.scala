@@ -70,7 +70,6 @@ class DatastoreIOTest extends PipelineSpec with ScioIOSpec {
     JobTest[DatastoreJob.type]
       .args("--input=store.in", "--output=store.out")
       .input(DatastoreIO("store.in"), (1L to 3L).map(newEntity))
-      // TODO add scalafix for existing DatastoreIO in tests -> DatastoreIO[Entity]
       .output(DatastoreIO[Entity]("store.out"))(coll => coll should containInAnyOrder(xs))
       .run()
 

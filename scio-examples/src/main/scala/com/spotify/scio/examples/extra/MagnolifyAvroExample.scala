@@ -22,7 +22,7 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio._
-import com.spotify.scio.avro.typed._
+import com.spotify.scio.avro._
 import com.spotify.scio.examples.common.ExampleData
 
 object MagnolifyAvroExample {
@@ -49,7 +49,7 @@ object MagnolifyAvroWriteExample {
       .countByValue
       .map { case (word, count) => WordCount(word, count) }
       // uses implicitly-derived magnolify.avro.AvroType[WordCount] to save to avro
-      .saveAsTypedAvroFile(args("output"))
+      .saveAsAvroFile(args("output"))
     sc.run()
     ()
   }
@@ -70,7 +70,7 @@ object MagnolifyAvroReadExample {
 
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     // uses implicitly-derived magnolify.avro.AvroType[WordCount] to read from avro
-    sc.typedAvroFile[WordCount](args("input"))
+    sc.typedAvroFileMagnolify[WordCount](args("input"))
       .map(wc => wc.word + ": " + wc.count)
       .saveAsTextFile(args("output"))
     sc.run()

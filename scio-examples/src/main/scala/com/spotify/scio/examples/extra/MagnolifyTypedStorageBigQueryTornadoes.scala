@@ -24,7 +24,6 @@
 package com.spotify.scio.examples.extra
 
 import com.spotify.scio.bigquery._
-import com.spotify.scio.bigquery.typed._
 import com.spotify.scio.{ContextAndArgs, ScioContext}
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.Method
 
