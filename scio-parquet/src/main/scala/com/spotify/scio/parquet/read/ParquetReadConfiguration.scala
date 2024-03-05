@@ -40,7 +40,7 @@ object ParquetReadConfiguration {
 
   // SplittableDoFn
   val UseSplittableDoFn = "scio.parquet.read.useSplittableDoFn"
-  private[scio] val UseSplittableDoFnDefault = false
+  private[scio] val UseSplittableDoFnDefault = true
 
   // Row Group API (note: this setting is only supported for SplittableDoFn-based reads)
   val FilterGranularity = "scio.parquet.read.filterGranularity"
@@ -54,17 +54,18 @@ object ParquetReadConfiguration {
   private[scio] def getUseSplittableDoFn(conf: Configuration, opts: PipelineOptions): Boolean = {
     Option(conf.get(UseSplittableDoFn)) match {
       case Some(v) => v.toBoolean
-      case None if dataflowRunnerV2Enabled(opts) =>
+      case None if dataflowRunnerV2Disabled(opts) =>
         log.info(
-          "Defaulting to SplittableDoFn-based Parquet read as Dataflow Runner V2 is enabled. To opt out, " +
-            "set `scio.parquet.read.useSplittableDoFn -> false` in your read Configuration."
+          "Defaulting to HadoopFormatIO-based Parquet read as Dataflow Runner V2 is disabled. To opt in, " +
+            "set `scio.parquet.read.useSplittableDoFn -> true` in your read Configuration."
         )
-        true
+        false
       case None =>
         UseSplittableDoFnDefault
     }
   }
 
-  private def dataflowRunnerV2Enabled(opts: PipelineOptions): Boolean =
-    Option(opts.as(classOf[ExperimentalOptions]).getExperiments).exists(_.contains("use_runner_v2"))
+  private def dataflowRunnerV2Disabled(opts: PipelineOptions): Boolean =
+    Option(opts.as(classOf[ExperimentalOptions]).getExperiments)
+      .exists(_.contains("disable_runner_v2"))
 }

@@ -196,9 +196,8 @@ object SortMergeTransform {
         }
       }
       val t = transform.via(fn, sideViews)
-      sc.applyInternal(t)
-
       val writeResult = sc.applyInternal(t)
+
       ClosedTap(SmbIO.tap(t.getFileOperations, writeResult).apply(sc))
     }
   }

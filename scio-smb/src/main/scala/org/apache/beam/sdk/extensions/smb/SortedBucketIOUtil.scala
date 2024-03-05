@@ -29,9 +29,7 @@ object SortedBucketIOUtil {
         .getInputs
         .asScala
         .toSeq
-        .map { case (rId, _) =>
-          s"${rId.getCurrentDirectory}${Option(rId.getFilename).getOrElse("")}"
-        }: _*
+        .map { case (rId, _) => rId.toString }: _*
     )
 
   def testId(write: beam.SortedBucketIO.Write[_, _, _]): String =

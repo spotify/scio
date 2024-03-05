@@ -21,7 +21,6 @@ import com.spotify.scio.{IsJavaBean, MagnoliaMacros}
 import com.spotify.scio.coders.instances._
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.beam.sdk.values.KV
-import org.typelevel.scalaccompat.annotation.unused
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
@@ -35,24 +34,25 @@ Cannot find an implicit Coder instance for type:
   This can happen for a few reasons, but the most common case is that a data
   member somewhere within this type doesn't have an implicit Coder instance in scope.
 
-  Here are some debugging hints:
-    - For Option types, ensure that a Coder instance is in scope for the non-Option version.
-    - For List and Seq types, ensure that a Coder instance is in scope for a single element.
-    - For generic methods, you may need to add an implicit parameter so that
+  Here are some hints:
+    - For collections, ensure that a Coder instance is in scope for the element type.
+    - For module specific types, you may need to explicitly import the coders, eg avro:
+        import com.spotify.scio.avro._
+    - For sealed traits and case classes, you can identify the missing member's coder:
+        scala> com.spotify.scio.coders.Coder.gen[Foo]
+
+          error: magnolia: could not find Coder.Typeclass for type Bar
+            in parameter 'xxx' of product type Foo
+    - For generic methods, you may need to add an implicit parameter so that:
         def foo[T](coll: SCollection[SomeClass], param: String): SCollection[T]
 
       may become:
         def foo[T](coll: SCollection[SomeClass],
                    param: String)(implicit c: Coder[T]): SCollection[T]
-                                                ^
+                                  ^
       Alternatively, you can use a context bound instead of an implicit parameter:
         def foo[T: Coder](coll: SCollection[SomeClass], param: String): SCollection[T]
-                    ^
-      read more here: https://spotify.github.io/scio/migrations/v0.7.0-Migration-Guide#add-missing-context-bounds
-
-    - You can check that an instance exists for Coder in the REPL or in your code:
-        scala> com.spotify.scio.coders.Coder[Foo]
-      And find the missing instance and construct it as needed.
+                 ^
 """
 )
 sealed trait Coder[T] extends Serializable
@@ -222,14 +222,14 @@ object Coder
     with LowPriorityCoders {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
 
-  @deprecated("Use Coder.kryo[T] instead", "0.14.0")
-  def fallback[T](@unused lp: shapeless.LowPriority): Coder[T] =
-    macro CoderMacros.issueFallbackWarning[T]
 }
 
-trait LowPriorityCoders { self: CoderDerivation with JavaBeanCoders =>
-  implicit override def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
+trait LowPriorityCoders extends LowPriorityCoders1 { self: CoderDerivation with JavaBeanCoders =>
   implicit override def gen[T]: Coder[T] = macro MagnoliaMacros.genWithoutAnnotations[T]
+}
+
+trait LowPriorityCoders1 { self: JavaBeanCoders =>
+  implicit override def javaBeanCoder[T: IsJavaBean: ClassTag]: Coder[T] = JavaCoders.javaBeanCoder
 }
 
 private[coders] object CoderStackTrace {
