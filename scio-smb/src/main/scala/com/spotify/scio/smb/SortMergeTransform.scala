@@ -133,7 +133,7 @@ object SortMergeTransform {
       transformFn: (KeyType, R, SortedBucketTransform.SerializableConsumer[W]) => Unit
     ): ClosedTap[W] = {
       val data = read.parDo(new ViaTransform(transformFn))
-      TestDataManager.getOutput(sc.testId.get)(SortedBucketIOUtil.testId(output))
+      TestDataManager.getOutput(sc.testId.get)(SortedBucketIOUtil.testId(output))(data)
       ClosedTap(TapOf[W].saveForTest(data))
     }
   }
@@ -222,7 +222,7 @@ object SortMergeTransform {
           .of(new ViaTransformWithSideOutput(transformFn))
           .withSideInputs(sides.map(_.view).asJava)
       )
-      TestDataManager.getOutput(sc.testId.get)(SortedBucketIOUtil.testId(output))
+      TestDataManager.getOutput(sc.testId.get)(SortedBucketIOUtil.testId(output))(data)
       ClosedTap(TapOf[W].saveForTest(data))
     }
   }
