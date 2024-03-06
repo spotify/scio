@@ -93,15 +93,15 @@ class SortMergeBucketExampleTest extends PipelineSpec {
 
     val userInput = (0 until 200)
       .map(i => SortMergeBucketExample.user(i, i % 100))
-    val accountInput = (25 until 225)
-      .map(i => AccountProjection(i, i * 10.0d))
+    val accountInput = (25 until 425)
+      .map(i => AccountProjection(i % 200, i * 10.0d))
 
     val expectedOutput = (0 until 200)
       .flatMap { userId =>
         for {
-          user <- userInput.filter(_.get("userId").asInstanceOf[Int] == userId)
-          account <- accountInput.filter(_.id == userId)
-        } yield (user.get("age").asInstanceOf[Integer], account.amount)
+          user <- userInput if user.get("userId").asInstanceOf[Int] == userId
+          account <- accountInput if account.id == userId
+        } yield (user.get("age").asInstanceOf[Int], account.amount)
       }
       .groupBy(_._1)
       .map { case (age, grped) =>
@@ -147,23 +147,25 @@ class SortMergeBucketExampleTest extends PipelineSpec {
     implicit val coder: Coder[GenericRecord] =
       avroGenericRecordCoder(SortMergeBucketExample.UserDataSchema)
 
-    val userInput = (0 until 100)
-      .map(i => SortMergeBucketExample.user(i, i % 100))
-    val accountInput = (100 until 300)
-      .map(i => AccountProjection(i, i * 10.0d))
+    val userInput = (0 until 200)
+      .map(i => (i, i % 100))
+      .map { case (id, age) => SortMergeBucketExample.user(id, age) }
+
+    val accountInput = (25 until 425)
+      .map(i => AccountProjection(i % 200, i * 10.0d))
 
     val expectedOutput = (0 until 200)
-      .flatMap { userId =>
-        for {
-          user <- userInput.filter(_.get("userId").asInstanceOf[Integer] == userId)
-          account <- accountInput.filter(_.id == userId)
-        } yield (
-          (userId.asInstanceOf[Integer], user.get("age").asInstanceOf[Integer]),
-          account.amount
-        )
+      .map { userId =>
+        val user = userInput
+          .filter(_.get("userId").asInstanceOf[Int] == userId)
+          .ensuring(_.size == 1)
+          .head
+        val accounts = accountInput.filter(_.id == userId)
+
+        val age = user.get("age").asInstanceOf[Int]
+        val amount = accounts.map(_.amount).sum
+        CombinedAccount(userId, age, amount)
       }
-      .groupBy(_._1)
-      .map { case ((userId, age), grped) => CombinedAccount(userId, age, grped.map(_._2).sum) }
 
     JobTest[SortMergeBucketTransformExample.type]
       .args("--users=gs://users", "--accounts=gs://accounts", "--output=gs://output")
