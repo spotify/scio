@@ -554,7 +554,7 @@ lazy val protobufSettings = Def.settings(
   protocGrpcSourceManaged := sourceManaged.value / "compiled_grpc",
   libraryDependencies ++= Seq(
     "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
-    Libraries.ProtobufJava% "protobuf",
+    Libraries.ProtobufJava % "protobuf",
     Libraries.ProtobufJava
   )
 ) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(protobufConfigSettings))
@@ -666,7 +666,7 @@ lazy val `scio-core` = project
       "org.apache.beam" % "beam-runners-flink-1.16" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Provided,
-      Libraries.BeamSdksJavaExtensionsGoogleCloudPlatformCore% Provided
+      Libraries.BeamSdksJavaExtensionsGoogleCloudPlatformCore % Provided
     ),
     buildInfoKeys := Seq[BuildInfoKey](scalaVersion, version, "beamVersion" -> beamVersion),
     buildInfoPackage := "com.spotify.scio"
@@ -715,12 +715,12 @@ lazy val `scio-test` = project
       // runtime
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
-      Libraries.Annoy% Test,
-      Libraries.Sparkey% Test,
+      Libraries.Annoy % Test,
+      Libraries.Sparkey % Test,
       "com.twitter" %% "algebird-test" % algebirdVersion % Test,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
-      Libraries.BeamSdksJavaCore% Test classifier "tests",
-      Libraries.BeamSdksJavaCore% Test,
+      Libraries.BeamSdksJavaCore % Test classifier "tests",
+      Libraries.BeamSdksJavaCore % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
@@ -771,7 +771,7 @@ lazy val `scio-avro` = project
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % Test,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
-      Libraries.Scalatest% Test,
+      Libraries.Scalatest % Test,
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
       "org.typelevel" %% "cats-core" % catsVersion % Test
@@ -836,9 +836,9 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % Test,
-      Libraries.Hamcrest% Test,
+      Libraries.Hamcrest % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
-      Libraries.Scalatest% Test,
+      Libraries.Scalatest % Test,
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
       "org.typelevel" %% "cats-core" % catsVersion % Test,
@@ -868,8 +868,8 @@ lazy val `scio-cassandra3` = project
       Libraries.HadoopCommon,
       Libraries.HadoopMapreduceClientCore,
       // test
-      Libraries.BeamSdksJavaCore% Test,
-      Libraries.Scalatest% Test,
+      Libraries.BeamSdksJavaCore % Test,
+      Libraries.Scalatest % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
@@ -895,10 +895,10 @@ lazy val `scio-elasticsearch-common` = project
       Libraries.Httpcore,
       Libraries.Slf4jApi,
       // provided
-      Libraries.ElasticsearchJava7% Provided,
+      Libraries.ElasticsearchJava7 % Provided,
       "org.elasticsearch.client" % "elasticsearch-rest-client" % elasticsearch8Version % Provided,
       // test
-      Libraries.Scalatest% Test,
+      Libraries.Scalatest % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
@@ -974,7 +974,7 @@ lazy val `scio-extra` = project
       // test
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
-      Libraries.Scalatest% Test,
+      Libraries.Scalatest % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
     Compile / doc / sources := List(), // suppress warnings
@@ -1002,7 +1002,7 @@ lazy val `scio-grpc` = project
       Libraries.BeamSdksJavaCore,
       Libraries.CommonsLang3,
       // test
-      Libraries.GrpcNetty% Test
+      Libraries.GrpcNetty % Test
     )
   )
 
@@ -1094,7 +1094,7 @@ lazy val `scio-parquet` = project
       Libraries.Log4jOverSlf4j, // log4j is excluded from hadoop
       Libraries.Slf4jApi,
       // provided
-      Libraries.TensorflowCoreApi% Provided,
+      Libraries.TensorflowCoreApi % Provided,
       // runtime
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % Runtime excludeAll (Exclude.metricsCore),
       "io.dropwizard.metrics" % "metrics-core" % metricsVersion % Runtime,
@@ -1138,7 +1138,7 @@ lazy val `scio-tensorflow` = project
       "com.spotify" %% "featran-core" % featranVersion % Test,
       "com.spotify" %% "featran-scio" % featranVersion % Test,
       "com.spotify" %% "featran-tensorflow" % featranVersion % Test,
-      Libraries.MagnolifyTensorflow% Test,
+      Libraries.MagnolifyTensorflow % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
     Compile / tensorFlowMetadataSourcesDir := target.value / s"metadata-$tensorFlowMetadataVersion",
@@ -1412,7 +1412,7 @@ lazy val `scio-jmh` = project
     unusedCompileDependenciesFilter := NothingFilter,
     libraryDependencies ++= directRunnerDependencies ++ Seq(
       // test
-      Libraries.Hamcrest% Test,
+      Libraries.Hamcrest % Test,
       "org.slf4j" % "slf4j-nop" % slf4jVersion % Test
     ),
     publish / skip := true,
@@ -1459,24 +1459,24 @@ lazy val `scio-smb` = project
       Libraries.Log4jOverSlf4j, // log4j is excluded from hadoop
       Libraries.Slf4jApi,
       // provided
-      Libraries.GoogleApiServicesBigquery% Provided, // scio-gcp
+      Libraries.GoogleApiServicesBigquery % Provided, // scio-gcp
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
-      Libraries.Avro% Provided, // scio-avro
-      Libraries.BeamSdksJavaExtensionsAvro% Provided, // scio-avro
-      Libraries.BeamSdksJavaExtensionsProtobuf% Provided, // scio-tensorflow
-      Libraries.BeamSdksJavaIoGoogleCloudPlatform% Provided, // scio-gcp
-      Libraries.BeamSdksJavaIoHadoopCommon% Provided, // scio-parquet
-      Libraries.HadoopCommon% Provided, // scio-parquet
-      Libraries.ParquetAvro% Provided excludeAll (Exclude.avro), // scio-parquet
-      Libraries.ParquetColumn% Provided, // scio-parquet
-      Libraries.ParquetCommon% Provided, // scio-parquet
-      Libraries.ParquetHadoop% Provided, // scio-parquet
-      Libraries.TensorflowCoreApi% Provided, // scio-tensorflow
+      Libraries.Avro % Provided, // scio-avro
+      Libraries.BeamSdksJavaExtensionsAvro % Provided, // scio-avro
+      Libraries.BeamSdksJavaExtensionsProtobuf % Provided, // scio-tensorflow
+      Libraries.BeamSdksJavaIoGoogleCloudPlatform % Provided, // scio-gcp
+      Libraries.BeamSdksJavaIoHadoopCommon % Provided, // scio-parquet
+      Libraries.HadoopCommon % Provided, // scio-parquet
+      Libraries.ParquetAvro % Provided excludeAll (Exclude.avro), // scio-parquet
+      Libraries.ParquetColumn % Provided, // scio-parquet
+      Libraries.ParquetCommon % Provided, // scio-parquet
+      Libraries.ParquetHadoop % Provided, // scio-parquet
+      Libraries.TensorflowCoreApi % Provided, // scio-tensorflow
       // test
-      Libraries.BeamSdksJavaCore% Test classifier "tests",
-      Libraries.BeamSdksJavaExtensionsAvro% Test classifier "tests",
-      Libraries.Hamcrest% Test,
-      Libraries.Scalatest% Test,
+      Libraries.BeamSdksJavaCore % Test classifier "tests",
+      Libraries.BeamSdksJavaExtensionsAvro % Test classifier "tests",
+      Libraries.Hamcrest % Test,
+      Libraries.Scalatest % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
     javacOptions ++= {
@@ -1503,7 +1503,7 @@ lazy val `scio-redis` = project
       Libraries.BeamSdksJavaIoRedis,
       Libraries.Jedis,
       // test
-      Libraries.Scalatest% Test,
+      Libraries.Scalatest % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
@@ -1564,11 +1564,11 @@ lazy val integration = project
       "com.dimafeng" %% "testcontainers-scala-elasticsearch" % testContainersVersion % Test,
       "com.dimafeng" %% "testcontainers-scala-neo4j" % testContainersVersion % Test,
       "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % Test,
-      Libraries.JacksonDatabind% Test,
-      Libraries.JacksonModuleScala% Test,
-      Libraries.MagnolifyDatastore% Test,
+      Libraries.JacksonDatabind % Test,
+      Libraries.JacksonModuleScala % Test,
+      Libraries.MagnolifyDatastore % Test,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
-      Libraries.BeamSdksJavaIoGoogleCloudPlatform% Test
+      Libraries.BeamSdksJavaIoGoogleCloudPlatform % Test
     )
   )
 

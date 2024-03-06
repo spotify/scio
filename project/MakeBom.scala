@@ -42,7 +42,10 @@ object MakeBom {
     def versionString: String = versionStr(versionVariable, rev)
     def oper: String
     def depRegex(s: String) =
-      s""""$org" $oper "$name" %[^%,\n]*""".r.replaceAllIn(s, s"Libraries.${camel.capitalize}")
+      s""""$org" $oper "$name" %([^%,\n]*)""".r.replaceAllIn(s, m => {
+        val suffix = if(m.group(1).endsWith(" ")) " " else ""
+        s"Libraries.${camel.capitalize}$suffix"
+      })
     def depString: String = {
       val variable = s"lazy val ${camel.capitalize}"
       s"""$variable = "$org" $oper "$name" % $versionVariable"""
