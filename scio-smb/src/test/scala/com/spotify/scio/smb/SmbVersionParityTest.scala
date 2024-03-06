@@ -2,7 +2,6 @@ package com.spotify.scio.smb
 
 import com.spotify.scio.avro.{Account, AccountStatus}
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.extensions.smb.AvroSortedBucketIO
 import org.apache.beam.sdk.values.TupleTag
