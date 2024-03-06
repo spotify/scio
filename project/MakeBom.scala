@@ -159,6 +159,7 @@ object MakeBom {
       w.close()
     }
 
+    /*
     val buildSbtSource = scala.io.Source.fromFile("build.sbt")
     val buildSbtContents = buildSbtSource.mkString
     buildSbtSource.close()
@@ -169,6 +170,7 @@ object MakeBom {
     val w = new FileWriter(new File("build.sbt"))
     w.write(y)
     w.close()
+    */
 
     // return original state
     state
