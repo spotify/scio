@@ -572,7 +572,10 @@ lazy val scio = project
   .enablePlugins(NoPublishPlugin)
   .settings(commonSettings)
   .settings(
-    assembly / aggregate := false
+    assembly / aggregate := false,
+    commands ++= Seq(
+      MakeBom.makeBom
+    )
   )
   .aggregate(
     `integration`,
