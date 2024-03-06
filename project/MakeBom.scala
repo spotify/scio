@@ -1,19 +1,33 @@
 import sbt.*
 import Keys.*
 
+import java.io.FileWriter
 import scala.sys.process.*
 import scala.util.matching.Regex.Match
 
 object MakeBom {
-  val BeamVendored = "beam-vendor-"
+  case class Output(path: String, packageName: Option[String] = None)
+  val Outputs = List(
+    Output("project/Libraries.scala"),
+    Output("scio-bom/src/main/scala/com/spotify/scio/Libraries.scala", Some("com.spotify.scio"))
+  )
+  val Template = "import sbt._\n\nobject Libraries {\n%s\n}\n"
   val DefaultBeamVendoredVersion = "0.1"
   val BeamOrganization = "org.apache.beam"
-  def toCamel(name: String): String =
+  val BeamVendored = "beam-vendor-"
+  val BeamVendoredVersionVariable = "beamVendoredVersion"
+  val BeamVersionVariable = "beamVersion"
+  val ScalaLangOrganization = "org.scala-lang"
+
+  private def toCamel(name: String): String =
     "([-.])([0-9a-z])".r.replaceAllIn(name.toLowerCase, (m: Match) => m.group(2).toUpperCase)
 
+  private def versionStr(v: String, r: String) = s"""lazy val ${v} = "${r}""""
+
   val NameOverrides: Map[(String, String), (String, String, String) => String] = Map(
-    ("me.lyh", "parquet-avro") -> {(org, name, rev) => "meLyhParquetAvro" },
-    ("co.elastic.clients", "elasticsearch-java") -> { (_, _, rev) =>s"elasticsearchJava${rev.head}" }
+    ("me.lyh", "parquet-avro") -> { (_, _, _) => "meLyhParquetAvro" },
+    ("com.google.cloud.bigdataoss", "util") -> { (_, _, _) => "bigdataosssUtil" },
+    ("co.elastic.clients", "elasticsearch-java") -> { (_, _, rev) => s"elasticsearchJava${rev(0)}" }
   )
 
   trait Flub {
@@ -22,12 +36,16 @@ object MakeBom {
     def rev: String
 
     def camel: String
-    def versionVariable: String = s"${camel}Version"
-    def versionString: String = s"""lazy val ${versionVariable} = "${rev}""""
+    def versionVariable: String = {
+      s"${camel}Version"
+    }
+    def versionString: String = versionStr(versionVariable, rev)
     def oper: String
+    def depRegex(s: String) =
+      s""""$org" $oper "$name" %[^%,\n]*""".r.replaceAllIn(s, s"Libraries.${camel.capitalize}")
     def depString: String = {
       val variable = s"lazy val ${camel.capitalize}"
-      s"""$variable = "${org}" $oper "${name}" % "$versionVariable""""
+      s"""$variable = "$org" $oper "$name" % $versionVariable"""
     }
   }
 
@@ -43,12 +61,20 @@ object MakeBom {
     def isBeam: Boolean = m.organization.startsWith(BeamOrganization)
     def isBeamVendored: Boolean = isBeam && m.name.startsWith(BeamVendored)
     def isScalaDep: Boolean = m.crossVersion.isInstanceOf[Binary]
-    def isExcluded: Boolean = m.configurations.exists(_.startsWith("plugin->")) // plugin deps
+    def isExcluded: Boolean = {
+      m.organization == ScalaLangOrganization ||
+      m.configurations.isDefined // ignores provided, test, and plugin dependencies
+      // m.configurations.exists { c => c == "provided" || c == "test" || c.startsWith("plugin->") }
+    }
     def camel: String =
       NameOverrides.get(m.key) match {
         case Some(fn) => fn(m.organization, m.name, m.revision)
         case None => toCamel(m.name)
       }
+    override def versionVariable: String =
+      if(isBeamVendored) BeamVendoredVersionVariable
+      else if(isBeam) BeamVersionVariable
+      else super.versionVariable
     def oper: String = if (isScalaDep) "%%" else "%"
   }
 
@@ -70,7 +96,9 @@ object MakeBom {
       .mapValues(_.toSet)
 
     // if we have conflicts in the build
-    val multipleVersions = inModules.filter(_._2.size > 1)
+    val multipleVersions = inModules
+      .mapValues(_.map(_.revision))
+      .filter(_._2.size > 1)
     if(multipleVersions.nonEmpty)
       println(s"Projects do not agree on: ${multipleVersions}")
 
@@ -90,7 +118,7 @@ object MakeBom {
 
         output.flatMap { dep =>
           dep.split(":").toList match {
-            case org :: name :: rev :: _ => Some((org, name) -> rev)
+            case org :: name :: rev :: _ if org != BeamOrganization => Some((org, name) -> rev)
             case _ => None
           }
         }
@@ -107,13 +135,37 @@ object MakeBom {
     // retain the transitive deps on which we explicitly depends
     val transitiveBuildDeps = transitiveDeps.filter { case (k, v) => transitiveKeys.contains(k) }
 
-    val versions = (beamModules ++ nonTransitive).toList.map(_.versionString) ++
+    val versions = List(
+      versionStr(BeamVersionVariable, beamVersion),
+      versionStr(BeamVendoredVersionVariable, beamVendorVersion)
+    ) ++
+      nonTransitive.toList.map(_.versionString) ++
       transitiveBuildDeps.map(_.versionString)
+
     val deps = (beamModules ++ nonTransitive).toList.map(_.depString) ++
       transitiveBuildDeps.map(_.depString)
 
-    print(versions.distinct.sorted.mkString("\n"))
-    print(deps.distinct.sorted.mkString("\n"))
+    val contents = Template.format(
+      versions.distinct.sorted.mkString("  ", "\n  ", "\n") +
+        deps.distinct.sorted.mkString("\n  ", "\n  ", "")
+    )
+    Outputs.foreach { case Output(path, optPackage) =>
+      val w = new FileWriter(new File(path))
+      optPackage.foreach(pkg => w.write(s"package $pkg\n\n") )
+      w.write(contents)
+      w.close()
+    }
+
+    val buildSbtSource = scala.io.Source.fromFile("build.sbt")
+    val buildSbtContents = buildSbtSource.mkString
+    buildSbtSource.close()
+
+    val x = (beamModules ++ nonTransitive).toList
+      .foldLeft(buildSbtContents) { case (str, m) => m.depRegex(str) }
+    val y = transitiveBuildDeps.foldLeft(x) { case (str, m) => m.depRegex(str) }
+    val w = new FileWriter(new File("build.sbt"))
+    w.write(y)
+    w.close()
 
     // return original state
     state
