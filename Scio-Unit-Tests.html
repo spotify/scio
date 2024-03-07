@@ -231,7 +231,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.1-5-a658edb-20240229T134655Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.2-6-40c900b-20240307T190659Z*
 </label>
 </li>
 </ul>
@@ -406,14 +406,14 @@ spotify/scio
   .map((i: KV[Int, BaseAsyncLookupDoFn.Try[String]]) =&gt; i.getValue.get())
   .saveAsTextFile(args(&quot;output&quot;))</code></pre>
 <p>In a <code>JobTest</code>, a <code>PTransformOverride</code> can be passed to the <code>transformOverride</code> method to replace transforms in the original pipeline. Scio provides convenience methods for constructing <code>PTransformOverride</code>s in the <code>com.spotify.scio.testing.TransformOverride</code> object. Continuing the example above, <code>TransformOverride.ofAsyncLookup</code> can be used to map static mock data into the expected output format for the transform, here <code>KV[Int, BaseAsyncLookupDoFn.Try[String]]</code>.</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1172-L1177" target="_blank" title="Go to snippet source">source</a><code class="language-scala">.transformOverride(
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1183-L1188" target="_blank" title="Go to snippet source">source</a><code class="language-scala">.transformOverride(
   TransformOverride.ofAsyncLookup[Int, String](
     &quot;myTransform&quot;,
     Map(1 -&gt; &quot;10&quot;, 2 -&gt; &quot;20&quot;, 3 -&gt; &quot;30&quot;)
   )
 )</code></pre>
 <p>It is also possible to provide a function rather than a static map:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1203-L1206" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofAsyncLookup[Int, String](
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1200-L1203" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofAsyncLookup[Int, String](
   &quot;myTransform&quot;,
   (i: Int) =&gt; s&quot;${i * 10}&quot;
 )</code></pre>
@@ -425,12 +425,12 @@ spotify/scio
     .map(_.toString)
 }</code></pre>
 <p>The transform can be mocked by one of the flavours of <code>ofIter</code> method to map each element to an Iterable[U]:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L985-L988" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofIter[Int, String](
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L982-L985" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofIter[Int, String](
   &quot;myTransform&quot;,
   Map(1 -&gt; Seq(&quot;10&quot;), 2 -&gt; Seq(&quot;20&quot;, &quot;21&quot;), 3 -&gt; Seq())
 )</code></pre>
 <p>or similarly provide a function rather than a static map:</p>
-<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L1015-L1019" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofIter[Int, String](
+<pre class="prettyprint"><button class="snippet-button copy-snippet" title="Copy snippet to clipboard">copy</button><a class="snippet-button go-to-source" href="https://github.com/spotify/scio/tree/master/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala#L998-L1002" target="_blank" title="Go to snippet source">source</a><code class="language-scala">TransformOverride.ofIter[Int, String](
   &quot;myTransform&quot;,
   // map fn equal to: Map(1 -&gt; Seq(), 2 -&gt; Seq(&quot;1&quot;), 3 -&gt; Seq(&quot;1&quot;, &quot;2&quot;)}
   (i: Int) =&gt; { (1 until i).map(String.valueOf(_)) }
@@ -474,7 +474,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.1-5-a658edb-20240229T134655Z*
+0.14.2-6-40c900b-20240307T190659Z*
 </span>
 </div>
 </article>
