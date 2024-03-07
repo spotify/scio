@@ -387,6 +387,14 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     return isIntraPartitionCompatibleWith(other, true);
   }
 
+  <OtherKeyType> boolean keyClassMatches(Class<OtherKeyType> requestedReadType) {
+    return requestedReadType == keyClass;
+  }
+
+  <OtherKeyType> boolean keyClassSecondaryMatches(Class<OtherKeyType> requestedReadType) {
+    return requestedReadType == keyClassSecondary;
+  }
+
   private <MetadataT extends BucketMetadata> boolean isIntraPartitionCompatibleWith(
       MetadataT other, boolean checkSecondaryKeys) {
     if (other == null) {
