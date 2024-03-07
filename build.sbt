@@ -374,7 +374,9 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 
 // mima
 ThisBuild / mimaBinaryIssueFilters ++= Seq(
-  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.testing.TransformOverride.ofSource")
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.testing.TransformOverride.ofSource"
+  )
 )
 
 // headers
