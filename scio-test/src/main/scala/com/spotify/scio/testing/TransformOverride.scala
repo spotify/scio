@@ -16,9 +16,10 @@
 
 package com.spotify.scio.testing
 
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
+
 import java.lang.{Iterable => JIterable}
 import java.util
-
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.Functions
 import org.apache.beam.runners.core.construction.{PTransformReplacements, ReplacementOutputs}
@@ -95,14 +96,16 @@ object TransformOverride {
    *   A [[PTransformOverride]] which when applied will override a source with name `name` with a
    *   source producing `values`.
    */
-  def ofSource[U](name: String, values: Seq[U]): PTransformOverride =
+  def ofSource[U: Coder](name: String, values: Seq[U]): PTransformOverride = {
+    val bCoder = CoderMaterializer.beamWithDefault(Coder[U])
     PTransformOverride.of(
       new EqualNamePTransformMatcher(name),
       factory[PBegin, PCollection[U], PTransform[PBegin, PCollection[U]]](
         inFn = t => t.getPipeline.begin(),
-        replacement = Create.of(values.asJava)
+        replacement = Create.of(values.asJava).withCoder(bCoder)
       )
     )
+  }
 
   /**
    * @return
