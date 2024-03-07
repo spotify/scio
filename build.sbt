@@ -21,6 +21,7 @@ import Keys.*
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 import sbtassembly.AssemblyPlugin.autoImport.*
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import com.typesafe.tools.mima.core.*
 import de.heikoseeberger.sbtheader.CommentCreator
 import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
@@ -372,7 +373,9 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 
 // mima
-ThisBuild / mimaBinaryIssueFilters ++= Seq()
+ThisBuild / mimaBinaryIssueFilters ++= Seq(
+  ProblemFilters.exclude[DirectMissingMethodProblem]("com.spotify.scio.testing.TransformOverride.ofSource")
+)
 
 // headers
 lazy val currentYear = java.time.LocalDate.now().getYear
