@@ -231,7 +231,7 @@ jobs:
         run: sbt tlCiRelease
 
       - name: Upload Repl
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: scio-repl/target/scala-2.13/scio-repl.jar
           draft: true
