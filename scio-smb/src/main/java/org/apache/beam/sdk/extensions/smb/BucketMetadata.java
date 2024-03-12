@@ -403,11 +403,9 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
     final Class<? extends BucketMetadata> otherClass = other.getClass();
     final Set<Class<? extends BucketMetadata>> compatibleTypes = compatibleMetadataTypes();
 
-    if (compatibleTypes.isEmpty() && other.getClass() != this.getClass()) {
-      return false;
-    } else if (!this.keyClassMatches(other.getKeyClass())
-        && !(compatibleTypes.contains(otherClass)
-            && (other.compatibleMetadataTypes().contains(this.getClass())))) {
+    if ((other.getClass() != this.getClass())
+        && (!compatibleTypes.contains(otherClass)
+            || !other.compatibleMetadataTypes().contains(this.getClass()))) {
       return false;
     }
 
