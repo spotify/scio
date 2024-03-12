@@ -405,7 +405,7 @@ public abstract class BucketMetadata<K1, K2, V> implements Serializable, HasDisp
 
     if (compatibleTypes.isEmpty() && other.getClass() != this.getClass()) {
       return false;
-    } else if (this.getKeyClass() != other.getKeyClass()
+    } else if (!this.keyClassMatches(other.getKeyClass())
         && !(compatibleTypes.contains(otherClass)
             && (other.compatibleMetadataTypes().contains(this.getClass())))) {
       return false;

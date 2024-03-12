@@ -149,12 +149,13 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
 
   @Override
   int hashPrimaryKeyMetadata() {
-    return Objects.hash(keyField, getKeyClass());
+    return Objects.hash(keyField, AvroUtils.castToComparableStringClass(getKeyClass()));
   }
 
   @Override
   int hashSecondaryKeyMetadata() {
-    return Objects.hash(keyFieldSecondary, getKeyClassSecondary());
+    return Objects.hash(
+        keyFieldSecondary, AvroUtils.castToComparableStringClass(getKeyClassSecondary()));
   }
 
   @Override
@@ -230,20 +231,16 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
 
   @Override
   <OtherKeyType> boolean keyClassMatches(Class<OtherKeyType> requestedReadType) {
-    if (requestedReadType == String.class && getKeyClass() == CharSequence.class) {
-      return true;
-    } else {
-      return super.keyClassMatches(requestedReadType);
-    }
+    return super.keyClassMatches(requestedReadType)
+        || AvroUtils.castToComparableStringClass(getKeyClass()) == requestedReadType
+        || AvroUtils.castToComparableStringClass(requestedReadType) == getKeyClass();
   }
 
   @Override
   <OtherKeyType> boolean keyClassSecondaryMatches(Class<OtherKeyType> requestedReadType) {
-    if (requestedReadType == String.class && getKeyClassSecondary() == CharSequence.class) {
-      return true;
-    } else {
-      return super.keyClassSecondaryMatches(requestedReadType);
-    }
+    return super.keyClassSecondaryMatches(requestedReadType)
+        || AvroUtils.castToComparableStringClass(getKeyClassSecondary()) == requestedReadType
+        || AvroUtils.castToComparableStringClass(requestedReadType) == getKeyClassSecondary();
   }
 
   ////////////////////////////////////////////////////////////////////////////////

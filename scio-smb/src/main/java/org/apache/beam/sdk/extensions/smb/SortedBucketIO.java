@@ -436,7 +436,7 @@ public class SortedBucketIO {
       Optional<Coder<K1>> c =
           inputs.stream()
               .flatMap(i -> i.getSourceMetadata().mapping.values().stream())
-              .filter(sm -> sm.metadata.getKeyClass() == keyClassPrimary)
+              .filter(sm -> sm.metadata.keyClassMatches(keyClassPrimary))
               .findFirst()
               .map(sm -> (Coder<K1>) sm.metadata.getKeyCoder());
       if (!c.isPresent())
