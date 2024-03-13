@@ -228,6 +228,24 @@ public class ParquetBucketMetadata<K1, K2, V> extends BucketMetadata<K1, K2, V> 
     return key;
   }
 
+  @Override
+  <OtherKeyType> boolean keyClassMatches(Class<OtherKeyType> requestedReadType) {
+    if (requestedReadType == String.class && getKeyClass() == CharSequence.class) {
+      return true;
+    } else {
+      return super.keyClassMatches(requestedReadType);
+    }
+  }
+
+  @Override
+  <OtherKeyType> boolean keyClassSecondaryMatches(Class<OtherKeyType> requestedReadType) {
+    if (requestedReadType == String.class && getKeyClassSecondary() == CharSequence.class) {
+      return true;
+    } else {
+      return super.keyClassSecondaryMatches(requestedReadType);
+    }
+  }
+
   ////////////////////////////////////////////////////////////////////////////////
   // Logic for dealing with Avro records vs Scala case classes
   ////////////////////////////////////////////////////////////////////////////////

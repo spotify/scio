@@ -21,6 +21,7 @@ import Keys.*
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 import sbtassembly.AssemblyPlugin.autoImport.*
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import com.typesafe.tools.mima.core.*
 import de.heikoseeberger.sbtheader.CommentCreator
 import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
@@ -115,7 +116,7 @@ val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
-val jedisVersion = "5.1.0"
+val jedisVersion = "5.1.2"
 val jnaVersion = "5.14.0"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -126,7 +127,7 @@ val magnoliaVersion = "1.1.8"
 val magnolifyVersion = "0.7.0"
 val metricsVersion = "4.2.25"
 val munitVersion = "0.7.29"
-val neo4jDriverVersion = "4.4.13"
+val neo4jDriverVersion = "4.4.14"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.13.1"
@@ -149,7 +150,7 @@ val scalatestplusVersion = s"$scalatestVersion.0"
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
 // project
-ThisBuild / tlBaseVersion := "0.14"
+ThisBuild / tlBaseVersion := "0.15"
 ThisBuild / tlSonatypeUseLegacyHost := true
 ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
@@ -372,7 +373,11 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 
 // mima
-ThisBuild / mimaBinaryIssueFilters ++= Seq()
+ThisBuild / mimaBinaryIssueFilters ++= Seq(
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.testing.TransformOverride.ofSource"
+  )
+)
 
 // headers
 lazy val currentYear = java.time.LocalDate.now().getYear
@@ -1244,7 +1249,7 @@ lazy val `scio-examples` = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.16.0" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.17.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1553,7 +1558,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.16.0" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.17.0" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test

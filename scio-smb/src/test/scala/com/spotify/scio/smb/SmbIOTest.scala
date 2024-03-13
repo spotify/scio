@@ -166,6 +166,7 @@ class SmbIOTest extends PipelineSpec {
     }
 
   "SmbIO" should "be able to mock sortMergeTransform input and saveAsSortedBucket output" in {
+    // success
     JobTest[SmbJoinSaveJob.type]
       .args(
         "--users=gs://users",
@@ -183,9 +184,24 @@ class SmbIOTest extends PipelineSpec {
         )
       )
       .run()
+
+    // error
+    an[AssertionError] shouldBe thrownBy {
+      JobTest[SmbJoinSaveJob.type]
+        .args(
+          "--users=gs://users",
+          "--accounts=gs://accounts",
+          "--output=gs://output"
+        )
+        .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
+        .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+        .output(SmbIO[Integer, User]("gs://output", _.getId))(_ should beEmpty)
+        .run()
+    }
   }
 
   it should "be able to mock sortMergeCoGroup and saveAsSortedBucket" in {
+    // success
     JobTest[SmbCoGroupSavePreKeyedJob.type]
       .args(
         "--users=gs://users",
@@ -198,9 +214,24 @@ class SmbIOTest extends PipelineSpec {
         _ should containInAnyOrder(Seq(joinedUserAccounts))
       )
       .run()
+
+    // error
+    an[AssertionError] shouldBe thrownBy {
+      JobTest[SmbCoGroupSavePreKeyedJob.type]
+        .args(
+          "--users=gs://users",
+          "--accounts=gs://accounts",
+          "--output=gs://output"
+        )
+        .input(SmbIO[Integer, User]("gs://users", _.getId), Seq(user))
+        .input(SmbIO[Integer, Account]("gs://accounts", _.getId), Seq(accountA, accountB))
+        .output(SmbIO[Integer, User]("gs://output", _.getId))(_ should beEmpty)
+        .run()
+    }
   }
 
   it should "be able to mock sortMergeTransform" in {
+    // success
     JobTest[SmbTransformJob.type]
       .args(
         "--users=/users",
@@ -213,6 +244,20 @@ class SmbIOTest extends PipelineSpec {
         _ should containInAnyOrder(Seq(joinedUserAccounts))
       )
       .run()
+
+    // error
+    an[AssertionError] shouldBe thrownBy {
+      JobTest[SmbTransformJob.type]
+        .args(
+          "--users=/users",
+          "--accounts=/accounts",
+          "--output=/output"
+        )
+        .input(SmbIO[Integer, User]("/users", _.getId), Seq(user))
+        .input(SmbIO[Integer, Account]("/accounts", _.getId), Seq(accountA, accountB))
+        .output(SmbIO[Integer, User]("/output", _.getId))(_ should beEmpty)
+        .run()
+    }
   }
 
   it should "be able to mock sortMergeTransform with side inputs" in {
