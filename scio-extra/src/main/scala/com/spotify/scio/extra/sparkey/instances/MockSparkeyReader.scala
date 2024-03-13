@@ -58,7 +58,7 @@ case class MockStringEntry(k: String, v: String) extends MockEntry[String, Strin
 }
 
 case class MockStringSparkeyReader(data: Map[String, String]) extends MockSparkeyReader {
-  override def getAsString(key: String): String = data(key)
+  override def getAsString(key: String): String = data.getOrElse(key, null)
   override def iterator(): java.util.Iterator[Entry] = data.iterator
     .map[Entry] { case (k, v) => MockStringEntry(k, v) }
     .asJava
@@ -74,7 +74,10 @@ case class MockByteArrayEntry(k: Array[Byte], v: Array[Byte])
 
 case class MockByteArraySparkeyReader(data: Map[Array[Byte], Array[Byte]])
     extends MockSparkeyReader {
-  override def getAsByteArray(key: Array[Byte]): Array[Byte] = data(key)
+  private lazy val internal = data.map { case (k, v) => (k.toVector, v) }
+
+  override def getAsByteArray(key: Array[Byte]): Array[Byte] =
+    internal.getOrElse(key.toVector, null)
   override def iterator(): java.util.Iterator[Entry] = data.iterator
     .map[Entry] { case (k, v) => MockByteArrayEntry(k, v) }
     .asJava

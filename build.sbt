@@ -16,20 +16,22 @@
  */
 
 import sbt.*
+import sbt.util.CacheImplicits.*
 import Keys.*
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 import sbtassembly.AssemblyPlugin.autoImport.*
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import com.typesafe.tools.mima.core.*
 import de.heikoseeberger.sbtheader.CommentCreator
 import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.53.0"
+val beamVersion = "2.54.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.53.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.54.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -52,42 +54,43 @@ val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.87.Final"
 val slf4jVersion = "1.7.30"
-val zetasketchVersion = "0.1.0"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20230812-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20220920-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20240113-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20231202-$googleClientsVersion"
 // beam tested versions
+val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
 val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
-val hadoopVersion = "3.2.4" // io/parquet/build.gradle
+val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.28.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.30.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val bigQueryStorageBetaVersion = "0.171.0"
-val bigQueryStorageVersion = "2.47.0"
 val checkerQualVersion = "3.40.0"
 val errorProneAnnotationsVersion = "2.23.0"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.8"
-val gaxVersion = "2.38.0"
+val gaxVersion = "2.39.0"
 val googleApiClientVersion = "2.2.0" // very strangely not in sync with googleClientsVersion
-val googleApiCommonVersion = "2.21.0"
-val googleAuthVersion = "1.20.0"
-val googleCloudBigTableVersion = "2.30.0"
-val googleCloudCoreVersion = "2.28.0"
-val googleCloudDatastoreVersion = "0.108.6"
-val googleCloudMonitoringVersion = "3.32.0"
-val googleCloudPubSubVersion = "1.107.13"
-val googleCloudSpannerVersion = "6.55.0"
-val googleCloudStorageVersion = "2.30.1"
-val googleCommonsProtoVersion = "2.29.0"
-val googleHttpClientsVersion = "1.43.3"
-val googleIAMVersion = "1.24.0"
-val grpcVersion = "1.59.1"
+val googleApiCommonVersion = "2.22.0"
+val googleAuthVersion = "1.21.0"
+val googleCloudBigQueryStorageVersion = "3.0.0"
+val googleCloudBigTableVersion = "2.31.0"
+val googleCloudCoreVersion = "2.29.0"
+val googleCloudMonitoringVersion = "3.34.0"
+val googleCloudProtoBigQueryStorageBetaVersion = "0.172.0"
+val googleCloudProtoBigTableVersion = googleCloudBigTableVersion
+val googleCloudProtoDatastoreVersion = "0.109.0"
+val googleCloudProtoPubSubVersion = "1.108.0"
+val googleCloudSpannerVersion = "6.56.0"
+val googleCloudStorageVersion = "2.31.0"
+val googleHttpClientVersion = "1.43.3"
+val googleProtoCommonVersion = "2.30.0"
+val googleProtoIAMVersion = "1.25.0"
+val grpcVersion = "1.60.0"
 val j2objcAnnotationsVersion = "2.8"
 val jsr305Version = "3.0.2"
 val opencensusVersion = "0.31.1"
@@ -107,13 +110,13 @@ val chillVersion = "0.10.0"
 val circeVersion = "0.14.6"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.14"
-val elasticsearch8Version = "8.12.0"
+val elasticsearch8Version = "8.12.2"
 val fansiVersion = "0.4.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
-val jedisVersion = "5.1.0"
+val jedisVersion = "5.1.2"
 val jnaVersion = "5.14.0"
 val junitInterfaceVersion = "0.13.3"
 val junitVersion = "4.13.2"
@@ -124,7 +127,7 @@ val magnoliaVersion = "1.1.8"
 val magnolifyVersion = "0.7.0"
 val metricsVersion = "4.2.25"
 val munitVersion = "0.7.29"
-val neo4jDriverVersion = "4.4.13"
+val neo4jDriverVersion = "4.4.14"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.13.1"
@@ -133,12 +136,12 @@ val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
 val scalaCollectionCompatVersion = "2.11.0"
 val scalaMacrosVersion = "2.1.1"
-val scalatestVersion = "3.2.17"
+val scalatestVersion = "3.2.18"
 val shapelessVersion = "2.3.10"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.14.0"
-val testContainersVersion = "0.41.2"
+val testContainersVersion = "0.41.3"
 val voyagerVersion = "2.0.2"
 val zoltarVersion = "0.6.0"
 // dependent versions
@@ -217,8 +220,8 @@ ThisBuild / developers := List(
 )
 
 // scala versions
-val scala213 = "2.13.12"
-val scala212 = "2.12.18"
+val scala213 = "2.13.13"
+val scala212 = "2.12.19"
 val scalaDefault = scala213
 
 // compiler settings
@@ -370,7 +373,11 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 )
 
 // mima
-ThisBuild / mimaBinaryIssueFilters ++= Seq()
+ThisBuild / mimaBinaryIssueFilters ++= Seq(
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.testing.TransformOverride.ofSource"
+  )
+)
 
 // headers
 lazy val currentYear = java.time.LocalDate.now().getYear
@@ -432,6 +439,7 @@ val commonSettings = Def.settings(
   resolvers ++= Resolver.sonatypeOssRepos("public"),
   fork := true,
   run / outputStrategy := Some(OutputStrategy.StdoutOutput),
+  run / javaOptions ++= JavaOptions.runDefaults(javaMajorVersion),
   Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
   Test / testOptions += Tests.Argument("-oD"),
@@ -623,8 +631,8 @@ lazy val `scio-core` = project
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
+      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.twitter" % "chill-java" % chillVersion,
@@ -680,8 +688,8 @@ lazy val `scio-test` = project
       moduleFilter("junit", "junit")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
@@ -781,16 +789,16 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % bigQueryStorageBetaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
-      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % googleCloudPubSubVersion,
+      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudProtoPubSubVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % googleCloudProtoBigQueryStorageBetaVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudProtoBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
+      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % googleCloudProtoPubSubVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
       "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
-      "com.google.cloud" % "google-cloud-bigquerystorage" % bigQueryStorageVersion,
+      "com.google.cloud" % "google-cloud-bigquerystorage" % googleCloudBigQueryStorageVersion,
       "com.google.cloud" % "google-cloud-bigtable" % googleCloudBigTableVersion,
       "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
       "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
@@ -798,8 +806,8 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
       "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-      "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
+      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
@@ -1087,6 +1095,10 @@ lazy val `scio-parquet` = project
     )
   )
 
+val tensorFlowMetadataSourcesDir =
+  settingKey[File]("Directory containing TensorFlow metadata proto files")
+val tensorFlowMetadata = taskKey[Seq[File]]("Retrieve TensorFlow metadata proto files")
+
 lazy val `scio-tensorflow` = project
   .in(file("scio-tensorflow"))
   .dependsOn(
@@ -1121,14 +1133,34 @@ lazy val `scio-tensorflow` = project
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
-    Compile / PB.protoSources += target.value / s"metadata-$tensorFlowMetadataVersion",
+    Compile / tensorFlowMetadataSourcesDir := target.value / s"metadata-$tensorFlowMetadataVersion",
+    Compile / PB.protoSources += (Compile / tensorFlowMetadataSourcesDir).value,
+    Compile / tensorFlowMetadata := {
+      def work(tensorFlowMetadataVersion: String) = {
+        val tfMetadata = url(
+          s"https://github.com/tensorflow/metadata/archive/refs/tags/v$tensorFlowMetadataVersion.zip"
+        )
+        IO.unzipURL(tfMetadata, target.value, "*.proto").toSeq
+      }
+
+      val cacheStoreFactory = streams.value.cacheStoreFactory
+      val root = (Compile / tensorFlowMetadataSourcesDir).value
+      val tracker =
+        Tracked.inputChanged(cacheStoreFactory.make("input")) { (versionChanged, version: String) =>
+          val cached = Tracked.outputChanged(cacheStoreFactory.make("output")) {
+            (outputChanged: Boolean, files: Seq[HashFileInfo]) =>
+              if (versionChanged || outputChanged) work(version)
+              else files.map(_.file)
+          }
+          cached(() => (root ** "*.proto").get().map(FileInfo.hash(_)))
+        }
+
+      tracker(tensorFlowMetadataVersion)
+    },
     Compile / PB.unpackDependencies := {
-      val tfMetadata = new URL(
-        s"https://github.com/tensorflow/metadata/archive/refs/tags/v$tensorFlowMetadataVersion.zip"
-      )
-      val protoFiles = IO.unzipURL(tfMetadata, target.value, "*.proto")
-      val root = target.value / s"metadata-$tensorFlowMetadataVersion"
-      val metadataDep = ProtocPlugin.UnpackedDependency(protoFiles.toSeq, Seq.empty)
+      val protoFiles = (Compile / tensorFlowMetadata).value
+      val root = (Compile / tensorFlowMetadataSourcesDir).value
+      val metadataDep = ProtocPlugin.UnpackedDependency(protoFiles, Seq.empty)
       val deps = (Compile / PB.unpackDependencies).value
       new ProtocPlugin.UnpackedDependencies(deps.mappedFiles ++ Map(root -> metadataDep))
     }
@@ -1179,8 +1211,8 @@ lazy val `scio-examples` = project
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
       "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
@@ -1188,7 +1220,7 @@ lazy val `scio-examples` = project
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
@@ -1208,7 +1240,7 @@ lazy val `scio-examples` = project
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.15.2" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.17.0" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1284,8 +1316,8 @@ lazy val `scio-repl` = project
             } match {
               case Some(e) => Right(Vector(e))
               case None =>
-                val conflictList = conflicts.mkString("\t", "\n", "\n")
-                Left("Error merging beam avro classes:\n" + conflictList)
+                val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
+                Left("Error merging beam avro classes:" + conflictList)
             }
           }
         case PathList("com", "google", "errorprone", _*) =>
@@ -1298,26 +1330,25 @@ lazy val `scio-repl` = project
             } match {
               case Some(e) => Right(Vector(e))
               case None =>
-                val conflictList = conflicts.mkString("\t", "\n", "\n")
-                Left("Error merging errorprone classes:\n" + conflictList)
+                val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
+                Left("Error merging errorprone classes:" + conflictList)
             }
           }
-        case PathList("org", "checkerframework", tail @ _*) =>
-          if (tail.last == "SignedPositiveFromUnsigned.class") {
-            // this class has been dropped in original checkerframework libs
-            MergeStrategy.discard
-          } else {
-            // prefer checker-qual classes packaged in checkerframework libs
-            CustomMergeStrategy("CheckerQual") { conflicts =>
-              import sbtassembly.Assembly._
+        case PathList("com", "squareup", _*) =>
+          // prefer jvm jar in case of conflict
+          CustomMergeStrategy("SquareUp") { conflicts =>
+            import sbtassembly.Assembly._
+            if (conflicts.size == 1) {
+              Right(conflicts.map(conflict => JarEntry(conflict.target, conflict.stream)))
+            } else {
               conflicts.collectFirst {
-                case Library(ModuleCoordinate("org.checkerframework", _, _), _, t, s) =>
+                case Library(ModuleCoordinate(_, jar, _), _, t, s) if jar.endsWith("-jvm") =>
                   JarEntry(t, s)
               } match {
                 case Some(e) => Right(Vector(e))
                 case None =>
-                  val conflictList = conflicts.mkString("\t", "\n", "\n")
-                  Left("Error merging checker-qual classes:\n" + conflictList)
+                  val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
+                  Left("Error merging squareup classes:" + conflictList)
               }
             }
           }
@@ -1335,6 +1366,15 @@ lazy val `scio-repl` = project
           MergeStrategy.discard
         case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
           // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("META-INF", "kotlin-project-structure-metadata.json") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("META-INF", tail @ _*) if tail.last.endsWith(".kotlin_module") =>
+          // drop conflicting kotlin compiler info
+          MergeStrategy.discard
+        case PathList("commonMain", _*) =>
+          // drop conflicting squareup linkdata
           MergeStrategy.discard
         case PathList("META-INF", "io.netty.versions.properties") =>
           // merge conflicting netty property files
@@ -1500,16 +1540,16 @@ lazy val integration = project
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.4.2.jre11",
+      "com.microsoft.sqlserver" % "mssql-jdbc" % "12.6.1.jre11",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.15.2" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.17.0" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
@@ -1622,7 +1662,7 @@ lazy val site = project
       .withFavicon("images/favicon.ico")
       .withColor("white", "indigo")
       .withLogo("images/logo.png")
-      .withCopyright("Copyright (C) 2023 Spotify AB")
+      .withCopyright(s"Copyright (C) $currentYear Spotify AB")
       .withRepository(uri("https://github.com/spotify/scio"))
       .withSocial(uri("https://github.com/spotify"), uri("https://twitter.com/spotifyeng")),
     // sbt-site
@@ -1641,7 +1681,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.10").cross(CrossVersion.full)),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.11").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {
@@ -1666,12 +1706,12 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.api" % "gax-grpc" % gaxVersion,
   "com.google.api" % "gax-httpjson" % gaxVersion,
   "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-  "com.google.api.grpc" % "grpc-google-common-protos" % googleCommonsProtoVersion,
+  "com.google.api.grpc" % "grpc-google-common-protos" % googleProtoCommonVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
   "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudDatastoreVersion,
-  "com.google.api.grpc" % "proto-google-common-protos" % googleCommonsProtoVersion,
-  "com.google.api.grpc" % "proto-google-iam-v1" % googleIAMVersion,
+  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
+  "com.google.api.grpc" % "proto-google-common-protos" % googleProtoCommonVersion,
+  "com.google.api.grpc" % "proto-google-iam-v1" % googleProtoIAMVersion,
   "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
   "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
   "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
@@ -1686,10 +1726,10 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.flogger" % "flogger-system-backend" % floggerVersion,
   "com.google.flogger" % "google-extensions" % floggerVersion,
   "com.google.guava" % "guava" % guavaVersion,
-  "com.google.http-client" % "google-http-client" % googleHttpClientsVersion,
-  "com.google.http-client" % "google-http-client-gson" % googleHttpClientsVersion,
-  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientsVersion,
-  "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientsVersion,
+  "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
+  "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
+  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientVersion,
+  "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientVersion,
   "com.google.j2objc" % "j2objc-annotations" % j2objcAnnotationsVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,

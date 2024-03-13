@@ -41,7 +41,7 @@ object SmbIO {
     new SmbIO[K, T](path, keyBy)
 
   def testId(paths: String*): String = {
-    val normalizedPaths = paths.map(p => ScioUtil.strippedPath(p) + "/").mkString(",")
+    val normalizedPaths = paths.map(ScioUtil.strippedPath).sorted.mkString(",")
     s"SmbIO($normalizedPaths)"
   }
 

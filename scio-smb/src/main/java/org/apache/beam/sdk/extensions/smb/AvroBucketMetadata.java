@@ -191,4 +191,22 @@ public class AvroBucketMetadata<K1, K2, V extends IndexedRecord> extends BucketM
     if (keyFieldSecondary != null)
       builder.add(DisplayData.item("keyFieldSecondary", keyFieldSecondary));
   }
+
+  @Override
+  <OtherKeyType> boolean keyClassMatches(Class<OtherKeyType> requestedReadType) {
+    if (requestedReadType == String.class && getKeyClass() == CharSequence.class) {
+      return true;
+    } else {
+      return super.keyClassMatches(requestedReadType);
+    }
+  }
+
+  @Override
+  <OtherKeyType> boolean keyClassSecondaryMatches(Class<OtherKeyType> requestedReadType) {
+    if (requestedReadType == String.class && getKeyClassSecondary() == CharSequence.class) {
+      return true;
+    } else {
+      return super.keyClassSecondaryMatches(requestedReadType);
+    }
+  }
 }

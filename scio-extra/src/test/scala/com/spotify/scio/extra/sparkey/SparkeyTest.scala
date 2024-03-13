@@ -19,7 +19,8 @@ package com.spotify.scio.extra.sparkey
 
 import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.spotify.scio._
-import com.spotify.scio.extra.sparkey.instances.MockStringSparkeyReader
+import com.spotify.scio.extra.sparkey.instances._
+import com.spotify.scio.io.TextIO
 import com.spotify.scio.testing._
 import com.spotify.scio.util._
 import com.spotify.scio.values.SCollection
@@ -102,13 +103,33 @@ class SparkeyTest extends PipelineSpec {
   val bigSideData: IndexedSeq[(String, String)] =
     (0 until 100).map(i => (('a' + i).toString, i.toString))
 
-  "JobTest" should "support mocking sparkey" in {
+  "JobTest" should "support mocking String-keyed Sparkey" in {
     val input = Map("a" -> "b", "c" -> "d")
     JobTest[SparkeyJob.type]
       .args("--input=foo", "--output1=bar", "--output2=baz")
       .input(SparkeyIO("foo"), Seq(MockStringSparkeyReader(input)))
       .output(SparkeyIO.output[String, String]("bar"))(_ should containInAnyOrder(input))
       .output(SparkeyIO.output[String, String]("baz"))(_ should containInAnyOrder(input))
+      .run()
+  }
+
+  it should "support mocking byte[]-keyed Sparkey" in {
+    val input = Map("foo" -> "bar", "bar" -> "baz").map { case (k, v) => (k.getBytes, v.getBytes) }
+
+    JobTest { sc =>
+      val si = sc.sparkeySideInput("input")
+      sc
+        .parallelize(List("foo", "bar", "baz"))
+        .withSideInputs(si)
+        .map { case (input, ctx) =>
+          Option(ctx(si).getAsByteArray(input.getBytes)).map(new String(_)).getOrElse("NULLKEY")
+        }
+        .toSCollection
+        .saveAsTextFile("output")
+    }
+      .args("--input=input", "--output=bar")
+      .input(SparkeyIO("input"), Seq(MockByteArraySparkeyReader(input)))
+      .output(TextIO("output"))(_ should containInAnyOrder(Seq("bar", "baz", "NULLKEY")))
       .run()
   }
 

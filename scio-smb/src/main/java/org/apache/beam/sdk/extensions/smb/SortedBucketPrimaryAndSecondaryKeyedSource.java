@@ -91,7 +91,7 @@ public class SortedBucketPrimaryAndSecondaryKeyedSource<K1, K2>
     Optional<Coder<K1>> c1 =
         sources.stream()
             .flatMap(i -> i.getSourceMetadata().mapping.values().stream())
-            .filter(sm -> sm.metadata.getKeyClass() == keyClassPrimary)
+            .filter(sm -> sm.metadata.keyClassMatches(keyClassPrimary))
             .findFirst()
             .map(sm -> (Coder<K1>) sm.metadata.getKeyCoder());
 
@@ -101,7 +101,7 @@ public class SortedBucketPrimaryAndSecondaryKeyedSource<K1, K2>
             .filter(
                 sm ->
                     sm.metadata.getKeyClassSecondary() != null
-                        && sm.metadata.getKeyClassSecondary() == keyClassSecondary
+                        && sm.metadata.keyClassSecondaryMatches(keyClassSecondary)
                         && sm.metadata.getKeyCoderSecondary() != null)
             .findFirst()
             .map(sm -> (Coder<K2>) sm.metadata.getKeyCoderSecondary());

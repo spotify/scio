@@ -177,9 +177,10 @@ object ParquetAvroIO {
 
     def setupConfig(): Unit = {
       AvroReadSupport.setAvroReadSchema(confOrDefault, readSchema)
-      if (projection != null) {
-        AvroReadSupport.setRequestedProjection(confOrDefault, projection)
-      }
+      AvroReadSupport.setRequestedProjection(
+        confOrDefault,
+        Option(projection).getOrElse(readSchema)
+      )
 
       if (predicate != null) {
         ParquetInputFormat.setFilterPredicate(confOrDefault, predicate)

@@ -49,11 +49,11 @@ class FixLogicalTypeSupplier extends SemanticRule("FixLogicalTypeSupplier") {
     def filterArgs(lhsOpt: Option[Term], rhsOption: Boolean, confArgs: List[Term]): Option[Term] = {
       val filtered = parquetConfigurationArgs(confArgs)
       (lhsOpt, rhsOption, filtered.isEmpty) match {
-        case (_, _, true) => None
-        case (Some(lhs), true, false) => Some(q"$lhs = Some(ParquetConfiguration.of(..$filtered))")
+        case (_, _, true)              => None
+        case (Some(lhs), true, false)  => Some(q"$lhs = Some(ParquetConfiguration.of(..$filtered))")
         case (Some(lhs), false, false) => Some(q"$lhs = ParquetConfiguration.of(..$filtered)")
-        case (None, true, false) => Some(q"Some(ParquetConfiguration.of(..$filtered))")
-        case (None, false, false) => Some(q"ParquetConfiguration.of(..$filtered)")
+        case (None, true, false)       => Some(q"Some(ParquetConfiguration.of(..$filtered))")
+        case (None, false, false)      => Some(q"ParquetConfiguration.of(..$filtered)")
       }
     }
 
@@ -62,9 +62,11 @@ class FixLogicalTypeSupplier extends SemanticRule("FixLogicalTypeSupplier") {
         filterArgs(Some(lhs), false, confArgs)
       case q"$fn(..$confArgs)" if ParquetConfigurationMatcher.matches(fn.symbol) =>
         filterArgs(None, false, confArgs)
-      case q"$lhs = $maybeOpt($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
+      case q"$lhs = $maybeOpt($fn(..$confArgs))"
+          if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
         filterArgs(Some(lhs), true, confArgs)
-      case q"$maybeOpt($fn(..$confArgs))" if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
+      case q"$maybeOpt($fn(..$confArgs))"
+          if ParquetConfigurationMatcher.matches(fn.symbol) && OptionMatcher.matches(maybeOpt) =>
         filterArgs(None, true, confArgs)
       case a =>
         Some(a)
@@ -75,11 +77,11 @@ class FixLogicalTypeSupplier extends SemanticRule("FixLogicalTypeSupplier") {
     def isParquetConf(term: Term): Boolean = ParquetConfigurationMatcher.matches(term.symbol)
 
     args.exists {
-      case q"$_ = $fn(..$args)" if isParquetConf(fn) => true
-      case q"$fn(..$args)" if isParquetConf(fn) => true
+      case q"$_ = $fn(..$args)" if isParquetConf(fn)       => true
+      case q"$fn(..$args)" if isParquetConf(fn)            => true
       case q"$_ = Some($fn(..$args))" if isParquetConf(fn) => true
-      case q"Some($fn(..$args))" if isParquetConf(fn) => true
-      case _ => false
+      case q"Some($fn(..$args))" if isParquetConf(fn)      => true
+      case _                                               => false
     }
   }
 

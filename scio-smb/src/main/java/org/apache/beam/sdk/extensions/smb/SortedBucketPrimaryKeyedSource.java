@@ -81,7 +81,7 @@ public class SortedBucketPrimaryKeyedSource<K> extends SortedBucketSource<K> {
     Optional<Coder<K>> c =
         sources.stream()
             .flatMap(i -> i.getSourceMetadata().mapping.values().stream())
-            .filter(sm -> sm.metadata.getKeyClass() == keyClassPrimary)
+            .filter(sm -> sm.metadata.keyClassMatches(keyClassPrimary))
             .findFirst()
             .map(sm -> (Coder<K>) sm.metadata.getKeyCoder());
     if (!c.isPresent())

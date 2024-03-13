@@ -71,6 +71,6 @@ private[coders] class MutateRowsExceptionSerializer extends KSerializer[MutateRo
       failedMutations.add(MutateRowsException.FailedMutation.create(index, error))
     }
     val retryable = kryo.readObject(input, classOf[Boolean])
-    new MutateRowsException(cause, failedMutations, retryable)
+    MutateRowsException.create(cause, failedMutations, retryable)
   }
 }
