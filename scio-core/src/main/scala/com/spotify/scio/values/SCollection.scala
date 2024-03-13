@@ -644,10 +644,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   The type of representative values used to dedup.
    * @group transform
    */
-  // This is simplier than Distinct.withRepresentativeValueFn, and allows us to set Coders
+  // This is simpler than Distinct.withRepresentativeValueFn, and allows us to set Coders
   def distinctBy[U: Coder](f: T => U): SCollection[T] =
     this.transform { me =>
-      me.keyBy(f).combineByKey(identity) { case (c, _) => c } { case (c, _) => c }.values
+      me
+        .keyBy(f)
+        // we use aggregate by key to avoid errors in streaming mode
+        // when a pane would fire without any element for the key
+        .aggregateByKey[Option[T]](None)(_ orElse Some(_), _ orElse _)
+        .values
+        .flatten
     }
 
   /**
