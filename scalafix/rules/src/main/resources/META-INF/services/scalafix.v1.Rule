@@ -21,4 +21,5 @@ fix.v0_14_0.FixDynamicAvro
 fix.v0_14_0.FixGenericAvro
 fix.v0_14_0.FixLogicalTypeSupplier
 fix.v0_14_0.FixSMBCharSequenceKey
+fix.v0_14_0.FixQuery
 
