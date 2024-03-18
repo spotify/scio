@@ -66,6 +66,14 @@
         {"name": "string_field", "type": ["null", "string"], "default": null},
         {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": null}
     ]
+}, {
+      "type": "record",
+      "name": "TrimmedTestRecord",
+      "namespace": "com.spotify.scio.avro",
+      "doc": "Record for testing",
+      "fields": [
+          {"name": "array_field", "type": {"type": "array", "items": "string"}, "default": null}
+      ]
 },
 {
     "name": "StringFieldTest",

@@ -170,6 +170,23 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
     }
   }
 
+  it should "read specific records with trimmed Avro schema projection" in {
+    import scala.jdk.CollectionConverters._
+
+    forAllCases(readConfigs) { case (c, _) =>
+      val sc = ScioContext()
+      val data = sc.parquetAvroFile[TrimmedTestRecord](
+        path = testDir.getAbsolutePath,
+        suffix = ".parquet",
+        conf = c()
+      )
+      data.map(_.getArrayField.asScala.toSeq.map(_.toString)) should satisfy[Seq[String]](
+        _.forall(_.equals(Seq("a", "b", "c")))
+      )
+      sc.run()
+    }
+  }
+
   it should "write and read SpecificRecords with default logical types" in withTempDir { dir =>
     forAllCases(readConfigs) { case (readConf, testCase) =>
       val testCaseDir = new File(dir, testCase)
