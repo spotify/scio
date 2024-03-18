@@ -38,6 +38,8 @@ import org.apache.beam.sdk.values.ValueInSingleWindow
 import scala.reflect.runtime.universe._
 import scala.util.chaining._
 
+object DynamicWriteParam extends Writes.WriteParamDefaults
+
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
  * methods.
@@ -49,9 +51,9 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
    * type `T` to `TableRow` via the implicitly-available `TableRowType[T]`
    */
   def saveAsBigQuery(
-    writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null,
-    extendedErrorInfo: Boolean = false
+    writeDisposition: WriteDisposition = DynamicWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = DynamicWriteParam.DefaultCreateDisposition,
+    extendedErrorInfo: Boolean = DynamicWriteParam.DefaultExtendedErrorInfo
   )(
     tableFn: ValueInSingleWindow[T] => TableDestination
   )(implicit tableRowType: TableRowType[T]): ClosedTap[Nothing] = {
@@ -115,9 +117,9 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
    */
   def saveAsBigQuery(
     schema: TableSchema,
-    writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null,
-    extendedErrorInfo: Boolean = false
+    writeDisposition: WriteDisposition = DynamicWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = DynamicWriteParam.DefaultCreateDisposition,
+    extendedErrorInfo: Boolean = DynamicWriteParam.DefaultExtendedErrorInfo
   )(tableFn: ValueInSingleWindow[T] => TableDestination): ClosedTap[Nothing] =
     new DynamicBigQueryOps(self).saveAsBigQuery(
       DynamicDestinationsUtil.tableFn(tableFn, schema),
@@ -142,9 +144,9 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
   def saveAsTypedBigQuery(
-    writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null,
-    extendedErrorInfo: Boolean = false
+    writeDisposition: WriteDisposition = DynamicWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = DynamicWriteParam.DefaultCreateDisposition,
+    extendedErrorInfo: Boolean = DynamicWriteParam.DefaultExtendedErrorInfo
   )(
     tableFn: ValueInSingleWindow[T] => TableDestination
   )(implicit tt: TypeTag[T]): ClosedTap[Nothing] = {

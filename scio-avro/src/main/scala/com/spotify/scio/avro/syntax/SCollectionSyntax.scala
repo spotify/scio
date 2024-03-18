@@ -24,7 +24,7 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
-import magnolify.avro.{AvroType => MagnolifyAvroType}
+import magnolify.avro.{AvroType => AvroMagnolifyType}
 import magnolify.protobuf.ProtobufType
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
@@ -220,18 +220,18 @@ final class TypedMagnolifyProtobufSCollectionOps[T](private val self: SCollectio
    */
   def saveAsProtobufFile[U <: Message](
     path: String,
-    numShards: Int = TypedProtobufObjectFileIO.WriteParam.DefaultNumShards,
-    suffix: String = TypedProtobufObjectFileIO.WriteParam.DefaultSuffixProtobuf,
-    codec: CodecFactory = TypedProtobufObjectFileIO.WriteParam.DefaultCodec,
-    metadata: Map[String, AnyRef] = TypedProtobufObjectFileIO.WriteParam.DefaultMetadata,
-    shardNameTemplate: String = TypedProtobufObjectFileIO.WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = TypedProtobufObjectFileIO.WriteParam.DefaultTempDirectory,
+    numShards: Int = ProtobufTypedObjectFileIO.WriteParam.DefaultNumShards,
+    suffix: String = ProtobufTypedObjectFileIO.WriteParam.DefaultSuffixProtobuf,
+    codec: CodecFactory = ProtobufTypedObjectFileIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = ProtobufTypedObjectFileIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = ProtobufTypedObjectFileIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = ProtobufTypedObjectFileIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
-      TypedProtobufObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = TypedProtobufObjectFileIO.WriteParam.DefaultPrefix
+      ProtobufTypedObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = ProtobufTypedObjectFileIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[U], pt: ProtobufType[T, U]): ClosedTap[T] = {
     implicit val tCoder: Coder[T] = self.coder
-    val param = TypedProtobufObjectFileIO.WriteParam[GenericRecord](
+    val param = ProtobufTypedObjectFileIO.WriteParam[GenericRecord](
       numShards,
       suffix,
       codec,
@@ -241,13 +241,11 @@ final class TypedMagnolifyProtobufSCollectionOps[T](private val self: SCollectio
       shardNameTemplate,
       tempDirectory
     )
-    self.write(TypedProtobufObjectFileIO[T, U](path, pt))(param)
+    self.write(ProtobufTypedObjectFileIO[T, U](path))(param)
   }
 }
 
-final class TypedMagnolifyAvroSCollectionOps[T: MagnolifyAvroType](
-  private val self: SCollection[T]
-) {
+final class TypedMagnolifyAvroSCollectionOps[T](private val self: SCollection[T]) {
 
   def saveAsAvroFile(
     path: String,
@@ -261,8 +259,8 @@ final class TypedMagnolifyAvroSCollectionOps[T: MagnolifyAvroType](
       AvroTypedIO.WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = AvroTypedIO.WriteParam.DefaultPrefix,
     datumFactory: AvroDatumFactory[GenericRecord] = AvroTypedIO.WriteParam.DefaultDatumFactory
-  )(implicit coder: Coder[T]): ClosedTap[T] = {
-    val param = AvroMagnolifyTyped.WriteParam(
+  )(implicit coder: Coder[T], at: AvroMagnolifyType[T]): ClosedTap[T] = {
+    val param = AvroMagnolifyTypedIO.WriteParam(
       numShards,
       suffix,
       codec,
@@ -273,7 +271,7 @@ final class TypedMagnolifyAvroSCollectionOps[T: MagnolifyAvroType](
       tempDirectory,
       datumFactory
     )
-    self.write(AvroMagnolifyTyped[T](path))(param)
+    self.write(AvroMagnolifyTypedIO[T](path))(param)
   }
 }
 
@@ -303,7 +301,7 @@ trait SCollectionSyntax {
     c: SCollection[T]
   ): TypedMagnolifyProtobufSCollectionOps[T] = new TypedMagnolifyProtobufSCollectionOps[T](c)
 
-  implicit def typedMagnolifyAvroSCollectionOps[T: MagnolifyAvroType](
+  implicit def typedMagnolifyAvroSCollectionOps[T](
     c: SCollection[T]
   ): TypedMagnolifyAvroSCollectionOps[T] = new TypedMagnolifyAvroSCollectionOps(c)
 }

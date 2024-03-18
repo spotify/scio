@@ -19,7 +19,7 @@ import com.google.datastore.v1.Entity
 package com.spotify.scio.datastore.syntax
 
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.datastore.{EntityDatastoreIO, TypedDatastoreIO}
+import com.spotify.scio.datastore.{DatastoreEntityIO, DatastoreTypedIO}
 import com.spotify.scio.io.ClosedTap
 import com.google.datastore.v1.Entity
 import com.spotify.scio.coders.Coder
@@ -35,20 +35,20 @@ final class SCollectionEntityOps[T <: Entity](private val coll: SCollection[T]) 
   def saveAsDatastore(
     projectId: String,
     configOverride: BDatastore.Write => BDatastore.Write =
-      EntityDatastoreIO.WriteParam.DefaultConfigOverride
+      DatastoreEntityIO.WriteParam.DefaultConfigOverride
   ): ClosedTap[Nothing] =
     coll
       .covary_[Entity]
-      .write(EntityDatastoreIO(projectId))(EntityDatastoreIO.WriteParam(configOverride))
+      .write(DatastoreEntityIO(projectId))(DatastoreEntityIO.WriteParam(configOverride))
 }
 
 final class TypedEntitySCollectionOps[T: EntityType: Coder](private val coll: SCollection[T]) {
   def saveAsDatastore(
     projectId: String,
     configOverride: BDatastore.Write => BDatastore.Write =
-      TypedDatastoreIO.WriteParam.DefaultConfigOverride
+      DatastoreTypedIO.WriteParam.DefaultConfigOverride
   ): ClosedTap[Nothing] =
-    coll.write(TypedDatastoreIO(projectId))(TypedDatastoreIO.WriteParam(configOverride))
+    coll.write(DatastoreTypedIO(projectId))(DatastoreTypedIO.WriteParam(configOverride))
 }
 
 trait SCollectionSyntax {

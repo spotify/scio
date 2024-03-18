@@ -145,7 +145,7 @@ object PredictSCollectionOps {
   val DefaultFetchOps: Option[Seq[String]] = None
 }
 
-final class TypedExampleSCollectionOps[T: ExampleType](private val self: SCollection[T]) {
+final class TypedExampleSCollectionOps[T](private val self: SCollection[T]) {
 
   /**
    * Converts this collection of `T` into Tensorflow [[org.tensorflow.proto.example.Example]]s with
@@ -162,7 +162,7 @@ final class TypedExampleSCollectionOps[T: ExampleType](private val self: SCollec
     filenamePolicySupplier: FilenamePolicySupplier =
       TFExampleIO.WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = TFExampleIO.WriteParam.DefaultPrefix
-  ): ClosedTap[T] = {
+  )(implicit exampleType: ExampleType[T]): ClosedTap[T] = {
     implicit val tCoder: Coder[T] = self.coder
     val param = TFExampleTypedIO.WriteParam(
       suffix,
@@ -355,7 +355,7 @@ trait SCollectionSyntax {
     s: SCollection[T]
   ): SequenceExampleSCollectionOps[T] = new SequenceExampleSCollectionOps(s)
 
-  implicit def tensorFlowTypedExampleSCollectionOps[T: ExampleType](
+  implicit def tensorFlowTypedExampleSCollectionOps[T](
     s: SCollection[T]
   ): TypedExampleSCollectionOps[T] = new TypedExampleSCollectionOps(s)
 }

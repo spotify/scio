@@ -39,7 +39,10 @@ final case class ObjectFileIO[T: Coder](path: String) extends ScioIO[T] {
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val objectCoder = CoderMaterializer.beamWithDefault(Coder[T])
-    sc.read(underlying)(params).map(record => AvroBytesUtil.decode(objectCoder, record))
+    sc.transform { self =>
+      self.read(underlying)(params)
+        .map(record => AvroBytesUtil.decode(objectCoder, record))
+    }
   }
 
   /**

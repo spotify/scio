@@ -74,12 +74,12 @@ final case class ProtobufObjectFileIO[T <: Message: ClassTag](path: String) exte
   override def tap(read: ReadP): Tap[T] = ProtobufFileTap(path, read)
 }
 
-final case class TypedProtobufObjectFileIO[T: Coder, U <: Message: ClassTag](
-  path: String,
-  pt: ProtobufType[T, U]
-) extends ProtobufIO[T] {
-  override type ReadP = TypedProtobufObjectFileIO.ReadParam
-  override type WriteP = TypedProtobufObjectFileIO.WriteParam
+final case class ProtobufTypedObjectFileIO[T: Coder, U <: Message: ClassTag](
+  path: String
+)(implicit pt: ProtobufType[T, U])
+    extends ProtobufIO[T] {
+  override type ReadP = ProtobufTypedObjectFileIO.ReadParam
+  override type WriteP = ProtobufTypedObjectFileIO.WriteParam
   override def testId: String = s"ProtobufIO($path)"
 
   private lazy val underlying: ObjectFileIO[U] = ObjectFileIO(path)
@@ -101,9 +101,11 @@ final case class TypedProtobufObjectFileIO[T: Coder, U <: Message: ClassTag](
    */
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val metadata = params.metadata ++ ProtobufUtil.schemaMetadataOf[U]
-    data
-      .map(t => pt.to(t))
-      .write(underlying)(params.copy(metadata = metadata))
+    underlying
+      .writeWithContext(
+        data.transform(_.map(t => pt.to(t))),
+        params.copy(metadata = metadata)
+      )
       .underlying
       .map(u => pt.from(u))
   }
@@ -111,7 +113,7 @@ final case class TypedProtobufObjectFileIO[T: Coder, U <: Message: ClassTag](
   override def tap(read: ReadP): Tap[T] = ProtobufFileTap[U](path, read).map(u => pt.from(u))
 }
 
-object TypedProtobufObjectFileIO {
+object ProtobufTypedObjectFileIO {
   type ReadParam = ProtobufObjectFileIO.ReadParam
   val ReadParam = ProtobufObjectFileIO.ReadParam
   type WriteParam = ProtobufObjectFileIO.WriteParam

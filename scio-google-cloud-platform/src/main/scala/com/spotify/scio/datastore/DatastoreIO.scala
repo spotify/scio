@@ -22,7 +22,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT, TestIO}
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
-import com.spotify.scio.datastore.TypedDatastoreIO.{ReadParam, WriteParam}
+import com.spotify.scio.datastore.DatastoreTypedIO.{ReadParam, WriteParam}
 import magnolify.datastore.EntityType
 import org.apache.beam.sdk.io.gcp.datastore.{DatastoreIO => BDatastoreIO, DatastoreV1 => BDatastore}
 
@@ -37,15 +37,15 @@ object DatastoreIO {
     }
 }
 
-final case class TypedDatastoreIO[T: EntityType: Coder](projectId: String) extends DatastoreIO[T] {
-  override type ReadP = TypedDatastoreIO.ReadParam
-  override type WriteP = TypedDatastoreIO.WriteParam
+final case class DatastoreTypedIO[T: EntityType: Coder](projectId: String) extends DatastoreIO[T] {
+  override type ReadP = DatastoreTypedIO.ReadParam
+  override type WriteP = DatastoreTypedIO.WriteParam
   override def testId: String = s"DatastoreIO($projectId)"
 
   override protected def read(sc: ScioContext, params: ReadParam): SCollection[T] = {
     val entityType: EntityType[T] = implicitly
     sc.transform { ctx =>
-      EntityDatastoreIO
+      DatastoreEntityIO
         .read(ctx, projectId, params.namespace, params.query, params.configOverride)
         .map(e => entityType(e))
     }
@@ -67,20 +67,20 @@ final case class TypedDatastoreIO[T: EntityType: Coder](projectId: String) exten
   override def tap(read: ReadParam): Tap[Nothing] = EmptyTap
 }
 
-object TypedDatastoreIO {
-  type ReadParam = EntityDatastoreIO.ReadParam
-  val ReadParam = EntityDatastoreIO.ReadParam
-  type WriteParam = EntityDatastoreIO.WriteParam
-  val WriteParam = EntityDatastoreIO.WriteParam
+object DatastoreTypedIO {
+  type ReadParam = DatastoreEntityIO.ReadParam
+  val ReadParam = DatastoreEntityIO.ReadParam
+  type WriteParam = DatastoreEntityIO.WriteParam
+  val WriteParam = DatastoreEntityIO.WriteParam
 }
 
-final case class EntityDatastoreIO(projectId: String) extends DatastoreIO[Entity] {
-  override type ReadP = EntityDatastoreIO.ReadParam
-  override type WriteP = EntityDatastoreIO.WriteParam
+final case class DatastoreEntityIO(projectId: String) extends DatastoreIO[Entity] {
+  override type ReadP = DatastoreEntityIO.ReadParam
+  override type WriteP = DatastoreEntityIO.WriteParam
   override def testId: String = s"DatastoreIO($projectId)"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
-    EntityDatastoreIO.read(sc, projectId, params.namespace, params.query, params.configOverride)
+    DatastoreEntityIO.read(sc, projectId, params.namespace, params.query, params.configOverride)
 
   override protected def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
     val write = BDatastoreIO.v1.write.withProjectId(projectId)
@@ -90,10 +90,10 @@ final case class EntityDatastoreIO(projectId: String) extends DatastoreIO[Entity
     EmptyTap
   }
 
-  override def tap(read: EntityDatastoreIO.ReadParam): Tap[Nothing] = EmptyTap
+  override def tap(read: DatastoreEntityIO.ReadParam): Tap[Nothing] = EmptyTap
 }
 
-object EntityDatastoreIO {
+object DatastoreEntityIO {
 
   object ReadParam {
     val DefaultNamespace: String = null

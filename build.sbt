@@ -403,8 +403,6 @@ lazy val unusedCompileDependenciesTestSkipped = Def.task {
 }
 
 val commonSettings = Def.settings(
-  // TODO re-enable
-  mimaPreviousArtifacts := Set.empty,
   headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
   headerMappings := headerMappings.value ++ Map(
     HeaderFileType.scala -> keepExistingHeader,

@@ -19,7 +19,7 @@ package com.spotify.scio.datastore.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.datastore.{EntityDatastoreIO, TypedDatastoreIO}
+import com.spotify.scio.datastore.{DatastoreEntityIO, DatastoreTypedIO}
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.coders.Coder
 import magnolify.datastore.EntityType
@@ -34,23 +34,23 @@ final class ScioContextOps(private val sc: ScioContext) extends AnyVal {
   def datastore(
     projectId: String,
     query: Query,
-    namespace: String = EntityDatastoreIO.ReadParam.DefaultNamespace,
+    namespace: String = DatastoreEntityIO.ReadParam.DefaultNamespace,
     configOverride: BDatastore.Read => BDatastore.Read =
-      EntityDatastoreIO.ReadParam.DefaultConfigOverride
+      DatastoreEntityIO.ReadParam.DefaultConfigOverride
   ): SCollection[Entity] =
-    sc.read(EntityDatastoreIO(projectId))(
-      EntityDatastoreIO.ReadParam(query, namespace, configOverride)
+    sc.read(DatastoreEntityIO(projectId))(
+      DatastoreEntityIO.ReadParam(query, namespace, configOverride)
     )
 
   def typedDatastore[T: EntityType: Coder](
     projectId: String,
     query: Query,
-    namespace: String = TypedDatastoreIO.ReadParam.DefaultNamespace,
+    namespace: String = DatastoreTypedIO.ReadParam.DefaultNamespace,
     configOverride: BDatastore.Read => BDatastore.Read =
-      TypedDatastoreIO.ReadParam.DefaultConfigOverride
+      DatastoreTypedIO.ReadParam.DefaultConfigOverride
   ): SCollection[T] =
-    sc.read(TypedDatastoreIO(projectId))(
-      TypedDatastoreIO.ReadParam(query, namespace, configOverride)
+    sc.read(DatastoreTypedIO(projectId))(
+      DatastoreTypedIO.ReadParam(query, namespace, configOverride)
     )
 }
 

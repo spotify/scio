@@ -19,12 +19,12 @@ package com.spotify.scio.bigquery.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.{
+  BigQueryMagnolifyTypedSelectIO,
+  BigQueryMagnolifyTypedStorage,
+  BigQueryMagnolifyTypedStorageSelect,
+  BigQueryMagnolifyTypedTable,
   BigQueryTypedTable,
   Clustering,
-  MagnolifyBigQuerySelect,
-  MagnolifyBigQueryStorage,
-  MagnolifyBigQueryStorageSelect,
-  MagnolifyBigQueryTable,
   Query,
   Sharding,
   Table,
@@ -53,13 +53,15 @@ final class MagnolifyBigQueryScioContextOps(private val self: ScioContext) exten
    */
   def typedBigQuerySelect[T: TableRowType: Coder](
     sqlQuery: Query,
-    flattenResults: Boolean = MagnolifyBigQuerySelect.ReadParam.DefaultFlattenResults
+    flattenResults: Boolean = BigQueryMagnolifyTypedSelectIO.ReadParam.DefaultFlattenResults
   ): SCollection[T] =
-    self.read(MagnolifyBigQuerySelect(sqlQuery))(MagnolifyBigQuerySelect.ReadParam(flattenResults))
+    self.read(BigQueryMagnolifyTypedSelectIO(sqlQuery))(
+      BigQueryMagnolifyTypedSelectIO.ReadParam(flattenResults)
+    )
 
   /** Get an SCollection for a BigQuery table. */
   def typedBigQueryTable[T: TableRowType: Coder](table: Table): SCollection[T] =
-    self.read(MagnolifyBigQueryTable(table))
+    self.read(BigQueryMagnolifyTypedTable(table))
 
   /**
    * Get an SCollection for a BigQuery table using the storage API.
@@ -80,10 +82,10 @@ final class MagnolifyBigQueryScioContextOps(private val self: ScioContext) exten
    */
   def typedBigQueryStorageMagnolify[T: TableRowType: Coder](
     table: Table,
-    selectedFields: List[String] = MagnolifyBigQueryStorage.ReadParam.DefaultSelectFields,
+    selectedFields: List[String] = BigQueryMagnolifyTypedStorage.ReadParam.DefaultSelectFields,
     rowRestriction: String = null
   ): SCollection[T] =
-    self.read(MagnolifyBigQueryStorage(table, selectedFields, Option(rowRestriction)))
+    self.read(BigQueryMagnolifyTypedStorage(table, selectedFields, Option(rowRestriction)))
 
   /**
    * Get an SCollection for a BigQuery SELECT query using the storage API.
@@ -92,11 +94,11 @@ final class MagnolifyBigQueryScioContextOps(private val self: ScioContext) exten
    *   SQL query
    */
   def typedBigQueryStorageMagnolify[T: TableRowType: Coder](query: Query): SCollection[T] =
-    self.read(MagnolifyBigQueryStorageSelect(query))
+    self.read(BigQueryMagnolifyTypedStorageSelect(query))
 
 }
 
-final class MagnolifyBigQuerySCollectionOps[T: TableRowType](private val self: SCollection[T]) {
+final class MagnolifyBigQuerySCollectionOps[T](private val self: SCollection[T]) {
 
   def saveAsBigQueryTable(
     table: Table,
@@ -114,8 +116,7 @@ final class MagnolifyBigQuerySCollectionOps[T: TableRowType](private val self: S
     extendedErrorInfo: Boolean = BigQueryTypedTable.WriteParam.DefaultExtendedErrorInfo,
     configOverride: BigQueryTypedTable.WriteParam.ConfigOverride[T] =
       BigQueryTypedTable.WriteParam.DefaultConfigOverride
-  )(implicit coder: Coder[T]): ClosedTap[T] = {
-    val tableRowType = implicitly[TableRowType[T]]
+  )(implicit coder: Coder[T], tableRowType: TableRowType[T]): ClosedTap[T] = {
     val param = BigQueryTypedTable.WriteParam[T](
       method,
       tableRowType.schema,
@@ -131,7 +132,7 @@ final class MagnolifyBigQuerySCollectionOps[T: TableRowType](private val self: S
       extendedErrorInfo,
       configOverride
     )
-    self.write(MagnolifyBigQueryTable[T](table))(param)
+    self.write(BigQueryMagnolifyTypedTable[T](table))(param)
   }
 
 }
@@ -140,7 +141,7 @@ trait MagnolifySyntax {
   implicit def magnolifyBigQueryScioContextOps(sc: ScioContext): MagnolifyBigQueryScioContextOps =
     new MagnolifyBigQueryScioContextOps(sc)
 
-  implicit def magnolifyBigQuerySCollectionOps[T: TableRowType](
+  implicit def magnolifyBigQuerySCollectionOps[T](
     scoll: SCollection[T]
   ): MagnolifyBigQuerySCollectionOps[T] =
     new MagnolifyBigQuerySCollectionOps(scoll)
