@@ -364,6 +364,51 @@ public class AvroBucketMetadataTest {
   }
 
   @Test
+  public void testParquetMetadataCompatibility() throws Exception {
+    final AvroBucketMetadata<String, Integer, GenericRecord> metadata1 =
+        new AvroBucketMetadata<>(
+            2,
+            1,
+            String.class,
+            "name",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    final ParquetBucketMetadata<String, Integer, GenericRecord> metadata2 =
+        new ParquetBucketMetadata<>(
+            2,
+            1,
+            String.class,
+            "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    final ParquetBucketMetadata<String, Integer, GenericRecord> metadata3 =
+        new ParquetBucketMetadata<>(
+            4,
+            1,
+            String.class,
+            "favorite_color",
+            Integer.class,
+            "favorite_number",
+            HashType.MURMUR3_32,
+            SortedBucketIO.DEFAULT_FILENAME_PREFIX,
+            AvroGeneratedUser.SCHEMA$);
+
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryKey(metadata2));
+    Assert.assertFalse(metadata1.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata2));
+
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryKey(metadata3));
+    Assert.assertTrue(metadata2.isPartitionCompatibleForPrimaryAndSecondaryKey(metadata3));
+  }
+
+  @Test
   public void testKeyTypeCheckingBytes()
       throws CannotProvideCoderException, NonDeterministicException {
     new AvroBucketMetadata<>(

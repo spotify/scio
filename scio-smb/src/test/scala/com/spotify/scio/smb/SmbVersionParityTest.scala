@@ -30,8 +30,8 @@ import org.apache.beam.sdk.values.TupleTag
 import java.nio.file.Files
 
 class SmbVersionParityTest extends PipelineSpec {
-  private def testRoundtrip(
-    write: SortedBucketIO.Write[CharSequence, _, Account],
+  private def testReadRoundtrip(
+    writes: Seq[SortedBucketIO.Write[_ <: CharSequence, _, Account]],
     read: SortedBucketIO.Read[Account]
   ): Unit = {
     val accounts = (1 to 10).map { i =>
@@ -47,9 +47,10 @@ class SmbVersionParityTest extends PipelineSpec {
 
     {
       val sc = ScioContext()
-      sc.parallelize(accounts)
-        .saveAsSortedBucket(write)
+      val records = sc.parallelize(accounts)
+      writes.foreach(records.saveAsSortedBucket(_))
       sc.run()
+      ()
     }
 
     // Read data
@@ -61,38 +62,157 @@ class SmbVersionParityTest extends PipelineSpec {
       .get(sc.run().waitUntilDone())
       .flatMap(_._2)
       .value
-      .toSeq should contain theSameElementsAs accounts
+      .toSeq should contain theSameElementsAs writes.flatMap(_ => accounts)
   }
 
-  "SortedBucketSource" should "be able to read CharSequence-keyed Avro sources written before 0.14" in {
-    val output = Files.createTempDirectory("smb-version-test-avro").toFile
-    output.deleteOnExit()
+  private def testTransformRoundtrip(
+    writes: Seq[SortedBucketIO.Write[_ <: CharSequence, Void, Account]],
+    read: SortedBucketIO.Read[Account],
+    transform: SortedBucketIO.TransformOutput[String, Void, Account]
+  ): Unit = {
+    val accounts = (1 to 10).map { i =>
+      Account
+        .newBuilder()
+        .setId(i)
+        .setName(i.toString)
+        .setAmount(i.toDouble)
+        .setType(s"type$i")
+        .setAccountStatus(AccountStatus.Active)
+        .build()
+    }
 
-    testRoundtrip(
-      AvroSortedBucketIO
-        .write(classOf[CharSequence], "name", classOf[Account])
-        .to(output.getAbsolutePath)
-        .withNumBuckets(1)
-        .withNumShards(1),
+    {
+      val sc = ScioContext()
+      val records = sc.parallelize(accounts)
+      writes.foreach(records.saveAsSortedBucket(_))
+      sc.run()
+      ()
+    }
+
+    // Read data
+    val sc = ScioContext()
+    val tap = sc
+      .sortMergeTransform(classOf[String], read)
+      .to(transform)
+      .via { case (_, records, outputCollector) =>
+        records.foreach(outputCollector.accept(_))
+      }
+
+    tap
+      .get(sc.run().waitUntilDone())
+      .value
+      .toSeq should contain theSameElementsAs writes.flatMap(_ => accounts)
+  }
+
+  "SortedBucketSource" should "be able to read mixed CharSequence and String-keyed Avro sources" in {
+    val tmpDir = Files.createTempDirectory("smb-version-test-mixed-avro-read").toFile
+    tmpDir.deleteOnExit()
+
+    val partition1Output = tmpDir.toPath.resolve("partition1")
+    val partition2Output = tmpDir.toPath.resolve("partition2")
+
+    testReadRoundtrip(
+      Seq(
+        AvroSortedBucketIO
+          .write(classOf[CharSequence], "name", classOf[Account])
+          .to(partition1Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1),
+        AvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(partition2Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1)
+      ),
       AvroSortedBucketIO
         .read(new TupleTag[Account], classOf[Account])
-        .from(output.getAbsolutePath)
+        .from(partition1Output.toString, partition2Output.toString)
     )
   }
 
-  it should "be able to read CharSequence-keyed Parquet sources written before 0.14" in {
-    val output = Files.createTempDirectory("smb-version-test-parquet").toFile
-    output.deleteOnExit()
+  it should "be able to transform mixed CharSequence- and String-keyed Avro sources written before 0.14" in {
+    val tmpDir = Files.createTempDirectory("smb-version-test-avro-tfx").toFile
+    tmpDir.deleteOnExit()
 
-    testRoundtrip(
-      ParquetAvroSortedBucketIO
-        .write(classOf[CharSequence], "name", classOf[Account])
-        .to(output.getAbsolutePath)
-        .withNumBuckets(1)
-        .withNumShards(1),
+    val partition1Output = tmpDir.toPath.resolve("partition1")
+    val partition2Output = tmpDir.toPath.resolve("partition2")
+    val tfxOutput = tmpDir.toPath.resolve("tfx")
+
+    testTransformRoundtrip(
+      Seq(
+        AvroSortedBucketIO
+          .write(classOf[CharSequence], "name", classOf[Account])
+          .to(partition1Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1),
+        AvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(partition2Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1)
+      ),
+      AvroSortedBucketIO
+        .read(new TupleTag[Account], classOf[Account])
+        .from(partition1Output.toString, partition2Output.toString),
+      AvroSortedBucketIO
+        .transformOutput(classOf[String], "name", classOf[Account])
+        .to(tfxOutput.toString)
+    )
+  }
+
+  it should "be able to read mixed CharSequence- and String-keyed-keyed Parquet sources written before 0.14" in {
+    val tmpDir = Files.createTempDirectory("smb-version-test-mixed-parquet-read").toFile
+    tmpDir.deleteOnExit()
+
+    val partition1Output = tmpDir.toPath.resolve("partition1")
+    val partition2Output = tmpDir.toPath.resolve("partition2")
+
+    testReadRoundtrip(
+      Seq(
+        ParquetAvroSortedBucketIO
+          .write(classOf[CharSequence], "name", classOf[Account])
+          .to(partition1Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1),
+        ParquetAvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(partition2Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1)
+      ),
       ParquetAvroSortedBucketIO
         .read(new TupleTag[Account], classOf[Account])
-        .from(output.getAbsolutePath)
+        .from(partition1Output.toString, partition2Output.toString)
+    )
+  }
+
+  it should "be able to transform mixed CharSequence- and String-keyed Parquet sources written before 0.14" in {
+    val tmpDir = Files.createTempDirectory("smb-version-test-parquet-tfx").toFile
+    tmpDir.deleteOnExit()
+
+    val partition1Output = tmpDir.toPath.resolve("partition1")
+    val partition2Output = tmpDir.toPath.resolve("partition2")
+    val tfxOutput = tmpDir.toPath.resolve("tfx")
+
+    testTransformRoundtrip(
+      Seq(
+        ParquetAvroSortedBucketIO
+          .write(classOf[CharSequence], "name", classOf[Account])
+          .to(partition1Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1),
+        ParquetAvroSortedBucketIO
+          .write(classOf[String], "name", classOf[Account])
+          .to(partition2Output.toString)
+          .withNumBuckets(1)
+          .withNumShards(1)
+      ),
+      ParquetAvroSortedBucketIO
+        .read(new TupleTag[Account], classOf[Account])
+        .from(partition1Output.toString, partition2Output.toString),
+      ParquetAvroSortedBucketIO
+        .transformOutput(classOf[String], "name", classOf[Account])
+        .to(tfxOutput.toString)
     )
   }
 }
