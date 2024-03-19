@@ -878,6 +878,7 @@ lazy val `scio-elasticsearch-common` = project
     libraryDependencies ++= Seq(
       // compile
       "commons-io" % "commons-io" % commonsIoVersion,
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "jakarta.json" % "jakarta.json-api" % jakartaJsonVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,

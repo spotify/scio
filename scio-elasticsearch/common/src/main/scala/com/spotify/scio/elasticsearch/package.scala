@@ -18,7 +18,10 @@
 package com.spotify.scio
 
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
-import co.elastic.clients.json.{JsonpMapper, SimpleJsonpMapper}
+import co.elastic.clients.json.jackson.JacksonJsonpMapper
+import co.elastic.clients.json.JsonpMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.elasticsearch.ElasticsearchIO.{RetryConfig, WriteParam}
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
@@ -34,11 +37,17 @@ import org.joda.time.Duration
  * }}}
  */
 package object elasticsearch extends CoderInstances {
+  def defaultMapper(): JsonpMapper = {
+    // Use jackson for user json serialization, add scala and java.time support
+    val mapper = new JacksonJsonpMapper()
+    mapper.objectMapper().registerModule(DefaultScalaModule).registerModule(new JavaTimeModule())
+    mapper
+  }
 
   final case class ElasticsearchOptions(
     nodes: Seq[HttpHost],
     usernameAndPassword: Option[(String, String)] = None,
-    mapperFactory: () => JsonpMapper = () => new SimpleJsonpMapper()
+    mapperFactory: () => JsonpMapper = defaultMapper
   )
 
   implicit class ElasticsearchSCollection[T](@transient private val self: SCollection[T])
