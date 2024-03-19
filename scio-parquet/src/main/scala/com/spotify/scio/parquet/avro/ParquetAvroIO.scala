@@ -22,7 +22,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.parquet.read.{ParquetRead, ParquetReadConfiguration, ReadSupportFactory}
-import com.spotify.scio.parquet.{GcsConnectorUtil, ParquetConfiguration}
+import com.spotify.scio.parquet._
 import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.SCollection
@@ -43,6 +43,8 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.parquet.avro.{
   AvroDataSupplier,
   AvroParquetInputFormat,
+  AvroParquetReader,
+  AvroParquetWriter,
   AvroReadSupport,
   GenericDataSupplier
 }
@@ -50,6 +52,7 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
+import java.io.ByteArrayOutputStream
 import scala.reflect.{classTag, ClassTag}
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
@@ -66,11 +69,18 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
 
   override protected def readTest(sc: ScioContext, params: ReadP): SCollection[T] = {
     type AvroType = params.avroClass.type
+
+    val cleanedProjectionFn = ClosureCleaner.clean(params.projectionFn.asInstanceOf[AvroType => T])
+
     // The projection function is not part of the test input, so it must be applied directly
     TestDataManager
       .getInput(sc.testId.get)(ParquetAvroIO[AvroType](path)(classTag, null))
       .toSCollection(sc)
-      .map(params.projectionFn.asInstanceOf[AvroType => T])
+      .flatMap(
+        params.testRoundtripFn
+          .asInstanceOf[AvroType => Option[AvroType]]
+          .andThen(_.map(cleanedProjectionFn))
+      )
   }
 
   private def parquetOut(
@@ -172,6 +182,33 @@ object ParquetAvroIO {
         readSplittableDoFn(sc, path)
       } else {
         readLegacy(sc, path)
+      }
+    }
+
+    private[avro] def testRoundtripFn: A => Option[A] = {
+      val configuration = {
+        setupConfig()
+        new SerializableConfiguration(confOrDefault)
+      }
+
+      record => {
+        val stream = new ByteArrayOutputStream()
+        val writer = AvroParquetWriter
+          .builder[A](inMemoryOutputFile(stream))
+          .withSchema(ReflectData.get().getSchema(record.getClass))
+          .build()
+
+        writer.write(record)
+        writer.close()
+
+        val reader = AvroParquetReader
+          .builder[A](inMemoryInputFile(stream.toByteArray))
+          .withConf(configuration.get())
+          .build()
+
+        val roundtripped = reader.read()
+        reader.close()
+        Option(roundtripped) // If record is filtered out, reader.read will return null
       }
     }
 

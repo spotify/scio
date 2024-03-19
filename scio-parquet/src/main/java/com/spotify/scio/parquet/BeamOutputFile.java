@@ -43,7 +43,7 @@ public class BeamOutputFile implements OutputFile {
     return of(FileSystems.matchNewResource(path, false));
   }
 
-  private BeamOutputFile(OutputStream outputStream) {
+  BeamOutputFile(OutputStream outputStream) {
     this.outputStream = outputStream;
   }
 

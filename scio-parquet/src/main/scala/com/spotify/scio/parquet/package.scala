@@ -17,9 +17,9 @@
 package com.spotify.scio
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.io.{OutputFile, PositionOutputStream}
+import org.apache.parquet.io._
 
-import java.io.OutputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 import java.nio.channels.{Channels, WritableByteChannel}
 
 package object parquet {
@@ -73,5 +73,29 @@ package object parquet {
 
     private[parquet] def ofNullable(conf: Configuration): Configuration =
       Option(conf).getOrElse(empty())
+  }
+
+  private[parquet] def inMemoryOutputFile(baos: ByteArrayOutputStream): OutputFile =
+    new BeamOutputFile(baos)
+
+  private[parquet] def inMemoryInputFile(bytes: Array[Byte]): InputFile = new InputFile {
+    override def getLength: Long = bytes.length
+
+    override def newStream(): SeekableInputStream =
+      new DelegatingSeekableInputStream(new ByteArrayInputStream(bytes)) {
+        override def getPos: Long = bytes.length - getStream.available()
+        override def mark(readlimit: Int): Unit = {
+          if (readlimit != 0) {
+            throw new UnsupportedOperationException(
+              "In-memory seekable input stream is intended for testing only, can't mark past 0"
+            )
+          }
+          super.mark(readlimit)
+        }
+        override def seek(newPos: Long): Unit = {
+          getStream.reset()
+          getStream.skip(newPos)
+        }
+      }
   }
 }

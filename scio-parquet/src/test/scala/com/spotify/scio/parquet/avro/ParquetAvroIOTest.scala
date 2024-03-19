@@ -495,12 +495,15 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       e.getCause shouldBe a[NotImplementedError]
   }
 
-  it should "apply map functions to test input" in {
+  it should "apply map, projection, and predicate functions to test input" in {
     JobTest[ParquetTestJob.type]
       .args("--input=input", "--output=output")
       .input(
         ParquetAvroIO[Account]("input"),
-        List(Account.newBuilder().setId(1).setName("foo").setType("bar").setAmount(2.0).build())
+        List(
+          Account.newBuilder().setId(1).setName("foo").setType("bar").setAmount(2.0).build(),
+          Account.newBuilder().setId(1).setName("foo").setType("bar").setAmount(10.0).build()
+        )
       )
       .output(TextIO("output"))(_ should containSingleValue(("foo", 2.0).toString))
       .run()
@@ -513,7 +516,8 @@ object ParquetTestJob {
     sc
       .parquetAvroFile[Account](
         args("input"),
-        projection = Projection[Account](_.getName, _.getAmount)
+        projection = Projection[Account](_.getName, _.getAmount),
+        predicate = Predicate[Account](_.getAmount < 5.0)
       )
       .map(a => (a.getName.toString, a.getAmount))
       .saveAsTextFile(args("output"))
