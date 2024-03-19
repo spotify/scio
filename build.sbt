@@ -27,11 +27,12 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
+ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/orgapachebeam-1373/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.54.0"
+val beamVersion = "2.55.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.54.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.55.0-RC3/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -41,7 +42,7 @@ val commonsCompressVersion = "1.21"
 val commonsIoVersion = "2.13.0"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
-val datastoreV1ProtoClientVersion = "2.17.1"
+val datastoreV1ProtoClientVersion = "2.18.3"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
@@ -52,13 +53,13 @@ val jacksonVersion = "2.14.1"
 val javaxAnnotationApiVersion = "1.3.2"
 val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
-val nettyVersion = "4.1.87.Final"
+val nettyVersion = "4.1.100.Final"
 val slf4jVersion = "1.7.30"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20230812-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20240124-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20240113-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20231202-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20240205-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
@@ -67,35 +68,36 @@ val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.30.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.32.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
-val checkerQualVersion = "3.40.0"
-val errorProneAnnotationsVersion = "2.23.0"
+val checkerQualVersion = "3.42.0"
+val errorProneAnnotationsVersion = "2.24.1"
 val failureAccessVersion = "1.0.1"
 val floggerVersion = "0.8"
-val gaxVersion = "2.39.0"
+val gaxVersion = "2.42.0"
 val googleApiClientVersion = "2.2.0" // very strangely not in sync with googleClientsVersion
-val googleApiCommonVersion = "2.22.0"
-val googleAuthVersion = "1.21.0"
-val googleCloudBigQueryStorageVersion = "3.0.0"
-val googleCloudBigTableVersion = "2.31.0"
-val googleCloudCoreVersion = "2.29.0"
-val googleCloudMonitoringVersion = "3.34.0"
-val googleCloudProtoBigQueryStorageBetaVersion = "0.172.0"
+val googleApiCommonVersion = "2.25.0"
+val googleAuthVersion = "1.22.0"
+val googleCloudBigQueryStorageVersion = "3.1.0"
+val googleCloudBigTableVersion = "2.33.0"
+val googleCloudCoreVersion = "2.32.0"
+val googleCloudMonitoringVersion = "3.36.0"
+val googleCloudProtoBigQueryStorageBetaVersion = "0.173.0"
 val googleCloudProtoBigTableVersion = googleCloudBigTableVersion
-val googleCloudProtoDatastoreVersion = "0.109.0"
-val googleCloudProtoPubSubVersion = "1.108.0"
-val googleCloudSpannerVersion = "6.56.0"
-val googleCloudStorageVersion = "2.31.0"
+val googleCloudProtoDatastoreVersion = "0.109.3"
+val googleCloudProtoPubSubVersion = "1.108.5"
+val googleCloudSpannerVersion = "6.58.0"
+val googleCloudStorageVersion = "2.33.0"
 val googleHttpClientVersion = "1.43.3"
-val googleProtoCommonVersion = "2.30.0"
-val googleProtoIAMVersion = "1.25.0"
-val grpcVersion = "1.60.0"
+val googleProtoCommonVersion = "2.33.0"
+val googleProtoIAMVersion = "1.28.0"
+val grpcVersion = "1.61.0"
 val j2objcAnnotationsVersion = "2.8"
 val jsr305Version = "3.0.2"
+val okioVersion = "3.4.0"
 val opencensusVersion = "0.31.1"
-val perfmarkVersion = "0.26.0"
-val protobufVersion = "3.25.1"
+val perfmarkVersion = "0.27.0"
+val protobufVersion = "3.25.2"
 
 val algebirdVersion = "0.13.10"
 val algebraVersion = "2.10.0"
@@ -643,7 +645,6 @@ lazy val `scio-core` = project
       "commons-io" % "commons-io" % commonsIoVersion,
       "io.grpc" % "grpc-api" % grpcVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.beam" % "beam-runners-core-construction-java" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
@@ -1306,32 +1307,22 @@ lazy val `scio-repl` = project
     assembly / test := {},
     assembly / assemblyMergeStrategy ~= { old =>
       {
-        case PathList("org", "apache", "beam", "sdk", "extensions", "avro", _*) =>
-          // prefer beam avro classes from extensions lib instead of ones shipped in runners
-          CustomMergeStrategy("BeamAvro") { conflicts =>
+        case PathList("org", "apache", "beam", "sdk", _*) =>
+          // prefer original beam sdk classes instead of the ones packaged by the runners-direct-java
+          CustomMergeStrategy("BeamSdk") { conflicts =>
             import sbtassembly.Assembly._
-            conflicts.collectFirst {
-              case Library(ModuleCoordinate(_, "beam-sdks-java-extensions-avro", _), _, t, s) =>
-                JarEntry(t, s)
-            } match {
-              case Some(e) => Right(Vector(e))
-              case None =>
-                val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
-                Left("Error merging beam avro classes:" + conflictList)
+            val sdkDeps = conflicts.filterNot {
+              case Library(module, _, _, _) =>
+                module.organization == "org.apache.beam" && module.name == "beam-runners-direct-java"
+              case _ => false
             }
-          }
-        case PathList("com", "google", "errorprone", _*) =>
-          // prefer original errorprone classes instead of the ones packaged by beam
-          CustomMergeStrategy("ErrorProne") { conflicts =>
-            import sbtassembly.Assembly._
-            conflicts.collectFirst {
-              case Library(ModuleCoordinate("com.google.errorprone", _, _), _, t, s) =>
-                JarEntry(t, s)
-            } match {
-              case Some(e) => Right(Vector(e))
-              case None =>
+
+            sdkDeps.toList match {
+              case Library(_, _, t, s) :: Nil => Right(Vector(JarEntry(t, s)))
+              case Project(_, _, t, s) :: Nil => Right(Vector(JarEntry(t, s)))
+              case _ =>
                 val conflictList = conflicts.mkString("\n  ", "\n  ", "\n")
-                Left("Error merging errorprone classes:" + conflictList)
+                Left("Error merging beam sdk classes:" + conflictList)
             }
           }
         case PathList("com", "squareup", _*) =>
@@ -1358,7 +1349,7 @@ lazy val `scio-repl` = project
         case s if s.endsWith(".proto") =>
           // arbitrary pick last conflicting proto file
           MergeStrategy.last
-        case PathList("git.properties") =>
+        case PathList("git.properties" | "arrow-git.properties") =>
           // drop conflicting git properties
           MergeStrategy.discard
         case PathList("META-INF", "versions", "9", "module-info.class") =>
@@ -1733,6 +1724,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.google.j2objc" % "j2objc-annotations" % j2objcAnnotationsVersion,
   "com.google.protobuf" % "protobuf-java" % protobufVersion,
   "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
+  "com.squareup.okio" % "okio" % okioVersion,
   "commons-codec" % "commons-codec" % commonsCodecVersion,
   "commons-io" % "commons-io" % commonsIoVersion,
   "io.dropwizard.metrics" % "metrics-core" % metricsVersion,
