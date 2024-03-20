@@ -50,7 +50,6 @@ val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.14.1"
-val javaxAnnotationApiVersion = "1.3.2"
 val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.100.Final"
@@ -1205,7 +1204,14 @@ lazy val `scio-examples` = project
       scalacOptions.value.filterNot(exclude.contains)
     },
     undeclaredCompileDependenciesFilter := NothingFilter,
-    unusedCompileDependenciesFilter -= moduleFilter("mysql", "mysql-connector-java"),
+    unusedCompileDependenciesFilter -= Seq(
+      // used in es example
+      moduleFilter("com.fasterxml.jackson.datatype", "jackson-datatype-jsr310"),
+      // used in beam java
+      moduleFilter("com.google.oauth-client", "google-oauth-client"),
+      // class reference only
+      moduleFilter("mysql", "mysql-connector-java")
+    ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
