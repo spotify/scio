@@ -1210,7 +1210,6 @@ lazy val `scio-examples` = project
     unusedCompileDependenciesFilter -= moduleFilter("mysql", "mysql-connector-java"),
     libraryDependencies ++= Seq(
       // compile
-      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
