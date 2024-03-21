@@ -18,11 +18,24 @@
 package com.spotify.scio.elasticsearch
 
 import co.elastic.clients.elasticsearch.core.bulk.{BulkOperation, IndexOperation}
+import co.elastic.clients.json.jackson.{
+  JacksonJsonpGenerator,
+  JacksonJsonpMapper,
+  JacksonJsonpParser
+}
+import com.fasterxml.jackson.core.JsonFactory
 import com.spotify.scio.testing._
 
-class ElasticsearchIOTest extends ScioIOSpec {
+import java.io.StringWriter
+import java.time.LocalDate
 
+object ElasticsearchIOTest {
   type Document = Map[String, String]
+  case class Record(i: Int, jt: java.time.Instant, ldt: LocalDate)
+}
+
+class ElasticsearchIOTest extends ScioIOSpec {
+  import ElasticsearchIOTest._
 
   "ElasticsearchIO" should "work with output" in {
     val xs = 1 to 100
@@ -38,4 +51,22 @@ class ElasticsearchIOTest extends ScioIOSpec {
     }
   }
 
+  "ElasticsearchOptions" should "have a default mapper that supports scala and java.time" in {
+    val record = Record(10, java.time.Instant.ofEpochSecond(10), LocalDate.of(2021, 10, 22))
+
+    // the mapper internals require that the generator and parser types match,
+    // so we have to do some awkward java dancing here
+    val mapper = ElasticsearchOptions(Nil).mapperFactory()
+    val writer = new StringWriter()
+    val generator = new JacksonJsonpGenerator(new JsonFactory().createGenerator(writer))
+    mapper.serialize(record, generator)
+    generator.close()
+    val parser = new JacksonJsonpParser(
+      new JsonFactory().createParser(writer.toString),
+      mapper.asInstanceOf[JacksonJsonpMapper]
+    )
+    val roundTripped = mapper.deserialize(parser, classOf[Record])
+
+    roundTripped should equal(record)
+  }
 }
