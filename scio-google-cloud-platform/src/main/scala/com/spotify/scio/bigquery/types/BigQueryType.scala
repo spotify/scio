@@ -53,6 +53,7 @@ import scala.util.Try
  * @groupname Ungrouped
  * Other Members
  */
+@deprecated("Use magnolify API instead.", "0.15.0")
 object BigQueryType {
 
   /**
@@ -194,6 +195,7 @@ object BigQueryType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
+  @deprecated("Use magnolify API instead.", "0.15.0")
   class fromTable(tableSpec: String, args: String*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.tableImpl
   }
@@ -225,6 +227,7 @@ object BigQueryType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
+  @deprecated("Use magnolify API instead.", "0.15.0")
   class fromSchema(schema: String) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.schemaImpl
   }
@@ -275,6 +278,7 @@ object BigQueryType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
+  @deprecated("Use magnolify API instead.", "0.15.0")
   class fromStorage(
     tableSpec: String,
     args: List[Any] = Nil,
@@ -322,6 +326,7 @@ object BigQueryType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
+  @deprecated("Use magnolify API instead.", "0.15.0")
   class fromQuery(query: String, args: Any*) extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.queryImpl
   }
@@ -342,34 +347,40 @@ object BigQueryType {
   @compileTimeOnly(
     "enable macro paradise (2.12) or -Ymacro-annotations (2.13) to expand macro annotations"
   )
+  @deprecated("Use magnolify API instead.", "0.15.0")
   class toTable extends StaticAnnotation {
     def macroTransform(annottees: Any*): Any = macro TypeProvider.toTableImpl
   }
 
   /** Generate [[org.apache.avro.Schema Schema]] for a case class. */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def avroSchemaOf[T: TypeTag]: Schema = SchemaProvider.avroSchemaOf[T]
 
   /**
    * Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class.
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
 
   /**
    * Generate a converter function from Avro [[GenericRecord]] to the given case class `T`.
    * @group converters
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def fromAvro[T]: GenericRecord => T = macro ConverterProvider.fromAvroImpl[T]
 
   /**
    * Generate a converter function from the given case class `T` to [[GenericRecord]].
    * @group converters
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def toAvro[T]: T => GenericRecord = macro ConverterProvider.toAvroImpl[T]
 
   /**
    * Generate a converter function from [[TableRow]] to the given case class `T`.
    * @group converters
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def fromTableRow[T]: TableRow => T =
     macro ConverterProvider.fromTableRowImpl[T]
 
@@ -377,9 +388,11 @@ object BigQueryType {
    * Generate a converter function from the given case class `T` to [[TableRow]].
    * @group converters
    */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   def toTableRow[T]: T => TableRow = macro ConverterProvider.toTableRowImpl[T]
 
   /** Create a new BigQueryType instance. */
+  @deprecated("Use magnolify API instead.", "0.15.0")
   @inline final def apply[T: TypeTag]: BigQueryType[T] = new BigQueryType[T]
 }
 
@@ -388,6 +401,7 @@ object BigQueryType {
  *
  * This decouples generated fields and methods from macro expansion to keep core macro free.
  */
+@deprecated("Use magnolify API instead.", "0.15.0")
 class BigQueryType[T: TypeTag] {
   private[this] val bases = typeOf[T].companion.baseClasses
 

@@ -19,29 +19,68 @@ package com.spotify.scio.datastore
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
-import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
+import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT, TestIO}
 import com.google.datastore.v1.{Entity, Query}
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.datastore.DatastoreTypedIO.{ReadParam, WriteParam}
+import magnolify.datastore.EntityType
 import org.apache.beam.sdk.io.gcp.datastore.{DatastoreIO => BDatastoreIO, DatastoreV1 => BDatastore}
 
-final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
-  override type ReadP = DatastoreIO.ReadParam
-  override type WriteP = DatastoreIO.WriteParam
+sealed trait DatastoreIO[T] extends ScioIO[T] {
+  final override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
+}
 
-  override val tapT: TapT.Aux[Entity, Nothing] = EmptyTapOf[Entity]
+object DatastoreIO {
+  final def apply[T](projectId: String): DatastoreIO[T] =
+    new DatastoreIO[T] with TestIO[T] {
+      override def testId: String = s"DatastoreIO($projectId)"
+    }
+}
 
-  override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] = {
-    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Entity])
-    val read = BDatastoreIO
-      .v1()
-      .read()
-      .withProjectId(projectId)
-      .withNamespace(params.namespace)
-      .withQuery(params.query)
-    sc.applyTransform(
-      Option(params.configOverride).map(_(read)).getOrElse(read)
-    ).setCoder(coder)
+final case class DatastoreTypedIO[T: EntityType: Coder](projectId: String) extends DatastoreIO[T] {
+  override type ReadP = DatastoreTypedIO.ReadParam
+  override type WriteP = DatastoreTypedIO.WriteParam
+  override def testId: String = s"DatastoreIO($projectId)"
+
+  override protected def read(sc: ScioContext, params: ReadParam): SCollection[T] = {
+    val entityType: EntityType[T] = implicitly
+    sc.transform { ctx =>
+      DatastoreEntityIO
+        .read(ctx, projectId, params.namespace, params.query, params.configOverride)
+        .map(e => entityType(e))
+    }
   }
+
+  override protected def write(data: SCollection[T], params: WriteParam): Tap[Nothing] = {
+    val entityType: EntityType[T] = implicitly
+    val write = BDatastoreIO.v1.write.withProjectId(projectId)
+    data.transform_ { scoll =>
+      scoll
+        .map(t => entityType(t))
+        .applyInternal(
+          Option(params.configOverride).map(_(write)).getOrElse(write)
+        )
+    }
+    EmptyTap
+  }
+
+  override def tap(read: ReadParam): Tap[Nothing] = EmptyTap
+}
+
+object DatastoreTypedIO {
+  type ReadParam = DatastoreEntityIO.ReadParam
+  val ReadParam = DatastoreEntityIO.ReadParam
+  type WriteParam = DatastoreEntityIO.WriteParam
+  val WriteParam = DatastoreEntityIO.WriteParam
+}
+
+final case class DatastoreEntityIO(projectId: String) extends DatastoreIO[Entity] {
+  override type ReadP = DatastoreEntityIO.ReadParam
+  override type WriteP = DatastoreEntityIO.WriteParam
+  override def testId: String = s"DatastoreIO($projectId)"
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[Entity] =
+    DatastoreEntityIO.read(sc, projectId, params.namespace, params.query, params.configOverride)
 
   override protected def write(data: SCollection[Entity], params: WriteP): Tap[Nothing] = {
     val write = BDatastoreIO.v1.write.withProjectId(projectId)
@@ -51,10 +90,10 @@ final case class DatastoreIO(projectId: String) extends ScioIO[Entity] {
     EmptyTap
   }
 
-  override def tap(read: DatastoreIO.ReadParam): Tap[Nothing] = EmptyTap
+  override def tap(read: DatastoreEntityIO.ReadParam): Tap[Nothing] = EmptyTap
 }
 
-object DatastoreIO {
+object DatastoreEntityIO {
 
   object ReadParam {
     val DefaultNamespace: String = null
@@ -74,4 +113,23 @@ object DatastoreIO {
   final case class WriteParam private (
     configOverride: BDatastore.Write => BDatastore.Write = WriteParam.DefaultConfigOverride
   )
+
+  private[scio] def read(
+    sc: ScioContext,
+    projectId: String,
+    namespace: String,
+    query: Query,
+    configOverride: BDatastore.Read => BDatastore.Read
+  ): SCollection[Entity] = {
+    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Entity])
+    val read = BDatastoreIO
+      .v1()
+      .read()
+      .withProjectId(projectId)
+      .withNamespace(namespace)
+      .withQuery(query)
+    sc.applyTransform(
+      Option(configOverride).map(_(read)).getOrElse(read)
+    ).setCoder(coder)
+  }
 }
