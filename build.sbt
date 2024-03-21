@@ -704,6 +704,14 @@ lazy val `scio-test` = project
       "org.scalactic" %% "scalactic" % scalatestVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
+      // provided
+      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+      "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
+      "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided,
+      "org.apache.parquet" % "parquet-column" % parquetVersion % Provided,
+      "org.apache.parquet" % "parquet-common" % parquetVersion % Provided,
+      "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided,
       // runtime
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
