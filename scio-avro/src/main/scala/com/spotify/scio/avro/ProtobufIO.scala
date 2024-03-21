@@ -91,7 +91,7 @@ final case class ProtobufTypedObjectFileIO[T: Coder, U <: Message: ClassTag](
    * block file format.
    */
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.transform(_.read(underlying)(params).map(u => pt.from(u)))
+    sc.transform(_.read(underlying)(params).map(pt.from))
 
   /**
    * Save this SCollection as a Protobuf file.
@@ -103,14 +103,14 @@ final case class ProtobufTypedObjectFileIO[T: Coder, U <: Message: ClassTag](
     val metadata = params.metadata ++ ProtobufUtil.schemaMetadataOf[U]
     underlying
       .writeWithContext(
-        data.transform(_.map(t => pt.to(t))),
+        data.transform(_.map(pt.to)),
         params.copy(metadata = metadata)
       )
       .underlying
-      .map(u => pt.from(u))
+      .map(pt.from)
   }
 
-  override def tap(read: ReadP): Tap[T] = ProtobufFileTap[U](path, read).map(u => pt.from(u))
+  override def tap(read: ReadP): Tap[T] = ProtobufFileTap[U](path, read).map(pt.from)
 }
 
 object ProtobufTypedObjectFileIO {

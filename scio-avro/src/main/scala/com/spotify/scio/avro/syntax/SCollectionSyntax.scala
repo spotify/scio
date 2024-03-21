@@ -218,7 +218,7 @@ final class TypedMagnolifyProtobufSCollectionOps[T](private val self: SCollectio
    * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
    * block file format.
    */
-  def saveAsProtobufFile[U <: Message](
+  def saveAsProtobufFile[U <: Message: ClassTag](
     path: String,
     numShards: Int = ProtobufTypedObjectFileIO.WriteParam.DefaultNumShards,
     suffix: String = ProtobufTypedObjectFileIO.WriteParam.DefaultSuffixProtobuf,
@@ -229,7 +229,7 @@ final class TypedMagnolifyProtobufSCollectionOps[T](private val self: SCollectio
     filenamePolicySupplier: FilenamePolicySupplier =
       ProtobufTypedObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = ProtobufTypedObjectFileIO.WriteParam.DefaultPrefix
-  )(implicit ct: ClassTag[U], pt: ProtobufType[T, U]): ClosedTap[T] = {
+  )(implicit pt: ProtobufType[T, U]): ClosedTap[T] = {
     implicit val tCoder: Coder[T] = self.coder
     val param = ProtobufTypedObjectFileIO.WriteParam[GenericRecord](
       numShards,

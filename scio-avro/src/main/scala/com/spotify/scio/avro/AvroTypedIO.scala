@@ -44,10 +44,13 @@ final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](path: Strin
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val datumFactory = Option(params.datumFactory).getOrElse(GenericRecordDatumFactory)
     implicit val coder: Coder[GenericRecord] = avroCoder(datumFactory, schema)
-    underlying.writeWithContext(
-      data.transform(_.map(avroT.toGenericRecord)),
-      params
-    ).underlying.map(avroT.fromGenericRecord)
+    underlying
+      .writeWithContext(
+        data.transform(_.map(avroT.toGenericRecord)),
+        params
+      )
+      .underlying
+      .map(avroT.fromGenericRecord)
   }
 
   override def tap(read: ReadP): Tap[T] =
