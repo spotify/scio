@@ -94,7 +94,6 @@ trait ElasticsearchIOBehavior extends Eventually with ForAllTestContainer { this
   }
 
   def elasticsearchIO() = {
-
     // from https://www.elastic.co/blog/a-practical-introduction-to-elasticsearch
     it should "apply operations to elasticsearch cluster" in {
       val options = PipelineOptionsFactory.create()
@@ -103,8 +102,7 @@ trait ElasticsearchIOBehavior extends Eventually with ForAllTestContainer { this
       val host = new HttpHost(container.host, container.mappedPort(9200))
       val esOptions = ElasticsearchOptions(
         nodes = Seq(host),
-        usernameAndPassword = Some((Username, Password)),
-        mapperFactory = createScalaMapper
+        usernameAndPassword = Some((Username, Password))
       )
 
       val persons = Seq(
