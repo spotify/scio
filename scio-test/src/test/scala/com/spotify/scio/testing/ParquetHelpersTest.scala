@@ -79,7 +79,7 @@ class ParquetHelpersTest extends AnyFlatSpec with Matchers {
     }
   }
 
-  "Case classes" should "be filterable and projectable" in {
+  "Case classes" should "be filterable" in {
     val records = (1 to 10).map(SomeRecord)
 
     val transformed = records

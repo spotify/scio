@@ -111,6 +111,8 @@ object ParquetHelpers {
     }
   }
 
+  // @Todo tensorflow helpers
+
   private def inMemoryOutputFile(baos: ByteArrayOutputStream): OutputFile = new OutputFile {
     override def create(blockSizeHint: Long): PositionOutputStream = newPositionOutputStream()
 
