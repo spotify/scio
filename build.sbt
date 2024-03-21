@@ -705,7 +705,7 @@ lazy val `scio-test` = project
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // provided
-      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+      "com.spotify" %% "magnolify-parquet" % magnolifyVersion % Provided,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion % Provided,
       "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided,
