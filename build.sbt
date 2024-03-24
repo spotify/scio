@@ -54,6 +54,7 @@ val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val nettyVersion = "4.1.87.Final"
 val slf4jVersion = "1.7.30"
+val zstdJniVersion = "1.5.2-5"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20230812-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20240113-$googleClientsVersion"
@@ -623,6 +624,7 @@ lazy val `scio-core` = project
       "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+      "com.github.luben" % "zstd-jni" % zstdJniVersion,
       "com.google.api" % "gax" % gaxVersion,
       "com.google.api" % "gax-grpc" % gaxVersion,
       "com.google.api" % "gax-httpjson" % gaxVersion,
