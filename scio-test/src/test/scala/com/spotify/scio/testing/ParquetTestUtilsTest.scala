@@ -26,8 +26,7 @@ import org.scalatest.matchers.should.Matchers
 
 case class SomeRecord(intField: Int)
 
-class ParquetHelpersTest extends AnyFlatSpec with Matchers {
-  import com.spotify.scio.testing.ParquetHelpers._
+class ParquetTestUtilsTest extends AnyFlatSpec with Matchers with ParquetTestUtils {
 
   "Avro SpecificRecords" should "be filterable and projectable" in {
     val records = (1 to 10).map(AvroUtils.newSpecificRecord)

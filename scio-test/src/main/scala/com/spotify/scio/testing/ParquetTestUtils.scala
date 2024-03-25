@@ -29,17 +29,17 @@ import org.apache.parquet.io._
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import scala.reflect.ClassTag
 
-object ParquetHelpers {
-  sealed trait ParquetFilterHelper[T] {
+trait ParquetTestUtils {
+  sealed trait ImplementsFilter[T] {
     def parquetFilter(filter: FilterPredicate): Iterable[T]
   }
 
-  sealed trait ParquetProjectionHelper[T] {
+  sealed trait ImplementsProject[T] {
     def parquetProject(schema: Schema): Iterable[T]
   }
 
   case class ParquetMagnolifyHelpers[T: ParquetType: ClassTag](records: Iterable[T])
-      extends ParquetFilterHelper[T] {
+      extends ImplementsFilter[T] {
     override def parquetFilter(filter: FilterPredicate): Iterable[T] = {
       val configuration = new Configuration()
       ParquetInputFormat.setFilterPredicate(configuration, filter)
@@ -67,8 +67,8 @@ object ParquetHelpers {
   }
 
   case class ParquetAvroHelpers[T <: GenericRecord: ClassTag](records: Iterable[T])
-      extends ParquetFilterHelper[T]
-      with ParquetProjectionHelper[T] {
+      extends ImplementsFilter[T]
+      with ImplementsProject[T] {
     override def parquetProject(projection: Schema): Iterable[T] = {
       val configuration = new Configuration()
       AvroReadSupport.setRequestedProjection(configuration, projection)
