@@ -11,7 +11,6 @@ import scala.util.{Random, Try}
 
 case class ZstdDictIO[T](path: String) extends ScioIO[T] {
   private val logger = LoggerFactory.getLogger(this.getClass)
-  private val DictionarySizeMbWarningThreshold = 10
 
   override type ReadP = Nothing // WriteOnly
   override type WriteP = ZstdDictIO.WriteParam
@@ -31,9 +30,9 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
       trainingBytesTarget
     ) = params
     // see https://github.com/facebook/zstd/issues/3769#issuecomment-1730261489
-    if (zstdDictSizeBytes > (DictionarySizeMbWarningThreshold * 1024 * 1024)) {
+    if (zstdDictSizeBytes > (ZstdDictIO.DictionarySizeMbWarningThreshold * 1024 * 1024)) {
       logger.warn(
-        s"Dictionary sizes over ${DictionarySizeMbWarningThreshold}MB are of " +
+        s"Dictionary sizes over ${ZstdDictIO.DictionarySizeMbWarningThreshold}MB are of " +
           s"questionable utility. Consider reducing zstdDictSizeBytes."
       )
     }
@@ -102,14 +101,17 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
 }
 
 object ZstdDictIO {
-  val DefaultZstdDictSizeBytes: Int = 110 * 1024
-  val DefaultNumElementsForSizeEstimation: Long = 100L
-  val DefaultTrainingBytesTarget: Int = null.asInstanceOf[Int]
+  val DictionarySizeMbWarningThreshold = 10
 
   final case class WriteParam(
-    zstdDictSizeBytes: Int = DefaultZstdDictSizeBytes,
-    numElementsForSizeEstimation: Long = DefaultNumElementsForSizeEstimation,
-    trainingBytesTarget: Int = DefaultTrainingBytesTarget
+    zstdDictSizeBytes: Int = WriteParam.DefaultZstdDictSizeBytes,
+    numElementsForSizeEstimation: Long = WriteParam.DefaultNumElementsForSizeEstimation,
+    trainingBytesTarget: Int = WriteParam.DefaultTrainingBytesTarget
   )
 
+  object WriteParam {
+    val DefaultZstdDictSizeBytes: Int = 110 * 1024
+    val DefaultNumElementsForSizeEstimation: Long = 100L
+    val DefaultTrainingBytesTarget: Int = null.asInstanceOf[Int]
+  }
 }
