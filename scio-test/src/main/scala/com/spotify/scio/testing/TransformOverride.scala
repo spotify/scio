@@ -22,7 +22,7 @@ import java.lang.{Iterable => JIterable}
 import java.util
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.Functions
-import org.apache.beam.runners.core.construction.{PTransformReplacements, ReplacementOutputs}
+import org.apache.beam.sdk.util.construction.{PTransformReplacements, ReplacementOutputs}
 import org.apache.beam.sdk.runners.PTransformOverrideFactory.{
   PTransformReplacement,
   ReplacementOutput
