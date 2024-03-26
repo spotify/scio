@@ -85,7 +85,10 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
           .keyBy(_ => ())
           .groupByKey
           .map { case (_, elements) =>
-            val zstdSampleSize = elements.map(_.length).sum
+            val zstdSampleSize = {
+              val sum = elements.map(_.length.toLong).sum
+              if (sum > Int.MaxValue.toLong) Int.MaxValue else sum.toInt
+            }
             logger.info(s"Training set size for for Zstd dictionary: ${zstdSampleSize}")
             val trainer = new ZstdDictTrainer(zstdSampleSize, zstdDictSizeBytes)
             elements.foreach(trainer.addSample)
