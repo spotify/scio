@@ -7,7 +7,7 @@ If you need support for custom encoders or decoders, see the [circe documentatio
 
 ## Reading Json
 
-Read Json into a record type with @scaladoc[jsonFile](com.spotify.scio.extra.json.JsonScioContext#jsonFile[T](path:String,compression:org.apache.beam.sdk.io.Compression)(implicitevidence$1:com.spotify.scio.extra.json.package.Decoder[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]):
+Read Json into a record type with @scaladoc[jsonFile](com.spotify.scio.extra.json.package$$JsonScioContext#jsonFile[T](path:String,compression:org.apache.beam.sdk.io.Compression)(implicitevidence$1:com.spotify.scio.extra.json.package.Decoder[T],implicitevidence$2:com.spotify.scio.coders.Coder[T]):com.spotify.scio.values.SCollection[T]):
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
@@ -22,7 +22,7 @@ val records: SCollection[Record] = sc.jsonFile[Record]("input.json")
 
 ## Writing Json
 
-Write to Json with @scaladoc[saveAsJsonFile](com.spotify.scio.extra.json.JsonSCollection#saveAsJsonFile(path:String,suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,printer:io.circe.Printer,shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier):com.spotify.scio.io.ClosedTap[T]), which optionally takes a custom `printer` argument of type [`io.circe.Printer`](https://circe.github.io/circe/api/io/circe/Printer.html) for controlling formatting.
+Write to Json with @scaladoc[saveAsJsonFile](com.spotify.scio.extra.json.package$$JsonSCollection#saveAsJsonFile(path:String,suffix:String,numShards:Int,compression:org.apache.beam.sdk.io.Compression,printer:io.circe.Printer,shardNameTemplate:String,tempDirectory:String,filenamePolicySupplier:com.spotify.scio.util.FilenamePolicySupplier):com.spotify.scio.io.ClosedTap[T]), which optionally takes a custom `printer` argument of type [`io.circe.Printer`](https://circe.github.io/circe/api/io/circe/Printer.html) for controlling formatting.
 
 ```scala mdoc:compile-only
 import com.spotify.scio._
