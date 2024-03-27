@@ -45,7 +45,9 @@ object CoderMaterializer {
         { o =>
           val scioOpts = o.as(classOf[com.spotify.scio.options.ScioOptions])
           val nullableCoder = scioOpts.getNullableCoders
-          val zstdDictPaths = scioOpts.getZstdDictionary.asScala
+          val zstdDictPaths = Option(scioOpts.getZstdDictionary)
+            .map(_.asScala)
+            .getOrElse(List.empty)
             .map { s =>
               // worst api?
               s.split(":", 2).toList match {
