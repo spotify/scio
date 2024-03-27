@@ -18,6 +18,7 @@
 package com.spotify.scio.options;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.List;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -78,4 +79,9 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
   boolean getNullableCoders();
 
   void setNullableCoders(boolean value);
+
+  @Description("")
+  List<String> getZstdDictionary();
+
+  void setZstdDictionary(List<String> value);
 }

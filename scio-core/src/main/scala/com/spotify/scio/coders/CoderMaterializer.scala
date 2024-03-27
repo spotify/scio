@@ -17,20 +17,81 @@
 
 package com.spotify.scio.coders
 
+import com.spotify.scio.util.RemoteFileUtil
 import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder, KvCoder, NullableCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
+import java.net.URI
+import java.nio.file.Files
+import java.util.concurrent.ConcurrentHashMap
 import scala.collection.concurrent.TrieMap
+import scala.jdk.CollectionConverters._
 import scala.util.chaining._
 
 object CoderMaterializer {
   import com.spotify.scio.ScioContext
 
-  private[scio] case class CoderOptions(nullableCoders: Boolean, kryo: KryoOptions)
+  private[scio] case class CoderOptions(
+    nullableCoders: Boolean,
+    kryo: KryoOptions,
+    zstdDictMapping: Map[Class[_], Array[Byte]]
+  )
   private[scio] object CoderOptions {
+    private val cache: ConcurrentHashMap[PipelineOptions, CoderOptions] = new ConcurrentHashMap()
+
     final def apply(o: PipelineOptions): CoderOptions = {
-      val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders
-      new CoderOptions(nullableCoder, KryoOptions(o))
+      cache.computeIfAbsent(
+        o,
+        { o =>
+          val scioOpts = o.as(classOf[com.spotify.scio.options.ScioOptions])
+          val nullableCoder = scioOpts.getNullableCoders
+          val zstdDictPaths = scioOpts.getZstdDictionary.asScala
+            .map { s =>
+              // worst api?
+              s.split(":", 2).toList match {
+                case className :: path :: Nil =>
+                  try {
+                    Class.forName(className) -> path
+                  } catch {
+                    case e: ClassNotFoundException =>
+                      throw new IllegalArgumentException(
+                        s"Class for zstdDictionary argument ${s} not found.",
+                        e
+                      )
+                  }
+                case _ =>
+                  throw new IllegalArgumentException(
+                    "zstdDictionary arguments must be in a colon-separated format. " +
+                      s"Example: `com.spotify.ClassName:gs://path`. Found: ${s}"
+                  )
+              }
+            }
+            .groupBy(_._1)
+            .map { case (clazz, values) => clazz -> values.map(_._2).toSet }
+
+          val dupes = zstdDictPaths
+            .collect {
+              case (clazz, values) if values.size > 1 =>
+                s"Class ${clazz.getCanonicalName} -> [${values.mkString(", ")}]"
+            }
+          if (dupes.size > 1) {
+            throw new IllegalArgumentException(
+              dupes.mkString("Found multiple Zstd dictionaries for:\n\t", "\n\t", "\n")
+            )
+          }
+
+          val zstdDictMapping = zstdDictPaths.map { case (clazz, dictUriSet) =>
+            // dictUriSet always contains exactly 1 item
+            val dictUri = dictUriSet.toList.head
+            val dictPath = RemoteFileUtil.create(o).download(new URI(dictUri))
+            val dictBytes = Files.readAllBytes(dictPath)
+            Files.delete(dictPath)
+            clazz -> dictBytes
+          }
+
+          new CoderOptions(nullableCoder, KryoOptions(o), zstdDictMapping)
+        }
+      )
     }
   }
 

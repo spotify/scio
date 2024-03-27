@@ -104,7 +104,7 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
 }
 
 object ZstdDictIO {
-  val DictionarySizeMbWarningThreshold = 10
+  val DictionarySizeMbWarningThreshold: Int = 10
 
   final case class WriteParam(
     zstdDictSizeBytes: Int = WriteParam.DefaultZstdDictSizeBytes,
