@@ -383,6 +383,9 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[MissingClassProblem](
     "com.spotify.scio.coders.instances.kryo.StatusRuntimeExceptionSerializer"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer"
   )
 )
 
