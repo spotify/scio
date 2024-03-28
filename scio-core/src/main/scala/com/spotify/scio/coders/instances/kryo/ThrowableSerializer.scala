@@ -88,7 +88,7 @@ private object ThrowableSerializer {
   }
 }
 
-final private[scio] class ThrowableSerializer extends KSerializer[Throwable] {
+final private[coders] class ThrowableSerializer extends KSerializer[Throwable] {
   import ThrowableSerializer._
   override def write(kryo: Kryo, out: Output, obj: Throwable): Unit = {
     try {
