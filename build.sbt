@@ -376,6 +376,13 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.testing.TransformOverride.ofSource"
+  ),
+  // removal of private classes
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.coders.instances.kryo.GaxApiExceptionSerializer"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.coders.instances.kryo.StatusRuntimeExceptionSerializer"
   )
 )
 
