@@ -17,16 +17,16 @@
 
 package com.spotify.scio.coders
 
+import com.esotericsoftware.kryo.KryoException
+import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
+import com.google.protobuf.{ByteString, Message}
+import com.spotify.scio.coders.instances.JavaCollectionWrappers
+import com.spotify.scio.coders.instances.kryo._
+import com.spotify.scio.options.ScioOptions
+
 import java.io.{EOFException, InputStream, OutputStream}
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import com.esotericsoftware.kryo.KryoException
-import com.esotericsoftware.kryo.io.{InputChunked, OutputChunked}
-import com.esotericsoftware.kryo.serializers.JavaSerializer
-import com.google.protobuf.{ByteString, Message}
-import com.spotify.scio.coders.instances.kryo._
-import com.spotify.scio.coders.instances.JavaCollectionWrappers
-import com.spotify.scio.options.ScioOptions
 import com.twitter.chill._
 import com.twitter.chill.algebird.AlgebirdRegistrar
 import com.twitter.chill.protobuf.ProtobufSerializer
@@ -43,8 +43,8 @@ import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.reflect.ClassP
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 
 private object KryoRegistrarLoader {
   private[this] val logger = LoggerFactory.getLogger(this.getClass)
@@ -121,9 +121,7 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
     k.forClass[io.grpc.Status](new StatusSerializer)
-    k.forSubclass[io.grpc.StatusRuntimeException](new StatusRuntimeExceptionSerializer)
-    k.forSubclass[com.google.api.gax.rpc.ApiException](new GaxApiExceptionSerializer)
-    k.addDefaultSerializer(classOf[Throwable], new JavaSerializer)
+    k.addDefaultSerializer(classOf[Throwable], new ThrowableSerializer)
     ()
   }
 }

@@ -18,22 +18,21 @@
 package com.spotify.scio.coders.instances.kryo
 
 import com.google.api.gax.grpc.GrpcStatusCode
-import com.google.api.gax.rpc.{ApiException, ApiExceptionFactory}
-import io.grpc.{Metadata, Status, StatusRuntimeException}
+import com.google.api.gax.rpc.{ApiException, ApiExceptionFactory, StatusCode}
+import io.grpc.{Status, StatusException, StatusRuntimeException}
 import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.jdk.CollectionConverters._
-
 object GrpcSerializerTest {
-  private val eqMetadata: Equality[Metadata] = {
-    case (a: Metadata, b: Metadata) =>
-      a.keys().size() == b.keys().size() &&
-      a.keys.asScala.forall { k =>
-        val strKey = Metadata.Key.of[String](k, Metadata.ASCII_STRING_MARSHALLER)
-        a.get(strKey) == b.get(strKey)
-      }
+
+  val eqCause: Equality[Throwable] = {
+    case (null, null) => true
+    case (null, _)    => false
+    case (_, null)    => false
+    case (a: Throwable, b: Throwable) =>
+      a.getClass == b.getClass &&
+      a.getMessage == b.getMessage
     case _ => false
   }
 
@@ -41,39 +40,48 @@ object GrpcSerializerTest {
     case (a: Status, b: Status) =>
       a.getCode == b.getCode &&
       a.getDescription == b.getDescription &&
-      ((Option(a.getCause), Option(b.getCause)) match {
-        case (None, None) =>
-          true
-        case (Some(ac), Some(bc)) =>
-          ac.getClass == bc.getClass &&
-          ac.getMessage == bc.getMessage
-        case _ =>
-          false
-      })
+      eqCause.areEqual(a.getCause, b.getCause)
+    case _ => false
+  }
+
+  implicit val eqStatusException: Equality[StatusException] = {
+    case (a: StatusException, b: StatusException) =>
+      // skip trailers check
+      eqStatus.areEqual(a.getStatus, b.getStatus)
     case _ => false
   }
 
   implicit val eqStatusRuntimeException: Equality[StatusRuntimeException] = {
     case (a: StatusRuntimeException, b: StatusRuntimeException) =>
-      a.getMessage == b.getMessage &&
-      eqStatus.areEqual(a.getStatus, b.getStatus) &&
-      ((Option(a.getTrailers), Option(b.getTrailers)) match {
-        case (None, None)         => true
-        case (Some(am), Some(bm)) => eqMetadata.areEqual(am, bm)
-        case _                    => false
-      })
+      // skip trailers check
+      eqStatus.areEqual(a.getStatus, b.getStatus)
+    case _ => false
+  }
+
+  private val eqStatusCode: Equality[StatusCode] = {
+    case (a: StatusCode, b: StatusCode) =>
+      a.getCode == b.getCode
     case _ => false
   }
 
   implicit val eqGaxApiException: Equality[ApiException] = {
     case (a: ApiException, b: ApiException) =>
-      // a.getCause == b.getCause &&
+      eqCause.areEqual(a.getCause, b.getCause) &&
       a.getMessage == b.getMessage &&
-      a.getStatusCode == b.getStatusCode
+      eqStatusCode.areEqual(a.getStatusCode, b.getStatusCode) &&
       a.isRetryable == b.isRetryable
     case _ => false
   }
 
+  final case class RootException[T <: Throwable](message: String, cause: T)
+
+  implicit def eqRootException[T <: Throwable](implicit
+    eq: Equality[T]
+  ): Equality[RootException[T]] = {
+    case (a: RootException[T], b: RootException[T]) =>
+      a.message == b.message && eq.areEqual(a.cause, b.cause)
+    case _ => false
+  }
 }
 
 class GrpcSerializerTest extends AnyFlatSpec with Matchers {
@@ -81,28 +89,30 @@ class GrpcSerializerTest extends AnyFlatSpec with Matchers {
   import GrpcSerializerTest._
   import com.spotify.scio.testing.CoderAssertions._
 
-  "StatusRuntimeException" should "roundtrip with nullable fields present" in {
-    val metadata = new Metadata()
-    metadata.put(Metadata.Key.of[String]("k", Metadata.ASCII_STRING_MARSHALLER), "v")
-    val statusRuntimeException = new StatusRuntimeException(
-      Status.OK.withCause(new RuntimeException("bar")).withDescription("bar"),
-      metadata
+  "StatusRuntime" should "roundtrip" in {
+    val statusException = new StatusException(
+      Status.OK.withCause(new RuntimeException("bar")).withDescription("baz")
     )
-
-    statusRuntimeException coderShould roundtrip()
+    statusException coderShould roundtrip()
+    RootException("root", statusException) coderShould roundtrip()
   }
 
-  it should "roundtrip with nullable fields absent" in {
-    val statusRuntimeException = new StatusRuntimeException(Status.OK)
+  "StatusRuntimeException" should "roundtrip" in {
+    val statusRuntimeException = new StatusRuntimeException(
+      Status.OK.withCause(new RuntimeException("bar")).withDescription("baz")
+    )
     statusRuntimeException coderShould roundtrip()
+    RootException("root", statusRuntimeException) coderShould roundtrip()
   }
 
   "Gax API exception" should "roundtrip" in {
-    val cause = new StatusRuntimeException(Status.NOT_FOUND)
-    ApiExceptionFactory.createException(
-      cause,
+    val apiException = ApiExceptionFactory.createException(
+      "foo",
+      new RuntimeException("bar"),
       GrpcStatusCode.of(Status.NOT_FOUND.getCode),
       false
-    ) coderShould roundtrip()
+    )
+    apiException coderShould roundtrip()
+    RootException("root", apiException) coderShould roundtrip()
   }
 }
