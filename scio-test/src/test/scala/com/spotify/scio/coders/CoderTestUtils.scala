@@ -17,10 +17,15 @@
 
 package com.spotify.scio.coders
 
+import com.spotify.scio.ScioContext
 import com.spotify.scio.avro.TestRecord
+import com.spotify.scio.options.ScioOptions
 import org.apache.beam.sdk.coders.{Coder => BCoder}
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.util.CoderUtils
+
+import java.io.{File, FileOutputStream}
+import java.nio.file.Files
 
 object CoderTestUtils {
   case class Pair(name: String, size: Int)
@@ -34,5 +39,28 @@ object CoderTestUtils {
     val bytes = CoderUtils.encodeToByteArray(writer, value)
     val result = CoderUtils.decodeFromByteArray(reader, bytes)
     result == value
+  }
+
+  case class ZstdTestCaseClass(a: Int, b: String, c: Long)
+
+  def writeZstdBytes(bytes: Array[Byte]): File = {
+    val tmp = Files.createTempFile("zstd-test", ".bin").toFile
+    tmp.deleteOnExit()
+    val fos = new FileOutputStream(tmp)
+    try {
+      fos.write(bytes)
+    } finally {
+      fos.close()
+    }
+    tmp
+  }
+
+  def zstdOpts(className: String, path: String): ScioOptions = {
+    val (opts, _) = ScioContext.parseArguments[ScioOptions](
+      Array(
+        s"--zstdDictionary=com.spotify.scio.coders.CoderTestUtils$$${className}:${path}"
+      )
+    )
+    opts
   }
 }

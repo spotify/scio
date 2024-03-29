@@ -68,7 +68,7 @@ object CoderMaterializer {
                         e
                       )
                   }
-                  className -> path
+                  className.replaceAll("\\$", ".") -> path
                 case _ =>
                   throw new IllegalArgumentException(
                     "zstdDictionary arguments must be in a colon-separated format. " +
@@ -192,9 +192,9 @@ object CoderMaterializer {
       .pipe(bc => if (isNullableCoder(o, coder)) NullableCoder.of(bc) else bc)
       .pipe { bc =>
         Option(coder)
-          .collect { case x: TypeName if topLevel => x.typeName }
-          .flatMap(className => o.zstdDictMapping.get(className))
-          .map(dict => ZstdCoder.of(bc, dict))
+          .collect { case x: TypeName => x.typeName }
+          .flatMap(o.zstdDictMapping.get)
+          .map(ZstdCoder.of(bc, _))
           .getOrElse(bc)
       }
       .pipe(bc => if (isWrappableCoder(topLevel, coder)) new MaterializedCoder(bc) else bc)

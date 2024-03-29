@@ -17,9 +17,9 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.coders.{Coder, CoderMaterializer, MaterializedCoder}
+import com.spotify.scio.coders.CoderMaterializer
 
-import java.io.{File, FileOutputStream, PrintWriter}
+import java.io.PrintWriter
 import java.nio.file.{Files, NoSuchFileException}
 import com.spotify.scio.io.TextIO
 import com.spotify.scio.metrics.Metrics
@@ -36,15 +36,14 @@ import org.apache.beam.sdk.transforms.Create
 
 import scala.concurrent.duration.Duration
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
-import org.apache.beam.sdk.coders.ZstdCoder
 import org.apache.beam.sdk.options.Validation.Required
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.UncheckedExecutionException
 
 import scala.jdk.CollectionConverters._
 
-case class ZstdTestCaseClass(a: Int, b: String, c: Double)
-
 class ScioContextTest extends PipelineSpec {
+  import com.spotify.scio.coders.CoderTestUtils._
+
   "ScioContext" should "support pipeline" in {
     val pipeline = ScioContext().pipeline
     val p = pipeline.apply(Create.of(List(1, 2, 3).asJava))
@@ -283,68 +282,32 @@ class ScioContextTest extends PipelineSpec {
     noException shouldBe thrownBy(sc.run())
   }
 
-  def writeZstdBytes(bytes: Array[Byte]): File = {
-    val tmp = Files.createTempFile("zstd-test", ".bin").toFile
-    tmp.deleteOnExit()
-    val fos = new FileOutputStream(tmp)
-    try {
-      fos.write(bytes)
-    } finally {
-      fos.close()
-    }
-    tmp
-  }
-
-  def zstdContext(className: String, path: String): ScioContext = {
-    val args = List(s"com.spotify.scio.${className}:${path}").map { s =>
-      s"--zstdDictionary=$s"
-    }.toArray
-    val (sc, _) = ContextAndArgs(args)
-    sc
-  }
-
-  def zstdOpts(sc: ScioContext): CoderMaterializer.CoderOptions =
-    CoderMaterializer.CoderOptions(sc.optionsAs[ScioOptions])
-
   it should "support zstdDictionary arguments" in {
     val bytes = Array[Byte](7, 6, 5, 4, 3, 2, 1, 0)
     val tmp = writeZstdBytes(bytes)
-    val coderOpts = zstdOpts(
-      zstdContext("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+    val coderOpts = CoderMaterializer.CoderOptions(
+      zstdOpts("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
     )
+
     coderOpts.zstdDictMapping should have size 1
     coderOpts.zstdDictMapping.toList.head._2.toList should equal(bytes.toList)
-  }
-
-  it should "derive zstd coders when configured" in {
-    val bytes = Array[Byte](7, 6, 5, 4, 3, 2, 1, 0)
-    val tmp = writeZstdBytes(bytes)
-    val sc = zstdContext("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
-    val bCoder = CoderMaterializer.beam(sc, implicitly[Coder[ZstdTestCaseClass]])
-    bCoder shouldBe a[MaterializedCoder[_]]
-    bCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldBe a[ZstdCoder[_]]
-  }
-
-  it should "not derive zstd coders when not configured" in {
-    val sc = ScioContext()
-    val bCoder = CoderMaterializer.beam(sc, implicitly[Coder[ZstdTestCaseClass]])
-    bCoder shouldBe a[MaterializedCoder[_]]
-    bCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldNot be(a[ZstdCoder[_]])
   }
 
   it should "error when zstdDictionary arguments contain an invalid class name" in {
     val thrown = the[IllegalArgumentException] thrownBy {
       val bytes = Array[Byte](7, 6, 5, 4, 3, 2, 1, 0)
       val tmp = writeZstdBytes(bytes)
-      zstdOpts(zstdContext("Kellen", s"file://${tmp.getAbsolutePath}"))
+      CoderMaterializer.CoderOptions(zstdOpts("Kellen", s"file://${tmp.getAbsolutePath}"))
     }
-    thrown.getMessage should startWith("Class for zstdDictionary argument com.spotify.scio.Kellen")
+    thrown.getMessage should startWith(
+      "Class for zstdDictionary argument com.spotify.scio.coders.CoderTestUtils$Kellen"
+    )
   }
 
   it should "error when zstdDictionary arguments point to a non-existent remote file" in {
     val path = "gs://dataflow-samples/samples/fake.txt"
     val thrown = the[UncheckedExecutionException] thrownBy {
-      zstdOpts(zstdContext("ZstdTestCaseClass", path))
+      CoderMaterializer.CoderOptions(zstdOpts("ZstdTestCaseClass", path))
     }
     thrown.getCause.getCause should have message s"File spec ${path} not found"
   }
@@ -353,7 +316,9 @@ class ScioContextTest extends PipelineSpec {
     val tmp = Files.createTempFile("zstd-test", ".bin").toFile
     tmp.delete()
     assertThrows[NoSuchFileException] {
-      zstdOpts(zstdContext("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}"))
+      CoderMaterializer.CoderOptions(
+        zstdOpts("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+      )
     }
   }
 
