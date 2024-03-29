@@ -19,6 +19,8 @@ package com.spotify.scio.values
 
 import com.spotify.scio.coders.{BeamCoders, Coder}
 
+import scala.reflect.ClassTag
+
 /**
  * Extra functions available on SCollections of (key, value) pairs for hash based joins through an
  * implicit conversion.
@@ -26,7 +28,7 @@ import com.spotify.scio.coders.{BeamCoders, Coder}
  * @groupname join
  * Join Operations
  */
-class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+class PairHashSCollectionFunctions[K : ClassTag, V](val self: SCollection[(K, V)]) {
 
   // set as private to avoid conflict with PairSCollectionFunctions keyCoder/valueCoder
   implicit private lazy val keyCoder: Coder[K] = BeamCoders.getKeyCoder(self)
@@ -38,7 +40,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group join
    */
-  def hashJoin[W](
+  def hashJoin[W : ClassTag](
     rhs: SCollection[(K, W)]
   ): SCollection[(K, (V, W))] = {
     implicit val wCoder = rhs.valueCoder
@@ -85,7 +87,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param rhs
    *   The tiny SCollection[(K, W)] treated as right side of the join.
    */
-  def hashLeftOuterJoin[W](
+  def hashLeftOuterJoin[W : ClassTag](
     rhs: SCollection[(K, W)]
   ): SCollection[(K, (V, Option[W]))] = {
     implicit val wCoder: Coder[W] = BeamCoders.getValueCoder(rhs)
@@ -121,7 +123,7 @@ class PairHashSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group join
    */
-  def hashFullOuterJoin[W](
+  def hashFullOuterJoin[W : ClassTag](
     rhs: SCollection[(K, W)]
   ): SCollection[(K, (Option[V], Option[W]))] = {
     implicit val wCoder: Coder[W] = BeamCoders.getValueCoder(rhs)

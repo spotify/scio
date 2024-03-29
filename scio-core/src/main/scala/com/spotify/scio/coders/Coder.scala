@@ -36,7 +36,7 @@ Cannot find an implicit Coder instance for type:
 
   Here are some hints:
     - For collections, ensure that a Coder instance is in scope for the element type.
-    - For module specific types, you may need to explicitly import the coders, eg avro:
+    - For module specific types, you may need to explicitly import the coders, e.g. avro:
         import com.spotify.scio.avro._
     - For sealed traits and case classes, you can identify the missing member's coder:
         scala> com.spotify.scio.coders.Coder.gen[Foo]

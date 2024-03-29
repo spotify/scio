@@ -39,6 +39,7 @@ import org.apache.beam.sdk.transforms.{
 
 import scala.jdk.CollectionConverters._
 import scala.collection.compat._
+import scala.reflect.ClassTag
 
 private[scio] object Functions {
   private[this] val BufferSize = 20
@@ -80,7 +81,9 @@ private[scio] object Functions {
     }
   }
 
-  abstract private class CombineFn[VI, VA, VO] extends BCombineFn[VI, VA, VO] with NamedFn {
+  abstract private class CombineFn[VI, VA: ClassTag, VO: ClassTag]
+      extends BCombineFn[VI, VA, VO]
+      with NamedFn {
     val vacoder: Coder[VA]
     val vocoder: Coder[VO]
 
@@ -105,7 +108,7 @@ private[scio] object Functions {
     }
   }
 
-  def aggregateFn[T: Coder, U: Coder](
+  def aggregateFn[T: Coder, U: Coder: ClassTag](
     sc: ScioContext,
     zeroValue: => U
   )(seqOp: (U, T) => U, combOp: (U, U) => U): BCombineFn[T, (U, JList[T]), U] =
@@ -146,7 +149,7 @@ private[scio] object Functions {
       override def defaultValue(): U = zeroValue
     }
 
-  def combineFn[T: Coder, C: Coder](
+  def combineFn[T: Coder, C: Coder: ClassTag](
     sc: ScioContext,
     createCombiner: T => C,
     mergeValue: (C, T) => C,
@@ -284,7 +287,7 @@ private[scio] object Functions {
       override def partitionFor(elem: T, numPartitions: Int): Int = g(elem)
     }
 
-  abstract private class ReduceFn[T] extends CombineFn[T, JList[T], T] {
+  abstract private class ReduceFn[T: ClassTag] extends CombineFn[T, JList[T], T] {
     override def createAccumulator(): JList[T] = new JArrayList[T]()
 
     override def addInput(accumulator: JList[T], input: T): JList[T] = {
@@ -321,7 +324,7 @@ private[scio] object Functions {
     def reduceOption(accumulator: JIterable[T]): Option[T]
   }
 
-  def reduceFn[T: Coder](sc: ScioContext, f: (T, T) => T): BCombineFn[T, JList[T], T] =
+  def reduceFn[T: Coder: ClassTag](sc: ScioContext, f: (T, T) => T): BCombineFn[T, JList[T], T] =
     new ReduceFn[T] {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]
@@ -332,7 +335,7 @@ private[scio] object Functions {
         Fns.reduceOption(accumulator)(g)
     }
 
-  def reduceFn[T: Coder](sc: ScioContext, sg: Semigroup[T]): BCombineFn[T, JList[T], T] =
+  def reduceFn[T: Coder: ClassTag](sc: ScioContext, sg: Semigroup[T]): BCombineFn[T, JList[T], T] =
     new ReduceFn[T] {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]
@@ -356,7 +359,7 @@ private[scio] object Functions {
         Fns.reduceOption(accumulator)(_sg.plus(_, _))
     }
 
-  def reduceFn[T: Coder](sc: ScioContext, mon: Monoid[T]): BCombineFn[T, JList[T], T] =
+  def reduceFn[T: Coder: ClassTag](sc: ScioContext, mon: Monoid[T]): BCombineFn[T, JList[T], T] =
     new ReduceFn[T] {
       val vacoder = Coder[JList[T]]
       val vocoder = Coder[T]

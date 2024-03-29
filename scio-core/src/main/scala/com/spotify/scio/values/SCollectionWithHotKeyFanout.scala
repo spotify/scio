@@ -25,11 +25,13 @@ import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
 
+import scala.reflect.ClassTag
+
 /**
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
  * performing the full combine.
  */
-class SCollectionWithHotKeyFanout[K, V] private[values] (
+class SCollectionWithHotKeyFanout[K: ClassTag, V: ClassTag] private[values] (
   private val self: PairSCollectionFunctions[K, V],
   private val hotKeyFanout: Either[K => Int, Int]
 ) extends TransformNameable {
@@ -60,7 +62,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
    * [[PairSCollectionFunctions.aggregateByKey[U]* PairSCollectionFunctions.aggregateByKey]] with
    * hot key fanout.
    */
-  def aggregateByKey[U: Coder](
+  def aggregateByKey[U: Coder: ClassTag](
     zeroValue: U
   )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] = {
     val cmb = Combine.perKey[K, V, U](Functions.aggregateFn(context, zeroValue)(seqOp, combOp))
@@ -71,7 +73,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
    * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]] with
    * hot key fanout.
    */
-  def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
+  def aggregateByKey[A: Coder: ClassTag, U: Coder: ClassTag](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
     self.self.transform { in =>
       val a = aggregator // defeat closure
       new SCollectionWithHotKeyFanout(in.mapValues(a.prepare), hotKeyFanout)
@@ -83,7 +85,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
    * [[PairSCollectionFunctions.aggregateByKey[A,U]* PairSCollectionFunctions.aggregateByKey]] with
    * hot key fanout.
    */
-  def aggregateByKey[A: Coder, U: Coder](
+  def aggregateByKey[A: Coder: ClassTag, U: Coder: ClassTag](
     aggregator: MonoidAggregator[V, A, U]
   ): SCollection[(K, U)] = {
     self.self.transform { in =>
@@ -95,7 +97,7 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   }
 
   /** [[PairSCollectionFunctions.combineByKey]] with hot key fanout. */
-  def combineByKey[C: Coder](
+  def combineByKey[C: Coder: ClassTag](
     createCombiner: V => C
   )(mergeValue: (C, V) => C)(mergeCombiners: (C, C) => C): SCollection[(K, C)] = {
     SCollection.logger.warn(

@@ -19,6 +19,8 @@ package com.spotify.scio
 
 import com.spotify.scio.values.{SCollection, SideInput}
 
+import scala.reflect.ClassTag
+
 /**
  * Main package for hash APIs. Import all.
  *
@@ -27,7 +29,7 @@ import com.spotify.scio.values.{SCollection, SideInput}
  * }}}
  */
 package object hash {
-  implicit class ApproxFilterIterable[T](private val self: Iterable[T]) extends AnyVal {
+  implicit class ApproxFilterIterable[T : ClassTag](private val self: Iterable[T]) {
 
     /**
      * Creates an [[ApproxFilter]] from this [[Iterable]] with the collection size as
@@ -73,7 +75,7 @@ package object hash {
       c.create(self, expectedInsertions, fpp)
   }
 
-  implicit class ApproxFilterSCollection[T](private val self: SCollection[T]) extends AnyVal {
+  implicit class ApproxFilterSCollection[T : ClassTag](private val self: SCollection[T]) {
 
     /**
      * Creates an [[ApproxFilter]] from this [[SCollection]] with the collection size as

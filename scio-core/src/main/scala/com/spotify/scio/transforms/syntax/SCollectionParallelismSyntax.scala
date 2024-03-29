@@ -18,12 +18,9 @@ package com.spotify.scio.transforms.syntax
 
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.transforms.{
-  ParallelCollectFn,
-  ParallelFilterFn,
-  ParallelFlatMapFn,
-  ParallelMapFn
-}
+import com.spotify.scio.transforms.{ParallelCollectFn, ParallelFilterFn, ParallelFlatMapFn, ParallelMapFn}
+
+import scala.reflect.ClassTag
 
 trait SCollectionParallelismSyntax {
 
@@ -40,7 +37,7 @@ trait SCollectionParallelismSyntax {
      * worker.
      * @group transform
      */
-    def flatMapWithParallelism[U: Coder](
+    def flatMapWithParallelism[U: Coder: ClassTag](
       parallelism: Int
     )(fn: T => TraversableOnce[U]): SCollection[U] =
       self.parDo(new ParallelFlatMapFn(parallelism)(fn))
@@ -53,14 +50,14 @@ trait SCollectionParallelismSyntax {
     def filterWithParallelism(
       parallelism: Int
     )(fn: T => Boolean): SCollection[T] =
-      self.parDo(new ParallelFilterFn(parallelism)(fn))(self.coder)
+      self.parDo(new ParallelFilterFn(parallelism)(fn))(self.coder, self.tClassTag)
 
     /**
      * Return a new SCollection by applying a function to all elements of this SCollection.
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def mapWithParallelism[U: Coder](parallelism: Int)(fn: T => U): SCollection[U] =
+    def mapWithParallelism[U: Coder: ClassTag](parallelism: Int)(fn: T => U): SCollection[U] =
       self.parDo(new ParallelMapFn(parallelism)(fn))
 
     /**
@@ -68,7 +65,7 @@ trait SCollectionParallelismSyntax {
      * `parallelism` is the number of concurrent `DoFn`s per worker.
      * @group transform
      */
-    def collectWithParallelism[U: Coder](
+    def collectWithParallelism[U: Coder: ClassTag](
       parallelism: Int
     )(pfn: PartialFunction[T, U]): SCollection[U] =
       self.parDo(new ParallelCollectFn(parallelism)(pfn))

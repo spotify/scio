@@ -22,6 +22,8 @@ import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.{SCollection, SideInput}
 import org.slf4j.LoggerFactory
 
+import scala.reflect.ClassTag
+
 /**
  * An approximate filter for instances of `T`, e.g. a Bloom filter. A Bloom filter offers an
  * approximate containment test with one-sided error: if it claims that an element is contained in
@@ -100,7 +102,7 @@ sealed trait ApproxFilterCompanion {
    */
   // Empirically (see [[com.twitter.algebird.BF.contains]])
   // `expectedInsertions` to number of unique elements ratio should be 1.1
-  final def create[T: Hash](elems: Iterable[T]): Filter[T] =
+  final def create[T: Hash : ClassTag](elems: Iterable[T]): Filter[T] =
     create(elems, elems.size.toLong)
 
   /**
@@ -110,7 +112,7 @@ sealed trait ApproxFilterCompanion {
    * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
    * result in its saturation, and a sharp deterioration of its false positive probability.
    */
-  final def create[T: Hash](elems: Iterable[T], expectedInsertions: Long): Filter[T] =
+  final def create[T: Hash : ClassTag](elems: Iterable[T], expectedInsertions: Long): Filter[T] =
     create(elems, expectedInsertions, 0.03)
 
   /**
@@ -120,7 +122,7 @@ sealed trait ApproxFilterCompanion {
    * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
    * result in its saturation, and a sharp deterioration of its false positive probability.
    */
-  final def create[T: Hash](
+  final def create[T: Hash : ClassTag](
     elems: Iterable[T],
     expectedInsertions: Long,
     fpp: Double
@@ -139,7 +141,7 @@ sealed trait ApproxFilterCompanion {
     filter
   }
 
-  protected def createImpl[T: Hash](
+  protected def createImpl[T: Hash : ClassTag](
     elems: Iterable[T],
     expectedInsertions: Long,
     fpp: Double
@@ -155,7 +157,9 @@ sealed trait ApproxFilterCompanion {
    * Note that [[Hash]] should be supplied at compile time and not serialized since it might not
    * have deterministic serialization.
    */
-  implicit def filterCoder[T: Hash]: Coder[Filter[T]]
+  implicit def filterCoder[T: Hash : ClassTag]: Coder[Filter[T]]
+
+  implicit def filterClassTag[T : ClassTag]: ClassTag[Filter[T]]
 
   /**
    * Creates an [[ApproxFilter]] from an [[SCollection]] with the collection size as
@@ -164,7 +168,7 @@ sealed trait ApproxFilterCompanion {
    * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
    * result in its saturation, and a sharp deterioration of its false positive probability.
    */
-  final def create[T: Hash](elems: SCollection[T]): SCollection[Filter[T]] =
+  final def create[T: Hash: ClassTag](elems: SCollection[T]): SCollection[Filter[T]] =
     // size is unknown, count after groupBy
     create(elems, 0)
 
@@ -175,7 +179,7 @@ sealed trait ApproxFilterCompanion {
    * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
    * result in its saturation, and a sharp deterioration of its false positive probability.
    */
-  final def create[T: Hash](
+  final def create[T: Hash: ClassTag](
     elems: SCollection[T],
     expectedInsertions: Long
   ): SCollection[Filter[T]] =
@@ -188,7 +192,7 @@ sealed trait ApproxFilterCompanion {
    * Note that overflowing an [[ApproxFilter]] with significantly more elements than specified, will
    * result in its saturation, and a sharp deterioration of its false positive probability.
    */
-  final def create[T: Hash](
+  final def create[T: Hash: ClassTag](
     elems: SCollection[T],
     expectedInsertions: Long,
     fpp: Double
@@ -214,7 +218,7 @@ sealed trait ApproxFilterCompanion {
    * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
    * Dataflow.
    */
-  final def createSideInput[T: Hash](
+  final def createSideInput[T: Hash: ClassTag](
     elems: SCollection[T]
   ): SideInput[Filter[T]] =
     create(elems, 0)
@@ -237,7 +241,7 @@ sealed trait ApproxFilterCompanion {
    * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
    * Dataflow.
    */
-  final def createSideInput[T: Hash](
+  final def createSideInput[T: Hash : ClassTag](
     elems: SCollection[T],
     expectedInsertions: Long
   ): SideInput[Filter[T]] =
@@ -259,7 +263,7 @@ sealed trait ApproxFilterCompanion {
    * This implies that `expectedInsertions` should not exceed 112 Million with a fp of 0.03 on
    * Dataflow.
    */
-  final def createSideInput[T: Hash](
+  final def createSideInput[T: Hash: ClassTag](
     elems: SCollection[T],
     expectedInsertions: Long,
     fpp: Double
@@ -267,7 +271,7 @@ sealed trait ApproxFilterCompanion {
     create(elems, expectedInsertions, fpp)
       .asSingletonSideInput(defaultValue = create(elems = Nil, expectedInsertions = 1L, fpp = fpp))
 
-  final private[scio] def createPartitionedSideInputs[T: Hash](
+  final private[scio] def createPartitionedSideInputs[T: Hash : ClassTag](
     elems: SCollection[T],
     expectedInsertions: Long,
     fpp: Double
@@ -330,10 +334,14 @@ object BloomFilter extends ApproxFilterCompanion {
     PartitionSettings(partitions, capacity, numBits(capacity, fpp) / 8)
   }
 
-  implicit override def filterCoder[T: Hash]: Coder[Filter[T]] =
+  implicit override def filterCoder[T: Hash : ClassTag]: Coder[Filter[T]] =
     Coder.xmap(Coder[g.BloomFilter[T]])(a => new BloomFilter[T](a), b => b.impl)
 
-  override protected def createImpl[T: Hash](
+  implicit override def filterClassTag[T: ClassTag]: ClassTag[BloomFilter[T]] = {
+    implicitly[ClassTag[BloomFilter[T]]]
+  }
+
+  override protected def createImpl[T: Hash : ClassTag](
     elems: Iterable[T],
     expectedInsertions: Long,
     fpp: Double

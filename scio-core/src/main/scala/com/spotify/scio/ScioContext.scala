@@ -524,7 +524,7 @@ class ScioContext private[scio] (
   private var _onClose: Unit => Unit = identity
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
-  def wrap[T](p: PCollection[T]): SCollection[T] =
+  def wrap[T : ClassTag](p: PCollection[T]): SCollection[T] =
     new SCollectionImpl[T](p, this)
 
   /** Add callbacks calls when the context is closed. */
@@ -685,26 +685,26 @@ class ScioContext private[scio] (
   ): Output =
     applyInternal(Option(name), root)
 
-  private[scio] def applyTransform[U](
+  private[scio] def applyTransform[U : ClassTag](
     name: Option[String],
     root: PTransform[_ >: PBegin, PCollection[U]]
   ): SCollection[U] =
     wrap(applyInternal(name, root))
 
-  private[scio] def applyTransform[U](
+  private[scio] def applyTransform[U: ClassTag](
     root: PTransform[_ >: PBegin, PCollection[U]]
   ): SCollection[U] =
     applyTransform(None, root)
 
-  private[scio] def applyTransform[U](
+  private[scio] def applyTransform[U: ClassTag](
     name: String,
     root: PTransform[_ >: PBegin, PCollection[U]]
   ): SCollection[U] =
     applyTransform(Option(name), root)
 
-  def transform[U](f: ScioContext => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
+  def transform[U: ClassTag](f: ScioContext => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
 
-  def transform[U](name: String)(f: ScioContext => SCollection[U]): SCollection[U] =
+  def transform[U : ClassTag](name: String)(f: ScioContext => SCollection[U]): SCollection[U] =
     wrap(transform_(name)(f(_).internal))
 
   private[scio] def transform_[U <: POutput](f: ScioContext => U): U =
@@ -752,7 +752,7 @@ class ScioContext private[scio] (
    * Get an SCollection with a custom input transform. The transform should have a unique name.
    * @group input
    */
-  def customInput[T, I >: PBegin <: PInput](
+  def customInput[T: ClassTag, I >: PBegin <: PInput](
     name: String,
     transform: PTransform[I, PCollection[T]]
   ): SCollection[T] =
@@ -786,7 +786,7 @@ class ScioContext private[scio] (
 
   /** Create a union of multiple SCollections. Supports empty lists. */
   // `T: Coder` context bound is required since `scs` might be empty.
-  def unionAll[T: Coder](scs: => Iterable[SCollection[T]]): SCollection[T] = {
+  def unionAll[T: Coder: ClassTag](scs: => Iterable[SCollection[T]]): SCollection[T] = {
     val tfName = this.tfName // evaluate eagerly to avoid overriding `scs` names
     scs match {
       case Nil => empty()
@@ -800,13 +800,13 @@ class ScioContext private[scio] (
   }
 
   /** Form an empty SCollection. */
-  def empty[T: Coder](): SCollection[T] = parallelize(Nil)
+  def empty[T: Coder: ClassTag](): SCollection[T] = parallelize(Nil)
 
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.
    * @group in_memory
    */
-  def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] =
+  def parallelize[T: Coder: ClassTag](elems: Iterable[T]): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       this.applyTransform(Create.of(elems.asJava).withCoder(coder))
@@ -830,7 +830,7 @@ class ScioContext private[scio] (
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: Coder](elems: Iterable[(T, Instant)]): SCollection[T] =
+  def parallelizeTimestamped[T: Coder: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.map(t => TimestampedValue.of(t._1, t._2))
@@ -841,7 +841,7 @@ class ScioContext private[scio] (
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: Coder](
+  def parallelizeTimestamped[T: Coder: ClassTag](
     elems: Iterable[T],
     timestamps: Iterable[Instant]
   ): SCollection[T] =

@@ -26,6 +26,7 @@ import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
 import java.io.{EOFException, InputStream}
+import scala.reflect.ClassTag
 
 /**
  * Placeholder to an external data set that can either be load into memory as an iterator or opened
@@ -43,7 +44,7 @@ trait Tap[T] extends Serializable { self =>
   def open(sc: ScioContext): SCollection[T]
 
   /** Map items from `T` to `U`. */
-  def map[U: Coder](f: T => U): Tap[U] = new Tap[U] {
+  def map[U: Coder: ClassTag](f: T => U): Tap[U] = new Tap[U] {
 
     /** Parent of this Tap before [[map]]. */
     override val parent: Option[Tap[_]] = Option(self)
@@ -55,7 +56,7 @@ trait Tap[T] extends Serializable { self =>
     override def open(sc: ScioContext): SCollection[U] = self.open(sc).map(f)
   }
 
-  def flatMap[U: Coder](f: T => TraversableOnce[U]): Tap[U] = new Tap[U] {
+  def flatMap[U: Coder: ClassTag](f: T => TraversableOnce[U]): Tap[U] = new Tap[U] {
 
     /** Parent of this Tap before [[flatMap]]. */
     override val parent: Option[Tap[_]] = Option(self)
@@ -88,15 +89,17 @@ final case class TextTap(path: String, params: TextIO.ReadParam) extends Tap[Str
     sc.read(TextIO(path))(params)
 }
 
-final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
+final private[scio] class InMemoryTap[T: Coder: ClassTag] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
   override def value: Iterator[T] = InMemorySink.get(id).iterator
   override def open(sc: ScioContext): SCollection[T] =
     sc.parallelize[T](InMemorySink.get(id))
 }
 
-final private[scio] class MaterializeTap[T: Coder] private (path: String, coder: BCoder[T])
-    extends Tap[T] {
+final private[scio] class MaterializeTap[T: Coder: ClassTag] private (
+  path: String,
+  coder: BCoder[T]
+) extends Tap[T] {
 
   override def value: Iterator[T] = {
     val storage = FileStorage(path, BinaryIO.ReadParam.DefaultSuffix)
@@ -139,7 +142,7 @@ final private[scio] class MaterializeTap[T: Coder] private (path: String, coder:
 }
 
 object MaterializeTap {
-  def apply[T: Coder](path: String, context: ScioContext): MaterializeTap[T] =
+  def apply[T: Coder: ClassTag](path: String, context: ScioContext): MaterializeTap[T] =
     new MaterializeTap(path, CoderMaterializer.beam(context, Coder[T]))
 
   case object MaterializeReader extends BinaryIO.BinaryFileReader {

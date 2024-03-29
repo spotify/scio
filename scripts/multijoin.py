@@ -31,7 +31,7 @@ def mkArgs(n):
 
 
 def mkClassTags(n):
-    return ', '.join(['KEY'] + mkVals(n))
+    return ', '.join(['KEY'] + ["%s: ClassTag" % x for x in mkVals(n)])
 
 
 def mkFnArgs(n):
@@ -191,6 +191,7 @@ def main(out):
         import org.apache.beam.sdk.values.TupleTag
 
         import scala.jdk.CollectionConverters._
+        import scala.reflect.ClassTag
 
         trait MultiJoin extends Serializable {
 

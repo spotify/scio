@@ -17,8 +17,14 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.util.RemoteFileUtil
-import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder, KvCoder, NullableCoder}
+import com.spotify.scio.util.{RemoteFileUtil, ScioUtil}
+import org.apache.beam.sdk.coders.{
+  Coder => BCoder,
+  IterableCoder,
+  KvCoder,
+  NullableCoder,
+  ZstdCoder
+}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 import java.net.URI
@@ -26,6 +32,7 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.concurrent.TrieMap
 import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 import scala.util.chaining._
 
 object CoderMaterializer {
@@ -53,6 +60,7 @@ object CoderMaterializer {
               s.split(":", 2).toList match {
                 case className :: path :: Nil =>
                   try {
+                    // TODO blacklist certain classes?
                     Class.forName(className) -> path
                   } catch {
                     case e: ClassNotFoundException =>
@@ -97,15 +105,15 @@ object CoderMaterializer {
     }
   }
 
-  final def beam[T](sc: ScioContext, c: Coder[T]): BCoder[T] =
+  final def beam[T: ClassTag](sc: ScioContext, c: Coder[T]): BCoder[T] =
     beam(sc.options, c)
 
-  final def beamWithDefault[T](
+  final def beamWithDefault[T: ClassTag](
     coder: Coder[T],
     o: PipelineOptions = PipelineOptionsFactory.create()
   ): BCoder[T] = beam(o, coder)
 
-  final def beam[T](
+  final def beam[T: ClassTag](
     o: PipelineOptions,
     coder: Coder[T]
   ): BCoder[T] = beamImpl(CoderOptions(o), coder, refs = TrieMap.empty, topLevel = true)
@@ -127,7 +135,7 @@ object CoderMaterializer {
     case _                    => topLevel
   }
 
-  final private[scio] def beamImpl[T](
+  final private[scio] def beamImpl[T: ClassTag](
     o: CoderOptions,
     coder: Coder[T],
     refs: TrieMap[Ref[_], RefCoder[_]],
@@ -183,5 +191,11 @@ object CoderMaterializer {
     bCoder
       .pipe(bc => if (isNullableCoder(o, coder)) NullableCoder.of(bc) else bc)
       .pipe(bc => if (isWrappableCoder(topLevel, coder)) new MaterializedCoder(bc) else bc)
+      .pipe { bc =>
+        o.zstdDictMapping
+          .get(ScioUtil.classOf[T])
+          .map(dict => ZstdCoder.of(bc, dict))
+          .getOrElse(bc)
+      }
   }
 }

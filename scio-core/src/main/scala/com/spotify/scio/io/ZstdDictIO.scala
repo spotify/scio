@@ -7,9 +7,10 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.util.CoderUtils
 import org.slf4j.LoggerFactory
 
+import scala.reflect.ClassTag
 import scala.util.{Random, Try}
 
-case class ZstdDictIO[T](path: String) extends ScioIO[T] {
+case class ZstdDictIO[T: ClassTag](path: String) extends ScioIO[T] {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   override type ReadP = Nothing // WriteOnly

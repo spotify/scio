@@ -19,12 +19,9 @@ package com.spotify.scio.transforms.syntax
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.transforms.{
-  CollectFnWithResource,
-  FilterFnWithResource,
-  FlatMapFnWithResource,
-  MapFnWithResource
-}
+import com.spotify.scio.transforms.{CollectFnWithResource, FilterFnWithResource, FlatMapFnWithResource, MapFnWithResource}
+
+import scala.reflect.ClassTag
 
 trait SCollectionWithResourceSyntax {
 
@@ -34,7 +31,7 @@ trait SCollectionWithResourceSyntax {
      * Return a new [[SCollection]] by applying a function that also takes in a resource and
      * `ResourceType` to all elements of this SCollection.
      */
-    def mapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    def mapWithResource[R, U: Coder: ClassTag](resource: => R, resourceType: ResourceType)(
       fn: (R, T) => U
     ): SCollection[U] =
       self.parDo(new MapFnWithResource(resource, resourceType, fn))
@@ -43,7 +40,7 @@ trait SCollectionWithResourceSyntax {
      * Filter the elements for which the given `PartialFunction` that also takes in a resource and
      * `ResourceType` is defined, and then map.
      */
-    def collectWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    def collectWithResource[R, U: Coder: ClassTag](resource: => R, resourceType: ResourceType)(
       pfn: PartialFunction[(R, T), U]
     ): SCollection[U] =
       self.parDo(new CollectFnWithResource(resource, resourceType, pfn))
@@ -52,7 +49,7 @@ trait SCollectionWithResourceSyntax {
      * Return a new [[SCollection]] by first applying a function that also takes in a resource and
      * `ResourceType` to all elements of this SCollection, and then flattening the results.
      */
-    def flatMapWithResource[R, U: Coder](resource: => R, resourceType: ResourceType)(
+    def flatMapWithResource[R, U: Coder: ClassTag](resource: => R, resourceType: ResourceType)(
       fn: (R, T) => TraversableOnce[U]
     ): SCollection[U] =
       self.parDo(new FlatMapFnWithResource(resource, resourceType, fn))
@@ -64,7 +61,7 @@ trait SCollectionWithResourceSyntax {
     def filterWithResource[R](resource: => R, resourceType: ResourceType)(
       fn: (R, T) => Boolean
     ): SCollection[T] =
-      self.parDo(new FilterFnWithResource(resource, resourceType, fn))(self.coder)
+      self.parDo(new FilterFnWithResource(resource, resourceType, fn))(self.coder, self.tClassTag)
 
   }
 }

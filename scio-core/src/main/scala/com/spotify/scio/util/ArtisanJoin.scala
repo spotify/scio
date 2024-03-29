@@ -30,11 +30,12 @@ import org.apache.beam.sdk.values.{KV, TupleTag}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 
 private[scio] object ArtisanJoin {
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  private def cogroupImpl[KEY, A, B, A1: Coder, B1: Coder](
+  private def cogroupImpl[KEY: ClassTag, A: ClassTag, B: ClassTag, A1: Coder, B1: Coder](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
@@ -93,7 +94,7 @@ private[scio] object ArtisanJoin {
       .withState(_.copy(postGbkOp = true))
   }
 
-  private def joinImpl[KEY, A, B, A1: Coder, B1: Coder](
+  private def joinImpl[KEY: ClassTag, A: ClassTag, B: ClassTag, A1: Coder, B1: Coder](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
@@ -113,48 +114,51 @@ private[scio] object ArtisanJoin {
       }
     }.withState(_.copy(postGbkOp = true))
 
-  def cogroup[KEY, A, B](
+  def cogroup[KEY: ClassTag, A: ClassTag, B: ClassTag](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Iterable[A], Iterable[B]))] =
     cogroupImpl[KEY, A, B, Iterable[A], Iterable[B]](name, a, b) { case (key, a, b, out) =>
       out.output((key, (a.asScala, b.asScala)))
-    }(Coder.iterableCoder(a.valueCoder), Coder.iterableCoder(b.valueCoder))
+    }(implicitly, implicitly, implicitly, Coder.iterableCoder(a.valueCoder), Coder.iterableCoder(b.valueCoder))
 
-  def apply[KEY, A, B](
+  def apply[KEY: ClassTag, A: ClassTag, B: ClassTag](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (A, B))] =
-    joinImpl(name, a, b)(identity, identity)(a.valueCoder, b.valueCoder)
+    joinImpl(name, a, b)(identity, identity)(implicitly, implicitly, implicitly, a.valueCoder, b.valueCoder)
 
-  def left[KEY, A, B](
+  def left[KEY: ClassTag, A: ClassTag, B: ClassTag](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (A, Option[B]))] =
     joinImpl(name, a, b)(identity, toOptions)(
+      implicitly, implicitly, implicitly,
       a.valueCoder,
       Coder.optionCoder(b.valueCoder)
     )
 
-  def right[KEY, A, B](
+  def right[KEY: ClassTag, A: ClassTag, B: ClassTag](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Option[A], B))] =
     joinImpl(name, a, b)(toOptions, identity)(
+      implicitly, implicitly, implicitly,
       Coder.optionCoder(a.valueCoder),
       b.valueCoder
     )
 
-  def outer[KEY, A, B](
+  def outer[KEY: ClassTag, A: ClassTag, B: ClassTag](
     name: String,
     a: SCollection[(KEY, A)],
     b: SCollection[(KEY, B)]
   ): SCollection[(KEY, (Option[A], Option[B]))] =
     joinImpl(name, a, b)(toOptions, toOptions)(
+      implicitly, implicitly, implicitly,
       Coder.optionCoder(a.valueCoder),
       Coder.optionCoder(b.valueCoder)
     )

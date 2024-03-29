@@ -20,6 +20,8 @@ package com.spotify.scio.values
 import com.spotify.scio.coders.Coder
 import com.twitter.algebird.{CMS, CMSAggregator, CMSHasher, TopCMS, TopCMSAggregator}
 
+import scala.reflect.ClassTag
+
 final private case class Partitions[K, V](hot: SCollection[(K, V)], chill: SCollection[(K, V)])
 
 /** Method to compute the hot keys in a SCollection */
@@ -83,7 +85,7 @@ object SkewedJoins {
   private[scio] def union[T](hot: SCollection[T], chill: SCollection[T]): SCollection[T] =
     hot.withName("Union hot and chill join results").union(chill)
 
-  private[scio] def join[K, V, W](
+  private[scio] def join[K: ClassTag, V: ClassTag, W: ClassTag](
     lhs: Partitions[K, V],
     rhs: Partitions[K, W]
   ): SCollection[(K, (V, W))] = {
@@ -100,7 +102,7 @@ object SkewedJoins {
     union(hotJoined, chillJoined)
   }
 
-  private[scio] def leftOuterJoin[K, V, W](
+  private[scio] def leftOuterJoin[K: ClassTag, V: ClassTag, W: ClassTag](
     lhs: Partitions[K, V],
     rhs: Partitions[K, W]
   ): SCollection[(K, (V, Option[W]))] = {
@@ -117,7 +119,7 @@ object SkewedJoins {
     union(hotJoined, chillJoined)
   }
 
-  private[scio] def fullOuterJoin[K, V, W](
+  private[scio] def fullOuterJoin[K: ClassTag, V: ClassTag, W: ClassTag](
     lhs: Partitions[K, V],
     rhs: Partitions[K, W]
   ): SCollection[(K, (Option[V], Option[W]))] = {
@@ -148,7 +150,7 @@ object SkewedJoins {
  * @groupname transform
  * Transformations
  */
-class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+class PairSkewedSCollectionFunctions[K: ClassTag, V: ClassTag](val self: SCollection[(K, V)]) {
 
   /**
    * N to 1 skew-proof flavor of [[PairSCollectionFunctions.join]].
@@ -183,7 +185,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
-  def skewedJoin[W](
+  def skewedJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod = SkewedJoins.DefaultHotKeyMethod,
     hotKeyFanout: Int = SkewedJoins.DefaultHotKeyFanout,
@@ -242,7 +244,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param cms
    *   left hand side key [[com.twitter.algebird.CMS]]
    */
-  def skewedJoin[W](
+  def skewedJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
@@ -278,7 +280,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param cms
    *   left hand side key [[com.twitter.algebird.TopCMS]]
    */
-  def skewedJoin[W](
+  def skewedJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     cms: SCollection[TopCMS[K]]
   ): SCollection[(K, (V, W))] = self.transform { me =>
@@ -328,7 +330,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
-  def skewedLeftOuterJoin[W](
+  def skewedLeftOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod = SkewedJoins.DefaultHotKeyMethod,
     hotKeyFanout: Int = SkewedJoins.DefaultHotKeyFanout,
@@ -387,7 +389,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param cms
    *   left hand side key [[com.twitter.algebird.CMS]]
    */
-  def skewedLeftOuterJoin[W](
+  def skewedLeftOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
@@ -423,7 +425,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param cms
    *   left hand side key [[com.twitter.algebird.TopCMS]]
    */
-  def skewedLeftOuterJoin[W](
+  def skewedLeftOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     cms: SCollection[TopCMS[K]]
   ): SCollection[(K, (V, Option[W]))] = self.transform { lhs =>
@@ -471,7 +473,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   whether to use sampling with replacement, see
    *   [[SCollection.sample(withReplacement:Boolean,fraction:Double)* SCollection.sample]].
    */
-  def skewedFullOuterJoin[W](
+  def skewedFullOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     hotKeyMethod: HotKeyMethod = SkewedJoins.DefaultHotKeyMethod,
     hotKeyFanout: Int = SkewedJoins.DefaultHotKeyFanout,
@@ -531,7 +533,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param cms
    *   left hand side key [[com.twitter.algebird.CMSMonoid]]
    */
-  def skewedFullOuterJoin[W](
+  def skewedFullOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     hotKeyThreshold: Long,
     cms: SCollection[CMS[K]]
@@ -567,7 +569,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @param cms
    *   left hand side key [[com.twitter.algebird.TopCMS]]
    */
-  def skewedFullOuterJoin[W](
+  def skewedFullOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     cms: SCollection[TopCMS[K]]
   ): SCollection[(K, (Option[V], Option[W]))] = self.transform { lhs =>
@@ -577,7 +579,7 @@ class PairSkewedSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 }
 
 private object LargeLeftSide {
-  def sampleKeys[K, V](
+  def sampleKeys[K: ClassTag, V: ClassTag](
     coll: SCollection[(K, V)],
     fraction: Double,
     withReplacement: Boolean
@@ -611,7 +613,7 @@ private object CMSOperations {
   ): SCollection[TopCMS[K]] =
     keys.withName("Compute CMS of LHS keys").withFanout(fanout).aggregate(aggregator)
 
-  def partition[K, V, W](
+  def partition[K, V: ClassTag, W: ClassTag](
     lhs: SCollection[(K, V)],
     rhs: SCollection[(K, W)],
     hotKeyCms: SCollection[CMS[K]],
@@ -648,7 +650,7 @@ private object CMSOperations {
     (lhsPartitions, rhsPartitions)
   }
 
-  def partition[K, V, W](
+  def partition[K, V: ClassTag, W: ClassTag](
     lhs: SCollection[(K, V)],
     rhs: SCollection[(K, W)],
     hotKeyCms: SCollection[TopCMS[K]]

@@ -18,12 +18,13 @@ package com.spotify.scio.transforms.syntax
 
 import java.nio.file.Path
 import java.net.URI
-
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.transforms.FileDownloadDoFn
 import com.spotify.scio.util._
 import org.apache.beam.sdk.transforms.ParDo
+
+import scala.reflect.ClassTag
 
 trait SCollectionFileDownloadSyntax {
 
@@ -40,7 +41,7 @@ trait SCollectionFileDownloadSyntax {
      * @param keep
      *   keep downloaded files after processing
      */
-    def mapFile[T: Coder](
+    def mapFile[T: Coder: ClassTag](
       f: Path => T,
       batchSize: Int = 10,
       keep: Boolean = false
@@ -63,7 +64,7 @@ trait SCollectionFileDownloadSyntax {
      * @param keep
      *   keep downloaded files after processing
      */
-    def flatMapFile[T: Coder](
+    def flatMapFile[T: Coder: ClassTag](
       f: Path => TraversableOnce[T],
       batchSize: Int = 10,
       keep: Boolean = false

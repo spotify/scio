@@ -25,6 +25,7 @@ import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
 import scala.collection.compat._
+import scala.reflect.ClassTag
 
 trait SCollectionSafeSyntax {
 
@@ -43,7 +44,7 @@ trait SCollectionSafeSyntax {
      *
      * @group transform
      */
-    def safeFlatMap[U: Coder](
+    def safeFlatMap[U: Coder: ClassTag](
       f: T => TraversableOnce[U]
     ): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])

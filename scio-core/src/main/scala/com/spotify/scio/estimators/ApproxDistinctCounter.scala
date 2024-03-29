@@ -23,6 +23,8 @@ import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{transforms => beam}
 import org.typelevel.scalaccompat.annotation.nowarn
 
+import scala.reflect.ClassTag
+
 /**
  * Approximate distinct element counter for type `T`, e.g. HyperLogLog or HyperLogLog++. This has
  * two APIs one estimate total distinct count for a given SCollection and second one estimate
@@ -42,7 +44,7 @@ trait ApproxDistinctCounter[T] {
    * Approximate distinct element per each key in the given key value SCollection. This will output
    * estimated distinct count per each unique key.
    */
-  def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)]
+  def estimateDistinctCountPerKey[K: ClassTag](in: SCollection[(K, T)]): SCollection[(K, Long)]
 }
 
 /**
@@ -54,13 +56,13 @@ trait ApproxDistinctCounter[T] {
  *   the number of entries in the statistical sample; the higher this number, the more accurate the
  *   estimate will be; should be `>= 16`.
  */
-case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCounter[T] {
+case class ApproximateUniqueCounter[T : ClassTag](sampleSize: Int) extends ApproxDistinctCounter[T] {
 
   override def estimateDistinctCount(in: SCollection[T]): SCollection[Long] =
     in.applyTransform(beam.ApproximateUnique.globally(sampleSize))
       .asInstanceOf[SCollection[Long]]: @nowarn("cat=deprecation")
 
-  override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
+  override def estimateDistinctCountPerKey[K : ClassTag](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
     implicit val keyCoder: Coder[K] = in.keyCoder
     in.toKV
       .applyTransform(beam.ApproximateUnique.perKey[K, T](sampleSize))
@@ -76,14 +78,14 @@ case class ApproximateUniqueCounter[T](sampleSize: Int) extends ApproxDistinctCo
  * @param maximumEstimationError
  *   the maximum estimation error, which should be in the range `[0.01, 0.5]`
  */
-case class ApproximateUniqueCounterByError[T](maximumEstimationError: Double = 0.02)
+case class ApproximateUniqueCounterByError[T : ClassTag](maximumEstimationError: Double = 0.02)
     extends ApproxDistinctCounter[T] {
 
   override def estimateDistinctCount(in: SCollection[T]): SCollection[Long] =
     in.applyTransform(beam.ApproximateUnique.globally(maximumEstimationError))
       .asInstanceOf[SCollection[Long]]: @nowarn("cat=deprecation")
 
-  override def estimateDistinctCountPerKey[K](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
+  override def estimateDistinctCountPerKey[K: ClassTag](in: SCollection[(K, T)]): SCollection[(K, Long)] = {
     implicit val keyCoder: Coder[K] = in.keyCoder
     in.toKV
       .applyTransform(beam.ApproximateUnique.perKey[K, T](maximumEstimationError))

@@ -24,11 +24,13 @@ import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine
 import org.apache.beam.sdk.values.PCollection
 
+import scala.reflect.ClassTag
+
 /**
  * An enhanced SCollection that uses an intermediate node to combine parts of the data to reduce
  * load on the final global combine step.
  */
-class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: Int)
+class SCollectionWithFanout[T: ClassTag] private[values] (coll: SCollection[T], fanout: Int)
     extends PCollectionWrapper[T] {
   override val internal: PCollection[T] = coll.internal
 
@@ -40,7 +42,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   }
 
   /** [[SCollection.aggregate[U]* SCollection.aggregate]] with fan out. */
-  def aggregate[U: Coder](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
+  def aggregate[U: Coder: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): SCollection[U] =
     coll.pApply(
       Combine
         .globally(Functions.aggregateFn(context, zeroValue)(seqOp, combOp))
@@ -48,7 +50,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
     )
 
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
-  def aggregate[A: Coder, U: Coder](aggregator: Aggregator[T, A, U]): SCollection[U] = {
+  def aggregate[A: Coder: ClassTag, U: Coder: ClassTag](aggregator: Aggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
     coll.transform { in =>
       new SCollectionWithFanout(in.map(a.prepare), fanout)
@@ -58,7 +60,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   }
 
   /** [[SCollection.aggregate[A,U]* SCollection.aggregate]] with fan out. */
-  def aggregate[A: Coder, U: Coder](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
+  def aggregate[A: Coder: ClassTag, U: Coder: ClassTag](aggregator: MonoidAggregator[T, A, U]): SCollection[U] = {
     val a = aggregator // defeat closure
     coll.transform { in =>
       new SCollectionWithFanout(in.map(a.prepare), fanout)
@@ -68,7 +70,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   }
 
   /** [[SCollection.combine]] with fan out. */
-  def combine[C: Coder](
+  def combine[C: Coder: ClassTag](
     createCombiner: T => C
   )(mergeValue: (C, T) => C)(mergeCombiners: (C, C) => C): SCollection[C] = {
     SCollection.logger.warn(

@@ -36,6 +36,7 @@ import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 
 import scala.collection.compat._
+import scala.reflect.ClassTag
 
 private object PairSCollectionFunctions {
   private val logger = LoggerFactory.getLogger(this.getClass)
@@ -53,7 +54,7 @@ private object PairSCollectionFunctions {
  * @groupname transform
  * Transformations
  */
-class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
+class PairSCollectionFunctions[K: ClassTag, V: ClassTag](val self: SCollection[(K, V)]) {
   import TupleFunctions._
 
   private[this] val context: ScioContext = self.context
@@ -127,7 +128,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * the list of values for that key in `this` as well as `rhs`.
    * @group cogroup
    */
-  def cogroup[W](rhs: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
+  def cogroup[W: ClassTag](rhs: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
     ArtisanJoin.cogroup(self.tfName, self, rhs)
 
   /**
@@ -135,7 +136,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * tuple with the list of values for that key in `this`, `rhs1` and `rhs2`.
    * @group cogroup
    */
-  def cogroup[W1, W2](
+  def cogroup[W1: ClassTag, W2: ClassTag](
     rhs1: SCollection[(K, W1)],
     rhs2: SCollection[(K, W2)]
   ): SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2]))] =
@@ -146,7 +147,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * contains a tuple with the list of values for that key in `this`, `rhs1`, `rhs2` and `rhs3`.
    * @group cogroup
    */
-  def cogroup[W1, W2, W3](
+  def cogroup[W1: ClassTag, W2: ClassTag, W3: ClassTag](
     rhs1: SCollection[(K, W1)],
     rhs2: SCollection[(K, W2)],
     rhs3: SCollection[(K, W3)]
@@ -157,14 +158,14 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Alias for `cogroup`.
    * @group cogroup
    */
-  def groupWith[W](rhs: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
+  def groupWith[W: ClassTag](rhs: SCollection[(K, W)]): SCollection[(K, (Iterable[V], Iterable[W]))] =
     this.cogroup(rhs)
 
   /**
    * Alias for `cogroup`.
    * @group cogroup
    */
-  def groupWith[W1, W2](
+  def groupWith[W1: ClassTag, W2: ClassTag](
     rhs1: SCollection[(K, W1)],
     rhs2: SCollection[(K, W2)]
   ): SCollection[(K, (Iterable[V], Iterable[W1], Iterable[W2]))] =
@@ -174,7 +175,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * Alias for `cogroup`.
    * @group cogroup
    */
-  def groupWith[W1, W2, W3](
+  def groupWith[W1: ClassTag, W2: ClassTag, W3: ClassTag](
     rhs1: SCollection[(K, W1)],
     rhs2: SCollection[(K, W2)],
     rhs3: SCollection[(K, W3)]
@@ -209,7 +210,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * `this`, or the pair (k, (None, Some(w))) if no elements in `this` have key k.
    * @group join
    */
-  def fullOuterJoin[W](rhs: SCollection[(K, W)]): SCollection[(K, (Option[V], Option[W]))] =
+  def fullOuterJoin[W: ClassTag](rhs: SCollection[(K, W)]): SCollection[(K, (Option[V], Option[W]))] =
     ArtisanJoin.outer(self.tfName, self, rhs)
 
   /**
@@ -218,7 +219,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * (k, v2) is in `rhs`.
    * @group join
    */
-  def join[W](rhs: SCollection[(K, W)]): SCollection[(K, (V, W))] =
+  def join[W: ClassTag](rhs: SCollection[(K, W)]): SCollection[(K, (V, W))] =
     ArtisanJoin(self.tfName, self, rhs)
 
   /**
@@ -227,7 +228,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * None)) if no elements in `rhs` have key k.
    * @group join
    */
-  def leftOuterJoin[W](rhs: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
+  def leftOuterJoin[W: ClassTag](rhs: SCollection[(K, W)]): SCollection[(K, (V, Option[W]))] =
     ArtisanJoin.left(self.tfName, self, rhs)
 
   /**
@@ -236,7 +237,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * (None, w)) if no elements in `this` have key k.
    * @group join
    */
-  def rightOuterJoin[W](rhs: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
+  def rightOuterJoin[W: ClassTag](rhs: SCollection[(K, W)]): SCollection[(K, (Option[V], W))] =
     ArtisanJoin.right(self.tfName, self, rhs)
 
   /**
@@ -264,19 +265,20 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   computing the overlap. Note: having fpProb = 0 doesn't mean that Scio would calculate an
    *   exact overlap.
    */
-  def sparseFullOuterJoin[W](
+  def sparseFullOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
-  )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], Option[W]))] = self.transform { me =>
-    implicit val wCoder = rhs.valueCoder
-    SCollection.unionAll(
-      split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
-        val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
-        unique ++ lhsOverlap.fullOuterJoin(rhs)
-      }
-    )
-  }
+  )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], Option[W]))] = self
+    .transform { me =>
+      implicit val wCoder: Coder[W] = rhs.valueCoder
+      SCollection.unionAll(
+        split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
+          val unique = lhsUnique.map(kv => (kv._1, (Option(kv._2), Option.empty[W])))
+          unique ++ lhsOverlap.fullOuterJoin(rhs)
+        }
+      )
+    }
 
   /**
    * Inner join for cases when the left collection (`this`) is much larger than the right collection
@@ -302,13 +304,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   computing the overlap. Note: having fpProb = 0 doesn't mean that Scio would calculate an
    *   exact overlap.
    */
-  def sparseJoin[W](
+  def sparseJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
   )(implicit funnel: Funnel[K]): SCollection[(K, (V, W))] =
     self.transform { me =>
-      implicit val wCoder = rhs.valueCoder
+      implicit val wCoder: Coder[W] = rhs.valueCoder
       SCollection.unionAll(
         split(me, rhs, rhsNumKeys, fpProb).map { case (_, lhsOverlap, rhs) =>
           lhsOverlap.join(rhs)
@@ -341,13 +343,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   computing the overlap. Note: having fpProb = 0 doesn't mean that Scio would calculate an
    *   exact overlap.
    */
-  def sparseLeftOuterJoin[W](
+  def sparseLeftOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
   )(implicit funnel: Funnel[K]): SCollection[(K, (V, Option[W]))] =
     self.transform { me =>
-      implicit val wCoder = rhs.valueCoder
+      implicit val wCoder: Coder[W] = rhs.valueCoder
       SCollection.unionAll(
         split(me, rhs, rhsNumKeys, fpProb).map { case (lhsUnique, lhsOverlap, rhs) =>
           val unique = lhsUnique.map(kv => (kv._1, (kv._2, Option.empty[W])))
@@ -381,13 +383,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   computing the overlap. Note: having fpProb = 0 doesn't mean that Scio would calculate an
    *   exact overlap.
    */
-  def sparseRightOuterJoin[W](
+  def sparseRightOuterJoin[W: ClassTag](
     rhs: SCollection[(K, W)],
     rhsNumKeys: Long,
     fpProb: Double = 0.01
   )(implicit funnel: Funnel[K]): SCollection[(K, (Option[V], W))] =
     self.transform { me =>
-      implicit val wCoder = rhs.valueCoder
+      implicit val wCoder: Coder[W] = rhs.valueCoder
       SCollection.unionAll(
         split(me, rhs, rhsNumKeys, fpProb).map { case (_, lhsOverlap, rhs) =>
           lhsOverlap.rightOuterJoin(rhs)
@@ -405,7 +407,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    maintain the given false positive probability for the split of `thisSColl` into Unique and
    Overlap. This function is used by Sparse Join transforms.
    */
-  private def split[W](
+  private def split[W: ClassTag](
     thisSColl: SCollection[(K, V)],
     rhsSColl: SCollection[(K, W)],
     rhsNumKeys: Long,
@@ -449,7 +451,8 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   A fraction in range (0, 1) which would be the accepted false positive probability when
    *   discarding elements of `rhs` in the pre-filter step.
    */
-  def sparseLookup[A](rhs: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(implicit
+  def sparseLookup[A: ClassTag](rhs: SCollection[(K, A)], thisNumKeys: Long, fpProb: Double)(
+    implicit
     funnel: Funnel[K]
   ): SCollection[(K, (V, Iterable[A]))] = self.transform { sColl =>
     implicit val aCoder = rhs.valueCoder
@@ -488,9 +491,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   Having a value close to the actual number improves the false positives in intermediate steps
    *   which means less shuffle.
    */
-  def sparseLookup[A](rhs: SCollection[(K, A)], thisNumKeys: Long)(implicit
-    funnel: Funnel[K]
-  ): SCollection[(K, (V, Iterable[A]))] = sparseLookup(rhs, thisNumKeys, 0.01)
+  def sparseLookup[A: ClassTag](rhs: SCollection[(K, A)], thisNumKeys: Long)(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A]))] = sparseLookup(rhs, thisNumKeys, 0.01)
 
   /**
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
@@ -513,13 +514,13 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   A fraction in range (0, 1) which would be the accepted false positive probability when
    *   discarding elements of `rhs1` and `rhs2` in the pre-filter step.
    */
-  def sparseLookup[A, B](
+  def sparseLookup[A: ClassTag, B: ClassTag](
     rhs1: SCollection[(K, A)],
     rhs2: SCollection[(K, B)],
     thisNumKeys: Long,
     fpProb: Double
-  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A], Iterable[B]))] = self.transform {
-    sColl =>
+  )(implicit funnel: Funnel[K]): SCollection[(K, (V, Iterable[A], Iterable[B]))] =
+    self.transform { sColl =>
       implicit val aCoder = rhs1.valueCoder
       implicit val bCoder = rhs2.valueCoder
       val selfBfSideInputs =
@@ -547,7 +548,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
               .flatMap { case (k, (iV, iA, iB)) => iV.map(v => (k, (v, iA, iB))) }
         }
       )
-  }
+    }
 
   /**
    * Look up values from `rhs` where `rhs` is much larger and keys from `this` wont fit in memory,
@@ -567,7 +568,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *   Having a value close to the actual number improves the false positives in intermediate steps
    *   which means less shuffle.
    */
-  def sparseLookup[A, B](
+  def sparseLookup[A: ClassTag, B: ClassTag](
     rhs1: SCollection[(K, A)],
     rhs2: SCollection[(K, B)],
     thisNumKeys: Long
@@ -586,7 +587,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * modify and return their first argument instead of creating a new `U`.
    * @group per_key
    */
-  def aggregateByKey[U: Coder](
+  def aggregateByKey[U: Coder: ClassTag](
     zeroValue: => U
   )(seqOp: (U, V) => U, combOp: (U, U) => U): SCollection[(K, U)] =
     this
@@ -601,7 +602,9 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * `U`. This could be more powerful and better optimized in some cases.
    * @group per_key
    */
-  def aggregateByKey[A: Coder, U: Coder](aggregator: Aggregator[V, A, U]): SCollection[(K, U)] =
+  def aggregateByKey[A: Coder: ClassTag, U: Coder](
+    aggregator: Aggregator[V, A, U]
+  ): SCollection[(K, U)] =
     self.transform { in =>
       val a = aggregator // defeat closure
       in.mapValues(a.prepare)
@@ -616,7 +619,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * present the results as `U`. This could be more powerful and better optimized in some cases.
    * @group per_key
    */
-  def aggregateByKey[A: Coder, U: Coder](
+  def aggregateByKey[A: Coder: ClassTag, U: Coder](
     aggregator: MonoidAggregator[V, A, U]
   ): SCollection[(K, U)] = self.transform { in =>
     val a = aggregator // defeat closure
@@ -654,7 +657,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    *
    * @group per_key
    */
-  def combineByKey[C: Coder](
+  def combineByKey[C: Coder: ClassTag](
     createCombiner: V => C
   )(mergeValue: (C, V) => C)(mergeCombiners: (C, C) => C): SCollection[(K, C)] = {
     PairSCollectionFunctions.logger.warn(
@@ -676,7 +679,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def countApproxDistinctByKey(sampleSize: Int): SCollection[(K, Long)] =
-    ApproximateUniqueCounter(sampleSize)
+    ApproximateUniqueCounter[V](sampleSize)
       .estimateDistinctCountPerKey(this.self)
 
   /**
@@ -686,7 +689,7 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    * @group per_key
    */
   def countApproxDistinctByKey(maximumEstimationError: Double = 0.02): SCollection[(K, Long)] =
-    ApproximateUniqueCounterByError(maximumEstimationError)
+    ApproximateUniqueCounterByError[V](maximumEstimationError)
       .estimateDistinctCountPerKey(this.self)
 
   /**

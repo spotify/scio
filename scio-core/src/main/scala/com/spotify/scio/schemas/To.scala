@@ -30,10 +30,11 @@ import scala.reflect.ClassTag
 
 sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializable {
   def coder: Coder[O]
+  def classTag: ClassTag[O]
   def convert(i: I): O
 
   final def apply(coll: SCollection[I]): SCollection[O] =
-    coll.map(i => convert(i))(coder)
+    coll.map(i => convert(i))(coder, classTag)
 }
 
 object To {
@@ -180,6 +181,7 @@ object To {
         .fold(message => throw new IllegalArgumentException(message), identity)
 
       val coder = underlying.coder
+      val classTag = underlying.classTag
       def convert(i: I): O = underlying.convert(i)
     }
 
@@ -200,6 +202,7 @@ object To {
       val underlying = unchecked[I, O](convertRow)
 
       val coder = underlying.coder
+      val classTag = underlying.classTag
       def convert(i: I): O = underlying.convert(i)
     }
 
@@ -208,6 +211,7 @@ object To {
       val (bso, toO, fromO) = SchemaMaterializer.materialize(Schema[O])
       val td = TypeDescriptor.of(ScioUtil.classOf[O])
       val coder = Coder.beam(SchemaCoder.of(bso, td, toO, fromO))
+      val classTag = implicitly
       def convert(i: I): O = f.curried(bso).andThen(fromO(_))(i)
     }
 
