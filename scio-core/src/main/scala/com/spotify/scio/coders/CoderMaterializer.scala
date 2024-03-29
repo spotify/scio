@@ -141,11 +141,6 @@ object CoderMaterializer {
     refs: TrieMap[Ref[_], RefCoder[_]],
     topLevel: Boolean = false
   ): BCoder[T] = {
-    val optTypeName = coder match {
-      case x: TypeName if topLevel => Some(x.typeName)
-      case _                       => None
-    }
-
     val bCoder: BCoder[T] = coder match {
       case RawBeam(c) =>
         c
@@ -196,15 +191,10 @@ object CoderMaterializer {
     bCoder
       .pipe(bc => if (isNullableCoder(o, coder)) NullableCoder.of(bc) else bc)
       .pipe { bc =>
-        optTypeName
-          .flatMap { className =>
-            o.zstdDictMapping
-              .get(className)
-              .map { dict =>
-                val xxx = ZstdCoder.of(bc, dict)
-                xxx
-              }
-          }
+        Option(coder)
+          .collect { case x: TypeName if topLevel => x.typeName }
+          .flatMap(className => o.zstdDictMapping.get(className))
+          .map(dict => ZstdCoder.of(bc, dict))
           .getOrElse(bc)
       }
       .pipe(bc => if (isWrappableCoder(topLevel, coder)) new MaterializedCoder(bc) else bc)

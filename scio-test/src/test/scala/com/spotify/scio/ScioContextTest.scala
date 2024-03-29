@@ -322,7 +322,14 @@ class ScioContextTest extends PipelineSpec {
     val sc = zstdContext("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
     val bCoder = CoderMaterializer.beam(sc, implicitly[Coder[ZstdTestCaseClass]])
     bCoder shouldBe a[MaterializedCoder[_]]
-    bCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldBe a[ZstdCoder[ZstdTestCaseClass]]
+    bCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldBe a[ZstdCoder[_]]
+  }
+
+  it should "not derive zstd coders when not configured" in {
+    val sc = ScioContext()
+    val bCoder = CoderMaterializer.beam(sc, implicitly[Coder[ZstdTestCaseClass]])
+    bCoder shouldBe a[MaterializedCoder[_]]
+    bCoder.asInstanceOf[MaterializedCoder[_]].bcoder shouldNot be(a[ZstdCoder[_]])
   }
 
   it should "error when zstdDictionary arguments contain an invalid class name" in {
