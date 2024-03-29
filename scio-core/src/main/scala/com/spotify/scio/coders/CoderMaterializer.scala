@@ -18,7 +18,13 @@
 package com.spotify.scio.coders
 
 import com.spotify.scio.util.RemoteFileUtil
-import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder, KvCoder, NullableCoder}
+import org.apache.beam.sdk.coders.{
+  Coder => BCoder,
+  IterableCoder,
+  KvCoder,
+  NullableCoder,
+  ZstdCoder
+}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 
 import java.net.URI
@@ -34,7 +40,7 @@ object CoderMaterializer {
   private[scio] case class CoderOptions(
     nullableCoders: Boolean,
     kryo: KryoOptions,
-    zstdDictMapping: Map[Class[_], Array[Byte]]
+    zstdDictMapping: Map[String, Array[Byte]]
   )
   private[scio] object CoderOptions {
     private val cache: ConcurrentHashMap[PipelineOptions, CoderOptions] = new ConcurrentHashMap()
@@ -53,7 +59,8 @@ object CoderMaterializer {
               s.split(":", 2).toList match {
                 case className :: path :: Nil =>
                   try {
-                    Class.forName(className) -> path
+                    // ensure class exists
+                    Class.forName(className)
                   } catch {
                     case e: ClassNotFoundException =>
                       throw new IllegalArgumentException(
@@ -61,6 +68,7 @@ object CoderMaterializer {
                         e
                       )
                   }
+                  className -> path
                 case _ =>
                   throw new IllegalArgumentException(
                     "zstdDictionary arguments must be in a colon-separated format. " +
@@ -69,12 +77,12 @@ object CoderMaterializer {
               }
             }
             .groupBy(_._1)
-            .map { case (clazz, values) => clazz -> values.map(_._2).toSet }
+            .map { case (className, values) => className -> values.map(_._2).toSet }
 
           val dupes = zstdDictPaths
             .collect {
-              case (clazz, values) if values.size > 1 =>
-                s"Class ${clazz.getCanonicalName} -> [${values.mkString(", ")}]"
+              case (className, values) if values.size > 1 =>
+                s"Class $className -> [${values.mkString(", ")}]"
             }
           if (dupes.size > 1) {
             throw new IllegalArgumentException(
@@ -133,6 +141,11 @@ object CoderMaterializer {
     refs: TrieMap[Ref[_], RefCoder[_]],
     topLevel: Boolean = false
   ): BCoder[T] = {
+    val optTypeName = coder match {
+      case x: TypeName if topLevel => Some(x.typeName)
+      case _                       => None
+    }
+
     val bCoder: BCoder[T] = coder match {
       case RawBeam(c) =>
         c
@@ -182,6 +195,18 @@ object CoderMaterializer {
 
     bCoder
       .pipe(bc => if (isNullableCoder(o, coder)) NullableCoder.of(bc) else bc)
+      .pipe { bc =>
+        optTypeName
+          .flatMap { className =>
+            o.zstdDictMapping
+              .get(className)
+              .map { dict =>
+                val xxx = ZstdCoder.of(bc, dict)
+                xxx
+              }
+          }
+          .getOrElse(bc)
+      }
       .pipe(bc => if (isWrappableCoder(topLevel, coder)) new MaterializedCoder(bc) else bc)
   }
 }
