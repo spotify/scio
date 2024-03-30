@@ -135,25 +135,36 @@ object FixAvroCoder {
   def isAvroType(sym: Symbol)(implicit sd: SemanticDocument): Boolean =
     AvroMatcher.matches(sym) || hasParentClass(sym, AvroMatcher)
 
-  def hasAvroTypeSignature(tree: Tree, checkLiftedType: Boolean)(implicit doc: SemanticDocument): Boolean =
+  def hasAvroTypeSignature(tree: Tree, checkLiftedType: Boolean)(implicit
+    doc: SemanticDocument
+  ): Boolean =
     tree.symbol.info.map(_.signature).exists {
-      case MethodSignature(_, _, TypeRef(_, returnType, _)) if !checkLiftedType && isAvroType(returnType) =>
+      case MethodSignature(_, _, TypeRef(_, returnType, _))
+          if !checkLiftedType && isAvroType(returnType) =>
         true
-      case MethodSignature(_, _, TypeRef(_, _, List(TypeRef(_, returnType, _)))) if checkLiftedType && isAvroType(returnType) =>
+      case MethodSignature(_, _, TypeRef(_, _, List(TypeRef(_, returnType, _))))
+          if checkLiftedType && isAvroType(returnType) =>
         true
       case _ =>
         false
     }
 
   def methodHasAvroCoderTypeBound(expr: Term)(implicit doc: SemanticDocument): Boolean =
-    expr.symbol.info.map(_.signature)
+    expr.symbol.info
+      .map(_.signature)
       .toList
       .collect { case MethodSignature(_, parameterLists, _) => parameterLists }
       .flatMap(_.flatten)
       .flatMap(_.symbol.info.map(_.signature).toList)
-      .collect { case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _)))) if CoderMatcher.matches(symbol) => coderT }
+      .collect {
+        case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _))))
+            if CoderMatcher.matches(symbol) =>
+          coderT
+      }
       .flatMap(_.info.map(_.signature).toList)
-      .exists { case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) => AvroMatcher.matches(maybeAvroType) }
+      .exists { case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) =>
+        AvroMatcher.matches(maybeAvroType)
+      }
 }
 
 class FixAvroCoder extends SemanticRule("FixAvroCoder") {
@@ -178,8 +189,9 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
         case q"$fn(..$args)" if ParallelizeMatcher.matches(fn) =>
           args.headOption exists {
             case expr if hasAvroTypeSignature(expr, true) => true
-            case q"$seqLike($elem)" if seqLike.symbol.value.startsWith("scala/collection/") &&
-              (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
+            case q"$seqLike($elem)"
+                if seqLike.symbol.value.startsWith("scala/collection/") &&
+                  (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
               true
             case _ => false
           }
