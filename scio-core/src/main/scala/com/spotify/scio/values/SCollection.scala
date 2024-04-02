@@ -35,7 +35,7 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
+import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder, ZstdCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.io.Compression
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
@@ -148,6 +148,20 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   /** Assign a Coder to this SCollection. */
   def setCoder(coder: org.apache.beam.sdk.coders.Coder[T]): SCollection[T] =
     context.wrap(internal.setCoder(coder))
+
+  /**
+   * Apply Zstd compression to this SCollection, using the provided Zstd dictionary. Dictionary must
+   * have been trained on exactly type `T`.
+   *
+   * @param dict
+   *   The Zstd dictionary trained on type `T`.
+   */
+  def setZstdDictionary(dict: Array[Byte]): SCollection[T] = {
+    val bCoder = CoderMaterializer.beam(self.context, self.coder)
+    val zstdCoder = ZstdCoder.of(bCoder, dict)
+    self.setCoder(zstdCoder)
+    self
+  }
 
   def setSchema(schema: Schema[T])(implicit ct: ClassTag[T]): SCollection[T] =
     if (!internal.hasSchema) {
@@ -1679,7 +1693,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           trainingBytesTarget
         )
       )
-
   }
 
   /**

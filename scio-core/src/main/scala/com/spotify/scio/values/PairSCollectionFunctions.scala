@@ -104,12 +104,12 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
 
   /**
    * Apply Zstd compression to the _value side only_ of this SCollection, using the provided Zstd
-   * dictionary. This should be applied before shuffle operations.
+   * dictionary. Dictionary must have been trained on exactly type `V`.
    *
    * @param dict
    *   The Zstd dictionary trained on type `V`.
    */
-  def withZstdDictionaryForValue(dict: Array[Byte]): SCollection[(K, V)] = {
+  def setZstdDictionaryForValue(dict: Array[Byte]): SCollection[(K, V)] = {
     val bValueCoder = CoderMaterializer.beam(self.context, self.valueCoder)
     val zstdCoder = Coder.beam(ZstdCoder.of(bValueCoder, dict))
     val tupleCoder = Coder.tuple2Coder(self.keyCoder, zstdCoder)

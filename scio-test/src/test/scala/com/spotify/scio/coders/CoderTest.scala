@@ -707,11 +707,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[Tuple2Coder[_, _]] and
       beFullyCompliant() and { ctx =>
         // casts checked in materializeTo
-        val valueCoder = ctx.beamCoder
-          .asInstanceOf[MaterializedCoder[_]]
-          .bcoder
-          .asInstanceOf[Tuple2Coder[_, _]]
-          .bc
+        val valueCoder =
+          ctx.beamCoder.asInstanceOf[MaterializedCoder[_]].bcoder.asInstanceOf[Tuple2Coder[_, _]].bc
         valueCoder shouldBe a[ZstdCoder[_]]
       }
   }
