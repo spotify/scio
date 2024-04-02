@@ -95,8 +95,10 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
 
         scoll
           .withSideInputs(sampleRateSI)
-          .flatMap { case (s, ctx) =>
-            Option.when(new Random().nextDouble() <= ctx(sampleRateSI))(toBytes(s))
+          .flatMap {
+            case (s, ctx) if new Random().nextDouble() <= ctx(sampleRateSI) =>
+              Some(toBytes(s))
+            case _ => None
           }
           .toSCollection
           .keyBy(_ => ())
