@@ -377,6 +377,12 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.testing.TransformOverride.ofSource"
+  ),
+  ProblemFilters.exclude[ReversedMissingMethodProblem](
+    "com.spotify.scio.options.ScioOptions.setZstdDictionary"
+  ),
+  ProblemFilters.exclude[ReversedMissingMethodProblem](
+    "com.spotify.scio.options.ScioOptions.getZstdDictionary"
   )
 )
 
