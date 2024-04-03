@@ -376,6 +376,16 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
 ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[DirectMissingMethodProblem](
     "com.spotify.scio.testing.TransformOverride.ofSource"
+  ),
+  // removal of private classes
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.coders.instances.kryo.GaxApiExceptionSerializer"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.coders.instances.kryo.StatusRuntimeExceptionSerializer"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer"
   )
 )
 
@@ -624,8 +634,6 @@ lazy val `scio-core` = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api" % "gax" % gaxVersion,
-      "com.google.api" % "gax-grpc" % gaxVersion,
-      "com.google.api" % "gax-httpjson" % gaxVersion,
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
