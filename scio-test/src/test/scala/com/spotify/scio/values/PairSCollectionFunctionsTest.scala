@@ -18,6 +18,7 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.instances.ZstdCoder
 import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
@@ -25,15 +26,7 @@ import com.spotify.scio.hash._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Aggregator
 import magnolify.guava.auto._
-import org.apache.beam.sdk.coders.{
-  Coder => BCoder,
-  KvCoder,
-  NullableCoder,
-  StringUtf8Coder,
-  StructuredCoder,
-  VarIntCoder,
-  ZstdCoder
-}
+import org.apache.beam.sdk.coders.{KvCoder, NullableCoder, StringUtf8Coder, StructuredCoder, VarIntCoder, Coder => BCoder, ZstdCoder => BZstdCoder}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -60,11 +53,14 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       }
     }
 
-    def shouldHaveStringKeyAndZstdValue = {
-      tuple2 { case (keyCoder, valueCoder) =>
-        keyCoder shouldBe StringUtf8Coder.of()
-        valueCoder shouldBe a[ZstdCoder[_]]
-      }
+    def shouldHaveKey[K: ClassTag] = {
+      tuple2 { case (keyCoder, _) => keyCoder shouldBe a[K] }
+      value
+    }
+
+    def shouldHaveValue[V: ClassTag] = {
+      tuple2 { case (_, valueCoder) => valueCoder shouldBe a[V] }
+      value
     }
   }
 
@@ -110,42 +106,70 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
   }
 
   it should "apply and propagate zstd coders" in {
+    def tuple2[K, V](scoll: SCollection[(K, V)]) = {
+      scoll.internal.getCoder
+        .as[MaterializedCoder[_]]
+        .bcoder
+        .as[StructuredCoder[_]]
+    }
+
     val sc = ScioContext()
     val dictBytes = Array[Byte](0, 1, 2, 3, 4, 5)
 
+    // don't die when extracting underlying coders
+    val tupleDictColl = sc
+      .empty[(String, String)]()(ZstdCoder(dictBytes))
+    noException shouldBe thrownBy {
+      tupleDictColl.keyCoder
+      tupleDictColl.valueCoder
+    }
+
     val coll = sc
-      .empty[String]()
-      .setZstdDictionary(dictBytes)
+      .empty[String]()(ZstdCoder(dictBytes))
 
     // zstd should be applied
-    coll.internal.getCoder shouldBe a[ZstdCoder[_]]
+    coll.internal.getCoder.as[MaterializedCoder[_]].bcoder shouldBe a[BZstdCoder[_]]
+
+    val keyed = coll.keyBy(_.substring(0, 1))
 
     // zstd should survive key operation on value side
-    coll
-      .keyBy(_.substring(0, 1))
-      .internal
-      .getCoder
-      .as[MaterializedCoder[_]]
-      .bcoder
-      .as[StructuredCoder[_]]
-      .shouldHaveStringKeyAndZstdValue
-
-    val keyed = sc.empty[String]().keyBy(_.substring(0, 1))
-    keyed.setZstdDictionaryForValue(dictBytes)
-
-    // zstd should be applied
-    keyed.internal.getCoder
-      .as[MaterializedCoder[_]]
-      .bcoder
-      .as[StructuredCoder[_]]
-      .shouldHaveStringKeyAndZstdValue
+    tuple2(keyed)
+      .shouldHaveKey[StringUtf8Coder]
+      .shouldHaveValue[BZstdCoder[_]]
 
     // zstd should survive conversion to KV
     keyed.toKV.internal.getCoder
       .as[KvCoder[_, _]]
       .getValueCoder
       .as[MaterializedCoder[_]]
-      .bcoder shouldBe a[ZstdCoder[_]]
+      .bcoder shouldBe a[BZstdCoder[_]]
+
+    val tupleValueZstd = sc
+      .empty[(String, String)]()(ZstdCoder.kv(valueDict = dictBytes))
+
+    // zstd should be applied to value side only
+    tuple2(tupleValueZstd)
+      .shouldHaveKey[StringUtf8Coder]
+      .shouldHaveValue[BZstdCoder[_]]
+
+    val tupleKVZstd = sc
+      .empty[(String, String)]()(ZstdCoder.kv(dictBytes, dictBytes))
+
+    // zstd should be applied to both sides
+    tuple2(tupleKVZstd)
+      .shouldHaveKey[BZstdCoder[_]]
+      .shouldHaveValue[BZstdCoder[_]]
+
+    // transforming key should drop Zstd on key side but not value side
+    tuple2(tupleKVZstd.mapKeys(_.substring(0, 1)))
+      .shouldHaveKey[StringUtf8Coder]
+      .shouldHaveValue[BZstdCoder[_]]
+
+    // transforming value should drop Zstd on value side but not key side
+    tuple2(tupleKVZstd.mapValues(_.substring(0, 1)))
+      .shouldHaveKey[BZstdCoder[_]]
+      .shouldHaveValue[StringUtf8Coder]
+
   }
 
   it should "support cogroup()" in {

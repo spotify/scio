@@ -19,7 +19,7 @@ package com.spotify.scio.values
 
 import com.google.common.hash.Funnel
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{BeamCoders, Coder, CoderMaterializer}
+import com.spotify.scio.coders.{BeamCoders, Coder}
 import com.spotify.scio.estimators.{
   ApproxDistinctCounter,
   ApproximateUniqueCounter,
@@ -29,7 +29,6 @@ import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.coders.ZstdCoder
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
 import org.joda.time.Duration
@@ -101,22 +100,6 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def withHotKeyFanout(hotKeyFanout: Int): SCollectionWithHotKeyFanout[K, V] =
     new SCollectionWithHotKeyFanout(this, Right(hotKeyFanout))
-
-  /**
-   * Apply Zstd compression to the _value side only_ of this SCollection, using the provided Zstd
-   * dictionary. Dictionary must have been trained on exactly type `V`.
-   *
-   * @param dict
-   *   The Zstd dictionary trained on type `V`.
-   */
-  def setZstdDictionaryForValue(dict: Array[Byte]): SCollection[(K, V)] = {
-    val bValueCoder = CoderMaterializer.beam(self.context, self.valueCoder)
-    val zstdCoder = Coder.beam(ZstdCoder.of(bValueCoder, dict))
-    val tupleCoder = Coder.tuple2Coder(self.keyCoder, zstdCoder)
-    val bTupleCoder = CoderMaterializer.beam(self.context, tupleCoder)
-    self.setCoder(bTupleCoder)
-    self
-  }
 
   // =======================================================================
   // CoGroups

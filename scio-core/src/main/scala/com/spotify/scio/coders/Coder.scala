@@ -232,7 +232,6 @@ object Coder
     with CoderDerivation
     with LowPriorityCoders {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
-
 }
 
 trait LowPriorityCoders extends LowPriorityCoders1 { self: CoderDerivation with JavaBeanCoders =>
