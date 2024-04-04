@@ -13,13 +13,13 @@ object ZstdCoder {
     keyDict: Array[Byte] = null,
     valueDict: Array[Byte] = null
   ): Coder[(K, V)] =
-      Coder.transform(Coder[K]) { kCoder =>
-        val bKCoder = Option(keyDict).map(BZstdCoder.of(kCoder, _)).getOrElse(kCoder)
-        Coder.transform(Coder[V]) { vCoder =>
-          val bVCoder = Option(valueDict).map(BZstdCoder.of(vCoder, _)).getOrElse(vCoder)
-          Coder.beam(
-            new Tuple2Coder[K, V](bKCoder, bVCoder)
-          )
-        }
+    Coder.transform(Coder[K]) { kCoder =>
+      val bKCoder = Option(keyDict).map(BZstdCoder.of(kCoder, _)).getOrElse(kCoder)
+      Coder.transform(Coder[V]) { vCoder =>
+        val bVCoder = Option(valueDict).map(BZstdCoder.of(vCoder, _)).getOrElse(vCoder)
+        Coder.beam(
+          new Tuple2Coder[K, V](bKCoder, bVCoder)
+        )
       }
+    }
 }

@@ -17,13 +17,8 @@
 package com.spotify.scio.coders
 
 import com.google.cloud.bigtable.data.v2.models.MutateRowsException
-import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException
 import com.spotify.scio.bigquery.TableRow
-import com.spotify.scio.coders.instances.kryo.{
-  BigtableRetriesExhaustedExceptionSerializer,
-  CoderSerializer,
-  MutateRowsExceptionSerializer
-}
+import com.spotify.scio.coders.instances.kryo.{CoderSerializer, MutateRowsExceptionSerializer}
 import com.twitter.chill._
 import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 
@@ -31,7 +26,8 @@ import org.apache.beam.sdk.io.gcp.bigquery.TableRowJsonCoder
 class GcpKryoRegistrar extends IKryoRegistrar {
   override def apply(k: Kryo): Unit = {
     k.forClass[TableRow](new CoderSerializer(TableRowJsonCoder.of()))
-    k.forClass[BigtableRetriesExhaustedException](new BigtableRetriesExhaustedExceptionSerializer)
+    // if MutateRowsException is used as cause in another throwable,
+    // it will be serialized as generic InternalException gax ApiException
     k.forClass[MutateRowsException](new MutateRowsExceptionSerializer)
   }
 }

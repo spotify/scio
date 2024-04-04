@@ -4,7 +4,7 @@ Scio integrates with Spotify's [Annoy](https://github.com/spotify/annoy), an app
 
 ## Write
 
-A keyed `SCollection` with `Int` keys and `Array[Float]` vector values can be saved with @scaladoc[asAnnoy](com.spotify.scio.extra.annoy.AnnoyPairSCollection#asAnnoy(path:String,metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int,nTrees:Int):com.spotify.scio.values.SCollection[com.spotify.scio.extra.annoy.AnnoyUri]):
+A keyed `SCollection` with `Int` keys and `Array[Float]` vector values can be saved with @scaladoc[asAnnoy](com.spotify.scio.extra.annoy.package$$AnnoyPairSCollection#asAnnoy(path:String,metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int,nTrees:Int):com.spotify.scio.values.SCollection[com.spotify.scio.extra.annoy.AnnoyUri]):
 
 ```scala
 import com.spotify.scio.values.SCollection
@@ -19,7 +19,7 @@ itemVectors.asAnnoy("gs://output-path", metric, numDimensions, numTrees)
 
 ## Side Input
 
-An Annoy file can be read directly as a `SideInput` with @scaladoc[annoySideInput](com.spotify.scio.extra.annoy.AnnoyScioContext#annoySideInput(path:String,metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.annoy.package.AnnoyReader]):
+An Annoy file can be read directly as a `SideInput` with @scaladoc[annoySideInput](com.spotify.scio.extra.annoy.package$$AnnoyScioContext#annoySideInput(path:String,metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.annoy.package.AnnoyReader]):
 
 ```scala
 import com.spotify.scio._
@@ -34,7 +34,7 @@ val annoySI: SideInput[AnnoyReader] = sc.annoySideInput("gs://input-path", metri
 ```
 
 Alternatively, an `SCollection` can be converted directly to a `SideInput` with @scaladoc
-[`asAnnoySideInput`](com.spotify.scio.extra.annoy.AnnoyPairSCollection#asAnnoySideInput(metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.annoy.package.AnnoyReader]):
+[`asAnnoySideInput`](com.spotify.scio.extra.annoy.package$$AnnoyPairSCollection#asAnnoySideInput(metric:com.spotify.scio.extra.annoy.package.AnnoyMetric,dim:Int):com.spotify.scio.values.SideInput[com.spotify.scio.extra.annoy.package.AnnoyReader]):
 
 ```scala
 import com.spotify.scio.values.{SCollection, SideInput}

@@ -26,7 +26,15 @@ import com.spotify.scio.hash._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Aggregator
 import magnolify.guava.auto._
-import org.apache.beam.sdk.coders.{KvCoder, NullableCoder, StringUtf8Coder, StructuredCoder, VarIntCoder, Coder => BCoder, ZstdCoder => BZstdCoder}
+import org.apache.beam.sdk.coders.{
+  Coder => BCoder,
+  KvCoder,
+  NullableCoder,
+  StringUtf8Coder,
+  StructuredCoder,
+  VarIntCoder,
+  ZstdCoder => BZstdCoder
+}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._

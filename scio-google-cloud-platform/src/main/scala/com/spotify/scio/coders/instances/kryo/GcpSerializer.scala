@@ -16,43 +16,18 @@
 
 package com.spotify.scio.coders.instances.kryo
 
-import com.esotericsoftware.kryo.serializers.DefaultSerializers.StringSerializer
 import com.google.api.gax.rpc.ApiException
 import com.google.cloud.bigtable.data.v2.models.MutateRowsException
-import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException
 import com.twitter.chill._
 
-private[coders] class BigtableRetriesExhaustedExceptionSerializer
-    extends KSerializer[BigtableRetriesExhaustedException] {
-
-  private lazy val stringSerializer = new StringSerializer()
-  private lazy val statusExceptionSerializer = new StatusRuntimeExceptionSerializer()
-
-  override def write(kryo: Kryo, output: Output, e: BigtableRetriesExhaustedException): Unit = {
-    kryo.writeObject(output, e.getMessage, stringSerializer)
-    kryo.writeObject(output, e.getCause, statusExceptionSerializer)
-  }
-
-  override def read(
-    kryo: Kryo,
-    input: Input,
-    `type`: Class[BigtableRetriesExhaustedException]
-  ): BigtableRetriesExhaustedException = {
-    val message = kryo.readObject(input, classOf[String], stringSerializer)
-    val cause = kryo.readObject(input, classOf[Throwable], statusExceptionSerializer)
-    new BigtableRetriesExhaustedException(message, cause)
-  }
-}
-
 private[coders] class MutateRowsExceptionSerializer extends KSerializer[MutateRowsException] {
-  private lazy val apiExceptionSer = new GaxApiExceptionSerializer()
   override def write(kryo: Kryo, output: Output, e: MutateRowsException): Unit = {
     kryo.writeClassAndObject(output, e.getCause)
     val failedMutations = e.getFailedMutations
     kryo.writeObject(output, failedMutations.size())
     failedMutations.forEach { fm =>
       kryo.writeObject(output, fm.getIndex)
-      kryo.writeObject(output, fm.getError, apiExceptionSer)
+      kryo.writeObject(output, fm.getError)
     }
     kryo.writeObject(output, e.isRetryable)
   }
@@ -67,7 +42,7 @@ private[coders] class MutateRowsExceptionSerializer extends KSerializer[MutateRo
     val failedMutations = new _root_.java.util.ArrayList[MutateRowsException.FailedMutation](size)
     (0 until size).foreach { _ =>
       val index = kryo.readObject(input, classOf[Integer])
-      val error = kryo.readObject(input, classOf[ApiException], apiExceptionSer)
+      val error = kryo.readObject(input, classOf[ApiException])
       failedMutations.add(MutateRowsException.FailedMutation.create(index, error))
     }
     val retryable = kryo.readObject(input, classOf[Boolean])
