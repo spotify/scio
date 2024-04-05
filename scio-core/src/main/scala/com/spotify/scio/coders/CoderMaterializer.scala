@@ -26,6 +26,7 @@ import org.apache.beam.sdk.coders.{
   ZstdCoder
 }
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.commons.lang3.ObjectUtils
 
 import java.net.URI
 import java.nio.file.Files
@@ -43,13 +44,14 @@ object CoderMaterializer {
     zstdDictMapping: Map[String, Array[Byte]]
   )
   private[scio] object CoderOptions {
-    private val cache: ConcurrentHashMap[PipelineOptions, CoderOptions] = new ConcurrentHashMap()
+    private val cache: ConcurrentHashMap[String, CoderOptions] = new ConcurrentHashMap()
 
     final def apply(o: PipelineOptions): CoderOptions = {
       cache.computeIfAbsent(
-        o,
-        { o =>
+        ObjectUtils.identityToString(o),
+        { _ =>
           val scioOpts = o.as(classOf[com.spotify.scio.options.ScioOptions])
+          scioOpts.getAppArguments
           val nullableCoder = scioOpts.getNullableCoders
           val zstdDictPaths = Option(scioOpts.getZstdDictionary)
             .map(_.asScala)
