@@ -22,8 +22,3 @@ libraryDependencies ++= Seq(
   "org.apache.avro" % "avro-compiler" % "1.8.2",
   "org.typelevel" %% "scalac-options" % "0.1.4"
 )
-
-// sbt-site plugin conflict. Remove after update
-dependencyOverrides ++= Seq(
-  "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
-)
