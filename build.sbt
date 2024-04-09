@@ -733,7 +733,6 @@ lazy val `scio-test-core` = project
     )
   )
 
-
 lazy val `scio-test-google-cloud-platform` = project
   .in(file("scio-test/google-cloud-platform"))
   .dependsOn(
@@ -748,7 +747,7 @@ lazy val `scio-test-google-cloud-platform` = project
     libraryDependencies ++= Seq(
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion,
+      "org.scalatest" %% "scalatest" % scalatestVersion
     )
   )
 
@@ -757,7 +756,7 @@ lazy val `scio-test-parquet` = project
   .dependsOn()
   .settings(commonSettings)
   .settings(
-    description := "Scio helpers for ScalaTest",
+    description := "Scio helpers for ScalaTest"
   )
 
 lazy val `scio-macros` = project
@@ -809,7 +808,7 @@ lazy val `scio-google-cloud-platform` = project
   .in(file("scio-google-cloud-platform"))
   .dependsOn(
     `scio-core` % "compile;test->test",
-    `scio-avro`,
+    `scio-avro`
   )
   .settings(commonSettings)
   .settings(macroSettings)
@@ -1012,7 +1011,7 @@ lazy val `scio-extra` = project
 lazy val `scio-grpc` = project
   .in(file("scio-grpc"))
   .dependsOn(
-    `scio-core` % "compile;test->test",
+    `scio-core` % "compile;test->test"
   )
   .settings(commonSettings)
   .settings(protobufSettings)
@@ -1036,7 +1035,7 @@ lazy val `scio-grpc` = project
 lazy val `scio-jdbc` = project
   .in(file("scio-jdbc"))
   .dependsOn(
-    `scio-core` % "compile;test->test",
+    `scio-core` % "compile;test->test"
   )
   .settings(commonSettings)
   .settings(
@@ -1055,7 +1054,7 @@ lazy val `scio-jdbc` = project
 lazy val `scio-neo4j` = project
   .in(file("scio-neo4j"))
   .dependsOn(
-    `scio-core` % "compile;test->test",
+    `scio-core` % "compile;test->test"
   )
   .settings(commonSettings)
   .settings(
@@ -1077,7 +1076,7 @@ lazy val `scio-parquet` = project
   .dependsOn(
     `scio-core` % "compile;test->test",
     `scio-tensorflow` % "provided",
-    `scio-avro` % "test->test",
+    `scio-avro` % "test->test"
   )
   .settings(commonSettings)
   .settings(
@@ -1134,7 +1133,7 @@ val tensorFlowMetadata = taskKey[Seq[File]]("Retrieve TensorFlow metadata proto 
 lazy val `scio-tensorflow` = project
   .in(file("scio-tensorflow"))
   .dependsOn(
-    `scio-core` % "compile;test->test",
+    `scio-core` % "compile;test->test"
   )
   .settings(commonSettings)
   .settings(protobufSettings)
@@ -1445,7 +1444,7 @@ lazy val `scio-smb` = project
     `scio-avro` % "provided;test->test",
     `scio-google-cloud-platform` % "provided",
     `scio-parquet` % "provided",
-    `scio-tensorflow` % "provided",
+    `scio-tensorflow` % "provided"
   )
   .settings(commonSettings)
   .settings(jUnitSettings)
