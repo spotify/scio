@@ -60,7 +60,7 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20240205-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
-val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
+val avroVersion = "1.11.3" // sdks/java/extensions/avro/build.gradle
 val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle

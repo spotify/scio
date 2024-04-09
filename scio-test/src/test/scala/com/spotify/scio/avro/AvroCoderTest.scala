@@ -23,6 +23,7 @@ import org.apache.avro.AvroRuntimeException
 import org.apache.avro.generic.GenericRecord
 import org.apache.avro.specific.SpecificRecord
 import org.apache.beam.sdk.util.CoderUtils
+import java.time.Instant
 import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -48,6 +49,15 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
     val cause = caught.getCause.getCause
     cause shouldBe a[AvroRuntimeException]
     cause.getMessage shouldBe "Not a Specific class: interface org.apache.avro.specific.SpecificRecord"
+  }
+
+  it should "support nullable decimal types" in {
+    val record = TestLogicalTypes.newBuilder()
+      .setTimestamp(Instant.now())
+      .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+      .setNullableDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+      .build()
+    record coderShould roundtrip
   }
 
   it should "support Avro's GenericRecord" in {
