@@ -1,7 +1,65 @@
-{
-  "type": "record",
-  "name": "Test",
-  "fields": [
-    {"name": "test", "type": "int"}
-  ]
-}
+[
+  {
+    "type": "record",
+    "name": "Test",
+    "namespace": "com.spotify.scio.avro",
+    "fields": [
+      {
+        "name": "test",
+        "type": "int"
+      }
+    ]
+  },
+  {
+    "name": "LogicalTypesTest",
+    "namespace": "com.spotify.scio.avro",
+    "doc": "Record for testing logical types",
+    "type": "record",
+    "fields": [
+      {
+        "name": "timestamp",
+        "type": {
+          "type": "long",
+          "logicalType": "timestamp-millis"
+        }
+      },
+      {
+        "name": "local_date_time",
+        "type": {
+          "name": "LocalDateTimeTest",
+          "type": "record",
+          "fields": [
+            {
+              "name": "date",
+              "type": {
+                "type": "int",
+                "logicalType": "date"
+              }
+            },
+            {
+              "name": "time",
+              "type": {
+                "type": "int",
+                "logicalType": "time-millis"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "record",
+    "name": "NameConflict",
+    "namespace": "com.spotify.scio.avro",
+    "fields": [
+      {
+        "name": "conversions",
+        "type": {
+          "type": "array",
+          "items": "int"
+        }
+      }
+    ]
+  }
+]
