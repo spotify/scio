@@ -21,6 +21,7 @@ import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ScioIO, Tap, TapOf, TapT}
 import com.spotify.scio.values.SCollection
+import magnolify.avro.{AvroType => AvroMagnolifyType}
 import org.apache.avro.generic.GenericRecord
 
 import scala.reflect.runtime.universe._
@@ -38,13 +39,18 @@ final case class AvroTypedIO[T <: HasAvroAnnotation: TypeTag: Coder](path: Strin
   private lazy val underlying: GenericRecordIO = GenericRecordIO(path, schema)
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
-    sc.read(underlying)(params).map(avroT.fromGenericRecord)
+    sc.transform(_.read(underlying)(params).map(avroT.fromGenericRecord))
 
   override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
     val datumFactory = Option(params.datumFactory).getOrElse(GenericRecordDatumFactory)
     implicit val coder: Coder[GenericRecord] = avroCoder(datumFactory, schema)
-    data.map(avroT.toGenericRecord).write(underlying)(params)
-    tap(AvroIO.ReadParam(params))
+    underlying
+      .writeWithContext(
+        data.transform(_.map(avroT.toGenericRecord)),
+        params
+      )
+      .underlying
+      .map(avroT.fromGenericRecord)
   }
 
   override def tap(read: ReadP): Tap[T] =
@@ -61,6 +67,35 @@ object AvroTypedIO {
 @deprecated("Use AvroTypedIO instead", "0.14.0")
 object AvroTyped {
   type AvroIO[T <: HasAvroAnnotation] = AvroTypedIO[T]
-  def AvroIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String): AvroIO[T] =
-    AvroTypedIO[T](path)
+  def AvroIO[T <: HasAvroAnnotation: TypeTag: Coder](path: String): AvroIO[T] = AvroTypedIO[T](path)
+}
+
+final case class AvroMagnolifyTypedIO[T: AvroMagnolifyType: Coder](path: String) extends ScioIO[T] {
+  override type ReadP = AvroMagnolifyTypedIO.ReadParam
+  override type WriteP = AvroMagnolifyTypedIO.WriteParam
+  override val tapT: TapT.Aux[T, T] = TapOf[T]
+
+  override def testId: String = s"AvroIO($path)"
+
+  private lazy val avroT: AvroMagnolifyType[T] = implicitly
+  private lazy val schema = avroT.schema
+  private lazy val underlying: GenericRecordIO = GenericRecordIO(path, schema)
+
+  override protected def read(sc: ScioContext, params: ReadP): SCollection[T] =
+    sc.transform(_.read(underlying)(params).map(avroT.from))
+
+  override protected def write(data: SCollection[T], params: WriteP): Tap[T] = {
+    val datumFactory = Option(params.datumFactory).getOrElse(GenericRecordDatumFactory)
+    implicit val coder: Coder[GenericRecord] = avroCoder(datumFactory, schema)
+    underlying.writeWithContext(data.transform(_.map(avroT.to)), params).underlying.map(avroT.from)
+  }
+
+  override def tap(read: ReadP): Tap[T] = underlying.tap(read).map(avroT.from)
+}
+
+object AvroMagnolifyTypedIO {
+  type ReadParam = GenericRecordIO.ReadParam
+  val ReadParam = GenericRecordIO.ReadParam
+  type WriteParam = GenericRecordIO.WriteParam
+  val WriteParam = GenericRecordIO.WriteParam
 }

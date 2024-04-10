@@ -25,6 +25,7 @@ import com.spotify.scio.bigquery.{TableRow, Writes}
 import com.spotify.scio.io.{ClosedTap, EmptyTap}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
+import magnolify.bigquery.TableRowType
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   CreateDisposition,
   Method,
@@ -37,11 +38,36 @@ import org.apache.beam.sdk.values.ValueInSingleWindow
 import scala.reflect.runtime.universe._
 import scala.util.chaining._
 
+object DynamicWriteParam extends Writes.WriteParamDefaults
+
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with dynamic destinations
  * methods.
  */
 final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyVal {
+
+  /**
+   * Save this SCollection to dynamic BigQuery tables specified by `tableFn`, converting elements of
+   * type `T` to `TableRow` via the implicitly-available `TableRowType[T]`
+   */
+  def saveAsBigQuery(
+    writeDisposition: WriteDisposition = DynamicWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = DynamicWriteParam.DefaultCreateDisposition,
+    extendedErrorInfo: Boolean = DynamicWriteParam.DefaultExtendedErrorInfo
+  )(
+    tableFn: ValueInSingleWindow[T] => TableDestination
+  )(implicit tableRowType: TableRowType[T]): ClosedTap[Nothing] = {
+    val destinations = DynamicDestinationsUtil.tableFn(tableFn, tableRowType.schema)
+
+    new DynamicBigQueryOps(self).saveAsBigQuery(
+      destinations,
+      tableRowType.to,
+      writeDisposition,
+      createDisposition,
+      false,
+      extendedErrorInfo
+    )
+  }
 
   /**
    * Save this SCollection to dynamic BigQuery tables using the table and schema specified by the
@@ -52,8 +78,8 @@ final class DynamicBigQueryOps[T](private val self: SCollection[T]) extends AnyV
     formatFn: T => TableRow,
     writeDisposition: WriteDisposition,
     createDisposition: CreateDisposition,
-    successfulInsertsPropagation: Boolean = false,
-    extendedErrorInfo: Boolean = false
+    successfulInsertsPropagation: Boolean,
+    extendedErrorInfo: Boolean
   ): ClosedTap[Nothing] = {
     if (self.context.isTest) {
       throw new NotImplementedError(
@@ -91,15 +117,16 @@ final class DynamicTableRowBigQueryOps[T <: TableRow](private val self: SCollect
    */
   def saveAsBigQuery(
     schema: TableSchema,
-    writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null,
-    extendedErrorInfo: Boolean = false
+    writeDisposition: WriteDisposition = DynamicWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = DynamicWriteParam.DefaultCreateDisposition,
+    extendedErrorInfo: Boolean = DynamicWriteParam.DefaultExtendedErrorInfo
   )(tableFn: ValueInSingleWindow[T] => TableDestination): ClosedTap[Nothing] =
     new DynamicBigQueryOps(self).saveAsBigQuery(
       DynamicDestinationsUtil.tableFn(tableFn, schema),
       identity,
       writeDisposition,
       createDisposition,
+      false,
       extendedErrorInfo
     )
 }
@@ -117,9 +144,9 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
    * [[com.spotify.scio.bigquery.types.BigQueryType BigQueryType]].
    */
   def saveAsTypedBigQuery(
-    writeDisposition: WriteDisposition = null,
-    createDisposition: CreateDisposition = null,
-    extendedErrorInfo: Boolean = false
+    writeDisposition: WriteDisposition = DynamicWriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = DynamicWriteParam.DefaultCreateDisposition,
+    extendedErrorInfo: Boolean = DynamicWriteParam.DefaultExtendedErrorInfo
   )(
     tableFn: ValueInSingleWindow[T] => TableDestination
   )(implicit tt: TypeTag[T]): ClosedTap[Nothing] = {
@@ -131,6 +158,7 @@ final class DynamicTypedBigQueryOps[T <: HasAnnotation](private val self: SColle
       bqt.toTableRow,
       writeDisposition,
       createDisposition,
+      false,
       extendedErrorInfo
     )
   }
