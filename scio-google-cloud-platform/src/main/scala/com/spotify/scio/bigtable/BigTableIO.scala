@@ -25,6 +25,7 @@ import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT, TestIO}
 import com.spotify.scio.util.Functions
 import com.spotify.scio.values.SCollection
+import magnolify.bigtable.BigtableType
 import org.apache.beam.sdk.io.gcp.{bigtable => beam}
 import org.apache.beam.sdk.io.range.ByteKeyRange
 import org.apache.beam.sdk.values.KV
@@ -56,17 +57,13 @@ final case class BigtableRead(bigtableOptions: BigtableOptions, tableId: String)
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Row] = {
     val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
-    val opts = bigtableOptions // defeat closure
-    val read = beam.BigtableIO
-      .read()
-      .withProjectId(bigtableOptions.getProjectId)
-      .withInstanceId(bigtableOptions.getInstanceId)
-      .withTableId(tableId)
-      .withBigtableOptionsConfigurator(Functions.serializableFn(_ => opts.toBuilder))
-      .withMaxBufferElementCount(params.maxBufferElementCount.map(Int.box).orNull)
-      .pipe(r => if (params.keyRanges.isEmpty) r else r.withKeyRanges(params.keyRanges.asJava))
-      .pipe(r => Option(params.rowFilter).fold(r)(r.withRowFilter)): @nowarn("cat=deprecation")
-
+    val read = BigtableRead.read(
+      bigtableOptions,
+      tableId,
+      params.maxBufferElementCount,
+      params.keyRanges,
+      params.rowFilter
+    )
     sc.applyTransform(read).setCoder(coder)
   }
 
@@ -97,14 +94,119 @@ object BigtableRead {
     maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
   )
 
-  final def apply(projectId: String, instanceId: String, tableId: String): BigtableRead = {
-    val bigtableOptions = BigtableOptions
-      .builder()
-      .setProjectId(projectId)
-      .setInstanceId(instanceId)
-      .build
-    BigtableRead(bigtableOptions, tableId)
+  private[scio] def read(
+    bigtableOptions: BigtableOptions,
+    tableId: String,
+    maxBufferElementCount: Option[Int],
+    keyRanges: Seq[ByteKeyRange],
+    rowFilter: RowFilter
+  ): beam.BigtableIO.Read = {
+    val opts = bigtableOptions // defeat closure
+    beam.BigtableIO
+      .read()
+      .withProjectId(bigtableOptions.getProjectId)
+      .withInstanceId(bigtableOptions.getInstanceId)
+      .withTableId(tableId)
+      .withBigtableOptionsConfigurator(Functions.serializableFn(_ => opts.toBuilder))
+      .withMaxBufferElementCount(maxBufferElementCount.map(Int.box).orNull)
+      .pipe(r => if (keyRanges.isEmpty) r else r.withKeyRanges(keyRanges.asJava))
+      .pipe(r => Option(rowFilter).fold(r)(r.withRowFilter)): @nowarn("cat=deprecation")
   }
+}
+
+final case class BigtableTypedIO[K: Coder, T: BigtableType: Coder](
+  bigtableOptions: BigtableOptions,
+  tableId: String
+) extends BigtableIO[(K, T)] {
+  override type ReadP = BigtableTypedIO.ReadParam[K]
+  override type WriteP = BigtableTypedIO.WriteParam[K]
+
+  override def testId: String =
+    s"BigtableIO(${bigtableOptions.getProjectId}\t${bigtableOptions.getInstanceId}\t$tableId)"
+
+  override protected def read(
+    sc: ScioContext,
+    params: ReadP
+  ): SCollection[(K, T)] = {
+    val coder = CoderMaterializer.beam(sc, Coder.protoMessageCoder[Row])
+    val read = BigtableRead.read(
+      bigtableOptions,
+      tableId,
+      params.maxBufferElementCount,
+      params.keyRanges,
+      params.rowFilter
+    )
+
+    val bigtableType: BigtableType[T] = implicitly
+    val cf = params.columnFamily
+    val keyFn = params.keyFn
+    sc.transform(
+      _.applyTransform(read)
+        .setCoder(coder)
+        .map(row => keyFn(row.getKey) -> bigtableType(row, cf))
+    )
+  }
+
+  override protected def write(
+    data: SCollection[(K, T)],
+    params: WriteP
+  ): Tap[Nothing] = {
+    val bigtableType: BigtableType[T] = implicitly
+    val btParams = params.numOfShards match {
+      case None            => BigtableWrite.Default
+      case Some(numShards) =>
+        BigtableWrite.Bulk(
+          numShards,
+          Option(params.flushInterval).getOrElse(BigtableWrite.Bulk.DefaultFlushInterval)
+        )
+    }
+    val cf = params.columnFamily
+    val ts = params.timestamp
+    val keyFn = params.keyFn
+    data.transform_("Bigtable write") { coll =>
+      coll
+        .map { case (key, t) =>
+          val mutations = Iterable(bigtableType.apply(t, cf, ts)).asJava
+            .asInstanceOf[java.lang.Iterable[Mutation]]
+          KV.of(keyFn(key), mutations)
+        }
+        .applyInternal(BigtableWrite.sink(tableId, bigtableOptions, btParams))
+    }
+    EmptyTap
+  }
+
+  override def tap(params: ReadP): Tap[Nothing] =
+    throw new NotImplementedError("Bigtable tap not implemented")
+}
+
+object BigtableTypedIO {
+  object ReadParam {
+    val DefaultKeyRanges: Seq[ByteKeyRange] = Seq.empty[ByteKeyRange]
+    val DefaultRowFilter: RowFilter = null
+    val DefaultMaxBufferElementCount: Option[Int] = None
+  }
+
+  final case class ReadParam[K] private (
+    columnFamily: String,
+    keyFn: ByteString => K,
+    keyRanges: Seq[ByteKeyRange] = ReadParam.DefaultKeyRanges,
+    rowFilter: RowFilter = ReadParam.DefaultRowFilter,
+    maxBufferElementCount: Option[Int] = ReadParam.DefaultMaxBufferElementCount
+  )
+
+  object WriteParam {
+    val DefaultTimestamp: Long = 0L
+    val DefaultNumOfShards: Option[Int] = None
+    val DefaultFlushInterval: Duration = null
+  }
+
+  final case class WriteParam[K] private (
+    columnFamily: String,
+    keyFn: K => ByteString,
+    timestamp: Long = WriteParam.DefaultTimestamp,
+    numOfShards: Option[Int] = WriteParam.DefaultNumOfShards,
+    flushInterval: Duration = WriteParam.DefaultFlushInterval
+  )
 }
 
 final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, tableId: String)
@@ -127,28 +229,12 @@ final case class BigtableWrite[T <: Mutation](bigtableOptions: BigtableOptions, 
     data: SCollection[(ByteString, Iterable[T])],
     params: WriteP
   ): Tap[Nothing] = {
-    val sink =
-      params match {
-        case BigtableWrite.Default(flowControlEnabled) =>
-          val opts = bigtableOptions // defeat closure
-          beam.BigtableIO
-            .write()
-            .withProjectId(bigtableOptions.getProjectId)
-            .withInstanceId(bigtableOptions.getInstanceId)
-            .withTableId(tableId)
-            .withFlowControl(flowControlEnabled)
-            .withBigtableOptionsConfigurator(
-              Functions.serializableFn(_ => opts.toBuilder)
-            ): @nowarn("cat=deprecation")
-        case BigtableWrite.Bulk(numOfShards, flushInterval) =>
-          new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
-      }
     data.transform_("Bigtable write") { coll =>
       coll
         .map { case (key, value) =>
           KV.of(key, value.asJava.asInstanceOf[java.lang.Iterable[Mutation]])
         }
-        .applyInternal(sink)
+        .applyInternal(BigtableWrite.sink(tableId, bigtableOptions, params))
     }
     EmptyTap
   }
@@ -186,5 +272,23 @@ object BigtableWrite {
       .setInstanceId(instanceId)
       .build
     BigtableWrite[T](bigtableOptions, tableId)
+  }
+
+  private[scio] def sink(tableId: String, bigtableOptions: BigtableOptions, params: WriteParam) = {
+    params match {
+      case BigtableWrite.Default(flowControlEnabled) =>
+        val opts = bigtableOptions // defeat closure
+        beam.BigtableIO
+          .write()
+          .withProjectId(bigtableOptions.getProjectId)
+          .withInstanceId(bigtableOptions.getInstanceId)
+          .withTableId(tableId)
+          .withFlowControl(flowControlEnabled)
+          .withBigtableOptionsConfigurator(
+            Functions.serializableFn(_ => opts.toBuilder)
+          ): @nowarn("cat=deprecation")
+      case BigtableWrite.Bulk(numOfShards, flushInterval) =>
+        new BigtableBulkWriter(tableId, bigtableOptions, numOfShards, flushInterval)
+    }
   }
 }

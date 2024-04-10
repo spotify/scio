@@ -39,6 +39,13 @@ class TFExampleIOTest extends ScioIOSpec {
     testTap(xs)(_.saveAsTfRecordFile(_))(".tfrecords")
     testJobTest(xs)(TFExampleIO(_))(_.tfRecordExampleFile(_))(_.saveAsTfRecordFile(_))
   }
+
+  it should "work with typed records" in {
+    val xs = (1 to 100).map(x => Record(x, x.toString))
+    implicit val exampleType: ExampleType[Record] = recordT
+    testTap(xs)(_.saveAsTfRecordFile(_))(".tfrecords")
+    testJobTest(xs)(TFExampleTypedIO(_))(_.typedTfRecordFile(_))(_.saveAsTfRecordFile(_))
+  }
 }
 
 class TFExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
@@ -65,7 +72,7 @@ class TFExampleIOFileNamePolicyTest extends FileNamePolicySpec[Example] {
     _.map(x => recordT(Record(x, x.toString))).saveAsTfRecordFile(
       "nonsense",
       shardNameTemplate = "SSS-of-NNN",
-      filenamePolicySupplier = testFilenamePolicySupplier
+      filenamePolicySupplier = testFilenamePolicySupplier(_, _)
     )
   )
 }
