@@ -1601,9 +1601,9 @@ lazy val site = project
     MdocPlugin
   )
   .dependsOn(
-    `scio-avro`,
+    `scio-avro` % "compile->test",
     `scio-cassandra3`,
-    `scio-core`,
+    `scio-core` % "compile->test",
     `scio-elasticsearch-common`,
     `scio-elasticsearch8`,
     `scio-extra`,

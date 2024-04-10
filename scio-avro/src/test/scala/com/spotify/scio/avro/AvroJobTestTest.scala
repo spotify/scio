@@ -24,18 +24,11 @@ import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.generic.GenericRecord
 
 object ObjectFileJob {
-
-  // #JobTestTest_io_pipeline_section
-  def pipeline(sc: ScioContext, input: String, output: String): Unit = {
-    sc.objectFile[Int](input)
-      .map(_ * 10)
-      .saveAsObjectFile(output)
-  }
-  // #JobTestTest_io_pipeline_section
-
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    pipeline(sc, args("input"), args("output"))
+    sc.objectFile[Int](args("input"))
+      .map(_ * 10)
+      .saveAsObjectFile(args("output"))
     sc.run()
     ()
   }
@@ -87,27 +80,17 @@ class AvroJobTestTest extends PipelineSpec {
       .output(ObjectFileIO[Int]("out.avro"))(coll => coll should containInAnyOrder(xs))
       .run()
 
-  "JobTest" should "pass correct ObjectFileIO" in {
+  "ObjectFileIO" should "pass when correct" in {
     testObjectFileJob(10, 20, 30)
   }
 
-  it should "fail incorrect ObjectFileIO" in {
+  it should "fail when incorrect" in {
     an[AssertionError] should be thrownBy {
       testObjectFileJob(10, 20)
     }
     an[AssertionError] should be thrownBy {
       testObjectFileJob(10, 20, 30, 40)
     }
-  }
-
-  it should "execute anonymous job" in {
-    import ObjectFileJob.pipeline
-    // #JobTestTest_anonymous_job_test
-    JobTest(pipeline(_, "in.avro", "out.avro"))
-      .input(ObjectFileIO[Int]("in.avro"), Seq(1, 2, 3))
-      .output(ObjectFileIO[Int]("out.avro"))(_ should containInAnyOrder(Seq(10, 20, 30)))
-      .run()
-    // #JobTestTest_anonymous_job_test
   }
 
   def testSpecificAvroFileJob(xs: Seq[TestRecord]): Unit =
@@ -117,11 +100,11 @@ class AvroJobTestTest extends PipelineSpec {
       .output(AvroIO[TestRecord]("out.avro"))(coll => coll should containInAnyOrder(xs))
       .run()
 
-  it should "pass correct specific AvroFileIO" in {
+  "AvroIO" should "pass when correct specific records" in {
     testSpecificAvroFileJob((1 to 3).map(newSpecificRecord))
   }
 
-  it should "fail incorrect specific AvroFileIO" in {
+  it should "fail when incorrect specific records" in {
     an[AssertionError] should be thrownBy {
       testSpecificAvroFileJob((1 to 2).map(newSpecificRecord))
     }
@@ -139,11 +122,11 @@ class AvroJobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass correct generic AvroFileIO" in {
+  it should "pass when correct generic records" in {
     testGenericAvroFileJob((1 to 3).map(newGenericRecord))
   }
 
-  it should "fail incorrect generic AvroFileIO" in {
+  it should "fail when incorrect generic records" in {
     an[AssertionError] should be thrownBy {
       testGenericAvroFileJob((1 to 2).map(newGenericRecord))
     }
@@ -165,11 +148,11 @@ class AvroJobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass correct generic parseFn AvroFileIO" in {
+  it should "pass when correct generic parsed records" in {
     testGenericParseAvroFileJob((1 to 3).map(newGenericRecord))
   }
 
-  it should "fail incorrect generic parseFn AvroFileIO" in {
+  it should "fail when incorrect parsed generic records" in {
     an[AssertionError] should be thrownBy {
       testGenericParseAvroFileJob((1 to 2).map(newGenericRecord))
     }

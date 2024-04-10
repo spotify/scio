@@ -47,11 +47,18 @@ class MockedPrintStream extends PrintStream("/dev/null") with Serializable {
 }
 
 object TextFileJob {
+
+  // #JobTestTest_io_pipeline_section
+  def pipeline(sc: ScioContext, input: String, output: String): Unit = {
+    sc.textFile(input)
+      .map(_ + "X")
+      .saveAsTextFile(output)
+  }
+  // #JobTestTest_io_pipeline_section
+
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.textFile(args("input"))
-      .map(_ + "X")
-      .saveAsTextFile(args("output"))
+    pipeline(sc, args("input"), args("output"))
     sc.run()
     ()
   }
@@ -312,6 +319,16 @@ class JobTestTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       testTextFileJob("aX", "bX", "cX", "dX")
     }
+  }
+
+  it should "execute anonymous job" in {
+    import TextFileJob.pipeline
+    // #JobTestTest_anonymous_job_test
+    JobTest(pipeline(_, "in.txt", "out.txt"))
+      .input(TextIO("in.txt"), Seq("a", "b", "c"))
+      .output(TextIO("out.txt"))(_ should containInAnyOrder(Seq("aX", "bX", "cX")))
+      .run()
+    // #JobTestTest_anonymous_job_test
   }
 
   def testDistCacheJob(xs: String*): Unit =
