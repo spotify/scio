@@ -330,7 +330,7 @@ trait SCollectionMatchers extends EqInstances {
   ): Matcher[T] =
     matcher.matcher(_.inEarlyGlobalWindowPanes)
 
-  /** Assert that the SCollection in question contains the provided elements. */
+  /** Assert that the SCollection in question contains exactly the provided elements. */
   def containInAnyOrder[T: Coder: Eq](
     value: Iterable[T]
   ): IterableMatcher[SCollection[T], T] =
