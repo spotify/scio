@@ -23,6 +23,40 @@ import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
+import com.spotify.zoltar.tf.TensorFlowModel
+import magnolify.tensorflow.ExampleType
+
+final class TypedExampleSCollectionOps[T](private val self: SCollection[T]) {
+
+  /**
+   * Converts this collection of `T` into Tensorflow [[org.tensorflow.proto.example.Example]]s with
+   * the provided [[magnolify.tensorflow.ExampleType]], then saves these as a TensorFlow TFRecord
+   * file.
+   */
+  def saveAsTfRecordFile(
+    path: String,
+    suffix: String = TFExampleIO.WriteParam.DefaultSuffix,
+    compression: Compression = TFExampleIO.WriteParam.DefaultCompression,
+    numShards: Int = TFExampleIO.WriteParam.DefaultNumShards,
+    shardNameTemplate: String = TFExampleIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = TFExampleIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      TFExampleIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = TFExampleIO.WriteParam.DefaultPrefix
+  )(implicit exampleType: ExampleType[T]): ClosedTap[T] = {
+    implicit val tCoder: Coder[T] = self.coder
+    val param = TFExampleTypedIO.WriteParam(
+      suffix,
+      compression,
+      numShards,
+      filenamePolicySupplier,
+      prefix,
+      shardNameTemplate,
+      tempDirectory
+    )
+    self.write(TFExampleTypedIO(path))(param)
+  }
+}
 
 final class ExampleSCollectionOps[T <: Example](private val self: SCollection[T]) extends AnyVal {
 
@@ -193,4 +227,8 @@ trait SCollectionSyntax {
   implicit def tensorFlowSequenceExampleSCollectionOps[T <: SequenceExample](
     s: SCollection[T]
   ): SequenceExampleSCollectionOps[T] = new SequenceExampleSCollectionOps(s)
+
+  implicit def tensorFlowTypedExampleSCollectionOps[T](
+    s: SCollection[T]
+  ): TypedExampleSCollectionOps[T] = new TypedExampleSCollectionOps(s)
 }
