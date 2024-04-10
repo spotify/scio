@@ -40,6 +40,7 @@ import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.{
   CountingOutputStream
 }
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.reflect.ClassPath
+import org.codehaus.jackson.node.NullNode
 import org.joda.time.{DateTime, LocalDate, LocalDateTime, LocalTime}
 import org.slf4j.LoggerFactory
 
@@ -120,6 +121,7 @@ final private class ScioKryoRegistrar extends IKryoRegistrar {
     k.forSubclass[Path](new JPathSerializer)
     k.forSubclass[ByteString](new ByteStringSerializer)
     k.forClass(new KVSerializer)
+    k.forClass[org.codehaus.jackson.node.NullNode](new SingletonSerializer(NullNode.getInstance()))
     k.forClass[io.grpc.Status](new StatusSerializer)
     k.addDefaultSerializer(classOf[Throwable], new ThrowableSerializer)
     ()

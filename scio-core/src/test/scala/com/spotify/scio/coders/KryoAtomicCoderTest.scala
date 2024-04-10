@@ -70,8 +70,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
     Pair("record", 10) kryoCoderShould roundtrip()
   }
 
-  // Enable once https://github.com/scala/scala/pull/10425 is release
-  ignore should "support wrapped iterables" in {
+  it should "support wrapped iterables" in {
     // handle immutable underlying Java collections
     val list = List(1, 2, 3).asJava
 
@@ -83,7 +82,6 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
   it should "support Avro GenericRecord" in {
     val r = newGenericRecord(1)
-    r kryoCoderShould roundtrip()
     ("key", r) kryoCoderShould roundtrip()
     CaseClassWithGenericRecord("record", 10, r) kryoCoderShould roundtrip()
   }

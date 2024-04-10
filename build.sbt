@@ -747,7 +747,9 @@ lazy val `scio-test-google-cloud-platform` = project
     libraryDependencies ++= Seq(
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion
+      "org.scalatest" %% "scalatest" % scalatestVersion,
+      // runtime
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime
     )
   )
 
@@ -874,8 +876,7 @@ lazy val `scio-google-cloud-platform` = project
 lazy val `scio-cassandra3` = project
   .in(file("scio-cassandra/cassandra3"))
   .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
+    `scio-core` % "compile;test->test",
   )
   .settings(commonSettings)
   .settings(
@@ -902,8 +903,7 @@ lazy val `scio-cassandra3` = project
 lazy val `scio-elasticsearch-common` = project
   .in(file("scio-elasticsearch/common"))
   .dependsOn(
-    `scio-core`,
-    `scio-test` % "test"
+    `scio-core` % "compile;test->test",
   )
   .settings(commonSettings)
   .settings(
