@@ -32,20 +32,26 @@ class AvroDatumFactoryTest extends AnyFlatSpec with Matchers {
       val writer = factory(schema)
       val data = writer.asInstanceOf[SpecificDatumWriter[LogicalTypesTest]].getData
       // top-level
-      data.getConversionFor(LogicalTypes.timestampMillis()) shouldBe a[TimeConversions.TimestampConversion]
+      val timestamp = data.getConversionFor(LogicalTypes.timestampMillis())
+      timestamp shouldBe a[TimeConversions.TimestampConversion]
       // nested-level
-      data.getConversionFor(LogicalTypes.date()) shouldBe a[TimeConversions.DateConversion]
-      data.getConversionFor(LogicalTypes.timeMillis()) shouldBe a[TimeConversions.TimeConversion]
+      val date = data.getConversionFor(LogicalTypes.date())
+      date shouldBe a[TimeConversions.DateConversion]
+      val time = data.getConversionFor(LogicalTypes.timeMillis())
+      time shouldBe a[TimeConversions.TimeConversion]
     }
 
     {
       val reader = factory(schema, schema)
       val data = reader.asInstanceOf[SpecificDatumReader[LogicalTypesTest]].getData
       // top-level
-      data.getConversionFor(LogicalTypes.timestampMillis()) shouldBe a[TimeConversions.TimestampConversion]
+      val timestamp = data.getConversionFor(LogicalTypes.timestampMillis())
+      timestamp shouldBe a[TimeConversions.TimestampConversion]
       // nested-level
-      data.getConversionFor(LogicalTypes.date()) shouldBe a[TimeConversions.DateConversion]
-      data.getConversionFor(LogicalTypes.timeMillis()) shouldBe a[TimeConversions.TimeConversion]
+      val date = data.getConversionFor(LogicalTypes.date())
+      date shouldBe a[TimeConversions.DateConversion]
+      val time = data.getConversionFor(LogicalTypes.timeMillis())
+      time shouldBe a[TimeConversions.TimeConversion]
     }
   }
 
