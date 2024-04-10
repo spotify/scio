@@ -22,13 +22,15 @@ import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
+import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values._
+import magnolify.avro.{AvroType => AvroMagnolifyType}
+import magnolify.protobuf.ProtobufType
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.specific.{SpecificData, SpecificRecord}
+import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.extensions.avro.io.{AvroDatumFactory, AvroIO => BAvroIO, AvroSource}
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -183,17 +185,17 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
    */
   def saveAsProtobufFile(
     path: String,
-    numShards: Int = ProtobufIO.WriteParam.DefaultNumShards,
-    suffix: String = ProtobufIO.WriteParam.DefaultSuffixProtobuf,
-    codec: CodecFactory = ProtobufIO.WriteParam.DefaultCodec,
-    metadata: Map[String, AnyRef] = ProtobufIO.WriteParam.DefaultMetadata,
-    shardNameTemplate: String = ProtobufIO.WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = ProtobufIO.WriteParam.DefaultTempDirectory,
+    numShards: Int = ProtobufObjectFileIO.WriteParam.DefaultNumShards,
+    suffix: String = ProtobufObjectFileIO.WriteParam.DefaultSuffixProtobuf,
+    codec: CodecFactory = ProtobufObjectFileIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = ProtobufObjectFileIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = ProtobufObjectFileIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = ProtobufObjectFileIO.WriteParam.DefaultTempDirectory,
     filenamePolicySupplier: FilenamePolicySupplier =
-      ProtobufIO.WriteParam.DefaultFilenamePolicySupplier,
-    prefix: String = ProtobufIO.WriteParam.DefaultPrefix
+      ProtobufObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = ProtobufObjectFileIO.WriteParam.DefaultPrefix
   )(implicit ct: ClassTag[T]): ClosedTap[T] = {
-    val param = ProtobufIO.WriteParam[GenericRecord](
+    val param = ProtobufObjectFileIO.WriteParam[GenericRecord](
       numShards,
       suffix,
       codec,
@@ -203,64 +205,73 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
       shardNameTemplate,
       tempDirectory
     )
-    self.write(ProtobufIO[T](path))(param)
+    self.write(ProtobufObjectFileIO[T](path))(param)
   }
 }
 
-final class FilesSCollectionOps(private val self: SCollection[String]) extends AnyVal {
+final class TypedMagnolifyProtobufSCollectionOps[T](private val self: SCollection[T])
+    extends AnyVal {
 
-  def readAvroGenericFiles(
-    schema: Schema,
-    datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordIO.ReadParam.DefaultDatumFactory
-  ): SCollection[GenericRecord] = {
-    val df = Option(datumFactory).getOrElse(GenericRecordDatumFactory)
-    implicit val coder: Coder[GenericRecord] = avroCoder(df, schema)
-    val transform = BAvroIO
-      .readFilesGenericRecords(schema)
-      .withDatumReaderFactory(df)
-    self.readFiles(filesTransform = transform)
+  /**
+   * Save this SCollection as a Protobuf file.
+   *
+   * Protobuf messages are serialized into `Array[Byte]` and stored in Avro files to leverage Avro's
+   * block file format.
+   */
+  def saveAsProtobufFile[U <: Message: ClassTag](
+    path: String,
+    numShards: Int = ProtobufTypedObjectFileIO.WriteParam.DefaultNumShards,
+    suffix: String = ProtobufTypedObjectFileIO.WriteParam.DefaultSuffixProtobuf,
+    codec: CodecFactory = ProtobufTypedObjectFileIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = ProtobufTypedObjectFileIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = ProtobufTypedObjectFileIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = ProtobufTypedObjectFileIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      ProtobufTypedObjectFileIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = ProtobufTypedObjectFileIO.WriteParam.DefaultPrefix
+  )(implicit pt: ProtobufType[T, U]): ClosedTap[T] = {
+    implicit val tCoder: Coder[T] = self.coder
+    val param = ProtobufTypedObjectFileIO.WriteParam[GenericRecord](
+      numShards,
+      suffix,
+      codec,
+      metadata,
+      filenamePolicySupplier,
+      prefix,
+      shardNameTemplate,
+      tempDirectory
+    )
+    self.write(ProtobufTypedObjectFileIO[T, U](path))(param)
   }
+}
 
-  def readAvroSpecificFiles[T <: SpecificRecord: ClassTag](
-    datumFactory: AvroDatumFactory[T] = SpecificRecordIO.ReadParam.DefaultDatumFactory
-  ): SCollection[T] = {
-    val recordClass = ScioUtil.classOf[T]
-    val schema = SpecificData.get().getSchema(recordClass)
-    val df = Option(datumFactory).getOrElse(new SpecificRecordDatumFactory(recordClass))
-    implicit val coder: Coder[T] = avroCoder(df, schema)
-    val transform = BAvroIO
-      .readFiles(recordClass)
-      .withDatumReaderFactory(df)
-    self.readFiles(filesTransform = transform)
-  }
+final class TypedMagnolifyAvroSCollectionOps[T](private val self: SCollection[T]) {
 
-  def readAvroGenericFilesWithPath(
-    schema: Schema,
-    datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordIO.ReadParam.DefaultDatumFactory
-  ): SCollection[(String, GenericRecord)] = {
-    val df = Option(datumFactory).getOrElse(GenericRecordDatumFactory)
-    implicit val coder: Coder[GenericRecord] = avroCoder(df, schema)
-    self.readFilesWithPath() { f =>
-      AvroSource
-        .from(f)
-        .withSchema(schema)
-        .withDatumReaderFactory(df)
-    }
-  }
-
-  def readAvroSpecificFilesWithPath[T <: SpecificRecord: ClassTag](
-    datumFactory: AvroDatumFactory[T] = SpecificRecordIO.ReadParam.DefaultDatumFactory
-  ): SCollection[(String, T)] = {
-    val recordClass = ScioUtil.classOf[T]
-    val schema = SpecificData.get().getSchema(recordClass)
-    val df = Option(datumFactory).getOrElse(new SpecificRecordDatumFactory(recordClass))
-    implicit val coder: Coder[T] = avroCoder(df, schema)
-    self.readFilesWithPath() { f =>
-      AvroSource
-        .from(f)
-        .withSchema(recordClass)
-        .withDatumReaderFactory(df)
-    }
+  def saveAsAvroFile(
+    path: String,
+    numShards: Int = AvroTypedIO.WriteParam.DefaultNumShards,
+    suffix: String = AvroTypedIO.WriteParam.DefaultSuffix,
+    codec: CodecFactory = AvroTypedIO.WriteParam.DefaultCodec,
+    metadata: Map[String, AnyRef] = AvroTypedIO.WriteParam.DefaultMetadata,
+    shardNameTemplate: String = AvroTypedIO.WriteParam.DefaultShardNameTemplate,
+    tempDirectory: String = AvroTypedIO.WriteParam.DefaultTempDirectory,
+    filenamePolicySupplier: FilenamePolicySupplier =
+      AvroTypedIO.WriteParam.DefaultFilenamePolicySupplier,
+    prefix: String = AvroTypedIO.WriteParam.DefaultPrefix,
+    datumFactory: AvroDatumFactory[GenericRecord] = AvroTypedIO.WriteParam.DefaultDatumFactory
+  )(implicit coder: Coder[T], at: AvroMagnolifyType[T]): ClosedTap[T] = {
+    val param = AvroMagnolifyTypedIO.WriteParam(
+      numShards,
+      suffix,
+      codec,
+      metadata,
+      filenamePolicySupplier,
+      prefix,
+      shardNameTemplate,
+      tempDirectory,
+      datumFactory
+    )
+    self.write(AvroMagnolifyTypedIO[T](path))(param)
   }
 }
 
@@ -286,8 +297,11 @@ trait SCollectionSyntax {
     c: SCollection[T]
   ): ProtobufSCollectionOps[T] = new ProtobufSCollectionOps[T](c)
 
-  implicit def avroFilesSCollectionOps[T](
+  implicit def typedAvroProtobufSCollectionOps[T](
     c: SCollection[T]
-  )(implicit ev: T <:< String): FilesSCollectionOps =
-    new FilesSCollectionOps(c.covary_)
+  ): TypedMagnolifyProtobufSCollectionOps[T] = new TypedMagnolifyProtobufSCollectionOps[T](c)
+
+  implicit def typedMagnolifyAvroSCollectionOps[T](
+    c: SCollection[T]
+  ): TypedMagnolifyAvroSCollectionOps[T] = new TypedMagnolifyAvroSCollectionOps(c)
 }
