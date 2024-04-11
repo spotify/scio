@@ -750,6 +750,7 @@ lazy val `scio-test-google-cloud-platform` = project
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
+      "org.typelevel" %% "cats-kernel" % catsVersion,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
