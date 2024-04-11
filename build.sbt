@@ -623,7 +623,6 @@ lazy val `scio-core` = project
   .settings(commonSettings)
   .settings(macroSettings)
   .settings(protobufSettings)
-  .settings(jUnitSettings)
   .settings(
     description := "Scio - A Scala API for Apache Beam and Google Cloud Dataflow",
     Compile / resources ++= Seq(
@@ -680,6 +679,7 @@ lazy val `scio-core` = project
       "com.twitter" %% "chill" % chillVersion % Test,
       "commons-io" % "commons-io" % commonsIoVersion % Test,
       "joda-time" % "joda-time" % jodaTimeVersion % Test,
+      "junit" % "junit" % junitVersion % Test,
       "org.apache.avro" % "avro" % avroVersion % Test,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
@@ -712,7 +712,6 @@ lazy val `scio-test-core` = project
   .dependsOn(`scio-core`)
   .settings(commonSettings)
   .settings(macroSettings)
-  .settings(jUnitSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
     undeclaredCompileDependenciesFilter -= moduleFilter("org.scalatest"),
@@ -729,7 +728,10 @@ lazy val `scio-test-core` = project
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // runtime
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime
+      "junit" % "junit" % junitVersion % Runtime,
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
+      // test
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
 
@@ -737,7 +739,7 @@ lazy val `scio-test-google-cloud-platform` = project
   .in(file("scio-test/google-cloud-platform"))
   .dependsOn(
     `scio-core`,
-    `scio-test-core`
+    `scio-test-core` % "compile;runtime->runtime"
   )
   .settings(commonSettings)
   .settings(
@@ -748,8 +750,8 @@ lazy val `scio-test-google-cloud-platform` = project
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
       "com.google.protobuf" % "protobuf-java" % protobufVersion,
       "org.scalatest" %% "scalatest" % scalatestVersion,
-      // runtime
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime
+      // test
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
   )
 
@@ -968,7 +970,6 @@ lazy val `scio-extra` = project
     `scio-macros`
   )
   .settings(commonSettings)
-  .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
     description := "Scio extra utilities",
