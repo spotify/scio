@@ -36,6 +36,7 @@ import org.joda.time.Instant
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 import org.apache.beam.sdk.testing.CoderProperties
+import org.codehaus.jackson.node.NullNode
 import org.typelevel.scalaccompat.annotation.nowarn
 
 case class RecordA(name: String, value: Int)
@@ -44,6 +45,15 @@ case class RecordB(name: String, value: Int)
 case class Pair(name: String, size: Int)
 case class CaseClassWithGenericRecord(name: String, size: Int, record: GenericRecord)
 case class CaseClassWithSpecificRecord(name: String, size: Int, record: TestRecord)
+
+// additional kryo registrar for avro schema null value
+// deserializes null to the singleton instance for schema equality
+@KryoRegistrar
+class TestKryoRegistrar extends IKryoRegistrar {
+
+  override def apply(k: Kryo): Unit =
+    k.forClass[NullNode](new SingletonSerializer(NullNode.getInstance()))
+}
 
 class KryoAtomicCoderTest extends PipelineSpec {
   type CoderFactory = () => BCoder[Any]
