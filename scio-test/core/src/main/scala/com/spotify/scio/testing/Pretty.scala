@@ -17,16 +17,17 @@
 
 package com.spotify.scio.testing
 
-//import org.apache.avro.generic.GenericRecord
-//import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.specific.SpecificRecord
 import com.spotify.scio.{registerSysProps, SysProp}
+
 import scala.util.Try
 import pprint.PPrinter
-//import com.google.api.client.json.GenericJson
-// import org.apache.beam.sdk.extensions.gcp.util.Transport
+import com.google.api.client.json.GenericJson
+import com.google.api.client.json.gson.GsonFactory
 
-//import scala.jdk.CollectionConverters._
-//import scala.collection.compat._
+import scala.jdk.CollectionConverters._
+import scala.collection.compat._
 
 @registerSysProps
 object PrettySysProps {
@@ -35,56 +36,56 @@ object PrettySysProps {
 }
 
 object Pretty {
+  import pprint.Tree
+  import fansi.{Color, Str}
 
-//  private def renderFieldName(n: String) =
-//    Tree.Lazy(_ => List(Color.LightBlue(n).toString).iterator)
-//
-//  private def renderGenericRecord: PartialFunction[GenericRecord, Tree] = { case g =>
-//    val renderer =
-//      new pprint.Renderer(
-//        printer.defaultWidth,
-//        printer.colorApplyPrefix,
-//        printer.colorLiteral,
-//        printer.defaultIndent
-//      )
-//    def render(tree: Tree): Str =
-//      Str.join(renderer.rec(tree, 0, 0).iter.iterator.to(Iterable))
-//
-//    Tree.Lazy { _ =>
-//      val fields = g.getSchema.getFields.asScala
-//        .map(f => Str(render(renderFieldName(f.name)), ": ", render(treeifyAvro(g.get(f.name())))))
-//        .reduce((a, b) => Str(a, ", ", b))
-//
-//      Iterator(Color.LightGray("{ ").toString + fields + Color.LightGray(" }"))
-//    }
-//  }
-//
-//  private def renderSpecificRecord: PartialFunction[SpecificRecord, Tree] = { case x =>
-//    val fs = x.getSchema.getFields.asScala
-//      .map(f => Tree.Infix(renderFieldName(f.name), "=", treeifyAvro(x.get(f.pos()))))
-//
-//    Tree.Apply(x.getClass.getSimpleName, fs.iterator)
-//  }
-//
-//  private def treeifyAvro: PartialFunction[Any, Tree] = {
-//    case x: SpecificRecord =>
-//      renderSpecificRecord(x)
-//    case g: GenericRecord =>
-//      renderGenericRecord(g)
-//    case x =>
-//      printer.treeify(x, true, true)
-//  }
-//
-//  private[this] val jsonFactory = Transport.getJsonFactory
-//
-//  private def treeifyGenericJson: PartialFunction[GenericJson, Tree] = { case x =>
-//    pprint.Tree.Literal(jsonFactory.toString(x))
-//  }
-//
-//  private val handlers: PartialFunction[Any, Tree] = {
-//    case x: GenericRecord => treeifyAvro(x)
-//    case x: GenericJson   => treeifyGenericJson(x)
-//  }
+  private def renderFieldName(n: String) =
+    Tree.Lazy(_ => List(Color.LightBlue(n).toString).iterator)
+
+  private def renderGenericRecord: PartialFunction[GenericRecord, Tree] = { case g =>
+    val renderer =
+      new pprint.Renderer(
+        printer.defaultWidth,
+        printer.colorApplyPrefix,
+        printer.colorLiteral,
+        printer.defaultIndent
+      )
+    def render(tree: Tree): Str =
+      Str.join(renderer.rec(tree, 0, 0).iter.iterator.to(Iterable))
+
+    Tree.Lazy { _ =>
+      val fields = g.getSchema.getFields.asScala
+        .map(f => Str(render(renderFieldName(f.name)), ": ", render(treeifyAvro(g.get(f.name())))))
+        .reduce((a, b) => Str(a, ", ", b))
+
+      Iterator(Color.LightGray("{ ").toString + fields + Color.LightGray(" }"))
+    }
+  }
+
+  private def renderSpecificRecord: PartialFunction[SpecificRecord, Tree] = { case x =>
+    val fs = x.getSchema.getFields.asScala
+      .map(f => Tree.Infix(renderFieldName(f.name), "=", treeifyAvro(x.get(f.pos()))))
+
+    Tree.Apply(x.getClass.getSimpleName, fs.iterator)
+  }
+
+  private def treeifyAvro: PartialFunction[Any, Tree] = {
+    case x: SpecificRecord =>
+      renderSpecificRecord(x)
+    case g: GenericRecord =>
+      renderGenericRecord(g)
+    case x =>
+      printer.treeify(x, true, true)
+  }
+
+  private def treeifyGenericJson: PartialFunction[GenericJson, Tree] = { case x =>
+    pprint.Tree.Literal(GsonFactory.getDefaultInstance.toString(x))
+  }
+
+  private val handlers: PartialFunction[Any, Tree] = {
+    case x: GenericRecord => treeifyAvro(x)
+    case x: GenericJson   => treeifyGenericJson(x)
+  }
 
   private val useColors =
     PrettySysProps.PrettyPrint.valueOption
@@ -97,11 +98,11 @@ object Pretty {
   val printer: PPrinter =
     if (useColors) {
       pprint.PPrinter(
-//        additionalHandlers = handlers
+        additionalHandlers = handlers
       )
     } else {
       pprint.PPrinter(
-//        additionalHandlers = handlers,
+        additionalHandlers = handlers,
         colorLiteral = fansi.Attrs.Empty,
         colorApplyPrefix = fansi.Attrs.Empty
       )

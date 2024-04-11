@@ -719,11 +719,14 @@ lazy val `scio-test-core` = project
     undeclaredCompileDependenciesFilter -= moduleFilter("org.scalatest"),
     unusedCompileDependenciesFilter -= moduleFilter("org.scalatest", "scalatest"),
     libraryDependencies ++= Seq(
+      "com.google.http-client" % "google-http-client" % googleHttpClientVersion, // TODO should we have this here ?
+      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion, // TODO should we have this here ?
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
       "com.twitter" %% "chill" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.apache.avro" % "avro" % avroVersion, // TODO should we have this here ?
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.hamcrest" % "hamcrest" % hamcrestVersion,
       "org.scalactic" %% "scalactic" % scalatestVersion,
