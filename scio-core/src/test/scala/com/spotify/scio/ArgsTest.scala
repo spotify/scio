@@ -116,29 +116,29 @@ class ArgsTest extends AnyFlatSpec with Matchers {
 
   trait Options extends PipelineOptions {
     @Required
-    def getInput: String
-    def setInput(input: String): Unit
+    def getTestInput: String
+    def setTestInput(input: String): Unit
     @Required
-    def getOutput: String
-    def setOutput(output: String): Unit
+    def getTestOutput: String
+    def setTestOutput(output: String): Unit
   }
 
   "PipelineOptionsParser" should "parse" in {
-    val rawArgs = Array("--input=value1", "--output=value2")
+    val rawArgs = Array("--testInput=value1", "--testOutput=value2")
     val result = PipelineOptionsParser[Options]().parse(rawArgs)
 
     result should be a Symbol("success")
   }
 
   it should "fail on missing args" in {
-    val rawArgs = Array("--input=value1")
+    val rawArgs = Array("--testInput=value1")
     val result = PipelineOptionsParser[Options]().parse(rawArgs)
 
     result should be a Symbol("failure")
   }
 
   it should "fail on unused args" in {
-    val rawArgs = Array("--input=value1", "--output=value2", "--unused")
+    val rawArgs = Array("--testInput=value1", "--testOutput=value2", "--unused")
     val result = PipelineOptionsParser[Options]().parse(rawArgs)
 
     result should be a Symbol("failure")
