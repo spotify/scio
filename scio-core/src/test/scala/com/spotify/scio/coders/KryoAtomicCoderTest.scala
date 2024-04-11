@@ -92,6 +92,7 @@ class KryoAtomicCoderTest extends PipelineSpec {
 
   it should "support Avro GenericRecord" in {
     val r = newGenericRecord(1)
+    r kryoCoderShould roundtrip()
     ("key", r) kryoCoderShould roundtrip()
     CaseClassWithGenericRecord("record", 10, r) kryoCoderShould roundtrip()
   }
