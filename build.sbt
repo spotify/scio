@@ -876,7 +876,7 @@ lazy val `scio-google-cloud-platform` = project
 lazy val `scio-cassandra3` = project
   .in(file("scio-cassandra/cassandra3"))
   .dependsOn(
-    `scio-core` % "compile;test->test",
+    `scio-core` % "compile;test->test"
   )
   .settings(commonSettings)
   .settings(
@@ -903,7 +903,7 @@ lazy val `scio-cassandra3` = project
 lazy val `scio-elasticsearch-common` = project
   .in(file("scio-elasticsearch/common"))
   .dependsOn(
-    `scio-core` % "compile;test->test",
+    `scio-core` % "compile;test->test"
   )
   .settings(commonSettings)
   .settings(
