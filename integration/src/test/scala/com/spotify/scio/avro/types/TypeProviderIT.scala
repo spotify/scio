@@ -24,18 +24,32 @@ import org.scalatest.matchers.should.Matchers
 import scala.annotation.StaticAnnotation
 import scala.reflect.runtime.universe._
 
+object TypeProviderIT {
+  private val SchemaFile =
+    "https://raw.githubusercontent.com/spotify/scio/master/integration/src/test/avro/avro-type-provider.avsc"
+
+  @AvroType.fromSchemaFile(SchemaFile)
+  class FromResourceMultiLine
+  @AvroType.fromSchemaFile(SchemaFile)
+  class FromResource
+
+  class Annotation1 extends StaticAnnotation
+  class Annotation2 extends StaticAnnotation
+
+  @Annotation1
+  @AvroType.fromSchemaFile(SchemaFile)
+  @Annotation2
+  class FromResourceWithSurroundingAnnotations
+
+  @AvroType.fromSchemaFile(SchemaFile)
+  @Annotation1
+  @Annotation2
+  class FromResourceWithSequentialAnnotations
+}
+
 class TypeProviderIT extends AnyFlatSpec with Matchers {
 
-  @AvroType.fromSchemaFile("""
-      |https://raw.githubusercontent.com/spotify/scio/master/
-      |scio-avro/src/test/avro/
-      |scio-avro-test.avsc
-    """.stripMargin)
-  class FromResourceMultiLine
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  class FromResource
+  import TypeProviderIT._
 
   "AvroType.fromSchemaFile" should "support reading schema from multiline resource" in {
     val r = FromResourceMultiLine(1)
@@ -47,31 +61,15 @@ class TypeProviderIT extends AnyFlatSpec with Matchers {
     r.test shouldBe 2
   }
 
-  class Annotation1 extends StaticAnnotation
-  class Annotation2 extends StaticAnnotation
-
-  @Annotation1
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation2
-  class FromResourceWithSurroundingAnnotations
-
   it should "preserve surrounding user defined annotations" in {
     containsAllAnnotTypes[FromResourceWithSurroundingAnnotations]
   }
-  @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
-  )
-  @Annotation1
-  @Annotation2
-  class FromResourceWithSequentialAnnotations
 
   it should "preserve sequential user defined annotations" in {
     containsAllAnnotTypes[FromResourceWithSequentialAnnotations]
   }
 
-  def containsAllAnnotTypes[T: TypeTag]: Assertion =
+  private def containsAllAnnotTypes[T: TypeTag]: Assertion =
     typeOf[T].typeSymbol.annotations
       .map(_.tree.tpe)
       .containsSlice(Seq(typeOf[Annotation1], typeOf[Annotation2])) shouldBe true

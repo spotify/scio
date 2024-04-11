@@ -1,16 +1,5 @@
 [
   {
-    "type": "record",
-    "name": "Test",
-    "namespace": "com.spotify.scio.avro",
-    "fields": [
-      {
-        "name": "test",
-        "type": "int"
-      }
-    ]
-  },
-  {
     "name": "LogicalTypesTest",
     "namespace": "com.spotify.scio.avro",
     "doc": "Record for testing logical types",
