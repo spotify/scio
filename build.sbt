@@ -131,7 +131,7 @@ val neo4jDriverVersion = "4.4.15"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
 val parquetVersion = "1.13.1"
-val pprintVersion = "0.8.1"
+val pprintVersion = "0.9.0"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.17.0"
 val scalaCollectionCompatVersion = "2.12.0"
@@ -697,7 +697,6 @@ lazy val `scio-test` = project
     libraryDependencies ++= Seq(
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
-      "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
