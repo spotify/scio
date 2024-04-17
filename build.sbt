@@ -801,7 +801,8 @@ lazy val `scio-test-parquet` = project
     `scio-core`,
     `scio-parquet`,
     `scio-test-core` % "compile;runtime->runtime",
-    `scio-avro` % "test->test"
+    `scio-avro` % "test->test",
+    `scio-tensorflow` % Provided
   )
   .settings(commonSettings)
   .settings(

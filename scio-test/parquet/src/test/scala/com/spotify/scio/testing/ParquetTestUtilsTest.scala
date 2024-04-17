@@ -23,6 +23,8 @@ import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.parquet.filter2.predicate.FilterApi
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.tensorflow.metadata.{v0 => tfmd}
+import org.tensorflow.proto.example._
 
 import scala.jdk.CollectionConverters._
 
@@ -97,5 +99,104 @@ class ParquetTestUtilsTest extends AnyFlatSpec with Matchers with ParquetTestUti
       .parquetFilter(FilterApi.gt(FilterApi.intColumn("intField"), Int.box(5)))
 
     transformed.map(_.intField) should contain theSameElementsAs Seq(6, 7, 8, 9, 10)
+  }
+
+  "TfExamples" should "be filterable and projectable" in {
+    val required = tfmd.ValueCount.newBuilder().setMin(1).setMax(1).build()
+
+    val schema = tfmd.Schema
+      .newBuilder()
+      .addFeature(
+        tfmd.Feature
+          .newBuilder()
+          .setName("int64_required")
+          .setType(tfmd.FeatureType.INT)
+          .setValueCount(required)
+          .build()
+      )
+      .addFeature(
+        tfmd.Feature
+          .newBuilder()
+          .setName("float_required")
+          .setType(tfmd.FeatureType.FLOAT)
+          .setValueCount(required)
+          .build()
+      )
+      .build()
+
+    val records = (1 to 10).map(i =>
+      Example
+        .newBuilder()
+        .setFeatures(
+          Features
+            .newBuilder()
+            .putFeature(
+              "int64_required",
+              Feature
+                .newBuilder()
+                .setInt64List(
+                  Int64List
+                    .newBuilder()
+                    .addAllValue(Seq(i.toLong).asInstanceOf[Seq[java.lang.Long]].asJava)
+                )
+                .build()
+            )
+            .putFeature(
+              "float_required",
+              Feature
+                .newBuilder()
+                .setFloatList(
+                  FloatList
+                    .newBuilder()
+                    .addAllValue(Seq(10 - i.toFloat).asInstanceOf[Seq[java.lang.Float]].asJava)
+                )
+                .build()
+            )
+            .build()
+        )
+        .build()
+    )
+
+    val transformed = records
+      .parquetFilter(
+        schema,
+        FilterApi.gt(FilterApi.floatColumn("float_required"), Float.box(5.5f))
+      )
+      .parquetProject(
+        schema,
+        tfmd.Schema
+          .newBuilder()
+          .addFeature(
+            tfmd.Feature
+              .newBuilder()
+              .setName("int64_required")
+              .setType(tfmd.FeatureType.INT)
+              .setValueCount(required)
+              .build()
+          )
+          .build()
+      )
+
+    transformed should contain theSameElementsAs (1 to 4).map(i =>
+      Example
+        .newBuilder()
+        .setFeatures(
+          Features
+            .newBuilder()
+            .putFeature(
+              "int64_required",
+              Feature
+                .newBuilder()
+                .setInt64List(
+                  Int64List
+                    .newBuilder()
+                    .addAllValue(Seq(i.toLong).asInstanceOf[Seq[java.lang.Long]].asJava)
+                )
+                .build()
+            )
+            .build()
+        )
+        .build()
+    )
   }
 }
