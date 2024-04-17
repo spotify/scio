@@ -797,7 +797,12 @@ lazy val `scio-test-google-cloud-platform` = project
 
 lazy val `scio-test-parquet` = project
   .in(file("scio-test/parquet"))
-  .dependsOn()
+  .dependsOn(
+    `scio-core`,
+    `scio-parquet`,
+    `scio-test-core` % "compile;runtime->runtime",
+    `scio-avro` % "test->test"
+  )
   .settings(commonSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
