@@ -697,7 +697,6 @@ lazy val `scio-test` = project
     libraryDependencies ++= Seq(
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
       "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
-      "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
