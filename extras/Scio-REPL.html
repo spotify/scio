@@ -228,7 +228,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.2-6-40c900b-20240307T190659Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.3-36-9cdce42-20240418T151636Z*
 </label>
 </li>
 </ul>
@@ -331,7 +331,7 @@ val scioResult = sc.run().waitUntilDone()
 
 val values = scioResult.tap(wordCount).value.take(3)
 </code></pre>
-<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.54.0/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
+<p>Make sure <code>README.md</code> is in the current directory. This example counts words in local file using a local runner (<a href="https://beam.apache.org/releases/javadoc/2.55.1/?org/apache/beam/runners/direct/DirectRunner.html" title="org.apache.beam.runners.direct.DirectRunner"><code>DirectRunner</code></a> and writes result in a local file. The pipeline and actual computation starts on <code>sc.run()</code>. The last command take 3 lines from results and prints them.</p>
 <h3><a href="#local-pipeline-" name="local-pipeline-" class="anchor"><span class="anchor-link"></span></a>Local pipeline ++</h3>
 <p>In the next example we will spice things up a bit and read data from GCS:</p>
 <pre><code>:newScio
@@ -360,7 +360,8 @@ val result = sc
 <p>To create a Scio context for Google Cloud Dataflow service, add Dataflow pipeline options when starting the REPL. The same options will also be used by <code>:newScio</code> when creating new context. For example:</p>
 <pre><code>$ java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
-&gt; --stagingLocation=&lt;stagin-dir&gt; \
+&gt; --stagingLocation=&lt;staging-dir&gt; \
+&gt; --tempLocation=&lt;temp-dir&gt; \
 &gt; --runner=DataflowRunner
 Welcome to
                  _____
@@ -406,7 +407,8 @@ Local Scio context available as &#39;lsc&#39;
 <p>In this example we will read some data from BigQuery and process it in Dataflow. We shall count number of tornadoes per month from a public sample dataset. Scio will do its best to find your configured Google Cloud project, but you can also specify it explicitly via <code>-Dbigquery.project</code> option.</p>
 <pre><code>$ java -jar -Dbigquery.project=&lt;project-id&gt; scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
-&gt; --stagingLocation=&lt;stagin-dir&gt; \
+&gt; --stagingLocation=&lt;staging-dir&gt; \
+&gt; --tempLocation=&lt;temp-dir&gt; \
 &gt; --runner=DataflowRunner
 Welcome to
                  _____
@@ -502,10 +504,11 @@ def tap: ClosedTap[String] = evenNumbers.saveAsTextFile(&quot;/tmp/even&quot;)
 def result = sc.run()
 </code></pre>
 <h3><a href="#running-jobs-asynchronously" name="running-jobs-asynchronously" class="anchor"><span class="anchor-link"></span></a>Running jobs asynchronously</h3>
-<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.54.0/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
+<p>When using REPL and Dataflow service consider using the non-blocking <a href="https://beam.apache.org/releases/javadoc/2.55.1/?org/apache/beam/runners/dataflow/DataflowRunner.html" title="org.apache.beam.runners.dataflow.DataflowRunner"><code>DataflowRunner</code></a> for a more interactive experience. To start:</p>
 <pre><code>java -jar scio-repl-0.7.0.jar \
 &gt; --project=&lt;project-id&gt; \
-&gt; --stagingLocation=&lt;stagin-dir&gt; \
+&gt; --stagingLocation=&lt;staging-dir&gt; \
+&gt; --tempLocation=&lt;temp-dir&gt; \
 &gt; --runner=DataflowRunner
 Welcome to
                  _____
@@ -629,7 +632,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.2-6-40c900b-20240307T190659Z*
+0.14.3-36-9cdce42-20240418T151636Z*
 </span>
 </div>
 </article>

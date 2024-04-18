@@ -326,27 +326,7 @@ the word count of a input document</p></p></div>
     <span class="keyword">val</span> <span class="identifier">primaryHost</span> = <span class="keyword">new</span> <span class="identifier">HttpHost</span>(<span class="identifier">host</span>, <span class="identifier">port</span>)
     <span class="keyword">val</span> <span class="identifier">nodes</span> = <span class="identifier">Seq</span>(<span class="identifier">primaryHost</span>)
 
-    <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/package$$ElasticsearchOptions.html" data-tooltip="<span>com.spotify.scio.elasticsearch.ElasticsearchOptions</span>">clusterOpts</a></span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/package$$ElasticsearchOptions$.html#apply(nodes:Seq[org.apache.http.HttpHost],usernameAndPassword:Option[(String,String)],mapperFactory:()=>co.elastic.clients.json.JsonpMapper)::com.spotify.scio.elasticsearch.package.ElasticsearchOptions" data-tooltip="<span>com.spotify.scio.elasticsearch.ElasticsearchOptions.apply(nodes: Seq[org.apache.http.HttpHost], usernameAndPassword: Option[(String, String)], mapperFactory: () => co.elastic.clients.json.JsonpMapper): : com.spotify.scio.elasticsearch.package.ElasticsearchOptions</span>">ElasticsearchOptions</a></span>(
-      <span class="identifier">nodes</span> = <span class="identifier">nodes</span>,
-      <span class="identifier">mapperFactory</span> = () => {&nbsp;</div>
-              </section>
-            
-              <section class="">
-                <div class="comment "><p>Use jackson for user json serialization</p></p></div>
-                <div class="code ">        <span class="keyword">val</span> <span class="identifier">mapper</span> = <span class="keyword">new</span> <span class="identifier">JacksonJsonpMapper</span>()&nbsp;</div>
-              </section>
-            
-              <section class="">
-                <div class="comment "><p>Add scala support</p></p></div>
-                <div class="code ">        <span class="identifier">mapper</span>.<span class="identifier">objectMapper</span>().<span class="identifier">registerModule</span>(<span class="identifier">DefaultScalaModule</span>)&nbsp;</div>
-              </section>
-            
-              <section class="">
-                <div class="comment "><p>Add java.time support</p></p></div>
-                <div class="code ">        <span class="identifier">mapper</span>.<span class="identifier">objectMapper</span>().<span class="identifier">registerModule</span>(<span class="keyword">new</span> <span class="identifier">JavaTimeModule</span>())
-        <span class="identifier">mapper</span>
-      }
-    )
+    <span class="keyword">val</span> <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/package$$ElasticsearchOptions.html" data-tooltip="<span>com.spotify.scio.elasticsearch.ElasticsearchOptions</span>">clusterOpts</a></span> = <span class="identifier"><a target="doc" href="https://spotify.github.io/scio/api/com/spotify/scio/elasticsearch/package$$ElasticsearchOptions$.html#apply(nodes:Seq[org.apache.http.HttpHost],usernameAndPassword:Option[(String,String)],mapperFactory:()=>co.elastic.clients.json.JsonpMapper)::com.spotify.scio.elasticsearch.package.ElasticsearchOptions" data-tooltip="<span>com.spotify.scio.elasticsearch.ElasticsearchOptions.apply(nodes: Seq[org.apache.http.HttpHost], usernameAndPassword: Option[(String, String)], mapperFactory: () => co.elastic.clients.json.JsonpMapper): : com.spotify.scio.elasticsearch.package.ElasticsearchOptions</span>">ElasticsearchOptions</a></span>(<span class="identifier">nodes</span> = <span class="identifier">nodes</span>)
 &nbsp;</div>
               </section>
             
