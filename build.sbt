@@ -772,7 +772,9 @@ lazy val `scio-test-parquet` = project
   .settings(
     description := "Scio helpers for ScalaTest",
     // disable mima due to module split
-    mimaPreviousArtifacts := Set.empty
+    mimaPreviousArtifacts := Set.empty,
+    // to remove once we have some utilities
+    publish / skip := true
   )
 
 lazy val `scio-macros` = project

@@ -5,7 +5,7 @@ To write Scio unit tests you will need to add the following dependency to your b
 ```sbt
 libraryDependencies ++= Seq(
   // .......
-  "com.spotify" %% "scio-test" % scioVersion % Test,
+  "com.spotify" %% "scio-test-core" % scioVersion % Test,
   // .......
 )
 ```
