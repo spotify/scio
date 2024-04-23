@@ -704,7 +704,10 @@ lazy val `scio-test` = project
   )
   .settings(commonSettings)
   .settings(
-    description := "Scio helpers for ScalaTest"
+    description := "Scio helpers for ScalaTest",
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-core` = project
@@ -735,7 +738,10 @@ lazy val `scio-test-core` = project
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    )
+    ),
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-google-cloud-platform` = project
@@ -756,7 +762,10 @@ lazy val `scio-test-google-cloud-platform` = project
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    )
+    ),
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-parquet` = project
@@ -764,7 +773,10 @@ lazy val `scio-test-parquet` = project
   .dependsOn()
   .settings(commonSettings)
   .settings(
-    description := "Scio helpers for ScalaTest"
+    description := "Scio helpers for ScalaTest",
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-macros` = project
