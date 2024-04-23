@@ -705,8 +705,9 @@ lazy val `scio-test` = project
   .settings(commonSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
-    // disable mima due to module split
-    mimaPreviousArtifacts := Set.empty
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-core` = project
@@ -738,8 +739,9 @@ lazy val `scio-test-core` = project
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
-    // disable mima due to module split
-    mimaPreviousArtifacts := Set.empty
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-google-cloud-platform` = project
@@ -761,8 +763,9 @@ lazy val `scio-test-google-cloud-platform` = project
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
-    // disable mima due to module split
-    mimaPreviousArtifacts := Set.empty
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-test-parquet` = project
@@ -771,10 +774,9 @@ lazy val `scio-test-parquet` = project
   .settings(commonSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
-    // disable mima due to module split
-    mimaPreviousArtifacts := Set.empty,
-    // to remove once we have some utilities
-    publish / skip := true
+    // only releases after 0.14.4
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 4)
   )
 
 lazy val `scio-macros` = project
