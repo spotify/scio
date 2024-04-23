@@ -318,12 +318,13 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
       List(
         githubWorkflowCheckStep,
         githubWorkflowGcpAuthStep,
-        githubWorkflowSetupStep.copy(env =
-          Map(
-            "BQ_READ_TIMEOUT" -> "30000",
-            "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}"
-          )
-        ),
+        githubWorkflowSetupStep
+          .withEnv(
+            Map(
+              "BQ_READ_TIMEOUT" -> "30000",
+              "CLOUDSQL_SQLSERVER_PASSWORD" -> "${{ secrets.CLOUDSQL_SQLSERVER_PASSWORD }}"
+            )
+          ),
         WorkflowStep.Sbt(
           List("set integration/test/skip := false", "integration/test"),
           name = Some("Test")
