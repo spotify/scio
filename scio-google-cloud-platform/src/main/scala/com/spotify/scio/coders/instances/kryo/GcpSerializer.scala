@@ -16,13 +16,14 @@
 
 package com.spotify.scio.coders.instances.kryo
 
-import com.google.api.gax.rpc.ApiException
+import com.google.api.gax.rpc.{ApiException, StatusCode}
 import com.google.cloud.bigtable.data.v2.models.MutateRowsException
 import com.twitter.chill._
 
 private[coders] class MutateRowsExceptionSerializer extends KSerializer[MutateRowsException] {
   override def write(kryo: Kryo, output: Output, e: MutateRowsException): Unit = {
     kryo.writeClassAndObject(output, e.getCause)
+    kryo.writeObject(output, e.getStatusCode.getCode)
     val failedMutations = e.getFailedMutations
     kryo.writeObject(output, failedMutations.size())
     failedMutations.forEach { fm =>
@@ -38,6 +39,12 @@ private[coders] class MutateRowsExceptionSerializer extends KSerializer[MutateRo
     `type`: Class[MutateRowsException]
   ): MutateRowsException = {
     val cause = kryo.readClassAndObject(input).asInstanceOf[Throwable]
+    // generic status code. we lost transport information during serialization
+    val code = kryo.readObject(input, classOf[StatusCode.Code])
+    val statusCode = new StatusCode() {
+      override def getCode: StatusCode.Code = code
+      override def getTransportCode: AnyRef = null
+    }
     val size = kryo.readObject(input, classOf[Integer])
     val failedMutations = new _root_.java.util.ArrayList[MutateRowsException.FailedMutation](size)
     (0 until size).foreach { _ =>
@@ -46,6 +53,6 @@ private[coders] class MutateRowsExceptionSerializer extends KSerializer[MutateRo
       failedMutations.add(MutateRowsException.FailedMutation.create(index, error))
     }
     val retryable = kryo.readObject(input, classOf[Boolean])
-    MutateRowsException.create(cause, failedMutations, retryable)
+    MutateRowsException.create(cause, statusCode, failedMutations, retryable)
   }
 }

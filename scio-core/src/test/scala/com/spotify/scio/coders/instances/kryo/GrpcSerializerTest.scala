@@ -58,7 +58,7 @@ object GrpcSerializerTest {
     case _ => false
   }
 
-  private val eqStatusCode: Equality[StatusCode] = {
+  val eqStatusCode: Equality[StatusCode] = {
     case (a: StatusCode, b: StatusCode) =>
       a.getCode == b.getCode
     case _ => false

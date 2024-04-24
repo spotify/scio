@@ -27,11 +27,12 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
+ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/orgapachebeam-1376/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.55.1"
+val beamVersion = "2.56.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.55.1/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.56.0-RC1/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -41,7 +42,6 @@ val commonsCompressVersion = "1.21"
 val commonsIoVersion = "2.13.0"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
-val datastoreV1ProtoClientVersion = "2.18.3"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
@@ -51,7 +51,6 @@ val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.14.1"
 val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
-val nettyVersion = "4.1.100.Final"
 val slf4jVersion = "1.7.30"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20240124-$googleClientsVersion"
@@ -61,41 +60,43 @@ val googleApiServicesStorageVersion = s"v1-rev20240205-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
-val flinkVersion = "1.16.0" // runners/flink/1.16/build.gradle
+val flinkVersion = "1.17.0" // runners/flink/1.17/build.gradle
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 
 // check versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.32.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.36.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
 val checkerQualVersion = "3.42.0"
-val errorProneAnnotationsVersion = "2.24.1"
-val failureAccessVersion = "1.0.1"
+val datastoreV1ProtoClientVersion = "2.19.0"
+val errorProneAnnotationsVersion = "2.26.1"
+val failureAccessVersion = "1.0.2"
 val floggerVersion = "0.8"
-val gaxVersion = "2.42.0"
-val googleApiClientVersion = "2.2.0" // very strangely not in sync with googleClientsVersion
-val googleApiCommonVersion = "2.25.0"
-val googleAuthVersion = "1.22.0"
-val googleCloudBigQueryStorageVersion = "3.1.0"
-val googleCloudBigTableVersion = "2.33.0"
-val googleCloudCoreVersion = "2.32.0"
-val googleCloudMonitoringVersion = "3.36.0"
-val googleCloudProtoBigQueryStorageBetaVersion = "0.173.0"
+val gaxVersion = "2.46.1"
+val googleApiClientVersion = "2.4.0" // very strangely not in sync with googleClientsVersion
+val googleApiCommonVersion = "2.29.1"
+val googleAuthVersion = "1.23.0"
+val googleCloudBigQueryStorageVersion = "3.4.0"
+val googleCloudBigTableVersion = "2.37.0"
+val googleCloudCoreVersion = "2.36.1"
+val googleCloudMonitoringVersion = "3.41.0"
+val googleCloudProtoBigQueryStorageBetaVersion = "0.176.0"
 val googleCloudProtoBigTableVersion = googleCloudBigTableVersion
-val googleCloudProtoDatastoreVersion = "0.109.3"
-val googleCloudProtoPubSubVersion = "1.108.5"
-val googleCloudSpannerVersion = "6.58.0"
-val googleCloudStorageVersion = "2.33.0"
-val googleHttpClientVersion = "1.43.3"
-val googleProtoCommonVersion = "2.33.0"
-val googleProtoIAMVersion = "1.28.0"
-val grpcVersion = "1.61.0"
-val j2objcAnnotationsVersion = "2.8"
+val googleCloudProtoDatastoreVersion = "0.110.0"
+val googleCloudProtoPubSubVersion = "1.109.3"
+val googleCloudSpannerVersion = "6.62.0"
+val googleCloudStorageVersion = "2.36.1"
+val googleHttpClientVersion = "1.44.1"
+val googleProtoCommonVersion = "2.37.1"
+val googleProtoIAMVersion = "1.32.1"
+val grpcVersion = "1.62.2"
+val j2objcAnnotationsVersion = "3.0.0"
 val jsr305Version = "3.0.2"
-val okioVersion = "3.4.0"
+val nettyVersion = "4.1.100.Final"
+val okioVersion = "3.6.0"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.27.0"
-val protobufVersion = "3.25.2"
+val protobufVersion = "3.25.3"
 
 val algebirdVersion = "0.13.10"
 val algebraVersion = "2.10.0"
