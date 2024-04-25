@@ -1511,7 +1511,6 @@ lazy val `scio-smb` = project
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided, // scio-tensorflow
       // test
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test classifier "tests",
-      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Test classifier "tests",
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
