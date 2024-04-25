@@ -53,10 +53,10 @@ val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val slf4jVersion = "1.7.30"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20240124-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20240113-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20240229-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20240218-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20240205-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20240311-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
