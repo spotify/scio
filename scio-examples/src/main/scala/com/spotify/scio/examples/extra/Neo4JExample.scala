@@ -53,6 +53,6 @@ object Neo4JExample {
         |""".stripMargin
     )
     // Run pipeline
-    sc.run().waitUntilFinish()
+    sc.run().waitUntilDone()
   }
 }

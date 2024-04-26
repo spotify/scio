@@ -74,7 +74,7 @@ object DebuggingWordCount {
       .containsInAnyOrder(List(("Flourish", 3L), ("stomach", 1L)).asJava)
 
     // Execute the pipeline and block until it finishes
-    val result = sc.run().waitUntilFinish()
+    val result = sc.run().waitUntilDone()
 
     // Retrieve metric values
     require(result.counter(matchedWords).committed.get == 2)
