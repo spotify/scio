@@ -37,7 +37,12 @@ import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
-import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.{
+  Compression,
+  FileBasedSource,
+  ReadAllViaFileBasedSource,
+  ReadAllViaFileBasedSourceWithFilename
+}
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
@@ -1425,6 +1430,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   }
 
   /**
+   * Reads each file, represented as a pattern, in this [[SCollection]]. Files are split into
+   * multiple offset ranges and read with the [[FileBasedSource]].
+   *
+   * @param desiredBundleSizeBytes
+   *   Desired size of bundles read by the sources.
+   * @param directoryTreatment
+   *   Controls how to handle directories in the input.
+   * @param compression
+   *   Reads files using the given [[org.apache.beam.sdk.io.Compression]].
+   */
+  def readFiles[A: Coder](
+    desiredBundleSizeBytes: Long,
+    directoryTreatment: DirectoryTreatment,
+    compression: Compression
+  )(filesSource: String => FileBasedSource[A])(implicit ev: T <:< String): SCollection[A] = {
+    val fn = Functions.serializableFn(filesSource)
+    val bcoder = CoderMaterializer.beam(context, Coder[A])
+    val fileTransform = new ReadAllViaFileBasedSource(desiredBundleSizeBytes, fn, bcoder)
+    readFiles(fileTransform, directoryTreatment, compression)
+  }
+
+  /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
    *
    * @see
@@ -1459,6 +1486,48 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
               .apply(filesTransform)
         })
     }
+
+  /**
+   * Reads each file, represented as a pattern, in this [[SCollection]]. Files are split into
+   * multiple offset ranges and read with the [[FileBasedSource]].
+   *
+   * Produced elements are paired with the file name they were read from.
+   *
+   * @param desiredBundleSizeBytes
+   *   Desired size of bundles read by the sources.
+   * @param directoryTreatment
+   *   Controls how to handle directories in the input.
+   * @param compression
+   *   Reads files using the given [[org.apache.beam.sdk.io.Compression]].
+   */
+  def readFilesWithPath[A: Coder](
+    desiredBundleSizeBytes: Long,
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO
+  )(
+    filesSource: String => FileBasedSource[A]
+  )(implicit ev: T <:< String): SCollection[(String, A)] = {
+    if (context.isTest) {
+      val id = context.testId.get
+      this.flatMap { s =>
+        val path = ev(s)
+        TestDataManager
+          .getInput(id)(ReadIO[A](path))
+          .asIterable
+          .get
+          .map(x => path -> x)
+      }
+    } else {
+      val fn = Functions.serializableFn(filesSource)
+      val bcoder = CoderMaterializer.beam(context, Coder[KV[String, A]])
+      val fileTransform = new ReadAllViaFileBasedSourceWithFilename(
+        desiredBundleSizeBytes,
+        fn,
+        bcoder
+      )
+      readFiles(fileTransform, directoryTreatment, compression).map(kvToTuple)
+    }
+  }
 
   /**
    * Pairs each element with the value of the provided [[SideInput]] in the element's window.
