@@ -253,8 +253,9 @@ object ReadAllBytesJob {
 object ReadAllWithPathJob {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val bundleSizeBytes = 64 * 1024 * 1024L
     sc.textFile(args("input"))
-      .readFilesWithPath(10_000_000) { f =>
+      .readFilesWithPath(bundleSizeBytes) { f =>
         new beam.TextSource(
           StaticValueProvider.of(f),
           EmptyMatchTreatment.DISALLOW,
