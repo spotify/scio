@@ -167,7 +167,7 @@ class ScioContextTest extends PipelineSpec {
 
   it should "invalidate options where required arguments are missing" in {
     assertThrows[IllegalArgumentException] {
-      ScioContext.parseArguments[TestValidationOptions](Array("--foo=bar"), true)
+      ScioContext.parseArguments[TestValidationOptions](Array("--foo=bar"), withValidation = true)
     }
   }
 
@@ -293,11 +293,20 @@ class ScioContextTest extends PipelineSpec {
     coderOpts.zstdDictMapping.toList.head._2.toList should equal(bytes.toList)
   }
 
+  it should "error when a blacklisted class is used" in {
+    val thrown = the[IllegalArgumentException] thrownBy {
+      val path = "gs://dataflow-samples/samples/fake.txt"
+      CoderMaterializer.CoderOptions(zstdOpts("String", path, "java.lang.", includeTestId = false))
+    }
+    thrown.getMessage should startWith(
+      "zstdDictionary command-line arguments may not be used"
+    )
+  }
+
   it should "error when zstdDictionary arguments contain an invalid class name" in {
     val thrown = the[IllegalArgumentException] thrownBy {
-      val bytes = Array[Byte](7, 6, 5, 4, 3, 2, 1, 0)
-      val tmp = writeZstdBytes(bytes)
-      CoderMaterializer.CoderOptions(zstdOpts("Kellen", s"file://${tmp.getAbsolutePath}"))
+      val path = "gs://dataflow-samples/samples/fake.txt"
+      CoderMaterializer.CoderOptions(zstdOpts("Kellen", path))
     }
     thrown.getMessage should startWith(
       "Class for zstdDictionary argument com.spotify.scio.coders.CoderTestUtils$Kellen"

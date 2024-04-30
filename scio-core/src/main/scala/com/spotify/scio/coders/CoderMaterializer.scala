@@ -17,6 +17,7 @@
 
 package com.spotify.scio.coders
 
+import com.spotify.scio.testing.TestUtil
 import com.spotify.scio.util.RemoteFileUtil
 import org.apache.beam.sdk.coders.{
   Coder => BCoder,
@@ -25,7 +26,7 @@ import org.apache.beam.sdk.coders.{
   NullableCoder,
   ZstdCoder
 }
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.apache.commons.lang3.ObjectUtils
 
 import java.net.URI
@@ -33,6 +34,7 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.concurrent.TrieMap
 import scala.jdk.CollectionConverters._
+import scala.util.Try
 import scala.util.chaining._
 
 object CoderMaterializer {
@@ -50,6 +52,9 @@ object CoderMaterializer {
       List("scala.", "java.", "com.spotify.scio.", "org.apache.beam.")
 
     final def apply(o: PipelineOptions): CoderOptions = {
+      val isTest = Try(o.as(classOf[ApplicationNameOptions])).toOption
+        .exists(o => TestUtil.isTestId(o.getAppName))
+
       cache.computeIfAbsent(
         ObjectUtils.identityToString(o),
         { _ =>
@@ -61,14 +66,17 @@ object CoderMaterializer {
             .getOrElse(List.empty)
             .map {
               case s @ ZstdArgRegex(className, path) =>
-                ZstdPackageBlacklist.foreach { packagePrefix =>
-                  if (className.startsWith(packagePrefix)) {
-                    throw new IllegalArgumentException(
-                      s"zstdDictionary command-line arguments may not be used for class $className. " +
-                        s"Provide Zstd coders manually instead."
-                    )
+                if (!isTest) {
+                  ZstdPackageBlacklist.foreach { packagePrefix =>
+                    if (className.startsWith(packagePrefix)) {
+                      throw new IllegalArgumentException(
+                        s"zstdDictionary command-line arguments may not be used for class $className. " +
+                          s"Provide Zstd coders manually instead."
+                      )
+                    }
                   }
                 }
+
                 try {
                   // ensure class exists
                   Class.forName(className)

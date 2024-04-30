@@ -17,13 +17,15 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.ScioContext
 import com.spotify.scio.options.ScioOptions
+import com.spotify.scio.testing.TestUtil
 import org.apache.beam.sdk.coders.{Coder => BCoder}
+import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.CoderUtils
 
 import java.io.{File, FileOutputStream}
 import java.nio.file.Files
+import scala.jdk.CollectionConverters._
 
 object CoderTestUtils {
 
@@ -50,12 +52,16 @@ object CoderTestUtils {
     tmp
   }
 
-  def zstdOpts(className: String, path: String): ScioOptions = {
-    val (opts, _) = ScioContext.parseArguments[ScioOptions](
-      Array(
-        s"--zstdDictionary=com.spotify.scio.coders.CoderTestUtils$$${className}:${path}"
-      )
-    )
+  def zstdOpts(
+    className: String,
+    path: String,
+    packageName: String = "com.spotify.scio.coders.CoderTestUtils$",
+    includeTestId: Boolean = true
+  ): PipelineOptions = {
+    val opts = PipelineOptionsFactory.create()
+    // sidestep class blacklist during test
+    if (includeTestId) opts.as(classOf[ApplicationNameOptions]).setAppName(TestUtil.newTestId())
+    opts.as(classOf[ScioOptions]).setZstdDictionary(List(s"$packageName$className:$path").asJava)
     opts
   }
 }
