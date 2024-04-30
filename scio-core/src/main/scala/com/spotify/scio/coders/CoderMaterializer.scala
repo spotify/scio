@@ -46,6 +46,8 @@ object CoderMaterializer {
   private[scio] object CoderOptions {
     private val cache: ConcurrentHashMap[String, CoderOptions] = new ConcurrentHashMap()
     private val ZstdArgRegex = "([^:]+):(.*)".r
+    private val ZstdPackageBlacklist =
+      List("scala.", "java.", "com.spotify.scio.", "org.apache.beam.")
 
     final def apply(o: PipelineOptions): CoderOptions = {
       cache.computeIfAbsent(
@@ -59,6 +61,14 @@ object CoderMaterializer {
             .getOrElse(List.empty)
             .map {
               case s @ ZstdArgRegex(className, path) =>
+                ZstdPackageBlacklist.foreach { packagePrefix =>
+                  if (className.startsWith(packagePrefix)) {
+                    throw new IllegalArgumentException(
+                      s"zstdDictionary command-line arguments may not be used for class $className. " +
+                        s"Provide Zstd coders manually instead."
+                    )
+                  }
+                }
                 try {
                   // ensure class exists
                   Class.forName(className)
