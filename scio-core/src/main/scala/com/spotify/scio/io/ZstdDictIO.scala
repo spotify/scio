@@ -46,6 +46,7 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
       numElementsForSizeEstimation,
       trainingBytesTarget
     ) = params
+
     // see https://github.com/facebook/zstd/issues/3769#issuecomment-1730261489
     if (zstdDictSizeBytes > (ZstdDictIO.DictionarySizeMbWarningThreshold * 1024 * 1024)) {
       logger.warn(
@@ -59,7 +60,8 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
       )
     }
     // training bytes may not exceed 2GiB a.k.a. the max value of an Int
-    val trainingBytesTargetActual: Int = Option(trainingBytesTarget).getOrElse {
+    val trainingBytesTargetActual: Int = trainingBytesTarget.getOrElse {
+      // see https://github.com/facebook/zstd/blob/v1.5.5/lib/zdict.h#L132-L136
       val computed =
         Try(Math.multiplyExact(zstdDictSizeBytes, 100)).toOption.getOrElse(Int.MaxValue)
       logger.info(s"No trainingBytesTarget passed, using ${computed} bytes")
@@ -128,12 +130,12 @@ object ZstdDictIO {
   final case class WriteParam(
     zstdDictSizeBytes: Int = WriteParam.DefaultZstdDictSizeBytes,
     numElementsForSizeEstimation: Long = WriteParam.DefaultNumElementsForSizeEstimation,
-    trainingBytesTarget: Int = WriteParam.DefaultTrainingBytesTarget
+    trainingBytesTarget: Option[Int] = WriteParam.DefaultTrainingBytesTarget
   )
 
   object WriteParam {
     val DefaultZstdDictSizeBytes: Int = 110 * 1024
     val DefaultNumElementsForSizeEstimation: Long = 100L
-    val DefaultTrainingBytesTarget: Int = null.asInstanceOf[Int]
+    val DefaultTrainingBytesTarget: Option[Int] = None
   }
 }

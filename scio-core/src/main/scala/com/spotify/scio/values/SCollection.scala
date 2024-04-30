@@ -1662,14 +1662,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   The number of elements of the SCollection to use to estimate the average element size.
    * @param trainingBytesTarget
    *   The target number of bytes on which to train. Memory usage for training can be 10x this.
-   *   `null` to infer from `zstdDictSizeBytes`. Must be able to fit in the memory of a single
+   *   `None` to infer from `zstdDictSizeBytes`. Must be able to fit in the memory of a single
    *   worker.
    */
   def saveAsZstdDictionary(
     path: String,
     zstdDictSizeBytes: Int = ZstdDictIO.WriteParam.DefaultZstdDictSizeBytes,
     numElementsForSizeEstimation: Long = ZstdDictIO.WriteParam.DefaultNumElementsForSizeEstimation,
-    trainingBytesTarget: Int = ZstdDictIO.WriteParam.DefaultTrainingBytesTarget
+    trainingBytesTarget: Option[Int] = ZstdDictIO.WriteParam.DefaultTrainingBytesTarget
   ): ClosedTap[Nothing] = {
     this
       .write(ZstdDictIO[T](path))(

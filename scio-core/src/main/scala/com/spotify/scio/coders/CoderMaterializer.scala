@@ -45,6 +45,7 @@ object CoderMaterializer {
   )
   private[scio] object CoderOptions {
     private val cache: ConcurrentHashMap[String, CoderOptions] = new ConcurrentHashMap()
+    private val ZstdArgRegex = "([^:]+):(.*)".r
 
     final def apply(o: PipelineOptions): CoderOptions = {
       cache.computeIfAbsent(
@@ -56,27 +57,24 @@ object CoderMaterializer {
           val zstdDictPaths = Option(scioOpts.getZstdDictionary)
             .map(_.asScala)
             .getOrElse(List.empty)
-            .map { s =>
-              // worst api?
-              s.split(":", 2).toList match {
-                case className :: path :: Nil =>
-                  try {
-                    // ensure class exists
-                    Class.forName(className)
-                  } catch {
-                    case e: ClassNotFoundException =>
-                      throw new IllegalArgumentException(
-                        s"Class for zstdDictionary argument ${s} not found.",
-                        e
-                      )
-                  }
-                  className.replaceAll("\\$", ".") -> path
-                case _ =>
-                  throw new IllegalArgumentException(
-                    "zstdDictionary arguments must be in a colon-separated format. " +
-                      s"Example: `com.spotify.ClassName:gs://path`. Found: ${s}"
-                  )
-              }
+            .map {
+              case s @ ZstdArgRegex(className, path) =>
+                try {
+                  // ensure class exists
+                  Class.forName(className)
+                } catch {
+                  case e: ClassNotFoundException =>
+                    throw new IllegalArgumentException(
+                      s"Class for zstdDictionary argument ${s} not found.",
+                      e
+                    )
+                }
+                className.replaceAll("\\$", ".") -> path
+              case s =>
+                throw new IllegalArgumentException(
+                  "zstdDictionary arguments must be in a colon-separated format. " +
+                    s"Example: `com.spotify.ClassName:gs://path`. Found: ${s}"
+                )
             }
             .groupBy(_._1)
             .map { case (className, values) => className -> values.map(_._2).toSet }

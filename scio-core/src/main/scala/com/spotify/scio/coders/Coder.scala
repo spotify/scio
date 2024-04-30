@@ -57,7 +57,7 @@ Cannot find an implicit Coder instance for type:
 )
 sealed trait Coder[T] extends Serializable
 
-sealed trait TypeName {
+sealed private[scio] trait TypeName {
   def typeName: String
 }
 
