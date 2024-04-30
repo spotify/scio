@@ -18,12 +18,13 @@
 package com.spotify.scio.values
 
 import java.io.PrintStream
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
+import org.apache.beam.sdk.{io => beam}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
 import org.apache.beam.sdk.transforms.windowing.PaneInfo.Timing
@@ -42,6 +43,8 @@ import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.schemas.Schema
 import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder}
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.commons.io.FileUtils
 
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -904,6 +907,58 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  private def writerTestFiles(dir: Path): Unit = {
+    for {
+      partition <- Seq("a", "b")
+      idx <- Seq(1, 2)
+    } yield {
+      val p = dir.resolve(partition)
+      Files.createDirectories(p)
+      val f = p.resolve(s"part-$idx.txt")
+      val data = s"$partition$idx"
+      Files.write(f, data.getBytes(StandardCharsets.UTF_8))
+    }
+  }
+
+  it should "support reading file patterns" in withTempDir { dir =>
+    writerTestFiles(dir)
+    runWithRealContext() { sc =>
+      val actual = sc
+        .parallelize(Seq(s"$dir/a/part-*", s"$dir/b/part-*"))
+        .readFiles(beam.TextIO.readFiles())
+      actual should containInAnyOrder(Seq("a1", "a2", "b1", "b2"))
+    }
+  }
+
+  it should "support reading file patterns with retaining path" in withTempDir { dir =>
+    writerTestFiles(dir)
+    runWithRealContext() { sc =>
+      val actual = sc
+        .parallelize(Seq(s"$dir/a/part-*", s"$dir/b/part-*"))
+        .readFilesWithPath(
+          100L,
+          beam.FileIO.ReadMatches.DirectoryTreatment.PROHIBIT,
+          beam.Compression.AUTO
+        ) { f =>
+          new beam.TextSource(
+            StaticValueProvider.of(f),
+            beam.fs.EmptyMatchTreatment.DISALLOW,
+            Array('\n'.toByte),
+            0
+          )
+        }
+
+      actual should containInAnyOrder(
+        Seq(
+          s"$dir/a/part-1.txt" -> "a1",
+          s"$dir/a/part-2.txt" -> "a2",
+          s"$dir/b/part-1.txt" -> "b1",
+          s"$dir/b/part-2.txt" -> "b2"
+        )
+      )
+    }
+  }
+
   it should "reify as List" in {
     runWithContext { sc =>
       val other = sc.parallelize(Seq(1))
@@ -950,4 +1005,12 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  private def withTempDir(test: Path => Any): Unit = {
+    val dir = Files.createTempDirectory("scio-test-")
+    try {
+      test(dir)
+    } finally {
+      FileUtils.deleteDirectory(dir.toFile)
+    }
+  }
 }
