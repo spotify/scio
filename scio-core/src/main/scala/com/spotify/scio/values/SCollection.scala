@@ -1444,10 +1444,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     desiredBundleSizeBytes: Long,
     directoryTreatment: DirectoryTreatment,
     compression: Compression
-  )(filesSource: String => FileBasedSource[A])(implicit ev: T <:< String): SCollection[A] = {
-    val fn = Functions.serializableFn(filesSource)
+  )(f: String => FileBasedSource[A])(implicit ev: T <:< String): SCollection[A] = {
+    val createSource = Functions.serializableFn(f)
     val bcoder = CoderMaterializer.beam(context, Coder[A])
-    val fileTransform = new ReadAllViaFileBasedSource(desiredBundleSizeBytes, fn, bcoder)
+    val fileTransform = new ReadAllViaFileBasedSource(desiredBundleSizeBytes, createSource, bcoder)
     readFiles(fileTransform, directoryTreatment, compression)
   }
 
@@ -1505,7 +1505,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
   )(
-    filesSource: String => FileBasedSource[A]
+    f: String => FileBasedSource[A]
   )(implicit ev: T <:< String): SCollection[(String, A)] = {
     if (context.isTest) {
       val id = context.testId.get
@@ -1518,11 +1518,11 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
           .map(x => path -> x)
       }
     } else {
-      val fn = Functions.serializableFn(filesSource)
+      val createSource = Functions.serializableFn(f)
       val bcoder = CoderMaterializer.beam(context, Coder[KV[String, A]])
       val fileTransform = new ReadAllViaFileBasedSourceWithFilename(
         desiredBundleSizeBytes,
-        fn,
+        createSource,
         bcoder
       )
       readFiles(fileTransform, directoryTreatment, compression).map(kvToTuple)
