@@ -79,7 +79,7 @@ object ElasticsearchMinimalExample {
       .saveAsElasticsearch(clusterOpts)(indexRequestBuilder)
 
     // Run pipeline
-    sc.run().waitUntilFinish()
+    sc.run().waitUntilDone()
   }
 
   private def indexer(index: String): ((String, Long)) => Iterable[BulkOperation] = {

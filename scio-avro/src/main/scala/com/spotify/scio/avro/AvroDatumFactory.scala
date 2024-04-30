@@ -28,6 +28,8 @@ import org.apache.avro.specific.{
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 
 import scala.jdk.CollectionConverters._
+import scala.util.Try
+import scala.util.chaining._
 
 /**
  * AvroDatumFactory for [[GenericRecord]] forcing underlying [[CharSequence]] implementation to
@@ -108,21 +110,20 @@ private[scio] object SpecificRecordDatumFactory {
 
     schema.getType match {
       case Schema.Type.RECORD =>
-        Option(data.getClass(schema)).foreach { clazz =>
-          try {
-            val field = clazz.getDeclaredField("conversions")
-            field.setAccessible(true)
-            val conversions = field.get(null).asInstanceOf[Array[Conversion[_]]]
-            // remove null entries from the conversion array
-            conversions.filter(_ != null).foreach(data.addLogicalTypeConversion)
+        // avro 1.8 patching
+        //   - specific data must find the class
+        //   - class must have a 'conversions' field
+        //   - 'conversion' field must be a static array of Conversion[_]
+        //   - add non null conversions to the data
+        for {
+          clazz <- Option(data.getClass(schema))
+          field <- Try(clazz.getDeclaredField("conversions").tap(_.setAccessible(true))).toOption
+          conversions <- Try(field.get(null)).collect { case c: Array[Conversion[_]] => c }.toOption
+        } yield conversions.filter(_ != null).foreach(data.addLogicalTypeConversion)
 
-            val updatedSeenSchemas = seenSchemas + schema
-            schema.getFields.asScala.foreach { f =>
-              addLogicalTypeConversions(data, f.schema(), updatedSeenSchemas)
-            }
-          } catch {
-            case _: NoSuchFieldException | _: IllegalAccessException =>
-          }
+        val updatedSeenSchemas = seenSchemas + schema
+        schema.getFields.asScala.foreach { f =>
+          addLogicalTypeConversions(data, f.schema(), updatedSeenSchemas)
         }
       case Schema.Type.MAP =>
         addLogicalTypeConversions(data, schema.getValueType, seenSchemas)

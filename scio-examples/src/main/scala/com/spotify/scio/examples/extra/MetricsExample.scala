@@ -70,7 +70,7 @@ object MetricsExample {
         sum2.inc(i)
       }
 
-    val result = sc.run().waitUntilFinish()
+    val result = sc.run().waitUntilDone()
 
     // # Retrieving metrics
 

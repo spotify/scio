@@ -87,7 +87,9 @@ Scio includes the following artifacts:
 - `scio-repl`: extension of the Scala REPL with Scio specific operations
 - `scio-smb`: add-on for Sort Merge Bucket operations
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
-- `scio-test`: test utilities, add to your project as a "test" dependency
+- `scio-test`: all following test utilities. Add to your project as a "test" dependency
+  - `scio-test-core`: test core utilities
+  - `scio-test-google-cloud-platform`: test utilities for Google Cloud IO's
 
 # License
 

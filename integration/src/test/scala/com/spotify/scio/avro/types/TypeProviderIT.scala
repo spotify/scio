@@ -26,14 +26,12 @@ import scala.reflect.runtime.universe._
 
 class TypeProviderIT extends AnyFlatSpec with Matchers {
 
-  @AvroType.fromSchemaFile("""
-      |https://raw.githubusercontent.com/spotify/scio/master/
-      |scio-avro/src/test/avro/
-      |scio-avro-test.avsc
-    """.stripMargin)
+  @AvroType.fromSchemaFile(
+    "https://raw.githubusercontent.com/spotify/scio/master/integration/src/test/avro/avro-type-provider.avsc"
+  )
   class FromResourceMultiLine
   @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
+    "https://raw.githubusercontent.com/spotify/scio/master/integration/src/test/avro/avro-type-provider.avsc"
   )
   class FromResource
 
@@ -52,7 +50,7 @@ class TypeProviderIT extends AnyFlatSpec with Matchers {
 
   @Annotation1
   @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
+    "https://raw.githubusercontent.com/spotify/scio/master/integration/src/test/avro/avro-type-provider.avsc"
   )
   @Annotation2
   class FromResourceWithSurroundingAnnotations
@@ -61,7 +59,7 @@ class TypeProviderIT extends AnyFlatSpec with Matchers {
     containsAllAnnotTypes[FromResourceWithSurroundingAnnotations]
   }
   @AvroType.fromSchemaFile(
-    "https://raw.githubusercontent.com/spotify/scio/master/scio-avro/src/test/avro/scio-avro-test.avsc"
+    "https://raw.githubusercontent.com/spotify/scio/master/integration/src/test/avro/avro-type-provider.avsc"
   )
   @Annotation1
   @Annotation2
