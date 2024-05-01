@@ -62,8 +62,12 @@ case class ZstdDictIO[T](path: String) extends ScioIO[T] {
     // training bytes may not exceed 2GiB a.k.a. the max value of an Int
     val trainingBytesTargetActual: Int = trainingBytesTarget.getOrElse {
       // see https://github.com/facebook/zstd/blob/v1.5.5/lib/zdict.h#L132-L136
-      val computed =
-        Try(Math.multiplyExact(zstdDictSizeBytes, 100)).toOption.getOrElse(Int.MaxValue)
+      val computed = Try(Math.multiplyExact(zstdDictSizeBytes, 100)).toOption.getOrElse {
+        throw new IllegalArgumentException(
+          "Using 100 * zstdDictSizeBytes would exceed 2GiB training bytes. " +
+            "Reduce dictionary size"
+        )
+      }
       logger.info(s"No trainingBytesTarget passed, using ${computed} bytes")
       computed
     }

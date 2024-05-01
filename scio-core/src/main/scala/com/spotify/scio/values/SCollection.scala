@@ -1657,7 +1657,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @param path
    *   The path to which the trained dictionary should be written.
    * @param zstdDictSizeBytes
-   *   The size of the dictionary to train in bytes
+   *   The size of the dictionary to train in bytes. Recommended dictionary sizes are in hundreds of
+   *   KB. Over 10MB is not recommended and you may hit resource limits if the dictionary size is
+   *   near 20MB.
    * @param numElementsForSizeEstimation
    *   The number of elements of the SCollection to use to estimate the average element size.
    * @param trainingBytesTarget

@@ -26,7 +26,7 @@ object ZstdCoder {
   def apply[T: Coder: ClassTag](dict: Array[Byte]): Coder[T] =
     Coder.transform(Coder[T])(tCoder => Coder.beam(BZstdCoder.of(tCoder, dict)))
 
-  def kv[K: Coder, V: Coder](
+  def tuple2[K: Coder, V: Coder](
     keyDict: Array[Byte] = null,
     valueDict: Array[Byte] = null
   ): Coder[(K, V)] =

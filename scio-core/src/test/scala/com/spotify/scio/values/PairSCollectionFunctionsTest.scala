@@ -153,7 +153,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       .bcoder shouldBe a[BZstdCoder[_]]
 
     val tupleValueZstd = sc
-      .empty[(String, String)]()(ZstdCoder.kv(valueDict = dictBytes))
+      .empty[(String, String)]()(ZstdCoder.tuple2(valueDict = dictBytes))
 
     // zstd should be applied to value side only
     tuple2(tupleValueZstd)
@@ -161,7 +161,7 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       .shouldHaveValue[BZstdCoder[_]]
 
     val tupleKVZstd = sc
-      .empty[(String, String)]()(ZstdCoder.kv(dictBytes, dictBytes))
+      .empty[(String, String)]()(ZstdCoder.tuple2(dictBytes, dictBytes))
 
     // zstd should be applied to both sides
     tuple2(tupleKVZstd)
