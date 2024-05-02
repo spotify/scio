@@ -7,7 +7,7 @@ import com.spotify.scio.values.SCollection
 
 object FixAvroCoder16 {
 
-  def someMethod(data: SCollection[A]): SCollection[A] = {
+  def someMethod(data: SCollection[A]): SCollection[(String, A)] = {
     data.map(r => ("foo", r))
   }
 }
