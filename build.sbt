@@ -302,8 +302,9 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           List("coverage", "test", "coverageAggregate"),
           name = Some("Test coverage")
         ),
-        WorkflowStep.Run(
-          List("bash <(curl -s https://codecov.io/bash)"),
+        WorkflowStep.Use(
+          UseRef.Public("codecov", "codecov-action", "v4"),
+          Map("token" -> "${{ secrets.CODECOV_TOKEN }}"),
           name = Some("Upload coverage report")
         )
       ),
