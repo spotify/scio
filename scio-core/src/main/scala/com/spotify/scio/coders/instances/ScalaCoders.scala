@@ -241,6 +241,13 @@ private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[So
     decode(inStream, SortedSet.newBuilder[T])
 }
 
+private class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
+    extends SeqLikeCoder[m.PriorityQueue, T](bc) {
+  override def consistentWithEquals(): Boolean = false // PriorityQueue does not define equality
+  override def decode(inStream: InputStream): m.PriorityQueue[T] =
+    decode(inStream, m.PriorityQueue.newBuilder[T])
+}
+
 private[coders] class BitSetCoder extends AtomicCoder[BitSet] {
   private[this] val lc = VarIntCoder.of()
 
@@ -514,6 +521,9 @@ trait ScalaCoders extends CoderGrammar with CoderDerivation {
 
   implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] =
     transform(Coder[T])(bc => beam(new SortedSetCoder[T](bc)))
+
+  implicit def priorityQueueCoder[T: Coder: Ordering]: Coder[m.PriorityQueue[T]] =
+    transform(Coder[T])(bc => beam(new MutablePriorityQueueCoder[T](bc)))
 
   // cache common scala types to avoid macro expansions
   implicit def tryCoder[T: Coder]: Coder[Try[T]] =

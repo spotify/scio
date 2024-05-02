@@ -53,10 +53,12 @@ import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
-import scala.util.Try
+import scala.util.{Random, Try}
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.typelevel.scalaccompat.annotation.{nowarn, unused}
+
+import scala.collection.mutable
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -918,6 +920,68 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def sample(sampleSize: Int): SCollection[Iterable[T]] = this.transform {
     _.pApply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
+  }
+
+  final private class WeightedHeapAggregator(totalWeight: Long, cost: T => Long)(implicit
+    ordering: Ordering[(Long, T)]
+  ) extends Aggregator[T, mutable.PriorityQueue[(Long, T)], Iterable[T]] {
+    @transient private lazy val random = new Random()
+
+    override def prepare(value: T): mutable.PriorityQueue[(Long, T)] = {
+      val queue = mutable.PriorityQueue[(Long, T)]()
+      if (cost(value) <= totalWeight) {
+        queue.enqueue((random.nextLong(), value))
+      }
+      queue
+    }
+
+    override def semigroup: Semigroup[mutable.PriorityQueue[(Long, T)]] = Semigroup.from {
+      (left, right) =>
+        var weight = 0L
+        val queue = mutable.PriorityQueue[(Long, T)]()
+        while (weight < totalWeight && (right.nonEmpty || left.nonEmpty)) {
+          val (w, v) = (left.headOption, right.headOption) match {
+            case (Some((lid, lvalue)), Some((rid, _))) if lid >= rid =>
+              (cost(lvalue), left.dequeue())
+            case (Some(_), Some((_, rvalue))) =>
+              (cost(rvalue), right.dequeue())
+            case (Some((_, lvalue)), _) =>
+              (cost(lvalue), left.dequeue())
+            case (_, Some((_, rvalue))) =>
+              (cost(rvalue), right.dequeue())
+          }
+          weight += w
+          if (weight <= totalWeight) {
+            queue.enqueue(v)
+          }
+        }
+        queue
+    }
+
+    override def present(reduction: mutable.PriorityQueue[(Long, T)]): Iterable[T] =
+      reduction.iterator.map(_._2).toSeq
+  }
+
+  def sampleWeighted(
+    totalWeight: Long,
+    cost: T => Long
+  ): SCollection[Iterable[T]] = {
+    implicit val ordering: Ordering[(Long, T)] = Ordering.by(_._1)
+    this.aggregate(new WeightedHeapAggregator(totalWeight, cost))
+  }
+
+  def sampleBySize(totalByteSize: Long): SCollection[Iterable[T]] = {
+    val bCoder = CoderMaterializer.beam(context, coder)
+    val weigher = { (e: T) =>
+      var size: Long = 0L
+      val observer = new ElementByteSizeObserver {
+        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
+      }
+      bCoder.registerByteSizeObserver(e, observer)
+      observer.advance()
+      size
+    }
+    sampleWeighted(totalByteSize, weigher)
   }
 
   /**
