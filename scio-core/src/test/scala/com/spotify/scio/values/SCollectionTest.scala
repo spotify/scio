@@ -582,8 +582,8 @@ class SCollectionTest extends PipelineSpec {
     } else {
       runWithContext { sc =>
         val p = sc.parallelize(Seq[Byte](1, 1, 1, 1, 1))
-        p.sampleBySize(1) should containSingleValue(Iterable[Byte](1))
-        p.sampleBySize(6) should containSingleValue(Iterable[Byte](1, 1, 1, 1, 1))
+        p.sampleByteSized(1) should containSingleValue(Iterable[Byte](1))
+        p.sampleByteSized(6) should containSingleValue(Iterable[Byte](1, 1, 1, 1, 1))
       }
     }
   }

@@ -970,7 +970,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.aggregate(new WeightedHeapAggregator(totalWeight, cost))
   }
 
-  def sampleBySize(totalByteSize: Long): SCollection[Iterable[T]] = {
+  def sampleByteSized(totalByteSize: Long): SCollection[Iterable[T]] = {
     val bCoder = CoderMaterializer.beam(context, coder)
     val weigher = { (e: T) =>
       var size: Long = 0L
