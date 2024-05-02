@@ -190,28 +190,34 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
   override def fix(implicit doc: SemanticDocument): Patch = {
     val usesAvroCoders = doc.tree
       .collect {
-        case q"$expr[..$tpesnel]" =>
-          // A method call with a type parameter requires an implicit Coder[T] for our type
-          findBoundedTypes(expr, tpesnel, CoderMatcher)
-            .exists(isAvroType)
-        case t @ q"..$mods val ..$patsnel: $tpeopt = $expr" =>
-          // Coder[T] is a variable type where T is an avro type
-          findMatchingValTypeParams(t, CoderMatcher)
-            .exists(isAvroType)
-        case q"$fn(..$args)" if JobTestBuilderMatcher.matches(fn) =>
-          args.headOption match {
-            case Some(q"$io[$tpe](..$args)") if isAvroType(tpe.symbol) => true
-            case _                                                     => false
-          }
-        case q"$fn(..$args)" if ParallelizeMatcher.matches(fn) =>
-          args.headOption exists {
-            case expr if hasAvroTypeSignature(expr, true) => true
-            case q"$seqLike($elem)"
-                if seqLike.symbol.value.startsWith("scala/collection/") &&
-                  (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
-              true
-            case _ => false
-          }
+        // A method call with a type parameter requires an implicit Coder[T] for our type
+        case q"$expr[..$tpesnel]"
+            if findBoundedTypes(expr, tpesnel, CoderMatcher).exists(isAvroType) =>
+          true
+        // Coder[T] is a variable type where T is an avro type
+        case t @ q"..$mods val ..$patsnel: $tpeopt = $expr"
+            if findMatchingValTypeParams(t, CoderMatcher)
+              .exists(isAvroType) =>
+          true
+        case q"$fn(..$args)" if methodHasAvroCoderTypeBound(fn) => true
+        case q"..$mods def $ename(...$params): $tpe = $expr" if methodReturnsAvroSCollection(tpe) =>
+          true
+        case q"$fn(..$args)"
+            if JobTestBuilderMatcher.matches(fn) &&
+              (args.headOption match {
+                case Some(q"$io[$tpe](..$args)") if isAvroType(tpe.symbol) => true
+                case _                                                     => false
+              }) =>
+          true
+        case q"$fn(..$args)" if ParallelizeMatcher.matches(fn) && (args.headOption exists {
+              case expr if hasAvroTypeSignature(expr, true) => true
+              case q"$seqLike($elem)"
+                  if seqLike.symbol.value.startsWith("scala/collection/") &&
+                    (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
+                true
+              case _ => false
+            }) =>
+          true
         case q"$expr(..$args)" if SmbReadMatchers.matches(expr) =>
           args.tail.map(_.symbol.info.map(_.signature)).exists {
             case Some(
@@ -225,9 +231,6 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
               true
             case _ => false
           }
-        case q"$fn(..$args)" if methodHasAvroCoderTypeBound(fn) => true
-        case q"..$mods def $ename(...$params): $tpe = $expr" if methodReturnsAvroSCollection(tpe) =>
-          true
       }
       .foldLeft(false)(_ || _)
     val avroValuePatch = if (usesAvroCoders) Patch.addGlobalImport(avroImport) else Patch.empty
