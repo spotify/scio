@@ -42,6 +42,9 @@ object FixAvroCoder {
   val ParallelizeMatcher = SymbolMatcher.normalized(
     "com/spotify/scio/ScioContext#parallelize()."
   )
+  val SCollectionMatcher = SymbolMatcher.normalized(
+    "com/spotify/scio/values/SCollection#"
+  )
 
   /** @return true if `sym` is a class whose parents include a type matching `parentMatcher` */
   def hasParentClass(sym: Symbol, parentMatcher: SymbolMatcher)(implicit
@@ -162,9 +165,23 @@ object FixAvroCoder {
           coderT
       }
       .flatMap(_.info.map(_.signature).toList)
-      .exists { case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) =>
-        AvroMatcher.matches(maybeAvroType)
+      .exists {
+        case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) =>
+          AvroMatcher.matches(maybeAvroType)
+        case _ => false
       }
+
+  def methodReturnsAvroSCollection(
+    returnType: Option[Type]
+  )(implicit doc: SemanticDocument): Boolean = returnType match {
+    case Some(t"$tpe[..$tpesnel]") if SCollectionMatcher.matches(tpe) =>
+      tpesnel.exists {
+        case tpe if isAvroType(tpe.symbol)                                        => true
+        case t"(..$tupleTypes)" if tupleTypes.exists(tt => isAvroType(tt.symbol)) => true
+        case _                                                                    => false
+      }
+    case _ => false
+  }
 }
 
 class FixAvroCoder extends SemanticRule("FixAvroCoder") {
@@ -209,6 +226,8 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
             case _ => false
           }
         case q"$fn(..$args)" if methodHasAvroCoderTypeBound(fn) => true
+        case q"..$mods def $ename(...$params): $tpe = $expr" if methodReturnsAvroSCollection(tpe) =>
+          true
       }
       .foldLeft(false)(_ || _)
     val avroValuePatch = if (usesAvroCoders) Patch.addGlobalImport(avroImport) else Patch.empty
