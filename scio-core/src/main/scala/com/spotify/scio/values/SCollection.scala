@@ -33,7 +33,6 @@ import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.transforms.BatchDoFn
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
-import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
@@ -53,12 +52,10 @@ import scala.jdk.CollectionConverters._
 import scala.collection.compat._
 import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
-import scala.util.{Random, Try}
+import scala.util.Try
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.typelevel.scalaccompat.annotation.{nowarn, unused}
-
-import scala.collection.mutable
 
 /** Convenience functions for creating SCollections. */
 object SCollection {
@@ -918,71 +915,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   a new SCollection whose single value is an `Iterable` of the samples
    * @group transform
    */
-  def sample(sampleSize: Int): SCollection[Iterable[T]] = this.transform {
-    _.pApply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
-  }
+  // TODO move to implicit
+  def sample(sampleSize: Int): SCollection[Iterable[T]] =
+    new SampleSCollectionFunctions(this).sample(sampleSize)
 
-  final private class WeightedHeapAggregator(totalWeight: Long, cost: T => Long)(implicit
-    ordering: Ordering[(Long, T)]
-  ) extends Aggregator[T, mutable.PriorityQueue[(Long, T)], Iterable[T]] {
-    @transient private lazy val random = new Random()
+  // TODO move to implicit
+  def sampleWeighted(totalWeight: Long, cost: T => Long): SCollection[Iterable[T]] =
+    new SampleSCollectionFunctions(this).sampleWeighted(totalWeight, cost)
 
-    override def prepare(value: T): mutable.PriorityQueue[(Long, T)] = {
-      val queue = mutable.PriorityQueue[(Long, T)]()
-      if (cost(value) <= totalWeight) {
-        queue.enqueue((random.nextLong(), value))
-      }
-      queue
-    }
-
-    override def semigroup: Semigroup[mutable.PriorityQueue[(Long, T)]] = Semigroup.from {
-      (left, right) =>
-        var weight = 0L
-        val queue = mutable.PriorityQueue[(Long, T)]()
-        while (weight < totalWeight && (right.nonEmpty || left.nonEmpty)) {
-          val (w, v) = (left.headOption, right.headOption) match {
-            case (Some((lid, lvalue)), Some((rid, _))) if lid >= rid =>
-              (cost(lvalue), left.dequeue())
-            case (Some(_), Some((_, rvalue))) =>
-              (cost(rvalue), right.dequeue())
-            case (Some((_, lvalue)), _) =>
-              (cost(lvalue), left.dequeue())
-            case (_, Some((_, rvalue))) =>
-              (cost(rvalue), right.dequeue())
-          }
-          weight += w
-          if (weight <= totalWeight) {
-            queue.enqueue(v)
-          }
-        }
-        queue
-    }
-
-    override def present(reduction: mutable.PriorityQueue[(Long, T)]): Iterable[T] =
-      reduction.iterator.map(_._2).toSeq
-  }
-
-  def sampleWeighted(
-    totalWeight: Long,
-    cost: T => Long
-  ): SCollection[Iterable[T]] = {
-    implicit val ordering: Ordering[(Long, T)] = Ordering.by(_._1)
-    this.aggregate(new WeightedHeapAggregator(totalWeight, cost))
-  }
-
-  def sampleByteSized(totalByteSize: Long): SCollection[Iterable[T]] = {
-    val bCoder = CoderMaterializer.beam(context, coder)
-    val weigher = { (e: T) =>
-      var size: Long = 0L
-      val observer = new ElementByteSizeObserver {
-        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
-      }
-      bCoder.registerByteSizeObserver(e, observer)
-      observer.advance()
-      size
-    }
-    sampleWeighted(totalByteSize, weigher)
-  }
+  // TODO move to implicit
+  def sampleByteSized(totalByteSize: Long): SCollection[Iterable[T]] =
+    new SampleSCollectionFunctions(this).sampleByteSized(totalByteSize)
 
   /**
    * Return a sampled subset of this SCollection. Does not trigger shuffling.
@@ -994,12 +937,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   the sampling fraction
    * @group transform
    */
+  // TODO move to implicit
   def sample(withReplacement: Boolean, fraction: Double): SCollection[T] =
-    if (withReplacement) {
-      this.parDo(new PoissonSampler[T](fraction))
-    } else {
-      this.parDo(new BernoulliSampler[T](fraction))
-    }
+    new SampleSCollectionFunctions(this).sample(withReplacement, fraction)
 
   /**
    * Return an SCollection with the elements from `this` that are not in `other`.
