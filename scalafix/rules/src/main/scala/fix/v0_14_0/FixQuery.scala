@@ -12,9 +12,14 @@ class FixQuery extends SemanticRule("FixQuery") {
 
   import FixQuery._
 
+  private def isQuery(term: Tree)(implicit doc: SemanticDocument): Boolean =
+    term.symbol.info.exists(_.overriddenSymbols.exists(HasQueryMatcher.matches))
+
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
       case t @ q"$qual.$fn" if HasQueryMatcher.matches(fn) =>
+        Patch.replaceTree(t, q"$qual.queryRaw".syntax)
+      case t @ q"$qual.query" if isQuery(t) =>
         Patch.replaceTree(t, q"$qual.queryRaw".syntax)
     }.asPatch
   }
