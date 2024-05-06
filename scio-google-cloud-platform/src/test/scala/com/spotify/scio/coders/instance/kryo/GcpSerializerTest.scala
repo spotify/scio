@@ -41,7 +41,7 @@ object GcpSerializerTest {
   implicit val eqMutateRowsException: Equality[MutateRowsException] = {
     case (a: MutateRowsException, b: MutateRowsException) =>
       eqCause.areEqual(a.getCause, b.getCause) &&
-      a.getStatusCode == b.getStatusCode &&
+      eqStatusCode.areEqual(a.getStatusCode, b.getStatusCode) &&
       a.isRetryable == b.isRetryable &&
       a.getFailedMutations.size() == b.getFailedMutations.size() &&
       a.getFailedMutations.asScala.zip(b.getFailedMutations.asScala).forall { case (x, y) =>
@@ -71,9 +71,10 @@ class GcpSerializerTest extends AnyFlatSpec with Matchers {
 
   "MutateRowsExceptionSerializer" should "roundtrip" in {
     val cause = new StatusRuntimeException(Status.OK)
+    val code = GrpcStatusCode.of(Status.OK.getCode)
     val apiException = new InternalException(cause, GrpcStatusCode.of(Code.OK), false)
     val failedMutations = List(MutateRowsException.FailedMutation.create(1, apiException))
-    val mutateRowsException = MutateRowsException.create(cause, failedMutations.asJava, false)
+    val mutateRowsException = MutateRowsException.create(cause, code, failedMutations.asJava, false)
 
     mutateRowsException coderShould roundtrip()
   }
