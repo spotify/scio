@@ -37,12 +37,7 @@ import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
-import org.apache.beam.sdk.io.{
-  Compression,
-  FileBasedSource,
-  ReadAllViaFileBasedSource,
-  ReadAllViaFileBasedSourceWithFilename
-}
+import org.apache.beam.sdk.io.{Compression, FileBasedSource}
 import org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment
 import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
@@ -1364,14 +1359,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   // Read operations
   // =======================================================================
 
-  /**
-   * Reads each file, represented as a pattern, in this [[SCollection]].
-   *
-   * @return
-   *   each line of the input files.
-   * @see
-   *   [[readFilesAsBytes]], [[readFilesAsString]]
-   */
+  /** @deprecated Use readTextFiles */
+  @deprecated("Use readTextFiles", "0.14.5")
   def readFiles(implicit ev: T <:< String): SCollection[String] =
     readFiles(beam.TextIO.readFiles())
 
@@ -1379,23 +1368,28 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Reads each file, represented as a pattern, in this [[SCollection]].
    *
    * @return
+   *   each line of the input files.
+   */
+  def readTextFiles(implicit ev: T <:< String): SCollection[String] =
+    new FileSCollectionFunctions(this.covary_[String]).readTextFiles()
+
+  /**
+   * Reads each file, represented as a pattern, in this [[SCollection]].
+   *
+   * @return
    *   each file fully read as [[Array[Byte]].
-   * @see
-   *   [[readFilesAsBytes]], [[readFilesAsString]]
    */
   def readFilesAsBytes(implicit ev: T <:< String): SCollection[Array[Byte]] =
-    readFiles(_.readFullyAsBytes())
+    new FileSCollectionFunctions(this.covary_[String]).readFilesAsBytes()
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
    *
    * @return
    *   each file fully read as [[String]].
-   * @see
-   *   [[readFilesAsBytes]], [[readFilesAsString]]
    */
   def readFilesAsString(implicit ev: T <:< String): SCollection[String] =
-    readFiles(_.readFullyAsUTF8String())
+    new FileSCollectionFunctions(this.covary_[String]).readFilesAsString()
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1406,7 +1400,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def readFiles[A: Coder](
     f: beam.FileIO.ReadableFile => A
   )(implicit ev: T <:< String): SCollection[A] =
-    readFiles(DirectoryTreatment.SKIP, Compression.AUTO)(f)
+    new FileSCollectionFunctions(this.covary_[String]).readFiles(f)
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1421,13 +1415,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def readFiles[A: Coder](directoryTreatment: DirectoryTreatment, compression: Compression)(
     f: beam.FileIO.ReadableFile => A
-  )(implicit ev: T <:< String): SCollection[A] = {
-    val transform =
-      ParDo
-        .of(Functions.mapFn[beam.FileIO.ReadableFile, A](f))
-        .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]]]
-    readFiles(transform, directoryTreatment, compression)
-  }
+  )(implicit ev: T <:< String): SCollection[A] =
+    new FileSCollectionFunctions(this.covary_[String]).readFiles(directoryTreatment, compression)(f)
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]]. Files are split into
@@ -1444,12 +1433,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     desiredBundleSizeBytes: Long,
     directoryTreatment: DirectoryTreatment,
     compression: Compression
-  )(f: String => FileBasedSource[A])(implicit ev: T <:< String): SCollection[A] = {
-    val createSource = Functions.serializableFn(f)
-    val bcoder = CoderMaterializer.beam(context, Coder[A])
-    val fileTransform = new ReadAllViaFileBasedSource(desiredBundleSizeBytes, createSource, bcoder)
-    readFiles(fileTransform, directoryTreatment, compression)
-  }
+  )(f: String => FileBasedSource[A])(implicit ev: T <:< String): SCollection[A] =
+    new FileSCollectionFunctions(this.covary_[String])
+      .readFiles(desiredBundleSizeBytes, directoryTreatment, compression)(f)
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1467,31 +1453,37 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
   )(implicit ev: T <:< String): SCollection[A] =
-    if (context.isTest) {
-      val id = context.testId.get
-      this.flatMap(s => TestDataManager.getInput(id)(ReadIO[A](ev(s))).asIterable.get)
-    } else {
-      this
-        .covary_[String]
-        .applyTransform(new PTransform[PCollection[String], PCollection[A]]() {
-          override def expand(input: PCollection[String]): PCollection[A] =
-            input
-              .apply(beam.FileIO.matchAll())
-              .apply(
-                beam.FileIO
-                  .readMatches()
-                  .withCompression(compression)
-                  .withDirectoryTreatment(directoryTreatment)
-              )
-              .apply(filesTransform)
-        })
-    }
+    new FileSCollectionFunctions(this.covary_[String])
+      .readFiles(filesTransform, directoryTreatment, compression)
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]]. Files are split into
    * multiple offset ranges and read with the [[FileBasedSource]].
    *
-   * Produced elements are paired with the file name they were read from.
+   * @return
+   *   origin file name paired with read line.
+   *
+   * @param desiredBundleSizeBytes
+   *   Desired size of bundles read by the sources.
+   * @param directoryTreatment
+   *   Controls how to handle directories in the input.
+   * @param compression
+   *   Reads files using the given [[org.apache.beam.sdk.io.Compression]].
+   */
+  def readTextFilesWithPath(
+    desiredBundleSizeBytes: Long = FileSCollectionFunctions.DefaultBundleSizeBytes,
+    directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
+    compression: Compression = Compression.AUTO
+  )(implicit ev: T <:< String): SCollection[(String, String)] =
+    new FileSCollectionFunctions(this.covary_[String])
+      .readTextFilesWithPath(desiredBundleSizeBytes, directoryTreatment, compression)
+
+  /**
+   * Reads each file, represented as a pattern, in this [[SCollection]]. Files are split into
+   * multiple offset ranges and read with the [[FileBasedSource]].
+   *
+   * @return
+   *   origin file name paired with read element.
    *
    * @param desiredBundleSizeBytes
    *   Desired size of bundles read by the sources.
@@ -1501,33 +1493,14 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   Reads files using the given [[org.apache.beam.sdk.io.Compression]].
    */
   def readFilesWithPath[A: Coder](
-    desiredBundleSizeBytes: Long,
+    desiredBundleSizeBytes: Long = FileSCollectionFunctions.DefaultBundleSizeBytes,
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
   )(
     f: String => FileBasedSource[A]
-  )(implicit ev: T <:< String): SCollection[(String, A)] = {
-    if (context.isTest) {
-      val id = context.testId.get
-      this.flatMap { s =>
-        val path = ev(s)
-        TestDataManager
-          .getInput(id)(ReadIO[A](path))
-          .asIterable
-          .get
-          .map(x => path -> x)
-      }
-    } else {
-      val createSource = Functions.serializableFn(f)
-      val bcoder = CoderMaterializer.beam(context, Coder[KV[String, A]])
-      val fileTransform = new ReadAllViaFileBasedSourceWithFilename(
-        desiredBundleSizeBytes,
-        createSource,
-        bcoder
-      )
-      readFiles(fileTransform, directoryTreatment, compression).map(kvToTuple)
-    }
-  }
+  )(implicit ev: T <:< String): SCollection[(String, A)] =
+    new FileSCollectionFunctions(this.covary_[String])
+      .readFilesWithPath(desiredBundleSizeBytes, directoryTreatment, compression)(f)
 
   /**
    * Pairs each element with the value of the provided [[SideInput]] in the element's window.

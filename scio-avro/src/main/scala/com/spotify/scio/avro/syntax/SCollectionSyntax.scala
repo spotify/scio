@@ -22,13 +22,13 @@ import com.spotify.scio.avro._
 import com.spotify.scio.avro.types.AvroType.HasAvroAnnotation
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.util.FilenamePolicySupplier
+import com.spotify.scio.util.{FilenamePolicySupplier, ScioUtil}
 import com.spotify.scio.values._
 import org.apache.avro.Schema
 import org.apache.avro.file.CodecFactory
-import org.apache.avro.specific.SpecificRecord
+import org.apache.avro.specific.{SpecificData, SpecificRecord}
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
+import org.apache.beam.sdk.extensions.avro.io.{AvroDatumFactory, AvroIO => BAvroIO, AvroSource}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -207,6 +207,63 @@ final class ProtobufSCollectionOps[T <: Message](private val self: SCollection[T
   }
 }
 
+final class FilesSCollectionOps(private val self: SCollection[String]) extends AnyVal {
+
+  def readAvroGenericFiles(
+    schema: Schema,
+    datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordIO.ReadParam.DefaultDatumFactory
+  ): SCollection[GenericRecord] = {
+    val df = Option(datumFactory).getOrElse(GenericRecordDatumFactory)
+    implicit val coder: Coder[GenericRecord] = avroCoder(df, schema)
+    val transform = BAvroIO
+      .readFilesGenericRecords(schema)
+      .withDatumReaderFactory(df)
+    self.readFiles(filesTransform = transform)
+  }
+
+  def readAvroSpecificFiles[T <: SpecificRecord: ClassTag](
+    datumFactory: AvroDatumFactory[T] = SpecificRecordIO.ReadParam.DefaultDatumFactory
+  ): SCollection[T] = {
+    val recordClass = ScioUtil.classOf[T]
+    val schema = SpecificData.get().getSchema(recordClass)
+    val df = Option(datumFactory).getOrElse(new SpecificRecordDatumFactory(recordClass))
+    implicit val coder: Coder[T] = avroCoder(df, schema)
+    val transform = BAvroIO
+      .readFiles(recordClass)
+      .withDatumReaderFactory(df)
+    self.readFiles(filesTransform = transform)
+  }
+
+  def readAvroGenericFilesWithPath(
+    schema: Schema,
+    datumFactory: AvroDatumFactory[GenericRecord] = GenericRecordIO.ReadParam.DefaultDatumFactory
+  ): SCollection[(String, GenericRecord)] = {
+    val df = Option(datumFactory).getOrElse(GenericRecordDatumFactory)
+    implicit val coder: Coder[GenericRecord] = avroCoder(df, schema)
+    self.readFilesWithPath() { f =>
+      AvroSource
+        .from(f)
+        .withSchema(schema)
+        .withDatumReaderFactory(df)
+    }
+  }
+
+  def readAvroSpecificFilesWithPath[T <: SpecificRecord: ClassTag](
+    datumFactory: AvroDatumFactory[T] = SpecificRecordIO.ReadParam.DefaultDatumFactory
+  ): SCollection[(String, T)] = {
+    val recordClass = ScioUtil.classOf[T]
+    val schema = SpecificData.get().getSchema(recordClass)
+    val df = Option(datumFactory).getOrElse(new SpecificRecordDatumFactory(recordClass))
+    implicit val coder: Coder[T] = avroCoder(df, schema)
+    self.readFilesWithPath() { f =>
+      AvroSource
+        .from(f)
+        .withSchema(recordClass)
+        .withDatumReaderFactory(df)
+    }
+  }
+}
+
 /** Enhanced with Avro methods. */
 trait SCollectionSyntax {
   implicit def avroGenericRecordSCollectionOps(
@@ -228,4 +285,9 @@ trait SCollectionSyntax {
   implicit def avroProtobufSCollectionOps[T <: Message](
     c: SCollection[T]
   ): ProtobufSCollectionOps[T] = new ProtobufSCollectionOps[T](c)
+
+  implicit def avroFilesSCollectionOps[T](
+    c: SCollection[T]
+  )(implicit ev: T <:< String): FilesSCollectionOps =
+    new FilesSCollectionOps(c.covary_[String])
 }
