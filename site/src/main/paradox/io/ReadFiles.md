@@ -4,7 +4,7 @@ Scio supports reading file paths/patterns from an `SCollection[String]` into var
 
 ## Read as text lines
 
-Reading to `String` text lines via @scaladoc[readFiles](com.spotify.scio.values.SCollection#readFiles(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[String]):
+Reading to `String` text lines via @scaladoc[readTextFiles](com.spotify.scio.values.SCollection#readTextFiles(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[String]):
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
@@ -13,7 +13,7 @@ import com.spotify.scio.values.SCollection
 val sc: ScioContext = ???
 val paths: SCollection[String] = ???
 
-val lines: SCollection[String] = paths.readFiles
+val lines: SCollection[String] = paths.readTextFiles
 ```
 
 ## Read entire file as String
