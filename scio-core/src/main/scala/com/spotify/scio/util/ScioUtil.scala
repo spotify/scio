@@ -22,6 +22,7 @@ import java.util.UUID
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.extensions.gcp.util.Transport
@@ -30,6 +31,7 @@ import org.apache.beam.sdk.io.FileIO.Write.FileNaming
 import org.apache.beam.sdk.io.{DefaultFilenamePolicy, FileBasedSink, FileIO, FileSystems}
 import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.apache.beam.sdk.values.WindowingStrategy
 import org.apache.beam.sdk.{PipelineResult, PipelineRunner}
 import org.apache.commons.lang3.StringUtils
@@ -156,4 +158,22 @@ private[scio] object ScioUtil {
 
   def isWindowed(coll: SCollection[_]): Boolean =
     coll.internal.getWindowingStrategy != WindowingStrategy.globalDefault()
+
+  private class ByteSizeObserver extends ElementByteSizeObserver {
+    private var elementByteSize: Long = 0L
+    override def reportElementSize(elementByteSize: Long): Unit =
+      this.elementByteSize += elementByteSize
+    def getElementByteSize: Long = elementByteSize
+  }
+
+  def elementByteSize[T: Coder](context: ScioContext): T => Long = {
+    val bCoder = CoderMaterializer.beam(context, Coder[T])
+
+    { (e: T) =>
+      val observer = new ByteSizeObserver()
+      bCoder.registerByteSizeObserver(e, observer)
+      observer.advance()
+      observer.getElementByteSize
+    }
+  }
 }

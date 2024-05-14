@@ -16,10 +16,9 @@
 
 package com.spotify.scio.values
 
-import com.spotify.scio.coders.CoderMaterializer
+import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import org.apache.beam.sdk.transforms.Sample
-import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -118,17 +117,8 @@ class SampleSCollectionFunctions[T](self: SCollection[T]) {
    * @group transform
    */
   def sampleByteSized(totalByteSize: Long): SCollection[Iterable[T]] = {
-    val bCoder = CoderMaterializer.beam(self.context, self.coder)
-    val weigher = { (e: T) =>
-      var size: Long = 0L
-      val observer = new ElementByteSizeObserver {
-        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
-      }
-      bCoder.registerByteSizeObserver(e, observer)
-      observer.advance()
-      size
-    }
-    sampleWeighted(totalByteSize, weigher)
+    import self.coder
+    sampleWeighted(totalByteSize, ScioUtil.elementByteSize(self.context))
   }
 
   /**

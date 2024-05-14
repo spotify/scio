@@ -54,7 +54,6 @@ import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
-import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.typelevel.scalaccompat.annotation.{nowarn, unused}
 
 /** Convenience functions for creating SCollections. */
@@ -488,21 +487,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def batchByteSized(
     batchByteSize: Long,
     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-  ): SCollection[Iterable[T]] = {
-    val bCoder = CoderMaterializer.beam(context, coder)
-    val weigher = Functions.serializableFn[T, java.lang.Long] { e =>
-      var size: Long = 0L
-      val observer = new ElementByteSizeObserver {
-        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
-      }
-      bCoder.registerByteSizeObserver(e, observer)
-      observer.advance()
-      size
-    }
-    this
-      .parDo(new BatchDoFn[T](batchByteSize, weigher, maxLiveWindows))(Coder.aggregate)
-      .map(_.asScala)
-  }
+  ): SCollection[Iterable[T]] =
+    batchWeighted(batchByteSize, ScioUtil.elementByteSize(context), maxLiveWindows)
 
   /**
    * Batches elements for amortized processing. Elements are batched per-window and batches emitted
@@ -524,7 +510,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     cost: T => Long,
     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
   ): SCollection[Iterable[T]] = {
-    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
+    val weigher = Functions.serializableFn(cost.andThen(Long.box))
     this
       .parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows))(Coder.aggregate)
       .map(_.asScala)
