@@ -1449,7 +1449,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   Reads files using the given [[org.apache.beam.sdk.io.Compression]].
    */
   def readFiles[A: Coder](
-    filesTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]],
+    filesTransform: PTransform[_ >: PCollection[beam.FileIO.ReadableFile], PCollection[A]],
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
   )(implicit ev: T <:< String): SCollection[A] =

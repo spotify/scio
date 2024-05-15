@@ -98,10 +98,7 @@ class FileSCollectionFunctions(self: SCollection[String]) {
   def readFiles[A: Coder](directoryTreatment: DirectoryTreatment, compression: Compression)(
     f: beam.FileIO.ReadableFile => A
   ): SCollection[A] = {
-    val transform =
-      ParDo
-        .of(Functions.mapFn[beam.FileIO.ReadableFile, A](f))
-        .asInstanceOf[PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]]]
+    val transform = ParDo.of(Functions.mapFn[beam.FileIO.ReadableFile, A](f))
     readFiles(transform, directoryTreatment, compression)
   }
 
@@ -139,7 +136,7 @@ class FileSCollectionFunctions(self: SCollection[String]) {
    *   Reads files using the given [[org.apache.beam.sdk.io.Compression]].
    */
   def readFiles[A: Coder](
-    filesTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]],
+    filesTransform: PTransform[_ >: PCollection[beam.FileIO.ReadableFile], PCollection[A]],
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
   ): SCollection[A] =
