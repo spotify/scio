@@ -289,5 +289,5 @@ trait SCollectionSyntax {
   implicit def avroFilesSCollectionOps[T](
     c: SCollection[T]
   )(implicit ev: T <:< String): FilesSCollectionOps =
-    new FilesSCollectionOps(c.covary_[String])
+    new FilesSCollectionOps(c.covary_)
 }

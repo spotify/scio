@@ -1371,7 +1371,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   each line of the input files.
    */
   def readTextFiles(implicit ev: T <:< String): SCollection[String] =
-    new FileSCollectionFunctions(this.covary_[String]).readTextFiles()
+    new FileSCollectionFunctions(this.covary_).readTextFiles()
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1380,7 +1380,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   each file fully read as [[Array[Byte]].
    */
   def readFilesAsBytes(implicit ev: T <:< String): SCollection[Array[Byte]] =
-    new FileSCollectionFunctions(this.covary_[String]).readFilesAsBytes()
+    new FileSCollectionFunctions(this.covary_).readFilesAsBytes()
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1389,7 +1389,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   each file fully read as [[String]].
    */
   def readFilesAsString(implicit ev: T <:< String): SCollection[String] =
-    new FileSCollectionFunctions(this.covary_[String]).readFilesAsString()
+    new FileSCollectionFunctions(this.covary_).readFilesAsString()
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1400,7 +1400,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def readFiles[A: Coder](
     f: beam.FileIO.ReadableFile => A
   )(implicit ev: T <:< String): SCollection[A] =
-    new FileSCollectionFunctions(this.covary_[String]).readFiles(f)
+    new FileSCollectionFunctions(this.covary_).readFiles(f)
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]].
@@ -1416,7 +1416,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def readFiles[A: Coder](directoryTreatment: DirectoryTreatment, compression: Compression)(
     f: beam.FileIO.ReadableFile => A
   )(implicit ev: T <:< String): SCollection[A] =
-    new FileSCollectionFunctions(this.covary_[String]).readFiles(directoryTreatment, compression)(f)
+    new FileSCollectionFunctions(this.covary_).readFiles(directoryTreatment, compression)(f)
 
   /**
    * Reads each file, represented as a pattern, in this [[SCollection]]. Files are split into
@@ -1434,7 +1434,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     directoryTreatment: DirectoryTreatment,
     compression: Compression
   )(f: String => FileBasedSource[A])(implicit ev: T <:< String): SCollection[A] =
-    new FileSCollectionFunctions(this.covary_[String])
+    new FileSCollectionFunctions(this.covary_)
       .readFiles(desiredBundleSizeBytes, directoryTreatment, compression)(f)
 
   /**
@@ -1453,7 +1453,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
   )(implicit ev: T <:< String): SCollection[A] =
-    new FileSCollectionFunctions(this.covary_[String])
+    new FileSCollectionFunctions(this.covary_)
       .readFiles(filesTransform, directoryTreatment, compression)
 
   /**
@@ -1475,7 +1475,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     directoryTreatment: DirectoryTreatment = DirectoryTreatment.SKIP,
     compression: Compression = Compression.AUTO
   )(implicit ev: T <:< String): SCollection[(String, String)] =
-    new FileSCollectionFunctions(this.covary_[String])
+    new FileSCollectionFunctions(this.covary_)
       .readTextFilesWithPath(desiredBundleSizeBytes, directoryTreatment, compression)
 
   /**
@@ -1499,7 +1499,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   )(
     f: String => FileBasedSource[A]
   )(implicit ev: T <:< String): SCollection[(String, A)] =
-    new FileSCollectionFunctions(this.covary_[String])
+    new FileSCollectionFunctions(this.covary_)
       .readFilesWithPath(desiredBundleSizeBytes, directoryTreatment, compression)(f)
 
   /**
