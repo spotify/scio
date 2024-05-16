@@ -144,6 +144,7 @@ val tensorFlowMetadataVersion = "1.14.0"
 val testContainersVersion = "0.41.3"
 val voyagerVersion = "2.0.6"
 val zoltarVersion = "0.6.0"
+val zstdJniVersion = "1.5.6-3"
 // dependent versions
 val scalatestplusVersion = s"$scalatestVersion.0"
 
@@ -1745,6 +1746,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+  "com.github.luben" % "zstd-jni" % zstdJniVersion,
   "com.google.api" % "api-common" % googleApiCommonVersion,
   "com.google.api" % "gax" % gaxVersion,
   "com.google.api" % "gax-grpc" % gaxVersion,
