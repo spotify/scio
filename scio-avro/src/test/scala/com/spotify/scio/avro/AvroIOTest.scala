@@ -27,7 +27,6 @@ import org.apache.avro.generic._
 import org.apache.avro.io.{DatumReader, DatumWriter}
 import org.apache.avro.{LogicalTypes, Schema, SchemaBuilder}
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
-import org.joda.time.LocalDate
 
 import java.io.File
 
@@ -175,9 +174,17 @@ class AvroIOTest extends ScioIOSpec {
       }
     }
 
+    val jodaAvroVersion: Boolean =
+      Option(classOf[Schema].getPackage.getImplementationVersion)
+        .exists(v => v.startsWith("1.8") || v.startsWith("1.9"))
+
+    def logicalDate(epochDay: Int): AnyRef =
+      if (jodaAvroVersion) new org.joda.time.LocalDate(0).plusDays(epochDay)
+      else java.time.LocalDate.ofEpochDay(epochDay.toLong)
+
     implicit val coder: Coder[GenericRecord] = avroCoder(datumFactory, schema)
     val xs: Seq[GenericRecord] = (1 to 100)
-      .map(i => new LocalDate(i.toLong)) // use LocalDate instead of int to test logical-type
+      .map(i => logicalDate(i)) // use LocalDate instead of int to test logical-type
       .map(d => new GenericRecordBuilder(schema).set("date", d).build())
 
     // No test for saveAsAvroFile because parseFn is only for input
