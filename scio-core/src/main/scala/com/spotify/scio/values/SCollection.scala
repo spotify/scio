@@ -33,7 +33,6 @@ import com.spotify.scio.testing.TestDataManager
 import com.spotify.scio.transforms.BatchDoFn
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.util._
-import com.spotify.scio.util.random.{BernoulliSampler, PoissonSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.schemas.SchemaCoder
@@ -55,7 +54,6 @@ import scala.collection.immutable.TreeMap
 import scala.reflect.ClassTag
 import scala.util.Try
 import com.twitter.chill.ClosureCleaner
-import org.apache.beam.sdk.util.common.ElementByteSizeObserver
 import org.typelevel.scalaccompat.annotation.{nowarn, unused}
 
 /** Convenience functions for creating SCollections. */
@@ -489,21 +487,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def batchByteSized(
     batchByteSize: Long,
     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
-  ): SCollection[Iterable[T]] = {
-    val bCoder = CoderMaterializer.beam(context, coder)
-    val weigher = Functions.serializableFn[T, java.lang.Long] { e =>
-      var size: Long = 0L
-      val observer = new ElementByteSizeObserver {
-        override def reportElementSize(elementByteSize: Long): Unit = size += elementByteSize
-      }
-      bCoder.registerByteSizeObserver(e, observer)
-      observer.advance()
-      size
-    }
-    this
-      .parDo(new BatchDoFn[T](batchByteSize, weigher, maxLiveWindows))(Coder.aggregate)
-      .map(_.asScala)
-  }
+  ): SCollection[Iterable[T]] =
+    batchWeighted(batchByteSize, ScioUtil.elementByteSize(context), maxLiveWindows)
 
   /**
    * Batches elements for amortized processing. Elements are batched per-window and batches emitted
@@ -525,7 +510,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     cost: T => Long,
     maxLiveWindows: Int = BatchDoFn.DEFAULT_MAX_LIVE_WINDOWS
   ): SCollection[Iterable[T]] = {
-    val weigher = Functions.serializableFn(cost.andThen(_.asInstanceOf[java.lang.Long]))
+    val weigher = Functions.serializableFn(cost.andThen(Long.box))
     this
       .parDo(new BatchDoFn[T](batchWeight, weigher, maxLiveWindows))(Coder.aggregate)
       .map(_.asScala)
@@ -916,9 +901,17 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   a new SCollection whose single value is an `Iterable` of the samples
    * @group transform
    */
-  def sample(sampleSize: Int): SCollection[Iterable[T]] = this.transform {
-    _.pApply(Sample.fixedSizeGlobally(sampleSize)).map(_.asScala)
-  }
+  // TODO move to implicit
+  def sample(sampleSize: Int): SCollection[Iterable[T]] =
+    new SampleSCollectionFunctions(this).sample(sampleSize)
+
+  // TODO move to implicit
+  def sampleWeighted(totalWeight: Long, cost: T => Long): SCollection[Iterable[T]] =
+    new SampleSCollectionFunctions(this).sampleWeighted(totalWeight, cost)
+
+  // TODO move to implicit
+  def sampleByteSized(totalByteSize: Long): SCollection[Iterable[T]] =
+    new SampleSCollectionFunctions(this).sampleByteSized(totalByteSize)
 
   /**
    * Return a sampled subset of this SCollection. Does not trigger shuffling.
@@ -930,12 +923,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   the sampling fraction
    * @group transform
    */
+  // TODO move to implicit
   def sample(withReplacement: Boolean, fraction: Double): SCollection[T] =
-    if (withReplacement) {
-      this.parDo(new PoissonSampler[T](fraction))
-    } else {
-      this.parDo(new BernoulliSampler[T](fraction))
-    }
+    new SampleSCollectionFunctions(this).sample(withReplacement, fraction)
 
   /**
    * Return an SCollection with the elements from `this` that are not in `other`.

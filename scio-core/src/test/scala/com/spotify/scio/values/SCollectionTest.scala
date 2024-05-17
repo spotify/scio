@@ -22,7 +22,6 @@ import java.nio.file.Files
 import com.spotify.scio.ScioContext
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.MockedPrintStream
-import com.spotify.scio.util.random.RandomSamplerUtils
 import com.twitter.algebird.{Aggregator, Semigroup}
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement
 import org.apache.beam.sdk.transforms.{Count, DoFn, GroupByKey, ParDo}
@@ -563,34 +562,6 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       val p = sc.parallelize(Seq(1, 2, 3, 4, 5)).reduce(_ + _)
       p should containSingleValue(15)
-    }
-  }
-
-  it should "support sample()" in {
-    runWithContext { sc =>
-      val p = sc.parallelize(Seq(1, 1, 1, 1, 1))
-      val r1 = p.sample(1)
-      val r2 = p.sample(5)
-      r1 should containSingleValue(Iterable(1))
-      r2 should containSingleValue(Iterable(1, 1, 1, 1, 1))
-    }
-  }
-
-  it should "support sample() with replacement" in {
-    import RandomSamplerUtils._
-    for (fraction <- List(0.05, 0.2, 1.0)) {
-      val sample = runWithData(population)(_.sample(true, fraction))
-      (sample.size.toDouble / populationSize) shouldBe fraction +- 0.05
-      sample.toSet.size should be < sample.size
-    }
-  }
-
-  it should "support sample() without replacement" in {
-    import RandomSamplerUtils._
-    for (fraction <- List(0.05, 0.2, 1.0)) {
-      val sample = runWithData(population)(_.sample(false, fraction))
-      (sample.size.toDouble / populationSize) shouldBe fraction +- 0.05
-      sample.toSet.size shouldBe sample.size
     }
   }
 
