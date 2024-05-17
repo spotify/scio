@@ -358,6 +358,39 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  avro-latest:
+    name: Test with latest avro
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        scala: [2.13]
+        java: [corretto@11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
+        if: matrix.java == 'corretto@11'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Test
+        env:
+          JAVA_OPTS: '-Davro.version=1.11.3'
+        run: sbt '++ ${{ matrix.scala }}' scio-avro/test
+
   it-test:
     name: Integration Test
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

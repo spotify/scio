@@ -58,7 +58,7 @@ val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20240311-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
-val avroVersion = "1.8.2" // sdks/java/extensions/avro/build.gradle
+val avroVersion = avroCompilerVersion // sdks/java/extensions/avro/build.gradle
 val flinkVersion = "1.17.0" // runners/flink/1.17/build.gradle
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
@@ -308,6 +308,22 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           name = Some("Upload coverage report")
         )
       ),
+    scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
+    javas = List(javaDefault)
+  ),
+  WorkflowJob(
+    "avro-latest",
+    "Test with latest avro",
+    WorkflowStep.CheckoutFull ::
+      WorkflowStep.SetupJava(List(javaDefault)) :::
+      List(
+        WorkflowStep.Sbt(
+          List("scio-avro/test"),
+          env = Map("JAVA_OPTS" -> "-Davro.version=1.11.3"),
+          name = Some("Test")
+        )
+      ),
+    cond = Some(Seq(condSkipPR, condIsMain).mkString(" && ")),
     scalas = List(CrossVersion.binaryScalaVersion(scalaDefault)),
     javas = List(javaDefault)
   ),
@@ -685,6 +701,7 @@ lazy val `scio-core` = project
       "org.apache.avro" % "avro" % avroVersion % Test,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
+      "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13" % Test,
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalactic" %% "scalactic" % scalatestVersion % Test,
@@ -823,7 +840,11 @@ lazy val `scio-avro` = project
       "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
       "org.typelevel" %% "cats-core" % catsVersion % Test
-    )
+    ),
+    Test / unmanagedSourceDirectories += {
+      val base = (Test / sourceDirectory).value
+      if (avroVersion.startsWith("1.8")) base / "scala-avro-legacy" else base / "scala-avro-latest"
+    }
   )
 
 lazy val `scio-google-cloud-platform` = project

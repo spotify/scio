@@ -27,6 +27,7 @@ import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 
 final class AvroCoderTest extends AnyFlatSpec with Matchers {
@@ -44,10 +45,17 @@ final class AvroCoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support not Avro's SpecificRecord if a concrete type is not provided" in {
+    @tailrec
+    def rootCause(e: Throwable): Throwable =
+      Option(e.getCause) match {
+        case Some(cause) => rootCause(cause)
+        case None        => e
+      }
+
     val caught = intercept[RuntimeException] {
       Avro.user.asInstanceOf[SpecificRecord] coderShould notFallback()
     }
-    val cause = caught.getCause.getCause
+    val cause = rootCause(caught)
     cause shouldBe a[AvroRuntimeException]
     cause.getMessage shouldBe "Not a Specific class: interface org.apache.avro.specific.SpecificRecord"
   }

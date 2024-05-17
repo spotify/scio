@@ -64,15 +64,9 @@ private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericD
 private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: Class[T])
     extends AvroDatumFactory.SpecificDatumFactory[T](recordType) {
   import SpecificRecordDatumFactory._
-  private class ScioSpecificDatumReader extends SpecificDatumReader[T](recordType) {
-    override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
-      case cls if cls == classOf[CharSequence] => classOf[String]
-      case cls                                 => cls
-    }
-  }
 
   override def apply(writer: Schema): DatumWriter[T] = {
-    val datumWriter = new SpecificDatumWriter[T]()
+    val datumWriter = new SpecificDatumWriter(recordType)
     // avro 1.8 generated code does not add conversions to the data
     if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       addLogicalTypeConversions(datumWriter.getData.asInstanceOf[SpecificData], writer)
@@ -82,7 +76,7 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
   }
 
   override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
-    val datumReader = new ScioSpecificDatumReader()
+    val datumReader = new ScioSpecificDatumReader(recordType)
     // avro 1.8 generated code does not add conversions to the data
     if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
       addLogicalTypeConversions(datumReader.getData.asInstanceOf[SpecificData], reader)
@@ -95,6 +89,14 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
 }
 
 private[scio] object SpecificRecordDatumFactory {
+
+  private class ScioSpecificDatumReader[T](recordType: Class[T])
+      extends SpecificDatumReader[T](recordType) {
+    override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
+      case cls if cls == classOf[CharSequence] => classOf[String]
+      case cls                                 => cls
+    }
+  }
 
   @transient private lazy val runtimeAvroVersion: Option[String] =
     Option(classOf[Schema].getPackage.getImplementationVersion)
