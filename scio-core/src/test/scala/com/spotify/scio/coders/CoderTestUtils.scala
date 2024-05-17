@@ -38,8 +38,6 @@ object CoderTestUtils {
     result == value
   }
 
-  case class ZstdTestCaseClass(a: Int, b: String, c: Long)
-
   def writeZstdBytes(bytes: Array[Byte]): File = {
     val tmp = Files.createTempFile("zstd-test", ".bin").toFile
     tmp.deleteOnExit()
@@ -52,16 +50,14 @@ object CoderTestUtils {
     tmp
   }
 
-  def zstdOpts(
+  private[scio] def zstdOpts(
     className: String,
     path: String,
-    packageName: String = "com.spotify.scio.coders.CoderTestUtils$",
     includeTestId: Boolean = true
   ): PipelineOptions = {
     val opts = PipelineOptionsFactory.create()
-    // sidestep class blacklist during test
     if (includeTestId) opts.as(classOf[ApplicationNameOptions]).setAppName(TestUtil.newTestId())
-    opts.as(classOf[ScioOptions]).setZstdDictionary(List(s"$packageName$className:$path").asJava)
+    opts.as(classOf[ScioOptions]).setZstdDictionary(List(s"$className:$path").asJava)
     opts
   }
 }

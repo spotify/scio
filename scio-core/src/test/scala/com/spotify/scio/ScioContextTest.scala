@@ -286,7 +286,7 @@ class ScioContextTest extends PipelineSpec {
     val bytes = Array[Byte](7, 6, 5, 4, 3, 2, 1, 0)
     val tmp = writeZstdBytes(bytes)
     val coderOpts = CoderMaterializer.CoderOptions(
-      zstdOpts("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+      zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
     )
 
     coderOpts.zstdDictMapping should have size 1
@@ -296,9 +296,9 @@ class ScioContextTest extends PipelineSpec {
   it should "error when a blacklisted class is used" in {
     val thrown = the[IllegalArgumentException] thrownBy {
       val path = "gs://dataflow-samples/samples/fake.txt"
-      CoderMaterializer.CoderOptions(zstdOpts("String", path, "java.lang.", includeTestId = false))
+      CoderMaterializer.CoderOptions(zstdOpts("java.lang.String", path, includeTestId = false))
     }
-    thrown.getMessage should startWith(
+    thrown.getMessage should include(
       "zstdDictionary command-line arguments may not be used"
     )
   }
@@ -306,17 +306,17 @@ class ScioContextTest extends PipelineSpec {
   it should "error when zstdDictionary arguments contain an invalid class name" in {
     val thrown = the[IllegalArgumentException] thrownBy {
       val path = "gs://dataflow-samples/samples/fake.txt"
-      CoderMaterializer.CoderOptions(zstdOpts("Kellen", path))
+      CoderMaterializer.CoderOptions(zstdOpts("com.test.Kellen", path))
     }
-    thrown.getMessage should startWith(
-      "Class for zstdDictionary argument com.spotify.scio.coders.CoderTestUtils$Kellen"
+    thrown.getMessage should include(
+      "Class for zstdDictionary argument com.test.Kellen"
     )
   }
 
   it should "error when zstdDictionary arguments point to a non-existent remote file" in {
     val path = "gs://dataflow-samples/samples/fake.txt"
     val thrown = the[UncheckedExecutionException] thrownBy {
-      CoderMaterializer.CoderOptions(zstdOpts("ZstdTestCaseClass", path))
+      CoderMaterializer.CoderOptions(zstdOpts("com.test.ZstdTestCaseClass", path))
     }
     thrown.getCause.getCause should have message s"File spec ${path} not found"
   }
@@ -326,7 +326,7 @@ class ScioContextTest extends PipelineSpec {
     tmp.delete()
     assertThrows[NoSuchFileException] {
       CoderMaterializer.CoderOptions(
-        zstdOpts("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+        zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
       )
     }
   }

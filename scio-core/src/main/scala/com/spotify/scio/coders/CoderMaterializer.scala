@@ -17,7 +17,6 @@
 
 package com.spotify.scio.coders
 
-import com.spotify.scio.testing.TestUtil
 import com.spotify.scio.util.RemoteFileUtil
 import org.apache.beam.sdk.coders.{
   Coder => BCoder,
@@ -26,7 +25,7 @@ import org.apache.beam.sdk.coders.{
   NullableCoder,
   ZstdCoder
 }
-import org.apache.beam.sdk.options.{ApplicationNameOptions, PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.commons.lang3.ObjectUtils
 
 import java.net.URI
@@ -52,48 +51,41 @@ object CoderMaterializer {
       List("scala.", "java.", "com.spotify.scio.", "org.apache.beam.")
 
     final def apply(o: PipelineOptions): CoderOptions = {
-      val isTest = Try(o.as(classOf[ApplicationNameOptions])).toOption
-        .exists(o => TestUtil.isTestId(o.getAppName))
-
       cache.computeIfAbsent(
         ObjectUtils.identityToString(o),
         { _ =>
           val scioOpts = o.as(classOf[com.spotify.scio.options.ScioOptions])
-          scioOpts.getAppArguments
           val nullableCoder = scioOpts.getNullableCoders
-          val zstdDictPaths = Option(scioOpts.getZstdDictionary)
-            .map(_.asScala)
-            .getOrElse(List.empty)
-            .map {
-              case s @ ZstdArgRegex(className, path) =>
-                if (!isTest) {
-                  ZstdPackageBlacklist.foreach { packagePrefix =>
-                    if (className.startsWith(packagePrefix)) {
-                      throw new IllegalArgumentException(
-                        s"zstdDictionary command-line arguments may not be used for class $className. " +
-                          s"Provide Zstd coders manually instead."
-                      )
-                    }
-                  }
-                }
 
-                try {
-                  // ensure class exists
-                  Class.forName(className)
-                } catch {
-                  case e: ClassNotFoundException =>
-                    throw new IllegalArgumentException(
-                      s"Class for zstdDictionary argument ${s} not found.",
-                      e
-                    )
-                }
-                className.replaceAll("\\$", ".") -> path
+          val (errors, classPathMapping) = Option(scioOpts.getZstdDictionary)
+            .map(_.asScala.toList)
+            .getOrElse(List.empty)
+            .partitionMap {
+              case s @ ZstdArgRegex(className, path) =>
+                Option
+                  .when(ZstdPackageBlacklist.exists(className.startsWith))(
+                    s"zstdDictionary command-line arguments may not be used for class $className. " +
+                      s"Provide Zstd coders manually instead."
+                  )
+                  .orElse {
+                    Try(Class.forName(className)).failed.toOption
+                      .map(_ => s"Class for zstdDictionary argument ${s} not found.")
+                  }
+                  .toLeft(className.replaceAll("\\$", ".") -> path)
               case s =>
-                throw new IllegalArgumentException(
+                Left(
                   "zstdDictionary arguments must be in a colon-separated format. " +
-                    s"Example: `com.spotify.ClassName:gs://path`. Found: ${s}"
+                    s"Example: `com.spotify.ClassName:gs://path`. Found: $s"
                 )
             }
+
+          if (errors.nonEmpty) {
+            throw new IllegalArgumentException(
+              errors.mkString("Bad zstdDictionary arguments:\n\t", "\n\t", "\n")
+            )
+          }
+
+          val zstdDictPaths = classPathMapping
             .groupBy(_._1)
             .map { case (className, values) => className -> values.map(_._2).toSet }
 

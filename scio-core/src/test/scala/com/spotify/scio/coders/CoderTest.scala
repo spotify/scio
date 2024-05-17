@@ -23,6 +23,7 @@ import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
 import com.spotify.scio.coders.instances._
 import com.spotify.scio.options.ScioOptions
+import com.test.ZstdTestCaseClass
 import com.twitter.algebird.Moments
 import org.apache.beam.sdk.{coders => beam}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
@@ -691,7 +692,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "derive zstd coders when configured" in {
     val tmp = writeZstdBytes(Array[Byte](7, 6, 5, 4, 3, 2, 1, 0))
-    val opts = zstdOpts("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+    val opts = zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
     ZstdTestCaseClass(1, "s", 10L) coder WithOptions(opts) should notFallback() and
       beOfType[Ref[_]] and
       materializeTo[ZstdCoder[_]] and
@@ -700,7 +701,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
   it should "derive a zstd coder for the value side of a 2-tuple" in {
     val tmp = writeZstdBytes(Array[Byte](7, 6, 5, 4, 3, 2, 1, 0))
-    val opts = zstdOpts("ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+    val opts = zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
     ("Foo", ZstdTestCaseClass(1, "s", 10L)) coder WithOptions(opts) should notFallback() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[Tuple2Coder[_, _]] and
