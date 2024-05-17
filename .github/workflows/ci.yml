@@ -290,7 +290,7 @@ jobs:
         run: sbt +update
 
       - name: Submit Dependencies
-        uses: scalacenter/sbt-dependency-submission@v2
+        uses: scalacenter/sbt-dependency-submission@v3
         with:
           modules-ignore: scio_2.13 scio_2.12 scio-examples_2.13 scio-examples_2.12
           configs-ignore: test scala-tool scala-doc-tool test-internal
