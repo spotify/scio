@@ -359,7 +359,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   avro-latest:
-    name: Test with latest avro
+    name: Test Latest Avro
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     strategy:
       matrix:

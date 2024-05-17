@@ -313,7 +313,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
   ),
   WorkflowJob(
     "avro-latest",
-    "Test with latest avro",
+    "Test Latest Avro",
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
