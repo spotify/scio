@@ -2,7 +2,7 @@
 
 ## Read Binary files
 
-See @ref:[read as binary](ReadFiles.md#read-as-binary) for reading an entire file as a single binary record.
+See @ref:[read entire file as binary](ReadFiles.md#read-entire-file-as-binary) for reading an entire file as a single binary record.
 
 Binary reads are supported via the @scaladoc[binaryFile](com.spotify.scio.ScioContext#binaryFile(path:String,reader:com.spotify.scio.io.BinaryIO.BinaryFileReader,compression:org.apache.beam.sdk.io.Compression,emptyMatchTreatment:org.apache.beam.sdk.io.fs.EmptyMatchTreatment,suffix:String):com.spotify.scio.values.SCollection[Array[Byte]]), with a @scaladoc[BinaryFileReader](com.spotify.scio.io.BinaryIO.BinaryFileReader) instance provided that can parse the underlying binary file format.
 

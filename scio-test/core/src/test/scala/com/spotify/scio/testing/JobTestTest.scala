@@ -25,12 +25,14 @@ import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.transforms.{BaseAsyncLookupDoFn, GuavaAsyncDoFn}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
+import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.apache.beam.sdk.metrics.DistributionResult
 import org.apache.beam.sdk.{io => beam}
 import org.scalatest.exceptions.TestFailedException
 
 import scala.io.Source
 import org.apache.beam.sdk.metrics.{Counter, Distribution, Gauge}
+import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.KV
 
@@ -248,6 +250,26 @@ object ReadAllBytesJob {
   }
 }
 
+object ReadAllWithPathJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    val bundleSizeBytes = 64 * 1024 * 1024L
+    sc.textFile(args("input"))
+      .readFilesWithPath(bundleSizeBytes) { f =>
+        new beam.TextSource(
+          StaticValueProvider.of(f),
+          EmptyMatchTreatment.DISALLOW,
+          Array('\n'.toByte),
+          0
+        )
+      }
+      .map { case (f, x) => s"$f:$x" }
+      .saveAsTextFile(args("output"))
+    sc.run()
+    ()
+  }
+}
+
 object JobWithoutRun {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
@@ -432,6 +454,43 @@ class JobTestTest extends PipelineSpec {
 
     the[PipelineExecutionException] thrownBy {
       JobTest[ReadAllBytesJob.type]
+        .args("--input=in.txt", "--output=out.txt")
+        .input(TextIO("in.txt"), Seq("a"))
+        .inputStream(ReadIO("a"), testStream)
+        .output(TextIO("out.txt")) { _ => }
+        .run()
+    } should have message
+      s"java.lang.UnsupportedOperationException: Test input TestStream(${testStream.getEvents}) " +
+      s"can't be converted to Iterable[T] to test this ScioIO type"
+  }
+
+  def testReadAllWithPathJob(xs: String*): Unit =
+    JobTest[ReadAllWithPathJob.type]
+      .args("--input=in1.txt", "--output=out.txt")
+      .input(TextIO("in1.txt"), Seq("a", "b"))
+      .input(ReadIO("a"), Seq("a1", "a2"))
+      .input(ReadIO("b"), Seq("b1", "b2"))
+      .output(TextIO("out.txt"))(coll => coll should containInAnyOrder(xs))
+      .run()
+
+  it should "pass correct path ReadIO" in {
+    testReadAllWithPathJob("a:a1", "a:a2", "b:b1", "b:b2")
+  }
+
+  it should "fail correct path ReadIO" in {
+    an[AssertionError] should be thrownBy { testReadAllWithPathJob("a:a1", "a:a2") }
+    an[AssertionError] should be thrownBy {
+      testReadAllWithPathJob("a:a1", "a:a2", "b:b1", "b:b2", "c:c1")
+    }
+  }
+
+  it should "fail path ReadIO used with TestStream input" in {
+    val testStream = testStreamOf[Array[Byte]]
+      .addElements("a1".getBytes, "a2".getBytes)
+      .advanceWatermarkToInfinity()
+
+    the[PipelineExecutionException] thrownBy {
+      JobTest[ReadAllWithPathJob.type]
         .args("--input=in.txt", "--output=out.txt")
         .input(TextIO("in.txt"), Seq("a"))
         .inputStream(ReadIO("a"), testStream)

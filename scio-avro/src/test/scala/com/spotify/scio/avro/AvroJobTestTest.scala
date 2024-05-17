@@ -20,6 +20,7 @@ package com.spotify.scio.avro
 import com.spotify.scio._
 import com.spotify.scio.avro.AvroUtils._
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.ReadIO
 import com.spotify.scio.testing.PipelineSpec
 import org.apache.avro.generic.GenericRecord
 
@@ -49,6 +50,29 @@ object GenericAvroFileJob {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
     sc.avroFile(args("input"), AvroUtils.schema)
       .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
+    sc.run()
+    ()
+  }
+}
+
+object ReadGenericAvroFilesJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.parallelize(args.list("input"))
+      .readAvroGenericFiles(AvroUtils.schema)
+      .saveAsAvroFile(args("output"), schema = AvroUtils.schema)
+    sc.run()
+    ()
+  }
+}
+
+object ReadSpecificAvroFilesWithPathJob {
+  def main(cmdlineArgs: Array[String]): Unit = {
+    val (sc, args) = ContextAndArgs(cmdlineArgs)
+    sc.parallelize(args.list("input"))
+      .readAvroSpecificFilesWithPath[TestRecord]()
+      .map { case (f, r) => TestRecord.newBuilder(r).setStringField(f).build() }
+      .saveAsAvroFile(args("output"))
     sc.run()
     ()
   }
@@ -114,7 +138,8 @@ class AvroJobTestTest extends PipelineSpec {
   }
 
   def testGenericAvroFileJob(xs: Seq[GenericRecord]): Unit = {
-    implicit val coder = avroGenericRecordCoder
+    implicit val coder: Coder[GenericRecord] =
+      avroGenericRecordCoder(AvroUtils.schema)
     JobTest[GenericAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[GenericRecord]("in.avro"), (1 to 3).map(newGenericRecord))
@@ -137,7 +162,8 @@ class AvroJobTestTest extends PipelineSpec {
 
   def testGenericParseAvroFileJob(xs: Seq[GenericRecord]): Unit = {
     import GenericParseFnAvroFileJob.PartialFieldsAvro
-    implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder
+    implicit val coder: Coder[GenericRecord] =
+      avroGenericRecordCoder(AvroUtils.schema)
     JobTest[GenericParseFnAvroFileJob.type]
       .args("--input=in.avro", "--output=out.avro")
       .input(AvroIO[PartialFieldsAvro]("in.avro"), (1 to 3).map(PartialFieldsAvro))
@@ -148,7 +174,7 @@ class AvroJobTestTest extends PipelineSpec {
       .run()
   }
 
-  it should "pass when correct generic parsed records" in {
+  it should "pass when correct parsed generic records" in {
     testGenericParseAvroFileJob((1 to 3).map(newGenericRecord))
   }
 
@@ -159,5 +185,35 @@ class AvroJobTestTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       testGenericParseAvroFileJob((1 to 4).map(newGenericRecord))
     }
+  }
+
+  "Read avro files" should "pass when correct specific records" in {
+    implicit val coder: Coder[GenericRecord] =
+      avroGenericRecordCoder(AvroUtils.schema)
+    val expected = (1 to 6).map(newGenericRecord)
+    val (part1, part2) = expected.splitAt(3)
+    JobTest[ReadGenericAvroFilesJob.type]
+      .args("--input=in1.avro", "--input=in2.avro", "--output=out.avro")
+      .input(ReadIO[GenericRecord]("in1.avro"), part1)
+      .input(ReadIO[GenericRecord]("in2.avro"), part2)
+      .output(AvroIO[GenericRecord]("out.avro"))(coll => coll should containInAnyOrder(expected))
+      .run()
+  }
+
+  "Read avro files with path" should "pass when correct specific records" in {
+    val input = (1 to 6).map(newSpecificRecord)
+    val (part1, part2) = input.splitAt(3)
+    val expected = (1 to 6).map { i =>
+      val r = newSpecificRecord(i)
+      r.setStringField(if (i <= 3) "in1.avro" else "in2.avro")
+      r
+    }
+
+    JobTest[ReadSpecificAvroFilesWithPathJob.type]
+      .args("--input=in1.avro", "--input=in2.avro", "--output=out.avro")
+      .input(ReadIO[TestRecord]("in1.avro"), part1)
+      .input(ReadIO[TestRecord]("in2.avro"), part2)
+      .output(AvroIO[TestRecord]("out.avro"))(coll => coll should containInAnyOrder(expected))
+      .run()
   }
 }

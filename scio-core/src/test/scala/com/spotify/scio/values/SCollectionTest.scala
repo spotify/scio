@@ -949,5 +949,4 @@ class SCollectionTest extends PipelineSpec {
       coll should containInAnyOrder(Seq(Seq.empty[Int]))
     }
   }
-
 }
