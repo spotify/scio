@@ -31,6 +31,7 @@ import org.apache.commons.lang3.ObjectUtils
 import java.net.URI
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
+import scala.collection.compat._
 import scala.collection.concurrent.TrieMap
 import scala.jdk.CollectionConverters._
 import scala.util.Try
