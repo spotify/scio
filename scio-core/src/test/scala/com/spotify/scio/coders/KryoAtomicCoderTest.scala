@@ -46,7 +46,7 @@ case class Pair(name: String, size: Int)
 case class CaseClassWithGenericRecord(name: String, size: Int, record: GenericRecord)
 case class CaseClassWithSpecificRecord(name: String, size: Int, record: TestRecord)
 
-// additional kryo registrar for avro schema null value
+// additional kryo registrar for avro 1.8 schema null value
 // deserializes null to the singleton instance for schema equality
 @KryoRegistrar
 class TestKryoRegistrar extends IKryoRegistrar {
