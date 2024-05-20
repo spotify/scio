@@ -1680,6 +1680,42 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
       )
 
   /**
+   * Creates a Zstd dictionary based on this SCollection targeting a dictionary of size
+   * `zstdDictSizeBytes` to be trained with approximately `trainingBytesTarget` bytes. The exact
+   * training size is determined by estimating the average element size with
+   * `numElementsForSizeEstimation` encoded elements and sampling this SCollection at an appropriate
+   * rate.
+   *
+   * @param path
+   *   The path to which the trained dictionary should be written.
+   * @param zstdDictSizeBytes
+   *   The size of the dictionary to train in bytes. Recommended dictionary sizes are in hundreds of
+   *   KB. Over 10MB is not recommended and you may hit resource limits if the dictionary size is
+   *   near 20MB.
+   * @param numElementsForSizeEstimation
+   *   The number of elements of the SCollection to use to estimate the average element size.
+   * @param trainingBytesTarget
+   *   The target number of bytes on which to train. Memory usage for training can be 10x this.
+   *   `None` to infer from `zstdDictSizeBytes`. Must be able to fit in the memory of a single
+   *   worker.
+   */
+  def saveAsZstdDictionary(
+    path: String,
+    zstdDictSizeBytes: Int = ZstdDictIO.WriteParam.DefaultZstdDictSizeBytes,
+    numElementsForSizeEstimation: Long = ZstdDictIO.WriteParam.DefaultNumElementsForSizeEstimation,
+    trainingBytesTarget: Option[Int] = ZstdDictIO.WriteParam.DefaultTrainingBytesTarget
+  ): ClosedTap[Nothing] = {
+    this
+      .write(ZstdDictIO[T](path))(
+        ZstdDictIO.WriteParam(
+          zstdDictSizeBytes,
+          numElementsForSizeEstimation,
+          trainingBytesTarget
+        )
+      )
+  }
+
+  /**
    * Save this SCollection with a custom output transform. The transform should have a unique name.
    * @group output
    */

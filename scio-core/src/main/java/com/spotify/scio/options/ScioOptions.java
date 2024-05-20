@@ -18,6 +18,7 @@
 package com.spotify.scio.options;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.List;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -34,7 +35,7 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
 
   void setScalaVersion(String version);
 
-  @Description("Filename to save metrics to.")
+  @Description("Filename to save metrics to")
   String getMetricsLocation();
 
   void setMetricsLocation(String metricsLocation);
@@ -73,9 +74,14 @@ public interface ScioOptions extends PipelineOptions, KryoOptions {
     ERROR
   }
 
-  @Description("Should scio use NullableCoder to serialize data.")
+  @Description("Should scio use NullableCoder to serialize data")
   @Default.Boolean(false)
   boolean getNullableCoders();
 
   void setNullableCoders(boolean value);
+
+  @Description("Colon-separated mapping of fully-qualified class name to location of Zstd dictionary for that class com.MyClass:gs://bucket/file.bin")
+  List<String> getZstdDictionary();
+
+  void setZstdDictionary(List<String> value);
 }

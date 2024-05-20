@@ -57,13 +57,20 @@ Cannot find an implicit Coder instance for type:
 )
 sealed trait Coder[T] extends Serializable
 
+sealed private[scio] trait TypeName {
+  def typeName: String
+}
+
 final private[scio] case class Singleton[T] private (typeName: String, supply: () => T)
-    extends Coder[T] {
+    extends Coder[T]
+    with TypeName {
   override def toString: String = s"Singleton[$typeName]"
 }
 
 // This should not be a case class. equality must be reference equality to detect recursive coders
-final private[scio] class Ref[T] private (val typeName: String, c: => Coder[T]) extends Coder[T] {
+final private[scio] class Ref[T] private (val typeName: String, c: => Coder[T])
+    extends Coder[T]
+    with TypeName {
   def value: Coder[T] = c
   override def toString: String = s"Ref[$typeName]"
 }
@@ -82,7 +89,8 @@ final case class CoderTransform[T, U] private (
   typeName: String,
   c: Coder[U],
   f: BCoder[U] => Coder[T]
-) extends Coder[T] {
+) extends Coder[T]
+    with TypeName {
   override def toString: String = s"CoderTransform[$typeName]($c)"
 }
 final case class Transform[T, U] private (
@@ -90,7 +98,8 @@ final case class Transform[T, U] private (
   c: Coder[U],
   t: T => U,
   f: U => T
-) extends Coder[T] {
+) extends Coder[T]
+    with TypeName {
   override def toString: String = s"Transform[$typeName]($c)"
 }
 
@@ -99,7 +108,8 @@ final case class Disjunction[T, Id] private (
   idCoder: Coder[Id],
   coder: Map[Id, Coder[T]],
   id: T => Id
-) extends Coder[T] {
+) extends Coder[T]
+    with TypeName {
   override def toString: String = {
     val body = coder.map { case (id, v) => s"$id -> $v" }.mkString(", ")
     s"Disjunction[$typeName]($body)"
@@ -111,7 +121,8 @@ final case class Record[T] private (
   cs: Array[(String, Coder[Any])],
   construct: Seq[Any] => T,
   destruct: T => IndexedSeq[Any]
-) extends Coder[T] {
+) extends Coder[T]
+    with TypeName {
   override def toString: String = {
     val body = cs.map { case (k, v) => s"($k, $v)" }.mkString(", ")
     s"Record[$typeName]($body)"
@@ -221,7 +232,6 @@ object Coder
     with CoderDerivation
     with LowPriorityCoders {
   @inline final def apply[T](implicit c: Coder[T]): Coder[T] = c
-
 }
 
 trait LowPriorityCoders extends LowPriorityCoders1 { self: CoderDerivation with JavaBeanCoders =>

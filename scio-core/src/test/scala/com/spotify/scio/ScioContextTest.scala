@@ -17,8 +17,10 @@
 
 package com.spotify.scio
 
+import com.spotify.scio.coders.CoderMaterializer
+
 import java.io.PrintWriter
-import java.nio.file.Files
+import java.nio.file.{Files, NoSuchFileException}
 import com.spotify.scio.io.TextIO
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
@@ -35,10 +37,13 @@ import org.apache.beam.sdk.transforms.Create
 import scala.concurrent.duration.Duration
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.sdk.options.Validation.Required
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.util.concurrent.UncheckedExecutionException
 
 import scala.jdk.CollectionConverters._
 
 class ScioContextTest extends PipelineSpec {
+  import com.spotify.scio.coders.CoderTestUtils._
+
   "ScioContext" should "support pipeline" in {
     val pipeline = ScioContext().pipeline
     val p = pipeline.apply(Create.of(List(1, 2, 3).asJava))
@@ -162,7 +167,7 @@ class ScioContextTest extends PipelineSpec {
 
   it should "invalidate options where required arguments are missing" in {
     assertThrows[IllegalArgumentException] {
-      ScioContext.parseArguments[TestValidationOptions](Array("--foo=bar"), true)
+      ScioContext.parseArguments[TestValidationOptions](Array("--foo=bar"), withValidation = true)
     }
   }
 
@@ -275,6 +280,55 @@ class ScioContextTest extends PipelineSpec {
     s1.join(s2)
 
     noException shouldBe thrownBy(sc.run())
+  }
+
+  it should "support zstdDictionary arguments" in {
+    val bytes = Array[Byte](7, 6, 5, 4, 3, 2, 1, 0)
+    val tmp = writeZstdBytes(bytes)
+    val coderOpts = CoderMaterializer.CoderOptions(
+      zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+    )
+
+    coderOpts.zstdDictMapping should have size 1
+    coderOpts.zstdDictMapping.toList.head._2.toList should equal(bytes.toList)
+  }
+
+  it should "error when a blacklisted class is used" in {
+    val thrown = the[IllegalArgumentException] thrownBy {
+      val path = "gs://dataflow-samples/samples/fake.txt"
+      CoderMaterializer.CoderOptions(zstdOpts("java.lang.String", path, includeTestId = false))
+    }
+    thrown.getMessage should include(
+      "zstdDictionary command-line arguments may not be used"
+    )
+  }
+
+  it should "error when zstdDictionary arguments contain an invalid class name" in {
+    val thrown = the[IllegalArgumentException] thrownBy {
+      val path = "gs://dataflow-samples/samples/fake.txt"
+      CoderMaterializer.CoderOptions(zstdOpts("com.test.Kellen", path))
+    }
+    thrown.getMessage should include(
+      "Class for zstdDictionary argument com.test.Kellen"
+    )
+  }
+
+  it should "error when zstdDictionary arguments point to a non-existent remote file" in {
+    val path = "gs://dataflow-samples/samples/fake.txt"
+    val thrown = the[UncheckedExecutionException] thrownBy {
+      CoderMaterializer.CoderOptions(zstdOpts("com.test.ZstdTestCaseClass", path))
+    }
+    thrown.getCause.getCause should have message s"File spec ${path} not found"
+  }
+
+  it should "error when zstdDictionary arguments point to a non-existent local file" in {
+    val tmp = Files.createTempFile("zstd-test", ".bin").toFile
+    tmp.delete()
+    assertThrows[NoSuchFileException] {
+      CoderMaterializer.CoderOptions(
+        zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+      )
+    }
   }
 
   "RunnerContext" should "include ~/.m2, ~/.ivy2, ~/.cache/coursier, and ~/.sbt/boot/ dirs, but not other env dirs" in {

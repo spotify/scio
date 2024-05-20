@@ -18,67 +18,166 @@
 package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{Beam, MaterializedCoder}
+import com.spotify.scio.coders.instances.ZstdCoder
+import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder}
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.util.random.RandomSamplerUtils
 import com.spotify.scio.hash._
 import com.spotify.scio.options.ScioOptions
 import com.twitter.algebird.Aggregator
 import magnolify.guava.auto._
-import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder, StructuredCoder, VarIntCoder}
+import org.apache.beam.sdk.coders.{
+  Coder => BCoder,
+  KvCoder,
+  NullableCoder,
+  StringUtf8Coder,
+  StructuredCoder,
+  VarIntCoder,
+  ZstdCoder => BZstdCoder
+}
 
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 
 class PairSCollectionFunctionsTest extends PipelineSpec {
+  trait Cast[T] {
+    val value: T
+    def as[U: ClassTag]: U = {
+      value shouldBe a[U]
+      value.asInstanceOf[U]
+    }
+  }
+  implicit class ScioCoderCast[T](val value: Coder[T]) extends Cast[Coder[T]]
+  implicit class BeamCoderCast[T](val value: BCoder[T]) extends Cast[BCoder[T]]
+  implicit class StructuredDestructure[T](value: StructuredCoder[T]) {
+    def components: List[BCoder[_]] = value.getComponents.asScala.toList
+      .asInstanceOf[List[BCoder[_]]]
+
+    def tuple2(fn: (BCoder[_], BCoder[_]) => Any) = {
+      components match {
+        case keyCoder :: valueCoder :: Nil => fn(keyCoder, valueCoder)
+        case _                             => throw new IllegalStateException()
+      }
+    }
+
+    def shouldHaveKey[K: ClassTag] = {
+      tuple2 { case (keyCoder, _) => keyCoder shouldBe a[K] }
+      value
+    }
+
+    def shouldHaveValue[V: ClassTag] = {
+      tuple2 { case (_, valueCoder) => valueCoder shouldBe a[V] }
+      value
+    }
+  }
+
   "PairSCollection" should "propagates unwrapped coders" in {
     val sc = ScioContext()
     val coll = sc.empty[(String, Int)]()
-    // internal is wrapped
-    val internalCoder = coll.internal.getCoder
-    internalCoder shouldBe a[MaterializedCoder[_]]
-    val materializedCoder = internalCoder.asInstanceOf[MaterializedCoder[_]]
-    materializedCoder.bcoder shouldBe a[StructuredCoder[_]]
-    val tupleCoder = materializedCoder.bcoder.asInstanceOf[StructuredCoder[_]]
-    val keyCoder = tupleCoder.getComponents.get(0)
-    keyCoder shouldBe StringUtf8Coder.of()
-    val valueCoder = tupleCoder.getComponents.get(1)
-    valueCoder shouldBe VarIntCoder.of()
-    // implicit SCollection key and value coder aren't
-    coll.keyCoder shouldBe a[Beam[_]]
-    val beamKeyCoder = coll.keyCoder.asInstanceOf[Beam[_]]
-    beamKeyCoder.beam shouldBe StringUtf8Coder.of()
 
-    coll.valueCoder shouldBe a[Beam[_]]
-    val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[_]]
-    beamValueCoder.beam shouldBe VarIntCoder.of()
+    // internal is wrapped
+    coll.internal.getCoder
+      .as[MaterializedCoder[_]]
+      .bcoder
+      .as[StructuredCoder[_]]
+      .tuple2 { case (keyCoder, valueCoder) =>
+        keyCoder shouldBe StringUtf8Coder.of()
+        valueCoder shouldBe VarIntCoder.of()
+      }
+
+    // implicit SCollection key and value coder aren't
+    coll.keyCoder.as[Beam[_]].beam shouldBe StringUtf8Coder.of()
+    coll.valueCoder.as[Beam[_]].beam shouldBe VarIntCoder.of()
   }
 
   it should "propagate unwrapped nullable coders" in {
     val sc = ScioContext()
     sc.optionsAs[ScioOptions].setNullableCoders(true)
-
     val coll = sc.empty[(String, Int)]()
-    // internal is wrapped
-    val internalCoder = coll.internal.getCoder
-    internalCoder shouldBe a[MaterializedCoder[_]]
-    val materializedCoder = internalCoder.asInstanceOf[MaterializedCoder[_]]
-    materializedCoder.bcoder shouldBe a[NullableCoder[_]]
-    val nullableTupleCoder = materializedCoder.bcoder.asInstanceOf[NullableCoder[_]]
-    val tupleCoder = nullableTupleCoder.getValueCoder.asInstanceOf[StructuredCoder[_]]
-    val keyCoder = tupleCoder.getComponents.get(0)
-    keyCoder shouldBe a[NullableCoder[_]]
-    keyCoder.asInstanceOf[NullableCoder[_]].getValueCoder shouldBe StringUtf8Coder.of()
-    val valueCoder = tupleCoder.getComponents.get(1)
-    valueCoder shouldBe a[NullableCoder[_]]
-    valueCoder.asInstanceOf[NullableCoder[_]].getValueCoder shouldBe VarIntCoder.of()
-    // implicit SCollection key and value coder aren't
-    coll.keyCoder shouldBe a[Beam[_]]
-    val beamKeyCoder = coll.keyCoder.asInstanceOf[Beam[_]]
-    beamKeyCoder.beam shouldBe StringUtf8Coder.of()
 
-    coll.valueCoder shouldBe a[Beam[_]]
-    val beamValueCoder = coll.valueCoder.asInstanceOf[Beam[_]]
-    beamValueCoder.beam shouldBe VarIntCoder.of()
+    // internal is wrapped
+    coll.internal.getCoder
+      .as[MaterializedCoder[_]]
+      .bcoder
+      .as[NullableCoder[_]]
+      .getValueCoder
+      .as[StructuredCoder[_]]
+      .tuple2 { case (keyCoder, valueCoder) =>
+        keyCoder.as[NullableCoder[_]].getValueCoder shouldBe StringUtf8Coder.of()
+        valueCoder.as[NullableCoder[_]].getValueCoder shouldBe VarIntCoder.of()
+      }
+
+    // implicit SCollection key and value coder aren't
+    coll.keyCoder.as[Beam[_]].beam shouldBe StringUtf8Coder.of()
+    coll.valueCoder.as[Beam[_]].beam shouldBe VarIntCoder.of()
+  }
+
+  it should "apply and propagate zstd coders" in {
+    def tuple2[K, V](scoll: SCollection[(K, V)]) = {
+      scoll.internal.getCoder
+        .as[MaterializedCoder[_]]
+        .bcoder
+        .as[StructuredCoder[_]]
+    }
+
+    val sc = ScioContext()
+    val dictBytes = Array[Byte](0, 1, 2, 3, 4, 5)
+
+    // don't die when extracting underlying coders
+    val tupleDictColl = sc
+      .empty[(String, String)]()(ZstdCoder(dictBytes))
+    noException shouldBe thrownBy {
+      tupleDictColl.keyCoder
+      tupleDictColl.valueCoder
+    }
+
+    val coll = sc
+      .empty[String]()(ZstdCoder(dictBytes))
+
+    // zstd should be applied
+    coll.internal.getCoder.as[MaterializedCoder[_]].bcoder shouldBe a[BZstdCoder[_]]
+
+    val keyed = coll.keyBy(_.substring(0, 1))
+
+    // zstd should survive key operation on value side
+    tuple2(keyed)
+      .shouldHaveKey[StringUtf8Coder]
+      .shouldHaveValue[BZstdCoder[_]]
+
+    // zstd should survive conversion to KV
+    keyed.toKV.internal.getCoder
+      .as[KvCoder[_, _]]
+      .getValueCoder
+      .as[MaterializedCoder[_]]
+      .bcoder shouldBe a[BZstdCoder[_]]
+
+    val tupleValueZstd = sc
+      .empty[(String, String)]()(ZstdCoder.tuple2(valueDict = dictBytes))
+
+    // zstd should be applied to value side only
+    tuple2(tupleValueZstd)
+      .shouldHaveKey[StringUtf8Coder]
+      .shouldHaveValue[BZstdCoder[_]]
+
+    val tupleKVZstd = sc
+      .empty[(String, String)]()(ZstdCoder.tuple2(dictBytes, dictBytes))
+
+    // zstd should be applied to both sides
+    tuple2(tupleKVZstd)
+      .shouldHaveKey[BZstdCoder[_]]
+      .shouldHaveValue[BZstdCoder[_]]
+
+    // transforming key should drop Zstd on key side but not value side
+    tuple2(tupleKVZstd.mapKeys(_.substring(0, 1)))
+      .shouldHaveKey[StringUtf8Coder]
+      .shouldHaveValue[BZstdCoder[_]]
+
+    // transforming value should drop Zstd on value side but not key side
+    tuple2(tupleKVZstd.mapValues(_.substring(0, 1)))
+      .shouldHaveKey[BZstdCoder[_]]
+      .shouldHaveValue[StringUtf8Coder]
+
   }
 
   it should "support cogroup()" in {

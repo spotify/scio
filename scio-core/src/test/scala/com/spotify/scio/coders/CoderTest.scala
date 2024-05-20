@@ -23,10 +23,11 @@ import com.spotify.scio.proto.OuterClassForProto
 import com.spotify.scio.testing.CoderAssertions._
 import com.spotify.scio.coders.instances._
 import com.spotify.scio.options.ScioOptions
+import com.test.ZstdTestCaseClass
 import com.twitter.algebird.Moments
 import org.apache.beam.sdk.{coders => beam}
 import org.apache.beam.sdk.coders.Coder.NonDeterministicException
-import org.apache.beam.sdk.coders.BigEndianLongCoder
+import org.apache.beam.sdk.coders.{BigEndianLongCoder, ZstdCoder}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
@@ -46,6 +47,7 @@ import java.util.UUID
 import scala.jdk.CollectionConverters._
 
 final class CoderTest extends AnyFlatSpec with Matchers {
+  import com.spotify.scio.coders.CoderTestUtils._
 
   val userId: UserId = UserId(Seq[Byte](1, 2, 3, 4))
   val user: User = User(userId, "johndoe", "johndoe@spotify.com")
@@ -686,6 +688,36 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     val coder = Coder.beam(bCoder)
     val materializedCoder = CoderMaterializer.beamWithDefault(coder, opts)
     materializedCoder shouldBe new MaterializedCoder[String](bCoder)
+  }
+
+  it should "derive zstd coders when configured" in {
+    val tmp = writeZstdBytes(Array[Byte](7, 6, 5, 4, 3, 2, 1, 0))
+    val opts = zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+    ZstdTestCaseClass(1, "s", 10L) coder WithOptions(opts) should notFallback() and
+      beOfType[Ref[_]] and
+      materializeTo[ZstdCoder[_]] and
+      beFullyCompliant()
+  }
+
+  it should "derive a zstd coder for the value side of a 2-tuple" in {
+    val tmp = writeZstdBytes(Array[Byte](7, 6, 5, 4, 3, 2, 1, 0))
+    val opts = zstdOpts("com.test.ZstdTestCaseClass", s"file://${tmp.getAbsolutePath}")
+    ("Foo", ZstdTestCaseClass(1, "s", 10L)) coder WithOptions(opts) should notFallback() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[Tuple2Coder[_, _]] and
+      beFullyCompliant() and { ctx =>
+        // casts checked in materializeTo
+        val valueCoder =
+          ctx.beamCoder.asInstanceOf[MaterializedCoder[_]].bcoder.asInstanceOf[Tuple2Coder[_, _]].bc
+        valueCoder shouldBe a[ZstdCoder[_]]
+      }
+  }
+
+  it should "not derive zstd coders when not configured" in {
+    ZstdTestCaseClass(1, "s", 10L) coderShould notFallback() and
+      beOfType[Ref[_]] and
+      materializeTo[RefCoder[_]] and
+      beFullyCompliant()
   }
 
   it should "have a useful stacktrace when a Coder throws" in {
