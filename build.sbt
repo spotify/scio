@@ -1774,6 +1774,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
+  "com.github.luben" % "zstd-jni" % zstdJniVersion,
   "com.google.api" % "api-common" % googleApiCommonVersion,
   "com.google.api" % "gax" % gaxVersion,
   "com.google.api" % "gax-grpc" % gaxVersion,
