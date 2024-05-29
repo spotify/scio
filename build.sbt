@@ -1435,7 +1435,7 @@ lazy val `scio-repl` = project
         case PathList("git.properties" | "arrow-git.properties") =>
           // drop conflicting git properties
           MergeStrategy.discard
-        case PathList("META-INF", "versions", "9", "module-info.class") =>
+        case PathList(segments @ _*) if segments.last == "module-info.class" =>
           // drop conflicting module-info.class
           MergeStrategy.discard
         case PathList("META-INF", "gradle", "incremental.annotation.processors") =>
