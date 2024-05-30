@@ -15,9 +15,9 @@
  * under the License.
  */
 
-package com.spotify.scio.testing
+package com.spotify.scio.testing.parquet
 
-import com.spotify.scio.avro.TestRecord
+import com.spotify.scio.avro.{Account, AccountStatus}
 import org.apache.avro.SchemaBuilder
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.parquet.filter2.predicate.FilterApi
@@ -30,39 +30,38 @@ import scala.jdk.CollectionConverters._
 
 case class SomeRecord(intField: Int)
 
-class ParquetTestUtilsTest extends AnyFlatSpec with Matchers with ParquetTestUtils {
+class ParquetTestUtilsTest extends AnyFlatSpec with Matchers {
 
   "Avro SpecificRecords" should "be filterable and projectable" in {
+    import com.spotify.scio.testing.parquet.avro._
+
     val records = (1 to 10).map(i =>
-      new TestRecord(
-        i,
-        i.toLong,
-        i.toFloat,
-        i.toDouble,
-        true,
-        "hello",
-        List[CharSequence]("a", "b", "c").asJava
-      )
+      Account
+        .newBuilder()
+        .setId(i)
+        .setName(i.toString)
+        .setAmount(i.toDouble)
+        .setType(s"Type$i")
+        .setAccountStatus(AccountStatus.Active)
+        .build()
     )
 
-    val transformed = records
-      .parquetFilter(
-        FilterApi.gt(FilterApi.intColumn("int_field"), 5.asInstanceOf[java.lang.Integer])
-      )
-      .parquetProject(
-        SchemaBuilder.record("TestRecord").fields().optionalInt("int_field").endRecord()
-      )
+    val filter = FilterApi.gt(FilterApi.intColumn("id"), 5.asInstanceOf[java.lang.Integer])
+    val projection = SchemaBuilder.record("Account").fields().requiredInt("id").endRecord()
 
-    transformed.map(_.int_field) should contain theSameElementsAs Seq(6, 7, 8, 9, 10)
+    val transformed = records withFilter filter withProjection projection
+    transformed.map(_.getId) should contain theSameElementsAs Seq(6, 7, 8, 9, 10)
     transformed.foreach { r =>
-      r.long_field shouldBe null
-      r.string_field shouldBe null
-      r.double_field shouldBe null
-      r.boolean_field shouldBe null
+      r.getName shouldBe null
+      r.getAmount shouldBe 0.0d
+      r.getAccountStatus shouldBe null
+      r.getType shouldBe null
     }
   }
 
   "Avro GenericRecords" should "be filterable and projectable" in {
+    import com.spotify.scio.testing.parquet.avro._
+
     val recordSchema = SchemaBuilder
       .record("TestRecord")
       .fields()
@@ -77,31 +76,32 @@ class ParquetTestUtilsTest extends AnyFlatSpec with Matchers with ParquetTestUti
         .build()
     )
 
-    val transformed = records
-      .parquetFilter(
-        FilterApi.gt(FilterApi.intColumn("int_field"), Int.box(5))
-      )
-      .parquetProject(
-        SchemaBuilder.record("Projection").fields().optionalInt("int_field").endRecord()
-      )
+    val filter = FilterApi.gt(FilterApi.intColumn("int_field"), 5.asInstanceOf[java.lang.Integer])
+    val projection =
+      SchemaBuilder.record("Projection").fields().optionalInt("int_field").endRecord()
 
-    transformed.map(_.get("int_field").toString.toInt) should contain theSameElementsAs Seq(6, 7, 8,
-      9, 10)
-    transformed.foreach { r =>
-      r.get("string_field") shouldBe null
-    }
+    records withFilter filter withProjection projection should contain theSameElementsAs Seq(6, 7,
+      8, 9, 10).map(i =>
+      new GenericRecordBuilder(recordSchema)
+        .set("int_field", i)
+        .set("string_field", null)
+        .build()
+    )
   }
 
   "Case classes" should "be filterable" in {
+    import com.spotify.scio.testing.parquet.types._
+
     val records = (1 to 10).map(SomeRecord)
 
-    val transformed = records
-      .parquetFilter(FilterApi.gt(FilterApi.intColumn("intField"), Int.box(5)))
-
-    transformed.map(_.intField) should contain theSameElementsAs Seq(6, 7, 8, 9, 10)
+    records withFilter (
+      FilterApi.gt(FilterApi.intColumn("intField"), Int.box(5))
+    ) should contain theSameElementsAs Seq(6, 7, 8, 9, 10).map(SomeRecord)
   }
 
   "TfExamples" should "be filterable and projectable" in {
+    import com.spotify.scio.testing.parquet.tensorflow._
+
     val required = tfmd.ValueCount.newBuilder().setMin(1).setMax(1).build()
 
     val schema = tfmd.Schema
@@ -157,27 +157,23 @@ class ParquetTestUtilsTest extends AnyFlatSpec with Matchers with ParquetTestUti
         .build()
     )
 
-    val transformed = records
-      .parquetFilter(
-        schema,
-        FilterApi.gt(FilterApi.floatColumn("float_required"), Float.box(5.5f))
-      )
-      .parquetProject(
-        schema,
-        tfmd.Schema
-          .newBuilder()
-          .addFeature(
-            tfmd.Feature
-              .newBuilder()
-              .setName("int64_required")
-              .setType(tfmd.FeatureType.INT)
-              .setValueCount(required)
-              .build()
-          )
-          .build()
-      )
-
-    transformed should contain theSameElementsAs (1 to 4).map(i =>
+    records withFilter (
+      schema,
+      FilterApi.gt(FilterApi.floatColumn("float_required"), Float.box(5.5f))
+    ) withProjection (
+      schema,
+      tfmd.Schema
+        .newBuilder()
+        .addFeature(
+          tfmd.Feature
+            .newBuilder()
+            .setName("int64_required")
+            .setType(tfmd.FeatureType.INT)
+            .setValueCount(required)
+            .build()
+        )
+        .build()
+    ) should contain theSameElementsAs (1 to 4).map(i =>
       Example
         .newBuilder()
         .setFeatures(

@@ -15,14 +15,14 @@
  * under the License.
  */
 
-package com.spotify.scio.testing
+package com.spotify.scio.testing.parquet
 
 import com.spotify.parquet.tensorflow.{
   TensorflowExampleParquetReader,
   TensorflowExampleParquetWriter,
   TensorflowExampleReadSupport
 }
-import magnolify.parquet._
+import _root_.magnolify.parquet.ParquetType
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.hadoop.conf.Configuration
@@ -30,14 +30,14 @@ import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSu
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader, ParquetWriter}
 import org.apache.parquet.io._
-import org.tensorflow.metadata.{v0 => tfmd}
 import org.tensorflow.proto.example.Example
+import org.tensorflow.metadata.{v0 => tfmd}
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-trait ParquetTestUtils {
-  case class ParquetMagnolifyHelpers[T: ParquetType](records: Iterable[T]) {
-    def parquetFilter(filter: FilterPredicate): Iterable[T] = {
+object ParquetTestUtils {
+  case class ParquetMagnolifyHelpers[T: ParquetType] private[testing] (records: Iterable[T]) {
+    def withFilter(filter: FilterPredicate): Iterable[T] = {
       val pt = implicitly[ParquetType[T]]
 
       val configuration = new Configuration()
@@ -50,15 +50,17 @@ trait ParquetTestUtils {
     }
   }
 
-  case class ParquetAvroHelpers[T <: GenericRecord](records: Iterable[T]) {
-    def parquetProject(projection: Schema): Iterable[T] = {
+  case class ParquetAvroHelpers[T <: GenericRecord] private[testing] (
+    records: Iterable[T]
+  ) {
+    def withProjection(projection: Schema): Iterable[T] = {
       val configuration = new Configuration()
       AvroReadSupport.setRequestedProjection(configuration, projection)
 
       roundtripAvro(records, configuration)
     }
 
-    def parquetFilter(filter: FilterPredicate): Iterable[T] = {
+    def withFilter(filter: FilterPredicate): Iterable[T] = {
       val configuration = new Configuration()
       ParquetInputFormat.setFilterPredicate(configuration, filter)
 
@@ -83,8 +85,8 @@ trait ParquetTestUtils {
     }
   }
 
-  case class ParquetExampleHelpers(records: Iterable[Example]) {
-    def parquetProject(schema: tfmd.Schema, projection: tfmd.Schema): Iterable[Example] = {
+  case class ParquetExampleHelpers private[testing] (records: Iterable[Example]) {
+    def withProjection(schema: tfmd.Schema, projection: tfmd.Schema): Iterable[Example] = {
       val configuration = new Configuration()
       TensorflowExampleReadSupport.setExampleReadSchema(
         configuration,
@@ -98,7 +100,7 @@ trait ParquetTestUtils {
       roundtripExample(records, schema, configuration)
     }
 
-    def parquetFilter(schema: tfmd.Schema, filter: FilterPredicate): Iterable[Example] = {
+    def withFilter(schema: tfmd.Schema, filter: FilterPredicate): Iterable[Example] = {
       val configuration = new Configuration()
       TensorflowExampleReadSupport.setExampleReadSchema(
         configuration,
@@ -109,7 +111,7 @@ trait ParquetTestUtils {
       roundtripExample(records, schema, configuration)
     }
 
-    def roundtripExample(
+    private def roundtripExample(
       records: Iterable[Example],
       schema: tfmd.Schema,
       readConfiguration: Configuration
@@ -194,16 +196,4 @@ trait ParquetTestUtils {
         }
       }
   }
-
-  implicit def toParquetAvroHelpers[T <: GenericRecord](
-    records: Iterable[T]
-  ): ParquetAvroHelpers[T] = ParquetAvroHelpers(records)
-
-  implicit def toParquetMagnolifyHelpers[T: ParquetType](
-    records: Iterable[T]
-  ): ParquetMagnolifyHelpers[T] = ParquetMagnolifyHelpers(records)
-
-  implicit def toParquetExampleHelpers(
-    records: Iterable[Example]
-  ): ParquetExampleHelpers = ParquetExampleHelpers(records)
 }
