@@ -28,11 +28,11 @@ import org.tensorflow.proto.example._
 
 import scala.jdk.CollectionConverters._
 
-case class SomeRecord(intField: Int)
+case class SomeRecord(id: Int)
 
 class ParquetTestUtilsTest extends AnyFlatSpec with Matchers {
 
-  "Avro SpecificRecords" should "be filterable and projectable" in {
+  "Avro SpecificRecords" should "be filterable and projectable via Schema" in {
     import com.spotify.scio.testing.parquet.avro._
 
     val records = (1 to 10).map(i =>
@@ -59,34 +59,71 @@ class ParquetTestUtilsTest extends AnyFlatSpec with Matchers {
     }
   }
 
-  "Avro GenericRecords" should "be filterable and projectable" in {
+  it should "be projectable via case class" in {
+    import com.spotify.scio.testing.parquet.avro._
+
+    val records = (1 to 10).map(i =>
+      Account
+        .newBuilder()
+        .setId(i)
+        .setName(i.toString)
+        .setAmount(i.toDouble)
+        .setType(s"Type$i")
+        .setAccountStatus(AccountStatus.Active)
+        .build()
+    )
+
+    records.withProjection[SomeRecord] should contain theSameElementsAs (1 to 10).map(SomeRecord)
+  }
+
+  "Avro GenericRecords" should "be filterable and projectable via Schema" in {
     import com.spotify.scio.testing.parquet.avro._
 
     val recordSchema = SchemaBuilder
       .record("TestRecord")
       .fields()
-      .requiredInt("int_field")
+      .requiredInt("id")
       .optionalString("string_field")
       .endRecord()
 
     val records = (1 to 10).map(i =>
       new GenericRecordBuilder(recordSchema)
-        .set("int_field", i)
+        .set("id", i)
         .set("string_field", i.toString)
         .build()
     )
 
-    val filter = FilterApi.gt(FilterApi.intColumn("int_field"), 5.asInstanceOf[java.lang.Integer])
+    val filter = FilterApi.gt(FilterApi.intColumn("id"), 5.asInstanceOf[java.lang.Integer])
     val projection =
-      SchemaBuilder.record("Projection").fields().optionalInt("int_field").endRecord()
+      SchemaBuilder.record("Projection").fields().optionalInt("id").endRecord()
 
     records withFilter filter withProjection projection should contain theSameElementsAs Seq(6, 7,
       8, 9, 10).map(i =>
       new GenericRecordBuilder(recordSchema)
-        .set("int_field", i)
+        .set("id", i)
         .set("string_field", null)
         .build()
     )
+  }
+
+  it should "be projectable via case class" in {
+    import com.spotify.scio.testing.parquet.avro._
+
+    val recordSchema = SchemaBuilder
+      .record("TestRecord")
+      .fields()
+      .requiredInt("id")
+      .optionalString("string_field")
+      .endRecord()
+
+    val records = (1 to 10).map(i =>
+      new GenericRecordBuilder(recordSchema)
+        .set("id", i)
+        .set("string_field", i.toString)
+        .build()
+    )
+
+    records.withProjection[SomeRecord] should contain theSameElementsAs (1 to 10).map(SomeRecord)
   }
 
   "Case classes" should "be filterable" in {
@@ -95,7 +132,7 @@ class ParquetTestUtilsTest extends AnyFlatSpec with Matchers {
     val records = (1 to 10).map(SomeRecord)
 
     records withFilter (
-      FilterApi.gt(FilterApi.intColumn("intField"), Int.box(5))
+      FilterApi.gt(FilterApi.intColumn("id"), Int.box(5))
     ) should contain theSameElementsAs Seq(6, 7, 8, 9, 10).map(SomeRecord)
   }
 

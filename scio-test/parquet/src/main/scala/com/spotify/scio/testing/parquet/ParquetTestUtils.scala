@@ -50,17 +50,33 @@ object ParquetTestUtils {
     }
   }
 
-  case class ParquetAvroHelpers[T <: GenericRecord] private[testing] (
-    records: Iterable[T]
+  case class ParquetAvroHelpers[U <: GenericRecord] private[testing] (
+    records: Iterable[U]
   ) {
-    def withProjection(projection: Schema): Iterable[T] = {
+    def withProjection(projection: Schema): Iterable[U] = {
       val configuration = new Configuration()
       AvroReadSupport.setRequestedProjection(configuration, projection)
 
       roundtripAvro(records, configuration)
     }
 
-    def withFilter(filter: FilterPredicate): Iterable[T] = {
+    def withProjection[V: ParquetType]: Iterable[V] = {
+      val pt = implicitly[ParquetType[V]]
+
+      records.headOption match {
+        case None =>
+          Iterable.empty[V] // empty iterable
+        case Some(head) =>
+          val schema = head.getSchema
+
+          roundtrip(
+            outputFile => AvroParquetWriter.builder[U](outputFile).withSchema(schema).build(),
+            inputFile => pt.readBuilder(inputFile).build()
+          )(records)
+      }
+    }
+
+    def withFilter(filter: FilterPredicate): Iterable[U] = {
       val configuration = new Configuration()
       ParquetInputFormat.setFilterPredicate(configuration, filter)
 
@@ -68,9 +84,9 @@ object ParquetTestUtils {
     }
 
     private def roundtripAvro(
-      records: Iterable[T],
+      records: Iterable[U],
       readConfiguration: Configuration
-    ): Iterable[T] = {
+    ): Iterable[U] = {
       records.headOption match {
         case None =>
           records // empty iterable
@@ -78,8 +94,8 @@ object ParquetTestUtils {
           val schema = head.getSchema
 
           roundtrip(
-            outputFile => AvroParquetWriter.builder[T](outputFile).withSchema(schema).build(),
-            inputFile => AvroParquetReader.builder[T](inputFile).withConf(readConfiguration).build()
+            outputFile => AvroParquetWriter.builder[U](outputFile).withSchema(schema).build(),
+            inputFile => AvroParquetReader.builder[U](inputFile).withConf(readConfiguration).build()
           )(records)
       }
     }
@@ -123,12 +139,12 @@ object ParquetTestUtils {
     )(records)
   }
 
-  private def roundtrip[T](
+  private def roundtrip[T, U](
     writerFn: OutputFile => ParquetWriter[T],
-    readerFn: InputFile => ParquetReader[T]
+    readerFn: InputFile => ParquetReader[U]
   )(
     records: Iterable[T]
-  ): Iterable[T] = {
+  ): Iterable[U] = {
     val baos = new ByteArrayOutputStream()
     val writer = writerFn(new InMemoryOutputFile(baos))
 
