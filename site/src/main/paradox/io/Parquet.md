@@ -301,3 +301,33 @@ A full list of Parquet configuration options can be found [here](https://github.
 Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation,
 backed by the new Beam [SplittableDoFn](https://beam.apache.org/blog/splittable-do-fn/) API, by following the instructions
 @ref:[here](../releases/migrations/v0.12.0-Migration-Guide.md#parquet-reads).
+
+## Testing
+
+In addition to JobTest support for Avro, Typed, and Tensorflow models, Scio 0.14.5 and above include utilities for testing projections and predicates.
+Just import the desired module, `com.spotify.scio.testing.parquet.{avro|types|tensorflow}._`, from the `scio-test-parquet` artifact.
+For example, test utilities for Avro are available in `com.spotify.scio.testing.parquet.avro._`:
+
+```scala
+import com.spotify.scio.testing.parquet.avro._
+
+val projection: Schema = ???
+val predicate: FilterPredicate = ???
+
+val records: Iterable[T <: SpecificRecord] = ???
+val expected: Iterable[T <: SpecificRecord] = ???
+
+records withProjection projection withPredicate predicate should contain theSameElementsAs expected
+```
+
+You can also test a case class projection against an Avro writer schema to ensure writer/reader compatibility:
+
+```scala
+import com.spotify.scio.testing.parquet.avro._
+
+case class MyProjection(id: Int)
+val records: Iterable[T <: SpecificRecord] = ???
+val expected: Iterable[MyRecord] = ???
+
+records withProjection[MyProjection] should contain theSameElementsAs expected
+```
