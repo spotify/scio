@@ -15,30 +15,13 @@
  * under the License.
  */
 
-package com.spotify.scio.testing
+package com.spotify.scio.testing.parquet
 
 import com.spotify.scio.testing.parquet.ParquetTestUtils._
-import magnolify.parquet.ParquetType
 import org.apache.avro.generic.GenericRecord
-import org.tensorflow.proto.example.Example
 
-package object parquet {
-
-  object avro {
-    implicit def toParquetAvroHelpers[T <: GenericRecord](
-      records: Iterable[T]
-    ): ParquetAvroHelpers[T] = ParquetAvroHelpers(records)
-  }
-
-  object types {
-    implicit def toParquetMagnolifyHelpers[T: ParquetType](
-      records: Iterable[T]
-    ): ParquetMagnolifyHelpers[T] = ParquetMagnolifyHelpers(records)
-  }
-
-  object tensorflow {
-    implicit def toParquetExampleHelpers(
-      records: Iterable[Example]
-    ): ParquetExampleHelpers = ParquetExampleHelpers(records)
-  }
+package object avro {
+  implicit def toParquetAvroHelpers[T <: GenericRecord](
+    records: Iterable[T]
+  ): ParquetAvroHelpers[T] = new ParquetAvroHelpers(records)
 }
