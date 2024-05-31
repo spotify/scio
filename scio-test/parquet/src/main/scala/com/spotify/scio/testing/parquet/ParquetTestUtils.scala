@@ -17,129 +17,14 @@
 
 package com.spotify.scio.testing.parquet
 
-import com.spotify.parquet.tensorflow.{
-  TensorflowExampleParquetReader,
-  TensorflowExampleParquetWriter,
-  TensorflowExampleReadSupport
-}
-import _root_.magnolify.parquet.ParquetType
-import org.apache.avro.Schema
-import org.apache.avro.generic.GenericRecord
-import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.avro.{AvroParquetReader, AvroParquetWriter, AvroReadSupport}
-import org.apache.parquet.filter2.predicate.FilterPredicate
-import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader, ParquetWriter}
+import org.apache.parquet.hadoop.{ParquetReader, ParquetWriter}
 import org.apache.parquet.io._
-import org.tensorflow.proto.example.Example
-import org.tensorflow.metadata.{v0 => tfmd}
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
-object ParquetTestUtils {
-  class ParquetMagnolifyHelpers[T: ParquetType] private[testing] (records: Iterable[T]) {
-    def withFilter(filter: FilterPredicate): Iterable[T] = {
-      val pt = implicitly[ParquetType[T]]
+private[parquet] object ParquetTestUtils {
 
-      val configuration = new Configuration()
-      ParquetInputFormat.setFilterPredicate(configuration, filter)
-
-      roundtrip(
-        outputFile => pt.writeBuilder(outputFile).build(),
-        inputFile => pt.readBuilder(inputFile).withConf(configuration).build()
-      )(records)
-    }
-  }
-
-  class ParquetAvroHelpers[U <: GenericRecord] private[testing] (
-    records: Iterable[U]
-  ) {
-    def withProjection(projection: Schema): Iterable[U] = {
-      val configuration = new Configuration()
-      AvroReadSupport.setRequestedProjection(configuration, projection)
-
-      roundtripAvro(records, configuration)
-    }
-
-    def withProjection[V: ParquetType]: Iterable[V] = {
-      val pt = implicitly[ParquetType[V]]
-
-      records.headOption match {
-        case None =>
-          Iterable.empty[V] // empty iterable
-        case Some(head) =>
-          val schema = head.getSchema
-
-          roundtrip(
-            outputFile => AvroParquetWriter.builder[U](outputFile).withSchema(schema).build(),
-            inputFile => pt.readBuilder(inputFile).build()
-          )(records)
-      }
-    }
-
-    def withFilter(filter: FilterPredicate): Iterable[U] = {
-      val configuration = new Configuration()
-      ParquetInputFormat.setFilterPredicate(configuration, filter)
-
-      roundtripAvro(records, configuration)
-    }
-
-    private def roundtripAvro(
-      records: Iterable[U],
-      readConfiguration: Configuration
-    ): Iterable[U] = {
-      records.headOption match {
-        case None =>
-          records // empty iterable
-        case Some(head) =>
-          val schema = head.getSchema
-
-          roundtrip(
-            outputFile => AvroParquetWriter.builder[U](outputFile).withSchema(schema).build(),
-            inputFile => AvroParquetReader.builder[U](inputFile).withConf(readConfiguration).build()
-          )(records)
-      }
-    }
-  }
-
-  class ParquetExampleHelpers private[testing] (records: Iterable[Example]) {
-    def withProjection(schema: tfmd.Schema, projection: tfmd.Schema): Iterable[Example] = {
-      val configuration = new Configuration()
-      TensorflowExampleReadSupport.setExampleReadSchema(
-        configuration,
-        projection
-      )
-      TensorflowExampleReadSupport.setRequestedProjection(
-        configuration,
-        projection
-      )
-
-      roundtripExample(records, schema, configuration)
-    }
-
-    def withFilter(schema: tfmd.Schema, filter: FilterPredicate): Iterable[Example] = {
-      val configuration = new Configuration()
-      TensorflowExampleReadSupport.setExampleReadSchema(
-        configuration,
-        schema
-      )
-      ParquetInputFormat.setFilterPredicate(configuration, filter)
-
-      roundtripExample(records, schema, configuration)
-    }
-
-    private def roundtripExample(
-      records: Iterable[Example],
-      schema: tfmd.Schema,
-      readConfiguration: Configuration
-    ): Iterable[Example] = roundtrip(
-      outputFile => TensorflowExampleParquetWriter.builder(outputFile).withSchema(schema).build(),
-      inputFile => {
-        TensorflowExampleParquetReader.builder(inputFile).withConf(readConfiguration).build()
-      }
-    )(records)
-  }
-
-  private def roundtrip[T, U](
+  def roundtrip[T, U](
     writerFn: OutputFile => ParquetWriter[T],
     readerFn: InputFile => ParquetReader[U]
   )(
