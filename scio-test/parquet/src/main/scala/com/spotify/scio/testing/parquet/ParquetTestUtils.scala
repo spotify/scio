@@ -36,7 +36,7 @@ import org.tensorflow.metadata.{v0 => tfmd}
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 object ParquetTestUtils {
-  case class ParquetMagnolifyHelpers[T: ParquetType] private[testing] (records: Iterable[T]) {
+  class ParquetMagnolifyHelpers[T: ParquetType] private[testing] (records: Iterable[T]) {
     def withFilter(filter: FilterPredicate): Iterable[T] = {
       val pt = implicitly[ParquetType[T]]
 
@@ -50,7 +50,7 @@ object ParquetTestUtils {
     }
   }
 
-  case class ParquetAvroHelpers[U <: GenericRecord] private[testing] (
+  class ParquetAvroHelpers[U <: GenericRecord] private[testing] (
     records: Iterable[U]
   ) {
     def withProjection(projection: Schema): Iterable[U] = {
@@ -101,7 +101,7 @@ object ParquetTestUtils {
     }
   }
 
-  case class ParquetExampleHelpers private[testing] (records: Iterable[Example]) {
+  class ParquetExampleHelpers private[testing] (records: Iterable[Example]) {
     def withProjection(schema: tfmd.Schema, projection: tfmd.Schema): Iterable[Example] = {
       val configuration = new Configuration()
       TensorflowExampleReadSupport.setExampleReadSchema(
