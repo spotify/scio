@@ -99,7 +99,6 @@ val perfmarkVersion = "0.27.0"
 val protobufVersion = "3.25.3"
 
 val algebirdVersion = "0.13.10"
-val algebraVersion = "2.12.0"
 val annoy4sVersion = "0.10.0"
 val annoyVersion = "0.2.6"
 val breezeVersion = "2.1.0"
@@ -146,6 +145,7 @@ val testContainersVersion = "0.41.3"
 val voyagerVersion = "2.0.6"
 val zoltarVersion = "0.6.0"
 // dependent versions
+val algebraVersion = catsVersion // algebra is a cats module
 val scalatestplusVersion = s"$scalatestVersion.0"
 
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
