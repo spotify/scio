@@ -24,6 +24,10 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 
 package object types {
+  implicit def toParquetMagnolifyHelpers[T: ParquetType](
+    records: Iterable[T]
+  ): ParquetMagnolifyHelpers[T] = new ParquetMagnolifyHelpers(records)
+
   class ParquetMagnolifyHelpers[T: ParquetType] private[testing] (records: Iterable[T]) {
     def withFilter(filter: FilterPredicate): Iterable[T] = {
       val pt = implicitly[ParquetType[T]]
@@ -37,8 +41,4 @@ package object types {
       )(records)
     }
   }
-
-  implicit def toParquetMagnolifyHelpers[T: ParquetType](
-    records: Iterable[T]
-  ): ParquetMagnolifyHelpers[T] = new ParquetMagnolifyHelpers(records)
 }

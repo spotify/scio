@@ -28,9 +28,9 @@ import org.apache.parquet.hadoop.{ParquetInputFormat, ParquetReader}
 import org.apache.parquet.io.InputFile
 
 package object avro {
-  implicit def toParquetAvroHelpers[T <: GenericRecord](
-    records: Iterable[T]
-  ): ParquetAvroHelpers[T] = new ParquetAvroHelpers(records)
+  implicit def toParquetAvroHelpers[U <: GenericRecord](
+    records: Iterable[U]
+  ): ParquetAvroHelpers[U] = new ParquetAvroHelpers(records)
 
   class ParquetAvroHelpers[U <: GenericRecord] private[testing] (
     records: Iterable[U]
