@@ -801,13 +801,29 @@ lazy val `scio-test-google-cloud-platform` = project
 
 lazy val `scio-test-parquet` = project
   .in(file("scio-test/parquet"))
-  .dependsOn()
+  .dependsOn(
+    `scio-core`,
+    `scio-parquet`,
+    `scio-test-core` % "compile;runtime->runtime",
+    `scio-avro` % "test->test",
+    `scio-tensorflow` % Provided
+  )
   .settings(commonSettings)
   .settings(
     description := "Scio helpers for ScalaTest",
     // only releases after 0.14.4
     tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
+      .filter(v => VersionNumber(v).numbers.last >= 4),
+    libraryDependencies ++= Seq(
+      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion,
+      "org.apache.parquet" % "parquet-column" % parquetVersion,
+      "org.apache.parquet" % "parquet-common" % parquetVersion,
+      "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion % Provided
+    )
   )
 
 lazy val `scio-macros` = project
