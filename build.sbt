@@ -411,6 +411,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[MissingClassProblem](
     "com.spotify.scio.coders.instances.kryo.BigtableRetriesExhaustedExceptionSerializer"
+  ),
+  // added new Cache.get method
+  ProblemFilters.exclude[ReversedMissingMethodProblem](
+    "com.spotify.scio.util.Cache.get"
   )
 )
 
