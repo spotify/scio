@@ -14,15 +14,13 @@
 
 Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Google Cloud Dataflow](https://github.com/GoogleCloudPlatform/DataflowJavaSDK) inspired by [Apache Spark](http://spark.apache.org/) and [Scalding](https://github.com/twitter/scalding).
 
-Scio 0.3.0 and future versions depend on Apache Beam (`org.apache.beam`) while earlier versions depend on Google Cloud Dataflow SDK (`com.google.cloud.dataflow`). See this [page](https://spotify.github.io/scio/Apache-Beam.html) for a list of breaking changes.
-
 # Features
 
 - Scala API close to that of Spark and Scalding core APIs
 - Unified batch and streaming programming model
 - Fully managed service<sup>\*</sup>
 - Integration with Google Cloud products: Cloud Storage, BigQuery, Pub/Sub, Datastore, Bigtable
-- JDBC, [TensorFlow](http://tensorflow.org/) TFRecords, Cassandra, Elasticsearch and Parquet I/O
+- Avro, Cassandra, Elasticsearch, gRPC, JDBC, neo4j, Parquet, Redis, [TensorFlow](http://tensorflow.org/) IOs
 - Interactive mode with Scio REPL
 - Type safe BigQuery
 - Integration with [Algebird](https://github.com/twitter/algebird) and [Breeze](https://github.com/scalanlp/breeze)
@@ -90,9 +88,10 @@ Scio includes the following artifacts:
 - `scio-test`: all following test utilities. Add to your project as a "test" dependency
   - `scio-test-core`: test core utilities
   - `scio-test-google-cloud-platform`: test utilities for Google Cloud IO's
+  - `scio-test-parquet`: test utilities for Parquet
 
 # License
 
-Copyright 2021 Spotify AB.
+Copyright 2024 Spotify AB.
 
 Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
