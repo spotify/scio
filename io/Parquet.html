@@ -221,6 +221,7 @@ spotify/scio
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
     <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
     <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
+    <li><a href="../io/Parquet.html#testing" class="header">Testing</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -229,7 +230,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.3-36-9cdce42-20240418T151636Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.4-43-c85f296-20240610T161009Z*
 </label>
 </li>
 </ul>
@@ -248,6 +249,7 @@ spotify/scio
     <li><a href="../io/Parquet.html#case-classes" class="header">Case classes</a></li>
     <li><a href="../io/Parquet.html#configuring-parquet" class="header">Configuring Parquet</a></li>
     <li><a href="../io/Parquet.html#parquet-reads-in-scio-0-12-0-" class="header">Parquet Reads in Scio 0.12.0+</a></li>
+    <li><a href="../io/Parquet.html#testing" class="header">Testing</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -492,6 +494,27 @@ val parquetConf: Configuration = {
 <p>A full list of Parquet configuration options can be found <a href="https://github.com/apache/parquet-mr/blob/master/parquet-hadoop/README.md">here</a>.</p>
 <h2><a href="#parquet-reads-in-scio-0-12-0-" name="parquet-reads-in-scio-0-12-0-" class="anchor"><span class="anchor-link"></span></a>Parquet Reads in Scio 0.12.0+</h2>
 <p>Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation, backed by the new Beam <a href="https://beam.apache.org/blog/splittable-do-fn/">SplittableDoFn</a> API, by following the instructions <a href="../releases/migrations/v0.12.0-Migration-Guide.html#parquet-reads">here</a>.</p>
+<h2><a href="#testing" name="testing" class="anchor"><span class="anchor-link"></span></a>Testing</h2>
+<p>In addition to JobTest support for Avro, Typed, and Tensorflow models, Scio 0.14.5 and above include utilities for testing projections and predicates. Just import the desired module, <code>com.spotify.scio.testing.parquet.{avro|types|tensorflow}._</code>, from the <code>scio-test-parquet</code> artifact. For example, test utilities for Avro are available in <code>com.spotify.scio.testing.parquet.avro._</code>:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.testing.parquet.avro._
+
+val projection: Schema = ???
+val predicate: FilterPredicate = ???
+
+val records: Iterable[T &lt;: SpecificRecord] = ???
+val expected: Iterable[T &lt;: SpecificRecord] = ???
+
+records withProjection projection withPredicate predicate should contain theSameElementsAs expected
+</code></pre>
+<p>You can also test a case class projection against an Avro writer schema to ensure writer/reader compatibility:</p>
+<pre class="prettyprint"><code class="language-scala">import com.spotify.scio.testing.parquet.avro._
+
+case class MyProjection(id: Int)
+val records: Iterable[T &lt;: SpecificRecord] = ???
+val expected: Iterable[MyRecord] = ???
+
+records withProjection[MyProjection] should contain theSameElementsAs expected
+</code></pre>
 </div>
 <div>
 <a href="https://github.com/spotify/scio/tree/master/site/src/main/paradox/io/Parquet.md" title="Edit this page" class="md-source-file md-edit">
@@ -500,7 +523,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.3-36-9cdce42-20240418T151636Z*
+0.14.4-43-c85f296-20240610T161009Z*
 </span>
 </div>
 </article>

@@ -219,9 +219,10 @@ spotify/scio
   <ul>
     <li><a href="../io/ReadFiles.html#read-as-text-lines" class="header">Read as text lines</a></li>
     <li><a href="../io/ReadFiles.html#read-entire-file-as-string" class="header">Read entire file as String</a></li>
-    <li><a href="../io/ReadFiles.html#read-as-binary" class="header">Read as binary</a></li>
-    <li><a href="../io/ReadFiles.html#read-as-a-custom-type" class="header">Read as a custom type</a></li>
+    <li><a href="../io/ReadFiles.html#read-entire-file-as-binary" class="header">Read entire file as binary</a></li>
+    <li><a href="../io/ReadFiles.html#read-entire-file-as-a-custom-type" class="header">Read entire file as a custom type</a></li>
     <li><a href="../io/ReadFiles.html#read-with-a-beam-transform" class="header">Read with a Beam transform</a></li>
+    <li><a href="../io/ReadFiles.html#read-with-a-beam-source" class="header">Read with a Beam source</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -230,7 +231,7 @@ spotify/scio
 <ul style="display: none">
 <li class="md-nav__item md-version" id="project.version">
 <label class="md-nav__link" for="__version">
-<i class="md-icon" title="Version">label_outline</i> 0.14.3-36-9cdce42-20240418T151636Z*
+<i class="md-icon" title="Version">label_outline</i> 0.14.4-43-c85f296-20240610T161009Z*
 </label>
 </li>
 </ul>
@@ -247,9 +248,10 @@ spotify/scio
   <ul>
     <li><a href="../io/ReadFiles.html#read-as-text-lines" class="header">Read as text lines</a></li>
     <li><a href="../io/ReadFiles.html#read-entire-file-as-string" class="header">Read entire file as String</a></li>
-    <li><a href="../io/ReadFiles.html#read-as-binary" class="header">Read as binary</a></li>
-    <li><a href="../io/ReadFiles.html#read-as-a-custom-type" class="header">Read as a custom type</a></li>
+    <li><a href="../io/ReadFiles.html#read-entire-file-as-binary" class="header">Read entire file as binary</a></li>
+    <li><a href="../io/ReadFiles.html#read-entire-file-as-a-custom-type" class="header">Read entire file as a custom type</a></li>
     <li><a href="../io/ReadFiles.html#read-with-a-beam-transform" class="header">Read with a Beam transform</a></li>
+    <li><a href="../io/ReadFiles.html#read-with-a-beam-source" class="header">Read with a Beam source</a></li>
   </ul></li>
 </ul>
 </nav>
@@ -261,36 +263,39 @@ spotify/scio
 <article class="md-content__inner md-typeset">
 <div class="md-content__searchable">
 <h1><a href="#readfiles" name="readfiles" class="anchor"><span class="anchor-link"></span></a>ReadFiles</h1>
-<p>Scio supports reading file paths from an <code>SCollection[String]</code> into various formats.</p>
+<p>Scio supports reading file paths/patterns from an <code>SCollection[String]</code> into various formats.</p>
 <h2><a href="#read-as-text-lines" name="read-as-text-lines" class="anchor"><span class="anchor-link"></span></a>Read as text lines</h2>
-<p>Reading to <code>String</code> text lines via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFiles(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[String]" title="com.spotify.scio.values.SCollection"><code>readFiles</code></a>:</p>
+<p>Reading to <code>String</code> text lines via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readTextFiles(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[String]" title="com.spotify.scio.values.SCollection"><code>readTextFiles</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 
 val sc: ScioContext = ???
 val paths: SCollection[String] = ???
-val fileBytes: SCollection[String] = paths.readFiles
+
+val lines: SCollection[String] = paths.readTextFiles
 </code></pre>
 <h2><a href="#read-entire-file-as-string" name="read-entire-file-as-string" class="anchor"><span class="anchor-link"></span></a>Read entire file as String</h2>
-<p>Reading to <code>String</code> text lines via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFilesAsString(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[String]" title="com.spotify.scio.values.SCollection"><code>readFilesAsString</code></a>:</p>
+<p>Reading entire files to <code>String</code> via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFilesAsString(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[String]" title="com.spotify.scio.values.SCollection"><code>readFilesAsString</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 
 val sc: ScioContext = ???
 val paths: SCollection[String] = ???
-val fileBytes: SCollection[String] = paths.readFiles
+
+val files: SCollection[String] = paths.readFilesAsString
 </code></pre>
-<h2><a href="#read-as-binary" name="read-as-binary" class="anchor"><span class="anchor-link"></span></a>Read as binary</h2>
-<p>Reading to binary <code>Array[Byte]</code> via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFilesAsBytes(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[Array[Byte]]" title="com.spotify.scio.values.SCollection"><code>readFilesAsBytes</code></a>:</p>
+<h2><a href="#read-entire-file-as-binary" name="read-entire-file-as-binary" class="anchor"><span class="anchor-link"></span></a>Read entire file as binary</h2>
+<p>Reading entire files to binary <code>Array[Byte]</code> via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFilesAsBytes(implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[Array[Byte]]" title="com.spotify.scio.values.SCollection"><code>readFilesAsBytes</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 
 val sc: ScioContext = ???
 val paths: SCollection[String] = ???
-val fileBytes: SCollection[Array[Byte]] = paths.readFilesAsBytes
+
+val files: SCollection[Array[Byte]] = paths.readFilesAsBytes
 </code></pre>
-<h2><a href="#read-as-a-custom-type" name="read-as-a-custom-type" class="anchor"><span class="anchor-link"></span></a>Read as a custom type</h2>
-<p>Reading to a custom type with a user-defined function from <code>FileIO.ReadableFile</code> to the output type via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFiles[A](f:org.apache.beam.sdk.io.FileIO.ReadableFile=%3EA)(implicitevidence$24:com.spotify.scio.coders.Coder[A],implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[A]" title="com.spotify.scio.values.SCollection"><code>readFiles</code></a>:</p>
+<h2><a href="#read-entire-file-as-a-custom-type" name="read-entire-file-as-a-custom-type" class="anchor"><span class="anchor-link"></span></a>Read entire file as a custom type</h2>
+<p>Reading entire files to a custom type with a user-defined function from <code>FileIO.ReadableFile</code> to the output type via <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFiles[A](f:org.apache.beam.sdk.io.FileIO.ReadableFile=%3EA)(implicitevidence$24:com.spotify.scio.coders.Coder[A],implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[A]" title="com.spotify.scio.values.SCollection"><code>readFiles</code></a>:</p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{io =&gt; beam}
@@ -298,23 +303,55 @@ import org.apache.beam.sdk.{io =&gt; beam}
 case class A(i: Int, s: String)
 val sc: ScioContext = ???
 val paths: SCollection[String] = ???
+
 val userFn: beam.FileIO.ReadableFile =&gt; A = ???
 val fileBytes: SCollection[A] = paths.readFiles(userFn)
 </code></pre>
 <h2><a href="#read-with-a-beam-transform" name="read-with-a-beam-transform" class="anchor"><span class="anchor-link"></span></a>Read with a Beam transform</h2>
-<p>If there is an existing beam <code>PTransform</code> from <code>FileIO.ReadableFile</code> to <code>A</code> (as an example, beam&rsquo;s <code>TextIO.readFiles()</code>), this can be reused via another variant of <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFiles[A](filesTransform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[org.apache.beam.sdk.io.FileIO.ReadableFile],org.apache.beam.sdk.values.PCollection[A]],directoryTreatment:org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment,compression:org.apache.beam.sdk.io.Compression)(implicitevidence$26:com.spotify.scio.coders.Coder[A],implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[A]" title="com.spotify.scio.values.SCollection"><code>readFiles</code></a></p>
+<p>Reading a file can be done with a beam <code>PTransform</code> from a <code>PCollection[FileIO.ReadableFile]</code> to <code>PCollection[T]</code> (as an example, beam&rsquo;s <code>TextIO.readFiles()</code>), via another variant of <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFiles[A](filesTransform:org.apache.beam.sdk.transforms.PTransform[org.apache.beam.sdk.values.PCollection[org.apache.beam.sdk.io.FileIO.ReadableFile],org.apache.beam.sdk.values.PCollection[A]],directoryTreatment:org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment,compression:org.apache.beam.sdk.io.Compression)(implicitevidence$26:com.spotify.scio.coders.Coder[A],implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[A]" title="com.spotify.scio.values.SCollection"><code>readFiles</code></a></p>
 <pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.{io =&gt; beam}
 import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.values.PCollection
 
-case class A(i: Int, s: String)
+case class Record(i: Int, s: String)
 
 val sc: ScioContext = ???
 val paths: SCollection[String] = ???
-val userTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[A]] = ???
-val fileBytes: SCollection[A] = paths.readFiles(userTransform)
+
+val userTransform: PTransform[PCollection[beam.FileIO.ReadableFile], PCollection[Record]] = ???
+val records: SCollection[Record] = paths.readFiles(userTransform)
+</code></pre>
+<h2><a href="#read-with-a-beam-source" name="read-with-a-beam-source" class="anchor"><span class="anchor-link"></span></a>Read with a Beam source</h2>
+<p>Reading a file can be done with a beam <code>FileBasedSource[T]</code> (as example, beam&rsquo;s <code>TextSource</code>) via another variant of <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFiles[A](desiredBundleSizeBytes:Long,directoryTreatment:org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment,compression:org.apache.beam.sdk.io.Compression)(f:String=%3Eorg.apache.beam.sdk.io.FileBasedSource[A])(implicitevidence$27:com.spotify.scio.coders.Coder[A],implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[A]" title="com.spotify.scio.values.SCollection"><code>readFiles</code></a>.</p>
+<p>When using <a href="https://spotify.github.io/scio/api/com/spotify/scio/values/SCollection.html#readFilesWithPath[A](desiredBundleSizeBytes:Long,directoryTreatment:org.apache.beam.sdk.io.FileIO.ReadMatches.DirectoryTreatment,compression:org.apache.beam.sdk.io.Compression)(filesSource:String=%3Eorg.apache.beam.sdk.io.FileBasedSource[A])(implicitevidence$29:com.spotify.scio.coders.Coder[A],implicitev:T%3C:%3CString):com.spotify.scio.values.SCollection[(String,A)]" title="com.spotify.scio.values.SCollection"><code>readFilesWithPath</code></a>, the origin file path will be passed along with all elements emitted by the source.</p>
+<p>The source will be created with the given file paths, and then split in sub-ranges depending on the desired bundle size.</p>
+<pre class="prettyprint"><code class="language-scala mdoc:compile-only">import com.spotify.scio.ScioContext
+import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.{io =&gt; beam}
+
+case class Record(i: Int, s: String)
+
+val sc: ScioContext = ???
+val paths: SCollection[String] = ???
+
+val desiredBundleSizeBytes: Long = ???
+val directoryTreatment: beam.FileIO.ReadMatches.DirectoryTreatment = ???
+val compression: beam.Compression = ???
+val createSource: String =&gt; beam.FileBasedSource[Record] = ???
+
+val records: SCollection[Record] = paths.readFiles(
+  desiredBundleSizeBytes,
+  directoryTreatment,
+  compression
+) { file =&gt; createSource(file) }
+
+val recordsWithPath: SCollection[(String, Record)] = paths.readFilesWithPath(
+  desiredBundleSizeBytes,
+  directoryTreatment,
+  compression
+) { file =&gt; createSource(file) }
 </code></pre>
 </div>
 <div>
@@ -324,7 +361,7 @@ Edit this page
 </div>
 <div class="print-only">
 <span class="md-source-file md-version">
-0.14.3-36-9cdce42-20240418T151636Z*
+0.14.4-43-c85f296-20240610T161009Z*
 </span>
 </div>
 </article>
