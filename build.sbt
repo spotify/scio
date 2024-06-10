@@ -482,13 +482,6 @@ val commonSettings = Def.settings(
   Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
   Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
   Test / testOptions += Tests.Argument("-oD"),
-  testOptions ++= {
-    if (sys.env.contains("SLOW")) {
-      Nil
-    } else {
-      Seq(Tests.Argument(TestFrameworks.ScalaTest, "-l", "org.scalatest.tags.Slow"))
-    }
-  },
   // libs to help with cross-build
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapelessVersion,
