@@ -51,7 +51,7 @@ val jacksonVersion = "2.14.1"
 val jodaTimeVersion = "2.10.10"
 val nettyTcNativeVersion = "2.0.52.Final"
 val slf4jVersion = "1.7.30"
-val zstdJniVersion = "1.5.6-3"
+val zstdJniVersion = "1.5.2-5"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20240229-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20240218-$googleClientsVersion"
@@ -543,7 +543,7 @@ lazy val sparkRunnerDependencies = Seq(
 )
 
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.16" % beamVersion % Runtime,
+  "org.apache.beam" % "beam-runners-flink-1.17" % beamVersion % Runtime,
   "org.apache.flink" % "flink-clients" % flinkVersion % Runtime,
   "org.apache.flink" % "flink-streaming-java" % flinkVersion % Runtime
 )
@@ -689,7 +689,7 @@ lazy val `scio-core` = project
       // provided
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion % Provided,
-      "org.apache.beam" % "beam-runners-flink-1.16" % beamVersion % Provided,
+      "org.apache.beam" % "beam-runners-flink-1.17" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
@@ -1866,6 +1866,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
   "io.perfmark" % "perfmark-api" % perfmarkVersion,
   "org.apache.avro" % "avro" % avroVersion,
+  "org.apache.commons" % "commons-lang3" % commonsLang3Version,
   "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
   "org.checkerframework" % "checker-qual" % checkerQualVersion,
