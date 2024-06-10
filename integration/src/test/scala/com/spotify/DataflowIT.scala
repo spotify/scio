@@ -21,7 +21,6 @@ import com.spotify.scio._
 import com.spotify.scio.runners.dataflow._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.tagobjects.Slow
 
 import scala.jdk.CollectionConverters._
 
@@ -47,20 +46,20 @@ class DataflowIT extends AnyFlatSpec with Matchers {
   private lazy val scioResult = DataflowIT.run()
   private lazy val dfResult = scioResult.as[DataflowResult]
 
-  "DataflowResult" should "have Dataflow data" taggedAs Slow in {
+  "DataflowResult" should "have Dataflow data" in {
     dfResult.internal.getState shouldBe scioResult.state
     dfResult.getJob.getProjectId shouldBe DataflowIT.projectId
     dfResult.getJobMetrics.getMetrics.asScala should not be empty
   }
 
-  it should "round trip ScioResult" taggedAs Slow in {
+  it should "round trip ScioResult" in {
     val r = dfResult.asScioResult
     r.state shouldBe scioResult.state
     r.getMetrics shouldBe scioResult.getMetrics
     r.allCountersAtSteps shouldBe scioResult.allCountersAtSteps
   }
 
-  it should "work independently" taggedAs Slow in {
+  it should "work independently" in {
     val r = DataflowResult(
       dfResult.internal.getProjectId,
       dfResult.internal.getRegion,
