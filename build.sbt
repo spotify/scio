@@ -61,8 +61,10 @@ val googleApiServicesStorageVersion = s"v1-rev20240311-$googleClientsVersion"
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = avroCompilerVersion // sdks/java/extensions/avro/build.gradle
 val flinkVersion = "1.17.0" // runners/flink/1.17/build.gradle
+val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString(".")
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
+val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.36.0/index.html
@@ -147,6 +149,7 @@ val zoltarVersion = "0.6.0"
 // dependent versions
 val algebraVersion = catsVersion // algebra is a cats module
 val scalatestplusVersion = s"$scalatestVersion.0"
+val scalacheckMinorVersion = VersionNumber(scalacheckVersion).numbers.take(2).mkString("-")
 
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
@@ -537,13 +540,13 @@ lazy val dataflowRunnerDependencies = Seq(
 )
 
 lazy val sparkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Runtime,
+  "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Runtime,
   "org.apache.spark" %% "spark-core" % sparkVersion % Runtime,
   "org.apache.spark" %% "spark-streaming" % sparkVersion % Runtime
 )
 
 lazy val flinkRunnerDependencies = Seq(
-  "org.apache.beam" % "beam-runners-flink-1.17" % beamVersion % Runtime,
+  "org.apache.beam" % s"beam-runners-flink-$flinkMinorVersion" % beamVersion % Runtime,
   "org.apache.flink" % "flink-clients" % flinkVersion % Runtime,
   "org.apache.flink" % "flink-streaming-java" % flinkVersion % Runtime
 )
@@ -689,9 +692,9 @@ lazy val `scio-core` = project
       // provided
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion % Provided,
-      "org.apache.beam" % "beam-runners-flink-1.17" % beamVersion % Provided,
+      "org.apache.beam" % s"beam-runners-flink-$flinkMinorVersion" % beamVersion % Provided,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
-      "org.apache.beam" % "beam-runners-spark-3" % beamVersion % Provided,
+      "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Provided,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
       // test
       "com.lihaoyi" %% "fansi" % fansiVersion % Test,
@@ -711,7 +714,7 @@ lazy val `scio-core` = project
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalactic" %% "scalactic" % scalatestVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
+      "org.scalatestplus" %% s"scalacheck-$scalacheckMinorVersion" % scalatestplusVersion % Test,
       "org.typelevel" %% "cats-kernel" % catsVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     ),
@@ -858,7 +861,7 @@ lazy val `scio-avro` = project
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
+      "org.scalatestplus" %% s"scalacheck-$scalacheckMinorVersion" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
       "org.typelevel" %% "cats-core" % catsVersion % Test
     ),
@@ -928,7 +931,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.scalatestplus" %% "scalacheck-1-17" % scalatestplusVersion % Test,
+      "org.scalatestplus" %% s"scalacheck-$scalacheckMinorVersion" % scalatestplusVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
       "org.typelevel" %% "cats-core" % catsVersion % Test,
       "org.scalameta" %% "munit" % munitVersion % Test
