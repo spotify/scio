@@ -814,7 +814,7 @@ lazy val `scio-test-parquet` = project
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion,
+      "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll (Exclude.avro),
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
