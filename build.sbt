@@ -852,7 +852,7 @@ lazy val `scio-avro` = project
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion excludeAll (Exclude.avro),
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
@@ -921,7 +921,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (Exclude.avro),
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
@@ -1645,8 +1645,7 @@ lazy val integration = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % Test,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Test
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test
     )
   )
 
