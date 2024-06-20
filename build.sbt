@@ -921,9 +921,11 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (Exclude.jacksons: _*),
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // runtime
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion % Runtime, // replace excluded
       // test
       "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
@@ -1789,6 +1791,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   "com.github.luben" % "zstd-jni" % zstdJniVersion,
   "com.google.api" % "api-common" % googleApiCommonVersion,
