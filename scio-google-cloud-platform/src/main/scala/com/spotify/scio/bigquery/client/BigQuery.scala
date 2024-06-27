@@ -33,6 +33,7 @@ import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.{GoogleCredentials, ImpersonatedCredentials}
 import com.google.cloud.bigquery.storage.v1beta1.{BigQueryStorageClient, BigQueryStorageSettings}
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
+import com.google.cloud.storage.{Storage, StorageOptions}
 import com.spotify.scio.bigquery.{Table => STable}
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.client.BigQueryConfig.ImpersonationInfo
@@ -331,5 +332,8 @@ object BigQuery {
         .build()
       BigQueryStorageClient.create(settings)
     }
+
+    lazy val blobStorage: Storage =
+      StorageOptions.newBuilder.setProjectId(project).setCredentials(_credentials).build.getService
   }
 }
