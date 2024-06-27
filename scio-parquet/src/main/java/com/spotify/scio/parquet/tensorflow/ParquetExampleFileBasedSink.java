@@ -21,6 +21,7 @@ import com.spotify.parquet.tensorflow.TensorflowExampleParquetWriter;
 import com.spotify.scio.parquet.BeamOutputFile;
 import com.spotify.scio.parquet.WriterUtils;
 import java.nio.channels.WritableByteChannel;
+import java.util.Map;
 import org.apache.beam.sdk.io.FileBasedSink;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
@@ -37,22 +38,25 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
   private final Schema schema;
   private final SerializableConfiguration conf;
   private final CompressionCodecName compression;
+  private final Map<String, String> extraMetadata;
 
   public ParquetExampleFileBasedSink(
       ValueProvider<ResourceId> baseOutputFileName,
       FileBasedSink.DynamicDestinations<Example, Void, Example> dynamicDestinations,
       Schema schema,
       Configuration conf,
-      CompressionCodecName compression) {
+      CompressionCodecName compression,
+      Map<String, String> extraMetadata) {
     super(baseOutputFileName, dynamicDestinations);
     this.schema = schema;
     this.conf = new SerializableConfiguration(conf);
     this.compression = compression;
+    this.extraMetadata = extraMetadata;
   }
 
   @Override
   public FileBasedSink.WriteOperation<Void, Example> createWriteOperation() {
-    return new ParquetExampleWriteOperation(this, schema, conf, compression);
+    return new ParquetExampleWriteOperation(this, schema, conf, compression, extraMetadata);
   }
 
   // =======================================================================
@@ -63,21 +67,24 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
     private final Schema schema;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
+    private final Map<String, String> extraMetadata;
 
     ParquetExampleWriteOperation(
         FileBasedSink<Example, Void, Example> sink,
         Schema schema,
         SerializableConfiguration conf,
-        CompressionCodecName compression) {
+        CompressionCodecName compression,
+        Map<String, String> extraMetadata) {
       super(sink);
       this.schema = schema;
       this.conf = conf;
       this.compression = compression;
+      this.extraMetadata = extraMetadata;
     }
 
     @Override
     public Writer<Void, Example> createWriter() throws Exception {
-      return new ParquetExampleWriter(this, schema, conf, compression);
+      return new ParquetExampleWriter(this, schema, conf, compression, extraMetadata);
     }
   }
 
@@ -90,17 +97,20 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
     private final Schema schema;
     private final SerializableConfiguration conf;
     private final CompressionCodecName compression;
+    private final Map<String, String> extraMetadata;
     private ParquetWriter<Example> writer;
 
     public ParquetExampleWriter(
         FileBasedSink.WriteOperation<Void, Example> writeOperation,
         Schema schema,
         SerializableConfiguration conf,
-        CompressionCodecName compression) {
+        CompressionCodecName compression,
+        Map<String, String> extraMetadata) {
       super(writeOperation, MimeTypes.BINARY);
       this.schema = schema;
       this.conf = conf;
       this.compression = compression;
+      this.extraMetadata = extraMetadata;
     }
 
     @Override
@@ -108,7 +118,7 @@ public class ParquetExampleFileBasedSink extends FileBasedSink<Example, Void, Ex
       BeamOutputFile outputFile = BeamOutputFile.of(channel);
       TensorflowExampleParquetWriter.Builder builder =
           TensorflowExampleParquetWriter.builder(outputFile).withSchema(schema);
-      writer = WriterUtils.build(builder, conf.get(), compression);
+      writer = WriterUtils.build(builder, conf.get(), compression, extraMetadata);
     }
 
     @Override
