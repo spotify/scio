@@ -86,7 +86,7 @@ public final class IcebergEncoder {
       return value -> encode((Integer) value);
     }
     if (klass.isAssignableFrom(Long.class)) {
-      return value -> encode((long) value);
+      return value -> encode((Long) value);
     }
     if (klass.isAssignableFrom(BigDecimal.class)) {
       return value -> encode((BigDecimal) value);
