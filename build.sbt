@@ -32,6 +32,7 @@ val beamVersion = "2.56.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/v2.56.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+val arrowVersion = "15.0.1"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -883,6 +884,11 @@ lazy val `scio-google-cloud-platform` = project
   .settings(beamRunnerSettings)
   .settings(
     description := "Scio add-on for Google Cloud Platform",
+    unusedCompileDependenciesFilter -= Seq(
+      // required for patching jackson version pulled by arrow
+      moduleFilter("org.apache.arrow", "arrow-vector"),
+      moduleFilter("com.fasterxml.jackson.datatype", "jackson-datatype-jsr310")
+    ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
@@ -924,6 +930,9 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (Exclude.avro),
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      // patch jackson versions
+      "org.apache.arrow" % "arrow-vector" % arrowVersion excludeAll (Exclude.jacksons: _*),
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       // test
       "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
@@ -1788,6 +1797,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
   "com.github.luben" % "zstd-jni" % zstdJniVersion,
   "com.google.api" % "api-common" % googleApiCommonVersion,

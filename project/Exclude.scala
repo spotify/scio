@@ -2,14 +2,20 @@ import sbt._
 
 object Exclude {
   // do not pull newer avro version
-  val avro = "org.apache.avro" % "avro"
-  val gcsio = "com.google.cloud.bigdataoss" % "gcsio"
+  val avro: ExclusionRule = "org.apache.avro" % "avro"
+  val gcsio: ExclusionRule = "com.google.cloud.bigdataoss" % "gcsio"
+  // do not pull newer jackson version
+  val jacksons: Seq[ExclusionRule] = Seq(
+    ExclusionRule("com.fasterxml.jackson.core"),
+    ExclusionRule("com.fasterxml.jackson.datatype"),
+    ExclusionRule("com.fasterxml.jackson.module")
+  )
   // replaced by io.dropwizard.metrics metrics-core
-  val metricsCore = "com.codahale.metrics" % "metrics-core"
+  val metricsCore: ExclusionRule = "com.codahale.metrics" % "metrics-core"
   // kafka isn't exposed in scio and pulling too many things
-  val beamKafka = "org.apache.beam" % "beam-sdks-java-io-kafka"
+  val beamKafka: ExclusionRule = "org.apache.beam" % "beam-sdks-java-io-kafka"
   // logger implementation must be given by the runner lib
-  val loggerImplementations = Seq(
+  val loggerImplementations: Seq[ExclusionRule] = Seq(
     "ch.qos.logback" % "logback-classic",
     "ch.qos.logback" % "logback-core",
     "ch.qos.reload4j" % "reload4j",
