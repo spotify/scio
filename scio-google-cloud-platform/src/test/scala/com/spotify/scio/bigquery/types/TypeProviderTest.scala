@@ -619,4 +619,19 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     cc.f1 shouldBe Geography(wkt)
     GeoRecordTo(Geography(wkt))
   }
+
+  @BigQueryType.fromSchema("""
+      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "JSON"}]}
+    """.stripMargin)
+  class JsonRecordFrom
+
+  @BigQueryType.toTable
+  case class JsonRecordTo(f1: Json)
+
+  it should "support JSON type" in {
+    val wkt = "{\"name\": \"Alice\", \"age\": 30}"
+    val cc = JsonRecordFrom(Json(wkt))
+    cc.f1 shouldBe Json(wkt)
+    JsonRecordTo(Json(wkt))
+  }
 }

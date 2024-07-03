@@ -106,6 +106,7 @@ object StorageUtil {
             case null                          => "STRING"
             case t if t.getName == "datetime"  => "DATETIME"
             case t if t.getName == "geography" => "GEOGRAPHY"
+            case t if t.getName == "json"      => "JSON"
             case t =>
               throw new IllegalStateException(s"Unsupported logical type: $t")
           }

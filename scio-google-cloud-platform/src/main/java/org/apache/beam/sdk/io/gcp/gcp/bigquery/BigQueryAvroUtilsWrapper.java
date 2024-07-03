@@ -47,6 +47,7 @@ public class BigQueryAvroUtilsWrapper {
       ImmutableMap.<String, Type>builder()
           .put("STRING", Type.STRING)
           .put("GEOGRAPHY", Type.STRING)
+          .put("JSON", Type.STRING)
           .put("BYTES", Type.BYTES)
           .put("INTEGER", Type.LONG)
           .put("FLOAT", Type.DOUBLE)

@@ -213,6 +213,14 @@ private[types] object TypeProvider {
               tq"_root_.java.lang.String @${typeOf[BigQueryTag]}",
               q"{$rhs}.wkt"
             )
+          case q"$m val $n: _root_.com.spotify.scio.bigquery.types.Json = $rhs" => // Could not find how to mutualize
+            provider.initializeToTable(c)(m, n, tq"_root_.java.lang.String")
+            c.universe.ValDef(
+              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
+              n,
+              tq"_root_.java.lang.String @${typeOf[BigQueryTag]}",
+              q"{$rhs}.wkt"
+            )
           case ValDef(m, n, tpt, rhs) =>
             provider.initializeToTable(c)(m, n, tpt)
             c.universe.ValDef(
@@ -288,6 +296,8 @@ private[types] object TypeProvider {
         case "DATETIME"          => (tq"_root_.org.joda.time.LocalDateTime", Nil)
         case "GEOGRAPHY" =>
           (tq"_root_.com.spotify.scio.bigquery.types.Geography", Nil)
+        case "JSON" =>
+          (tq"_root_.com.spotify.scio.bigquery.types.Json", Nil)
         case "RECORD" | "STRUCT" =>
           val name = NameProvider.getUniqueName(tfs.getName)
           val (fields, records) = toFields(tfs.getFields)
