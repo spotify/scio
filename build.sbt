@@ -21,6 +21,7 @@ import Keys.*
 import explicitdeps.ExplicitDepsPlugin.autoImport.moduleFilterRemoveValue
 import sbtassembly.AssemblyPlugin.autoImport.*
 import com.github.sbt.git.SbtGit.GitKeys.gitRemoteRepo
+import com.here.bom.Bom
 import com.typesafe.tools.mima.core.*
 import de.heikoseeberger.sbtheader.CommentCreator
 import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
@@ -42,6 +43,7 @@ val commonsCompressVersion = "1.21"
 val commonsIoVersion = "2.13.0"
 val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
+val gcpLibrariesVersion = "26.36.0"
 val googleClientsVersion = "2.0.0"
 val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
@@ -66,40 +68,24 @@ val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString("."
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
+// BOMs
+lazy val beamBom = Bom("org.apache.beam" % "beam-sdks-java-bom" % beamVersion)
+lazy val gcpBom = Bom("com.google.cloud" % "libraries-bom" % gcpLibrariesVersion)
+lazy val jacksonBom = Bom("com.fasterxml.jackson" % "jackson-bom" % jacksonVersion)
 
-// check versions from libraries-bom
+// check recommended versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.36.0/index.html
 val animalSnifferAnnotationsVersion = "1.23"
 val checkerQualVersion = "3.42.0"
-val datastoreV1ProtoClientVersion = "2.19.0"
 val errorProneAnnotationsVersion = "2.26.1"
 val failureAccessVersion = "1.0.2"
 val floggerVersion = "0.8"
-val gaxVersion = "2.46.1"
-val googleApiClientVersion = "2.4.0" // very strangely not in sync with googleClientsVersion
-val googleApiCommonVersion = "2.29.1"
-val googleAuthVersion = "1.23.0"
-val googleCloudBigQueryStorageVersion = "3.4.0"
-val googleCloudBigTableVersion = "2.37.0"
-val googleCloudCoreVersion = "2.36.1"
-val googleCloudMonitoringVersion = "3.41.0"
-val googleCloudProtoBigQueryStorageBetaVersion = "0.176.0"
-val googleCloudProtoBigTableVersion = googleCloudBigTableVersion
-val googleCloudProtoDatastoreVersion = "0.110.0"
-val googleCloudProtoPubSubVersion = "1.109.3"
-val googleCloudSpannerVersion = "6.62.0"
-val googleCloudStorageVersion = "2.36.1"
-val googleHttpClientVersion = "1.44.1"
-val googleProtoCommonVersion = "2.37.1"
-val googleProtoIAMVersion = "1.32.1"
-val grpcVersion = "1.62.2"
 val j2objcAnnotationsVersion = "3.0.0"
 val jsr305Version = "3.0.2"
 val nettyVersion = "4.1.100.Final"
 val okioVersion = "3.6.0"
 val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.27.0"
-val protobufVersion = "3.25.3"
 
 val algebirdVersion = "0.13.10"
 val annoy4sVersion = "0.10.0"
@@ -445,66 +431,78 @@ lazy val unusedCompileDependenciesTestSkipped = Def.task {
   if ((Compile / compile / skip).value) () else unusedCompileDependenciesTest.value
 }
 
-val commonSettings = Def.settings(
-  headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
-  headerMappings := headerMappings.value ++ Map(
-    HeaderFileType.scala -> keepExistingHeader,
-    HeaderFileType.java -> keepExistingHeader
-  ),
-  scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
-  scalacOptions := {
-    val exclude = ScalacOptions
-      .tokensForVersion(
-        scalaVersion.value,
-        Set(
-          // too many false positives
-          ScalacOptions.privateWarnDeadCode,
-          ScalacOptions.warnDeadCode,
-          // too many warnings
-          ScalacOptions.warnValueDiscard,
-          // not ready for scala 3 yet
-          ScalacOptions.source3
+val commonSettings = beamBom ++
+  gcpBom ++
+  jacksonBom ++
+  Def.settings(
+    headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
+    headerMappings := headerMappings.value ++ Map(
+      HeaderFileType.scala -> keepExistingHeader,
+      HeaderFileType.java -> keepExistingHeader
+    ),
+    scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
+    scalacOptions := {
+      val exclude = ScalacOptions
+        .tokensForVersion(
+          scalaVersion.value,
+          Set(
+            // too many false positives
+            ScalacOptions.privateWarnDeadCode,
+            ScalacOptions.warnDeadCode,
+            // too many warnings
+            ScalacOptions.warnValueDiscard,
+            // not ready for scala 3 yet
+            ScalacOptions.source3
+          )
         )
+        .toSet
+      scalacOptions.value.filterNot(exclude.contains)
+    },
+    javacOptions := {
+      val exclude = Set(
+        // too many warnings
+        "-Xlint:all"
       )
-      .toSet
-    scalacOptions.value.filterNot(exclude.contains)
-  },
-  javacOptions := {
-    val exclude = Set(
-      // too many warnings
-      "-Xlint:all"
-    )
-    javacOptions.value.filterNot(exclude.contains)
-  },
-  javaOptions := JavaOptions.defaults(javaMajorVersion),
-  excludeDependencies += Exclude.beamKafka,
-  excludeDependencies ++= Exclude.loggerImplementations,
-  resolvers ++= Resolver.sonatypeOssRepos("public"),
-  fork := true,
-  run / outputStrategy := Some(OutputStrategy.StdoutOutput),
-  run / javaOptions ++= JavaOptions.runDefaults(javaMajorVersion),
-  Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-  Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
-  Test / testOptions += Tests.Argument("-oD"),
-  // libs to help with cross-build
-  libraryDependencies ++= Seq(
-    "com.chuusai" %% "shapeless" % shapelessVersion,
-    "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
-  ),
-  unusedCompileDependenciesFilter -= Seq(
-    moduleFilter("com.chuusai", "shapeless"),
-    moduleFilter("org.scala-lang", "scala-reflect"),
-    moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
-    moduleFilter("org.typelevel", "scalac-compat-annotation")
-  ).reduce(_ | _),
-  coverageExcludedPackages := (Seq(
-    "com\\.spotify\\.scio\\.examples\\..*",
-    "com\\.spotify\\.scio\\.repl\\..*",
-    "com\\.spotify\\.scio\\.util\\.MultiJoin",
-    "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
-  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
-  coverageHighlighting := true
-)
+      javacOptions.value.filterNot(exclude.contains)
+    },
+    javaOptions := JavaOptions.defaults(javaMajorVersion),
+    resolvers ++= Resolver.sonatypeOssRepos("public"),
+    excludeDependencies += Exclude.beamKafka,
+    excludeDependencies ++= Exclude.loggerImplementations,
+    dependencyOverrides ++= beamBom.key.value.bomDependencies ++
+      gcpBom.key.value.bomDependencies ++
+      jacksonBom.key.value.bomDependencies ++
+      Seq(
+        // slf4j-bom only available for v2
+        "org.slf4j" % "slf4j-api" % slf4jVersion,
+        // parquet pulls more recent zstd-jni version
+        "com.github.luben" % "zstd-jni" % zstdJniVersion
+      ),
+    // libs to help with cross-build
+    libraryDependencies ++= Seq(
+      "com.chuusai" %% "shapeless" % shapelessVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
+    ),
+    unusedCompileDependenciesFilter -= Seq(
+      moduleFilter("com.chuusai", "shapeless"),
+      moduleFilter("org.scala-lang", "scala-reflect"),
+      moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
+      moduleFilter("org.typelevel", "scalac-compat-annotation")
+    ).reduce(_ | _),
+    fork := true,
+    run / outputStrategy := Some(OutputStrategy.StdoutOutput),
+    run / javaOptions ++= JavaOptions.runDefaults(javaMajorVersion),
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+    Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
+    Test / testOptions += Tests.Argument("-oD"),
+    coverageExcludedPackages := (Seq(
+      "com\\.spotify\\.scio\\.examples\\..*",
+      "com\\.spotify\\.scio\\.repl\\..*",
+      "com\\.spotify\\.scio\\.util\\.MultiJoin",
+      "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
+    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
+    coverageHighlighting := true
+  )
 
 // for modules containing java jUnit 4 tests
 lazy val jUnitSettings = Def.settings(
@@ -581,10 +579,10 @@ val protocJavaSourceManaged =
 val protocGrpcSourceManaged =
   settingKey[File]("Default directory for gRPC sources generated by protoc.")
 
-ThisBuild / PB.protocVersion := protobufVersion
 lazy val protobufConfigSettings = Def.settings(
+  PB.protocVersion := gcpBom.key.value.version("com.google.protobuf" % "protobuf-java"),
   PB.targets := Seq(
-    PB.gens.java(protobufVersion) -> Defaults.configSrcSub(protocJavaSourceManaged).value,
+    PB.gens.java(PB.protocVersion.value) -> Defaults.configSrcSub(protocJavaSourceManaged).value,
     PB.gens.plugin("grpc-java") -> Defaults.configSrcSub(protocGrpcSourceManaged).value
   ),
   managedSourceDirectories ++= PB.targets.value.map(_.outputPath)
@@ -594,9 +592,9 @@ lazy val protobufSettings = Def.settings(
   protocJavaSourceManaged := sourceManaged.value / "compiled_proto",
   protocGrpcSourceManaged := sourceManaged.value / "compiled_grpc",
   libraryDependencies ++= Seq(
-    "io.grpc" % "protoc-gen-grpc-java" % grpcVersion asProtocPlugin (),
-    "com.google.protobuf" % "protobuf-java" % protobufVersion % "protobuf",
-    "com.google.protobuf" % "protobuf-java" % protobufVersion
+    "io.grpc" % "protoc-gen-grpc-java" % gcpBom.key.value asProtocPlugin (),
+    "com.google.protobuf" % "protobuf-java" % gcpBom.key.value % "protobuf",
+    "com.google.protobuf" % "protobuf-java" % gcpBom.key.value
   )
 ) ++ Seq(Compile, Test).flatMap(c => inConfig(c)(protobufConfigSettings))
 
@@ -664,15 +662,15 @@ lazy val `scio-core` = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.github.luben" % "zstd-jni" % zstdJniVersion,
-      "com.google.api" % "gax" % gaxVersion,
-      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
+      "com.google.api" % "gax" % gcpBom.key.value,
+      "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
       "com.google.auto.service" % "auto-service" % autoServiceVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
-      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.http-client" % "google-http-client" % gcpBom.key.value,
+      "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" % "chill-protobuf" % chillVersion,
@@ -680,7 +678,7 @@ lazy val `scio-core` = project
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" %% "chill-algebird" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
-      "io.grpc" % "grpc-api" % grpcVersion,
+      "io.grpc" % "grpc-api" % gcpBom.key.value,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion,
@@ -748,8 +746,8 @@ lazy val `scio-test-core` = project
     undeclaredCompileDependenciesFilter -= moduleFilter("org.scalatest"),
     unusedCompileDependenciesFilter -= moduleFilter("org.scalatest", "scalatest"),
     libraryDependencies ++= Seq(
-      "com.google.http-client" % "google-http-client" % googleHttpClientVersion, // TODO should we have this here ?
-      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion, // TODO should we have this here ?
+      "com.google.http-client" % "google-http-client" % gcpBom.key.value, // TODO should we have this here ?
+      "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value, // TODO should we have this here ?
       "com.lihaoyi" %% "fansi" % fansiVersion,
       "com.lihaoyi" %% "pprint" % pprintVersion,
       "com.twitter" %% "chill" % chillVersion,
@@ -784,8 +782,8 @@ lazy val `scio-test-google-cloud-platform` = project
     undeclaredCompileDependenciesFilter -= moduleFilter("org.scalatest"),
     unusedCompileDependenciesFilter -= moduleFilter("org.scalatest", "scalatest"),
     libraryDependencies ++= Seq(
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % gcpBom.key.value,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "org.scalatest" %% "scalatest" % scalatestVersion,
       "org.typelevel" %% "cats-kernel" % catsVersion,
       // test
@@ -847,7 +845,7 @@ lazy val `scio-avro` = project
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
@@ -892,36 +890,36 @@ lazy val `scio-google-cloud-platform` = project
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
-      "com.google.api" % "gax" % gaxVersion,
-      "com.google.api" % "gax-grpc" % gaxVersion,
-      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % googleCloudProtoPubSubVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % googleCloudProtoBigQueryStorageBetaVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudProtoBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
-      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % googleCloudProtoPubSubVersion,
+      "com.google.api" % "gax" % gcpBom.key.value,
+      "com.google.api" % "gax-grpc" % gcpBom.key.value,
+      "com.google.api-client" % "google-api-client" % gcpBom.key.value,
+      "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % gcpBom.key.value,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
-      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
-      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
-      "com.google.cloud" % "google-cloud-bigquerystorage" % googleCloudBigQueryStorageVersion,
-      "com.google.cloud" % "google-cloud-bigtable" % googleCloudBigTableVersion,
-      "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
-      "com.google.cloud" % "google-cloud-spanner" % googleCloudSpannerVersion,
+      "com.google.auth" % "google-auth-library-credentials" % gcpBom.key.value,
+      "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
+      "com.google.cloud" % "google-cloud-bigquerystorage" % gcpBom.key.value,
+      "com.google.cloud" % "google-cloud-bigtable" % gcpBom.key.value,
+      "com.google.cloud" % "google-cloud-core" % gcpBom.key.value,
+      "com.google.cloud" % "google-cloud-spanner" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
       "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
       "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
-      "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.http-client" % "google-http-client" % gcpBom.key.value,
+      "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.twitter" %% "chill" % chillVersion,
       "com.twitter" % "chill-java" % chillVersion,
       "commons-io" % "commons-io" % commonsIoVersion,
-      "io.grpc" % "grpc-api" % grpcVersion,
-      "io.grpc" % "grpc-auth" % grpcVersion,
-      "io.grpc" % "grpc-netty" % grpcVersion,
-      "io.grpc" % "grpc-stub" % grpcVersion,
+      "io.grpc" % "grpc-api" % gcpBom.key.value,
+      "io.grpc" % "grpc-auth" % gcpBom.key.value,
+      "io.grpc" % "grpc-netty" % gcpBom.key.value,
+      "io.grpc" % "grpc-stub" % gcpBom.key.value,
       "io.netty" % "netty-handler" % nettyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -934,7 +932,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.arrow" % "arrow-vector" % arrowVersion excludeAll (Exclude.jacksons: _*),
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       // test
-      "com.google.cloud" % "google-cloud-storage" % googleCloudStorageVersion % Test,
+      "com.google.cloud" % "google-cloud-storage" % gcpBom.key.value % Test,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
       "com.spotify" %% "magnolify-scalacheck" % magnolifyVersion % Test,
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
@@ -961,7 +959,7 @@ lazy val `scio-cassandra3` = project
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" %% "chill" % chillVersion,
       "org.apache.cassandra" % "cassandra-all" % cassandraVersion,
@@ -1047,7 +1045,7 @@ lazy val `scio-extra` = project
     description := "Scio extra utilities",
     libraryDependencies ++= Seq(
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.google.zetasketch" % "zetasketch" % zetasketchVersion,
       "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
@@ -1096,12 +1094,12 @@ lazy val `scio-grpc` = project
       "com.google.guava" % "failureaccess" % failureAccessVersion,
       "com.google.guava" % "guava" % guavaVersion,
       "com.twitter" %% "chill" % chillVersion,
-      "io.grpc" % "grpc-api" % grpcVersion,
-      "io.grpc" % "grpc-stub" % grpcVersion,
+      "io.grpc" % "grpc-api" % gcpBom.key.value,
+      "io.grpc" % "grpc-stub" % gcpBom.key.value,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.commons" % "commons-lang3" % commonsLang3Version,
       // test
-      "io.grpc" % "grpc-netty" % grpcVersion % Test
+      "io.grpc" % "grpc-netty" % gcpBom.key.value % Test
     )
   )
 
@@ -1169,9 +1167,9 @@ lazy val `scio-parquet` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
-      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+      "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util-hadoop" % s"hadoop2-$bigdataossVersion",
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "com.twitter" %% "chill" % chillVersion,
       "me.lyh" %% "parquet-avro" % parquetExtraVersion,
@@ -1306,7 +1304,10 @@ lazy val `scio-examples` = project
         .toSet
       scalacOptions.value.filterNot(exclude.contains)
     },
-    undeclaredCompileDependenciesFilter := NothingFilter,
+    undeclaredCompileDependenciesFilter -= Seq(
+      // missing from gcpBom. Add explicitly once there
+      moduleFilter("com.google.cloud.datastore", "datastore-v1-proto-client")
+    ).reduce(_ | _),
     unusedCompileDependenciesFilter -= Seq(
       // used in es example
       moduleFilter("com.fasterxml.jackson.datatype", "jackson-datatype-jsr310"),
@@ -1319,19 +1320,18 @@ lazy val `scio-examples` = project
       // compile
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudProtoBigTableVersion,
-      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
+      "com.google.api-client" % "google-api-client" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % gcpBom.key.value,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.apis" % "google-api-services-pubsub" % googleApiServicesPubsubVersion,
-      "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
-      "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
+      "com.google.auth" % "google-auth-library-credentials" % gcpBom.key.value,
+      "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-      "com.google.cloud.datastore" % "datastore-v1-proto-client" % datastoreV1ProtoClientVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
+      "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
@@ -1537,7 +1537,7 @@ lazy val `scio-smb` = project
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
       "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
@@ -1632,11 +1632,11 @@ lazy val integration = project
     mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // compile
-      "com.google.api-client" % "google-api-client" % googleApiClientVersion,
+      "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
-      "com.google.protobuf" % "protobuf-java" % protobufVersion,
+      "com.google.http-client" % "google-http-client" % gcpBom.key.value,
+      "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.microsoft.sqlserver" % "mssql-jdbc" % "12.6.3.jre11",
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.avro" % "avro" % avroVersion,
@@ -1789,100 +1789,3 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
 } else {
   Nil
 }
-
-// strict should only be enabled when updating/adding dependencies
-// ThisBuild / conflictManager := ConflictManager.strict
-// To update this list we need to check against the dependencies being evicted
-ThisBuild / dependencyOverrides ++= Seq(
-  "com.fasterxml.jackson.core" % "jackson-annotations" % jacksonVersion,
-  "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
-  "com.github.luben" % "zstd-jni" % zstdJniVersion,
-  "com.google.api" % "api-common" % googleApiCommonVersion,
-  "com.google.api" % "gax" % gaxVersion,
-  "com.google.api" % "gax-grpc" % gaxVersion,
-  "com.google.api" % "gax-httpjson" % gaxVersion,
-  "com.google.api-client" % "google-api-client" % googleApiClientVersion,
-  "com.google.api.grpc" % "grpc-google-common-protos" % googleProtoCommonVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % googleCloudBigTableVersion,
-  "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % googleCloudBigTableVersion,
-  "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % googleCloudProtoDatastoreVersion,
-  "com.google.api.grpc" % "proto-google-common-protos" % googleProtoCommonVersion,
-  "com.google.api.grpc" % "proto-google-iam-v1" % googleProtoIAMVersion,
-  "com.google.apis" % "google-api-services-storage" % googleApiServicesStorageVersion,
-  "com.google.auth" % "google-auth-library-credentials" % googleAuthVersion,
-  "com.google.auth" % "google-auth-library-oauth2-http" % googleAuthVersion,
-  "com.google.auto.value" % "auto-value" % autoValueVersion,
-  "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-  "com.google.cloud" % "google-cloud-core" % googleCloudCoreVersion,
-  "com.google.cloud" % "google-cloud-monitoring" % googleCloudMonitoringVersion,
-  "com.google.cloud.bigdataoss" % "gcsio" % bigdataossVersion,
-  "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-  "com.google.errorprone" % "error_prone_annotations" % errorProneAnnotationsVersion,
-  "com.google.flogger" % "flogger" % floggerVersion,
-  "com.google.flogger" % "flogger-system-backend" % floggerVersion,
-  "com.google.flogger" % "google-extensions" % floggerVersion,
-  "com.google.guava" % "guava" % guavaVersion,
-  "com.google.http-client" % "google-http-client" % googleHttpClientVersion,
-  "com.google.http-client" % "google-http-client-gson" % googleHttpClientVersion,
-  "com.google.http-client" % "google-http-client-jackson2" % googleHttpClientVersion,
-  "com.google.http-client" % "google-http-client-protobuf" % googleHttpClientVersion,
-  "com.google.j2objc" % "j2objc-annotations" % j2objcAnnotationsVersion,
-  "com.google.protobuf" % "protobuf-java" % protobufVersion,
-  "com.google.protobuf" % "protobuf-java-util" % protobufVersion,
-  "com.squareup.okio" % "okio" % okioVersion,
-  "commons-codec" % "commons-codec" % commonsCodecVersion,
-  "commons-io" % "commons-io" % commonsIoVersion,
-  "io.dropwizard.metrics" % "metrics-core" % metricsVersion,
-  "io.dropwizard.metrics" % "metrics-jvm" % metricsVersion,
-  "io.grpc" % "grpc-all" % grpcVersion,
-  "io.grpc" % "grpc-alts" % grpcVersion,
-  "io.grpc" % "grpc-api" % grpcVersion,
-  "io.grpc" % "grpc-auth" % grpcVersion,
-  "io.grpc" % "grpc-benchmarks" % grpcVersion,
-  "io.grpc" % "grpc-census" % grpcVersion,
-  "io.grpc" % "grpc-context" % grpcVersion,
-  "io.grpc" % "grpc-core" % grpcVersion,
-  "io.grpc" % "grpc-gcp-observability" % grpcVersion,
-  "io.grpc" % "grpc-googleapis" % grpcVersion,
-  "io.grpc" % "grpc-grpclb" % grpcVersion,
-  "io.grpc" % "grpc-interop-testing" % grpcVersion,
-  "io.grpc" % "grpc-netty" % grpcVersion,
-  "io.grpc" % "grpc-netty-shaded" % grpcVersion,
-  "io.grpc" % "grpc-okhttp" % grpcVersion,
-  "io.grpc" % "grpc-protobuf" % grpcVersion,
-  "io.grpc" % "grpc-protobuf-lite" % grpcVersion,
-  "io.grpc" % "grpc-rls" % grpcVersion,
-  "io.grpc" % "grpc-services" % grpcVersion,
-  "io.grpc" % "grpc-servlet" % grpcVersion,
-  "io.grpc" % "grpc-servlet-jakarta" % grpcVersion,
-  "io.grpc" % "grpc-testing" % grpcVersion,
-  "io.grpc" % "grpc-testing-proto" % grpcVersion,
-  "io.grpc" % "grpc-stub" % grpcVersion,
-  "io.grpc" % "grpc-xds" % grpcVersion,
-  "io.netty" % "netty-all" % nettyVersion,
-  "io.netty" % "netty-buffer" % nettyVersion,
-  "io.netty" % "netty-codec" % nettyVersion,
-  "io.netty" % "netty-codec-http" % nettyVersion,
-  "io.netty" % "netty-codec-http2" % nettyVersion,
-  "io.netty" % "netty-common" % nettyVersion,
-  "io.netty" % "netty-handler" % nettyVersion,
-  "io.netty" % "netty-resolver" % nettyVersion,
-  "io.netty" % "netty-tcnative-boringssl-static" % nettyTcNativeVersion,
-  "io.netty" % "netty-transport" % nettyVersion,
-  "io.opencensus" % "opencensus-api" % opencensusVersion,
-  "io.opencensus" % "opencensus-contrib-grpc-metrics" % opencensusVersion,
-  "io.opencensus" % "opencensus-contrib-grpc-util" % opencensusVersion,
-  "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
-  "io.perfmark" % "perfmark-api" % perfmarkVersion,
-  "org.apache.avro" % "avro" % avroVersion,
-  "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-  "org.apache.commons" % "commons-lang3" % commonsLang3Version,
-  "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
-  "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-  "org.checkerframework" % "checker-qual" % checkerQualVersion,
-  "org.codehaus.mojo" % "animal-sniffer-annotations" % animalSnifferAnnotationsVersion,
-  "org.slf4j" % "slf4j-api" % slf4jVersion
-)
