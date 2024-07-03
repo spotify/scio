@@ -72,6 +72,7 @@ val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString("."
 lazy val beamBom = Bom("org.apache.beam" % "beam-sdks-java-bom" % beamVersion)
 lazy val gcpBom = Bom("com.google.cloud" % "libraries-bom" % gcpLibrariesVersion)
 lazy val jacksonBom = Bom("com.fasterxml.jackson" % "jackson-bom" % jacksonVersion)
+lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
 
 // check recommended versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.36.0/index.html
@@ -434,6 +435,7 @@ lazy val unusedCompileDependenciesTestSkipped = Def.task {
 val commonSettings = beamBom ++
   gcpBom ++
   jacksonBom ++
+  nettyBom ++
   Def.settings(
     headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
     headerMappings := headerMappings.value ++ Map(
@@ -472,6 +474,7 @@ val commonSettings = beamBom ++
     dependencyOverrides ++= beamBom.key.value.bomDependencies ++
       gcpBom.key.value.bomDependencies ++
       jacksonBom.key.value.bomDependencies ++
+      nettyBom.key.value.bomDependencies ++
       Seq(
         // slf4j-bom only available for v2
         "org.slf4j" % "slf4j-api" % slf4jVersion,
