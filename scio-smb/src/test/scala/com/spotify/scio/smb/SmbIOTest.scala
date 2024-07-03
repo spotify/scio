@@ -55,7 +55,7 @@ trait SmbJob {
 
   def setUserAccounts(user: User, accounts: Iterable[Account]): User = {
     val sortedAccounts = accounts.toList
-      .sortBy(_.getAmount)(Ordering[java.lang.Double].reverse)
+      .sortBy(_.getAmount)(Ordering[Double].reverse)
       .asJava
     User
       .newBuilder(user)

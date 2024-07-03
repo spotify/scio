@@ -1,8 +1,6 @@
 import sbt._
 
 object Exclude {
-  // do not pull newer avro version
-  val avro: ExclusionRule = "org.apache.avro" % "avro"
   val gcsio: ExclusionRule = "com.google.cloud.bigdataoss" % "gcsio"
   // do not pull newer jackson version
   val jacksons: Seq[ExclusionRule] = Seq(

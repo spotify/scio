@@ -144,7 +144,7 @@ public class ParquetAvroFileOperationsTest {
             .mapToObj(
                 i ->
                     TestLogicalTypes.newBuilder()
-                        .setTimestamp(DateTime.now())
+                        .setTimestamp(java.time.Instant.now())
                         .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal())
                         .build())
             .collect(Collectors.toList());

@@ -27,21 +27,18 @@ import com.spotify.scio.testing._
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.data.TimeConversions
-import org.apache.avro.{Conversion, Conversions, LogicalType, Schema}
+import org.apache.avro.{Conversions, Schema}
 import org.apache.avro.generic.{GenericData, GenericRecord, GenericRecordBuilder}
-import org.apache.avro.specific.SpecificData
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.avro._
-import org.joda.time.{DateTime, DateTimeFieldType, Duration, Instant}
+import org.joda.time.{DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
 import org.typelevel.scalaccompat.annotation.unused
 
-import java.lang
 import java.nio.file.Files
 
 class ParquetAvroIOFileNamePolicyTest extends FileNamePolicySpec[TestRecord] {
@@ -176,7 +173,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       val records = (1 to 10).map(_ =>
         TestLogicalTypes
           .newBuilder()
-          .setTimestamp(DateTime.now())
+          .setTimestamp(java.time.Instant.now())
           .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
           .build()
       )
@@ -205,7 +202,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       val testCaseDir = new File(dir, testCase)
       val records: Seq[GenericRecord] = (1 to 10).map { _ =>
         val gr = new GenericRecordBuilder(TestLogicalTypes.SCHEMA$)
-        gr.set("timestamp", DateTime.now())
+        gr.set("timestamp", java.time.Instant.now())
         gr.set(
           "decimal",
           BigDecimal.decimal(1.0).setScale(2).bigDecimal
@@ -214,7 +211,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       }
 
       implicit val coder = {
-        GenericData.get().addLogicalTypeConversion(new TimeConversions.TimestampConversion)
+        GenericData.get().addLogicalTypeConversion(new TimeConversions.TimeMillisConversion)
         GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion)
         avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
       }
@@ -249,7 +246,7 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
         (1 to 10).map(_ =>
           TestLogicalTypes
             .newBuilder()
-            .setTimestamp(DateTime.now())
+            .setTimestamp(java.time.Instant.now())
             .setDecimal(BigDecimal.decimal(1.0).setScale(2).bigDecimal)
             .build()
         )
@@ -518,27 +515,5 @@ object ParquetTestJob {
       .map(a => (a.getName.toString, a.getAmount))
       .saveAsTextFile(args("output"))
     sc.run().waitUntilDone()
-  }
-}
-
-case class CustomLogicalTypeSupplier() extends AvroDataSupplier {
-  override def get(): GenericData = {
-    val specificData = new SpecificData()
-    specificData.addLogicalTypeConversion(new Conversion[DateTime] {
-      override def getConvertedType: Class[DateTime] = classOf[DateTime]
-      override def getLogicalTypeName: String = "timestamp-millis"
-
-      override def toLong(
-        value: DateTime,
-        schema: Schema,
-        `type`: LogicalType
-      ): lang.Long =
-        value.toInstant.getMillis
-
-      override def fromLong(value: lang.Long, schema: Schema, `type`: LogicalType): DateTime =
-        Instant.ofEpochMilli(value).toDateTime
-    })
-    specificData.addLogicalTypeConversion(new Conversions.DecimalConversion)
-    specificData
   }
 }

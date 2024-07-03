@@ -358,8 +358,8 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  avro-latest:
-    name: Test Latest Avro
+  avro-legacy:
+    name: Test Legacy Avro
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
@@ -388,7 +388,7 @@ jobs:
 
       - name: Test
         env:
-          JAVA_OPTS: '-Davro.version=1.11.3'
+          JAVA_OPTS: '-Davro.version=1.8.2'
         run: sbt '++ ${{ matrix.scala }}' scio-avro/test
 
   it-test:
