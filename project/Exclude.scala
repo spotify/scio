@@ -2,12 +2,6 @@ import sbt._
 
 object Exclude {
   val gcsio: ExclusionRule = "com.google.cloud.bigdataoss" % "gcsio"
-  // do not pull newer jackson version
-  val jacksons: Seq[ExclusionRule] = Seq(
-    ExclusionRule("com.fasterxml.jackson.core"),
-    ExclusionRule("com.fasterxml.jackson.datatype"),
-    ExclusionRule("com.fasterxml.jackson.module")
-  )
   // replaced by io.dropwizard.metrics metrics-core
   val metricsCore: ExclusionRule = "com.codahale.metrics" % "metrics-core"
   // kafka isn't exposed in scio and pulling too many things

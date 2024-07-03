@@ -33,7 +33,6 @@ val beamVersion = "2.56.0"
 
 // check version used by beam
 // https://github.com/apache/beam/blob/v2.56.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
-val arrowVersion = "15.0.1"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -52,7 +51,7 @@ val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.14.1"
 val jodaTimeVersion = "2.10.10"
-val nettyTcNativeVersion = "2.0.52.Final"
+val nettyVersion = "4.1.100.Final"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.2-5"
 // dependent versions
@@ -76,16 +75,9 @@ lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
 
 // check recommended versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.36.0/index.html
-val animalSnifferAnnotationsVersion = "1.23"
-val checkerQualVersion = "3.42.0"
-val errorProneAnnotationsVersion = "2.26.1"
 val failureAccessVersion = "1.0.2"
-val floggerVersion = "0.8"
-val j2objcAnnotationsVersion = "3.0.0"
+val checkerQualVersion = "3.42.0"
 val jsr305Version = "3.0.2"
-val nettyVersion = "4.1.100.Final"
-val okioVersion = "3.6.0"
-val opencensusVersion = "0.31.1"
 val perfmarkVersion = "0.27.0"
 
 val algebirdVersion = "0.13.10"
@@ -476,6 +468,8 @@ val commonSettings = beamBom ++
       jacksonBom.key.value.bomDependencies ++
       nettyBom.key.value.bomDependencies ++
       Seq(
+        // version conflict with parquet 1.14. Downgrade to beam's version
+        "com.github.luben" % "zstd-jni" % zstdJniVersion,
         // slf4j-bom only available for v2
         "org.slf4j" % "slf4j-api" % slf4jVersion,
         // parquet pulls more recent zstd-jni version
@@ -695,8 +689,8 @@ lazy val `scio-core` = project
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "com.google.apis" % "google-api-services-dataflow" % googleApiServicesDataflowVersion % Provided,
       "org.apache.beam" % s"beam-runners-flink-$flinkMinorVersion" % beamVersion % Provided,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided,
-      "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Provided,
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Provided excludeAll (Exclude.avro),
+      "org.apache.beam" % s"beam-runners-spark-$sparkMajorVersion" % beamVersion % Provided excludeAll (Exclude.avro),
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion % Provided,
       // test
       "com.lihaoyi" %% "fansi" % fansiVersion % Test,
@@ -709,8 +703,7 @@ lazy val `scio-core` = project
       "joda-time" % "joda-time" % jodaTimeVersion % Test,
       "junit" % "junit" % junitVersion % Test,
       "org.apache.avro" % "avro" % avroVersion % Test,
-      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion % Test,
+      "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test excludeAll (Exclude.avro),
       "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13" % Test,
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test,
@@ -931,9 +924,6 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
-      // patch jackson versions
-      "org.apache.arrow" % "arrow-vector" % arrowVersion excludeAll (Exclude.jacksons: _*),
-      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       // test
       "com.google.cloud" % "google-cloud-storage" % gcpBom.key.value % Test,
       "com.spotify" %% "magnolify-cats" % magnolifyVersion % Test,
@@ -1356,6 +1346,10 @@ lazy val `scio-examples` = project
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
+    dependencyOverrides ++= Seq(
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.avro" % "avro-compiler" % avroVersion
+    ),
     // exclude problematic sources if we don't have GCP credentials
     unmanagedSources / excludeFilter := {
       if (BuildCredentials.exists) {
@@ -1555,9 +1549,9 @@ lazy val `scio-smb` = project
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion % Provided, // scio-gcp
       "com.github.ben-manes.caffeine" % "caffeine" % caffeineVersion % Provided,
       "org.apache.avro" % "avro" % avroVersion % Provided, // scio-avro
-      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Provided, // scio-avro
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion % Provided excludeAll (Exclude.avro), // scio-avro
       "org.apache.beam" % "beam-sdks-java-extensions-protobuf" % beamVersion % Provided, // scio-tensorflow
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Provided, // scio-gcp
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Provided excludeAll (Exclude.avro), // scio-gcp
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion % Provided, // scio-parquet
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided, // scio-parquet
@@ -1658,6 +1652,10 @@ lazy val integration = project
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
       "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test
+    ),
+    dependencyOverrides ++= Seq(
+      "org.apache.avro" % "avro" % avroVersion,
+      "org.apache.avro" % "avro-compiler" % avroVersion
     )
   )
 
