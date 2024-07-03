@@ -44,7 +44,6 @@ val commonsLang3Version = "3.9"
 val commonsMath3Version = "3.6.1"
 val gcpLibrariesVersion = "26.36.0"
 val googleClientsVersion = "2.0.0"
-val googleOauthClientVersion = "1.34.1"
 val guavaVersion = "32.1.2-jre"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
@@ -70,6 +69,7 @@ val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString("."
 // BOMs
 lazy val beamBom = Bom("org.apache.beam" % "beam-sdks-java-bom" % beamVersion)
 lazy val gcpBom = Bom("com.google.cloud" % "libraries-bom" % gcpLibrariesVersion)
+lazy val guavaBom = Bom("com.google.guava" % "guava-bom" % guavaVersion)
 lazy val jacksonBom = Bom("com.fasterxml.jackson" % "jackson-bom" % jacksonVersion)
 lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
 
@@ -424,82 +424,92 @@ lazy val unusedCompileDependenciesTestSkipped = Def.task {
   if ((Compile / compile / skip).value) () else unusedCompileDependenciesTest.value
 }
 
-val commonSettings = beamBom ++
-  gcpBom ++
-  jacksonBom ++
-  nettyBom ++
-  Def.settings(
-    headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
-    headerMappings := headerMappings.value ++ Map(
-      HeaderFileType.scala -> keepExistingHeader,
-      HeaderFileType.java -> keepExistingHeader
-    ),
-    scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
-    scalacOptions := {
-      val exclude = ScalacOptions
-        .tokensForVersion(
-          scalaVersion.value,
-          Set(
-            // too many false positives
-            ScalacOptions.privateWarnDeadCode,
-            ScalacOptions.warnDeadCode,
-            // too many warnings
-            ScalacOptions.warnValueDiscard,
-            // not ready for scala 3 yet
-            ScalacOptions.source3
-          )
+val bomSettings = Def.settings(
+  beamBom,
+  gcpBom,
+  guavaBom,
+  jacksonBom,
+  nettyBom
+)
+
+val commonSettings = bomSettings ++ Def.settings(
+  headerLicense := Some(HeaderLicense.ALv2(currentYear.toString, "Spotify AB")),
+  headerMappings := headerMappings.value ++ Map(
+    HeaderFileType.scala -> keepExistingHeader,
+    HeaderFileType.java -> keepExistingHeader
+  ),
+  scalacOptions ++= ScalacOptions.defaults(scalaVersion.value),
+  scalacOptions := {
+    val exclude = ScalacOptions
+      .tokensForVersion(
+        scalaVersion.value,
+        Set(
+          // too many false positives
+          ScalacOptions.privateWarnDeadCode,
+          ScalacOptions.warnDeadCode,
+          // too many warnings
+          ScalacOptions.warnValueDiscard,
+          // not ready for scala 3 yet
+          ScalacOptions.source3
         )
-        .toSet
-      scalacOptions.value.filterNot(exclude.contains)
-    },
-    javacOptions := {
-      val exclude = Set(
-        // too many warnings
-        "-Xlint:all"
       )
-      javacOptions.value.filterNot(exclude.contains)
-    },
-    javaOptions := JavaOptions.defaults(javaMajorVersion),
-    resolvers ++= Resolver.sonatypeOssRepos("public"),
-    excludeDependencies += Exclude.beamKafka,
-    excludeDependencies ++= Exclude.loggerImplementations,
-    dependencyOverrides ++= beamBom.key.value.bomDependencies ++
-      gcpBom.key.value.bomDependencies ++
-      jacksonBom.key.value.bomDependencies ++
-      nettyBom.key.value.bomDependencies ++
-      Seq(
-        // version conflict with parquet 1.14. Downgrade to beam's version
-        "com.github.luben" % "zstd-jni" % zstdJniVersion,
-        // slf4j-bom only available for v2
-        "org.slf4j" % "slf4j-api" % slf4jVersion,
-        // parquet pulls more recent zstd-jni version
-        "com.github.luben" % "zstd-jni" % zstdJniVersion
-      ),
-    // libs to help with cross-build
-    libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % shapelessVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
+      .toSet
+    scalacOptions.value.filterNot(exclude.contains)
+  },
+  javacOptions := {
+    val exclude = Set(
+      // too many warnings
+      "-Xlint:all"
+    )
+    javacOptions.value.filterNot(exclude.contains)
+  },
+  javaOptions := JavaOptions.defaults(javaMajorVersion),
+  resolvers ++= Resolver.sonatypeOssRepos("public"),
+  excludeDependencies += Exclude.beamKafka,
+  excludeDependencies ++= Exclude.loggerImplementations,
+  dependencyOverrides ++= beamBom.key.value.bomDependencies ++
+    gcpBom.key.value.bomDependencies ++
+    guavaBom.key.value.bomDependencies ++
+    jacksonBom.key.value.bomDependencies ++
+    nettyBom.key.value.bomDependencies ++
+    Seq(
+      // version conflict with parquet 1.14. Downgrade to beam's version
+      "com.github.luben" % "zstd-jni" % zstdJniVersion,
+      // downgrade deps to align with beam version
+      "com.google.auto.value" % "auto-value" % autoValueVersion,
+      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
+      "commons-codec" % "commons-codec" % commonsCodecVersion,
+      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
+      "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
+      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+      // slf4j-bom only available for v2
+      "org.slf4j" % "slf4j-api" % slf4jVersion
     ),
-    unusedCompileDependenciesFilter -= Seq(
-      moduleFilter("com.chuusai", "shapeless"),
-      moduleFilter("org.scala-lang", "scala-reflect"),
-      moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
-      moduleFilter("org.typelevel", "scalac-compat-annotation")
-    ).reduce(_ | _),
-    fork := true,
-    run / outputStrategy := Some(OutputStrategy.StdoutOutput),
-    run / javaOptions ++= JavaOptions.runDefaults(javaMajorVersion),
-    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
-    Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
-    Test / testOptions += Tests.Argument("-oD"),
-    coverageExcludedPackages := (Seq(
-      "com\\.spotify\\.scio\\.examples\\..*",
-      "com\\.spotify\\.scio\\.repl\\..*",
-      "com\\.spotify\\.scio\\.util\\.MultiJoin",
-      "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
-    ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
-    coverageHighlighting := true
-  )
+  // libs to help with cross-build
+  libraryDependencies ++= Seq(
+    "com.chuusai" %% "shapeless" % shapelessVersion,
+    "org.scala-lang.modules" %% "scala-collection-compat" % scalaCollectionCompatVersion
+  ),
+  unusedCompileDependenciesFilter -= Seq(
+    moduleFilter("com.chuusai", "shapeless"),
+    moduleFilter("org.scala-lang", "scala-reflect"),
+    moduleFilter("org.scala-lang.modules", "scala-collection-compat"),
+    moduleFilter("org.typelevel", "scalac-compat-annotation")
+  ).reduce(_ | _),
+  fork := true,
+  run / outputStrategy := Some(OutputStrategy.StdoutOutput),
+  run / javaOptions ++= JavaOptions.runDefaults(javaMajorVersion),
+  Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
+  Test / javaOptions ++= JavaOptions.testDefaults(javaMajorVersion),
+  Test / testOptions += Tests.Argument("-oD"),
+  coverageExcludedPackages := (Seq(
+    "com\\.spotify\\.scio\\.examples\\..*",
+    "com\\.spotify\\.scio\\.repl\\..*",
+    "com\\.spotify\\.scio\\.util\\.MultiJoin",
+    "com\\.spotify\\.scio\\.smb\\.util\\.SMBMultiJoin"
+  ) ++ (2 to 10).map(x => s"com\\.spotify\\.scio\\.sql\\.Query$x")).mkString(";"),
+  coverageHighlighting := true
+)
 
 // for modules containing java jUnit 4 tests
 lazy val jUnitSettings = Def.settings(
@@ -1311,6 +1321,7 @@ lazy val `scio-examples` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
+      "co.elastic.clients" % "elasticsearch-java" % elasticsearch8Version,
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
@@ -1321,25 +1332,40 @@ lazy val `scio-examples` = project
       "com.google.auth" % "google-auth-library-credentials" % gcpBom.key.value,
       "com.google.auth" % "google-auth-library-oauth2-http" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.code.findbugs" % "jsr305" % jsr305Version,
       "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
-      "com.google.oauth-client" % "google-oauth-client" % googleOauthClientVersion,
+      "com.google.oauth-client" % "google-oauth-client" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
+      "com.mysql" % "mysql-connector-j" % "9.0.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
+      "com.spotify" %% "magnolify-guava" % magnolifyVersion,
+      "com.spotify" %% "magnolify-neo4j" % magnolifyVersion,
+      "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "com.spotify" %% "magnolify-shared" % magnolifyVersion,
       "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "com.twitter" %% "algebird-core" % algebirdVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
-      "com.mysql" % "mysql-connector-j" % "9.0.0",
+      "me.lyh" %% "parquet-avro" % parquetExtraVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
+      "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
+      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+      "org.apache.parquet" % "parquet-column" % parquetVersion,
+      "org.apache.parquet" % "parquet-common" % parquetVersion,
+      "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
+      "org.neo4j.driver" % "neo4j-java-driver" % neo4jDriverVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
+      "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
+      "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
       "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.19.0" % Runtime,
