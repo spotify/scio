@@ -96,8 +96,8 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
   val date: LocalDate = LocalDate.parse("2019-10-29")
   val timeMillis: LocalTime = LocalTime.parse("01:24:52.211")
   val timeMicros: LocalTime = LocalTime.parse("01:24:52.211112")
-  val timestampMillis: Instant = Instant.parse("2019-10-29T05:24:52.215")
-  val timestampMicros: Instant = Instant.parse("2019-10-29T05:24:52.215521")
+  val timestampMillis: Instant = Instant.parse("2019-10-29T05:24:52.215Z")
+  val timestampMicros: Instant = Instant.parse("2019-10-29T05:24:52.215521Z")
   val decimal = new JBigDecimal("3.14")
 
   val expectedLogicalTypeOutput: TableRow = new TableRow()
@@ -111,9 +111,9 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     .set("dateField", "2019-10-29")
     .set("decimalField", decimal.toString)
     .set("timeMillisField", "01:24:52.211000")
-    .set("timeMicrosField", timeMicros)
+    .set("timeMicrosField", "01:24:52.211112")
     .set("timestampMillisField", "2019-10-29T05:24:52.215000")
-    .set("timestampMicrosField", timestampMicros)
+    .set("timestampMicrosField", "2019-10-29T05:24:52.215521")
 
   "ToTableRowWithLogicalType" should "convert a SpecificRecord with Logical Types to TableRow" in {
     val specificRecord = AvroExampleWithLogicalType
