@@ -204,31 +204,14 @@ private[types] object TypeProvider {
           tq"${TypeName(s"Function${fields.size}")}[..${fields.map(_.children.head)}, $cName]"
         val traits = (if (fields.size <= 22) Seq(fnTrait) else Seq()) ++ defTblDesc
           .map(_ => tq"${p(c, SType)}.HasTableDescription")
-        val taggedFields = fields.map {
-          case q"$m val $n: _root_.com.spotify.scio.bigquery.types.Geography = $rhs" =>
-            provider.initializeToTable(c)(m, n, tq"_root_.java.lang.String")
-            c.universe.ValDef(
-              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
-              n,
-              tq"_root_.java.lang.String @${typeOf[BigQueryTag]}",
-              q"{$rhs}.wkt"
-            )
-          case q"$m val $n: _root_.com.spotify.scio.bigquery.types.Json = $rhs" => // Could not find how to mutualize
-            provider.initializeToTable(c)(m, n, tq"_root_.java.lang.String")
-            c.universe.ValDef(
-              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
-              n,
-              tq"_root_.java.lang.String @${typeOf[BigQueryTag]}",
-              q"{$rhs}.wkt"
-            )
-          case ValDef(m, n, tpt, rhs) =>
-            provider.initializeToTable(c)(m, n, tpt)
-            c.universe.ValDef(
-              c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
-              n,
-              tq"$tpt @${typeOf[BigQueryTag]}",
-              rhs
-            )
+        val taggedFields = fields.map { case ValDef(m, n, tpt, rhs) =>
+          provider.initializeToTable(c)(m, n, tpt)
+          c.universe.ValDef(
+            c.universe.Modifiers(m.flags, m.privateWithin, m.annotations),
+            n,
+            tq"$tpt @${typeOf[BigQueryTag]}",
+            rhs
+          )
         }
         val caseClassTree =
           q"""${caseClass(c)(mods, cName, taggedFields, body)}"""
