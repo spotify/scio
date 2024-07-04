@@ -262,31 +262,31 @@ private[types] object TypeProvider {
     val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
 
     // Returns: (raw type, e.g. Int, String, NestedRecord, nested case class definitions)
-    def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) =
+    def getRawType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {
+      // format: off
       tfs.getType match {
-        case _ if provider.shouldOverrideType(tfs) =>
-          (provider.getScalaType(c)(tfs), Nil)
-        case "BOOLEAN" | "BOOL"  => (tq"_root_.scala.Boolean", Nil)
-        case "INTEGER" | "INT64" => (tq"_root_.scala.Long", Nil)
-        case "FLOAT" | "FLOAT64" => (tq"_root_.scala.Double", Nil)
-        case "STRING"            => (tq"_root_.java.lang.String", Nil)
-        case "NUMERIC"           => (tq"_root_.scala.BigDecimal", Nil)
-        case "BIGNUMERIC"        => (tq"_root_.scala.BigDecimal", Nil)
-        case "BYTES"             => (tq"_root_.com.google.protobuf.ByteString", Nil)
-        case "TIMESTAMP"         => (tq"_root_.org.joda.time.Instant", Nil)
-        case "DATE"              => (tq"_root_.org.joda.time.LocalDate", Nil)
-        case "TIME"              => (tq"_root_.org.joda.time.LocalTime", Nil)
-        case "DATETIME"          => (tq"_root_.org.joda.time.LocalDateTime", Nil)
-        case "GEOGRAPHY" =>
-          (tq"_root_.com.spotify.scio.bigquery.types.Geography", Nil)
-        case "JSON" =>
-          (tq"_root_.com.spotify.scio.bigquery.types.Json", Nil)
+        case _ if provider.shouldOverrideType(tfs) => (provider.getScalaType(c)(tfs), Nil)
+        case "BOOLEAN" | "BOOL"                    => (tq"_root_.scala.Boolean", Nil)
+        case "INTEGER" | "INT64"                   => (tq"_root_.scala.Long", Nil)
+        case "FLOAT" | "FLOAT64"                   => (tq"_root_.scala.Double", Nil)
+        case "STRING"                              => (tq"_root_.java.lang.String", Nil)
+        case "NUMERIC"                             => (tq"_root_.scala.BigDecimal", Nil)
+        case "BIGNUMERIC"                          => (tq"_root_.scala.BigDecimal", Nil)
+        case "BYTES"                               => (tq"_root_.com.google.protobuf.ByteString", Nil)
+        case "TIMESTAMP"                           => (tq"_root_.org.joda.time.Instant", Nil)
+        case "DATE"                                => (tq"_root_.org.joda.time.LocalDate", Nil)
+        case "TIME"                                => (tq"_root_.org.joda.time.LocalTime", Nil)
+        case "DATETIME"                            => (tq"_root_.org.joda.time.LocalDateTime", Nil)
+        case "GEOGRAPHY"                           => (tq"_root_.com.spotify.scio.bigquery.types.Geography", Nil)
+        case "JSON"                                => (tq"_root_.com.spotify.scio.bigquery.types.Json", Nil)
         case "RECORD" | "STRUCT" =>
           val name = NameProvider.getUniqueName(tfs.getName)
           val (fields, records) = toFields(tfs.getFields)
           (q"${Ident(TypeName(name))}", Seq(q"case class ${TypeName(name)}(..$fields)") ++ records)
         case t => c.abort(c.enclosingPosition, s"type: $t not supported")
       }
+      // format: on
+    }
 
     // Returns: (field type, e.g. T/Option[T]/List[T], nested case class definitions)
     def getFieldType(tfs: TableFieldSchema): (Tree, Seq[Tree]) = {

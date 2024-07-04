@@ -49,7 +49,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         t.plus(Duration.millis(i.toLong)),
         dt.toLocalDate.plusDays(i),
         dt.toLocalTime.plusMillis(i),
-        dt.toLocalDateTime.plusMillis(i)
+        dt.toLocalDateTime.plusMillis(i),
+        s"POINT($i $i)", // geography is not an avro logical type
+        s"""{"value":$i}""" // json is not an avro logical type
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -74,7 +76,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         Some(t.plus(Duration.millis(i.toLong))),
         Some(dt.toLocalDate.plusDays(i)),
         Some(dt.toLocalTime.plusMillis(i)),
-        Some(dt.toLocalDateTime.plusMillis(i))
+        Some(dt.toLocalDateTime.plusMillis(i)),
+        Some(s"POINT($i $i)"), // geography is not an avro logical type
+        Some(s"""{"value":$i}""") // json is not an avro logical type
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -99,7 +103,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         List(t.plus(Duration.millis(i.toLong))),
         List(dt.toLocalDate.plusDays(i)),
         List(dt.toLocalTime.plusMillis(i)),
-        List(dt.toLocalDateTime.plusMillis(i))
+        List(dt.toLocalDateTime.plusMillis(i)),
+        List(s"POINT($i $i)"), // geography is not an avro logical type
+        List(s"""{"value":$i}""") // json is not an avro logical type
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -184,7 +190,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         Some(t.plus(Duration.millis(i.toLong))),
         Some(dt.toLocalDate.plusDays(i)),
         Some(dt.toLocalTime.plusMillis(i)),
-        Some(dt.toLocalDateTime.plusMillis(i))
+        Some(dt.toLocalDateTime.plusMillis(i)),
+        Some(Geography(s"POINT($i $i)")),
+        Some(Json(s"""{"value":$i}"""))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -211,7 +219,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         t.plus(Duration.millis(i.toLong)),
         dt.toLocalDate.plusDays(i),
         dt.toLocalTime.plusMillis(i),
-        dt.toLocalDateTime.plusMillis(i)
+        dt.toLocalDateTime.plusMillis(i),
+        Geography(s"POINT($i $i)"),
+        Json(s"""{"value":$i}""")
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -248,7 +258,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         Some(t.plus(Duration.millis(i.toLong))),
         Some(dt.toLocalDate.plusDays(i)),
         Some(dt.toLocalTime.plusMillis(i)),
-        Some(dt.toLocalDateTime.plusMillis(i))
+        Some(dt.toLocalDateTime.plusMillis(i)),
+        Some(Geography(s"POINT($i $i)")),
+        Some(Json(s"""{"value":$i}"""))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
