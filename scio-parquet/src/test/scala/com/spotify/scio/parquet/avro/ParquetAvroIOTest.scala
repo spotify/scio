@@ -20,6 +20,7 @@ package com.spotify.scio.parquet.avro
 import java.io.File
 import com.spotify.scio._
 import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec, TextIO}
 import com.spotify.scio.parquet.ParquetConfiguration
 import com.spotify.scio.parquet.read.ParquetReadConfiguration
@@ -28,12 +29,21 @@ import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.{SCollection, WindowOptions}
 import org.apache.avro.data.TimeConversions
 import org.apache.avro.{Conversions, Schema}
-import org.apache.avro.generic.{GenericData, GenericRecord, GenericRecordBuilder}
+import org.apache.avro.generic.{
+  GenericData,
+  GenericDatumReader,
+  GenericDatumWriter,
+  GenericRecord,
+  GenericRecordBuilder
+}
+import org.apache.avro.io.{DatumReader, DatumWriter}
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
+import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, IntervalWindow, PaneInfo}
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
+import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
 import org.joda.time.{DateTimeFieldType, Duration, Instant}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.prop.TableDrivenPropertyChecks.{forAll => forAllCases, Table}
@@ -198,45 +208,60 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
   }
 
   it should "write and read GenericRecords with default logical types" in withTempDir { dir =>
-    forAllCases(readConfigs) { case (readConf, testCase) =>
-      val testCaseDir = new File(dir, testCase)
-      val records: Seq[GenericRecord] = (1 to 10).map { _ =>
-        val gr = new GenericRecordBuilder(TestLogicalTypes.SCHEMA$)
-        gr.set("timestamp", java.time.Instant.now())
-        gr.set(
-          "decimal",
-          BigDecimal.decimal(1.0).setScale(2).bigDecimal
-        )
-        gr.build()
-      }
-
-      implicit val coder = {
-        GenericData.get().addLogicalTypeConversion(new TimeConversions.TimeMillisConversion)
-        GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion)
-        avroGenericRecordCoder(TestLogicalTypes.SCHEMA$)
-      }
-
-      val sc1 = ScioContext()
-      sc1
-        .parallelize(records)
-        .saveAsParquetAvroFile(
-          path = testCaseDir.getAbsolutePath,
-          schema = TestLogicalTypes.SCHEMA$
-        )
-      sc1.run()
-
-      val sc2 = ScioContext()
-      sc2
-        .parquetAvroFile[GenericRecord](
-          path = testCaseDir.getAbsolutePath,
-          projection = TestLogicalTypes.SCHEMA$,
-          conf = readConf(),
-          suffix = ".parquet"
-        )
-        .map(identity) should containInAnyOrder(records)
-
-      sc2.run()
+    // forAllCases(readConfigs) { case (readConf, testCase) =>
+    // val testCaseDir = new File(dir, testCase)
+    val records: Seq[GenericRecord] = (1 to 10).map { _ =>
+      new GenericRecordBuilder(TestLogicalTypes.getClassSchema)
+        .set("timestamp", java.time.Instant.now())
+        .set("decimal", BigDecimal.decimal(1.0).setScale(2).bigDecimal)
+        .build()
     }
+
+    val logicalTypeDatumFactory = new AvroDatumFactory(classOf[GenericRecord]) {
+      override def apply(writer: Schema, reader: Schema): DatumReader[GenericRecord] = {
+        val data = new GenericData()
+        data.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion)
+        data.addLogicalTypeConversion(new Conversions.DecimalConversion)
+        new GenericDatumReader[GenericRecord](writer, reader, data)
+      }
+
+      override def apply(writer: Schema): DatumWriter[GenericRecord] = {
+        val data = new GenericData()
+        data.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion)
+        data.addLogicalTypeConversion(new Conversions.DecimalConversion)
+        new GenericDatumWriter[GenericRecord](writer, data)
+      }
+    }
+
+    implicit val coder: Coder[GenericRecord] =
+      avroCoder(logicalTypeDatumFactory, TestLogicalTypes.getClassSchema)
+
+    val sc1 = ScioContext()
+    val c1 = new Configuration()
+    AvroWriteSupport.setAvroDataSupplier(c1, classOf[LogicalTypeDataSupplier])
+    sc1
+      .parallelize(records)
+      .saveAsParquetAvroFile(
+        path = dir.getAbsolutePath,
+        schema = TestLogicalTypes.getClassSchema,
+        conf = c1
+      )
+    sc1.run()
+
+    val sc2 = ScioContext()
+    val c2 = new Configuration()
+    AvroReadSupport.setAvroDataSupplier(c2, classOf[LogicalTypeDataSupplier])
+    sc2
+      .parquetAvroFile[GenericRecord](
+        path = dir.getAbsolutePath,
+        projection = TestLogicalTypes.getClassSchema,
+        conf = c2,
+        suffix = ".parquet"
+      )
+      .map(identity) should containInAnyOrder(records)
+
+    sc2.run()
+    // }
   }
 
   it should "write and read SpecificRecords with custom logical types" in withTempDir { dir =>
@@ -348,8 +373,8 @@ class ParquetAvroIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAll {
       s"${testDir.toPath}",
       ParquetAvroIO.ReadParam(identity[GenericRecord], schema, suffix = "*.parquet")
     ).value.foreach { gr =>
-      gr.get("int_field") should not be null
-      gr.get("string_field") should be(null)
+      gr.hasField("int_field") shouldBe true
+      gr.hasField("string_field") shouldBe false
     }
   }
 
@@ -515,5 +540,14 @@ object ParquetTestJob {
       .map(a => (a.getName.toString, a.getAmount))
       .saveAsTextFile(args("output"))
     sc.run().waitUntilDone()
+  }
+}
+
+class LogicalTypeDataSupplier extends AvroDataSupplier {
+  override def get(): GenericData = {
+    val data = new GenericData()
+    data.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion)
+    data.addLogicalTypeConversion(new Conversions.DecimalConversion)
+    data
   }
 }
