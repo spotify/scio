@@ -1878,6 +1878,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
   "io.perfmark" % "perfmark-api" % perfmarkVersion,
   "org.apache.avro" % "avro" % avroVersion,
+  "org.apache.commons" % "commons-compress" % commonsCompressVersion,
   "org.apache.commons" % "commons-lang3" % commonsLang3Version,
   "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
