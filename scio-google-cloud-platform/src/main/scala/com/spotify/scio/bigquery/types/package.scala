@@ -45,4 +45,14 @@ package object types {
    *   Well Known Text formatted string that BigQuery displays for Geography
    */
   case class Geography(wkt: String)
+
+  /**
+   * Case class to serve as raw type for Json instances to distinguish them from Strings.
+   *
+   * See also https://cloud.google.com/bigquery/docs/json-data
+   *
+   * @param wkt
+   *   Well Known Text formatted string that BigQuery displays for Json
+   */
+  case class Json(wkt: String)
 }

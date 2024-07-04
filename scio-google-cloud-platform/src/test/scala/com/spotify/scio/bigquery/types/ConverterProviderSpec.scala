@@ -104,6 +104,7 @@ final class ConverterProviderSpec
       o.datetimeF.isDefined shouldBe r.containsKey("datetimeF")
       o.bigDecimalF.isDefined shouldBe r.containsKey("bigDecimalF")
       o.geographyF.isDefined shouldBe r.containsKey("geographyF")
+      o.jsonF.isDefined shouldBe r.containsKey("jsonF")
     }
   }
 
