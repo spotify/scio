@@ -618,6 +618,7 @@ lazy val scio = project
   .aggregate(
     `integration`,
     `scio-avro`,
+    `scio-bom`,
     `scio-cassandra3`,
     `scio-core`,
     `scio-elasticsearch-common`,
@@ -640,6 +641,40 @@ lazy val scio = project
     `scio-test-google-cloud-platform`,
     `scio-test-parquet`,
     `scio-test`
+  )
+
+lazy val `scio-bom` = project
+  .in(file("scio-bom"))
+  .enablePlugins(BillOfMaterialsPlugin)
+  .settings(
+    // Just one BOM including all cross Scala versions
+    crossVersion := CrossVersion.disabled,
+    // Create BOM in the first run
+    crossScalaVersions := Seq(scalaDefault),
+    bomIncludeProjects := Seq(
+      `scio-avro`,
+      `scio-cassandra3`,
+      `scio-core`,
+      `scio-elasticsearch-common`,
+      `scio-elasticsearch7`,
+      `scio-elasticsearch8`,
+      `scio-extra`,
+      `scio-google-cloud-platform`,
+      `scio-grpc`,
+      `scio-jdbc`,
+      `scio-macros`,
+      `scio-neo4j`,
+      `scio-parquet`,
+      `scio-redis`,
+      `scio-repl`,
+      `scio-smb`,
+      `scio-tensorflow`,
+      `scio-test-core`,
+      `scio-test-google-cloud-platform`,
+      `scio-test-parquet`,
+      `scio-test`
+    ),
+    libraryDependencies := Seq.empty
   )
 
 lazy val `scio-core` = project
@@ -1598,6 +1633,7 @@ lazy val `scio-redis` = project
 
 lazy val integration = project
   .in(file("integration"))
+  .enablePlugins(NoPublishPlugin)
   .dependsOn(
     `scio-core` % "compile;test->test",
     `scio-avro` % "test->test",
@@ -1613,7 +1649,6 @@ lazy val integration = project
   .settings(jUnitSettings)
   .settings(macroSettings)
   .settings(
-    publish / skip := true,
     // disable compile / test when unauthorized
     compile / skip := skipUnauthorizedGcpGithubWorkflow.value,
     test / skip := true,
