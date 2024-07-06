@@ -26,11 +26,13 @@ import org.tensorflow.proto.example.Example
 import org.tensorflow.metadata.v0.Schema
 
 import java.nio.channels.WritableByteChannel
+import scala.jdk.CollectionConverters._
 
 class ParquetExampleSink(
   val schema: Schema,
   val compression: CompressionCodecName,
-  val conf: SerializableConfiguration
+  val conf: SerializableConfiguration,
+  val metadata: Map[String, String]
 ) extends FileIO.Sink[Example] {
 
   private var writer: ParquetWriter[Example] = _
@@ -38,7 +40,7 @@ class ParquetExampleSink(
   override def open(channel: WritableByteChannel): Unit = {
     val outputFile = BeamOutputFile.of(channel)
     val builder = TensorflowExampleParquetWriter.builder(outputFile).withSchema(schema)
-    writer = WriterUtils.build(builder, conf.get, compression)
+    writer = WriterUtils.build(builder, conf.get, compression, metadata.asJava)
   }
 
   override def write(element: Example): Unit = writer.write(element)

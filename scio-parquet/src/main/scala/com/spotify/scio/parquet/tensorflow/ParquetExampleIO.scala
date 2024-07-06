@@ -159,7 +159,8 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
     shardNameTemplate: String,
     isWindowed: Boolean,
     tempDirectory: ResourceId,
-    isLocalRunner: Boolean
+    isLocalRunner: Boolean,
+    metadata: Map[String, String]
   ) = {
     require(tempDirectory != null, "tempDirectory must not be null")
     val fp = FilenamePolicySupplier.resolve(
@@ -177,7 +178,8 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
       dynamicDestinations,
       schema,
       job.getConfiguration,
-      compression
+      compression,
+      metadata.asJava
     )
     val transform = WriteFiles.to(sink).withNumShards(numShards)
     if (!isWindowed) transform else transform.withWindowedWrites()
@@ -197,7 +199,8 @@ final case class ParquetExampleIO(path: String) extends ScioIO[Example] {
         params.shardNameTemplate,
         ScioUtil.isWindowed(data),
         ScioUtil.tempDirOrDefault(params.tempDirectory, data.context),
-        ScioUtil.isLocalRunner(data.context.options.getRunner)
+        ScioUtil.isLocalRunner(data.context.options.getRunner),
+        params.metadata
       )
     )
     tap(ParquetExampleIO.ReadParam(params))
@@ -237,6 +240,7 @@ object ParquetExampleIO {
     val DefaultPrefix: String = null
     val DefaultShardNameTemplate: String = null
     val DefaultTempDirectory: String = null
+    val DefaultMetadata: Map[String, String] = null
   }
 
   final case class WriteParam private (
@@ -248,7 +252,8 @@ object ParquetExampleIO {
     filenamePolicySupplier: FilenamePolicySupplier = WriteParam.DefaultFilenamePolicySupplier,
     prefix: String = WriteParam.DefaultPrefix,
     shardNameTemplate: String = WriteParam.DefaultShardNameTemplate,
-    tempDirectory: String = WriteParam.DefaultTempDirectory
+    tempDirectory: String = WriteParam.DefaultTempDirectory,
+    metadata: Map[String, String] = WriteParam.DefaultMetadata
   )
 }
 

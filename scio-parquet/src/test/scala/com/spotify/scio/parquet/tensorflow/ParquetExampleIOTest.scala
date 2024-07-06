@@ -20,13 +20,16 @@ package com.spotify.scio.parquet.tensorflow
 import com.google.protobuf.ByteString
 import com.spotify.scio.ScioContext
 import com.spotify.scio.io.{ClosedTap, FileNamePolicySpec, ScioIOTest, TapSpec}
+import com.spotify.scio.parquet.{BeamInputFile, ParquetConfiguration}
 import com.spotify.scio.parquet.types._
 import com.spotify.scio.testing.ScioIOSpec
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 import magnolify.parquet.ParquetType
 import org.apache.commons.io.FileUtils
+import org.apache.parquet.HadoopReadOptions
 import org.apache.parquet.filter2.predicate.FilterApi
+import org.apache.parquet.hadoop.ParquetFileReader
 import org.scalatest.BeforeAndAfterAll
 import org.tensorflow.metadata.{v0 => tfmd}
 import org.tensorflow.proto.example._
@@ -277,5 +280,31 @@ class ParquetExampleIOTest extends ScioIOSpec with TapSpec with BeforeAndAfterAl
     testJobTest(projected)(ParquetExampleIO(_))(_.parquetExampleFile(_, projection = projection))(
       _.saveAsParquetExampleFile(_, schema)
     )
+  }
+
+  it should "write extra metadata" in withTempDir { dir =>
+    val sc = ScioContext()
+    val outDir = s"${dir.toPath.resolve("test-metadata").toFile.getAbsolutePath}"
+
+    sc
+      .parallelize(1 to 10)
+      .map(newExample)
+      .saveAsParquetExampleFile(
+        outDir,
+        schema,
+        metadata = Map("foo" -> "bar", "bar" -> "baz"),
+        numShards = 1
+      )
+    sc.run()
+
+    val options = HadoopReadOptions.builder(ParquetConfiguration.empty()).build
+    val r =
+      ParquetFileReader.open(BeamInputFile.of(s"$outDir/part-00000-of-00001.parquet"), options)
+    val metadata = r.getFileMetaData.getKeyValueMetaData
+
+    metadata.get("foo") shouldBe "bar"
+    metadata.get("bar") shouldBe "baz"
+
+    r.close()
   }
 }
