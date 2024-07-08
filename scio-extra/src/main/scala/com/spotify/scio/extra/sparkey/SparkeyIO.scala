@@ -124,7 +124,7 @@ object SparkeyIO {
 
       // write files to temporary locations
       val tempShardUris = shards
-        .rightOuterJoin(allShards)
+        .hashFullOuterJoin(allShards)
         .map { case (shard, (xs, _)) =>
           // use a temp uri so that if a bundle fails retries will not fail
           val tempUri = SparkeyUri(s"$tempPath/${UUID.randomUUID}")
