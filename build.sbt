@@ -646,6 +646,7 @@ lazy val scio = project
 lazy val `scio-bom` = project
   .in(file("scio-bom"))
   .enablePlugins(BillOfMaterialsPlugin)
+  .disablePlugins(TypelevelSettingsPlugin)
   .settings(
     // Just one BOM including all cross Scala versions
     crossVersion := CrossVersion.disabled,
@@ -674,7 +675,6 @@ lazy val `scio-bom` = project
       `scio-test-parquet`,
       `scio-test`
     ),
-    libraryDependencies := Seq.empty,
     // only releases after 0.14.6
     tlMimaPreviousVersions := tlMimaPreviousVersions.value
       .filter(v => VersionNumber(v).numbers.last >= 6)
