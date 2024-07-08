@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.file.CodecFactory;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
@@ -84,25 +85,15 @@ public class MixedSourcesEndToEndTest {
           .thenComparing(o -> (String) o.get("country"));
 
   private static final Schema GR_USER_SCHEMA =
-      Schema.createRecord(
-          "user",
-          "",
-          "org.apache.beam.sdk.extensions.smb",
-          false,
-          Arrays.asList(
-              new Field(
-                  "firstname",
-                  Schema.createUnion(
-                      Arrays.asList(Schema.create(Type.NULL), Schema.create(Type.BYTES))),
-                  "",
-                  ""),
-              new Field(
-                  "lastname",
-                  Schema.createUnion(
-                      Arrays.asList(Schema.create(Type.NULL), Schema.create(Type.BYTES))),
-                  "",
-                  ""),
-              new Field("age", Schema.create(Type.INT), "", -1)));
+      SchemaBuilder
+              .builder()
+              .record("user")
+              .namespace("org.apache.beam.sdk.extensions.smb")
+              .fields()
+              .name("firstname").type().optional().bytesType()
+              .name("lastname").type().optional().bytesType()
+              .name("age").type().intType().intDefault(-1)
+              .endRecord();
 
   @SafeVarargs
   private static <A> List<A> list(A... a) {

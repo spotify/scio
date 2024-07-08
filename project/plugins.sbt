@@ -18,7 +18,7 @@ addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.5.3")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.1.0")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 
-val avroVersion = sys.props.get("avro.version").getOrElse("1.8.2")
+val avroVersion = sys.props.get("avro.version").getOrElse("1.11.3")
 libraryDependencies ++= Seq(
   "org.apache.avro" % "avro-compiler" % avroVersion,
   "org.typelevel" %% "scalac-options" % "0.1.5"

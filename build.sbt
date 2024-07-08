@@ -317,14 +317,14 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     javas = List(javaDefault)
   ),
   WorkflowJob(
-    "avro-latest",
-    "Test Latest Avro",
+    "avro-legacy",
+    "Test Legacy Avro",
     WorkflowStep.CheckoutFull ::
       WorkflowStep.SetupJava(List(javaDefault)) :::
       List(
         WorkflowStep.Sbt(
           List("scio-avro/test"),
-          env = Map("JAVA_OPTS" -> "-Davro.version=1.11.3"),
+          env = Map("JAVA_OPTS" -> "-Davro.version=1.8.2"),
           name = Some("Test")
         )
       ),
@@ -815,7 +815,7 @@ lazy val `scio-test-parquet` = project
       "com.spotify" %% "magnolify-parquet" % magnolifyVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll (Exclude.avro),
+      "org.apache.parquet" % "parquet-avro" % parquetVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
@@ -853,7 +853,7 @@ lazy val `scio-avro` = project
       "me.lyh" %% "protobuf-generic" % protobufGenericVersion,
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion excludeAll (Exclude.avro),
+      "org.apache.beam" % "beam-sdks-java-extensions-avro" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // test
@@ -927,7 +927,7 @@ lazy val `scio-google-cloud-platform` = project
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-extensions-google-cloud-platform-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion excludeAll (Exclude.avro),
+      "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // patch jackson versions
@@ -1183,7 +1183,7 @@ lazy val `scio-parquet` = project
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion,
-      "org.apache.parquet" % "parquet-avro" % parquetVersion excludeAll (Exclude.avro),
+      "org.apache.parquet" % "parquet-avro" % parquetVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
       "org.apache.parquet" % "parquet-common" % parquetVersion,
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion,
@@ -1557,7 +1557,7 @@ lazy val `scio-smb` = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion % Provided, // scio-gcp
       "org.apache.beam" % "beam-sdks-java-io-hadoop-common" % beamVersion % Provided, // scio-parquet
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % Provided, // scio-parquet
-      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided excludeAll (Exclude.avro), // scio-parquet
+      "org.apache.parquet" % "parquet-avro" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-column" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-common" % parquetVersion % Provided, // scio-parquet
       "org.apache.parquet" % "parquet-hadoop" % parquetVersion % Provided, // scio-parquet
@@ -1878,6 +1878,7 @@ ThisBuild / dependencyOverrides ++= Seq(
   "io.opencensus" % "opencensus-contrib-http-util" % opencensusVersion,
   "io.perfmark" % "perfmark-api" % perfmarkVersion,
   "org.apache.avro" % "avro" % avroVersion,
+  "org.apache.commons" % "commons-compress" % commonsCompressVersion,
   "org.apache.commons" % "commons-lang3" % commonsLang3Version,
   "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
   "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
