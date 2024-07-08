@@ -674,7 +674,10 @@ lazy val `scio-bom` = project
       `scio-test-parquet`,
       `scio-test`
     ),
-    libraryDependencies := Seq.empty
+    libraryDependencies := Seq.empty,
+    // only releases after 0.14.6
+    tlMimaPreviousVersions := tlMimaPreviousVersions.value
+      .filter(v => VersionNumber(v).numbers.last >= 6)
   )
 
 lazy val `scio-core` = project
@@ -1524,6 +1527,7 @@ lazy val `scio-repl` = project
 lazy val `scio-jmh` = project
   .in(file("scio-jmh"))
   .enablePlugins(JmhPlugin)
+  .enablePlugins(NoPublishPlugin)
   .dependsOn(
     `scio-core`,
     `scio-avro`
@@ -1540,9 +1544,7 @@ lazy val `scio-jmh` = project
       // test
       "org.hamcrest" % "hamcrest" % hamcrestVersion % Test,
       "org.slf4j" % "slf4j-nop" % slf4jVersion % Test
-    ),
-    publish / skip := true,
-    mimaPreviousArtifacts := Set.empty
+    )
   )
 
 lazy val `scio-smb` = project
@@ -1664,7 +1666,6 @@ lazy val integration = project
     },
     undeclaredCompileDependenciesTest := undeclaredCompileDependenciesTestSkipped.value,
     unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
-    mimaPreviousArtifacts := Set.empty,
     libraryDependencies ++= Seq(
       // compile
       "com.google.api-client" % "google-api-client" % googleApiClientVersion,
