@@ -33,3 +33,4 @@ metals.sbt
 .bigquery/
 .scio_repl
 *.jfr
+scio-bom/
