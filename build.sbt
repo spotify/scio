@@ -29,18 +29,18 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.56.0"
+val beamVersion = "2.57.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.56.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.57.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
-val commonsCodecVersion = "1.15"
-val commonsCompressVersion = "1.21"
-val commonsIoVersion = "2.13.0"
-val commonsLang3Version = "3.9"
+val commonsCodecVersion = "1.17.0"
+val commonsCompressVersion = "1.26.2"
+val commonsIoVersion = "2.16.1"
+val commonsLang3Version = "3.14.0"
 val commonsMath3Version = "3.6.1"
 val gcpLibrariesVersion = "26.36.0"
 val googleClientsVersion = "2.0.0"
@@ -48,20 +48,20 @@ val guavaVersion = "32.1.2-jre"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
-val jacksonVersion = "2.14.1"
+val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.10"
 val nettyVersion = "4.1.100.Final"
 val slf4jVersion = "1.7.30"
-val zstdJniVersion = "1.5.2-5"
+val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20240229-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20240323-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20240218-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20240311-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20240319-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = avroCompilerVersion // sdks/java/extensions/avro/build.gradle
-val flinkVersion = "1.17.0" // runners/flink/1.17/build.gradle
+val flinkVersion = "1.18.0" // runners/flink/1.17/build.gradle
 val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString(".")
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
@@ -476,13 +476,12 @@ val commonSettings = bomSettings ++ Def.settings(
       // override when testing with legacy version
       "org.apache.avro" % "avro" % avroVersion,
       "org.apache.avro" % "avro-compiler" % avroVersion,
-      // downgrade deps to align with beam version
+      // zstd-jni has strict version-scheme, force version
       "com.github.luben" % "zstd-jni" % zstdJniVersion,
+      // downgrade deps to align with beam version
       "com.google.auto.value" % "auto-value" % autoValueVersion,
       "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-      "commons-codec" % "commons-codec" % commonsCodecVersion,
-      "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.apache.commons" % "commons-lang3" % commonsLang3Version,
+      "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion // slf4j-bom only available for v2
@@ -750,7 +749,6 @@ lazy val `scio-core` = project
       "com.spotify" %% "magnolify-guava" % magnolifyVersion % Test,
       "com.twitter" %% "chill" % chillVersion % Test,
       "commons-io" % "commons-io" % commonsIoVersion % Test,
-      "joda-time" % "joda-time" % jodaTimeVersion % Test,
       "junit" % "junit" % junitVersion % Test,
       "org.apache.avro" % "avro" % avroVersion % Test,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Test,
