@@ -963,7 +963,6 @@ lazy val `scio-cassandra3` = project
       "com.datastax.cassandra" % "cassandra-driver-core" % cassandraDriverVersion,
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.google.guava" % "guava" % guavaVersion,
-      "com.google.guava" % "guava" % guavaVersion,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
       "com.twitter" % "chill-java" % chillVersion,
       "com.twitter" %% "chill" % chillVersion,
