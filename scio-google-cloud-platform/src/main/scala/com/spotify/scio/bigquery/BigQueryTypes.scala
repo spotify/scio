@@ -300,13 +300,12 @@ object Numeric {
   val MaxNumericPrecision = 38
   val MaxNumericScale = 9
 
-  private[this] val DecimalConverter = new DecimalConversion
-  private[this] val DecimalLogicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
+  private val DecimalConverter = new DecimalConversion
+  private val DecimalLogicalType = LogicalTypes.decimal(MaxNumericPrecision, MaxNumericScale)
 
   def apply(value: String): BigDecimal = apply(BigDecimal(value))
 
   def apply(value: BigDecimal): BigDecimal = {
-    // NUMERIC's max scale is 9, precision is 38
     val scaled = if (value.scale > MaxNumericScale) {
       value.setScale(MaxNumericScale, scala.math.BigDecimal.RoundingMode.HALF_UP)
     } else {

@@ -74,22 +74,26 @@ private[types] object ConverterProvider {
       tpe match {
         case t if provider.shouldOverrideType(c)(t) =>
           provider.createInstance(c)(t, q"$tree")
-        case t if t =:= typeOf[Boolean] => q"$tree.asInstanceOf[Boolean]"
-        case t if t =:= typeOf[Int]     => q"$tree.asInstanceOf[Long].toInt"
-        case t if t =:= typeOf[Long]    => q"$tree.asInstanceOf[Long]"
-        case t if t =:= typeOf[Float]   => q"$tree.asInstanceOf[Double].toFloat"
-        case t if t =:= typeOf[Double]  => q"$tree.asInstanceOf[Double]"
-        case t if t =:= typeOf[String]  => q"$tree.toString"
+        case t if t =:= typeOf[Boolean] =>
+          q"$tree.asInstanceOf[Boolean]"
+        case t if t =:= typeOf[Int] =>
+          q"$tree.asInstanceOf[Long].toInt"
+        case t if t =:= typeOf[Long] =>
+          q"$tree.asInstanceOf[Long]"
+        case t if t =:= typeOf[Float] =>
+          q"$tree.asInstanceOf[Double].toFloat"
+        case t if t =:= typeOf[Double] =>
+          q"$tree.asInstanceOf[Double]"
+        case t if t =:= typeOf[String] =>
+          q"$tree.toString"
         case t if t =:= typeOf[BigDecimal] =>
           q"_root_.com.spotify.scio.bigquery.Numeric.parse($tree)"
-
         case t if t =:= typeOf[ByteString] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
           q"_root_.com.google.protobuf.ByteString.copyFrom($b.asReadOnlyBuffer())"
         case t if t =:= typeOf[Array[Byte]] =>
           val b = q"$tree.asInstanceOf[_root_.java.nio.ByteBuffer]"
           q"_root_.java.util.Arrays.copyOfRange($b.array(), $b.position(), $b.limit())"
-
         case t if t =:= typeOf[Instant] =>
           q"_root_.com.spotify.scio.bigquery.Timestamp.parse($tree)"
         case t if t =:= typeOf[LocalDate] =>
@@ -102,12 +106,13 @@ private[types] object ConverterProvider {
           q"_root_.com.spotify.scio.bigquery.types.Geography($tree.toString)"
         case t if t =:= typeOf[Json] =>
           q"_root_.com.spotify.scio.bigquery.types.Json($tree.toString)"
-
+        case t if t =:= typeOf[BigNumeric] =>
+          q"_root_.com.spotify.scio.bigquery.types.BigNumeric.parse($tree)"
         case t if isCaseClass(c)(t) =>
-          val fn = TermName("r" + t.typeSymbol.name)
+          val nestedRecord = TermName("r" + t.typeSymbol.name)
           q"""{
-                val $fn = $tree.asInstanceOf[_root_.org.apache.avro.generic.GenericRecord]
-                ${constructor(t, fn)}
+                val $nestedRecord = $tree.asInstanceOf[_root_.org.apache.avro.generic.GenericRecord]
+                ${constructor(t, Ident(nestedRecord))}
               }
           """
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
@@ -122,11 +127,11 @@ private[types] object ConverterProvider {
       q"asScala($tree.asInstanceOf[$jl]).iterator.map(x => ${cast(q"x", tpe)}).toList"
     }
 
-    def field(symbol: Symbol, fn: TermName): Tree = {
+    def field(symbol: Symbol, record: Tree): Tree = {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
 
-      val tree = q"$fn.get($name)"
+      val tree = q"$record.get($name)"
       if (tpe.erasure =:= typeOf[Option[_]].erasure) {
         option(tree, tpe.typeArgs.head)
       } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
@@ -136,10 +141,10 @@ private[types] object ConverterProvider {
       }
     }
 
-    def constructor(tpe: Type, fn: TermName): Tree = {
+    def constructor(tpe: Type, record: Tree): Tree = {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
-        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
+        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, record))
         case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
@@ -148,11 +153,9 @@ private[types] object ConverterProvider {
     // =======================================================================
     // Entry point
     // =======================================================================
-
-    val tn = TermName("r")
     q"""(r: _root_.org.apache.avro.generic.GenericRecord) => {
           import _root_.scala.jdk.javaapi.CollectionConverters._
-          ${constructor(tpe, tn)}
+          ${constructor(tpe, q"r")}
         }
     """
   }
@@ -178,8 +181,10 @@ private[types] object ConverterProvider {
 
         case t if t =:= typeOf[BigDecimal] =>
           q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
-        case t if t =:= typeOf[ByteString]  => q"_root_.java.nio.ByteBuffer.wrap($tree.toByteArray)"
-        case t if t =:= typeOf[Array[Byte]] => q"_root_.java.nio.ByteBuffer.wrap($tree)"
+        case t if t =:= typeOf[ByteString] =>
+          q"_root_.java.nio.ByteBuffer.wrap($tree.toByteArray)"
+        case t if t =:= typeOf[Array[Byte]] =>
+          q"_root_.java.nio.ByteBuffer.wrap($tree)"
 
         case t if t =:= typeOf[Instant] => q"$tree.getMillis * 1000"
         case t if t =:= typeOf[LocalDate] =>
@@ -194,8 +199,11 @@ private[types] object ConverterProvider {
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
           q"$tree.wkt"
+        case t if t =:= typeOf[BigNumeric] =>
+          q"_root_.com.spotify.scio.bigquery.types.BigNumeric($tree.wkt).toString"
 
-        case t if isCaseClass(c)(t) => // nested records
+        // nested records
+        case t if isCaseClass(c)(t) =>
           val fn = TermName("r" + t.typeSymbol.name)
           q"""{
                 val $fn = $tree
@@ -298,6 +306,8 @@ private[types] object ConverterProvider {
           q"_root_.com.spotify.scio.bigquery.types.Geography($s)"
         case t if t =:= typeOf[Json] =>
           q"_root_.com.spotify.scio.bigquery.types.Json($s)"
+        case t if t =:= typeOf[BigNumeric] =>
+          q"_root_.com.spotify.scio.bigquery.types.BigNumeric($s)"
 
         case t if isCaseClass(c)(t) => // nested records
           val fn = TermName("r" + t.typeSymbol.name)
@@ -402,6 +412,8 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
+          q"$tree.wkt"
+        case t if t =:= typeOf[BigNumeric] =>
           q"$tree.wkt"
 
         case t if isCaseClass(c)(t) => // nested records
