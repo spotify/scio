@@ -50,8 +50,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         dt.toLocalDate.plusDays(i),
         dt.toLocalTime.plusMillis(i),
         dt.toLocalDateTime.plusMillis(i),
-        s"POINT($i $i)", // geography is not an avro logical type
-        s"""{"value":$i}""" // json is not an avro logical type
+        Geography(s"POINT($i $i)"),
+        Json(s"""{"value":$i}"""),
+        BigNumeric(BigDecimal(i))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -77,8 +78,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         Some(dt.toLocalDate.plusDays(i)),
         Some(dt.toLocalTime.plusMillis(i)),
         Some(dt.toLocalDateTime.plusMillis(i)),
-        Some(s"POINT($i $i)"), // geography is not an avro logical type
-        Some(s"""{"value":$i}""") // json is not an avro logical type
+        Some(Geography(s"POINT($i $i)")),
+        Some(Json(s"""{"value":$i}""")),
+        Some(BigNumeric(BigDecimal(i)))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -104,8 +106,9 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         List(dt.toLocalDate.plusDays(i)),
         List(dt.toLocalTime.plusMillis(i)),
         List(dt.toLocalDateTime.plusMillis(i)),
-        List(s"POINT($i $i)"), // geography is not an avro logical type
-        List(s"""{"value":$i}""") // json is not an avro logical type
+        List(Geography(s"POINT($i $i)")),
+        List(Json(s"""{"value":$i}""")),
+        List(BigNumeric(BigDecimal(i)))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -192,7 +195,8 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         Some(dt.toLocalTime.plusMillis(i)),
         Some(dt.toLocalDateTime.plusMillis(i)),
         Some(Geography(s"POINT($i $i)")),
-        Some(Json(s"""{"value":$i}"""))
+        Some(Json(s"""{"value":$i}""")),
+        Some(BigNumeric(BigDecimal(i)))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -221,7 +225,8 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         dt.toLocalTime.plusMillis(i),
         dt.toLocalDateTime.plusMillis(i),
         Geography(s"POINT($i $i)"),
-        Json(s"""{"value":$i}""")
+        Json(s"""{"value":$i}"""),
+        BigNumeric(BigDecimal(i))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(
@@ -260,7 +265,8 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
         Some(dt.toLocalTime.plusMillis(i)),
         Some(dt.toLocalDateTime.plusMillis(i)),
         Some(Geography(s"POINT($i $i)")),
-        Some(Json(s"""{"value":$i}"""))
+        Some(Json(s"""{"value":$i}""")),
+        Some(BigNumeric(BigDecimal(i)))
       )
     }.asJava
     val (sc, _) = ContextAndArgs(

@@ -21,7 +21,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{Dataset, DatasetReference}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.client.BigQuery
-import com.spotify.scio.bigquery.types.{Geography, Json}
+import com.spotify.scio.bigquery.types.{BigNumeric, Geography, Json}
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -53,7 +53,8 @@ object PopulateTestData {
     time: LocalTime,
     datetime: LocalDateTime,
     geography: Geography,
-    json: Json
+    json: Json,
+    bigNumeric: BigNumeric
   )
 
   @BigQueryType.toTable
@@ -69,7 +70,8 @@ object PopulateTestData {
     time: Option[LocalTime],
     datetime: Option[LocalDateTime],
     geography: Option[Geography],
-    json: Option[Json]
+    json: Option[Json],
+    bigNumeric: Option[BigNumeric]
   )
 
   @BigQueryType.toTable
@@ -85,7 +87,8 @@ object PopulateTestData {
     time: List[LocalTime],
     datetime: List[LocalDateTime],
     geography: List[Geography],
-    json: List[Json]
+    json: List[Json],
+    bigNumeric: List[BigNumeric]
   )
 
   case class Record(int: Long, string: String)
@@ -209,7 +212,8 @@ object PopulateTestData {
       dt.toLocalTime.plusMillis(i),
       dt.toLocalDateTime.plusMillis(i),
       Geography(s"POINT($i $i)"),
-      Json(s"""{"value": $i}""")
+      Json(s"""{"value": $i}"""),
+      BigNumeric(BigDecimal(i))
     )
   }
 
@@ -228,7 +232,8 @@ object PopulateTestData {
       Some(dt.toLocalTime.plusMillis(i)),
       Some(dt.toLocalDateTime.plusMillis(i)),
       Some(Geography(s"POINT($i $i)")),
-      Some(Json(s"""{"value": $i}"""))
+      Some(Json(s"""{"value": $i}""")),
+      Some(BigNumeric(BigDecimal(i)))
     )
   }
 
@@ -247,7 +252,8 @@ object PopulateTestData {
       List(dt.toLocalTime.plusMillis(i)),
       List(dt.toLocalDateTime.plusMillis(i)),
       List(Geography(s"POINT($i $i)")),
-      List(Json(s"""{"value": $i}"""))
+      List(Json(s"""{"value": $i}""")),
+      List(BigNumeric(BigDecimal(i)))
     )
   }
 }

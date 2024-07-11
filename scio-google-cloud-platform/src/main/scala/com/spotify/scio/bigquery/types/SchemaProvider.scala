@@ -79,6 +79,7 @@ private[types] object SchemaProvider {
       case t if t =:= typeOf[Double]     => ("FLOAT", Iterable.empty)
       case t if t =:= typeOf[String]     => ("STRING", Iterable.empty)
       case t if t =:= typeOf[BigDecimal] => ("NUMERIC", Iterable.empty)
+      case t if t =:= typeOf[BigNumeric] => ("BIGNUMERIC", Iterable.empty)
 
       case t if t =:= typeOf[ByteString]  => ("BYTES", Iterable.empty)
       case t if t =:= typeOf[Array[Byte]] => ("BYTES", Iterable.empty)

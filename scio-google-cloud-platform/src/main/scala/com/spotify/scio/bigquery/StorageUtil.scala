@@ -99,17 +99,13 @@ object StorageUtil {
         }
       case Type.STRING =>
         // FIXME: schema.getLogicalType == null in this case, BigQuery service side bug?
-        if (schema.getProp("logicalType") == "datetime") {
-          "DATETIME"
-        } else {
-          schema.getLogicalType match {
-            case null                          => "STRING"
-            case t if t.getName == "datetime"  => "DATETIME"
-            case t if t.getName == "geography" => "GEOGRAPHY"
-            case t if t.getName == "json"      => "JSON"
-            case t =>
-              throw new IllegalStateException(s"Unsupported logical type: $t")
-          }
+        val logicalType = schema.getProp("logicalType")
+        val sqlType = schema.getProp("sqlType")
+        (logicalType, sqlType) match {
+          case ("datetime", _)  => "DATETIME"
+          case (_, "GEOGRAPHY") => "GEOGRAPHY"
+          case (_, "JSON")      => "JSON"
+          case _                => "STRING"
         }
       case Type.RECORD =>
         tableField.setFields(getFieldSchemas(schema).asJava)
