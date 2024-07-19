@@ -938,7 +938,7 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.api" % "gax-grpc" % gcpBom.key.value,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % gcpBom.key.value,
-      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % gcpBom.key.value,
+      "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % gcpBom.key.value,
