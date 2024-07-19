@@ -75,7 +75,8 @@ final private[client] class TableOps(client: Client) {
 
   def storageAvroRows(table: STable, readOptions: TableReadOptions): Iterator[GenericRecord] = {
     val tableProjectId = Option(table.ref.getProjectId).getOrElse(client.project)
-    val tableUrn = s"projects/${tableProjectId}/datasets/${table.ref.getDatasetId}/tables/${table.ref.getTableId}"
+    val tableUrn =
+      s"projects/${tableProjectId}/datasets/${table.ref.getDatasetId}/tables/${table.ref.getTableId}"
 
     val readSessionProto = ReadSession
       .newBuilder()
@@ -137,7 +138,8 @@ final private[client] class TableOps(client: Client) {
     ) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
       val tableProjectId = Option(tableRef.getProjectId).getOrElse(client.project)
-      val tableUrn = s"projects/${tableProjectId}/datasets/${tableRef.getDatasetId}/tables/${tableRef.getTableId}"
+      val tableUrn =
+        s"projects/${tableProjectId}/datasets/${tableRef.getDatasetId}/tables/${tableRef.getTableId}"
 
       val readSessionProto = ReadSession
         .newBuilder()
