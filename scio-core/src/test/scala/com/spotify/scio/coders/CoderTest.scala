@@ -545,6 +545,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     )
   }
 
+  it should "derive when protobuf Any is in scope" in {
+    """import com.google.protobuf.Any
+      |Coder.gen[DummyCC]
+      |""".stripMargin should compile
+  }
+
   it should "support classes with private constructors" in {
     import com.spotify.scio.coders.kryo.{fallback => f}
     PrivateClass(42L) coderShould fallback() and materializeTo[KryoAtomicCoder[_]]
