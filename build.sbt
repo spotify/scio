@@ -66,12 +66,6 @@ val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString("."
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
-// BOMs
-lazy val beamBom = Bom("org.apache.beam" % "beam-sdks-java-bom" % beamVersion)
-lazy val gcpBom = Bom("com.google.cloud" % "libraries-bom" % gcpLibrariesVersion)
-lazy val guavaBom = Bom("com.google.guava" % "guava-bom" % guavaVersion)
-lazy val jacksonBom = Bom("com.fasterxml.jackson" % "jackson-bom" % jacksonVersion)
-lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
 
 // check recommended versions from libraries-bom
 // https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.36.0/index.html
@@ -106,7 +100,7 @@ val kantanCodecsVersion = "0.5.3"
 val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.10"
-val magnolifyVersion = "0.7.3"
+val magnolifyVersion = "0.7.4"
 val metricsVersion = "4.2.26"
 val munitVersion = "1.0.0"
 val neo4jDriverVersion = "4.4.18"
@@ -130,6 +124,14 @@ val zoltarVersion = "0.6.0"
 val algebraVersion = catsVersion // algebra is a cats module
 val scalatestplusVersion = s"$scalatestVersion.0"
 val scalacheckMinorVersion = VersionNumber(scalacheckVersion).numbers.take(2).mkString("-")
+
+// BOMs
+lazy val beamBom = Bom("org.apache.beam" % "beam-sdks-java-bom" % beamVersion)
+lazy val gcpBom = Bom("com.google.cloud" % "libraries-bom" % gcpLibrariesVersion)
+lazy val guavaBom = Bom("com.google.guava" % "guava-bom" % guavaVersion)
+lazy val jacksonBom = Bom("com.fasterxml.jackson" % "jackson-bom" % jacksonVersion)
+lazy val magnolifyBom = Bom("com.spotify" % "magnolify-bom" % magnolifyVersion)
+lazy val nettyBom = Bom("io.netty" % "netty-bom" % nettyVersion)
 
 val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
@@ -429,7 +431,15 @@ val bomSettings = Def.settings(
   gcpBom,
   guavaBom,
   jacksonBom,
-  nettyBom
+  magnolifyBom,
+  nettyBom,
+  dependencyOverrides ++=
+    beamBom.key.value.bomDependencies ++
+      gcpBom.key.value.bomDependencies ++
+      guavaBom.key.value.bomDependencies ++
+      jacksonBom.key.value.bomDependencies ++
+      magnolifyBom.key.value.bomDependencies ++
+      nettyBom.key.value.bomDependencies
 )
 
 val commonSettings = bomSettings ++ Def.settings(
@@ -467,25 +477,20 @@ val commonSettings = bomSettings ++ Def.settings(
   resolvers ++= Resolver.sonatypeOssRepos("public"),
   excludeDependencies += Exclude.beamKafka,
   excludeDependencies ++= Exclude.loggerImplementations,
-  dependencyOverrides ++= beamBom.key.value.bomDependencies ++
-    gcpBom.key.value.bomDependencies ++
-    guavaBom.key.value.bomDependencies ++
-    jacksonBom.key.value.bomDependencies ++
-    nettyBom.key.value.bomDependencies ++
-    Seq(
-      // override when testing with legacy version
-      "org.apache.avro" % "avro" % avroVersion,
-      "org.apache.avro" % "avro-compiler" % avroVersion,
-      // zstd-jni has strict version-scheme, force version
-      "com.github.luben" % "zstd-jni" % zstdJniVersion,
-      // downgrade deps to align with beam version
-      "com.google.auto.value" % "auto-value" % autoValueVersion,
-      "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
-      "joda-time" % "joda-time" % jodaTimeVersion,
-      "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
-      "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion // slf4j-bom only available for v2
-    ),
+  dependencyOverrides ++= Seq(
+    // override when testing with legacy version
+    "org.apache.avro" % "avro" % avroVersion,
+    "org.apache.avro" % "avro-compiler" % avroVersion,
+    // zstd-jni has strict version-scheme, force version
+    "com.github.luben" % "zstd-jni" % zstdJniVersion,
+    // downgrade deps to align with beam version
+    "com.google.auto.value" % "auto-value" % autoValueVersion,
+    "com.google.auto.value" % "auto-value-annotations" % autoValueVersion,
+    "joda-time" % "joda-time" % jodaTimeVersion,
+    "org.apache.httpcomponents" % "httpclient" % httpClientVersion,
+    "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
+    "org.slf4j" % "slf4j-api" % slf4jVersion // slf4j-bom only available for v2
+  ),
   // libs to help with cross-build
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapelessVersion,
