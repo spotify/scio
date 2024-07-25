@@ -686,9 +686,8 @@ lazy val `scio-bom` = project
       `scio-test-parquet`,
       `scio-test`
     ),
-    // only releases after 0.14.6
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 6)
+    // pom project. No ABI
+    tlMimaPreviousVersions := Set.empty
   )
 
 lazy val `scio-core` = project
