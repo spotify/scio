@@ -44,6 +44,7 @@ import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
 import java.time._
 import java.util.UUID
+import scala.collection.immutable.SortedMap
 import scala.jdk.CollectionConverters._
 
 final class CoderTest extends AnyFlatSpec with Matchers {
@@ -120,6 +121,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     m coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[MapCoder[_, _]] and
+      beFullyCompliantNonDeterministic()
+
+    SortedMap.from(m) coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[SortedMapCoder[_, _]] and
       beFullyCompliantNonDeterministic()
 
     s.toSet coderShould roundtrip() and

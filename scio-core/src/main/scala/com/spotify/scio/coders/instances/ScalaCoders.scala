@@ -27,6 +27,7 @@ import java.io.{InputStream, OutputStream}
 import java.lang.{Iterable => JIterable}
 import java.util.{Collections, List => JList}
 import scala.collection.compat._
+import scala.collection.immutable.SortedMap
 import scala.collection.{mutable => m, AbstractIterable, BitSet, SortedSet}
 import scala.jdk.CollectionConverters._
 import scala.reflect.{classTag, ClassTag}
@@ -335,6 +336,75 @@ private[coders] class MapCoder[K, V](val kc: BCoder[K], val vc: BCoder[V])
   override def getCoderArguments: JList[_ <: BCoder[_]] = List(kc, vc).asJava
 }
 
+private[coders] class SortedMapCoder[K: Ordering, V](
+  val kc: BCoder[K],
+  val vc: BCoder[V]
+) extends StructuredCoder[SortedMap[K, V]] {
+  private[this] val lc = VarIntCoder.of()
+
+  override def encode(value: SortedMap[K, V], os: OutputStream): Unit = {
+    lc.encode(value.size, os)
+    val it = value.iterator
+    while (it.hasNext) {
+      val (k, v) = it.next()
+      kc.encode(k, os)
+      vc.encode(v, os)
+    }
+  }
+
+  override def decode(is: InputStream): SortedMap[K, V] = {
+    val l = lc.decode(is)
+    val builder = SortedMap.newBuilder[K, V]
+    builder.sizeHint(l)
+    var i = 0
+    while (i < l) {
+      val k = kc.decode(is)
+      val v = vc.decode(is)
+      builder += (k -> v)
+      i = i + 1
+    }
+    builder.result()
+  }
+
+  // delegate methods for determinism and equality checks
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Ordering of entries in a SortedMap may be non-deterministic."
+    )
+  override def consistentWithEquals(): Boolean =
+    kc.consistentWithEquals() && vc.consistentWithEquals()
+  override def structuralValue(value: SortedMap[K, V]): AnyRef =
+    if (consistentWithEquals()) {
+      value
+    } else {
+      val b = Map.newBuilder[Any, Any]
+      b.sizeHint(value.size)
+      value.foreach { case (k, v) =>
+        b += kc.structuralValue(k) -> vc.structuralValue(v)
+      }
+      b.result()
+    }
+
+  // delegate methods for byte size estimation
+  override def isRegisterByteSizeObserverCheap(value: SortedMap[K, V]): Boolean = false
+  override def registerByteSizeObserver(
+    value: SortedMap[K, V],
+    observer: ElementByteSizeObserver
+  ): Unit = {
+    lc.registerByteSizeObserver(value.size, observer)
+    value.foreach { case (k, v) =>
+      kc.registerByteSizeObserver(k, observer)
+      vc.registerByteSizeObserver(v, observer)
+    }
+  }
+
+  override def toString: String =
+    s"MapCoder($kc, $vc)"
+
+  override def getCoderArguments: JList[_ <: BCoder[_]] = List(kc, vc).asJava
+}
+
 private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
     extends StructuredCoder[m.Map[K, V]] {
   private[this] val lc = VarIntCoder.of()
@@ -517,6 +587,11 @@ trait ScalaCoders extends CoderGrammar with CoderDerivation {
   implicit def mapCoder[K: Coder, V: Coder]: Coder[Map[K, V]] =
     transform(Coder[K]) { kc =>
       transform(Coder[V])(vc => beam(new MapCoder[K, V](kc, vc)))
+    }
+
+  implicit def sortedMapCoder[K: Coder: Ordering, V: Coder]: Coder[SortedMap[K, V]] =
+    transform(Coder[K]) { kc =>
+      transform(Coder[V])(vc => beam(new SortedMapCoder[K, V](kc, vc)))
     }
 
   implicit def sortedSetCoder[T: Coder: Ordering]: Coder[SortedSet[T]] =
