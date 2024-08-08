@@ -216,6 +216,11 @@ ThisBuild / tlFatalWarnings := false
 ThisBuild / scalaVersion := scalaDefault
 ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
 
+// CI settings
+ThisBuild / tlCiHeaderCheck := true
+ThisBuild / tlCiScalafmtCheck := true
+ThisBuild / tlCiJavafmtCheck := true
+
 // github actions
 val java21 = JavaSpec.corretto("21")
 val java17 = JavaSpec.corretto("17")

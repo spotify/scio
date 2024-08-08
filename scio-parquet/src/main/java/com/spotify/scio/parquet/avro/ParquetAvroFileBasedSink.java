@@ -27,11 +27,7 @@ import org.apache.beam.sdk.io.hadoop.SerializableConfiguration;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.parquet.avro.AvroDataSupplier;
 import org.apache.parquet.avro.AvroParquetWriter;
-import org.apache.parquet.avro.AvroWriteSupport;
-import org.apache.parquet.avro.SpecificDataSupplier;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
