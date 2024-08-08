@@ -25,25 +25,25 @@ import scala.util.{Failure, Success, Try}
 /**
  * A [[org.apache.beam.sdk.transforms.DoFn DoFn]] that performs asynchronous lookup using the
  * provided client for Scala [[Future]].
- * @tparam A
+ * @tparam Input
  *   input element type.
- * @tparam B
+ * @tparam Output
  *   client lookup value type.
- * @tparam C
+ * @tparam Client
  *   client type.
  */
-abstract class ScalaAsyncLookupDoFn[A, B, C](
+abstract class ScalaAsyncLookupDoFn[Input, Output, Client](
   maxPendingRequests: Int,
   deduplicate: Boolean,
-  cacheSupplier: CacheSupplier[A, B]
-) extends BaseAsyncLookupDoFn[A, B, C, Future[B], Try[B]](
+  cacheSupplier: CacheSupplier[Input, Output]
+) extends BaseAsyncLookupDoFn[Input, Output, Client, Future[Output], Try[Output]](
       maxPendingRequests,
       deduplicate,
       cacheSupplier
     )
-    with ScalaFutureHandlers[B] {
+    with ScalaFutureHandlers[Output] {
   def this() =
-    this(1000, true, new NoOpCacheSupplier[A, B])
+    this(1000, true, new NoOpCacheSupplier[Input, Output])
 
   /**
    * @param maxPendingRequests
@@ -51,7 +51,7 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
    *   and retrying bundles.
    */
   def this(maxPendingRequests: Int) =
-    this(maxPendingRequests, true, new NoOpCacheSupplier[A, B])
+    this(maxPendingRequests, true, new NoOpCacheSupplier[Input, Output])
 
   /**
    * @param maxPendingRequests
@@ -60,9 +60,9 @@ abstract class ScalaAsyncLookupDoFn[A, B, C](
    * @param cacheSupplier
    *   supplier for lookup cache.
    */
-  def this(maxPendingRequests: Int, cacheSupplier: CacheSupplier[A, B]) =
+  def this(maxPendingRequests: Int, cacheSupplier: CacheSupplier[Input, Output]) =
     this(maxPendingRequests, true, cacheSupplier)
 
-  override def success(output: B): Try[B] = Success(output)
-  override def failure(throwable: Throwable): Try[B] = Failure(throwable)
+  override def success(output: Output): Try[Output] = Success(output)
+  override def failure(throwable: Throwable): Try[Output] = Failure(throwable)
 }
