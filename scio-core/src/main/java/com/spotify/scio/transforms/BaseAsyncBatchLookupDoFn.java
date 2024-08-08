@@ -22,6 +22,8 @@ import com.google.common.cache.Cache;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -36,10 +38,11 @@ import java.util.stream.Collectors;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.SerializableFunction;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.apache.beam.sdk.transforms.windowing.PaneInfo;
 import org.apache.beam.sdk.values.KV;
+import org.apache.beam.sdk.values.ValueInSingleWindow;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,12 +76,12 @@ public abstract class BaseAsyncBatchLookupDoFn<
 
   private final Semaphore semaphore;
   private final ConcurrentMap<UUID, FutureType> futures = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, List<Triple<Input, Instant, BoundedWindow>>> inputs =
+  private final ConcurrentMap<String, List<ValueInSingleWindow<Input>>> inputs =
       new ConcurrentHashMap<>();
 
   private final Queue<Input> batch = new ArrayDeque<>();
-  private final ConcurrentLinkedQueue<Pair<UUID, List<Result>>> results =
-      new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<Pair<UUID, List<ValueInSingleWindow<KV<Input, TryWrapper>>>>>
+      results = new ConcurrentLinkedQueue<>();
   private long inputCount;
   private long outputCount;
 
@@ -154,14 +157,32 @@ public abstract class BaseAsyncBatchLookupDoFn<
     semaphore.release(maxPendingRequests);
   }
 
+  // kept for binary compatibility. Must not be used
+  // TODO: remove in 0.15.0
+  @Deprecated
+  public void processElement(
+      Input input,
+      Instant timestamp,
+      OutputReceiver<KV<Input, TryWrapper>> out,
+      BoundedWindow window) {
+    processElement(input, timestamp, window, null, out);
+  }
+
   @ProcessElement
   public void processElement(
       @Element Input input,
       @Timestamp Instant timestamp,
-      OutputReceiver<KV<Input, TryWrapper>> out,
-      BoundedWindow window) {
+      BoundedWindow window,
+      PaneInfo pane,
+      OutputReceiver<KV<Input, TryWrapper>> out) {
     inputCount++;
-    flush(r -> out.output(KV.of(r.input, r.output)));
+    flush(r -> {
+      final KV<Input, TryWrapper> io = r.getValue();
+      final Instant ts = r.getTimestamp();
+      final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
+      final PaneInfo p = r.getPane();
+      out.outputWindowedValue(io, ts, ws, p);
+    });
     final Cache<String, Output> cache = getResourceCache();
 
     try {
@@ -182,7 +203,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
                 v = new LinkedList<>();
                 batch.add(input);
               }
-              v.add(Triple.of(input, timestamp, window));
+              v.add(ValueInSingleWindow.of(input, timestamp, window, pane));
               return v;
             });
       }
@@ -220,7 +241,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
       LOG.error("Failed to process futures", e);
       throw new RuntimeException("Failed to process futures", e);
     }
-    flush(r -> context.output(KV.of(r.input, r.output), r.timestamp, r.window));
+    flush(r -> context.output(r.getValue(), r.getTimestamp(), r.getWindow()));
 
     // Make sure all requests are processed
     Preconditions.checkState(
@@ -261,8 +282,7 @@ public abstract class BaseAsyncBatchLookupDoFn<
                   pair -> {
                     final String id = pair.getLeft();
                     final Output output = pair.getRight();
-                    final List<Triple<Input, Instant, BoundedWindow>> processInputs =
-                        inputs.remove(id);
+                    final List<ValueInSingleWindow<Input>> processInputs = inputs.remove(id);
                     if (processInputs == null) {
                       // no need to fail future here as we're only interested in its completion
                       // finishBundle will fail the checkState as we do not produce any result
@@ -274,14 +294,16 @@ public abstract class BaseAsyncBatchLookupDoFn<
                               + "idExtractorFn for the same input.",
                           id);
                     } else {
-                      final List<Result> batchResult =
+                      final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult =
                           processInputs.stream()
                               .map(
                                   processInput -> {
-                                    final Input input = processInput.getLeft();
-                                    final Instant ts = processInput.getMiddle();
-                                    final BoundedWindow w = processInput.getRight();
-                                    return new Result(input, success(output), ts, w);
+                                    final Input i = processInput.getValue();
+                                    final TryWrapper o = success(output);
+                                    final Instant ts = processInput.getTimestamp();
+                                    final BoundedWindow w = processInput.getWindow();
+                                    final PaneInfo p = processInput.getPane();
+                                    return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
                                   })
                               .collect(Collectors.toList());
                       results.add(Pair.of(key, batchResult));
@@ -293,14 +315,16 @@ public abstract class BaseAsyncBatchLookupDoFn<
           batchInput.forEach(
               element -> {
                 final String id = idExtractorFn.apply(element);
-                final List<Result> batchResult =
+                final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult =
                     inputs.remove(id).stream()
                         .map(
                             processInput -> {
-                              final Input input = processInput.getLeft();
-                              final Instant ts = processInput.getMiddle();
-                              final BoundedWindow w = processInput.getRight();
-                              return new Result(input, failure(throwable), ts, w);
+                              final Input i = processInput.getValue();
+                              final TryWrapper o = failure(throwable);
+                              final Instant ts = processInput.getTimestamp();
+                              final BoundedWindow w = processInput.getWindow();
+                              final PaneInfo p = processInput.getPane();
+                              return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
                             })
                         .collect(Collectors.toList());
                 results.add(Pair.of(key, batchResult));
@@ -340,29 +364,15 @@ public abstract class BaseAsyncBatchLookupDoFn<
   }
 
   // Flush pending elements errors and results
-  private void flush(Consumer<Result> outputFn) {
-    Pair<UUID, List<Result>> r = results.poll();
+  private void flush(Consumer<ValueInSingleWindow<KV<Input, TryWrapper>>> outputFn) {
+    Pair<UUID, List<ValueInSingleWindow<KV<Input, TryWrapper>>>> r = results.poll();
     while (r != null) {
       final UUID key = r.getKey();
-      final List<Result> batchResult = r.getValue();
+      final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult = r.getValue();
       batchResult.forEach(outputFn);
       outputCount += batchResult.size();
       futures.remove(key);
       r = results.poll();
-    }
-  }
-
-  private class Result {
-    private Input input;
-    private TryWrapper output;
-    private Instant timestamp;
-    private BoundedWindow window;
-
-    Result(Input input, TryWrapper output, Instant timestamp, BoundedWindow window) {
-      this.input = input;
-      this.output = output;
-      this.timestamp = timestamp;
-      this.window = window;
     }
   }
 }
