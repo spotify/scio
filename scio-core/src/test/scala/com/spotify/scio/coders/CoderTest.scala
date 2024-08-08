@@ -123,7 +123,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[MapCoder[_, _]] and
       beFullyCompliantNonDeterministic()
 
-    SortedMap.from(m) coderShould roundtrip() and
+    SortedMap(m.toSeq: _*) coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[SortedMapCoder[_, _]] and
       beFullyCompliantNonDeterministic()
