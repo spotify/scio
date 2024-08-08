@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.57.0"
+val beamVersion = "2.58.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.57.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.58.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -42,20 +42,20 @@ val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.14.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.36.0"
+val gcpLibrariesVersion = "26.39.0"
 val googleClientsVersion = "2.0.0"
-val guavaVersion = "32.1.2-jre"
+val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
 val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
-val jodaTimeVersion = "2.10.10"
+val jodaTimeVersion = "2.10.14"
 val nettyVersion = "4.1.100.Final"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
 val googleApiServicesBigQueryVersion = s"v2-rev20240323-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20240218-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20240624-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
 val googleApiServicesStorageVersion = s"v1-rev20240319-$googleClientsVersion"
 // beam tested versions
@@ -68,7 +68,7 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.36.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.39.0/index.html
 val failureAccessVersion = "1.0.2"
 val checkerQualVersion = "3.42.0"
 val jsr305Version = "3.0.2"
