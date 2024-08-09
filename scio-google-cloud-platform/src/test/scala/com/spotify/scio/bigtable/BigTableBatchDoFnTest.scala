@@ -17,8 +17,9 @@
 
 package com.spotify.scio.bigtable
 
+import com.google.cloud.bigtable.data.v2.BigtableDataClient
+
 import java.util.concurrent.{CompletionException, ConcurrentLinkedQueue}
-import com.google.cloud.bigtable.grpc.BigtableSession
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.testing._
@@ -82,9 +83,9 @@ class TestBigtableBatchDoFn
       BigtableBatchDoFnTest.batchResponse,
       BigtableBatchDoFnTest.idExtractor
     ) {
-  override def newClient(): BigtableSession = null
+  override def newClient(): BigtableDataClient = null
   override def asyncLookup(
-    session: BigtableSession,
+    client: BigtableDataClient,
     input: List[Int]
   ): ListenableFuture[List[String]] =
     Futures.immediateFuture(input.map(_.toString))
@@ -100,10 +101,10 @@ class TestCachingBigtableBatchDoFn
       100,
       new TestCacheBatchSupplier
     ) {
-  override def newClient(): BigtableSession = null
+  override def newClient(): BigtableDataClient = null
 
   override def asyncLookup(
-    session: BigtableSession,
+    client: BigtableDataClient,
     input: List[Int]
   ): ListenableFuture[List[String]] = {
     input.foreach(BigtableBatchDoFnTest.queue.add)
@@ -119,9 +120,9 @@ class TestFailingBigtableBatchDoFn
       BigtableBatchDoFnTest.batchResponse,
       BigtableBatchDoFnTest.idExtractor
     ) {
-  override def newClient(): BigtableSession = null
+  override def newClient(): BigtableDataClient = null
   override def asyncLookup(
-    session: BigtableSession,
+    client: BigtableDataClient,
     input: List[Int]
   ): ListenableFuture[List[String]] =
     if (input.size % 2 == 0) {
