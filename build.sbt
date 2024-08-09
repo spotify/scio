@@ -405,6 +405,25 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // added new Cache.get method
   ProblemFilters.exclude[ReversedMissingMethodProblem](
     "com.spotify.scio.util.Cache.get"
+  ),
+  // added SortedMapCoder
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.coders.instances.MutableMapCoder.encode"
+  ),
+  ProblemFilters.exclude[DirectAbstractMethodProblem](
+    "org.apache.beam.sdk.coders.Coder.verifyDeterministic"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.coders.instances.MutableMapCoder.structuralValue"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.coders.instances.MutableMapCoder.isRegisterByteSizeObserverCheap"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.coders.instances.MutableMapCoder.registerByteSizeObserver"
+  ),
+  ProblemFilters.exclude[DirectAbstractMethodProblem](
+    "org.apache.beam.sdk.coders.Coder.getCoderArguments"
   )
 )
 
