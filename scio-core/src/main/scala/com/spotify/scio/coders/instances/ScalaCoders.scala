@@ -362,6 +362,14 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
 private[coders] class SortedMapCoder[K: Ordering, V](kc: BCoder[K], vc: BCoder[V])
     extends MapLikeCoder[K, V, SortedMap](kc, vc) {
 
+  override def encode(value: SortedMap[K, V], os: OutputStream): Unit = {
+    require(
+      value.ordering == Ordering[K],
+      "SortedMap ordering does not match SortedMapCoder ordering"
+    )
+    super.encode(value, os)
+  }
+
   override def decode(is: InputStream): SortedMap[K, V] =
     decode(is, SortedMap.newBuilder[K, V])
 

@@ -904,6 +904,15 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     )
   }
 
+  it should "not accept SortedMap when ordering doesn't match with coder" in {
+    val sm = SortedMap(1 -> "1", 2 -> "2")(Ordering[Int].reverse)
+    // implicit SortedMapCoder will use implicit default Int ordering
+    val e = the[IllegalArgumentException] thrownBy {
+      sm coderShould roundtrip()
+    }
+    e.getMessage shouldBe "requirement failed: SortedMap ordering does not match SortedMapCoder ordering"
+  }
+
   /*
    * Case class nested inside another class. Do not move outside
    * */
