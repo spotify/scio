@@ -307,7 +307,6 @@ abstract private[coders] class MapLikeCoder[K, V, M[_, _]](
     builder.result()
   }
 
-  // delegate methods for determinism and equality checks
   override def verifyDeterministic(): Unit =
     throw new NonDeterministicException(
       this,
@@ -365,6 +364,11 @@ private[coders] class SortedMapCoder[K: Ordering, V](kc: BCoder[K], vc: BCoder[V
 
   override def decode(is: InputStream): SortedMap[K, V] =
     decode(is, SortedMap.newBuilder[K, V])
+
+  override def verifyDeterministic(): Unit = {
+    keyCoder.verifyDeterministic()
+    valueCoder.verifyDeterministic()
+  }
 }
 
 private[coders] object SFloatCoder extends BCoder[Float] {
