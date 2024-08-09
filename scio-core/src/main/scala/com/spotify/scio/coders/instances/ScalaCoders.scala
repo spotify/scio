@@ -256,23 +256,22 @@ private class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
 }
 
 private[coders] class BitSetCoder extends AtomicCoder[BitSet] {
-  private[this] val lc = VarIntCoder.of()
 
   def decode(in: InputStream): BitSet = {
-    val l = lc.decode(in)
+    val l = VarInt.decodeInt(in)
     val builder = BitSet.newBuilder
     builder.sizeHint(l)
-    (1 to l).foreach(_ => builder += lc.decode(in))
+    (1 to l).foreach(_ => builder += VarInt.decodeInt(in))
 
     builder.result()
   }
 
   def encode(ts: BitSet, out: OutputStream): Unit = {
-    lc.encode(ts.size, out)
-    ts.foreach(v => lc.encode(v, out))
+    VarInt.encode(ts.size, out)
+    ts.foreach(v => VarInt.encode(v, out))
   }
 
-  override def consistentWithEquals(): Boolean = lc.consistentWithEquals()
+  override def consistentWithEquals(): Boolean = true
 
   override def toString: String = "BitSetCoder"
 }
