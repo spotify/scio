@@ -24,6 +24,7 @@ import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import com.spotify.scio.testing._
 import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.transforms.{DoFn, ParDo}
+import org.joda.time.Instant
 import org.scalatest.BeforeAndAfter
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,7 +36,7 @@ class AsyncDoFnTest extends PipelineSpec with BeforeAndAfter {
     for (input <- inputs) {
       runWithContext { sc =>
         val p = sc.parallelize(input).applyTransform(ParDo.of(doFn))
-        p should containInAnyOrder(input.map("output-" + _))
+        p should containInAnyOrder(input.map(x => s"output-$x"))
       }
     }
 
@@ -66,6 +67,22 @@ class AsyncDoFnTest extends PipelineSpec with BeforeAndAfter {
     runWithContext(_.parallelize(Seq(1, 10, 100)).parDo(new ClosableAsyncDoFn))
     ClosableResourceCounters.clientsOpened.get() should be > 0
     ClosableResourceCounters.allResourcesClosed shouldBe true
+  }
+
+  it should "propagate element metadata" in {
+    runWithContext { sc =>
+      // try to use a single bundle so we can check
+      // elements flushed in processElement as well as
+      // elements flushed in finishBundle
+      val data = sc
+        .parallelize(Seq[Seq[Int]](1 to 10))
+        .flatten
+        .timestampBy(x => Instant.ofEpochMilli(x.toLong))
+        .parDo(new GuavaDoFn(1))
+        .withTimestamp
+        .map { case (x, ts) => (x, ts.getMillis) }
+      data should containInAnyOrder((1 to 10).map(x => (s"output-$x", x.toLong)))
+    }
   }
 
   "GuavaAsyncDoFn" should "work" in {
