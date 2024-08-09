@@ -17,8 +17,7 @@
 
 package com.spotify.scio.bigtable
 
-import java.util.concurrent.ConcurrentLinkedQueue
-import com.google.cloud.bigtable.grpc.BigtableSession
+import com.google.cloud.bigtable.data.v2.BigtableDataClient
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.testing._
@@ -26,6 +25,7 @@ import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import com.spotify.scio.transforms.JavaAsyncConverters._
 import com.spotify.scio.util.TransformingCache.SimpleTransformingCache
 
+import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success}
 
@@ -38,6 +38,7 @@ class BigtableDoFnTest extends PipelineSpec {
   }
 
   it should "work with cache" in {
+    BigtableDoFnTest.queue.clear()
     val fn = new TestCachingBigtableDoFn
     val output = runWithData((1 to 10) ++ (6 to 15))(_.parDo(fn))
       .map(kv => (kv.getKey, kv.getValue.get()))
@@ -67,22 +68,22 @@ object BigtableDoFnTest {
 }
 
 class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {
-  override def newClient(): BigtableSession = null
-  override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
+  override def newClient(): BigtableDataClient = null
+  override def asyncLookup(client: BigtableDataClient, input: Int): ListenableFuture[String] =
     Futures.immediateFuture(input.toString)
 }
 
 class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new TestCacheSupplier) {
-  override def newClient(): BigtableSession = null
-  override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] = {
+  override def newClient(): BigtableDataClient = null
+  override def asyncLookup(client: BigtableDataClient, input: Int): ListenableFuture[String] = {
     BigtableDoFnTest.queue.add(input)
     Futures.immediateFuture(input.toString)
   }
 }
 
 class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](null) {
-  override def newClient(): BigtableSession = null
-  override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
+  override def newClient(): BigtableDataClient = null
+  override def asyncLookup(client: BigtableDataClient, input: Int): ListenableFuture[String] =
     if (input % 2 == 0) {
       Futures.immediateFuture("success" + input)
     } else {
