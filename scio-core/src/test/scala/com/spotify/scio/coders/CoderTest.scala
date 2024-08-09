@@ -97,7 +97,9 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     val nil: Seq[String] = Nil
     val s: Seq[String] = (1 to 10).map(_.toString)
-    val m: Map[String, String] = s.map(v => v -> v).toMap
+    val kvs = s.map(v => v -> v)
+    val m: Map[String, String] = kvs.toMap
+    val sm = SortedMap(kvs: _*)
 
     nil coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
@@ -123,7 +125,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[MapCoder[_, _]] and
       beFullyCompliantNonDeterministic()
 
-    SortedMap.from(m) coderShould roundtrip() and
+    sm coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[SortedMapCoder[_, _]] and
       beFullyCompliant()
