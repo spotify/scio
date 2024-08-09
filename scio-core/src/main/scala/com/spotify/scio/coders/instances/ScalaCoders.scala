@@ -27,7 +27,7 @@ import java.io.{InputStream, OutputStream}
 import java.util.{Collections, List => JList}
 import scala.collection.compat._
 import scala.collection.immutable.SortedMap
-import scala.collection.{mutable, mutable => m, AbstractIterable, BitSet, SortedSet}
+import scala.collection.{mutable => m, AbstractIterable, BitSet, SortedSet}
 import scala.jdk.CollectionConverters._
 import scala.reflect.{classTag, ClassTag}
 import scala.util.{Failure, Success, Try}
@@ -355,7 +355,7 @@ private[coders] class MapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
 private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
     extends MapLikeCoder[K, V, m.Map](kc, vc) {
 
-  override def decode(inStream: InputStream): mutable.Map[K, V] =
+  override def decode(inStream: InputStream): m.Map[K, V] =
     decode(inStream, m.Map.newBuilder[K, V])
 }
 
