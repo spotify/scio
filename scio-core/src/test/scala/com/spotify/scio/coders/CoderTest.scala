@@ -39,11 +39,13 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.typelevel.scalaccompat.annotation.nowarn
 
-import scala.collection.{mutable => mut}
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
 import java.time._
 import java.util.UUID
+
+import scala.collection.{mutable => mut}
+import scala.collection.compat._
 import scala.collection.immutable.SortedMap
 import scala.jdk.CollectionConverters._
 
@@ -97,9 +99,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     val nil: Seq[String] = Nil
     val s: Seq[String] = (1 to 10).map(_.toString)
-    val kvs = s.map(v => v -> v)
-    val m: Map[String, String] = kvs.toMap
-    val sm = SortedMap(kvs: _*)
+    val m: Map[String, String] = s.map(v => v -> v).toMap
 
     nil coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
@@ -125,7 +125,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[MapCoder[_, _]] and
       beFullyCompliantNonDeterministic()
 
-    sm coderShould roundtrip() and
+    SortedMap.from(m) coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[SortedMapCoder[_, _]] and
       beFullyCompliant()
@@ -135,17 +135,17 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[SetCoder[_]] and
       beFullyCompliantNonDeterministic()
 
-    mut.ListBuffer(1 to 10: _*) coderShould roundtrip() and
+    mut.ListBuffer.from(s) coderShould roundtrip() and
       beOfType[Transform[_, _]] and
       materializeToTransformOf[BufferCoder[_]] and
       beFullyCompliant()
 
-    BitSet(1 to 100000: _*) coderShould roundtrip() and
+    BitSet.fromSpecific(1 to 100000) coderShould roundtrip() and
       beOfType[Beam[_]] and
       materializeTo[BitSetCoder] and
       beFullyCompliant()
 
-    mut.Set(s: _*) coderShould roundtrip() and
+    mut.Set.from(s) coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[MutableSetCoder[_]] and
       beFullyCompliant()
