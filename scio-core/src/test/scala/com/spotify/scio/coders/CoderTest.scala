@@ -39,11 +39,14 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.typelevel.scalaccompat.annotation.nowarn
 
-import scala.collection.{mutable => mut}
 import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
 import java.time._
 import java.util.UUID
+
+import scala.collection.{mutable => mut}
+import scala.collection.compat._
+import scala.collection.immutable.SortedMap
 import scala.jdk.CollectionConverters._
 
 final class CoderTest extends AnyFlatSpec with Matchers {
@@ -122,22 +125,27 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[MapCoder[_, _]] and
       beFullyCompliantNonDeterministic()
 
+    SortedMap.from(m) coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[SortedMapCoder[_, _]] and
+      beFullyCompliant()
+
     s.toSet coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[SetCoder[_]] and
       beFullyCompliantNonDeterministic()
 
-    mut.ListBuffer(1 to 10: _*) coderShould roundtrip() and
+    mut.ListBuffer.from(s) coderShould roundtrip() and
       beOfType[Transform[_, _]] and
       materializeToTransformOf[BufferCoder[_]] and
       beFullyCompliant()
 
-    BitSet(1 to 100000: _*) coderShould roundtrip() and
+    BitSet.fromSpecific(1 to 100000) coderShould roundtrip() and
       beOfType[Beam[_]] and
       materializeTo[BitSetCoder] and
       beFullyCompliant()
 
-    mut.Set(s: _*) coderShould roundtrip() and
+    mut.Set.from(s) coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[MutableSetCoder[_]] and
       beFullyCompliant()
@@ -896,6 +904,15 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       classOf[magnolia1.SealedTrait[Coder, _]].getName,
       classOf[magnolia1.Subtype[Coder, _]].getName
     )
+  }
+
+  it should "not accept SortedMap when ordering doesn't match with coder" in {
+    val sm = SortedMap(1 -> "1", 2 -> "2")(Ordering[Int].reverse)
+    // implicit SortedMapCoder will use implicit default Int ordering
+    val e = the[IllegalArgumentException] thrownBy {
+      sm coderShould roundtrip()
+    }
+    e.getMessage shouldBe "requirement failed: SortedMap ordering does not match SortedMapCoder ordering"
   }
 
   /*
