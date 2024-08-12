@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.transforms.windowing.PaneInfo;
@@ -45,7 +44,8 @@ public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
   public abstract Future processElement(Input input);
 
   private final ConcurrentMap<UUID, Future> futures = new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<Pair<UUID, ValueInSingleWindow<Output>>> results = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<Pair<UUID, ValueInSingleWindow<Output>>> results =
+      new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
 
   @StartBundle
@@ -76,10 +76,7 @@ public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
   // TODO: remove in 0.15.0
   @Deprecated
   public void processElement(
-      Input input,
-      Instant timestamp,
-      OutputReceiver<Output> out,
-      BoundedWindow window) {
+      Input input, Instant timestamp, OutputReceiver<Output> out, BoundedWindow window) {
     processElement(input, timestamp, window, null, out);
   }
 
@@ -90,13 +87,14 @@ public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
       BoundedWindow window,
       PaneInfo pane,
       OutputReceiver<Output> out) {
-    flush(r -> {
-      final Output o = r.getValue();
-      final Instant ts = r.getTimestamp();
-      final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
-      final PaneInfo p = r.getPane();
-      out.outputWindowedValue(o, ts, ws, p);
-    });
+    flush(
+        r -> {
+          final Output o = r.getValue();
+          final Instant ts = r.getTimestamp();
+          final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
+          final PaneInfo p = r.getPane();
+          out.outputWindowedValue(o, ts, ws, p);
+        });
 
     try {
       final UUID uuid = UUID.randomUUID();
@@ -108,7 +106,8 @@ public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
     }
   }
 
-  private Future handleOutput(Future future, UUID key, Instant timestamp, BoundedWindow window, PaneInfo pane) {
+  private Future handleOutput(
+      Future future, UUID key, Instant timestamp, BoundedWindow window, PaneInfo pane) {
     return addCallback(
         future,
         output -> {

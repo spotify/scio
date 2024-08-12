@@ -176,13 +176,14 @@ public abstract class BaseAsyncBatchLookupDoFn<
       PaneInfo pane,
       OutputReceiver<KV<Input, TryWrapper>> out) {
     inputCount++;
-    flush(r -> {
-      final KV<Input, TryWrapper> io = r.getValue();
-      final Instant ts = r.getTimestamp();
-      final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
-      final PaneInfo p = r.getPane();
-      out.outputWindowedValue(io, ts, ws, p);
-    });
+    flush(
+        r -> {
+          final KV<Input, TryWrapper> io = r.getValue();
+          final Instant ts = r.getTimestamp();
+          final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
+          final PaneInfo p = r.getPane();
+          out.outputWindowedValue(io, ts, ws, p);
+        });
     final Cache<String, Output> cache = getResourceCache();
 
     try {

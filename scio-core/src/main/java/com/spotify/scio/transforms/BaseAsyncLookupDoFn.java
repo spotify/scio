@@ -66,7 +66,8 @@ public abstract class BaseAsyncLookupDoFn<Input, Output, Client, Future, TryWrap
   private final Semaphore semaphore;
   private final ConcurrentMap<UUID, Future> futures = new ConcurrentHashMap<>();
   private final ConcurrentMap<Input, Future> inFlightRequests = new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<Pair<UUID, ValueInSingleWindow<KV<Input, TryWrapper>>>> results = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<Pair<UUID, ValueInSingleWindow<KV<Input, TryWrapper>>>>
+      results = new ConcurrentLinkedQueue<>();
   private long inputCount;
   private long outputCount;
 
@@ -179,13 +180,14 @@ public abstract class BaseAsyncLookupDoFn<Input, Output, Client, Future, TryWrap
       PaneInfo pane,
       OutputReceiver<KV<Input, TryWrapper>> out) {
     inputCount++;
-    flush(r -> {
-      final KV<Input, TryWrapper> io = r.getValue();
-      final Instant ts = r.getTimestamp();
-      final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
-      final PaneInfo p = r.getPane();
-      out.outputWindowedValue(io, ts, ws, p);
-    });
+    flush(
+        r -> {
+          final KV<Input, TryWrapper> io = r.getValue();
+          final Instant ts = r.getTimestamp();
+          final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
+          final PaneInfo p = r.getPane();
+          out.outputWindowedValue(io, ts, ws, p);
+        });
     final Client client = getResourceClient();
     final Cache<Input, Output> cache = getResourceCache();
 
@@ -246,16 +248,24 @@ public abstract class BaseAsyncLookupDoFn<Input, Output, Client, Future, TryWrap
         outputCount);
   }
 
-  private Future handleOutput(Future future, Input input, UUID key, Instant timestamp, BoundedWindow window, PaneInfo pane) {
+  private Future handleOutput(
+      Future future,
+      Input input,
+      UUID key,
+      Instant timestamp,
+      BoundedWindow window,
+      PaneInfo pane) {
     return addCallback(
         future,
         output -> {
-          final ValueInSingleWindow<KV<Input, TryWrapper>> result = ValueInSingleWindow.of(KV.of(input, success(output)), timestamp, window, pane);
+          final ValueInSingleWindow<KV<Input, TryWrapper>> result =
+              ValueInSingleWindow.of(KV.of(input, success(output)), timestamp, window, pane);
           results.add(Pair.of(key, result));
           return null;
         },
         throwable -> {
-          final ValueInSingleWindow<KV<Input, TryWrapper>> result = ValueInSingleWindow.of(KV.of(input, failure(throwable)), timestamp, window, pane);
+          final ValueInSingleWindow<KV<Input, TryWrapper>> result =
+              ValueInSingleWindow.of(KV.of(input, failure(throwable)), timestamp, window, pane);
           results.add(Pair.of(key, result));
           return null;
         });
