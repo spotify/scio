@@ -17,9 +17,9 @@
 
 package com.spotify.scio.bigtable
 
+import com.google.api.core.{ApiFuture, ApiFutures}
 import com.google.cloud.bigtable.data.v2.BigtableDataClient
 import com.google.common.cache.{Cache, CacheBuilder}
-import com.google.common.util.concurrent.{Futures, ListenableFuture}
 import com.spotify.scio.testing._
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
 import com.spotify.scio.transforms.JavaAsyncConverters._
@@ -69,25 +69,25 @@ object BigtableDoFnTest {
 
 class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {
   override def newClient(): BigtableDataClient = null
-  override def asyncLookup(client: BigtableDataClient, input: Int): ListenableFuture[String] =
-    Futures.immediateFuture(input.toString)
+  override def asyncLookup(client: BigtableDataClient, input: Int): ApiFuture[String] =
+    ApiFutures.immediateFuture(input.toString)
 }
 
 class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new TestCacheSupplier) {
   override def newClient(): BigtableDataClient = null
-  override def asyncLookup(client: BigtableDataClient, input: Int): ListenableFuture[String] = {
+  override def asyncLookup(client: BigtableDataClient, input: Int): ApiFuture[String] = {
     BigtableDoFnTest.queue.add(input)
-    Futures.immediateFuture(input.toString)
+    ApiFutures.immediateFuture(input.toString)
   }
 }
 
 class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](null) {
   override def newClient(): BigtableDataClient = null
-  override def asyncLookup(client: BigtableDataClient, input: Int): ListenableFuture[String] =
+  override def asyncLookup(client: BigtableDataClient, input: Int): ApiFuture[String] =
     if (input % 2 == 0) {
-      Futures.immediateFuture("success" + input)
+      ApiFutures.immediateFuture("success" + input)
     } else {
-      Futures.immediateFailedFuture(new RuntimeException("failure" + input))
+      ApiFutures.immediateFailedFuture(new RuntimeException("failure" + input))
     }
 }
 
