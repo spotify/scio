@@ -151,7 +151,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     instanceId: String,
     tableId: String,
     columnFamilies: Iterable[String],
-    createDisposition: Admin.Table.CreateDisposition = Admin.Table.CreateDisposition.default
+    createDisposition: Admin.Table.CreateDisposition = Admin.Table.CreateDisposition.Default
   ): Unit =
     if (!self.isTest) {
       Admin.Table.ensureTable(projectId, instanceId, tableId, columnFamilies, createDisposition)
@@ -172,7 +172,7 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     instanceId: String,
     tableId: String,
     columnFamiliesWithExpiration: Iterable[(String, Option[Duration])],
-    createDisposition: Admin.Table.CreateDisposition = Admin.Table.CreateDisposition.default
+    createDisposition: Admin.Table.CreateDisposition = Admin.Table.CreateDisposition.Default
   ): Unit =
     if (!self.isTest) {
       Admin.Table.ensureTablesWithExpiration(
