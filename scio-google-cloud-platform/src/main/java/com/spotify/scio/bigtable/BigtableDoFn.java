@@ -17,11 +17,11 @@
 
 package com.spotify.scio.bigtable;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
-import com.spotify.scio.transforms.GuavaAsyncLookupDoFn;
+import com.spotify.scio.transforms.FutureHandlers;
 import java.io.IOException;
 import java.util.function.Supplier;
 import org.apache.beam.sdk.transforms.DoFn;
@@ -32,12 +32,14 @@ import org.apache.beam.sdk.transforms.DoFn;
  * @param <A> input element type.
  * @param <B> Bigtable lookup value type.
  */
-public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, BigtableDataClient> {
+public abstract class BigtableDoFn<A, B>
+    extends BaseAsyncLookupDoFn<A, B, BigtableDataClient, ApiFuture<B>, BaseAsyncLookupDoFn.Try<B>>
+    implements FutureHandlers.GoogleApi<B> {
 
   private final Supplier<BigtableDataSettings> settingsSupplier;
 
   /** Perform asynchronous Bigtable lookup. */
-  public abstract ListenableFuture<B> asyncLookup(BigtableDataClient client, A input);
+  public abstract ApiFuture<B> asyncLookup(BigtableDataClient client, A input);
 
   /**
    * Create a {@link BigtableDoFn} instance.
@@ -106,5 +108,15 @@ public abstract class BigtableDoFn<A, B> extends GuavaAsyncLookupDoFn<A, B, Bigt
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public BaseAsyncLookupDoFn.Try<B> success(B output) {
+    return new Try<>(output);
+  }
+
+  @Override
+  public BaseAsyncLookupDoFn.Try<B> failure(Throwable throwable) {
+    return new Try<>(throwable);
   }
 }

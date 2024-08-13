@@ -19,10 +19,9 @@ package com.spotify.scio.coders.instance.kryo
 import com.google.api.gax.grpc.GrpcStatusCode
 import com.google.api.gax.rpc.InternalException
 import com.google.cloud.bigtable.data.v2.models.MutateRowsException
-import com.google.cloud.bigtable.grpc.scanner.BigtableRetriesExhaustedException
 import com.spotify.scio.coders.instances.kryo.GrpcSerializerTest._
 import io.grpc.Status.Code
-import io.grpc.{Metadata, Status, StatusRuntimeException}
+import io.grpc.{Status, StatusRuntimeException}
 import org.scalactic.Equality
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -30,13 +29,6 @@ import org.scalatest.matchers.should.Matchers
 import scala.jdk.CollectionConverters._
 
 object GcpSerializerTest {
-
-  implicit val eqBigtableRetriesExhaustedException: Equality[BigtableRetriesExhaustedException] = {
-    case (a: BigtableRetriesExhaustedException, b: BigtableRetriesExhaustedException) =>
-      a.getMessage == b.getMessage &&
-      eqCause.areEqual(a.getCause, b.getCause)
-    case _ => false
-  }
 
   implicit val eqMutateRowsException: Equality[MutateRowsException] = {
     case (a: MutateRowsException, b: MutateRowsException) =>
@@ -58,16 +50,6 @@ class GcpSerializerTest extends AnyFlatSpec with Matchers {
 
   import GcpSerializerTest._
   import com.spotify.scio.testing.CoderAssertions._
-
-  "BigtableRetriesExhaustedException" should "roundtrip" in {
-    val metadata = new Metadata()
-    metadata.put(Metadata.Key.of[String]("k", Metadata.ASCII_STRING_MARSHALLER), "v")
-    val cause = new StatusRuntimeException(
-      Status.OK.withCause(new RuntimeException("bar")).withDescription("bar"),
-      metadata
-    )
-    new BigtableRetriesExhaustedException("Error", cause) coderShould roundtrip()
-  }
 
   "MutateRowsExceptionSerializer" should "roundtrip" in {
     val cause = new StatusRuntimeException(Status.OK)
