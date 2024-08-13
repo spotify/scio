@@ -40,7 +40,7 @@ import scala.jdk.CollectionConverters._
  */
 object Admin {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[Admin.type])
+  private val logger: Logger = LoggerFactory.getLogger(this.getClass)
   sys.addShutdownHook {
     logger.info("Shutting down Bigtable clients")
     Instance.clients.values.foreach(_.close())
@@ -50,13 +50,11 @@ object Admin {
   object Table {
 
     sealed trait CreateDisposition
-
     object CreateDisposition {
       case object Never extends CreateDisposition
-
       case object CreateIfNeeded extends CreateDisposition
 
-      val default: CreateDisposition = CreateIfNeeded
+      val Default: CreateDisposition = CreateIfNeeded
     }
 
     private[bigtable] val clients: concurrent.Map[(String, String), BigtableTableAdminClient] =
@@ -95,7 +93,7 @@ object Admin {
       instanceId: String,
       tableId: String,
       columnFamilies: Iterable[String],
-      createDisposition: CreateDisposition = CreateDisposition.default
+      createDisposition: CreateDisposition = CreateDisposition.Default
     ): Unit = {
       val tcf = columnFamilies.map(cf => cf -> None)
       ensureTableImpl(projectId, instanceId, tableId, tcf, createDisposition)
@@ -116,7 +114,7 @@ object Admin {
       instanceId: String,
       tableId: String,
       columnFamilies: Iterable[(String, Option[Duration])],
-      createDisposition: CreateDisposition = CreateDisposition.default
+      createDisposition: CreateDisposition = CreateDisposition.Default
     ): Unit = {
       // Convert Duration to GcRule
       val x = columnFamilies.map { case (columnFamily, duration) =>
@@ -142,7 +140,7 @@ object Admin {
       instanceId: String,
       tableId: String,
       columnFamilies: Iterable[(String, Option[GCRule])],
-      createDisposition: CreateDisposition = CreateDisposition.default
+      createDisposition: CreateDisposition = CreateDisposition.Default
     ): Unit = ensureTableImpl(projectId, instanceId, tableId, columnFamilies, createDisposition)
 
     /**
@@ -242,17 +240,19 @@ object Admin {
       sleepDuration: Duration
     ): Unit = {
       val client = getOrCreateClient(projectId)
-      val ids =
-        if (clusterIds.isEmpty) client.listClusters(instanceId).asScala.map(_.getId)
-        else clusterIds
+      val ids: Iterable[String] = if (clusterIds.isEmpty) {
+        client.listClusters(instanceId).asScala.map(_.getId)
+      } else {
+        clusterIds
+      }
 
       ids.foreach { clusterId =>
         logger.info("Updating number of nodes to {} for cluster {}", numberOfNodes, clusterId)
         client.resizeCluster(instanceId, clusterId, numberOfNodes)
       }
 
-      if (sleepDuration.getMillis > 0) {
-        logger.info("Sleeping for {} after update", sleepDuration.toPeriod)
+      if (sleepDuration.isLongerThan(Duration.ZERO)) {
+        logger.info("Sleeping for {} after update", sleepDuration)
         Thread.sleep(sleepDuration.getMillis)
       }
     }
