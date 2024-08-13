@@ -365,18 +365,11 @@ Datastore `Entity` class is actually generated from @github[Protobuf](/scio-exam
 
 #### How do I throttle Bigtable writes?
 
-Currently, Dataflow autoscaling may not work well with large writes BigtableIO. Specifically It does not take into account Bigtable IO rate limits and may scale up more workers and end up hitting the limit and eventually fail the job. As a workaround, you can enable throttling for Bigtable writes in Scio 0.4.0-alpha2 or later.
+To prevent overloading the cluster but keep trigger the autoscaling if available, you can enable flow control for Bigtable writes in Scio 0.15.0 or later.
 
-```scala mdoc:reset:invisible
-val btProjectId = ""
-val btInstanceId = ""
-val btTableId = ""
-```
-
-```scala mdoc:silent
+```scala mdoc:reset:silent
 import com.spotify.scio.values._
 import com.spotify.scio.bigtable._
-import com.google.cloud.bigtable.config.{BigtableOptions, BulkOptions}
 import com.google.bigtable.v2.Mutation
 import com.google.protobuf.ByteString
 
@@ -385,16 +378,10 @@ def main(cmdlineArgs: Array[String]): Unit = {
 
   val data: SCollection[(ByteString, Iterable[Mutation])] = ???
 
-  val btOptions =
-    BigtableOptions.builder()
-      .setProjectId(btProjectId)
-      .setInstanceId(btInstanceId)
-      .setBulkOptions(BulkOptions.builder()
-        .enableBulkMutationThrottling()
-        .setBulkMutationRpcTargetMs(10) // lower latency threshold, default is 100
-        .build())
-      .build()
-  data.saveAsBigtable(btOptions, btTableId)
+  val btProjectId: String = ???
+  val btInstanceId: String = ???
+  val btTableId: String = ???
+  data.saveAsBigtable(btProjectId, btInstanceId, btTableId, flowControl = true)
 
   // ...
 }
