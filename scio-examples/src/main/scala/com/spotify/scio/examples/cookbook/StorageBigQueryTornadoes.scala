@@ -45,13 +45,13 @@ object StorageBigQueryTornadoes {
     )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
-    val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    val table = Table(
+      args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE),
+      selectedFields = List("tornado", "month"),
+      rowRestriction = "tornado = true"
+    )
     val resultTap = sc
-      .bigQueryStorage(
-        table,
-        selectedFields = List("tornado", "month"),
-        rowRestriction = "tornado = true"
-      )
+      .bigQueryStorage(table)
       .map(_.getLong("month"))
       // Count occurrences of each unique month to get `(Long, Long)`
       .countByValue
@@ -59,7 +59,7 @@ object StorageBigQueryTornadoes {
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
       // Save result as a BigQuery table
       .saveAsBigQueryTable(
-        table = Table.Spec(args("output")),
+        table = Table(args("output")),
         schema = schema,
         writeDisposition = WRITE_TRUNCATE,
         createDisposition = CREATE_IF_NEEDED,

@@ -187,10 +187,9 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     tableReference.setProjectId("data-integration-test")
     tableReference.setDatasetId("partition_a")
     tableReference.setTableId("table_$LATEST")
-    Table.Ref(tableReference).latest().ref.getTableId shouldBe "table_20170302"
+    Table(tableReference).latest().ref.getTableId shouldBe "table_20170302"
 
-    Table
-      .Spec("data-integration-test:partition_a.table_$LATEST")
+    Table("data-integration-test:partition_a.table_$LATEST")
       .latest()
       .ref
       .getTableId shouldBe "table_20170302"
@@ -210,7 +209,7 @@ class BigQueryTypeIT extends AnyFlatSpec with Matchers {
     val bqt = BigQueryType[FromTableT]
     bqt.isQuery shouldBe false
     bqt.isTable shouldBe true
-    bqt.query shouldBe None
+    bqt.queryRaw shouldBe None
     bqt.table shouldBe Some("bigquery-public-data:samples.shakespeare")
     val fields = bqt.schema.getFields.asScala
     fields.size shouldBe 4

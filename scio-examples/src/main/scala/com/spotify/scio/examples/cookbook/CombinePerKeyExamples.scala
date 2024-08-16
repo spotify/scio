@@ -47,7 +47,7 @@ object CombinePerKeyExamples {
     )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
-    val table = Table.Spec(args.getOrElse("input", ExampleData.SHAKESPEARE_TABLE))
+    val table = Table(args.getOrElse("input", ExampleData.SHAKESPEARE_TABLE))
     sc.bigQueryTable(table)
       // Extract words and corresponding play names
       .flatMap { row =>
@@ -64,7 +64,7 @@ object CombinePerKeyExamples {
       // Map `(String, String)` tuples into result `TableRow`s
       .map(kv => TableRow("word" -> kv._1, "all_plays" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     // Execute the pipeline
     sc.run()

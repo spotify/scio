@@ -19,30 +19,26 @@ package com.spotify.scio.bigquery.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.{
-  BigQuerySelect,
-  BigQueryStorage,
-  BigQueryStorageSelect,
-  BigQueryType,
-  BigQueryTyped,
-  Query,
-  Source,
-  Table,
-  TableRow,
-  TableRowJsonIO
-}
+import com.spotify.scio.bigquery.{BigQueryIO, Query, Source, Table, TableRow, TableRowJsonIO}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values._
 
 import scala.reflect.runtime.universe._
-import com.spotify.scio.bigquery.BigQueryTypedTable
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.coders.tableRowCoder
+import com.spotify.scio.bigquery.types.BigQueryType
 import org.apache.beam.sdk.io.Compression
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.TypedRead.Method
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
+import org.apache.beam.sdk.transforms.errorhandling.{BadRecord, ErrorHandler}
+import org.slf4j.{Logger, LoggerFactory}
+
+object ScioContextOps {
+  @transient private lazy val logger: Logger = LoggerFactory.getLogger(this.getClass)
+}
 
 /** Enhanced version of [[ScioContext]] with BigQuery methods. */
 final class ScioContextOps(private val self: ScioContext) extends AnyVal {
+  import ScioContextOps._
 
   /**
    * Get an SCollection for a BigQuery SELECT query. Both
@@ -53,36 +49,79 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def bigQuerySelect(
     sqlQuery: Query,
-    flattenResults: Boolean
-  ): SCollection[TableRow] =
-    self.read(BigQuerySelect(sqlQuery))(BigQuerySelect.ReadParam(flattenResults))
+    flattenResults: Boolean = BigQueryIO.ReadParam.DefaultFlattenResults,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[TableRow] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[TableRow] = {
+    val params = BigQueryIO.QueryReadParam(
+      BigQueryIO.Format.Default(),
+      Method.DEFAULT,
+      flattenResults,
+      BigQueryIO.ReadParam.DefaultErrorHandler,
+      configOverride
+    )
+    self.read(BigQueryIO[TableRow](sqlQuery))(params)
+  }
 
-  /**
-   * Get an SCollection for a BigQuery SELECT query. Both
-   * [[https://cloud.google.com/bigquery/docs/reference/legacy-sql Legacy SQL]] and
-   * [[https://cloud.google.com/bigquery/docs/reference/standard-sql/ Standard SQL]] dialects are
-   * supported. By default the query dialect will be automatically detected. To override this
-   * behavior, start the query string with `#legacysql` or `#standardsql`.
-   */
-  def bigQuerySelect(
-    sqlQuery: Query
-  ): SCollection[TableRow] =
-    bigQuerySelect(sqlQuery, BigQuerySelect.ReadParam.DefaultFlattenResults)
+  def bigQuerySelectFormat[T: Coder](
+    sqlQuery: Query,
+    format: BigQueryIO.Format[T],
+    flattenResults: Boolean = BigQueryIO.ReadParam.DefaultFlattenResults,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[T] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[T] = {
+    val params = BigQueryIO.QueryReadParam(
+      format,
+      Method.DEFAULT,
+      flattenResults,
+      BigQueryIO.ReadParam.DefaultErrorHandler,
+      configOverride
+    )
+    self.read(BigQueryIO[T](sqlQuery))(params)
+  }
 
-  /** Get an SCollection for a BigQuery table. */
-  def bigQueryTable(table: Table): SCollection[TableRow] =
-    bigQueryTable(table, BigQueryTypedTable.Format.TableRow)(tableRowCoder)
+  def bigQueryTable(
+    table: Table,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[TableRow] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[TableRow] = {
+    if (table.filter.nonEmpty) {
+      logger.warn(
+        "Using filtered table with standard API. " +
+          "selectedFields and rowRestriction are ignored. " +
+          "Use bigQueryStorage instead"
+      )
+    }
+    val params = BigQueryIO.TableReadParam(
+      BigQueryIO.Format.Default(),
+      Method.DEFAULT,
+      BigQueryIO.ReadParam.DefaultErrorHandler,
+      configOverride
+    )
+    self.read(BigQueryIO[TableRow](table))(params)
+  }
 
-  /**
-   * Get an SCollection for a BigQuery table using the specified [[Format]].
-   *
-   * Reading records as GenericRecord **should** offer better performance over TableRow records.
-   *
-   * Note: When using `Format.GenericRecord` Bigquery types DATE, TIME and DATETIME are read as
-   * STRING.
-   */
-  def bigQueryTable[F: Coder](table: Table, format: Format[F]): SCollection[F] =
-    self.read(BigQueryTypedTable(table, format))
+  def bigQueryTableFormat[T: Coder](
+    table: Table,
+    format: BigQueryIO.Format[T],
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[T] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[T] = {
+    if (table.filter.nonEmpty) {
+      logger.warn(
+        "Using filtered table with standard API. " +
+          "selectedFields and rowRestriction are ignored. " +
+          "Use bigQueryStorage instead"
+      )
+    }
+    val params = BigQueryIO.TableReadParam(
+      format,
+      Method.DEFAULT,
+      BigQueryIO.ReadParam.DefaultErrorHandler,
+      configOverride
+    )
+    self.read(BigQueryIO[T](table))(params)
+  }
 
   /**
    * Get an SCollection for a BigQuery table using the storage API.
@@ -103,10 +142,34 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    */
   def bigQueryStorage(
     table: Table,
-    selectedFields: List[String] = BigQueryStorage.ReadParam.DefaultSelectFields,
-    rowRestriction: String = null
-  ): SCollection[TableRow] =
-    self.read(BigQueryStorage(table, selectedFields, Option(rowRestriction)))
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.ReadParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[TableRow] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[TableRow] = {
+    val params = BigQueryIO.TableReadParam(
+      BigQueryIO.Format.Default(),
+      Method.DIRECT_READ,
+      errorHandler,
+      configOverride
+    )
+    self.read(BigQueryIO[TableRow](table))(params)
+  }
+
+  def bigQueryStorageFormat[T: Coder](
+    table: Table,
+    format: BigQueryIO.Format[T],
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.ReadParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[T] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[T] = {
+    val params = BigQueryIO.TableReadParam(
+      format,
+      Method.DIRECT_READ,
+      errorHandler,
+      configOverride
+    )
+    self.read(BigQueryIO[T](table))(params)
+  }
 
   /**
    * Get an SCollection for a BigQuery SELECT query using the storage API.
@@ -114,99 +177,108 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
    * @param query
    *   SQL query
    */
-  def bigQueryStorage(query: Query): SCollection[TableRow] =
-    self.read(BigQueryStorageSelect(query))
+  def bigQuerySelectStorage(
+    query: Query,
+    flattenResults: Boolean = BigQueryIO.ReadParam.DefaultFlattenResults,
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.ReadParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[TableRow] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[TableRow] = {
+    val params = BigQueryIO.QueryReadParam(
+      BigQueryIO.Format.Default(),
+      Method.DIRECT_READ,
+      flattenResults,
+      errorHandler,
+      configOverride
+    )
+    self.read(BigQueryIO[TableRow](query))(params)
+  }
 
-  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] =
-    typedBigQuery(None)
-
-  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
-    newSource: Source
-  ): SCollection[T] = typedBigQuery(Option(newSource))
-
-  /** Get a typed SCollection for BigQuery Table or a SELECT query using the Storage API. */
-  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
-    newSource: Option[Source]
+  def bigQuerySelectStorageFormat[T: Coder](
+    query: Query,
+    format: BigQueryIO.Format[T],
+    flattenResults: Boolean = BigQueryIO.ReadParam.DefaultFlattenResults,
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.ReadParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[T] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
   ): SCollection[T] = {
-    val bqt = BigQueryType[T]
-    if (bqt.isStorage) {
-      newSource
-        .asInstanceOf[Option[Table]]
-        .map(typedBigQueryStorage(_))
-        .getOrElse(typedBigQueryStorage())
-    } else {
-      self.read(BigQueryTyped.dynamic[T](newSource))
-    }
-  }
-
-  /**
-   * Get a typed SCollection for a BigQuery storage API.
-   *
-   * Note that `T` must be annotated with
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromSchema BigQueryType.fromStorage]] or
-   * [[com.spotify.scio.bigquery.types.BigQueryType.fromQuery BigQueryType.fromQuery]]
-   */
-  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](): SCollection[T] = {
-    val bqt = BigQueryType[T]
-    if (bqt.isQuery) {
-      self.read(BigQueryTyped.StorageQuery[T](Query(bqt.queryRaw.get)))
-    } else {
-      val table = Table.Spec(bqt.table.get)
-      val rr = bqt.rowRestriction
-      val fields = bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields)
-      self.read(BigQueryTyped.Storage[T](table, fields, rr))
-    }
-  }
-
-  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
-    table: Table
-  ): SCollection[T] =
-    self.read(
-      BigQueryTyped.Storage[T](
-        table,
-        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
-        BigQueryType[T].rowRestriction
-      )
+    val params = BigQueryIO.QueryReadParam(
+      format,
+      Method.DIRECT_READ,
+      flattenResults,
+      errorHandler,
+      configOverride
     )
+    self.read(BigQueryIO[T](query))(params)
+  }
 
-  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
-    rowRestriction: String
+  /** Get a typed SCollection for BigQuery Table or a SELECT query. */
+  def typedBigQuery[T <: HasAnnotation: TypeTag: Coder](
+    source: Source = null,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[T] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
   ): SCollection[T] = {
-    val bqt = BigQueryType[T]
-    val table = Table.Spec(bqt.table.get)
-    self.read(
-      BigQueryTyped.Storage[T](
-        table,
-        bqt.selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
-        Option(rowRestriction)
-      )
-    )
+    val format = BigQueryIO.Format.Avro(BigQueryType[T])
+    val io = Option(source) match {
+      case Some(s) => BigQueryIO[T](s)
+      case None    => BigQueryIO[T]
+    }
+
+    val params = io.source match {
+      case _: Query =>
+        BigQueryIO.QueryReadParam[T](
+          format,
+          Method.DEFAULT,
+          BigQueryIO.ReadParam.DefaultFlattenResults,
+          BigQueryIO.ReadParam.DefaultErrorHandler,
+          configOverride
+        )
+      case t: Table =>
+        if (t.filter.nonEmpty) {
+          logger.warn(
+            "Using filtered table with standard API. " +
+              "selectedFields and rowRestriction are ignored. " +
+              "Use typedBigQueryStorage instead"
+          )
+        }
+        BigQueryIO.TableReadParam[T](
+          format,
+          Method.DEFAULT,
+          BigQueryIO.ReadParam.DefaultErrorHandler,
+          configOverride
+        )
+    }
+    self.read(io)(params)
   }
 
+  /** Get a typed SCollection for a BigQuery storage API. */
   def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
-    table: Table,
-    rowRestriction: String
-  ): SCollection[T] =
-    self.read(
-      BigQueryTyped.Storage[T](
-        table,
-        BigQueryType[T].selectedFields.getOrElse(BigQueryStorage.ReadParam.DefaultSelectFields),
-        Option(rowRestriction)
-      )
-    )
+    source: Source = null,
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.ReadParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.ReadParam.ConfigOverride[T] =
+      BigQueryIO.ReadParam.DefaultConfigOverride
+  ): SCollection[T] = {
+    val io = Option(source) match {
+      case Some(s) => BigQueryIO[T](s)
+      case None    => BigQueryIO[T]
+    }
 
-  def typedBigQueryStorage[T <: HasAnnotation: TypeTag: Coder](
-    table: Table,
-    selectedFields: List[String],
-    rowRestriction: String
-  ): SCollection[T] =
-    self.read(
-      BigQueryTyped.Storage[T](
-        table,
-        selectedFields,
-        Option(rowRestriction)
-      )
-    )
+    val format = BigQueryIO.Format.Avro(BigQueryType[T])
+    val params = io.source match {
+      case _: Query =>
+        BigQueryIO.QueryReadParam[T](
+          format,
+          Method.DIRECT_READ,
+          BigQueryIO.ReadParam.DefaultFlattenResults,
+          errorHandler,
+          configOverride
+        )
+      case _: Table =>
+        BigQueryIO.TableReadParam[T](format, Method.DIRECT_READ, errorHandler, configOverride)
+    }
+
+    self.read(io)(params)
+  }
 
   /** Get an SCollection for a BigQuery TableRow JSON file. */
   def tableRowJsonFile(
@@ -214,10 +286,11 @@ final class ScioContextOps(private val self: ScioContext) extends AnyVal {
     compression: Compression = TableRowJsonIO.ReadParam.DefaultCompression,
     emptyMatchTreatment: EmptyMatchTreatment = TableRowJsonIO.ReadParam.DefaultEmptyMatchTreatment,
     suffix: String = TableRowJsonIO.ReadParam.DefaultSuffix
-  ): SCollection[TableRow] =
+  ): SCollection[TableRow] = {
     self.read(TableRowJsonIO(path))(
       TableRowJsonIO.ReadParam(compression, emptyMatchTreatment, suffix)
     )
+  }
 }
 
 trait ScioContextSyntax {

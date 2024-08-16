@@ -98,7 +98,7 @@ object TypedBigQueryIT {
     val now = Instant.now().toString(TIME_FORMATTER)
     val spec =
       s"data-integration-test:bigquery_avro_it.$name${now}_${Random.nextInt(Int.MaxValue)}"
-    Table.Spec(spec)
+    Table(spec)
   }
   private val typedTable = table("records")
   private val tableRowTable = table("records_tablerow")
