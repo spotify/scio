@@ -96,7 +96,7 @@ object LeaderBoard {
       // Done with windowing information, convert back to regular `SCollection`
       .toSCollection
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_team" suffix
-      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_team"))
+      .saveAsTypedBigQueryTable(Table(args("output") + "_team"))
 
     gameEvents
       // Use a global window for unbounded data, which updates calculation every 10 minutes,
@@ -126,7 +126,7 @@ object LeaderBoard {
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
       .map(kv => UserScoreSums(kv._1, kv._2, fmt.print(Instant.now())))
       // Save to the BigQuery table defined by "output" in the arguments passed in + "_user" suffix
-      .saveAsTypedBigQueryTable(Table.Spec(args("output") + "_user"))
+      .saveAsTypedBigQueryTable(Table(args("output") + "_user"))
 
     // Execute the pipeline
     val result = sc.run()

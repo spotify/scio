@@ -20,7 +20,6 @@ package com.spotify.scio.bigquery
 import com.google.protobuf.ByteString
 import com.spotify.scio._
 import com.spotify.scio.avro._
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.testing._
 import magnolify.scalacheck.auto._
@@ -69,7 +68,7 @@ object TypedBigQueryIT {
     val now = Instant.now().toString(TIME_FORMATTER)
     val spec =
       s"data-integration-test:bigquery_avro_it.$name${now}_${Random.nextInt(Int.MaxValue)}"
-    Table.Spec(spec)
+    Table(spec)
   }
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
@@ -101,37 +100,25 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     BigQuery.defaultInstance().tables.delete(avroLogicalTypeTable.ref)
   }
 
-  "TypedBigQuery" should "read records" in {
+  "typedBigQuery" should "read records" in {
     val sc = ScioContext(options)
     sc.typedBigQuery[Record](tableRowTable) should containInAnyOrder(records)
     sc.run()
   }
 
-  it should "convert to avro format" in {
+  "bigQueryTableFormat" should "read TableRow records" in {
     val sc = ScioContext(options)
-    implicit val coder = avroGenericRecordCoder(Record.avroSchema)
-    sc.typedBigQuery[Record](tableRowTable)
-      .map(Record.toAvro)
-      .map(Record.fromAvro) should containInAnyOrder(
-      records
-    )
+    val format = BigQueryIO.Format.Default(BigQueryType[Record])
+    val data = sc.bigQueryTableFormat(tableRowTable, format)
+    data should containInAnyOrder(records)
     sc.run()
   }
 
-  "BigQueryTypedTable" should "read TableRow records" in {
+  it should "read GenericRecord records" in {
     val sc = ScioContext(options)
-    sc
-      .bigQueryTable(tableRowTable)
-      .map(Record.fromTableRow) should containInAnyOrder(records)
-    sc.run()
-  }
-
-  it should "read GenericRecord recors" in {
-    val sc = ScioContext(options)
-    implicit val coder = avroGenericRecordCoder(Record.avroSchema)
-    sc
-      .bigQueryTable(tableRowTable, Format.GenericRecord)
-      .map(Record.fromAvro) should containInAnyOrder(records)
+    val format = BigQueryIO.Format.Avro(BigQueryType[Record])
+    val data = sc.bigQueryTableFormat(tableRowTable, format)
+    data should containInAnyOrder(records)
     sc.run()
   }
 
@@ -157,7 +144,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         |}
       """.stripMargin)
     val tap = sc
-      .bigQueryTable(tableRowTable, Format.GenericRecord)
+      .bigQueryTableFormat(tableRowTable, BigQueryIO.Format.Avro())
       .saveAsBigQueryTable(avroTable, schema = schema, createDisposition = CREATE_IF_NEEDED)
 
     val result = sc.run().waitUntilDone()

@@ -45,7 +45,7 @@ object BigQueryTornadoes {
     )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
-    val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    val table = Table(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
     val resultTap = sc
       .bigQueryTable(table)
       // Extract months with tornadoes
@@ -55,7 +55,7 @@ object BigQueryTornadoes {
       // Map `(Long, Long)` tuples into result `TableRow`s
       .map(kv => TableRow("month" -> kv._1, "tornado_count" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     // Access the loaded tables
     resultTap
