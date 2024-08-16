@@ -735,6 +735,7 @@ lazy val `scio-core` = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.github.luben" % "zstd-jni" % zstdJniVersion,
+      "com.google.api" % "api-common" % gcpBom.key.value,
       "com.google.api" % "gax" % gcpBom.key.value,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
@@ -961,6 +962,7 @@ lazy val `scio-google-cloud-platform` = project
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "com.google.api" % "api-common" % gcpBom.key.value,
       "com.google.api" % "gax" % gcpBom.key.value,
       "com.google.api" % "gax-grpc" % gcpBom.key.value,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
