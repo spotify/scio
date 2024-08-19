@@ -23,5 +23,5 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 val avroVersion = sys.props.get("avro.version").getOrElse("1.11.3")
 libraryDependencies ++= Seq(
   "org.apache.avro" % "avro-compiler" % avroVersion,
-  "org.typelevel" %% "scalac-options" % "0.1.5"
+  "org.typelevel" %% "scalac-options" % "0.1.7"
 )
