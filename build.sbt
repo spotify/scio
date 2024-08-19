@@ -118,7 +118,7 @@ val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.14.0"
 val testContainersVersion = "0.41.4"
-val voyagerVersion = "2.0.6"
+val voyagerVersion = "2.0.9"
 val zoltarVersion = "0.6.0"
 // dependent versions
 val algebraVersion = catsVersion // algebra is a cats module
