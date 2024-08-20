@@ -32,7 +32,7 @@ val beamVendorVersion = "0.1"
 val beamVersion = "2.58.1"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.58.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.58.1/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
