@@ -51,6 +51,7 @@ import scala.reflect.ClassTag
 import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
 import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+import org.apache.beam.sdk.transforms.errorhandling.{BadRecord, ErrorHandler}
 
 /** Runner specific context. */
 trait RunnerContext {
@@ -854,6 +855,11 @@ class ScioContext private[scio] (
   // =======================================================================
   // Error handler
   // =======================================================================
+  def registerBadRecordErrorHandler[T <: POutput](
+    sinkTransform: PTransform[PCollection[BadRecord], T]
+  ): ErrorHandler[BadRecord, T] =
+    pipeline.registerBadRecordErrorHandler(sinkTransform)
+
   def errorSink(): ErrorSink = ErrorSink(this)
 
   // =======================================================================
