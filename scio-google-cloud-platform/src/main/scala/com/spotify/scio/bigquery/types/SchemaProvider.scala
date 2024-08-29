@@ -79,6 +79,7 @@ private[types] object SchemaProvider {
       case t if t =:= typeOf[Double]     => ("FLOAT", Iterable.empty)
       case t if t =:= typeOf[String]     => ("STRING", Iterable.empty)
       case t if t =:= typeOf[BigDecimal] => ("NUMERIC", Iterable.empty)
+      case t if t =:= typeOf[BigNumeric] => ("BIGNUMERIC", Iterable.empty)
 
       case t if t =:= typeOf[ByteString]  => ("BYTES", Iterable.empty)
       case t if t =:= typeOf[Array[Byte]] => ("BYTES", Iterable.empty)
@@ -88,6 +89,7 @@ private[types] object SchemaProvider {
       case t if t =:= typeOf[LocalTime]     => ("TIME", Iterable.empty)
       case t if t =:= typeOf[LocalDateTime] => ("DATETIME", Iterable.empty)
       case t if t =:= typeOf[Geography]     => ("GEOGRAPHY", Iterable.empty)
+      case t if t =:= typeOf[Json]          => ("JSON", Iterable.empty)
 
       case t if isCaseClass(t) => ("RECORD", toFields(t))
       case _                   => throw new RuntimeException(s"Unsupported type: $tpe")

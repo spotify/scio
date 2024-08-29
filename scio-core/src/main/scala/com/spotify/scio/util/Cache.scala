@@ -19,15 +19,20 @@ package com.spotify.scio.util
 
 import com.github.benmanes.caffeine.cache.{Cache => CCache, Caffeine}
 import com.google.common.cache.{Cache => GCache, CacheBuilder => GCacheBuilder}
-import java.util.function.{Function => JFunction}
-import java.util.concurrent.{Callable => JCallable, ConcurrentHashMap => JConcurrentHashMap}
+
+import java.util.concurrent.{ConcurrentHashMap => JConcurrentHashMap}
+import scala.concurrent.ExecutionException
 
 trait Cache[K, V] extends Serializable {
   type Underlying
 
   def underlying: Underlying
+
   def get(k: K): Option[V]
+  def get(k: K, default: => Option[V]): Option[V]
+
   def get(k: K, default: => V): V
+
   def put(k: K, value: V): Unit
   def invalidateAll(): Unit
 }
@@ -40,6 +45,7 @@ object Cache {
   def noOp[K, V]: CacheT[K, V, Nothing] = new CacheT[K, V, Nothing] {
     override def underlying: Nothing = ???
     override def get(k: K): Option[V] = None
+    override def get(k: K, default: => Option[V]): Option[V] = default
     override def get(k: K, default: => V): V = default
     override def put(k: K, value: V): Unit = ()
     override def invalidateAll(): Unit = ()
@@ -56,18 +62,22 @@ object Cache {
 
       override def get(k: K): Option[V] = Option(chm.get(k))
 
+      override def get(k: K, default: => Option[V]): Option[V] = {
+        val maybeValue = chm.computeIfAbsent(
+          k,
+          _ => default.getOrElse(null.asInstanceOf[V])
+        )
+        Option(maybeValue)
+      }
+
       override def get(k: K, default: => V): V =
         chm.computeIfAbsent(
           k,
-          new JFunction[K, V] {
-            override def apply(key: K): V = default
-          }
+          _ => default
         )
 
-      override def put(k: K, value: V): Unit = {
+      override def put(k: K, value: V): Unit =
         chm.put(k, value)
-        ()
-      }
 
       override def invalidateAll(): Unit = chm.clear()
     }
@@ -82,12 +92,18 @@ object Cache {
       override def get(key: K): Option[V] =
         Option(underlying.getIfPresent(key))
 
+      override def get(key: K, default: => Option[V]): Option[V] = {
+        val maybeValue = underlying.get(
+          key,
+          _ => default.getOrElse(null.asInstanceOf[V])
+        )
+        Option(maybeValue)
+      }
+
       override def get(key: K, default: => V): V =
         underlying.get(
           key,
-          new JFunction[K, V] {
-            override def apply(key: K): V = default
-          }
+          _ => default
         )
 
       override def put(key: K, value: V): Unit =
@@ -98,7 +114,7 @@ object Cache {
     }
 
   def guava[K <: AnyRef, V <: AnyRef](): CacheT[K, V, GCache[K, V]] =
-    guava(GCacheBuilder.newBuilder().build[K, V]())
+    guava(GCacheBuilder.newBuilder().recordStats().build[K, V]())
 
   def guava[K, V](cache: GCache[K, V]): CacheT[K, V, GCache[K, V]] =
     new CacheT[K, V, GCache[K, V]] {
@@ -107,12 +123,24 @@ object Cache {
       override def get(key: K): Option[V] =
         Option(underlying.getIfPresent(key))
 
+      override def get(key: K, default: => Option[V]): Option[V] = {
+        try {
+          // guava does not accept null values
+          // throw an exception and catch it to return None
+          val value = underlying.get(
+            key,
+            () => default.getOrElse(throw new NoSuchElementException("Key not found"))
+          )
+          Some(value)
+        } catch {
+          case _: ExecutionException => None
+        }
+      }
+
       override def get(key: K, default: => V): V =
         underlying.get(
           key,
-          new JCallable[V] {
-            override def call(): V = default
-          }
+          () => default
         )
 
       override def put(key: K, value: V): Unit =

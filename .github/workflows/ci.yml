@@ -38,6 +38,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
+      - name: Install sbt
+        if: contains(runner.os, 'macos')
+        run: brew install sbt
+
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -98,7 +102,7 @@ jobs:
 
       - name: Check headers and formatting
         if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
+        run: sbt '++ ${{ matrix.scala }}' headerCheckAll javafmtCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' test
@@ -116,11 +120,11 @@ jobs:
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
-        run: mkdir -p integration/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-jmh/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-redis/target scio-extra/target scio-google-cloud-platform/target scio-smb/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target project/target
+        run: mkdir -p scio-bom/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-redis/target scio-extra/target scio-test/parquet/target scio-test/core/target scio-google-cloud-platform/target scio-smb/target scio-test/google-cloud-platform/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target project/target
 
       - name: Compress target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
-        run: tar cf targets.tar integration/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-jmh/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-redis/target scio-extra/target scio-google-cloud-platform/target scio-smb/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target project/target
+        run: tar cf targets.tar scio-bom/target scio-tensorflow/target site/target scio-cassandra/cassandra3/target scio-elasticsearch/es8/target scio-jdbc/target scio-macros/target scio-grpc/target scio-elasticsearch/common/target scio-test/target scio-avro/target scio-elasticsearch/es7/target scio-redis/target scio-extra/target scio-test/parquet/target scio-test/core/target scio-google-cloud-platform/target scio-smb/target scio-test/google-cloud-platform/target scio-neo4j/target scio-parquet/target scio-core/target scio-repl/target project/target
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
@@ -139,6 +143,10 @@ jobs:
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install sbt
+        if: contains(runner.os, 'macos')
+        run: brew install sbt
+
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -245,6 +253,10 @@ jobs:
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install sbt
+        if: contains(runner.os, 'macos')
+        run: brew install sbt
+
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -292,7 +304,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: scio_2.13 scio_2.12 scio-examples_2.13 scio-examples_2.12
+          modules-ignore: scio_2.13 scio_2.12 scio-examples_2.13 scio-examples_2.12 integration_2.13 integration_2.12 scio-jmh_2.13 scio-jmh_2.12
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   validate-steward:
@@ -354,7 +366,42 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}' coverage test coverageAggregate
 
       - name: Upload coverage report
-        run: 'bash <(curl -s https://codecov.io/bash)'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  avro-legacy:
+    name: Test Legacy Avro
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        scala: [2.13]
+        java: [corretto@11]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java (corretto@11)
+        id: setup-java-corretto-11
+        if: matrix.java == 'corretto@11'
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'corretto@11' && steps.setup-java-corretto-11.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Test
+        env:
+          JAVA_OPTS: '-Davro.version=1.8.2'
+        run: sbt '++ ${{ matrix.scala }}' scio-avro/test
 
   it-test:
     name: Integration Test

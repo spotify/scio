@@ -125,7 +125,9 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
   it should "infer types for Numerics" in {
     BigQueryType[RecordWithNumerics].avroSchema shouldBe RecordWithNumerics.avroSchema
 
-    compileErrors("new RecordWithNumerics(BigDecimal.apply(42), BigDecimal.apply(43))") shouldBe ""
+    compileErrors(
+      "new RecordWithNumerics(BigDecimal(42), BigNumeric(BigDecimal(43)))"
+    ) shouldBe empty
     val error = compileErrors("new RecordWithNumerics(true, false)").replace(" ", "")
     error should include("found:Boolean(true)")
     error should include("required:BigDecimal")
@@ -442,6 +444,54 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
       .map(_.getName) should not contain "tupled"
   }
 
+  @BigQueryType.fromSchema("""
+                             |{
+                             |  "fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]
+                             |}
+    """.stripMargin)
+  class Artisanal1FieldWithBody {
+    object InnerObject {
+      def innerObjectInnerMethod: String = "so artisanal"
+    }
+    val bar: Long = 42L
+    def foo: String = "foo"
+  }
+
+  it should "support user defined body in fromSchema" in {
+    Artisanal1Field.getClass.getMethods
+      .map(_.getName) should not contain "tupled"
+    RecordWithRequiredPrimitives.schema should not be null
+    (classOf[TableRow => RecordWithRequiredPrimitives]
+      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
+    (classOf[ToTable => RecordWithRequiredPrimitives]
+      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
+    Artisanal1FieldWithBody(3).bar shouldBe 42L
+    Artisanal1FieldWithBody(3).foo shouldBe "foo"
+    Artisanal1FieldWithBody(3).InnerObject.innerObjectInnerMethod shouldBe "so artisanal"
+  }
+
+  @Annotation1
+  @BigQueryType.fromSchema("""
+                             |{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}
+                             |""".stripMargin)
+  @Annotation2
+  class SchemaWithSurroundingAnnotations
+
+  it should "preserve surrounding user defined annotations" in {
+    containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
+  }
+
+  @BigQueryType.fromSchema("""
+                             |{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}
+                             |""".stripMargin)
+  @Annotation1
+  @Annotation2
+  class SchemaWithSequentialAnnotations
+
+  it should "preserve sequential user defined annotations" in {
+    containsAllAnnotTypes[SchemaWithSequentialAnnotations]
+  }
+
   @BigQueryType.toTable
   case class TwentyThree(
     a1: Int,
@@ -504,32 +554,6 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     DescriptionTbl.tableDescription shouldBe "Foo bar table description"
   }
 
-  @BigQueryType.fromSchema("""
-      |{
-      |  "fields": [ {"mode": "REQUIRED", "name": "f1", "type": "INTEGER"} ]
-      |}
-    """.stripMargin)
-  class Artisanal1FieldWithBody {
-    object InnerObject {
-      def innerObjectInnerMethod: String = "so artisanal"
-    }
-    val bar: Long = 42L
-    def foo: String = "foo"
-  }
-
-  it should "support user defined body in fromSchema" in {
-    Artisanal1Field.getClass.getMethods
-      .map(_.getName) should not contain "tupled"
-    RecordWithRequiredPrimitives.schema should not be null
-    (classOf[TableRow => RecordWithRequiredPrimitives]
-      isAssignableFrom RecordWithRequiredPrimitives.fromTableRow.getClass) shouldBe true
-    (classOf[ToTable => RecordWithRequiredPrimitives]
-      isAssignableFrom RecordWithRequiredPrimitives.toTableRow.getClass) shouldBe true
-    Artisanal1FieldWithBody(3).bar shouldBe 42L
-    Artisanal1FieldWithBody(3).foo shouldBe "foo"
-    Artisanal1FieldWithBody(3).InnerObject.innerObjectInnerMethod shouldBe "so artisanal"
-  }
-
   @BigQueryType.toTable
   case class Artisanal1ToTableWithBody(a1: Int) {
     object InnerObject {
@@ -579,28 +603,6 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     containsAllAnnotTypes[RecordWithSequentialAnnotations]
   }
 
-  @Annotation1
-  @BigQueryType.fromSchema("""
-      |{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}
-      |""".stripMargin)
-  @Annotation2
-  class SchemaWithSurroundingAnnotations
-
-  "BigQueryType.fromSchema" should "preserve surrounding user defined annotations" in {
-    containsAllAnnotTypes[SchemaWithSurroundingAnnotations]
-  }
-
-  @BigQueryType.fromSchema("""
-      |{"fields": [ {"mode": "REQUIRED", "name": "f1", "type": "DATE"} ]}
-      |""".stripMargin)
-  @Annotation1
-  @Annotation2
-  class SchemaWithSequentialAnnotations
-
-  it should "preserve sequential user defined annotations" in {
-    containsAllAnnotTypes[SchemaWithSequentialAnnotations]
-  }
-
   "BigQueryType" should " #1414: not fail on refined types" in {
     noException should be thrownBy
       BigQueryType[TypeProviderTest.RefinedClass with BigQueryType.HasAnnotation]
@@ -618,5 +620,35 @@ class TypeProviderTest extends AnyFlatSpec with Matchers {
     val cc = GeoRecordFrom(Geography(wkt))
     cc.f1 shouldBe Geography(wkt)
     GeoRecordTo(Geography(wkt))
+  }
+
+  @BigQueryType.fromSchema("""
+      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "JSON"}]}
+    """.stripMargin)
+  class JsonRecordFrom
+
+  @BigQueryType.toTable
+  case class JsonRecordTo(f1: Json)
+
+  it should "support JSON type" in {
+    val wkt = "{\"name\": \"Alice\", \"age\": 30}"
+    val cc = JsonRecordFrom(Json(wkt))
+    cc.f1 shouldBe Json(wkt)
+    JsonRecordTo(Json(wkt))
+  }
+
+  @BigQueryType.fromSchema("""
+      |{"fields": [{"mode": "REQUIRED", "name": "f1", "type": "BIGNUMERIC"}]}
+    """.stripMargin)
+  class BigNumericRecordFrom
+
+  @BigQueryType.toTable
+  case class BigNumericRecordTo(f1: BigNumeric)
+
+  it should "support BIGNUMERIC type" in {
+    val wkt = BigDecimal(30.31)
+    val cc = BigNumericRecordFrom(BigNumeric(wkt))
+    cc.f1 shouldBe BigNumeric(wkt)
+    BigNumericRecordTo(BigNumeric(wkt))
   }
 }

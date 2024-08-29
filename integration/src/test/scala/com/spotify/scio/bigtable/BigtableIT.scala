@@ -100,7 +100,7 @@ class BigtableIT extends PipelineSpec {
         sc
           .parallelize(data.map(kv => toWriteMutation(kv._1, kv._2)))
           .saveAsBigtable(projectId, instanceId, tableId)
-      }.waitUntilFinish()
+      }.waitUntilDone()
 
       // Read rows back
       // Filter rows in case there are other keys in the table
@@ -112,16 +112,17 @@ class BigtableIT extends PipelineSpec {
         sc
           .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
           .map(fromRow) should containInAnyOrder(data)
-      }.waitUntilFinish()
+      }.waitUntilDone()
     } catch {
       case e: Throwable => throw e
-    } finally {
-      // Delete rows afterwards
-      runWithRealContext() { sc =>
-        sc.parallelize(data.map(kv => toDeleteMutation(kv._1)))
-          .saveAsBigtable(projectId, instanceId, tableId)
-      }
-    }
+    } finally
+      {
+        // Delete rows afterwards
+        runWithRealContext() { sc =>
+          sc.parallelize(data.map(kv => toDeleteMutation(kv._1)))
+            .saveAsBigtable(projectId, instanceId, tableId)
+        }
+      }.waitUntilFinish()
   }
 
   it should "work in bulk mode" in {
@@ -140,7 +141,7 @@ class BigtableIT extends PipelineSpec {
         sc
           .parallelize(data.map(kv => toWriteMutation(kv._1, kv._2)))
           .saveAsBigtable(options, tableId, 1)
-      }.waitUntilFinish()
+      }.waitUntilDone()
 
       // Read rows back
       // Filter rows in case there are other keys in the table
@@ -152,7 +153,7 @@ class BigtableIT extends PipelineSpec {
         sc
           .bigtable(projectId, instanceId, tableId, rowFilter = rowFilter)
           .map(fromRow) should containInAnyOrder(data)
-      }.waitUntilFinish()
+      }.waitUntilDone()
     } catch {
       case e: Throwable => throw e
     } finally

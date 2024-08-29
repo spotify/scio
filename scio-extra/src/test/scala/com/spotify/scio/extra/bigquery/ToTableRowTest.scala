@@ -24,10 +24,10 @@ import com.spotify.scio.bigquery.TableRow
 import org.apache.avro.generic.GenericRecordBuilder
 import org.apache.avro.generic.GenericData.EnumSymbol
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.BaseEncoding
-import org.joda.time.{DateTime, LocalDate, LocalTime}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.{Instant, LocalDate, LocalTime}
 import scala.jdk.CollectionConverters._
 
 class ToTableRowTest extends AnyFlatSpec with Matchers {
@@ -95,9 +95,9 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
 
   val date: LocalDate = LocalDate.parse("2019-10-29")
   val timeMillis: LocalTime = LocalTime.parse("01:24:52.211")
-  val timeMicros = 1234L
-  val timestampMillis: DateTime = DateTime.parse("2019-10-29T05:24:52.215")
-  val timestampMicros = 4325L
+  val timeMicros: LocalTime = LocalTime.parse("01:24:52.211112")
+  val timestampMillis: Instant = Instant.parse("2019-10-29T05:24:52.215Z")
+  val timestampMicros: Instant = Instant.parse("2019-10-29T05:24:52.215521Z")
   val decimal = new JBigDecimal("3.14")
 
   val expectedLogicalTypeOutput: TableRow = new TableRow()
@@ -111,9 +111,9 @@ class ToTableRowTest extends AnyFlatSpec with Matchers {
     .set("dateField", "2019-10-29")
     .set("decimalField", decimal.toString)
     .set("timeMillisField", "01:24:52.211000")
-    .set("timeMicrosField", timeMicros)
+    .set("timeMicrosField", "01:24:52.211112")
     .set("timestampMillisField", "2019-10-29T05:24:52.215000")
-    .set("timestampMicrosField", timestampMicros)
+    .set("timestampMicrosField", "2019-10-29T05:24:52.215521")
 
   "ToTableRowWithLogicalType" should "convert a SpecificRecord with Logical Types to TableRow" in {
     val specificRecord = AvroExampleWithLogicalType

@@ -71,7 +71,7 @@ Any Scala or Java unit testing frameworks can be used with Scio, but we provide 
 - @scaladoc[SCollectionMatchers](com.spotify.scio.testing.SCollectionMatchers) - ScalaTest matchers for `SCollection`
 - @scaladoc[PipelineSpec](com.spotify.scio.testing.PipelineSpec) - shortcut for ScalaTest `FlatSpec` with utilities and matchers
 
-The best place to find example usage of `JobTest` and `SCollectionMatchers` are their respective tests in @github[JobTestTest](/scio-test/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and @github[SCollectionMatchersTest](/scio-test/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
+The best place to find example usage of `JobTest` and `SCollectionMatchers` are their respective tests in @github[JobTestTest](/scio-test/core/src/test/scala/com/spotify/scio/testing/JobTestTest.scala) and @github[SCollectionMatchersTest](/scio-test/core/src/test/scala/com/spotify/scio/testing/SCollectionMatchersTest.scala).
 For more examples see:
 
 - @github[scio-examples](/scio-examples/src/test/scala/com/spotify/scio/examples)

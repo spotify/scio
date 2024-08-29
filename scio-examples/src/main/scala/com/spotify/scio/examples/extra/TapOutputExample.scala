@@ -60,7 +60,7 @@ object TapOutputExample {
     // Re-open taps in new `ScioContext`
     (t1.open(sc2) ++ t2.open(sc2).map(_.toInt)).sum
     // Execute the pipeline and block until it completes
-    val result = sc2.run().waitUntilFinish()
+    val result = sc2.run().waitUntilDone()
 
     println(result.state)
   }

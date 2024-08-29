@@ -97,8 +97,8 @@ be manually read by a downstream user.
 
 ## Avro String keys
 
-If you're using `AvroSortedBucketIO`, be aware of how Avro String fields are decoded. Configuration
-errors can result in the following runtime exception:
+As of **Scio 0.14.0**, Avro `CharSequence` are backed by `String` instead of default `Utf8`.
+With previous versions you may encounter the following when using Avro `CharSequence` keys:
 
 ```bash
 Cause: java.lang.ClassCastException: class org.apache.avro.util.Utf8 cannot be cast to class java.lang.String
@@ -106,90 +106,17 @@ Cause: java.lang.ClassCastException: class org.apache.avro.util.Utf8 cannot be c
 [info]   at org.apache.beam.sdk.extensions.smb.BucketMetadata.encodeKeyBytes(BucketMetadata.java:222)
 ```
 
-### SpecificRecords
-
-Scio 0.10.4 specifically has a bug in the default String decoding behavior for `SpecificRecords`: by default,
-they're decoded at runtime into `org.apache.avro.util.Utf8` objects, rather than `java.lang.String`s
-(the generated getter/setter signatures use `CharSequence` as an umbrella type). This bug has been fixed in
-Scio 0.11+. If you cannot upgrade, you can mitigate this by ensuring your `SpecificRecord` schema has the property
-`java-class: java.lang.String` set in the key field. This can be done either in the avsc/avdl schema or in
-Java/Scala code:
-
-```scala
-val mySchema: org.apache.avro.Schema = ???
-mySchema
-  .getField("keyField")
-  .schema()
-  .addProp(
-    org.apache.avro.specific.SpecificData.CLASS_PROP,
-    "java.lang.String".asInstanceOf[Object]
-  )
-```
-
-Note: If you're using [sbt-avro](https://github.com/sbt/sbt-avro#examples) for schema generation, you can
-just set the SBT property `avroStringType := "String"` instead.
-
-### GenericRecords
-
-For GenericRecords, `org.apache.avro.util.Utf8` decoding has always been the default. If you're reading
-Avro GenericRecords in your SMB join, set the `avro.java.string: String` property in the Schema of the key field.
-
-```scala
-val mySchema: org.apache.avro.Schema = ???
-mySchema
-  .getField("keyField")
-  .schema()
-  .addProp(
-    org.apache.avro.generic.GenericData.STRING_PROP,
-    "String".asInstanceOf[Object]
-  )
-```
+You'll have to either recompile your avro schema using `String` type,
+or add the `GenericData.StringType.String` property to your Avro schema with [setStringType](https://avro.apache.org/docs/1.11.1/api/java/org/apache/avro/generic/GenericData.html#setStringType-org.apache.avro.Schema-org.apache.avro.generic.GenericData.StringType-)
 
 ## Parquet
 
 SMB supports Parquet reads and writes in both Avro and case class formats.
 
-As of **Scio 0.14.0** and above, Scio supports logical types in parquet-avro out of the box.
+As of **Scio 0.14.0** and above, Scio supports specific record logical types in parquet-avro out of the box.
 
-Earlier versions of Scio require you to manually supply a _logical type supplier_ in your Parquet `Configuration` parameter:
-
-```scala mdoc:fail:silent
-import org.apache.avro.specific.SpecificRecordBase
-
-import org.apache.beam.sdk.extensions.smb.{AvroLogicalTypeSupplier, ParquetAvroSortedBucketIO}
-import org.apache.beam.sdk.values.TupleTag
-import org.apache.hadoop.conf.Configuration
-import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
-import com.spotify.scio.avro.TestRecord
-
-// Reads
-val readConf = new Configuration()
-readConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
-
-ParquetAvroSortedBucketIO
-  .read[TestRecord](new TupleTag[TestRecord], classOf[TestRecord])
-  .withConfiguration(readConf)
-
-// Writes
-val writeConf = new Configuration()
-writeConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
-
-ParquetAvroSortedBucketIO
-  .write(classOf[String], "myKeyField", classOf[TestRecord])
-  .withConfiguration(writeConf)
-
-// Transforms
-val transformConf = new Configuration()
-transformConf.setClass(AvroReadSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
-transformConf.setClass(AvroWriteSupport.AVRO_DATA_SUPPLIER, classOf[AvroLogicalTypeSupplier], classOf[AvroDataSupplier])
-
-ParquetAvroSortedBucketIO
-  .transformOutput(classOf[String], "myKeyField", classOf[TestRecord])
-  .withConfiguration(transformConf)
-```
-
-Note that if you're using a non-default Avro version (i.e. Avro 1.11), you'll have to supply a custom logical type supplier
-using Avro 1.11 classes. See @ref:[Logical Types in Parquet](../io/Parquet.md#logical-types) for more information.
+When using generic record, you have to manually supply a _data supplier_ in your Parquet `Configuration` parameter.
+See @ref:[Logical Types in Parquet](../io/Parquet.md#logical-types) for more information.
 
 ## Tuning parameters for SMB transforms
 

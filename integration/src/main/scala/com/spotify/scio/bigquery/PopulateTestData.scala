@@ -21,6 +21,7 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model.{Dataset, DatasetReference}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.client.BigQuery
+import com.spotify.scio.bigquery.types.{BigNumeric, Geography, Json}
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -50,7 +51,10 @@ object PopulateTestData {
     timestamp: Instant,
     date: LocalDate,
     time: LocalTime,
-    datetime: LocalDateTime
+    datetime: LocalDateTime,
+    geography: Geography,
+    json: Json,
+    bigNumeric: BigNumeric
   )
 
   @BigQueryType.toTable
@@ -64,7 +68,10 @@ object PopulateTestData {
     timestamp: Option[Instant],
     date: Option[LocalDate],
     time: Option[LocalTime],
-    datetime: Option[LocalDateTime]
+    datetime: Option[LocalDateTime],
+    geography: Option[Geography],
+    json: Option[Json],
+    bigNumeric: Option[BigNumeric]
   )
 
   @BigQueryType.toTable
@@ -78,7 +85,10 @@ object PopulateTestData {
     timestamp: List[Instant],
     date: List[LocalDate],
     time: List[LocalTime],
-    datetime: List[LocalDateTime]
+    datetime: List[LocalDateTime],
+    geography: List[Geography],
+    json: List[Json],
+    bigNumeric: List[BigNumeric]
   )
 
   case class Record(int: Long, string: String)
@@ -200,7 +210,10 @@ object PopulateTestData {
       t.plus(Duration.millis(i.toLong)),
       dt.toLocalDate.plusDays(i),
       dt.toLocalTime.plusMillis(i),
-      dt.toLocalDateTime.plusMillis(i)
+      dt.toLocalDateTime.plusMillis(i),
+      Geography(s"POINT($i $i)"),
+      Json(s"""{"value": $i}"""),
+      BigNumeric(BigDecimal(i))
     )
   }
 
@@ -217,7 +230,10 @@ object PopulateTestData {
       Some(t.plus(Duration.millis(i.toLong))),
       Some(dt.toLocalDate.plusDays(i)),
       Some(dt.toLocalTime.plusMillis(i)),
-      Some(dt.toLocalDateTime.plusMillis(i))
+      Some(dt.toLocalDateTime.plusMillis(i)),
+      Some(Geography(s"POINT($i $i)")),
+      Some(Json(s"""{"value": $i}""")),
+      Some(BigNumeric(BigDecimal(i)))
     )
   }
 
@@ -234,7 +250,10 @@ object PopulateTestData {
       List(t.plus(Duration.millis(i.toLong))),
       List(dt.toLocalDate.plusDays(i)),
       List(dt.toLocalTime.plusMillis(i)),
-      List(dt.toLocalDateTime.plusMillis(i))
+      List(dt.toLocalDateTime.plusMillis(i)),
+      List(Geography(s"POINT($i $i)")),
+      List(Json(s"""{"value": $i}""")),
+      List(BigNumeric(BigDecimal(i)))
     )
   }
 }

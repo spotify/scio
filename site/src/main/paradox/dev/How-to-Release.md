@@ -41,7 +41,6 @@ git push origin vX.Y.Z
 
 ## Manual 
 
-- Run the slow integration tests with `SLOW=true sbt it:test`
 - Run `release skip-tests` in sbt console and follow the instructions
 - Go to [oss.sonatype.org](https://oss.sonatype.org/), find the staging repository, "close" and "release"
 - When the tag build completes, update release notes with name and change log

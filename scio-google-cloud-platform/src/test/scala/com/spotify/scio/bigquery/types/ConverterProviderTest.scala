@@ -46,6 +46,12 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
     BigQueryType.toTableRow[RequiredGeo](RequiredGeo(Geography(wkt))) shouldBe TableRow("a" -> wkt)
   }
 
+  it should "handle required json type" in {
+    val wkt = "{\"name\": \"Alice\", \"age\": 30}"
+    RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
+    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> wkt)
+  }
+
   it should "handle case classes with methods" in {
     RequiredWithMethod.fromTableRow(TableRow("a" -> "")) shouldBe RequiredWithMethod("")
     BigQueryType.toTableRow[RequiredWithMethod](RequiredWithMethod("")) shouldBe TableRow("a" -> "")
@@ -56,6 +62,9 @@ object ConverterProviderTest {
 
   @BigQueryType.toTable
   case class RequiredGeo(a: Geography)
+
+  @BigQueryType.toTable
+  case class RequiredJson(a: Json)
 
   @BigQueryType.toTable
   case class Required(a: String)

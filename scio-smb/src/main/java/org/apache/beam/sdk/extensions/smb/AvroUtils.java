@@ -166,6 +166,14 @@ class AvroUtils {
         CharSequence.class, CharSequenceCoder.of());
   }
 
+  static Class castToComparableStringClass(Class cls) {
+    if (cls == String.class) {
+      return CharSequence.class;
+    } else {
+      return cls;
+    }
+  }
+
   private static class ByteBufferCoder extends AtomicCoder<ByteBuffer> {
     private static final ByteBufferCoder INSTANCE = new ByteBufferCoder();
 

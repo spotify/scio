@@ -86,7 +86,7 @@ object ParquetJob {
 
 ### Write Avro to Parquet files
 
-Both Avro [generic](https://avro.apache.org/docs/1.8.1/api/java/org/apache/avro/generic/GenericData.Record.html) and [specific](https://avro.apache.org/docs/1.8.2/api/java/org/apache/avro/specific/package-summary.html) records are supported when writing.
+Both Avro [generic](https://avro.apache.org/docs/current/api/java/org/apache/avro/generic/GenericData.Record.html) and [specific](https://avro.apache.org/docs/current/api/java/org/apache/avro/specific/package-summary.html) records are supported when writing.
 
 Type of Avro specific records will hold information about schema,
 therefore Scio will figure out the schema by itself:
@@ -117,65 +117,51 @@ def result = input.saveAsParquetAvroFile("gs://path-to-data/lake/output", schema
 
 ### Logical Types
 
-As of **Scio 0.14.0** and above, Scio supports logical types in parquet-avro out of the box.
+As of **Scio 0.14.0** and above, Scio supports specific record logical types in parquet-avro out of the box.
 
-If you're on an earlier version of Scio and your Avro schema contains a logical type, you'll need to supply an additional Configuration parameter for your reads and writes.
+When using generic record you'll need to supply the additional Configuration parameter
+`AvroReadSupport.AVRO_DATA_SUPPLIER` for reads or `AvroWriteSupport.AVRO_DATA_SUPPLIER` for writes to use logical types.
 
-If you're using the default version of Avro (1.8), you can use Scio's pre-built logical type conversions:
-
-```scala mdoc:fail:silent
+```scala mdoc:compile-only
 import com.spotify.scio._
-import com.spotify.scio.values.SCollection
+import com.spotify.scio.avro._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.parquet.avro._
-import com.spotify.scio.avro.TestRecord
+import com.spotify.scio.parquet.ParquetConfiguration
+import com.spotify.scio.values.SCollection
+import org.apache.avro.Conversions
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.data.TimeConversions
+import org.apache.avro.generic.GenericData
+import org.apache.parquet.avro.{AvroDataSupplier, AvroReadSupport, AvroWriteSupport}
 
 val sc: ScioContext = ???
-val data: SCollection[TestRecord] = sc.parallelize(List[TestRecord]())
+implicit val coder: Coder[GenericRecord] = ???
+val data: SCollection[GenericRecord] = ???
+
+class AvroLogicalTypeSupplier extends AvroDataSupplier {
+  override def get(): GenericData = {
+    val data = GenericData.get()
+
+    // Add conversions as needed
+    data.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion())
+
+    data
+  }
+}
 
 // Reads
-import com.spotify.scio.parquet.ParquetConfiguration
-
-import org.apache.parquet.avro.AvroReadSupport
-
 sc.parquetAvroFile(
   "somePath",
-  conf = ParquetConfiguration.of(AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier])
+  conf = ParquetConfiguration.of(AvroReadSupport.AVRO_DATA_SUPPLIER -> classOf[AvroLogicalTypeSupplier])
 )
 
 // Writes
-import org.apache.parquet.avro.AvroWriteSupport
-
 data.saveAsParquetAvroFile(
   "somePath",
-  conf = ParquetConfiguration.of(AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[LogicalTypeSupplier])
+  conf = ParquetConfiguration.of(AvroWriteSupport.AVRO_DATA_SUPPLIER -> classOf[AvroLogicalTypeSupplier])
 )
 ```
-
-(If you're using `scio-smb`, you can use the provided class `org.apache.beam.sdk.extensions.smb.AvroLogicalTypeSupplier` instead.)
-
-If you're using Avro 1.11, you'll have to create your own logical type supplier class, as Scio's `LogicalTypeSupplier` uses
-classes present in Avro 1.8 but not 1.11. A sample Avro 1.11 logical-type supplier might look like:
-
-```scala
-import org.apache.avro.Conversions;
-import org.apache.avro.data.TimeConversions;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.specific.SpecificData;
-import org.apache.parquet.avro.AvroDataSupplier;
-
-case class AvroLogicalTypeSupplier() extends AvroDataSupplier {
-  override def get(): GenericData = {
-    val specificData = SpecificData.get()
-
-    // Add conversions as needed
-    specificData.addLogicalTypeConversion(new TimeConversions.TimestampMillisConversion())
-
-    specificData
-  }
-}
-```
-
-Then, you'll have to specify your logical type supplier class in your `Configuration` as outlined above.
 
 ## Case classes
 
@@ -301,3 +287,33 @@ A full list of Parquet configuration options can be found [here](https://github.
 Parquet read internals have been reworked in Scio 0.12.0. As of 0.12.0, you can opt-into the new Parquet read implementation,
 backed by the new Beam [SplittableDoFn](https://beam.apache.org/blog/splittable-do-fn/) API, by following the instructions
 @ref:[here](../releases/migrations/v0.12.0-Migration-Guide.md#parquet-reads).
+
+## Testing
+
+In addition to JobTest support for Avro, Typed, and Tensorflow models, Scio 0.14.5 and above include utilities for testing projections and predicates.
+Just import the desired module, `com.spotify.scio.testing.parquet.{avro|types|tensorflow}._`, from the `scio-test-parquet` artifact.
+For example, test utilities for Avro are available in `com.spotify.scio.testing.parquet.avro._`:
+
+```scala
+import com.spotify.scio.testing.parquet.avro._
+
+val projection: Schema = ???
+val predicate: FilterPredicate = ???
+
+val records: Iterable[T <: SpecificRecord] = ???
+val expected: Iterable[T <: SpecificRecord] = ???
+
+records withProjection projection withPredicate predicate should contain theSameElementsAs expected
+```
+
+You can also test a case class projection against an Avro writer schema to ensure writer/reader compatibility:
+
+```scala
+import com.spotify.scio.testing.parquet.avro._
+
+case class MyProjection(id: Int)
+val records: Iterable[T <: SpecificRecord] = ???
+val expected: Iterable[MyRecord] = ???
+
+records withProjection[MyProjection] should contain theSameElementsAs expected
+```

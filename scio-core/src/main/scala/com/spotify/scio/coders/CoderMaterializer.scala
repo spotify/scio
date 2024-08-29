@@ -17,20 +17,102 @@
 
 package com.spotify.scio.coders
 
-import org.apache.beam.sdk.coders.{Coder => BCoder, IterableCoder, KvCoder, NullableCoder}
+import com.spotify.scio.util.RemoteFileUtil
+import org.apache.beam.sdk.coders.{
+  Coder => BCoder,
+  IterableCoder,
+  KvCoder,
+  NullableCoder,
+  ZstdCoder
+}
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.commons.lang3.ObjectUtils
 
+import java.net.URI
+import java.nio.file.Files
+import java.util.concurrent.ConcurrentHashMap
+import scala.collection.compat._
 import scala.collection.concurrent.TrieMap
+import scala.jdk.CollectionConverters._
+import scala.util.Try
 import scala.util.chaining._
 
 object CoderMaterializer {
   import com.spotify.scio.ScioContext
 
-  private[scio] case class CoderOptions(nullableCoders: Boolean, kryo: KryoOptions)
+  private[scio] case class CoderOptions(
+    nullableCoders: Boolean,
+    kryo: KryoOptions,
+    zstdDictMapping: Map[String, Array[Byte]]
+  )
   private[scio] object CoderOptions {
+    private val cache: ConcurrentHashMap[String, CoderOptions] = new ConcurrentHashMap()
+    private val ZstdArgRegex = "([^:]+):(.*)".r
+    private val ZstdPackageBlacklist =
+      List("scala.", "java.", "com.spotify.scio.", "org.apache.beam.")
+
     final def apply(o: PipelineOptions): CoderOptions = {
-      val nullableCoder = o.as(classOf[com.spotify.scio.options.ScioOptions]).getNullableCoders
-      new CoderOptions(nullableCoder, KryoOptions(o))
+      cache.computeIfAbsent(
+        ObjectUtils.identityToString(o),
+        { _ =>
+          val scioOpts = o.as(classOf[com.spotify.scio.options.ScioOptions])
+          val nullableCoder = scioOpts.getNullableCoders
+
+          val (errors, classPathMapping) = Option(scioOpts.getZstdDictionary)
+            .map(_.asScala.toList)
+            .getOrElse(List.empty)
+            .partitionMap {
+              case s @ ZstdArgRegex(className, path) =>
+                Option
+                  .when(ZstdPackageBlacklist.exists(className.startsWith))(
+                    s"zstdDictionary command-line arguments may not be used for class $className. " +
+                      s"Provide Zstd coders manually instead."
+                  )
+                  .orElse {
+                    Try(Class.forName(className)).failed.toOption
+                      .map(_ => s"Class for zstdDictionary argument ${s} not found.")
+                  }
+                  .toLeft(className.replaceAll("\\$", ".") -> path)
+              case s =>
+                Left(
+                  "zstdDictionary arguments must be in a colon-separated format. " +
+                    s"Example: `com.spotify.ClassName:gs://path`. Found: $s"
+                )
+            }
+
+          if (errors.nonEmpty) {
+            throw new IllegalArgumentException(
+              errors.mkString("Bad zstdDictionary arguments:\n\t", "\n\t", "\n")
+            )
+          }
+
+          val zstdDictPaths = classPathMapping
+            .groupBy(_._1)
+            .map { case (className, values) => className -> values.map(_._2).toSet }
+
+          val dupes = zstdDictPaths
+            .collect {
+              case (className, values) if values.size > 1 =>
+                s"Class $className -> [${values.mkString(", ")}]"
+            }
+          if (dupes.size > 1) {
+            throw new IllegalArgumentException(
+              dupes.mkString("Found multiple Zstd dictionaries for:\n\t", "\n\t", "\n")
+            )
+          }
+
+          val zstdDictMapping = zstdDictPaths.map { case (clazz, dictUriSet) =>
+            // dictUriSet always contains exactly 1 item
+            val dictUri = dictUriSet.toList.head
+            val dictPath = RemoteFileUtil.create(o).download(new URI(dictUri))
+            val dictBytes = Files.readAllBytes(dictPath)
+            Files.delete(dictPath)
+            clazz -> dictBytes
+          }
+
+          new CoderOptions(nullableCoder, KryoOptions(o), zstdDictMapping)
+        }
+      )
     }
   }
 
@@ -119,6 +201,13 @@ object CoderMaterializer {
 
     bCoder
       .pipe(bc => if (isNullableCoder(o, coder)) NullableCoder.of(bc) else bc)
+      .pipe { bc =>
+        Option(coder)
+          .collect { case x: TypeName => x.typeName }
+          .flatMap(o.zstdDictMapping.get)
+          .map(ZstdCoder.of(bc, _))
+          .getOrElse(bc)
+      }
       .pipe(bc => if (isWrappableCoder(topLevel, coder)) new MaterializedCoder(bc) else bc)
   }
 }

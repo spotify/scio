@@ -19,8 +19,17 @@ package com.spotify.scio.avro
 import org.apache.avro.{Conversion, Schema}
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
 import org.apache.avro.io.{DatumReader, DatumWriter}
-import org.apache.avro.specific.{SpecificDatumReader, SpecificDatumWriter, SpecificRecord}
+import org.apache.avro.specific.{
+  SpecificData,
+  SpecificDatumReader,
+  SpecificDatumWriter,
+  SpecificRecord
+}
 import org.apache.beam.sdk.extensions.avro.io.AvroDatumFactory
+
+import scala.jdk.CollectionConverters._
+import scala.util.Try
+import scala.util.chaining._
 
 /**
  * AvroDatumFactory for [[GenericRecord]] forcing underlying [[CharSequence]] implementation to
@@ -55,6 +64,18 @@ private[scio] object GenericRecordDatumFactory extends AvroDatumFactory.GenericD
 private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: Class[T])
     extends AvroDatumFactory.SpecificDatumFactory[T](recordType) {
   import SpecificRecordDatumFactory._
+
+  override def apply(writer: Schema): DatumWriter[T] = {
+    val datumWriter = new SpecificDatumWriter(recordType)
+    // avro 1.8 generated code does not add conversions to the data
+    if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
+      addLogicalTypeConversions(datumWriter.getData.asInstanceOf[SpecificData], writer)
+    }
+    datumWriter.setSchema(writer)
+    datumWriter
+  }
+
+  // TODO move this to companion object
   private class ScioSpecificDatumReader extends SpecificDatumReader[T](recordType) {
     override def findStringClass(schema: Schema): Class[_] = super.findStringClass(schema) match {
       case cls if cls == classOf[CharSequence] => classOf[String]
@@ -62,25 +83,11 @@ private[scio] class SpecificRecordDatumFactory[T <: SpecificRecord](recordType: 
     }
   }
 
-  override def apply(writer: Schema): DatumWriter[T] = {
-    val datumWriter = new SpecificDatumWriter[T]()
-    // avro 1.8 generated code does not add conversions to the data
-    if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
-      val data = datumWriter.getData
-      val conversions = specificRecordConversions(recordType)
-      conversions.foreach(data.addLogicalTypeConversion)
-    }
-    datumWriter.setSchema(writer)
-    datumWriter
-  }
-
   override def apply(writer: Schema, reader: Schema): DatumReader[T] = {
     val datumReader = new ScioSpecificDatumReader()
     // avro 1.8 generated code does not add conversions to the data
     if (runtimeAvroVersion.exists(_.startsWith("1.8."))) {
-      val data = datumReader.getData
-      val conversions = specificRecordConversions(recordType)
-      conversions.foreach(data.addLogicalTypeConversion)
+      addLogicalTypeConversions(datumReader.getData.asInstanceOf[SpecificData], reader)
     }
     datumReader.getData
     datumReader.setExpected(reader)
@@ -94,17 +101,41 @@ private[scio] object SpecificRecordDatumFactory {
   @transient private lazy val runtimeAvroVersion: Option[String] =
     Option(classOf[Schema].getPackage.getImplementationVersion)
 
-  private def specificRecordConversions[T <: SpecificRecord](
-    recordType: Class[T]
-  ): Seq[Conversion[_]] = {
-    try {
-      val field = recordType.getDeclaredField("conversions")
-      field.setAccessible(true)
-      val conversions = field.get(null).asInstanceOf[Array[Conversion[_]]]
-      // remove null entries from the conversion array
-      conversions.filter(_ != null).toSeq
-    } catch {
-      case _: NoSuchFieldException | _: IllegalAccessException => Seq.empty[Conversion[_]]
+  private def addLogicalTypeConversions[T <: SpecificRecord](
+    data: SpecificData,
+    schema: Schema,
+    seenSchemas: Set[Schema] = Set.empty
+  ): Unit = {
+    if (seenSchemas.contains(schema)) {
+      return
+    }
+
+    schema.getType match {
+      case Schema.Type.RECORD =>
+        // avro 1.8 patching
+        //   - specific data must find the class
+        //   - class must have a 'conversions' field
+        //   - 'conversion' field must be a static array of Conversion[_]
+        //   - add non null conversions to the data
+        for {
+          clazz <- Option(data.getClass(schema))
+          field <- Try(clazz.getDeclaredField("conversions").tap(_.setAccessible(true))).toOption
+          conversions <- Try(field.get(null)).collect { case c: Array[Conversion[_]] => c }.toOption
+        } yield conversions.filter(_ != null).foreach(data.addLogicalTypeConversion)
+
+        val updatedSeenSchemas = seenSchemas + schema
+        schema.getFields.asScala.foreach { f =>
+          addLogicalTypeConversions(data, f.schema(), updatedSeenSchemas)
+        }
+      case Schema.Type.MAP =>
+        addLogicalTypeConversions(data, schema.getValueType, seenSchemas)
+      case Schema.Type.ARRAY =>
+        addLogicalTypeConversions(data, schema.getElementType, seenSchemas)
+      case Schema.Type.UNION =>
+        schema.getTypes.asScala.foreach { t =>
+          addLogicalTypeConversions(data, t, seenSchemas)
+        }
+      case _ =>
     }
   }
 

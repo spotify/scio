@@ -143,7 +143,8 @@ To create a Scio context for Google Cloud Dataflow service, add Dataflow pipelin
 ```
 $ java -jar scio-repl-0.7.0.jar \
 > --project=<project-id> \
-> --stagingLocation=<stagin-dir> \
+> --stagingLocation=<staging-dir> \
+> --tempLocation=<temp-dir> \
 > --runner=DataflowRunner
 Welcome to
                  _____
@@ -203,7 +204,8 @@ In this example we will read some data from BigQuery and process it in Dataflow.
 ```
 $ java -jar -Dbigquery.project=<project-id> scio-repl-0.7.0.jar \
 > --project=<project-id> \
-> --stagingLocation=<stagin-dir> \
+> --stagingLocation=<staging-dir> \
+> --tempLocation=<temp-dir> \
 > --runner=DataflowRunner
 Welcome to
                  _____
@@ -326,7 +328,8 @@ When using REPL and Dataflow service consider using the non-blocking @javadoc[Da
 ```
 java -jar scio-repl-0.7.0.jar \
 > --project=<project-id> \
-> --stagingLocation=<stagin-dir> \
+> --stagingLocation=<staging-dir> \
+> --tempLocation=<temp-dir> \
 > --runner=DataflowRunner
 Welcome to
                  _____

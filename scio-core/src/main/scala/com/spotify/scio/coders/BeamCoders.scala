@@ -19,7 +19,7 @@ package com.spotify.scio.coders
 
 import com.spotify.scio.coders.CoderMaterializer.CoderOptions
 import com.spotify.scio.values.SCollection
-import org.apache.beam.sdk.coders.{Coder => BCoder, NullableCoder}
+import org.apache.beam.sdk.coders.{Coder => BCoder, NullableCoder, ZstdCoder => BZstdCoder}
 import org.apache.beam.sdk.values.PCollection
 
 import scala.annotation.tailrec
@@ -33,6 +33,14 @@ private[scio] object BeamCoders {
       case c: MaterializedCoder[T]                       => unwrap(options, c.bcoder)
       case c: NullableCoder[T] if options.nullableCoders => c.getValueCoder
       case _                                             => coder
+    }
+
+  private def unwrapZstd[T](options: CoderOptions, coder: BCoder[T]): BCoder[T] =
+    coder match {
+      case c: BZstdCoder[T] =>
+        val underlying = c.getCoderArguments.get(0).asInstanceOf[BCoder[T]]
+        unwrap(options, underlying)
+      case _ => coder
     }
 
   /** Get coder from an `PCollection[T]`. */
@@ -49,6 +57,7 @@ private[scio] object BeamCoders {
     val options = CoderOptions(coll.context.options)
     val coder = coll.internal.getCoder
     Some(unwrap(options, coder))
+      .map(unwrapZstd(options, _))
       .map(_.getCoderArguments.asScala.toList)
       .collect {
         case (c1: BCoder[K @unchecked]) ::
@@ -75,6 +84,7 @@ private[scio] object BeamCoders {
     val options = CoderOptions(coll.context.options)
     val coder = coll.internal.getCoder
     Some(unwrap(options, coder))
+      .map(unwrapZstd(options, _))
       .map(_.getCoderArguments.asScala.toList)
       .collect {
         case (c1: BCoder[A @unchecked]) ::
@@ -99,6 +109,7 @@ private[scio] object BeamCoders {
     val options = CoderOptions(coll.context.options)
     val coder = coll.internal.getCoder
     Some(unwrap(options, coder))
+      .map(unwrapZstd(options, _))
       .map(_.getCoderArguments.asScala.toList)
       .collect {
         case (c1: BCoder[A @unchecked]) ::

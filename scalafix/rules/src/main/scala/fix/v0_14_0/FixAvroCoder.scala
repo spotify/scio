@@ -42,6 +42,9 @@ object FixAvroCoder {
   val ParallelizeMatcher = SymbolMatcher.normalized(
     "com/spotify/scio/ScioContext#parallelize()."
   )
+  val SCollectionMatcher = SymbolMatcher.normalized(
+    "com/spotify/scio/values/SCollection#"
+  )
 
   /** @return true if `sym` is a class whose parents include a type matching `parentMatcher` */
   def hasParentClass(sym: Symbol, parentMatcher: SymbolMatcher)(implicit
@@ -135,25 +138,50 @@ object FixAvroCoder {
   def isAvroType(sym: Symbol)(implicit sd: SemanticDocument): Boolean =
     AvroMatcher.matches(sym) || hasParentClass(sym, AvroMatcher)
 
-  def hasAvroTypeSignature(tree: Tree, checkLiftedType: Boolean)(implicit doc: SemanticDocument): Boolean =
+  def hasAvroTypeSignature(tree: Tree, checkLiftedType: Boolean)(implicit
+    doc: SemanticDocument
+  ): Boolean =
     tree.symbol.info.map(_.signature).exists {
-      case MethodSignature(_, _, TypeRef(_, returnType, _)) if !checkLiftedType && isAvroType(returnType) =>
+      case MethodSignature(_, _, TypeRef(_, returnType, _))
+          if !checkLiftedType && isAvroType(returnType) =>
         true
-      case MethodSignature(_, _, TypeRef(_, _, List(TypeRef(_, returnType, _)))) if checkLiftedType && isAvroType(returnType) =>
+      case MethodSignature(_, _, TypeRef(_, _, List(TypeRef(_, returnType, _))))
+          if checkLiftedType && isAvroType(returnType) =>
         true
       case _ =>
         false
     }
 
   def methodHasAvroCoderTypeBound(expr: Term)(implicit doc: SemanticDocument): Boolean =
-    expr.symbol.info.map(_.signature)
+    expr.symbol.info
+      .map(_.signature)
       .toList
       .collect { case MethodSignature(_, parameterLists, _) => parameterLists }
       .flatMap(_.flatten)
       .flatMap(_.symbol.info.map(_.signature).toList)
-      .collect { case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _)))) if CoderMatcher.matches(symbol) => coderT }
+      .collect {
+        case ValueSignature(TypeRef(_, symbol, List(TypeRef(_, coderT, _))))
+            if CoderMatcher.matches(symbol) =>
+          coderT
+      }
       .flatMap(_.info.map(_.signature).toList)
-      .exists { case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) => AvroMatcher.matches(maybeAvroType) }
+      .exists {
+        case TypeSignature(_, _, TypeRef(_, maybeAvroType, _)) =>
+          AvroMatcher.matches(maybeAvroType)
+        case _ => false
+      }
+
+  def methodReturnsAvroSCollection(
+    returnType: Option[Type]
+  )(implicit doc: SemanticDocument): Boolean = returnType match {
+    case Some(t"$tpe[..$tpesnel]") if SCollectionMatcher.matches(tpe) =>
+      tpesnel.exists {
+        case tpe if isAvroType(tpe.symbol)                                        => true
+        case t"(..$tupleTypes)" if tupleTypes.exists(tt => isAvroType(tt.symbol)) => true
+        case _                                                                    => false
+      }
+    case _ => false
+  }
 }
 
 class FixAvroCoder extends SemanticRule("FixAvroCoder") {
@@ -162,27 +190,34 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
   override def fix(implicit doc: SemanticDocument): Patch = {
     val usesAvroCoders = doc.tree
       .collect {
-        case q"$expr[..$tpesnel]" =>
-          // A method call with a type parameter requires an implicit Coder[T] for our type
-          findBoundedTypes(expr, tpesnel, CoderMatcher)
-            .exists(isAvroType)
-        case t @ q"..$mods val ..$patsnel: $tpeopt = $expr" =>
-          // Coder[T] is a variable type where T is an avro type
-          findMatchingValTypeParams(t, CoderMatcher)
-            .exists(isAvroType)
-        case q"$fn(..$args)" if JobTestBuilderMatcher.matches(fn) =>
-          args.headOption match {
-            case Some(q"$io[$tpe](..$args)") if isAvroType(tpe.symbol) => true
-            case _                                                     => false
-          }
-        case q"$fn(..$args)" if ParallelizeMatcher.matches(fn) =>
-          args.headOption exists {
-            case expr if hasAvroTypeSignature(expr, true) => true
-            case q"$seqLike($elem)" if seqLike.symbol.value.startsWith("scala/collection/") &&
-              (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
-              true
-            case _ => false
-          }
+        // A method call with a type parameter requires an implicit Coder[T] for our type
+        case q"$expr[..$tpesnel]"
+            if findBoundedTypes(expr, tpesnel, CoderMatcher).exists(isAvroType) =>
+          true
+        // Coder[T] is a variable type where T is an avro type
+        case t @ q"..$mods val ..$patsnel: $tpeopt = $expr"
+            if findMatchingValTypeParams(t, CoderMatcher)
+              .exists(isAvroType) =>
+          true
+        case q"$fn(..$args)" if methodHasAvroCoderTypeBound(fn) => true
+        case q"..$mods def $ename(...$params): $tpe = $expr" if methodReturnsAvroSCollection(tpe) =>
+          true
+        case q"$fn(..$args)"
+            if JobTestBuilderMatcher.matches(fn) &&
+              (args.headOption match {
+                case Some(q"$io[$tpe](..$args)") if isAvroType(tpe.symbol) => true
+                case _                                                     => false
+              }) =>
+          true
+        case q"$fn(..$args)" if ParallelizeMatcher.matches(fn) && (args.headOption exists {
+              case expr if hasAvroTypeSignature(expr, true) => true
+              case q"$seqLike($elem)"
+                  if seqLike.symbol.value.startsWith("scala/collection/") &&
+                    (isAvroType(elem.symbol) || hasAvroTypeSignature(elem, false)) =>
+                true
+              case _ => false
+            }) =>
+          true
         case q"$expr(..$args)" if SmbReadMatchers.matches(expr) =>
           args.tail.map(_.symbol.info.map(_.signature)).exists {
             case Some(
@@ -196,7 +231,6 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
               true
             case _ => false
           }
-        case q"$fn(..$args)" if methodHasAvroCoderTypeBound(fn) => true
       }
       .foldLeft(false)(_ || _)
     val avroValuePatch = if (usesAvroCoders) Patch.addGlobalImport(avroImport) else Patch.empty

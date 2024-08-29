@@ -41,13 +41,10 @@ final case class TestCache[K, V](testId: String) extends CacheT[K, V, CCache[K, 
       .asInstanceOf[CacheT[K, V, CCache[K, V]]]
 
   override def get(k: K): Option[V] = cache.get(k)
-
+  override def get(k: K, default: => Option[V]): Option[V] = cache.get(k, default)
   override def get(k: K, default: => V): V = cache.get(k, default)
 
-  override def put(k: K, value: V): Unit = {
-    cache.put(k, value)
-    ()
-  }
+  override def put(k: K, value: V): Unit = cache.put(k, value)
 
   override def invalidateAll(): Unit = cache.invalidateAll()
 
@@ -372,8 +369,9 @@ class SparkeyTest extends PipelineSpec {
     }
     result.toList.sorted shouldBe input.map(sideData.toMap).sorted
 
-    cache.underlying.stats().requestCount shouldBe input.size
-    cache.underlying.stats().loadCount shouldBe input.toSet.size
+    val stats = cache.underlying.stats()
+    stats.requestCount shouldBe input.size
+    stats.loadCount shouldBe input.toSet.size
 
     val basePath = sparkeyUris.head.basePath
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
@@ -395,8 +393,9 @@ class SparkeyTest extends PipelineSpec {
     }
     result.toList.sorted shouldBe input.map(sideData.toMap).sorted
 
-    cache.underlying.stats().requestCount shouldBe input.size
-    cache.underlying.stats().loadCount shouldBe input.toSet.size
+    val stats = cache.underlying.stats()
+    stats.requestCount shouldBe input.size
+    stats.loadCount shouldBe input.toSet.size
 
     val basePath = sparkeyUris.head.basePath
     FileUtils.deleteDirectory(new File(basePath))
@@ -404,8 +403,8 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support .asTypedSparkeySideInput" in {
     val input = Seq("ab", "bc", "cd", "de")
-    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
-    val typedSideDataMap = typedSideData.toMap
+    val typedSideData = Map("ab" -> Seq(1, 2), "bc" -> Seq(2, 3), "cd" -> Seq(3, 4))
+    val typedSideDataMap = typedSideData
 
     val (_, sparkeyUris, result) = runWithLocalOutput { sc =>
       val sparkey =
@@ -428,8 +427,8 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support .asTypedSparkeySideInput with a cache" in {
     val input = Seq("ab", "bc", "cd", "de")
-    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
-    val typedSideDataMap = typedSideData.toMap
+    val typedSideData = Map("ab" -> Seq(1, 2), "bc" -> Seq(2, 3), "cd" -> Seq(3, 4))
+    val typedSideDataMap = typedSideData
     val cache = TestCache[String, Seq[Int]]()
 
     val (_, sparkeyUris, result) = runWithLocalOutput { sc =>
@@ -447,8 +446,11 @@ class SparkeyTest extends PipelineSpec {
     val expectedOutput = input.flatMap(typedSideDataMap.get)
     result should contain theSameElementsAs expectedOutput
 
-    cache.underlying.stats().requestCount shouldBe input.size
-    cache.underlying.stats().loadCount shouldBe input.toSet.size
+    val stats = cache.underlying.stats()
+    stats.requestCount shouldBe input.size
+    stats.loadCount shouldBe input.size
+    stats.loadSuccessCount shouldBe (input.toSet intersect typedSideData.keySet).size
+    stats.loadFailureCount shouldBe (input.toSet -- typedSideData.keySet).size
 
     val basePath = sparkeyUris.head.basePath
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
@@ -456,7 +458,7 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support iteration with .asTypedSparkeySideInput" in {
     val input = Seq("1")
-    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
+    val typedSideData = Map("ab" -> Seq(1, 2), "bc" -> Seq(2, 3), "cd" -> Seq(3, 4))
 
     val (_, sparkeyUris, result) = runWithLocalOutput { sc =>
       val sparkey =
@@ -480,7 +482,7 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support iteration .asTypedSparkeySideInput with a cache" in {
     val input = Seq("1")
-    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
+    val typedSideData = Map("ab" -> Seq(1, 2), "bc" -> Seq(2, 3), "cd" -> Seq(3, 4))
     val cache = TestCache[String, Seq[Int]]()
 
     val (_, sparkeyUris, result) = runWithLocalOutput { sc =>
@@ -498,9 +500,9 @@ class SparkeyTest extends PipelineSpec {
 
     val expectedOutput = typedSideData.map(_._2)
     result should contain theSameElementsAs expectedOutput
-
-    cache.underlying.stats().requestCount shouldBe typedSideData.size
-    cache.underlying.stats().loadCount shouldBe 0
+    val stats = cache.underlying.stats()
+    stats.requestCount shouldBe typedSideData.size
+    stats.loadCount shouldBe 0
 
     val basePath = sparkeyUris.head.basePath
     for (ext <- Seq(".spi", ".spl")) new File(basePath + ext).delete()
@@ -508,7 +510,7 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support iteration .asTypedSparkeySideInput with a cache and shards" in {
     val input = Seq("1")
-    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
+    val typedSideData = Map("ab" -> Seq(1, 2), "bc" -> Seq(2, 3), "cd" -> Seq(3, 4))
     val cache = TestCache[String, Seq[Int]]()
 
     val (_, sparkeyUris, result) = runWithLocalOutput { sc =>
@@ -525,11 +527,12 @@ class SparkeyTest extends PipelineSpec {
       (sparkey, result)
     }
 
-    val expectedOutput = typedSideData.map(_._2)
+    val expectedOutput = typedSideData.values
     result should contain theSameElementsAs expectedOutput
 
-    cache.underlying.stats().requestCount shouldBe typedSideData.size
-    cache.underlying.stats().loadCount shouldBe 0
+    val stats = cache.underlying.stats()
+    stats.requestCount shouldBe typedSideData.size
+    stats.loadCount shouldBe 0
 
     val basePath = sparkeyUris.head.basePath
     FileUtils.deleteDirectory(new File(basePath))
@@ -537,8 +540,7 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support .asLargeMapSideInput" in {
     val input = Seq("ab", "bc", "cd", "de")
-    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
-    val typedSideDataMap = typedSideData.toMap
+    val typedSideData = Map("ab" -> Seq(1, 2), "bc" -> Seq(2, 3), "cd" -> Seq(3, 4))
 
     val (_, sparkeyUris, result) = runWithLocalOutput { sc =>
       val si = sc.parallelize(typedSideData).asLargeMapSideInput
@@ -551,7 +553,7 @@ class SparkeyTest extends PipelineSpec {
       (sparkey, result)
     }
 
-    val expectedOutput = input.flatMap(typedSideDataMap.get)
+    val expectedOutput = input.flatMap(typedSideData.get)
     result should contain theSameElementsAs expectedOutput
 
     val basePath = sparkeyUris.head.basePath
@@ -560,8 +562,7 @@ class SparkeyTest extends PipelineSpec {
 
   it should "support .asLargeMapSideInput with one shard" in {
     val input = Seq("ab", "bc", "cd", "de")
-    val typedSideData = Seq(("ab", Seq(1, 2)), ("bc", Seq(2, 3)), ("cd", Seq(3, 4)))
-    val typedSideDataMap = typedSideData.toMap
+    val typedSideData = Map("ab" -> Seq(1, 2), "bc" -> Seq(2, 3), "cd" -> Seq(3, 4))
 
     val (_, sparkeyUris, result) = runWithLocalOutput { sc =>
       val si = sc.parallelize(typedSideData).asLargeMapSideInput(numShards = 1)
@@ -574,7 +575,7 @@ class SparkeyTest extends PipelineSpec {
       (sparkey, result)
     }
 
-    val expectedOutput = input.flatMap(typedSideDataMap.get)
+    val expectedOutput = input.flatMap(typedSideData.get)
     result should contain theSameElementsAs expectedOutput
 
     val basePath = sparkeyUris.head.basePath

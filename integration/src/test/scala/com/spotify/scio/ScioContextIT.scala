@@ -17,21 +17,23 @@
 
 package com.spotify.scio
 
-import java.net.URI
-
 import com.spotify.scio.testing.util.ItUtils
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.runners.core.construction.{PipelineTranslation, SdkComponents}
+import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
 import org.apache.beam.runners.dataflow.{DataflowPipelineTranslator, DataflowRunner}
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.FileSystems
-import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
+import org.apache.beam.sdk.options.{
+  PipelineOptions,
+  PipelineOptionsFactory,
+  PortablePipelineOptions
+}
+import org.apache.beam.sdk.util.construction.{Environments, PipelineTranslation, SdkComponents}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.apache.beam.runners.dataflow.options.DataflowPipelineOptions
+
+import java.net.URI
 import scala.jdk.CollectionConverters._
-import org.apache.beam.runners.core.construction.Environments
-import org.apache.beam.sdk.options.PortablePipelineOptions
 
 class ScioContextIT extends AnyFlatSpec with Matchers {
   "ScioContext" should "have temp location for DataflowRunner" in {

@@ -60,18 +60,7 @@ object ElasticsearchMinimalExample {
     val primaryHost = new HttpHost(host, port)
     val nodes = Seq(primaryHost)
 
-    val clusterOpts = ElasticsearchOptions(
-      nodes = nodes,
-      mapperFactory = () => {
-        // Use jackson for user json serialization
-        val mapper = new JacksonJsonpMapper()
-        // Add scala support
-        mapper.objectMapper().registerModule(DefaultScalaModule)
-        // Add java.time support
-        mapper.objectMapper().registerModule(new JavaTimeModule())
-        mapper
-      }
-    )
+    val clusterOpts = ElasticsearchOptions(nodes = nodes)
 
     // Provide an elasticsearch indexer to transform collections to indexable ES documents
     val indexRequestBuilder = indexer(index)
@@ -90,7 +79,7 @@ object ElasticsearchMinimalExample {
       .saveAsElasticsearch(clusterOpts)(indexRequestBuilder)
 
     // Run pipeline
-    sc.run().waitUntilFinish()
+    sc.run().waitUntilDone()
   }
 
   private def indexer(index: String): ((String, Long)) => Iterable[BulkOperation] = {
