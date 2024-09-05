@@ -34,6 +34,7 @@ import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.util.MimeTypes
+import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.typelevel.scalaccompat.annotation.unused
 
@@ -56,7 +57,6 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[Array[Byte]] = {
     val filePattern = ScioUtil.filePattern(path, params.suffix)
-    val desiredBundleSizeBytes = 64 * 1024 * 1024L // 64 mb
     val coder = ByteArrayCoder.of()
     val srcFn = Functions.serializableFn { path: String =>
       new BinaryIO.BinarySource(path, params.emptyMatchTreatment, params.reader)
@@ -74,7 +74,8 @@ final case class BinaryIO(path: String) extends ScioIO[Array[Byte]] {
       )
       .applyTransform(
         "Read all via FileBasedSource",
-        new ReadAllViaFileBasedSource[Array[Byte]](desiredBundleSizeBytes, srcFn, coder)
+        // Setting desiredBundleSizeBytes to Long.MaxValue prevents Beam from trying to split files
+        new ReadAllViaFileBasedSource[Array[Byte]](Long.MaxValue, srcFn, coder)
       )
   }
 
@@ -326,6 +327,9 @@ object BinaryIO {
               false
           }
         }
+
+        override def allowsDynamicSplitting(): Boolean =
+          false
       }
   }
 
@@ -344,8 +348,14 @@ object BinaryIO {
       fileMetadata: Metadata,
       start: Long,
       end: Long
-    ): FileBasedSource[Array[Byte]] =
+    ): FileBasedSource[Array[Byte]] = {
+      Preconditions.checkArgument(
+        start == 0,
+        "Range with offset {} requested, but BinaryIO is unsplittable",
+        start
+      )
       new BinarySingleFileSource(binaryFileReader, fileMetadata, start, end)
+    }
 
     override def createSingleFileReader(
       options: PipelineOptions
