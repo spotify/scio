@@ -158,7 +158,7 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
           new TypedSparkeyReader[T](
             reader,
             decoder,
-           Option(cache).getOrElse(Cache.noOp[String, T])
+            Option(cache).getOrElse(Cache.noOp[String, T])
           )
       )
 
