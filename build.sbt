@@ -100,7 +100,7 @@ val kantanCodecsVersion = "0.5.3"
 val kantanCsvVersion = "0.7.0"
 val kryoVersion = "4.0.3"
 val magnoliaVersion = "1.1.10"
-val magnolifyVersion = "0.7.4"
+val magnolifyVersion = "0.7.4-47-aa9f05b-20240903T173705Z-SNAPSHOT"
 val metricsVersion = "4.2.27"
 val munitVersion = "1.0.1"
 val neo4jDriverVersion = "4.4.18"
@@ -697,6 +697,7 @@ lazy val `scio-bom` = project
       `scio-extra`,
       `scio-google-cloud-platform`,
       `scio-grpc`,
+      `scio-iceberg`,
       `scio-jdbc`,
       `scio-macros`,
       `scio-neo4j`,
@@ -1171,6 +1172,25 @@ lazy val `scio-grpc` = project
     )
   )
 
+lazy val `scio-iceberg` = project
+  .in(file("scio-iceberg"))
+  .dependsOn(
+    `scio-core` % "compile;test->test"
+  )
+  .settings(commonSettings)
+  .settings(
+    description := "Scio add-on for Iceberg",
+    libraryDependencies ++= Seq(
+      // compile
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
+      // TODO add iceberg as test source
+      "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion,
+      // test
+    )
+  )
+
 lazy val `scio-jdbc` = project
   .in(file("scio-jdbc"))
   .dependsOn(
@@ -1340,17 +1360,18 @@ lazy val `scio-examples` = project
   .enablePlugins(NoPublishPlugin)
   .disablePlugins(ScalafixPlugin)
   .dependsOn(
-    `scio-core` % "compile->test",
     `scio-avro` % "compile->test",
-    `scio-google-cloud-platform`,
-    `scio-jdbc`,
-    `scio-extra`,
+    `scio-core` % "compile->test",
     `scio-elasticsearch8`,
+    `scio-extra`,
+    `scio-google-cloud-platform`,
+    `scio-iceberg`,
+    `scio-jdbc`,
     `scio-neo4j`,
-    `scio-tensorflow`,
-    `scio-smb`,
+    `scio-parquet`,
     `scio-redis`,
-    `scio-parquet`
+    `scio-smb`,
+    `scio-tensorflow`
   )
   .settings(commonSettings)
   .settings(soccoSettings)
@@ -1422,6 +1443,35 @@ lazy val `scio-examples` = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion,
+      // no
+      "org.apache.iceberg" % "iceberg-hive-metastore" % "1.4.2",
+      "org.apache.hive.hcatalog" % "hive-hcatalog-core" % "3.1.3",
+      /*
+      def hive_version = "3.1.3"
+def iceberg_version = "1.4.2"
+    testRuntimeOnly library.java.snake_yaml
+    testRuntimeOnly library.java.bigdataoss_gcs_connector
+    testRuntimeOnly library.java.hadoop_client
+
+    // needed to set up the test environment
+    testImplementation "org.apache.iceberg:iceberg-common:$iceberg_version"
+    testImplementation "org.apache.iceberg:iceberg-core:$iceberg_version"
+    testImplementation "org.assertj:assertj-core:3.11.1"
+    testImplementation library.java.junit
+
+    // needed to set up test Hive Metastore and run tests
+    testImplementation ("org.apache.iceberg:iceberg-hive-metastore:$iceberg_version")
+    testImplementation project(path: ":sdks:java:io:iceberg:hive:exec", configuration: "shadow")
+    testRuntimeOnly ("org.apache.hive.hcatalog:hive-hcatalog-core:$hive_version") {
+        exclude group: "org.apache.hive", module: "hive-exec"
+        exclude group: "org.apache.parquet", module: "parquet-hadoop-bundle"
+    }
+    testImplementation "org.apache.iceberg:iceberg-parquet:$iceberg_version"
+    testImplementation "org.apache.parquet:parquet-column:1.12.0"
+       */
+
+      // no
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
