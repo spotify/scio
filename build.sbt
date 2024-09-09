@@ -207,7 +207,7 @@ ThisBuild / developers := List(
 
 // scala versions
 val scala213 = "2.13.14"
-val scala212 = "2.12.19"
+val scala212 = "2.12.20"
 val scalaDefault = scala213
 
 // compiler settings
