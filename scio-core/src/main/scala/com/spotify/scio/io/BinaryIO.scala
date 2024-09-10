@@ -34,7 +34,6 @@ import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
 import org.apache.beam.sdk.transforms.SerializableFunctions
 import org.apache.beam.sdk.util.MimeTypes
-import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.typelevel.scalaccompat.annotation.unused
 
@@ -349,10 +348,9 @@ object BinaryIO {
       start: Long,
       end: Long
     ): FileBasedSource[Array[Byte]] = {
-      Preconditions.checkArgument(
+      require(
         start == 0,
-        "Range with offset {} requested, but BinaryIO is unsplittable",
-        start
+        s"Range with offset $start requested, but BinaryIO is unsplittable"
       )
       new BinarySingleFileSource(binaryFileReader, fileMetadata, start, end)
     }
