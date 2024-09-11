@@ -19,47 +19,47 @@ package com.spotify.scio.examples.extra
 import com.spotify.scio.ContextAndArgs
 import com.spotify.scio.iceberg._
 import magnolify.beam._
-import magnolify.beam.logical.nanos._
-import org.joda.time.Instant
 
-// ## Iceberg IO example
+// Example: Apache Iceberg read/write Example
 
 // Usage:
 
 // `sbt "runMain com.spotify.scio.examples.extra.IcebergExample
 // --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
-// FIXME
+// --inputTable=[INPUT TABLE] --catalogName=[CATALOG NAME]
+// --catalogType=[CATALOG TYPE] --catalogUri=[CATALOG URI]
+// --catalogWarehouse=[CATALOG WAREHOUSE] --outputTable=[OUTPUT TABLE]"`
 object IcebergExample {
-  /*
-  --------------------------------------------------------------------------------------------->
- partition    | row(__PARTITIONTIME timestamp(6))                                                                                                                                                                                                                                                                                                                                     >
- record_count | BigDecimal                                                                                                                                                                                                                                                                                                                                                                >
- file_count   | BigDecimal                                                                                                                                                                                                                                                                                                                                                                >
- total_size   | BigDecimal                                                                                                                                                                                                                                                                                                                                                                >
- data         | row(timestamp row(min timestamp(6), max timestamp(6), null_count BigDecimal, nan_count BigDecimal), country_code row(min varchar, max varchar, null_count BigDecimal, nan_count BigDecimal), url row(min varchar, max varchar, null_count BigDecimal, nan_count BigDecimal), project row(min varchar, max varchar, null_count BigDecimal, nan_count BigDecimal), tls_protocol
-   */
-  case class FileDownloads(
-    record_count: BigDecimal,
-    file_count: BigDecimal,
-    total_size: BigDecimal,
-    data: Data
-  )
-  case class Data(timestamp: Timestamp)
-  case class Timestamp(min: Instant, max: Instant, null_count: BigDecimal, nan_count: BigDecimal)
+
+  case class Record(a: Int, b: String)
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
 
-    sc.iceberg[FileDownloads](
-      // TODO quoted things don't work via iceberg/hive
-      "",
-      "",
-      Map(
-        "type" -> "hive",
-        "uri" -> "",
-        "warehouse" -> ""
+    // Catalog configuration
+    val catalogConfig = Map(
+      "type" -> args("catalogType"),
+      "uri" -> args("catalogUri"),
+      "warehouse" -> args("catalogWarehouse")
+    )
+
+    // Derive a conversion between Record and Beam Row
+    implicit val rt: RowType[Record] = RowType[Record]
+
+    sc
+      // Read Records from Iceberg
+      .iceberg[Record](
+        args("inputTable"),
+        args.optional("catalogName").orNull,
+        catalogConfig
       )
-    ).debug(prefix = "FileDownload: ")
+      .map(r => r.copy(a = r.a + 1))
+      // Write Records to Iceberg
+      .saveAsIceberg(
+        args("outputTable"),
+        args.optional("catalogName").orNull,
+        catalogConfig
+      )
 
     sc.run()
   }

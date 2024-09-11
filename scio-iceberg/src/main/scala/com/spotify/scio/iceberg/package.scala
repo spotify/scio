@@ -16,7 +16,7 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.iceberg.syntax.{ScioContextSyntax, SCollectionSyntax}
+import com.spotify.scio.iceberg.syntax.{SCollectionSyntax, ScioContextSyntax}
 
 /**
  * Iceberg IO APIs. Import all.

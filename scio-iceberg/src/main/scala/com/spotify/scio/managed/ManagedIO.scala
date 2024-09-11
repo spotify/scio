@@ -36,9 +36,10 @@ final case class ManagedIO(ioName: String, config: Map[String, Object]) extends 
     // both are bad
     def _convert(a: Object): Object = {
       a match {
-        case m: Map[_, _] => m.asInstanceOf[Map[_, Object]].map { case (k, v) => k -> _convert(v) }.asJava
+        case m: Map[_, _] =>
+          m.asInstanceOf[Map[_, Object]].map { case (k, v) => k -> _convert(v) }.asJava
         case i: Iterable[_] => i.map(o => _convert(o.asInstanceOf[Object])).asJava
-        case _ => a
+        case _              => a
       }
     }
     config.map { case (k, v) => k -> _convert(v) }.asJava
@@ -48,14 +49,16 @@ final case class ManagedIO(ioName: String, config: Map[String, Object]) extends 
   override def testId: String = s"ManagedIO($ioName, ${config.toString})"
   override protected def read(sc: ScioContext, params: ManagedIO.ReadParam): SCollection[Row] = {
     sc.wrap(
-        sc.applyInternal[PCollectionRowTuple](
-          Managed.read(ioName).withConfig(_config)
-        ).getSinglePCollection
-      )
-      .setCoder(CoderMaterializer.beam(sc, Coder.row(params.schema)))
+      sc.applyInternal[PCollectionRowTuple](
+        Managed.read(ioName).withConfig(_config)
+      ).getSinglePCollection
+    ).setCoder(CoderMaterializer.beam(sc, Coder.row(params.schema)))
   }
 
-  override protected def write(data: SCollection[Row], params: ManagedIO.WriteParam): Tap[tapT.T] = {
+  override protected def write(
+    data: SCollection[Row],
+    params: ManagedIO.WriteParam
+  ): Tap[tapT.T] = {
     val t = Managed.write(ioName).withConfig(_config)
     data.applyInternal(t)
     EmptyTap

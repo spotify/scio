@@ -8,7 +8,7 @@ import magnolify.beam._
 import org.apache.beam.sdk.managed.Managed
 import org.apache.beam.sdk.values.Row
 
-// ## Managed IO example
+// Example: Beam's Managed IO
 
 // Usage:
 
@@ -16,7 +16,7 @@ import org.apache.beam.sdk.values.Row
 // --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --table=[TABLE] --catalogName=[CATALOG] --catalogType=[CATALOG TYPE]
 // --catalogUri=[CATALOG URI] --catalogWarehouse=[CATALOG WAREHOUSE]
-// --output=[OUTPUT PATH]
+// --output=[OUTPUT PATH]"`
 object ManagedExample {
 
   case class Record(a: Int, b: String)
@@ -36,25 +36,25 @@ object ManagedExample {
     )
 
     val rt = RowType[Record]
-    // provide implicit coder for Row with the schema derived from Record case class
+    // Provide an implicit coder for Row with the schema derived from Record case class
     implicit val recordRowCoder: Coder[Row] = Coder.row(rt.schema)
 
-    // read beam Row instances from iceberg
+    // Read beam Row instances from iceberg
     val records: SCollection[Record] = sc
       .managed(
         Managed.ICEBERG,
-        // schema derived from the Record case class
+        // Schema derived from the Record case class
         rt.schema,
         config
       )
-      // convert the Row instance to a Record
+      // Convert the Row instance to a Record
       .map(rt.apply)
 
     records
       .map(r => r.copy(a = r.a + 1))
-      // convert the Record to a Row
+      // Convert the Record to a Row
       .map(rt.apply)
-      // save Row instances to Iceberg
+      // Save Row instances to Iceberg
       .saveAsManaged(Managed.ICEBERG, config)
 
     sc.run()

@@ -28,23 +28,47 @@ val rows: SCollection[Row] = sc.managed(Managed.ICEBERG, rowSchema, config)
 ```
 
 Saving data to a Managed IO is similar:
-
-```scala mdoc:compile-only
-import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.Coder
+```scala mdoc:invisible
 import com.spotify.scio.managed._
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.managed.Managed
 import org.apache.beam.sdk.schemas.Schema
 import org.apache.beam.sdk.values.Row
+```
 
+```scala mdoc:compile-only
 val rows: SCollection[Row] = ???
 val config: Map[String, Object] = ???
 
 rows.saveAsManaged(Managed.ICEBERG, config)
 ```
 
-[Magnolify's](https://github.com/spotify/magnolify) `RowType` (available as part of the `magnolify-beam` artifact) provides automatically-derived mappings between Beam's `Row` and scala case classes.
+[Magnolify's](https://github.com/spotify/magnolify) `RowType` (available as part of the `magnolify-beam` artifact) provides automatically-derived mappings between Beam's `Row` and scala case classes. See [full documentation here](https://github.com/spotify/magnolify/blob/main/docs/beam.md).
 
-See [full documentation here](https://github.com/spotify/magnolify/blob/main/docs/beam.md) and [an example usage here](https://spotify.github.io/scio/examples/extra/ManagedExample.scala.html).
+```scala mdoc:invisible
+import com.spotify.scio.ScioContext
+import com.spotify.scio.managed._
+import org.apache.beam.sdk.managed.Managed
+import org.apache.beam.sdk.schemas.Schema
+import org.apache.beam.sdk.values.Row
+```
 
+```scala mdoc:compile-only
+import magnolify.beam._
+
+val config: Map[String, Object] = ???
+
+case class Record(a: Int, b: String)
+val rt = RowType[Record]
+implicit val recordRowCoder: Coder[Row] = Coder.row(rt.schema)
+
+val sc: ScioContext = ???
+sc.managed(Managed.ICEBERG, rt.schema, config)
+  // convert the Row instance to a Record
+  .map(rt.apply)
+  .map(r => r.copy(a = r.a + 1))
+  // convert the Record to a Row
+  .map(rt.apply)
+  .saveAsManaged(Managed.ICEBERG, config)
+```

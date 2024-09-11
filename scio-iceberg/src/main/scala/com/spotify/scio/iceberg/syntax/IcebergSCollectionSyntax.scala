@@ -19,16 +19,24 @@ package com.spotify.scio.iceberg.syntax
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.iceberg.IcebergIO
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.managed.ManagedIO
 import com.spotify.scio.values.SCollection
 import magnolify.beam.RowType
 
-class IcebergSCollectionSyntax[T : RowType : Coder](self: SCollection[T]) {
-  def saveAsIceberg(config: Map[String, AnyRef]): ClosedTap[Nothing] =
-    self.write(IcebergIO(config))(ManagedIO.WriteParam())
+class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
+  def saveAsIceberg(
+    table: String,
+    catalogName: String = null,
+    catalogProperties: Map[String, String] = null,
+    configProperties: Map[String, String] = null
+  ): ClosedTap[Nothing] = {
+    val params = IcebergIO.WriteParam(catalogProperties, configProperties)
+    self.write(IcebergIO(table, Option(catalogName)))(params)
+  }
 }
 
 trait SCollectionSyntax {
-  implicit def icebergSCollectionSyntax[T : RowType : Coder](self: SCollection[T]): IcebergSCollectionSyntax[T] =
+  implicit def icebergSCollectionSyntax[T: RowType: Coder](
+    self: SCollection[T]
+  ): IcebergSCollectionSyntax[T] =
     new IcebergSCollectionSyntax(self)
 }

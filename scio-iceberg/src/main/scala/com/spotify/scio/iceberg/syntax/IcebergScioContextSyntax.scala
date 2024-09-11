@@ -19,27 +19,23 @@ package com.spotify.scio.iceberg.syntax
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.iceberg.IcebergIO
-import com.spotify.scio.managed.ManagedIO
 import com.spotify.scio.values.SCollection
 import magnolify.beam.RowType
 
-
 class IcebergScioContextSyntax(self: ScioContext) {
-  def iceberg[T : Coder](config: Map[String, AnyRef])(implicit rt: RowType[T]): SCollection[T] =
-    self.read(IcebergIO(config))(ManagedIO.ReadParam(rt.schema))
 
   /**
-   * @see [[org.apache.beam.sdk.io.iceberg.SchemaTransformConfiguration SchemaTransformConfiguration]]
+   * @see
+   *   [[org.apache.beam.sdk.io.iceberg.SchemaTransformConfiguration SchemaTransformConfiguration]]
    */
-  def iceberg[T : Coder](table: String, catalogName: String = null, catalogProperties: Map[String, String] = null, configProperties: Map[String, String] = null)(implicit rt: RowType[T]): SCollection[T] = {
-    // see
-    val config = Map[String, AnyRef](
-      "table" -> table,
-      "catalog_name" -> catalogName,
-      "catalog_properties" -> catalogProperties,
-      "config_properties" -> configProperties
-    ).filter(_._2 != null)
-    iceberg(config)
+  def iceberg[T: Coder](
+    table: String,
+    catalogName: String = null,
+    catalogProperties: Map[String, String] = null,
+    configProperties: Map[String, String] = null
+  )(implicit rt: RowType[T]): SCollection[T] = {
+    val params = IcebergIO.ReadParam(catalogProperties, configProperties)
+    self.read(IcebergIO(table, Option(catalogName)))(params)
   }
 }
 

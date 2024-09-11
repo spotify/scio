@@ -23,7 +23,11 @@ import org.apache.beam.sdk.schemas.Schema
 import org.apache.beam.sdk.values.Row
 
 class ManagedScioContextSyntax(self: ScioContext) {
-  def managed(source: String, schema: Schema, config: Map[String, Object] = Map.empty): SCollection[Row] =
+  def managed(
+    source: String,
+    schema: Schema,
+    config: Map[String, Object] = Map.empty
+  ): SCollection[Row] =
     self.read[Row](ManagedIO(source, config))(ManagedIO.ReadParam(schema))
 }
 

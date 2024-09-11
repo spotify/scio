@@ -16,7 +16,7 @@
 
 package com.spotify.scio
 
-import com.spotify.scio.managed.syntax.{ScioContextSyntax, SCollectionSyntax}
+import com.spotify.scio.managed.syntax.{SCollectionSyntax, ScioContextSyntax}
 
 /**
  * Managed IO APIs. Import all.
