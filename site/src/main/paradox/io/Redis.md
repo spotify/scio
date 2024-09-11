@@ -22,9 +22,12 @@ val elements: SCollection[(String, String)] = sc.redis(connectionOptions, keyPat
 
 Looking up specific keys from redis can be done with @scaladoc[RedisDoFn](com.spotify.scio.redis.RedisDoFn):
 
-```scala
+```scala mdoc:compile-only
+import com.spotify.scio._
 import com.spotify.scio.redis._
 import com.spotify.scio.values.SCollection
+import org.apache.beam.sdk.transforms.ParDo
+import scala.concurrent.{ExecutionContext, Future}
 
 val redisHost: String = ???
 val redisPort: Int = ???
@@ -34,15 +37,17 @@ val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
 val keys: SCollection[String] = ???
 
 keys
-  .parDo(
-    new RedisDoFn[String, (String, Option[String])](connectionOptions, batchSize) {
-      override def request(value: String, client: Client)(
-        implicit ec: ExecutionContext
-      ): Future[(String, Option[String])] =
-        client
-          .request(p => p.get(value) :: Nil)
-          .map { case r: List[String @unchecked] => (value, r.headOption) }
-    }
+  .applyTransform(
+    ParDo.of(
+      new RedisDoFn[String, (String, Option[String])](connectionOptions, batchSize) {
+        override def request(value: String, client: Client)(
+          implicit ec: ExecutionContext
+        ): Future[(String, Option[String])] =
+          client
+            .request(p => p.get(value) :: Nil)
+            .map { case r: List[String @unchecked] => (value, r.headOption) }
+      }
+    )
   )
 ```
 
