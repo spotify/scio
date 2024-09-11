@@ -27,6 +27,8 @@ import org.apache.beam.examples.common.ExampleUtils
 import org.apache.beam.sdk.options.{PipelineOptions, StreamingOptions}
 import scala.concurrent.{ExecutionContext, Future}
 
+// Example: Redis Examples
+
 // ## Redis Read Strings example
 // Read strings from Redis by a key pattern
 
@@ -135,7 +137,7 @@ object RedisWriteStreamingExample {
 // `sbt "runMain com.spotify.scio.examples.extra.RedisLookUpStringsExample
 // --project=[PROJECT] --runner=DataflowRunner --region=[REGION NAME]
 // --redisHost=[REDIS_HOST]
-// --redisPort=[REDIS_PORT]
+// --redisPort=[REDIS_PORT]`
 object RedisLookUpStringsExample {
 
   def main(cmdlineArgs: Array[String]): Unit = {
@@ -146,7 +148,6 @@ object RedisLookUpStringsExample {
     val connectionOptions = RedisConnectionOptions(redisHost, redisPort)
 
     sc.parallelize(Seq("key1", "key2", "unknownKey"))
-      // #RedisLookup_example
       .parDo(
         new RedisDoFn[String, (String, Option[String])](connectionOptions, 1000) {
           override def request(value: String, client: Client)(implicit
@@ -157,7 +158,6 @@ object RedisLookUpStringsExample {
               .map { case r: List[String @unchecked] => (value, r.headOption) }
         }
       )
-      // #RedisLookup_example
       .debug()
 
     sc.run()
