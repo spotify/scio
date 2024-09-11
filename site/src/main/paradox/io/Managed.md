@@ -11,6 +11,7 @@ The source and sink parameters should be imported from Beam's @javadoc[Managed](
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.managed._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.managed.Managed
@@ -23,13 +24,14 @@ val rowSchema: Schema = ???
 implicit val rowCoder: Coder[Row] = Coder.row(rowSchema)
 
 val config: Map[String, Object] = ???
-val rows: SCollection[Row] = sc.managed(Managed.ICEBERG, schema, config)
+val rows: SCollection[Row] = sc.managed(Managed.ICEBERG, rowSchema, config)
 ```
 
 Saving data to a Managed IO is similar:
 
 ```scala mdoc:compile-only
 import com.spotify.scio.ScioContext
+import com.spotify.scio.coders.Coder
 import com.spotify.scio.managed._
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.managed.Managed

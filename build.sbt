@@ -1812,6 +1812,7 @@ lazy val site = project
     `scio-extra`,
     `scio-google-cloud-platform`,
     `scio-grpc` % "compile->test",
+    `scio-iceberg`,
     `scio-jdbc`,
     `scio-macros`,
     `scio-neo4j`,
