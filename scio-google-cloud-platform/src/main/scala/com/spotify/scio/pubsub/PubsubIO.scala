@@ -17,6 +17,7 @@
 
 package com.spotify.scio.pubsub
 
+import com.google.api.client.util.DateTime
 import com.google.protobuf.Message
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
@@ -31,6 +32,7 @@ import org.apache.beam.sdk.io.gcp.{pubsub => beam}
 import org.apache.beam.sdk.util.CoderUtils
 import org.joda.time.Instant
 
+import scala.util.Try
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
@@ -318,11 +320,21 @@ final private case class PubsubIOWithAttributes[T: Coder](
       }
   }
 
+  // timestamp is either epoch or RFC 3339
+  // use same implementation as beam
+  private def parseTimestampAttribute(ts: String): Instant =
+    Try(ts.toLong)
+      .recover { case _: IllegalArgumentException =>
+        DateTime.parseRfc3339(ts).getValue
+      }
+      .map(Instant.ofEpochMilli)
+      .get
+
   override def readTest(sc: ScioContext, params: ReadP): SCollection[WithAttributeMap] = {
     val read = TestDataManager.getInput(sc.testId.get)(this).toSCollection(sc)
 
     Option(timestampAttribute)
-      .map(att => read.timestampBy(kv => new Instant(kv._2(att))))
+      .map(att => read.timestampBy(kv => parseTimestampAttribute(kv._2(att))))
       .getOrElse(read)
   }
 

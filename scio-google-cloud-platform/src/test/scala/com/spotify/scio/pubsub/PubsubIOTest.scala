@@ -121,9 +121,18 @@ class PubsubIOTest extends PipelineSpec with ScioIOSpec {
       .run()
   }
 
-  it should "pass correct PubsubIO with attributes" in {
+  it should "pass correct PubsubIO with attributes and ISO timestamp" in {
     testPubsubWithAttributesJob(
       Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().toString),
+      "aX",
+      "bX",
+      "cX"
+    )
+  }
+
+  it should "pass correct PubsubIO with attributes and epoch timestamp" in {
+    testPubsubWithAttributesJob(
+      Map(PubsubWithAttributesJob.timestampAttribute -> new Instant().getMillis.toString),
       "aX",
       "bX",
       "cX"
