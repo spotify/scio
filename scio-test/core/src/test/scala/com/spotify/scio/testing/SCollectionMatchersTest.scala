@@ -20,7 +20,6 @@ package com.spotify.scio.testing
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.streaming.ACCUMULATING_FIRED_PANES
 import com.spotify.scio.values.WindowOptions
-import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.transforms.windowing.{
   AfterProcessingTime,
   AfterWatermark,
@@ -130,10 +129,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       runWithContext(_.parallelize(Seq(1)) should containSingleValue(10))
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext(_.parallelize(1 to 10) should containSingleValue(1))
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(Seq.empty[Int]) should containSingleValue(1)
       }
@@ -145,10 +144,10 @@ class SCollectionMatchersTest extends PipelineSpec {
     an[AssertionError] should be thrownBy {
       runWithContext(_.parallelize(Seq(1)) shouldNot containSingleValue(1))
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext(_.parallelize(1 to 10) shouldNot containSingleValue(1))
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(Seq.empty[Int]) shouldNot containSingleValue(1)
       }
@@ -351,12 +350,12 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(Seq(1)) should satisfySingleValue[Int](_ == 10)
       }
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(1 to 10) should satisfySingleValue[Int](_ == 1)
       }
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(Seq.empty[Int]) should satisfySingleValue[Int](_ == 1)
       }
@@ -372,12 +371,12 @@ class SCollectionMatchersTest extends PipelineSpec {
         _.parallelize(Seq(1)) shouldNot satisfySingleValue[Int](_ == 1)
       }
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(1 to 10) shouldNot satisfySingleValue[Int](_ == 1)
       }
     }
-    a[PipelineExecutionException] should be thrownBy {
+    a[AssertionError] should be thrownBy {
       runWithContext {
         _.parallelize(Seq.empty[Int]) shouldNot satisfySingleValue[Int](_ == 1)
       }
