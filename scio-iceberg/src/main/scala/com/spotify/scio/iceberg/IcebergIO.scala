@@ -23,6 +23,7 @@ import com.spotify.scio.values.SCollection
 import magnolify.beam.RowType
 import org.apache.beam.sdk.managed.Managed
 import com.spotify.scio.managed.ManagedIO
+import org.apache.beam.sdk.coders.RowCoder
 import org.apache.beam.sdk.values.Row
 
 final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option[String])
@@ -32,7 +33,8 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
   private lazy val rowType: RowType[T] = implicitly
-  implicit private lazy val rowCoder: Coder[Row] = Coder.row(rowType.schema)
+  private lazy val beamRowCoder: RowCoder = RowCoder.of(rowType.schema)
+  implicit private lazy val rowCoder: Coder[Row] = Coder.beam(beamRowCoder)
 
   override def testId: String = s"IcebergIO($table, $catalogName)"
 
@@ -53,10 +55,14 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
       .readWithContext(sc, ManagedIO.ReadParam(rowType.schema))
       .map(rowType.from)
 
-  override protected def write(data: SCollection[T], params: IcebergIO.WriteParam): Tap[tapT.T] =
+  override protected def write(data: SCollection[T], params: IcebergIO.WriteParam): Tap[tapT.T] = {
+    val tx = data.transform {
+      _.map(rowType.to).setCoder(beamRowCoder)
+    }
     ManagedIO(Managed.ICEBERG, config(params.catalogProperties, params.configProperties))
-      .writeWithContext(data.transform(_.map(rowType.to)), ManagedIO.WriteParam())
+      .writeWithContext(tx, ManagedIO.WriteParam())
       .underlying
+}
 
   override def tap(read: IcebergIO.ReadParam): Tap[tapT.T] = EmptyTap
 }

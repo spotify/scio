@@ -61,6 +61,8 @@ final case class ManagedIO(ioName: String, config: Map[String, Object]) extends 
   ): Tap[tapT.T] = {
     val t = Managed.write(ioName).withConfig(_config)
     data.applyInternal(t)
+      .getSinglePCollection
+      .setCoder(data.internal.getCoder)
     EmptyTap
   }
 
