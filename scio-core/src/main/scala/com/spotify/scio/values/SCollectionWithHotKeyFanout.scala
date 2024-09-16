@@ -23,6 +23,7 @@ import com.spotify.scio.util.Functions
 import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
+import org.apache.beam.sdk.transforms.Top.TopCombineFn
 import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
 
 /**
@@ -140,4 +141,10 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     )
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, sg))))(kvToTuple)
   }
+
+  /** [[PairSCollectionFunctions.topByKey]] with hot key fanout. */
+  def topByKey(num: Int)(implicit ord: Ordering[V]): SCollection[(K, Iterable[V])] =
+    self.applyPerKey(withFanout(Combine.perKey(new TopCombineFn[V, Ordering[V]](num, ord))))(
+      kvListToTuple
+    )
 }

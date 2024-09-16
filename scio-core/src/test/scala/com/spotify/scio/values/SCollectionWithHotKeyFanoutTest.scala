@@ -93,6 +93,27 @@ class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
     }
   }
 
+  it should "support topByKey()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(
+        List(
+          ("a", 1),
+          ("a", 2),
+          ("a", 3),
+          ("a", 4),
+          ("b", 5),
+          ("b", 6),
+          ("b", 7),
+          ("b", 8)
+        )
+      )
+      val r1 = p.withHotKeyFanout(10).topByKey(3)
+      val r2 = p.withHotKeyFanout(_.hashCode).topByKey(3)
+      r1 should containInAnyOrder(Seq(("a", Iterable(4, 3, 2)), ("b", Iterable(8, 7, 6))))
+      r2 should containInAnyOrder(Seq(("a", Iterable(4, 3, 2)), ("b", Iterable(8, 7, 6))))
+    }
+  }
+
   private def shouldFanOut[T](
     fn: SCollectionWithHotKeyFanout[String, Int] => SCollection[T]
   ) = {

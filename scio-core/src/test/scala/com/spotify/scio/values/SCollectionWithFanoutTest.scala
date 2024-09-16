@@ -72,6 +72,18 @@ class SCollectionWithFanoutTest extends NamedTransformSpec {
     }
   }
 
+  it should "support top()" in {
+    runWithContext { sc =>
+      def top3[T: Ordering: Coder](elems: T*): SCollection[Iterable[T]] =
+        sc.parallelize(elems).withFanout(10).top(3)
+
+      top3(1, 2, 3, 4) should containSingleValue(Iterable(4, 3, 2))
+      top3(1L, 2L, 3L, 4L) should containSingleValue(Iterable(4L, 3L, 2L))
+      top3(1f, 2f, 3f, 4f) should containSingleValue(Iterable(4f, 3f, 2f))
+      top3(1.0, 2.0, 3.0, 4.0) should containSingleValue(Iterable(4.0, 3.0, 2.0))
+    }
+  }
+
   private def shouldFanOut[T](fn: SCollectionWithFanout[Int] => SCollection[T]) = {
     runWithContext { sc =>
       val p = fn(sc.parallelize(1 to 100).withFanout(10))

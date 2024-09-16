@@ -962,11 +962,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   a new SCollection whose single value is an `Iterable` of the top k
    * @group transform
    */
-  def top(
-    num: Int
-  )(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
+  def top(num: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.transform {
-      _.pApply(Top.of(num, ord)).map((l: JIterable[T]) => l.asScala)
+      _.pApply(Top.of[T, Ordering[T]](num, ord)).map((l: JIterable[T]) => l.asScala)
     }
 
   // =======================================================================

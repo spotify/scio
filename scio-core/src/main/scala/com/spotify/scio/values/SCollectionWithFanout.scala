@@ -21,8 +21,12 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
 import com.spotify.scio.coders.Coder
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.transforms.Combine
+import org.apache.beam.sdk.transforms.{Combine, Top}
 import org.apache.beam.sdk.values.PCollection
+
+import java.lang.{Iterable => JIterable}
+
+import scala.jdk.CollectionConverters._
 
 /**
  * An enhanced SCollection that uses an intermediate node to combine parts of the data to reduce
@@ -110,5 +114,13 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
     coll.pApply(
       Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults().withFanout(fanout)
     )
+  }
+
+  /** [[SCollection.top]] with fan out. */
+  def top(num: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] = {
+    coll.transform { in =>
+      in.pApply(Top.of[T, Ordering[T]](num, ord).withFanout(fanout))
+        .map((l: JIterable[T]) => l.asScala)
+    }
   }
 }
