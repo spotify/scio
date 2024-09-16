@@ -1,5 +1,5 @@
 addDependencyTreePlugin
-addSbtPlugin("org.typelevel" % "sbt-typelevel" % "0.7.2")
+addSbtPlugin("org.typelevel" % "sbt-typelevel" % "0.7.3")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.12.1")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.2.0")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.12.0")
@@ -17,7 +17,7 @@ addSbtPlugin("com.github.sbt" % "sbt-site" % "1.7.0")
 addSbtPlugin("com.github.sbt" % "sbt-site-paradox" % "1.7.0")
 addSbtPlugin("com.github.sbt" % "sbt-paradox-material-theme" % "0.7.0")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.5.4")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.1.1")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.2.0")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 
 val avroVersion = sys.props.get("avro.version").getOrElse("1.11.3")

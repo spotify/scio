@@ -4,7 +4,7 @@ Scio ships with two `SCollection` variants that provide _fanout_ over aggregatio
 The interim step pairs the data to be aggregated with a synthetic key, then aggregates within this artificial keyspace before passing the partial aggregations on to the final aggregation step.
 The interim step requires an additional shuffle but can make the aggregation more parallelizable and reduces the impact of a hot key.
 
-The `aggregate`, `combine`, `fold`, `reduce`, `sum` transforms and their keyed variants are supported.
+The `aggregate`, `combine`, `fold`, `reduce`, `sum`, `top` transforms and their keyed variants are supported.
 
 ## WithFanout
 

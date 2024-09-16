@@ -29,10 +29,10 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.58.1"
+val beamVersion = "2.59.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.58.1/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.59.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
@@ -61,7 +61,7 @@ val googleApiServicesStorageVersion = s"v1-rev20240319-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = avroCompilerVersion // sdks/java/extensions/avro/build.gradle
-val flinkVersion = "1.18.0" // runners/flink/1.17/build.gradle
+val flinkVersion = "1.18.0" // runners/flink/1.18/build.gradle
 val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString(".")
 val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
@@ -83,10 +83,10 @@ val cassandraDriverVersion = "3.11.5"
 val cassandraVersion = "3.11.17"
 val catsVersion = "2.12.0"
 val chillVersion = "0.10.0"
-val circeVersion = "0.14.9"
+val circeVersion = "0.14.10"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.21"
-val elasticsearch8Version = "8.15.0"
+val elasticsearch8Version = "8.15.1"
 val fansiVersion = "0.5.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
@@ -106,7 +106,7 @@ val munitVersion = "1.0.1"
 val neo4jDriverVersion = "4.4.18"
 val ndArrayVersion = "0.3.3"
 val parquetExtraVersion = "0.4.3"
-val parquetVersion = "1.14.1"
+val parquetVersion = "1.14.2"
 val pprintVersion = "0.9.0"
 val protobufGenericVersion = "0.2.9"
 val scalacheckVersion = "1.18.0"
@@ -207,7 +207,7 @@ ThisBuild / developers := List(
 
 // scala versions
 val scala213 = "2.13.14"
-val scala212 = "2.12.19"
+val scala212 = "2.12.20"
 val scalaDefault = scala213
 
 // compiler settings
@@ -1483,7 +1483,7 @@ def iceberg_version = "1.4.2"
       "redis.clients" % "jedis" % jedisVersion,
       // runtime
       "com.google.cloud.bigdataoss" % "gcs-connector" % s"hadoop2-$bigdataossVersion" % Runtime,
-      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.20.0" % Runtime,
+      "com.google.cloud.sql" % "mysql-socket-factory-connector-j-8" % "1.20.1" % Runtime,
       // test
       "org.scalacheck" %% "scalacheck" % scalacheckVersion % Test
     ),
@@ -1776,7 +1776,7 @@ lazy val integration = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       // runtime
-      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.20.0" % Runtime,
+      "com.google.cloud.sql" % "cloud-sql-connector-jdbc-sqlserver" % "1.20.1" % Runtime,
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Runtime,
       // test
