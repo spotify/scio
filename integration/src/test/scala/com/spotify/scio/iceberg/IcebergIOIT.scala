@@ -16,8 +16,9 @@
 
 package com.spotify.scio.iceberg
 
-import com.dimafeng.testcontainers.GenericContainer.FileSystemBind
+//import com.dimafeng.testcontainers.GenericContainer.FileSystemBind
 import com.dimafeng.testcontainers.{ForAllTestContainer, GenericContainer}
+import org.apache.iceberg.{CatalogProperties, CatalogUtil}
 //import com.google.common.collect.ImmutableMap
 import com.spotify.scio.testing.PipelineSpec
 
@@ -34,7 +35,7 @@ import magnolify.beam._
 
 import java.time.Duration
 //import org.scalatest.BeforeAndAfterAll
-import org.testcontainers.containers.BindMode
+//import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 
 import java.io.File
@@ -54,17 +55,20 @@ class IcebergIOIT extends PipelineSpec  with ForAllTestContainer { //with Before
   }
 
   // docker run -d -p 9083:9083 -v /Users/kellend/tmp/iceberg-it:/opt/hive/data/warehouse/iceberg-it/ --env SERVICE_NAME=metastore apache/hive:3.1.3
+  // docker run -d -p 10000:10000 -p 10002:10002 --env SERVICE_NAME=hiveserver2 --env VERBOSE=true apache/hive:3.1.3
   override val container: GenericContainer =
     GenericContainer(
       GenericContainer.stringToDockerImage("apache/hive:4.0.0"),
       env = Map(
         "SERVICE_NAME" -> "hiveserver2",
         "VERBOSE" -> "true",
+        "HIVE_SERVER2_THRIFT_PORT" -> "10000",
+        "SERVICE_OPTS" -> "-Dhive.metastore.uris=thrift://0.0.0.0:9083'"
       ),
       exposedPorts = Seq(10000, 10002),
-      fileSystemBind = Seq(
-        FileSystemBind(s"$tempDir", "/warehouse", BindMode.READ_WRITE)
-      ),
+//      fileSystemBind = Seq(
+//        FileSystemBind(s"$tempDir", "/warehouse", BindMode.READ_WRITE)
+//      ),
       waitStrategy = new HostPortWaitStrategy()
         .forPorts(10000, 10002)
         // hive metastore
@@ -155,9 +159,10 @@ class IcebergIOIT extends PipelineSpec  with ForAllTestContainer { //with Before
     val conStr = s"jdbc:hive2://${container.containerIpAddress}:${container.mappedPort(10000)}/default"
     val con = DriverManager.getConnection(conStr, "", "")
     val stmt = con.createStatement
-    stmt.execute("CREATE DATABASE iceberg_it")
-    stmt.execute("CREATE TABLE iceberg_it.iceberg_records(a INT, b STRING) PARTITIONED BY (i int) STORED BY ICEBERG")
-    stmt.execute("INSERT INTO iceberg_it.iceberg_records VALUES(1, '1', 1)")
+    stmt.execute("CREATE DATABASE iceberg_it_db")
+//    stmt.execute("CREATE NAMESPACE iceberg_it_ns")
+    stmt.execute("CREATE TABLE iceberg_it_db.iceberg_records(a INT, b STRING) PARTITIONED BY (i int) STORED BY ICEBERG")
+    stmt.execute("INSERT INTO iceberg_it_db.iceberg_records VALUES(1, '1', 1)")
     con.close()
   }
 
@@ -166,12 +171,17 @@ class IcebergIOIT extends PipelineSpec  with ForAllTestContainer { //with Before
       val elements = 1.to(10).map(i => IcebergIOITRecord(i, s"$i", i))
       sc.parallelize(elements)
         .saveAsIceberg(
-          "iceberg_it.iceberg_records",
-//          "iceberg_it",
+          "iceberg_it_db.iceberg_records",
+          "iceberg_it_db",
           catalogProperties = Map(
-            "type" -> "hive",
-            "uri" -> s"thrift://${container.containerIpAddress}:${container.mappedPort(10000)}",
+            CatalogUtil.ICEBERG_CATALOG_TYPE -> CatalogUtil.ICEBERG_CATALOG_TYPE_HIVE,
+            CatalogProperties.URI -> s"thrift://${container.containerIpAddress}:${container.mappedPort(10000)}",
 //            "warehouse" -> s"file://${warehouseLocalPath}"
+          ),
+          configProperties = Map(
+//            "hive.metastore.sasl.enabled" -> "true",
+            "hive.security.authorization.enabled" -> "true",
+            "hive.metastore.username" -> "",
           )
         )
     }
