@@ -35,7 +35,7 @@ object IcebergIOITRecord {
   implicit val icebergIOITRecordRowType: RowType[IcebergIOITRecord] = RowType[IcebergIOITRecord]
 }
 
-class IcebergIOIT extends PipelineSpec with ForAllTestContainer { // with BeforeAndAfterAll with Eventually  { //  {
+class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
   val ContainerPort = 8181
   val CatalogName = "iceberg_it"
   val NamespaceName = "iceberg_it_ns"
