@@ -1425,6 +1425,7 @@ lazy val `scio-examples` = project
       "com.mysql" % "mysql-connector-j" % "9.0.0",
       "com.softwaremill.magnolia1_2" %% "magnolia" % magnoliaVersion,
       "com.spotify" %% "magnolify-avro" % magnolifyVersion,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion,
       "com.spotify" %% "magnolify-bigtable" % magnolifyVersion,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion,
       "com.spotify" %% "magnolify-guava" % magnolifyVersion,
