@@ -17,7 +17,6 @@
 package com.spotify.scio.managed
 
 import com.spotify.scio.ScioContext
-import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.io.{EmptyTap, EmptyTapOf, ScioIO, Tap, TapT}
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.managed.Managed
@@ -52,17 +51,14 @@ final case class ManagedIO(ioName: String, config: Map[String, Object]) extends 
       sc.applyInternal[PCollectionRowTuple](
         Managed.read(ioName).withConfig(_config)
       ).getSinglePCollection
-    ).setCoder(CoderMaterializer.beam(sc, Coder.row(params.schema)))
+    )
   }
 
   override protected def write(
     data: SCollection[Row],
     params: ManagedIO.WriteParam
   ): Tap[tapT.T] = {
-    val t = Managed.write(ioName).withConfig(_config)
-    data.applyInternal(t)
-      .getSinglePCollection
-      .setCoder(data.internal.getCoder)
+    data.applyInternal(Managed.write(ioName).withConfig(_config))
     EmptyTap
   }
 

@@ -90,6 +90,7 @@ val elasticsearch8Version = "8.15.1"
 val fansiVersion = "0.5.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
+val icebergVersion = "1.4.2"
 val jakartaJsonVersion = "2.1.3"
 val javaLshVersion = "0.12"
 val jedisVersion = "5.1.5"
@@ -697,9 +698,9 @@ lazy val `scio-bom` = project
       `scio-extra`,
       `scio-google-cloud-platform`,
       `scio-grpc`,
-      `scio-iceberg`,
       `scio-jdbc`,
       `scio-macros`,
+      `scio-managed`,
       `scio-neo4j`,
       `scio-parquet`,
       `scio-redis`,
@@ -1172,21 +1173,19 @@ lazy val `scio-grpc` = project
     )
   )
 
-lazy val `scio-iceberg` = project
-  .in(file("scio-iceberg"))
+lazy val `scio-managed` = project
+  .in(file("scio-managed"))
   .dependsOn(
     `scio-core` % "compile;test->test"
   )
   .settings(commonSettings)
   .settings(
-    description := "Scio add-on for Iceberg",
+    description := "Scio add-on for Beam's managed transforms",
     libraryDependencies ++= Seq(
       // compile
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
-      // TODO add iceberg as test source
-      "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion,
-      "com.spotify" %% "magnolify-beam" % magnolifyVersion,
+      "com.spotify" %% "magnolify-beam" % magnolifyVersion
       // test
     )
   )
@@ -1365,8 +1364,8 @@ lazy val `scio-examples` = project
     `scio-elasticsearch8`,
     `scio-extra`,
     `scio-google-cloud-platform`,
-    `scio-iceberg`,
     `scio-jdbc`,
+    `scio-managed`,
     `scio-neo4j`,
     `scio-parquet`,
     `scio-redis`,
@@ -1444,34 +1443,7 @@ lazy val `scio-examples` = project
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion,
-      // no
-      "org.apache.iceberg" % "iceberg-hive-metastore" % "1.4.2",
-      "org.apache.hive.hcatalog" % "hive-hcatalog-core" % "3.1.3",
-      /*
-      def hive_version = "3.1.3"
-def iceberg_version = "1.4.2"
-    testRuntimeOnly library.java.snake_yaml
-    testRuntimeOnly library.java.bigdataoss_gcs_connector
-    testRuntimeOnly library.java.hadoop_client
-
-    // needed to set up the test environment
-    testImplementation "org.apache.iceberg:iceberg-common:$iceberg_version"
-    testImplementation "org.apache.iceberg:iceberg-core:$iceberg_version"
-    testImplementation "org.assertj:assertj-core:3.11.1"
-    testImplementation library.java.junit
-
-    // needed to set up test Hive Metastore and run tests
-    testImplementation ("org.apache.iceberg:iceberg-hive-metastore:$iceberg_version")
-    testImplementation project(path: ":sdks:java:io:iceberg:hive:exec", configuration: "shadow")
-    testRuntimeOnly ("org.apache.hive.hcatalog:hive-hcatalog-core:$hive_version") {
-        exclude group: "org.apache.hive", module: "hive-exec"
-        exclude group: "org.apache.parquet", module: "parquet-hadoop-bundle"
-    }
-    testImplementation "org.apache.iceberg:iceberg-parquet:$iceberg_version"
-    testImplementation "org.apache.parquet:parquet-column:1.12.0"
-       */
-
-      // no
+      "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
       "org.apache.parquet" % "parquet-column" % parquetVersion,
@@ -1740,6 +1712,7 @@ lazy val integration = project
     `scio-extra` % "test->test",
     `scio-google-cloud-platform` % "compile;test->test",
     `scio-jdbc` % "compile;test->test",
+    `scio-managed` % "test->test",
     `scio-neo4j` % "test->test",
     `scio-smb` % "test->provided,test"
   )
@@ -1786,7 +1759,13 @@ lazy val integration = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion % Test,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion % Test,
       "com.spotify" %% "magnolify-datastore" % magnolifyVersion % Test,
-      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test
+      "org.apache.beam" % "beam-runners-google-cloud-dataflow-java" % beamVersion % Test,
+      "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion % Test,
+      "org.apache.iceberg" % "iceberg-common" % icebergVersion % Test,
+      "org.apache.iceberg" % "iceberg-core" % icebergVersion % Test,
+      "org.apache.iceberg" % "iceberg-parquet" % icebergVersion % Test,
+      "org.apache.parquet" % "parquet-common" % parquetVersion % Test,
+      "org.apache.parquet" % "parquet-column" % parquetVersion % Test
     )
   )
 
@@ -1812,9 +1791,9 @@ lazy val site = project
     `scio-extra`,
     `scio-google-cloud-platform`,
     `scio-grpc` % "compile->test",
-    `scio-iceberg`,
     `scio-jdbc`,
     `scio-macros`,
+    `scio-managed`,
     `scio-neo4j`,
     `scio-parquet`,
     `scio-redis`,
