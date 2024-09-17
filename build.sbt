@@ -1442,7 +1442,6 @@ lazy val `scio-examples` = project
       "org.apache.beam" % "beam-sdks-java-extensions-sql" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-google-cloud-platform" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-jdbc" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-iceberg" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-managed" % beamVersion,
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion,
       "org.apache.httpcomponents" % "httpcore" % httpCoreVersion,
