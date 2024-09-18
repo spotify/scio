@@ -67,5 +67,5 @@ final case class ManagedIO(ioName: String, config: Map[String, Object]) extends 
 
 object ManagedIO {
   final case class ReadParam(schema: Schema)
-  final case class WriteParam()
+  type WriteParam = Unit
 }

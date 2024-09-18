@@ -26,8 +26,8 @@ class IcebergSCollectionSyntax[T: RowType: Coder](self: SCollection[T]) {
   def saveAsIceberg(
     table: String,
     catalogName: String = null,
-    catalogProperties: Map[String, String] = null,
-    configProperties: Map[String, String] = null
+    catalogProperties: Map[String, String] = IcebergIO.WriteParam.DefaultCatalogProperties,
+    configProperties: Map[String, String] = IcebergIO.WriteParam.DefaultConfigProperties
   ): ClosedTap[Nothing] = {
     val params = IcebergIO.WriteParam(catalogProperties, configProperties)
     self.write(IcebergIO(table, Option(catalogName)))(params)

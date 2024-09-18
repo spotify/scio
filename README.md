@@ -79,6 +79,7 @@ Scio includes the following artifacts:
 - `scio-google-cloud-platform`: add-on for Google Cloud IO's: BigQuery, Bigtable, Pub/Sub, Datastore, Spanner
 - `scio-grpc`: add-on for gRPC service calls
 - `scio-jdbc`: add-on for JDBC IO
+- `scio-managed`: add-on for Beam's managed transforms. Includes Iceberg
 - `scio-neo4j`: add-on for Neo4J IO
 - `scio-parquet`: add-on for Parquet
 - `scio-redis`: add-on for Redis

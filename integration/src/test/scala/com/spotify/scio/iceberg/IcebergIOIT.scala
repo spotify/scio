@@ -22,7 +22,7 @@ import magnolify.beam._
 import org.apache.iceberg.catalog.{Namespace, TableIdentifier}
 import org.apache.iceberg.rest.RESTCatalog
 import org.apache.iceberg.types.Types.{IntegerType, NestedField, StringType}
-import org.apache.iceberg.{CatalogProperties, CatalogUtil, PartitionSpec}
+import org.apache.iceberg.{CatalogProperties, CatalogUtil, PartitionSpec, Schema}
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 
 import java.time.Duration
@@ -62,7 +62,6 @@ class IcebergIOIT extends PipelineSpec with ForAllTestContainer {
     val cat = new RESTCatalog()
     cat.initialize(CatalogName, Map("uri" -> uri).asJava)
 
-    import org.apache.iceberg.Schema
     cat.createNamespace(Namespace.of(NamespaceName))
     cat.createTable(
       TableIdentifier.parse(TableName),

@@ -31,8 +31,8 @@ class IcebergScioContextSyntax(self: ScioContext) {
   def iceberg[T: Coder](
     table: String,
     catalogName: String = null,
-    catalogProperties: Map[String, String] = null,
-    configProperties: Map[String, String] = null
+    catalogProperties: Map[String, String] = IcebergIO.ReadParam.DefaultCatalogProperties,
+    configProperties: Map[String, String] = IcebergIO.ReadParam.DefaultConfigProperties
   )(implicit rt: RowType[T]): SCollection[T] = {
     val params = IcebergIO.ReadParam(catalogProperties, configProperties)
     self.read(IcebergIO(table, Option(catalogName)))(params)

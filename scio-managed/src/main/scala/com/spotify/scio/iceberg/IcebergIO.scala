@@ -36,44 +36,48 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
   private lazy val beamRowCoder: RowCoder = RowCoder.of(rowType.schema)
   implicit private lazy val rowCoder: Coder[Row] = Coder.beam(beamRowCoder)
 
-  override def testId: String = s"IcebergIO($table, $catalogName)"
+  override def testId: String = s"IcebergIO(${(Some(table) ++ catalogName).mkString(", ")})"
 
   private def config(
     catalogProperties: Map[String, String],
     configProperties: Map[String, String]
   ): Map[String, AnyRef] = {
-    Map[String, AnyRef](
-      "table" -> table,
-      "catalog_name" -> catalogName.orNull,
-      "catalog_properties" -> catalogProperties,
-      "config_properties" -> configProperties
-    ).filter(_._2 != null)
+    val b = Map.newBuilder[String, AnyRef]
+    b.addOne("table" -> table)
+    catalogName.foreach(name => b.addOne("catalog_name" -> name))
+    Option(catalogProperties).foreach(p => b.addOne("catalog_properties" -> p))
+    Option(configProperties).foreach(p => b.addOne("config_properties" -> p))
+    b.result()
   }
 
-  override protected def read(sc: ScioContext, params: IcebergIO.ReadParam): SCollection[T] =
-    ManagedIO(Managed.ICEBERG, config(params.catalogProperties, params.configProperties))
-      .readWithContext(sc, ManagedIO.ReadParam(rowType.schema))
-      .map(rowType.from)
+  override protected def read(sc: ScioContext, params: IcebergIO.ReadParam): SCollection[T] = {
+    val io = ManagedIO(Managed.ICEBERG, config(params.catalogProperties, params.configProperties))
+    sc.transform(_.read(io)(ManagedIO.ReadParam(rowType.schema)).map(rowType.from))
+  }
 
   override protected def write(data: SCollection[T], params: IcebergIO.WriteParam): Tap[tapT.T] = {
-    val tx = data.transform {
-      _.map(rowType.to).setCoder(beamRowCoder)
-    }
-    ManagedIO(Managed.ICEBERG, config(params.catalogProperties, params.configProperties))
-      .writeWithContext(tx, ManagedIO.WriteParam())
-      .underlying
-}
+    val io = ManagedIO(Managed.ICEBERG, config(params.catalogProperties, params.configProperties))
+    data.map(rowType.to).setCoder(beamRowCoder).write(io).underlying
+  }
 
   override def tap(read: IcebergIO.ReadParam): Tap[tapT.T] = EmptyTap
 }
 
 object IcebergIO {
   case class ReadParam private (
-    catalogProperties: Map[String, String] = null,
-    configProperties: Map[String, String] = null
+    catalogProperties: Map[String, String] = ReadParam.DefaultCatalogProperties,
+    configProperties: Map[String, String] = ReadParam.DefaultConfigProperties
   )
+  object ReadParam {
+    val DefaultCatalogProperties: Map[String, String] = null
+    val DefaultConfigProperties: Map[String, String] = null
+  }
   case class WriteParam private (
-    catalogProperties: Map[String, String] = null,
-    configProperties: Map[String, String] = null
+    catalogProperties: Map[String, String] = WriteParam.DefaultCatalogProperties,
+    configProperties: Map[String, String] = WriteParam.DefaultConfigProperties
   )
+  object WriteParam {
+    val DefaultCatalogProperties: Map[String, String] = null
+    val DefaultConfigProperties: Map[String, String] = null
+  }
 }

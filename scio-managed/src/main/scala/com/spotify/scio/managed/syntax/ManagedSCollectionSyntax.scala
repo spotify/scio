@@ -23,7 +23,7 @@ import org.apache.beam.sdk.values.Row
 
 class ManagedSCollectionSyntax(self: SCollection[Row]) {
   def saveAsManaged(sink: String, config: Map[String, AnyRef] = Map.empty): ClosedTap[Nothing] =
-    self.write(ManagedIO(sink, config))(ManagedIO.WriteParam())
+    self.write(ManagedIO(sink, config))
 }
 
 trait SCollectionSyntax {
