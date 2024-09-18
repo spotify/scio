@@ -43,10 +43,10 @@ final case class IcebergIO[T: RowType: Coder](table: String, catalogName: Option
     configProperties: Map[String, String]
   ): Map[String, AnyRef] = {
     val b = Map.newBuilder[String, AnyRef]
-    b.addOne("table" -> table)
-    catalogName.foreach(name => b.addOne("catalog_name" -> name))
-    Option(catalogProperties).foreach(p => b.addOne("catalog_properties" -> p))
-    Option(configProperties).foreach(p => b.addOne("config_properties" -> p))
+    b += ("table" -> table)
+    catalogName.foreach(name => b += ("catalog_name" -> name))
+    Option(catalogProperties).foreach(p => b += ("catalog_properties" -> p))
+    Option(configProperties).foreach(p => b += ("config_properties" -> p))
     b.result()
   }
 
