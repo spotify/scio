@@ -492,6 +492,17 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
+  it should "support withTimestampedValues" in {
+    runWithContext { sc =>
+      val p = sc.parallelizeTimestamped(
+        Seq(("a", 1), ("b", 2), ("c", 3)),
+        Seq(1L, 2L, 3L).map(new Instant(_))
+      )
+      val r = p.withTimestampedValues.map { case (k, (v, ts)) => (k, v, ts.getMillis) }
+      r should containInAnyOrder(Seq(("a", 1, 1L), ("b", 2, 2L), ("c", 3, 3L)))
+    }
+  }
+
   it should "support filterValues()" in {
     runWithContext { sc =>
       val p = sc

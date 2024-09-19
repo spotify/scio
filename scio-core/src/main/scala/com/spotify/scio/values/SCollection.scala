@@ -793,7 +793,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     val e = ev // defeat closure
     in.map(e.toDouble)
       .asInstanceOf[SCollection[JDouble]]
-      .pApply(Mean.globally())
+      .pApply(Mean.globally().withoutDefaults())
       .asInstanceOf[SCollection[Double]]
   }
 
@@ -808,14 +808,13 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.reduce(ord.min)
 
   /**
-   * Return the latest of this SCollection according to its event time, or null if there are no
-   * elements.
+   * Return the latest of this SCollection according to its event time.
    * @return
    *   a new SCollection with the latest element
    * @group transform
    */
   def latest: SCollection[T] =
-    this.pApply(Latest.globally())
+    this.withTimestamp.max(Ordering.by(_._2)).keys
 
   /**
    * Compute the SCollection's data distribution using approximate `N`-tiles.

@@ -21,7 +21,7 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.util.Functions
 import com.spotify.scio.coders.Coder
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
-import org.apache.beam.sdk.transforms.{Combine, Latest, Mean, Reify, Top}
+import org.apache.beam.sdk.transforms.{Combine, Mean, Top}
 import org.apache.beam.sdk.values.PCollection
 
 import java.lang.{Double => JDouble, Iterable => JIterable}
@@ -136,8 +136,7 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   /** [[SCollection.latest]] with fan out. */
   def latest: SCollection[T] = {
     coll.transform { in =>
-      in.pApply("Reify Timestamps", Reify.timestamps[T]())
-        .pApply("Latest Value", Combine.globally(Latest.combineFn[T]()).withFanout(fanout))
+      new SCollectionWithFanout(in.withTimestamp, this.fanout).max(Ordering.by(_._2)).keys
     }
   }
 

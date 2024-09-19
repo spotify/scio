@@ -24,15 +24,7 @@ import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.Top.TopCombineFn
-import org.apache.beam.sdk.transforms.{
-  Combine,
-  Latest,
-  Mean,
-  PTransform,
-  Reify,
-  SerializableFunction
-}
-import org.apache.beam.sdk.values.{KV, PCollection}
+import org.apache.beam.sdk.transforms.{Combine, Mean, SerializableFunction}
 
 import java.lang.{Double => JDouble}
 
@@ -170,14 +162,11 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
 
   /** [[SCollection.latest]] with hot key fan out. */
   def latestByKey: SCollection[(K, V)] = {
-    self.applyPerKey(new PTransform[PCollection[KV[K, V]], PCollection[KV[K, V]]]() {
-      override def expand(input: PCollection[KV[K, V]]): PCollection[KV[K, V]] = {
-        input
-          .apply("Reify Timestamps", Reify.timestampsInValue[K, V])
-          .apply("Latest Value", withFanout(Combine.perKey(Latest.combineFn[V]())))
-          .setCoder(input.getCoder)
-      }
-    })(kvToTuple)
+    self.self.transform { in =>
+      new SCollectionWithHotKeyFanout(in.withTimestampedValues, this.hotKeyFanout)
+        .maxByKey(Ordering.by(_._2))
+        .mapValues(_._1)
+    }
   }
 
   /** [[PairSCollectionFunctions.topByKey]] with hot key fanout. */

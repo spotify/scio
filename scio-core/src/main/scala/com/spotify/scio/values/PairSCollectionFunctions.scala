@@ -29,9 +29,10 @@ import com.spotify.scio.hash._
 import com.spotify.scio.util._
 import com.spotify.scio.util.random.{BernoulliValueSampler, PoissonValueSampler}
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
+import org.apache.beam.sdk.transforms.DoFn.{Element, OutputReceiver, ProcessElement, Timestamp}
 import org.apache.beam.sdk.transforms._
 import org.apache.beam.sdk.values.{KV, PCollection}
-import org.joda.time.Duration
+import org.joda.time.{Duration, Instant}
 import org.slf4j.LoggerFactory
 
 import scala.collection.compat._
@@ -717,6 +718,23 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
    */
   def distinctByKey: SCollection[(K, V)] =
     self.distinctBy(_._1)
+
+  /**
+   * Convert values into pairs of (value, timestamp).
+   * @group transform
+   */
+  def withTimestampedValues: SCollection[(K, (V, Instant))] =
+    self.parDo(new DoFn[(K, V), (K, (V, Instant))] {
+      @ProcessElement
+      private[scio] def processElement(
+        @Element element: (K, V),
+        @Timestamp timestamp: Instant,
+        out: OutputReceiver[(K, (V, Instant))]
+      ): Unit = {
+        val (k, v) = element
+        out.output((k, (v, timestamp)))
+      }
+    })
 
   /**
    * Return a new SCollection of (key, value) pairs whose values satisfy the predicate.

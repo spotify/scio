@@ -498,6 +498,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       def max[T: Coder: Numeric](elems: T*): SCollection[T] =
         sc.parallelize(elems).max
+      max[Int]() should beEmpty
       max(1, 2, 3) should containSingleValue(3)
       max(1L, 2L, 3L) should containSingleValue(3L)
       max(1f, 2f, 3f) should containSingleValue(3f)
@@ -509,6 +510,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       def mean[T: Coder: Numeric](elems: T*): SCollection[Double] =
         sc.parallelize(elems).mean
+      mean[Int]() should beEmpty
       mean(1, 2, 3) should containSingleValue(2.0)
       mean(1L, 2L, 3L) should containSingleValue(2.0)
       mean(1f, 2f, 3f) should containSingleValue(2.0)
@@ -520,6 +522,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       def min[T: Coder: Numeric](elems: T*): SCollection[T] =
         sc.parallelize(elems).min
+      min[Int]() should beEmpty
       min(1, 2, 3) should containSingleValue(1)
       min(1L, 2L, 3L) should containSingleValue(1L)
       min(1f, 2f, 3f) should containSingleValue(1f)
@@ -531,6 +534,7 @@ class SCollectionTest extends PipelineSpec {
     runWithContext { sc =>
       def latest(elems: Long*): SCollection[Long] =
         sc.parallelize(elems).timestampBy(Instant.ofEpochMilli).latest
+      latest() should beEmpty
       latest(1L, 2L, 3L) should containSingleValue(3L)
     }
   }
