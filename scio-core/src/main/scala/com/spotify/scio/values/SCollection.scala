@@ -774,30 +774,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def map[U: Coder](f: T => U): SCollection[U] = this.parDo(Functions.mapFn(f))
 
   /**
-   * Return the max of this SCollection as defined by the implicit `Ordering[T]`.
-   * @return
-   *   a new SCollection with the maximum element
-   * @group transform
-   */
-  // Scala lambda is simpler and more powerful than transforms.Max
-  def max(implicit ord: Ordering[T]): SCollection[T] =
-    this.reduce(ord.max)
-
-  /**
-   * Return the mean of this SCollection as defined by the implicit `Numeric[T]`.
-   * @return
-   *   a new SCollection with the mean of elements
-   * @group transform
-   */
-  def mean(implicit ev: Numeric[T]): SCollection[Double] = this.transform { in =>
-    val e = ev // defeat closure
-    in.map(e.toDouble)
-      .asInstanceOf[SCollection[JDouble]]
-      .pApply(Mean.globally().withoutDefaults())
-      .asInstanceOf[SCollection[Double]]
-  }
-
-  /**
    * Return the min of this SCollection as defined by the implicit `Ordering[T]`.
    * @return
    *   a new SCollection with the minimum element
@@ -808,6 +784,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.reduce(ord.min)
 
   /**
+   * Return the max of this SCollection as defined by the implicit `Ordering[T]`.
+   * @return
+   *   a new SCollection with the maximum element
+   * @group transform
+   */
+  // Scala lambda is simpler and more powerful than transforms.Max
+  def max(implicit ord: Ordering[T]): SCollection[T] =
+    this.reduce(ord.max)
+
+  /**
    * Return the latest of this SCollection according to its event time.
    * @return
    *   a new SCollection with the latest element
@@ -815,6 +801,32 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def latest: SCollection[T] =
     this.withTimestamp.max(Ordering.by(_._2)).keys
+
+  /**
+   * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
+   * better optimized than [[reduce]] in some cases.
+   * @group transform
+   */
+  def sum(implicit sg: Semigroup[T]): SCollection[T] = {
+    SCollection.logger.warn(
+      "combine/sum does not support default value and may fail in some streaming scenarios. " +
+        "Consider aggregate/fold instead."
+    )
+    this.pApply(Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults())
+  }
+
+  /**
+   * Return the mean of this SCollection as defined by the implicit `Numeric[T]`.
+   * @return
+   *   a new SCollection with the mean of elements
+   * @group transform
+   */
+  def mean(implicit ev: Numeric[T]): SCollection[Double] = this.transform { in =>
+    val e = ev // defeat closure
+    in.map[JDouble](e.toDouble)
+      .pApply(Mean.globally().withoutDefaults())
+      .asInstanceOf[SCollection[Double]]
+  }
 
   /**
    * Compute the SCollection's data distribution using approximate `N`-tiles.
@@ -944,19 +956,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.transform {
       _.map((_, ())).subtractByKey(that).keys
     }
-
-  /**
-   * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
-   * better optimized than [[reduce]] in some cases.
-   * @group transform
-   */
-  def sum(implicit sg: Semigroup[T]): SCollection[T] = {
-    SCollection.logger.warn(
-      "combine/sum does not support default value and may fail in some streaming scenarios. " +
-        "Consider aggregate/fold instead."
-    )
-    this.pApply(Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults())
-  }
 
   /**
    * Return a sampled subset of any `num` elements of the SCollection.

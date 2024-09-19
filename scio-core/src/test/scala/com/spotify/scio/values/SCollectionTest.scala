@@ -494,30 +494,6 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
-  it should "support max" in {
-    runWithContext { sc =>
-      def max[T: Coder: Numeric](elems: T*): SCollection[T] =
-        sc.parallelize(elems).max
-      max[Int]() should beEmpty
-      max(1, 2, 3) should containSingleValue(3)
-      max(1L, 2L, 3L) should containSingleValue(3L)
-      max(1f, 2f, 3f) should containSingleValue(3f)
-      max(1.0, 2.0, 3.0) should containSingleValue(3.0)
-    }
-  }
-
-  it should "support mean" in {
-    runWithContext { sc =>
-      def mean[T: Coder: Numeric](elems: T*): SCollection[Double] =
-        sc.parallelize(elems).mean
-      mean[Int]() should beEmpty
-      mean(1, 2, 3) should containSingleValue(2.0)
-      mean(1L, 2L, 3L) should containSingleValue(2.0)
-      mean(1f, 2f, 3f) should containSingleValue(2.0)
-      mean(1.0, 2.0, 3.0) should containSingleValue(2.0)
-    }
-  }
-
   it should "support min" in {
     runWithContext { sc =>
       def min[T: Coder: Numeric](elems: T*): SCollection[T] =
@@ -530,12 +506,49 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support max" in {
+    runWithContext { sc =>
+      def max[T: Coder: Numeric](elems: T*): SCollection[T] =
+        sc.parallelize(elems).max
+      max[Int]() should beEmpty
+      max(1, 2, 3) should containSingleValue(3)
+      max(1L, 2L, 3L) should containSingleValue(3L)
+      max(1f, 2f, 3f) should containSingleValue(3f)
+      max(1.0, 2.0, 3.0) should containSingleValue(3.0)
+    }
+  }
+
   it should "support latest" in {
     runWithContext { sc =>
       def latest(elems: Long*): SCollection[Long] =
         sc.parallelize(elems).timestampBy(Instant.ofEpochMilli).latest
       latest() should beEmpty
       latest(1L, 2L, 3L) should containSingleValue(3L)
+    }
+  }
+
+  it should "support sum" in {
+    runWithContext { sc =>
+      def sum[T: Coder: Semigroup](elems: T*): SCollection[T] =
+        sc.parallelize(elems).sum
+      sum[Int]() should beEmpty
+      sum(1, 2, 3) should containSingleValue(6)
+      sum(1L, 2L, 3L) should containSingleValue(6L)
+      sum(1f, 2f, 3f) should containSingleValue(6f)
+      sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
+      sum(1 to 100: _*) should containSingleValue(5050)
+    }
+  }
+
+  it should "support mean" in {
+    runWithContext { sc =>
+      def mean[T: Coder: Numeric](elems: T*): SCollection[Double] =
+        sc.parallelize(elems).mean
+      mean[Int]() should beEmpty
+      mean(1, 2, 3) should containSingleValue(2.0)
+      mean(1L, 2L, 3L) should containSingleValue(2.0)
+      mean(1f, 2f, 3f) should containSingleValue(2.0)
+      mean(1.0, 2.0, 3.0) should containSingleValue(2.0)
     }
   }
 
@@ -592,18 +605,6 @@ class SCollectionTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq(2, 4, 6, 8, 10))
       val p = p1.subtract(p2)
       p should containInAnyOrder(Seq(1, 3, 5, 1, 3, 5))
-    }
-  }
-
-  it should "support sum" in {
-    runWithContext { sc =>
-      def sum[T: Coder: Semigroup](elems: T*): SCollection[T] =
-        sc.parallelize(elems).sum
-      sum(1, 2, 3) should containSingleValue(6)
-      sum(1L, 2L, 3L) should containSingleValue(6L)
-      sum(1f, 2f, 3f) should containSingleValue(6f)
-      sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
-      sum(1 to 100: _*) should containSingleValue(5050)
     }
   }
 

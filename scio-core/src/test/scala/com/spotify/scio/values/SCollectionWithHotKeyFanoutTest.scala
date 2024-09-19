@@ -84,16 +84,6 @@ class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
     }
   }
 
-  it should "support sumByKey" in {
-    runWithContext { sc =>
-      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)))
-      val r1 = p.withHotKeyFanout(10).sumByKey
-      val r2 = p.withHotKeyFanout(_.hashCode).sumByKey
-      r1 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
-      r2 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
-    }
-  }
-
   it should "support minByKey" in {
     runWithContext { sc =>
       val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 3)) ++ (1 to 100).map(("c", _)))
@@ -114,16 +104,6 @@ class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
     }
   }
 
-  it should "support meanByKey" in {
-    runWithContext { sc =>
-      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 3)) ++ (0 to 100).map(("c", _)))
-      val r1 = p.withHotKeyFanout(10).meanByKey
-      val r2 = p.withHotKeyFanout(_.hashCode).meanByKey
-      r1 should containInAnyOrder(Seq(("a", 1.0), ("b", 2.5), ("c", 50.0)))
-      r2 should containInAnyOrder(Seq(("a", 1.0), ("b", 2.5), ("c", 50.0)))
-    }
-  }
-
   it should "support latestByKey" in {
     runWithContext { sc =>
       val p = sc
@@ -133,6 +113,26 @@ class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
       val r2 = p.withHotKeyFanout(_.hashCode).latestByKey
       r1 should containInAnyOrder(Seq(("a", 1L), ("b", 3L), ("c", 100L)))
       r2 should containInAnyOrder(Seq(("a", 1L), ("b", 3L), ("c", 100L)))
+    }
+  }
+
+  it should "support sumByKey" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)))
+      val r1 = p.withHotKeyFanout(10).sumByKey
+      val r2 = p.withHotKeyFanout(_.hashCode).sumByKey
+      r1 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
+      r2 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
+    }
+  }
+
+  it should "support meanByKey" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 3)) ++ (0 to 100).map(("c", _)))
+      val r1 = p.withHotKeyFanout(10).meanByKey
+      val r2 = p.withHotKeyFanout(_.hashCode).meanByKey
+      r1 should containInAnyOrder(Seq(("a", 1.0), ("b", 2.5), ("c", 50.0)))
+      r2 should containInAnyOrder(Seq(("a", 1.0), ("b", 2.5), ("c", 50.0)))
     }
   }
 

@@ -713,30 +713,66 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
     }
   }
 
-  it should "support maxByKey()" in {
+  it should "support minByKey()" in {
     runWithContext { sc =>
-      val p =
-        sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).maxByKey
-      p should containInAnyOrder(Seq(("a", 10), ("b", 20)))
+      def minByKey(elems: (String, Int)*): SCollection[(String, Int)] =
+        sc.parallelize(elems).minByKey
+
+      minByKey() should beEmpty
+      minByKey(("a", 1), ("a", 10), ("b", 2), ("b", 20)) should containInAnyOrder(
+        Seq(("a", 1), ("b", 2))
+      )
     }
   }
 
-  it should "support minByKey()" in {
+  it should "support maxByKey()" in {
     runWithContext { sc =>
-      val p =
-        sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).minByKey
-      p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+      def maxByKey(elems: (String, Int)*): SCollection[(String, Int)] =
+        sc.parallelize(elems).maxByKey
+
+      maxByKey() should beEmpty
+      maxByKey(("a", 1), ("a", 10), ("b", 2), ("b", 20)) should containInAnyOrder(
+        Seq(("a", 10), ("b", 20))
+      )
     }
   }
 
   it should "support latestByKey()" in {
     runWithContext { sc =>
-      val p = sc
-        .parallelize(Seq(("a", 1L), ("a", 10L), ("b", 2L), ("b", 20L)))
-        .timestampBy { case (_, v) => Instant.ofEpochMilli(v) }
-        .latestByKey
+      def latestByKey(elems: (String, Int)*): SCollection[(String, Int)] =
+        sc
+          .parallelize(elems)
+          .timestampBy { case (_, v) => Instant.ofEpochMilli(v.toLong) }
+          .latestByKey
 
-      p should containInAnyOrder(Seq(("a", 10L), ("b", 20L)))
+      latestByKey() should beEmpty
+      latestByKey(("a", 1), ("a", 10), ("b", 2), ("b", 20)) should containInAnyOrder(
+        Seq(("a", 10), ("b", 20))
+      )
+    }
+  }
+
+  it should "support sumByKey" in {
+    runWithContext { sc =>
+      def sumByKey(elems: (String, Int)*): SCollection[(String, Int)] =
+        sc.parallelize(elems).sumByKey
+
+      sumByKey() should beEmpty
+      sumByKey(
+        Seq(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)): _*
+      ) should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
+    }
+  }
+
+  it should "support meanByKey" in {
+    runWithContext { sc =>
+      def meanByKey(elems: (String, Int)*): SCollection[(String, Double)] =
+        sc.parallelize(elems).meanByKey
+
+      meanByKey() should beEmpty
+      meanByKey(
+        Seq(("a", 1), ("b", 2), ("b", 3)) ++ (0 to 100).map(("c", _)): _*
+      ) should containInAnyOrder(Seq(("a", 1.0), ("b", 2.5), ("c", 50.0)))
     }
   }
 
@@ -817,15 +853,6 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p2 = sc.parallelize(Seq[String]())
       val p = p1.subtractByKey(p2)
       p should containInAnyOrder(Seq(("a", 1), ("b", 2), ("c", 3), ("b", 4)))
-    }
-  }
-
-  it should "support sumByKey()" in {
-    runWithContext { sc =>
-      val p = sc
-        .parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)))
-        .sumByKey
-      p should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
     }
   }
 
