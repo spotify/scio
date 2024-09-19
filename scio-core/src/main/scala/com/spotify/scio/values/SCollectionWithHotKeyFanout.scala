@@ -24,7 +24,17 @@ import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.Top.TopCombineFn
-import org.apache.beam.sdk.transforms.{Combine, SerializableFunction}
+import org.apache.beam.sdk.transforms.{
+  Combine,
+  Latest,
+  Mean,
+  PTransform,
+  Reify,
+  SerializableFunction
+}
+import org.apache.beam.sdk.values.{KV, PCollection}
+
+import java.lang.{Double => JDouble}
 
 /**
  * An enhanced SCollection that uses an intermediate node to combine "hot" keys partially before
@@ -140,6 +150,34 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
         "scenarios. Consider aggregateByKey/foldByKey instead."
     )
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, sg))))(kvToTuple)
+  }
+
+  /** [[SCollection.min]] with hot key fan out. */
+  def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
+    self.reduceByKey(ord.min)
+
+  /** [[SCollection.max]] with hot key fan out. */
+  def maxByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
+    self.reduceByKey(ord.max)
+
+  /** [[SCollection.mean]] with hot key fan out. */
+  def meanByKey(implicit ev: Numeric[V]): SCollection[(K, Double)] = {
+    val e = ev // defeat closure
+    self.self.transform { in =>
+      in.mapValues[JDouble](e.toDouble).applyPerKey(Mean.perKey[K, JDouble]())(kdToTuple)
+    }
+  }
+
+  /** [[SCollection.latest]] with hot key fan out. */
+  def latestByKey: SCollection[(K, V)] = {
+    self.applyPerKey(new PTransform[PCollection[KV[K, V]], PCollection[KV[K, V]]]() {
+      override def expand(input: PCollection[KV[K, V]]): PCollection[KV[K, V]] = {
+        input
+          .apply("Reify Timestamps", Reify.timestampsInValue[K, V])
+          .apply("Latest Value", withFanout(Combine.perKey(Latest.combineFn[V]())))
+          .setCoder(input.getCoder)
+      }
+    })(kvToTuple)
   }
 
   /** [[PairSCollectionFunctions.topByKey]] with hot key fanout. */
