@@ -25,6 +25,7 @@ import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.Top.TopCombineFn
 import org.apache.beam.sdk.transforms.{Combine, Mean, SerializableFunction}
+import org.joda.time.ReadableInstant
 
 import java.lang.{Double => JDouble}
 
@@ -147,7 +148,8 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   def latestByKey: SCollection[(K, V)] = {
     self.self.transform { in =>
       new SCollectionWithHotKeyFanout(in.withTimestampedValues, this.hotKeyFanout)
-        .maxByKey(Ordering.by(_._2))
+        // widen to ReadableInstant for scala 2.12 implicit ordering
+        .maxByKey(Ordering.by(_._2: ReadableInstant))
         .mapValues(_._1)
     }
   }

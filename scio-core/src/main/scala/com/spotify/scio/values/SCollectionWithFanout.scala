@@ -23,6 +23,7 @@ import com.spotify.scio.coders.Coder
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.{Combine, Mean, Top}
 import org.apache.beam.sdk.values.PCollection
+import org.joda.time.ReadableInstant
 
 import java.lang.{Double => JDouble, Iterable => JIterable}
 import scala.jdk.CollectionConverters._
@@ -115,7 +116,10 @@ class SCollectionWithFanout[T] private[values] (coll: SCollection[T], fanout: In
   /** [[SCollection.latest]] with fan out. */
   def latest: SCollection[T] = {
     coll.transform { in =>
-      new SCollectionWithFanout(in.withTimestamp, this.fanout).max(Ordering.by(_._2)).keys
+      // widen to ReadableInstant for scala 2.12 implicit ordering
+      new SCollectionWithFanout(in.withTimestamp, this.fanout)
+        .max(Ordering.by(_._2: ReadableInstant))
+        .keys
     }
   }
 

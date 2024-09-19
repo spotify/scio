@@ -45,7 +45,7 @@ import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => beam}
-import org.joda.time.{Duration, Instant}
+import org.joda.time.{Duration, Instant, ReadableInstant}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
@@ -800,7 +800,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group transform
    */
   def latest: SCollection[T] =
-    this.withTimestamp.max(Ordering.by(_._2)).keys
+    // widen to ReadableInstant for scala 2.12 implicit ordering
+    this.withTimestamp.max(Ordering.by(_._2: ReadableInstant)).keys
 
   /**
    * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
