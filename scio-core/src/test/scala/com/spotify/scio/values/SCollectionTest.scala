@@ -527,6 +527,14 @@ class SCollectionTest extends PipelineSpec {
     }
   }
 
+  it should "support latest" in {
+    runWithContext { sc =>
+      def latest(elems: Long*): SCollection[Long] =
+        sc.parallelize(elems).timestampBy(Instant.ofEpochMilli).latest
+      latest(1L, 2L, 3L) should containSingleValue(3L)
+    }
+  }
+
   it should "support quantilesApprox()" in {
     runWithContext { sc =>
       val p = sc.parallelize(0 to 100).quantilesApprox(5)

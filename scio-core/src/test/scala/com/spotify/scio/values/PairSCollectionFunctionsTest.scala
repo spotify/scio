@@ -35,6 +35,7 @@ import org.apache.beam.sdk.coders.{
   VarIntCoder,
   ZstdCoder => BZstdCoder
 }
+import org.joda.time.Instant
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
@@ -714,6 +715,17 @@ class PairSCollectionFunctionsTest extends PipelineSpec {
       val p =
         sc.parallelize(Seq(("a", 1), ("a", 10), ("b", 2), ("b", 20))).minByKey
       p should containInAnyOrder(Seq(("a", 1), ("b", 2)))
+    }
+  }
+
+  it should "support latestByKey()" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(Seq(("a", 1L), ("a", 10L), ("b", 2L), ("b", 20L)))
+        .timestampBy { case (_, v) => Instant.ofEpochMilli(v) }
+        .latestByKey
+
+      p should containInAnyOrder(Seq(("a", 10L), ("b", 20L)))
     }
   }
 

@@ -1013,6 +1013,16 @@ class PairSCollectionFunctions[K, V](val self: SCollection[(K, V)]) {
     this.reduceByKey(ord.min)
 
   /**
+   * Return latest of values for each key according to its event time, or null if there are no
+   * elements.
+   * @return
+   *   a new SCollection of (key, latest value) pairs
+   * @group per_key
+   */
+  def latestByKey: SCollection[(K, V)] =
+    self.applyPerKey(Latest.perKey[K, V]())(kvToTuple)
+
+  /**
    * Merge the values for each key using an associative reduce function. This will also perform the
    * merging locally on each mapper before sending results to a reducer, similarly to a "combiner"
    * in MapReduce.
