@@ -1740,7 +1740,7 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * Generic write method for all `ScioIO[T]` implementations, if it is a test pipeline this will
    * evaluate pre-registered output IO implementation which match for the passing `ScioIO[T]`
    * implementation. If not, this will invoke [[com.spotify.scio.io.ScioIO[T]#write]] with the
-   * passed write configuration.
+   * provided write configuration.
    *
    * @param io
    *   an implementation of `ScioIO[T]` trait
