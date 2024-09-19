@@ -807,9 +807,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def min(implicit ord: Ordering[T]): SCollection[T] =
     this.reduce(ord.min)
 
-
   /**
-   * Return the latest of this SCollection according to its event time, or null if there are no elements.
+   * Return the latest of this SCollection according to its event time, or null if there are no
+   * elements.
    * @return
    *   a new SCollection with the latest element
    * @group transform
