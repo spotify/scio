@@ -61,18 +61,6 @@ class SCollectionWithFanoutTest extends NamedTransformSpec {
     }
   }
 
-  it should "support sum" in {
-    runWithContext { sc =>
-      def sum[T: Coder: Semigroup](elems: T*): SCollection[T] =
-        sc.parallelize(elems).withFanout(10).sum
-      sum(1, 2, 3) should containSingleValue(6)
-      sum(1L, 2L, 3L) should containSingleValue(6L)
-      sum(1f, 2f, 3f) should containSingleValue(6f)
-      sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
-      sum(1 to 100: _*) should containSingleValue(5050)
-    }
-  }
-
   it should "support min" in {
     runWithContext { sc =>
       def min[T: Coder: Ordering](elems: T*): SCollection[T] =
@@ -97,6 +85,27 @@ class SCollectionWithFanoutTest extends NamedTransformSpec {
     }
   }
 
+  it should "support latest" in {
+    runWithContext { sc =>
+      def latest(elems: Long*): SCollection[Long] =
+        sc.parallelize(elems).timestampBy(Instant.ofEpochMilli).withFanout(10).latest
+      latest(1L, 2L, 3L) should containSingleValue(3L)
+      latest(1L to 100L: _*) should containSingleValue(100L)
+    }
+  }
+
+  it should "support sum" in {
+    runWithContext { sc =>
+      def sum[T: Coder: Semigroup](elems: T*): SCollection[T] =
+        sc.parallelize(elems).withFanout(10).sum
+      sum(1, 2, 3) should containSingleValue(6)
+      sum(1L, 2L, 3L) should containSingleValue(6L)
+      sum(1f, 2f, 3f) should containSingleValue(6f)
+      sum(1.0, 2.0, 3.0) should containSingleValue(6.0)
+      sum(1 to 100: _*) should containSingleValue(5050)
+    }
+  }
+
   it should "support mean" in {
     runWithContext { sc =>
       def mean[T: Coder: Numeric](elems: T*): SCollection[Double] =
@@ -106,15 +115,6 @@ class SCollectionWithFanoutTest extends NamedTransformSpec {
       mean(1f, 2f, 3f) should containSingleValue(2.0)
       mean(1.0, 2.0, 3.0) should containSingleValue(2.0)
       mean(0 to 100: _*) should containSingleValue(50.0)
-    }
-  }
-
-  it should "support latest" in {
-    runWithContext { sc =>
-      def latest(elems: Long*): SCollection[Long] =
-        sc.parallelize(elems).timestampBy(Instant.ofEpochMilli).withFanout(10).latest
-      latest(1L, 2L, 3L) should containSingleValue(3L)
-      latest(1L to 100L: _*) should containSingleValue(100L)
     }
   }
 

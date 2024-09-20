@@ -24,15 +24,8 @@ import com.spotify.scio.util.TupleFunctions._
 import com.twitter.algebird.{Aggregator, Monoid, MonoidAggregator, Semigroup}
 import org.apache.beam.sdk.transforms.Combine.PerKeyWithHotKeyFanout
 import org.apache.beam.sdk.transforms.Top.TopCombineFn
-import org.apache.beam.sdk.transforms.{
-  Combine,
-  Latest,
-  Mean,
-  PTransform,
-  Reify,
-  SerializableFunction
-}
-import org.apache.beam.sdk.values.{KV, PCollection}
+import org.apache.beam.sdk.transforms.{Combine, Mean, SerializableFunction}
+import org.joda.time.ReadableInstant
 
 import java.lang.{Double => JDouble}
 
@@ -143,15 +136,6 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   def reduceByKey(op: (V, V) => V): SCollection[(K, V)] =
     self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, op))))(kvToTuple)
 
-  /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
-  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
-    SCollection.logger.warn(
-      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
-        "scenarios. Consider aggregateByKey/foldByKey instead."
-    )
-    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, sg))))(kvToTuple)
-  }
-
   /** [[SCollection.min]] with hot key fan out. */
   def minByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
     self.reduceByKey(ord.min)
@@ -159,6 +143,16 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
   /** [[SCollection.max]] with hot key fan out. */
   def maxByKey(implicit ord: Ordering[V]): SCollection[(K, V)] =
     self.reduceByKey(ord.max)
+
+  /** [[SCollection.latest]] with hot key fan out. */
+  def latestByKey: SCollection[(K, V)] = {
+    self.self.transform { in =>
+      new SCollectionWithHotKeyFanout(in.withTimestampedValues, this.hotKeyFanout)
+        // widen to ReadableInstant for scala 2.12 implicit ordering
+        .maxByKey(Ordering.by(_._2: ReadableInstant))
+        .mapValues(_._1)
+    }
+  }
 
   /** [[SCollection.mean]] with hot key fan out. */
   def meanByKey(implicit ev: Numeric[V]): SCollection[(K, Double)] = {
@@ -168,16 +162,13 @@ class SCollectionWithHotKeyFanout[K, V] private[values] (
     }
   }
 
-  /** [[SCollection.latest]] with hot key fan out. */
-  def latestByKey: SCollection[(K, V)] = {
-    self.applyPerKey(new PTransform[PCollection[KV[K, V]], PCollection[KV[K, V]]]() {
-      override def expand(input: PCollection[KV[K, V]]): PCollection[KV[K, V]] = {
-        input
-          .apply("Reify Timestamps", Reify.timestampsInValue[K, V])
-          .apply("Latest Value", withFanout(Combine.perKey(Latest.combineFn[V]())))
-          .setCoder(input.getCoder)
-      }
-    })(kvToTuple)
+  /** [[PairSCollectionFunctions.sumByKey]] with hot key fanout. */
+  def sumByKey(implicit sg: Semigroup[V]): SCollection[(K, V)] = {
+    SCollection.logger.warn(
+      "combineByKey/sumByKey does not support default value and may fail in some streaming " +
+        "scenarios. Consider aggregateByKey/foldByKey instead."
+    )
+    self.applyPerKey(withFanout(Combine.perKey(Functions.reduceFn(context, sg))))(kvToTuple)
   }
 
   /** [[PairSCollectionFunctions.topByKey]] with hot key fanout. */
