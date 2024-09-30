@@ -18,6 +18,7 @@
 package com.spotify.scio.testing
 
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.graph.TestInput
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
@@ -46,7 +47,7 @@ final private[scio] case class TestStreamInputSource[T](
   )
 
   override def toSCollection(sc: ScioContext): SCollection[T] =
-    sc.applyTransform(stream)
+    sc.applyTransform(stream, TestInput("TestStream"))
 
   override def toString: String = s"TestStream(${stream.getEvents})"
 }

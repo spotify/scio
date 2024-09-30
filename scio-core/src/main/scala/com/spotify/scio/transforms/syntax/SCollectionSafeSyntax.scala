@@ -75,7 +75,7 @@ trait SCollectionSafeSyntax {
         tuple
           .get(errorTag)
           .setCoder(CoderMaterializer.beam(self.context, Coder[(T, Throwable)]))
-      (self.context.wrap(main), self.context.wrap(errorPipe))
+      (self.context.wrap(main, FlatMap()), self.context.wrap(errorPipe))
     }
   }
 }

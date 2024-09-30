@@ -22,6 +22,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Files
 import com.spotify.scio.coders.{Coder, CoderMaterializer, KVCoder}
+import com.spotify.scio.graph.{CustomInput, Parallelize, StepInfo, TransformStep, UnionAll}
 import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
@@ -524,8 +525,8 @@ class ScioContext private[scio] (
   private var _onClose: Unit => Unit = identity
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
-  def wrap[T](p: PCollection[T]): SCollection[T] =
-    new SCollectionImpl[T](p, this)
+  def wrap[T](p: PCollection[T], step: StepInfo): SCollection[T] =
+    new SCollectionImpl[T](p, this, step)
 
   /** Add callbacks calls when the context is closed. */
   private[scio] def onClose(f: Unit => Unit): Unit =
@@ -687,25 +688,33 @@ class ScioContext private[scio] (
 
   private[scio] def applyTransform[U](
     name: Option[String],
-    root: PTransform[_ >: PBegin, PCollection[U]]
+    root: PTransform[_ >: PBegin, PCollection[U]],
+    step: StepInfo
   ): SCollection[U] =
-    wrap(applyInternal(name, root))
+    wrap(applyInternal(name, root), step)
 
   private[scio] def applyTransform[U](
-    root: PTransform[_ >: PBegin, PCollection[U]]
+    root: PTransform[_ >: PBegin, PCollection[U]],
+    step: StepInfo
   ): SCollection[U] =
-    applyTransform(None, root)
+    applyTransform(None, root, step)
 
   private[scio] def applyTransform[U](
     name: String,
-    root: PTransform[_ >: PBegin, PCollection[U]]
+    root: PTransform[_ >: PBegin, PCollection[U]],
+    step: StepInfo
   ): SCollection[U] =
-    applyTransform(Option(name), root)
+    applyTransform(Option(name), root, step)
 
   def transform[U](f: ScioContext => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
 
-  def transform[U](name: String)(f: ScioContext => SCollection[U]): SCollection[U] =
-    wrap(transform_(name)(f(_).internal))
+  def transform[U](name: String)(f: ScioContext => SCollection[U]): SCollection[U] = {
+    val transformed = transform_(name)(sc => SCollectionOutput(f(sc)))
+    wrap(
+      transformed.scioCollection.internal,
+      TransformStep(name, transformed.scioCollection.step)
+    )
+  }
 
   private[scio] def transform_[U <: POutput](f: ScioContext => U): U =
     transform_(tfName)(f)
@@ -760,7 +769,7 @@ class ScioContext private[scio] (
       if (this.isTest) {
         TestDataManager.getInput(testId.get)(CustomIO[T](name)).toSCollection(this)
       } else {
-        applyTransform(name, transform)
+        applyTransform(name, transform, CustomInput(name))
       }
     }
 
@@ -788,13 +797,15 @@ class ScioContext private[scio] (
   // `T: Coder` context bound is required since `scs` might be empty.
   def unionAll[T: Coder](scs: => Iterable[SCollection[T]]): SCollection[T] = {
     val tfName = this.tfName // evaluate eagerly to avoid overriding `scs` names
-    scs match {
+    scs.toList match {
       case Nil => empty()
       case contents =>
+        val sources = contents.map(_.step)
         wrap(
           PCollectionList
             .of(contents.map(_.internal).asJava)
-            .apply(tfName, Flatten.pCollections())
+            .apply(tfName, Flatten.pCollections()),
+          UnionAll(tfName, sources)
         )
     }
   }
@@ -809,7 +820,7 @@ class ScioContext private[scio] (
   def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
-      this.applyTransform(Create.of(elems.asJava).withCoder(coder))
+      this.applyTransform(Create.of(elems.asJava).withCoder(coder), Parallelize)
     }
 
   /**
@@ -822,7 +833,7 @@ class ScioContext private[scio] (
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, KVCoder(koder, voder))
       this
-        .applyTransform(Create.of(elems.asJava).withCoder(coder))
+        .applyTransform(Create.of(elems.asJava).withCoder(coder), Parallelize)
         .map(kv => (kv.getKey, kv.getValue))
     }
 
@@ -834,7 +845,7 @@ class ScioContext private[scio] (
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder))
+      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder), Parallelize)
     }
 
   /**
@@ -848,7 +859,7 @@ class ScioContext private[scio] (
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
-      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder))
+      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder), Parallelize)
     }
 
   // =======================================================================
