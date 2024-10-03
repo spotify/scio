@@ -75,7 +75,7 @@ private[scio] object ArtisanJoin {
 
     type DF = DoFn[KV[KEY, CoGbkResult], (KEY, (A1, B1))]
     a.context
-      .wrap(keyed)
+      .wrap(keyed, )
       .withName(name)
       .applyTransform(ParDo.of(new DF {
         @ProcessElement

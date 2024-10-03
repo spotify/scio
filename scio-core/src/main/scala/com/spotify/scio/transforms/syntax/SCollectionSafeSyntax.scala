@@ -18,6 +18,7 @@ package com.spotify.scio.transforms.syntax
 
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.graph.{NodeType, ScioGraphNode}
 import com.spotify.scio.util.NamedDoFn
 import com.twitter.chill.ClosureCleaner
 import org.apache.beam.sdk.transforms.DoFn.{Element, MultiOutputReceiver, ProcessElement}
@@ -25,6 +26,7 @@ import org.apache.beam.sdk.transforms.ParDo
 import org.apache.beam.sdk.values.{TupleTag, TupleTagList}
 
 import scala.collection.compat._
+import scala.reflect.ClassTag
 
 trait SCollectionSafeSyntax {
 
@@ -43,7 +45,7 @@ trait SCollectionSafeSyntax {
      *
      * @group transform
      */
-    def safeFlatMap[U: Coder](
+    def safeFlatMap[U: Coder: ClassTag](
       f: T => TraversableOnce[U]
     ): (SCollection[U], SCollection[(T, Throwable)]) = {
       val (mainTag, errorTag) = (new TupleTag[U], new TupleTag[(T, Throwable)])
@@ -75,7 +77,11 @@ trait SCollectionSafeSyntax {
         tuple
           .get(errorTag)
           .setCoder(CoderMaterializer.beam(self.context, Coder[(T, Throwable)]))
-      (self.context.wrap(main, FlatMap()), self.context.wrap(errorPipe))
+      (
+        self.context.wrap(main, ScioGraphNode.node(null, NodeType.FlatMap, List(self))),
+        self.context
+          .wrap(errorPipe, ScioGraphNode.node(null, NodeType.FlatMap, List(self)))
+      )
     }
   }
 }

@@ -19,7 +19,7 @@ package com.spotify.scio.values
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{BeamCoders, Coder}
-import com.spotify.scio.graph.StepInfo
+import com.spotify.scio.graph.ScioGraphNode
 import org.apache.beam.sdk.transforms.PTransform
 import org.apache.beam.sdk.values.{PCollection, POutput}
 
@@ -28,7 +28,7 @@ private[values] trait PCollectionWrapper[T] extends TransformNameable {
   /** The [[org.apache.beam.sdk.values.PCollection PCollection]] being wrapped internally. */
   val internal: PCollection[T]
 
-  val step: StepInfo
+  val step: ScioGraphNode
 
   implicit def coder: Coder[T] = BeamCoders.getCoder(internal)
 

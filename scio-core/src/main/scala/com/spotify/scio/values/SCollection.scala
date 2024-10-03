@@ -27,7 +27,7 @@ import com.spotify.scio.estimators.{
   ApproximateUniqueCounter,
   ApproximateUniqueCounterByError
 }
-import com.spotify.scio.graph.StepInfo
+import com.spotify.scio.graph.ScioGraphNode
 import com.spotify.scio.io._
 import com.spotify.scio.schemas.{Schema, SchemaMaterializer}
 import com.spotify.scio.testing.TestDataManager
@@ -1767,5 +1767,5 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
 private[scio] class SCollectionImpl[T](
   val internal: PCollection[T],
   val context: ScioContext,
-  val step: StepInfo
+  val step: ScioGraphNode
 ) extends SCollection[T] {}

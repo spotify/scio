@@ -18,7 +18,7 @@
 package com.spotify.scio.testing
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.graph.TestInput
+import com.spotify.scio.graph.ScioGraphNode
 import com.spotify.scio.io.ScioIO
 import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ScioContext, ScioResult}
@@ -29,6 +29,7 @@ import org.apache.beam.sdk.testing.TestStream
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.{Set => MSet}
 import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 /* Inputs are Scala Iterables to be parallelized for TestPipeline, or PTransforms to be applied */
@@ -37,7 +38,7 @@ sealed private[scio] trait JobInputSource[T] {
   val asIterable: Try[Iterable[T]]
 }
 
-final private[scio] case class TestStreamInputSource[T](
+final private[scio] case class TestStreamInputSource[T: ClassTag](
   stream: TestStream[T]
 ) extends JobInputSource[T] {
   override val asIterable: Try[Iterable[T]] = Failure(
@@ -47,12 +48,12 @@ final private[scio] case class TestStreamInputSource[T](
   )
 
   override def toSCollection(sc: ScioContext): SCollection[T] =
-    sc.applyTransform(stream, TestInput("TestStream"))
+    sc.applyTransform(stream, ScioGraphNode.read[T]("TestStream", "TestInput"))
 
   override def toString: String = s"TestStream(${stream.getEvents})"
 }
 
-final private[scio] case class IterableInputSource[T: Coder](
+final private[scio] case class IterableInputSource[T: Coder: ClassTag](
   iterable: Iterable[T]
 ) extends JobInputSource[T] {
   override val asIterable: Success[Iterable[T]] = Success(iterable)

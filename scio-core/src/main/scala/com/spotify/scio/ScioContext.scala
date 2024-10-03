@@ -22,7 +22,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.Files
 import com.spotify.scio.coders.{Coder, CoderMaterializer, KVCoder}
-import com.spotify.scio.graph.{CustomInput, Parallelize, StepInfo, TransformStep, UnionAll}
+import com.spotify.scio.graph.{NodeIO, NodeType, ScioGraphNode}
 import com.spotify.scio.io._
 import com.spotify.scio.metrics.Metrics
 import com.spotify.scio.options.ScioOptions
@@ -525,7 +525,7 @@ class ScioContext private[scio] (
   private var _onClose: Unit => Unit = identity
 
   /** Wrap a [[org.apache.beam.sdk.values.PCollection PCollection]]. */
-  def wrap[T](p: PCollection[T], step: StepInfo): SCollection[T] =
+  def wrap[T](p: PCollection[T], step: ScioGraphNode): SCollection[T] =
     new SCollectionImpl[T](p, this, step)
 
   /** Add callbacks calls when the context is closed. */
@@ -689,30 +689,31 @@ class ScioContext private[scio] (
   private[scio] def applyTransform[U](
     name: Option[String],
     root: PTransform[_ >: PBegin, PCollection[U]],
-    step: StepInfo
+    step: ScioGraphNode
   ): SCollection[U] =
     wrap(applyInternal(name, root), step)
 
   private[scio] def applyTransform[U](
     root: PTransform[_ >: PBegin, PCollection[U]],
-    step: StepInfo
+    step: ScioGraphNode
   ): SCollection[U] =
     applyTransform(None, root, step)
 
   private[scio] def applyTransform[U](
     name: String,
     root: PTransform[_ >: PBegin, PCollection[U]],
-    step: StepInfo
+    step: ScioGraphNode
   ): SCollection[U] =
     applyTransform(Option(name), root, step)
 
-  def transform[U](f: ScioContext => SCollection[U]): SCollection[U] = transform(this.tfName)(f)
+  def transform[U: ClassTag](f: ScioContext => SCollection[U]): SCollection[U] =
+    transform(this.tfName)(f)
 
-  def transform[U](name: String)(f: ScioContext => SCollection[U]): SCollection[U] = {
+  def transform[U: ClassTag](name: String)(f: ScioContext => SCollection[U]): SCollection[U] = {
     val transformed = transform_(name)(sc => SCollectionOutput(f(sc)))
     wrap(
       transformed.scioCollection.internal,
-      TransformStep(name, transformed.scioCollection.step)
+      ScioGraphNode.node[U](name, NodeType.Transform, List(transformed.scioCollection))
     )
   }
 
@@ -769,7 +770,7 @@ class ScioContext private[scio] (
       if (this.isTest) {
         TestDataManager.getInput(testId.get)(CustomIO[T](name)).toSCollection(this)
       } else {
-        applyTransform(name, transform, CustomInput(name))
+        applyTransform(name, transform, ScioGraphNode.read(name, NodeIO.CustomInput))
       }
     }
 
@@ -795,32 +796,31 @@ class ScioContext private[scio] (
 
   /** Create a union of multiple SCollections. Supports empty lists. */
   // `T: Coder` context bound is required since `scs` might be empty.
-  def unionAll[T: Coder](scs: => Iterable[SCollection[T]]): SCollection[T] = {
+  def unionAll[T: Coder: ClassTag](scs: => Iterable[SCollection[T]]): SCollection[T] = {
     val tfName = this.tfName // evaluate eagerly to avoid overriding `scs` names
     scs.toList match {
       case Nil => empty()
       case contents =>
-        val sources = contents.map(_.step)
         wrap(
           PCollectionList
             .of(contents.map(_.internal).asJava)
             .apply(tfName, Flatten.pCollections()),
-          UnionAll(tfName, sources)
+          ScioGraphNode.node[T](tfName, NodeType.UnionAll, contents)
         )
     }
   }
 
   /** Form an empty SCollection. */
-  def empty[T: Coder](): SCollection[T] = parallelize(Nil)
+  def empty[T: Coder: ClassTag](): SCollection[T] = parallelize(Nil)
 
   /**
    * Distribute a local Scala `Iterable` to form an SCollection.
    * @group in_memory
    */
-  def parallelize[T: Coder](elems: Iterable[T]): SCollection[T] =
+  def parallelize[T: Coder: ClassTag](elems: Iterable[T]): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
-      this.applyTransform(Create.of(elems.asJava).withCoder(coder), Parallelize)
+      this.applyTransform(Create.of(elems.asJava).withCoder(coder), ScioGraphNode.parallelize[T])
     }
 
   /**
@@ -833,7 +833,7 @@ class ScioContext private[scio] (
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, KVCoder(koder, voder))
       this
-        .applyTransform(Create.of(elems.asJava).withCoder(coder), Parallelize)
+        .applyTransform(Create.of(elems.asJava).withCoder(coder), ScioGraphNode.parallelize[(K, V)])
         .map(kv => (kv.getKey, kv.getValue))
     }
 
@@ -841,25 +841,31 @@ class ScioContext private[scio] (
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: Coder](elems: Iterable[(T, Instant)]): SCollection[T] =
+  def parallelizeTimestamped[T: Coder: ClassTag](elems: Iterable[(T, Instant)]): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.map(t => TimestampedValue.of(t._1, t._2))
-      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder), Parallelize)
+      this.applyTransform(
+        Create.timestamped(v.asJava).withCoder(coder),
+        ScioGraphNode.parallelize[T]
+      )
     }
 
   /**
    * Distribute a local Scala `Iterable` with timestamps to form an SCollection.
    * @group in_memory
    */
-  def parallelizeTimestamped[T: Coder](
+  def parallelizeTimestamped[T: Coder: ClassTag](
     elems: Iterable[T],
     timestamps: Iterable[Instant]
   ): SCollection[T] =
     requireNotClosed {
       val coder = CoderMaterializer.beam(this, Coder[T])
       val v = elems.zip(timestamps).map(t => TimestampedValue.of(t._1, t._2))
-      this.applyTransform(Create.timestamped(v.asJava).withCoder(coder), Parallelize)
+      this.applyTransform(
+        Create.timestamped(v.asJava).withCoder(coder),
+        ScioGraphNode.parallelize[T]
+      )
     }
 
   // =======================================================================

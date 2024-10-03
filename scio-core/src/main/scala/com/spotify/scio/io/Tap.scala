@@ -26,6 +26,7 @@ import org.apache.beam.sdk.coders.{ByteArrayCoder, Coder => BCoder}
 import org.apache.beam.sdk.util.CoderUtils
 
 import java.io.{EOFException, InputStream}
+import scala.reflect.ClassTag
 
 /**
  * Placeholder to an external data set that can either be load into memory as an iterator or opened
@@ -88,7 +89,7 @@ final case class TextTap(path: String, params: TextIO.ReadParam) extends Tap[Str
     sc.read(TextIO(path))(params)
 }
 
-final private[scio] class InMemoryTap[T: Coder] extends Tap[T] {
+final private[scio] class InMemoryTap[T: Coder: ClassTag] extends Tap[T] {
   private[scio] val id: String = UUID.randomUUID().toString
   override def value: Iterator[T] = InMemorySink.get(id).iterator
   override def open(sc: ScioContext): SCollection[T] =

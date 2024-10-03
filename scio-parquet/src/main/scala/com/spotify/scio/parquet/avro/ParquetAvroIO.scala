@@ -37,6 +37,7 @@ import org.apache.beam.sdk.io.fs.ResourceId
 import org.apache.beam.sdk.io.hadoop.SerializableConfiguration
 import org.apache.beam.sdk.io.hadoop.format.HadoopFormatIO
 import org.apache.beam.sdk.options.ValueProvider.StaticValueProvider
+import org.apache.beam.sdk.transforms.display.DisplayData
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.Job
@@ -50,6 +51,7 @@ import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.hadoop.ParquetInputFormat
 import org.apache.parquet.hadoop.metadata.CompressionCodecName
 
+import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.reflect.{classTag, ClassTag}
 
 final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[T] {
@@ -106,6 +108,7 @@ final case class ParquetAvroIO[T: ClassTag: Coder](path: String) extends ScioIO[
       job.getConfiguration,
       compression
     )
+
     val transform = WriteFiles.to(sink).withNumShards(numShards)
     if (!isWindowed) transform else transform.withWindowedWrites()
   }
