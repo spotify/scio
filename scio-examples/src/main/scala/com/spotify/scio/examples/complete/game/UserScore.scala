@@ -62,7 +62,7 @@ object UserScore {
       // Map summed results from tuples into `UserScoreSums` case class, so we can save to BQ
       .map(UserScoreSums.tupled)
       // Save to the BigQuery table defined by "output" in the arguments passed in
-      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
+      .saveAsTypedBigQueryTable(Table(args("output")))
 
     // Execute the pipeline
     sc.run()

@@ -125,7 +125,7 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
-      .typedBigQuery[NestedWithFields]()
+      .typedBigQueryStorage[NestedWithFields]()
       .map(r => (r.required.int, r.required.string, r.optional.get.int))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
@@ -139,7 +139,7 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
-      .typedBigQuery[NestedWithRestriction]()
+      .typedBigQueryStorage[NestedWithRestriction]()
       .map { r =>
         val (req, opt, rep) = (r.required, r.optional.get, r.repeated.head)
         (req.int, req.string, opt.int, opt.string, rep.int, rep.string)
@@ -155,8 +155,10 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
+    val bqt = BigQueryType[NestedWithRestriction]
+    val source = Table(bqt.table.get, "required.int < 3")
     val p = sc
-      .typedBigQueryStorage[NestedWithRestriction](rowRestriction = "required.int < 3")
+      .typedBigQueryStorage[NestedWithRestriction](source)
       .map { r =>
         val (req, opt, rep) = (r.required, r.optional.get, r.repeated.head)
         (req.int, req.string, opt.int, opt.string, rep.int, rep.string)
@@ -172,7 +174,7 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
-      .typedBigQuery[NestedWithAll](Table.Spec(NestedWithAll.table.format("nested")))
+      .typedBigQueryStorage[NestedWithAll](Table(NestedWithAll.table.format("nested")))
       .map(r => (r.required.int, r.required.string, r.optional.get.int))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
@@ -232,7 +234,7 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
-    val p = sc.typedBigQuery[FromTable]().internal
+    val p = sc.typedBigQueryStorage[FromTable]().internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()
   }
@@ -243,7 +245,7 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
     val p = sc
-      .typedBigQueryStorage[ToTableRequired](Table.Spec("data-integration-test:storage.required"))
+      .typedBigQueryStorage[ToTableRequired](Table("data-integration-test:storage.required"))
       .internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()
@@ -272,7 +274,7 @@ class BigQueryStorageIT extends AnyFlatSpec with Matchers {
     val (sc, _) = ContextAndArgs(
       Array("--project=data-integration-test", "--tempLocation=gs://data-integration-test-eu/temp")
     )
-    val p = sc.typedBigQuery[FromQuery]().internal
+    val p = sc.typedBigQueryStorage[FromQuery]().internal
     PAssert.that(p).containsInAnyOrder(expected)
     sc.run()
   }
