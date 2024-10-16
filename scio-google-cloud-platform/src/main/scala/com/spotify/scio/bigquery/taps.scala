@@ -17,7 +17,7 @@
 
 package com.spotify.scio.bigquery
 
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
+import com.google.cloud.bigquery.storage.v1.ReadSession.TableReadOptions
 import com.google.api.services.bigquery.model.{TableReference, TableSchema}
 import com.spotify.scio.ScioContext
 import com.spotify.scio.avro._
