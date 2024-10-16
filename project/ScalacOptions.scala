@@ -57,12 +57,12 @@ object ScalacOptions {
     // silence all scala library deprecation warnings in 2.13
     // since we still support 2.12
     "conf:cat=deprecation&origin=scala\\..*&since>2.12.99:s" +
+      // until we can set fatalWarningOptions, handle those as errors
+      ",cat=unused:e" +
       // silence unused-imports compat
       ",cat=unused-imports&origin=scala\\.collection\\.compat\\..*:s" +
       ",cat=unused-imports&origin=kantan\\.codecs\\.compat\\..*:s" +
-      ",cat=unused-imports&origin=com\\.spotify\\.scio\\.repl\\.compat\\..*:s" +
-      // until we can set fatalWarningOptions, handle those as errors
-      ",cat=unused:e",
+      ",cat=unused-imports&origin=com\\.spotify\\.scio\\.repl\\.compat\\..*:s",
     _.isBetween(V2_13_2, V3_0_0)
   )
 
