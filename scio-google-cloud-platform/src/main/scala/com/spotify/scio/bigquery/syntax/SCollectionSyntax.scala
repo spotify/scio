@@ -18,11 +18,8 @@
 package com.spotify.scio.bigquery.syntax
 
 import com.google.api.services.bigquery.model.TableSchema
-import com.spotify.scio.bigquery.BigQueryTyped.Table.{WriteParam => TableWriteParam}
-import com.spotify.scio.bigquery.BigQueryTypedTable.{Format, WriteParam => TypedTableWriteParam}
 import com.spotify.scio.bigquery.TableRowJsonIO.{WriteParam => TableRowJsonWriteParam}
 import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
-import com.spotify.scio.bigquery.coders
 import com.spotify.scio.bigquery._
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io._
@@ -36,6 +33,7 @@ import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.{
   WriteDisposition
 }
 import org.apache.beam.sdk.io.gcp.bigquery.InsertRetryPolicy
+import org.apache.beam.sdk.transforms.errorhandling.{BadRecord, ErrorHandler}
 import org.joda.time.Duration
 
 import scala.reflect.runtime.universe._
@@ -63,23 +61,26 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
    */
   def saveAsBigQueryTable(
     table: Table,
-    schema: TableSchema = TypedTableWriteParam.DefaultSchema,
-    writeDisposition: WriteDisposition = TypedTableWriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = TypedTableWriteParam.DefaultCreateDisposition,
-    tableDescription: String = TypedTableWriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = TypedTableWriteParam.DefaultTimePartitioning,
-    clustering: Clustering = TypedTableWriteParam.DefaultClustering,
-    method: Method = TypedTableWriteParam.DefaultMethod,
-    triggeringFrequency: Duration = TypedTableWriteParam.DefaultTriggeringFrequency,
-    sharding: Sharding = TypedTableWriteParam.DefaultSharding,
+    schema: TableSchema = BigQueryIO.WriteParam.DefaultSchema,
+    writeDisposition: WriteDisposition = BigQueryIO.WriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = BigQueryIO.WriteParam.DefaultCreateDisposition,
+    tableDescription: String = BigQueryIO.WriteParam.DefaultTableDescription,
+    timePartitioning: TimePartitioning = BigQueryIO.WriteParam.DefaultTimePartitioning,
+    clustering: Clustering = BigQueryIO.WriteParam.DefaultClustering,
+    method: Method = BigQueryIO.WriteParam.DefaultMethod,
+    triggeringFrequency: Duration = BigQueryIO.WriteParam.DefaultTriggeringFrequency,
+    sharding: Sharding = BigQueryIO.WriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy =
-      TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
-    successfulInsertsPropagation: Boolean = TableWriteParam.DefaultSuccessfulInsertsPropagation,
-    extendedErrorInfo: Boolean = TypedTableWriteParam.DefaultExtendedErrorInfo,
-    configOverride: TypedTableWriteParam.ConfigOverride[TableRow] =
-      TableWriteParam.DefaultConfigOverride
+      BigQueryIO.WriteParam.DefaultFailedInsertRetryPolicy,
+    successfulInsertsPropagation: Boolean =
+      BigQueryIO.WriteParam.DefaultSuccessfulInsertsPropagation,
+    extendedErrorInfo: Boolean = BigQueryIO.WriteParam.DefaultExtendedErrorInfo,
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.WriteParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.WriteParam.ConfigOverride[TableRow] =
+      BigQueryIO.WriteParam.DefaultConfigOverride
   ): ClosedTap[TableRow] = {
-    val param = TypedTableWriteParam(
+    val param = BigQueryIO.WriteParam[TableRow](
+      BigQueryIO.Format.Default(),
       method,
       schema,
       writeDisposition,
@@ -92,12 +93,13 @@ final class SCollectionTableRowOps[T <: TableRow](private val self: SCollection[
       failedInsertRetryPolicy,
       successfulInsertsPropagation,
       extendedErrorInfo,
+      errorHandler,
       configOverride
     )
 
     self
       .covary[TableRow]
-      .write(BigQueryTypedTable(table, Format.TableRow)(coders.tableRowCoder))(param)
+      .write(BigQueryIO(table))(param)
   }
 
   /**
@@ -169,23 +171,26 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
    */
   def saveAsBigQueryTable(
     table: Table,
-    schema: TableSchema = TypedTableWriteParam.DefaultSchema,
-    writeDisposition: WriteDisposition = TypedTableWriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = TypedTableWriteParam.DefaultCreateDisposition,
-    tableDescription: String = TypedTableWriteParam.DefaultTableDescription,
-    timePartitioning: TimePartitioning = TypedTableWriteParam.DefaultTimePartitioning,
-    clustering: Clustering = TypedTableWriteParam.DefaultClustering,
-    method: Method = TypedTableWriteParam.DefaultMethod,
-    triggeringFrequency: Duration = TypedTableWriteParam.DefaultTriggeringFrequency,
-    sharding: Sharding = TypedTableWriteParam.DefaultSharding,
+    schema: TableSchema = BigQueryIO.WriteParam.DefaultSchema,
+    writeDisposition: WriteDisposition = BigQueryIO.WriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = BigQueryIO.WriteParam.DefaultCreateDisposition,
+    tableDescription: String = BigQueryIO.WriteParam.DefaultTableDescription,
+    timePartitioning: TimePartitioning = BigQueryIO.WriteParam.DefaultTimePartitioning,
+    clustering: Clustering = BigQueryIO.WriteParam.DefaultClustering,
+    method: Method = BigQueryIO.WriteParam.DefaultMethod,
+    triggeringFrequency: Duration = BigQueryIO.WriteParam.DefaultTriggeringFrequency,
+    sharding: Sharding = BigQueryIO.WriteParam.DefaultSharding,
     failedInsertRetryPolicy: InsertRetryPolicy =
-      TypedTableWriteParam.DefaultFailedInsertRetryPolicy,
-    successfulInsertsPropagation: Boolean = TableWriteParam.DefaultSuccessfulInsertsPropagation,
-    extendedErrorInfo: Boolean = TypedTableWriteParam.DefaultExtendedErrorInfo,
-    configOverride: TypedTableWriteParam.ConfigOverride[GenericRecord] =
-      TypedTableWriteParam.DefaultConfigOverride
+      BigQueryIO.WriteParam.DefaultFailedInsertRetryPolicy,
+    successfulInsertsPropagation: Boolean =
+      BigQueryIO.WriteParam.DefaultSuccessfulInsertsPropagation,
+    extendedErrorInfo: Boolean = BigQueryIO.WriteParam.DefaultExtendedErrorInfo,
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.WriteParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.WriteParam.ConfigOverride[GenericRecord] =
+      BigQueryIO.WriteParam.DefaultConfigOverride
   ): ClosedTap[GenericRecord] = {
-    val param = TypedTableWriteParam(
+    val param = BigQueryIO.WriteParam[GenericRecord](
+      BigQueryIO.Format.Avro(),
       method,
       schema,
       writeDisposition,
@@ -198,15 +203,12 @@ final class SCollectionGenericRecordOps[T <: GenericRecord](private val self: SC
       failedInsertRetryPolicy,
       successfulInsertsPropagation,
       extendedErrorInfo,
+      errorHandler,
       configOverride
     )
     self
       .covary[GenericRecord]
-      .write(
-        BigQueryTypedTable(table, Format.GenericRecord)(
-          self.coder.asInstanceOf[Coder[GenericRecord]]
-        )
-      )(param)
+      .write(BigQueryIO[GenericRecord](table)(self.coder.asInstanceOf[Coder[GenericRecord]]))(param)
   }
 
 }
@@ -227,7 +229,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    * case class Result(name: String, score: Double)
    *
    * val p: SCollection[Result] = // process data and convert elements to Result
-   * p.saveAsTypedBigQueryTable(Table.Spec("myproject:mydataset.mytable"))
+   * p.saveAsTypedBigQueryTable(Table("myproject:mydataset.mytable"))
    * }}}
    *
    * It could also be an empty class with schema from
@@ -241,7 +243,7 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    *
    * sc.typedBigQuery[Row]()
    *   .sample(withReplacement = false, fraction = 0.1)
-   *   .saveAsTypedBigQueryTable(Table.Spec("myproject:samples.gsod"))
+   *   .saveAsTypedBigQueryTable(Table("myproject:samples.gsod"))
    * }}}
    *
    * *
@@ -260,22 +262,30 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
    */
   def saveAsTypedBigQueryTable(
     table: Table,
-    timePartitioning: TimePartitioning = TableWriteParam.DefaultTimePartitioning,
-    writeDisposition: WriteDisposition = TableWriteParam.DefaultWriteDisposition,
-    createDisposition: CreateDisposition = TableWriteParam.DefaultCreateDisposition,
-    clustering: Clustering = TableWriteParam.DefaultClustering,
-    method: Method = TableWriteParam.DefaultMethod,
-    triggeringFrequency: Duration = TableWriteParam.DefaultTriggeringFrequency,
-    sharding: Sharding = TableWriteParam.DefaultSharding,
-    failedInsertRetryPolicy: InsertRetryPolicy = TableWriteParam.DefaultFailedInsertRetryPolicy,
-    successfulInsertsPropagation: Boolean = TableWriteParam.DefaultSuccessfulInsertsPropagation,
-    extendedErrorInfo: Boolean = TableWriteParam.DefaultExtendedErrorInfo,
-    configOverride: TableWriteParam.ConfigOverride[T] = TableWriteParam.DefaultConfigOverride
+    timePartitioning: TimePartitioning = BigQueryIO.WriteParam.DefaultTimePartitioning,
+    writeDisposition: WriteDisposition = BigQueryIO.WriteParam.DefaultWriteDisposition,
+    createDisposition: CreateDisposition = BigQueryIO.WriteParam.DefaultCreateDisposition,
+    clustering: Clustering = BigQueryIO.WriteParam.DefaultClustering,
+    method: Method = BigQueryIO.WriteParam.DefaultMethod,
+    triggeringFrequency: Duration = BigQueryIO.WriteParam.DefaultTriggeringFrequency,
+    sharding: Sharding = BigQueryIO.WriteParam.DefaultSharding,
+    failedInsertRetryPolicy: InsertRetryPolicy =
+      BigQueryIO.WriteParam.DefaultFailedInsertRetryPolicy,
+    successfulInsertsPropagation: Boolean =
+      BigQueryIO.WriteParam.DefaultSuccessfulInsertsPropagation,
+    extendedErrorInfo: Boolean = BigQueryIO.WriteParam.DefaultExtendedErrorInfo,
+    errorHandler: ErrorHandler[BadRecord, _] = BigQueryIO.WriteParam.DefaultErrorHandler,
+    configOverride: BigQueryIO.WriteParam.ConfigOverride[T] =
+      BigQueryIO.WriteParam.DefaultConfigOverride
   )(implicit tt: TypeTag[T], coder: Coder[T]): ClosedTap[T] = {
-    val param = TableWriteParam[T](
+    val bqt = BigQueryType[T]
+    val param = BigQueryIO.WriteParam[T](
+      BigQueryIO.Format.Avro[T](bqt),
       method,
+      bqt.schema,
       writeDisposition,
       createDisposition,
+      BigQueryIO.WriteParam.DefaultTableDescription,
       timePartitioning,
       clustering,
       triggeringFrequency,
@@ -283,9 +293,10 @@ final class SCollectionTypedOps[T <: HasAnnotation](private val self: SCollectio
       failedInsertRetryPolicy,
       successfulInsertsPropagation,
       extendedErrorInfo,
+      errorHandler,
       configOverride
     )
-    self.write(BigQueryTyped.Table[T](table))(param)
+    self.write(BigQueryIO[T](table))(param)
   }
 }
 

@@ -89,7 +89,7 @@ final class BigQuery private (val client: Client) {
     val rows = if (newSource == null) {
       // newSource is missing, T's companion object must have either table or query
       if (bqt.isTable) {
-        tables.rows(STable.Spec(bqt.table.get))
+        tables.rows(STable(bqt.table.get))
       } else if (bqt.isQuery) {
         query.rows(bqt.queryRaw.get)
       } else {
@@ -98,7 +98,7 @@ final class BigQuery private (val client: Client) {
     } else {
       // newSource can be either table or query
       Try(BigQueryHelpers.parseTableSpec(newSource)).toOption
-        .map(STable.Ref)
+        .map(STable.apply)
         .map(tables.rows)
         .getOrElse(query.rows(newSource))
     }

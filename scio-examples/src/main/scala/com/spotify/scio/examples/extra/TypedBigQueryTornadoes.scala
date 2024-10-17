@@ -52,7 +52,7 @@ object TypedBigQueryTornadoes {
       .map(kv => Result(kv._1, kv._2))
       // Convert elements from Result to TableRow and save output to BigQuery.
       .saveAsTypedBigQueryTable(
-        Table.Spec(args("output")),
+        Table(args("output")),
         writeDisposition = WRITE_TRUNCATE,
         createDisposition = CREATE_IF_NEEDED
       )

@@ -32,16 +32,14 @@ final class StorageBigQueryTornadoesTest extends PipelineSpec {
     .map(t => TableRow("month" -> t._1, "tornado_count" -> t._2))
 
   "BigQueryTornadoes" should "work" in {
+    val table = Table(
+      "bigquery-public-data:samples.gsod",
+      List("tornado", "month"),
+      "tornado = true"
+    )
     JobTest[com.spotify.scio.examples.cookbook.StorageBigQueryTornadoes.type]
-      .args("--input=bigquery-public-data:samples.gsod", "--output=dataset.table")
-      .input(
-        BigQueryIO(
-          "bigquery-public-data:samples.gsod",
-          List("tornado", "month"),
-          Some("tornado = true")
-        ),
-        inData
-      )
+      .args(s"--input=${table.spec}", "--output=dataset.table")
+      .input(BigQueryIO(table), inData)
       .output(BigQueryIO[TableRow]("dataset.table")) { coll =>
         coll should containInAnyOrder(expected)
       }

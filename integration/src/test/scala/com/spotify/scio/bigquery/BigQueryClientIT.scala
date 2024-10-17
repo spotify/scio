@@ -154,7 +154,7 @@ class BigQueryClientIT extends AnyFlatSpec with Matchers {
 
   "TableService.getRows" should "work" in {
     val rows =
-      bq.tables.rows(Table.Spec("bigquery-public-data:samples.shakespeare")).take(10).toList
+      bq.tables.rows(Table("bigquery-public-data:samples.shakespeare")).take(10).toList
     val columns = Set("word", "word_count", "corpus", "corpus_date")
     all(rows.map(_.keySet().asScala)) shouldBe columns
   }
