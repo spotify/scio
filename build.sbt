@@ -36,7 +36,6 @@ val beamVersion = "2.59.0"
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
-val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.17.0"
 val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
@@ -736,6 +735,7 @@ lazy val `scio-core` = project
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVersion,
       "com.github.luben" % "zstd-jni" % zstdJniVersion,
+      "com.google.api" % "api-common" % gcpBom.key.value,
       "com.google.api" % "gax" % gcpBom.key.value,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.auto.service" % "auto-service-annotations" % autoServiceVersion,
@@ -962,12 +962,12 @@ lazy val `scio-google-cloud-platform` = project
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "com.google.api" % "api-common" % gcpBom.key.value,
       "com.google.api" % "gax" % gcpBom.key.value,
       "com.google.api" % "gax-grpc" % gcpBom.key.value,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-bigquerystorage-v1beta1" % gcpBom.key.value,
-      "com.google.api.grpc" % "proto-google-cloud-bigtable-admin-v2" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-bigtable-v2" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-datastore-v1" % gcpBom.key.value,
       "com.google.api.grpc" % "proto-google-cloud-pubsub-v1" % gcpBom.key.value,
@@ -979,9 +979,6 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.cloud" % "google-cloud-core" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-spanner" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
-      "com.google.cloud.bigtable" % "bigtable-client-core" % bigtableClientVersion,
-      "com.google.cloud.bigtable" % "bigtable-client-core-config" % bigtableClientVersion,
-      "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
