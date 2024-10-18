@@ -119,24 +119,27 @@ public class RemoteFileUtil implements Serializable {
    * @return {@link Path}s to the downloaded local files.
    */
   public List<Path> download(List<URI> srcs, int numThreads) {
-      try (ExecutorService executor = Executors.newFixedThreadPool(numThreads)) {
-        return executor.invokeAll(
-                srcs.stream()
-                        .map(url -> (Callable<Path>) () -> paths.get(url))
-                        .collect(Collectors.toList())
-                )
-          .stream()
-          .map(f -> {
-              try {
-                  return f.get();
-              } catch (InterruptedException | ExecutionException e) {
-                  throw new RuntimeException(e);
-              }
-          })
-          .collect(Collectors.toList());
-      } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-      }
+    final ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    try {
+      return executor.invokeAll(
+              srcs.stream()
+                      .map(url -> (Callable<Path>) () -> paths.get(url))
+                      .collect(Collectors.toList())
+              )
+        .stream()
+        .map(f -> {
+            try {
+                return f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        })
+        .collect(Collectors.toList());
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    } finally {
+      executor.shutdown();
+    }
   }
 
   /** Delete a single downloaded local file. */
