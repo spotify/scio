@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -112,29 +111,29 @@ public class RemoteFileUtil implements Serializable {
   }
 
   /**
-   * Download a batch of remote {@link URI}s in parallel,
-   * using at most numThreads to do so. `numThreads` may not be larger
-   * than the number of available processors * 4.
+   * Download a batch of remote {@link URI}s in parallel, using at most numThreads to do so.
+   * `numThreads` may not be larger than the number of available processors * 4.
    *
    * @return {@link Path}s to the downloaded local files.
    */
   public List<Path> download(List<URI> srcs, int numThreads) {
     final ExecutorService executor = Executors.newFixedThreadPool(numThreads);
     try {
-      return executor.invokeAll(
+      return executor
+          .invokeAll(
               srcs.stream()
-                      .map(url -> (Callable<Path>) () -> paths.get(url))
-                      .collect(Collectors.toList())
-              )
-        .stream()
-        .map(f -> {
-            try {
-                return f.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        })
-        .collect(Collectors.toList());
+                  .map(url -> (Callable<Path>) () -> paths.get(url))
+                  .collect(Collectors.toList()))
+          .stream()
+          .map(
+              f -> {
+                try {
+                  return f.get();
+                } catch (InterruptedException | ExecutionException e) {
+                  throw new RuntimeException(e);
+                }
+              })
+          .collect(Collectors.toList());
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     } finally {
