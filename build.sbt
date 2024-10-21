@@ -137,11 +137,11 @@ val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
 // project
 ThisBuild / tlBaseVersion := "0.14"
-ThisBuild / tlSonatypeUseLegacyHost := true
 ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
 ThisBuild / startYear := Some(2016)
 ThisBuild / licenses := Seq(License.Apache2)
+ThisBuild / sonatypeCredentialHost := Sonatype.sonatypeLegacy
 ThisBuild / developers := List(
   Developer(
     id = "sinisa_lyh",
