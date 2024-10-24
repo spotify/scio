@@ -17,6 +17,10 @@
 
 package com.spotify.scio.util;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
@@ -29,15 +33,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
@@ -48,16 +50,15 @@ import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A utility class for handling remote file systems designed to be used in a {@link
- * org.apache.beam.sdk.transforms.DoFn}.
- */
+/** A utility class for handling remote file systems designed to be used in a {@link DoFn}. */
 public class RemoteFileUtil implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteFileUtil.class);
 
   private static final int CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors() * 4;
   private static final int HASH_LENGTH = 8;
+
+  private transient ListeningExecutorService executorService;
 
   // Mapping of remote sources to local destinations
   private static final LoadingCache<URI, Path> paths =
@@ -76,6 +77,16 @@ public class RemoteFileUtil implements Serializable {
   public static RemoteFileUtil create(PipelineOptions options) {
     FileSystems.setDefaultPipelineOptions(options);
     return new RemoteFileUtil();
+  }
+
+  private synchronized ListeningExecutorService getExecutorService() {
+    if (executorService == null) {
+      ThreadPoolExecutor threadPool =
+          (ThreadPoolExecutor) Executors.newFixedThreadPool(CONCURRENCY_LEVEL);
+      executorService =
+          MoreExecutors.listeningDecorator(MoreExecutors.getExitingExecutorService(threadPool));
+    }
+    return executorService;
   }
 
   /** Check if a remote {@link URI} exists. */
@@ -107,37 +118,15 @@ public class RemoteFileUtil implements Serializable {
    * @return {@link Path}s to the downloaded local files.
    */
   public List<Path> download(List<URI> srcs) {
-    return download(srcs, CONCURRENCY_LEVEL);
-  }
-
-  /**
-   * Download a batch of remote {@link URI}s in parallel, using at most numThreads to do so.
-   * `numThreads` may not be larger than the number of available processors * 4.
-   *
-   * @return {@link Path}s to the downloaded local files.
-   */
-  public List<Path> download(List<URI> srcs, int numThreads) {
-    final ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    ListeningExecutorService executor = getExecutorService();
+    List<ListenableFuture<Path>> futures =
+        srcs.stream()
+            .map(uri -> executor.submit(() -> paths.get(uri)))
+            .collect(Collectors.toList());
     try {
-      return executor
-          .invokeAll(
-              srcs.stream()
-                  .map(url -> (Callable<Path>) () -> paths.get(url))
-                  .collect(Collectors.toList()))
-          .stream()
-          .map(
-              f -> {
-                try {
-                  return f.get();
-                } catch (InterruptedException | ExecutionException e) {
-                  throw new RuntimeException(e);
-                }
-              })
-          .collect(Collectors.toList());
-    } catch (InterruptedException e) {
+      return Futures.allAsList(futures).get();
+    } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
-    } finally {
-      executor.shutdown();
     }
   }
 
