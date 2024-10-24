@@ -20,7 +20,6 @@ package com.spotify.scio.coders.instances
 import java.io.{InputStream, OutputStream}
 import java.math.{BigDecimal, BigInteger}
 import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, Period}
-import java.util.UUID
 import com.spotify.scio.IsJavaBean
 import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.schemas.Schema
@@ -48,9 +47,9 @@ private[coders] object VoidCoder extends AtomicCoder[Void] {
 trait JavaCoders extends CoderGrammar with JavaBeanCoders {
   implicit lazy val voidCoder: Coder[Void] = beam[Void](VoidCoder)
 
-  implicit lazy val uuidCoder: Coder[UUID] =
+  implicit lazy val uuidCoder: Coder[java.util.UUID] =
     xmap(Coder[(Long, Long)])(
-      { case (msb, lsb) => new UUID(msb, lsb) },
+      { case (msb, lsb) => new java.util.UUID(msb, lsb) },
       uuid => (uuid.getMostSignificantBits, uuid.getLeastSignificantBits)
     )
 
@@ -68,6 +67,14 @@ trait JavaCoders extends CoderGrammar with JavaBeanCoders {
 
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
     xmap(jListCoder[T])(new java.util.ArrayList(_), identity)
+
+  implicit def jPriorityQueueCoder[T: ClassTag](implicit
+    c: Coder[T]
+  ): Coder[java.util.PriorityQueue[T]] =
+    Coder.xmap(ScalaCoders.arrayCoder[T])(
+      arr => new java.util.PriorityQueue[T](java.util.Arrays.asList(arr: _*)),
+      _.toArray.asInstanceOf[Array[T]]
+    )
 
   implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
     transform(ck)(bk => transform(cv)(bv => beam(bcoders.MapCoder.of(bk, bv))))
