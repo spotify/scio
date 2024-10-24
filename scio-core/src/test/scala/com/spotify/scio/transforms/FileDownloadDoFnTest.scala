@@ -18,10 +18,10 @@
 package com.spotify.scio.transforms
 
 import java.nio.file.{Files, Path}
-
 import com.spotify.scio.testing._
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.io.{Files => GFiles}
+import org.joda.time.Instant
 
 import scala.jdk.CollectionConverters._
 
@@ -31,8 +31,13 @@ class FileDownloadDoFnTest extends PipelineSpec {
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
       val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn)
-      p.keys should containInAnyOrder((1 to 100).map(_.toString))
-      p.values.distinct should forAll { f: Path => !Files.exists(f) }
+
+      val content = p.keys
+      val paths = p.values.distinct
+
+      val expected = (1 to 100).map(_.toString)
+      content should containInAnyOrder(expected)
+      paths should forAll { f: Path => !Files.exists(f) }
     }
     files.foreach(Files.delete)
     Files.delete(tmpDir)
@@ -42,9 +47,23 @@ class FileDownloadDoFnTest extends PipelineSpec {
     val tmpDir = Files.createTempDirectory("filedofn-")
     val files = createFiles(tmpDir, 100)
     runWithContext { sc =>
-      val p = sc.parallelize(files.map(_.toUri)).flatMapFile(fn, 10, false)
-      p.keys should containInAnyOrder((1 to 100).map(_.toString))
-      p.values.distinct should forAll { f: Path => !Files.exists(f) }
+      // try to use a single bundle so we can check
+      // elements flushed in processElement as well as
+      // elements flushed in finishBundle
+      val p = sc
+        .parallelize(Seq(files.map(_.toUri).zipWithIndex))
+        .flatten
+        .timestampBy { case (_, i) => new Instant(i + 1) }
+        .keys
+        .flatMapFile(fn, 10, false)
+        .withTimestamp
+
+      val contentAndTimestamp = p.map { case ((i, _), ts) => (i, ts.getMillis) }
+      val paths = p.map { case ((_, f), _) => f }.distinct
+
+      val expected = (1L to 100L).map(i => (i.toString, i))
+      contentAndTimestamp should containInAnyOrder(expected)
+      paths should forAll { f: Path => !Files.exists(f) }
     }
     files.foreach(Files.delete)
     Files.delete(tmpDir)
