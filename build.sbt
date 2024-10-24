@@ -671,6 +671,7 @@ lazy val scio = project
     `scio-redis`,
     `scio-repl`,
     `scio-smb`,
+    `scio-snowflake`,
     `scio-tensorflow`,
     `scio-test-core`,
     `scio-test-google-cloud-platform`,
@@ -1263,6 +1264,24 @@ lazy val `scio-parquet` = project
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
     )
+  )
+
+lazy val `scio-snowflake` = project
+  .in(file("scio-snowflake"))
+  .dependsOn(
+    `scio-core` % "compile;test->test"
+  )
+  .settings(commonSettings)
+  .settings(
+    description := "Scio add-on for Neo4J",
+    libraryDependencies ++= Seq(
+      // compile
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-snowflake" % beamVersion,
+      "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
+      "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
+    ),
+    tlMimaPreviousVersions := Set.empty // TODO: remove once released
   )
 
 val tensorFlowMetadataSourcesDir =
