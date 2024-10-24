@@ -58,7 +58,10 @@ public class RemoteFileUtil implements Serializable {
   private static final int CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors() * 4;
   private static final int HASH_LENGTH = 8;
 
-  private transient ListeningExecutorService executorService;
+  private static final ListeningExecutorService executor =
+      MoreExecutors.listeningDecorator(
+          MoreExecutors.getExitingExecutorService(
+              (ThreadPoolExecutor) Executors.newFixedThreadPool(CONCURRENCY_LEVEL)));
 
   // Mapping of remote sources to local destinations
   private static final LoadingCache<URI, Path> paths =
@@ -77,16 +80,6 @@ public class RemoteFileUtil implements Serializable {
   public static RemoteFileUtil create(PipelineOptions options) {
     FileSystems.setDefaultPipelineOptions(options);
     return new RemoteFileUtil();
-  }
-
-  private synchronized ListeningExecutorService getExecutorService() {
-    if (executorService == null) {
-      ThreadPoolExecutor threadPool =
-          (ThreadPoolExecutor) Executors.newFixedThreadPool(CONCURRENCY_LEVEL);
-      executorService =
-          MoreExecutors.listeningDecorator(MoreExecutors.getExitingExecutorService(threadPool));
-    }
-    return executorService;
   }
 
   /** Check if a remote {@link URI} exists. */
@@ -118,7 +111,6 @@ public class RemoteFileUtil implements Serializable {
    * @return {@link Path}s to the downloaded local files.
    */
   public List<Path> download(List<URI> srcs) {
-    ListeningExecutorService executor = getExecutorService();
     List<ListenableFuture<Path>> futures =
         srcs.stream()
             .map(uri -> executor.submit(() -> paths.get(uri)))
@@ -132,7 +124,7 @@ public class RemoteFileUtil implements Serializable {
 
   /** Delete a single downloaded local file. */
   public void delete(URI src) {
-    Path dst = null;
+    Path dst;
     try {
       dst = paths.get(src);
     } catch (ExecutionException e) {
