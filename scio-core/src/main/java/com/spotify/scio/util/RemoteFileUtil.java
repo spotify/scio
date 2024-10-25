@@ -28,7 +28,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
@@ -104,7 +106,12 @@ public class RemoteFileUtil implements Serializable {
    */
   public List<Path> download(List<URI> srcs) {
     try {
-      return paths.getAll(srcs).values().asList();
+      Map<URI, Path> results = paths.getAll(srcs);
+      List<Path> paths = new ArrayList<>(srcs.size());
+      for (URI src : srcs) {
+        paths.add(results.get(src));
+      }
+      return paths;
     } catch (ExecutionException e) {
       throw new RuntimeException(e);
     }
