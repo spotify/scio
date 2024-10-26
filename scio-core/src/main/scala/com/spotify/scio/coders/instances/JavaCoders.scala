@@ -68,13 +68,28 @@ trait JavaCoders extends CoderGrammar with JavaBeanCoders {
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
     xmap(jListCoder[T])(new java.util.ArrayList(_), identity)
 
-  implicit def jPriorityQueueCoder[T: ClassTag](implicit
-    c: Coder[T]
-  ): Coder[java.util.PriorityQueue[T]] =
+  /**
+   * Coder must be created explicitly via
+   * {{{implicit val pqCoder = Coders.jPriorityQueueCoder[T](ord)}}} since there is otherwise no
+   * guarantee that the PriorityQueue comparator is the same as an implicitly-available ordering at
+   * coder construction time.
+   *
+   * @param ord
+   *   Ordering used as PriorityQueue comparator
+   */
+  def jPriorityQueueCoder[T: Coder: ClassTag](
+    ord: Ordering[T]
+  ): Coder[java.util.PriorityQueue[T]] = {
+    // neither arrays nor PriorityQueues are consistentWithEquals
     Coder.xmap(ScalaCoders.arrayCoder[T])(
-      arr => new java.util.PriorityQueue[T](java.util.Arrays.asList(arr: _*)),
+      arr => {
+        val pq = new java.util.PriorityQueue[T](ord)
+        pq.addAll(java.util.Arrays.asList(arr: _*))
+        pq
+      },
       _.toArray.asInstanceOf[Array[T]]
     )
+  }
 
   implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
     transform(ck)(bk => transform(cv)(bv => beam(bcoders.MapCoder.of(bk, bv))))

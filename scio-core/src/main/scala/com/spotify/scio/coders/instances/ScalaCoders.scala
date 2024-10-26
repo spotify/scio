@@ -248,7 +248,7 @@ private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[So
     decode(inStream, SortedSet.newBuilder[T])
 }
 
-private class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
+private[coders] class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
     extends SeqLikeCoder[m.PriorityQueue, T](bc) {
   override def consistentWithEquals(): Boolean = false // PriorityQueue does not define equality
   override def decode(inStream: InputStream): m.PriorityQueue[T] =

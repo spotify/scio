@@ -33,6 +33,7 @@ import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.commons.io.output.NullOutputStream
+import org.scalactic.Equality
 import org.scalatest.Assertion
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.flatspec.AnyFlatSpec
@@ -43,9 +44,9 @@ import java.io.{ByteArrayInputStream, ObjectOutputStream, ObjectStreamClass}
 import java.nio.charset.Charset
 import java.time._
 import java.util.UUID
-
 import scala.collection.{mutable => mut}
 import scala.collection.compat._
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.immutable.SortedMap
 import scala.jdk.CollectionConverters._
 
@@ -153,6 +154,20 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     Array("1", "2", "3") coderShould roundtrip() and
       beOfType[CoderTransform[_, _]] and
       materializeTo[ArrayCoder[_]] and
+      beFullyCompliantNotConsistentWithEquals()
+
+    val pqOrd: Ordering[String] = (x: String, y: String) => x.reverse.compareTo(y.reverse)
+    val pq = new mut.PriorityQueue[String]()(pqOrd)
+    pq.addAll(s)
+
+    implicit val pqEq: Equality[mut.PriorityQueue[String]] = {
+      case (a: mut.PriorityQueue[String], b: mut.PriorityQueue[_]) => a.toList == b.toList
+      case _                                                       => false
+    }
+
+    pq coderShould roundtrip() and
+      beOfType[CoderTransform[_, _]] and
+      materializeTo[MutablePriorityQueueCoder[_]] and
       beFullyCompliantNotConsistentWithEquals()
   }
 
@@ -321,7 +336,12 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
-    import java.util.{ArrayList => jArrayList, List => jList, Map => jMap}
+    import java.util.{
+      ArrayList => jArrayList,
+      List => jList,
+      Map => jMap,
+      PriorityQueue => jPriorityQueue
+    }
     val is = 1 to 10
     val s: jList[String] = is.map(_.toString).asJava
     val m: jMap[String, Int] = is
@@ -344,6 +364,23 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       beOfType[Transform[_, _]] and
       materializeToTransformOf[beam.ListCoder[_]] and
       beFullyCompliant()
+
+    val pqOrd: Ordering[String] = (x: String, y: String) => x.reverse.compareTo(y.reverse)
+    val pq = new jPriorityQueue[String](pqOrd)
+    pq.addAll(s)
+    implicit val pqCoder: Coder[java.util.PriorityQueue[String]] =
+      Coder.jPriorityQueueCoder[String](pqOrd)
+
+    implicit val pqEq: Equality[java.util.PriorityQueue[String]] = {
+      case (a: jPriorityQueue[String], b: jPriorityQueue[_]) =>
+        ArraySeq.unsafeWrapArray(a.toArray) == ArraySeq.unsafeWrapArray(b.toArray)
+      case _ => false
+    }
+
+    pq coderShould roundtrip() and
+      beOfType[Transform[_, _]] and
+      materializeToTransformOf[ArrayCoder[_]] and
+      beFullyCompliantNotConsistentWithEquals()
   }
 
   it should "Derive serializable coders" in {
