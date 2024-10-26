@@ -158,7 +158,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
 
     val pqOrd: Ordering[String] = (x: String, y: String) => x.reverse.compareTo(y.reverse)
     val pq = new mut.PriorityQueue[String]()(pqOrd)
-    pq.addAll(s)
+    pq ++= s
 
     implicit val pqEq: Equality[mut.PriorityQueue[String]] = {
       case (a: mut.PriorityQueue[String], b: mut.PriorityQueue[_]) => a.toList == b.toList
