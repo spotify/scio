@@ -1273,7 +1273,7 @@ lazy val `scio-snowflake` = project
   )
   .settings(commonSettings)
   .settings(
-    description := "Scio add-on for Neo4J",
+    description := "Scio add-on for Snowflake",
     libraryDependencies ++= Seq(
       // compile
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
