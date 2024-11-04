@@ -32,6 +32,7 @@ import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.apache.beam.sdk.util.SerializableUtils
 import org.apache.beam.sdk.extensions.protobuf.ByteStringCoder
 import org.apache.beam.sdk.schemas.SchemaCoder
+import org.apache.commons.collections.IteratorUtils
 import org.apache.commons.io.output.NullOutputStream
 import org.scalactic.Equality
 import org.scalatest.Assertion
@@ -156,19 +157,22 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       materializeTo[ArrayCoder[_]] and
       beFullyCompliantNotConsistentWithEquals()
 
-    val pqOrd: Ordering[String] = (x: String, y: String) => x.reverse.compareTo(y.reverse)
-    val pq = new mut.PriorityQueue[String]()(pqOrd)
-    pq ++= s
+    {
+      // custom ordering must have stable equal after serialization
+      implicit val pqOrd: Ordering[String] = FlippedStringOrdering
+      val pq = new mut.PriorityQueue[String]()(pqOrd)
+      pq ++= s
 
-    implicit val pqEq: Equality[mut.PriorityQueue[String]] = {
-      case (a: mut.PriorityQueue[String], b: mut.PriorityQueue[_]) => a.toList == b.toList
-      case _                                                       => false
+      implicit val pqEq: Equality[mut.PriorityQueue[String]] = {
+        case (a: mut.PriorityQueue[String], b: mut.PriorityQueue[_]) => a.toList == b.toList
+        case _                                                       => false
+      }
+
+      pq coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[MutablePriorityQueueCoder[_]] and
+        beFullyCompliantNotConsistentWithEquals()
     }
-
-    pq coderShould roundtrip() and
-      beOfType[CoderTransform[_, _]] and
-      materializeTo[MutablePriorityQueueCoder[_]] and
-      beFullyCompliantNotConsistentWithEquals()
   }
 
   it should "support Scala enumerations" in {
@@ -336,51 +340,99 @@ final class CoderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "support Java collections" in {
+    import java.lang.{Iterable => JIterable}
     import java.util.{
-      ArrayList => jArrayList,
-      List => jList,
-      Map => jMap,
-      PriorityQueue => jPriorityQueue
-    }
-    val is = 1 to 10
-    val s: jList[String] = is.map(_.toString).asJava
-    val m: jMap[String, Int] = is
-      .map(v => v.toString -> v)
-      .toMap
-      .asJava
-    val arrayList = new jArrayList(s)
-
-    s coderShould roundtrip() and
-      beOfType[CoderTransform[_, _]] and
-      materializeTo[beam.ListCoder[_]] and
-      beFullyCompliant()
-
-    m coderShould roundtrip() and
-      beOfType[CoderTransform[_, _]] and
-      materializeTo[org.apache.beam.sdk.coders.MapCoder[_, _]] and
-      beFullyCompliantNonDeterministic()
-
-    arrayList coderShould roundtrip() and
-      beOfType[Transform[_, _]] and
-      materializeToTransformOf[beam.ListCoder[_]] and
-      beFullyCompliant()
-
-    val pqOrd: Ordering[String] = (x: String, y: String) => x.reverse.compareTo(y.reverse)
-    val pq = new jPriorityQueue[String](pqOrd)
-    pq.addAll(s)
-    implicit val pqCoder: Coder[java.util.PriorityQueue[String]] =
-      Coder.jPriorityQueueCoder[String](pqOrd)
-
-    implicit val pqEq: Equality[java.util.PriorityQueue[String]] = {
-      case (a: jPriorityQueue[String], b: jPriorityQueue[_]) =>
-        ArraySeq.unsafeWrapArray(a.toArray) == ArraySeq.unsafeWrapArray(b.toArray)
-      case _ => false
+      ArrayList => JArrayList,
+      Collection => JCollection,
+      List => JList,
+      Set => JSet,
+      Map => JMap,
+      PriorityQueue => JPriorityQueue
     }
 
-    pq coderShould roundtrip() and
-      beOfType[Transform[_, _]] and
-      materializeToTransformOf[ArrayCoder[_]] and
-      beFullyCompliantNotConsistentWithEquals()
+    val elems = (1 to 10).map(_.toString)
+
+    {
+      val i: JIterable[String] = (elems: Iterable[String]).asJava
+      implicit val iEq: Equality[JIterable[String]] = {
+        case (xs: JIterable[String], ys: JIterable[String]) =>
+          IteratorUtils.toArray(xs.iterator()) sameElements IteratorUtils.toArray(ys.iterator())
+        case _ => false
+      }
+
+      i coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.IterableCoder[_]] and
+        beNotConsistentWithEquals()
+    }
+
+    {
+      val c: JCollection[String] = elems.asJavaCollection
+      implicit val iEq: Equality[JCollection[String]] = {
+        case (xs: JCollection[String], ys: JCollection[String]) =>
+          IteratorUtils.toArray(xs.iterator()) sameElements IteratorUtils.toArray(ys.iterator())
+        case _ => false
+      }
+      c coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.CollectionCoder[_]] and
+        beNotConsistentWithEquals()
+    }
+
+    {
+      val l: JList[String] = elems.asJava
+      l coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.ListCoder[_]] and
+        beFullyCompliant()
+    }
+
+    {
+      val al: JArrayList[String] = new JArrayList(elems.asJava)
+      al coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[JArrayListCoder[_]] and
+        beFullyCompliant()
+    }
+
+    {
+      val s: JSet[String] = elems.toSet.asJava
+      s coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.SetCoder[_]] and
+        structuralValueConsistentWithEquals() and
+        beSerializable()
+    }
+
+    {
+      val m: JMap[String, Int] = (1 to 10)
+        .map(v => v.toString -> v)
+        .toMap
+        .asJava
+      m coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[beam.MapCoder[_, _]] and
+        beFullyCompliantNonDeterministic()
+    }
+
+    {
+      // custom ordering must have stable equal after serialization
+      implicit val pqOrd: Ordering[String] = FlippedStringOrdering
+      val pq = new JPriorityQueue[String](pqOrd)
+      pq.addAll(elems.asJavaCollection)
+
+      implicit val pqEq: Equality[java.util.PriorityQueue[String]] = {
+        case (a: JPriorityQueue[String], b: JPriorityQueue[_]) =>
+          a.toArray sameElements b.toArray
+        case _ => false
+      }
+
+      pq coderShould roundtrip() and
+        beOfType[CoderTransform[_, _]] and
+        materializeTo[JPriorityQueueCoder[_]] and
+        beSerializable() and
+        structuralValueConsistentWithEquals()
+    }
   }
 
   it should "Derive serializable coders" in {

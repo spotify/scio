@@ -25,7 +25,8 @@ import com.spotify.scio.coders.{Coder, CoderGrammar}
 import com.spotify.scio.schemas.Schema
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn
 import com.spotify.scio.util.ScioUtil
-import org.apache.beam.sdk.coders.{Coder => _, _}
+import org.apache.beam.sdk.coders.Coder.NonDeterministicException
+import org.apache.beam.sdk.coders.{Coder => BCoder, _}
 import org.apache.beam.sdk.schemas.SchemaCoder
 import org.apache.beam.sdk.values.TypeDescriptor
 import org.apache.beam.sdk.{coders => bcoders}
@@ -39,6 +40,51 @@ private[coders] object VoidCoder extends AtomicCoder[Void] {
   override def decode(inStream: InputStream): Void = ???
 
   override def structuralValue(value: Void): AnyRef = AnyRef
+}
+
+final private[coders] class JArrayListCoder[T](bc: BCoder[T])
+    extends IterableLikeCoder[T, java.util.ArrayList[T]](bc, "ArrayList") {
+
+  override def decodeToIterable(decodedElements: java.util.List[T]): java.util.ArrayList[T] =
+    decodedElements match {
+      case al: java.util.ArrayList[T] => al
+      case _                          => new java.util.ArrayList[T](decodedElements)
+    }
+
+  override def consistentWithEquals(): Boolean = getElemCoder.consistentWithEquals()
+
+  override def verifyDeterministic(): Unit =
+    BCoder.verifyDeterministic(
+      this,
+      "JArrayListCoder element coder must be deterministic",
+      getElemCoder
+    )
+}
+
+final private[coders] class JPriorityQueueCoder[T](
+  bc: BCoder[T],
+  ordering: Ordering[T] // use Ordering instead of Comparator for serialization
+) extends IterableLikeCoder[T, java.util.PriorityQueue[T]](bc, "PriorityQueue") {
+
+  override def decodeToIterable(decodedElements: java.util.List[T]): java.util.PriorityQueue[T] = {
+    val pq = new java.util.PriorityQueue[T](ordering)
+    pq.addAll(decodedElements)
+    pq
+  }
+
+  override def encode(value: java.util.PriorityQueue[T], os: OutputStream): Unit = {
+    require(
+      value.comparator() == ordering,
+      "PriorityQueue comparator does not match JPriorityQueueCoder comparator"
+    )
+    super.encode(value, os)
+  }
+
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Ordering of elements in a priority queue may be non-deterministic."
+    )
 }
 
 //
@@ -62,34 +108,26 @@ trait JavaCoders extends CoderGrammar with JavaBeanCoders {
   implicit def jIterableCoder[T](implicit c: Coder[T]): Coder[java.lang.Iterable[T]] =
     transform(c)(bc => beam(bcoders.IterableCoder.of(bc)))
 
+  implicit def jCollectionCoder[T](implicit c: Coder[T]): Coder[java.util.Collection[T]] =
+    transform(c)(bc => beam(bcoders.CollectionCoder.of(bc)))
+
   implicit def jListCoder[T](implicit c: Coder[T]): Coder[java.util.List[T]] =
     transform(c)(bc => beam(bcoders.ListCoder.of(bc)))
 
   implicit def jArrayListCoder[T](implicit c: Coder[T]): Coder[java.util.ArrayList[T]] =
-    xmap(jListCoder[T])(new java.util.ArrayList(_), identity)
+    transform(c)(bc => beam(new JArrayListCoder[T](bc)))
 
-  /**
-   * Coder must be created explicitly via
-   * {{{implicit val pqCoder = Coders.jPriorityQueueCoder[T](ord)}}} since there is otherwise no
-   * guarantee that the PriorityQueue comparator is the same as an implicitly-available ordering at
-   * coder construction time.
-   *
-   * @param ord
-   *   Ordering used as PriorityQueue comparator
-   */
-  def jPriorityQueueCoder[T: Coder: ClassTag](
+  implicit def jSetCoder[T](implicit c: Coder[T]): Coder[java.util.Set[T]] =
+    transform(c)(bc => beam(bcoders.SetCoder.of(bc)))
+
+  implicit def jDequeCoder[T](implicit c: Coder[T]): Coder[java.util.Deque[T]] =
+    transform(c)(bc => beam(bcoders.DequeCoder.of(bc)))
+
+  implicit def jPriorityQueueCoder[T](implicit
+    c: Coder[T],
     ord: Ordering[T]
-  ): Coder[java.util.PriorityQueue[T]] = {
-    // neither arrays nor PriorityQueues are consistentWithEquals
-    Coder.xmap(ScalaCoders.arrayCoder[T])(
-      arr => {
-        val pq = new java.util.PriorityQueue[T](ord)
-        pq.addAll(java.util.Arrays.asList(arr: _*))
-        pq
-      },
-      _.toArray.asInstanceOf[Array[T]]
-    )
-  }
+  ): Coder[java.util.PriorityQueue[T]] =
+    transform(c)(bc => beam(new JPriorityQueueCoder[T](bc, ord)))
 
   implicit def jMapCoder[K, V](implicit ck: Coder[K], cv: Coder[V]): Coder[java.util.Map[K, V]] =
     transform(ck)(bk => transform(cv)(bv => beam(bcoders.MapCoder.of(bk, bv))))
