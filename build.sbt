@@ -29,20 +29,20 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.59.0"
+val beamVersion = "2.60.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.59.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.60.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
-val commonsCodecVersion = "1.17.0"
+val commonsCodecVersion = "1.17.1" // libraries-bom version
 val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.14.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.39.0"
+val gcpLibrariesVersion = "26.45.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
@@ -54,10 +54,10 @@ val nettyVersion = "4.1.100.Final"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20240323-$googleClientsVersion"
-val googleApiServicesDataflowVersion = s"v1b3-rev20240624-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20240815-$googleClientsVersion"
+val googleApiServicesDataflowVersion = s"v1b3-rev20240817-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20240319-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20240706-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = avroCompilerVersion // sdks/java/extensions/avro/build.gradle
@@ -68,9 +68,9 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.39.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.45.0/index.html
 val failureAccessVersion = "1.0.2"
-val checkerQualVersion = "3.42.0"
+val checkerQualVersion = "3.46.0"
 val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
 
@@ -137,11 +137,11 @@ val NothingFilter: explicitdeps.ModuleFilter = { _ => false }
 
 // project
 ThisBuild / tlBaseVersion := "0.14"
-ThisBuild / tlSonatypeUseLegacyHost := true
 ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
 ThisBuild / startYear := Some(2016)
 ThisBuild / licenses := Seq(License.Apache2)
+ThisBuild / sonatypeCredentialHost := Sonatype.sonatypeLegacy
 ThisBuild / developers := List(
   Developer(
     id = "sinisa_lyh",
@@ -1860,7 +1860,7 @@ lazy val soccoSettings = if (sys.env.contains("SOCCO")) {
       "-P:socco:package_com.spotify.scio:https://spotify.github.io/scio/api"
     ),
     autoCompilerPlugins := true,
-    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.12").cross(CrossVersion.full)),
+    addCompilerPlugin(("io.regadas" %% "socco-ng" % "0.1.13").cross(CrossVersion.full)),
     // Generate scio-examples/target/site/index.html
     soccoIndex := SoccoIndex.generate(target.value / "site" / "index.html"),
     Compile / compile := {
