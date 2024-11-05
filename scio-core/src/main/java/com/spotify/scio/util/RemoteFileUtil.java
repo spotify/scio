@@ -17,6 +17,10 @@
 
 package com.spotify.scio.util;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
@@ -28,14 +32,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Charsets;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Preconditions;
@@ -46,16 +50,18 @@ import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.hash.Hashing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A utility class for handling remote file systems designed to be used in a {@link
- * org.apache.beam.sdk.transforms.DoFn}.
- */
+/** A utility class for handling remote file systems designed to be used in a {@link DoFn}. */
 public class RemoteFileUtil implements Serializable {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteFileUtil.class);
 
   private static final int CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors() * 4;
   private static final int HASH_LENGTH = 8;
+
+  private static final ListeningExecutorService executor =
+      MoreExecutors.listeningDecorator(
+          MoreExecutors.getExitingExecutorService(
+              (ThreadPoolExecutor) Executors.newFixedThreadPool(CONCURRENCY_LEVEL)));
 
   // Mapping of remote sources to local destinations
   private static final LoadingCache<URI, Path> paths =
@@ -105,21 +111,20 @@ public class RemoteFileUtil implements Serializable {
    * @return {@link Path}s to the downloaded local files.
    */
   public List<Path> download(List<URI> srcs) {
+    List<ListenableFuture<Path>> futures =
+        srcs.stream()
+            .map(uri -> executor.submit(() -> paths.get(uri)))
+            .collect(Collectors.toList());
     try {
-      Map<URI, Path> results = paths.getAll(srcs);
-      List<Path> paths = new ArrayList<>(srcs.size());
-      for (URI src : srcs) {
-        paths.add(results.get(src));
-      }
-      return paths;
-    } catch (ExecutionException e) {
+      return Futures.allAsList(futures).get();
+    } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
   }
 
   /** Delete a single downloaded local file. */
   public void delete(URI src) {
-    Path dst = null;
+    Path dst;
     try {
       dst = paths.get(src);
     } catch (ExecutionException e) {
