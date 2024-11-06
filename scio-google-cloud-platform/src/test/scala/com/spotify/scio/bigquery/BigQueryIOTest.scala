@@ -17,21 +17,25 @@
 
 package com.spotify.scio.bigquery
 
+import com.google.api.services.bigquery.model.{Table => GTAble, TableReference}
+import com.google.cloud.bigquery.storage.v1._
+import com.google.protobuf.ByteString
 import com.spotify.scio.avro._
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
-import com.spotify.scio.coders.Coder
-import com.spotify.scio.{ContextAndArgs, ScioContext}
+import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.coders.{Coder, CoderMaterializer}
 import com.spotify.scio.testing._
+import com.spotify.scio.{ContextAndArgs, ScioContext}
 import org.apache.avro.generic.GenericRecord
-import org.apache.beam.sdk.Pipeline.PipelineVisitor
-import org.apache.beam.sdk.io.gcp.{bigquery => beam}
-import org.apache.beam.sdk.io.Read
 import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO.Write.CreateDisposition
-import org.apache.beam.sdk.runners.TransformHierarchy
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryServices
+import org.apache.beam.sdk.io.gcp.bigquery.BigQueryServices.StorageClient
+import org.apache.beam.sdk.io.gcp.testing.FakeBigQueryServices.FakeBigQueryServerStream
+import org.apache.beam.sdk.io.gcp.testing.{FakeBigQueryServices, FakeDatasetService, FakeJobService}
+import org.apache.beam.sdk.io.gcp.{bigquery => beam}
 import org.apache.beam.sdk.transforms.display.DisplayData
-import org.apache.beam.sdk.values.PValue
+import org.apache.beam.sdk.util.CoderUtils
+import org.scalatest.BeforeAndAfterAll
 
-import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 object BigQueryIOTest {
@@ -45,53 +49,72 @@ object BigQueryIOTest {
     "tableDescription"
   )
 
-  /**
-   * Return `Read` Transforms that do not have another transform using it as an input.
-   *
-   * To do this, we visit all PTransforms, and find the inputs at each stage, and mark those inputs
-   * as consumed by putting them in `consumedOutputs`. We also check if each transform is a `Read`
-   * and if so we extract them as well.
-   *
-   * This is copied from Beam's test for UnconsumedReads.
-   */
-  def unconsumedReads(context: ScioContext): Set[PValue] = {
-    val consumedOutputs = mutable.HashSet[PValue]()
-    val allReads = mutable.HashSet[PValue]()
+  final class FakeStorageClient(data: Seq[BQRecord]) extends StorageClient with Serializable {
 
-    context.pipeline.traverseTopologically(
-      new PipelineVisitor.Defaults {
-        override def visitPrimitiveTransform(node: TransformHierarchy#Node): Unit =
-          consumedOutputs ++= node.getInputs.values().asScala
+    @transient
+    private lazy val bqt: BigQueryType[BQRecord] = BigQueryType[BQRecord]
 
-        override def visitValue(
-          value: PValue,
-          producer: TransformHierarchy#Node
-        ): Unit =
-          producer.getTransform match {
-            case _: Read.Bounded[_] | _: Read.Unbounded[_] =>
-              allReads += value
-            case _ =>
-          }
-      }
-    )
+    override def createReadSession(request: CreateReadSessionRequest): ReadSession = ReadSession
+      .newBuilder()
+      .setName("session")
+      .setAvroSchema(AvroSchema.newBuilder().setSchema(bqt.avroSchema.toString()))
+      .addStreams(ReadStream.newBuilder().setName("stream"))
+      .setDataFormat(DataFormat.AVRO)
+      .build()
 
-    allReads.diff(consumedOutputs).toSet
+    override def readRows(
+      request: ReadRowsRequest
+    ): BigQueryServices.BigQueryServerStream[ReadRowsResponse] = {
+      val bcoder = CoderMaterializer.beamWithDefault(avroGenericRecordCoder(bqt.avroSchema))
+      val bytes = data
+        .foldLeft(ByteString.newOutput()) { (bs, r) =>
+          bs.write(CoderUtils.encodeToByteArray(bcoder, bqt.toAvro(r)))
+          bs
+        }
+        .toByteString
+
+      new FakeBigQueryServerStream(
+        List(
+          ReadRowsResponse
+            .newBuilder()
+            .setAvroRows(AvroRows.newBuilder().setSerializedBinaryRows(bytes).build())
+            .setRowCount(data.size.toLong)
+            .build()
+        ).asJava
+      )
+    }
+
+    override def readRows(
+      request: ReadRowsRequest,
+      fullTableId: String
+    ): BigQueryServices.BigQueryServerStream[ReadRowsResponse] = readRows(request)
+
+    override def splitReadStream(request: SplitReadStreamRequest): SplitReadStreamResponse = ???
+    override def splitReadStream(
+      request: SplitReadStreamRequest,
+      fullTableId: String
+    ): SplitReadStreamResponse = ???
+
+    override def close(): Unit = ()
   }
 }
 
-final class BigQueryIOTest extends ScioIOSpec {
+final class BigQueryIOTest extends ScioIOSpec with BeforeAndAfterAll {
   import BigQueryIOTest._
+
+  override def beforeAll(): Unit =
+    FakeDatasetService.setUp()
 
   "BigQueryIO" should "apply config override" in {
     val name = "saveAsBigQueryTable"
     val desc = "table-description"
     val sc = ScioContext()
     implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder
-    val io = BigQueryTypedTable[GenericRecord](
-      table = Table.Spec("project:dataset.out_table"),
-      format = Format.GenericRecord
+    val io = BigQueryIO[GenericRecord](
+      Table("project:dataset.out_table")
     )
-    val params = BigQueryTypedTable.WriteParam[GenericRecord](
+    val params = BigQueryIO.WriteParam[GenericRecord](
+      format = BigQueryIO.Format.Avro(),
       createDisposition = CreateDisposition.CREATE_NEVER,
       configOverride = _.withTableDescription(desc)
     )
@@ -111,78 +134,96 @@ final class BigQueryIOTest extends ScioIOSpec {
     val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
     testJobTest(xs, in = "project:dataset.in_table", out = "project:dataset.out_table")(
       BigQueryIO(_)
-    )((sc, s) => sc.bigQueryTable(Table.Spec(s)))((coll, s) =>
-      coll.saveAsBigQueryTable(Table.Spec(s))
-    )
-  }
-
-  /**
-   * The `BigQueryIO`'s write, runs Beam's BQ IO which creates a `Read` Transform to return the
-   * insert errors.
-   *
-   * The `saveAsBigQuery` or `saveAsTypedBigQuery` in Scio is designed to return a `ClosedTap` and
-   * by default drops insert errors.
-   *
-   * The following tests make sure that the dropped insert errors do not appear as an unconsumed
-   * read outside the transform writing to Big Query.
-   */
-  it should "not have unconsumed errors with saveAsBigQuery" in {
-    val xs = (1 to 100).map(x => TableRow("x" -> x.toString))
-
-    val context = ScioContext()
-    context
-      .parallelize(xs)
-      .saveAsBigQueryTable(Table.Spec("project:dataset.dummy"), createDisposition = CREATE_NEVER)
-    // We want to validate on the job graph, and we need not actually execute the pipeline.
-
-    unconsumedReads(context) shouldBe empty
-  }
-
-  it should "not have unconsumed errors with saveAsTypedBigQuery" in {
-    val xs = (1 to 100).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
-
-    val context = ScioContext()
-    context
-      .parallelize(xs)
-      .saveAsTypedBigQueryTable(
-        Table.Spec("project:dataset.dummy"),
-        createDisposition = CREATE_NEVER
-      )
-    // We want to validate on the job graph, and we need not actually execute the pipeline.
-
-    unconsumedReads(context) shouldBe empty
+    )((sc, s) => sc.bigQueryTable(Table(s)))((coll, s) => coll.saveAsBigQueryTable(Table(s)))
   }
 
   it should "read the same input table with different predicate and projections using bigQueryStorage" in {
-
     JobTest[JobWithDuplicateInput.type]
       .args("--input=table.in")
       .input(
-        BigQueryIO[TableRow]("table.in", List("a"), Some("a > 0")),
+        BigQueryIO[TableRow](Table("table.in", List("a"), "a > 0")),
         (1 to 3).map(x => TableRow("x" -> x.toString))
       )
       .input(
-        BigQueryIO[TableRow]("table.in", List("b"), Some("b > 0")),
+        BigQueryIO[TableRow](Table("table.in", List("b"), "b > 0")),
         (1 to 3).map(x => TableRow("x" -> x.toString))
       )
       .run()
-
   }
 
   it should "read the same input table with different predicate and projections using typedBigQueryStorage" in {
-
     JobTest[TypedJobWithDuplicateInput.type]
       .args("--input=table.in")
       .input(
-        BigQueryIO[BQRecord]("table.in", List("a"), Some("a > 0")),
+        BigQueryIO[BQRecord](Table("table.in", List("a"), "a > 0")),
         (1 to 3).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
       )
       .input(
-        BigQueryIO[BQRecord]("table.in", List("b"), Some("b > 0")),
+        BigQueryIO[BQRecord](Table("table.in", List("b"), "b > 0")),
         (1 to 3).map(x => BQRecord(x, x.toString, (1 to x).map(_.toString).toList))
       )
       .run()
+  }
 
+  it should "propagate errors if handler is set" in {
+    val ref = new TableReference()
+      .setProjectId("project")
+      .setDatasetId("dataset")
+      .setTableId("table")
+
+    val bqt = BigQueryType[BQRecord]
+    val data = Seq(
+      BQRecord(1, "a", List("1")),
+      BQRecord(2, "b", List("2"))
+    )
+
+    val failingFormat = BigQueryIO.Format.Avro(
+      bqt.fromAvro.andThen(r => if (r.i % 2 == 0) throw new Exception("fail") else r),
+      bqt.toAvro
+    )
+
+    val fakeDatasetService = new FakeDatasetService()
+    val fakeJobService = new FakeJobService()
+    val fakeStorageClient = new FakeStorageClient(data)
+
+    val fakeBqServices = new FakeBigQueryServices()
+      .withDatasetService(fakeDatasetService)
+      .withJobService(fakeJobService)
+      .withStorageClient(fakeStorageClient)
+
+    try {
+      fakeDatasetService.createDataset(ref.getProjectId, ref.getDatasetId, "US", "desc", -1)
+      fakeDatasetService.createTable(new GTAble().setTableReference(ref).setSchema(bqt.schema))
+      fakeDatasetService.insertAll(ref, data.map(bqt.toTableRow).asJava, null)
+
+      runWithRealContext() { sc =>
+        val table = Table(ref)
+        val errors = sc.errorSink()
+        sc.bigQueryStorageFormat[BQRecord](
+          table,
+          failingFormat,
+          errorHandler = errors.handler,
+          configOverride = _.withTestServices(fakeBqServices)
+        )
+
+        val recordWithFailure = errors.sink.map { br =>
+          val record = br.getRecord.getHumanReadableJsonRecord
+          val desc = br.getFailure.getDescription
+          val exception = br.getFailure.getException
+          (record, desc, exception)
+        }
+        recordWithFailure should containSingleValue(
+          (
+            """{"i": 2, "s": "b", "r": ["2"]}""",
+            "Unable to parse record reading from BigQuery",
+            "java.lang.Exception: fail"
+          )
+        )
+      }
+    } finally {
+      fakeDatasetService.close()
+      fakeJobService.close()
+    }
   }
 
   "TableRowJsonIO" should "work" in {
@@ -196,8 +237,8 @@ final class BigQueryIOTest extends ScioIOSpec {
 object JobWithDuplicateInput {
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.bigQueryStorage(Table.Spec(args("input")), List("a"), "a > 0")
-    sc.bigQueryStorage(Table.Spec(args("input")), List("b"), "b > 0")
+    sc.bigQueryStorage(Table(args("input"), List("a"), "a > 0"))
+    sc.bigQueryStorage(Table(args("input"), List("b"), "b > 0"))
     sc.run()
     ()
   }
@@ -208,8 +249,8 @@ object TypedJobWithDuplicateInput {
 
   def main(cmdlineArgs: Array[String]): Unit = {
     val (sc, args) = ContextAndArgs(cmdlineArgs)
-    sc.typedBigQueryStorage[BQRecord](Table.Spec(args("input")), List("a"), "a > 0")
-    sc.typedBigQueryStorage[BQRecord](Table.Spec(args("input")), List("b"), "b > 0")
+    sc.typedBigQueryStorage[BQRecord](Table(args("input"), List("a"), "a > 0"))
+    sc.typedBigQueryStorage[BQRecord](Table(args("input"), List("b"), "b > 0"))
     sc.run()
     ()
   }
