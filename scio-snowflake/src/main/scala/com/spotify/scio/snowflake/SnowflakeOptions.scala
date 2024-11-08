@@ -17,7 +17,7 @@
 
 package com.spotify.scio.snowflake
 
-trait SnowflakeAuthenticationOptions
+sealed trait SnowflakeAuthenticationOptions
 
 /**
  * Options for a Snowflake username/password authentication.
