@@ -50,7 +50,7 @@ object SnowflakeIO {
           .withRole(connectionOptions.role)
           .withWarehouse(connectionOptions.warehouse)
       )
-      .pipe(ds => connectionOptions.schema.map(schema => ds.withSchema(schema)).getOrElse(ds))
+      .pipe(ds => connectionOptions.schema.fold(ds)(ds.withSchema))
 
   private[snowflake] def buildCsvMapper[T](rowDecoder: RowDecoder[T]): CsvMapper[T] =
     new CsvMapper[T] {
