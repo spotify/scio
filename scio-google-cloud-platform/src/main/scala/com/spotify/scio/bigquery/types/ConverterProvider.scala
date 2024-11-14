@@ -171,13 +171,14 @@ private[types] object ConverterProvider {
       val provider: OverrideTypeProvider =
         OverrideTypeProviderFinder.getProvider
       tpe match {
-        case t if provider.shouldOverrideType(c)(t) => q"$tree.toString"
-        case t if t =:= typeOf[Boolean]             => tree
-        case t if t =:= typeOf[Int]                 => q"$tree.toLong"
-        case t if t =:= typeOf[Long]                => tree
-        case t if t =:= typeOf[Float]               => q"$tree.toDouble"
-        case t if t =:= typeOf[Double]              => tree
-        case t if t =:= typeOf[String]              => tree
+        case t if provider.shouldOverrideType(c)(t)                     => q"$tree.toString"
+        case t if t =:= typeOf[Boolean]                                 => tree
+        case t if t =:= typeOf[Int]                                     => q"$tree.toLong"
+        case t if t =:= typeOf[Long]                                    => tree
+        case t if t =:= typeOf[Float]                                   => q"$tree.toDouble"
+        case t if t =:= typeOf[Double]                                  => tree
+        case t if t =:= typeOf[String]                                  => tree
+        case t if t =:= typeOf[com.fasterxml.jackson.databind.JsonNode] => tree
 
         case t if t =:= typeOf[BigDecimal] =>
           q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
@@ -198,7 +199,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          q"$tree.wkt"
+          q"$tree.asJackson"
         case t if t =:= typeOf[BigNumeric] =>
           q"_root_.com.spotify.scio.bigquery.types.BigNumeric($tree.wkt).toString"
 
@@ -276,12 +277,13 @@ private[types] object ConverterProvider {
       tpe match {
         case t if provider.shouldOverrideType(c)(t) =>
           provider.createInstance(c)(t, q"$tree")
-        case t if t =:= typeOf[Boolean] => q"$s.toBoolean"
-        case t if t =:= typeOf[Int]     => q"$s.toInt"
-        case t if t =:= typeOf[Long]    => q"$s.toLong"
-        case t if t =:= typeOf[Float]   => q"$s.toFloat"
-        case t if t =:= typeOf[Double]  => q"$s.toDouble"
-        case t if t =:= typeOf[String]  => q"$s"
+        case t if t =:= typeOf[Boolean]                                 => q"$s.toBoolean"
+        case t if t =:= typeOf[Int]                                     => q"$s.toInt"
+        case t if t =:= typeOf[Long]                                    => q"$s.toLong"
+        case t if t =:= typeOf[Float]                                   => q"$s.toFloat"
+        case t if t =:= typeOf[Double]                                  => q"$s.toDouble"
+        case t if t =:= typeOf[String]                                  => q"$s"
+        case t if t =:= typeOf[com.fasterxml.jackson.databind.JsonNode] => q"$s"
         case t if t =:= typeOf[BigDecimal] =>
           q"_root_.com.spotify.scio.bigquery.Numeric($s)"
 
@@ -412,7 +414,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          q"$tree.wkt"
+          q"$tree.asJackson"
         case t if t =:= typeOf[BigNumeric] =>
           q"$tree.wkt"
 

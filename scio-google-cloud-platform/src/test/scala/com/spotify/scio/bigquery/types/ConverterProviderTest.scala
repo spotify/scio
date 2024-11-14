@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
+import com.fasterxml.jackson.databind.node.{JsonNodeFactory, ObjectNode}
 import com.spotify.scio.bigquery._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
@@ -48,8 +49,14 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
 
   it should "handle required json type" in {
     val wkt = "{\"name\": \"Alice\", \"age\": 30}"
+    val jsNodeFactory = new JsonNodeFactory(false)
+    val jackson = jsNodeFactory
+      .objectNode()
+      .set[ObjectNode]("name", jsNodeFactory.textNode("Alice"))
+      .set[ObjectNode]("age", jsNodeFactory.numberNode(30))
+
     RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
-    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> wkt)
+    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> jackson)
   }
 
   it should "handle case classes with methods" in {
