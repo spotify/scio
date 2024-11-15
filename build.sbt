@@ -294,7 +294,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
           name = Some("Test coverage")
         ),
         WorkflowStep.Use(
-          UseRef.Public("codecov", "codecov-action", "v4"),
+          UseRef.Public("codecov", "codecov-action", "v5"),
           Map("token" -> "${{ secrets.CODECOV_TOKEN }}"),
           name = Some("Upload coverage report")
         )
