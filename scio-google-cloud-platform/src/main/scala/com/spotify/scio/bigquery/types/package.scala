@@ -17,7 +17,6 @@
 
 package com.spotify.scio.bigquery
 
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
@@ -54,20 +53,14 @@ package object types {
   case class Geography(wkt: String)
 
   /**
-   * Case class to serve as raw type for Json instances. On write, they will be transformed into
-   * Jackson JsonNode.
+   * Case class to serve as raw type for Json instances.
    *
    * See also https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#json_type
    *
    * @param wkt
    *   Well Known Text formatted string that BigQuery displays for Json
    */
-  case class Json(wkt: String) {
-    def asJackson: JsonNode = Json.mapper.readTree(wkt)
-  }
-  object Json {
-    private val mapper = new ObjectMapper()
-  }
+  case class Json(wkt: String)
 
   /**
    * Case class to serve as BigNumeric type to distinguish them from Numeric.

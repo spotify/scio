@@ -90,7 +90,6 @@ private[types] object SchemaProvider {
       case t if t =:= typeOf[LocalDateTime] => ("DATETIME", Iterable.empty)
       case t if t =:= typeOf[Geography]     => ("GEOGRAPHY", Iterable.empty)
       case t if t =:= typeOf[Json]          => ("JSON", Iterable.empty)
-      case t if t =:= typeOf[com.fasterxml.jackson.databind.JsonNode] => ("JSON", Iterable.empty)
 
       case t if isCaseClass(t) => ("RECORD", toFields(t))
       case _                   => throw new RuntimeException(s"Unsupported type: $tpe")

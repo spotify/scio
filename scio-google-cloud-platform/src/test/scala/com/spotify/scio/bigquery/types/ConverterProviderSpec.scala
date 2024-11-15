@@ -55,7 +55,7 @@ final class ConverterProviderSpec
     for {
       key <- Gen.alphaStr
       value <- Gen.alphaStr
-    } yield Json("{\"" + key + "\":\"" + value + "\"}")
+    } yield Json(s"""{"$key":"$value"}""")
   )
   implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
   implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
