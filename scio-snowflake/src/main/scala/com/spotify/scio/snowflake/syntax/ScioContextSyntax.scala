@@ -19,9 +19,14 @@ package com.spotify.scio.snowflake.syntax
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.snowflake.{SnowflakeOptions, SnowflakeSelect}
+import com.spotify.scio.snowflake.{
+  SnowflakeConnectionOptions,
+  SnowflakeIO,
+  SnowflakeSelect,
+  SnowflakeTable
+}
 import com.spotify.scio.values.SCollection
-import kantan.csv.RowDecoder
+import kantan.csv.{RowCodec, RowDecoder}
 
 /** Enhanced version of [[ScioContext]] with Snowflake methods. */
 final class SnowflakeScioContextOps(private val self: ScioContext) extends AnyVal {
@@ -29,16 +34,68 @@ final class SnowflakeScioContextOps(private val self: ScioContext) extends AnyVa
   /**
    * Get an SCollection for a Snowflake SQL query
    *
-   * @param snowflakeOptions
+   * @param connectionOptions
    *   options for configuring a Snowflake connexion
    * @param query
    *   Snowflake SQL select query
+   * @param storageIntegrationName
+   *   Storage Integration in Snowflake to be used
+   * @param stagingBucketName
+   *   cloud bucket (GCS by now) to use as tmp location of CSVs during COPY statement.
+   * @param quotationMark
+   *   Snowflake-specific quotations around strings
    */
-  def snowflakeQuery[T: RowDecoder: Coder](
-    snowflakeOptions: SnowflakeOptions,
-    query: String
-  ): SCollection[T] =
-    self.read(SnowflakeSelect(snowflakeOptions, query))
+  def snowflakeQuery[T](
+    connectionOptions: SnowflakeConnectionOptions,
+    query: String,
+    storageIntegrationName: String,
+    stagingBucketName: String = SnowflakeIO.ReadParam.DefaultStagingBucketName,
+    quotationMark: String = SnowflakeIO.ReadParam.DefaultQuotationMark,
+    configOverride: SnowflakeIO.ReadParam.ConfigOverride[T] =
+      SnowflakeIO.ReadParam.DefaultConfigOverride
+  )(implicit rowDecoder: RowDecoder[T], coder: Coder[T]): SCollection[T] = {
+    val param = SnowflakeIO.ReadParam(
+      storageIntegrationName = storageIntegrationName,
+      stagingBucketName = stagingBucketName,
+      quotationMark = quotationMark,
+      configOverride = configOverride
+    )
+    self.read(SnowflakeSelect(connectionOptions, query))(param)
+  }
+
+  /**
+   * Get an SCollection for a Snowflake table
+   *
+   * @param connectionOptions
+   *   options for configuring a Snowflake connexion
+   * @param table
+   *   Snowflake table
+   * @param storageIntegrationName
+   *   Storage Integration in Snowflake to be used
+   * @param stagingBucketName
+   *   cloud bucket (GCS by now) to use as tmp location of CSVs during COPY statement.
+   * @param quotationMark
+   *   Snowflake-specific quotations around strings
+   */
+  def snowflakeTable[T](
+    connectionOptions: SnowflakeConnectionOptions,
+    table: String,
+    storageIntegrationName: String,
+    stagingBucketName: String = SnowflakeIO.ReadParam.DefaultStagingBucketName,
+    quotationMark: String = SnowflakeIO.ReadParam.DefaultQuotationMark,
+    configOverride: SnowflakeIO.ReadParam.ConfigOverride[T] =
+      SnowflakeIO.ReadParam.DefaultConfigOverride
+  )(implicit rowDecoder: RowDecoder[T], coder: Coder[T]): SCollection[T] = {
+    // create a read only codec
+    implicit val codec: RowCodec[T] = RowCodec.from(rowDecoder, null)
+    val param = SnowflakeIO.ReadParam(
+      storageIntegrationName = storageIntegrationName,
+      stagingBucketName = stagingBucketName,
+      quotationMark = quotationMark,
+      configOverride = configOverride
+    )
+    self.read(SnowflakeTable(connectionOptions, table))(param)
+  }
 
 }
 trait ScioContextSyntax {

@@ -18,108 +18,88 @@
 package com.spotify.scio.snowflake.syntax
 
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.io.{EmptyTap, Tap}
-import com.spotify.scio.snowflake.SnowflakeOptions
+import com.spotify.scio.io.ClosedTap
+import com.spotify.scio.snowflake.{SnowflakeConnectionOptions, SnowflakeIO, SnowflakeTable}
 import com.spotify.scio.values.SCollection
-import kantan.csv.{RowDecoder, RowEncoder}
-import org.apache.beam.sdk.io.snowflake.SnowflakeIO.UserDataMapper
-import org.apache.beam.sdk.io.{snowflake => beam}
+import kantan.csv.RowCodec
+import org.apache.beam.sdk.io.snowflake.data.SnowflakeTableSchema
+import org.apache.beam.sdk.io.snowflake.enums.{CreateDisposition, WriteDisposition}
+import org.joda.time.Duration
 
 /**
  * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Snowflake methods.
  */
 final class SnowflakeSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
-  import com.spotify.scio.snowflake.SnowflakeIO._
-
   /**
-   * Execute the provided SQL query in Snowflake, COPYing the result in CSV format to the provided
-   * bucket, and return an [[SCollection]] of provided type, reading this bucket.
-   *
-   * The [[SCollection]] is generated using [[kantan.csv.RowDecoded]]. [[SCollection]] type
-   * properties must then match the order of the columns of the SELECT, that will be copied to the
-   * bucket.
+   * Save this SCollection as a Snowflake database table. The [[SCollection]] is written to CSV
+   * files in a bucket, using a provided [[kantan.csv.RowEncoder]] to encode each element as a CSV
+   * row. The bucket is then COPYied to the Snowflake table.
    *
    * @see
    *   ''Reading from Snowflake'' in the
    *   [[https://beam.apache.org/documentation/io/built-in/snowflake/ Beam `SnowflakeIO` documentation]]
-   * @param snowflakeConf
-   *   options for configuring a Snowflake integration
-   * @param query
-   *   SQL select query
-   * @return
-   *   [[SCollection]] containing the query results as parsed from the CSV bucket copied from
-   *   Snowflake
-   */
-  def snowflakeSelect[U](
-    snowflakeConf: SnowflakeOptions,
-    query: String
-  )(implicit
-    rowDecoder: RowDecoder[U],
-    coder: Coder[U]
-  ): SCollection[U] =
-    self.context.applyTransform(prepareRead(snowflakeConf, self.context).fromQuery(query))
-
-  /**
-   * Copy the provided Snowflake table in CSV format to the provided bucket, and * return an
-   * [[SCollection]] of provided type, reading this bucket.
-   *
-   * The [[SCollection]] is generated using [[kantan.csv.RowDecoded]]. [[SCollection]] type
-   * properties must then match the order of the columns of the table, that will be copied to the
-   * bucket.
-   *
-   * @see
-   *   ''Reading from Snowflake'' in the
-   *   [[https://beam.apache.org/documentation/io/built-in/snowflake/ Beam `SnowflakeIO` documentation]]
-   * @param snowflakeConf
+   * @param connectionOptions
    *   options for configuring a Snowflake integration
    * @param table
-   *   table
+   *   table name to be written in Snowflake
+   * @param tableSchema
+   *   table schema to be used during creating table
+   * @param createDisposition
+   *   disposition to be used during table preparation
+   * @param writeDisposition
+   *   disposition to be used during writing to table phase
+   * @param snowPipe
+   *   name of created
+   *   [[https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro SnowPipe]] in Snowflake
+   *   dashboard
+   * @param shardNumber
+   *   number of shards that are created per window
+   * @param flushRowLimit
+   *   number of row limit that will be saved to the staged file and then loaded to Snowflake
+   * @param flushTimeLimit
+   *   duration how often staged files will be created and then how often ingested by Snowflake
+   *   during streaming
+   * @param storageIntegrationName
+   *   Storage Integration in Snowflake to be used
+   * @param stagingBucketName
+   *   cloud bucket (GCS by now) to use as tmp location of CSVs during COPY statement.
+   * @param quotationMark
+   *   Snowflake-specific quotations around strings
    * @return
    *   [[SCollection]] containing the table elements as parsed from the CSV bucket copied from
    *   Snowflake table
    */
-  def snowflakeTable[U](
-    snowflakeConf: SnowflakeOptions,
-    table: String
-  )(implicit
-    rowDecoder: RowDecoder[U],
-    coder: Coder[U]
-  ): SCollection[U] =
-    self.context.applyTransform(prepareRead(snowflakeConf, self.context).fromTable(table))
-
-  /**
-   * Save this SCollection as a Snowflake database table. The [[SCollection]] is written to CSV
-   * files in a bucket, using the provided [[kantan.csv.RowEncoder]] to encode each element as a CSV
-   * row. The bucket is then COPYied to the Snowflake table.
-   *
-   * @see
-   *   ''Writing to Snowflake tables'' in the
-   *   [[https://beam.apache.org/documentation/io/built-in/snowflake/ Beam `SnowflakeIO` documentation]]
-   *
-   * @param snowflakeOptions
-   *   options for configuring a Snowflake connexion
-   * @param table
-   *   Snowflake table
-   */
-  def saveAsSnowflakeTable(
-    snowflakeOptions: SnowflakeOptions,
-    table: String
-  )(implicit rowEncoder: RowEncoder[T], coder: Coder[T]): Tap[Nothing] = {
-    self.applyInternal(
-      beam.SnowflakeIO
-        .write[T]()
-        .withDataSourceConfiguration(
-          dataSourceConfiguration(snowflakeOptions.connectionOptions)
-        )
-        .to(table)
-        .withStagingBucketName(snowflakeOptions.stagingBucketName)
-        .withStorageIntegrationName(snowflakeOptions.storageIntegrationName)
-        .withUserDataMapper(new UserDataMapper[T] {
-          override def mapRow(element: T): Array[AnyRef] = rowEncoder.encode(element).toArray
-        })
+  def saveAsSnowflake(
+    connectionOptions: SnowflakeConnectionOptions,
+    table: String,
+    tableSchema: SnowflakeTableSchema = SnowflakeIO.WriteParam.DefaultTableSchema,
+    createDisposition: CreateDisposition = SnowflakeIO.WriteParam.DefaultCreateDisposition,
+    writeDisposition: WriteDisposition = SnowflakeIO.WriteParam.DefaultWriteDisposition,
+    snowPipe: String = SnowflakeIO.WriteParam.DefaultSnowPipe,
+    shardNumber: Integer = SnowflakeIO.WriteParam.DefaultShardNumber,
+    flushRowLimit: Integer = SnowflakeIO.WriteParam.DefaultFlushRowLimit,
+    flushTimeLimit: Duration = SnowflakeIO.WriteParam.DefaultFlushTimeLimit,
+    storageIntegrationName: String = SnowflakeIO.WriteParam.DefaultStorageIntegrationName,
+    stagingBucketName: String = SnowflakeIO.WriteParam.DefaultStagingBucketName,
+    quotationMark: String = SnowflakeIO.WriteParam.DefaultQuotationMark,
+    configOverride: SnowflakeIO.WriteParam.ConfigOverride[T] =
+      SnowflakeIO.WriteParam.DefaultConfigOverride
+  )(implicit rowCodec: RowCodec[T], coder: Coder[T]): ClosedTap[Nothing] = {
+    val param = SnowflakeIO.WriteParam(
+      tableSchema = tableSchema,
+      createDisposition = createDisposition,
+      writeDisposition = writeDisposition,
+      snowPipe = snowPipe,
+      shardNumber = shardNumber,
+      flushRowLimit = flushRowLimit,
+      flushTimeLimit = flushTimeLimit,
+      storageIntegrationName = storageIntegrationName,
+      stagingBucketName = stagingBucketName,
+      quotationMark = quotationMark,
+      configOverride = configOverride
     )
-    EmptyTap
+    self.write(SnowflakeTable[T](connectionOptions, table))(param)
   }
 }
 

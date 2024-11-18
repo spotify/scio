@@ -17,84 +17,76 @@
 
 package com.spotify.scio.snowflake
 
+import org.joda.time.Duration
+
 sealed trait SnowflakeAuthenticationOptions
 
-/**
- * Options for a Snowflake username/password authentication.
- *
- * @param username
- *   username
- * @param password
- *   password
- */
-final case class SnowflakeUsernamePasswordAuthenticationOptions(
-  username: String,
-  password: String
-) extends SnowflakeAuthenticationOptions
+object SnowflakeAuthenticationOptions {
 
-/**
- * Options for a Snowflake key pair authentication.
- *
- * @param username
- *   username
- * @param privateKeyPath
- *   path to the private key
- * @param privateKeyPassphrase
- *   passphrase for the private key (optional)
- */
-final case class SnowflakeKeyPairAuthenticationOptions(
-  username: String,
-  privateKeyPath: String,
-  privateKeyPassphrase: Option[String]
-) extends SnowflakeAuthenticationOptions
+  /**
+   * Snowflake username/password authentication.
+   *
+   * @param username
+   *   username
+   * @param password
+   *   password
+   */
+  final case class UsernamePassword(
+    username: String,
+    password: String
+  ) extends SnowflakeAuthenticationOptions
 
-/**
- * Options for a Snowflake OAuth token authentication.
- *
- * @param token
- *   OAuth token
- */
-final case class SnowflakeOAuthTokenAuthenticationOptions(
-  token: String
-) extends SnowflakeAuthenticationOptions
+  /**
+   * Key pair authentication.
+   *
+   * @param username
+   *   username
+   * @param privateKeyPath
+   *   path to the private key
+   * @param privateKeyPassphrase
+   *   passphrase for the private key (optional)
+   */
+  final case class KeyPair(
+    username: String,
+    privateKeyPath: String,
+    privateKeyPassphrase: Option[String] = None
+  ) extends SnowflakeAuthenticationOptions
+
+  /**
+   * OAuth token authentication.
+   *
+   * @param token
+   *   OAuth token
+   */
+  final case class OAuthToken(token: String) extends SnowflakeAuthenticationOptions
+
+}
 
 /**
  * Options for a Snowflake connection.
  *
  * @param authenticationOptions
  *   authentication options
- * @param serverName
- *   server name (e.g. "account.region.snowflakecomputing.com")
+ * @param url
+ *   Sets URL of Snowflake server in following format:
+ *   "jdbc:snowflake://[host]:[port].snowflakecomputing.com"
  * @param database
- *   database name
+ *   database to use
  * @param role
- *   role name
+ *   user's role to be used when running queries on Snowflake
  * @param warehouse
  *   warehouse name
  * @param schema
- *   schema name (optional)
+ *   schema to use when connecting to Snowflake
+ * @param loginTimeout
+ *   Sets loginTimeout that will be used in [[net.snowflake.client.jdbc.SnowflakeBasicDataSource]].
  */
 final case class SnowflakeConnectionOptions(
-  authenticationOptions: SnowflakeAuthenticationOptions,
-  serverName: String,
-  database: String,
-  role: String,
-  warehouse: String,
-  schema: Option[String]
-)
-
-/**
- * Options for configuring a Neo4J driver.
- *
- * @param connectionOptions
- *   connection options
- * @param stagingBucketName
- *   Snowflake staging bucket name where CSV files will be stored
- * @param storageIntegrationName
- *   Storage integration name as created in Snowflake
- */
-final case class SnowflakeOptions(
-  connectionOptions: SnowflakeConnectionOptions,
-  stagingBucketName: String,
-  storageIntegrationName: String
+  url: String,
+  authenticationOptions: SnowflakeAuthenticationOptions = null,
+  database: String = null,
+  role: String = null,
+  warehouse: String = null,
+  schema: String = null,
+  loginTimeout: Duration = null
 )
