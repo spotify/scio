@@ -17,7 +17,6 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.google.api.services.bigquery.model.TableRow
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery.types.MacroUtil._
@@ -413,8 +412,8 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          // for BigQuery, we need to provide parsed JSON to prevent escaping
-          q"_root_.com.spotify.scio.bigquery.types.ConverterUtil.readJsonTree($tree)"
+          // for TableRow/json, we need to provide parsed JSON to prevent escaping
+          q"_root_.com.spotify.scio.bigquery.types.Json.parse($tree)"
         case t if t =:= typeOf[BigNumeric] =>
           q"$tree.wkt"
 
@@ -476,9 +475,6 @@ private[types] object ConverterProvider {
 }
 
 object ConverterUtil {
-  private val mapper = new ObjectMapper()
-  def readJsonTree(json: Json): JsonNode = mapper.readTree(json.wkt)
-
   @inline final def notNull[@specialized(Boolean, Int, Long, Float, Double) T](x: T): Boolean =
     x != null
 }
