@@ -62,8 +62,12 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   it should "handle required big numeric type" in {
     val bigNumeric = "12.34567890123456789012345678901234567890"
     val wkt = BigDecimal(bigNumeric)
-    RequiredBigNumeric.fromTableRow(TableRow("a" -> bigNumeric)) shouldBe RequiredBigNumeric(BigNumeric(wkt))
-    BigQueryType.toTableRow(RequiredBigNumeric(BigNumeric(wkt))) shouldBe TableRow("a" -> bigNumeric)
+    RequiredBigNumeric.fromTableRow(TableRow("a" -> bigNumeric)) shouldBe RequiredBigNumeric(
+      BigNumeric(wkt)
+    )
+    BigQueryType.toTableRow(RequiredBigNumeric(BigNumeric(wkt))) shouldBe TableRow(
+      "a" -> bigNumeric
+    )
   }
 
   it should "handle case classes with methods" in {
