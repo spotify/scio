@@ -424,6 +424,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[DirectAbstractMethodProblem](
     "org.apache.beam.sdk.coders.Coder.getCoderArguments"
+  ),
+  // added BQ Json object
+  ProblemFilters.exclude[MissingTypesProblem](
+    "com.spotify.scio.bigquery.types.package$Json$"
   )
 )
 
@@ -962,6 +966,7 @@ lazy val `scio-google-cloud-platform` = project
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.google.api" % "gax" % gcpBom.key.value,
       "com.google.api" % "gax-grpc" % gcpBom.key.value,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
