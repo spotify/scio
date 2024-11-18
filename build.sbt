@@ -424,6 +424,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[DirectAbstractMethodProblem](
     "org.apache.beam.sdk.coders.Coder.getCoderArguments"
+  ),
+  // added BQ Json object
+  ProblemFilters.exclude[MissingTypesProblem](
+    "com.spotify.scio.bigquery.types.package$Json$"
   )
 )
 
