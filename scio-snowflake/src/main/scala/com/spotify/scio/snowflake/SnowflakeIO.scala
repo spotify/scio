@@ -130,7 +130,7 @@ object SnowflakeIO {
 
 sealed trait SnowflakeIO[T] extends ScioIO[T]
 
-final case class SnowflakeSelect[T](connectionOptions: SnowflakeConnectionOptions, select: String)(
+final case class SnowflakeSelect[T](connectionOptions: SnowflakeConnectionOptions, query: String)(
   implicit
   rowDecoder: RowDecoder[T],
   coder: Coder[T]
@@ -142,13 +142,13 @@ final case class SnowflakeSelect[T](connectionOptions: SnowflakeConnectionOption
   override type WriteP = Unit
   override val tapT: TapT.Aux[T, Nothing] = EmptyTapOf[T]
 
-  override def testId: String = s"SnowflakeIO(${snowflakeIoId(connectionOptions, select)})"
+  override def testId: String = s"SnowflakeIO(${snowflakeIoId(connectionOptions, query)})"
 
   override protected def read(sc: ScioContext, params: ReadP): SCollection[T] = {
     val tempDirectory = ScioUtil.tempDirOrDefault(params.stagingBucketName, sc).toString
     val t = beam.SnowflakeIO
       .read[T]()
-      .fromQuery(select)
+      .fromQuery(query)
       .withDataSourceConfiguration(dataSourceConfiguration(connectionOptions))
       .withStorageIntegrationName(params.storageIntegrationName)
       .withStagingBucketName(tempDirectory)
