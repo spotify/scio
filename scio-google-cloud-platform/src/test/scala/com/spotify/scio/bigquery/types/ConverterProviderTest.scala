@@ -59,6 +59,13 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
     BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> jackson)
   }
 
+  it should "handle required big numeric type" in {
+    val bigNumeric = "12.34567890123456789012345678901234567890"
+    val wkt = BigDecimal(bigNumeric)
+    RequiredBigNumeric.fromTableRow(TableRow("a" -> bigNumeric)) shouldBe RequiredBigNumeric(BigNumeric(wkt))
+    BigQueryType.toTableRow(RequiredBigNumeric(BigNumeric(wkt))) shouldBe TableRow("a" -> bigNumeric)
+  }
+
   it should "handle case classes with methods" in {
     RequiredWithMethod.fromTableRow(TableRow("a" -> "")) shouldBe RequiredWithMethod("")
     BigQueryType.toTableRow[RequiredWithMethod](RequiredWithMethod("")) shouldBe TableRow("a" -> "")
@@ -72,6 +79,9 @@ object ConverterProviderTest {
 
   @BigQueryType.toTable
   case class RequiredJson(a: Json)
+
+  @BigQueryType.toTable
+  case class RequiredBigNumeric(a: BigNumeric)
 
   @BigQueryType.toTable
   case class Required(a: String)
