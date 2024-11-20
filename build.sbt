@@ -1276,10 +1276,11 @@ lazy val `scio-snowflake` = project
     description := "Scio add-on for Snowflake",
     libraryDependencies ++= Seq(
       // compile
-      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
-      "org.apache.beam" % "beam-sdks-java-io-snowflake" % beamVersion,
+      "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion,
       "com.nrinaudo" %% "kantan.csv" % kantanCsvVersion,
-      "com.nrinaudo" %% "kantan.codecs" % kantanCodecsVersion
+      "joda-time" % "joda-time" % jodaTimeVersion,
+      "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
+      "org.apache.beam" % "beam-sdks-java-io-snowflake" % beamVersion
     ),
     tlMimaPreviousVersions := Set.empty // TODO: remove once released
   )
