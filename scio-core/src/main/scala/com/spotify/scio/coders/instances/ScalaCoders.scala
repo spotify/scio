@@ -245,13 +245,8 @@ private[coders] class MutableSetCoder[T](bc: BCoder[T]) extends SeqLikeCoder[m.S
 
 private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[SortedSet, T](bc) {
 
-  override def encode(value: SortedSet[T], os: OutputStream): Unit = {
-    require(
-      value.ordering == Ordering[T],
-      "SortedSet ordering does not match SortedSetCoder ordering"
-    )
+  override def encode(value: SortedSet[T], os: OutputStream): Unit =
     super.encode(value, os)
-  }
 
   override def decode(inStream: InputStream): SortedSet[T] =
     decode(inStream, SortedSet.newBuilder[T])
@@ -260,13 +255,8 @@ private class SortedSetCoder[T: Ordering](bc: BCoder[T]) extends SeqLikeCoder[So
 private[coders] class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
     extends SeqLikeCoder[m.PriorityQueue, T](bc) {
   override def consistentWithEquals(): Boolean = false // PriorityQueue does not define equality
-  override def encode(value: m.PriorityQueue[T], os: OutputStream): Unit = {
-    require(
-      value.ord == Ordering[T],
-      "PriorityQueue ordering does not match MutablePriorityQueueCoder ordering"
-    )
+  override def encode(value: m.PriorityQueue[T], os: OutputStream): Unit =
     super.encode(value, os)
-  }
   override def decode(inStream: InputStream): m.PriorityQueue[T] =
     decode(inStream, m.PriorityQueue.newBuilder[T])
 }
@@ -377,13 +367,8 @@ private class MutableMapCoder[K, V](kc: BCoder[K], vc: BCoder[V])
 private[coders] class SortedMapCoder[K: Ordering, V](kc: BCoder[K], vc: BCoder[V])
     extends MapLikeCoder[K, V, SortedMap](kc, vc) {
 
-  override def encode(value: SortedMap[K, V], os: OutputStream): Unit = {
-    require(
-      value.ordering == Ordering[K],
-      "SortedMap ordering does not match SortedMapCoder ordering"
-    )
+  override def encode(value: SortedMap[K, V], os: OutputStream): Unit =
     super.encode(value, os)
-  }
 
   override def decode(is: InputStream): SortedMap[K, V] =
     decode(is, SortedMap.newBuilder[K, V])

@@ -158,8 +158,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       beFullyCompliantNotConsistentWithEquals()
 
     {
-      // custom ordering must have stable equal after serialization
-      implicit val pqOrd: Ordering[String] = FlippedStringOrdering
+      implicit val pqOrd: Ordering[String] = Ordering.String.on(_.reverse)
       val pq = new mut.PriorityQueue[String]()(pqOrd)
       pq ++= s
 
@@ -416,8 +415,7 @@ final class CoderTest extends AnyFlatSpec with Matchers {
     }
 
     {
-      // custom ordering must have stable equal after serialization
-      implicit val pqOrd: Ordering[String] = FlippedStringOrdering
+      implicit val pqOrd: Ordering[String] = Ordering.String.on(_.reverse)
       val pq = new JPriorityQueue[String](pqOrd)
       pq.addAll(elems.asJavaCollection)
 
@@ -993,15 +991,6 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       classOf[magnolia1.SealedTrait[Coder, _]].getName,
       classOf[magnolia1.Subtype[Coder, _]].getName
     )
-  }
-
-  it should "not accept SortedMap when ordering doesn't match with coder" in {
-    val sm = SortedMap(1 -> "1", 2 -> "2")(Ordering[Int].reverse)
-    // implicit SortedMapCoder will use implicit default Int ordering
-    val e = the[IllegalArgumentException] thrownBy {
-      sm coderShould roundtrip()
-    }
-    e.getMessage shouldBe "requirement failed: SortedMap ordering does not match SortedMapCoder ordering"
   }
 
   /*

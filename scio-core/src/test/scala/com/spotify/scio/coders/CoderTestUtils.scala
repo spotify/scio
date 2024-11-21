@@ -29,10 +29,6 @@ import scala.jdk.CollectionConverters._
 
 object CoderTestUtils {
 
-  object FlippedStringOrdering extends Ordering[String] {
-    override def compare(x: String, y: String): Int = x.reverse.compareTo(y.reverse)
-  }
-
   def testRoundTrip[T](coder: BCoder[T], value: T): Boolean =
     testRoundTrip(coder, coder, value)
 

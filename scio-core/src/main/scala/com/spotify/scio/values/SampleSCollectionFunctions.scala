@@ -30,13 +30,8 @@ object SampleSCollectionFunctions {
 
   final private case class WeightedSample[T](id: Long, value: T, weight: Long)
   private object WeightedSample {
-    private object WeightedSampleOrdering extends Ordering[WeightedSample[_]] {
-      override def compare(x: WeightedSample[_], y: WeightedSample[_]): Int =
-        java.lang.Long.compare(y.id, x.id) // reverse order
-    }
-
     implicit def ordering[T]: Ordering[WeightedSample[T]] =
-      WeightedSampleOrdering.asInstanceOf[Ordering[WeightedSample[T]]]
+      Ordering.by[WeightedSample[T], Long](_.id).reverse
   }
 
   final private case class WeightedCombiner[T](
