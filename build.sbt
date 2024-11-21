@@ -1719,6 +1719,7 @@ lazy val integration = project
     unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     libraryDependencies ++= Seq(
       // compile
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.guava" % "guava" % guavaVersion,
