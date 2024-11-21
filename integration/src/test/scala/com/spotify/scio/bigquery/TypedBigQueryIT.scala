@@ -32,7 +32,7 @@ import org.joda.time.format.DateTimeFormat
 import org.scalacheck._
 import org.scalatest.BeforeAndAfterAll
 
-import scala.util.Random
+import scala.util.{Random, Try}
 
 object TypedBigQueryIT {
   @BigQueryType.toTable
@@ -118,9 +118,10 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
 
   override protected def afterAll(): Unit = {
     val bq = BigQuery.defaultInstance()
-    bq.tables.delete(typedTable.ref)
-    bq.tables.delete(tableRowTable.ref)
-    bq.tables.delete(avroTable.ref)
+    // best effort cleanup
+    Try(bq.tables.delete(typedTable.ref))
+    Try(bq.tables.delete(tableRowTable.ref))
+    Try(bq.tables.delete(avroTable.ref))
   }
 
   "TypedBigQuery" should "handle records as TableRow" in {
