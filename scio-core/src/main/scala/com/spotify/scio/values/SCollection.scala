@@ -382,11 +382,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group collection
    */
   def partitionByKey[U](partitionKeys: Set[U])(f: T => U): Map[U, SCollection[T]] = {
-    val partitionKeysIndexed = partitionKeys.toIndexedSeq
-
-    partitionKeysIndexed
-      .zip(partition(partitionKeys.size, (t: T) => partitionKeysIndexed.indexOf(f(t))))
-      .toMap
+    val partitions = partitionKeys.zipWithIndex.toMap
+    partitionKeys.zip(partition(partitionKeys.size, x => partitions(f(x)))).toMap
   }
 
   /**
