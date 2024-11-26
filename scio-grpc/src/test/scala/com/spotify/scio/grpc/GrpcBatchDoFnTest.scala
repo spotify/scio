@@ -17,7 +17,11 @@
 package com.spotify.scio.grpc
 
 import com.google.common.cache.{Cache, CacheBuilder}
-import com.spotify.concat.v1.ConcatServiceGrpc.{ConcatServiceFutureStub, ConcatServiceImplBase}
+import com.spotify.concat.v1.ConcatServiceGrpc.{
+  ConcatServiceFutureStub,
+  ConcatServiceImplBase,
+  ConcatServiceStub
+}
 import com.spotify.concat.v1._
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
@@ -66,6 +70,11 @@ object GrpcBatchDoFnTest {
   def concatBatchResponse(response: BatchResponse): Seq[(String, ConcatResponseWithID)] =
     response.getResponseList.asScala.toSeq.map(e => (e.getRequestId, e))
 
+  def concatListResponse(
+    response: List[ConcatResponseWithID]
+  ): Seq[(String, ConcatResponseWithID)] =
+    response.map(e => (e.getRequestId, e))
+
   def idExtractor(concatRequest: ConcatRequestWithID): String =
     concatRequest.getRequestId
 
@@ -81,6 +90,15 @@ object GrpcBatchDoFnTest {
       responseObserver: StreamObserver[BatchResponse]
     ): Unit = {
       responseObserver.onNext(processBatch(request))
+      responseObserver.onCompleted()
+    }
+
+    override def batchConcatServerStreaming(
+      request: BatchRequest,
+      responseObserver: StreamObserver[ConcatResponseWithID]
+    ): Unit = {
+      val batchResponse = processBatch(request)
+      batchResponse.getResponseList.forEach(responseObserver.onNext)
       responseObserver.onCompleted()
     }
   }
@@ -133,6 +151,43 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
           idExtractor,
           2
         )(_.batchConcat)
+
+      result should containInAnyOrder(expected)
+    }
+  }
+
+  it should "issue request and propagate streamed responses" in {
+    val input = (0 to 10).map { i =>
+      ConcatRequestWithID
+        .newBuilder()
+        .setRequestId(i.toString)
+        .setStringOne(i.toString)
+        .setStringTwo(i.toString)
+        .build()
+    }
+
+    val expected: Seq[(ConcatRequestWithID, Try[ConcatResponseWithID])] = input.map { req =>
+      val resp = concat(req)
+      req -> Success(resp)
+    }
+
+    runWithContext { sc =>
+      val result = sc
+        .parallelize(input)
+        .grpcLookupBatchStream[
+          BatchRequest,
+          ConcatResponseWithID,
+          ConcatResponseWithID,
+          ConcatServiceStub
+        ](
+          () => NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
+          ConcatServiceGrpc.newStub,
+          2,
+          concatBatchRequest,
+          concatListResponse,
+          idExtractor,
+          2
+        )(_.batchConcatServerStreaming)
 
       result should containInAnyOrder(expected)
     }
