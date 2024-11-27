@@ -385,7 +385,7 @@ object BigQueryTypedTable {
       beam.BigQueryIO.readTableRows(),
       beam.BigQueryIO.writeTableRows(),
       table,
-      BigQueryUtils.convertGenericRecordToTableRow(_, _)
+      (r, _) => BigQueryUtils.convertGenericRecordToTableRow(r)
     )(coders.tableRowCoder)
 
   private[this] def genericRecord(
@@ -423,8 +423,8 @@ object BigQueryTypedTable {
     val writer = beam.BigQueryIO
       .write[T]()
       .withFormatFunction(Functions.serializableFn(wFn))
-    val fn: (GenericRecord, TableSchema) => T = (gr, ts) =>
-      tableRowFn(BigQueryUtils.convertGenericRecordToTableRow(gr, ts))
+    val fn: (GenericRecord, TableSchema) => T = (gr, _) =>
+      tableRowFn(BigQueryUtils.convertGenericRecordToTableRow(gr))
 
     BigQueryTypedTable(reader, writer, table, fn)
   }
@@ -437,13 +437,15 @@ object BigQueryTypedTable {
   ): BigQueryTypedTable[T] = {
     val rFn = ClosureCleaner.clean(readerFn)
     val wFn = ClosureCleaner.clean(writerFn)
-    val reader = beam.BigQueryIO.read(rFn(_))
+    val reader = beam.BigQueryIO
+      .read(rFn(_))
+      .useAvroLogicalTypes()
     val writer = beam.BigQueryIO
       .write[T]()
       .useAvroLogicalTypes()
       .withAvroFormatFunction(input => wFn(input.getElement()))
       .withAvroSchemaFactory { ts =>
-        BigQueryAvroUtilsWrapper.toGenericAvroSchema("root", ts.getFields())
+        BigQueryUtils.toGenericAvroSchema("root", ts.getFields(), true)
       }
 
     BigQueryTypedTable(reader, writer, table, fn)

@@ -428,6 +428,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // added BQ Json object
   ProblemFilters.exclude[MissingTypesProblem](
     "com.spotify.scio.bigquery.types.package$Json$"
+  ),
+  // dropped custom BigQueryAvroUtilsWrapper
+  ProblemFilters.exclude[MissingClassProblem](
+    "org.apache.beam.sdk.io.gcp.bigquery.BigQueryAvroUtilsWrapper"
   )
 )
 

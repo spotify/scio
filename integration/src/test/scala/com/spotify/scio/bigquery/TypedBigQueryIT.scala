@@ -48,7 +48,8 @@ object TypedBigQueryIT {
     timestamp: Instant,
     date: LocalDate,
     time: LocalTime,
-    datetime: LocalDateTime,
+    // BQ DATETIME is problematic with avro: export as 'string(datetime)', load as '(long)local-timestamp-micros'
+    // datetime: LocalDateTime,
     geography: Geography,
     json: Json,
     bigNumeric: BigNumeric
@@ -116,12 +117,22 @@ object TypedBigQueryIT {
 class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
   import TypedBigQueryIT._
 
+  private val bq = BigQuery.defaultInstance()
+
   override protected def afterAll(): Unit = {
-    val bq = BigQuery.defaultInstance()
     // best effort cleanup
     Try(bq.tables.delete(typedTable.ref))
     Try(bq.tables.delete(tableRowTable.ref))
     Try(bq.tables.delete(avroTable.ref))
+  }
+
+  def waitForTable(table: Table.Spec): Unit = {
+    var retries = 0
+    while (!bq.tables.exists(table.ref) && retries < 3) {
+      Thread.sleep(500)
+      retries += 1
+    }
+    if (retries >= 3) throw new RuntimeException(s"Table $table not found")
   }
 
   "TypedBigQuery" should "handle records as TableRow" in {
@@ -129,6 +140,8 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
       sc.parallelize(records)
         .saveAsTypedBigQueryTable(typedTable, createDisposition = CREATE_IF_NEEDED)
     }.waitUntilFinish()
+
+    waitForTable(typedTable)
 
     runWithRealContext(options) { sc =>
       val data = sc.typedBigQuery[Record](typedTable)
@@ -147,15 +160,17 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
         )
     }.waitUntilFinish()
 
+    waitForTable(tableRowTable)
+
     runWithRealContext(options) { sc =>
       val data = sc.bigQueryTable(tableRowTable).map(Record.fromTableRow)
       data should containInAnyOrder(records)
     }
   }
 
-  // TODO fix if in beam 2.61
-  ignore should "handle records as avro format" in {
+  it should "handle records as avro format" in {
     implicit val coder: Coder[GenericRecord] = avroGenericRecordCoder(Record.avroSchema)
+
     runWithRealContext(options) { sc =>
       sc.parallelize(records)
         .map(Record.toAvro)
@@ -165,6 +180,8 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
           createDisposition = CREATE_IF_NEEDED
         )
     }.waitUntilFinish()
+
+    waitForTable(avroTable)
 
     runWithRealContext(options) { sc =>
       val data = sc.bigQueryTable(avroTable, Format.GenericRecord).map(Record.fromAvro)
