@@ -40,6 +40,7 @@ import scala.jdk.CollectionConverters._
 import com.spotify.scio.coders.{Beam, Coder, MaterializedCoder}
 import com.spotify.scio.options.ScioOptions
 import com.spotify.scio.schemas.Schema
+import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.apache.beam.sdk.coders.{NullableCoder, StringUtf8Coder}
 
 import java.nio.charset.StandardCharsets
@@ -249,6 +250,16 @@ class SCollectionTest extends PipelineSpec {
       m("b") should containInAnyOrder(Seq("b4", "b5"))
       m("c") should containInAnyOrder(Seq("c6"))
     }
+
+    val e = the[PipelineExecutionException] thrownBy {
+      runWithContext { sc =>
+        sc
+          .parallelize(Seq("x"))
+          .partitionByKey(Set("a", "b", "c"))(_.substring(0, 1))
+      }
+    }
+    e.getCause shouldBe a[NoSuchElementException]
+    e.getCause.getMessage shouldBe "key not found: x"
   }
 
   it should "support hashPartition() based on Object.hashCode()" in {

@@ -17,6 +17,7 @@
 
 package com.spotify.scio.bigquery.types
 
+import com.fasterxml.jackson.databind.node.{JsonNodeFactory, ObjectNode}
 import com.spotify.scio.bigquery._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
@@ -47,9 +48,26 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "handle required json type" in {
-    val wkt = "{\"name\": \"Alice\", \"age\": 30}"
-    RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
-    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> wkt)
+    val wkt = """{"name":"Alice","age":30}"""
+    val jsNodeFactory = new JsonNodeFactory(false)
+    val jackson = jsNodeFactory
+      .objectNode()
+      .set[ObjectNode]("name", jsNodeFactory.textNode("Alice"))
+      .set[ObjectNode]("age", jsNodeFactory.numberNode(30))
+
+    RequiredJson.fromTableRow(TableRow("a" -> jackson)) shouldBe RequiredJson(Json(wkt))
+    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> jackson)
+  }
+
+  it should "handle required big numeric type" in {
+    val bigNumeric = "12.34567890123456789012345678901234567890"
+    val wkt = BigDecimal(bigNumeric)
+    RequiredBigNumeric.fromTableRow(TableRow("a" -> bigNumeric)) shouldBe RequiredBigNumeric(
+      BigNumeric(wkt)
+    )
+    BigQueryType.toTableRow(RequiredBigNumeric(BigNumeric(wkt))) shouldBe TableRow(
+      "a" -> bigNumeric
+    )
   }
 
   it should "handle case classes with methods" in {
@@ -65,6 +83,9 @@ object ConverterProviderTest {
 
   @BigQueryType.toTable
   case class RequiredJson(a: Json)
+
+  @BigQueryType.toTable
+  case class RequiredBigNumeric(a: BigNumeric)
 
   @BigQueryType.toTable
   case class Required(a: String)

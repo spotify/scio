@@ -412,9 +412,11 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          q"$tree.wkt"
+          // for TableRow/json, use JSON to prevent escaping
+          q"_root_.com.spotify.scio.bigquery.types.Json.parse($tree)"
         case t if t =:= typeOf[BigNumeric] =>
-          q"$tree.wkt"
+          // for TableRow/json, use string to avoid precision loss (like numeric)
+          q"$tree.wkt.toString"
 
         case t if isCaseClass(c)(t) => // nested records
           val fn = TermName("r" + t.typeSymbol.name)
