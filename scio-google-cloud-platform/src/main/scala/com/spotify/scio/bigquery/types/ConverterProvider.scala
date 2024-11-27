@@ -180,17 +180,18 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[String]              => tree
 
         case t if t =:= typeOf[BigDecimal] =>
-          q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
+          q"_root_.com.spotify.scio.bigquery.Numeric.bytes($tree)"
         case t if t =:= typeOf[ByteString] =>
           q"_root_.java.nio.ByteBuffer.wrap($tree.toByteArray)"
         case t if t =:= typeOf[Array[Byte]] =>
           q"_root_.java.nio.ByteBuffer.wrap($tree)"
 
-        case t if t =:= typeOf[Instant] => q"$tree.getMillis * 1000"
+        case t if t =:= typeOf[Instant] =>
+          q"_root_.com.spotify.scio.bigquery.Timestamp.micros($tree)"
         case t if t =:= typeOf[LocalDate] =>
-          q"_root_.com.spotify.scio.bigquery.Date($tree)"
+          q"_root_.com.spotify.scio.bigquery.Date.days($tree)"
         case t if t =:= typeOf[LocalTime] =>
-          q"_root_.com.spotify.scio.bigquery.Time($tree)"
+          q"_root_.com.spotify.scio.bigquery.Time.micros($tree)"
         case t if t =:= typeOf[LocalDateTime] =>
           q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
 
@@ -200,7 +201,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Json] =>
           q"$tree.wkt"
         case t if t =:= typeOf[BigNumeric] =>
-          q"_root_.com.spotify.scio.bigquery.types.BigNumeric($tree.wkt).toString"
+          q"_root_.com.spotify.scio.bigquery.types.BigNumeric.bytes($tree)"
 
         // nested records
         case t if isCaseClass(c)(t) =>

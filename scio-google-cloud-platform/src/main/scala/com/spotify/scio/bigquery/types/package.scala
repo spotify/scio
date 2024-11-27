@@ -117,5 +117,8 @@ package object types {
       case b: ByteBuffer => new BigNumeric(DecimalConverter.fromBytes(b, null, DecimalLogicalType))
       case _             => apply(value.toString)
     }
+
+    def bytes(value: BigNumeric): ByteBuffer =
+      DecimalConverter.toBytes(value.wkt.bigDecimal, null, DecimalLogicalType)
   }
 }
