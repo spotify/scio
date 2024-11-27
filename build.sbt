@@ -29,15 +29,15 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.60.0"
+val beamVersion = "2.61.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.60.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.61.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
 val bigdataossVersion = "2.2.16"
 val bigtableClientVersion = "1.28.0"
-val commonsCodecVersion = "1.17.1" // libraries-bom version
+val commonsCodecVersion = "1.17.1"
 val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.14.0"
@@ -61,9 +61,9 @@ val googleApiServicesStorageVersion = s"v1-rev20240706-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val avroVersion = avroCompilerVersion // sdks/java/extensions/avro/build.gradle
-val flinkVersion = "1.18.0" // runners/flink/1.18/build.gradle
+val flinkVersion = "1.19.0" // runners/flink/1.19/build.gradle
 val flinkMinorVersion = VersionNumber(flinkVersion).numbers.take(2).mkString(".")
-val hadoopVersion = "3.2.4" // sdks/java/io/parquet/build.gradle
+val hadoopVersion = "3.4.1" // sdks/java/io/parquet/build.gradle
 val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
