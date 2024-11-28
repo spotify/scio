@@ -257,6 +257,9 @@ object DateTime {
   /** Convert BigQuery `DATETIME` string to `LocalDateTime`. */
   def parse(datetime: String): LocalDateTime =
     Parser.parseLocalDateTime(datetime)
+
+  //  For BigQueryType macros only, do not use directly
+  def format(datetime: LocalDateTime): String = apply(datetime)
 }
 
 /** Scala wrapper for [[com.google.api.services.bigquery.model.TimePartitioning]]. */
