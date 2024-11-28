@@ -193,7 +193,9 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[LocalTime] =>
           q"_root_.com.spotify.scio.bigquery.Time.micros($tree)"
         case t if t =:= typeOf[LocalDateTime] =>
-          q"_root_.com.spotify.scio.bigquery.DateTime($tree)"
+          // LocalDateTime is read as avro string
+          // on write we should use `local-timestamp-micros`
+          q"_root_.com.spotify.scio.bigquery.DateTime.format($tree)"
 
         // different than nested record match below, even though thore are case classes
         case t if t =:= typeOf[Geography] =>

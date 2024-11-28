@@ -328,7 +328,11 @@ object BigQueryTypedTable {
   /** Defines the format in which BigQuery can be read and written to. */
   sealed abstract class Format[F]
   object Format {
-    case object GenericRecord extends Format[GenericRecord]
+    sealed abstract private[bigquery] class AvroFormat(val useLogicalTypes: Boolean)
+        extends Format[GenericRecord]
+
+    case object GenericRecord extends AvroFormat(false)
+    case object GenericRecordWithLogicalTypes extends AvroFormat(true)
     case object TableRow extends Format[TableRow]
   }
 
@@ -389,25 +393,31 @@ object BigQueryTypedTable {
     )(coders.tableRowCoder)
 
   private[this] def genericRecord(
-    table: Table
+    table: Table,
+    useLogicalTypes: Boolean
   )(implicit c: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] =
     BigQueryTypedTable(
-      _.getRecord(),
-      identity[GenericRecord],
-      (genericRecord: GenericRecord, _: TableSchema) => genericRecord,
-      table
+      beam.BigQueryIO
+        .read(_.getRecord)
+        .pipe(r => if (useLogicalTypes) r.useAvroLogicalTypes() else r),
+      beam.BigQueryIO
+        .write[GenericRecord]()
+        .withAvroFormatFunction(_.getElement)
+        .pipe(r => if (useLogicalTypes) r.useAvroLogicalTypes() else r),
+      table,
+      (genericRecord: GenericRecord, _: TableSchema) => genericRecord
     )
 
   /**
    * Creates a new instance of [[BigQueryTypedTable]] based on the supplied [[Format]].
    *
    * NOTE: LogicalType support when using `Format.GenericRecord` has some caveats: Reading: Bigquery
-   * types DATE, TIME, DATIME will be read as STRING. Writing: Supports LogicalTypes only for DATE
-   * and TIME. DATETIME is not yet supported. https://issuetracker.google.com/issues/140681683
+   * types DATE, TIME, DATEIME will be read as STRING. Use `Format.GenericRecordWithLogicalTypes`
+   * for avro `date`, `timestamp-micros` and `local-timestamp-micros` (avro 1.10+)
    */
   def apply[F: Coder](table: Table, format: Format[F]): BigQueryTypedTable[F] =
     format match {
-      case Format.GenericRecord => genericRecord(table)
+      case f: Format.AvroFormat => genericRecord(table, f.useLogicalTypes)
       case Format.TableRow      => tableRow(table)
     }
 
@@ -437,16 +447,11 @@ object BigQueryTypedTable {
   ): BigQueryTypedTable[T] = {
     val rFn = ClosureCleaner.clean(readerFn)
     val wFn = ClosureCleaner.clean(writerFn)
-    val reader = beam.BigQueryIO
-      .read(rFn(_))
-      .useAvroLogicalTypes()
+    val reader = beam.BigQueryIO.read(rFn(_))
     val writer = beam.BigQueryIO
       .write[T]()
       .useAvroLogicalTypes()
       .withAvroFormatFunction(input => wFn(input.getElement()))
-      .withAvroSchemaFactory { ts =>
-        BigQueryUtils.toGenericAvroSchema("root", ts.getFields(), true)
-      }
 
     BigQueryTypedTable(reader, writer, table, fn)
   }
@@ -740,12 +745,31 @@ object BigQueryTyped {
     override type ReadP = Unit
     override type WriteP = Table.WriteParam[T]
 
-    private val underlying = BigQueryTypedTable[T](
-      (i: SchemaAndRecord) => BigQueryType[T].fromAvro(i.getRecord),
-      BigQueryType[T].toTableRow,
-      BigQueryType[T].fromTableRow,
-      table
-    )
+    private val underlying = {
+      val readFn = Functions.serializableFn[SchemaAndRecord, T] { x =>
+        BigQueryType[T].fromAvro(x.getRecord)
+      }
+      val writeFn = Functions.serializableFn[AvroWriteRequest[T], GenericRecord] { x =>
+        BigQueryType[T].toAvro(x.getElement)
+      }
+      val schemaFactory = Functions.serializableFn[TableSchema, org.apache.avro.Schema] { _ =>
+        BigQueryType[T].avroSchema
+      }
+      val parseFn = (r: GenericRecord, _: TableSchema) => BigQueryType[T].fromAvro(r)
+
+      BigQueryTypedTable[T](
+        beam.BigQueryIO
+          .read(readFn)
+          .useAvroLogicalTypes(),
+        beam.BigQueryIO
+          .write[T]()
+          .withAvroFormatFunction(writeFn)
+          .withAvroSchemaFactory(schemaFactory)
+          .useAvroLogicalTypes(),
+        table,
+        parseFn
+      )
+    }
 
     override def testId: String = s"BigQueryIO(${table.spec})"
 

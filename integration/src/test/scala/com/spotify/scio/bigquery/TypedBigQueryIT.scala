@@ -184,7 +184,8 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     waitForTable(avroTable)
 
     runWithRealContext(options) { sc =>
-      val data = sc.bigQueryTable(avroTable, Format.GenericRecord).map(Record.fromAvro)
+      val data =
+        sc.bigQueryTable(avroTable, Format.GenericRecordWithLogicalTypes).map(Record.fromAvro)
       data should containInAnyOrder(records)
     }
   }
