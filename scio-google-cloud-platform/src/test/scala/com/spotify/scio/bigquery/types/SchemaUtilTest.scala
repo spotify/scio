@@ -24,66 +24,105 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.jdk.CollectionConverters._
 
 class SchemaUtilTest extends AnyFlatSpec with Matchers {
-  def newSchema(mode: String): TableSchema =
-    new TableSchema().setFields(
+
+  "toPrettyString()" should "support indent" in {
+    val schema = new TableSchema().setFields(
       List(
-        new TableFieldSchema()
-          .setName("boolF")
-          .setType("BOOLEAN")
-          .setMode(mode),
-        new TableFieldSchema().setName("intF").setType("INTEGER").setMode(mode),
-        new TableFieldSchema().setName("floatF").setType("FLOAT").setMode(mode),
-        new TableFieldSchema()
-          .setName("stringF")
-          .setType("STRING")
-          .setMode(mode),
-        new TableFieldSchema().setName("bytesF").setType("BYTES").setMode(mode),
-        new TableFieldSchema()
-          .setName("timestampF")
-          .setType("TIMESTAMP")
-          .setMode(mode),
-        new TableFieldSchema().setName("dateF").setType("DATE").setMode(mode),
-        new TableFieldSchema().setName("timeF").setType("TIME").setMode(mode),
-        new TableFieldSchema()
-          .setName("datetimeF")
-          .setType("DATETIME")
-          .setMode(mode)
+        new TableFieldSchema().setName("field").setType("BOOLEAN").setMode("REQUIRED")
       ).asJava
     )
 
-  "toPrettyString()" should "support required primitive types" in {
-    SchemaUtil.toPrettyString(newSchema("REQUIRED"), "Row", 0) should equal(
+    SchemaUtil.toPrettyString(schema, "Row", 0) should equal("""@BigQueryType.toTable
+        |case class Row(field: Boolean)""".stripMargin)
+    SchemaUtil.toPrettyString(schema, "Row", 2) should equal("""@BigQueryType.toTable
+        |case class Row(
+        |  field: Boolean)""".stripMargin)
+    SchemaUtil.toPrettyString(schema, "Row", 4) should equal("""@BigQueryType.toTable
+        |case class Row(
+        |    field: Boolean)""".stripMargin)
+  }
+
+  it should "support all primitive types" in {
+    val schema = SchemaProvider.schemaOf[Schemas.Required]
+    SchemaUtil.toPrettyString(schema, "Row", 2) should equal(
       """
         |@BigQueryType.toTable
-        |case class Row(boolF: Boolean, intF: Long, floatF: Double, stringF: String, bytesF: ByteString, timestampF: Instant, dateF: LocalDate, timeF: LocalTime, datetimeF: LocalDateTime)
+        |case class Row(
+        |  boolF: Boolean,
+        |  intF: Long,
+        |  longF: Long,
+        |  floatF: Double,
+        |  doubleF: Double,
+        |  stringF: String,
+        |  byteArrayF: ByteString,
+        |  byteStringF: ByteString,
+        |  timestampF: Instant,
+        |  dateF: LocalDate,
+        |  timeF: LocalTime,
+        |  datetimeF: LocalDateTime,
+        |  bigDecimalF: BigDecimal,
+        |  geographyF: Geography,
+        |  jsonF: Json,
+        |  bigNumericF: BigNumeric)
       """.stripMargin.trim
     )
   }
 
   it should "support nullable primitive types" in {
-    SchemaUtil.toPrettyString(newSchema("NULLABLE"), "Row", 0) should equal(
+    val schema = SchemaProvider.schemaOf[Schemas.Optional]
+    SchemaUtil.toPrettyString(schema, "Row", 2) should equal(
       """
         |@BigQueryType.toTable
-        |case class Row(boolF: Option[Boolean], intF: Option[Long], floatF: Option[Double], stringF: Option[String], bytesF: Option[ByteString], timestampF: Option[Instant], dateF: Option[LocalDate], timeF: Option[LocalTime], datetimeF: Option[LocalDateTime])
+        |case class Row(
+        |  boolF: Option[Boolean],
+        |  intF: Option[Long],
+        |  longF: Option[Long],
+        |  floatF: Option[Double],
+        |  doubleF: Option[Double],
+        |  stringF: Option[String],
+        |  byteArrayF: Option[ByteString],
+        |  byteStringF: Option[ByteString],
+        |  timestampF: Option[Instant],
+        |  dateF: Option[LocalDate],
+        |  timeF: Option[LocalTime],
+        |  datetimeF: Option[LocalDateTime],
+        |  bigDecimalF: Option[BigDecimal],
+        |  geographyF: Option[Geography],
+        |  jsonF: Option[Json],
+        |  bigNumericF: Option[BigNumeric])
       """.stripMargin.trim
     )
   }
 
   it should "support repeated primitive types" in {
-    SchemaUtil.toPrettyString(newSchema("REPEATED"), "Row", 0) should equal(
+    val schema = SchemaProvider.schemaOf[Schemas.Repeated]
+    SchemaUtil.toPrettyString(schema, "Row", 2) should equal(
       """
         |@BigQueryType.toTable
-        |case class Row(boolF: List[Boolean], intF: List[Long], floatF: List[Double], stringF: List[String], bytesF: List[ByteString], timestampF: List[Instant], dateF: List[LocalDate], timeF: List[LocalTime], datetimeF: List[LocalDateTime])
+        |case class Row(
+        |  boolF: List[Boolean],
+        |  intF: List[Long],
+        |  longF: List[Long],
+        |  floatF: List[Double],
+        |  doubleF: List[Double],
+        |  stringF: List[String],
+        |  byteArrayF: List[ByteString],
+        |  byteStringF: List[ByteString],
+        |  timestampF: List[Instant],
+        |  dateF: List[LocalDate],
+        |  timeF: List[LocalTime],
+        |  datetimeF: List[LocalDateTime],
+        |  bigDecimalF: List[BigDecimal],
+        |  geographyF: List[Geography],
+        |  jsonF: List[Json],
+        |  bigNumericF: List[BigNumeric])
       """.stripMargin.trim
     )
   }
 
   it should "support records" in {
     val fields = List(
-      new TableFieldSchema()
-        .setName("f1")
-        .setType("INTEGER")
-        .setMode("REQUIRED"),
+      new TableFieldSchema().setName("f1").setType("INTEGER").setMode("REQUIRED"),
       new TableFieldSchema().setName("f2").setType("FLOAT").setMode("REQUIRED")
     ).asJava
     val schema = new TableSchema().setFields(
@@ -112,24 +151,6 @@ class SchemaUtilTest extends AnyFlatSpec with Matchers {
         |case class R1$1(f1: Long, f2: Double)
         |case class R2$1(f1: Long, f2: Double)
         |case class R3$1(f1: Long, f2: Double)
-      """.stripMargin.trim
-    )
-  }
-
-  it should "support indent" in {
-    SchemaUtil.toPrettyString(newSchema("REQUIRED"), "Row", 2) should equal(
-      """
-        |@BigQueryType.toTable
-        |case class Row(
-        |  boolF: Boolean,
-        |  intF: Long,
-        |  floatF: Double,
-        |  stringF: String,
-        |  bytesF: ByteString,
-        |  timestampF: Instant,
-        |  dateF: LocalDate,
-        |  timeF: LocalTime,
-        |  datetimeF: LocalDateTime)
       """.stripMargin.trim
     )
   }
