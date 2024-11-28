@@ -16,8 +16,30 @@
 
 package com.spotify.scio.transforms;
 
+import java.util.Objects;
+
 public class UnmatchedRequestException extends RuntimeException {
+
+  private final String id;
+
   public UnmatchedRequestException(String id) {
     super("Unmatched batch request for ID: " + id);
+    this.id = id;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    UnmatchedRequestException that = (UnmatchedRequestException) o;
+    return Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }

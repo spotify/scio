@@ -21,16 +21,16 @@ import com.spotify.concat.v1.ConcatServiceGrpc.{ConcatServiceFutureStub, ConcatS
 import com.spotify.concat.v1._
 import com.spotify.scio.testing.PipelineSpec
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier
+import com.spotify.scio.transforms.UnmatchedRequestException
 import io.grpc.netty.NettyChannelBuilder
 import io.grpc.stub.StreamObserver
 import io.grpc.{Server, ServerBuilder}
-import org.apache.beam.sdk.Pipeline.PipelineExecutionException
 import org.scalatest.BeforeAndAfterAll
 
 import java.net.ServerSocket
 import java.util.stream.Collectors
 import scala.jdk.CollectionConverters._
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 object GrpcBatchDoFnTest {
 
@@ -230,7 +230,7 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
     }
   }
 
-  it should "throw an IllegalStateException if gRPC response contains unknown ids" in {
+  it should "fail unmatched inputs" in {
     val input = (0 to 1).map { i =>
       ConcatRequestWithID
         .newBuilder()
@@ -240,30 +240,29 @@ class GrpcBatchDoFnTest extends PipelineSpec with BeforeAndAfterAll {
         .build()
     }
 
-    assertThrows[IllegalStateException] {
-      try {
-        runWithContext { sc =>
-          sc.parallelize(input)
-            .grpcBatchLookup[
-              BatchRequest,
-              BatchResponse,
-              ConcatResponseWithID,
-              ConcatServiceFutureStub
-            ](
-              () => NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
-              ConcatServiceGrpc.newFutureStub,
-              2,
-              concatBatchRequest,
-              r => r.getResponseList.asScala.toSeq.map(e => ("WrongID-" + e.getRequestId, e)),
-              idExtractor,
-              2
-            )(_.batchConcat)
-        }
-      } catch {
-        case e: PipelineExecutionException =>
-          e.getMessage should include("Expected requestCount == responseCount")
-          throw e.getCause
-      }
+    val expected: Seq[(ConcatRequestWithID, Try[ConcatResponseWithID])] = input.map { req =>
+      req -> Failure(new UnmatchedRequestException(req.getRequestId))
+    }
+
+    runWithContext { sc =>
+      val result = sc
+        .parallelize(input)
+        .grpcBatchLookup[
+          BatchRequest,
+          BatchResponse,
+          ConcatResponseWithID,
+          ConcatServiceFutureStub
+        ](
+          () => NettyChannelBuilder.forTarget(ServiceUri).usePlaintext().build(),
+          ConcatServiceGrpc.newFutureStub,
+          2,
+          concatBatchRequest,
+          r => r.getResponseList.asScala.toSeq.map(e => ("WrongID-" + e.getRequestId, e)),
+          idExtractor,
+          2
+        )(_.batchConcat)
+
+      result should containInAnyOrder(expected)
     }
   }
 }
