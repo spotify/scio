@@ -17,6 +17,7 @@
 package com.spotify.scio.transforms;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.function.Function.identity;
 
 import com.google.common.cache.Cache;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
@@ -26,6 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -274,48 +276,53 @@ public abstract class BaseAsyncBatchLookupDoFn<
   }
 
   private FutureType handleOutput(FutureType future, List<Input> batchInput, UUID key) {
+    final Map<String, Input> keyedInputs =
+        batchInput.stream().collect(Collectors.toMap(idExtractorFn::apply, identity()));
     return addCallback(
         future,
         response -> {
-          batchResponseFn
-              .apply(response)
-              .forEach(
-                  pair -> {
-                    final String id = pair.getLeft();
-                    final Output output = pair.getRight();
-                    final List<ValueInSingleWindow<Input>> processInputs = inputs.remove(id);
-                    if (processInputs == null) {
-                      // no need to fail future here as we're only interested in its completion
-                      // finishBundle will fail the checkState as we do not produce any result
-                      LOG.error(
-                          "The ID '{}' received in the gRPC batch response does not "
-                              + "match any IDs extracted via the idExtractorFn for the requested  "
-                              + "batch sent to the gRPC endpoint. Please ensure that the IDs returned "
-                              + "from the gRPC endpoints match the IDs extracted using the provided"
-                              + "idExtractorFn for the same input.",
-                          id);
-                    } else {
-                      final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult =
-                          processInputs.stream()
-                              .map(
-                                  processInput -> {
-                                    final Input i = processInput.getValue();
-                                    final TryWrapper o = success(output);
-                                    final Instant ts = processInput.getTimestamp();
-                                    final BoundedWindow w = processInput.getWindow();
-                                    final PaneInfo p = processInput.getPane();
-                                    return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
-                                  })
-                              .collect(Collectors.toList());
-                      results.add(Pair.of(key, batchResult));
-                    }
-                  });
+          final Map<String, Output> keyedOutput =
+              batchResponseFn.apply(response).stream()
+                  .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+
+          keyedInputs.forEach(
+              (id, input) -> {
+                final List<ValueInSingleWindow<Input>> processInputs = inputs.remove(id);
+                if (processInputs == null) {
+                  // no need to fail future here as we're only interested in its completion
+                  // finishBundle will fail the checkState as we do not produce any result
+                  LOG.error(
+                      "The ID '{}' received in the gRPC batch response does not "
+                          + "match any IDs extracted via the idExtractorFn for the requested  "
+                          + "batch sent to the gRPC endpoint. Please ensure that the IDs returned "
+                          + "from the gRPC endpoints match the IDs extracted using the provided"
+                          + "idExtractorFn for the same input.",
+                      id);
+                } else {
+                  List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult =
+                      processInputs.stream()
+                          .map(
+                              processInput -> {
+                                final Input i = processInput.getValue();
+                                final Output output = keyedOutput.get(id);
+                                final TryWrapper o =
+                                    output == null
+                                        ? failure(new UnmatchedRequestException(id))
+                                        : success(output);
+                                final Instant ts = processInput.getTimestamp();
+                                final BoundedWindow w = processInput.getWindow();
+                                final PaneInfo p = processInput.getPane();
+                                return ValueInSingleWindow.of(KV.of(i, o), ts, w, p);
+                              })
+                          .collect(Collectors.toList());
+                  results.add(Pair.of(key, batchResult));
+                }
+              });
           return null;
         },
         throwable -> {
-          batchInput.forEach(
-              element -> {
-                final String id = idExtractorFn.apply(element);
+          keyedInputs.forEach(
+              (id, element) -> {
                 final List<ValueInSingleWindow<KV<Input, TryWrapper>>> batchResult =
                     inputs.remove(id).stream()
                         .map(
