@@ -61,7 +61,12 @@ class AsyncBatchLookupDoFnTest extends PipelineSpec {
     doFn: BaseAsyncBatchLookupDoFn[Int, List[Int], List[String], String, AsyncBatchClient, F, T]
   )(tryFn: T => Try[String]): Unit = {
     // batches of size 4 and size 3
-    val output = runWithData(Seq[Seq[Int]](1 to 4, 8 to 10))(_.flatten.parDo(doFn)).map { kv =>
+    val output = runWithData(
+      Seq[Seq[Int]](
+        1 to 4, // 1 and 3 are unmatched
+        8 to 10 // failure
+      )
+    )(_.flatten.parDo(doFn)).map { kv =>
       val r = tryFn(kv.getValue) match {
         case Success(v)                      => v
         case Failure(e: CompletionException) => e.getCause.getMessage
@@ -70,8 +75,9 @@ class AsyncBatchLookupDoFnTest extends PipelineSpec {
       (kv.getKey, r)
     }
     output should contain theSameElementsAs (
-      (1 to 4).map(x => x -> x.toString) ++
-        (8 to 10).map(x => x -> "failure for 8,9,10")
+      Seq(1, 3).map(x => x -> s"Unmatched batch request for ID: $x") ++
+        Seq(2, 4).map(x => x -> x.toString) ++
+        Seq(8, 9, 10).map(x => x -> "failure for 8,9,10")
     )
   }
 
@@ -229,7 +235,7 @@ class FailingGuavaBatchLookupDoFn extends AbstractGuavaAsyncBatchLookupDoFn() {
     input: List[Int]
   ): ListenableFuture[List[String]] =
     if (input.size % 2 == 0) {
-      Futures.immediateFuture(input.map(_.toString))
+      Futures.immediateFuture(input.filter(_ % 2 == 0).map(_.toString))
     } else {
       Futures.immediateFailedFuture(new RuntimeException("failure for " + input.mkString(",")))
     }
@@ -299,7 +305,7 @@ class FailingJavaBatchLookupDoFn extends AbstractJavaAsyncBatchLookupDoFn() {
     input: List[Int]
   ): CompletableFuture[List[String]] =
     if (input.size % 2 == 0) {
-      CompletableFuture.supplyAsync(() => input.map(_.toString))
+      CompletableFuture.supplyAsync(() => input.filter(_ % 2 == 0).map(_.toString))
     } else {
       val f = new CompletableFuture[List[String]]()
       f.completeExceptionally(new RuntimeException("failure for " + input.mkString(",")))
@@ -347,7 +353,7 @@ class FailingScalaBatchLookupDoFn extends AbstractScalaAsyncBatchLookupDoFn() {
   override protected def newClient(): AsyncBatchClient = null
   override def asyncLookup(session: AsyncBatchClient, input: List[Int]): Future[List[String]] =
     if (input.size % 2 == 0) {
-      Future.successful(input.map(_.toString))
+      Future.successful(input.filter(_ % 2 == 0).map(_.toString))
     } else {
       Future.failed(new RuntimeException("failure for " + input.mkString(",")))
     }

@@ -25,7 +25,7 @@ import com.spotify.scio.transforms.BaseAsyncLookupDoFn;
 import com.spotify.scio.transforms.BaseAsyncLookupDoFn.CacheSupplier;
 import com.spotify.scio.transforms.GuavaAsyncBatchLookupDoFn;
 import io.grpc.Channel;
-import io.grpc.stub.AbstractFutureStub;
+import io.grpc.stub.AbstractStub;
 import java.io.Serializable;
 import java.util.List;
 import org.apache.beam.sdk.transforms.SerializableBiFunction;
@@ -43,7 +43,7 @@ import org.apache.commons.lang3.tuple.Pair;
  * @param <Client> client type.
  */
 public class GrpcBatchDoFn<
-        Input, BatchRequest, BatchResponse, Output, Client extends AbstractFutureStub<Client>>
+        Input, BatchRequest, BatchResponse, Output, Client extends AbstractStub<Client>>
     extends GuavaAsyncBatchLookupDoFn<Input, BatchRequest, BatchResponse, Output, Client> {
   private final ChannelSupplier channelSupplier;
   private final SerializableFunction<Channel, Client> newClientFn;
@@ -104,21 +104,13 @@ public class GrpcBatchDoFn<
   }
 
   public static <
-          Input,
-          BatchRequest,
-          BatchResponse,
-          Output,
-          ClientType extends AbstractFutureStub<ClientType>>
+          Input, BatchRequest, BatchResponse, Output, ClientType extends AbstractStub<ClientType>>
       Builder<Input, BatchRequest, BatchResponse, Output, ClientType> newBuilder() {
     return new Builder<>();
   }
 
   public static class Builder<
-          Input,
-          BatchRequest,
-          BatchResponse,
-          Output,
-          ClientType extends AbstractFutureStub<ClientType>>
+          Input, BatchRequest, BatchResponse, Output, ClientType extends AbstractStub<ClientType>>
       implements Serializable {
 
     private ChannelSupplier channelSupplier;

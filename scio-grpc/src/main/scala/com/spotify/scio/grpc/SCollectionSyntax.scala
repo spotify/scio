@@ -147,6 +147,64 @@ class GrpcSCollectionOps[Request](private val self: SCollection[Request]) extend
     ).map(kvToTuple _)
       .mapValues(_.asScala)
   }
+
+  def grpcLookupBatchStream[
+    BatchRequest,
+    Response,
+    Result: Coder,
+    Client <: AbstractStub[Client]
+  ](
+    channelSupplier: () => Channel,
+    clientFactory: Channel => Client,
+    batchSize: Int,
+    batchRequestFn: Seq[Request] => BatchRequest,
+    batchResponseFn: List[Response] => Seq[(String, Result)],
+    idExtractorFn: Request => String,
+    maxPendingRequests: Int,
+    cacheSupplier: CacheSupplier[String, Result] = new NoOpCacheSupplier[String, Result]()
+  )(
+    f: Client => (BatchRequest, StreamObserver[Response]) => Unit
+  ): SCollection[(Request, Try[Result])] = self.transform { in =>
+    import self.coder
+    val cleanedChannelSupplier = ClosureCleaner.clean(channelSupplier)
+    val serializableClientFactory = Functions.serializableFn(clientFactory)
+    val serializableLookupFn =
+      Functions.serializableBiFn[Client, BatchRequest, ListenableFuture[JIterable[Response]]] {
+        (client, request) =>
+          val observer = new StreamObservableFuture[Response]()
+          f(client)(request, observer)
+          observer
+      }
+    val serializableBatchRequestFn =
+      Functions.serializableFn[java.util.List[Request], BatchRequest] { inputs =>
+        batchRequestFn(inputs.asScala.toSeq)
+      }
+
+    val serializableBatchResponseFn =
+      Functions.serializableFn[JIterable[Response], java.util.List[Pair[String, Result]]] {
+        batchResponse =>
+          batchResponseFn(batchResponse.asScala.toList).map { case (input, output) =>
+            Pair.of(input, output)
+          }.asJava
+      }
+    val serializableIdExtractorFn = Functions.serializableFn(idExtractorFn)
+    in.parDo(
+      GrpcBatchDoFn
+        .newBuilder[Request, BatchRequest, JIterable[Response], Result, Client]()
+        .withChannelSupplier(() => cleanedChannelSupplier())
+        .withNewClientFn(serializableClientFactory)
+        .withLookupFn(serializableLookupFn)
+        .withMaxPendingRequests(maxPendingRequests)
+        .withBatchSize(batchSize)
+        .withBatchRequestFn(serializableBatchRequestFn)
+        .withBatchResponseFn(serializableBatchResponseFn)
+        .withIdExtractorFn(serializableIdExtractorFn)
+        .withCacheSupplier(cacheSupplier)
+        .build()
+    ).map(kvToTuple _)
+      .mapValues(_.asScala)
+  }
+
 }
 
 trait SCollectionSyntax {
