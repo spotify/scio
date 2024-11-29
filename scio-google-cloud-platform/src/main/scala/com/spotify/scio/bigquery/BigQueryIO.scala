@@ -25,7 +25,6 @@ import com.spotify.scio.coders._
 import com.spotify.scio.io._
 import com.spotify.scio.util.{FilenamePolicySupplier, Functions, ScioUtil}
 import com.spotify.scio.values.{SCollection, SideOutput, SideOutputCollections}
-import com.twitter.chill.ClosureCleaner
 import org.apache.avro.generic.GenericRecord
 import org.apache.beam.sdk.extensions.gcp.options.GcpOptions
 import org.apache.beam.sdk.io.Compression
@@ -398,7 +397,7 @@ object BigQueryTypedTable {
   )(implicit c: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] = {
     BigQueryTypedTable(
       beam.BigQueryIO
-        .read(_.getRecord)
+        .read(Functions.serializableFn(_.getRecord))
         .pipe(r => if (useLogicalTypes) r.useAvroLogicalTypes() else r),
       beam.BigQueryIO
         .write[GenericRecord]()
@@ -429,12 +428,10 @@ object BigQueryTypedTable {
     tableRowFn: TableRow => T,
     table: Table
   ): BigQueryTypedTable[T] = {
-    val rFn = ClosureCleaner.clean(readerFn)
-    val wFn = ClosureCleaner.clean(writerFn)
-    val reader = beam.BigQueryIO.read(Functions.serializableFn(rFn))
-    val writer = beam.BigQueryIO
-      .write[T]()
-      .withFormatFunction(Functions.serializableFn(wFn))
+    val rFn = Functions.serializableFn(readerFn)
+    val wFn = Functions.serializableFn(writerFn)
+    val reader = beam.BigQueryIO.read(rFn)
+    val writer = beam.BigQueryIO.write[T]().withFormatFunction(wFn)
     val fn: (GenericRecord, TableSchema) => T = (gr, _) =>
       tableRowFn(BigQueryUtils.convertGenericRecordToTableRow(gr))
 
@@ -447,13 +444,10 @@ object BigQueryTypedTable {
     fn: (GenericRecord, TableSchema) => T,
     table: Table
   ): BigQueryTypedTable[T] = {
-    val rFn = ClosureCleaner.clean(readerFn)
-    val wFn = ClosureCleaner.clean(writerFn)
-    val reader = beam.BigQueryIO.read(rFn(_))
-    val writer = beam.BigQueryIO
-      .write[T]()
-      .useAvroLogicalTypes()
-      .withAvroFormatFunction(input => wFn(input.getElement()))
+    val rFn = Functions.serializableFn(readerFn)
+    val wFn = Functions.serializableFn((r: AvroWriteRequest[T]) => writerFn(r.getElement))
+    val reader = beam.BigQueryIO.read(rFn)
+    val writer = beam.BigQueryIO.write[T]().withAvroFormatFunction(wFn).useAvroLogicalTypes()
 
     BigQueryTypedTable(reader, writer, table, fn)
   }
