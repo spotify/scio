@@ -395,18 +395,20 @@ object BigQueryTypedTable {
   private[this] def genericRecord(
     table: Table,
     useLogicalTypes: Boolean
-  )(implicit c: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] =
+  )(implicit c: Coder[GenericRecord]): BigQueryTypedTable[GenericRecord] = {
     BigQueryTypedTable(
       beam.BigQueryIO
         .read(_.getRecord)
         .pipe(r => if (useLogicalTypes) r.useAvroLogicalTypes() else r),
       beam.BigQueryIO
         .write[GenericRecord]()
-        .withAvroFormatFunction(_.getElement)
+        .withAvroFormatFunction(Functions.serializableFn(_.getElement))
+        .withAvroSchemaFactory(Functions.serializableFn(BigQueryUtils.toGenericAvroSchema(_, true)))
         .pipe(r => if (useLogicalTypes) r.useAvroLogicalTypes() else r),
       table,
       (genericRecord: GenericRecord, _: TableSchema) => genericRecord
     )
+  }
 
   /**
    * Creates a new instance of [[BigQueryTypedTable]] based on the supplied [[Format]].
