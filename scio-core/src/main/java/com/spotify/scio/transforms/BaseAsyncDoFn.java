@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
@@ -64,7 +65,7 @@ public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
         Thread.currentThread().interrupt();
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
-      } catch (ExecutionException e) {
+      } catch (ExecutionException | TimeoutException e) {
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
       }
