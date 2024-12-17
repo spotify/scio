@@ -38,6 +38,11 @@ final class ConverterProviderSpec
 
   import Schemas._
 
+  def arbBigDecimal(precision: Int, scale: Int): Arbitrary[BigDecimal] = Arbitrary {
+    val max = BigInt(10).pow(precision) - 1
+    Gen.choose(-max, max).map(BigDecimal(_, scale))
+  }
+
   implicit val arbByteArray: Arbitrary[Array[Byte]] = Arbitrary(Gen.alphaStr.map(_.getBytes))
   implicit val arbByteString: Arbitrary[ByteString] = Arbitrary(
     Gen.alphaStr.map(ByteString.copyFromUtf8)
@@ -46,17 +51,26 @@ final class ConverterProviderSpec
   implicit val arbDate: Arbitrary[LocalDate] = Arbitrary(Gen.const(LocalDate.now()))
   implicit val arbTime: Arbitrary[LocalTime] = Arbitrary(Gen.const(LocalTime.now()))
   implicit val arbDatetime: Arbitrary[LocalDateTime] = Arbitrary(Gen.const(LocalDateTime.now()))
-  implicit val arbNumericBigDecimal: Arbitrary[BigDecimal] = Arbitrary {
-    Arbitrary.arbBigDecimal.arbitrary
-      .retryUntil(_.precision <= Numeric.MaxNumericPrecision)
-      .map(Numeric.apply)
-  }
+  implicit val arbNumericBigDecimal: Arbitrary[BigDecimal] =
+    arbBigDecimal(Numeric.MaxNumericPrecision, Numeric.MaxNumericScale)
+  implicit val arbGeography: Arbitrary[Geography] = Arbitrary(
+    for {
+      x <- Gen.numChar
+      y <- Gen.numChar
+    } yield Geography(s"POINT($x $y)")
+  )
   implicit val arbJson: Arbitrary[Json] = Arbitrary(
     for {
       key <- Gen.alphaStr
       value <- Gen.alphaStr
     } yield Json(s"""{"$key":"$value"}""")
   )
+  implicit val arbBigNumeric: Arbitrary[BigNumeric] = Arbitrary {
+    // Precision: 76.76 (the 77th digit is partial)
+    arbBigDecimal(BigNumeric.MaxNumericPrecision - 1, BigNumeric.MaxNumericScale).arbitrary
+      .map(BigNumeric.apply)
+  }
+
   implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
   implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
   implicit val eqInstant: Eq[Instant] = Eq.instance[Instant](_ == _)
@@ -111,6 +125,7 @@ final class ConverterProviderSpec
       o.bigDecimalF.isDefined shouldBe r.containsKey("bigDecimalF")
       o.geographyF.isDefined shouldBe r.containsKey("geographyF")
       o.jsonF.isDefined shouldBe r.containsKey("jsonF")
+      o.bigNumericF.isDefined shouldBe r.containsKey("bigNumericF")
     }
   }
 
