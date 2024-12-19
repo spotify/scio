@@ -185,6 +185,7 @@ object FixAvroCoder {
 }
 
 class FixAvroCoder extends SemanticRule("FixAvroCoder") {
+
   import FixAvroCoder._
 
   override def fix(implicit doc: SemanticDocument): Patch = {
@@ -233,29 +234,35 @@ class FixAvroCoder extends SemanticRule("FixAvroCoder") {
           }
       }
       .foldLeft(false)(_ || _)
-    val avroValuePatch = if (usesAvroCoders) Patch.addGlobalImport(avroImport) else Patch.empty
 
-    val patches = doc.tree.collect {
+    val importPatches = doc.tree.collect {
       case importer"com.spotify.scio.coders.Coder.{..$imps}" =>
         // fix direct import from Coder
         imps.collect {
           case i @ (importee"avroGenericRecordCoder" | importee"avroSpecificRecordCoder" |
               importee"avroSpecificFixedCoder") =>
-            Patch.removeImportee(i) + Patch.addGlobalImport(avroImport)
+            Patch.removeImportee(i)
         }.asPatch
       case importer"com.spotify.scio.avro.{..$imps}" =>
         imps
-          .filterNot {
-            case importee"_" => true
-            case _           => false
-          }
-          .map(i => Patch.removeImportee(i) + Patch.addGlobalImport(avroImport))
+          .filterNot(_.isInstanceOf[Importee.Wildcard])
+          .map(Patch.removeImportee)
           .asPatch
       case t @ q"$obj.$fn" if AvroCoderMatcher.matches(fn.symbol) =>
         // fix direct usage of Coder.avro*
-        Patch.replaceTree(t, q"$fn".syntax) + Patch.addGlobalImport(avroImport)
+        Patch.replaceTree(t, q"$fn".syntax)
     }.asPatch
 
-    patches + avroValuePatch
+    val importWildcardPatch = {
+      val hasAvroWildcardImport = doc.tree
+        .collect { case importer"com.spotify.scio.avro.{..$imps}" =>
+          imps.exists(_.isInstanceOf[Importee.Wildcard])
+        }
+        .foldLeft(false)(_ || _)
+      if (hasAvroWildcardImport) Patch.empty else Patch.addGlobalImport(avroImport)
+    }
+
+    if (usesAvroCoders || importPatches.nonEmpty) importPatches + importWildcardPatch
+    else Patch.empty
   }
 }
