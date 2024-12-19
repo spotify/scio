@@ -17,7 +17,9 @@
 
 package com.spotify.scio.bigquery
 
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.joda.JodaModule
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
@@ -63,10 +65,15 @@ package object types {
    */
   case class Json(wkt: String)
   object Json {
+    // Use same mapper as the TableRowJsonCoder
     private lazy val mapper = new ObjectMapper()
+      .registerModule(new JavaTimeModule())
+      .registerModule(new JodaModule())
+      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+      .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
-    def apply(node: JsonNode): Json = Json(mapper.writeValueAsString(node))
-    def parse(json: Json): JsonNode = mapper.readTree(json.wkt)
+    def apply(row: TableRow): Json = Json(mapper.writeValueAsString(row))
+    def parse(json: Json): TableRow = mapper.readValue(json.wkt, classOf[TableRow])
   }
 
   /**
