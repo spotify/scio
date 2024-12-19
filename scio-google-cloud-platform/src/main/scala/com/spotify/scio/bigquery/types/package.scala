@@ -17,10 +17,10 @@
 
 package com.spotify.scio.bigquery
 
-import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
+import org.apache.beam.sdk.extensions.gcp.util.Transport
 import org.typelevel.scalaccompat.annotation.nowarn
 
 import java.math.MathContext
@@ -63,10 +63,11 @@ package object types {
    */
   case class Json(wkt: String)
   object Json {
-    private lazy val mapper = new ObjectMapper()
+    @transient
+    private lazy val jsonFactory = Transport.getJsonFactory
 
-    def apply(node: JsonNode): Json = Json(mapper.writeValueAsString(node))
-    def parse(json: Json): JsonNode = mapper.readTree(json.wkt)
+    def apply(row: TableRow): Json = Json(jsonFactory.toString(row))
+    def parse(json: Json): TableRow = jsonFactory.fromString(json.wkt, classOf[TableRow])
   }
 
   /**
