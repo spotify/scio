@@ -17,7 +17,6 @@
 
 package com.spotify.scio.bigquery.types
 
-import com.fasterxml.jackson.databind.node.{JsonNodeFactory, ObjectNode}
 import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery._
 import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
@@ -30,7 +29,7 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   "ConverterProvider" should "throw NPE with meaningful message for null in REQUIRED field" in {
     the[NullPointerException] thrownBy {
       Required.fromTableRow(TableRow())
-    } should have message """REQUIRED field "a" is null"""
+    } should have message "REQUIRED field 'a' is null"
   }
 
   it should "handle null in NULLABLE field" in {
@@ -40,7 +39,7 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   it should "throw NPE with meaningful message for null in REPEATED field" in {
     the[NullPointerException] thrownBy {
       Repeated.fromTableRow(TableRow())
-    } should have message """REPEATED field "a" is null"""
+    } should have message "REPEATED field 'a' is null"
   }
 
   it should "handle required geography type" in {
@@ -51,14 +50,12 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
 
   it should "handle required json type" in {
     val wkt = """{"name":"Alice","age":30}"""
-    val jsNodeFactory = new JsonNodeFactory(false)
-    val jackson = jsNodeFactory
-      .objectNode()
-      .set[ObjectNode]("name", jsNodeFactory.textNode("Alice"))
-      .set[ObjectNode]("age", jsNodeFactory.numberNode(30))
+    val parsed = new TableRow()
+      .set("name", "Alice")
+      .set("age", 30)
 
-    RequiredJson.fromTableRow(TableRow("a" -> jackson)) shouldBe RequiredJson(Json(wkt))
-    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> jackson)
+    RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
+    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> parsed)
   }
 
   it should "handle required big numeric type" in {

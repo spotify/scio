@@ -53,7 +53,9 @@ final class ConverterProviderSpec
   }
   implicit val arbJson: Arbitrary[Json] = Arbitrary(
     for {
-      key <- Gen.alphaStr
+      // f is a field from TableRow.
+      // Jackson ObjectMapper will fail with such key
+      key <- Gen.alphaStr.retryUntil(_ != "f")
       value <- Gen.alphaStr
     } yield Json(s"""{"$key":"$value"}""")
   )
