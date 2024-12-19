@@ -41,16 +41,22 @@ case object DataflowContext extends RunnerContext {
       .filesToStage(options, classLoader, localArtifacts, artifacts)
       .asJavaCollection
 
-    // Required for Kryo w/ Java 17
+    // Required for Kryo w/ Java 17+
     lazy val dataflowPipelineOpts = options.as(classOf[DataflowPipelineOptions])
-    if (
-      sys
-        .props("java.version")
-        .startsWith("17.") && dataflowPipelineOpts.getJdkAddOpenModules == null
-    ) {
-      dataflowPipelineOpts.setJdkAddOpenModules(
-        List("java.base/java.util=ALL-UNNAMED", "java.base/java.lang.invoke=ALL-UNNAMED").asJava
-      )
+    val javaVersionRe = "^(\\d+)\\..*".r
+
+    sys.props("java.version") match {
+      case javaVersionRe(version)
+          if version.toInt >= 17 && dataflowPipelineOpts.getJdkAddOpenModules == null =>
+        dataflowPipelineOpts.setJdkAddOpenModules(
+          List(
+            "java.base/java.util=ALL-UNNAMED",
+            "java.base/java.lang.invoke=ALL-UNNAMED",
+            "java.base/java.lang=ALL-UNNAMED",
+            "java.base/java.nio=ALL-UNNAMED"
+          ).asJava
+        )
+      case _ => // Only add opts for Java 17+
     }
 
     dataflowOptions.setFilesToStage(new java.util.ArrayList(filesToStage))
