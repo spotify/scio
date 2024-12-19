@@ -387,10 +387,10 @@ private[types] object ConverterProvider {
         case t if provider.shouldOverrideType(c)(t) => q"$tree.toString"
         case t if t =:= typeOf[Boolean]             => tree
         case t if t =:= typeOf[Int]                 => tree
-        case t if t =:= typeOf[Long]                => tree
-        case t if t =:= typeOf[Float]               => tree
-        case t if t =:= typeOf[Double]              => tree
-        case t if t =:= typeOf[String]              => tree
+        case t if t =:= typeOf[Long]   => q"$tree.toString" // json doesn't support long
+        case t if t =:= typeOf[Float]  => q"$tree.toDouble" // json doesn't support float
+        case t if t =:= typeOf[Double] => tree
+        case t if t =:= typeOf[String] => tree
 
         case t if t =:= typeOf[BigDecimal] =>
           q"_root_.com.spotify.scio.bigquery.Numeric($tree).toString"
@@ -412,7 +412,7 @@ private[types] object ConverterProvider {
         case t if t =:= typeOf[Geography] =>
           q"$tree.wkt"
         case t if t =:= typeOf[Json] =>
-          // for TableRow/json, use JSON to prevent escaping
+          // for TableRow/json, use parsed JSON to prevent escaping
           q"_root_.com.spotify.scio.bigquery.types.Json.parse($tree)"
         case t if t =:= typeOf[BigNumeric] =>
           // for TableRow/json, use string to avoid precision loss (like numeric)

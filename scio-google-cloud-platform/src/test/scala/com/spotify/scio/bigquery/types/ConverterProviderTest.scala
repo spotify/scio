@@ -18,7 +18,9 @@
 package com.spotify.scio.bigquery.types
 
 import com.fasterxml.jackson.databind.node.{JsonNodeFactory, ObjectNode}
+import com.google.protobuf.ByteString
 import com.spotify.scio.bigquery._
+import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -74,6 +76,13 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
     RequiredWithMethod.fromTableRow(TableRow("a" -> "")) shouldBe RequiredWithMethod("")
     BigQueryType.toTableRow[RequiredWithMethod](RequiredWithMethod("")) shouldBe TableRow("a" -> "")
   }
+
+  it should "convert to stable types for the coder" in {
+    import com.spotify.scio.testing.CoderAssertions._
+    // Coder[TableRow] is destructive
+    // make sure the target TableRow format chosen by the BigQueryType conversion is stable
+    AllTypes.toTableRow(AllTypes()) coderShould roundtrip()
+  }
 }
 
 object ConverterProviderTest {
@@ -102,4 +111,23 @@ object ConverterProviderTest {
     def accessorMethod: String = ""
     def method(x: String): String = x
   }
+
+  @BigQueryType.toTable
+  case class AllTypes(
+    bool: Boolean = true,
+    int: Int = 1,
+    long: Long = 2L,
+    float: Float = 3.3f,
+    double: Double = 4.4,
+    numeric: BigDecimal = BigDecimal(5),
+    string: String = "6",
+    byteString: ByteString = ByteString.copyFromUtf8("7"),
+    timestamp: Instant = Instant.now(),
+    date: LocalDate = LocalDate.now(),
+    time: LocalTime = LocalTime.now(),
+    datetime: LocalDateTime = LocalDateTime.now(),
+    geography: Geography = Geography("POINT (8 8)"),
+    json: Json = Json("""{"key": 9,"value": 10}"""),
+    bigNumeric: BigNumeric = BigNumeric(BigDecimal(11))
+  )
 }
