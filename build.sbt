@@ -975,6 +975,8 @@ lazy val `scio-google-cloud-platform` = project
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVersion,
+      "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
       "com.google.api" % "gax" % gcpBom.key.value,
       "com.google.api" % "gax-grpc" % gcpBom.key.value,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
@@ -1727,7 +1729,6 @@ lazy val integration = project
     unusedCompileDependenciesTest := unusedCompileDependenciesTestSkipped.value,
     libraryDependencies ++= Seq(
       // compile
-      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.google.api-client" % "google-api-client" % gcpBom.key.value,
       "com.google.apis" % "google-api-services-bigquery" % googleApiServicesBigQueryVersion,
       "com.google.guava" % "guava" % guavaVersion,
