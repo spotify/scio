@@ -29,7 +29,7 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   "ConverterProvider" should "throw NPE with meaningful message for null in REQUIRED field" in {
     the[NullPointerException] thrownBy {
       Required.fromTableRow(TableRow())
-    } should have message "REQUIRED field 'a' is null"
+    } should have message """REQUIRED field "a" is null"""
   }
 
   it should "handle null in NULLABLE field" in {
@@ -39,7 +39,7 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   it should "throw NPE with meaningful message for null in REPEATED field" in {
     the[NullPointerException] thrownBy {
       Repeated.fromTableRow(TableRow())
-    } should have message "REPEATED field 'a' is null"
+    } should have message """REPEATED field "a" is null"""
   }
 
   it should "handle required geography type" in {
