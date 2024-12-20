@@ -270,7 +270,7 @@ private[types] object ConverterProvider {
     // Converter helpers
     // =======================================================================
     def cast(tree: Tree, tpe: Type): Tree = {
-      val msg = Constant(s"Cannot convert to ${tpe.typeSymbol.name}: ")
+      val msg = s"Cannot convert to ${tpe.typeSymbol.name}: "
       val fail = q"""throw new _root_.java.lang.IllegalArgumentException($msg + $tree)"""
 
       def readBase64(term: TermName) =
@@ -418,7 +418,7 @@ private[types] object ConverterProvider {
 
       val tree = q"$fn.get($name)"
       def nonNullTree(fType: String) = {
-        val msg = Constant(s"$fType field '$name' is null")
+        val msg = s"""$fType field "$name" is null"""
         q"""{
           val v = $fn.get($name)
           if (v == null) {
