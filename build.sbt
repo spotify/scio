@@ -408,19 +408,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   // added SortedMapCoder
   ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.coders.instances.MutableMapCoder.encode"
+    "com.spotify.scio.coders.instances.MutableMapCoder.*"
   ),
   ProblemFilters.exclude[DirectAbstractMethodProblem](
     "org.apache.beam.sdk.coders.Coder.verifyDeterministic"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.coders.instances.MutableMapCoder.structuralValue"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.coders.instances.MutableMapCoder.isRegisterByteSizeObserverCheap"
-  ),
-  ProblemFilters.exclude[DirectMissingMethodProblem](
-    "com.spotify.scio.coders.instances.MutableMapCoder.registerByteSizeObserver"
   ),
   ProblemFilters.exclude[DirectAbstractMethodProblem](
     "org.apache.beam.sdk.coders.Coder.getCoderArguments"
@@ -436,6 +427,24 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // relax type hierarchy for batch stream
   ProblemFilters.exclude[IncompatibleMethTypeProblem](
     "com.spotify.scio.grpc.GrpcBatchDoFn.asyncLookup"
+  ),
+  // added TableRow syntax
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.bigquery.syntax.TableRowOps.*"
+  ),
+  // narrow return type from Map to TableRow
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.syntax.TableRowOps.getRecord$extension"
+  ),
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.syntax.TableRowOps.getRecord"
+  ),
+  // narrow return type from Seq to List
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.syntax.TableRowOps.getRepeated$extension"
+  ),
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.syntax.TableRowOps.getRepeated"
   )
 )
 

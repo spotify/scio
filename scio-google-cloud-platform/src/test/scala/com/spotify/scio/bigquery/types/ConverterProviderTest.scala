@@ -26,20 +26,20 @@ import org.scalatest.flatspec.AnyFlatSpec
 class ConverterProviderTest extends AnyFlatSpec with Matchers {
   import ConverterProviderTest._
 
-  "ConverterProvider" should "throw NPE with meaningful message for null in REQUIRED field" in {
-    the[NullPointerException] thrownBy {
+  "ConverterProvider" should "throw NoSuchElementException with meaningful message for missing REQUIRED field" in {
+    the[NoSuchElementException] thrownBy {
       Required.fromTableRow(TableRow())
-    } should have message """REQUIRED field "a" is null"""
+    } should have message "Field not found: a"
   }
 
   it should "handle null in NULLABLE field" in {
     Nullable.fromTableRow(TableRow()) shouldBe Nullable(None)
   }
 
-  it should "throw NPE with meaningful message for null in REPEATED field" in {
-    the[NullPointerException] thrownBy {
+  it should "throw NoSuchElementException with meaningful message for missing in REPEATED field" in {
+    the[NoSuchElementException] thrownBy {
       Repeated.fromTableRow(TableRow())
-    } should have message """REPEATED field "a" is null"""
+    } should have message "Field not found: a"
   }
 
   it should "handle required geography type" in {

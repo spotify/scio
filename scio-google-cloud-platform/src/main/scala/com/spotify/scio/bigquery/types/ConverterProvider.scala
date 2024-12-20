@@ -266,181 +266,61 @@ private[types] object ConverterProvider {
   private def fromTableRowInternal(c: blackbox.Context)(tpe: c.Type): c.Tree = {
     import c.universe._
 
+    val ops = q"_root_.com.spotify.scio.bigquery.syntax.TableRowOps"
+    val bs = q"_root_.com.google.protobuf.ByteString"
+
     // =======================================================================
     // Converter helpers
     // =======================================================================
     def cast(tree: Tree, tpe: Type): Tree = {
-      val msg = s"Cannot convert to ${tpe.typeSymbol.name}: "
-      val fail = q"""throw new _root_.java.lang.IllegalArgumentException($msg + $tree)"""
-
-      def readBase64(term: TermName) =
-        q"_root_.com.google.common.io.BaseEncoding.base64().decode($term)"
-
-      val provider: OverrideTypeProvider =
-        OverrideTypeProviderFinder.getProvider
+      val provider: OverrideTypeProvider = OverrideTypeProviderFinder.getProvider
       tpe match {
-        case t if provider.shouldOverrideType(c)(t) =>
-          provider.createInstance(c)(t, q"$tree")
-        case t if t =:= typeOf[Boolean] =>
-          q"""$tree match {
-              case b: ${typeOf[java.lang.Boolean]} => _root_.scala.Boolean.unbox(b)
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[Int] =>
-          q"""$tree match {
-              case i: ${typeOf[java.lang.Integer]} => _root_.scala.Int.unbox(i)
-              case s: ${typeOf[String]} => s.toInt
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[Long] =>
-          q"""$tree match {
-              case l: ${typeOf[java.lang.Long]} => _root_.scala.Long.unbox(l)
-              case i: ${typeOf[java.lang.Integer]} => _root_.scala.Long.unbox(i).toLong
-              case s: ${typeOf[String]} => s.toLong
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[Float] =>
-          q"""$tree match {
-              case f: ${typeOf[java.lang.Float]} => _root_.scala.Float.unbox(f)
-              case d: ${typeOf[java.lang.Double]} => _root_.scala.Double.unbox(d).toFloat
-              case s: ${typeOf[String]} => s.toFloat
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[Double] =>
-          q"""$tree match {
-              case d: ${typeOf[java.lang.Double]} => _root_.scala.Double.unbox(d)
-              case s: ${typeOf[String]} => s.toDouble
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[String] =>
-          q"""$tree match {
-              case s: ${typeOf[String]} => s
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[BigDecimal] =>
-          q"""$tree match {
-              case bd: ${typeOf[BigDecimal]} =>
-                _root_.com.spotify.scio.bigquery.Numeric(bd)
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.Numeric(s)
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[ByteString] =>
-          val s = TermName("s")
-          q"""$tree match {
-              case bs: ${typeOf[ByteString]} => bs
-              case $s: ${typeOf[String]} =>
-                _root_.com.google.protobuf.ByteString.copyFrom(${readBase64(s)})
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[Array[Byte]] =>
-          val s = TermName("s")
-          q"""$tree match {
-              case bs: ${typeOf[Array[Byte]]} => bs
-              case $s: ${typeOf[String]} =>
-                ${readBase64(s)}
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[Instant] =>
-          q"""$tree match {
-              case i: ${typeOf[Instant]} => i
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.Timestamp.parse(s)
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[LocalDate] =>
-          q"""$tree match {
-              case ld: ${typeOf[LocalDate]} => ld
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.Date.parse(s)
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[LocalTime] =>
-          q"""$tree match {
-              case lt: ${typeOf[LocalTime]} => lt
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.Time.parse(s)
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[LocalDateTime] =>
-          q"""$tree match {
-              case ldt: ${typeOf[LocalDateTime]} => ldt
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.DateTime.parse(s)
-              case _ => $fail
-           }"""
-        // different than nested record match below, even though those are case classes
-        case t if t =:= typeOf[Geography] =>
-          q"""$tree match {
-              case g: ${typeOf[Geography]} => g
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.types.Geography(s)
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[Json] =>
-          q"""$tree match {
-              case j: ${typeOf[Json]} => j
-              case tr: ${typeOf[TableRow]} =>
-                _root_.com.spotify.scio.bigquery.types.Json(tr)
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.types.Json(s)
-              case _ => $fail
-           }"""
-        case t if t =:= typeOf[BigNumeric] =>
-          q"""$tree match {
-              case bn: ${typeOf[BigNumeric]} => bn
-              case bd: ${typeOf[BigDecimal]} =>
-                _root_.com.spotify.scio.bigquery.types.BigNumeric(bd)
-              case s: ${typeOf[String]} =>
-                _root_.com.spotify.scio.bigquery.types.BigNumeric(s)
-              case _ => $fail
-           }"""
-        case t if isCaseClass(c)(t) => // nested records
-          val r = TermName("record")
-          q"""$tree match {
-                case $r: ${typeOf[java.util.Map[String, AnyRef]]} => ${constructor(t, r)}
-                case _ => $fail
-              }
-          """
+        case t if provider.shouldOverrideType(c)(t) => provider.createInstance(c)(t, q"$tree")
+        case t if t =:= typeOf[Boolean]             => q"$ops.boolean($tree)"
+        case t if t =:= typeOf[Int]                 => q"$ops.int($tree)"
+        case t if t =:= typeOf[Long]                => q"$ops.long($tree)"
+        case t if t =:= typeOf[Float]               => q"$ops.float($tree)"
+        case t if t =:= typeOf[Double]              => q"$ops.double($tree)"
+        case t if t =:= typeOf[String]              => q"$ops.string($tree)"
+        case t if t =:= typeOf[BigDecimal]          => q"$ops.numeric($tree)"
+        case t if t =:= typeOf[Array[Byte]]         => q"$ops.bytes($tree)"
+        case t if t =:= typeOf[ByteString]          => q"$bs.copyFrom($ops.bytes($tree))"
+        case t if t =:= typeOf[Instant]             => q"$ops.timestamp($tree)"
+        case t if t =:= typeOf[LocalDate]           => q"$ops.date($tree)"
+        case t if t =:= typeOf[LocalTime]           => q"$ops.time($tree)"
+        case t if t =:= typeOf[LocalDateTime]       => q"$ops.datetime($tree)"
+        case t if t =:= typeOf[Geography]           => q"$ops.geography($tree)"
+        case t if t =:= typeOf[Json]                => q"$ops.json($tree)"
+        case t if t =:= typeOf[BigNumeric]          => q"$ops.bignumeric($tree)"
+        case t if isCaseClass(c)(t)                 =>
+          // nested records
+          val r = TermName("r" + t.typeSymbol.name)
+          q"""{
+            val $r = $ops.record($tree)
+            ${constructor(t, r)}
+          }"""
         case _ => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
     }
 
-    def option(tree: Tree, tpe: Type): Tree =
-      q"_root_.scala.Option($tree).map(x => ${cast(q"x", tpe)})"
-
-    def list(tree: Tree, tpe: Type): Tree =
-      q"asScala($tree.asInstanceOf[${typeOf[java.util.List[AnyRef]]}].iterator).map(x => ${cast(q"x", tpe)}).toList"
-
-    def field(symbol: Symbol, fn: TermName): Tree = {
+    def field(symbol: Symbol, row: TermName): Tree = {
       val name = symbol.name.toString
       val tpe = symbol.asMethod.returnType
 
-      val tree = q"$fn.get($name)"
-      def nonNullTree(fType: String) = {
-        val msg = s"""$fType field "$name" is null"""
-        q"""{
-          val v = $fn.get($name)
-          if (v == null) {
-            throw new NullPointerException($msg)
-          }
-          v
-        }"""
-      }
-
-      if (tpe.erasure =:= typeOf[Option[_]].erasure) {
-        option(tree, tpe.typeArgs.head)
-      } else if (tpe.erasure =:= typeOf[List[_]].erasure) {
-        list(nonNullTree("REPEATED"), tpe.typeArgs.head)
-      } else {
-        cast(nonNullTree("REQUIRED"), tpe)
+      tpe match {
+        case t if t.erasure =:= typeOf[Option[_]].erasure =>
+          q"$ops.nullable($name)($row).map(x => ${cast(q"x", t.typeArgs.head)})"
+        case t if t.erasure =:= typeOf[List[_]].erasure =>
+          q"$ops.repeated($name)($row).map(x => ${cast(q"x", t.typeArgs.head)})"
+        case t =>
+          q"${cast(q"$ops.required($name)($row)", t)}"
       }
     }
 
-    def constructor(tpe: Type, fn: TermName): Tree = {
+    def constructor(tpe: Type, row: TermName): Tree = {
       val companion = tpe.typeSymbol.companion
       val gets = tpe.erasure match {
-        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, fn))
+        case t if isCaseClass(c)(t) => getFields(c)(t).map(s => field(s, row))
         case _                      => c.abort(c.enclosingPosition, s"Unsupported type: $tpe")
       }
       q"$companion(..$gets)"
@@ -449,13 +329,8 @@ private[types] object ConverterProvider {
     // =======================================================================
     // Entry point
     // =======================================================================
-
-    val tn = TermName("r")
-    q"""(r: _root_.java.util.Map[String, AnyRef]) => {
-          import _root_.scala.jdk.javaapi.CollectionConverters._
-          ${constructor(tpe, tn)}
-        }
-    """
+    val r = TermName("r")
+    q"($r: ${typeOf[TableRow]}) => ${constructor(tpe, r)}"
   }
 
   // =======================================================================
