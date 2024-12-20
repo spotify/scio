@@ -30,6 +30,9 @@ import scala.jdk.CollectionConverters._
 /** Dataflow runner specific context. */
 case object DataflowContext extends RunnerContext {
 
+  private lazy val JavaMajorVersion: Int =
+    System.getProperty("java.version").stripPrefix("1.").takeWhile(_.isDigit).toInt
+
   override def prepareOptions(options: PipelineOptions, artifacts: List[String]): Unit = {
     val classLoader = classOf[DataflowRunner].getClassLoader
     val dataflowOptions = options.as(classOf[DataflowPipelineWorkerPoolOptions])
@@ -43,20 +46,15 @@ case object DataflowContext extends RunnerContext {
 
     // Required for Kryo w/ Java 17+
     lazy val dataflowPipelineOpts = options.as(classOf[DataflowPipelineOptions])
-    val javaVersionRe = "^(\\d+)\\..*".r
-
-    sys.props("java.version") match {
-      case javaVersionRe(version)
-          if version.toInt >= 17 && dataflowPipelineOpts.getJdkAddOpenModules == null =>
-        dataflowPipelineOpts.setJdkAddOpenModules(
-          List(
-            "java.base/java.util=ALL-UNNAMED",
-            "java.base/java.lang.invoke=ALL-UNNAMED",
-            "java.base/java.lang=ALL-UNNAMED",
-            "java.base/java.nio=ALL-UNNAMED"
-          ).asJava
-        )
-      case _ => // Only add opts for Java 17+
+    if (JavaMajorVersion >= 17 && dataflowPipelineOpts.getJdkAddOpenModules == null) {
+      dataflowPipelineOpts.setJdkAddOpenModules(
+        List(
+          "java.base/java.util=ALL-UNNAMED",
+          "java.base/java.lang.invoke=ALL-UNNAMED",
+          "java.base/java.lang=ALL-UNNAMED",
+          "java.base/java.nio=ALL-UNNAMED"
+        ).asJava
+      )
     }
 
     dataflowOptions.setFilesToStage(new java.util.ArrayList(filesToStage))
