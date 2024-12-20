@@ -84,6 +84,7 @@ Scio includes the following artifacts:
 - `scio-redis`: add-on for Redis
 - `scio-repl`: extension of the Scala REPL with Scio specific operations
 - `scio-smb`: add-on for Sort Merge Bucket operations
+- `scio-snowflake`: add-on for Snowflake IO
 - `scio-tensorflow`: add-on for TensorFlow TFRecords IO and prediction
 - `scio-test`: all following test utilities. Add to your project as a "test" dependency
   - `scio-test-core`: test core utilities
