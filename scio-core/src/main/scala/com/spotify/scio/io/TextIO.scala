@@ -22,6 +22,7 @@ import java.nio.channels.Channels
 import java.util.Collections
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.{Coder, CoderMaterializer}
+import com.spotify.scio.graph.{NodeIO, ScioGraphNode}
 import com.spotify.scio.util.ScioUtil
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
@@ -49,9 +50,10 @@ final case class TextIO(path: String) extends ScioIO[String] {
       .read()
       .from(filePattern)
       .withCompression(params.compression)
-      .withEmptyMatchTreatment(params.emptyMatchTreatment)
+      .withEmptyMatchTreatment(params.emptyMatchTreatment).dis
 
-    sc.applyTransform(t)
+    sc.applyTransform(t, ScioGraphNode.read(null, NodeIO.Text, Map("filePattern" -> filePattern))
+      )
       .setCoder(coder)
   }
 
