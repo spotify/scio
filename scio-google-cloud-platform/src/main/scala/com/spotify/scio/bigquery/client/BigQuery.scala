@@ -31,7 +31,7 @@ import com.google.api.services.bigquery.model._
 import com.google.auth.Credentials
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.{GoogleCredentials, ImpersonatedCredentials}
-import com.google.cloud.bigquery.storage.v1beta1.{BigQueryStorageClient, BigQueryStorageSettings}
+import com.google.cloud.bigquery.storage.v1.{BigQueryReadClient, BigQueryReadSettings}
 import com.google.cloud.hadoop.util.ChainingHttpRequestInitializer
 import com.spotify.scio.bigquery.{Table => STable}
 import com.spotify.scio.bigquery.client.BigQuery.Client
@@ -318,18 +318,18 @@ object BigQuery {
         .build()
     }
 
-    lazy val storage: BigQueryStorageClient = {
-      val settings = BigQueryStorageSettings
+    lazy val storage: BigQueryReadClient = {
+      val settings = BigQueryReadSettings
         .newBuilder()
         .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
         .setTransportChannelProvider(
-          BigQueryStorageSettings
+          BigQueryReadSettings
             .defaultGrpcTransportProviderBuilder()
             .setHeaderProvider(FixedHeaderProvider.create("user-agent", "scio"))
             .build()
         )
         .build()
-      BigQueryStorageClient.create(settings)
+      BigQueryReadClient.create(settings)
     }
   }
 }
