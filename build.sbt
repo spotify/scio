@@ -428,6 +428,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // added BQ Json object
   ProblemFilters.exclude[MissingTypesProblem](
     "com.spotify.scio.bigquery.types.package$Json$"
+  ),
+  // relax type hierarchy for batch stream
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.grpc.GrpcBatchDoFn.asyncLookup"
   )
 )
 
