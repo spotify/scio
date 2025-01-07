@@ -116,7 +116,7 @@ val scalatestVersion = "3.2.19"
 val shapelessVersion = "2.3.12"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
-val tensorFlowMetadataVersion = "1.14.0"
+val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.41.4"
 val voyagerVersion = "2.0.9"
 val zoltarVersion = "0.6.0"
@@ -428,6 +428,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // added BQ Json object
   ProblemFilters.exclude[MissingTypesProblem](
     "com.spotify.scio.bigquery.types.package$Json$"
+  ),
+  // tf-metadata upgrade
+  ProblemFilters.exclude[Problem](
+    "org.tensorflow.metadata.v0.*"
   ),
   // relax type hierarchy for batch stream
   ProblemFilters.exclude[IncompatibleMethTypeProblem](

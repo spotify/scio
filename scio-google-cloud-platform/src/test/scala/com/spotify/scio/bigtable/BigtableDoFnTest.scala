@@ -17,6 +17,8 @@
 
 package com.spotify.scio.bigtable
 
+import com.google.cloud.bigtable.config.BigtableOptions
+
 import java.util.concurrent.ConcurrentLinkedQueue
 import com.google.cloud.bigtable.grpc.BigtableSession
 import com.google.common.cache.{Cache, CacheBuilder}
@@ -66,13 +68,18 @@ object BigtableDoFnTest {
   val queue: ConcurrentLinkedQueue[Int] = new ConcurrentLinkedQueue[Int]()
 }
 
-class TestBigtableDoFn extends BigtableDoFn[Int, String](null) {
+class TestBigtableDoFn extends BigtableDoFn[Int, String](BigtableOptions.getDefaultOptions) {
   override def newClient(): BigtableSession = null
   override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
     Futures.immediateFuture(input.toString)
 }
 
-class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new TestCacheSupplier) {
+class TestCachingBigtableDoFn
+    extends BigtableDoFn[Int, String](
+      BigtableOptions.getDefaultOptions,
+      100,
+      new TestCacheSupplier
+    ) {
   override def newClient(): BigtableSession = null
   override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] = {
     BigtableDoFnTest.queue.add(input)
@@ -80,7 +87,7 @@ class TestCachingBigtableDoFn extends BigtableDoFn[Int, String](null, 100, new T
   }
 }
 
-class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](null) {
+class TestFailingBigtableDoFn extends BigtableDoFn[Int, String](BigtableOptions.getDefaultOptions) {
   override def newClient(): BigtableSession = null
   override def asyncLookup(session: BigtableSession, input: Int): ListenableFuture[String] =
     if (input % 2 == 0) {
