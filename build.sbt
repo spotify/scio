@@ -432,6 +432,10 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // tf-metadata upgrade
   ProblemFilters.exclude[Problem](
     "org.tensorflow.metadata.v0.*"
+  ),
+  // relax type hierarchy for batch stream
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.grpc.GrpcBatchDoFn.asyncLookup"
   )
 )
 
