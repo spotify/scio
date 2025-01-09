@@ -49,10 +49,18 @@ case object DataflowContext extends RunnerContext {
     if (JavaMajorVersion >= 17 && dataflowPipelineOpts.getJdkAddOpenModules == null) {
       dataflowPipelineOpts.setJdkAddOpenModules(
         List(
-          "java.base/java.util=ALL-UNNAMED",
-          "java.base/java.lang.invoke=ALL-UNNAMED",
+          "java.base/java.io=ALL-UNNAMED",
           "java.base/java.lang=ALL-UNNAMED",
-          "java.base/java.nio=ALL-UNNAMED"
+          "java.base/java.lang.invoke=ALL-UNNAMED",
+          "java.base/java.lang.reflect=ALL-UNNAMED",
+          "java.base/java.net=ALL-UNNAMED",
+          "java.base/java.nio=ALL-UNNAMED",
+          "java.base/java.text=ALL-UNNAMED",
+          "java.base/java.time=ALL-UNNAMED",
+          "java.base/java.util=ALL-UNNAMED",
+          "java.base/java.util.concurrent=ALL-UNNAMED",
+          "java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+          "java.base/java.util.concurrent.locks=ALL-UNNAMED"
         ).asJava
       )
     }
