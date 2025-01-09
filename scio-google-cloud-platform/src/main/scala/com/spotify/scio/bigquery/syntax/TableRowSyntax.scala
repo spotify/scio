@@ -25,8 +25,15 @@ import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import scala.jdk.CollectionConverters._
 import scala.util.chaining._
 
-/** Enhanced version of [[TableRow]] with typed getters. */
+/**
+ * Enhanced version of [[TableRow]] with typed getters.
+ *
+ * Maximize compatibility by allowing
+ *   - boxed java type
+ *   - string values
+ */
 object TableRowOps {
+
   def boolean(value: AnyRef): Boolean = value match {
     case x: java.lang.Boolean => Boolean.unbox(x)
     case x: String            => x.toBoolean
@@ -34,28 +41,26 @@ object TableRowOps {
   }
 
   def int(value: AnyRef): Int = value match {
-    case x: java.lang.Integer => Int.unbox(x)
-    case x: String            => x.toInt
+    case x: java.lang.Number => x.intValue()
+    case x: String           => x.toInt
     case _ =>
       throw new UnsupportedOperationException("Cannot convert to integer: " + value)
   }
 
   def long(value: AnyRef): Long = value match {
-    case x: java.lang.Long    => Long.unbox(x)
-    case x: java.lang.Integer => Int.unbox(x).toLong
-    case x: String            => x.toLong
+    case x: java.lang.Number => x.longValue()
+    case x: String           => x.toLong
     case _ => throw new UnsupportedOperationException("Cannot convert to long: " + value)
   }
 
   def float(value: AnyRef): Float = value match {
-    case x: java.lang.Float  => Float.unbox(x)
-    case x: java.lang.Double => Double.unbox(x).toFloat
+    case x: java.lang.Number => x.floatValue()
     case x: String           => x.toFloat
     case _ => throw new UnsupportedOperationException("Cannot convert to float: " + value)
   }
 
   def double(value: AnyRef): Double = value match {
-    case x: java.lang.Double => Double.unbox(x)
+    case x: java.lang.Number => x.doubleValue()
     case x: String           => x.toDouble
     case _ =>
       throw new UnsupportedOperationException("Cannot convert to double: " + value)
@@ -69,7 +74,8 @@ object TableRowOps {
 
   def numeric(value: AnyRef): BigDecimal = value match {
     case x: scala.math.BigDecimal => Numeric(x)
-    case x: java.lang.Double      => Numeric(BigDecimal(x))
+    case x: java.math.BigDecimal  => Numeric(BigDecimal(x))
+    case x: java.lang.Number      => Numeric(x.toString)
     case x: String                => Numeric(x)
     case _ =>
       throw new UnsupportedOperationException("Cannot convert to numeric: " + value)
@@ -122,9 +128,10 @@ object TableRowOps {
   }
 
   def bignumeric(value: AnyRef): BigNumeric = value match {
-    case x: BigNumeric       => x
-    case x: java.lang.Double => BigNumeric(BigDecimal(x))
-    case x: String           => BigNumeric(x)
+    case x: BigNumeric           => x
+    case x: java.math.BigDecimal => BigNumeric(x)
+    case x: java.lang.Number     => BigNumeric(x.toString)
+    case x: String               => BigNumeric(x)
     case _ =>
       throw new UnsupportedOperationException("Cannot convert to bigNumeric: " + value)
   }
