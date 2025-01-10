@@ -22,13 +22,14 @@ import com.google.common.util.concurrent.{ListenableFuture, SettableFuture}
 import com.spotify.scio.transforms.DoFnWithResource.ResourceType
 import org.apache.beam.sdk.options.PipelineOptions
 import org.apache.beam.sdk.transforms.DoFn.OutputReceiver
-import org.apache.beam.sdk.transforms.windowing.BoundedWindow
+import org.apache.beam.sdk.transforms.windowing.{BoundedWindow, GlobalWindow, PaneInfo}
 import org.apache.beam.sdk.values.TupleTag
 import org.joda.time.{DateTime, Instant}
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck._
 import org.scalacheck.commands.Commands
 
+import java.util
 import scala.collection.mutable.{Buffer => MBuffer}
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -199,14 +200,22 @@ abstract class AsyncDoFnTester[P[_], F[_]] extends BaseDoFnTester {
 
   // make a new request
   override def request(): Unit = {
+    val outputReceiver = new OutputReceiver[String] {
+      override def output(output: String): Unit = ???
+      override def outputWithTimestamp(output: String, timestamp: Instant): Unit = ???
+      override def outputWindowedValue(
+        output: String,
+        timestamp: Instant,
+        windows: util.Collection[_ <: BoundedWindow],
+        paneInfo: PaneInfo
+      ): Unit =
+        outputBuffer.append(output)
+    }
     val input: Int = nextElement
     val timestamp = DateTime.parse("2022-08-31").toInstant
-    val outputReceiver = new OutputReceiver[String] {
-      override def output(output: String): Unit = outputBuffer.append(output)
-      override def outputWithTimestamp(output: String, timestamp: Instant): Unit = ???
-    }
-    val window: BoundedWindow = null
-    fn.processElement(input, timestamp, outputReceiver, window)
+    val window: BoundedWindow = GlobalWindow.INSTANCE
+    val pane: PaneInfo = PaneInfo.NO_FIRING
+    fn.processElement(input, timestamp, window, pane, outputReceiver)
     nextElement += 1
   }
 

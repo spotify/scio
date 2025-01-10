@@ -24,7 +24,6 @@ import org.apache.beam.sdk.schemas.{Schema => BSchema, SchemaCoder}
 import org.apache.beam.sdk.values._
 import org.typelevel.scalaccompat.annotation.nowarn
 
-import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 import scala.reflect.ClassTag
 
@@ -37,13 +36,6 @@ sealed trait To[I, O] extends (SCollection[I] => SCollection[O]) with Serializab
 }
 
 object To {
-
-  @tailrec @inline
-  private def getBaseType(t: BSchema.FieldType): BSchema.FieldType = {
-    val log = t.getLogicalType()
-    if (log == null) t
-    else getBaseType(log.getBaseType())
-  }
 
   // Position API
   private case class Location(p: List[String])

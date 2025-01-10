@@ -17,28 +17,36 @@
 
 package com.spotify.scio.transforms;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
+import org.apache.beam.sdk.transforms.windowing.PaneInfo;
+import org.apache.beam.sdk.values.ValueInSingleWindow;
+import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A {@link DoFn} that handles asynchronous requests to an external service. */
-public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
-    extends DoFnWithResource<InputT, OutputT, ResourceT>
-    implements FutureHandlers.Base<FutureT, OutputT> {
+public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
+    extends DoFnWithResource<Input, Output, Resource>
+    implements FutureHandlers.Base<Future, Output> {
   private static final Logger LOG = LoggerFactory.getLogger(BaseAsyncDoFn.class);
 
   /** Process an element asynchronously. */
-  public abstract FutureT processElement(InputT input);
+  public abstract Future processElement(Input input);
 
-  private final ConcurrentMap<UUID, FutureT> futures = new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<Result> results = new ConcurrentLinkedQueue<>();
+  private final ConcurrentMap<UUID, Future> futures = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<Pair<UUID, ValueInSingleWindow<Output>>> results =
+      new ConcurrentLinkedQueue<>();
   private final ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
 
   @StartBundle
@@ -57,37 +65,54 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
         Thread.currentThread().interrupt();
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
-      } catch (ExecutionException e) {
+      } catch (ExecutionException | TimeoutException e) {
         LOG.error("Failed to process futures", e);
         throw new RuntimeException("Failed to process futures", e);
       }
     }
-    flush(context);
+    flush(r -> context.output(r.getValue(), r.getTimestamp(), r.getWindow()));
+  }
+
+  // kept for binary compatibility. Must not be used
+  // TODO: remove in 0.15.0
+  @Deprecated
+  public void processElement(
+      Input input, Instant timestamp, OutputReceiver<Output> out, BoundedWindow window) {
+    processElement(input, timestamp, window, null, out);
   }
 
   @ProcessElement
   public void processElement(
-      @Element InputT element,
+      @Element Input element,
       @Timestamp Instant timestamp,
-      OutputReceiver<OutputT> out,
-      BoundedWindow window) {
-    flush(out);
+      BoundedWindow window,
+      PaneInfo pane,
+      OutputReceiver<Output> out) {
+    flush(
+        r -> {
+          final Output o = r.getValue();
+          final Instant ts = r.getTimestamp();
+          final Collection<BoundedWindow> ws = Collections.singleton(r.getWindow());
+          final PaneInfo p = r.getPane();
+          out.outputWindowedValue(o, ts, ws, p);
+        });
 
     try {
       final UUID uuid = UUID.randomUUID();
-      final FutureT future = processElement(element);
-      futures.put(uuid, handleOutput(future, uuid, timestamp, window));
+      final Future future = processElement(element);
+      futures.put(uuid, handleOutput(future, uuid, timestamp, window, pane));
     } catch (Exception e) {
       LOG.error("Failed to process element", e);
       throw e;
     }
   }
 
-  private FutureT handleOutput(FutureT future, UUID key, Instant timestamp, BoundedWindow window) {
+  private Future handleOutput(
+      Future future, UUID key, Instant timestamp, BoundedWindow window, PaneInfo pane) {
     return addCallback(
         future,
         output -> {
-          results.add(new Result(output, key, timestamp, window));
+          results.add(Pair.of(key, ValueInSingleWindow.of(output, timestamp, window, pane)));
           return null;
         },
         throwable -> {
@@ -96,7 +121,7 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
         });
   }
 
-  private void flush(OutputReceiver<OutputT> outputReceiver) {
+  private void flush(Consumer<ValueInSingleWindow<Output>> outputFn) {
     if (!errors.isEmpty()) {
       RuntimeException e = new RuntimeException("Failed to process futures");
       Throwable t = errors.poll();
@@ -106,43 +131,12 @@ public abstract class BaseAsyncDoFn<InputT, OutputT, ResourceT, FutureT>
       }
       throw e;
     }
-    Result r = results.poll();
+    Pair<UUID, ValueInSingleWindow<Output>> r = results.poll();
     while (r != null) {
-      outputReceiver.output(r.output);
-      futures.remove(r.futureUuid);
+      UUID key = r.getKey();
+      outputFn.accept(r.getValue());
+      futures.remove(key);
       r = results.poll();
-    }
-  }
-
-  private void flush(FinishBundleContext c) {
-    if (!errors.isEmpty()) {
-      RuntimeException e = new RuntimeException("Failed to process futures");
-      Throwable t = errors.poll();
-      while (t != null) {
-        e.addSuppressed(t);
-        t = errors.poll();
-      }
-      throw e;
-    }
-    Result r = results.poll();
-    while (r != null) {
-      c.output(r.output, r.timestamp, r.window);
-      futures.remove(r.futureUuid);
-      r = results.poll();
-    }
-  }
-
-  private class Result {
-    private OutputT output;
-    private UUID futureUuid;
-    private Instant timestamp;
-    private BoundedWindow window;
-
-    Result(OutputT output, UUID futureUuid, Instant timestamp, BoundedWindow window) {
-      this.output = output;
-      this.timestamp = timestamp;
-      this.futureUuid = futureUuid;
-      this.window = window;
     }
   }
 }

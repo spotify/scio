@@ -27,27 +27,31 @@ import org.apache.beam.sdk.options.Validation.Required
 
 class ArgsTest extends AnyFlatSpec with Matchers {
   "Args" should "support String" in {
-    Args("--str=value".split(" "))("str") shouldBe "value"
+    Args(Array("--str=value"))("str") shouldBe "value"
+  }
+
+  it should "support empty String" in {
+    Args(Array("--str="))("str") shouldBe ""
   }
 
   it should "support getOrElse" in {
-    Args("--key1=value1".split(" "))
+    Args(Array("--key1=value1"))
       .getOrElse("key2", "value2") shouldBe "value2"
   }
 
   it should "support list" in {
-    Args("--key=value1 --key=value2".split(" "))
+    Args(Array("--key=value1", "--key=value2"))
       .list("key") shouldBe List("value1", "value2")
   }
 
   it should "support optional" in {
-    val args = Args("--key1=value1".split(" "))
+    val args = Args(Array("--key1=value1"))
     args.optional("key1") shouldBe Some("value1")
     args.optional("key2") shouldBe None
   }
 
   it should "support required" in {
-    Args("--key=value".split(" ")).required("key") shouldBe "value"
+    Args(Array("--key=value")).required("key") shouldBe "value"
   }
 
   it should "fail required with missing value" in {
@@ -58,36 +62,36 @@ class ArgsTest extends AnyFlatSpec with Matchers {
 
   it should "fail required with multiple values" in {
     the[IllegalArgumentException] thrownBy {
-      Args("--key=value1 --key=value2".split(" ")).required("key")
+      Args(Array("--key=value1", "--key=value2")).required("key")
     } should have message "Multiple values for property 'key'"
   }
 
   it should "support int" in {
-    val args = Args("--key1=10".split(" "))
+    val args = Args(Array("--key1=10"))
     args.int("key1") shouldBe 10
     args.int("key2", 20) shouldBe 20
   }
 
   it should "support long" in {
-    val args = Args("--key1=10".split(" "))
+    val args = Args(Array("--key1=10"))
     args.long("key1") shouldBe 10L
     args.long("key2", 20L) shouldBe 20L
   }
 
   it should "support float" in {
-    val args = Args("--key1=1.5".split(" "))
+    val args = Args(Array("--key1=1.5"))
     args.float("key1") shouldBe 1.5f
     args.float("key2", 2.5f) shouldBe 2.5f
   }
 
   it should "support double" in {
-    val args = Args("--key1=1.5".split(" "))
+    val args = Args(Array("--key1=1.5"))
     args.double("key1") shouldBe 1.5
     args.double("key2", 2.5) shouldBe 2.5
   }
 
   it should "support boolean" in {
-    val args = Args("--key1=true --key2=false --key3".split(" "))
+    val args = Args(Array("--key1=true", "--key2=false", "--key3"))
     args.boolean("key1") shouldBe true
     args.boolean("key2") shouldBe false
     args.boolean("key3") shouldBe true

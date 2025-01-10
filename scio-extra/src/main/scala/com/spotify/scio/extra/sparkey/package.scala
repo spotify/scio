@@ -152,7 +152,15 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
       decoder: Array[Byte] => T,
       cache: Cache[String, T] = null
     ): SideInput[TypedSparkeyReader[T]] =
-      sparkeySideInput(basePath, reader => new TypedSparkeyReader[T](reader, decoder, cache))
+      sparkeySideInput(
+        basePath,
+        reader =>
+          new TypedSparkeyReader[T](
+            reader,
+            decoder,
+            Option(cache).getOrElse(Cache.noOp[String, T])
+          )
+      )
 
     /**
      * Create a SideInput of `CachedStringSparkeyReader` from a [[SparkeyUri]] base path, to be used

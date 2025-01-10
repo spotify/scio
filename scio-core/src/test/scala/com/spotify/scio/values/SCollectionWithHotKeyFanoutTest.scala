@@ -18,6 +18,7 @@
 package com.spotify.scio.values
 
 import com.twitter.algebird.Aggregator
+import org.joda.time.Instant
 
 class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
   "SCollectionWithHotKeyFanout" should "support aggregateByKey()" in {
@@ -83,13 +84,76 @@ class SCollectionWithHotKeyFanoutTest extends NamedTransformSpec {
     }
   }
 
-  it should "support sumByKey()" in {
+  it should "support minByKey" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 3)) ++ (1 to 100).map(("c", _)))
+      val r1 = p.withHotKeyFanout(10).minByKey
+      val r2 = p.withHotKeyFanout(_.hashCode).minByKey
+      r1 should containInAnyOrder(Seq(("a", 1), ("b", 2), ("c", 1)))
+      r2 should containInAnyOrder(Seq(("a", 1), ("b", 2), ("c", 1)))
+    }
+  }
+
+  it should "support maxByKey" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 3)) ++ (1 to 100).map(("c", _)))
+      val r1 = p.withHotKeyFanout(10).maxByKey
+      val r2 = p.withHotKeyFanout(_.hashCode).maxByKey
+      r1 should containInAnyOrder(Seq(("a", 1), ("b", 3), ("c", 100)))
+      r2 should containInAnyOrder(Seq(("a", 1), ("b", 3), ("c", 100)))
+    }
+  }
+
+  it should "support latestByKey" in {
+    runWithContext { sc =>
+      val p = sc
+        .parallelize(List(("a", 1L), ("b", 2L), ("b", 3L)) ++ (1L to 100L).map(("c", _)))
+        .timestampBy { case (_, v) => Instant.ofEpochMilli(v) }
+      val r1 = p.withHotKeyFanout(10).latestByKey
+      val r2 = p.withHotKeyFanout(_.hashCode).latestByKey
+      r1 should containInAnyOrder(Seq(("a", 1L), ("b", 3L), ("c", 100L)))
+      r2 should containInAnyOrder(Seq(("a", 1L), ("b", 3L), ("c", 100L)))
+    }
+  }
+
+  it should "support sumByKey" in {
     runWithContext { sc =>
       val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 2)) ++ (1 to 100).map(("c", _)))
       val r1 = p.withHotKeyFanout(10).sumByKey
       val r2 = p.withHotKeyFanout(_.hashCode).sumByKey
       r1 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
       r2 should containInAnyOrder(Seq(("a", 1), ("b", 4), ("c", 5050)))
+    }
+  }
+
+  it should "support meanByKey" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(List(("a", 1), ("b", 2), ("b", 3)) ++ (0 to 100).map(("c", _)))
+      val r1 = p.withHotKeyFanout(10).meanByKey
+      val r2 = p.withHotKeyFanout(_.hashCode).meanByKey
+      r1 should containInAnyOrder(Seq(("a", 1.0), ("b", 2.5), ("c", 50.0)))
+      r2 should containInAnyOrder(Seq(("a", 1.0), ("b", 2.5), ("c", 50.0)))
+    }
+  }
+
+  it should "support topByKey()" in {
+    runWithContext { sc =>
+      val p = sc.parallelize(
+        List(
+          ("a", 1),
+          ("a", 2),
+          ("a", 3),
+          ("a", 4),
+          ("b", 5),
+          ("b", 6),
+          ("b", 7),
+          ("b", 8)
+        )
+      )
+      val r1 = p.withHotKeyFanout(10).topByKey(3)
+      val r2 = p.withHotKeyFanout(_.hashCode).topByKey(3)
+      r1 should containInAnyOrder(Seq(("a", Iterable(4, 3, 2)), ("b", Iterable(8, 7, 6))))
+      r2 should containInAnyOrder(Seq(("a", Iterable(4, 3, 2)), ("b", Iterable(8, 7, 6))))
     }
   }
 

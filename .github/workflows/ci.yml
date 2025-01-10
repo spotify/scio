@@ -38,6 +38,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
+      - name: Install sbt
+        if: contains(runner.os, 'macos')
+        run: brew install sbt
+
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -98,7 +102,7 @@ jobs:
 
       - name: Check headers and formatting
         if: matrix.java == 'corretto@11' && matrix.os == 'ubuntu-latest'
-        run: sbt '++ ${{ matrix.scala }}' headerCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
+        run: sbt '++ ${{ matrix.scala }}' headerCheckAll javafmtCheckAll scalafmtCheckAll 'project /' scalafmtSbtCheck
 
       - name: Test
         run: sbt '++ ${{ matrix.scala }}' test
@@ -139,6 +143,10 @@ jobs:
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install sbt
+        if: contains(runner.os, 'macos')
+        run: brew install sbt
+
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -238,13 +246,17 @@ jobs:
 
   dependency-submission:
     name: Submit Dependencies
-    if: github.event_name != 'pull_request'
+    if: github.event.repository.fork == false && github.event_name != 'pull_request'
     strategy:
       matrix:
         os: [ubuntu-latest]
         java: [corretto@11]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install sbt
+        if: contains(runner.os, 'macos')
+        run: brew install sbt
+
       - name: Checkout current branch (full)
         uses: actions/checkout@v4
         with:
@@ -354,7 +366,7 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}' coverage test coverageAggregate
 
       - name: Upload coverage report
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 

@@ -40,15 +40,16 @@ private[scio] object MagnoliaMacros {
     // format: off
     // Remove annotations from magnolia since they are
     // not serializable and we don't use them anyway
+    val empty = q"_root_.scala.Array.empty[_root_.scala.Any]"
     val removeAnnotations: PartialFunction[Tree, Tree] = {
       case q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, $_, $_, $_)" if caseClass.symbol.name == TypeName("CaseClass") =>
-        q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+        q"$caseClass($typeName, $isObject, $isValueClass, $parametersArray, $empty, $empty, $empty)"
       case q"Param.apply[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, $_, $_, $_)" =>
-        q"_root_.magnolia1.Param[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+        q"_root_.magnolia1.Param[$tpTC, $tpT, $tpP]($name, $typeNameParam, $idx, $isRepeated, $typeclassParam, $defaultVal, $empty, $empty, $empty)"
       case q"new SealedTrait($typeName, $subtypesArray, $_, $_, $_)" =>
-        q"new _root_.magnolia1.SealedTrait($typeName, $subtypesArray, Array.empty[Any], Array.empty[Any], Array.empty[Any])"
+        q"new _root_.magnolia1.SealedTrait($typeName, $subtypesArray, $empty, $empty, $empty)"
       case q"Subtype[$tpTC, $tpT, $tpS]($name, $idx, $_, $_, $_, $tc, $isType, $asType)" =>
-        q"_root_.magnolia1.Subtype[$tpTC, $tpT, $tpS]($name, $idx, Array.empty[Any], Array.empty[Any], Array.empty[Any], $tc, $isType, $asType)"
+        q"_root_.magnolia1.Subtype[$tpTC, $tpT, $tpS]($name, $idx, $empty, $empty, $empty, $tc, $isType, $asType)"
     }
 
     // remove all outer references used in rawConstruct
