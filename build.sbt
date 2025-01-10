@@ -436,6 +436,19 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   // relax type hierarchy for batch stream
   ProblemFilters.exclude[IncompatibleMethTypeProblem](
     "com.spotify.scio.grpc.GrpcBatchDoFn.asyncLookup"
+  ),
+  // BQ api v1 update
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.BigQueryStorageTap.*"
+  ),
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.bigquery.BigQueryStorageTap.*"
+  ),
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.bigquery.BigQueryTaps.*"
+  ),
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.StorageUtil.tableReadOptions"
   )
 )
 
