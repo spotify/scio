@@ -19,9 +19,11 @@ package com.spotify.scio.bigquery.client
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.services.bigquery.model._
-import com.google.cloud.bigquery.storage.v1beta1.ReadOptions.TableReadOptions
-import com.google.cloud.bigquery.storage.v1beta1.Storage._
-import com.google.cloud.bigquery.storage.v1beta1.TableReferenceProto
+import com.google.cloud.bigquery.storage.v1.CreateReadSessionRequest
+import com.google.cloud.bigquery.storage.v1.DataFormat
+import com.google.cloud.bigquery.storage.v1.ReadRowsRequest
+import com.google.cloud.bigquery.storage.v1.ReadSession
+import com.google.cloud.bigquery.storage.v1.ReadSession.TableReadOptions
 import com.google.cloud.hadoop.util.ApiErrorExtractor
 import com.spotify.scio.bigquery.client.BigQuery.Client
 import com.spotify.scio.bigquery.{BigQuerySysProps, StorageUtil, Table => STable, TableRow}
@@ -72,29 +74,27 @@ final private[client] class TableOps(client: Client) {
     }
 
   def storageAvroRows(table: STable, readOptions: TableReadOptions): Iterator[GenericRecord] = {
-    val tableRefProto = TableReferenceProto.TableReference
+    val tableProjectId = Option(table.ref.getProjectId).getOrElse(client.project)
+    val tableUrn =
+      s"projects/${tableProjectId}/datasets/${table.ref.getDatasetId}/tables/${table.ref.getTableId}"
+
+    val readSessionProto = ReadSession
       .newBuilder()
-      .setDatasetId(table.ref.getDatasetId)
-      .setTableId(table.ref.getTableId)
-      .setProjectId(Option(table.ref.getProjectId).getOrElse(client.project))
+      .setTable(tableUrn)
+      .setReadOptions(readOptions)
+      .setDataFormat(DataFormat.AVRO)
 
     val request = CreateReadSessionRequest
       .newBuilder()
-      .setTableReference(tableRefProto)
-      .setReadOptions(readOptions)
       .setParent(s"projects/${client.project}")
-      .setRequestedStreams(1)
-      .setFormat(DataFormat.AVRO)
+      .setReadSession(readSessionProto)
+      .setMaxStreamCount(1)
       .build()
 
     val session = client.storage.createReadSession(request)
     val readRowsRequest = ReadRowsRequest
       .newBuilder()
-      .setReadPosition(
-        StreamPosition
-          .newBuilder()
-          .setStream(session.getStreams(0))
-      )
+      .setReadStream(session.getStreams(0).getName)
       .build()
 
     val schema = new Schema.Parser().parse(session.getAvroSchema.getSchema)
@@ -137,18 +137,22 @@ final private[client] class TableOps(client: Client) {
       Cache.SchemaCache
     ) {
       val tableRef = bq.BigQueryHelpers.parseTableSpec(tableSpec)
-      val tableRefProto = TableReferenceProto.TableReference
+      val tableProjectId = Option(tableRef.getProjectId).getOrElse(client.project)
+      val tableUrn =
+        s"projects/${tableProjectId}/datasets/${tableRef.getDatasetId}/tables/${tableRef.getTableId}"
+
+      val readSessionProto = ReadSession
         .newBuilder()
-        .setProjectId(Option(tableRef.getProjectId).getOrElse(client.project))
-        .setDatasetId(tableRef.getDatasetId)
-        .setTableId(tableRef.getTableId)
+        .setTable(tableUrn)
+        .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
+        .setDataFormat(DataFormat.AVRO)
 
       val request = CreateReadSessionRequest
         .newBuilder()
-        .setTableReference(tableRefProto)
-        .setReadOptions(StorageUtil.tableReadOptions(selectedFields, rowRestriction))
         .setParent(s"projects/${client.project}")
+        .setReadSession(readSessionProto)
         .build()
+
       val session = client.storage.createReadSession(request)
       new Schema.Parser().parse(session.getAvroSchema.getSchema)
     }
