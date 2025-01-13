@@ -119,7 +119,6 @@ val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.41.4"
 val voyagerVersion = "2.0.9"
-val zoltarVersion = "0.6.0"
 // dependent versions
 val algebraVersion = catsVersion // algebra is a cats module
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -1338,14 +1337,9 @@ lazy val `scio-tensorflow` = project
     unusedCompileDependenciesFilter -= Seq(
       // used by generated code, excluded above
       moduleFilter("com.google.protobuf", "protobuf-java"),
-      // false positive
-      moduleFilter("com.spotify", "zoltar-core"),
-      moduleFilter("com.spotify", "zoltar-tensorflow")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
-      "com.spotify" % "zoltar-core" % zoltarVersion,
-      "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
