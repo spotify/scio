@@ -17,7 +17,7 @@
 
 package com.spotify.scio.examples.complete
 
-import com.spotify.scio.bigquery.TableRow
+import com.spotify.scio.bigquery._
 import com.spotify.scio.testing._
 
 class TopWikipediaSessionsTest extends PipelineSpec {
