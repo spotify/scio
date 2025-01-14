@@ -1336,7 +1336,7 @@ lazy val `scio-tensorflow` = project
     description := "Scio add-on for TensorFlow",
     unusedCompileDependenciesFilter -= Seq(
       // used by generated code, excluded above
-      moduleFilter("com.google.protobuf", "protobuf-java"),
+      moduleFilter("com.google.protobuf", "protobuf-java")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
