@@ -211,7 +211,7 @@ val scala212 = "2.12.20"
 val scalaDefault = scala213
 
 // compiler settings
-ThisBuild / tlJdkRelease := Some(8)
+ThisBuild / tlJdkRelease := Some(11)
 ThisBuild / tlFatalWarnings := false
 ThisBuild / scalaVersion := scalaDefault
 ThisBuild / crossScalaVersions := Seq(scalaDefault, scala212)
