@@ -18,7 +18,6 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing.PipelineSpec
 
 object SequenceExamplesJob {
   def main(argv: Array[String]): Unit = {
