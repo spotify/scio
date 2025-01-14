@@ -20,11 +20,7 @@ package com.spotify.scio.tensorflow.syntax
 import org.apache.beam.sdk.io.Compression
 import org.tensorflow.proto.example.{Example, SequenceExample}
 import com.spotify.scio.io.ClosedTap
-import com.spotify.scio.tensorflow.{
-  TFExampleIO,
-  TFRecordIO,
-  TFSequenceExampleIO
-}
+import com.spotify.scio.tensorflow.{TFExampleIO, TFRecordIO, TFSequenceExampleIO}
 import com.spotify.scio.util.FilenamePolicySupplier
 import com.spotify.scio.values.SCollection
 
@@ -165,6 +161,7 @@ final class SequenceExampleSCollectionOps[T <: SequenceExample](private val self
 }
 
 trait SCollectionSyntax {
+
   /**
    * Implicit conversion from [[com.spotify.scio.values.SCollection SCollection]] to
    * [[TFRecordSCollectionOps]].
