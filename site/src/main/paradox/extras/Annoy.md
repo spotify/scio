@@ -1,5 +1,7 @@
 # Annoy
 
+** Deprecated since Scio 0.14.11 **
+
 Scio integrates with Spotify's [Annoy](https://github.com/spotify/annoy), an approximate nearest neighbors library, via [annoy-java](https://github.com/spotify/annoy-java) and [annoy4s](https://github.com/annoy4s/annoy4s).
 
 ## Write

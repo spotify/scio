@@ -147,6 +147,7 @@ package object annoy {
      * @param dim
      *   Number of dimensions in vectors used to build the Annoy index
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def annoySideInput(path: String, metric: AnnoyMetric, dim: Int): SideInput[AnnoyReader] = {
       val uri = AnnoyUri(path, self.options)
@@ -175,6 +176,7 @@ package object annoy {
      * @return
      *   A singleton SCollection containing the [[AnnoyUri]] of the saved files
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoy(path: String, metric: AnnoyMetric, dim: Int, nTrees: Int): SCollection[AnnoyUri] = {
       val uri = AnnoyUri(path, self.context.options)
@@ -217,6 +219,7 @@ package object annoy {
      * @return
      *   A singleton SCollection containing the [[AnnoyUri]] of the saved files
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoy(metric: AnnoyMetric, dim: Int, nTrees: Int): SCollection[AnnoyUri] = {
       val uuid = UUID.randomUUID()
@@ -242,6 +245,7 @@ package object annoy {
      * @return
      *   SideInput[AnnoyReader]
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoySideInput(metric: AnnoyMetric, dim: Int, nTrees: Int): SideInput[AnnoyReader] =
       self.asAnnoy(metric, dim, nTrees).asAnnoySideInput(metric, dim)
@@ -261,6 +265,7 @@ package object annoy {
      * @return
      *   SideInput[AnnoyReader]
      */
+    @deprecated("Use voyager instead", "0.14.11")
     @experimental
     def asAnnoySideInput(metric: AnnoyMetric, dim: Int): SideInput[AnnoyReader] = {
       val view = self.applyInternal(View.asSingleton())
