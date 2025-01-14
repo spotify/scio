@@ -119,7 +119,6 @@ val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.41.4"
 val voyagerVersion = "2.0.9"
-val zoltarVersion = "0.6.0"
 // dependent versions
 val algebraVersion = catsVersion // algebra is a cats module
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -458,6 +457,27 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[IncompatibleResultTypeProblem](
     "com.spotify.scio.bigquery.StorageUtil.tableReadOptions"
+  ),
+  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn"),
+  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn$"),
+  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.SavedBundlePredictDoFn"),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.tensorflow.SavedBundlePredictDoFn$"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps$"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.tensorflow.syntax.SCollectionSyntax.tensorFlowPredictSCollectionOps"
   )
 )
 
@@ -1337,20 +1357,13 @@ lazy val `scio-tensorflow` = project
     description := "Scio add-on for TensorFlow",
     unusedCompileDependenciesFilter -= Seq(
       // used by generated code, excluded above
-      moduleFilter("com.google.protobuf", "protobuf-java"),
-      // false positive
-      moduleFilter("com.spotify", "zoltar-core"),
-      moduleFilter("com.spotify", "zoltar-tensorflow")
+      moduleFilter("com.google.protobuf", "protobuf-java")
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
-      "com.spotify" % "zoltar-core" % zoltarVersion,
-      "com.spotify" % "zoltar-tensorflow" % zoltarVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.tensorflow" % "ndarray" % ndArrayVersion,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       // test
       "com.spotify" %% "featran-core" % featranVersion % Test,

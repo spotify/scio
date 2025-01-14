@@ -18,7 +18,6 @@
 package com.spotify.scio.tensorflow
 
 import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.testing.PipelineSpec
 
 object SequenceExamplesJob {
   def main(argv: Array[String]): Unit = {
@@ -27,14 +26,5 @@ object SequenceExamplesJob {
       .saveAsTfRecordFile(args("output"))
     sc.run()
     ()
-  }
-}
-
-class TFSequenceExampleTest extends PipelineSpec {
-  "SequenceExamplesJob" should "work" in {
-    JobTest[ExamplesJobV2.type]
-      .args("--output=out")
-      .output(TFExampleIO("out"))(coll => coll should haveSize(2))
-      .run()
   }
 }
