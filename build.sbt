@@ -1343,8 +1343,6 @@ lazy val `scio-tensorflow` = project
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "org.slf4j" % "slf4j-api" % slf4jVersion,
-      "org.tensorflow" % "ndarray" % ndArrayVersion,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
       // test
       "com.spotify" %% "featran-core" % featranVersion % Test,
