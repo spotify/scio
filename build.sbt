@@ -457,6 +457,27 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ),
   ProblemFilters.exclude[IncompatibleResultTypeProblem](
     "com.spotify.scio.bigquery.StorageUtil.tableReadOptions"
+  ),
+  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn"),
+  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.PredictDoFn$"),
+  ProblemFilters.exclude[MissingClassProblem]("com.spotify.scio.tensorflow.SavedBundlePredictDoFn"),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.tensorflow.SavedBundlePredictDoFn$"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.tensorflow.package.tensorFlowPredictSCollectionOps"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps"
+  ),
+  ProblemFilters.exclude[MissingClassProblem](
+    "com.spotify.scio.tensorflow.syntax.PredictSCollectionOps$"
+  ),
+  ProblemFilters.exclude[DirectMissingMethodProblem](
+    "com.spotify.scio.tensorflow.syntax.SCollectionSyntax.tensorFlowPredictSCollectionOps"
   )
 )
 
