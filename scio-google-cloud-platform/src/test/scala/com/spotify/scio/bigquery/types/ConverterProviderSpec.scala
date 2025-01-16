@@ -53,11 +53,12 @@ final class ConverterProviderSpec
   }
   implicit val arbJson: Arbitrary[Json] = Arbitrary(
     for {
+      isArray <- Arbitrary.arbBool.arbitrary
       // f is a key field from TableRow. It cannot be used as column name
       // see https://github.com/apache/beam/issues/33531
       key <- Gen.alphaStr.retryUntil(_ != "f")
       value <- Gen.alphaStr
-    } yield Json(s"""{"$key":"$value"}""")
+    } yield Json(if (isArray) s"""["$key","$value"]""" else s"""{"$key":"$value"}""")
   )
   implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
   implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)

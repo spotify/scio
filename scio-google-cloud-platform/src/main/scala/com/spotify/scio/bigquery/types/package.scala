@@ -72,8 +72,17 @@ package object types {
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
-    def apply(row: TableRow): Json = Json(mapper.writeValueAsString(row))
-    def parse(json: Json): TableRow = mapper.readValue(json.wkt, classOf[TableRow])
+    def apply(value: AnyRef): Json = Json(mapper.writeValueAsString(value))
+    def parse(json: Json): AnyRef = {
+      val node = mapper.readTree(json.wkt)
+      if (node.isObject) {
+        mapper.treeToValue(node, classOf[java.util.Map[_, _]])
+      } else if (node.isArray) {
+        mapper.treeToValue(node, classOf[java.util.List[_]])
+      } else {
+        throw new IllegalArgumentException(s"Invalid json ${json.wkt}")
+      }
+    }
   }
 
   /**

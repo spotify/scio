@@ -23,6 +23,8 @@ import org.joda.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AnyFlatSpec
 
+import scala.jdk.CollectionConverters._
+
 class ConverterProviderTest extends AnyFlatSpec with Matchers {
   import ConverterProviderTest._
 
@@ -49,13 +51,42 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   }
 
   it should "handle required json type" in {
-    val wkt = """{"name":"Alice","age":30}"""
-    val parsed = new TableRow()
-      .set("name", "Alice")
-      .set("age", 30)
+    // JSON object
+    {
+      val wkt = """{"name":"Alice","age":30,"address":{"street":"Broadway","city":"New York"}}"""
+      val parsed = Map(
+        "name" -> "Alice",
+        "age" -> 30,
+        "address" -> Map(
+          "street" -> "Broadway",
+          "city" -> "New York"
+        ).asJava
+      ).asJava
 
-    RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
-    BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow("a" -> parsed)
+      RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
+      BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow(
+        "a" -> parsed
+      )
+    }
+
+    // JSON array
+    {
+      val wkt = """["Alice",30,{"street":"Broadway","city":"New York"}]"""
+      val parsed = List(
+        "Alice",
+        30,
+        Map(
+          "street" -> "Broadway",
+          "city" -> "New York"
+        ).asJava
+      ).asJava
+
+      RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
+      BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow(
+        "a" -> parsed
+      )
+    }
+
   }
 
   it should "handle required big numeric type" in {
