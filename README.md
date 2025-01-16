@@ -31,7 +31,8 @@ Scio is a Scala API for [Apache Beam](http://beam.incubator.apache.org/) and [Go
 
 # Quick Start
 
-Download and install the [Java Development Kit (JDK)](https://adoptopenjdk.net/index.html) version 8.
+Download and install the Java Development Kit (JDK) version 11 or higher,
+eg. [adoptium](https://adoptium.net/index.html) or [corretto](https://aws.amazon.com/corretto/).
 
 Install [sbt](https://www.scala-sbt.org/1.x/docs/Setup.html).
 
