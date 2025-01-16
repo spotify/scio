@@ -66,7 +66,8 @@ object JavaOptions {
         property("file.encoding", "UTF-8"),
         addOpens("java.base", "java.util", "ALL-UNNAMED"),
         addOpens("java.base", "java.lang.invoke", "ALL-UNNAMED"),
-        addOpens("java.base", "java.lang", "ALL-UNNAMED")
+        addOpens("java.base", "java.lang", "ALL-UNNAMED"),
+        addOpens("java.base", "java.nio", "ALL-UNNAMED")
       )
     )
 

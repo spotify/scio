@@ -17,6 +17,9 @@
 
 package com.spotify.scio.bigquery
 
+import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.joda.JodaModule
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.spotify.scio.coders.Coder
 import org.apache.avro.Conversions.DecimalConversion
 import org.apache.avro.LogicalTypes
@@ -53,7 +56,7 @@ package object types {
   case class Geography(wkt: String)
 
   /**
-   * Case class to serve as raw type for Json instances to distinguish them from Strings.
+   * Case class to serve as raw type for Json instances.
    *
    * See also https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#json_type
    *
@@ -61,6 +64,17 @@ package object types {
    *   Well Known Text formatted string that BigQuery displays for Json
    */
   case class Json(wkt: String)
+  object Json {
+    // Use same mapper as the TableRowJsonCoder
+    private lazy val mapper = new ObjectMapper()
+      .registerModule(new JavaTimeModule())
+      .registerModule(new JodaModule())
+      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+      .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+
+    def apply(row: TableRow): Json = Json(mapper.writeValueAsString(row))
+    def parse(json: Json): TableRow = mapper.readValue(json.wkt, classOf[TableRow])
+  }
 
   /**
    * Case class to serve as BigNumeric type to distinguish them from Numeric.

@@ -22,7 +22,7 @@ import java.util.function.{Function => JFunction}
 
 import scala.jdk.CollectionConverters._
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 /** A [[FutureHandlers.Base]] implementation for Scala [[Future]]. */
@@ -35,8 +35,10 @@ trait ScalaFutureHandlers[T] extends FutureHandlers.Base[Future[T], T] {
   }
 
   override def waitForFutures(futures: lang.Iterable[Future[T]]): Unit = {
-    Await.ready(Future.sequence(futures.asScala), Duration.Inf)
-    ()
+    val timeout = Option(getTimeout)
+      .map(_.toMillis.millis)
+      .getOrElse(Duration.Inf)
+    Await.ready(Future.sequence(futures.asScala), timeout)
   }
 
   override def addCallback(

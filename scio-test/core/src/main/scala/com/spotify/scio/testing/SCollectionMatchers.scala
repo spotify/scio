@@ -19,7 +19,6 @@ package com.spotify.scio.testing
 
 import java.lang.{Iterable => JIterable}
 import java.util.{Map => JMap}
-
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.values.SCollection
 import com.twitter.chill.Externalizer
@@ -27,7 +26,7 @@ import org.apache.beam.sdk.testing.PAssert
 import org.apache.beam.sdk.testing.PAssert.{IterableAssert, SingletonAssert}
 import org.apache.beam.sdk.transforms.SerializableFunction
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow
-import org.apache.beam.sdk.util.CoderUtils
+import org.apache.beam.sdk.util.{CoderUtils, SerializableSupplier}
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.{hamcrest => h}
 import org.hamcrest.Matchers
@@ -69,13 +68,10 @@ private object ScioMatchers {
   /** Create a hamcrest matcher that can be serialized using a Coder[T]. */
   private def supplierFromCoder[A: Coder, B](@transient a: A, @transient context: ScioContext)(
     builder: A => B
-  ) = {
+  ): SerializableSupplier[B] = {
     val coder = CoderMaterializer.beam(context, Coder[A])
     val encoded = CoderUtils.encodeToByteArray(coder, a)
-    new SerializableMatchers.SerializableSupplier[B] {
-      def a = CoderUtils.decodeFromByteArray(coder, encoded)
-      def get() = builder(a)
-    }
+    () => builder(CoderUtils.decodeFromByteArray(coder, encoded))
   }
 
   /**

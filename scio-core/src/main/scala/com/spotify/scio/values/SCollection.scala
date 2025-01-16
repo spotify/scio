@@ -45,7 +45,7 @@ import org.apache.beam.sdk.util.{CoderUtils, SerializableUtils}
 import org.apache.beam.sdk.values.WindowingStrategy.AccumulationMode
 import org.apache.beam.sdk.values._
 import org.apache.beam.sdk.{io => beam}
-import org.joda.time.{Duration, Instant}
+import org.joda.time.{Duration, Instant, ReadableInstant}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
@@ -382,11 +382,8 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    * @group collection
    */
   def partitionByKey[U](partitionKeys: Set[U])(f: T => U): Map[U, SCollection[T]] = {
-    val partitionKeysIndexed = partitionKeys.toIndexedSeq
-
-    partitionKeysIndexed
-      .zip(partition(partitionKeys.size, (t: T) => partitionKeysIndexed.indexOf(f(t))))
-      .toMap
+    val partitions = partitionKeys.zipWithIndex.toMap
+    partitionKeys.zip(partition(partitionKeys.size, x => partitions(f(x)))).toMap
   }
 
   /**
@@ -774,6 +771,16 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
   def map[U: Coder](f: T => U): SCollection[U] = this.parDo(Functions.mapFn(f))
 
   /**
+   * Return the min of this SCollection as defined by the implicit `Ordering[T]`.
+   * @return
+   *   a new SCollection with the minimum element
+   * @group transform
+   */
+  // Scala lambda is simpler and more powerful than transforms.Min
+  def min(implicit ord: Ordering[T]): SCollection[T] =
+    this.reduce(ord.min)
+
+  /**
    * Return the max of this SCollection as defined by the implicit `Ordering[T]`.
    * @return
    *   a new SCollection with the maximum element
@@ -784,6 +791,29 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     this.reduce(ord.max)
 
   /**
+   * Return the latest of this SCollection according to its event time.
+   * @return
+   *   a new SCollection with the latest element
+   * @group transform
+   */
+  def latest: SCollection[T] =
+    // widen to ReadableInstant for scala 2.12 implicit ordering
+    this.withTimestamp.max(Ordering.by(_._2: ReadableInstant)).keys
+
+  /**
+   * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
+   * better optimized than [[reduce]] in some cases.
+   * @group transform
+   */
+  def sum(implicit sg: Semigroup[T]): SCollection[T] = {
+    SCollection.logger.warn(
+      "combine/sum does not support default value and may fail in some streaming scenarios. " +
+        "Consider aggregate/fold instead."
+    )
+    this.pApply(Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults())
+  }
+
+  /**
    * Return the mean of this SCollection as defined by the implicit `Numeric[T]`.
    * @return
    *   a new SCollection with the mean of elements
@@ -791,21 +821,10 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    */
   def mean(implicit ev: Numeric[T]): SCollection[Double] = this.transform { in =>
     val e = ev // defeat closure
-    in.map(e.toDouble)
-      .asInstanceOf[SCollection[JDouble]]
-      .pApply(Mean.globally())
+    in.map[JDouble](e.toDouble)
+      .pApply(Mean.globally().withoutDefaults())
       .asInstanceOf[SCollection[Double]]
   }
-
-  /**
-   * Return the min of this SCollection as defined by the implicit `Ordering[T]`.
-   * @return
-   *   a new SCollection with the minimum element
-   * @group transform
-   */
-  // Scala lambda is simpler and more powerful than transforms.Min
-  def min(implicit ord: Ordering[T]): SCollection[T] =
-    this.reduce(ord.min)
 
   /**
    * Compute the SCollection's data distribution using approximate `N`-tiles.
@@ -937,19 +956,6 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
     }
 
   /**
-   * Reduce with [[com.twitter.algebird.Semigroup Semigroup]]. This could be more powerful and
-   * better optimized than [[reduce]] in some cases.
-   * @group transform
-   */
-  def sum(implicit sg: Semigroup[T]): SCollection[T] = {
-    SCollection.logger.warn(
-      "combine/sum does not support default value and may fail in some streaming scenarios. " +
-        "Consider aggregate/fold instead."
-    )
-    this.pApply(Combine.globally(Functions.reduceFn(context, sg)).withoutDefaults())
-  }
-
-  /**
    * Return a sampled subset of any `num` elements of the SCollection.
    * @group transform
    */
@@ -962,11 +968,9 @@ sealed trait SCollection[T] extends PCollectionWrapper[T] {
    *   a new SCollection whose single value is an `Iterable` of the top k
    * @group transform
    */
-  def top(
-    num: Int
-  )(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
+  def top(num: Int)(implicit ord: Ordering[T]): SCollection[Iterable[T]] =
     this.transform {
-      _.pApply(Top.of(num, ord)).map((l: JIterable[T]) => l.asScala)
+      _.pApply(Top.of[T, Ordering[T]](num, ord)).map((l: JIterable[T]) => l.asScala)
     }
 
   // =======================================================================
