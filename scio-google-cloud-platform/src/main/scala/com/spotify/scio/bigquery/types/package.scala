@@ -28,6 +28,7 @@ import org.typelevel.scalaccompat.annotation.nowarn
 import java.math.MathContext
 import java.nio.ByteBuffer
 import scala.annotation.StaticAnnotation
+
 package object types {
 
   /**

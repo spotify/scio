@@ -1030,6 +1030,7 @@ lazy val `scio-google-cloud-platform` = project
     libraryDependencies ++= Seq(
       // compile
       "com.esotericsoftware" % "kryo-shaded" % kryoVersion,
+      "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
       "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVersion,
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
