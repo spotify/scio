@@ -419,6 +419,12 @@ ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[MissingTypesProblem](
     "com.spotify.scio.bigquery.types.package$Json$"
   ),
+  ProblemFilters.exclude[IncompatibleMethTypeProblem](
+    "com.spotify.scio.bigquery.types.package#Json.apply"
+  ),
+  ProblemFilters.exclude[IncompatibleResultTypeProblem](
+    "com.spotify.scio.bigquery.types.package#Json.parse"
+  ),
   // tf-metadata upgrade
   ProblemFilters.exclude[Problem](
     "org.tensorflow.metadata.v0.*"
