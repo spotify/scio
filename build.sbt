@@ -142,68 +142,6 @@ ThisBuild / organization := "com.spotify"
 ThisBuild / organizationName := "Spotify AB"
 ThisBuild / startYear := Some(2016)
 ThisBuild / licenses := Seq(License.Apache2)
-ThisBuild / developers := List(
-  Developer(
-    id = "sinisa_lyh",
-    name = "Neville Li",
-    email = "neville.lyh@gmail.com",
-    url = url("https://twitter.com/sinisa_lyh")
-  ),
-  Developer(
-    id = "ravwojdyla",
-    name = "Rafal Wojdyla",
-    email = "ravwojdyla@gmail.com",
-    url = url("https://twitter.com/ravwojdyla")
-  ),
-  Developer(
-    id = "andrewsmartin",
-    name = "Andrew Martin",
-    email = "andrewsmartin.mg@gmail.com",
-    url = url("https://twitter.com/andrew_martin92")
-  ),
-  Developer(
-    id = "fallonfofallon",
-    name = "Fallon Chen",
-    email = "fallon@spotify.com",
-    url = url("https://twitter.com/fallonfofallon")
-  ),
-  Developer(
-    id = "regadas",
-    name = "Filipe Regadas",
-    email = "filiperegadas@gmail.com",
-    url = url("https://twitter.com/regadas")
-  ),
-  Developer(
-    id = "jto",
-    name = "Julien Tournay",
-    email = "julient@spotify.com",
-    url = url("https://twitter.com/skaalf")
-  ),
-  Developer(
-    id = "clairemcginty",
-    name = "Claire McGinty",
-    email = "clairem@spotify.com",
-    url = url("http://github.com/clairemcginty")
-  ),
-  Developer(
-    id = "syodage",
-    name = "Shameera Rathnayaka",
-    email = "shameerayodage@gmail.com",
-    url = url("http://github.com/syodage")
-  ),
-  Developer(
-    id = "kellen",
-    name = "Kellen Dye",
-    email = "dye.kellen@gmail.com",
-    url = url("http://github.com/kellen")
-  ),
-  Developer(
-    id = "farzad-sedghi",
-    name = "farzad sedghi",
-    email = "farzadsedghi2@gmail.com",
-    url = url("http://github.com/farzad-sedghi")
-  )
-)
 
 // scala versions
 val scala213 = "2.13.16"
