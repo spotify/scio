@@ -28,6 +28,7 @@ import org.typelevel.scalaccompat.annotation.nowarn
 import java.math.MathContext
 import java.nio.ByteBuffer
 import scala.annotation.StaticAnnotation
+import scala.util.Try
 
 package object types {
 
@@ -64,8 +65,11 @@ package object types {
    * @param wkt
    *   Well Known Text formatted string that BigQuery displays for Json
    */
-  case class Json(wkt: String)
+  case class Json private (wkt: String)
   object Json {
+    implicit val jsonCoder: Coder[Json] =
+      Coder.xmap(Coder[String])(new Json(_), _.wkt)
+
     // Use same mapper as the TableRowJsonCoder
     private lazy val mapper = new ObjectMapper()
       .registerModule(new JavaTimeModule())
@@ -73,17 +77,14 @@ package object types {
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
-    def apply(value: AnyRef): Json = Json(mapper.writeValueAsString(value))
-    def parse(json: Json): AnyRef = {
-      val node = mapper.readTree(json.wkt)
-      if (node.isObject) {
-        mapper.treeToValue(node, classOf[java.util.Map[_, _]])
-      } else if (node.isArray) {
-        mapper.treeToValue(node, classOf[java.util.List[_]])
-      } else {
-        throw new IllegalArgumentException(s"Invalid json ${json.wkt}")
-      }
+    def apply(value: AnyRef): Json = value match {
+      case str: String if Try(mapper.readTree(str)).isSuccess =>
+        // string formatted json vs string literal
+        Json(str)
+      case _ =>
+        Json(mapper.writeValueAsString(value))
     }
+    def parse(json: Json): AnyRef = mapper.readValue(json.wkt, classOf[Object])
   }
 
   /**

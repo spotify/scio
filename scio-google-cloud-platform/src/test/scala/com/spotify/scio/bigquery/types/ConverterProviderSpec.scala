@@ -51,15 +51,22 @@ final class ConverterProviderSpec
       .retryUntil(_.precision <= Numeric.MaxNumericPrecision)
       .map(Numeric.apply)
   }
-  implicit val arbJson: Arbitrary[Json] = Arbitrary(
-    for {
-      isArray <- Arbitrary.arbBool.arbitrary
-      // f is a key field from TableRow. It cannot be used as column name
-      // see https://github.com/apache/beam/issues/33531
-      key <- Gen.alphaStr.retryUntil(_ != "f")
-      value <- Gen.alphaStr
-    } yield Json(if (isArray) s"""["$key","$value"]""" else s"""{"$key":"$value"}""")
-  )
+
+  implicit val arbJson: Arbitrary[Json] = Arbitrary {
+    import Arbitrary._
+    import Gen._
+    Gen
+      .oneOf(
+        alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""{"$str":$num}""")),
+        alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""["$str",$num]""")),
+        alphaLowerStr.map(str => s"\"$str\""),
+        arbInt.arbitrary.map(_.toString),
+        arbBool.arbitrary.map(_.toString)
+        // Gen.const("null"), null json literal is lost, interpreted as missing field
+      )
+      .map(wkt => Json(wkt))
+  }
+
   implicit val eqByteArrays: Eq[Array[Byte]] = Eq.instance[Array[Byte]](_.toList == _.toList)
   implicit val eqByteString: Eq[ByteString] = Eq.instance[ByteString](_ == _)
   implicit val eqInstant: Eq[Instant] = Eq.instance[Instant](_ == _)
@@ -70,7 +77,8 @@ final class ConverterProviderSpec
   property("round trip required primitive types") {
     forAll { r1: Required =>
       val r2 = BigQueryType.fromTableRow[Required](BigQueryType.toTableRow[Required](r1))
-      EqDerivation[Required].eqv(r1, r2) shouldBe true
+      val res = EqDerivation[Required].eqv(r1, r2)
+      res shouldBe true
     }
   }
 

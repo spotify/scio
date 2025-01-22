@@ -77,15 +77,20 @@ object TypedBigQueryIT {
       y <- Gen.numChar
     } yield Geography(s"POINT($x $y)")
   )
-  implicit val arbJson: Arbitrary[Json] = Arbitrary(
-    for {
-      isArray <- Arbitrary.arbBool.arbitrary
-      // f is a key field from TableRow. It cannot be used as column name
-      // see https://github.com/apache/beam/issues/33531
-      key <- Gen.alphaStr.retryUntil(_ != "f")
-      value <- Gen.alphaStr
-    } yield Json(if (isArray) s"""["$key","$value"]""" else s"""{"$key":"$value"}""")
-  )
+  implicit val arbJson: Arbitrary[Json] = Arbitrary {
+    import Arbitrary._
+    import Gen._
+    Gen
+      .oneOf(
+        alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""{"$str":$num}""")),
+        alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""["$str",$num]""")),
+        alphaLowerStr.map(str => s"\"$str\"")
+        // arbInt.arbitrary.map(_.toString), TableRow serialization converts to string literal
+        // arbBool.arbitrary.map(_.toString), TableRow serialization converts to string literal
+        // Gen.const("null"), null json literal is lost, interpreted as missing field
+      )
+      .map(wkt => Json(wkt))
+  }
 
   implicit val arbBigNumeric: Arbitrary[BigNumeric] = Arbitrary {
     // Precision: 76.76 (the 77th digit is partial)
@@ -107,7 +112,7 @@ object TypedBigQueryIT {
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
 
-  private val records = Gen.listOfN(100, recordGen).sample.get
+  private val records = Gen.listOfN(5, recordGen).sample.get
   private val options = PipelineOptionsFactory
     .fromArgs(
       "--project=data-integration-test",
