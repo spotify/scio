@@ -532,7 +532,7 @@ class ScioContext private[scio] (
       )
     } catch {
       // Hadoop and/or gcs-connector is excluded from classpath, do not try to set options
-      case _: ClassNotFoundException | _: NoSuchMethodException =>
+      case _: NoClassDefFoundError | _: NoSuchMethodException =>
     }
   }
 
