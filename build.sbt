@@ -29,21 +29,21 @@ import org.typelevel.scalacoptions.JavaMajorVersion.javaMajorVersion
 // To test release candidates, find the beam repo and add it as a resolver
 // ThisBuild / resolvers += "apache-beam-staging" at "https://repository.apache.org/content/repositories/"
 val beamVendorVersion = "0.1"
-val beamVersion = "2.61.0"
+val beamVersion = "2.62.0"
 
 // check version used by beam
-// https://github.com/apache/beam/blob/v2.61.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
+// https://github.com/apache/beam/blob/v2.62.0/buildSrc/src/main/groovy/org/apache/beam/gradle/BeamModulePlugin.groovy
 val autoServiceVersion = "1.0.1"
 val autoValueVersion = "1.9"
-val avroVersion = sys.props.getOrElse("avro.version", "1.11.3")
-val bigdataossVersion = "2.2.16"
+val avroVersion = sys.props.getOrElse("avro.version", "1.11.4")
+val bigdataossVersion = "2.2.26"
 val bigtableClientVersion = "1.28.0"
 val commonsCodecVersion = "1.17.1"
 val commonsCompressVersion = "1.26.2"
 val commonsIoVersion = "2.16.1"
 val commonsLang3Version = "3.14.0"
 val commonsMath3Version = "3.6.1"
-val gcpLibrariesVersion = "26.45.0"
+val gcpLibrariesVersion = "26.49.0"
 val googleClientsVersion = "2.0.0"
 val guavaVersion = "33.1.0-jre"
 val hamcrestVersion = "2.1"
@@ -51,14 +51,14 @@ val httpClientVersion = "4.5.13"
 val httpCoreVersion = "4.4.14"
 val jacksonVersion = "2.15.4"
 val jodaTimeVersion = "2.10.14"
-val nettyVersion = "4.1.100.Final"
+val nettyVersion = "4.1.110.Final"
 val slf4jVersion = "1.7.30"
 val zstdJniVersion = "1.5.6-3"
 // dependent versions
-val googleApiServicesBigQueryVersion = s"v2-rev20240815-$googleClientsVersion"
+val googleApiServicesBigQueryVersion = s"v2-rev20240919-$googleClientsVersion"
 val googleApiServicesDataflowVersion = s"v1b3-rev20240817-$googleClientsVersion"
 val googleApiServicesPubsubVersion = s"v1-rev20220904-$googleClientsVersion"
-val googleApiServicesStorageVersion = s"v1-rev20240706-$googleClientsVersion"
+val googleApiServicesStorageVersion = s"v1-rev20240924-$googleClientsVersion"
 // beam tested versions
 val zetasketchVersion = "0.1.0" // sdks/java/extensions/zetasketch/build.gradle
 val flinkVersion = "1.19.0" // runners/flink/1.19/build.gradle
@@ -68,9 +68,9 @@ val sparkVersion = "3.5.0" // runners/spark/3/build.gradle
 val sparkMajorVersion = VersionNumber(sparkVersion).numbers.take(1).mkString(".")
 
 // check recommended versions from libraries-bom
-// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.45.0/index.html
+// https://storage.googleapis.com/cloud-opensource-java-dashboard/com.google.cloud/libraries-bom/26.49.0/index.html
 val failureAccessVersion = "1.0.2"
-val checkerQualVersion = "3.46.0"
+val checkerQualVersion = "3.47.0"
 val jsr305Version = "3.0.2"
 val perfmarkVersion = "0.27.0"
 
@@ -1649,6 +1649,17 @@ lazy val `scio-repl` = project
           MergeStrategy.filterDistinctLines
         case PathList("META-INF", "native-image", "native-image.properties") =>
           // merge conflicting native-image property files
+          MergeStrategy.filterDistinctLines
+        case PathList(
+              "META-INF",
+              "native-image",
+              "io.grpc.netty.shaded.io.netty",
+              "netty-codec" | "netty-handler",
+              "generated",
+              "handlers",
+              "reflect-config.json"
+            ) =>
+          // merge conflicting netty config files
           MergeStrategy.filterDistinctLines
         case s => old(s)
       }
