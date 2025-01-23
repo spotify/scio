@@ -126,22 +126,11 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     Try(bq.tables.delete(avroTable.ref))
   }
 
-  def waitForTable(table: Table.Spec): Unit = {
-    var retries = 0
-    while (!bq.tables.exists(table.ref) && retries < 3) {
-      Thread.sleep(500)
-      retries += 1
-    }
-    if (retries >= 3) throw new RuntimeException(s"Table $table not found")
-  }
-
   "TypedBigQuery" should "handle records as TableRow" in {
     runWithRealContext(options) { sc =>
       sc.parallelize(records)
         .saveAsTypedBigQueryTable(typedTable, createDisposition = CREATE_IF_NEEDED)
     }.waitUntilFinish()
-
-    waitForTable(typedTable)
 
     runWithRealContext(options) { sc =>
       val data = sc.typedBigQuery[Record](typedTable)
@@ -159,8 +148,6 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
           createDisposition = CREATE_IF_NEEDED
         )
     }.waitUntilFinish()
-
-    waitForTable(tableRowTable)
 
     runWithRealContext(options) { sc =>
       val data = sc.bigQueryTable(tableRowTable).map(Record.fromTableRow)
@@ -180,8 +167,6 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
           createDisposition = CREATE_IF_NEEDED
         )
     }.waitUntilFinish()
-
-    waitForTable(avroTable)
 
     runWithRealContext(options) { sc =>
       val data =
