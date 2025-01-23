@@ -48,7 +48,10 @@ object TypedBigQueryIT {
     timestamp: Instant,
     date: LocalDate,
     time: LocalTime,
-    // BQ DATETIME is problematic with avro: export as 'string(datetime)', load as '(long)local-timestamp-micros'
+    // BQ DATETIME is problematic with avro as BQ api uses different representations:
+    // - BQ export uses 'string(datetime)'
+    // - BQ load uses 'long(local-timestamp-micros)'
+    // BigQueryType avroSchema favors read with string type
     // datetime: LocalDateTime,
     geography: Geography,
     json: Json,
