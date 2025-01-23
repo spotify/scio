@@ -77,8 +77,7 @@ final class ConverterProviderSpec
   property("round trip required primitive types") {
     forAll { r1: Required =>
       val r2 = BigQueryType.fromTableRow[Required](BigQueryType.toTableRow[Required](r1))
-      val res = EqDerivation[Required].eqv(r1, r2)
-      res shouldBe true
+      EqDerivation[Required].eqv(r1, r2) shouldBe true
     }
   }
 

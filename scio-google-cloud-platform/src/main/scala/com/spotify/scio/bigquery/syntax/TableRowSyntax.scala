@@ -126,13 +126,12 @@ object TableRowOps {
     case null                 => Json(null)
     case x: java.lang.Number  => Json(x)
     case x: java.lang.Boolean => Json(x)
+    case x: java.lang.String  => Json(x) // also handles json string
     // object
     case x: java.util.Map[_, _] => Json(x)
     // array
     case x: java.util.List[_] => Json(x)
-    // json string / literal
-    case x: String => Json(x)
-    case _         => throw new UnsupportedOperationException("Cannot convert to json: " + value)
+    case _ => throw new UnsupportedOperationException("Cannot convert to json: " + value)
   }
 
   def bignumeric(value: AnyRef): BigNumeric = value match {

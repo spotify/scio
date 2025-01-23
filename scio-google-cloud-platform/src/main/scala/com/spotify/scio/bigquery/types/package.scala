@@ -27,7 +27,7 @@ import org.typelevel.scalaccompat.annotation.nowarn
 
 import java.math.MathContext
 import java.nio.ByteBuffer
-import scala.annotation.StaticAnnotation
+import scala.annotation.{unused, StaticAnnotation}
 import scala.util.Try
 
 package object types {
@@ -77,12 +77,15 @@ package object types {
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
+    // force to use the apply(AnyRef)
+    @unused private def apply(wkt: String): Json = new Json(wkt)
+
     def apply(value: AnyRef): Json = value match {
       case str: String if Try(mapper.readTree(str)).isSuccess =>
         // string formatted json vs string literal
-        Json(str)
+        new Json(str)
       case _ =>
-        Json(mapper.writeValueAsString(value))
+        new Json(mapper.writeValueAsString(value))
     }
     def parse(json: Json): AnyRef = mapper.readValue(json.wkt, classOf[Object])
   }

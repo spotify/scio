@@ -53,16 +53,19 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
   it should "handle required json type" in {
     // JSON object
     {
-      val wkt = """{"name":"Alice","age":30,"address":{"street":"Broadway","city":"New York"}}"""
+      val wkt =
+        """{"name":"Alice","age":30,"job":null,"address":{"street":"Broadway","city":"New York"}}"""
       val parsed = Map(
         "name" -> "Alice",
         "age" -> 30,
+        "job" -> null,
         "address" -> Map(
           "street" -> "Broadway",
           "city" -> "New York"
         ).asJava
       ).asJava
 
+      RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
       RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
       BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow(
         "a" -> parsed
@@ -71,22 +74,61 @@ class ConverterProviderTest extends AnyFlatSpec with Matchers {
 
     // JSON array
     {
-      val wkt = """["Alice",30,{"street":"Broadway","city":"New York"}]"""
+      val wkt = """["Alice",30,null,{"street":"Broadway","city":"New York"}]"""
       val parsed = List(
         "Alice",
         30,
+        null,
         Map(
           "street" -> "Broadway",
           "city" -> "New York"
         ).asJava
       ).asJava
 
+      RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
       RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
       BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow(
         "a" -> parsed
       )
     }
 
+    // JSON string literal
+    {
+      val wkt = "\"Hello world!\""
+      val parsed = "Hello world!"
+
+      RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
+      RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
+      BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow(
+        "a" -> parsed
+      )
+    }
+
+    // JSON boolean literal
+    {
+      val wkt = "false"
+      val parsed = false
+
+      RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
+      RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
+      BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow(
+        "a" -> parsed
+      )
+    }
+
+    // JSON number literal
+    {
+      val wkt = "42"
+      val parsed = 42
+
+      RequiredJson.fromTableRow(TableRow("a" -> wkt)) shouldBe RequiredJson(Json(wkt))
+      RequiredJson.fromTableRow(TableRow("a" -> parsed)) shouldBe RequiredJson(Json(wkt))
+      BigQueryType.toTableRow[RequiredJson](RequiredJson(Json(wkt))) shouldBe TableRow(
+        "a" -> parsed
+      )
+    }
+
+    // JSON null literal is ambiguous with NULLABLE column
   }
 
   it should "handle required big numeric type" in {

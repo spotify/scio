@@ -84,9 +84,9 @@ object TypedBigQueryIT {
       .oneOf(
         alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""{"$str":$num}""")),
         alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""["$str",$num]""")),
-        alphaLowerStr.map(str => s"\"$str\"")
-        // arbInt.arbitrary.map(_.toString), TableRow serialization converts to string literal
-        // arbBool.arbitrary.map(_.toString), TableRow serialization converts to string literal
+        alphaLowerStr.map(str => s"\"$str\""),
+        arbInt.arbitrary.map(_.toString),
+        arbBool.arbitrary.map(_.toString)
         // Gen.const("null"), null json literal is lost, interpreted as missing field
       )
       .map(wkt => Json(wkt))
@@ -112,7 +112,7 @@ object TypedBigQueryIT {
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
 
-  private val records = Gen.listOfN(5, recordGen).sample.get
+  private val records = Gen.listOfN(100, recordGen).sample.get
   private val options = PipelineOptionsFactory
     .fromArgs(
       "--project=data-integration-test",
