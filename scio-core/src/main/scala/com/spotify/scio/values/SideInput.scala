@@ -49,9 +49,7 @@ trait SideInput[T] extends Serializable {
     cache
   }
 
-  /**
-   * Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput.
-   */
+  /** Create a new [[SideInput]] by applying a function on the elements wrapped in this SideInput. */
   @deprecated(since = "0.14.0")
   def map[B](f: T => B): SideInput[B] = new DelegatingSideInput[T, B](this, f)
 

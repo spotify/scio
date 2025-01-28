@@ -220,9 +220,7 @@ object BigQuery {
       BigQueryConfig.impersonationInfo
     )
 
-  /**
-   * Create a new BigQueryClient instance with the given project, secret file and impersonation info
-   */
+  /** Create a new BigQueryClient instance with the given project, secret file and impersonation info */
   def apply(project: String, secretFile: File, impersonation: Option[ImpersonationInfo]): BigQuery =
     BigQuery(
       project,
@@ -232,9 +230,7 @@ object BigQuery {
       impersonation
     )
 
-  /**
-   * Create a new BigQueryClient instance with the given project, credential and impersonation info
-   */
+  /** Create a new BigQueryClient instance with the given project, credential and impersonation info */
   def apply(
     project: String,
     credentials: => GoogleCredentials,
