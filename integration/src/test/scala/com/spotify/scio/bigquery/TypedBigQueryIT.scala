@@ -20,7 +20,7 @@ package com.spotify.scio.bigquery
 import com.google.protobuf.ByteString
 import com.spotify.scio.avro._
 import com.spotify.scio.coders.Coder
-import com.spotify.scio.bigquery.BigQueryTypedTable.Format
+import com.spotify.scio.bigquery.BigQueryIO.Format
 import com.spotify.scio.bigquery.client.BigQuery
 import com.spotify.scio.bigquery.types.{BigNumeric, Geography, Json}
 import com.spotify.scio.testing._
@@ -167,7 +167,7 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     }.waitUntilFinish()
 
     runWithRealContext(options) { sc =>
-      val data = sc.bigQueryTable(avroTable, Format.GenericRecord).map(Record.fromAvro)
+      val data = sc.bigQueryTableFormat(avroTable, Format.Avro()).map(Record.fromAvro)
       data should containInAnyOrder(records)
     }
   }

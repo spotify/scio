@@ -32,17 +32,16 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 
 import java.math.MathContext
 import java.nio.ByteBuffer
+
 import scala.jdk.CollectionConverters._
 
 sealed trait Source {
-  protected type Impl <: Source
-  def latest(bq: BigQuery): Impl
-  def latest(): Impl = latest(BigQuery.defaultInstance())
+  def latest(bq: BigQuery): Source
+  def latest(): Source
 }
 
 /** A wrapper type [[Query]] which wraps a SQL String. */
 final case class Query(underlying: String) extends Source {
-  override protected type Impl = Query
 
   /**
    * A helper method to replace the "$LATEST" placeholder in query to the latest common partition.
@@ -68,14 +67,17 @@ final case class Query(underlying: String) extends Source {
    */
   override def latest(bq: BigQuery): Query =
     copy(BigQueryPartitionUtil.latestQuery(bq, underlying))
+  override def latest(): Query =
+    latest(BigQuery.defaultInstance())
 
   override def toString: String = underlying
 }
 
 /**
- * Bigquery [[Table]]. Tables can be referenced by a table spec `String` or by a table reference
- * [[GTableReference]]. An additional [[Table.Filter]] can be given to specify selected fields and
- * row restrictions when used with the BQ storage read API.
+ * Bigquery [[Table]] abstracts the multiple ways of referencing Bigquery tables. Tables can be
+ * referenced by a table spec `String` or by a table reference [[GTableReference]]. An additional
+ * [[Table.Filter]] can be given to specify selected fields and row restrictions when used with the
+ * BQ storage read API.
  *
  * Example: Create a [[Table]] from a [[GTableReference]]:
  * {{{
@@ -101,13 +103,14 @@ final case class Query(underlying: String) extends Source {
  * }}}
  */
 case class Table private (ref: GTableReference, filter: Option[Table.Filter]) extends Source {
-  override protected type Impl = Table
   lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
-  def latest(bq: BigQuery): Table = {
+  override def latest(bq: BigQuery): Table = {
     val latestSpec = BigQueryPartitionUtil.latestTable(bq, spec)
     val latestRef = BigQueryHelpers.parseTableSpec(latestSpec)
     copy(latestRef)
   }
+  override def latest(): Table =
+    latest(BigQuery.defaultInstance())
 
   override def toString: String = filter match {
     case None => spec
@@ -186,6 +189,12 @@ object Table {
 
   def apply(spec: String, filter: Option[Table.Filter]): Table =
     new Table(BigQueryHelpers.parseTableSpec(spec), filter)
+
+  // deprecated API
+  @deprecated("Use Table.apply", "0.15.0")
+  def Ref(ref: GTableReference): Table = apply(ref)
+  @deprecated("Use Table.apply", "0.15.0")
+  def Spec(spec: String): Table = apply(spec)
 }
 
 /**
