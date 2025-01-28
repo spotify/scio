@@ -1050,6 +1050,7 @@ lazy val `scio-google-cloud-platform` = project
       "com.google.cloud" % "google-cloud-core" % gcpBom.key.value,
       "com.google.cloud" % "google-cloud-spanner" % gcpBom.key.value,
       "com.google.cloud.bigdataoss" % "util" % bigdataossVersion,
+      "com.google.guava" % "guava" % guavaVersion,
       "com.google.http-client" % "google-http-client" % gcpBom.key.value,
       "com.google.http-client" % "google-http-client-gson" % gcpBom.key.value,
       "com.google.protobuf" % "protobuf-java" % gcpBom.key.value,
