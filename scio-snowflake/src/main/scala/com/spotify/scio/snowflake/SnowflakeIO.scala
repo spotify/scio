@@ -124,7 +124,8 @@ object SnowflakeIO {
   }
 
   private[snowflake] def userDataMapper[T: RowEncoder]: UserDataMapper[T] = { (element: T) =>
-    RowEncoder[T].encode(element).toArray
+    // Snowflake COPY uses backslash as escape char
+    RowEncoder[T].encode(element).toArray.map(_.replace("\\", "\\\\"))
   }
 }
 
