@@ -86,7 +86,7 @@ val chillVersion = "0.10.0"
 val circeVersion = "0.14.10"
 val commonsTextVersion = "1.10.0"
 val elasticsearch7Version = "7.17.21"
-val elasticsearch8Version = "8.15.2"
+val elasticsearch8Version = "8.15.5"
 val fansiVersion = "0.5.0"
 val featranVersion = "0.8.0"
 val httpAsyncClientVersion = "4.1.5"
@@ -117,8 +117,9 @@ val shapelessVersion = "2.3.12"
 val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.16.1"
-val testContainersVersion = "0.41.4"
+val testContainersVersion = "0.41.8"
 val voyagerVersion = "2.1.0"
+
 // dependent versions
 val algebraVersion = catsVersion // algebra is a cats module
 val scalatestplusVersion = s"$scalatestVersion.0"
@@ -205,7 +206,7 @@ ThisBuild / developers := List(
 )
 
 // scala versions
-val scala213 = "2.13.15"
+val scala213 = "2.13.16"
 val scala212 = "2.12.20"
 val scalaDefault = scala213
 
