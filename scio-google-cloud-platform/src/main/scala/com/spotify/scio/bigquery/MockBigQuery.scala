@@ -93,9 +93,7 @@ class MockBigQuery private (private val bq: BigQuery) {
     new MockTable(bq, t.getSchema, original, temp)
   }
 
-  /**
-   * Get result of a live query against BigQuery service, substituting mocked tables with test data.
-   */
+  /** Get result of a live query against BigQuery service, substituting mocked tables with test data. */
   def queryResult(sqlQuery: String, flattenResults: Boolean = false): Seq[TableRow] = {
     val isLegacy = bq.query.isLegacySql(sqlQuery, flattenResults)
     val mockQuery = mapping.foldLeft(sqlQuery) { case (q, (src, dst)) =>
@@ -112,9 +110,7 @@ class MockBigQuery private (private val bq: BigQuery) {
     }
   }
 
-  /**
-   * Get result of a live query against BigQuery service, substituting mocked tables with test data.
-   */
+  /** Get result of a live query against BigQuery service, substituting mocked tables with test data. */
   def typedQueryResult[T <: HasAnnotation: TypeTag](
     sqlQuery: String,
     flattenResults: Boolean = false

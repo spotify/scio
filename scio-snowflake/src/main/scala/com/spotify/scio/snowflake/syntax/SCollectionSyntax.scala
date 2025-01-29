@@ -26,9 +26,7 @@ import org.apache.beam.sdk.io.snowflake.data.SnowflakeTableSchema
 import org.apache.beam.sdk.io.snowflake.enums.{CreateDisposition, WriteDisposition}
 import org.joda.time.Duration
 
-/**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Snowflake methods.
- */
+/** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Snowflake methods. */
 final class SnowflakeSCollectionOps[T](private val self: SCollection[T]) extends AnyVal {
 
   /**
