@@ -220,7 +220,6 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
       ClosedTap[Nothing](EmptyTap)
     }
 
-    // TODO for 0.15: make private, remove deprecation
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a specific location.
      *
@@ -235,8 +234,7 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
      * @return
      *   A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    @deprecated("Use saveAsSparkey instead", since = "0.14.0")
-    def asSparkey(
+    private[scio] def asSparkey(
       path: String = null,
       maxMemoryUsage: Long = -1,
       numShards: Short = SparkeyIO.DefaultNumShards,
@@ -263,15 +261,14 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
       )
     }
 
-    // TODO for 0.15: make private, remove deprecation
     /**
      * Write the key-value pairs of this SCollection as a Sparkey file to a temporary location.
      *
      * @return
      *   A singleton SCollection containing the [[SparkeyUri]] of the saved files.
      */
-    @deprecated("Use saveAsSparkey instead", since = "0.14.0")
-    def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] = this.asSparkey()
+    private[scio] def asSparkey(implicit w: SparkeyWritable[K, V]): SCollection[SparkeyUri] =
+      this.asSparkey()
 
     /**
      * Convert this SCollection to a SideInput, mapping key-value pairs of each window to a

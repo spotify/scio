@@ -449,7 +449,6 @@ trait ScalaCoders extends CoderGrammar with CoderDerivation {
   implicit def seqCoder[T: Coder]: Coder[Seq[T]] =
     transform(Coder[T])(bc => beam(new SeqCoder[T](bc)))
 
-  // TODO: proper chunking implementation
   implicit def iterableCoder[T: Coder]: Coder[Iterable[T]] =
     transform(Coder[T])(bc => beam(new IterableCoder[T](bc)))
 
