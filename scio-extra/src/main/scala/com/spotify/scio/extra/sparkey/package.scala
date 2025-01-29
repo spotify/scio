@@ -174,9 +174,7 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
       sparkeySideInput(basePath, reader => new CachedStringSparkeyReader(reader, cache))
   }
 
-  /**
-   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
-   */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   implicit class SparkeyPairSCollection[K, V](@transient private val self: SCollection[(K, V)])
       extends Serializable {
 
@@ -422,9 +420,7 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
         .asCachedStringSparkeySideInput(cache)
   }
 
-  /**
-   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
-   */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   implicit class SparkeySetSCollection[T](private val self: SCollection[T]) {
     implicit private lazy val coder: Coder[T] = BeamCoders.getCoder(self)
 
@@ -473,9 +469,7 @@ package object sparkey extends SparkeyReaderInstances with SparkeyCoders {
     }
   }
 
-  /**
-   * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods.
-   */
+  /** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Sparkey methods. */
   @deprecated(since = "0.14.0")
   implicit class SparkeySCollection(private val self: SCollection[SparkeyUri]) extends AnyVal {
 

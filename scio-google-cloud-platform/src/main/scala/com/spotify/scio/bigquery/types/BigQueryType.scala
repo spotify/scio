@@ -349,9 +349,7 @@ object BigQueryType {
   /** Generate [[org.apache.avro.Schema Schema]] for a case class. */
   def avroSchemaOf[T: TypeTag]: Schema = SchemaProvider.avroSchemaOf[T]
 
-  /**
-   * Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class.
-   */
+  /** Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class. */
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
 
   /**

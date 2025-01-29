@@ -26,9 +26,7 @@ import org.joda.time.Duration
 
 import com.spotify.scio.bigtable.BigtableWrite
 
-/**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
- */
+/** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods. */
 final class SCollectionMutationOps[T <: Mutation](
   private val self: SCollection[(ByteString, Iterable[T])]
 ) {
