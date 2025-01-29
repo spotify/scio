@@ -118,7 +118,8 @@ val sparkeyVersion = "3.2.5"
 val tensorFlowVersion = "0.4.2"
 val tensorFlowMetadataVersion = "1.16.1"
 val testContainersVersion = "0.41.8"
-val voyagerVersion = "2.0.9"
+val voyagerVersion = "2.1.0"
+
 // dependent versions
 val algebraVersion = catsVersion // algebra is a cats module
 val scalatestplusVersion = s"$scalatestVersion.0"
