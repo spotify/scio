@@ -748,7 +748,7 @@ lazy val `scio-test-core` = project
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    ),
+    )
   )
 
 lazy val `scio-test-google-cloud-platform` = project
@@ -1197,7 +1197,7 @@ lazy val `scio-snowflake` = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-snowflake" % beamVersion
-    ),
+    )
   )
 
 val tensorFlowMetadataSourcesDir =
@@ -1219,10 +1219,10 @@ lazy val `scio-tensorflow` = project
     ).reduce(_ | _),
     libraryDependencies ++= Seq(
       // compile
+      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-vendor-guava-32_1_2-jre" % beamVendorVersion,
       "org.apache.commons" % "commons-compress" % commonsCompressVersion,
-      "com.spotify" %% "magnolify-tensorflow" % magnolifyVersion,
       "org.slf4j" % "slf4j-api" % slf4jVersion,
       "org.tensorflow" % "ndarray" % ndArrayVersion,
       "org.tensorflow" % "tensorflow-core-api" % tensorFlowVersion,
