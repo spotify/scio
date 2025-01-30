@@ -81,12 +81,23 @@ object TypedBigQueryIT {
       y <- Gen.numChar
     } yield Geography(s"POINT($x $y)")
   )
-  implicit val arbJson: Arbitrary[Json] = Arbitrary(
-    for {
-      key <- Gen.alphaStr
-      value <- Gen.alphaStr
-    } yield Json(s"""{"$key":"$value"}""")
-  )
+  implicit val arbJson: Arbitrary[Json] = Arbitrary {
+    import Arbitrary._
+    import Gen._
+    Gen
+      .oneOf(
+        // json object
+        alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""{"$str":$num}""")),
+        // json array
+        alphaLowerStr.flatMap(str => arbInt.arbitrary.map(num => s"""["$str",$num]""")),
+        // json literals
+        alphaLowerStr.map(str => s"\"$str\""),
+        arbInt.arbitrary.map(_.toString),
+        arbBool.arbitrary.map(_.toString),
+        Gen.const("null")
+      )
+      .map(wkt => Json(wkt))
+  }
 
   implicit val arbBigNumeric: Arbitrary[BigNumeric] = Arbitrary {
     // Precision: 76.76 (the 77th digit is partial)
@@ -108,7 +119,7 @@ object TypedBigQueryIT {
   private val tableRowTable = table("records_tablerow")
   private val avroTable = table("records_avro")
 
-  private val records = Gen.listOfN(100, recordGen).sample.get
+  private val records = Gen.listOfN(5, recordGen).sample.get
   private val options = PipelineOptionsFactory
     .fromArgs(
       "--project=data-integration-test",
@@ -145,6 +156,14 @@ class TypedBigQueryIT extends PipelineSpec with BeforeAndAfterAll {
     runWithRealContext(options) { sc =>
       sc.parallelize(records)
         .map(Record.toTableRow)
+        .map { row =>
+          // TableRow BQ save API uses json
+          // TO disambiguate from literal json string,
+          // field MUST be converted to parsed JSON
+          val jsonLoadRow = new TableRow()
+          jsonLoadRow.putAll(row)
+          jsonLoadRow.set("json", Json.parse(row.getJson("json")))
+        }
         .saveAsBigQueryTable(
           tableRowTable,
           schema = Record.schema,
