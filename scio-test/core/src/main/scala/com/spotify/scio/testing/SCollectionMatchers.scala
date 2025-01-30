@@ -443,8 +443,6 @@ trait SCollectionMatchers extends EqInstances {
         }
     }
 
-  // TODO: investigate why multi-map doesn't work
-
   /** Assert that the SCollection in question satisfies the provided function. */
   def satisfy[T: Coder: Eq](
     predicate: Iterable[T] => Boolean

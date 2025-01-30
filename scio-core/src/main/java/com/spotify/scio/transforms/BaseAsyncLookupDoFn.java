@@ -161,17 +161,6 @@ public abstract class BaseAsyncLookupDoFn<Input, Output, Client, Future, TryWrap
     semaphore.release(maxPendingRequests);
   }
 
-  // kept for binary compatibility. Must not be used
-  // TODO: remove in 0.15.0
-  @Deprecated
-  public void processElement(
-      Input input,
-      Instant timestamp,
-      OutputReceiver<KV<Input, TryWrapper>> out,
-      BoundedWindow window) {
-    processElement(input, timestamp, window, null, out);
-  }
-
   @SuppressWarnings("unchecked")
   @ProcessElement
   public void processElement(

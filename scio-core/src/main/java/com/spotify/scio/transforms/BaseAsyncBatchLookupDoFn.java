@@ -160,17 +160,6 @@ public abstract class BaseAsyncBatchLookupDoFn<
     semaphore.release(maxPendingRequests);
   }
 
-  // kept for binary compatibility. Must not be used
-  // TODO: remove in 0.15.0
-  @Deprecated
-  public void processElement(
-      Input input,
-      Instant timestamp,
-      OutputReceiver<KV<Input, TryWrapper>> out,
-      BoundedWindow window) {
-    processElement(input, timestamp, window, null, out);
-  }
-
   @ProcessElement
   public void processElement(
       @Element Input input,
