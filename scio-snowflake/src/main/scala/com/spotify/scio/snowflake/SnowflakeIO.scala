@@ -210,6 +210,7 @@ final case class SnowflakeTable[T](connectionOptions: SnowflakeConnectionOptions
       .pipe(w => Option(params.flushTimeLimit).fold(w)(w.withFlushTimeLimit))
       .pipe(w => Option(params.quotationMark).fold(w)(w.withQuotationMark))
       .pipe(w => Option(params.storageIntegrationName).fold(w)(w.withStorageIntegrationName))
+      .pipe(w => Option(params.tableSchema).fold(w)(w.withTableSchema))
       .withStagingBucketName(tempDirectory)
       .withUserDataMapper(userDataMapper)
       .pipe(w => Option(params.configOverride).fold(w)(_(w)))

@@ -98,9 +98,7 @@ trait ScioIO[T] {
     ClosedTap(tap)
   }
 
-  /**
-   * Write `data` out according to write configuration provided in `params`, returning the Tap type.
-   */
+  /** Write `data` out according to write configuration provided in `params`, returning the Tap type. */
   protected def write(data: SCollection[T], params: WriteP): Tap[tapT.T]
 
   /** Called only in a JobTest. Write `data` to TestDataManager output and return the Tap type */

@@ -107,16 +107,12 @@ final case class AvroTaps(self: Taps) {
       () => ProtobufFileTap[T](path, params)
     )
 
-  /**
-   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
-   */
+  /** Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file. */
   def avroFile(path: String, schema: Schema): Future[Tap[GenericRecord]] =
     avroFile(path, schema, GenericRecordIO.ReadParam())
 
   // overloaded API. We can't use default params
-  /**
-   * Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file.
-   */
+  /** Get a `Future[Tap[T]]` for [[org.apache.avro.generic.GenericRecord GenericRecord]] Avro file. */
   def avroFile(
     path: String,
     schema: Schema,

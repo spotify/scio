@@ -27,9 +27,7 @@ import com.spotify.scio.bigtable.{BigtableTypedIO, BigtableWrite}
 import com.spotify.scio.coders.Coder
 import magnolify.bigtable.BigtableType
 
-/**
- * Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods.
- */
+/** Enhanced version of [[com.spotify.scio.values.SCollection SCollection]] with Bigtable methods. */
 final class SCollectionMutationOps[T <: Mutation](
   private val self: SCollection[(ByteString, Iterable[T])]
 ) {

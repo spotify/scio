@@ -356,9 +356,7 @@ object BigQueryType {
   @deprecated("Use magnolify API instead.", "0.15.0")
   def avroSchemaOf[T: TypeTag]: Schema = SchemaProvider.avroSchemaOf[T]
 
-  /**
-   * Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class.
-   */
+  /** Generate [[com.google.api.services.bigquery.model.TableSchema TableSchema]] for a case class. */
   @deprecated("Use magnolify API instead.", "0.15.0")
   def schemaOf[T: TypeTag]: TableSchema = SchemaProvider.schemaOf[T]
 
