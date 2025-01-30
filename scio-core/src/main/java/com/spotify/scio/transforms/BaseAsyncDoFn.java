@@ -73,14 +73,6 @@ public abstract class BaseAsyncDoFn<Input, Output, Resource, Future>
     flush(r -> context.output(r.getValue(), r.getTimestamp(), r.getWindow()));
   }
 
-  // kept for binary compatibility. Must not be used
-  // TODO: remove in 0.15.0
-  @Deprecated
-  public void processElement(
-      Input input, Instant timestamp, OutputReceiver<Output> out, BoundedWindow window) {
-    processElement(input, timestamp, window, null, out);
-  }
-
   @ProcessElement
   public void processElement(
       @Element Input element,
