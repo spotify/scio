@@ -39,6 +39,7 @@ import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration._
 import scala.jdk.CollectionConverters._
 import scala.util.Random
 import scala.util.control.NonFatal
@@ -230,6 +231,57 @@ final private[client] class TableOps(client: Client) {
   def exists(tableSpec: String): Boolean =
     exists(bq.BigQueryHelpers.parseTableSpec(tableSpec))
 
+  /**
+   * This is annoying but the GCP BQ client v2 does not accept BQ json rows in the same format as BQ
+   * load. JSON column are expected as string instead of parsed json
+   */
+  private def normalizeRows(schema: TableSchema)(tableRow: TableRow): TableRow =
+    normalizeRows(schema.getFields.asScala.toList)(tableRow)
+
+  private def normalizeRows(fields: List[TableFieldSchema])(tableRow: TableRow): TableRow = {
+    import com.spotify.scio.bigquery._
+
+    fields.foldLeft(tableRow) { (row, f) =>
+      f.getType match {
+        case "JSON" =>
+          val name = f.getName
+          f.getMode match {
+            case "REQUIRED" =>
+              row.set(name, row.getJson(name).wkt)
+            case "NULLABLE" =>
+              row.getJsonOpt(name).fold(row) { json =>
+                row.set(name, json.wkt)
+              }
+            case "REPEATED" =>
+              row.set(name, row.getJsonList(name).map(_.wkt).asJava)
+          }
+        case "RECORD" | "STRUCT" =>
+          val name = f.getName
+          val netedFields = f.getFields.asScala.toList
+          f.getMode match {
+            case "REQUIRED" =>
+              row.set(name, normalizeRows(netedFields)(row.getRecord(name)))
+            case "NULLABLE" =>
+              row.getRecordOpt(name).fold(row) { nestedRow =>
+                row.set(name, normalizeRows(netedFields)(nestedRow))
+              }
+            case "REPEATED" =>
+              row.set(
+                name,
+                row
+                  .getRecordList(name)
+                  .map { nestedRow =>
+                    normalizeRows(netedFields)(nestedRow)
+                  }
+                  .asJava
+              )
+          }
+        case _ =>
+          row
+      }
+    }
+  }
+
   /** Write rows to a table. */
   def writeRows(
     tableReference: TableReference,
@@ -239,20 +291,32 @@ final private[client] class TableOps(client: Client) {
     createDisposition: CreateDisposition
   ): Long = withBigQueryService { service =>
     val table = new Table().setTableReference(tableReference).setSchema(schema)
-    if (createDisposition == CreateDisposition.CREATE_IF_NEEDED) {
+    if (
+      createDisposition == CreateDisposition.CREATE_IF_NEEDED &&
+      service.getTable(tableReference) == null
+    ) {
       service.createTable(table)
+      // wait creation to be effective before inserting
+      Thread.sleep(10.seconds.toMillis)
     }
 
     writeDisposition match {
       case WriteDisposition.WRITE_TRUNCATE =>
-        delete(tableReference)
-        service.createTable(table)
+        if (!service.isTableEmpty(tableReference)) {
+          delete(tableReference)
+          // wait deletion to be effective before re-creating
+          Thread.sleep(10.seconds.toMillis)
+
+          service.createTable(table)
+          // wait creation to be effective before inserting
+          Thread.sleep(10.seconds.toMillis)
+        }
       case WriteDisposition.WRITE_EMPTY =>
         require(service.isTableEmpty(tableReference))
       case WriteDisposition.WRITE_APPEND =>
     }
 
-    service.insertAll(tableReference, rows.asJava)
+    service.insertAll(tableReference, rows.map(normalizeRows(schema)).asJava)
   }
 
   /** Write rows to a table. */
