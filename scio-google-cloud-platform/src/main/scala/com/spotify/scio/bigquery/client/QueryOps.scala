@@ -111,7 +111,7 @@ final private[client] class QueryOps(client: Client, tableService: TableOps, job
 
     newQueryJob(config).map { job =>
       jobService.waitForJobs(job)
-      tableService.rows(STable.Ref(job.table))
+      tableService.rows(STable(job.table))
     }.get
   }
 

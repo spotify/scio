@@ -111,7 +111,7 @@ object TrafficRoutes {
       .map { case (r, ts) =>
         Record(r.route, r.avgSpeed, r.slowdownEvent, ts)
       }
-      .saveAsTypedBigQueryTable(Table.Spec(args("output")))
+      .saveAsTypedBigQueryTable(Table(args("output")))
 
     val result = sc.run()
     exampleUtils.waitToFinish(result.pipelineResult)

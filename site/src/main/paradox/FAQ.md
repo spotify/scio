@@ -553,7 +553,7 @@ def main(cmdlineArgs: Array[String]): Unit = {
   val p: SCollection[(String, Int)] = ???
 
   p.map(kv => Result(kv._1, kv._2))
-   .saveAsTypedBigQueryTable(Table.Spec(args("output")))
+   .saveAsTypedBigQueryTable(Table(args("output")))
 }
 ```
 

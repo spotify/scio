@@ -44,7 +44,7 @@ object MaxPerKeyExamples {
     )
 
     // Open a BigQuery table as a `SCollection[TableRow]`
-    val table = Table.Spec(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
+    val table = Table(args.getOrElse("input", ExampleData.WEATHER_SAMPLES_TABLE))
     sc.bigQueryTable(table)
       // Extract month and mean temperature as `(Long, Double)` tuples
       .map(row => (row.getLong("month"), row.getDouble("mean_temp")))
@@ -54,7 +54,7 @@ object MaxPerKeyExamples {
       // Map `(Long, Double)` tuples into result `TableRow`s
       .map(kv => TableRow("month" -> kv._1, "max_mean_temp" -> kv._2))
       // Save result as a BigQuery table
-      .saveAsBigQueryTable(Table.Spec(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
+      .saveAsBigQueryTable(Table(args("output")), schema, WRITE_TRUNCATE, CREATE_IF_NEEDED)
 
     // Execute the pipeline
     sc.run()

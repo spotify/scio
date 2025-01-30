@@ -177,7 +177,7 @@ class MockTable(
    */
   def withSample(numRows: Int): Unit = {
     ensureUnique()
-    val rows = bq.tables.rows(Table.Ref(original)).take(numRows).toList
+    val rows = bq.tables.rows(Table(original)).take(numRows).toList
     require(rows.length == numRows, s"Sample size ${rows.length} != requested $numRows")
     writeRows(rows)
     ()
@@ -189,7 +189,7 @@ class MockTable(
    */
   def withSample(minNumRows: Int, maxNumRows: Int): Unit = {
     ensureUnique()
-    val rows = bq.tables.rows(Table.Ref(original)).take(maxNumRows).toList
+    val rows = bq.tables.rows(Table(original)).take(maxNumRows).toList
     require(
       rows.length >= minNumRows && rows.length <= maxNumRows,
       s"Sample size ${rows.length} < requested minimal $minNumRows"

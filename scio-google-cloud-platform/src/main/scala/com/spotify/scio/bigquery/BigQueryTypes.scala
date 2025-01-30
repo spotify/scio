@@ -32,9 +32,13 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
 
 import java.math.MathContext
 import java.nio.ByteBuffer
+
 import scala.jdk.CollectionConverters._
 
-sealed trait Source
+sealed trait Source {
+  def latest(bq: BigQuery): Source
+  def latest(): Source
+}
 
 /** A wrapper type [[Query]] which wraps a SQL String. */
 final case class Query(underlying: String) extends Source {
@@ -61,64 +65,136 @@ final case class Query(underlying: String) extends Source {
    * @return
    *   [[Query]] with "$LATEST" replaced
    */
-  def latest(bq: BigQuery): Query =
-    Query(BigQueryPartitionUtil.latestQuery(bq, underlying))
+  override def latest(bq: BigQuery): Query =
+    copy(BigQueryPartitionUtil.latestQuery(bq, underlying))
+  override def latest(): Query =
+    latest(BigQuery.defaultInstance())
 
-  def latest(): Query = latest(BigQuery.defaultInstance())
+  override def toString: String = underlying
 }
 
 /**
- * [[Table]] abstracts the multiple ways of referencing Bigquery tables. Tables can be referenced by
- * a table spec `String` or by a table reference [[GTableReference]].
+ * Bigquery [[Table]] abstracts the multiple ways of referencing Bigquery tables. Tables can be
+ * referenced by a table spec `String` or by a table reference [[GTableReference]]. An additional
+ * [[Table.Filter]] can be given to specify selected fields and row restrictions when used with the
+ * BQ storage read API.
  *
- * Example:
- * {{{
- *   val table = Table.Spec("bigquery-public-data:samples.shakespeare")
- *   sc.bigQueryTable(table)
- *     .filter(r => "hamlet".equals(r.getString("corpus")) && "Polonius".equals(r.getString("word")))
- *     .saveAsTextFile("./output.txt")
- *   sc.run()
- * }}}
- *
- * Or create a [[Table]] from a [[GTableReference]]:
+ * Example: Create a [[Table]] from a [[GTableReference]]:
  * {{{
  *   val tableReference = new TableReference
  *   tableReference.setProjectId("bigquery-public-data")
  *   tableReference.setDatasetId("samples")
  *   tableReference.setTableId("shakespeare")
- *   val table = Table.Ref(tableReference)
+ *   val table = Table(tableReference)
+ * }}}
+ * or with a spec string with filtering:
+ * {{{
+ *   val table = Table(
+ *     "bigquery-public-data:samples.shakespeare",
+ *     List("word", "word_count"),
+ *     "word_count > 10"
+ *   )
  * }}}
  *
  * A helper method is provided to replace the "$LATEST" placeholder in the table name to the latest
  * common partition.
  * {{{
- *   val table = Table.Spec("some_project:some_data.some_table_$LATEST").latest()
+ *   val table = Table("some_project:some_data.some_table_$LATEST").latest()
  * }}}
  */
-sealed trait Table extends Source {
-  def spec: String
+case class Table private (ref: GTableReference, filter: Option[Table.Filter]) extends Source {
+  lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
+  override def latest(bq: BigQuery): Table = {
+    val latestSpec = BigQueryPartitionUtil.latestTable(bq, spec)
+    val latestRef = BigQueryHelpers.parseTableSpec(latestSpec)
+    copy(latestRef)
+  }
+  override def latest(): Table =
+    latest(BigQuery.defaultInstance())
 
-  def ref: GTableReference
-
-  def latest(bg: BigQuery): Table
-
-  def latest(): Table
+  override def toString: String = filter match {
+    case None => spec
+    case Some(Table.Filter(selectedFields, rowRestriction)) =>
+      val sb = new StringBuilder("SELECT ")
+      selectedFields match {
+        case Nil => sb.append("*")
+        case _   => sb.append(selectedFields.mkString(","))
+      }
+      sb.append(" FROM `")
+        .append(ref.getProjectId)
+        .append(".")
+        .append(ref.getDatasetId)
+        .append(".")
+        .append(ref.getTableId)
+        .append("`")
+      rowRestriction.foreach(r => sb.append(" WHERE ").append(r))
+      sb.result()
+  }
 }
 
 object Table {
-  final case class Ref(ref: GTableReference) extends Table {
-    override lazy val spec: String = BigQueryHelpers.toTableSpec(ref)
-    def latest(bq: BigQuery): Ref =
-      Ref(Spec(spec).latest(bq).ref)
-    def latest(): Ref = latest(BigQuery.defaultInstance())
 
-  }
-  final case class Spec(spec: String) extends Table {
-    override val ref: GTableReference = BigQueryHelpers.parseTableSpec(spec)
-    def latest(bq: BigQuery): Spec =
-      Spec(BigQueryPartitionUtil.latestTable(bq, spec))
-    def latest(): Spec = latest(BigQuery.defaultInstance())
-  }
+  /**
+   * @param selectedFields
+   *   names of the fields in the table that should be read. If empty, all fields will be read. If
+   *   the specified field is a nested field, all the sub-fields in the field will be selected.
+   *   Fields will always appear in the generated class in the same order as they appear in the
+   *   table, regardless of the order specified in selectedFields.
+   * @param rowRestriction
+   *   SQL text filtering statement, similar ti a WHERE clause in a query. Currently, we support
+   *   combinations of predicates that are a comparison between a column and a constant value in SQL
+   *   statement. Aggregates are not supported. For example:
+   *
+   * {{{
+   *   "a > DATE '2014-09-27' AND (b > 5 AND c LIKE 'date')"
+   * }}}
+   */
+  final case class Filter(
+    selectedFields: List[String],
+    rowRestriction: Option[String]
+  )
+
+  def apply(ref: GTableReference): Table =
+    new Table(ref, None)
+
+  def apply(ref: GTableReference, selectedFields: List[String]): Table =
+    new Table(ref, Some(Filter(selectedFields, None)))
+
+  def apply(ref: GTableReference, rowRestriction: String): Table =
+    new Table(ref, Some(Filter(List.empty, Some(rowRestriction))))
+
+  def apply(ref: GTableReference, selectedFields: List[String], rowRestriction: String): Table =
+    new Table(ref, Some(Filter(selectedFields, Some(rowRestriction))))
+
+  def apply(ref: GTableReference, filter: Table.Filter): Table =
+    new Table(ref, Some(filter))
+
+  def apply(spec: String): Table =
+    new Table(BigQueryHelpers.parseTableSpec(spec), None)
+
+  def apply(spec: String, selectedFields: List[String]): Table =
+    new Table(BigQueryHelpers.parseTableSpec(spec), Some(Filter(selectedFields, None)))
+
+  def apply(spec: String, rowRestriction: String): Table =
+    new Table(BigQueryHelpers.parseTableSpec(spec), Some(Filter(List.empty, Some(rowRestriction))))
+
+  def apply(spec: String, selectedFields: List[String], rowRestriction: String): Table =
+    new Table(
+      BigQueryHelpers.parseTableSpec(spec),
+      Some(Filter(selectedFields, Some(rowRestriction)))
+    )
+
+  def apply(spec: String, filter: Table.Filter): Table =
+    new Table(BigQueryHelpers.parseTableSpec(spec), Some(filter))
+
+  def apply(spec: String, filter: Option[Table.Filter]): Table =
+    new Table(BigQueryHelpers.parseTableSpec(spec), filter)
+
+  // deprecated API
+  @deprecated("Use Table.apply", "0.15.0")
+  def Ref(ref: GTableReference): Table = apply(ref)
+  @deprecated("Use Table.apply", "0.15.0")
+  def Spec(spec: String): Table = apply(spec)
 }
 
 /**

@@ -29,6 +29,7 @@ import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.{MatchResult, MetadataCoderV2, ResourceId, ResourceIdCoder}
 import org.apache.beam.sdk.io.ReadableFileCoder
 import org.apache.beam.sdk.schemas.{Schema => BSchema}
+import org.apache.beam.sdk.transforms.errorhandling.BadRecord
 import org.apache.beam.sdk.transforms.windowing.{
   BoundedWindow,
   GlobalWindow,
@@ -66,6 +67,11 @@ trait BeamTypeCoders extends CoderGrammar {
       str => DefaultJsonObjectParser.parseAndClose(new StringReader(str), ScioUtil.classOf[T]),
       DefaultJsonObjectParser.getJsonFactory().toString(_)
     )
+
+  // rely on serializable
+  implicit val badRecordCoder: Coder[BadRecord] = kryo
+  implicit val badRecordRecordCoder: Coder[BadRecord.Record] = kryo
+  implicit val badRecordFailurCoder: Coder[BadRecord.Failure] = kryo
 }
 
 private[coders] object BeamTypeCoders extends BeamTypeCoders {
