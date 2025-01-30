@@ -170,7 +170,11 @@ final class CoderTest extends AnyFlatSpec with Matchers {
       pq coderShould roundtrip() and
         beOfType[CoderTransform[_, _]] and
         materializeTo[MutablePriorityQueueCoder[_]] and
-        beFullyCompliantNotConsistentWithEquals()
+        beSerializable() and
+        structuralValueConsistentWithEquals() and
+        beNotConsistentWithEquals() and
+        bytesCountTested() and
+        beNonDeterministic()
     }
   }
 
@@ -429,7 +433,8 @@ final class CoderTest extends AnyFlatSpec with Matchers {
         beOfType[CoderTransform[_, _]] and
         materializeTo[JPriorityQueueCoder[_]] and
         beSerializable() and
-        structuralValueConsistentWithEquals()
+        structuralValueConsistentWithEquals() and
+        beNonDeterministic()
     }
   }
 

@@ -259,6 +259,11 @@ private[coders] class MutablePriorityQueueCoder[T: Ordering](bc: BCoder[T])
     super.encode(value, os)
   override def decode(inStream: InputStream): m.PriorityQueue[T] =
     decode(inStream, m.PriorityQueue.newBuilder[T])
+  override def verifyDeterministic(): Unit =
+    throw new NonDeterministicException(
+      this,
+      "Ordering of elements in a priority queue may be non-deterministic."
+    )
 }
 
 private[coders] class BitSetCoder extends AtomicCoder[BitSet] {
