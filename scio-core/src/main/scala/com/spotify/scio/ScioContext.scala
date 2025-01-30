@@ -485,7 +485,6 @@ class ScioContext private[scio] (
   }
 
   private[scio] def prepare(): Unit = {
-    // TODO: make sure this works for other PipelineOptions
     RunnerContext.prepareOptions(options, artifacts)
     ScioContext.validateOptions(options)
   }

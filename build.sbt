@@ -842,10 +842,7 @@ lazy val `scio-test-core` = project
       "org.apache.beam" % "beam-runners-direct-java" % beamVersion % Runtime,
       // test
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test
-    ),
-    // only releases after 0.14.4
-    tlMimaPreviousVersions := tlMimaPreviousVersions.value
-      .filter(v => VersionNumber(v).numbers.last >= 4)
+    )
   )
 
 lazy val `scio-test-google-cloud-platform` = project
@@ -1299,8 +1296,7 @@ lazy val `scio-snowflake` = project
       "joda-time" % "joda-time" % jodaTimeVersion,
       "org.apache.beam" % "beam-sdks-java-core" % beamVersion,
       "org.apache.beam" % "beam-sdks-java-io-snowflake" % beamVersion
-    ),
-    tlMimaPreviousVersions := Set.empty // TODO: remove once released
+    )
   )
 
 val tensorFlowMetadataSourcesDir =
