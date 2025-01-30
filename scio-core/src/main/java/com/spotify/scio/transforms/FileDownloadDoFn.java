@@ -79,14 +79,6 @@ public class FileDownloadDoFn<OutputT> extends DoFn<URI, OutputT> {
     this.batch.clear();
   }
 
-  // kept for binary compatibility. Must not be used
-  // TODO: remove in 0.15.0
-  @Deprecated
-  public void processElement(
-      URI element, Instant timestamp, OutputReceiver<OutputT> out, BoundedWindow window) {
-    processElement(element, timestamp, window, null, out);
-  }
-
   @ProcessElement
   public void processElement(
       @DoFn.Element URI element,
